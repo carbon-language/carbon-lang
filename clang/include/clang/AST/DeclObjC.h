@@ -743,25 +743,10 @@ public:
   static bool classof(const ObjCCategoryDecl *D) { return true; }
 };
 
-/// ObjCCategoryImplDecl - An object of this class encapsulates a category 
-/// @implementation declaration. If a category class has declaration of a 
-/// property, its implementation must be specified in the category's 
-/// @implementation declaration. Example:
-/// @interface I @end
-/// @interface I(CATEGORY)
-///    @property int p1, d1;
-/// @end
-/// @implementation I(CATEGORY)
-///  @dynamic p1,d1;
-/// @end
-///
-/// FIXME: Like ObjCImplementationDecl, this should not be a NamedDecl!
-/// FIXME: Introduce a new common base class for ObjCImplementationDecl and
-/// ObjCCategoryImplDecl
-class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
+class ObjCImplDecl : public Decl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
-
+  
   /// implemented instance methods
   llvm::SmallVector<ObjCMethodDecl*, 16> InstanceMethods;
   
@@ -770,18 +755,15 @@ class ObjCCategoryImplDecl : public NamedDecl, public DeclContext {
   
   /// Property Implementations in this category
   llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
-
+  
   SourceLocation EndLoc;  
-
-  ObjCCategoryImplDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-                       ObjCInterfaceDecl *classInterface)
-    : NamedDecl(ObjCCategoryImpl, DC, L, Id), DeclContext(ObjCCategoryImpl),
-      ClassInterface(classInterface) {}
+protected:
+  ObjCImplDecl(Kind DK, DeclContext *DC, SourceLocation L,
+               ObjCInterfaceDecl *classInterface)
+  : Decl(DK, DC, L), DeclContext(DK),
+  ClassInterface(classInterface) {}
+  
 public:
-  static ObjCCategoryImplDecl *Create(ASTContext &C, DeclContext *DC,
-                                      SourceLocation L, IdentifierInfo *Id,
-                                      ObjCInterfaceDecl *classInterface);
-        
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   
@@ -791,7 +773,7 @@ public:
   void addClassMethod(ObjCMethodDecl *method) {
     ClassMethods.push_back(method);
   }   
-
+  
   // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   ObjCMethodDecl *getClassMethod(Selector Sel) const;
@@ -802,7 +784,7 @@ public:
   void addPropertyImplementation(ObjCPropertyImplDecl *property) {
     PropertyImplementations.push_back(property);
   }
-
+  
   ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
   ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
   
@@ -830,7 +812,51 @@ public:
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
-    
+};
+  
+/// ObjCCategoryImplDecl - An object of this class encapsulates a category 
+/// @implementation declaration. If a category class has declaration of a 
+/// property, its implementation must be specified in the category's 
+/// @implementation declaration. Example:
+/// @interface I @end
+/// @interface I(CATEGORY)
+///    @property int p1, d1;
+/// @end
+/// @implementation I(CATEGORY)
+///  @dynamic p1,d1;
+/// @end
+///
+/// ObjCCategoryImplDecl
+class ObjCCategoryImplDecl : public ObjCImplDecl {
+  // Category name
+  IdentifierInfo *Id;
+
+  ObjCCategoryImplDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+                       ObjCInterfaceDecl *classInterface)
+    : ObjCImplDecl(ObjCCategoryImpl, DC, L, classInterface), Id(Id) {}
+public:
+  static ObjCCategoryImplDecl *Create(ASTContext &C, DeclContext *DC,
+                                      SourceLocation L, IdentifierInfo *Id,
+                                      ObjCInterfaceDecl *classInterface);
+        
+  /// getIdentifier - Get the identifier that names the class
+  /// interface associated with this implementation.
+  IdentifierInfo *getIdentifier() const { 
+    return Id; 
+  }
+  
+  /// getNameAsCString - Get the name of identifier for the class
+  /// interface associated with this implementation as a C string
+  /// (const char*).
+  const char *getNameAsCString() const {
+    return Id->getName();
+  }
+  
+  /// @brief Get the name of the class associated with this interface.
+  std::string getNameAsString() const {
+    return Id->getName();
+  }
+  
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
   static bool classof(const ObjCCategoryImplDecl *D) { return true; }
   static DeclContext *castToDeclContext(const ObjCCategoryImplDecl *D) {
@@ -855,32 +881,18 @@ public:
 /// allow instance variables to be specified in the implementation.  When
 /// specified, they need to be *identical* to the interface.
 ///
-class ObjCImplementationDecl : public Decl, public DeclContext {
-  /// Class interface for this implementation
-  ObjCInterfaceDecl *ClassInterface;
-  
+class ObjCImplementationDecl : public ObjCImplDecl {  
   /// Implementation Class's super class.
   ObjCInterfaceDecl *SuperClass;
     
   /// Instance variables declared in the @implementation.
   ObjCList<ObjCIvarDecl> IVars;
 
-  /// implemented instance methods
-  llvm::SmallVector<ObjCMethodDecl*, 16> InstanceMethods;
-  
-  /// implemented class methods
-  llvm::SmallVector<ObjCMethodDecl*, 16> ClassMethods;
-
-  /// Properties being implemented
-  llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
-  
-  SourceLocation EndLoc;
-
   ObjCImplementationDecl(DeclContext *DC, SourceLocation L, 
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
-    : Decl(ObjCImplementation, DC, L), DeclContext(ObjCImplementation),
-      ClassInterface(classInterface), SuperClass(superDecl){}
+    : ObjCImplDecl(ObjCImplementation, DC, L, classInterface), 
+       SuperClass(superDecl){}
 public:  
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC, 
                                         SourceLocation L, 
@@ -893,34 +905,6 @@ public:
   void setIVarList(ObjCIvarDecl *const *InArray, unsigned Num, ASTContext &C) {
     IVars.set(InArray, Num, C);
   }
-  
-  void addInstanceMethod(ObjCMethodDecl *method) {
-    InstanceMethods.push_back(method);
-  }
-  void addClassMethod(ObjCMethodDecl *method) {
-    ClassMethods.push_back(method);
-  }    
-  
-  void addPropertyImplementation(ObjCPropertyImplDecl *property) {
-    PropertyImplementations.push_back(property);
-  } 
-
-  ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
-  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
-
-  typedef llvm::SmallVector<ObjCPropertyImplDecl*, 8>::const_iterator
-  propimpl_iterator;
-  propimpl_iterator propimpl_begin() const { 
-    return PropertyImplementations.begin(); 
-  }
-  propimpl_iterator propimpl_end() const { 
-    return PropertyImplementations.end(); 
-  }
-  
-  // Location information, modeled after the Stmt API. 
-  SourceLocation getLocStart() const { return getLocation(); }
-  SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
   
   /// getIdentifier - Get the identifier that names the class
   /// interface associated with this implementation.
@@ -941,30 +925,11 @@ public:
     return getClassInterface()->getNameAsString();
   }
 
-  const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
-  ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   const ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
   ObjCInterfaceDecl *getSuperClass() { return SuperClass; }
   
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
-  
-  typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
-       instmeth_iterator;
-  instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }
-  instmeth_iterator instmeth_end() const { return InstanceMethods.end(); }
-
-  typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
-    classmeth_iterator;
-  classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
-  classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
-  
-  // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
-  ObjCMethodDecl *getClassMethod(Selector Sel) const;
-  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
-    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
-  }
-  
+    
   typedef ObjCList<ObjCIvarDecl>::iterator ivar_iterator;
   ivar_iterator ivar_begin() const { return IVars.begin(); }
   ivar_iterator ivar_end() const { return IVars.end(); }

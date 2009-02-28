@@ -525,7 +525,7 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
 /// properties implemented in this category @implementation block and returns
 /// the implemented property that uses it.
 ///
-ObjCPropertyImplDecl *ObjCCategoryImplDecl::
+ObjCPropertyImplDecl *ObjCImplDecl::
 FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
   for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
@@ -540,7 +540,7 @@ FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
 /// added to the list of those properties @synthesized/@dynamic in this
 /// category @implementation block.
 ///
-ObjCPropertyImplDecl *ObjCCategoryImplDecl::
+ObjCPropertyImplDecl *ObjCImplDecl::
 FindPropertyImplDecl(IdentifierInfo *Id) const {
   for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
@@ -550,20 +550,20 @@ FindPropertyImplDecl(IdentifierInfo *Id) const {
   return 0;
 }
 
-// lookupInstanceMethod - This method returns an instance method by looking in
+// getInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCCategoryImplDecl::getInstanceMethod(Selector Sel) const {
+ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(Selector Sel) const {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
   return NULL;
 }
 
-// lookupClassMethod - This method returns an instance method by looking in
+// getClassMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCCategoryImplDecl::getClassMethod(Selector Sel) const {
+ObjCMethodDecl *ObjCImplDecl::getClassMethod(Selector Sel) const {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)
@@ -587,56 +587,6 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
 void ObjCImplementationDecl::Destroy(ASTContext &C) {
   IVars.Destroy(C);
   Decl::Destroy(C);
-}
-
-/// getInstanceMethod - This method returns an instance method by
-/// looking in the class implementation. Unlike interfaces, we don't
-/// look outside the implementation.
-ObjCMethodDecl *ObjCImplementationDecl::getInstanceMethod(Selector Sel) const {
-  for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
-    if ((*I)->getSelector() == Sel)
-      return *I;
-  return NULL;
-}
-
-/// getClassMethod - This method returns a class method by looking in
-/// the class implementation. Unlike interfaces, we don't look outside
-/// the implementation.
-ObjCMethodDecl *ObjCImplementationDecl::getClassMethod(Selector Sel) const {
-  for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
-       I != E; ++I)
-    if ((*I)->getSelector() == Sel)
-      return *I;
-  return NULL;
-}
-
-/// FindPropertyImplDecl - This method looks up a previous ObjCPropertyImplDecl
-/// added to the list of those properties @synthesized/@dynamic in this
-/// @implementation block.
-///
-ObjCPropertyImplDecl *ObjCImplementationDecl::
-FindPropertyImplDecl(IdentifierInfo *Id) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
-    ObjCPropertyImplDecl *PID = *i;
-    if (PID->getPropertyDecl()->getIdentifier() == Id)
-      return PID;
-  }
-  return 0;
-}
-
-/// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
-/// properties implemented in this @implementation block and returns the
-/// implemented property that uses it.
-///
-ObjCPropertyImplDecl *ObjCImplementationDecl::
-FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
-    ObjCPropertyImplDecl *PID = *i;
-    if (PID->getPropertyIvarDecl() &&
-        PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
-      return PID;
-  }
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
