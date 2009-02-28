@@ -3497,7 +3497,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
       else
         Diag(IdLoc, diag::err_redefinition) << Id;
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      Val->Destroy(Context);
+      if (Val) Val->Destroy(Context);
       return 0;
     }
   }
