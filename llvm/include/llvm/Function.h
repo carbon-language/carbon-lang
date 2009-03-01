@@ -28,7 +28,7 @@ namespace llvm {
 
 class FunctionType;
 
-// Traits for intrusive list of instructions...
+// Traits for intrusive list of basic blocks...
 template<> struct ilist_traits<BasicBlock>
   : public SymbolTableListTraits<BasicBlock, Function> {
 
