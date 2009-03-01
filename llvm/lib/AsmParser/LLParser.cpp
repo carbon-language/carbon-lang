@@ -2325,6 +2325,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   if (Token == lltok::Eof)
     return TokError("found end of file when expecting more instructions");
   LocTy Loc = Lex.getLoc();
+  unsigned KeywordVal = Lex.getUIntVal();
   Lex.Lex();  // Eat the keyword.
   
   switch (Token) {
@@ -2339,24 +2340,24 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
-  case lltok::kw_mul:    return ParseArithmetic(Inst, PFS, Lex.getUIntVal(), 0);
+  case lltok::kw_mul:    return ParseArithmetic(Inst, PFS, KeywordVal, 0);
       
   case lltok::kw_udiv:
   case lltok::kw_sdiv:
   case lltok::kw_urem:
-  case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, Lex.getUIntVal(), 1);
+  case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, KeywordVal, 1);
   case lltok::kw_fdiv:
-  case lltok::kw_frem:   return ParseArithmetic(Inst, PFS, Lex.getUIntVal(), 2);
+  case lltok::kw_frem:   return ParseArithmetic(Inst, PFS, KeywordVal, 2);
   case lltok::kw_shl:
   case lltok::kw_lshr:
   case lltok::kw_ashr:
   case lltok::kw_and:
   case lltok::kw_or:
-  case lltok::kw_xor:    return ParseLogical(Inst, PFS, Lex.getUIntVal());
+  case lltok::kw_xor:    return ParseLogical(Inst, PFS, KeywordVal);
   case lltok::kw_icmp:
   case lltok::kw_fcmp:
   case lltok::kw_vicmp:
-  case lltok::kw_vfcmp:  return ParseCompare(Inst, PFS, Lex.getUIntVal());
+  case lltok::kw_vfcmp:  return ParseCompare(Inst, PFS, KeywordVal);
   // Casts.
   case lltok::kw_trunc:
   case lltok::kw_zext:
@@ -2369,7 +2370,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_fptoui:
   case lltok::kw_fptosi: 
   case lltok::kw_inttoptr:
-  case lltok::kw_ptrtoint:       return ParseCast(Inst, PFS, Lex.getUIntVal());
+  case lltok::kw_ptrtoint:       return ParseCast(Inst, PFS, KeywordVal);
   // Other.
   case lltok::kw_select:         return ParseSelect(Inst, PFS);
   case lltok::kw_va_arg:         return ParseVA_Arg(Inst, PFS);
@@ -2381,7 +2382,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
   case lltok::kw_alloca:
-  case lltok::kw_malloc:         return ParseAlloc(Inst, PFS, Lex.getUIntVal());
+  case lltok::kw_malloc:         return ParseAlloc(Inst, PFS, KeywordVal);
   case lltok::kw_free:           return ParseFree(Inst, PFS);
   case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
   case lltok::kw_store:          return ParseStore(Inst, PFS, false);
@@ -2782,10 +2783,12 @@ bool LLParser::ParseCast(Instruction *&Inst, PerFunctionState &PFS,
       ParseType(DestTy))
     return true;
   
-  if (!CastInst::castIsValid((Instruction::CastOps)Opc, Op, DestTy))
+  if (!CastInst::castIsValid((Instruction::CastOps)Opc, Op, DestTy)) {
+    CastInst::castIsValid((Instruction::CastOps)Opc, Op, DestTy);
     return Error(Loc, "invalid cast opcode for cast from '" +
                  Op->getType()->getDescription() + "' to '" +
                  DestTy->getDescription() + "'");
+  }
   Inst = CastInst::Create((Instruction::CastOps)Opc, Op, DestTy);
   return false;
 }
