@@ -107,13 +107,43 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
   return NSConcreteStackBlock;
 }
 
+static void CollectBlockDeclRefInfo(const Stmt *S, 
+                                    CodeGenFunction::BlockInfo &Info) {
+  for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
+       I != E; ++I)
+    CollectBlockDeclRefInfo(*I, Info);
+  
+  if (const BlockDeclRefExpr *DE = dyn_cast<BlockDeclRefExpr>(S)) {
+    // FIXME: Handle enums.
+    if (isa<FunctionDecl>(DE->getDecl()))
+      return;
+    
+    if (DE->isByRef())
+      Info.ByRefDeclRefs.push_back(DE);
+    else
+      Info.ByCopyDeclRefs.push_back(DE);
+  }
+}
+
+/// CanBlockBeGlobal - Given a BlockInfo struct, determines if a block
+/// can be declared as a global variable instead of on the stack.
+static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info)
+{
+  return Info.ByRefDeclRefs.empty() && Info.ByCopyDeclRefs.empty();
+}
+
 // FIXME: Push most into CGM, passing down a few bits, like current
 // function name.
 llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
-  bool insideFunction = false;
-  bool BlockRefDeclList = false;
-  bool BlockByrefDeclList = false;
 
+  std::string Name = CurFn->getName();
+  CodeGenFunction::BlockInfo Info(0, Name.c_str());
+  CollectBlockDeclRefInfo(BE->getBody(), Info);
+
+  // Check if the block can be global.
+  if (CanBlockBeGlobal(Info))
+    return CGM.GetAddrOfGlobalBlock(BE, Name.c_str());
+    
   std::vector<llvm::Constant*> Elts;
   llvm::Constant *C;
   llvm::Value *V;
@@ -127,11 +157,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     // __isa
     C = CGM.getNSConcreteStackBlock();
-    if (!insideFunction ||
-        (!BlockRefDeclList && !BlockByrefDeclList)) {
-      C = CGM.getNSConcreteGlobalBlock();
-      flags |= BLOCK_IS_GLOBAL;
-    }
     const llvm::PointerType *PtrToInt8Ty
       = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
@@ -148,11 +173,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     Elts.push_back(C);
 
     // __invoke
-    const char *Name = "";
-    if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurFuncDecl))
-      if (ND->getIdentifier())
-        Name = ND->getNameAsCString();
-    BlockInfo Info(0, Name);
     uint64_t subBlockSize, subBlockAlign;
     llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
     llvm::Function *Fn

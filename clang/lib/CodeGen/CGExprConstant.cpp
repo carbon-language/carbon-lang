@@ -450,9 +450,13 @@ public:
       return CGM.GetAddrOfConstantCFString(S);
     }
     case Expr::BlockExprClass: {
-      BlockExpr *B = cast<BlockExpr>(E);
-      if (!B->hasBlockDeclRefExprs())
-        return cast<llvm::Constant>(CGF->BuildBlockLiteralTmp(B));
+      std::string FunctionName;
+      if (CGF)
+        FunctionName = CGF->CurFn->getName();
+      else
+        FunctionName = "global";
+
+      return CGM.GetAddrOfGlobalBlock(cast<BlockExpr>(E), FunctionName.c_str());
     }
     }
 

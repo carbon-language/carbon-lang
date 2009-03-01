@@ -275,6 +275,14 @@ public:
     /// Name - the name of the function this block was created for, if any
     const char *Name;
 
+    /// ByCopyDeclRefs - Variables from parent scopes that have been imported
+    /// into this block.
+    llvm::SmallVector<const BlockDeclRefExpr *, 8> ByCopyDeclRefs;
+    
+    // ByRefDeclRefs - __block variables from parent scopes that have been 
+    // imported into this block.
+    llvm::SmallVector<const BlockDeclRefExpr *, 8> ByRefDeclRefs;
+    
     BlockInfo(const llvm::Type *blt, const char *n)
       : BlockLiteralTy(blt), Name(n) {}
   };
