@@ -32,7 +32,7 @@ void f(id super) {
   [super m];
 }
 void f0(int super) {
-  [super m]; // expected-error{{bad receiver type 'int'}}
+  [super m]; // expected-warning{{bad receiver type 'int'}}
 }
 void f1(int puper) {
   [super m]; // expected-error{{use of undeclared identifier 'super'}}

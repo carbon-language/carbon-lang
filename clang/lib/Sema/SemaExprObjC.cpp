@@ -464,7 +464,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
       return true;
   } else {
-    Diag(lbrac, diag::error_bad_receiver_type)
+    Diag(lbrac, diag::warn_bad_receiver_type)
       << RExpr->getType() << RExpr->getSourceRange();
     return true;
   }
