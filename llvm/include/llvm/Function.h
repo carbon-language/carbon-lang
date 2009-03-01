@@ -32,12 +32,17 @@ class FunctionType;
 template<> struct ilist_traits<BasicBlock>
   : public SymbolTableListTraits<BasicBlock, Function> {
 
-  // createSentinel is used to create a node that marks the end of the list...
-  static BasicBlock *createSentinel();
-  static void destroySentinel(BasicBlock *BB) { delete BB; }
+  // createSentinel is used to get hold of the node that marks the end of the
+  // list... (same trick used here as in ilist_traits<Instruction>)
+  BasicBlock *createSentinel() const {
+    return const_cast<BasicBlock*>(static_cast<const BasicBlock*>(&Sentinel));
+  }
+  static void destroySentinel(BasicBlock*) {}
   static iplist<BasicBlock> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
   static int getListOffset();
+private:
+  ilist_node<BasicBlock> Sentinel;
 };
 
 template<> struct ilist_traits<Argument>

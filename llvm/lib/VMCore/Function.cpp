@@ -22,13 +22,6 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-BasicBlock *ilist_traits<BasicBlock>::createSentinel() {
-  BasicBlock *Ret = BasicBlock::Create();
-  // This should not be garbage monitored.
-  LeakDetector::removeGarbageObject(Ret);
-  return Ret;
-}
-
 iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
   return F->getBasicBlockList();
 }
