@@ -4565,18 +4565,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
     return Builder.CreateLoad(Entry, false, "tmp");
   
   std::string MetaClassName("\01_OBJC_METACLASS_$_" + ID->getNameAsString());
-  llvm::GlobalVariable *MetaClassGV = 
-    CGM.getModule().getGlobalVariable(MetaClassName);
-  if (!MetaClassGV) {
-    MetaClassGV =
-      new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0,
-                               MetaClassName,
-                               &CGM.getModule());
-      UsedGlobals.push_back(MetaClassGV);
-  }
-
+  llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName);
   Entry = 
     new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
                              llvm::GlobalValue::InternalLinkage,
