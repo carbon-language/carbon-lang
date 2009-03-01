@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -join-cross-class-copies -stats |& \
+; RUN: llvm-as < %s | llc -march=x86 -stats |& \
 ; RUN:   grep {twoaddrinstr} | grep {Number of instructions aggressively commuted}
 ; rdar://6523745
 
