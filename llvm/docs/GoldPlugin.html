@@ -75,9 +75,10 @@ make all-gold
   <tt>-emit-llvm</tt> or <tt>-flto</tt> or <tt>-O4</tt> which is equivalent
   to <tt>-O3 -flto</tt>.</p>
   <p><tt>llvm-gcc</tt> has a <tt>-use-gold-plugin</tt> option which looks
-  for the gold plugin in the same directories as it looks for <tt>cc1</tt>.
-  It will not look for an alternate linker, which is why you need gold to be
-  the installed system linker in your path.</p>
+  for the gold plugin in the same directories as it looks for <tt>cc1</tt> and
+  passes the <tt>-plugin</tt> option to ld. It will not look for an alternate
+  linker, which is why you need gold to be the installed system linker in your
+  path.</p>
 </div>
 <!--=========================================================================-->
 <div class="doc_section"><a name="licensing">Licensing</a></div>
