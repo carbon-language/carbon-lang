@@ -297,7 +297,10 @@ public:
   /// exception personality function.
   llvm::Value *EHPersonalityPtr;
 
-  llvm::Function *UnwindResumeOrRethrowFn;
+  llvm::Function *UnwindResumeOrRethrowFn, *ObjCBeginCatchFn, *ObjCEndCatchFn;
+
+  const llvm::StructType *EHTypeTy;
+  const llvm::Type *EHTypePtrTy;
 
   ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCNonFragileABITypesHelper(){}
@@ -613,7 +616,10 @@ private:
   llvm::GlobalVariable* ObjCEmptyVtableVar;
   /// MetaClassReferences - uniqued meta class references.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> MetaClassReferences;
-  
+
+  /// EHTypeReferences - uniqued class ehtype references.
+  llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> EHTypeReferences;
+    
   /// FinishNonFragileABIModule - Write out global data structures at the end of
   /// processing a translation unit.
   void FinishNonFragileABIModule();
@@ -698,7 +704,11 @@ private:
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
   llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
-  
+
+  /// GetInterfaceEHType - Get the ehtype for the given Objective-C
+  /// interface. The return value has type EHTypePtrTy.
+  llvm::Value *GetInterfaceEHType(const ObjCInterfaceType *IT);
+      
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
   // FIXME. All stubs for now!
@@ -3373,6 +3383,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                               "__objc_personality_v0");
   EHPersonalityPtr = llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
 
+
   Params.clear();
   Params.push_back(Int8PtrTy);
   UnwindResumeOrRethrowFn = 
@@ -3380,6 +3391,30 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                                       Params,
                                                       false),
                               "_Unwind_Resume_or_Rethrow");
+  ObjCBeginCatchFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(Int8PtrTy,
+                                                      Params,
+                                                      false),
+                              "objc_begin_catch");
+
+  Params.clear();
+  ObjCEndCatchFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "objc_end_catch");
+
+  // struct objc_typeinfo {
+  //   const void** vtable; // objc_ehtype_vtable + 2
+  //   const char*  name;    // c++ typeinfo string
+  //   Class        cls;
+  // };
+  EHTypeTy = llvm::StructType::get(llvm::PointerType::getUnqual(Int8PtrTy),
+                                   Int8PtrTy,
+                                   ClassnfABIPtrTy,
+                                   NULL);
+  CGM.getModule().addTypeName("struct._objc_typeinfo", CategorynfABITy);
+  EHTypePtrTy = llvm::PointerType::getUnqual(EHTypeTy);
 }
 
 llvm::Function *CGObjCNonFragileABIMac::ModuleInitFunction() { 
@@ -4829,6 +4864,41 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
 
   // Clear the insertion point to indicate we are in unreachable code.
   CGF.Builder.ClearInsertionPoint();
+}
+
+llvm::Value *
+CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceType *IT) {
+  const ObjCInterfaceDecl *ID = IT->getDecl();
+  llvm::GlobalVariable * &Entry = EHTypeReferences[ID->getIdentifier()];
+  if (Entry)
+    return Entry;
+
+  std::string ClassName("\01_OBJC_CLASS_$_" + ID->getNameAsString());
+  std::string VTableName = "objc_ehtype_vtable";
+  llvm::GlobalVariable *VTableGV = 
+    CGM.getModule().getGlobalVariable(VTableName);
+  if (!VTableGV)
+    VTableGV = new llvm::GlobalVariable(ObjCTypes.Int8PtrTy, false,
+                                        llvm::GlobalValue::ExternalLinkage,
+                                        0, VTableName, &CGM.getModule());
+
+  llvm::Value *VTableIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 2);
+
+  std::vector<llvm::Constant*> Values(3);
+  Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, &VTableIdx, 1);
+  Values[1] = GetClassName(ID->getIdentifier());
+  Values[2] = GetClassGlobal(ClassName);
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
+
+  Entry = 
+    new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+                             llvm::GlobalValue::WeakLinkage,
+                             Init, 
+                             (std::string("OBJC_EHTYPE_$_") + 
+                              ID->getIdentifier()->getName()),
+                             &CGM.getModule());
+
+  return Entry;
 }
   
 /* *** */
