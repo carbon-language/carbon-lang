@@ -36,8 +36,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              Diagnostic &diags, bool GenerateDebugInfo)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), Runtime(0), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
-    CFConstantStringClassRef(0), NSConcreteGlobalBlock(0),
-    BlockDescriptorType(0), GenericBlockLiteralType(0) {
+    CFConstantStringClassRef(0), NSConcreteGlobalBlock(0), 
+    NSConcreteStackBlock(0),BlockDescriptorType(0), GenericBlockLiteralType(0) {
 
   if (Features.ObjC1) {
     if (Features.NeXTRuntime) {
