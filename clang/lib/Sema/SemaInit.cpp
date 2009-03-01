@@ -410,7 +410,7 @@ InitListChecker::InitListChecker(Sema &S, InitListExpr *IL, QualType &T)
   unsigned newIndex = 0;
   unsigned newStructuredIndex = 0;
   FullyStructuredList 
-    = getStructuredSubobjectInit(IL, newIndex, T, 0, 0, SourceRange());
+    = getStructuredSubobjectInit(IL, newIndex, T, 0, 0, IL->getSourceRange());
   CheckExplicitInitList(IL, T, newIndex, FullyStructuredList, newStructuredIndex,
                         /*TopLevelObject=*/true);
 
@@ -470,7 +470,8 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   InitListExpr *StructuredSubobjectInitList
     = getStructuredSubobjectInit(ParentIList, Index, T, StructuredList, 
                                  StructuredIndex, 
-                                 ParentIList->getInit(Index)->getSourceRange());
+          SourceRange(ParentIList->getInit(Index)->getSourceRange().getBegin(),
+                      ParentIList->getSourceRange().getEnd()));
   unsigned StructuredSubobjectInitIndex = 0;
 
   // Check the element types and build the structural subobject.
@@ -481,7 +482,7 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
                         TopLevelObject);
   unsigned EndIndex = (Index == StartIndex? StartIndex : Index - 1);
   
-  // Update the structured sub-object initialize so that it's ending
+  // Update the structured sub-object initializer so that it's ending
   // range corresponds with the end of the last initializer it used.
   if (EndIndex < ParentIList->getNumInits()) {
     SourceLocation EndLoc 
@@ -1088,8 +1089,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   // Determine the structural initializer list that corresponds to the
   // current subobject.
   StructuredList = IsFirstDesignator? SyntacticToSemantic[IList]
-    : getStructuredSubobjectInit(IList, Index, CurrentObjectType, StructuredList,
-                                 StructuredIndex,
+    : getStructuredSubobjectInit(IList, Index, CurrentObjectType, 
+                                 StructuredList, StructuredIndex,
                                  SourceRange(D->getStartLocation(),
                                              DIE->getSourceRange().getEnd()));
   assert(StructuredList && "Expected a structured initializer list");
@@ -1421,7 +1422,8 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     // Here, xs[0].a == 0 and xs[0].b == 3, since the second,
     // designated initializer re-initializes the whole
     // subobject [0], overwriting previous initializers.
-    SemaRef.Diag(InitRange.getBegin(), diag::warn_subobject_initializer_overrides)
+    SemaRef.Diag(InitRange.getBegin(), 
+                 diag::warn_subobject_initializer_overrides)
       << InitRange;
     SemaRef.Diag(ExistingInit->getSourceRange().getBegin(), 
                   diag::note_previous_initializer)
@@ -1429,12 +1431,10 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
       << ExistingInit->getSourceRange();
   }
 
-  SourceLocation StartLoc;
-  if (Index < IList->getNumInits())
-    StartLoc = IList->getInit(Index)->getSourceRange().getBegin();
   InitListExpr *Result 
-    = new (SemaRef.Context) InitListExpr(StartLoc, 0, 0, 
-                                          IList->getSourceRange().getEnd());
+    = new (SemaRef.Context) InitListExpr(InitRange.getBegin(), 0, 0, 
+                                         InitRange.getEnd());
+
   Result->setType(CurrentObjectType);
 
   // Link this new initializer list into the structured initializer
