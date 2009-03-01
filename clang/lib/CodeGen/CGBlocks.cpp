@@ -508,7 +508,8 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   LiteralFields[0] = getNSConcreteGlobalBlock();
 
   // Flags
-  LiteralFields[1] = llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL);
+  LiteralFields[1] = 
+    llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_DESCRIPTOR);
 
   // Reserved
   LiteralFields[2] = llvm::Constant::getNullValue(IntTy);
