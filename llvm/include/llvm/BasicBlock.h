@@ -36,7 +36,7 @@ template<> struct ilist_traits<Instruction>
     // ilist_node<NodeTy>, there is a legal viable downcast from it
     // to NodeTy. We use this trick to superpose i(p)list with a "ghostly"
     // NodeTy, which becomes the sentinel. Dereferencing the sentinel is
-    // forbidden (save the ilist_node<NodeTy>) so noone will ever notice
+    // forbidden (save the ilist_node<NodeTy>) so no one will ever notice
     // the superposition.
     return const_cast<Instruction*>(static_cast<const Instruction*>(&Sentinel));
   }
