@@ -794,8 +794,6 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry)
-    Entry = getModule().getFunction(getMangledName(D));
-  if (!Entry)
     Entry = EmitForwardFunctionDefinition(D, 0);
 
   return llvm::ConstantExpr::getBitCast(Entry, PTy);
@@ -915,15 +913,13 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
     assert(Existing == 0 && "FIXME: Name collision");
   }
 
-  llvm::GlobalValue *&ExitingFn = GlobalDeclMap[getContext().Idents.get(Name).getName()];
-  if (ExitingFn) {
-    llvm::Function *Fn = dyn_cast<llvm::Function>(ExitingFn);
-    assert(Fn && "builting mixing with non-function");
-    return FunctionSlot = llvm::ConstantExpr::getBitCast(Fn, Ty);
-  }
+  llvm::GlobalValue *&ExistingFn =
+    GlobalDeclMap[getContext().Idents.get(Name).getName()];
+  if (ExistingFn)
+    return FunctionSlot = llvm::ConstantExpr::getBitCast(ExistingFn, Ty);
 
   // FIXME: param attributes for sext/zext etc.
-  return FunctionSlot = ExitingFn =
+  return FunctionSlot = ExistingFn =
     llvm::Function::Create(Ty, llvm::Function::ExternalLinkage, Name,
                            &getModule());
 }
