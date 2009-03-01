@@ -223,6 +223,10 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     Elts.push_back(BuildDescriptorBlockDecl(subBlockSize));
 
     if (subBlockDeclRefDecls.size() == 0) {
+      // Optimize to being a global block.
+      Elts[0] = CGM.getNSConcreteGlobalBlock();
+      Elts[1] = llvm::ConstantInt::get(IntTy, flags|BLOCK_IS_GLOBAL);
+
       C = llvm::ConstantStruct::get(Elts);
 
       char Name[32];
