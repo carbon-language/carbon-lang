@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>LLVM gold plugin</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+      
+<div class="doc_title">LLVM gold plugin</div>
+<ol>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#build">How to build it</a></li>
+  <li><a href="#usage">Usage</a></li>
+  <li><a href="#licensing">Licensing</a></li>
+</ol>
+<div class="doc_author">Written by Nick Lewycky</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="introduction">Introduction</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+  <p>Building with link time optimization requires cooperation with the
+system linker. To support LTO on Linux systems, we requires that you use
+<a href="http://sourceware.org/binutils">gold</a> which has support for
+LTO via plugins. This is the same system used by the upcoming
+<a href="http://gcc.gnu.org/wiki/LinkTimeOptimization">GCC LTO</a>
+support.</p>
+  <p>The LLVMgold plugin implements the gold
+<a href="http://gcc.gnu.org/wiki/whopr/driver">plugin interface</a> on
+top of
+<a href="http://llvm.org/docs/LinkTimeOptimization.html#lto">libLTO</a>.
+The same plugin can also be used by other tools such as <tt>ar</tt> and
+<tt>nm</tt>.
+</div>
+<!--=========================================================================-->
+<div class="doc_section"><a name="build">How to build it</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+  <p>You need to build gold with plugin support and build the LLVMgold
+plugin.</p>
+<ul>
+  <li>Build gold with plugin support:
+    <pre class="doc_code">
+mkdir binutils
+cd binutils
+cvs -z 9 -d :pserver:anoncvs@sourceware.org:/cvs/src login
+<em>{enter "anoncvs" as the password}</em>
+cvs -z 9 -d :pserver:anoncvs@sourceware.org:/cvs/src co src
+mkdir build
+cd build
+../src/configure --enable-gold --enable-plugins
+make all-gold
+</pre>
+    That should leave you with binutils/build/gold/ld-new which supports the
+-plugin option.
+
+    <li>Build LLVMgold. Configure LLVM with
+    <tt>--with-binutils-include=/path/to/binutils/src/include</tt> and run
+    <tt>make</tt>.
+</ul>
+</div>
+<!--=========================================================================-->
+<div class="doc_section"><a name="usage">Usage</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+  <p>The linker takes a <tt>-plugin</tt> option that points to the path of
+  the plugin <tt>.so</tt> file. To find out what link command <tt>gcc</tt>
+  would run in a given situation, run <tt>gcc -v <em>[...]</em></tt> and look
+  for the line where it runs <tt>collect2</tt>. Replace that with
+  <tt>ld-new -plugin /path/to/LLVMgold.so</tt> to test it out. Once you're
+  ready to switch to using gold, backup your existing <tt>/usr/bin/ld</tt>
+  then replace it with <tt>ld-new</tt>.</p>
+  <p>You can produce bitcode files from <tt>llvm-gcc</tt> using
+  <tt>-emit-llvm</tt> or <tt>-flto</tt> or <tt>-O4</tt> which is equivalent
+  to <tt>-O3 -flto</tt>.</p>
+  <p><tt>llvm-gcc</tt> has a <tt>-use-gold-plugin</tt> option which looks
+  for the gold plugin in the same directories as it looks for <tt>cc1</tt>.
+  It will not look for an alternate linker, which is why you need gold to be
+  the installed system linker in your path.</p>
+</div>
+<!--=========================================================================-->
+<div class="doc_section"><a name="licensing">Licensing</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+Gold is licensed under the GPLv3. LLVMgold uses the interface file
+<tt>plugin-api.h</tt> from gold which means that the resulting LLVMgold.so
+binary is also GPLv3. This can still be used to link non-GPLv3 programs just
+as much as gold could without the plugin.
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
+  Written by the 
+  <a href="mailto:nicholas@metrix.on.ca">Nick Lewycky</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2009-01-01 23:10:51 -0800 (Thu, 01 Jan 2009) $
+</address>
+</body>
+</html>
