@@ -36,7 +36,7 @@
 <p>This document contains the release notes for the LLVM Compiler
 Infrastructure, release 2.5.  Here we describe the status of LLVM, including
 major improvements from the previous release and significant known problems.
-All LLVM releases may be downloaded from the <a 
+All LLVM releases may be downloaded from the <a
 href="http://llvm.org/releases/">LLVM releases web site</a>.</p>
 
 <p>For more information about LLVM, including information about the latest
@@ -97,7 +97,7 @@ the <a href="#vmkit">VMKit Project</a>.
 
 <p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
 a set of new 'LLVM native' front-end technologies for the LLVM optimizer
-and code generator.  While Clang is not included in the LLVM 2.5 release, it 
+and code generator.  While Clang is not included in the LLVM 2.5 release, it
 is continuing to make major strides forward in all areas.  Its C and Objective-C
 parsing and code generation support is now very solid.  For example, it is
 capable of successfully building many real applications for X86-32 and X86-64,
@@ -110,7 +110,7 @@ on templates has recently started.</p>
 is quite usable for building many C and Objective-C applications.  If you are
 interested in fast compiles and good diagnostics, we encourage you to try it out
 by <a href="http://clang.llvm.org/get_started.html">building from mainline</a>
-and reporting any issues you hit to the <a 
+and reporting any issues you hit to the <a
 href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang front-end mailing
 list</a>.</p>
 
@@ -118,9 +118,9 @@ list</a>.</p>
 
 <ul>
 <li>Clang now has a new driver, which is focused on providing a GCC-compatible
-    interface.</li> 
-<li>The X86-64 ABI is now supported.</li> 
-<li>Precompiled header support is now implemented.</li> 
+    interface.</li>
+<li>The X86-64 ABI is now supported.</li>
+<li>Precompiled header support is now implemented.</li>
 <li>Objective-C support is significantly improved beyond LLVM 2.4, supporting
     many features, such as Objective-C Garbage Collection.</li>
 <li>Many many bugs are fixed.</li>
@@ -209,7 +209,7 @@ http://pure-lang.googlecode.com/
 Pure is an algebraic/functional programming language based on term rewriting.
 Programs are collections of equations which are used to evaluate expressions in
 a symbolic fashion. Pure offers dynamic typing, eager and lazy evaluation,
-lexical closures, a hygienic macro system (also based on term rewriting), 
+lexical closures, a hygienic macro system (also based on term rewriting),
 built-in list and matrix support (including list and matrix comprehensions) and
 an easy-to-use C interface. The interpreter uses LLVM as a backend to
  JIT-compile Pure programs to fast native code.</p>
@@ -317,7 +317,7 @@ vector widening <3 x float> -> <4 x float>
 arm port improvements? arm jit encoding stuff, constant island support?
 JIT TLS support on x86-32 but not x86-64.
 mem2reg now faster on code with huge basic blocks
-stack protectors/stack canaries, -fstack-protector, controllable on a 
+stack protectors/stack canaries, -fstack-protector, controllable on a
   per-function basis with attributes.
 shufflevector is generalized to allow different shuffle mask width than its
   input vectors.
@@ -332,7 +332,6 @@ integer overflow intrinsics for [us](add/sub/mul).  Supported on all targets,
 X86 backend now supports -disable-mmx.
 noalias attribute on return value indicates that function returns new memory
   (e.g. malloc).
-llvmc2 renamed to llvmc
 Jump threading more powerful: it is iterative, handles threading based on values
   with fully redundant and partially redundant loads.
 LSR improvements?
@@ -385,7 +384,7 @@ includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <ul>
 <li>?</li>
-    
+
 </ul>
 
 </div>
@@ -415,9 +414,9 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <div class="doc_text">
 
-<p>We have put a significant amount of work into the code generator infrastructure,
-which allows us to implement more aggressive algorithms and make it run
-faster:</p>
+<p>We have put a significant amount of work into the code generator
+infrastructure, which allows us to implement more aggressive algorithms and make
+it run faster:</p>
 
 <ul>
 <li>The type legalization logic has been completely rewritten, and is now
@@ -495,40 +494,38 @@ types.</li>
 <p>New features include:</p>
 
 <ul>
-<li>Beginning with LLVM 2.5, llvmc2 is known as just 'llvmc'. The
- old llvmc driver was removed.</li>
+<li>Beginning with LLVM 2.5, <tt>llvmc2</tt> is known as
+ just <tt>llvmc</tt>. The old <tt>llvmc</tt> driver was removed.</li>
 
 <li>The Clang plugin was substantially improved and is now enabled
- by default. The command 'llvmc --clang' can be now used as a
- synonym to 'ccc'.</li>
+ by default. The command <tt>llvmc --clang</tt> can be now used as a
+ synonym to <tt>ccc</tt>.</li>
 
-<li>There is now a '--check-graph' option which is supposed to
- catch common errors like multiple default edges, mismatched
- output/input language names and cycles. In general, these
- checks can't be done at compile-time because of the need to
- support plugins.</li>
+<li>There is now a <tt>--check-graph</tt> option which is supposed to catch
+ common errors like multiple default edges, mismatched output/input language
+ names and cycles. In general, these checks can't be done at compile-time
+ because of the need to support plugins.</li>
 
-<li>Plugins are now more flexible and can refer to compilation
- graph nodes and options defined in other plugins. To manage
- dependencies, a priority-sorting mechanism was introduced. This
- change affects the '.td' file syntax; see the documentation for
- details.</li>
+<li>Plugins are now more flexible and can refer to compilation graph nodes and
+ options defined in other plugins. To manage dependencies, a priority-sorting
+ mechanism was introduced. This change affects the TableGen file syntax; see the
+ documentation for details.</li>
 
-<li>Hooks can now be provided with arguments. The syntax
- is "$CALL(MyHook, 'Arg1', 'Arg2', 'Arg #3')".</li>
+<li>Hooks can now be provided with arguments. The syntax is "<tt>$CALL(MyHook,
+ 'Arg1', 'Arg2', 'Arg #3')</tt>".</li>
 
-<li>A new option type: multi-valued option, for options that take
- more than one argument (for example, "-foo a b c").</li>
+<li>A new option type: multi-valued option, for options that take more than one
+ argument (for example, "<tt>-foo a b c</tt>").</li>
 
-<li>New option properties: 'one_or_more', 'zero_or_more', 'hidden'
- and 'really_hidden'.</li>
+<li>New option properties: '<tt>one_or_more</tt>', '<tt>zero_or_more</tt>',
+'<tt>hidden</tt>' and '<tt>really_hidden</tt>'.</li>
 
-<li>The 'case' expression gained an 'error' action and an 'empty'
- test (equivalent to '(not (not_empty ...))').</li>
+<li>The '<tt>case</tt>' expression gained an '<tt>error</tt>' action and
+ an '<tt>empty</tt>' test (equivalent to "<tt>(not (not_empty ...))</tt>").</li>
 
 <li>Documentation now looks more consistent to the rest of the LLVM
  docs. There is also a man page now.</li>
-    
+
 </ul>
 
 </div>
@@ -592,9 +589,9 @@ API changes are:</p>
 <p>LLVM is known to work on the following platforms:</p>
 
 <ul>
-<li>Intel and AMD machines (IA32, X86-64, AMD64, EMT-64) running Red Hat 
+<li>Intel and AMD machines (IA32, X86-64, AMD64, EMT-64) running Red Hat
 Linux, Fedora Core and FreeBSD (and probably other unix-like systems).</li>
-<li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit 
+<li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit
 and 64-bit modes.</li>
 <li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
@@ -619,7 +616,7 @@ portability patches and reports of successful builds or error messages.</p>
 
 <div class="doc_text">
 
-<p>This section contains significant known problems with the LLVM system, 
+<p>This section contains significant known problems with the LLVM system,
 listed by component.  If you run into a problem, please check the <a
 href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
 there isn't already one.</p>
@@ -836,7 +833,7 @@ itself, Qt, Mozilla, etc.</p>
 <ul>
 <li>Fortran support generally works, but there are still several unresolved bugs
     in Bugzilla.  Please see the tools/gfortran component for details.</li>
-    
+
 <li>The Fortran front-end currently does not build on Darwin (without tweaks)
     due to unresolved dependencies on the C front-end.</li>
 </ul>
