@@ -596,6 +596,8 @@ public:
     ReferencedProtocols.set(List, Num, C);
   }
   
+  ObjCProtocolDecl *lookupProtocolNamed(IdentifierInfo *PName);
+  
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel);

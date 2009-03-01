@@ -412,6 +412,19 @@ void ObjCProtocolDecl::Destroy(ASTContext &C) {
   ObjCContainerDecl::Destroy(C);
 }
 
+ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
+  ObjCProtocolDecl *PDecl = this;
+
+  if (Name == getIdentifier())
+    return PDecl;
+
+  for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
+    if ((PDecl = (*I)->lookupProtocolNamed(Name)))
+      return PDecl;
+      
+  return NULL;
+}
+
 // lookupInstanceMethod - Lookup a instance method in the protocol and protocols
 // it inherited.
 ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(Selector Sel) {

@@ -2501,33 +2501,29 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
   // Finally, we must have two protocol-qualified interfaces.
   const ObjCQualifiedInterfaceType *LHSP =cast<ObjCQualifiedInterfaceType>(LHS);
   const ObjCQualifiedInterfaceType *RHSP =cast<ObjCQualifiedInterfaceType>(RHS);
-  ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHSP->qual_begin();
-  ObjCQualifiedInterfaceType::qual_iterator LHSPE = LHSP->qual_end();
-  ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHSP->qual_begin();
-  ObjCQualifiedInterfaceType::qual_iterator RHSPE = RHSP->qual_end();
   
-  // All protocols in LHS must have a presence in RHS.  Since the protocol lists
-  // are both sorted alphabetically and have no duplicates, we can scan RHS and
-  // LHS in a single parallel scan until we run out of elements in LHS.
-  assert(LHSPI != LHSPE && "Empty LHS protocol list?");
-  ObjCProtocolDecl *LHSProto = *LHSPI;
+  // All LHS protocols must have a presence on the RHS.  
+  assert(LHSP->qual_begin() != LHSP->qual_end() && "Empty LHS protocol list?");
   
-  while (RHSPI != RHSPE) {
-    ObjCProtocolDecl *RHSProto = *RHSPI++;
-    // If the RHS has a protocol that the LHS doesn't, ignore it.
-    if (RHSProto != LHSProto)
-      continue;
-    
-    // Otherwise, the RHS does have this element.
-    ++LHSPI;
-    if (LHSPI == LHSPE)
-      return true;  // All protocols in LHS exist in RHS.
-    
-    LHSProto = *LHSPI;
+  for (ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHSP->qual_begin(),
+                                                 LHSPE = LHSP->qual_end();
+       LHSPI != LHSPE; LHSPI++) {
+    bool RHSImplementsProtocol = false;
+
+    // If the RHS doesn't implement the protocol on the left, the types
+    // are incompatible.
+    for (ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHSP->qual_begin(),
+                                                   RHSPE = RHSP->qual_end();
+         !RHSImplementsProtocol && (RHSPI != RHSPE); RHSPI++) {
+      if ((*RHSPI)->lookupProtocolNamed((*LHSPI)->getIdentifier()))
+        RHSImplementsProtocol = true;
+    }
+    // FIXME: For better diagnostics, consider passing back the protocol name.
+    if (!RHSImplementsProtocol)
+      return false;
   }
-  
-  // If we got here, we didn't find one of the LHS's protocols in the RHS list.
-  return false;
+  // The RHS implements all protocols listed on the LHS.
+  return true;
 }
 
 bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {

@@ -40,8 +40,7 @@ typedef NSObject <OzzyActionDelegateP> OzzyActionDelegate;
 - (void)_recalculateStoredArraysForAnchor:(OzzyAnchor *)anchor {
   Ozzy * contentGroup = anchor.contentGroup;
   if (contentGroup == ((void *)0)) {
-    // GCC doesn't warn about the following (which seems wrong).
-    contentGroup = anchor; // expected-warning{{incompatible pointer types assigning 'OzzyAnchor *', expected 'Ozzy *'}}
+    contentGroup = anchor;
   }
 }
 @end
