@@ -964,7 +964,7 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            StmtArg Body, StmtArg catchList) {
   Stmt *CatchList = static_cast<Stmt*>(catchList.release());
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
-    static_cast<Stmt*>(Parm.release()), static_cast<Stmt*>(Body.release()),
+    static_cast<DeclStmt*>(Parm.release()), static_cast<Stmt*>(Body.release()),
     CatchList);
   return Owned(CatchList ? CatchList : CS);
 }

@@ -1066,7 +1066,8 @@ private:
 
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
-                  Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList);
+                  DeclStmt *catchVarStmtDecl, 
+                  Stmt *atCatchStmt, Stmt *atCatchList);
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
@@ -1078,8 +1079,11 @@ public:
     return static_cast<ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
   }
 
-  const Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
-  Stmt *getCatchParamStmt() { return SubExprs[SELECTOR]; }
+  const DeclStmt *getCatchParamStmt() const { 
+    return static_cast<const DeclStmt*>(SubExprs[SELECTOR]); }
+  DeclStmt *getCatchParamStmt() { 
+    return static_cast<DeclStmt*>(SubExprs[SELECTOR]); 
+  }
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
   

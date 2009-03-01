@@ -180,12 +180,13 @@ ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
 
 ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
                                  SourceLocation rparenloc,
-                                 Stmt *catchVarStmtDecl, Stmt *atCatchStmt,
+                                 DeclStmt *catchVarStmtDecl, Stmt *atCatchStmt,
                                  Stmt *atCatchList)
 : Stmt(ObjCAtCatchStmtClass) {
   SubExprs[SELECTOR] = catchVarStmtDecl;
   SubExprs[BODY] = atCatchStmt;
   SubExprs[NEXT_CATCH] = NULL;
+  // FIXME: O(N^2) in number of catch blocks.
   if (atCatchList) {
     ObjCAtCatchStmt *AtCatchList = static_cast<ObjCAtCatchStmt*>(atCatchList);
 

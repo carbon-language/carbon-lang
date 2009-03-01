@@ -1999,8 +1999,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
       llvm::BasicBlock *NextCatchBlock = CGF.createBasicBlock("catch");
 
-      const DeclStmt *CatchParam = 
-        cast_or_null<DeclStmt>(CatchStmt->getCatchParamStmt());
+      const DeclStmt *CatchParam = CatchStmt->getCatchParamStmt();
       const VarDecl *VD = 0;
       const PointerType *PT = 0;
 
