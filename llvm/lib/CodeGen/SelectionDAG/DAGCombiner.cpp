@@ -5257,7 +5257,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     }
 
     // Add count and size info.
-    MVT BuildVecVT = MVT::getVectorVT(TLI.getPointerTy(), NumElts);
+    MVT IndexVT = MVT::getIntegerVT(EltType.getSizeInBits());
+    MVT BuildVecVT = MVT::getVectorVT(IndexVT, NumElts);
     if (!TLI.isTypeLegal(BuildVecVT) && LegalTypes)
       return SDValue();
 
