@@ -147,8 +147,6 @@ static bool CanGenerateCodeForBlockExpr(CodeGenFunction &CGF,
   for (size_t I = 0, E = Info.ByCopyDeclRefs.size(); I != E; ++I) {
     const BlockDeclRefExpr *E = Info.ByCopyDeclRefs[I];
     
-    E->getType()->dump();
-    
     if (E->getType()->isBlockPointerType()) {
       CGF.ErrorUnsupported(BE, "block expression with imported block");
       return false;
