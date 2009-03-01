@@ -259,7 +259,7 @@ let test_constants () =
   ignore (define_global "Const08" c m);
   insist ((vector_type i16_type 8) = (type_of c));
   
-  (* RUN: grep {Const09.*. i16, i16, i32, i32 . .} < %t.ll
+  (* RUN: grep {Const09.*.i16 1, i16 2, i32 3, i32 4} < %t.ll
    *)
   group "structure";
   let c = const_struct [| one; two; three; four |] in
