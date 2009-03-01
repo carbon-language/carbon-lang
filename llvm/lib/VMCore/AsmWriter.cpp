@@ -26,7 +26,7 @@
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
@@ -318,7 +318,101 @@ void TypePrinting::printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
   std::swap(OldName, I->second);
 }
 
-static void AddModuleTypesToPrinter(TypePrinting &TP, const Module *M) {
+namespace {
+  class TypeFinder {
+    // To avoid walking constant expressions multiple times and other IR
+    // objects, we keep several helper maps.
+    DenseSet<const Value*> VisitedConstants;
+    DenseSet<const Type*> VisitedTypes;
+    
+    TypePrinting &TP;
+    std::vector<const Type*> &NumberedTypes;
+  public:
+    TypeFinder(TypePrinting &tp, std::vector<const Type*> &numberedTypes)
+      : TP(tp), NumberedTypes(numberedTypes) {}
+    
+    void Run(const Module &M) {
+      // Get types from global variables.
+      for (Module::const_global_iterator I = M.global_begin(),
+           E = M.global_end(); I != E; ++I) {
+        IncorporateType(I->getType());
+        if (I->hasInitializer())
+          IncorporateValue(I->getInitializer());
+      }
+      
+      // Get types from aliases.
+      for (Module::const_alias_iterator I = M.alias_begin(),
+           E = M.alias_end(); I != E; ++I) {
+        IncorporateType(I->getType());
+        IncorporateValue(I->getAliasee());
+      }
+      
+      // Get types from functions.
+      for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
+        IncorporateType(FI->getType());
+        
+        for (Function::const_iterator BB = FI->begin(), E = FI->end();
+             BB != E;++BB)
+          for (BasicBlock::const_iterator II = BB->begin(),
+               E = BB->end(); II != E; ++II) {
+            const Instruction &I = *II;
+            // Incorporate the type of the instruction and all its operands.
+            IncorporateType(I.getType());
+            for (User::const_op_iterator OI = I.op_begin(), OE = I.op_end();
+                 OI != OE; ++OI)
+              IncorporateValue(*OI);
+          }
+      }
+    }
+    
+  private:
+    void IncorporateType(const Type *Ty) {
+      // Check to see if we're already visited this type.
+      if (!VisitedTypes.insert(Ty).second || TP.hasTypeName(Ty))
+        return;
+      
+      // If this is a structure or opaque type, add a name for the type.
+      if (isa<StructType>(Ty) || isa<OpaqueType>(Ty)) {
+        TP.addTypeName(Ty, "%"+utostr(unsigned(NumberedTypes.size())));
+        NumberedTypes.push_back(Ty);
+      }
+      
+      // Recursively walk all contained types.
+      for (Type::subtype_iterator I = Ty->subtype_begin(),
+           E = Ty->subtype_end(); I != E; ++I)
+        IncorporateType(*I);      
+    }
+    
+    /// IncorporateValue - This method is used to walk operand lists finding
+    /// types hiding in constant expressions and other operands that won't be
+    /// walked in other ways.  GlobalValues, basic blocks, instructions, and
+    /// inst operands are all explicitly enumerated.
+    void IncorporateValue(const Value *V) {
+      if (V == 0 || !isa<Constant>(V) || isa<GlobalValue>(V)) return;
+      
+      // Already visited?
+      if (!VisitedConstants.insert(V).second)
+        return;
+      
+      // Check this type.
+      IncorporateType(V->getType());
+      
+      // Look in operands for types.
+      const Constant *C = cast<Constant>(V);
+      for (Constant::const_op_iterator I = C->op_begin(),
+           E = C->op_end(); I != E;++I)
+        IncorporateValue(*I);
+    }
+  };
+} // end anonymous namespace
+
+
+/// AddModuleTypesToPrinter - Add all of the symbolic type names for types in
+/// the specified module to the TypePrinter and all numbered types to it and the
+/// NumberedTypes table.
+static void AddModuleTypesToPrinter(TypePrinting &TP, 
+                                    std::vector<const Type*> &NumberedTypes,
+                                    const Module *M) {
   if (M == 0) return;
   
   // If the module has a symbol table, take all global types and stuff their
@@ -347,6 +441,12 @@ static void AddModuleTypesToPrinter(TypePrinting &TP, const Module *M) {
     PrintLLVMName(NameOS, TI->first.c_str(), TI->first.length(), LocalPrefix);
     TP.addTypeName(Ty, NameOS.str());
   }
+  
+  // Walk the entire module to find references to unnamed structure and opaque
+  // types.  This is required for correctness by opaque types (because multiple
+  // uses of an unnamed opaque type needs to be referred to by the same ID) and
+  // it shrinks complex recursive structure types substantially in some cases.
+  TypeFinder(TP, NumberedTypes).Run(*M);
 }
 
 
@@ -356,7 +456,8 @@ static void AddModuleTypesToPrinter(TypePrinting &TP, const Module *M) {
 ///
 void llvm::WriteTypeSymbolic(raw_ostream &OS, const Type *Ty, const Module *M) {
   TypePrinting Printer;
-  AddModuleTypesToPrinter(Printer, M);
+  std::vector<const Type*> NumberedTypes;
+  AddModuleTypesToPrinter(Printer, NumberedTypes, M);
   Printer.print(Ty, OS);
 }
 
@@ -933,7 +1034,8 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
   if (Context == 0) Context = getModuleFromVal(V);
 
   TypePrinting TypePrinter;
-  AddModuleTypesToPrinter(TypePrinter, Context);
+  std::vector<const Type*> NumberedTypes;
+  AddModuleTypesToPrinter(TypePrinter, NumberedTypes, Context);
   if (PrintType) {
     TypePrinter.print(V->getType(), Out);
     Out << ' ';
@@ -951,14 +1053,15 @@ class AssemblyWriter {
   const Module *TheModule;
   TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
+  std::vector<const Type*> NumberedTypes;
 public:
   inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
-    AddModuleTypesToPrinter(TypePrinter, M);
+    AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
   }
 
-  void write(const Module *M) { printModule(M);       }
+  void write(const Module *M) { printModule(M); }
   
   void write(const GlobalValue *G) {
     if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G))
@@ -993,7 +1096,7 @@ private:
   // which slot it occupies.
   void printInfoComment(const Value &V);
 };
-}  // end of llvm namespace
+}  // end of anonymous namespace
 
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
@@ -1070,7 +1173,7 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << " ]\n";
   }
 
-  // Loop over the symbol table, emitting all named constants.
+  // Loop over the symbol table, emitting all id'd types.
   printTypeSymbolTable(M->getTypeSymbolTable());
 
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
@@ -1192,7 +1295,17 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
 }
 
 void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
-  // Print the types.
+  // Emit all numbered types.
+  for (unsigned i = 0, e = NumberedTypes.size(); i != e; ++i) {
+    Out << "\ttype ";
+    
+    // Make sure we print out at least one level of the type structure, so
+    // that we do not get %2 = type %2
+    TypePrinter.printAtLeastOneLevel(NumberedTypes[i], Out);
+    Out << "\t\t; type %" << i << '\n';
+  }
+  
+  // Print the named types.
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
     Out << '\t';
@@ -1721,8 +1834,5 @@ void Type::dump(const Module *Context) const {
 // Type::dump - allow easy printing of Types from the debugger.
 void Type::dump() const { dump(0); }
 
-
 // Module::dump() - Allow printing of Modules from the debugger.
 void Module::dump() const { print(errs(), 0); errs().flush(); }
-
-
