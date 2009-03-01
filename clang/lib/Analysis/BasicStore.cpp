@@ -159,7 +159,7 @@ BasicStoreManager::CastRegion(const GRState* state, const MemRegion* R,
       return CastResult(state, R);
   }
 
-  return CastResult(state, MRMgr.getAnonTypedRegion(CastToTy, R));
+  return CastResult(state, MRMgr.getTypedViewRegion(CastToTy, R));
 }
   
 SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
@@ -223,7 +223,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
                                                   StateMgr.getSymbolManager());
       // Layered a typed region on top of this.
       QualType T = StateMgr.getSymbolManager().getType(Sym);
-      BaseR = MRMgr.getAnonTypedRegion(T, SymR);
+      BaseR = MRMgr.getTypedViewRegion(T, SymR);
       break;
     }
       

@@ -365,7 +365,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
     //   char *p = __builtin_alloc(10);
     //   p[1] = 8;
     //
-    //  Observe that 'p' binds to an AnonTypedRegion<AllocaRegion>.
+    //  Observe that 'p' binds to an TypedViewRegion<AllocaRegion>.
     //
 
     // Offset might be unsigned. We have to convert it to signed ConcreteInt.
@@ -442,7 +442,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     return NonLoc::MakeIntVal(getBasicVals(), Str->getByteLength()+1, false);
   }
 
-  if (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
+  if (const TypedViewRegion* ATR = dyn_cast<TypedViewRegion>(R)) {
 #if 0
     // FIXME: This logic doesn't really work, as we can have all sorts of
     // weird cases.  For example, this crashes on test case 'rdar-6442306-1.m'.
@@ -547,7 +547,7 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   //      char* y = (char*) x;
   //      void* z = (void*) y; // <-- we should get the same region that is 
   //                                  bound to 'x'
-  const MemRegion* ViewR = MRMgr.getAnonTypedRegion(CastToTy, R);  
+  const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
   return CastResult(AddRegionView(state, ViewR, R), ViewR);
 }
 

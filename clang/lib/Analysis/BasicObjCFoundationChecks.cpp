@@ -412,7 +412,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   const TypedRegion* R = dyn_cast<TypedRegion>(LV->getRegion());
   if (!R) return false;
   
-  while (const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R)) {
+  while (const TypedViewRegion* ATR = dyn_cast<TypedViewRegion>(R)) {
     R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
     if (!R) return false;
   }

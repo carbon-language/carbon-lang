@@ -57,9 +57,9 @@ void AllocaRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ProfileRegion(ID, Ex, Cnt);
 }
 
-void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
+void TypedViewRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
                                     const MemRegion* superRegion) {
-  ID.AddInteger((unsigned) AnonTypedRegionKind);
+  ID.AddInteger((unsigned) TypedViewRegionKind);
   ID.Add(T);
   ID.AddPointer(superRegion);
 }
@@ -160,7 +160,7 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
   os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
-void AnonTypedRegion::print(llvm::raw_ostream& os) const {
+void TypedViewRegion::print(llvm::raw_ostream& os) const {
   os << "anon_type{" << T.getAsString() << ',';
   getSuperRegion()->print(os);
   os << '}';
@@ -399,18 +399,18 @@ MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
   return R;
 }
 
-AnonTypedRegion* 
-MemRegionManager::getAnonTypedRegion(QualType t, const MemRegion* superRegion) {
+TypedViewRegion* 
+MemRegionManager::getTypedViewRegion(QualType t, const MemRegion* superRegion) {
   llvm::FoldingSetNodeID ID;
-  AnonTypedRegion::ProfileRegion(ID, t, superRegion);
+  TypedViewRegion::ProfileRegion(ID, t, superRegion);
 
   void* InsertPos;
   MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  AnonTypedRegion* R = cast_or_null<AnonTypedRegion>(data);
+  TypedViewRegion* R = cast_or_null<TypedViewRegion>(data);
 
   if (!R) {
-    R = (AnonTypedRegion*) A.Allocate<AnonTypedRegion>();
-    new (R) AnonTypedRegion(t, superRegion);
+    R = (TypedViewRegion*) A.Allocate<TypedViewRegion>();
+    new (R) TypedViewRegion(t, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
 

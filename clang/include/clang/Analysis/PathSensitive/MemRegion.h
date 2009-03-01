@@ -45,7 +45,7 @@ public:
                SymbolicRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
-               AnonTypedRegionKind,
+               TypedViewRegionKind,
                AnonPointeeRegionKind,
                // Decl Regions.
                  BEG_DECL_REGIONS,
@@ -224,13 +224,13 @@ public:
   }
 };
 
-class AnonTypedRegion : public TypedRegion {
+class TypedViewRegion : public TypedRegion {
   friend class MemRegionManager;
 
   QualType T;
 
-  AnonTypedRegion(QualType t, const MemRegion* sreg)
-    : TypedRegion(sreg, AnonTypedRegionKind), T(t) {}
+  TypedViewRegion(QualType t, const MemRegion* sreg)
+    : TypedRegion(sreg, TypedViewRegionKind), T(t) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
                             const MemRegion* superRegion);
@@ -248,7 +248,7 @@ public:
   }
 
   static bool classof(const MemRegion* R) {
-    return R->getKind() == AnonTypedRegionKind;
+    return R->getKind() == TypedViewRegionKind;
   }
 };
   
@@ -527,7 +527,7 @@ public:
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
 
-  AnonTypedRegion* getAnonTypedRegion(QualType t, const MemRegion* superRegion);
+  TypedViewRegion* getTypedViewRegion(QualType t, const MemRegion* superRegion);
 
   bool hasStackStorage(const MemRegion* R);
 

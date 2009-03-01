@@ -1643,9 +1643,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
         
-        // Blast through AnonTypedRegions to get the original region type.
+        // Blast through TypedViewRegions to get the original region type.
         while (R) {
-          const AnonTypedRegion* ATR = dyn_cast<AnonTypedRegion>(R);
+          const TypedViewRegion* ATR = dyn_cast<TypedViewRegion>(R);
           if (!ATR) break;
           R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
         }
