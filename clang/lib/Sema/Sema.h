@@ -68,6 +68,7 @@ namespace clang {
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
+  class ObjCImplDecl;
   class ObjCImplementationDecl;
   class ObjCCategoryImplDecl;
   class ObjCCategoryDecl;
@@ -930,14 +931,11 @@ public:
                                 SourceLocation Loc);
   
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
-  /// remains unimplemented in the @implementation class.
-  void ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl, 
-                                 ObjCInterfaceDecl* IDecl);
+  /// remains unimplemented in the class or category @implementation.
+  void ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl, 
+                                 ObjCContainerDecl* IDecl, 
+                                 bool IncompleteImpl = false);
   
-  /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
-  /// category interface is implemented in the category @implementation.
-  void ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
-                                        ObjCCategoryDecl *CatClassDecl);
   /// MatchTwoMethodDeclarations - Checks if two methods' type match and returns
   /// true, or false, accordingly.
   bool MatchTwoMethodDeclarations(const ObjCMethodDecl *Method, 

@@ -757,13 +757,16 @@ class ObjCImplDecl : public Decl, public DeclContext {
   llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
   
   SourceLocation EndLoc;  
+  
 protected:
   ObjCImplDecl(Kind DK, DeclContext *DC, SourceLocation L,
                ObjCInterfaceDecl *classInterface)
-  : Decl(DK, DC, L), DeclContext(DK),
-  ClassInterface(classInterface) {}
+      : Decl(DK, DC, L), DeclContext(DK),
+        ClassInterface(classInterface) {}
   
 public:
+  virtual ~ObjCImplDecl() {}
+  
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   
@@ -849,12 +852,12 @@ public:
   /// interface associated with this implementation as a C string
   /// (const char*).
   const char *getNameAsCString() const {
-    return Id->getName();
+    return Id ? Id->getName() : "";
   }
   
   /// @brief Get the name of the class associated with this interface.
   std::string getNameAsString() const {
-    return Id->getName();
+    return Id ? Id->getName() : "";
   }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
