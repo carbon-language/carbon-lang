@@ -11,7 +11,10 @@
 <ol>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#build">How to build it</a></li>
-  <li><a href="#usage">Usage</a></li>
+  <li><a href="#usage">Usage</a>
+  <ul>
+    <li><a href="#example1">Example of link time optimization</a></li>
+  </ul></li>
   <li><a href="#licensing">Licensing</a></li>
 </ol>
 <div class="doc_author">Written by Nick Lewycky</div>
@@ -80,6 +83,58 @@ make all-gold
   linker, which is why you need gold to be the installed system linker in your
   path.</p>
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="example1">Example of link time optimization</a>
+</div>
+
+<div class="doc_text">
+  <p>The following example shows a worked example of the gold plugin mixing
+  LLVM bitcode and native code.
+<pre class="doc_code">
+--- a.c ---
+#include &lt;stdio.h&gt;
+
+extern void foo1(void);
+extern void foo4(void);
+
+void foo2(void) {
+  printf("Foo2\n");
+}
+
+void foo3(void) {
+  foo4();
+}
+
+int main(void) {
+  foo1();
+}
+
+--- b.c ---
+#include &lt;stdio.h&gt;
+
+extern void foo2(void);
+
+void foo1(void) {
+  foo2();
+}
+
+void foo4(void) {
+  printf("Foo4");
+}
+
+--- command lines ---
+$ llvm-gcc -flto a.c -c -o a.o              # &lt;-- a.o is LLVM bitcode file
+$ llvm-gcc b.c -c -o b.o                    # &lt;-- b.o is native object file
+$ llvm-gcc -use-gold-plugin a.o b.o -o main # &lt;-- link with LLVMgold plugin
+</pre>
+  <p>Gold informs the plugin that foo3 is never referenced outside the IR,
+  leading LLVM to delete that function. However, unlike in the
+  <a href="http://llvm.org/docs/LinkTimeOptimization.html#example1">libLTO
+  example</a> gold does not currently eliminate foo4.</p>
+</div>
+
 <!--=========================================================================-->
 <div class="doc_section"><a name="licensing">Licensing</a></div>
 <!--=========================================================================-->
