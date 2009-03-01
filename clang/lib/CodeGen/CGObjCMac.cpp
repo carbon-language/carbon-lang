@@ -672,6 +672,10 @@ private:
                                   QualType Arg0Ty,
                                   bool IsSuper,
                                   const CallArgList &CallArgs);
+
+  /// GetClassGlobal - Return the global variable for the Objective-C
+  /// class of the given name.
+  llvm::GlobalVariable *GetClassGlobal(const std::string &Name);
   
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class.
@@ -3619,16 +3623,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   Values[4] = ClassRoGV;                 // &CLASS_RO_GV
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy, 
                                                    Values);
-  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(ClassName);
-  if (GV)
-    GV->setInitializer(Init);
-  else
-    GV =
-    new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                             llvm::GlobalValue::ExternalLinkage,
-                             Init,
-                             ClassName,
-                             &CGM.getModule());
+  llvm::GlobalVariable *GV = GetClassGlobal(ClassName);
+  GV->setInitializer(Init);
   GV->setSection("__DATA, __objc_data");
   GV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ClassnfABITy));
@@ -3676,57 +3672,18 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
     flags |= CLS_ROOT;
-    std::string SuperClassName = ObjCClassName + ClassName;
-    SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
-    if (!SuperClassGV) {
-      SuperClassGV = 
-        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                                llvm::GlobalValue::ExternalLinkage,
-                                 0,
-                                 SuperClassName,
-                                 &CGM.getModule());
-      UsedGlobals.push_back(SuperClassGV);
-    }
-    std::string IsAClassName = ObjCMetaClassName + ClassName;
-    IsAGV = CGM.getModule().getGlobalVariable(IsAClassName);
-    if (!IsAGV) {
-      IsAGV = 
-        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 0,
-                                 IsAClassName,
-                                 &CGM.getModule());
-      UsedGlobals.push_back(IsAGV);
-    }
+    SuperClassGV = GetClassGlobal(ObjCClassName + ClassName);
+    IsAGV = GetClassGlobal(ObjCMetaClassName + ClassName);
   } else {
     // Has a root. Current class is not a root.
     const ObjCInterfaceDecl *Root = ID->getClassInterface();
     while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
       Root = Super;
-    std::string RootClassName = ObjCMetaClassName + Root->getNameAsString();
-    IsAGV = CGM.getModule().getGlobalVariable(RootClassName);
-    if (!IsAGV) {
-      IsAGV = 
-        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 0,
-                                 RootClassName,
-                                 &CGM.getModule());
-      UsedGlobals.push_back(IsAGV);
-    }
+    IsAGV = GetClassGlobal(ObjCMetaClassName + Root->getNameAsString());
     // work on super class metadata symbol.
     std::string SuperClassName =  
       ObjCMetaClassName + ID->getClassInterface()->getSuperClass()->getNameAsString();
-    SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
-    if (!SuperClassGV) {
-      SuperClassGV = 
-        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 0,
-                                 SuperClassName,
-                                 &CGM.getModule());
-      UsedGlobals.push_back(SuperClassGV);
-    }
+    SuperClassGV = GetClassGlobal(SuperClassName);
   }
   llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                                                InstanceStart,
@@ -3748,17 +3705,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     // Has a root. Current class is not a root.
     std::string RootClassName =
       ID->getClassInterface()->getSuperClass()->getNameAsString();
-    std::string SuperClassName = ObjCClassName + RootClassName;
-    SuperClassGV = CGM.getModule().getGlobalVariable(SuperClassName);
-    if (!SuperClassGV) {
-      SuperClassGV = 
-      new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0,
-                               SuperClassName,
-                               &CGM.getModule());
-      UsedGlobals.push_back(SuperClassGV);
-    }
+    SuperClassGV = GetClassGlobal(ObjCClassName + RootClassName);
   }
   
   InstanceStart = InstanceSize = 0;
@@ -3857,16 +3804,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   std::vector<llvm::Constant*> Values(6);
   Values[0] = GetClassName(OCD->getIdentifier());
   // meta-class entry symbol
-  llvm::GlobalVariable *ClassGV = 
-    CGM.getModule().getGlobalVariable(ExtClassName);
-  if (!ClassGV)
-    ClassGV =
-    new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                             llvm::GlobalValue::ExternalLinkage,
-                             0,
-                             ExtClassName,
-                             &CGM.getModule());
-  UsedGlobals.push_back(ClassGV);
+  llvm::GlobalVariable *ClassGV = GetClassGlobal(ExtClassName);
   Values[1] = ClassGV;
   std::vector<llvm::Constant*> Methods;
   std::string MethodListName(Prefix);
@@ -4538,6 +4476,20 @@ CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
                          false, CallArgs);
 }
 
+llvm::GlobalVariable *
+CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name) {
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+
+  if (GV) {
+    GV = new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+                                  llvm::GlobalValue::ExternalLinkage,
+                                  0, Name, &CGM.getModule());
+    UsedGlobals.push_back(GV);
+  }
+
+  return GV;
+}
+
 llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder, 
                                      const ObjCInterfaceDecl *ID,
                                      bool IsSuper) {
@@ -4546,17 +4498,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
   
   if (!Entry) {
     std::string ClassName("\01_OBJC_CLASS_$_" + ID->getNameAsString());
-    llvm::GlobalVariable *ClassGV = 
-      CGM.getModule().getGlobalVariable(ClassName);
-    if (!ClassGV) {
-      ClassGV =
-        new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
-                                 llvm::GlobalValue::ExternalLinkage,
-                                 0,
-                                 ClassName,
-                                 &CGM.getModule());
-      UsedGlobals.push_back(ClassGV);
-    }
+    llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
     Entry = 
       new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
                                llvm::GlobalValue::InternalLinkage,
