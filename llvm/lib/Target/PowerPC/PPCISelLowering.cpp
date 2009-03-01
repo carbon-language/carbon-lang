@@ -3093,100 +3093,6 @@ SDValue PPCTargetLowering::LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG) {
 // Vector related lowering.
 //
 
-// If this is a vector of constants or undefs, get the bits.  A bit in
-// UndefBits is set if the corresponding element of the vector is an
-// ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
-// zero.   Return true if this is not an array of constants, false if it is.
-//
-static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
-                                       uint64_t UndefBits[2]) {
-  // Start with zero'd results.
-  VectorBits[0] = VectorBits[1] = UndefBits[0] = UndefBits[1] = 0;
-
-  unsigned EltBitSize = BV->getOperand(0).getValueType().getSizeInBits();
-  for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
-    SDValue OpVal = BV->getOperand(i);
-
-    unsigned PartNo = i >= e/2;     // In the upper 128 bits?
-    unsigned SlotNo = e/2 - (i & (e/2-1))-1;  // Which subpiece of the uint64_t.
-
-    uint64_t EltBits = 0;
-    if (OpVal.getOpcode() == ISD::UNDEF) {
-      uint64_t EltUndefBits = ~0U >> (32-EltBitSize);
-      UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
-      continue;
-    } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
-      EltBits = CN->getZExtValue() & (~0U >> (32-EltBitSize));
-    } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
-      assert(CN->getValueType(0) == MVT::f32 &&
-             "Only one legal FP vector type!");
-      EltBits = FloatToBits(CN->getValueAPF().convertToFloat());
-    } else {
-      // Nonconstant element.
-      return true;
-    }
-
-    VectorBits[PartNo] |= EltBits << (SlotNo*EltBitSize);
-  }
-
-  //printf("%llx %llx  %llx %llx\n",
-  //       VectorBits[0], VectorBits[1], UndefBits[0], UndefBits[1]);
-  return false;
-}
-
-// If this is a splat (repetition) of a value across the whole vector, return
-// the smallest size that splats it.  For example, "0x01010101010101..." is a
-// splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and
-// SplatSize = 1 byte.
-static bool isConstantSplat(const uint64_t Bits128[2],
-                            const uint64_t Undef128[2],
-                            unsigned &SplatBits, unsigned &SplatUndef,
-                            unsigned &SplatSize) {
-
-  // Don't let undefs prevent splats from matching.  See if the top 64-bits are
-  // the same as the lower 64-bits, ignoring undefs.
-  if ((Bits128[0] & ~Undef128[1]) != (Bits128[1] & ~Undef128[0]))
-    return false;  // Can't be a splat if two pieces don't match.
-
-  uint64_t Bits64  = Bits128[0] | Bits128[1];
-  uint64_t Undef64 = Undef128[0] & Undef128[1];
-
-  // Check that the top 32-bits are the same as the lower 32-bits, ignoring
-  // undefs.
-  if ((Bits64 & (~Undef64 >> 32)) != ((Bits64 >> 32) & ~Undef64))
-    return false;  // Can't be a splat if two pieces don't match.
-
-  uint32_t Bits32  = uint32_t(Bits64) | uint32_t(Bits64 >> 32);
-  uint32_t Undef32 = uint32_t(Undef64) & uint32_t(Undef64 >> 32);
-
-  // If the top 16-bits are different than the lower 16-bits, ignoring
-  // undefs, we have an i32 splat.
-  if ((Bits32 & (~Undef32 >> 16)) != ((Bits32 >> 16) & ~Undef32)) {
-    SplatBits = Bits32;
-    SplatUndef = Undef32;
-    SplatSize = 4;
-    return true;
-  }
-
-  uint16_t Bits16  = uint16_t(Bits32)  | uint16_t(Bits32 >> 16);
-  uint16_t Undef16 = uint16_t(Undef32) & uint16_t(Undef32 >> 16);
-
-  // If the top 8-bits are different than the lower 8-bits, ignoring
-  // undefs, we have an i16 splat.
-  if ((Bits16 & (uint16_t(~Undef16) >> 8)) != ((Bits16 >> 8) & ~Undef16)) {
-    SplatBits = Bits16;
-    SplatUndef = Undef16;
-    SplatSize = 2;
-    return true;
-  }
-
-  // Otherwise, we have an 8-bit splat.
-  SplatBits  = uint8_t(Bits16)  | uint8_t(Bits16 >> 8);
-  SplatUndef = uint8_t(Undef16) & uint8_t(Undef16 >> 8);
-  SplatSize = 1;
-  return true;
-}
-
 /// BuildSplatI - Build a canonical splati of Val with an element size of
 /// SplatSize.  Cast the result to VT.
 static SDValue BuildSplatI(int Val, unsigned SplatSize, MVT VT,
@@ -3256,25 +3162,18 @@ static SDValue BuildVSLDOI(SDValue LHS, SDValue RHS, unsigned Amt,
 // selects to a single instruction, return Op.  Otherwise, if we can codegen
 // this case more efficiently than a constant pool load, lower it to the
 // sequence of ops that should be used.
-SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
-                                               SelectionDAG &DAG) {
-  // If this is a vector of constants or undefs, get the bits.  A bit in
-  // UndefBits is set if the corresponding element of the vector is an
-  // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
-  // zero.
-  uint64_t VectorBits[2];
-  uint64_t UndefBits[2];
+SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
-  if (GetConstantBuildVectorBits(Op.getNode(), VectorBits, UndefBits))
-    return SDValue();   // Not a constant vector.
+  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
+  assert(BVN != 0 && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
 
   // If this is a splat (repetition) of a value across the whole vector, return
   // the smallest size that splats it.  For example, "0x01010101010101..." is a
   // splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and
   // SplatSize = 1 byte.
   unsigned SplatBits, SplatUndef, SplatSize;
-  if (isConstantSplat(VectorBits, UndefBits, SplatBits, SplatUndef, SplatSize)){
-    bool HasAnyUndefs = (UndefBits[0] | UndefBits[1]) != 0;
+  bool HasAnyUndefs;
+  if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatSize, HasAnyUndefs)) {
 
     // First, handle single instruction cases.
 

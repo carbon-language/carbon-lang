@@ -1929,6 +1929,24 @@ public:
   }
 };
 
+/// BuildVectorSDNode - A "pseudo-class" with methods for operating on
+/// BUILD_VECTORs.
+class BuildVectorSDNode : public SDNode {
+public:
+  /// isConstantSplat - check if this is a constant splat, and if so, return
+  /// the splat element value in SplatBits.  Any undefined bits in that value
+  /// are set to zero, and the corresponding bits in the SplatUndef mask are
+  /// set.  The SplatSize value is set to the splat element size in bytes.
+  /// HasAnyUndefs is set to true if any bits in the vector are undefined.
+  bool isConstantSplat(unsigned &SplatBits, unsigned &SplatUndef,
+                       unsigned &SplatSize, bool &HasAnyUndefs);
+
+  static inline bool classof(const BuildVectorSDNode *) { return true; }
+  static inline bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::BUILD_VECTOR;
+  }
+};
+
 /// SrcValueSDNode - An SDNode that holds an arbitrary LLVM IR Value. This is
 /// used when the SelectionDAG needs to make a simple reference to something
 /// in the LLVM IR representation.
