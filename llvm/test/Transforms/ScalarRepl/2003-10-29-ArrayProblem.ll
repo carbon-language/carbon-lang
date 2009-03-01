@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
-; RUN:   grep alloca | grep \\{
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {alloca %T}
 
+%T = type { [80 x i8], i32, i32 }
 declare i32 @.callback_1(i8*)
 
 declare void @.iter_2(i32 (i8*)*, i8*)
