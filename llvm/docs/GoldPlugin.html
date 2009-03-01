@@ -20,15 +20,15 @@
 <div class="doc_section"><a name="introduction">Introduction</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
-  <p>Building with link time optimization requires cooperation with the
+  <p>Building with link time optimization requires cooperation from the
 system linker. LTO support on Linux systems requires that you use
-<a href="http://sourceware.org/binutils">gold</a> which supports for
+the <a href="http://sourceware.org/binutils">gold linker</a> which supports
 LTO via plugins. This is the same system used by the upcoming
 <a href="http://gcc.gnu.org/wiki/LinkTimeOptimization">GCC LTO</a>
-support.</p>
-  <p>The LLVMgold plugin implements the gold
-<a href="http://gcc.gnu.org/wiki/whopr/driver">plugin interface</a> on
-top of
+project.</p>
+  <p>The LLVM gold plugin implements the
+<a href="http://gcc.gnu.org/wiki/whopr/driver">gold plugin interface</a>
+on top of
 <a href="http://llvm.org/docs/LinkTimeOptimization.html#lto">libLTO</a>.
 The same plugin can also be used by other tools such as <tt>ar</tt> and
 <tt>nm</tt>.
@@ -55,7 +55,7 @@ make all-gold
     That should leave you with binutils/build/gold/ld-new which supports the
 -plugin option.
 
-    <li>Build LLVMgold. Configure LLVM with
+    <li>Build the LLVMgold plugin: Configure LLVM with
     <tt>--with-binutils-include=/path/to/binutils/src/include</tt> and run
     <tt>make</tt>.
 </ul>
