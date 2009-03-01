@@ -102,8 +102,7 @@ public:
 class VISIBILITY_HIDDEN UndefinedDeref : public BuiltinBug {
 public:
   UndefinedDeref(GRExprEngine* eng)
-    : BuiltinBug(eng,"uninitialized pointer dereference",
-                 "Dereference of undefined value.") {}
+    : BuiltinBug(eng,"Dereference of undefined pointer value") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.undef_derefs_begin(), Eng.undef_derefs_end());
@@ -113,7 +112,7 @@ public:
 class VISIBILITY_HIDDEN DivZero : public BuiltinBug {
 public:
   DivZero(GRExprEngine* eng)
-    : BuiltinBug(eng,"divide-by-zero", "Division by zero/undefined value.") {}
+    : BuiltinBug(eng,"divide-by-zero", "Division by zero or undefined value.") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.explicit_bad_divides_begin(), Eng.explicit_bad_divides_end());
@@ -134,7 +133,7 @@ class VISIBILITY_HIDDEN BadCall : public BuiltinBug {
 public:
   BadCall(GRExprEngine *eng)
   : BuiltinBug(eng,"invalid function call",
-        "Called function is a NULL or an undefined function pointer value.") {}
+        "Called function pointer is a null or undefined pointer value") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.bad_calls_begin(), Eng.bad_calls_end());
@@ -144,7 +143,7 @@ public:
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
 public:
   BadArg(GRExprEngine* eng) : BuiltinBug(eng,"uninitialized argument",  
-    "Pass-by-value argument in function is undefined.") {}
+    "Pass-by-value argument in function call is undefined.") {}
 
   BadArg(GRExprEngine* eng, const char* d)
     : BuiltinBug(eng,"uninitialized argument", d) {}
@@ -202,7 +201,8 @@ public:
 
 class VISIBILITY_HIDDEN RetStack : public BuiltinBug {
 public:
-  RetStack(GRExprEngine* eng) : BuiltinBug(eng, "return of stack address") {}
+  RetStack(GRExprEngine* eng)
+    : BuiltinBug(eng, "return of address to stack-allocated memory") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::ret_stackaddr_iterator I=Eng.ret_stackaddr_begin(),
@@ -339,7 +339,7 @@ public:
 class VISIBILITY_HIDDEN OutOfBoundMemoryAccess : public BuiltinBug {
 public:
   OutOfBoundMemoryAccess(GRExprEngine* eng)
-    : BuiltinBug(eng,"out-of-bound memory access",
+    : BuiltinBug(eng,"out-of-bounds memory access",
                      "Load or store into an out-of-bound memory position.") {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
@@ -421,7 +421,7 @@ public:
       // Lazily allocate the BugType object if it hasn't already been created.
       // Ownership is transferred to the BugReporter object once the BugReport
       // is passed to 'EmitWarning'.
-      if (!BT) BT = new BugType("'nonnull' argument passed null", "API");
+      if (!BT) BT = new BugType("argument with 'nonnull' attribute passed null", "API");
       
       RangedBugReport *R = new RangedBugReport(*BT,
                                    "Null pointer passed as an argument to a "
