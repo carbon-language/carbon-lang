@@ -253,13 +253,11 @@ bool SROA::performScalarRepl(Function &F) {
     // (allocations OF arrays are ok though), and an allocation of a scalar
     // value cannot be decomposed at all.
     uint64_t AllocaSize = TD->getTypePaddedSize(AI->getAllocatedType());
-
-    // Do not promote any struct whose size is too big.
-    if (AllocaSize < SRThreshold)
-      continue;
-    
+        
     if ((isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType())) &&
+        // Do not promote any struct whose size is too big.
+        AllocaSize < SRThreshold &&
         // Do not promote any struct into more than "32" separate vars.
         getNumSAElements(AI->getAllocatedType()) < SRThreshold/4) {
       // Check that all of the users of the allocation are capable of being
