@@ -485,6 +485,53 @@ types.</li>
 
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="llvmc">Improvements in LLVMC</a>
+</div>
+
+<div class="doc_text">
+<p>New features include:</p>
+
+<ul>
+<li>Beginning with LLVM 2.5, llvmc2 is known as just 'llvmc'. The
+ old llvmc driver was removed.</li>
+
+<li>The Clang plugin was substantially improved and is now enabled
+ by default. The command 'llvmc --clang' can be now used as a
+ synonym to 'ccc'.</li>
+
+<li>There is now a '--check-graph' option which is supposed to
+ catch common errors like multiple default edges, mismatched
+ output/input language names and cycles. In general, these
+ checks can't be done at compile-time because of the need to
+ support plugins.</li>
+
+<li>Plugins are now more flexible and can refer to compilation
+ graph nodes and options defined in other plugins. To manage
+ dependencies, a priority-sorting mechanism was introduced. This
+ change affects the '.td' file syntax; see the documentation for
+ details.</li>
+
+<li>Hooks can now be provided with arguments. The syntax
+ is "$CALL(MyHook, 'Arg1', 'Arg2', 'Arg #3')".</li>
+
+<li>A new option type: multi-valued option, for options that take
+ more than one argument (for example, "-foo a b c").</li>
+
+<li>New option properties: 'one_or_more', 'zero_or_more', 'hidden'
+ and 'really_hidden'.</li>
+
+<li>The 'case' expression gained an 'error' action and an 'empty'
+ test (equivalent to '(not (not_empty ...))').</li>
+
+<li>Documentation now looks more consistent to the rest of the LLVM
+ docs. There is also a man page now.</li>
+    
+</ul>
+
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
