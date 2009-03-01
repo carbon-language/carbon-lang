@@ -166,15 +166,15 @@ TypePrinting::~TypePrinting() {
 /// use of type names or up references to shorten the type name where possible.
 void TypePrinting::CalcTypeName(const Type *Ty,
                                 SmallVectorImpl<const Type *> &TypeStack,
-                                raw_ostream &OS) {
+                                raw_ostream &OS, bool IgnoreTopLevelName) {
   // Check to see if the type is named.
-  DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
-  DenseMap<const Type *, std::string>::iterator I = TM.find(Ty);
-  if (I != TM.end() &&
-      // If the name wasn't temporarily removed use it.
-      !I->second.empty()) {
-    OS << I->second;
-    return;
+  if (!IgnoreTopLevelName) {
+    DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+    DenseMap<const Type *, std::string>::iterator I = TM.find(Ty);
+    if (I != TM.end()) {
+      OS << I->second;
+      return;
+    }
   }
   
   // Check to see if the Type is already on the stack...
@@ -273,13 +273,16 @@ void TypePrinting::CalcTypeName(const Type *Ty,
 /// printTypeInt - The internal guts of printing out a type that has a
 /// potentially named portion.
 ///
-void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
+void TypePrinting::print(const Type *Ty, raw_ostream &OS,
+                         bool IgnoreTopLevelName) {
   // Check to see if the type is named.
   DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
-  DenseMap<const Type*, std::string>::iterator I = TM.find(Ty);
-  if (I != TM.end()) {
-    OS << I->second;
-    return;
+  if (!IgnoreTopLevelName) {
+    DenseMap<const Type*, std::string>::iterator I = TM.find(Ty);
+    if (I != TM.end()) {
+      OS << I->second;
+      return;
+    }
   }
   
   // Otherwise we have a type that has not been named but is a derived type.
@@ -289,33 +292,12 @@ void TypePrinting::print(const Type *Ty, raw_ostream &OS) {
   std::string TypeName;
   
   raw_string_ostream TypeOS(TypeName);
-  CalcTypeName(Ty, TypeStack, TypeOS);
+  CalcTypeName(Ty, TypeStack, TypeOS, IgnoreTopLevelName);
   OS << TypeOS.str();
 
   // Cache type name for later use.
-  TM.insert(std::make_pair(Ty, TypeOS.str()));
-}
-
-/// printAtLeastOneLevel - Print out one level of the possibly complex type
-/// without considering any symbolic types that we may have equal to it.
-void TypePrinting::printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
-  // If the type does not have a name, then it is already guaranteed to print at
-  // least one level.
-  DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
-  DenseMap<const Type*, std::string>::iterator I = TM.find(Ty);
-  if (I == TM.end())
-    return print(Ty, OS);
-  
-  // Otherwise, temporarily remove the name and print it.
-  std::string OldName;
-  std::swap(OldName, I->second);
-
-  // Print the type without the name.
-  SmallVector<const Type *, 16> TypeStack;
-  CalcTypeName(Ty, TypeStack, OS);
-
-  // Restore the name.
-  std::swap(OldName, I->second);
+  if (!IgnoreTopLevelName)
+    TM.insert(std::make_pair(Ty, TypeOS.str()));
 }
 
 namespace {

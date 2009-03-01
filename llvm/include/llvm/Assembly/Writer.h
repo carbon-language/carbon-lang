@@ -38,8 +38,11 @@ public:
   
   void clear();
   
-  void print(const Type *Ty, raw_ostream &OS);
-  void printAtLeastOneLevel(const Type *Ty, raw_ostream &OS);
+  void print(const Type *Ty, raw_ostream &OS, bool IgnoreTopLevelName = false);
+  
+  void printAtLeastOneLevel(const Type *Ty, raw_ostream &OS) {
+    print(Ty, OS, true);
+  }
   
   /// hasTypeName - Return true if the type has a name in TypeNames, false
   /// otherwise.
@@ -52,7 +55,7 @@ public:
   
 private:
   void CalcTypeName(const Type *Ty, SmallVectorImpl<const Type *> &TypeStack,
-                    raw_ostream &OS);
+                    raw_ostream &OS, bool IgnoreTopLevelName = false);
 };
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
