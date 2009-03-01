@@ -26,13 +26,6 @@ iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
   return F->getBasicBlockList();
 }
 
-Argument *ilist_traits<Argument>::createSentinel() {
-  Argument *Ret = new Argument(Type::Int32Ty);
-  // This should not be garbage monitored.
-  LeakDetector::removeGarbageObject(Ret);
-  return Ret;
-}
-
 iplist<Argument> &ilist_traits<Argument>::getList(Function *F) {
   return F->getArgumentList();
 }

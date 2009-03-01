@@ -48,12 +48,15 @@ private:
 template<> struct ilist_traits<Argument>
   : public SymbolTableListTraits<Argument, Function> {
 
-  // createSentinel is used to create a node that marks the end of the list...
-  static Argument *createSentinel();
-  static void destroySentinel(Argument *A) { delete A; }
+  Argument *createSentinel() const {
+    return const_cast<Argument*>(static_cast<const Argument*>(&Sentinel));
+  }
+  static void destroySentinel(Argument*) {}
   static iplist<Argument> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
   static int getListOffset();
+private:
+  ilist_node<Argument> Sentinel;
 };
 
 class Function : public GlobalValue, public Annotable,
