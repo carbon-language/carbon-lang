@@ -332,6 +332,13 @@ namespace {
       : TP(tp), NumberedTypes(numberedTypes) {}
     
     void Run(const Module &M) {
+      // Get types from the type symbol table.  This gets opaque types referened
+      // only through derived named types.
+      const TypeSymbolTable &ST = M.getTypeSymbolTable();
+      for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
+           TI != E; ++TI)
+        IncorporateType(TI->second);
+      
       // Get types from global variables.
       for (Module::const_global_iterator I = M.global_begin(),
            E = M.global_end(); I != E; ++I) {
@@ -368,11 +375,12 @@ namespace {
   private:
     void IncorporateType(const Type *Ty) {
       // Check to see if we're already visited this type.
-      if (!VisitedTypes.insert(Ty).second || TP.hasTypeName(Ty))
+      if (!VisitedTypes.insert(Ty).second)
         return;
       
       // If this is a structure or opaque type, add a name for the type.
-      if (isa<StructType>(Ty) || isa<OpaqueType>(Ty)) {
+      if ((isa<StructType>(Ty) || isa<OpaqueType>(Ty))
+          && !TP.hasTypeName(Ty)) {
         TP.addTypeName(Ty, "%"+utostr(unsigned(NumberedTypes.size())));
         NumberedTypes.push_back(Ty);
       }
