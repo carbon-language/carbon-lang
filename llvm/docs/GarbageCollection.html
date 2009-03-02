@@ -20,19 +20,15 @@
 <ol>
   <li><a href="#introduction">Introduction</a>
     <ul>
-    <li><a href="#feature">GC features provided and algorithms
-      supported</a></li>
+    <li><a href="#feature">Goals and non-goals</a></li>
     </ul>
   </li>
 
-  <li><a href="#usage">Using the collectors</a>
+  <li><a href="#quickstart">Getting started</a>
     <ul>
-    <li><a href="#shadow-stack">ShadowStack -
-      A highly portable collector</a></li>
-    <li><a href="#semispace">SemiSpace -
-      A simple copying collector runtime</a></li>
-    <li><a href="#ocaml">Ocaml -
-      An Objective Caml-compatible collector</a></li>
+    <li><a href="quickstart-compiler">In your compiler</a></li>
+    <li><a href="quickstart-runtime">In your runtime library</a></li>
+    <li><a href="shadow-stack">About the shadow stack</a></li>
     </ul>
   </li>
 
@@ -51,20 +47,7 @@
     </ul>
   </li>
   
-  <li><a href="#runtime">Recommended runtime interface</a>
-    <ul>
-    <li><a href="#initialize">Garbage collector startup and
-    initialization</a></li>
-    <li><a href="#allocate">Allocating memory from the GC</a></li>
-    <li><a href="#explicit">Explicit invocation of the garbage
-    collector</a></li>
-    <li><a href="#traceroots">Tracing GC pointers from the program
-    stack</a></li>
-    <li><a href="#staticroots">Tracing GC pointers from static roots</a></li>
-    </ul>
-  </li>
-
-  <li><a href="#plugin">Implementing a collector plugin</a>
+  <li><a href="#plugin">Compiler plugin interface</a>
     <ul>
     <li><a href="#collector-algos">Overview of available features</a></li>
     <li><a href="#stack-map">Computing stack maps</a></li>
@@ -145,7 +128,7 @@ support accurate garbage collection.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="feature">GC features provided and algorithms supported</a>
+  <a name="feature">Goals and non-goals</a>
 </div>
 
 <div class="doc_text">
@@ -168,174 +151,234 @@ collector models. For instance, the intrinsics permit:</p>
 support a broad class of garbage collected languages including Scheme, ML, Java,
 C#, Perl, Python, Lua, Ruby, other scripting languages, and more.</p>
 
-<p>However, LLVM does not itself implement a garbage collector. This is because
-collectors are tightly coupled to object models, and LLVM is agnostic to object
-models. Since LLVM is agnostic to object models, it would be inappropriate for
-LLVM to dictate any particular collector. Instead, LLVM provides a framework for
-garbage collector implementations in two manners:</p>
+<p>However, LLVM does not itself provide a garbage collector&#151;this should
+be part of your language's runtime library. LLVM provides a framework for
+compile time <a href="#plugin">code generation plugins</a>. The role of these
+plugins is to generate code and data structures which conforms to the <em>binary
+interface</em> specified by the <em>runtime library</em>. This is similar to the
+relationship between LLVM and DWARF debugging info, for example. The
+difference primarily lies in the lack of an established standard in the domain
+of garbage collection&#151;thus the plugins.</p>
+
+<p>The aspects of the binary interface with which LLVM's GC support is
+concerned are:</p>
 
 <ul>
-  <li><b>At compile time</b> with <a href="#plugin">collector plugins</a> for
-  the compiler. Collector plugins have ready access to important garbage
-  collector algorithms. Leveraging these tools, it is straightforward to
-  emit type-accurate stack maps for your runtime in as little as ~100 lines of
-  C++ code.</li>
-
-  <li><b>At runtime</b> with <a href="#runtime">suggested runtime
-  interfaces</a>, which allow front-end compilers to support a range of
-  collection runtimes.</li>
+  <li>Creation of GC-safe points within code where collection is allowed to
+      execute safely.</li>
+  <li>Definition of a stack frame descriptor. For each safe point in the code,
+      a frame descriptor maps where object references are located within the
+      frame so that the GC may traverse and perhaps update them.</li>
+  <li>Write barriers when storing object references within the heap. These
+      are commonly used to optimize incremental scans.</li>
+  <li>Emission of read barriers when loading object references. These are
+      useful for interoperating with concurrent collectors.</li>
 </ul>
+
+<p>There are additional areas that LLVM does not directly address:</p>
+
+<ul>
+  <li>Registration of global roots.</li>
+  <li>Discovery or registration of stack frame descriptors.</li>
+  <li>The functions used by the program to allocate memory, trigger a
+      collection, etc.</li>
+</ul>
+
+<p>In general, LLVM's support for GC does not include features which can be
+adequately addressed with other features of the IR and does not specify a
+particular binary interface. On the plus side, this means that you should be
+able to integrate LLVM with an existing runtime. On the other hand, it leaves
+a lot of work for the developer of a novel language. However, it's easy to get
+started quickly and scale up to a more sophisticated implementation as your
+compiler matures.</p>
 
 </div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="usage">Using the collectors</a>
+  <a name="quickstart">Getting started</a>
 </div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>In general, using a collector implies:</p>
+<p>Using a GC with LLVM implies many things, for example:</p>
 
 <ul>
-  <li>Emitting compatible code, including initialization in the main
-      program if necessary.</li>
-  <li>Loading a compiler plugin if the collector is not statically linked with
-      your compiler. For <tt>llc</tt>, use the <tt>-load</tt> option.</li>
-  <li>Selecting the collection algorithm by applying the <tt>gc "..."</tt> 
-      attribute to your garbage collected functions, or equivalently with
-      the <tt>setGC</tt> method.</li>
-  <li>Linking your final executable with the garbage collector runtime.</li>
+  <li>Write a runtime library or find an existing one which implements a GC
+      heap.<ol>
+    <li>Implement a memory allocator.</li>
+    <li>Design a binary interface for frame descriptors, used to identify
+        references within a stack frame.*</li>
+    <li>Implement a stack crawler to discover functions on the call stack.*</li>
+    <li>Implement a registry for global roots.</li>
+    <li>Design a binary interface for type descriptors, used to map references
+        within heap objects.</li>
+    <li>Implement a collection routine bringing together all of the above.</li>
+  </ol></li>
+  <li>Emit compatible code from your compiler.<ul>
+    <li>Initialization in the main function.</li>
+    <li>Use the <tt>gc "..."</tt> attribute to enable GC code generation
+        (or <tt>F.setGC("...")</tt>).</li>
+    <li>Use <tt>@llvm.gcroot</tt> to mark stack roots.</li>
+    <li>Use <tt>@llvm.gcread</tt> and/or <tt>@llvm.gcwrite</tt> to
+        manipulate GC references, if necessary.</li>
+    <li>Allocate memory using the GC allocation routine provided by the
+        runtime library.</li>
+    <li>Generate type descriptors according to your runtime's binary interface.</li>
+  </ul></li>
+  <li>Write a compiler plugin to interface LLVM with the runtime library.*<ul>
+    <li>Lower <tt>@llvm.gcread</tt> and <tt>@llvm.gcwrite</tt> to appropriate
+        code sequences.*</li>
+    <li>Generate stack maps according to the runtime's binary interface.*</li>
+  </ul></li>
+  <li>Load the plugin into the compiler. Use <tt>llc -load</tt> or link the
+      plugin statically with your language's compiler.*</li>
+  <li>Link program executables with the runtime.</li>
 </ul>
 
-<p>This table summarizes the available runtimes.</p>
-
-<table>
-  <tr>
-    <th>Collector</th>
-    <th><tt>gc</tt> attribute</th>
-    <th>Linkage</th>
-    <th><tt>gcroot</tt></th>
-    <th><tt>gcread</tt></th>
-    <th><tt>gcwrite</tt></th>
-  </tr>
-  <tr valign="baseline">
-    <td><a href="#semispace">SemiSpace</a></td>
-    <td><tt>gc "shadow-stack"</tt></td>
-    <td>TODO FIXME</td>
-    <td>required</td>
-    <td>optional</td>
-    <td>optional</td>
-  </tr>
-  <tr valign="baseline">
-    <td><a href="#ocaml">Ocaml</a></td>
-    <td><tt>gc "ocaml"</tt></td>
-    <td><i>provided by ocamlopt</i></td>
-    <td>required</td>
-    <td>optional</td>
-    <td>optional</td>
-  </tr>
-</table>
-
-<p>The sections for <a href="#intrinsics">Collection intrinsics</a> and
-<a href="#runtime">Recommended runtime interface</a> detail the interfaces that
-collectors may require user programs to utilize.</p>
+<p>To help with several of these tasks (those indicated with a *), LLVM
+includes a highly portable, built-in ShadowStack code generator. It is compiled
+into <tt>llc</tt> and works even with the interpreter and C backends.</p>
 
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="shadow-stack">ShadowStack - A highly portable collector</a>
+  <a name="quickstart-compiler">In your compiler</a>
 </div>
-
-<div class="doc_code"><tt>
-  Collector *llvm::createShadowStackCollector();
-</tt></div>
 
 <div class="doc_text">
 
-<p>The ShadowStack backend is invoked with the <tt>gc "shadow-stack"</tt>
-function attribute.
-Unlike many collectors which rely on a cooperative code generator to generate
-stack maps, this algorithm carefully maintains a linked list of stack root
-descriptors [<a href="#henderson02">Henderson2002</a>]. This so-called "shadow
-stack" mirrors the machine stack. Maintaining this data structure is slower
-than using stack maps, but has a significant portability advantage because it
-requires no special support from the target code generator.</p>
+<p>To turn the shadow stack on for your functions, first call:</p>
 
-<p>The ShadowStack collector does not use read or write barriers, so the user
-program may use <tt>load</tt> and <tt>store</tt> instead of <tt>llvm.gcread</tt>
-and <tt>llvm.gcwrite</tt>.</p>
+<div class="doc_code"><pre
+>F.setGC("shadow-stack");</pre></div>
 
-<p>ShadowStack is a code generator plugin only. It must be paired with a
-compatible runtime.</p>
+<p>for each function your compiler emits. Since the shadow stack is built into
+LLVM, you do not need to load a plugin.</p>
+
+<p>Your compiler must also use <tt>@llvm.gcroot</tt> as documented.
+Don't forget to create a root for each intermediate value that is generated
+when evaluating an expression. In <tt>h(f(), g())</tt>, the result of
+<tt>f()</tt> could easily be collected if evaluating <tt>g()</tt> triggers a
+collection.</p>
+
+<p>There's no need to use <tt>@llvm.gcread</tt> and <tt>@llvm.gcwrite</tt> over
+plain <tt>load</tt> and <tt>store</tt> for now. You will need them when
+switching to a more advanced GC.</p>
 
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="semispace">SemiSpace - A simple copying collector runtime</a>
+  <a name="quickstart-runtime">In your runtime</a>
 </div>
 
 <div class="doc_text">
 
-<p>The SemiSpace runtime implements the <a href="runtime">suggested
-runtime interface</a> and is compatible with the ShadowStack backend.</p>
+<p>The shadow stack doesn't imply a memory allocation algorithm. A semispace
+collector or building atop <tt>malloc</tt> are great places to start, and can
+be implemented with very little code.</p>
 
-<p>SemiSpace is a very simple copying collector. When it starts up, it
-allocates two blocks of memory for the heap. It uses a simple bump-pointer
-allocator to allocate memory from the first block until it runs out of space.
-When it runs out of space, it traces through all of the roots of the program,
-copying blocks to the other half of the memory space.</p>
-
-<p>This runtime is highly experimental and has not been used in a real project.
-Enhancements would be welcomed.</p>
+<p>When it comes time to collect, however, your runtime needs to traverse the
+stack roots, and for this it needs to integrate with the shadow stack. Luckily,
+doing so is very simple. (This code is heavily commented to help you
+understand the data structure, but there are only 20 lines of meaningful
+code.)</p>
 
 </div>
+
+<div class="doc_code"><pre
+>/// @brief A constant shadow stack frame descriptor. The compiler emits one of
+///        these for each function.
+/// 
+/// Storage of metadata values is elided if the %meta parameter to @llvm.gcroot
+/// is null.
+struct FrameMap {
+  int32_t NumRoots;    //&lt; Number of roots in stack frame.
+  int32_t NumMeta;     //&lt; Number of metadata descriptors. May be &lt; NumRoots.
+  const void *Meta[0]; //&lt; Metadata for each root.
+};
+
+/// @brief A link in the dynamic shadow stack. One of these is embedded in the
+///        stack frame of each function on the call stack.
+struct StackEntry {
+  StackEntry *Next;    //&lt; Link to next stack entry (the caller's).
+  const FrameMap *Map; //&lt; Pointer to constant FrameMap.
+  void *Roots[0];      //&lt; Stack roots (in-place array).
+};
+
+/// @brief The head of the singly-linked list of StackEntries. Functions push
+///        and pop onto this in their prologue and epilogue.
+/// 
+/// Since there is only a global list, this technique is not threadsafe.
+StackEntry *llvm_gc_root_chain;
+
+/// @brief Calls Visitor(root, meta) for each GC root on the stack.
+///        root and meta are exactly the values passed to
+///        <tt>@llvm.gcroot</tt>.
+/// 
+/// Visitor could be a function to recursively mark live objects. Or it
+/// might copy them to another heap or generation.
+/// 
+/// @param Visitor A function to invoke for every GC root on the stack.
+void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
+  for (StackEntry *R = llvm_gc_root_chain; R; R = R->Next) {
+    unsigned i = 0;
+    
+    // For roots [0, NumMeta), the metadata pointer is in the FrameMap.
+    for (unsigned e = R->Map->NumMeta; i != e; ++i)
+      Visitor(&R->Roots[i], R->Map->Meta[i]);
+    
+    // For roots [NumMeta, NumRoots), the metadata pointer is null.
+    for (unsigned e = R->Map->NumRoots; i != e; ++i)
+      Visitor(&R->Roots[i], NULL);
+  }
+}</pre></div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="ocaml">Ocaml - An Objective Caml-compatible collector</a>
+  <a name="shadow-stack">About the shadow stack</a>
 </div>
-
-<div class="doc_code"><tt>
-  Collector *llvm::createOcamlCollector();
-</tt></div>
 
 <div class="doc_text">
 
-<p>The ocaml backend is invoked with the <tt>gc "ocaml"</tt> function attribute.
-It supports the
-<a href="http://caml.inria.fr/">Objective Caml</a> language runtime by emitting
-a type-accurate stack map in the form of an ocaml 3.10.0-compatible frametable.
-The linkage requirements are satisfied automatically by the <tt>ocamlopt</tt>
-compiler when linking an executable.</p>
+<p>Unlike many GC algorithms which rely on a cooperative code generator to
+generate stack maps, this algorithm carefully maintains a linked list of stack
+root descriptors [<a href="#henderson02">Henderson2002</a>]. This so-called
+"shadow stack" mirrors the machine stack. Maintaining this data structure is
+slower than using stack maps, but has a significant portability advantage
+because it requires no special support from the target code generator.</p>
 
-<p>The ocaml collector does not use read or write barriers, so the user program
-may use <tt>load</tt> and <tt>store</tt> instead of <tt>llvm.gcread</tt> and
-<tt>llvm.gcwrite</tt>.</p>
+<p>The tradeoff for this simplicity and portability is:</p>
+
+<ul>
+  <li>High overhead per function call.</li>
+  <li>Not thread-safe.</li>
+</ul>
+
+<p>Still, it's an easy way to get started.</p>
 
 </div>
-
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="core">Core support</a><a name="intrinsics"></a>
+  <a name="core">IR features</a><a name="intrinsics"></a>
 </div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
 <p>This section describes the garbage collection facilities provided by the
-<a href="LangRef.html">LLVM intermediate representation</a>.</p>
+<a href="LangRef.html">LLVM intermediate representation</a>. The exact behavior
+of these IR features is specified by the binary interface implemented by a
+<a href="#plugin">code generation plugin</a>, not by this document.</p>
 
-<p>These facilities are limited to those strictly necessary for compilation.
-They are not intended to be a complete interface to any garbage collector.
-Notably, heap allocation is not among the supplied primitives. A user program
-will also need to interface with the runtime, using either the
-<a href="#runtime">suggested runtime interface</a> or another interface
-specified by the runtime.</p>
+<p>These facilities are limited to those strictly necessary; they are not
+intended to be a complete interface to any garbage collector. A program will
+need to interface with the GC library using the facilities provided by that
+program.</p>
 
 </div>
 
@@ -345,17 +388,22 @@ specified by the runtime.</p>
 </div>
 
 <div class="doc_code"><tt>
-  define <i>ty</i> @<i>name</i>(...) <u>gc "<i>collector</i>"</u> { ...
+  define <i>ty</i> @<i>name</i>(...) <u>gc "<i>name</i>"</u> { ...
 </tt></div>
 
 <div class="doc_text">
 
-<p>The <tt>gc</tt> function attribute is used to specify the desired collector
-algorithm to the compiler. It is equivalent to specifying the collector name
-programmatically using the <tt>setGC</tt> method of <tt>Function</tt>.</p>
+<p>The <tt>gc</tt> function attribute is used to specify the desired GC style
+to the compiler. Its programmatic equivalent is the <tt>setGC</tt> method of
+<tt>Function</tt>.</p>
 
-<p>Specifying the collector on a per-function basis allows LLVM to link together
-programs that use different garbage collection algorithms.</p>
+<p>Setting <tt>gc "<i>name</i>"</tt> on a function triggers a search for a
+matching code generation plugin "<i>name</i>"; it is that plugin which defines
+the exact nature of the code generated to support GC. If none is found, the
+compiler will raise an error.</p>
+
+<p>Specifying the GC style on a per-function basis allows LLVM to link together
+programs that use different garbage collection algorithms (or none at all).</p>
 
 </div>
 
@@ -370,12 +418,30 @@ programs that use different garbage collection algorithms.</p>
 
 <div class="doc_text">
 
-<p>The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM of a pointer
-variable on the stack. The first argument <b>must</b> be a value referring to an alloca instruction
+<p>The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM that a stack
+variable references an object on the heap and is to be tracked for garbage
+collection. The exact impact on generated code is specified by a <a
+href="#plugin">compiler plugin</a>.</p>
+
+<p>A compiler which uses mem2reg to raise imperative code using <tt>alloca</tt>
+into SSA form need only add a call to <tt>@llvm.gcroot</tt> for those variables
+which a pointers into the GC heap.</p>
+
+<p>It is also important to mark intermediate values with <tt>llvm.gcroot</tt>.
+For example, consider <tt>h(f(), g())</tt>. Beware leaking the result of
+<tt>f()</tt> in the case that <tt>g()</tt> triggers a collection.</p>
+
+<p>The first argument <b>must</b> be a value referring to an alloca instruction
 or a bitcast of an alloca. The second contains a pointer to metadata that
 should be associated with the pointer, and <b>must</b> be a constant or global
 value address. If your target collector uses tags, use a null pointer for
 metadata.</p>
+
+<p>The <tt>%metadata</tt> argument can be used to avoid requiring heap objects
+to have 'isa' pointers or tag bits. [<a href="#appel89">Appel89</a>, <a
+href="#goldberg91">Goldberg91</a>, <a href="#tolmach94">Tolmach94</a>] If
+specified, its value will be tracked along with the location of the pointer in
+the stack frame.</p>
 
 <p>Consider the following fragment of Java code:</p>
 
@@ -449,6 +515,11 @@ for completeness. In this snippet, <tt>%object</tt> is the object pointer, and
     ;; Compute the derived pointer.
     %derived = getelementptr %object, i32 0, i32 2, i32 %n</pre></blockquote>
 
+<p>The use of these intrinsics is naturally optional if the target GC does
+require the corresponding barrier. If so, the GC plugin will replace the
+intrinsic calls with the corresponding <tt>load</tt> or <tt>store</tt>
+instruction if they are used.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -464,15 +535,12 @@ void @llvm.gcwrite(i8* %value, i8* %object, i8** %derived)
 
 <p>For write barriers, LLVM provides the <tt>llvm.gcwrite</tt> intrinsic
 function. It has exactly the same semantics as a non-volatile <tt>store</tt> to
-the derived pointer (the third argument).</p>
+the derived pointer (the third argument). The exact code generated is specified
+by a <a href="#plugin">compiler plugin</a>.</p>
 
 <p>Many important algorithms require write barriers, including generational
 and concurrent collectors. Additionally, write barriers could be used to
 implement reference counting.</p>
-
-<p>The use of this intrinsic is optional if the target collector does use
-write barriers. If so, the collector will replace it with the corresponding
-<tt>store</tt>.</p>
 
 </div>
 
@@ -489,123 +557,14 @@ i8* @llvm.gcread(i8* %object, i8** %derived)<br>
 
 <p>For read barriers, LLVM provides the <tt>llvm.gcread</tt> intrinsic function.
 It has exactly the same semantics as a non-volatile <tt>load</tt> from the
-derived pointer (the second argument).</p>
+derived pointer (the second argument). The exact code generated is specified by
+a <a href="#plugin">compiler plugin</a>.</p>
 
 <p>Read barriers are needed by fewer algorithms than write barriers, and may
 have a greater performance impact since pointer reads are more frequent than
 writes.</p>
 
-<p>As with <tt>llvm.gcwrite</tt>, a target collector might not require the use
-of this intrinsic.</p>
-
 </div>
-
-<!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="runtime">Recommended runtime interface</a>
-</div>
-<!-- *********************************************************************** -->
-
-<div class="doc_text">
-
-<p>LLVM specifies the following recommended runtime interface to the garbage
-collection at runtime. A program should use these interfaces to accomplish the
-tasks not supported by the intrinsics.</p>
-
-<p>Unlike the intrinsics, which are integral to LLVM's code generator, there is
-nothing unique about these interfaces; a front-end compiler and runtime are free
-to agree to a different specification.</p>
-
-<p class="doc_warning">Note: This interface is a work in progress.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="initialize">Garbage collector startup and initialization</a>
-</div>
-
-<div class="doc_text">
-
-<div class="doc_code"><tt>
-  void llvm_gc_initialize(unsigned InitialHeapSize);
-</tt></div>
-
-<p>
-The <tt>llvm_gc_initialize</tt> function should be called once before any other
-garbage collection functions are called. This gives the garbage collector the
-chance to initialize itself and allocate the heap. The initial heap size to
-allocate should be specified as an argument.
-</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="allocate">Allocating memory from the GC</a>
-</div>
-
-<div class="doc_text">
-
-<div class="doc_code"><tt>
-  void *llvm_gc_allocate(unsigned Size);
-</tt></div>
-
-<p>The <tt>llvm_gc_allocate</tt> function is a global function defined by the
-garbage collector implementation to allocate memory. It returns a
-zeroed-out block of memory of the specified size, sufficiently aligned to store
-any object.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="explicit">Explicit invocation of the garbage collector</a>
-</div>
-
-<div class="doc_text">
-
-<div class="doc_code"><tt>
-  void llvm_gc_collect();
-</tt></div>
-
-<p>
-The <tt>llvm_gc_collect</tt> function is exported by the garbage collector
-implementations to provide a full collection, even when the heap is not
-exhausted. This can be used by end-user code as a hint, and may be ignored by
-the garbage collector.
-</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="traceroots">Tracing GC pointers from the program stack</a>
-</div>
-
-<div class="doc_text">
-  <div class="doc_code"><tt>
-     void llvm_cg_walk_gcroots(void (*FP)(void **Root, void *Meta));
-  </tt></div>
-
-<p>
-The <tt>llvm_cg_walk_gcroots</tt> function is a function provided by the code
-generator that iterates through all of the GC roots on the stack, calling the
-specified function pointer with each record. For each GC root, the address of
-the pointer and the meta-data (from the <a
-href="#gcroot"><tt>llvm.gcroot</tt></a> intrinsic) are provided.
-</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="staticroots">Tracing GC pointers from static roots</a>
-</div>
-
-<div class="doc_text">
-TODO
-</div>
-
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -628,8 +587,9 @@ might be accomplished in as few as 100 LOC.</p>
 
 <p>This is not the appropriate place to implement a garbage collected heap or a
 garbage collector itself. That code should exist in the language's runtime
-library. The compiler plugin is responsible for generating code which is
-compatible with that runtime library.</p>
+library. The compiler plugin is responsible for generating code which
+conforms to the binary interface defined by library, most essentially the
+<a href="stack-map">stack map</a>.</p>
 
 <p>To subclass <tt>llvm::GCStrategy</tt> and register it with the compiler:</p>
 
@@ -1203,7 +1163,7 @@ yet computed.)</p>
 
 <p>Since AsmWriter and CodeGen are separate components of LLVM, a separate
 abstract base class and registry is provided for printing assembly code, the
-<tt>GCMetadaPrinter</tt> and <tt>GCMetadaPrinterRegistry</tt>. The AsmWriter
+<tt>GCMetadaPrinter</tt> and <tt>GCMetadataPrinterRegistry</tt>. The AsmWriter
 will look for such a subclass if the <tt>GCStrategy</tt> sets
 <tt>UsesMetadata</tt>:</p>
 
@@ -1333,70 +1293,6 @@ void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
   }
 }
 </pre></blockquote>
-
-</div>
-
-
-<!-- *********************************************************************** -->
-<div class="doc_section">
-  <a name="runtime-impl">Implementing a collector runtime</a>
-</div>
-<!-- *********************************************************************** -->
-
-<div class="doc_text">
-
-<p>Implementing a garbage collector for LLVM is fairly straightforward. The
-LLVM garbage collectors are provided in a form that makes them easy to link into
-the language-specific runtime that a language front-end would use. They require
-functionality from the language-specific runtime to get information about <a
-href="#gcdescriptors">where pointers are located in heap objects</a>.</p>
-
-<p>The implementation must include the
-<a href="#allocate"><tt>llvm_gc_allocate</tt></a> and
-<a href="#explicit"><tt>llvm_gc_collect</tt></a> functions. To do this, it will
-probably have to <a href="#traceroots">trace through the roots
-from the stack</a> and understand the <a href="#gcdescriptors">GC descriptors
-for heap objects</a>. Luckily, there are some <a href="#usage">example
-implementations</a> available.
-</p>
-</div>
-
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="gcdescriptors">Tracing GC pointers from heap objects</a>
-</div>
-
-<div class="doc_text">
-<p>
-The three most common ways to keep track of where pointers live in heap objects
-are (listed in order of space overhead required):</p>
-
-<ol>
-<li>In languages with polymorphic objects, pointers from an object header are
-usually used to identify the GC pointers in the heap object. This is common for
-object-oriented languages like Self, Smalltalk, Java, or C#.</li>
-
-<li>If heap objects are not polymorphic, often the "shape" of the heap can be
-determined from the roots of the heap or from some other meta-data [<a
-href="#appel89">Appel89</a>, <a href="#goldberg91">Goldberg91</a>, <a
-href="#tolmach94">Tolmach94</a>]. In this case, the garbage collector can
-propagate the information around from meta data stored with the roots. This
-often eliminates the need to have a header on objects in the heap. This is
-common in the ML family.</li>
-
-<li>If all heap objects have pointers in the same locations, or pointers can be
-distinguished just by looking at them (e.g., the low order bit is clear), no
-book-keeping is needed at all. This is common for Lisp-like languages.</li>
-</ol>
-
-<p>The LLVM garbage collectors are capable of supporting all of these styles of
-language, including ones that mix various implementations. To do this, it
-allows the source-language to associate meta-data with the <a
-href="#gcroot">stack roots</a>, and the heap tracing routines can propagate the
-information. In addition, LLVM allows the front-end to extract GC information
-in any form from a specific object pointer (this supports situations #1 and #3).
-</p>
 
 </div>
 
