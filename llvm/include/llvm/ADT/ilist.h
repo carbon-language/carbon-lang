@@ -491,14 +491,7 @@ public:
 
   size_type size() const {
     if (Head == 0) return 0; // Don't require construction of sentinel if empty.
-#if __GNUC__ == 2
-    // GCC 2.95 has a broken std::distance
-    size_type Result = 0;
-    std::distance(begin(), end(), Result);
-    return Result;
-#else
     return std::distance(begin(), end());
-#endif
   }
 
   iterator erase(iterator first, iterator last) {
@@ -616,14 +609,10 @@ struct ilist : public iplist<NodeTy> {
     insert(this->begin(), first, last);
   }
 
-
-  // Forwarding functions: A workaround for GCC 2.95 which does not correctly
-  // support 'using' declarations to bring a hidden member into scope.
-  //
-  iterator insert(iterator a, NodeTy *b){ return iplist<NodeTy>::insert(a, b); }
-  void push_front(NodeTy *a) { iplist<NodeTy>::push_front(a); }
-  void push_back(NodeTy *a)  { iplist<NodeTy>::push_back(a); }
-
+  // bring hidden functions into scope
+  using iplist<NodeTy>::insert;
+  using iplist<NodeTy>::push_front;
+  using iplist<NodeTy>::push_back;
 
   // Main implementation here - Insert for a node passed by value...
   iterator insert(iterator where, const NodeTy &val) {
