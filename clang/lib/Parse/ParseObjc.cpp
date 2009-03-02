@@ -1386,11 +1386,12 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc,
                                        MultiStmtArg(Actions), false);
 
+  // TODO: Pass argument information.
+  Actions.ActOnFinishFunctionBody(MDecl, move(FnBody));
+  
   // Leave the function body scope.
   BodyScope.Exit();
 
-  // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, move(FnBody));
   return MDecl;
 }
 
