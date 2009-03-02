@@ -27,7 +27,7 @@ namespace llvmc {
     /// Priority - Plugin priority, useful for handling dependencies
     /// between plugins. Plugins with lower priorities are loaded
     /// first.
-    virtual int Priority() const = 0;
+    virtual int Priority() const { return 0; }
 
     /// PopulateLanguageMap - The auto-generated function that fills in
     /// the language map (map from file extensions to language names).
