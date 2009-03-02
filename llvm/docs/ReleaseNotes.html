@@ -81,12 +81,12 @@ initial support for debug line numbers when optimization enabled, not useful in
 <div class="doc_text">
 <p>
 The LLVM 2.5 distribution currently consists of code from the core LLVM
-repository (which roughly includes the LLVM optimizers, code generators and
-supporting tools) and the llvm-gcc repository.  In addition to this code, the
-LLVM Project includes other sub-projects that are in development.  The two which
-are the most actively developed are the <a href="#clang">Clang Project</a> and
-the <a href="#vmkit">VMKit Project</a>.
-</p>
+repository &mdash;which roughly includes the LLVM optimizers, code generators
+and supporting tools &mdash; and the llvm-gcc repository.  In addition to this
+code, the LLVM Project includes other sub-projects that are in development.  The
+two which are the most actively developed are the <a href="#clang">Clang
+Project</a> and the <a href="#vmkit">VMKit Project</a>.
+</pp>
 
 </div>
 
@@ -99,15 +99,16 @@ the <a href="#vmkit">VMKit Project</a>.
 <div class="doc_text">
 
 <p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
-a set of new 'LLVM native' front-end technologies for the LLVM optimizer
-and code generator.  While Clang is not included in the LLVM 2.5 release, it
-is continuing to make major strides forward in all areas.  Its C and Objective-C
+a set of new 'LLVM native' front-end technologies for the LLVM optimizer and
+code generator.  While Clang is not included in the LLVM 2.5 release, it is
+continuing to make major strides forward in all areas.  Its C and Objective-C
 parsing and code generation support is now very solid.  For example, it is
-capable of successfully building many real applications for X86-32 and X86-64,
+capable of successfully building many real-world applications for X86-32
+andX86-64,
 including <a href="http://wiki.freebsd.org/BuildingFreeBSDWithClang">the FreeBSD
-kernel</a>.  C++ is also making <a
-href="http://clang.llvm.org/cxx_status.html">incredible progress</a>, and work
-on templates has recently started.</p>
+kernel</a>.  C++ is also
+making <a href="http://clang.llvm.org/cxx_status.html">incredible progress</a>,
+and work on templates has recently started.</p>
 
 <p>While Clang is not yet production quality, it is progressing very nicely and
 is quite usable for building many C and Objective-C applications.  If you are
@@ -127,6 +128,7 @@ list</a>.</p>
 <li>Objective-C support is significantly improved beyond LLVM 2.4, supporting
     many features, such as Objective-C Garbage Collection.</li>
 <li>Many many bugs are fixed and many features have been added.</li>
+</ul>
 </div>
 
 <!--=========================================================================-->
@@ -411,7 +413,6 @@ several ways, including adding shadow induction variables to avoid
 
 <li>The "-scalarrepl" scalar replacement of aggregates pass is more aggressive
     about promoting unions to registers.</li>
-</li>
 
 </ul>
 
@@ -519,7 +520,6 @@ types.</li>
 <li>Support for integer arrays.</li>
 <li>Compiler can now emit libcalls for operations not support by m/c insns.</li>
 <li>Support for both data and rom address spaces.</li>
-</li>
 </ul>
 
 <p>Things not yet supported:</p>
@@ -531,7 +531,6 @@ types.</li>
 <li>Indirect function calls.</li>
 <li>Interrupts/programs.</li>
 <li>Debug info.</li>
-</li>
 </ul>
 
 </div>
@@ -607,6 +606,7 @@ API changes are:</p>
 <li>?</li>
 </ul>
 
+<ul>
 <li>?</li>
 </ul>
 
