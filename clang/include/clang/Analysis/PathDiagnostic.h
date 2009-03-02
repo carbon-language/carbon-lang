@@ -26,30 +26,34 @@ namespace clang {
 
 class PathDiagnosticPiece {
 public:
+  enum Kind { ControlFlow, Event };
   enum DisplayHint { Above, Below };
 
 private:
   const FullSourceLoc Pos;
   const std::string str;
   std::vector<CodeModificationHint> CodeModificationHints;
+  const Kind kind;
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
   
 public:
   
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
+                      Kind k = Event,
                       DisplayHint hint = Above);
   
   PathDiagnosticPiece(FullSourceLoc pos, const char* s,
+                      Kind k = Event,
                       DisplayHint hint = Above);
   
   const std::string& getString() const { return str; }
    
   DisplayHint getDisplayHint() const { return Hint; }
   
-  void addRange(SourceRange R) {
-    ranges.push_back(R);
-  }
+  Kind getKind() const { return kind; }
+  
+  void addRange(SourceRange R) { ranges.push_back(R); }
   
   void addRange(SourceLocation B, SourceLocation E) {
     ranges.push_back(SourceRange(B,E));
