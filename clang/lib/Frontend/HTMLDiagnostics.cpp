@@ -388,7 +388,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     
     // Next, determine the approximate size of the message bubble in em.
     unsigned em;
-    const unsigned max_line = 120;
+    const unsigned max_line = 110;
     
     if (max_token >= max_line)
       em = max_token / 2;
@@ -407,9 +407,16 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
       em = characters / 2;
     }
     
-    // Now generate the message bubble.    
-    std::string s;
-    llvm::raw_string_ostream os(s);
+    // Now generate the message bubble. 
+    const char *Kind = 0;
+    switch (P.getKind()) {
+      default: break;
+      case PathDiagnosticPiece::Event:  Kind = "Event"; break;
+      case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
+    }
+    
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
     
     os << "\n<tr><td class=\"num\"></td><td class=\"line\"><div id=\"";
     
@@ -419,19 +426,26 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
       os << "Path" << num;
     
     os << "\" class=\"msg";
-    switch (P.getKind()) {
-      default: break;
-      case PathDiagnosticPiece::Event: os << " msgEvent"; break;
-      case PathDiagnosticPiece::ControlFlow: os << " msgControl"; break;
-    }    
+    if (Kind) os << " msg" << Kind;
     os << "\" style=\"margin-left:" << PosNo << "ex";
     if (em < max_line/2) os << "; max-width:" << em << "em";
     os << "\">";
     
-    if (max > 1)
-      os << "<span class=\"PathIndex\">[" << num << "]</span> ";
+    if (max > 1) {
+      os << "<table class=\"msgT\"><tr><td valign=\"top\">";
+      os << "<div class=\"PathIndex";
+      if (Kind) os << " PathIndex" << Kind;
+      os << "\">" << num << "</div>";
+      os << "</td><td>";
+    }
     
-    os << html::EscapeText(Msg) << "</div></td></tr>";
+    os << html::EscapeText(Msg);
+    
+    if (max > 1) {
+      os << "</td></tr></table>";
+    }
+    
+    os << "</div></td></tr>";
 
     // Insert the new html.
     unsigned DisplayPos = LineEnd - FileStart;    
