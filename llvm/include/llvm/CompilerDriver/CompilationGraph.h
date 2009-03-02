@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMC2_COMPILATION_GRAPH_H
-#define LLVM_TOOLS_LLVMC2_COMPILATION_GRAPH_H
+#ifndef LLVM_INCLUDE_COMPILER_DRIVER_COMPILATION_GRAPH_H
+#define LLVM_INCLUDE_COMPILER_DRIVER_COMPILATION_GRAPH_H
 
 #include "llvm/CompilerDriver/Tool.h"
 
@@ -319,4 +319,4 @@ namespace llvm {
 
 }
 
-#endif // LLVM_TOOLS_LLVMC2_COMPILATION_GRAPH_H
+#endif // LLVM_INCLUDE_COMPILER_DRIVER_COMPILATION_GRAPH_H

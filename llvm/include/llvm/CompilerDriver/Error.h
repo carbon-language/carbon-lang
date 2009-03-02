@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMC2_ERROR_H
-#define LLVM_TOOLS_LLVMC2_ERROR_H
+#ifndef LLVM_INCLUDE_COMPILER_DRIVER_ERROR_H
+#define LLVM_INCLUDE_COMPILER_DRIVER_ERROR_H
 
 #include <stdexcept>
 
@@ -32,4 +32,4 @@ namespace llvmc {
 
 }
 
-#endif //LLVM_TOOLS_LLVMC2_ERROR_H
+#endif // LLVM_INCLUDE_COMPILER_DRIVER_ERROR_H

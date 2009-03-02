@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMC2_TOOL_H
-#define LLVM_TOOLS_LLVMC2_TOOL_H
+#ifndef LLVM_INCLUDE_COMPILER_DRIVER_TOOL_H
+#define LLVM_INCLUDE_COMPILER_DRIVER_TOOL_H
 
 #include "llvm/CompilerDriver/Action.h"
 
@@ -82,4 +82,4 @@ namespace llvmc {
 
 }
 
-#endif //LLVM_TOOLS_LLVMC2_TOOL_H
+#endif // LLVM_INCLUDE_COMPILER_DRIVER_TOOL_H

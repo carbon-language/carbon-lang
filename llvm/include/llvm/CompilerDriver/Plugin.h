@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Plugin support for llvmc2.
+//  Plugin support for llvmc.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMC2_PLUGIN_H
-#define LLVM_TOOLS_LLVMC2_PLUGIN_H
+#ifndef LLVM_INCLUDE_COMPILER_DRIVER_PLUGIN_H
+#define LLVM_INCLUDE_COMPILER_DRIVER_PLUGIN_H
 
 #include "llvm/Support/Registry.h"
 
@@ -76,4 +76,4 @@ namespace llvmc {
 
 }
 
-#endif // LLVM_TOOLS_LLVMC2_PLUGIN_H
+#endif // LLVM_INCLUDE_COMPILER_DRIVER_PLUGIN_H

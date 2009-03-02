@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMC2_ACTION_H
-#define LLVM_TOOLS_LLVMC2_ACTION_H
+#ifndef LLVM_INCLUDE_COMPILER_DRIVER_ACTION_H
+#define LLVM_INCLUDE_COMPILER_DRIVER_ACTION_H
 
 #include <string>
 #include <vector>
@@ -47,4 +47,4 @@ namespace llvmc {
 
 }
 
-#endif // LLVM_TOOLS_LLVMC2_ACTION_H
+#endif // LLVM_INCLUDE_COMPILER_DRIVER_ACTION_H
