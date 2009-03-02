@@ -11,7 +11,7 @@ LEVEL = ..
 include $(LEVEL)/Makefile.config
 
 ifneq ($(wildcard $(LLVMGCC)),)
-PARALLEL_DIRS  := libprofile GC
+PARALLEL_DIRS  := libprofile
 else
 PARALLEL_DIRS  := 
 install all ::
