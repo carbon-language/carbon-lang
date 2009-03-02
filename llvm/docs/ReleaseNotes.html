@@ -14,7 +14,7 @@
   <li><a href="#intro">Introduction</a></li>
   <li><a href="#subproj">Sub-project Status Update</a></li>
   <li><a href="#externalproj">External Projects Using LLVM 2.5</a></li>
-  <li><a href="#whatsnew">What's New in LLVM?</a></li>
+  <li><a href="#whatsnew">What's New in LLVM 2.5?</a></li>
   <li><a href="GettingStarted.html">Installation Instructions</a></li>
   <li><a href="#portability">Portability and Supported Platforms</a></li>
   <li><a href="#knownproblems">Known Problems</a></li>
@@ -63,6 +63,9 @@ current one.  To see the release notes for a specific release, please see the
   debug info for optimized code
   interpreter + libffi
   postalloc scheduler: anti dependence breaking, hazard recognizer?
+
+initial support for debug line numbers when optimization enabled, not useful in
+  2.5 but will be for 2.6.
 
  -->
 
@@ -123,7 +126,7 @@ list</a>.</p>
 <li>Precompiled header support is now implemented.</li>
 <li>Objective-C support is significantly improved beyond LLVM 2.4, supporting
     many features, such as Objective-C Garbage Collection.</li>
-<li>Many many bugs are fixed.</li>
+<li>Many many bugs are fixed and many features have been added.</li>
 </div>
 
 <!--=========================================================================-->
@@ -166,7 +169,7 @@ The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
 a JVM and a CLI Virtual Machines (Microsoft .NET is an
 implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
 
-<p>Following LLVM 2.5, VMKit has its first release ? that you can find on its
+<p>Following LLVM 2.5, VMKit has its first release that you can find on its
 <a href="http://vmkit.llvm.org/releases/">webpage</a>. The release includes
 bug fixes, cleanup and new features. The major changes are:</p>
 
@@ -202,11 +205,8 @@ Spec JVM98 is 6x faster (performance gain of 83%).</li>
 
 <div class="doc_text">
 <p>
-http://pure-lang.googlecode.com/
-</p>
-
-<p>
-Pure is an algebraic/functional programming language based on term rewriting.
+<a href="http://pure-lang.googlecode.com/">Pure</a>
+is an algebraic/functional programming language based on term rewriting.
 Programs are collections of equations which are used to evaluate expressions in
 a symbolic fashion. Pure offers dynamic typing, eager and lazy evaluation,
 lexical closures, a hygienic macro system (also based on term rewriting),
@@ -231,16 +231,11 @@ it as a kind of functional scripting language for many application areas.
 
 <div class="doc_text">
 <p>
-http://www.dsource.org/projects/ldc
-</p>
-
-<p>
-I'd like to inform that the LDC project (LLVM D
-Compiler) is working with release 2.5 of LLVM. In fact we've required
-2.5 in our trunk since the release was branched.
-The improvements in 2.5 have fixed a lot of problems with LDC, more
-specifically the new inline asm constraints, better debug info
-support, general bugfixes :) and better x86-64 support have allowed
+<a href="http://www.dsource.org/projects/ldc">LDC</a> is an implementation of
+the D Programming Language using the LLVM optimizer and code generator.
+LDC project works great with the LLVM 2.5 release.  General improvmenets in this
+cycle have included new inline asm constraint handling, better debug info
+support, general bugfixes, and better x86-64 support.  This has allowed
 some major improvements in LDC, getting us much closer to being as
 fully featured as the original DMD compiler from DigitalMars.
 </p>
@@ -252,17 +247,16 @@ fully featured as the original DMD compiler from DigitalMars.
 </div>
 
 <div class="doc_text">
-<p>http://code.roadsend.com/rphp</p>
-
-<p>Roadsend PHP is using LLVM for code generation. This is an open source
-project.
-</p>
+<p><a href="http://code.roadsend.com/rphp">Roadsend PHP</a> (rphp) is an open
+source compiler for the PHP programming language that uses LLVM for its
+optimizer, JIT, and static compiler.  This is a reimplementation of an earlier
+project that is now based on the LLVM.</p>
 </div>
 
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="whatsnew">What's New in LLVM?</a>
+  <a name="whatsnew">What's New in LLVM 2.5?</a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -284,73 +278,25 @@ in this section.
 <p>LLVM 2.5 includes several major new capabilities:</p>
 
 <ul>
-<li><p>The code generator now supports arbitrary precision integers.
-Types like <tt>i33</tt> have long been valid in the LLVM IR, but previously
-could only be used with the interpreter.
-Now IR using such types can be compiled to native code on all targets.
-All operations are supported if the integer is not bigger than twice the
-target machine word size.
-Simple operations like loads, stores and shifts by a constant amount are
-supported for integers of any size.
-</p></li>
+<li>LLVM 2.5 includes a brand new <a
+href="http://en.wikipedia.org/wiki/XCore">XCore</a> backend.</li>
 
-<!--
-Random stuff:
+<li>llvm-gcc now generally supports the GFortan front-end, and the precompiled
+release binaries now support Fortran, even on Mac OS/X.</li>
 
-Pure project: http://code.google.com/p/pure-lang/
+<li>CMake is now used by the <a href="GettingStartedVS.html">LLVM build process
+on Windows</a>.  It automatically generates Visual Studio project files (and
+more) from a set of simple text files.  This makes it much easier to
+maintain.  In time, we'd like to standardize on CMake for everything.</li>
 
+<li>LLVM 2.5 now uses (and includes) Google Test for unit testing.</li>
 
-xcore backend!
-fortran on darwin!
+<li>The LLVM native code generator now supports arbitrary precision integers.
+Types like <tt>i33</tt> have long been valid in the LLVM IR, but were previously
+only supported by the interpreter.  Note that the C backend still does not
+support these.</li>
 
-.ll parser rewrite, caret diags, better errors, less fragile (less likely to
-   crash on strange things).  No longer depends on flex/bison.
-GCC inliner off, llvm handles always-inline.
-cmake mature?
-x86 backend GS segment -> addr space 256 (r62980)
-nocapture
-addreadattrs pass renamed to functionattrs; now calculates nocapture
-memdep (used by GVN and memcpyopt) is faster / more aggressive.
-how to write a backend doc docs/WritingAnLLVMBackend.html
-fastisel + exception handling
-vector widening <3 x float> -> <4 x float>
-arm port improvements? arm jit encoding stuff, constant island support?
-JIT TLS support on x86-32 but not x86-64.
-mem2reg now faster on code with huge basic blocks
-stack protectors/stack canaries, -fstack-protector, controllable on a
-  per-function basis with attributes.
-shufflevector is generalized to allow different shuffle mask width than its
-  input vectors.
-loop optimizer improves floating point induction variables
-llvm/Analysis/DebugInfo.h classes, llvm-gcc and clang and codegen use them.
-    DebugInfoBuilder gone.
-asmprinters seperate from targets for jits
-PBQP register allocator now supports register coalescing.
-JIT supports exceptions on linux/x86-64 and linux/x86-64.
-integer overflow intrinsics for [us](add/sub/mul).  Supported on all targets,
-  but only generates efficient code on x86.
-X86 backend now supports -disable-mmx.
-noalias attribute on return value indicates that function returns new memory
-  (e.g. malloc).
-Jump threading more powerful: it is iterative, handles threading based on values
-  with fully redundant and partially redundant loads.
-LSR improvements?
-ARM debug info support?
-unit test framework based on Google Test.
-
-vector shift support + X86 backend.
-x86 JIT now detects core i7 and atom, autoconfiguring itself appropriately.
-SROA is more aggressive about promoting unions.
-non-zero __builtin_return_address values on X86.
-x86-64 now uses red zone (unless -mno-red-zone option is specified).
-private linkage.
-
-llvm-gcc defaults to -fno-math-errno on all x86 targets.
-
-initial support for debug line numbers when optimization enabled, not useful in
-  2.5 but will be for 2.6.
--->
-
+<li>LLVM 2.5 no longer uses 'bison', so it is easier to build on Windows.</li>
 </ul>
 
 </div>
@@ -368,7 +314,18 @@ front-ends and driver with the LLVM optimizer and code generator.  It currently
 includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <ul>
-<li>?</li>
+<li>In this release, the GCC inliner is completely disabled.  Previously the GCC
+inliner was used to handle always-inline functions and other cases.  This caused
+problems with code size growth, and it is completely disabled in this
+release.</li>
+
+<li>llvm-gcc (and LLVM in general) now support code generation for stack
+canaries, which is an effective form of <a
+href="http://en.wikipedia.org/wiki/Stack-smashing_protection">buffer overflow
+protection</a>.  llvm-gcc supports this with the <tt>-fstack-protector</tt>
+command line option (just like GCC).  In LLVM IR, you can request code
+generation for stack canaries with function attributes.
+</li>
 </ul>
 
 </div>
@@ -376,14 +333,52 @@ includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="coreimprovements">LLVM Core Improvements</a>
+<a name="coreimprovements">LLVM IR and Core Improvements</a>
 </div>
 
 <div class="doc_text">
-<p>New features include:</p>
+<p>LLVM IR has several new features that are used by our existing front-ends and
+can be useful if you are writing a front-end for LLVM:</p>
 
 <ul>
-<li>?</li>
+<li>The <a href="LangRef.html#i_shufflevector">shufflevector</a> instruction 
+has been generalized to allow different shuffle mask width than its input
+vectors.  This allows you to use shufflevector to combine two
+"&lt;4 x float&gt;" vectors into a "&lt;8 x float&gt;" for example.</li>
+
+<li>LLVM IR now supports new intrinsics for computing and acting on <a 
+href="LangRef.html#int_overflow">overflow of integer operations</a>. This allows
+efficient code generation for languages that must trap or throw an exception on
+overflow.  While these intrinsics work on all targets, they only generate
+efficient code on X86 so far.</li>
+
+<li>LLVM IR now supports a new <a href="LangRef.html#linkage">private
+linkage</a> type to produce labels that are stripped by the assembler before it
+produces a .o file (thus they are invisible to the linker).</li>
+
+<li>LLVM IR supports two new attributes for better alias analysis.  The <a
+href="LangRef.html#paramattrs">noalias</a> attribute can now be used on the
+return value of a function to indicate that it returns new memory (e.g.
+'malloc', 'calloc', etc).</li>
+
+<li>The new <a href="LangRef.html#paramattrs">nocapture</a> attribute can be
+used on pointer arguments to functions that access through but do not return the
+pointer in a data structure that out lives the call (e.g. 'strlen', 'memcpy',
+and many others).  The simplifylibcalls pass applies these attributes to
+standard libc functions.</li>
+
+<li>The parser for ".ll" files in lib/AsmParser is now completely rewritten as a
+recursive descent parser.  This parser produces better error messages (including
+caret diagnostics) is less fragile (less likely to crash on strange things) does
+not leak memory, is more efficient, and eliminates LLVM's last use of the
+'bison' tool.</li>
+
+<li>Debug information representation and manipulation internals have been
+    consolidated to use a new set of classes in
+    <tt>llvm/Analysis/DebugInfo.h</tt> classes.  These routines are more
+    efficient, robust, and extensible and replace the older mechanisms.
+    llvm-gcc, clang, and the code generator now use them to create and process
+    debug information.</li>
 
 </ul>
 
@@ -401,7 +396,22 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>?</li>
+<li>The loop optimizer now improves floating point induction variables in
+several ways, including adding shadow induction variables to avoid
+"integer &lt;-&gt; floating point" conversions in loops when safe.</li>
+
+<li>The "-mem2reg" pass is now much faster on code with huge basic blocks.</li>
+
+<li>The "-jump-threading" pass is more powerful: it is iterative
+  and handles threading based on values with fully and partially redundant
+  loads.</li>
+
+<li>The "-memdep" memory dependence analysis pass (used by GVN and memcpyopt) is
+    both faster and more aggressive.</li>
+
+<li>The "-scalarrepl" scalar replacement of aggregates pass is more aggressive
+    about promoting unions to registers.</li>
+</li>
 
 </ul>
 
@@ -430,10 +440,40 @@ The old type legalizer is still available and will be used if
 </li>
 <li>?</li>
 
+
+how to write a backend doc docs/WritingAnLLVMBackend.html
+asmprinters seperate from targets for jits
+fastisel + exception handling
+vector widening <3 x float> -> <4 x float>
+PBQP register allocator now supports register coalescing.
+
+
 </ul>
 
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="x86">X86-32 and X86-64 Target Improvements</a>
+</div>
+
+<div class="doc_text">
+<p>New features of the X86 target include:
+</p>
+
+<ul>
+non-zero __builtin_return_address values on X86.
+vector shift support + X86 backend.
+x86 JIT now detects core i7 and atom, autoconfiguring itself appropriately.
+x86-64 now uses red zone (unless -mno-red-zone option is specified).
+x86 backend GS segment -> addr space 256 (r62980)
+X86 backend now supports -disable-mmx.
+JIT supports exceptions on linux/x86-64 and linux/x86-64.
+JIT TLS support on x86-32 but not x86-64.
+</ul>
+
+
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -560,7 +600,7 @@ from the previous release.</p>
 
 <ul>
 
-<li>?</li>
+<li>llvm-gcc defaults to -fno-math-errno on all x86 targets.</li>
 </ul>
 
 
@@ -666,7 +706,7 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
     <a href="http://llvm.org/PR2257">bugs</a> due to lack of support for the
     'u' inline assembly constraint and X87 floating point inline assembly.</li>
   <li>The X86-64 backend does not yet support the LLVM IR instruction
-      <tt>va_arg</tt>. Currently, the llvm-gcc front-end supports variadic
+      <tt>va_arg</tt>. Currently, the llvm-gcc and front-ends support variadic
       argument constructs on X86-64 by lowering them manually.</li>
 </ul>
 
