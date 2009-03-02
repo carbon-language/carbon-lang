@@ -7,8 +7,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL = ../../../..
 
 LLVMC_PLUGIN = Hello
 
-include $(LEVEL)/Makefile
+include $(LEVEL)/Makefile.common
