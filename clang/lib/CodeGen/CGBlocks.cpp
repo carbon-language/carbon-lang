@@ -132,42 +132,6 @@ static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info)
   return Info.ByRefDeclRefs.empty() && Info.ByCopyDeclRefs.empty();
 }
 
-/// CanGenerateCodeForBlockExpr - Returns whether CodeGen for the block expr
-/// is supported. Will emit a diagnostic and return false if not.
-/// FIXME: Once we support everything this should of course be removed.
-static bool CanGenerateCodeForBlockExpr(CodeGenFunction &CGF, 
-                                        const BlockExpr* BE, 
-                                        const CodeGenFunction::BlockInfo &Info)
-{
-  if (!Info.ByRefDeclRefs.empty()) {
-    CGF.ErrorUnsupported(BE, "block expression with __block variables");
-    return false;
-  }
-  
-  for (size_t I = 0, E = Info.ByCopyDeclRefs.size(); I != E; ++I) {
-    const BlockDeclRefExpr *E = Info.ByCopyDeclRefs[I];
-    
-    if (E->getType()->isBlockPointerType()) {
-      CGF.ErrorUnsupported(BE, "block expression with imported block");
-      return false;
-    }
-    
-    if (E->getDecl()->getAttr<ObjCNSObjectAttr>() || 
-        CGF.getContext().isObjCNSObjectType(E->getType())) {
-      CGF.ErrorUnsupported(BE, "block expression with __attribute__((NSObject))"
-                           " variable");
-      return false;
-    }
-    
-    if (CGF.getContext().isObjCObjectPointerType(E->getType())) {
-      CGF.ErrorUnsupported(BE, "block expression with Objective-C variable");
-      return false;
-    }
-  }
-  
-  return true;
-}
-
 // FIXME: Push most into CGM, passing down a few bits, like current
 // function name.
 llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
@@ -180,9 +144,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   if (CanBlockBeGlobal(Info))
     return CGM.GetAddrOfGlobalBlock(BE, Name.c_str());
     
-  if (!CanGenerateCodeForBlockExpr(*this, BE, Info))
-    return llvm::UndefValue::get(ConvertType(BE->getType()));
-  
   std::vector<llvm::Constant*> Elts;
   llvm::Constant *C;
   llvm::Value *V;

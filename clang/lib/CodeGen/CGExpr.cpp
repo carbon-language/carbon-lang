@@ -674,6 +674,17 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   const llvm::Type *Ty;
   Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
 
+  if (E->isByRef())
+    ErrorUnsupported(E, "__block variable in block literal");
+  else if (E->getType()->isBlockPointerType())
+    ErrorUnsupported(E, "block pointer in block literal");
+  else if (E->getDecl()->getAttr<ObjCNSObjectAttr>() || 
+           getContext().isObjCNSObjectType(E->getType()))
+    ErrorUnsupported(E, "__attribute__((NSObject)) variable in block "
+                     "literal");
+  else if (getContext().isObjCObjectPointerType(E->getType()))
+    ErrorUnsupported(E, "Objective-C variable in block literal");
+
   // See if we have already allocated an offset for this variable.
   if (offset == 0) {
     // if not, allocate one now.
