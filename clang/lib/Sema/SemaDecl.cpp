@@ -1355,6 +1355,33 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   return QualType();
 }
 
+/// \brief Register the given locally-scoped external C declaration so
+/// that it can be found later for redeclarations
+void 
+Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
+                                       Scope *S) {
+  assert(ND->getLexicalDeclContext()->isFunctionOrMethod() &&
+         "Decl is not a locally-scoped decl!");
+  // Note that we have a locally-scoped external with this name.
+  LocallyScopedExternalDecls[ND->getDeclName()] = ND;
+
+  if (!PrevDecl)
+    return;
+
+  // If there was a previous declaration of this variable, it may be
+  // in our identifier chain. Update the identifier chain with the new
+  // declaration.
+  if (IdResolver.ReplaceDecl(PrevDecl, ND)) {
+    // The previous declaration was found on the identifer resolver
+    // chain, so remove it from its scope.
+    while (S && !S->isDeclScope(PrevDecl))
+      S = S->getParent();
+
+    if (S)
+      S->RemoveDecl(PrevDecl);
+  }
+}
+
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              QualType R, Decl* LastDeclarator,
@@ -1474,63 +1501,6 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
   }
 
   return true;
-}
-
-/// \brief Inject a locally-scoped declaration with external linkage
-/// into the appropriate namespace scope.
-///
-/// Given a declaration of an entity with linkage that occurs within a
-/// local scope, this routine inject that declaration into top-level
-/// scope so that it will be visible for later uses and declarations
-/// of the same entity.
-void Sema::InjectLocallyScopedExternalDeclaration(ValueDecl *VD) {
-  // FIXME: We don't do this in C++ because, although we would like
-  // to get the extra checking that this operation implies, 
-  // the declaration itself is not visible according to C++'s rules.
-  assert(!getLangOptions().CPlusPlus && 
-         "Can't inject locally-scoped declarations in C++");
-  IdentifierResolver::iterator I = IdResolver.begin(VD->getDeclName()),
-                            IEnd = IdResolver.end();
-  NamedDecl *PrevDecl = 0;
-  while (I != IEnd && !isa<TranslationUnitDecl>((*I)->getDeclContext())) {
-    PrevDecl = *I;
-    ++I;
-  }
-
-  if (I == IEnd) {
-    // No name with this identifier has been declared at translation
-    // unit scope. Add this name into the appropriate scope.
-    if (PrevDecl)
-      IdResolver.AddShadowedDecl(VD, PrevDecl);
-    else
-      IdResolver.AddDecl(VD);
-    TUScope->AddDecl(VD);
-    return;
-  }
-
-  if (isa<TagDecl>(*I)) {
-    // The first thing we found was a tag declaration, so insert
-    // this function so that it will be found before the tag
-    // declaration.
-    if (PrevDecl)
-      IdResolver.AddShadowedDecl(VD, PrevDecl);
-    else
-      IdResolver.AddDecl(VD);
-    TUScope->AddDecl(VD);
-    return;
-  } 
-
-  if (VD->declarationReplaces(*I)) {
-    // We found a previous declaration of the same entity. Replace
-    // that declaration with this one.
-    TUScope->RemoveDecl(*I);
-    TUScope->AddDecl(VD);
-    IdResolver.RemoveDecl(*I);
-    if (PrevDecl)
-      IdResolver.AddShadowedDecl(VD, PrevDecl);
-    else
-      IdResolver.AddDecl(VD);
-  }
 }
 
 NamedDecl*
@@ -1666,6 +1636,16 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;     
 
+  if (!PrevDecl && NewVD->isExternC(Context)) {
+    // Since we did not find anything by this name and we're declaring
+    // an extern "C" variable, look for a non-visible extern "C"
+    // declaration with the same name.
+    llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
+      = LocallyScopedExternalDecls.find(Name);
+    if (Pos != LocallyScopedExternalDecls.end())
+      PrevDecl = Pos->second;
+  }
+
   // Merge the decl with the existing one if appropriate.
   if (PrevDecl) {
     if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
@@ -1689,12 +1669,11 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
-  // If this is a locally-scoped extern variable in C, inject a
-  // declaration into translation unit scope so that all external
-  // declarations are visible.
-  if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod() &&
-      NewVD->hasLinkage())
-    InjectLocallyScopedExternalDeclaration(NewVD);
+  // If this is a locally-scoped extern C variable, update the map of
+  // such variables.
+  if (CurContext->isFunctionOrMethod() && NewVD->isExternC(Context) &&
+      !InvalidDecl)
+    RegisterLocallyScopedExternCDecl(NewVD, PrevDecl, S);
 
   return NewVD;
 }
@@ -1920,6 +1899,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
+  if (!PrevDecl && NewFD->isExternC(Context)) {
+    // Since we did not find anything by this name and we're declaring
+    // an extern "C" function, look for a non-visible extern "C"
+    // declaration with the same name.
+    llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
+      = LocallyScopedExternalDecls.find(Name);
+    if (Pos != LocallyScopedExternalDecls.end())
+      PrevDecl = Pos->second;
+  }
+
   // Merge or overload the declaration with an existing declaration of
   // the same name, if appropriate.
   bool OverloadableAttrRequired = false;
@@ -2046,11 +2035,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
-  // If this is a locally-scoped function in C, inject a declaration
-  // into translation unit scope so that all external declarations are
-  // visible.
-  if (!getLangOptions().CPlusPlus && CurContext->isFunctionOrMethod())
-    InjectLocallyScopedExternalDeclaration(NewFD);
+  // If this is a locally-scoped extern C function, update the
+  // map of such names.
+  if (CurContext->isFunctionOrMethod() && NewFD->isExternC(Context)
+      && !InvalidDecl)
+    RegisterLocallyScopedExternCDecl(NewFD, PrevDecl, S);
 
   return NewFD;
 }
@@ -2653,6 +2642,18 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
 NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, 
                                           IdentifierInfo &II, Scope *S) {
+  // Before we produce a declaration for an implicitly defined
+  // function, see whether there was a locally-scoped declaration of
+  // this name as a function or variable. If so, use that
+  // (non-visible) declaration, and complain about it.
+  llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
+    = LocallyScopedExternalDecls.find(&II);
+  if (Pos != LocallyScopedExternalDecls.end()) {
+    Diag(Loc, diag::warn_use_out_of_scope_declaration) << Pos->second;
+    Diag(Pos->second->getLocation(), diag::note_previous_declaration);
+    return Pos->second;
+  }
+
   // Extension in C99.  Legal in C90, but warn about it.
   if (getLangOptions().C99)
     Diag(Loc, diag::ext_implicit_function_decl) << &II;

@@ -338,6 +338,10 @@ public:
     return false;
   }
   
+  /// \brief Determines whether this variable is a variable with
+  /// external, C linkage.
+  bool isExternC(ASTContext &Context) const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= VarFirst && D->getKind() <= VarLast;
@@ -626,6 +630,10 @@ public:
   /// \brief Determines whether this is a function "main", which is
   /// the entry point into an executable program.
   bool isMain() const;
+
+  /// \brief Determines whether this function is a function with
+  /// external, C linkage.
+  bool isExternC(ASTContext &Context) const;
 
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.

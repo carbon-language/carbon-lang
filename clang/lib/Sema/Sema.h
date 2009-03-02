@@ -149,6 +149,33 @@ public:
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;
 
+  /// \brief A mapping from external names to the most recent
+  /// locally-scoped external declaration with that name.
+  ///
+  /// This map contains external declarations introduced in local
+  /// scoped, e.g.,
+  ///
+  /// \code
+  /// void f() {
+  ///   void foo(int, int);
+  /// }
+  /// \endcode
+  ///
+  /// Here, the name "foo" will be associated with the declaration on
+  /// "foo" within f. This name is not visible outside of
+  /// "f". However, we still find it in two cases:
+  ///
+  ///   - If we are declaring another external with the name "foo", we
+  ///     can find "foo" as a previous declaration, so that the types
+  ///     of this external declaration can be checked for
+  ///     compatibility.
+  ///
+  ///   - If we would implicitly declare "foo" (e.g., due to a call to
+  ///     "foo" in C when no prototype or definition is visible), then
+  ///     we find this declaration of "foo" and complain that it is
+  ///     not visible.
+  llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
+
   IdentifierResolver IdResolver;
 
   // Enum values used by KnownFunctionIDs (see below).
@@ -267,11 +294,12 @@ public:
   }
   DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
                           bool IsFunctionDefinition);
+  void RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
+                                        Scope *S);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R, Decl* LastDeclarator,
                                     Decl* PrevDecl, bool& InvalidDecl,
                                     bool &Redeclaration);
-  void InjectLocallyScopedExternalDeclaration(ValueDecl *VD);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, Decl* LastDeclarator,
                                      NamedDecl* PrevDecl, bool& InvalidDecl,

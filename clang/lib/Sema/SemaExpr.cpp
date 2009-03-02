@@ -84,29 +84,6 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
     Diag(D->getLocation(), diag::note_unavailable_here) << 0;
   }
 
-  if (D->getDeclContext()->isFunctionOrMethod() && 
-      !D->getDeclContext()->Encloses(CurContext)) {
-    // We've found the name of a function or variable that was
-    // declared with external linkage within another function (and,
-    // therefore, a scope where we wouldn't normally see the
-    // declaration). Once we've made sure that no previous declaration
-    // was properly made visible, produce a warning.
-    bool HasGlobalScopedDeclaration = false;
-    for (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D); FD;
-         FD = FD->getPreviousDeclaration()) {
-      if (FD->getDeclContext()->isFileContext()) {
-        HasGlobalScopedDeclaration = true;
-        break;
-      }
-    }
-    // FIXME: do the same thing for variable declarations
-    
-    if (!HasGlobalScopedDeclaration) {
-      Diag(Loc, diag::warn_use_out_of_scope_declaration) << D;
-      Diag(D->getLocation(), diag::note_previous_declaration);
-    }
-  }
-
   return false;
 }
 

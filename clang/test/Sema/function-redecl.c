@@ -74,6 +74,7 @@ void outer_test() {
   int outer5(int); // expected-error{{redefinition of 'outer5' as different kind of symbol}}
   int* outer6(int); // expected-note{{previous declaration is here}}
   int *outer7(int);
+  int outer8(int);
 
   int *ip7 = outer7(6);
 }
@@ -86,3 +87,9 @@ void outer_test2(int x) {
   int* ip = outer6(x); // expected-warning{{use of out-of-scope declaration of 'outer6'}}
   int *ip2 = outer7(x);
 }
+
+void outer_test3() {
+  int *(*fp)(int) = outer8; // expected-error{{use of undeclared identifier 'outer8'}}
+}
+
+static float outer8(float); // okay

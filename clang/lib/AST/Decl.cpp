@@ -63,6 +63,28 @@ QualType ParmVarDecl::getOriginalType() const {
   return getType();
 }
 
+bool VarDecl::isExternC(ASTContext &Context) const {
+  if (!Context.getLangOptions().CPlusPlus)
+    return (getDeclContext()->isTranslationUnit() && 
+            getStorageClass() != Static) ||
+      (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
+
+  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit(); 
+       DC = DC->getParent()) {
+    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
+      if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
+        return getStorageClass() != Static;
+
+      break;
+    }
+
+    if (DC->isFunctionOrMethod())
+      return false;
+  }
+
+  return false;
+}
+
 OriginalParmVarDecl *OriginalParmVarDecl::Create(
                                  ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
@@ -271,6 +293,25 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
 bool FunctionDecl::isMain() const {
   return getDeclContext()->getLookupContext()->isTranslationUnit() &&
     getIdentifier() && getIdentifier()->isStr("main");
+}
+
+bool FunctionDecl::isExternC(ASTContext &Context) const {
+  // In C, any non-static, non-overloadable function has external
+  // linkage.
+  if (!Context.getLangOptions().CPlusPlus)
+    return getStorageClass() != Static && !getAttr<OverloadableAttr>();
+
+  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit(); 
+       DC = DC->getParent()) {
+    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
+      if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
+        return getStorageClass() != Static && !getAttr<OverloadableAttr>();
+
+      break;
+    }
+  }
+
+  return false;
 }
 
 /// \brief Returns a value indicating whether this function

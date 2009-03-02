@@ -51,6 +51,11 @@ class IdentifierResolver {
     /// The decl must already be part of the decl chain.
     void RemoveDecl(NamedDecl *D);
 
+    /// Replaces the Old declaration with the New declaration. If the
+    /// replacement is successful, returns true. If the old
+    /// declaration was not found, returns false.
+    bool ReplaceDecl(NamedDecl *Old, NamedDecl *New);
+
   private:
     DeclsTy Decls;
   };
@@ -166,6 +171,11 @@ public:
   /// RemoveDecl - Unlink the decl from its shadowed decl chain.
   /// The decl must already be part of the decl chain.
   void RemoveDecl(NamedDecl *D);
+
+  /// Replace the decl Old with the new declaration New on its
+  /// identifier chain. Returns true if the old declaration was found
+  /// (and, therefore, replaced).
+  bool ReplaceDecl(NamedDecl *Old, NamedDecl *New);
 
   explicit IdentifierResolver(const LangOptions &LangOpt);
   ~IdentifierResolver();
