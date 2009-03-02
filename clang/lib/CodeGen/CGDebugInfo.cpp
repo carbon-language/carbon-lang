@@ -493,7 +493,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::Vector:
   case Type::ExtVector:
   case Type::ExtQual:
-  case Type::ObjCInterface:
   case Type::ObjCQualifiedInterface:
   case Type::ObjCQualifiedId:
   case Type::FixedWidthInt:
@@ -504,6 +503,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     // Unsupported types
     return llvm::DIType();
 
+  case Type::ObjCInterface: 
+    Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit); break;
   case Type::Builtin: Slot = CreateType(cast<BuiltinType>(Ty), Unit); break;
   case Type::Pointer: Slot = CreateType(cast<PointerType>(Ty), Unit); break;
   case Type::Typedef: Slot = CreateType(cast<TypedefType>(Ty), Unit); break;
