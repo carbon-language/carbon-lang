@@ -8,3 +8,17 @@ y;  // expected-warning {{type specifier missing, defaults to 'int'}}
 // rdar://6131634
 void f((x));  // expected-warning {{type specifier missing, defaults to 'int'}}
 
+
+// PR2639
+#define PAD(ms10) { \
+	register i; \
+}
+
+#define ILPAD() PAD((NROW - tt.tt_row) * 10)	/* 1 ms per char */
+
+void
+h19_insline(n)  // expected-warning {{parameter 'n' was not declared, defaulting to type 'int'}}
+{
+	ILPAD();  // expected-warning {{type specifier missing, defaults to 'int'}}
+}
+
