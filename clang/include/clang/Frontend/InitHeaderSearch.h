@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DRIVER_INIT_HEADER_SEARCH_H_
-#define DRIVER_INIT_HEADER_SEARCH_H_
+#ifndef LLVM_CLANG_FRONTEND_INIT_HEADER_SEARCH_H_
+#define LLVM_CLANG_FRONTEND_INIT_HEADER_SEARCH_H_
 
 #include <string>
 #include <vector>

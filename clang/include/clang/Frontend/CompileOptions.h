@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_COMPILEOPTIONS_H
-#define LLVM_CLANG_COMPILEOPTIONS_H
+#ifndef LLVM_CLANG_FRONTEND_COMPILEOPTIONS_H
+#define LLVM_CLANG_FRONTEND_COMPILEOPTIONS_H
 
 namespace clang {
 

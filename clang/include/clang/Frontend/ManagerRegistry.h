@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_MANAGER_REGISTRY_H
-#define LLVM_CLANG_MANAGER_REGISTRY_H
+#ifndef LLVM_CLANG_FRONTEND_MANAGER_REGISTRY_H
+#define LLVM_CLANG_FRONTEND_MANAGER_REGISTRY_H
 
 #include "clang/Analysis/PathSensitive/GRState.h"
 

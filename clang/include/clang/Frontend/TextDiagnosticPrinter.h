@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TEXT_DIAGNOSTIC_PRINTER_H_
-#define TEXT_DIAGNOSTIC_PRINTER_H_
+#ifndef LLVM_CLANG_FRONTEND_TEXT_DIAGNOSTIC_PRINTER_H_
+#define LLVM_CLANG_FRONTEND_TEXT_DIAGNOSTIC_PRINTER_H_
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"

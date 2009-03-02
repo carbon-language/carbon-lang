@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DRIVER_TEXT_DIAGNOSTIC_BUFFER_H_
-#define DRIVER_TEXT_DIAGNOSTIC_BUFFER_H_
+#ifndef LLVM_CLANG_FRONTEND_TEXT_DIAGNOSTIC_BUFFER_H_
+#define LLVM_CLANG_FRONTEND_TEXT_DIAGNOSTIC_BUFFER_H_
 
 #include "clang/Basic/Diagnostic.h"
 #include <vector>
