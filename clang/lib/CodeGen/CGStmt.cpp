@@ -1003,7 +1003,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::InlineAsm *IA = 
     llvm::InlineAsm::get(FTy, AsmString, Constraints, 
                          S.isVolatile() || S.getNumOutputs() == 0);
-  llvm::Value *Result = Builder.CreateCall(IA, Args.begin(), Args.end(), "");
+  llvm::CallInst *Result
+    = Builder.CreateCall(IA, Args.begin(), Args.end(), "");
+  Result->addAttribute(~0, llvm::Attribute::NoUnwind);
+  
   if (ResultAddr) // FIXME: volatility
     Builder.CreateStore(Result, ResultAddr);
 }
