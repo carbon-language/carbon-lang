@@ -443,7 +443,7 @@ void Sema::MergeProtocolPropertiesIntoClass(Decl *CDecl,
   }
 }
 
-/// DiagnoseClassExtensionDupMethods - Check for duplicate declartation of
+/// DiagnoseClassExtensionDupMethods - Check for duplicate declaration of
 /// a class method in its extension.
 ///
 void Sema::DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT, 
