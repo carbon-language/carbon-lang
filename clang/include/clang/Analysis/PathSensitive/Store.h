@@ -112,6 +112,11 @@ public:
   ///  casted and 'CastToTy' the result type of the cast.
   virtual CastResult CastRegion(const GRState* state, const MemRegion* R,
                                 QualType CastToTy) = 0;
+
+  /// EvalBinOp - Perform pointer arithmetic.
+  virtual SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
+    return UnknownVal();
+  }
   
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this

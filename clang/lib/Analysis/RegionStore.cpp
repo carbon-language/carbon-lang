@@ -170,6 +170,8 @@ public:
   CastResult CastRegion(const GRState* state, const MemRegion* R,
                         QualType CastToTy);
 
+  SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R);
+
   /// The high level logic for this method is this:
   /// Retrieve (L)
   ///   if L has binding
@@ -549,6 +551,33 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   //                                  bound to 'x'
   const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
   return CastResult(AddRegionView(state, ViewR, R), ViewR);
+}
+
+SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
+  // Assume the base location is MemRegionVal(ElementRegion).
+
+  if (!isa<loc::MemRegionVal>(L)) {
+    return UnknownVal();
+  }
+
+  const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
+
+  const ElementRegion* ER = cast<ElementRegion>(MR);
+  SVal Idx = ER->getIndex();
+
+  nonloc::ConcreteInt* Base = dyn_cast<nonloc::ConcreteInt>(&Idx);
+  nonloc::ConcreteInt* Offset = dyn_cast<nonloc::ConcreteInt>(&R);
+
+  // Only support concrete integer indexes for now.
+  if (Base && Offset) {
+    SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, *Offset);
+
+    const MemRegion* NewER = MRMgr.getElementRegion(NewIdx, 
+                                                    ER->getArrayRegion());
+    return Loc::MakeVal(NewER);
+
+  } else
+    return UnknownVal();
 }
 
 SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {

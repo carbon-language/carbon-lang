@@ -265,7 +265,8 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
 
 SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
                              Loc L, NonLoc R) {  
-  return UnknownVal();
+  // Delegate pointer arithmetic to store manager.
+  return Eng.getStoreManager().EvalBinOp(Op, L, R);
 }
 
 // Equality operators for Locs.
