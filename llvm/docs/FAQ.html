@@ -48,6 +48,7 @@
   <li>I've built LLVM and am testing it, but the tests freeze.</li>
   <li>Why do test results differ when I perform different types of builds?</li>
   <li>Compiling LLVM with GCC 3.3.2 fails, what should I do?</li>
+  <li>Compiling LLVM with GCC succeeds, but the resulting tools do not work, what can be wrong?</li>
   <li>When I use the test suite, all of the C Backend tests fail.  What is
       wrong?</li>
   <li>After Subversion update, rebuilding gives the error "No rule to make
@@ -353,6 +354,17 @@ build.</p>
 <div class="answer">
 <p>This is <a href="http://gcc.gnu.org/PR?13392">a bug in GCC</a>, and 
 affects projects other than LLVM.  Try upgrading or downgrading your GCC.</p>
+</div>
+
+<div class="question">
+<p>Compiling LLVM with GCC succeeds, but the resulting tools do not work, what can be wrong?</p>
+</div>
+
+<div class="answer">
+<p>Several versions of GCC have shown a weakness in miscompiling the LLVM codebase. Please
+consult your compiler version (<tt>gcc --version</tt>) to find out whether it is
+<a href="GettingStarted.html#brokengcc">broken</a>. If so, your only option is to upgrade
+GCC to a known good version.</p>
 </div>
 
 <div class="question">
