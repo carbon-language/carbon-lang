@@ -4844,8 +4844,17 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
     llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
     ExceptionAsObject = 
       CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
-    
-    CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
+
+    llvm::BasicBlock *InvokeDest = CGF.getInvokeDest();
+    if (InvokeDest) {
+      llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
+      CGF.Builder.CreateInvoke(ObjCTypes.ExceptionThrowFn,
+                               Cont, InvokeDest,
+                               &ExceptionAsObject, &ExceptionAsObject + 1);
+      CGF.EmitBlock(Cont);
+    } else
+      CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
+
     CGF.Builder.CreateUnreachable();
   } else {
     CGF.ErrorUnsupported(&S, "rethrow statement");
