@@ -1709,6 +1709,9 @@ public:
   void MergeProtocolPropertiesIntoClass(Decl *CDecl,
                                         DeclTy *MergeProtocols);
   
+  void DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT, 
+                                        ObjCInterfaceDecl *ID);
+  
   void MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
                                            ObjCProtocolDecl *PDecl);
   
