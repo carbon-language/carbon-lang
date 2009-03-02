@@ -38,14 +38,14 @@ template<> struct ilist_traits<Instruction>
     // NodeTy, which becomes the sentinel. Dereferencing the sentinel is
     // forbidden (save the ilist_node<NodeTy>) so no one will ever notice
     // the superposition.
-    return const_cast<Instruction*>(static_cast<const Instruction*>(&Sentinel));
+    return static_cast<Instruction*>(&Sentinel);
   }
   static void destroySentinel(Instruction*) {}
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
   static int getListOffset();
 private:
-  ilist_node<Instruction> Sentinel;
+  mutable ilist_node<Instruction> Sentinel;
 };
 
 /// This represents a single basic block in LLVM. A basic block is simply a

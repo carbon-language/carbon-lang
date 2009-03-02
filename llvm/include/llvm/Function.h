@@ -35,28 +35,28 @@ template<> struct ilist_traits<BasicBlock>
   // createSentinel is used to get hold of the node that marks the end of the
   // list... (same trick used here as in ilist_traits<Instruction>)
   BasicBlock *createSentinel() const {
-    return const_cast<BasicBlock*>(static_cast<const BasicBlock*>(&Sentinel));
+    return static_cast<BasicBlock*>(&Sentinel);
   }
   static void destroySentinel(BasicBlock*) {}
   static iplist<BasicBlock> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
   static int getListOffset();
 private:
-  ilist_node<BasicBlock> Sentinel;
+  mutable ilist_node<BasicBlock> Sentinel;
 };
 
 template<> struct ilist_traits<Argument>
   : public SymbolTableListTraits<Argument, Function> {
 
   Argument *createSentinel() const {
-    return const_cast<Argument*>(static_cast<const Argument*>(&Sentinel));
+    return static_cast<Argument*>(&Sentinel);
   }
   static void destroySentinel(Argument*) {}
   static iplist<Argument> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
   static int getListOffset();
 private:
-  ilist_node<Argument> Sentinel;
+  mutable ilist_node<Argument> Sentinel;
 };
 
 class Function : public GlobalValue, public Annotable,
