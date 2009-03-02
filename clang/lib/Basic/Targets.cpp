@@ -161,87 +161,6 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
 
 
 //===----------------------------------------------------------------------===//
-// Defines specific to certain architectures.
-//===----------------------------------------------------------------------===//
-
-/// getPowerPCDefines - Return a set of the PowerPC-specific #defines that are
-/// not tied to a specific subtarget.
-static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
-  // Target identification.
-  Define(Defs, "__ppc__");
-  Define(Defs, "_ARCH_PPC");
-  Define(Defs, "__POWERPC__");
-  if (is64Bit) {
-    Define(Defs, "_ARCH_PPC64");
-    Define(Defs, "_LP64");
-    Define(Defs, "__LP64__");
-    Define(Defs, "__ppc64__");
-  } else {
-    Define(Defs, "__ppc__");
-  }
-
-  // Target properties.
-  Define(Defs, "_BIG_ENDIAN");
-  Define(Defs, "__BIG_ENDIAN__");
-
-  // Subtarget options.
-  Define(Defs, "__NATURAL_ALIGNMENT__");
-  Define(Defs, "__REGISTER_PREFIX__", "");
-
-  // FIXME: Should be controlled by command line option.
-  Define(Defs, "__LONG_DOUBLE_128__");
-}
-
-/// getX86Defines - Return a set of the X86-specific #defines that are
-/// not tied to a specific subtarget.
-static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
-  // Target identification.
-  if (is64Bit) {
-    Define(Defs, "_LP64");
-    Define(Defs, "__LP64__");
-    Define(Defs, "__amd64__");
-    Define(Defs, "__amd64");
-    Define(Defs, "__x86_64");
-    Define(Defs, "__x86_64__");
-    Define(Defs, "__SSE3__");
-  } else {
-    Define(Defs, "__i386__");
-    Define(Defs, "__i386");
-    Define(Defs, "i386");
-  }
-
-  // Target properties.
-  Define(Defs, "__LITTLE_ENDIAN__");
-  
-  // Subtarget options.
-  Define(Defs, "__nocona");
-  Define(Defs, "__nocona__");
-  Define(Defs, "__tune_nocona__");
-  Define(Defs, "__SSE2_MATH__");
-  Define(Defs, "__SSE2__");
-  Define(Defs, "__SSE_MATH__");
-  Define(Defs, "__SSE__");
-  Define(Defs, "__MMX__");
-  Define(Defs, "__REGISTER_PREFIX__", "");
-}
-
-/// getARMDefines - Return a set of the ARM-specific #defines that are
-/// not tied to a specific subtarget.
-static void getARMDefines(std::vector<char> &Defs) {
-  // Target identification.
-  Define(Defs, "__arm");
-  Define(Defs, "__arm__");
-  
-  // Target properties.
-  Define(Defs, "__LITTLE_ENDIAN__");
-  
-  // Subtarget options.  [hard coded to v6 for now]
-  Define(Defs, "__ARM_ARCH_6K__");
-  Define(Defs, "__ARMEL__");
-  Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
-}
-
-//===----------------------------------------------------------------------===//
 // Specific target implementations.
 //===----------------------------------------------------------------------===//
 
@@ -261,6 +180,9 @@ public:
     Records = BuiltinInfo;
     NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
+  
+  virtual void getTargetDefines(std::vector<char> &Defines) const;
+  
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
     // This is the right definition for ABI/V4: System V.4/eabi.
@@ -301,6 +223,36 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
 #include "clang/AST/PPCBuiltins.def"
 };
+  
+  
+/// PPCTargetInfo::getTargetDefines - Return a set of the PowerPC-specific
+/// #defines that are not tied to a specific subtarget.
+void PPCTargetInfo::getTargetDefines(std::vector<char> &Defs) const {
+  // Target identification.
+  Define(Defs, "__ppc__");
+  Define(Defs, "_ARCH_PPC");
+  Define(Defs, "__POWERPC__");
+  if (PointerWidth == 64) {
+    Define(Defs, "_ARCH_PPC64");
+    Define(Defs, "_LP64");
+    Define(Defs, "__LP64__");
+    Define(Defs, "__ppc64__");
+  } else {
+    Define(Defs, "__ppc__");
+  }
+  
+  // Target properties.
+  Define(Defs, "_BIG_ENDIAN");
+  Define(Defs, "__BIG_ENDIAN__");
+  
+  // Subtarget options.
+  Define(Defs, "__NATURAL_ALIGNMENT__");
+  Define(Defs, "__REGISTER_PREFIX__", "");
+  
+  // FIXME: Should be controlled by command line option.
+  Define(Defs, "__LONG_DOUBLE_128__");
+}
+
 
 const char * const PPCTargetInfo::GCCRegNames[] = {
   "0", "1", "2", "3", "4", "5", "6", "7",
@@ -380,9 +332,6 @@ public:
     DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    getPowerPCDefines(Defines, false);
-  }
 };
 } // end anonymous namespace.
 
@@ -393,9 +342,6 @@ public:
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
-  }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    getPowerPCDefines(Defines, true);
   }
 };
 } // end anonymous namespace.
@@ -497,6 +443,7 @@ public:
   virtual const char *getClobbers() const {
     return "~{dirflag},~{fpsr},~{flags}";
   }
+  virtual void getTargetDefines(std::vector<char> &Defines) const;
   
   virtual int HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
                                   std::string &ErrorReason);
@@ -512,6 +459,40 @@ int X86TargetInfo::HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
     return -1;
   return 0;
 }
+
+/// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines
+/// that are not tied to a specific subtarget.
+void X86TargetInfo::getTargetDefines(std::vector<char> &Defs) const {
+  // Target identification.
+  if (PointerWidth == 64) {
+    Define(Defs, "_LP64");
+    Define(Defs, "__LP64__");
+    Define(Defs, "__amd64__");
+    Define(Defs, "__amd64");
+    Define(Defs, "__x86_64");
+    Define(Defs, "__x86_64__");
+    Define(Defs, "__SSE3__");
+  } else {
+    Define(Defs, "__i386__");
+    Define(Defs, "__i386");
+    Define(Defs, "i386");
+  }
+  
+  // Target properties.
+  Define(Defs, "__LITTLE_ENDIAN__");
+  
+  // Subtarget options.
+  Define(Defs, "__nocona");
+  Define(Defs, "__nocona__");
+  Define(Defs, "__tune_nocona__");
+  Define(Defs, "__SSE2_MATH__");
+  Define(Defs, "__SSE2__");
+  Define(Defs, "__SSE_MATH__");
+  Define(Defs, "__SSE__");
+  Define(Defs, "__MMX__");
+  Define(Defs, "__REGISTER_PREFIX__", "");
+}
+  
   
 bool
 X86TargetInfo::validateAsmConstraint(const char *&Name,
@@ -575,9 +556,6 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
-  }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    getX86Defines(Defines, false);
   }
 };
 } // end anonymous namespace
@@ -708,9 +686,6 @@ public:
            "  void* reg_save_area;"
            "} __builtin_va_list[1];";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    getX86Defines(Defines, true);
-  }
 };
 } // end anonymous namespace
 
@@ -769,8 +744,18 @@ public:
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    getARMDefines(Defines);
+  virtual void getTargetDefines(std::vector<char> &Defs) const {
+    // Target identification.
+    Define(Defs, "__arm");
+    Define(Defs, "__arm__");
+    
+    // Target properties.
+    Define(Defs, "__LITTLE_ENDIAN__");
+    
+    // Subtarget options.  [hard coded to v6 for now]
+    Define(Defs, "__ARM_ARCH_6K__");
+    Define(Defs, "__ARMEL__");
+    Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
