@@ -418,7 +418,13 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     else
       os << "Path" << num;
     
-    os << "\" class=\"msg\" style=\"margin-left:" << PosNo << "ex";
+    os << "\" class=\"msg";
+    switch (P.getKind()) {
+      default: break;
+      case PathDiagnosticPiece::Event: os << " msgEvent"; break;
+      case PathDiagnosticPiece::ControlFlow: os << " msgControl"; break;
+    }    
+    os << "\" style=\"margin-left:" << PosNo << "ex";
     if (em < max_line/2) os << "; max-width:" << em << "em";
     os << "\">";
     
