@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Exception classes for LLVMC.
+//  Exception classes for llvmc.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,6 +18,8 @@
 
 namespace llvmc {
 
+  /// error_code - This gets thrown during the compilation process if a tool
+  /// invocation returns a non-zero exit code.
   class error_code: public std::runtime_error {
     int Code_;
   public:
