@@ -517,12 +517,35 @@ Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences."));
 static llvm::cl::opt<bool>
 Ansi("ansi", llvm::cl::desc("Equivalent to specifying -std=c89."));
 
+
+static llvm::cl::list<std::string>
+TargetOptions("m", llvm::cl::Prefix, llvm::cl::value_desc("option"),
+          llvm::cl::desc("Target-specific options, such as -msse3"));
+
+
 // FIXME: add:
 //   -fdollars-in-identifiers
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target) {
   // Allow the target to set the default the langauge options as it sees fit.
   Target->getDefaultLangOptions(Options);
+  
+  // If the user specified any -mfoo options, pass them to the target for
+  // validation and processing.
+  if (!TargetOptions.empty()) {
+    std::string ErrorStr;
+    int Opt = Target->HandleTargetOptions(&TargetOptions[0],
+                                          TargetOptions.size(), ErrorStr);
+    if (Opt != -1) {
+      if (ErrorStr.empty())
+        fprintf(stderr, "invalid command line option '%s'\n",
+                TargetOptions[Opt].c_str());
+      else
+        fprintf(stderr, "command line option '%s': %s\n",
+                TargetOptions[Opt].c_str(), ErrorStr.c_str());
+      exit(1);
+    }
+  }
   
   if (Ansi) // "The -ansi option is equivalent to -std=c89."
     LangStd = lang_c89;
