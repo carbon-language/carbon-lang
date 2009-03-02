@@ -43,14 +43,19 @@ public:
 // GCC abstraction
 //
 class GCC {
-  sys::Path GCCPath;          // The path to the gcc executable
-  sys::Path RemoteClientPath; // The path to the rsh / ssh executable
-  GCC(const sys::Path &gccPath, const sys::Path &RemotePath)
-    : GCCPath(gccPath), RemoteClientPath(RemotePath) { }
+  sys::Path GCCPath;                // The path to the gcc executable.
+  sys::Path RemoteClientPath;       // The path to the rsh / ssh executable.
+  std::vector<std::string> gccArgs; // GCC-specific arguments.
+  GCC(const sys::Path &gccPath, const sys::Path &RemotePath,
+      const std::vector<std::string> *GCCArgs)
+    : GCCPath(gccPath), RemoteClientPath(RemotePath) {
+    if (GCCArgs) gccArgs = *GCCArgs;
+  }
 public:
   enum FileType { AsmFile, CFile };
 
-  static GCC *create(const std::string &ProgramPath, std::string &Message);
+  static GCC *create(const std::string &ProgramPath, std::string &Message,
+                     const std::vector<std::string> *Args);
 
   /// ExecuteProgram - Execute the program specified by "ProgramFile" (which is
   /// either a .s file, or a .c file, specified by FileType), with the specified
@@ -86,9 +91,11 @@ public:
 class AbstractInterpreter {
 public:
   static CBE *createCBE(const std::string &ProgramPath, std::string &Message,
-                        const std::vector<std::string> *Args = 0);
+                        const std::vector<std::string> *Args = 0,
+                        const std::vector<std::string> *GCCArgs = 0);
   static LLC *createLLC(const std::string &ProgramPath, std::string &Message,
-                        const std::vector<std::string> *Args = 0);
+                        const std::vector<std::string> *Args = 0,
+                        const std::vector<std::string> *GCCArgs = 0);
 
   static AbstractInterpreter* createLLI(const std::string &ProgramPath,
                                         std::string &Message,
@@ -139,14 +146,15 @@ public:
 // CBE Implementation of AbstractIntepreter interface
 //
 class CBE : public AbstractInterpreter {
-  sys::Path LLCPath;          // The path to the `llc' executable
-  std::vector<std::string> ToolArgs; // Extra args to pass to LLC
+  sys::Path LLCPath;                 // The path to the `llc' executable.
+  std::vector<std::string> ToolArgs; // Extra args to pass to LLC.
   GCC *gcc;
 public:
   CBE(const sys::Path &llcPath, GCC *Gcc,
-      const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
+      const std::vector<std::string> *Args)
+    : LLCPath(llcPath), gcc(Gcc) {
     ToolArgs.clear ();
-    if (Args) { ToolArgs = *Args; }
+    if (Args) ToolArgs = *Args;
   }
   ~CBE() { delete gcc; }
 
@@ -180,14 +188,18 @@ public:
 // LLC Implementation of AbstractIntepreter interface
 //
 class LLC : public AbstractInterpreter {
-  std::string LLCPath;          // The path to the LLC executable
-  std::vector<std::string> ToolArgs; // Extra args to pass to LLC
+  std::string LLCPath;               // The path to the LLC executable.
+  std::vector<std::string> ToolArgs; // Extra args to pass to LLC.
+  std::vector<std::string> gccArgs;  // Extra args to pass to GCC.
   GCC *gcc;
 public:
   LLC(const std::string &llcPath, GCC *Gcc,
-    const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
-    ToolArgs.clear ();
-    if (Args) { ToolArgs = *Args; }
+      const std::vector<std::string> *Args,
+      const std::vector<std::string> *GCCArgs)
+    : LLCPath(llcPath), gcc(Gcc) {
+    ToolArgs.clear();
+    if (Args) ToolArgs = *Args;
+    if (GCCArgs) gccArgs = *GCCArgs;
   }
   ~LLC() { delete gcc; }
 

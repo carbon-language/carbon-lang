@@ -344,7 +344,8 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
   FileRemover OutFileRemover(OutputAsmFile);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
-  GCCArgs.insert(GCCArgs.end(),SharedLibs.begin(),SharedLibs.end());
+  GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
+  GCCArgs.insert(GCCArgs.end(), gccArgs.begin(), gccArgs.end());
 
   // Assuming LLC worked, compile the result with GCC and run it.
   return gcc->ExecuteProgram(OutputAsmFile.toString(), Args, GCC::AsmFile,
@@ -356,7 +357,8 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
 ///
 LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
                                     std::string &Message,
-                                    const std::vector<std::string> *Args) {
+                                    const std::vector<std::string> *Args,
+                                    const std::vector<std::string> *GCCArgs) {
   std::string LLCPath = FindExecutable("llc", ProgramPath).toString();
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
@@ -364,12 +366,12 @@ LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
   }
 
   Message = "Found llc: " + LLCPath + "\n";
-  GCC *gcc = GCC::create(ProgramPath, Message);
+  GCC *gcc = GCC::create(ProgramPath, Message, GCCArgs);
   if (!gcc) {
     std::cerr << Message << "\n";
     exit(1);
   }
-  return new LLC(LLCPath, gcc, Args);
+  return new LLC(LLCPath, gcc, Args, GCCArgs);
 }
 
 //===---------------------------------------------------------------------===//
@@ -509,7 +511,8 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
   FileRemover CFileRemove(OutputCFile);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
-  GCCArgs.insert(GCCArgs.end(),SharedLibs.begin(),SharedLibs.end());
+  GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
+
   return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile,
                              InputFile, OutputFile, GCCArgs,
                              Timeout, MemoryLimit);
@@ -519,7 +522,8 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
 ///
 CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
                                     std::string &Message,
-                                    const std::vector<std::string> *Args) {
+                                    const std::vector<std::string> *Args,
+                                    const std::vector<std::string> *GCCArgs) {
   sys::Path LLCPath = FindExecutable("llc", ProgramPath);
   if (LLCPath.isEmpty()) {
     Message =
@@ -528,7 +532,7 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
   }
 
   Message = "Found llc: " + LLCPath.toString() + "\n";
-  GCC *gcc = GCC::create(ProgramPath, Message);
+  GCC *gcc = GCC::create(ProgramPath, Message, GCCArgs);
   if (!gcc) {
     std::cerr << Message << "\n";
     exit(1);
@@ -550,6 +554,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   std::vector<const char*> GCCArgs;
 
   GCCArgs.push_back(GCCPath.c_str());
+
+  for (std::vector<std::string>::const_iterator
+         I = gccArgs.begin(), E = gccArgs.end(); I != E; ++I)
+    GCCArgs.push_back(I->c_str());
 
   // Specify -x explicitly in case the extension is wonky
   GCCArgs.push_back("-x");
@@ -725,7 +733,8 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 
 /// create - Try to find the `gcc' executable
 ///
-GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
+GCC *GCC::create(const std::string &ProgramPath, std::string &Message,
+                 const std::vector<std::string> *Args) {
   sys::Path GCCPath = FindExecutable("gcc", ProgramPath);
   if (GCCPath.isEmpty()) {
     Message = "Cannot find `gcc' in executable directory or PATH!\n";
@@ -737,5 +746,5 @@ GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
     RemoteClientPath = FindExecutable(RemoteClient.c_str(), ProgramPath);
 
   Message = "Found gcc: " + GCCPath.toString() + "\n";
-  return new GCC(GCCPath, RemoteClientPath);
+  return new GCC(GCCPath, RemoteClientPath, Args);
 }
