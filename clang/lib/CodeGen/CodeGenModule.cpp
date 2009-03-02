@@ -334,7 +334,7 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
                              FD->isInline(), F, true);
   }
                              
-  if (!Features.Exceptions)
+  if (!Features.Exceptions && !Features.ObjCNonFragileABI)
     F->addFnAttr(llvm::Attribute::NoUnwind);  
 
   if (D->getAttr<AlwaysInlineAttr>())
