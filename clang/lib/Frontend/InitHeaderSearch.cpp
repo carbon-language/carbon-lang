@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
+#include <cstdio>
 #include <vector>
 using namespace clang;
 

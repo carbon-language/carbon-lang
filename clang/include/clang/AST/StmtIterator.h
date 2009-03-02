@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/iterator.h"
 #include <cassert>
+#include <stdint.h>
 
 namespace clang {
 

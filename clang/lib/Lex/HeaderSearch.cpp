@@ -17,6 +17,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/SmallString.h"
+#include <cstdio>
 using namespace clang;
 
 HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {

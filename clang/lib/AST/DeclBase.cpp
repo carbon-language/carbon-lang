@@ -20,6 +20,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include <algorithm>
+#include <cstdio>
 #include <functional>
 #include <vector>
 using namespace clang;

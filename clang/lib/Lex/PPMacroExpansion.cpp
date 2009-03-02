@@ -18,6 +18,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include <cstdio>
 #include <ctime>
 using namespace clang;
 

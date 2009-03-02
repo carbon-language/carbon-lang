@@ -38,6 +38,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
+#include <cstdio>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

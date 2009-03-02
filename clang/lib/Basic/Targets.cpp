@@ -497,7 +497,21 @@ public:
   virtual const char *getClobbers() const {
     return "~{dirflag},~{fpsr},~{flags}";
   }
+  
+  virtual int HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
+                                  std::string &ErrorReason);
 };
+
+/// HandleTargetOptions - Handle target-specific options like -msse2 and
+/// friends.  An array of arguments is passed in: if they are all valid, this
+/// should handle them and return -1.  If there is an error, the index of the
+/// invalid argument should be returned along with an optional error string.
+int X86TargetInfo::HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
+                                       std::string &ErrorReason) {
+  if (NumStrs == 0)
+    return -1;
+  return 0;
+}
   
 bool
 X86TargetInfo::validateAsmConstraint(const char *&Name,

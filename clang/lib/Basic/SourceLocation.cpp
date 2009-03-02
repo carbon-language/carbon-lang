@@ -17,6 +17,7 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <cstdio>
 
 using namespace clang;
 
