@@ -171,7 +171,7 @@ The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
 a JVM and a CLI Virtual Machines (Microsoft .NET is an
 implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
 
-<p>Following LLVM 2.5, VMKit has its first release that you can find on its
+<p>Following LLVM 2.5, VMKit has its second release that you can find on its
 <a href="http://vmkit.llvm.org/releases/">webpage</a>. The release includes
 bug fixes, cleanup and new features. The major changes are:</p>
 
@@ -189,7 +189,13 @@ a low performance penalty on applications without exceptions, but it is a big
 gain for exception-intensive applications. For example the jack benchmark in
 Spec JVM98 is 6x faster (performance gain of 83%).</li>
 
-<li>New support for OSX/X64, Linux/X64 (with the Boehm GC), Linux/ppc32.</li>
+<li>User-level management of thread stacks, so that thread local data access
+at runtime is fast and portable. </li>
+
+<li>Implementation of biased locking for faster object synchronizations at
+runtime.</li>
+
+<li>New support for OSX/X64, Linux/X64 (with the Boehm GC) and Linux/ppc32.</li>
 
 </ul>
 </div>
