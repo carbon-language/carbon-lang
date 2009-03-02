@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Error.h"
 #include "llvm/CompilerDriver/CompilationGraph.h"
+#include "llvm/CompilerDriver/Error.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"

@@ -9,11 +9,12 @@
 
 LEVEL = ../..
 
-BUILTIN_PLUGINS = Base Clang
-DRIVER_NAME = llvmc
-DIRS = plugins driver
+# The current plan is to make the user copy the skeleton project and change only
+# this file (and plugins/UserPlugin, of course).
 
-export BUILTIN_PLUGINS
-export DRIVER_NAME
+export LLVMC_BASED_DRIVER_NAME = llvmc
+export LLVMC_BUILTIN_PLUGINS = Base Clang
+
+DIRS = plugins driver
 
 include $(LEVEL)/Makefile.common

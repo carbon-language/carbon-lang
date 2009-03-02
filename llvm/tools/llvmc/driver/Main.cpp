@@ -1,4 +1,4 @@
-//===--- llvmc.cpp - The LLVM Compiler Driver -------------------*- C++ -*-===//
+//===--- Main.cpp - The LLVM Compiler Driver -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,9 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Error.h"
-
 #include "llvm/CompilerDriver/CompilationGraph.h"
+#include "llvm/CompilerDriver/Error.h"
 #include "llvm/CompilerDriver/Plugin.h"
 
 #include "llvm/System/Path.h"

@@ -9,7 +9,7 @@
 LEVEL = ..
 
 PARALLEL_DIRS = VMCore AsmParser Bitcode Archive Analysis Transforms CodeGen \
-                Target ExecutionEngine Debugger Linker
+                Target ExecutionEngine Debugger Linker CompilerDriver
 
 include $(LEVEL)/Makefile.common
 
