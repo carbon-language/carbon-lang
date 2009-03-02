@@ -185,6 +185,21 @@ bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 // llvm.dbg.region.end calls, and any globals they point to if now dead.
 bool StripDebugInfo(Module &M) {
 
+  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+  findUsedValues(M, llvmUsedValues);
+
+  // Delete all dbg variables.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+       I != E; ++I) {
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
+    if (!GV) continue;
+    if (!GV->use_empty() && llvmUsedValues.count(I) == 0) {
+      if (strncmp(GV->getNameStart(), "llvm.dbg", 8) == 0) {
+        GV->replaceAllUsesWith(UndefValue::get(GV->getType()));
+      }
+    }
+  }
+
   Function *FuncStart = M.getFunction("llvm.dbg.func.start");
   Function *StopPoint = M.getFunction("llvm.dbg.stoppoint");
   Function *RegionStart = M.getFunction("llvm.dbg.region.start");
@@ -262,9 +277,6 @@ bool StripDebugInfo(Module &M) {
     }
     Declare->eraseFromParent();
   }
-
-  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
-  findUsedValues(M, llvmUsedValues);
 
   // llvm.dbg.compile_units and llvm.dbg.subprograms are marked as linkonce
   // but since we are removing all debug information, make them internal now.
