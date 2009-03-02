@@ -405,7 +405,7 @@ def main():
                      action="store_false", default=True)
     group.add_option("", "--vector-types", dest="vectorTypes",
                      help="comma separated list of vector types (e.g., v2i32) [default %default]",
-                     action="store", type=str, default='v1i64, v2i32, v4i16, v8i8, v2i64, v4i32, v8i16, v16i8, v2f64, v4f32', metavar="N")
+                     action="store", type=str, default='v2i16, v1i64, v2i32, v4i16, v8i8, v2f32, v2i64, v4i32, v8i16, v16i8, v2f64, v4f32, v16f32', metavar="N")
 
     group.add_option("", "--max-args", dest="functionMaxArgs",
                      help="maximum number of arguments per function [default %default]",
