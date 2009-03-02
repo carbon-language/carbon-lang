@@ -3167,13 +3167,16 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
   assert(BVN != 0 && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
 
-  // If this is a splat (repetition) of a value across the whole vector, return
-  // the smallest size that splats it.  For example, "0x01010101010101..." is a
-  // splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and
-  // SplatSize = 1 byte.
-  unsigned SplatBits, SplatUndef, SplatSize;
+  // Check if this is a splat of a constant value.
+  APInt APSplatBits, APSplatUndef;
+  unsigned SplatBitSize;
   bool HasAnyUndefs;
-  if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatSize, HasAnyUndefs)) {
+  if (BVN->isConstantSplat(APSplatBits, APSplatUndef, SplatBitSize,
+                           HasAnyUndefs) &&
+      SplatBitSize <= 32) {
+    unsigned SplatBits = APSplatBits.getZExtValue();
+    unsigned SplatUndef = APSplatUndef.getZExtValue();
+    unsigned SplatSize = SplatBitSize / 8;
 
     // First, handle single instruction cases.
 
@@ -3189,7 +3192,8 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     }
 
     // If the sign extended value is in the range [-16,15], use VSPLTI[bhw].
-    int32_t SextVal= int32_t(SplatBits << (32-8*SplatSize)) >> (32-8*SplatSize);
+    int32_t SextVal= (int32_t(SplatBits << (32-SplatBitSize)) >>
+                      (32-SplatBitSize));
     if (SextVal >= -16 && SextVal <= 15)
       return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG, dl);
 
@@ -3221,7 +3225,6 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     }
 
     // Check to see if this is a wide variety of vsplti*, binop self cases.
-    unsigned SplatBitSize = SplatSize*8;
     static const signed char SplatCsts[] = {
       -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
       -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
