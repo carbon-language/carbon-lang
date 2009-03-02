@@ -178,7 +178,7 @@ bug fixes, cleanup and new features. The major changes are:</p>
 <ul>
 
 <li>Ahead of Time compiler: compiles .class files to llvm .bc. VMKit uses this
-functionality to native compile the standard classes (eg java.lang.String).
+functionality to native compile the standard classes (e.g. java.lang.String).
 Users can compile AOT .class files into dynamic libraries and run them with the
 help of VMKit.</li>
 
@@ -489,7 +489,7 @@ using SSE instructions.</li>
 <li>The X86 backend now supports using address space #256 in LLVM IR as a way of
 performing memory references off the GS segment register.  This allows a
 front-end to take advantage of very low-level programming techniques when
-targetting X86 CPUs. See <tt>test/CodeGen/X86/movgs.ll</tt> for a simple
+targeting X86 CPUs. See <tt>test/CodeGen/X86/movgs.ll</tt> for a simple
 example.</li>
 
 <li>The X86 backend now supports a <tt>-disable-mmx</tt> command line option to
@@ -526,7 +526,7 @@ example.</li>
 types.</li>
 <li>Function calls involving basic types work now.</li>
 <li>Support for integer arrays.</li>
-<li>Compiler can now emit libcalls for operations not support by m/c
+<li>Compiler can now emit libcalls for operations not supported by m/c
 instructions.</li>
 <li>Support for both data and ROM address spaces.</li>
 </ul>
