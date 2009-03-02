@@ -59,8 +59,13 @@ options to B<bugpoint> itself. (See B<--args>, above.)
 
 =item B<--safe-tool-args> I<tool args>
 
-Pass all arguments specified after --safe-tool-args to the "safe" execution
+Pass all arguments specified after B<--safe-tool-args> to the "safe" execution
 tool.
+
+=item B<--gcc-tool-args> I<gcc tool args>
+
+Pass all arguments specified after B<--gcc-tool-args> to the invocation of
+B<gcc>.
 
 =item B<--disable-{dce,simplifycfg}>
 
