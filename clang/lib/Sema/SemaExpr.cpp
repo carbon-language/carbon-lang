@@ -627,26 +627,41 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (II && getCurMethodDecl()) {
     // There are two cases to handle here.  1) scoped lookup could have failed,
     // in which case we should look for an ivar.  2) scoped lookup could have
-    // found a decl, but that decl is outside the current method (i.e. a global
-    // variable).  In these two cases, we do a lookup for an ivar with this
-    // name, if the lookup suceeds, we replace it our current decl.
+    // found a decl, but that decl is outside the current instance method (i.e. 
+    // a global variable).  In these two cases, we do a lookup for an ivar with 
+    // this name, if the lookup sucedes, we replace it our current decl.
     if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
         // Check if referencing a field with __attribute__((deprecated)).
         if (DiagnoseUseOfDecl(IV, Loc))
           return ExprError();
-
-        // FIXME: This should use a new expr for a direct reference, don't turn
-        // this into Self->ivar, just return a BareIVarExpr or something.
-        IdentifierInfo &II = Context.Idents.get("self");
-        OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
-        ObjCIvarRefExpr *MRef = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                  Loc, static_cast<Expr*>(SelfExpr.release()),
-                                  true, true);
-        Context.setFieldDecl(IFace, IV, MRef);
-        return Owned(MRef);
+        bool IsClsMethod = getCurMethodDecl()->isClassMethod();
+        // If a class method attemps to use a free standing ivar, this is
+        // an error.
+        if (IsClsMethod && D && !D->isDefinedOutsideFunctionOrMethod())
+           return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
+                           << IV->getDeclName());
+        // If a class method uses a global variable, even if an ivar with
+        // same name exists, use the global.
+        if (!IsClsMethod) {
+          // FIXME: This should use a new expr for a direct reference, don't turn
+          // this into Self->ivar, just return a BareIVarExpr or something.
+          IdentifierInfo &II = Context.Idents.get("self");
+          OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
+          ObjCIvarRefExpr *MRef = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
+                                    Loc, static_cast<Expr*>(SelfExpr.release()),
+                                    true, true);
+          Context.setFieldDecl(IFace, IV, MRef);
+          return Owned(MRef);
+        }
       }
+    }
+    else if (getCurMethodDecl()->isInstanceMethod()) {
+      // We should warn if a local variable hides an ivar.
+      ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II))
+        Diag(Loc, diag::warn_ivar_use_hidden)<<IV->getDeclName();
     }
     // Needed to implement property "super.method" notation.
     if (D == 0 && II->isStr("super")) {

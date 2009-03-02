@@ -1436,4 +1436,8 @@ DIAG(err_invalid_protocol_qualifiers, ERROR,
      "invalid protocol qualifiers on non-ObjC type")
 DIAG(err_qualified_class_unsupported, ERROR,
      "protocol qualified 'Class' is unsupported")
+DIAG(warn_ivar_use_hidden, WARNING,
+     "local declaration of %0 hides instance variable")
+DIAG(error_ivar_use_in_class_method, ERROR,
+     "instance variable %0 accessed in class method")
 
