@@ -11,4 +11,4 @@ LEVEL = ../..
 
 LLVMC_PLUGIN = Hello
 
-include $(LEVEL)/Makefile.llvmc
+include $(LEVEL)/Makefile
