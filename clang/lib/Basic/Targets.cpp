@@ -415,8 +415,12 @@ const TargetInfo::GCCRegAlias GCCRegAliases[] = {
 // X86 target abstract base class; x86-32 and x86-64 are very close, so
 // most of the implementation can be shared.
 class X86TargetInfo : public TargetInfo {
+  enum X86SSEEnum {
+    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
+  } SSELevel;
 public:
-  X86TargetInfo(const std::string& triple) : TargetInfo(triple) {
+  X86TargetInfo(const std::string& triple) 
+    : TargetInfo(triple), SSELevel(SSE2) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -485,12 +489,29 @@ void X86TargetInfo::getTargetDefines(std::vector<char> &Defs) const {
   Define(Defs, "__nocona");
   Define(Defs, "__nocona__");
   Define(Defs, "__tune_nocona__");
-  Define(Defs, "__SSE2_MATH__");
-  Define(Defs, "__SSE2__");
-  Define(Defs, "__SSE_MATH__");
-  Define(Defs, "__SSE__");
-  Define(Defs, "__MMX__");
   Define(Defs, "__REGISTER_PREFIX__", "");
+
+  // Each case falls through to the previous one here.
+  switch (SSELevel) {
+  case SSE42:
+    Define(Defs, "__SSE4_2__");
+  case SSE41:
+    Define(Defs, "__SSE4_1__");
+  case SSSE3:
+    Define(Defs, "__SSSE3__");
+  case SSE3:
+    Define(Defs, "__SSE3__");
+  case SSE2:
+    Define(Defs, "__SSE2__");
+    Define(Defs, "__SSE2_MATH__");  // -mfp-math=sse always implied.
+  case SSE1:
+    Define(Defs, "__SSE__");
+    Define(Defs, "__SSE_MATH__");   // -mfp-math=sse always implied.
+  case MMX:
+    Define(Defs, "__MMX__");
+  case NoMMXSSE:
+    break;
+  }
 }
   
   
