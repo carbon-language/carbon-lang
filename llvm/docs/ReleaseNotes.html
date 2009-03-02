@@ -470,36 +470,38 @@ code size of JIT compilers by not requiring them to be linked in.</li>
 </p>
 
 <ul>
-<li>The "<a href="LangRef.html#int_returnaddress">llvm.returnaddress</a>"
-intrinsic (which is used to implement "__builtin_return_address") now supports
-non-zero stack depths on X86.</li>
+<li>The <tt><a href="LangRef.html#int_returnaddress">llvm.returnaddress</a></tt>
+intrinsic (which is used to implement <tt>__builtin_return_address</tt>) now
+supports non-zero stack depths on X86.</li>
 
 <li>The X86 backend now supports code generation of vector shift operations
 using SSE instructions.</li>
 
-<li>X86-64 code generation now takes advantage of red zone (unless
--mno-red-zone option is specified).</li>
+<li>X86-64 code generation now takes advantage of red zone, unless the
+<tt>-mno-red-zone</tt> option is specified.</li>
 
 <li>The X86 backend now supports using address space #256 in LLVM IR as a way of
 performing memory references off the GS segment register.  This allows a
 front-end to take advantage of very low-level programming techniques when
-targetting X86 CPUs.  See test/CodeGen/X86/movgs.ll for a simple example.</li>
+targetting X86 CPUs. See <tt>test/CodeGen/X86/movgs.ll</tt> for a simple
+example.</li>
 
 <li>The X86 backend now supports a <tt>-disable-mmx</tt> command line option to
   prevent use of MMX even on chips that support it.  This is important for cases
-  where code does not contain the proper "llvm.x86.mmx.emms" intrinsics.</li>
+  where code does not contain the proper <tt>llvm.x86.mmx.emms</tt>
+  intrinsics.</li>
 
-<li>The X86 JIT now detects the new Intel "<a 
-   href="http://en.wikipedia.org/wiki/Intel_Core_i7">Core i7</a>" and <a
-   href="http://en.wikipedia.org/wiki/Intel_Atom">Atom</a>" chips,
+<li>The X86 JIT now detects the new Intel <a 
+   href="http://en.wikipedia.org/wiki/Intel_Core_i7">Core i7</a> and <a
+   href="http://en.wikipedia.org/wiki/Intel_Atom">Atom</a> chips;
     auto-configuring itself appropriately for the features of these chips.</li>
     
 <li>The JIT now supports exception handling constructs on Linux/X86-64 and
     Darwin/x86-64.</li>
+
 <li>The JIT supports Thread Local Storage (TLS) on Linux/X86-32 but not yet on
     X86-64.</li>
 </ul>
-
 
 </div>
 
@@ -518,15 +520,16 @@ targetting X86 CPUs.  See test/CodeGen/X86/movgs.ll for a simple example.</li>
 types.</li>
 <li>Function calls involving basic types work now.</li>
 <li>Support for integer arrays.</li>
-<li>Compiler can now emit libcalls for operations not support by m/c insns.</li>
-<li>Support for both data and rom address spaces.</li>
+<li>Compiler can now emit libcalls for operations not support by m/c
+instructions.</li>
+<li>Support for both data and ROM address spaces.</li>
 </ul>
 
 <p>Things not yet supported:</p>
 
 <ul>
 <li>Floating point.</li>
-<li>Passing/returning aggregate types to/from functions.</li>
+<li>Passing/returning aggregate types to and from functions.</li>
 <li>Variable arguments.</li>
 <li>Indirect function calls.</li>
 <li>Interrupts/programs.</li>
@@ -552,18 +555,18 @@ types.</li>
  by default. The command <tt>llvmc --clang</tt> can be now used as a
  synonym to <tt>ccc</tt>.</li>
 
-<li>There is now a <tt>--check-graph</tt> option which is supposed to catch
+<li>There is now a <tt>--check-graph</tt> option, which is supposed to catch
  common errors like multiple default edges, mismatched output/input language
  names and cycles. In general, these checks can't be done at compile-time
  because of the need to support plugins.</li>
 
 <li>Plugins are now more flexible and can refer to compilation graph nodes and
  options defined in other plugins. To manage dependencies, a priority-sorting
- mechanism was introduced. This change affects the TableGen file syntax; see the
+ mechanism was introduced. This change affects the TableGen file syntax. See the
  documentation for details.</li>
 
 <li>Hooks can now be provided with arguments. The syntax is "<tt>$CALL(MyHook,
- 'Arg1', 'Arg2', 'Arg #3')</tt>".</li>
+ 'Arg1', 'Arg2', 'Arg3')</tt>".</li>
 
 <li>A new option type: multi-valued option, for options that take more than one
  argument (for example, "<tt>-foo a b c</tt>").</li>
@@ -595,16 +598,13 @@ from the previous release.</p>
 
 <ul>
 
-<li>llvm-gcc defaults to -fno-math-errno on all X86 targets.</li>
+<li>llvm-gcc defaults to <tt>-fno-math-errno</tt> on all X86 targets.</li>
+
 </ul>
 
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
 API changes are:</p>
-
-<ul>
-<li>?</li>
-</ul>
 
 <ul>
 <li>?</li>
@@ -675,8 +675,8 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
 <li>The MSIL, IA64, Alpha, SPU, MIPS, and PIC16 backends are experimental.</li>
-<li>The llc "<tt>-filetype=asm</tt>" (the default) is the only supported
-    value for this option.</li>
+<li>The <tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
+    supported value for this option.</li>
 </ul>
 
 </div>
