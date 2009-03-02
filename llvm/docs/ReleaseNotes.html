@@ -419,7 +419,7 @@ several ways, including adding shadow induction variables to avoid
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="codegen">Code Generator Improvements</a>
+<a name="codegen">Target Independent Code Generator Improvements</a>
 </div>
 
 <div class="doc_text">
@@ -429,27 +429,34 @@ infrastructure, which allows us to implement more aggressive algorithms and make
 it run faster:</p>
 
 <ul>
-<li>The type legalization logic has been completely rewritten, and is now
-more powerful (it supports arbitrary precision integer types for example)
-and hopefully more correct.
-The type legalizer converts operations on types that are not natively
-supported by the target machine into equivalent code sequences that only use
-natively supported types.
-The old type legalizer is still available and will be used if
-<tt>-disable-legalize-types</tt> is passed to <tt>llc</tt>.
+<li>The <a href="WritingAnLLVMBackend.html">Writing an LLVM Compiler
+Backend</a> document has been greatly expanded and is substantially more
+complete.</li>
+
+<li>The SelectionDAG type legalization logic has been completely rewritten, is
+now more powerful (it supports arbitrary precision integer types for example),
+and more correct in several corner cases.  The type legalizer converts
+operations on types that are not natively supported by the target machine into
+equivalent code sequences that only use natively supported types.  The old type
+legalizer is still available (for now) and will be used if
+<tt>-disable-legalize-types</tt> is passed to the code generator.
 </li>
-<li>?</li>
 
+<li>The code generator now supports widening illegal vectors to larger legal
+ones (for example, converting operations on &lt;3 x float&gt; to work on
+&lt;4 x float&gt;) which is very important for common graphics
+applications.</li>
 
-how to write a backend doc docs/WritingAnLLVMBackend.html
-asmprinters seperate from targets for jits
-fastisel + exception handling
-vector widening <3 x float> -> <4 x float>
-PBQP register allocator now supports register coalescing.
+<li>The assembly printers for each target are now split out into their own
+libraries that are separate from the main code generation logic.  This reduces
+code size of JIT compilers by not requiring them to be linked in.</li>
 
-
+<li>The 'fast' instruction selection path (used at -O0 and for fast JIT
+    compilers) now supports accelerating codegen for code that uses exception
+    handling constructs.</li>
+    
+<li>The optional PBQP register allocator now supports register coalescing.</li>
 </ul>
-
 </div>
 
 <!--=========================================================================-->
@@ -462,14 +469,34 @@ PBQP register allocator now supports register coalescing.
 </p>
 
 <ul>
-non-zero __builtin_return_address values on X86.
-vector shift support + X86 backend.
-x86 JIT now detects core i7 and atom, autoconfiguring itself appropriately.
-x86-64 now uses red zone (unless -mno-red-zone option is specified).
-x86 backend GS segment -> addr space 256 (r62980)
-X86 backend now supports -disable-mmx.
-JIT supports exceptions on linux/x86-64 and linux/x86-64.
-JIT TLS support on x86-32 but not x86-64.
+<li>The "<a href="LangRef.html#int_returnaddress">llvm.returnaddress</a>"
+intrinsic (which is used to implement "__builtin_return_address") now supports
+non-zero stack depths on X86.</li>
+
+<li>The X86 backend now supports code generation of vector shift operations
+using SSE instructions.</li>
+
+<li>X86-64 code generation now takes advantage of red zone (unless
+-mno-red-zone option is specified).</li>
+
+<li>The X86 backend now supports using address space #256 in LLVM IR as a way of
+performing memory references off the GS segment register.  This allows a
+front-end to take advantage of very low-level programming techniques when
+targetting X86 CPUs.  See test/CodeGen/X86/movgs.ll for a simple example.</li>
+
+<li>The X86 backend now supports a <tt>-disable-mmx</tt> command line option to
+  prevent use of MMX even on chips that support it.  This is important for cases
+  where code does not contain the proper "llvm.x86.mmx.emms" intrinsics.</li>
+
+<li>The X86 JIT now detects the new Intel "<a 
+   href="http://en.wikipedia.org/wiki/Intel_Core_i7">Core i7</a>" and <a
+   href="http://en.wikipedia.org/wiki/Intel_Atom">Atom</a>" chips,
+    auto-configuring itself appropriately for the features of these chips.</li>
+    
+<li>The JIT now supports exception handling constructs on Linux/X86-64 and
+    Darwin/x86-64.</li>
+<li>The JIT supports Thread Local Storage (TLS) on Linux/X86-32 but not yet on
+    X86-64.</li>
 </ul>
 
 
@@ -502,28 +529,13 @@ types.</li>
 <li>Passing/returning aggregate types to/from functions.</li>
 <li>Variable arguments.</li>
 <li>Indirect function calls.</li>
-<li>Interrupts/prgrams.</li>
+<li>Interrupts/programs.</li>
 <li>Debug info.</li>
 </li>
 </ul>
 
 </div>
 
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="othertargetspecific">Other Target Specific Improvements</a>
-</div>
-
-<div class="doc_text">
-<p>New target-specific features include:
-</p>
-
-<ul>
-<li>?</li>
-</ul>
-
-</div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -600,7 +612,7 @@ from the previous release.</p>
 
 <ul>
 
-<li>llvm-gcc defaults to -fno-math-errno on all x86 targets.</li>
+<li>llvm-gcc defaults to -fno-math-errno on all X86 targets.</li>
 </ul>
 
 
