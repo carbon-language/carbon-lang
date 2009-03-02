@@ -111,7 +111,8 @@ static void CollectBlockDeclRefInfo(const Stmt *S,
                                     CodeGenFunction::BlockInfo &Info) {
   for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
        I != E; ++I)
-    CollectBlockDeclRefInfo(*I, Info);
+    if (*I)
+      CollectBlockDeclRefInfo(*I, Info);
   
   if (const BlockDeclRefExpr *DE = dyn_cast<BlockDeclRefExpr>(S)) {
     // FIXME: Handle enums.
