@@ -126,11 +126,14 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
   
   // Output the hint.
+#if 0
+  // Disable the display hint until we clear up its meaning.
   Indent(o, indent) << "<key>displayhint</key>\n";
   Indent(o, indent) << "<string>"
                     << (P.getDisplayHint() == PathDiagnosticPiece::Above 
                         ? "above" : "below")
                     << "</string>\n";
+#endif
   
   
   // Finish up.
