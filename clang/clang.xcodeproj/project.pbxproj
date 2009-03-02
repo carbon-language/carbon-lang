@@ -41,6 +41,9 @@
 		3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3551068B0E9A8546006A4E44 /* ParseTentative.cpp */; };
 		3552E7550E520D80003A8CA5 /* PPCaching.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7540E520D80003A8CA5 /* PPCaching.cpp */; };
 		3552E7590E520DD7003A8CA5 /* CGObjCMac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */; };
+		35544B880F5C7FD700D92AA9 /* RangeConstraintManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35544B850F5C7FD700D92AA9 /* RangeConstraintManager.cpp */; };
+		35544B890F5C7FD700D92AA9 /* SimpleConstraintManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35544B860F5C7FD700D92AA9 /* SimpleConstraintManager.cpp */; };
+		35544B8C0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */; };
 		3557D1A90EB136B100C59739 /* InheritViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3557D1A80EB136B100C59739 /* InheritViz.cpp */; };
 		3557D1F00EB13BB700C59739 /* SemaInherit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */; };
 		35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */; };
@@ -348,6 +351,10 @@
 		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
+		35544B850F5C7FD700D92AA9 /* RangeConstraintManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RangeConstraintManager.cpp; path = lib/Analysis/RangeConstraintManager.cpp; sourceTree = "<group>"; };
+		35544B860F5C7FD700D92AA9 /* SimpleConstraintManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SimpleConstraintManager.cpp; path = lib/Analysis/SimpleConstraintManager.cpp; sourceTree = "<group>"; };
+		35544B870F5C7FD700D92AA9 /* SimpleConstraintManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SimpleConstraintManager.h; path = lib/Analysis/SimpleConstraintManager.h; sourceTree = "<group>"; };
+		35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiate.cpp; path = lib/Sema/SemaTemplateInstantiate.cpp; sourceTree = "<group>"; };
 		3557D1A80EB136B100C59739 /* InheritViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = InheritViz.cpp; path = lib/AST/InheritViz.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInherit.cpp; path = lib/Sema/SemaInherit.cpp; sourceTree = "<group>"; };
 		35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXXFieldCollector.h; path = lib/Sema/CXXFieldCollector.h; sourceTree = "<group>"; };
@@ -666,14 +673,11 @@
 			name = Checks;
 			sourceTree = "<group>";
 		};
-		3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */ = {
+		3507E4C60E27FE5500FB7B57 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				35A057E00EAE2D950069249F /* RegionStore.cpp */,
 				35A057E10EAE2D950069249F /* SVals.cpp */,
 				355106850E9A8507006A4E44 /* MemRegion.cpp */,
-				358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */,
-				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
 				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
 				3536456A0E23EBF7009C6509 /* Environment.cpp */,
 				DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */,
@@ -685,7 +689,7 @@
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
 				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
 			);
-			name = "Path-Sensitive Core";
+			name = Core;
 			sourceTree = "<group>";
 		};
 		3507E4C90E27FE9000FB7B57 /* Bug Reporting */ = {
@@ -729,6 +733,37 @@
 			name = Visitors;
 			sourceTree = "<group>";
 		};
+		35544B820F5C7F6600D92AA9 /* StoreManagers */ = {
+			isa = PBXGroup;
+			children = (
+				35A057E00EAE2D950069249F /* RegionStore.cpp */,
+				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
+			);
+			name = StoreManagers;
+			sourceTree = "<group>";
+		};
+		35544B830F5C7F8900D92AA9 /* ConstraintManagers */ = {
+			isa = PBXGroup;
+			children = (
+				35544B870F5C7FD700D92AA9 /* SimpleConstraintManager.h */,
+				35544B860F5C7FD700D92AA9 /* SimpleConstraintManager.cpp */,
+				358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */,
+				35544B850F5C7FD700D92AA9 /* RangeConstraintManager.cpp */,
+			);
+			name = ConstraintManagers;
+			sourceTree = "<group>";
+		};
+		35544B840F5C7F9D00D92AA9 /* Path-Sensitive */ = {
+			isa = PBXGroup;
+			children = (
+				3507E4C60E27FE5500FB7B57 /* Core */,
+				35544B820F5C7F6600D92AA9 /* StoreManagers */,
+				35862B130E3629BC0009F542 /* Transfer Function Analyses */,
+				35544B830F5C7F8900D92AA9 /* ConstraintManagers */,
+			);
+			name = "Path-Sensitive";
+			sourceTree = "<group>";
+		};
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
@@ -747,10 +782,9 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				35544B840F5C7F9D00D92AA9 /* Path-Sensitive */,
 				3507E4CC0E27FEB900FB7B57 /* Flow-Sensitive Analyses */,
 				3507E4C30E27FE3800FB7B57 /* Checks */,
-				35862B130E3629BC0009F542 /* Transfer Function Analyses */,
-				3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */,
 				3507E4C90E27FE9000FB7B57 /* Bug Reporting */,
 			);
 			name = Analysis;
@@ -910,6 +944,7 @@
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
 				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
 				3591853E0EFB1088000039AF /* SemaTemplate.cpp */,
+				35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */,
 				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 			);
 			name = Sema;
@@ -1409,6 +1444,9 @@
 				352246EA0F5C6BE000D0D279 /* PlistDiagnostics.cpp in Sources */,
 				352246EB0F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp in Sources */,
 				352246EC0F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp in Sources */,
+				35544B880F5C7FD700D92AA9 /* RangeConstraintManager.cpp in Sources */,
+				35544B890F5C7FD700D92AA9 /* SimpleConstraintManager.cpp in Sources */,
+				35544B8C0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
