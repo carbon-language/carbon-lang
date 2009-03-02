@@ -10766,15 +10766,25 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
       // into     : GEP [10 x i8]* X, i32 0, ...
       //
+      // Likewise, transform: GEP (bitcast i8* X to [0 x i8]*), i32 0, ...
+      //           into     : GEP i8* X, ...
+      // 
       // This occurs when the program declares an array extern like "int X[];"
-      //
       const PointerType *CPTy = cast<PointerType>(PtrOp->getType());
       const PointerType *XTy = cast<PointerType>(X->getType());
-      if (const ArrayType *XATy =
-          dyn_cast<ArrayType>(XTy->getElementType()))
-        if (const ArrayType *CATy =
-            dyn_cast<ArrayType>(CPTy->getElementType()))
+      if (const ArrayType *CATy =
+          dyn_cast<ArrayType>(CPTy->getElementType())) {
+        // GEP (bitcast i8* X to [0 x i8]*), i32 0, ... ?
+        if (CATy->getElementType() == XTy->getElementType()) {
+          // -> GEP i8* X, ...
+          SmallVector<Value*, 8> Indices(GEP.idx_begin()+1, GEP.idx_end());
+          return GetElementPtrInst::Create(X, Indices.begin(), Indices.end(),
+                                           GEP.getName());
+        } else if (const ArrayType *XATy =
+                 dyn_cast<ArrayType>(XTy->getElementType())) {
+          // GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ... ?
           if (CATy->getElementType() == XATy->getElementType()) {
+            // -> GEP [10 x i8]* X, i32 0, ...
             // At this point, we know that the cast source type is a pointer
             // to an array of the same type as the destination pointer
             // array.  Because the array type is never stepped over (there
@@ -10782,6 +10792,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             GEP.setOperand(0, X);
             return &GEP;
           }
+        }
+      }
     } else if (GEP.getNumOperands() == 2) {
       // Transform things like:
       // %t = getelementptr i32* bitcast ([2 x i32]* %str to i32*), i32 %V
