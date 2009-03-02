@@ -681,8 +681,6 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   // All other values are symbolic.
   return SVal::GetRValueSymbolVal(getSymbolManager(), R);
-
-  // FIXME: consider default values for elements and fields.
 }
 
 SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
