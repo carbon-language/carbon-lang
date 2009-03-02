@@ -1329,7 +1329,7 @@ void JIT::updateDlsymStubTable() {
     return;
   
   // Calculate the size of the stub info
-  unsigned offset    = 4 + 4 * GVs.size();
+  unsigned offset    = 4 + 4 * GVs.size() + sizeof(intptr_t) * GVs.size();
   
   SmallVector<unsigned, 8> Offsets;
   for (unsigned i = 0; i != GVs.size(); ++i) {
