@@ -641,7 +641,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           os << "Control jumps to line "
              << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          PD.push_front(new PathDiagnosticPiece(L, os.str(), 
+                                             PathDiagnosticPiece::ControlFlow));
           break;
         }
           
@@ -709,7 +710,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
           }
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          PD.push_front(new PathDiagnosticPiece(L, os.str(),
+                                             PathDiagnosticPiece::ControlFlow));
           break;
         }
           
@@ -718,7 +720,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
           ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          PD.push_front(new PathDiagnosticPiece(L, os.str(),
+                                            PathDiagnosticPiece::ControlFlow));
           break;
         }
 
@@ -732,7 +735,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           else
             os << "true.";
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));          
+          PD.push_front(new PathDiagnosticPiece(L, os.str(),
+                                            PathDiagnosticPiece::ControlFlow));          
           break;
         }
           
@@ -745,11 +749,13 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             os << "Loop condition is true. ";
             ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
             
-            PD.push_front(new PathDiagnosticPiece(L, os.str()));
+            PD.push_front(new PathDiagnosticPiece(L, os.str(),
+                                             PathDiagnosticPiece::ControlFlow));
           }
           else
             PD.push_front(new PathDiagnosticPiece(L,
-                              "Loop condition is false.  Exiting loop."));
+                              "Loop condition is false.  Exiting loop.",
+                              PathDiagnosticPiece::ControlFlow));
           
           break;
         }
@@ -764,20 +770,24 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             os << "Loop condition is false. ";
             ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
 
-            PD.push_front(new PathDiagnosticPiece(L, os.str()));
+            PD.push_front(new PathDiagnosticPiece(L, os.str(),
+                                             PathDiagnosticPiece::ControlFlow));
           }
           else
             PD.push_front(new PathDiagnosticPiece(L,
-                            "Loop condition is true.  Entering loop body."));
+                            "Loop condition is true.  Entering loop body.",
+                            PathDiagnosticPiece::ControlFlow));
           
           break;
         }
           
         case Stmt::IfStmtClass: {          
           if (*(Src->succ_begin()+1) == Dst)
-            PD.push_front(new PathDiagnosticPiece(L, "Taking false branch."));
-          else 
-            PD.push_front(new PathDiagnosticPiece(L, "Taking true branch."));
+            PD.push_front(new PathDiagnosticPiece(L, "Taking false branch.",
+                            PathDiagnosticPiece::ControlFlow));
+          else  
+            PD.push_front(new PathDiagnosticPiece(L, "Taking true branch.",
+                            PathDiagnosticPiece::ControlFlow));
           
           break;
         }
