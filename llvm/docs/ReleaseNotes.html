@@ -104,14 +104,11 @@ code generator.  While Clang is not included in the LLVM 2.5 release, it is
 continuing to make major strides forward in all areas.  Its C and Objective-C
 parsing and code generation support is now very solid.  For example, it is
 capable of successfully building many real-world applications for X86-32
-andX86-64,
-including <a href="http://wiki.freebsd.org/BuildingFreeBSDWithClang">the FreeBSD
-kernel</a>.  C++ is also
+and X86-64,
+including the <a href="http://wiki.freebsd.org/BuildingFreeBSDWithClang">FreeBSD
+kernel</a> and <a href="http://gcc.gnu.org/gcc-4.2/">gcc 4.2</a>.  C++ is also
 making <a href="http://clang.llvm.org/cxx_status.html">incredible progress</a>,
-and work on templates has recently started.</p>
-
-<p>While Clang is not yet production quality, it is progressing very nicely and
-is quite usable for building many C and Objective-C applications.  If you are
+and work on templates has recently started.  If you are
 interested in fast compiles and good diagnostics, we encourage you to try it out
 by <a href="http://clang.llvm.org/get_started.html">building from mainline</a>
 and reporting any issues you hit to the <a
@@ -123,10 +120,15 @@ list</a>.</p>
 <ul>
 <li>Clang now has a new driver, which is focused on providing a GCC-compatible
     interface.</li>
-<li>The X86-64 ABI is now supported.</li>
+<li>The X86-64 ABI is now supported, including support for the Apple
+    64-bit Objective-C runtime and zero cost exception handling.</li>
 <li>Precompiled header support is now implemented.</li>
 <li>Objective-C support is significantly improved beyond LLVM 2.4, supporting
     many features, such as Objective-C Garbage Collection.</li>
+<li>Variable length arrays are now fully supported.</li>
+<li>C99 designated initializers are now fully supported.</li>
+<li>Clang now includes all major compiler headers, including a
+    redesigned <i>tgmath.h</i> and several more intrinsic headers.</li>
 <li>Many many bugs are fixed and many features have been added.</li>
 </ul>
 </div>
