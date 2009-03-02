@@ -8,7 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 
-PARALLEL_DIRS = Headers Basic Lex Parse AST Sema CodeGen Analysis Rewrite Frontend
+PARALLEL_DIRS = Headers Basic Lex Parse AST Sema CodeGen Analysis Rewrite \
+	Frontend Driver
 
 include $(LEVEL)/Makefile.common
 
