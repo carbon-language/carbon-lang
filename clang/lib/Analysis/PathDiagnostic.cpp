@@ -35,13 +35,13 @@ static inline size_t GetNumCharsToLastNonPeriod(const std::string &s) {
 
 PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
                                          const std::string& s,
-                                         DisplayHint hint)
-  : Pos(pos), str(s, 0, GetNumCharsToLastNonPeriod(s)), Hint(hint) {}
+                                         Kind k, DisplayHint hint)
+  : Pos(pos), str(s, 0, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
 
 PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
-                                         const char* s,
+                                         const char* s, Kind k,
                                          DisplayHint hint)
-  : Pos(pos), str(s, GetNumCharsToLastNonPeriod(s)), Hint(hint) {}
+  : Pos(pos), str(s, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
 
 PathDiagnostic::~PathDiagnostic() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
