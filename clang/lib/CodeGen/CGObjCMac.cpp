@@ -4515,7 +4515,7 @@ llvm::GlobalVariable *
 CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name) {
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
 
-  if (GV) {
+  if (!GV) {
     GV = new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
                                   llvm::GlobalValue::ExternalLinkage,
                                   0, Name, &CGM.getModule());
