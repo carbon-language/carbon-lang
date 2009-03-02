@@ -368,13 +368,16 @@ produces a .o file (thus they are invisible to the linker).</li>
 <li>LLVM IR supports two new attributes for better alias analysis.  The <a
 href="LangRef.html#paramattrs">noalias</a> attribute can now be used on the
 return value of a function to indicate that it returns new memory (e.g.
-'malloc', 'calloc', etc).</li>
-
-<li>The new <a href="LangRef.html#paramattrs">nocapture</a> attribute can be
-used on pointer arguments to functions that access through but do not return the
-pointer in a data structure that out lives the call (e.g. 'strlen', 'memcpy',
-and many others).  The simplifylibcalls pass applies these attributes to
-standard libc functions.</li>
+'malloc', 'calloc', etc).
+The new <a href="LangRef.html#paramattrs">nocapture</a> attribute can be used
+on pointer arguments to indicate that the function does not return the pointer,
+store it in an object that outlives the call, or let the value of the pointer
+escape from the function in any other way.
+Note that it is the pointer itself that must not escape, not the value it
+points to: loading a value out of the pointer is perfectly fine.
+Many standard library functions (e.g. 'strlen', 'memcpy') have this property.
+<!-- The simplifylibcalls pass applies these attributes to standard libc functions. -->
+</li>
 
 <li>The parser for ".ll" files in lib/AsmParser is now completely rewritten as a
 recursive descent parser.  This parser produces better error messages (including
