@@ -58,8 +58,8 @@ current one.  To see the release notes for a specific release, please see the
   target-specific intrinsics
   gold lto plugin
   pre-alloc splitter, strong phi elim
-  llc -enable-value-prop, propagation of value info (sign/zero ext info) from
-       one MBB to another
+  <tt>llc -enable-value-prop</tt>, propagation of value info
+       (sign/zero ext info) from one MBB to another
   debug info for optimized code
   interpreter + libffi
   postalloc scheduler: anti dependence breaking, hazard recognizer?
@@ -179,7 +179,7 @@ bug fixes, cleanup and new features. The major changes are:</p>
 
 <li>Ahead of Time compiler: compiles .class files to llvm .bc. VMKit uses this
 functionality to native compile the standard classes (e.g. java.lang.String).
-Users can compile AOT .class files into dynamic libraries and run them with the
+Users can compile AoT .class files into dynamic libraries and run them with the
 help of VMKit.</li>
 
 <li>New exception model: the dwarf exception model is very slow for
@@ -818,7 +818,7 @@ appropriate nops inserted to ensure restartability.</li>
     inline assembly code</a>.</li>
 <li><a href="http://llvm.org/PR1658">The C backend violates the ABI of common
     C++ programs</a>, preventing intermixing between C++ compiled by the CBE and
-    C++ code compiled with llc or native compilers.</li>
+    C++ code compiled with <tt>llc</tt> or native compilers.</li>
 <li>The C backend does not support all exception handling constructs.</li>
 <li>The C backend does not support arbitrary precision integers.</li>
 </ul>
