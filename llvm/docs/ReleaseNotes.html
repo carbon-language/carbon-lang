@@ -152,7 +152,7 @@ objects as well as an improved value-constraints subengine that does a much
 better job of reasoning about inequality relationships (e.g., <tt>x &gt; 2</tt>)
 between variables and constants.
 
-<p>The set of checks performed by the static analyzer continue to expand, and
+<p>The set of checks performed by the static analyzer continues to expand, and
 future plans for the tool include full source-level inter-procedural analysis
 and deeper checks such as buffer overrun detection. There are many opportunities
 to extend and enhance the static analyzer, and anyone interested in working on
@@ -241,7 +241,8 @@ it as a kind of functional scripting language for many application areas.
 <p>
 <a href="http://www.dsource.org/projects/ldc">LDC</a> is an implementation of
 the D Programming Language using the LLVM optimizer and code generator.
-LDC project works great with the LLVM 2.5 release.  General improvements in this
+The LDC project works great with the LLVM 2.5 release.  General improvements in
+this
 cycle have included new inline asm constraint handling, better debug info
 support, general bugfixes, and better x86-64 support.  This has allowed
 some major improvements in LDC, getting us much closer to being as
@@ -304,7 +305,7 @@ Types like <tt>i33</tt> have long been valid in the LLVM IR, but were previously
 only supported by the interpreter.  Note that the C backend still does not
 support these.</li>
 
-<li>LLVM 2.5 no longer uses 'bison', so it is easier to build on Windows.</li>
+<li>LLVM 2.5 no longer uses 'bison,' so it is easier to build on Windows.</li>
 </ul>
 
 </div>
@@ -377,13 +378,13 @@ standard libc functions.</li>
 
 <li>The parser for ".ll" files in lib/AsmParser is now completely rewritten as a
 recursive descent parser.  This parser produces better error messages (including
-caret diagnostics) is less fragile (less likely to crash on strange things) does
-not leak memory, is more efficient, and eliminates LLVM's last use of the
+caret diagnostics), is less fragile (less likely to crash on strange things),
+does not leak memory, is more efficient, and eliminates LLVM's last use of the
 'bison' tool.</li>
 
 <li>Debug information representation and manipulation internals have been
     consolidated to use a new set of classes in
-    <tt>llvm/Analysis/DebugInfo.h</tt> classes.  These routines are more
+    <tt>llvm/Analysis/DebugInfo.h</tt>.  These routines are more
     efficient, robust, and extensible and replace the older mechanisms.
     llvm-gcc, clang, and the code generator now use them to create and process
     debug information.</li>
@@ -399,7 +400,7 @@ not leak memory, is more efficient, and eliminates LLVM's last use of the
 
 <div class="doc_text">
 
-<p>In addition to a huge array of bug fixes and minor performance tweaks, this
+<p>In addition to a large array of bug fixes and minor performance tweaks, this
 release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
@@ -408,7 +409,7 @@ release includes a few major enhancements and additions to the optimizers:</p>
 several ways, including adding shadow induction variables to avoid
 "integer &lt;-&gt; floating point" conversions in loops when safe.</li>
 
-<li>The "-mem2reg" pass is now much faster on code with huge basic blocks.</li>
+<li>The "-mem2reg" pass is now much faster on code with large basic blocks.</li>
 
 <li>The "-jump-threading" pass is more powerful: it is iterative
   and handles threading based on values with fully and partially redundant
@@ -442,7 +443,7 @@ complete.</li>
 
 <li>The SelectionDAG type legalization logic has been completely rewritten, is
 now more powerful (it supports arbitrary precision integer types for example),
-and more correct in several corner cases.  The type legalizer converts
+and is more correct in several corner cases.  The type legalizer converts
 operations on types that are not natively supported by the target machine into
 equivalent code sequences that only use natively supported types.  The old type
 legalizer is still available (for now) and will be used if
@@ -456,7 +457,7 @@ applications.</li>
 
 <li>The assembly printers for each target are now split out into their own
 libraries that are separate from the main code generation logic.  This reduces
-code size of JIT compilers by not requiring them to be linked in.</li>
+the code size of JIT compilers by not requiring them to be linked in.</li>
 
 <li>The 'fast' instruction selection path (used at -O0 and for fast JIT
     compilers) now supports accelerating codegen for code that uses exception
@@ -499,8 +500,8 @@ example.</li>
 
 <li>The X86 JIT now detects the new Intel <a 
    href="http://en.wikipedia.org/wiki/Intel_Core_i7">Core i7</a> and <a
-   href="http://en.wikipedia.org/wiki/Intel_Atom">Atom</a> chips;
-    auto-configuring itself appropriately for the features of these chips.</li>
+   href="http://en.wikipedia.org/wiki/Intel_Atom">Atom</a> chips and
+    auto-configures itself appropriately for the features of these chips.</li>
     
 <li>The JIT now supports exception handling constructs on Linux/X86-64 and
     Darwin/x86-64.</li>
@@ -526,7 +527,7 @@ example.</li>
 types.</li>
 <li>Function calls involving basic types work now.</li>
 <li>Support for integer arrays.</li>
-<li>Compiler can now emit libcalls for operations not supported by m/c
+<li>The compiler can now emit libcalls for operations not supported by m/c
 instructions.</li>
 <li>Support for both data and ROM address spaces.</li>
 </ul>
@@ -614,7 +615,7 @@ API changes are:</p>
 
 <ul>
 <li>Some deprecated interfaces to create <tt>Instruction</tt> subclasses, that
-    were spelled with lower case "create", have been removed.</li>
+    were spelled with lower case "create," have been removed.</li>
 </ul>
 
 </div>
@@ -703,11 +704,12 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
   <li>The X86 backend generates inefficient floating point code when configured
     to generate code for systems that don't have SSE2.</li>
   <li>Win64 code generation wasn't widely tested. Everything should work, but we
-    expect small issues to happen. Also, llvm-gcc cannot build mingw64 runtime
-    currently due
+    expect small issues to happen. Also, llvm-gcc cannot build the mingw64
+    runtime currently due
     to <a href="http://llvm.org/PR2255">several</a>
-    <a href="http://llvm.org/PR2257">bugs</a> due to lack of support for the
-    'u' inline assembly constraint and X87 floating point inline assembly.</li>
+    <a href="http://llvm.org/PR2257">bugs</a> and due to lack of support for
+    the
+    'u' inline assembly constraint and for X87 floating point inline assembly.</li>
   <li>The X86-64 backend does not yet support the LLVM IR instruction
       <tt>va_arg</tt>. Currently, the llvm-gcc and front-ends support variadic
       argument constructs on X86-64 by lowering them manually.</li>
@@ -740,7 +742,7 @@ compilation, and lacks support for debug information.</li>
 <li>Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
 processors, thumb programs can crash or produce wrong
 results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
-<li>Compilation for ARM Linux OABI (old ABI) is supported, but not fully tested.
+<li>Compilation for ARM Linux OABI (old ABI) is supported but not fully tested.
 </li>
 <li>There is a bug in QEMU-ARM (&lt;= 0.9.0) which causes it to incorrectly
  execute
@@ -757,7 +759,7 @@ programs compiled with LLVM.  Please use more recent versions of QEMU.</li>
 <div class="doc_text">
 
 <ul>
-<li>The SPARC backend only supports the 32-bit SPARC ABI (-m32), it does not
+<li>The SPARC backend only supports the 32-bit SPARC ABI (-m32); it does not
     support the 64-bit SPARC ABI (-m64).</li>
 </ul>
 
@@ -800,7 +802,7 @@ appropriate nops inserted to ensure restartability.</li>
 <div class="doc_text">
 
 <ul>
-<li>The Itanium backend is highly experimental, and has a number of known
+<li>The Itanium backend is highly experimental and has a number of known
     issues.  We are looking for a maintainer for the Itanium backend.  If you
     are interested, please contact the LLVMdev mailing list.</li>
 </ul>
@@ -888,12 +890,12 @@ itself, Qt, Mozilla, etc.</p>
 </div>
 
 <div class="doc_text">
-The llvm-gcc 4.2 Ada compiler works fairly well, however this is not a mature
-technology and problems should be expected.
+The llvm-gcc 4.2 Ada compiler works fairly well; however, this is not a mature
+technology, and problems should be expected.
 <ul>
 <li>The Ada front-end currently only builds on X86-32.  This is mainly due
-to lack of trampoline support (pointers to nested functions) on other platforms,
-however it <a href="http://llvm.org/PR2006">also fails to build on X86-64</a>
+to lack of trampoline support (pointers to nested functions) on other platforms.
+However, it <a href="http://llvm.org/PR2006">also fails to build on X86-64</a>
 which does support trampolines.</li>
 <li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
 This is due to lack of LLVM support for <tt>setjmp</tt>/<tt>longjmp</tt> style
