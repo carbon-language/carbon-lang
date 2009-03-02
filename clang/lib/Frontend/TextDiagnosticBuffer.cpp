@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/TextDiagnosticBuffer.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
 

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/InitHeaderSearch.h"
+#include "clang/Frontend/InitHeaderSearch.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"

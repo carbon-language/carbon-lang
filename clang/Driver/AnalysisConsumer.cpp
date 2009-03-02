@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
-#include "clang/Driver/PathDiagnosticClients.h"
-#include "clang/Driver/ManagerRegistry.h"
+#include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Frontend/ManagerRegistry.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"

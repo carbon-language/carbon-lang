@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/PathDiagnosticClients.h"
+#include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"

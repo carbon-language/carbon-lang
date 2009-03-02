@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/ManagerRegistry.h"
+#include "clang/Frontend/ManagerRegistry.h"
 
 using namespace clang;
 

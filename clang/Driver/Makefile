@@ -13,7 +13,7 @@ include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader bitwriter codegen ipo selectiondag
 USEDLIBS = clangCodeGen.a clangAnalysis.a clangRewrite.a clangSema.a	\
-           clangDriver.a clangAST.a clangParse.a clangLex.a		\
+           clangFrontend.a clangAST.a clangParse.a clangLex.a		\
            clangBasic.a 
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

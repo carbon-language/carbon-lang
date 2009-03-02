@@ -12,7 +12,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../../..
-LIBRARYNAME := clangDriver
+LIBRARYNAME := clangFrontend
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 

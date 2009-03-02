@@ -13,7 +13,7 @@
 #include "clang/AST/TranslationUnit.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Driver/CompileOptions.h"
+#include "clang/Frontend/CompileOptions.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
