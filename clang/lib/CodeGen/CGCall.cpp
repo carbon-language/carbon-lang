@@ -22,6 +22,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1771,46 +1772,37 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   llvm::AttrListPtr Attrs = llvm::AttrListPtr::get(AttributeList.begin(),
                                                    AttributeList.end());
   
-  llvm::Instruction *CI;
-  if (!InvokeDest || Attrs.getFnAttributes() & (llvm::Attribute::NoUnwind ||
-                                                llvm::Attribute::NoReturn)) {
-    llvm::CallInst *CallInstr = 
-      Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
-    CI = CallInstr;
-
-    CallInstr->setAttributes(Attrs);
-    if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
-      CallInstr->setCallingConv(F->getCallingConv());
-
-    // If the call doesn't return, finish the basic block and clear the
-    // insertion point; this allows the rest of IRgen to discard
-    // unreachable code.
-    if (CallInstr->doesNotReturn()) {
-      Builder.CreateUnreachable();
-      Builder.ClearInsertionPoint();
-      
-      // FIXME: For now, emit a dummy basic block because expr
-      // emitters in generally are not ready to handle emitting
-      // expressions at unreachable points.
-      EnsureInsertPoint();
-
-      // Return a reasonable RValue.
-      return GetUndefRValue(RetTy);
-    }    
+  llvm::CallSite CS;
+  if (!InvokeDest || (Attrs.getFnAttributes() & llvm::Attribute::NoUnwind)) {
+    CS = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
   } else {
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
-    llvm::InvokeInst *InvokeInstr = 
-      Builder.CreateInvoke(Callee, Cont, InvokeDest, 
-                           &Args[0], &Args[0]+Args.size());
-    CI = InvokeInstr;
-
-    InvokeInstr->setAttributes(Attrs);
-    if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
-      InvokeInstr->setCallingConv(F->getCallingConv());
-
+    CS = Builder.CreateInvoke(Callee, Cont, InvokeDest, 
+                              &Args[0], &Args[0]+Args.size());
     EmitBlock(Cont);
   }
 
+  CS.setAttributes(Attrs);
+  if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
+    CS.setCallingConv(F->getCallingConv());
+
+  // If the call doesn't return, finish the basic block and clear the
+  // insertion point; this allows the rest of IRgen to discard
+  // unreachable code.
+  if (CS.doesNotReturn()) {
+    Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+    
+    // FIXME: For now, emit a dummy basic block because expr
+    // emitters in generally are not ready to handle emitting
+    // expressions at unreachable points.
+    EnsureInsertPoint();
+    
+    // Return a reasonable RValue.
+    return GetUndefRValue(RetTy);
+  }    
+
+  llvm::Instruction *CI = CS.getInstruction();
   if (CI->getType() != llvm::Type::VoidTy)
     CI->setName("call");
 
