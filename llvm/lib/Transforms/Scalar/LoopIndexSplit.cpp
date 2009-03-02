@@ -532,6 +532,21 @@ bool LoopIndexSplit::updateLoopIterationSpace() {
   BasicBlock *ExitingBlock = ExitCondition->getParent();
   if (!cleanBlock(ExitingBlock)) return false;
 
+  // If the merge point for BR is not loop latch then skip this loop.
+  if (BR->getSuccessor(0) != Latch) {
+    DominanceFrontier::iterator DF0 = DF->find(BR->getSuccessor(0));
+    assert (DF0 != DF->end() && "Unable to find dominance frontier");
+    if (!DF0->second.count(Latch))
+      return false;
+  }
+  
+  if (BR->getSuccessor(1) != Latch) {
+    DominanceFrontier::iterator DF1 = DF->find(BR->getSuccessor(1));
+    assert (DF1 != DF->end() && "Unable to find dominance frontier");
+    if (!DF1->second.count(Latch))
+      return false;
+  }
+    
   // Verify that loop exiting block has only two predecessor, where one pred
   // is split condition block. The other predecessor will become exiting block's
   // dominator after CFG is updated. TODO : Handle CFG's where exiting block has
