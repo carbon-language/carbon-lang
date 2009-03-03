@@ -7,7 +7,7 @@ void f() {
   } @catch (void a) { // expected-error{{@catch parameter is not an Objective-C class type}}
   } @catch (int) { // expected-error{{@catch parameter is not an Objective-C class type}}
   } @catch (int *b) { // expected-error{{@catch parameter is not an Objective-C class type}}
-  } @catch (id <P> c) { // expected-warning{{ignoring qualifiers on @catch parameter}}
+  } @catch (id <P> c) { // expected-error{{illegal qualifiers on @catch parameter}}
   }
 }
 

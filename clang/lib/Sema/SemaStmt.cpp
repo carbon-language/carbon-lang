@@ -974,7 +974,7 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                        diag::err_catch_param_not_objc_type));
     if (PVD->getType()->isObjCQualifiedIdType())
       return StmtError(Diag(PVD->getLocation(), 
-                       diag::warn_ignoring_qualifiers_on_catch_parm));
+                       diag::err_illegal_qualifiers_on_catch_parm));
   }
     
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
