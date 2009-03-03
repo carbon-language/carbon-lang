@@ -22,7 +22,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/ADT/SmallSet.h"
@@ -136,6 +136,10 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
         if (PointsToLocalMemory(SI->getPointerOperand()))
           continue;
       }
+
+      // Ignore dbg info intrinsics.
+      if (isa<DbgInfoIntrinsic>(I))
+        continue;
 
       // Any remaining instructions need to be taken seriously!  Check if they
       // read or write memory.
