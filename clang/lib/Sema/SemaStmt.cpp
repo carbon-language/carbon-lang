@@ -968,9 +968,14 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
   ParmVarDecl *PVD = static_cast<ParmVarDecl*>(Parm);
   
   // PVD == 0 implies @catch(...).
-  if (PVD && !Context.isObjCObjectPointerType(PVD->getType()))
-    return StmtError(Diag(PVD->getLocation(), 
-                          diag::err_catch_param_not_objc_type));
+  if (PVD) {
+    if (!Context.isObjCObjectPointerType(PVD->getType()))
+      return StmtError(Diag(PVD->getLocation(), 
+                       diag::err_catch_param_not_objc_type));
+    if (PVD->getType()->isObjCQualifiedIdType())
+      return StmtError(Diag(PVD->getLocation(), 
+                       diag::warn_ignoring_qualifiers_on_catch_parm));
+  }
     
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
     PVD, static_cast<Stmt*>(Body.release()), CatchList);

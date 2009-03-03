@@ -962,6 +962,8 @@ DIAG(err_attribute_multiple_objc_gc, ERROR,
      "multiple garbage collection attributes specified for type")
 DIAG(err_catch_param_not_objc_type, ERROR,
      "@catch parameter is not an Objective-C class type")
+DIAG(warn_ignoring_qualifiers_on_catch_parm, WARNING,
+     "ignoring qualifiers on @catch parameter")
 
 
 // C++ casts
