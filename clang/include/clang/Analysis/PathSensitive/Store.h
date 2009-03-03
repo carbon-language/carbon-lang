@@ -31,7 +31,8 @@ class GRStateManager;
 class Stmt;
 class Expr;
 class ObjCIvarDecl;
-
+class SubRegionMap;
+  
 class StoreManager {
 protected:
   /// MRMgr - Manages region objects associated with this StoreManager.
@@ -71,8 +72,17 @@ public:
                                              const CompoundLiteralExpr* CL,
                                              SVal V) = 0;
   
+  /// getInitialStore - Returns the initial "empty" store representing the
+  ///  value bindings upon entry to an analyzed function.
   virtual Store getInitialStore() = 0;
+  
+  /// getRegionManager - Returns the internal RegionManager object that is
+  ///  used to query and manipulate MemRegion objects.
   MemRegionManager& getRegionManager() { return MRMgr; }
+  
+  /// getSubRegionMap - Returns an opaque map object that clients can query
+  ///  to get the subregions of a given MemRegion object.
+  virtual std::auto_ptr<SubRegionMap> getSubRegionMap(const GRState *state) = 0;
 
   virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;
 
@@ -150,6 +160,21 @@ public:
   
   /// iterBindings - Iterate over the bindings in the Store.
   virtual void iterBindings(Store store, BindingsHandler& f) = 0;  
+};
+
+/// SubRegionMap - An abstract interface that represents a queryable map
+///  between MemRegion objects and their subregions.
+class SubRegionMap {
+public:
+  virtual ~SubRegionMap() {}
+  
+  class Visitor {
+  public:
+    virtual ~Visitor() {}
+    virtual bool Visit(const MemRegion* Parent, const MemRegion* SubRegion);    
+  };
+  
+  virtual void iterSubRegions(const MemRegion* R, Visitor& V) const = 0;  
 };
   
 StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);

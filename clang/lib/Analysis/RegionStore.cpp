@@ -105,6 +105,37 @@ namespace clang {
 
 namespace {
 
+class VISIBILITY_HIDDEN RegionStoreSubRegionMap : public SubRegionMap {
+  typedef llvm::DenseMap<const MemRegion*,
+                         llvm::ImmutableSet<const MemRegion*> > Map;
+  
+  llvm::ImmutableSet<const MemRegion*>::Factory F;
+  Map M;
+
+public:
+  void add(const MemRegion* Parent, const MemRegion* SubRegion) {
+    Map::iterator I = M.find(Parent);
+    M.insert(std::make_pair(Parent, 
+             F.Add(I == M.end() ? F.GetEmptySet() : I->second, SubRegion)));
+  }
+    
+  ~RegionStoreSubRegionMap() {}
+  
+  void iterSubRegions(const MemRegion* Parent, Visitor& V) const {
+    Map::iterator I = M.find(Parent);
+
+    if (I == M.end())
+      return;
+    
+    llvm::ImmutableSet<const MemRegion*> S = I->second;
+    for (llvm::ImmutableSet<const MemRegion*>::iterator SI=S.begin(),SE=S.end();
+         SI != SE; ++SI) {
+      if (!V.Visit(Parent, *SI))
+        return;
+    }
+  }
+};  
+
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionBindingsTy::Factory RBFactory;
   RegionViews::Factory RVFactory;
@@ -127,6 +158,8 @@ public:
   virtual ~RegionStoreManager() {}
 
   MemRegionManager& getRegionManager() { return MRMgr; }
+  
+  std::auto_ptr<SubRegionMap> getSubRegionMap(const GRState *state);
   
   const GRState* BindCompoundLiteral(const GRState* St, 
                                      const CompoundLiteralExpr* CL, SVal V);
@@ -268,6 +301,18 @@ StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
 }
 
+std::auto_ptr<SubRegionMap>
+RegionStoreManager::getSubRegionMap(const GRState *state) {
+  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionStoreSubRegionMap *M = new RegionStoreSubRegionMap();
+  
+  for (RegionBindingsTy::iterator I=B.begin(), E=B.end(); I!=E; ++I) {
+    if (const SubRegion* R = dyn_cast<SubRegion>(I.getKey()))
+      M->add(R->getSuperRegion(), R);
+  }
+  
+  return std::auto_ptr<SubRegionMap>(M);
+}
 
 /// getLValueString - Returns an SVal representing the lvalue of a
 ///  StringLiteral.  Within RegionStore a StringLiteral has an

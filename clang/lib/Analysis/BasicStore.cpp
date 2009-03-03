@@ -23,6 +23,15 @@ typedef llvm::ImmutableMap<const VarDecl*,SVal> VarBindingsTy;
 
 namespace {
   
+class VISIBILITY_HIDDEN BasicStoreSubRegionMap : public SubRegionMap {
+public:
+  BasicStoreSubRegionMap() {}
+
+  void iterSubRegions(const MemRegion* R, Visitor& V) const {
+    // Do nothing.  No subregions.
+  }
+};
+  
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   VarBindingsTy::Factory VBFactory;
   GRStateManager& StateMgr;
@@ -36,6 +45,10 @@ public:
       SelfRegion(0) {}
   
   ~BasicStoreManager() {}
+
+  std::auto_ptr<SubRegionMap> getSubRegionMap(const GRState *state) {
+    return std::auto_ptr<SubRegionMap>(new BasicStoreSubRegionMap());
+  }
 
   SVal Retrieve(const GRState *state, Loc loc, QualType T = QualType());  
 
