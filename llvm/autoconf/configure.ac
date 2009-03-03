@@ -1016,6 +1016,13 @@ fi
 dnl Determine if the compiler supports -fvisibility-inlines-hidden.
 AC_CXX_USE_VISIBILITY_INLINES_HIDDEN
 
+dnl Determine linker rpath flag
+case $llvm_cv_os_type in
+  SunOS) RPATH="-Wl,-R" ;;
+  *) RPATH="-Wl,-rpath" ;;
+esac
+AC_SUBST(RPATH)
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 10: Specify the output files and generate it

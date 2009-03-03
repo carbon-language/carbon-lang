@@ -428,7 +428,7 @@ ifdef LOADABLE_MODULE
 endif
 
 ifdef SHARED_LIBRARY
-  LD.Flags += -Wl,-rpath -Wl,$(LibDir)
+  LD.Flags += $(RPATH) -Wl,$(LibDir)
 endif
 
 ifdef TOOL_VERBOSE
@@ -458,9 +458,9 @@ endif
 ifneq ($(OS),Darwin)
 ifdef TOOLNAME
 ifdef EXAMPLE_TOOL
-  LD.Flags += -Wl,-rpath -Wl,$(ExmplDir) -export-dynamic
+  LD.Flags += $(RPATH) -Wl,$(ExmplDir) -export-dynamic
 else
-  LD.Flags += -Wl,-rpath -Wl,$(ToolDir) -export-dynamic
+  LD.Flags += $(RPATH) -Wl,$(ToolDir) -export-dynamic
 endif
 endif
 endif

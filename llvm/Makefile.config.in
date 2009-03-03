@@ -200,6 +200,9 @@ LLVMGCC_LANGS := @LLVMGCC_LANGS@
 # object files.
 OBJ_ROOT := .
 
+# What to pass as rpath flag to g++
+RPATH := @RPATH@
+
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1):
 
