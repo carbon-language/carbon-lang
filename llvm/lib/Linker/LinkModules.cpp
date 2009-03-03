@@ -1,4 +1,4 @@
- //===- lib/Linker/LinkModules.cpp - Module Linker Implementation ---------===//
+//===- lib/Linker/LinkModules.cpp - Module Linker Implementation ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
