@@ -311,6 +311,69 @@ bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
     return false;
 }
 
+/// \brief Check the validity of a C++ base class specifier. 
+///
+/// \returns a new CXXBaseSpecifier if well-formed, emits diagnostics
+/// and returns NULL otherwise.
+CXXBaseSpecifier *
+Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
+                         SourceRange SpecifierRange,
+                         bool Virtual, AccessSpecifier Access,
+                         QualType BaseType, 
+                         SourceLocation BaseLoc) {
+  // C++ [class.union]p1:
+  //   A union shall not have base classes.
+  if (Class->isUnion()) {
+    Diag(Class->getLocation(), diag::err_base_clause_on_union)
+      << SpecifierRange;
+    return 0;
+  }
+
+  if (BaseType->isDependentType())
+    return new CXXBaseSpecifier(SpecifierRange, Virtual, 
+                                Class->getTagKind() == RecordDecl::TK_class,
+                                Access, BaseType);
+
+  // Base specifiers must be record types.
+  if (!BaseType->isRecordType()) {
+    Diag(BaseLoc, diag::err_base_must_be_class) << SpecifierRange;
+    return 0;
+  }
+
+  // C++ [class.union]p1:
+  //   A union shall not be used as a base class.
+  if (BaseType->isUnionType()) {
+    Diag(BaseLoc, diag::err_union_as_base_class) << SpecifierRange;
+    return 0;
+  }
+
+  // C++ [class.derived]p2:
+  //   The class-name in a base-specifier shall not be an incompletely
+  //   defined class.
+  if (DiagnoseIncompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
+                             SpecifierRange))
+    return 0;
+
+  // If the base class is polymorphic, the new one is, too.
+  RecordDecl *BaseDecl = BaseType->getAsRecordType()->getDecl();
+  assert(BaseDecl && "Record type has no declaration");
+  BaseDecl = BaseDecl->getDefinition(Context);
+  assert(BaseDecl && "Base type is not incomplete, but has no definition");
+  if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic())
+    Class->setPolymorphic(true);
+
+  // C++ [dcl.init.aggr]p1:
+  //   An aggregate is [...] a class with [...] no base classes [...].
+  Class->setAggregate(false);
+  Class->setPOD(false);
+
+  // Create the base specifier.
+  // FIXME: Allocate via ASTContext?
+  return new CXXBaseSpecifier(SpecifierRange, Virtual, 
+                              Class->getTagKind() == RecordDecl::TK_class, 
+                              Access, BaseType);
+}
+
 /// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is
 /// one entry in the base class list of a class specifier, for
 /// example: 
@@ -320,56 +383,22 @@ Sema::BaseResult
 Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          TypeTy *basetype, SourceLocation BaseLoc) {
-  CXXRecordDecl *Decl = (CXXRecordDecl*)classdecl;
+  CXXRecordDecl *Class = (CXXRecordDecl*)classdecl;
   QualType BaseType = QualType::getFromOpaquePtr(basetype);
-
-  // Base specifiers must be record types.
-  if (!BaseType->isRecordType())
-    return Diag(BaseLoc, diag::err_base_must_be_class) << SpecifierRange;
-
-  // C++ [class.union]p1:
-  //   A union shall not be used as a base class.
-  if (BaseType->isUnionType())
-    return Diag(BaseLoc, diag::err_union_as_base_class) << SpecifierRange;
-
-  // C++ [class.union]p1:
-  //   A union shall not have base classes.
-  if (Decl->isUnion())
-    return Diag(Decl->getLocation(), diag::err_base_clause_on_union)
-              << SpecifierRange;
-
-  // C++ [class.derived]p2:
-  //   The class-name in a base-specifier shall not be an incompletely
-  //   defined class.
-  if (DiagnoseIncompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
-                             SpecifierRange))
-    return true;
-
-  // If the base class is polymorphic, the new one is, too.
-  RecordDecl *BaseDecl = BaseType->getAsRecordType()->getDecl();
-  assert(BaseDecl && "Record type has no declaration");
-  BaseDecl = BaseDecl->getDefinition(Context);
-  assert(BaseDecl && "Base type is not incomplete, but has no definition");
-  if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic())
-    Decl->setPolymorphic(true);
-
-  // C++ [dcl.init.aggr]p1:
-  //   An aggregate is [...] a class with [...] no base classes [...].
-  Decl->setAggregate(false);
-  Decl->setPOD(false);
-
-  // Create the base specifier.
-  return new CXXBaseSpecifier(SpecifierRange, Virtual, 
-                              BaseType->isClassType(), Access, BaseType);
+  if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
+                                                      Virtual, Access,
+                                                      BaseType, BaseLoc))
+    return BaseSpec;
+  
+  return true;
 }
 
-/// ActOnBaseSpecifiers - Attach the given base specifiers to the
-/// class, after checking whether there are any duplicate base
-/// classes.
-void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
-                               unsigned NumBases) {
-  if (NumBases == 0)
-    return;
+/// \brief Performs the actual work of attaching the given base class
+/// specifiers to a C++ class.
+bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
+                                unsigned NumBases) {
+ if (NumBases == 0)
+    return false;
 
   // Used to keep track of which base types we have already seen, so
   // that we can properly diagnose redundant direct base types. Note
@@ -378,40 +407,56 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
   std::map<QualType, CXXBaseSpecifier*, QualTypeOrdering> KnownBaseTypes;
 
   // Copy non-redundant base specifiers into permanent storage.
-  CXXBaseSpecifier **BaseSpecs = (CXXBaseSpecifier **)Bases;
   unsigned NumGoodBases = 0;
+  bool Invalid = false;
   for (unsigned idx = 0; idx < NumBases; ++idx) {
     QualType NewBaseType 
-      = Context.getCanonicalType(BaseSpecs[idx]->getType());
+      = Context.getCanonicalType(Bases[idx]->getType());
     NewBaseType = NewBaseType.getUnqualifiedType();
 
     if (KnownBaseTypes[NewBaseType]) {
       // C++ [class.mi]p3:
       //   A class shall not be specified as a direct base class of a
       //   derived class more than once.
-      Diag(BaseSpecs[idx]->getSourceRange().getBegin(),
+      Diag(Bases[idx]->getSourceRange().getBegin(),
            diag::err_duplicate_base_class)
         << KnownBaseTypes[NewBaseType]->getType()
-        << BaseSpecs[idx]->getSourceRange();
+        << Bases[idx]->getSourceRange();
 
       // Delete the duplicate base class specifier; we're going to
       // overwrite its pointer later.
-      delete BaseSpecs[idx];
+      delete Bases[idx];
+
+      Invalid = true;
     } else {
       // Okay, add this new base class.
-      KnownBaseTypes[NewBaseType] = BaseSpecs[idx];
-      BaseSpecs[NumGoodBases++] = BaseSpecs[idx];
+      KnownBaseTypes[NewBaseType] = Bases[idx];
+      Bases[NumGoodBases++] = Bases[idx];
     }
   }
 
   // Attach the remaining base class specifiers to the derived class.
-  CXXRecordDecl *Decl = (CXXRecordDecl*)ClassDecl;
-  Decl->setBases(BaseSpecs, NumGoodBases);
+  Class->setBases(Bases, NumGoodBases);
 
   // Delete the remaining (good) base class specifiers, since their
   // data has been copied into the CXXRecordDecl.
   for (unsigned idx = 0; idx < NumGoodBases; ++idx)
-    delete BaseSpecs[idx];
+    delete Bases[idx];
+
+  return Invalid;
+}
+
+/// ActOnBaseSpecifiers - Attach the given base specifiers to the
+/// class, after checking whether there are any duplicate base
+/// classes.
+void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+                               unsigned NumBases) {
+  if (!ClassDecl || !Bases || !NumBases)
+    return;
+
+  AdjustDeclIfTemplate(ClassDecl);
+  AttachBaseSpecifiers(cast<CXXRecordDecl>((Decl*)ClassDecl),
+                       (CXXBaseSpecifier**)(Bases), NumBases);
 }
 
 //===----------------------------------------------------------------------===//
@@ -760,11 +805,13 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclTy *TagDecl,
                                              SourceLocation LBrac,
                                              SourceLocation RBrac) {
-  AdjustDeclIfTemplate(TagDecl);
+  TemplateDecl *Template = AdjustDeclIfTemplate(TagDecl);
   ActOnFields(S, RLoc, TagDecl,
               (DeclTy**)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
-  AddImplicitlyDeclaredMembersToClass(cast<CXXRecordDecl>((Decl*)TagDecl));
+
+  if (!Template)
+    AddImplicitlyDeclaredMembersToClass(cast<CXXRecordDecl>((Decl*)TagDecl));
 }
 
 /// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared

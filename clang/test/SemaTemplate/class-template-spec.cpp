@@ -1,5 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
-template<typename T, typename U = int> struct A; // expected-note{{template is declared here}}
+template<typename T, typename U = int> struct A; // expected-note 2{{template is declared here}}
 
 template<> struct A<double, double>; // expected-note{{forward declaration}}
 
@@ -16,10 +16,10 @@ int test_specs(A<float, float> *a1, A<float, int> *a2) {
 }
 
 int test_incomplete_specs(A<double, double> *a1, 
-                          A<double> *a2) // FIXME: expected-note{{forward declaration}}
+                          A<double> *a2)
 {
   (void)a1->x; // expected-error{{incomplete definition of type 'A<double, double>'}}
-  (void)a2->x; // expected-error{{incomplete definition of type 'A<double>'}}
+  (void)a2->x; // expected-error{{implicit instantiation of undefined template 'struct A'}}
 }
 
 typedef float FLOAT;

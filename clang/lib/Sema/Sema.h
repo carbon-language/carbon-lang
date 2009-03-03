@@ -1501,11 +1501,19 @@ public:
   //
 
   /// ActOnBaseSpecifier - Parsed a base specifier
+  CXXBaseSpecifier *CheckBaseSpecifier(CXXRecordDecl *Class,
+                                       SourceRange SpecifierRange,
+                                       bool Virtual, AccessSpecifier Access,
+                                       QualType BaseType, 
+                                       SourceLocation BaseLoc);
   virtual BaseResult ActOnBaseSpecifier(DeclTy *classdecl, 
                                         SourceRange SpecifierRange,
                                         bool Virtual, AccessSpecifier Access,
-                                        TypeTy *basetype, SourceLocation BaseLoc);
+                                        TypeTy *basetype, SourceLocation 
+                                        BaseLoc);
 
+  bool AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
+                            unsigned NumBases);
   virtual void ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
                                    unsigned NumBases);
 
@@ -1542,6 +1550,7 @@ public:
                                          SourceLocation DefaultLoc,
                                          TypeTy *Default);
 
+  QualType CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc);
   virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                 unsigned Depth,
                                                 unsigned Position);
@@ -1615,7 +1624,8 @@ public:
   bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg, 
                                                       NamedDecl *&Entity);
   bool CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member);
-  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, Expr *&Arg,
+  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, 
+                             QualType InstantiatedParamType, Expr *&Arg,
                        llvm::SmallVectorImpl<TemplateArgument> *Converted = 0);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
@@ -1634,6 +1644,13 @@ public:
   QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,
                            unsigned NumTemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);
+  bool 
+  InstantiateBaseSpecifiers(ClassTemplateSpecializationDecl *ClassTemplateSpec,
+                            ClassTemplateDecl *ClassTemplate);
+  bool 
+  InstantiateClassTemplateSpecialization(
+                           ClassTemplateSpecializationDecl *ClassTemplateSpec,
+                           bool ExplicitInstantiation);
 
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,

@@ -627,6 +627,10 @@ DIAG(err_template_spec_redecl_out_of_scope, ERROR,
 DIAG(err_template_spec_redecl_global_scope, ERROR,
      "class template specialization of %0 must occur in at global scope")
 
+// C++ Template Instantiation
+DIAG(err_template_implicit_instantiate_undefined, ERROR,
+     "implicit instantiation of undefined template %0")
+
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")
 DIAG(err_unexpected_namespace, ERROR,

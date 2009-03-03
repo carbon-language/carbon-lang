@@ -590,6 +590,10 @@ public:
     return template_arg_begin() + NumTemplateArgs;
   }
 
+  const TemplateArgument *getTemplateArgs() const { 
+    return template_arg_begin(); 
+  }
+
   unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
 
   /// \brief Determine the kind of specialization that this

@@ -399,3 +399,124 @@ QualType Sema::InstantiateType(QualType T,
                                         Loc, Entity);
   return Instantiator(T);
 }
+
+/// \brief Instantiate the base class specifiers of the given class
+/// template specialization.
+///
+/// Produces a diagnostic and returns true on error, returns false and
+/// attaches the instantiated base classes to the class template
+/// specialization if successful.
+bool 
+Sema::InstantiateBaseSpecifiers(
+                           ClassTemplateSpecializationDecl *ClassTemplateSpec,
+                           ClassTemplateDecl *ClassTemplate) {
+  bool Invalid = false;
+  llvm::SmallVector<CXXBaseSpecifier*, 8> InstantiatedBases;
+  for (ClassTemplateSpecializationDecl::base_class_iterator
+         Base = ClassTemplate->getTemplatedDecl()->bases_begin(),
+         BaseEnd = ClassTemplate->getTemplatedDecl()->bases_end();
+       Base != BaseEnd && !Invalid; ++Base) {
+    if (!Base->getType()->isDependentType()) {
+      // FIXME: Allocate via ASTContext
+      InstantiatedBases.push_back(new CXXBaseSpecifier(*Base));
+      continue;
+    }
+
+    QualType BaseType = InstantiateType(Base->getType(), 
+                                        ClassTemplateSpec->getTemplateArgs(),
+                                        ClassTemplateSpec->getNumTemplateArgs(),
+                                        Base->getSourceRange().getBegin(),
+                                        DeclarationName());
+    if (BaseType.isNull()) {
+      Invalid = true;
+      continue;
+    }
+
+    if (CXXBaseSpecifier *InstantiatedBase
+          = CheckBaseSpecifier(ClassTemplateSpec,
+                               Base->getSourceRange(),
+                               Base->isVirtual(),
+                               Base->getAccessSpecifierAsWritten(),
+                               BaseType,
+                               /*FIXME: Not totally accurate */
+                               Base->getSourceRange().getBegin()))
+      InstantiatedBases.push_back(InstantiatedBase);
+    else
+      Invalid = true;
+  }
+
+  if (AttachBaseSpecifiers(ClassTemplateSpec, &InstantiatedBases[0],
+                           InstantiatedBases.size()))
+    Invalid = true;
+
+  return Invalid;
+}
+
+bool 
+Sema::InstantiateClassTemplateSpecialization(
+                           ClassTemplateSpecializationDecl *ClassTemplateSpec,
+                           bool ExplicitInstantiation) {
+  // Perform the actual instantiation on the canonical declaration.
+  ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
+                               Context.getCanonicalDecl(ClassTemplateSpec));
+
+  // We can only instantiate something that hasn't already been
+  // instantiated or specialized. Fail without any diagnostics: our
+  // caller will provide an error message.
+  if (ClassTemplateSpec->getSpecializationKind() != TSK_Undeclared)
+    return true;
+
+  // FIXME: Push this class template instantiation onto the
+  // instantiation stack, checking for recursion that exceeds a
+  // certain depth.
+
+  // FIXME: Perform class template partial specialization to select
+  // the best template.
+  ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
+
+  if (!Template->getTemplatedDecl()->getDefinition(Context)) {
+    Diag(ClassTemplateSpec->getLocation(), 
+         diag::err_template_implicit_instantiate_undefined)
+      << Context.getTypeDeclType(ClassTemplateSpec);
+    Diag(Template->getTemplatedDecl()->getLocation(), 
+         diag::note_template_decl_here);
+    return true;
+  }
+
+  // Note that this is an instantiation.  
+  ClassTemplateSpec->setSpecializationKind(
+                        ExplicitInstantiation? TSK_ExplicitInstantiation 
+                                             : TSK_ImplicitInstantiation);
+
+
+  bool Invalid = false;
+  
+  // Enter the scope of this instantiation. We don't use
+  // PushDeclContext because we don't have a scope.
+  DeclContext *PreviousContext = CurContext;
+  CurContext = ClassTemplateSpec;
+
+  // Start the definition of this instantiation.
+  ClassTemplateSpec->startDefinition();
+
+  // FIXME: Create the injected-class-name for the
+  // instantiation. Should this be a typedef or something like it?
+
+  // Instantiate the base class specifiers.
+  if (InstantiateBaseSpecifiers(ClassTemplateSpec, Template))
+    Invalid = true;
+
+  // FIXME: Instantiate all of the members.
+  
+  // Add any implicitly-declared members that we might need.
+  AddImplicitlyDeclaredMembersToClass(ClassTemplateSpec);
+
+  // Finish the definition of this instantiation.
+  // FIXME: ActOnFields does more checking, which we'll eventually need.
+  ClassTemplateSpec->completeDefinition(Context);
+
+  // Exit the scope of this instantiation.
+  CurContext = PreviousContext;
+
+  return Invalid;
+}

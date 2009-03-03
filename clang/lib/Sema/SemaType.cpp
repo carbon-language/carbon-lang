@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
@@ -473,7 +474,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
 /// This routine checks the function type according to C++ rules and
 /// under the assumption that the result type and parameter types have
 /// just been instantiated from a template. It therefore duplicates
-/// some of the behavior of GetTypeForDeclaration, but in a much
+/// some of the behavior of GetTypeForDeclarator, but in a much
 /// simpler form that is only suitable for this narrow use case.
 ///
 /// \param T The return type of the function.
@@ -1032,6 +1033,21 @@ bool Sema::DiagnoseIncompleteType(SourceLocation Loc, QualType T, unsigned diag,
   // If we have a complete type, we're done.
   if (!T->isIncompleteType())
     return false;
+
+  // If we have a class template specialization, try to instantiate
+  // it.
+  if (const RecordType *Record = T->getAsRecordType())
+    if (ClassTemplateSpecializationDecl *ClassTemplateSpec
+          = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) 
+      if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
+        // Update the class template specialization's location to
+        // refer to the point of instantiation.
+        if (Loc.isValid())
+          ClassTemplateSpec->setLocation(Loc);
+        return InstantiateClassTemplateSpecialization(ClassTemplateSpec,
+                                             /*ExplicitInstantiation=*/false);
+      }
+        
 
   if (PrintType.isNull())
     PrintType = T;

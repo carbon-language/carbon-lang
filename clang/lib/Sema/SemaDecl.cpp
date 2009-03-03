@@ -2174,13 +2174,16 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
       if (Var->getStorageClass() != VarDecl::Extern &&
           Var->getStorageClass() != VarDecl::PrivateExtern &&
           InitType->isRecordType()) {
-        const CXXConstructorDecl *Constructor
-          = PerformInitializationByConstructor(InitType, 0, 0, 
-                                               Var->getLocation(),
+        const CXXConstructorDecl *Constructor = 0;
+        if (!DiagnoseIncompleteType(Var->getLocation(), InitType, 
+                                    diag::err_invalid_incomplete_type_use))
+          Constructor
+            = PerformInitializationByConstructor(InitType, 0, 0, 
+                                                 Var->getLocation(),
                                                SourceRange(Var->getLocation(),
                                                            Var->getLocation()),
-                                               Var->getDeclName(),
-                                               IK_Default);
+                                                 Var->getDeclName(),
+                                                 IK_Default);
         if (!Constructor)
           Var->setInvalidDecl();
       }

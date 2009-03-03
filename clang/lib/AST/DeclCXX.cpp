@@ -52,6 +52,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   if (this->Bases)
     delete [] this->Bases;
 
+  // FIXME: allocate using the ASTContext
   this->Bases = new CXXBaseSpecifier[NumBases];
   this->NumBases = NumBases;
   for (unsigned i = 0; i < NumBases; ++i)
