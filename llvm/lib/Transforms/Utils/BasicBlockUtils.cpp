@@ -477,6 +477,12 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     Instruction *Inst = --ScanFrom;
     if (isa<DbgInfoIntrinsic>(Inst))
       continue;
+    // Likewise, we skip bitcasts that feed into a llvm.dbg.declare; these are
+    // not present when debugging is off.
+    if (isa<BitCastInst>(Inst) && Inst->hasOneUse() &&
+        isa<DbgDeclareInst>(Inst->use_begin()))
+      continue;
+
     // Restore ScanFrom to expected value in case next test succeeds
     ScanFrom++;
    

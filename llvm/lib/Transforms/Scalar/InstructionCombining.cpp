@@ -11484,7 +11484,11 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   for (unsigned ScanInsts = 6; BBI != SI.getParent()->begin() && ScanInsts;
        --ScanInsts) {
     // Don't count debug info directives, lest they affect codegen.
-    if (isa<DbgInfoIntrinsic>(BBI)) {
+    // Likewise, we skip bitcasts that feed into a llvm.dbg.declare; these are
+    // not present when debugging is off.
+    if (isa<DbgInfoIntrinsic>(BBI) ||
+        (isa<BitCastInst>(BBI) && BBI->hasOneUse() &&
+         isa<DbgDeclareInst>(BBI->use_begin()))) {
       ScanInsts++;
       --BBI;
       continue;
