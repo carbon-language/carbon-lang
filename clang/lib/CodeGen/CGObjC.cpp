@@ -205,9 +205,13 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     if (hasAggregateLLVMType(Ivar->getType())) {
       EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
     }
-    else
-      EmitReturnOfRValue(EmitLoadOfLValue(LV, Ivar->getType()), 
-                                          PD->getType());
+    else {
+      CodeGenTypes &Types = CGM.getTypes();
+      RValue RV = EmitLoadOfLValue(LV, Ivar->getType());
+      RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
+                       Types.ConvertType(PD->getType()))); 
+      EmitReturnOfRValue(RV, PD->getType());
+    }
   }
 
   FinishFunction();
