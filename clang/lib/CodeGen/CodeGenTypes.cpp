@@ -91,7 +91,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // We can handle bare pointers here because we know that the only pointers
     // to the Opaque type are P.second and from other types.  Refining the
     // opqaue type away will invalidate P.second, but we don't mind :).
-    const llvm::Type *NT = ConvertTypeRecursive(P.first);
+    const llvm::Type *NT = ConvertTypeForMemRecursive(P.first);
     P.second->refineAbstractTypeTo(NT);
   }
 
@@ -112,6 +112,13 @@ const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
   const llvm::Type *ResultType = ConvertNewType(T);
   TypeCache.insert(std::make_pair(T.getTypePtr(), 
                                   llvm::PATypeHolder(ResultType)));
+  return ResultType;
+}
+
+const llvm::Type *CodeGenTypes::ConvertTypeForMemRecursive(QualType T) {
+  const llvm::Type *ResultType = ConvertTypeRecursive(T);
+  if (ResultType == llvm::Type::Int1Ty)
+    return llvm::IntegerType::get((unsigned)Context.getTypeSize(T));
   return ResultType;
 }
 
@@ -245,18 +252,18 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
            "FIXME: We only handle trivial array types so far!");
     // VLAs resolve to the innermost element type; this matches
     // the return of alloca, and there isn't any obviously better choice.
-    return ConvertTypeRecursive(A.getElementType());
+    return ConvertTypeForMemRecursive(A.getElementType());
   }
   case Type::IncompleteArray: {
     const IncompleteArrayType &A = cast<IncompleteArrayType>(Ty);
     assert(A.getIndexTypeQualifier() == 0 &&
            "FIXME: We only handle trivial array types so far!");
     // int X[] -> [0 x int]
-    return llvm::ArrayType::get(ConvertTypeRecursive(A.getElementType()), 0);
+    return llvm::ArrayType::get(ConvertTypeForMemRecursive(A.getElementType()), 0);
   }
   case Type::ConstantArray: {
     const ConstantArrayType &A = cast<ConstantArrayType>(Ty);
-    const llvm::Type *EltTy = ConvertTypeRecursive(A.getElementType());
+    const llvm::Type *EltTy = ConvertTypeForMemRecursive(A.getElementType());
     return llvm::ArrayType::get(EltTy, A.getSize().getZExtValue());
   }
   case Type::ExtVector:
@@ -481,7 +488,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
                                FieldEnd = RD.field_end();
        Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
-    const llvm::Type *Ty = CGT.ConvertTypeRecursive(Field->getType());
+    const llvm::Type *Ty = CGT.ConvertTypeForMemRecursive(Field->getType());
     uint64_t size = CGT.getTargetData().getTypePaddedSizeInBits(Ty);
 
     if (Field->isBitField()) {

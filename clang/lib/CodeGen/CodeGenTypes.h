@@ -144,6 +144,7 @@ public:
   /// a type.  For example, the scalar representation for _Bool is i1, but the
   /// memory representation is usually i8 or i32, depending on the target.
   const llvm::Type *ConvertTypeForMem(QualType T);
+  const llvm::Type *ConvertTypeForMemRecursive(QualType T);
 
   /// GetFunctionType - Get the LLVM function type for \arg Info.
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
