@@ -159,6 +159,9 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 bool llvm::isInstructionTriviallyDead(Instruction *I) {
   if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
 
+  // We don't want debug info removed by anything this general.
+  if (isa<DbgInfoIntrinsic>(I)) return false;
+    
   if (!I->mayWriteToMemory())
     return true;
 
