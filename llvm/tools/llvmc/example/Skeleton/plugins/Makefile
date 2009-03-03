@@ -1,4 +1,4 @@
-##===- tools/llvmc/Makefile --------------------------------*- Makefile -*-===##
+##===- llvmc/example/Skeleton/plugins/Makefile -------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,12 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL = $(LLVMC_BASE_LEVEL)/..
 
-export LLVMC_BASED_DRIVER_NAME = llvmc
-export LLVMC_BUILTIN_PLUGINS = Base Clang
+ifneq ($(LLVMC_BUILTIN_PLUGINS),)
+DIRS = $(LLVMC_BUILTIN_PLUGINS)
+endif
 
-DIRS = plugins driver
+export LLVMC_BUILTIN_PLUGIN=1
 
 include $(LEVEL)/Makefile.common

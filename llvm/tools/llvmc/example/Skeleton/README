@@ -1,0 +1,6 @@
+
+This is a template that can be used to create your own LLVMC-based drivers. Just
+copy the `Skeleton` directory to the location of your preference and edit
+`Skeleton/Makefile` and `Skeleton/plugins/Plugin`.
+
+The build system assumes that your project is based on LLVM.
