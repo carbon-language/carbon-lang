@@ -2,6 +2,7 @@
 
 @interface current 
 {
+@public
   int ivar;
   int ivar1;
   int ivar2;

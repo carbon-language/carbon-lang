@@ -1440,4 +1440,7 @@ DIAG(warn_ivar_use_hidden, WARNING,
      "local declaration of %0 hides instance variable")
 DIAG(error_ivar_use_in_class_method, ERROR,
      "instance variable %0 accessed in class method")
-
+DIAG(error_private_ivar_access, ERROR,
+     "instance variable %0 is private")
+DIAG(error_protected_ivar_access, ERROR,
+     "instance variable %0 is protected")

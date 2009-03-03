@@ -632,7 +632,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // this name, if the lookup sucedes, we replace it our current decl.
     if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
-      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II)) {
+      ObjCInterfaceDecl *ClassDeclared;
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
         // Check if referencing a field with __attribute__((deprecated)).
         if (DiagnoseUseOfDecl(IV, Loc))
           return ExprError();
@@ -645,6 +646,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         // If a class method uses a global variable, even if an ivar with
         // same name exists, use the global.
         if (!IsClsMethod) {
+          if (IV->getAccessControl() == ObjCIvarDecl::Private &&
+              ClassDeclared != IFace)
+           Diag(Loc, diag::error_private_ivar_access) << IV->getDeclName();
           // FIXME: This should use a new expr for a direct reference, don't turn
           // this into Self->ivar, just return a BareIVarExpr or something.
           IdentifierInfo &II = Context.Idents.get("self");
@@ -660,8 +664,12 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     else if (getCurMethodDecl()->isInstanceMethod()) {
       // We should warn if a local variable hides an ivar.
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
-      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II))
-        Diag(Loc, diag::warn_ivar_use_hidden)<<IV->getDeclName();
+      ObjCInterfaceDecl *ClassDeclared;
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
+        if (IV->getAccessControl() != ObjCIvarDecl::Private ||
+            IFace == ClassDeclared)
+          Diag(Loc, diag::warn_ivar_use_hidden)<<IV->getDeclName();
+      }
     }
     // Needed to implement property "super.method" notation.
     if (D == 0 && II->isStr("super")) {
@@ -1773,7 +1781,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
   // (*Obj).ivar.
   if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
-    if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member)) {
+    ObjCInterfaceDecl *ClassDeclared;
+    if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member, 
+                                                             ClassDeclared)) {
       // If the decl being referenced had an error, return an error for this
       // sub-expr without emitting another error, in order to avoid cascading
       // error cases.
@@ -1783,6 +1793,19 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // Check whether we can reference this field.
       if (DiagnoseUseOfDecl(IV, MemberLoc))
         return ExprError();
+      if (IV->getAccessControl() != ObjCIvarDecl::Public) {
+        ObjCInterfaceDecl *ClassOfMethodDecl = 0;
+        if (ObjCMethodDecl *MD = getCurMethodDecl())
+          ClassOfMethodDecl =  MD->getClassInterface();
+        if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
+          if (ClassDeclared != IFTy->getDecl() || 
+              ClassOfMethodDecl != ClassDeclared)
+            Diag(MemberLoc, diag::error_private_ivar_access) << IV->getDeclName();
+        }
+        // @protected
+        else if (!IFTy->getDecl()->isSuperClassOf(ClassOfMethodDecl))
+          Diag(MemberLoc, diag::error_protected_ivar_access) << IV->getDeclName();
+      }
 
       ObjCIvarRefExpr *MRef= new (Context) ObjCIvarRefExpr(IV, IV->getType(),
                                                  MemberLoc, BaseExpr,
