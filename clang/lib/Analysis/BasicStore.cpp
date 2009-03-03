@@ -27,8 +27,9 @@ class VISIBILITY_HIDDEN BasicStoreSubRegionMap : public SubRegionMap {
 public:
   BasicStoreSubRegionMap() {}
 
-  void iterSubRegions(const MemRegion* R, Visitor& V) const {
+  bool iterSubRegions(const MemRegion* R, Visitor& V) const {
     // Do nothing.  No subregions.
+    return true;
   }
 };
   

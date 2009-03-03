@@ -121,18 +121,20 @@ public:
     
   ~RegionStoreSubRegionMap() {}
   
-  void iterSubRegions(const MemRegion* Parent, Visitor& V) const {
+  bool iterSubRegions(const MemRegion* Parent, Visitor& V) const {
     Map::iterator I = M.find(Parent);
 
     if (I == M.end())
-      return;
+      return true;
     
     llvm::ImmutableSet<const MemRegion*> S = I->second;
     for (llvm::ImmutableSet<const MemRegion*>::iterator SI=S.begin(),SE=S.end();
          SI != SE; ++SI) {
       if (!V.Visit(Parent, *SI))
-        return;
+        return false;
     }
+    
+    return true;
   }
 };  
 
@@ -600,10 +602,8 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
 
 SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
   // Assume the base location is MemRegionVal(ElementRegion).
-
-  if (!isa<loc::MemRegionVal>(L)) {
+  if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
-  }
 
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
 
@@ -621,8 +621,9 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
                                                     ER->getArrayRegion());
     return Loc::MakeVal(NewER);
 
-  } else
-    return UnknownVal();
+  }
+  
+  return UnknownVal();
 }
 
 SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {

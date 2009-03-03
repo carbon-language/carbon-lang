@@ -611,8 +611,8 @@ public:
     ConstraintMgr->EndPath(St);
   }
 
-  bool scanReachableSymbols(nonloc::CompoundVal val, SymbolVisitor& vistor);
-  bool scanReachableSymbols(SVal val, SymbolVisitor& visitor);
+  bool scanReachableSymbols(SVal val, const GRState* state,
+                            SymbolVisitor& visitor);
 };
   
 //===----------------------------------------------------------------------===//
@@ -738,7 +738,7 @@ public:
   template <typename CB>
   CB scanReachableSymbols(SVal val) {
     CB cb(*this);
-    Mgr->scanReachableSymbols(val, cb);
+    Mgr->scanReachableSymbols(val, St, cb);
     return cb;
   }
   

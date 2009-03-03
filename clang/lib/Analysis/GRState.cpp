@@ -46,7 +46,7 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   GRState NewState = *state;
 
   NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, SymReaper, *this,
-                                           RegionRoots);
+                                           state, RegionRoots);
 
   // Clean up the store.
   NewState.St = StoreMgr->RemoveDeadBindings(&NewState, Loc, SymReaper,
@@ -208,19 +208,42 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
 // Utility.
 //===----------------------------------------------------------------------===//
 
-bool GRStateManager::scanReachableSymbols(nonloc::CompoundVal val,
-                                          SymbolVisitor& visitor) {
+namespace {
+  class VISIBILITY_HIDDEN ScanReachableSymbols : public SubRegionMap::Visitor  {
+  typedef llvm::DenseSet<const MemRegion*> VisitedRegionsTy;
+
+  VisitedRegionsTy visited;
+  GRStateRef state;
+  SymbolVisitor &visitor;
+  llvm::OwningPtr<SubRegionMap> SRM;
+public:
+  
+  ScanReachableSymbols(GRStateManager* sm, const GRState *st, SymbolVisitor& v)
+    : state(st, *sm), visitor(v) {}
+  
+  bool scan(nonloc::CompoundVal val);
+  bool scan(SVal val);
+  bool scan(const MemRegion *R);
+    
+  // From SubRegionMap::Visitor.
+  bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) {
+    return scan(SubRegion);
+  }
+};
+}
+
+bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
   for (nonloc::CompoundVal::iterator I=val.begin(), E=val.end(); I!=E; ++I)
-    if (!scanReachableSymbols(*I, visitor)) return false;
+    if (!scan(*I))
+      return false;
 
   return true;
 }
-
-bool GRStateManager::scanReachableSymbols(SVal val, SymbolVisitor& visitor) {
-  
-  // FIXME: Scan through through the reachable regions.
-  // if (isa<Loc>(val)) { ... }
-  
+    
+bool ScanReachableSymbols::scan(SVal val) {
+  if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
+    return scan(X->getRegion());
+    
   if (loc::SymbolVal *X = dyn_cast<loc::SymbolVal>(&val))
     return visitor.VisitSymbol(X->getSymbol());
   
@@ -228,9 +251,42 @@ bool GRStateManager::scanReachableSymbols(SVal val, SymbolVisitor& visitor) {
     return visitor.VisitSymbol(X->getSymbol());
   
   if (nonloc::CompoundVal *X = dyn_cast<nonloc::CompoundVal>(&val))
-    return scanReachableSymbols(*X, visitor);
+    return scan(*X);
   
   return true;
+}
+  
+bool ScanReachableSymbols::scan(const MemRegion *R) {
+  if (visited.count(R))
+    return true;
+  
+  visited.insert(R);
+
+  // If this is a symbolic region, visit the symbol for the region.
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
+    if (!visitor.VisitSymbol(SR->getSymbol()))
+      return false;
+  
+  // If this is a subregion, also visit the parent regions.
+  if (const SubRegion *SR = dyn_cast<SubRegion>(R))
+    if (!scan(SR->getSuperRegion()));
+      return false;
+  
+  // Now look at the binding to this region (if any).
+  if (!scan(state.GetSVal(R)))
+    return false;
+  
+  // Now look at the subregions.
+  if (!SRM.get())
+   SRM.reset(state.getManager().getStoreManager().getSubRegionMap(state).get());
+  
+  return SRM->iterSubRegions(R, *this);
+}
+
+bool GRStateManager::scanReachableSymbols(SVal val, const GRState* state,
+                                          SymbolVisitor& visitor) {
+  ScanReachableSymbols S(this, state, visitor);
+  return S.scan(val);
 }
 
 //===----------------------------------------------------------------------===//

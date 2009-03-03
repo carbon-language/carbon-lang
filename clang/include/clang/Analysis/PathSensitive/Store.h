@@ -170,11 +170,11 @@ public:
   
   class Visitor {
   public:
-    virtual ~Visitor() {}
-    virtual bool Visit(const MemRegion* Parent, const MemRegion* SubRegion);    
+    virtual ~Visitor() {};
+    virtual bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) = 0;
   };
   
-  virtual void iterSubRegions(const MemRegion* R, Visitor& V) const = 0;  
+  virtual bool iterSubRegions(const MemRegion* R, Visitor& V) const = 0;  
 };
   
 StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);

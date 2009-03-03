@@ -141,7 +141,7 @@ public:
 
   Environment
   RemoveDeadBindings(Environment Env, Stmt* Loc, SymbolReaper& SymReaper,
-                     GRStateManager& StateMgr,
+                     GRStateManager& StateMgr, const GRState *state,
                      llvm::SmallVectorImpl<const MemRegion*>& DRoots);
 
 };

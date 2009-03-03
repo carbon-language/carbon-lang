@@ -119,6 +119,7 @@ Environment
 EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
                                        SymbolReaper& SymReaper,
                                        GRStateManager& StateMgr,
+                                       const GRState *state,
                               llvm::SmallVectorImpl<const MemRegion*>& DRoots) {
   
   // Drop bindings for subexpressions.
@@ -138,7 +139,7 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
 
       // Mark all symbols in the block expr's value live.
       MarkLiveCallback cb(SymReaper);
-      StateMgr.scanReachableSymbols(X, cb);
+      StateMgr.scanReachableSymbols(X, state, cb);
     } else {
       // The block expr is dead.
       SVal X = I.getData();
