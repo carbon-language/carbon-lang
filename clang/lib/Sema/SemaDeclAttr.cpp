@@ -1234,17 +1234,25 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   unsigned DestWidth = 0;
   bool IntegerMode = true;
+  bool ComplexMode = false;
   switch (Len) {
   case 2:
-    if (!memcmp(Str, "QI", 2)) { DestWidth =  8; break; }
-    if (!memcmp(Str, "HI", 2)) { DestWidth = 16; break; }
-    if (!memcmp(Str, "SI", 2)) { DestWidth = 32; break; }
-    if (!memcmp(Str, "DI", 2)) { DestWidth = 64; break; }
-    if (!memcmp(Str, "TI", 2)) { DestWidth = 128; break; }
-    if (!memcmp(Str, "SF", 2)) { DestWidth = 32; IntegerMode = false; break; }
-    if (!memcmp(Str, "DF", 2)) { DestWidth = 64; IntegerMode = false; break; }
-    if (!memcmp(Str, "XF", 2)) { DestWidth = 96; IntegerMode = false; break; }
-    if (!memcmp(Str, "TF", 2)) { DestWidth = 128; IntegerMode = false; break; }
+    switch (Str[0]) {
+    case 'Q': DestWidth = 8; break;
+    case 'H': DestWidth = 16; break;
+    case 'S': DestWidth = 32; break;
+    case 'D': DestWidth = 64; break;
+    case 'X': DestWidth = 96; break;
+    case 'T': DestWidth = 128; break;
+    }
+    if (Str[1] == 'F') {
+      IntegerMode = false;
+    } else if (Str[1] == 'C') {
+      IntegerMode = false;
+      ComplexMode = true;
+    } else if (Str[1] != 'I') {
+      DestWidth = 0;
+    }
     break;
   case 4:
     // FIXME: glibc uses 'word' to define register_t; this is narrower than a
@@ -1270,7 +1278,20 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
       << "mode" << SourceRange(Attr.getLoc(), Attr.getLoc());
     return;
   }
-  
+
+  if (!OldTy->getAsBuiltinType() && !OldTy->isComplexType())
+    S.Diag(Attr.getLoc(), diag::err_mode_not_primitive);
+  else if (IntegerMode) {
+    if (!OldTy->isIntegralType())
+      S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
+  } else if (ComplexMode) {
+    if (!OldTy->isComplexType())
+      S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
+  } else {
+    if (!OldTy->isFloatingType())
+      S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
+  }
+
   // FIXME: Sync this with InitializePredefinedMacros; we need to match
   // int8_t and friends, at least with glibc.
   // FIXME: Make sure 32/64-bit integers don't get defined to types of
@@ -1286,14 +1307,20 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
     return;
   case 8:
-    assert(IntegerMode);
+    if (!IntegerMode) {
+      S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
+      return;
+    }
     if (OldTy->isSignedIntegerType())
       NewTy = S.Context.SignedCharTy;
     else
       NewTy = S.Context.UnsignedCharTy;
     break;
   case 16:
-    assert(IntegerMode);
+    if (!IntegerMode) {
+      S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
+      return;
+    }
     if (OldTy->isSignedIntegerType())
       NewTy = S.Context.ShortTy;
     else
@@ -1315,19 +1342,20 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     else
       NewTy = S.Context.UnsignedLongLongTy;
     break;
+  case 96:
+    NewTy = S.Context.LongDoubleTy;
+    break;
   case 128:
     if (!IntegerMode) {
       S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
       return;
     }
     NewTy = S.Context.getFixedWidthIntType(128, OldTy->isSignedIntegerType());
+    break;
   }
 
-  if (!OldTy->getAsBuiltinType())
-    S.Diag(Attr.getLoc(), diag::err_mode_not_primitive);
-  else if (!(IntegerMode && OldTy->isIntegerType()) &&
-           !(!IntegerMode && OldTy->isFloatingType())) {
-    S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
+  if (ComplexMode) {
+    NewTy = S.Context.getComplexType(NewTy);
   }
 
   // Install the new type.
