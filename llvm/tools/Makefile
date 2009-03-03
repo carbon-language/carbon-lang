@@ -24,7 +24,7 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
 
 include $(LEVEL)/Makefile.config
 
-ifdef ENABLE_PIC
+ifeq ($(ENABLE_PIC),1)
   DIRS += lto
   ifdef BINUTILS_INCDIR
     DIRS += gold
