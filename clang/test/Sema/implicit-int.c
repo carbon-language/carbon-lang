@@ -9,7 +9,7 @@ y;  // expected-warning {{type specifier missing, defaults to 'int'}}
 void f((x));  // expected-warning {{type specifier missing, defaults to 'int'}}
 
 
-// PR2639
+// PR3702
 #define PAD(ms10) { \
 	register i; \
 }
