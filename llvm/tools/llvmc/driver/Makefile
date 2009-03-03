@@ -10,7 +10,7 @@
 LEVEL = ../../..
 
 TOOLNAME = $(LLVMC_BASED_DRIVER_NAME)
-USEDLIBS = CompilerDriver
+LLVMLIBS = CompilerDriver
 
 ifneq ($(LLVMC_BUILTIN_PLUGINS),)
 USEDLIBS += $(patsubst %,plugin_llvmc_%,$(LLVMC_BUILTIN_PLUGINS))
