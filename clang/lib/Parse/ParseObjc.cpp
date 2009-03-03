@@ -1285,7 +1285,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 
     SourceLocation AtCatchFinallyLoc = ConsumeToken();
     if (Tok.isObjCAtKeyword(tok::objc_catch)) {
-      OwningStmtResult FirstPart(Actions);
+      DeclTy *FirstPart = 0;
       ConsumeToken(); // consume catch
       if (Tok.is(tok::l_paren)) {
         ConsumeParen();
@@ -1294,17 +1294,14 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           DeclSpec DS;
           ParseDeclarationSpecifiers(DS);
           // For some odd reason, the name of the exception variable is
-          // optional. As a result, we need to use PrototypeContext.
-          Declarator DeclaratorInfo(DS, Declarator::PrototypeContext);
-          ParseDeclarator(DeclaratorInfo);
-          if (DeclaratorInfo.getIdentifier()) {
-            DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope,
-                                                          DeclaratorInfo, 0);
-            FirstPart =
-              Actions.ActOnDeclStmt(aBlockVarDecl,
-                                    DS.getSourceRange().getBegin(),
-                                    DeclaratorInfo.getSourceRange().getEnd());
-          }
+          // optional. As a result, we need to use "PrototypeContext", because 
+          // we must accept either 'declarator' or 'abstract-declarator' here.
+          Declarator ParmDecl(DS, Declarator::PrototypeContext);
+          ParseDeclarator(ParmDecl);
+
+          // Inform the actions module about the parameter declarator, so it
+          // gets added to the current scope.
+          FirstPart = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
         } else
           ConsumeToken(); // consume '...'
         SourceLocation RParenLoc = ConsumeParen();
@@ -1317,7 +1314,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (CatchBody.isInvalid())
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
-                        RParenLoc, move(FirstPart), move(CatchBody),
+                        RParenLoc, FirstPart, move(CatchBody),
                         move(CatchStmts));
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)

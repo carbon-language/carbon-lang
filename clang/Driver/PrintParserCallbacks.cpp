@@ -382,7 +382,7 @@ namespace {
     // Objective-c statements
     virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                   SourceLocation RParen,
-                                                  StmtArg Parm, StmtArg Body,
+                                                  DeclTy *Parm, StmtArg Body,
                                                   StmtArg CatchList) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();

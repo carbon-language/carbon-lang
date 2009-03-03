@@ -180,10 +180,10 @@ ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
 
 ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
                                  SourceLocation rparenloc,
-                                 DeclStmt *catchVarStmtDecl, Stmt *atCatchStmt,
+                                 ParmVarDecl *catchVarDecl, Stmt *atCatchStmt,
                                  Stmt *atCatchList)
 : Stmt(ObjCAtCatchStmtClass) {
-  SubExprs[SELECTOR] = catchVarStmtDecl;
+  ExceptionDecl = catchVarDecl;
   SubExprs[BODY] = atCatchStmt;
   SubExprs[NEXT_CATCH] = NULL;
   // FIXME: O(N^2) in number of catch blocks.

@@ -31,6 +31,7 @@ namespace clang {
   class ASTContext;
   class Expr;
   class Decl;
+  class ParmVarDecl;
   class QualType;
   class IdentifierInfo;
   class SourceManager;
@@ -1056,7 +1057,8 @@ public:
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
 class ObjCAtCatchStmt : public Stmt {
 private:
-  enum { SELECTOR, BODY, NEXT_CATCH, END_EXPR };
+  enum { BODY, NEXT_CATCH, END_EXPR };
+  ParmVarDecl *ExceptionDecl;
   Stmt *SubExprs[END_EXPR];
   SourceLocation AtCatchLoc, RParenLoc;
 
@@ -1066,7 +1068,7 @@ private:
 
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
-                  DeclStmt *catchVarStmtDecl, 
+                  ParmVarDecl *catchVarDecl, 
                   Stmt *atCatchStmt, Stmt *atCatchList);
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
@@ -1079,10 +1081,11 @@ public:
     return static_cast<ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
   }
 
-  const DeclStmt *getCatchParamStmt() const { 
-    return static_cast<const DeclStmt*>(SubExprs[SELECTOR]); }
-  DeclStmt *getCatchParamStmt() { 
-    return static_cast<DeclStmt*>(SubExprs[SELECTOR]); 
+  const ParmVarDecl *getCatchParamDecl() const { 
+    return ExceptionDecl; 
+  }
+  ParmVarDecl *getCatchParamDecl() { 
+    return ExceptionDecl; 
   }
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -1091,7 +1094,7 @@ public:
     return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
   }
 
-  bool hasEllipsis() const { return getCatchParamStmt() == 0; }
+  bool hasEllipsis() const { return getCatchParamDecl() == 0; }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtCatchStmtClass;

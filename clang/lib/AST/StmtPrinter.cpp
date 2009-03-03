@@ -448,9 +448,9 @@ void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {
        catchStmt = 
          static_cast<ObjCAtCatchStmt *>(catchStmt->getNextCatchStmt())) {
     Indent() << "@catch(";
-    if (catchStmt->getCatchParamStmt()) {
-      if (DeclStmt *DS = dyn_cast<DeclStmt>(catchStmt->getCatchParamStmt()))
-        PrintRawDeclStmt(DS);
+    if (catchStmt->getCatchParamDecl()) {
+      if (Decl *DS = catchStmt->getCatchParamDecl())
+        PrintRawDecl(DS);
     }
     OS << ")";
     if (CompoundStmt *CS = dyn_cast<CompoundStmt>(catchStmt->getCatchBody())) 

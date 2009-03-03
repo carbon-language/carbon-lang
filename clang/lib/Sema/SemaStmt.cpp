@@ -962,11 +962,11 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
 
 Action::OwningStmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
-                           SourceLocation RParen, StmtArg Parm,
+                           SourceLocation RParen, DeclTy *Parm,
                            StmtArg Body, StmtArg catchList) {
   Stmt *CatchList = static_cast<Stmt*>(catchList.release());
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
-    static_cast<DeclStmt*>(Parm.release()), static_cast<Stmt*>(Body.release()),
+    static_cast<ParmVarDecl*>(Parm), static_cast<Stmt*>(Body.release()),
     CatchList);
   return Owned(CatchList ? CatchList : CS);
 }

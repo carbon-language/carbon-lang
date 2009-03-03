@@ -1054,7 +1054,7 @@ public:
 
   virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
-                                                StmtArg Parm, StmtArg Body,
+                                                DeclTy *Parm, StmtArg Body,
                                                 StmtArg CatchList);
 
   virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,

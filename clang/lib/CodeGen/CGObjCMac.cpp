@@ -2014,30 +2014,28 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
       llvm::BasicBlock *NextCatchBlock = CGF.createBasicBlock("catch");
 
-      const DeclStmt *CatchParam = CatchStmt->getCatchParamStmt();
-      const VarDecl *VD = 0;
+      const ParmVarDecl *CatchParam = CatchStmt->getCatchParamDecl();
       const PointerType *PT = 0;
 
       // catch(...) always matches.
       if (!CatchParam) {
         AllMatched = true;
       } else {
-        VD = cast<VarDecl>(CatchParam->getSolitaryDecl());
-        PT = VD->getType()->getAsPointerType();
+        PT = CatchParam->getType()->getAsPointerType();
         
         // catch(id e) always matches. 
         // FIXME: For the time being we also match id<X>; this should
         // be rejected by Sema instead.
         if ((PT && CGF.getContext().isObjCIdStructType(PT->getPointeeType())) ||
-            VD->getType()->isObjCQualifiedIdType())
+            CatchParam->getType()->isObjCQualifiedIdType())
           AllMatched = true;
       }
       
       if (AllMatched) {   
         if (CatchParam) {
-          CGF.EmitStmt(CatchParam);
+          CGF.EmitLocalBlockVarDecl(*CatchParam);
           assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
-          CGF.Builder.CreateStore(Caught, CGF.GetAddrOfLocalVar(VD));
+          CGF.Builder.CreateStore(Caught, CGF.GetAddrOfLocalVar(CatchParam));
         }
         
         CGF.EmitStmt(CatchStmt->getCatchBody());
@@ -2063,13 +2061,13 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       
       // Emit the @catch block.
       CGF.EmitBlock(MatchedBlock);
-      CGF.EmitStmt(CatchParam);
+      CGF.EmitLocalBlockVarDecl(*CatchParam);
       assert(CGF.HaveInsertPoint() && "DeclStmt destroyed insert point?");
 
       llvm::Value *Tmp = 
-        CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(VD->getType()), 
+        CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(CatchParam->getType()), 
                                   "tmp");
-      CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
+      CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(CatchParam));
       
       CGF.EmitStmt(CatchStmt->getCatchBody());
       CGF.EmitBranchThroughCleanup(FinallyEnd);
@@ -4778,17 +4776,17 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   SelectorArgs.push_back(ObjCTypes.EHPersonalityPtr);
 
   // Construct the lists of (type, catch body) to handle.
-  llvm::SmallVector<std::pair<const DeclStmt*, const Stmt*>, 8> Handlers;
+  llvm::SmallVector<std::pair<const Decl*, const Stmt*>, 8> Handlers;
   bool HasCatchAll = false;
   if (isTry) {
     if (const ObjCAtCatchStmt* CatchStmt =
         cast<ObjCAtTryStmt>(S).getCatchStmts())  {
       for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
-        const DeclStmt *DS = CatchStmt->getCatchParamStmt();
-        Handlers.push_back(std::make_pair(DS, CatchStmt->getCatchBody()));
+        const Decl *CatchDecl = CatchStmt->getCatchParamDecl();
+        Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
 
         // catch(...) always matches.
-        if (!DS) {
+        if (!CatchDecl) {
           // Use i8* null here to signal this is a catch all, not a cleanup.
           llvm::Value *Null = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
           SelectorArgs.push_back(Null);
@@ -4796,7 +4794,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
           break;
         }
 
-        const VarDecl *VD = cast<VarDecl>(DS->getSolitaryDecl());
+        const VarDecl *VD = cast<VarDecl>(CatchDecl);
         if (CGF.getContext().isObjCIdType(VD->getType()) ||
             VD->getType()->isObjCQualifiedIdType()) {
           llvm::Value *IDEHType = 
@@ -4826,7 +4824,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // We use a cleanup unless there was already a catch all.
   if (!HasCatchAll) {
     SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
-    Handlers.push_back(std::make_pair((const DeclStmt*) 0, (const Stmt*) 0));
+    Handlers.push_back(std::make_pair((const Decl*) 0, (const Stmt*) 0));
   }
     
   llvm::Value *Selector = 
@@ -4834,7 +4832,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                            SelectorArgs.begin(), SelectorArgs.end(),
                            "selector");
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-    const DeclStmt *CatchParam = Handlers[i].first;
+    const Decl *CatchParam = Handlers[i].first;
     const Stmt *CatchBody = Handlers[i].second;
 
     llvm::BasicBlock *Next = 0;
@@ -4871,10 +4869,10 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
       // Bind the catch parameter if it exists.
       if (CatchParam) {
-        const VarDecl *VD = cast<VarDecl>(CatchParam->getSolitaryDecl());
+        const VarDecl *VD = dyn_cast<VarDecl>(CatchParam);
         ExcObject = CGF.Builder.CreateBitCast(ExcObject, 
                                               CGF.ConvertType(VD->getType()));
-        CGF.EmitStmt(CatchParam);
+        CGF.EmitLocalBlockVarDecl(*VD);
         CGF.Builder.CreateStore(ExcObject, CGF.GetAddrOfLocalVar(VD));
       }
 

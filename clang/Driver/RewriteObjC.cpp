@@ -1567,7 +1567,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
   while (catchList) {
-    Stmt *catchStmt = catchList->getCatchParamStmt();
+    ParmVarDecl *catchDecl = catchList->getCatchParamDecl();
 
     if (catchList == S->getCatchStmts()) 
       buf = "if ("; // we are generating code for the first catch clause
@@ -1592,8 +1592,8 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       buf += "1) { id _tmp = _caught;";
       Rewrite.ReplaceText(startLoc, bodyBuf-startBuf+1, 
                           buf.c_str(), buf.size());      
-    } else if (DeclStmt *declStmt = dyn_cast<DeclStmt>(catchStmt)) {
-      QualType t = dyn_cast<ValueDecl>(declStmt->getSolitaryDecl())->getType();
+    } else if (catchDecl) {
+      QualType t = catchDecl->getType();
       if (t == Context->getObjCIdType()) {
         buf += "1) { ";
         ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
@@ -1622,7 +1622,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       // Here we replace ") {" with "= _caught;" (which initializes and 
       // declares the @catch parameter).
       ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, buf.c_str(), buf.size());
-    } else if (!isa<NullStmt>(catchStmt)) {
+    } else {
       assert(false && "@catch rewrite bug");
     }
     // make sure all the catch bodies get rewritten!
