@@ -21,12 +21,12 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Support/MutexGuard.h"
-#include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
-
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/MutexGuard.h"
+#include "llvm/System/DynamicLibrary.h"
 #include "llvm/Config/config.h"
 
 using namespace llvm;
@@ -141,16 +141,14 @@ struct LibgccObjectInfo {
   unsigned unused[2];
 };
 
-// for DW_EH_PE_omit
-#include "llvm/Support/Dwarf.h"
-
 /// darwin_register_frame - Since __register_frame does not work with darwin's
 /// libgcc,we provide our own function, which "tricks" libgcc by modifying the
 /// "Dwarf2 object list" key.
 void DarwinRegisterFrame(void* FrameBegin) {
   // Get the key.
-  struct LibgccObjectInfo* LOI = (struct LibgccObjectInfo*)
+  LibgccObjectInfo* LOI = (struct LibgccObjectInfo*)
     _keymgr_get_and_lock_processwide_ptr(KEYMGR_GCC3_DW2_OBJ_LIST);
+  assert(LOI && "This should be preallocated by the runtime");
   
   // Allocate a new LibgccObject to represent this frame. Deallocation of this
   // object may be impossible: since darwin code in libgcc was written after
