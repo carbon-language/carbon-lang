@@ -156,6 +156,8 @@ DIAG(err_dup_implementation_class, ERROR,
      "reimplementation of class %0")
 DIAG(err_conflicting_ivar_type, ERROR,
      "instance variable %0 has conflicting type: %1 vs %2")
+DIAG(err_conflicting_ivar_bitwidth, ERROR,
+     "instance variable %0 has conflicting bitfield width")
 DIAG(err_conflicting_ivar_name, ERROR,
      "conflicting instance variable names: %0 vs %1")
 DIAG(err_inconsistant_ivar_count, ERROR,

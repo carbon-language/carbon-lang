@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Parse/DeclSpec.h"
@@ -688,20 +689,29 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     ObjCIvarDecl* ClsIvar = *IVI;
     assert (ImplIvar && "missing implementation ivar");
     assert (ClsIvar && "missing class ivar");
+    
+    // First, make sure the types match.
     if (Context.getCanonicalType(ImplIvar->getType()) !=
         Context.getCanonicalType(ClsIvar->getType())) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type)
         << ImplIvar->getIdentifier()
         << ImplIvar->getType() << ClsIvar->getType();
       Diag(ClsIvar->getLocation(), diag::note_previous_definition);
-    }
-    // TODO: Two mismatched (unequal width) Ivar bitfields should be diagnosed 
-    // as error.
-    else if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {
+    } else if (ImplIvar->isBitField() && ClsIvar->isBitField()) {
+      Expr *ImplBitWidth = ImplIvar->getBitWidth();
+      Expr *ClsBitWidth = ClsIvar->getBitWidth();
+      if (ImplBitWidth->getIntegerConstantExprValue(Context).getZExtValue() !=
+          ClsBitWidth->getIntegerConstantExprValue(Context).getZExtValue()) {
+        Diag(ImplBitWidth->getLocStart(), diag::err_conflicting_ivar_bitwidth)
+          << ImplIvar->getIdentifier();
+        Diag(ClsBitWidth->getLocStart(), diag::note_previous_definition);
+      }
+    } 
+    // Make sure the names are identical.
+    if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_name)
         << ImplIvar->getIdentifier() << ClsIvar->getIdentifier();
       Diag(ClsIvar->getLocation(), diag::note_previous_definition);
-      return;
     }
     --numIvars;
   }
