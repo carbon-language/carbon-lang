@@ -785,9 +785,11 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
   QualType FnRetType;
   if (FunctionDecl *FD = getCurFunctionDecl())
     FnRetType = FD->getResultType();
-  else
-    FnRetType = getCurMethodDecl()->getResultType();
-
+  else if (ObjCMethodDecl *MD = getCurMethodDecl())
+    FnRetType = MD->getResultType();
+  else // If we don't have a function/method context, bail.
+    return StmtError();
+    
   if (FnRetType->isVoidType()) {
     if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)
       unsigned D = diag::ext_return_has_expr;
