@@ -255,7 +255,7 @@ bool SROA::performScalarRepl(Function &F) {
     uint64_t AllocaSize = TD->getTypePaddedSize(AI->getAllocatedType());
 
     // Do not promote any struct whose size is too big.
-    if (AllocaSize >= SRThreshold) continue;
+    if (AllocaSize > SRThreshold) continue;
         
     if ((isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType())) &&
