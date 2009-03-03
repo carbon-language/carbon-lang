@@ -12,7 +12,7 @@
 @end
 
 @interface I (Cat) <P>
-@property float X; // expected-warning {{property type 'float' does not match property type inherited from 'P'}}
+@property float X; // expected-warning {{property type 'float' is incompatible with type 'int' inherited from 'P'}}
 @end
 
 @interface I (Cat2) <P1>
