@@ -54,6 +54,42 @@ SVal::symbol_iterator SVal::symbol_end() const {
   return symbol_iterator();
 }
 
+/// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
+///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolRef
+///  where 'isValid()' returns false.
+SymbolRef SVal::getAsLocSymbol() const {
+  if (const loc::SymbolVal *X = dyn_cast<loc::SymbolVal>(this))
+    return X->getSymbol();
+
+  if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this)) {
+    const MemRegion *R = X->getRegion();
+    
+    while (R) {
+      // Blast through region views.
+      if (const TypedViewRegion *View = dyn_cast<TypedViewRegion>(R)) {
+        R = View->getSuperRegion();
+        continue;
+      }
+      
+      if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
+        return SymR->getSymbol();
+      
+      break;
+    }
+  }
+  
+  return SymbolRef();
+}
+
+/// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
+///  Otherwise return a SymbolRef where 'isValid()' returns false.
+SymbolRef SVal::getAsSymbol() const {
+  if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
+    return X->getSymbol();
+  
+  return getAsLocSymbol();
+}
+
 //===----------------------------------------------------------------------===//
 // Other Iterators.
 //===----------------------------------------------------------------------===//

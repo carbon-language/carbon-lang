@@ -531,7 +531,7 @@ public:
     else
       return true;
   
-    assert (ScanSym.isInitialized());
+    assert (ScanSym.isValid());
   
     if (!BR.isNotable(ScanSym))
       return true;

@@ -18,8 +18,23 @@
 
 using namespace clang;
 
-void SymbolRef::print(llvm::raw_ostream& os) const {
-  os << getNumber();
+llvm::raw_ostream& llvm::operator<<(llvm::raw_ostream& os,
+                                    clang::SymbolRef sym)  {
+  if (sym.isValid())
+    os << sym.getNumber();
+  else
+    os << "(Invalid)";
+  
+  return os;
+}
+
+std::ostream& std::operator<<(std::ostream& os, clang::SymbolRef sym) {
+  if (sym.isValid())
+    os << sym.getNumber();
+  else
+    os << "(Invalid)";
+  
+  return os;
 }
 
 SymbolRef SymbolManager::getRegionRValueSymbol(const MemRegion* R) {  
@@ -35,7 +50,6 @@ SymbolRef SymbolManager::getRegionRValueSymbol(const MemRegion* R) {
   DataSet.InsertNode(SD, InsertPos);
   DataMap[SymbolCounter] = SD;  
   return SymbolCounter++;
-
 }
 
 SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count){

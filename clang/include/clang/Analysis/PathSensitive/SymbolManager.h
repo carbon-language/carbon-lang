@@ -39,40 +39,45 @@ class SymbolRef {
 public:
   SymbolRef() : Data(~0U - 2) {}
   SymbolRef(unsigned x) : Data(x) {}
-    
-  bool isInitialized() const { return Data != (unsigned) (~0U - 2); }
-  operator unsigned() const { return getNumber(); }
-  unsigned getNumber() const { assert (isInitialized()); return Data; }
+
+  bool isValid() const { return Data != (unsigned) (~0U - 2);  }
+  unsigned getNumber() const { assert (isValid()); return Data; }
   
+  bool operator<(const SymbolRef& X) const { return Data < X.Data; }
+  bool operator>(const SymbolRef& X) const { return Data > X.Data; }
   bool operator==(const SymbolRef& X) const { return Data == X.Data; }
   bool operator!=(const SymbolRef& X) const { return Data != X.Data; }
-    
-  void print(llvm::raw_ostream& os) const;
-  
+      
   void Profile(llvm::FoldingSetNodeID& ID) const { 
-    assert (isInitialized());
+    assert (isValid());
     ID.AddInteger(Data);
   }
 };
-  
 } // end clang namespace
 
 namespace llvm {
-  template <> struct DenseMapInfo<clang::SymbolRef> {
-    static inline clang::SymbolRef getEmptyKey() {
-      return clang::SymbolRef(~0U);
-    }
-    static inline clang::SymbolRef getTombstoneKey() {
-      return clang::SymbolRef(~0U - 1);
-    }
-    static unsigned getHashValue(clang::SymbolRef X) {
-      return X.getNumber();
-    }
-    static bool isEqual(clang::SymbolRef X, clang::SymbolRef Y) {
-      return X.getNumber() == Y.getNumber();
-    }
-    static bool isPod() { return true; }
-  };
+  llvm::raw_ostream& operator<<(llvm::raw_ostream& Out, clang::SymbolRef Sym);
+}
+namespace std {
+  std::ostream& operator<<(std::ostream& Out, clang::SymbolRef Sym);
+}
+
+namespace llvm {
+template <> struct DenseMapInfo<clang::SymbolRef> {
+  static inline clang::SymbolRef getEmptyKey() {
+    return clang::SymbolRef(~0U);
+  }
+  static inline clang::SymbolRef getTombstoneKey() {
+    return clang::SymbolRef(~0U - 1);
+  }
+  static unsigned getHashValue(clang::SymbolRef X) {
+    return X.getNumber();
+  }
+  static bool isEqual(clang::SymbolRef X, clang::SymbolRef Y) {
+    return X == Y;
+  }
+  static bool isPod() { return true; }
+};
 }
 
 // SymbolData: Used to record meta data about symbols.

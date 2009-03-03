@@ -66,8 +66,7 @@ public:
   inline bool operator==(const SVal& R) const {
     return getRawKind() == R.getRawKind() && Data == R.Data;
   }
-  
-  
+    
   inline bool operator!=(const SVal& R) const {
     return !(*this == R);
   }
@@ -75,7 +74,6 @@ public:
   /// GetRValueSymbolVal - make a unique symbol for value of R.
   static SVal GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R);
 
-  
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;
   }
@@ -93,6 +91,15 @@ public:
   }
   
   bool isZeroConstant() const;
+  
+  /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
+  ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolRef
+  ///  where 'isValid()' returns false.
+  SymbolRef getAsLocSymbol() const;
+  
+  /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
+  ///  Otherwise return a SymbolRef where 'isValid()' returns false.
+  SymbolRef getAsSymbol() const;
   
   void print(std::ostream& OS) const;
   void print(llvm::raw_ostream& OS) const;
@@ -237,8 +244,9 @@ enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind,
 
 class SymbolVal : public NonLoc {
 public:
-  SymbolVal(unsigned SymID)
-    : NonLoc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  SymbolVal(SymbolRef SymID)
+    : NonLoc(SymbolValKind,
+             reinterpret_cast<void*>((uintptr_t) SymID.getNumber())) {}
   
   SymbolRef getSymbol() const {
     return (SymbolRef) reinterpret_cast<uintptr_t>(Data);
@@ -370,8 +378,8 @@ enum Kind { SymbolValKind, GotoLabelKind, MemRegionKind, FuncValKind,
 
 class SymbolVal : public Loc {
 public:
-  SymbolVal(unsigned SymID)
-  : Loc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  SymbolVal(SymbolRef SymID)
+  : Loc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID.getNumber())){}
   
   SymbolRef getSymbol() const {
     return (SymbolRef) reinterpret_cast<uintptr_t>(Data);
