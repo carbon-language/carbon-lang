@@ -40,9 +40,7 @@ public:
   //===--------------------------------------------------------------------===//
     
   llvm::Constant *VisitStmt(Stmt *S) {
-    CGM.ErrorUnsupported(S, "constant expression");
-    QualType T = cast<Expr>(S)->getType();
-    return llvm::UndefValue::get(CGM.getTypes().ConvertType(T));
+    return 0;
   }
   
   llvm::Constant *VisitParenExpr(ParenExpr *PE) { 
