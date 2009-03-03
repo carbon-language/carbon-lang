@@ -450,16 +450,28 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     }
     if (!Method) {
       // If we have an implementation in scope, check "private" methods.
-      if (ClassDecl)
+      if (ClassDecl) {
         if (ObjCImplementationDecl *ImpDecl = 
               ObjCImplementations[ClassDecl->getIdentifier()])
           Method = ImpDecl->getInstanceMethod(Sel);
-          // If we still haven't found a method, look in the global pool. This
-          // behavior isn't very desirable, however we need it for GCC
-          // compatibility. FIXME: should we deviate??
-          if (!Method && OCIType->qual_empty())
-            Method = LookupInstanceMethodInGlobalPool(
-                                 Sel, SourceRange(lbrac,rbrac));
+        // Look through local category implementations associated with the class.
+        if (!Method) {
+          for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
+            if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
+              Method = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
+          }
+        }
+      }
+      // If we still haven't found a method, look in the global pool. This
+      // behavior isn't very desirable, however we need it for GCC
+      // compatibility. FIXME: should we deviate??
+      if (!Method && OCIType->qual_empty()) {
+        Method = LookupInstanceMethodInGlobalPool(
+                             Sel, SourceRange(lbrac,rbrac));
+        if (Method && !OCIType->getDecl()->isForwardDecl())
+          Diag(lbrac, diag::warn_maynot_respond) 
+            << OCIType->getDecl()->getIdentifier()->getName() << Sel;
+      }
     }
     if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
       return true;

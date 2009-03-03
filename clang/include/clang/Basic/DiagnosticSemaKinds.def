@@ -1454,3 +1454,5 @@ DIAG(error_private_ivar_access, ERROR,
      "instance variable %0 is private")
 DIAG(error_protected_ivar_access, ERROR,
      "instance variable %0 is protected")
+DIAG(warn_maynot_respond, WARNING,
+     "%0  may not respond to %1")
