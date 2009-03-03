@@ -269,7 +269,7 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
   
   // If this is a subregion, also visit the parent regions.
   if (const SubRegion *SR = dyn_cast<SubRegion>(R))
-    if (!scan(SR->getSuperRegion()));
+    if (!scan(SR->getSuperRegion()))
       return false;
   
   // Now look at the binding to this region (if any).
