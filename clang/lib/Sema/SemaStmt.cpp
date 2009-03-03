@@ -965,9 +965,15 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            SourceLocation RParen, DeclTy *Parm,
                            StmtArg Body, StmtArg catchList) {
   Stmt *CatchList = static_cast<Stmt*>(catchList.release());
+  ParmVarDecl *PVD = static_cast<ParmVarDecl*>(Parm);
+  
+  // PVD == 0 implies @catch(...).
+  if (PVD && !Context.isObjCObjectPointerType(PVD->getType()))
+    return StmtError(Diag(PVD->getLocation(), 
+                          diag::err_catch_param_not_objc_type));
+    
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
-    static_cast<ParmVarDecl*>(Parm), static_cast<Stmt*>(Body.release()),
-    CatchList);
+    PVD, static_cast<Stmt*>(Body.release()), CatchList);
   return Owned(CatchList ? CatchList : CS);
 }
 
