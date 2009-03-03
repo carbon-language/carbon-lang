@@ -28,6 +28,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
@@ -268,8 +269,8 @@ bool StripDebugInfo(Module &M) {
       if (Arg1->use_empty()) {
         if (Constant *C = dyn_cast<Constant>(Arg1)) 
           DeadConstants.push_back(C);
-        if (Instruction *I = dyn_cast<Instruction>(Arg1))
-          I->eraseFromParent();
+        else 
+          RecursivelyDeleteTriviallyDeadInstructions(Arg1, NULL);
       }
       if (Arg2->use_empty())
         if (Constant *C = dyn_cast<Constant>(Arg2)) 
