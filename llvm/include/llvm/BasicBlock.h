@@ -103,7 +103,8 @@ public:
         Function *getParent()       { return Parent; }
 
   /// use_back - Specialize the methods defined in Value, as we know that an
-  /// BasicBlock can only be used by Instructions (specifically PHI and terms).
+  /// BasicBlock can only be used by Instructions (specifically PHI nodes and
+  /// terminators).
   Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
   const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
   
