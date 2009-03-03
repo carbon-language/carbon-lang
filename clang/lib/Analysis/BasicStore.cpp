@@ -47,8 +47,8 @@ public:
   
   ~BasicStoreManager() {}
 
-  std::auto_ptr<SubRegionMap> getSubRegionMap(const GRState *state) {
-    return std::auto_ptr<SubRegionMap>(new BasicStoreSubRegionMap());
+  SubRegionMap* getSubRegionMap(const GRState *state) {
+    return new BasicStoreSubRegionMap();
   }
 
   SVal Retrieve(const GRState *state, Loc loc, QualType T = QualType());  

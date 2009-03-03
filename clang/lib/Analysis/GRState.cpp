@@ -278,7 +278,7 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
   
   // Now look at the subregions.
   if (!SRM.get())
-   SRM.reset(state.getManager().getStoreManager().getSubRegionMap(state).get());
+   SRM.reset(state.getManager().getStoreManager().getSubRegionMap(state));
   
   return SRM->iterSubRegions(R, *this);
 }

@@ -81,8 +81,9 @@ public:
   MemRegionManager& getRegionManager() { return MRMgr; }
   
   /// getSubRegionMap - Returns an opaque map object that clients can query
-  ///  to get the subregions of a given MemRegion object.
-  virtual std::auto_ptr<SubRegionMap> getSubRegionMap(const GRState *state) = 0;
+  ///  to get the subregions of a given MemRegion object.  It is the
+  //   caller's responsibility to 'delete' the returned map.
+  virtual SubRegionMap* getSubRegionMap(const GRState *state) = 0;
 
   virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;
 

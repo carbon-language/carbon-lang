@@ -161,7 +161,7 @@ public:
 
   MemRegionManager& getRegionManager() { return MRMgr; }
   
-  std::auto_ptr<SubRegionMap> getSubRegionMap(const GRState *state);
+  SubRegionMap* getSubRegionMap(const GRState *state);
   
   const GRState* BindCompoundLiteral(const GRState* St, 
                                      const CompoundLiteralExpr* CL, SVal V);
@@ -303,8 +303,7 @@ StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
 }
 
-std::auto_ptr<SubRegionMap>
-RegionStoreManager::getSubRegionMap(const GRState *state) {
+SubRegionMap* RegionStoreManager::getSubRegionMap(const GRState *state) {
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionStoreSubRegionMap *M = new RegionStoreSubRegionMap();
   
@@ -313,7 +312,7 @@ RegionStoreManager::getSubRegionMap(const GRState *state) {
       M->add(R->getSuperRegion(), R);
   }
   
-  return std::auto_ptr<SubRegionMap>(M);
+  return M;
 }
 
 /// getLValueString - Returns an SVal representing the lvalue of a
