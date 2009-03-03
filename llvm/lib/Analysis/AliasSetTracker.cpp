@@ -14,6 +14,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
@@ -296,6 +297,8 @@ bool AliasSetTracker::add(VAArgInst *VAAI) {
 
 
 bool AliasSetTracker::add(CallSite CS) {
+  if (isa<DbgInfoIntrinsic>(CS.getInstruction())) 
+    return true; // Ignore DbgInfo Intrinsics.
   if (AA.doesNotAccessMemory(CS))
     return true; // doesn't alias anything
 
