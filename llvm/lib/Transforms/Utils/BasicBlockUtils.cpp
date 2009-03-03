@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -471,11 +472,18 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
   }
   
   while (ScanFrom != ScanBB->begin()) {
+    // We must ignore debug info directives when counting (otherwise they
+    // would affect codegen).
+    Instruction *Inst = --ScanFrom;
+    if (isa<DbgInfoIntrinsic>(Inst))
+      continue;
+    // Restore ScanFrom to expected value in case next test succeeds
+    ScanFrom++;
+   
     // Don't scan huge blocks.
     if (MaxInstsToScan-- == 0) return 0;
     
-    Instruction *Inst = --ScanFrom;
-    
+    --ScanFrom;
     // If this is a load of Ptr, the loaded value is available.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
       if (AreEquivalentAddressValues(LI->getOperand(0), Ptr))
@@ -522,4 +530,19 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
   // Got to the start of the block, we didn't find it, but are done for this
   // block.
   return 0;
+}
+
+/// CopyPrecedingStopPoint - If I is immediately preceded by a StopPoint,
+/// make a copy of the stoppoint before InsertPos (presumably before copying
+/// or moving I).
+void llvm::CopyPrecedingStopPoint(Instruction *I, 
+                                  BasicBlock::iterator InsertPos) {
+  if (I != I->getParent()->begin()) {
+    BasicBlock::iterator BBI = I;  --BBI;
+    if (DbgStopPointInst *DSPI = dyn_cast<DbgStopPointInst>(BBI)) {
+      DbgStopPointInst *newDSPI =
+        reinterpret_cast<DbgStopPointInst*>(DSPI->clone());
+      newDSPI->insertBefore(InsertPos);
+    }
+  }
 }

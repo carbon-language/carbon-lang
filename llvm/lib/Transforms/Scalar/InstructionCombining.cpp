@@ -12374,6 +12374,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 
   BasicBlock::iterator InsertPos = DestBlock->getFirstNonPHI();
 
+  CopyPrecedingStopPoint(I, InsertPos);
   I->moveBefore(InsertPos);
   ++NumSunkInst;
   return true;
