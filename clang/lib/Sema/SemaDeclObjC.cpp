@@ -1734,7 +1734,8 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar);
     if (!Ivar) {
-      Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
+      if (!getLangOptions().ObjCNonFragileABI)
+        Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
       return 0;
     }
     QualType PropType = Context.getCanonicalType(property->getType());
