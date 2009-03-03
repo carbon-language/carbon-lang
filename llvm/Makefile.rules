@@ -313,7 +313,7 @@ ifdef SHARED_LIBRARY
 endif
 
 ifeq ($(ENABLE_PIC),1)
-  ifeq ($(LLVM_ON_WIN32),1)
+  ifeq ($(OS), $(filter $(OS), Cygwin MingW))
     # Nothing. Win32 defaults to PIC and warns when given -fPIC
   else
     ifeq ($(OS),Darwin)
@@ -471,7 +471,13 @@ ifeq ($(OS),Darwin)
                     -mmacosx-version-min=$(DARWIN_VERSION)
   CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 else
-  SharedLinkOptions=-shared
+  ifeq ($(OS),Cygwin)
+    SharedLinkOptions=-shared -nostdlib -Wl,--export-all-symbols \
+                      -Wl,--enable-auto-import -Wl,--enable-auto-image-base \
+                      -Wl,--enable-runtime-pseudo-relocs
+  else
+    SharedLinkOptions=-shared
+  endif
 endif
 
 #----------------------------------------------------------
