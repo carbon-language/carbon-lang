@@ -1,19 +1,26 @@
-// A simple wrapper for gcc.
+//===- Simple.td - A simple plugin for LLVMC ------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// A simple LLVMC-based gcc wrapper that shows how to write LLVMC plugins.
+//
 // To compile, use this command:
 //
-//      $ cd $LLVMC2_DIR
-//      $ make DRIVER_NAME=mygcc BUILTIN_PLUGINS=Simple
-//
-// To build this plugin as a dynamic library:
-//
-//      $ cd $LLVMC2_DIR
-//      $ make BUILTIN_PLUGINS=""
-//      $ cd plugins/Simple
+//      $ cd $LLVMC_DIR/example/Simple
 //      $ make
 //
 // Run as:
 //
-//      $ llvmc2 -load $LLVM_DIR/Release/lib/LLVMCSimple.so
+//      $ llvmc -load $LLVM_DIR/Release/lib/plugin_llvmc_Simple.so
+//
+// For instructions on how to build your own LLVMC-based driver, see
+// the 'example/Skeleton' directory.
+//===----------------------------------------------------------------------===//
 
 include "llvm/CompilerDriver/Common.td"
 
