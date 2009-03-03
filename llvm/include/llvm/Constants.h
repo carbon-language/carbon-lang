@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-/// @file This file contains the declarations for the subclasses of Constant, 
+/// @file
+/// This file contains the declarations for the subclasses of Constant, 
 /// which represent the different flavors of constant values that live in LLVM.
 /// Note that Constants are immutable (once created they never change) and are 
 /// fully shared by structural equivalence.  This means that two structurally

@@ -425,9 +425,9 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
 /// AreEquivalentAddressValues - Test if A and B will obviously have the same
 /// value. This includes recognizing that %t0 and %t1 will have the same
 /// value in code like this:
-///   %t0 = getelementptr @a, 0, 3
+///   %t0 = getelementptr \@a, 0, 3
 ///   store i32 0, i32* %t0
-///   %t1 = getelementptr @a, 0, 3
+///   %t1 = getelementptr \@a, 0, 3
 ///   %t2 = load i32* %t1
 ///
 static bool AreEquivalentAddressValues(const Value *A, const Value *B) {

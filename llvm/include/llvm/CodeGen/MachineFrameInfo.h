@@ -119,7 +119,7 @@ class MachineFrameInfo {
   bool HasVarSizedObjects;
 
   /// FrameAddressTaken - This boolean keeps track of whether there is a call
-  /// to builtin @llvm.frameaddress.
+  /// to builtin \@llvm.frameaddress.
   bool FrameAddressTaken;
 
   /// StackSize - The prolog/epilog code inserter calculates the final stack
@@ -207,7 +207,7 @@ public:
 
   /// isFrameAddressTaken - This method may be called any time after instruction
   /// selection is complete to determine if there is a call to
-  /// @llvm.frameaddress in this function.
+  /// \@llvm.frameaddress in this function.
   bool isFrameAddressTaken() const { return FrameAddressTaken; }
   void setFrameAddressIsTaken(bool T) { FrameAddressTaken = T; }
 

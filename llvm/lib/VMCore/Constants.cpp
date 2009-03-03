@@ -1277,8 +1277,8 @@ ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty) {
   return AggZeroConstants->getOrCreate(Ty, 0);
 }
 
-// destroyConstant - Remove the constant from the constant table...
-//
+/// destroyConstant - Remove the constant from the constant table...
+///
 void ConstantAggregateZero::destroyConstant() {
   AggZeroConstants->remove(this);
   destroyConstantImpl();
@@ -1328,8 +1328,8 @@ Constant *ConstantArray::get(const ArrayType *Ty,
   return ConstantAggregateZero::get(Ty);
 }
 
-// destroyConstant - Remove the constant from the constant table...
-//
+/// destroyConstant - Remove the constant from the constant table...
+///
 void ConstantArray::destroyConstant() {
   ArrayConstants->remove(this);
   destroyConstantImpl();
@@ -1370,7 +1370,7 @@ bool ConstantArray::isString() const {
 }
 
 /// isCString - This method returns true if the array is a string (see
-/// isString) and it ends in a null byte \0 and does not contains any other
+/// isString) and it ends in a null byte \\0 and does not contains any other
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
   // Check the element type for i8...
@@ -1391,10 +1391,10 @@ bool ConstantArray::isCString() const {
 }
 
 
-// getAsString - If the sub-element type of this array is i8
-// then this method converts the array to an std::string and returns it.
-// Otherwise, it asserts out.
-//
+/// getAsString - If the sub-element type of this array is i8
+/// then this method converts the array to an std::string and returns it.
+/// Otherwise, it asserts out.
+///
 std::string ConstantArray::getAsString() const {
   assert(isString() && "Not a string!");
   std::string Result;

@@ -496,7 +496,7 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
 }
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
-/// Don't print things like \n or \0.
+/// Don't print things like \\n or \\0.
 static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)

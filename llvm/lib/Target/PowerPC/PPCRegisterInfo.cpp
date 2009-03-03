@@ -467,9 +467,9 @@ unsigned findScratchRegister(MachineBasicBlock::iterator II, RegScavenger *RS,
 /// lowerDynamicAlloc - Generate the code for allocating an object in the
 /// current frame.  The sequence of code with be in the general form
 ///
-///   addi   R0, SP, #frameSize ; get the address of the previous frame
+///   addi   R0, SP, \#frameSize ; get the address of the previous frame
 ///   stwxu  R0, SP, Rnegsize   ; add and update the SP with the negated size
-///   addi   Rnew, SP, #maxCalFrameSize ; get the top of the allocation
+///   addi   Rnew, SP, \#maxCalFrameSize ; get the top of the allocation
 ///
 void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
                                         int SPAdj, RegScavenger *RS) const {

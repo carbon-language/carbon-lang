@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-/// @file This file contains the declarations for the Module class.
+/// @file
+/// Module.h This file contains the declarations for the Module class.
 //
 //===----------------------------------------------------------------------===//
 

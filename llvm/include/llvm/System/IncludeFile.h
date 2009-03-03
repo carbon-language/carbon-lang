@@ -64,7 +64,8 @@ namespace llvm {
 /// helps to resolve that problem. The basic strategy is to use this class in
 /// a header file and pass the address of a variable to the constructor. If the
 /// variable is defined in the header file's corresponding .cpp file then all
-/// tools/libraries that #include the header file will require the .cpp as well.
+/// tools/libraries that \#include the header file will require the .cpp as
+/// well.
 /// For example:<br/>
 /// <tt>extern int LinkMyCodeStub;</tt><br/>
 /// <tt>static IncludeFile LinkMyModule(&LinkMyCodeStub);</tt><br/>

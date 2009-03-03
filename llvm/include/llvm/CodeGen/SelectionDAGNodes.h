@@ -1125,7 +1125,7 @@ public:
   unsigned getOpcode()  const { return (unsigned short)NodeType; }
 
   /// isTargetOpcode - Test if this node has a target-specific opcode (in the
-  /// <target>ISD namespace).
+  /// \<target\>ISD namespace).
   bool isTargetOpcode() const { return NodeType >= ISD::BUILTIN_OP_END; }
 
   /// isMachineOpcode - Test if this node has a post-isel opcode, directly

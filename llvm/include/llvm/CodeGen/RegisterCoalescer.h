@@ -64,7 +64,7 @@ namespace llvm {
   ///
   ///   class LinearScanRegallocQuery : public RegallocQuery {
   ///   private:
-  ///     const LiveIntervals &li;
+  ///     const LiveIntervals \&li;
   ///
   ///   public:
   ///     LinearScanRegallocQuery(LiveIntervals &intervals) 
