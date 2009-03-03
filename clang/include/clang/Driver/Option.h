@@ -57,6 +57,8 @@ namespace driver {
   protected:
     Option(OptionClass Kind, const char *Name, 
            OptionGroup *Group, Option *Alias);
+  public:
+    virtual ~Option();
 
     OptionClass getKind() const { return Kind; }
     const char *getName() const { return Name; }
