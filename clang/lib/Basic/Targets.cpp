@@ -420,7 +420,10 @@ class X86TargetInfo : public TargetInfo {
   } SSELevel;
 public:
   X86TargetInfo(const std::string& triple) 
-    : TargetInfo(triple), SSELevel(SSE2) {
+    : TargetInfo(triple),
+      // FIXME: hard coding to SSE2 for now.  This should change to NoMMXSSE so
+      // that the driver controls this.
+      SSELevel(SSE2) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -449,19 +452,49 @@ public:
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const;
   
-  virtual int HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
-                                  std::string &ErrorReason);
+  virtual int HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
+                                   std::string &ErrorReason);
 };
 
 /// HandleTargetOptions - Handle target-specific options like -msse2 and
 /// friends.  An array of arguments is passed in: if they are all valid, this
 /// should handle them and return -1.  If there is an error, the index of the
 /// invalid argument should be returned along with an optional error string.
-int X86TargetInfo::HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
-                                       std::string &ErrorReason) {
-  if (NumStrs == 0)
-    return -1;
-  return 0;
+int X86TargetInfo::HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
+                                        std::string &ErrorReason) {
+  for (unsigned i = 0; i != NumStrs; ++i) {
+    const std::string &Feature = StrArray[i];
+    if (Feature.size() < 2) return i;
+    // Ignore explicitly disabled features.
+    if (Feature[0] == '-') continue;
+    
+    // Feature strings are of the form "+feature".
+    if (Feature[0] != '+') return i;
+    
+    // The set of supported subtarget features is defined in
+    // lib/Target/X86/X86.td.  Here we recognize and map onto our internal
+    // state.
+    if (Feature == "+mmx")
+      SSELevel = std::max(SSELevel, MMX);
+    else if (Feature == "+sse")
+      SSELevel = std::max(SSELevel, SSE1);
+    else if (Feature == "+sse2")
+      SSELevel = std::max(SSELevel, SSE2);
+    else if (Feature == "+sse3")
+      SSELevel = std::max(SSELevel, SSE3);
+    else if (Feature == "+ssse3")
+      SSELevel = std::max(SSELevel, SSSE3);
+    else if (Feature == "+sse41")
+      SSELevel = std::max(SSELevel, SSE41);
+    else if (Feature == "+sse42")
+      SSELevel = std::max(SSELevel, SSE42);
+    else if (Feature == "+64bit" || Feature == "+slow-bt-mem")
+      // Ignore these features.
+      continue;
+    else
+      return i;
+  }
+  return -1;
 }
 
 /// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines

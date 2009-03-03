@@ -249,12 +249,19 @@ public:
   /// options. 
   virtual void getDefaultLangOptions(LangOptions &Opts) {}
 
-  /// HandleTargetOptions - Handle target-specific options like -msse2 and
-  /// friends.  An array of arguments is passed in: if they are all valid, this
-  /// should handle them and return -1.  If there is an error, the index of the
-  /// invalid argument should be returned along with an optional error string.
-  virtual int HandleTargetOptions(std::string *StrArray, unsigned NumStrs,
-                                  std::string &ErrorReason) {
+  /// HandleTargetFeatures - Handle target-specific options like -mattr=+sse2
+  /// and friends.  An array of arguments is passed in: if they are all valid,
+  /// this should handle them and return -1.  If there is an error, the index of
+  /// the invalid argument should be returned along with an optional error
+  /// string.
+  ///
+  /// Note that the driver should have already consolidated all the
+  /// target-feature settings and passed them to us in the -mattr list.  The
+  /// -mattr list is treated by the code generator as a diff against the -mcpu
+  /// setting, but the driver should pass all enabled options as "+" settings.
+  /// This means that the target should only look at + settings.
+  virtual int HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
+                                   std::string &ErrorReason) {
     if (NumStrs == 0)
       return -1;
     return 0;

@@ -517,10 +517,10 @@ Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences."));
 static llvm::cl::opt<bool>
 Ansi("ansi", llvm::cl::desc("Equivalent to specifying -std=c89."));
 
-
 static llvm::cl::list<std::string>
-TargetOptions("m", llvm::cl::Prefix, llvm::cl::value_desc("option"),
-          llvm::cl::desc("Target-specific options, such as -msse3"));
+TargetFeatures("mattr", llvm::cl::CommaSeparated,
+        llvm::cl::desc("Target specific attributes (-mattr=help for details)"));
+
 
 
 // FIXME: add:
@@ -530,19 +530,25 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   // Allow the target to set the default the langauge options as it sees fit.
   Target->getDefaultLangOptions(Options);
   
-  // If the user specified any -mfoo options, pass them to the target for
-  // validation and processing.
-  if (!TargetOptions.empty()) {
+  // If there are any -mattr options, pass them to the target for validation and
+  // processing.  The driver should have already consolidated all the
+  // target-feature settings and passed them to us in the -mattr list.  The
+  // -mattr list is treated by the code generator as a diff against the -mcpu
+  // setting, but the driver should pass all enabled options as "+" settings.
+  // This means that the target should only look at + settings.
+  if (!TargetFeatures.empty()
+      // FIXME: The driver is not quite yet ready for this.
+      && 0) {
     std::string ErrorStr;
-    int Opt = Target->HandleTargetOptions(&TargetOptions[0],
-                                          TargetOptions.size(), ErrorStr);
+    int Opt = Target->HandleTargetFeatures(&TargetFeatures[0],
+                                           TargetFeatures.size(), ErrorStr);
     if (Opt != -1) {
       if (ErrorStr.empty())
-        fprintf(stderr, "invalid command line option '%s'\n",
-                TargetOptions[Opt].c_str());
+        fprintf(stderr, "invalid feature '%s'\n",
+                TargetFeatures[Opt].c_str());
       else
-        fprintf(stderr, "command line option '%s': %s\n",
-                TargetOptions[Opt].c_str(), ErrorStr.c_str());
+        fprintf(stderr, "feature '%s': %s\n",
+                TargetFeatures[Opt].c_str(), ErrorStr.c_str());
       exit(1);
     }
   }
@@ -1252,10 +1258,6 @@ OptLevel("O", llvm::cl::Prefix,
 static llvm::cl::opt<std::string>
 TargetCPU("mcpu",
          llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
-
-static llvm::cl::list<std::string>
-TargetFeatures("mattr",
-        llvm::cl::desc("Target specific attributes (-mattr=help for details)"));
 
 static void InitializeCompileOptions(CompileOptions &Opts) {
   Opts.OptimizeSize = OptSize;
