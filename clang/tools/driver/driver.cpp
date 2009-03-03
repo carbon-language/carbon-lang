@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the entry point to the clang driver; it is a thin
-// wrapper for functionality in the Driver clang library.
+// This is the entry point to the clang driver; it is a thin wrapper
+// for functionality in the Driver clang library.
 //
 //===----------------------------------------------------------------------===//
 

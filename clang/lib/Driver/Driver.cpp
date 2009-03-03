@@ -20,5 +20,3 @@ Driver::~Driver() {
 Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   return new Compilation();
 }
-
-                                      
