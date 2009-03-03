@@ -3171,152 +3171,152 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   APInt APSplatBits, APSplatUndef;
   unsigned SplatBitSize;
   bool HasAnyUndefs;
-  if (BVN->isConstantSplat(APSplatBits, APSplatUndef, SplatBitSize,
-                           HasAnyUndefs) &&
-      SplatBitSize <= 32) {
-    unsigned SplatBits = APSplatBits.getZExtValue();
-    unsigned SplatUndef = APSplatUndef.getZExtValue();
-    unsigned SplatSize = SplatBitSize / 8;
+  if (! BVN->isConstantSplat(APSplatBits, APSplatUndef, SplatBitSize,
+                             HasAnyUndefs) || SplatBitSize > 32)
+    return SDValue();
 
-    // First, handle single instruction cases.
+  unsigned SplatBits = APSplatBits.getZExtValue();
+  unsigned SplatUndef = APSplatUndef.getZExtValue();
+  unsigned SplatSize = SplatBitSize / 8;
 
-    // All zeros?
-    if (SplatBits == 0) {
-      // Canonicalize all zero vectors to be v4i32.
-      if (Op.getValueType() != MVT::v4i32 || HasAnyUndefs) {
-        SDValue Z = DAG.getConstant(0, MVT::i32);
-        Z = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Z, Z, Z, Z);
-        Op = DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Z);
-      }
-      return Op;
+  // First, handle single instruction cases.
+
+  // All zeros?
+  if (SplatBits == 0) {
+    // Canonicalize all zero vectors to be v4i32.
+    if (Op.getValueType() != MVT::v4i32 || HasAnyUndefs) {
+      SDValue Z = DAG.getConstant(0, MVT::i32);
+      Z = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Z, Z, Z, Z);
+      Op = DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Z);
     }
+    return Op;
+  }
 
-    // If the sign extended value is in the range [-16,15], use VSPLTI[bhw].
-    int32_t SextVal= (int32_t(SplatBits << (32-SplatBitSize)) >>
-                      (32-SplatBitSize));
-    if (SextVal >= -16 && SextVal <= 15)
-      return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG, dl);
+  // If the sign extended value is in the range [-16,15], use VSPLTI[bhw].
+  int32_t SextVal= (int32_t(SplatBits << (32-SplatBitSize)) >>
+                    (32-SplatBitSize));
+  if (SextVal >= -16 && SextVal <= 15)
+    return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG, dl);
 
 
-    // Two instruction sequences.
+  // Two instruction sequences.
 
-    // If this value is in the range [-32,30] and is even, use:
-    //    tmp = VSPLTI[bhw], result = add tmp, tmp
-    if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
-      SDValue Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG, dl);
-      Res = DAG.getNode(ISD::ADD, dl, Res.getValueType(), Res, Res);
+  // If this value is in the range [-32,30] and is even, use:
+  //    tmp = VSPLTI[bhw], result = add tmp, tmp
+  if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
+    SDValue Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG, dl);
+    Res = DAG.getNode(ISD::ADD, dl, Res.getValueType(), Res, Res);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
+  }
+
+  // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is
+  // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  This is important
+  // for fneg/fabs.
+  if (SplatSize == 4 && SplatBits == (0x7FFFFFFF&~SplatUndef)) {
+    // Make -1 and vspltisw -1:
+    SDValue OnesV = BuildSplatI(-1, 4, MVT::v4i32, DAG, dl);
+
+    // Make the VSLW intrinsic, computing 0x8000_0000.
+    SDValue Res = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, OnesV,
+                                   OnesV, DAG, dl);
+
+    // xor by OnesV to invert it.
+    Res = DAG.getNode(ISD::XOR, dl, MVT::v4i32, Res, OnesV);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
+  }
+
+  // Check to see if this is a wide variety of vsplti*, binop self cases.
+  static const signed char SplatCsts[] = {
+    -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
+    -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
+  };
+
+  for (unsigned idx = 0; idx < array_lengthof(SplatCsts); ++idx) {
+    // Indirect through the SplatCsts array so that we favor 'vsplti -1' for
+    // cases which are ambiguous (e.g. formation of 0x8000_0000).  'vsplti -1'
+    int i = SplatCsts[idx];
+
+    // Figure out what shift amount will be used by altivec if shifted by i in
+    // this splat size.
+    unsigned TypeShiftAmt = i & (SplatBitSize-1);
+
+    // vsplti + shl self.
+    if (SextVal == (i << (int)TypeShiftAmt)) {
+      SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
+      static const unsigned IIDs[] = { // Intrinsic to use for each size.
+        Intrinsic::ppc_altivec_vslb, Intrinsic::ppc_altivec_vslh, 0,
+        Intrinsic::ppc_altivec_vslw
+      };
+      Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
       return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
     }
 
-    // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is
-    // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  This is important
-    // for fneg/fabs.
-    if (SplatSize == 4 && SplatBits == (0x7FFFFFFF&~SplatUndef)) {
-      // Make -1 and vspltisw -1:
-      SDValue OnesV = BuildSplatI(-1, 4, MVT::v4i32, DAG, dl);
-
-      // Make the VSLW intrinsic, computing 0x8000_0000.
-      SDValue Res = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, OnesV,
-                                       OnesV, DAG, dl);
-
-      // xor by OnesV to invert it.
-      Res = DAG.getNode(ISD::XOR, dl, MVT::v4i32, Res, OnesV);
+    // vsplti + srl self.
+    if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
+      SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
+      static const unsigned IIDs[] = { // Intrinsic to use for each size.
+        Intrinsic::ppc_altivec_vsrb, Intrinsic::ppc_altivec_vsrh, 0,
+        Intrinsic::ppc_altivec_vsrw
+      };
+      Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
       return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
     }
 
-    // Check to see if this is a wide variety of vsplti*, binop self cases.
-    static const signed char SplatCsts[] = {
-      -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
-      -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
-    };
-
-    for (unsigned idx = 0; idx < array_lengthof(SplatCsts); ++idx) {
-      // Indirect through the SplatCsts array so that we favor 'vsplti -1' for
-      // cases which are ambiguous (e.g. formation of 0x8000_0000).  'vsplti -1'
-      int i = SplatCsts[idx];
-
-      // Figure out what shift amount will be used by altivec if shifted by i in
-      // this splat size.
-      unsigned TypeShiftAmt = i & (SplatBitSize-1);
-
-      // vsplti + shl self.
-      if (SextVal == (i << (int)TypeShiftAmt)) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
-        static const unsigned IIDs[] = { // Intrinsic to use for each size.
-          Intrinsic::ppc_altivec_vslb, Intrinsic::ppc_altivec_vslh, 0,
-          Intrinsic::ppc_altivec_vslw
-        };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
-        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
-      }
-
-      // vsplti + srl self.
-      if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
-        static const unsigned IIDs[] = { // Intrinsic to use for each size.
-          Intrinsic::ppc_altivec_vsrb, Intrinsic::ppc_altivec_vsrh, 0,
-          Intrinsic::ppc_altivec_vsrw
-        };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
-        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
-      }
-
-      // vsplti + sra self.
-      if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
-        static const unsigned IIDs[] = { // Intrinsic to use for each size.
-          Intrinsic::ppc_altivec_vsrab, Intrinsic::ppc_altivec_vsrah, 0,
-          Intrinsic::ppc_altivec_vsraw
-        };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
-        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
-      }
-
-      // vsplti + rol self.
-      if (SextVal == (int)(((unsigned)i << TypeShiftAmt) |
-                           ((unsigned)i >> (SplatBitSize-TypeShiftAmt)))) {
-        SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
-        static const unsigned IIDs[] = { // Intrinsic to use for each size.
-          Intrinsic::ppc_altivec_vrlb, Intrinsic::ppc_altivec_vrlh, 0,
-          Intrinsic::ppc_altivec_vrlw
-        };
-        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
-        return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
-      }
-
-      // t = vsplti c, result = vsldoi t, t, 1
-      if (SextVal == ((i << 8) | (i >> (TypeShiftAmt-8)))) {
-        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
-        return BuildVSLDOI(T, T, 1, Op.getValueType(), DAG, dl);
-      }
-      // t = vsplti c, result = vsldoi t, t, 2
-      if (SextVal == ((i << 16) | (i >> (TypeShiftAmt-16)))) {
-        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
-        return BuildVSLDOI(T, T, 2, Op.getValueType(), DAG, dl);
-      }
-      // t = vsplti c, result = vsldoi t, t, 3
-      if (SextVal == ((i << 24) | (i >> (TypeShiftAmt-24)))) {
-        SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
-        return BuildVSLDOI(T, T, 3, Op.getValueType(), DAG, dl);
-      }
+    // vsplti + sra self.
+    if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
+      SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
+      static const unsigned IIDs[] = { // Intrinsic to use for each size.
+        Intrinsic::ppc_altivec_vsrab, Intrinsic::ppc_altivec_vsrah, 0,
+        Intrinsic::ppc_altivec_vsraw
+      };
+      Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
     }
 
-    // Three instruction sequences.
+    // vsplti + rol self.
+    if (SextVal == (int)(((unsigned)i << TypeShiftAmt) |
+                         ((unsigned)i >> (SplatBitSize-TypeShiftAmt)))) {
+      SDValue Res = BuildSplatI(i, SplatSize, MVT::Other, DAG, dl);
+      static const unsigned IIDs[] = { // Intrinsic to use for each size.
+        Intrinsic::ppc_altivec_vrlb, Intrinsic::ppc_altivec_vrlh, 0,
+        Intrinsic::ppc_altivec_vrlw
+      };
+      Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG, dl);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Res);
+    }
 
-    // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
-    if (SextVal >= 0 && SextVal <= 31) {
-      SDValue LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG, dl);
-      SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
-      LHS = DAG.getNode(ISD::SUB, dl, LHS.getValueType(), LHS, RHS);
-      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), LHS);
+    // t = vsplti c, result = vsldoi t, t, 1
+    if (SextVal == ((i << 8) | (i >> (TypeShiftAmt-8)))) {
+      SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
+      return BuildVSLDOI(T, T, 1, Op.getValueType(), DAG, dl);
     }
-    // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
-    if (SextVal >= -31 && SextVal <= 0) {
-      SDValue LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG, dl);
-      SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
-      LHS = DAG.getNode(ISD::ADD, dl, LHS.getValueType(), LHS, RHS);
-      return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), LHS);
+    // t = vsplti c, result = vsldoi t, t, 2
+    if (SextVal == ((i << 16) | (i >> (TypeShiftAmt-16)))) {
+      SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
+      return BuildVSLDOI(T, T, 2, Op.getValueType(), DAG, dl);
     }
+    // t = vsplti c, result = vsldoi t, t, 3
+    if (SextVal == ((i << 24) | (i >> (TypeShiftAmt-24)))) {
+      SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
+      return BuildVSLDOI(T, T, 3, Op.getValueType(), DAG, dl);
+    }
+  }
+
+  // Three instruction sequences.
+
+  // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
+  if (SextVal >= 0 && SextVal <= 31) {
+    SDValue LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG, dl);
+    SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
+    LHS = DAG.getNode(ISD::SUB, dl, LHS.getValueType(), LHS, RHS);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), LHS);
+  }
+  // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
+  if (SextVal >= -31 && SextVal <= 0) {
+    SDValue LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG, dl);
+    SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
+    LHS = DAG.getNode(ISD::ADD, dl, LHS.getValueType(), LHS, RHS);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), LHS);
   }
 
   return SDValue();
