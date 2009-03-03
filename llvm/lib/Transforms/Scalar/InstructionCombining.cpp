@@ -11439,12 +11439,18 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
                                 SI.getAlignment()))
     SI.setAlignment(KnownAlign);
 
-  // Do really simple DSE, to catch cases where there are several consequtive
+  // Do really simple DSE, to catch cases where there are several consecutive
   // stores to the same location, separated by a few arithmetic operations. This
   // situation often occurs with bitfield accesses.
   BasicBlock::iterator BBI = &SI;
   for (unsigned ScanInsts = 6; BBI != SI.getParent()->begin() && ScanInsts;
        --ScanInsts) {
+    // Don't count debug info directives, lest they affect codegen.
+    if (isa<DbgInfoIntrinsic>(BBI)) {
+      ScanInsts++;
+      --BBI;
+      continue;
+    }    
     --BBI;
     
     if (StoreInst *PrevSI = dyn_cast<StoreInst>(BBI)) {
