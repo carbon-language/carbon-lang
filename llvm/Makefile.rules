@@ -784,8 +784,8 @@ $(LLVM_CONFIG):
 
 $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
 
-ProjLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
-ProjLibsPaths   += $(LLVM_CONFIG) \
+LLVMLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
+LLVMLibsPaths   += $(LLVM_CONFIG) \
                   $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
 endif
 endif
