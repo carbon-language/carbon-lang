@@ -540,6 +540,7 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 
 /// ObjCQualifiedIdTypesAreCompatible - We know that one of lhs/rhs is an
 /// ObjCQualifiedIDType.
+/// FIXME: Move to ASTContext::typesAreCompatible() and friends.
 bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
                                              bool compare) {
   // Allow id<P..> and an 'id' or void* type in all cases.

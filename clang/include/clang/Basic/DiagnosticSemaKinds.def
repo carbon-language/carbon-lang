@@ -144,8 +144,8 @@ DIAG(warn_readonly_property, WARNING,
      "'readwrite' of property inherited from %1")
 DIAG(warn_property_attribute, WARNING,
      "property %0 '%1' attribute does not match the property inherited from %2")
-DIAG(warn_property_type, WARNING,
-     "property type %0 does not match property type inherited from %1")
+DIAG(warn_property_types_are_incompatible, WARNING,
+     "property type %0 is incompatible with type %1 inherited from %2")
 DIAG(err_undef_interface, ERROR,
      "cannot find interface declaration for %0")
 DIAG(warn_dup_category_def, WARNING,

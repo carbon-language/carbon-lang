@@ -320,12 +320,20 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   if (Property->getGetterName() != SuperProperty->getGetterName())
     Diag(Property->getLocation(), diag::warn_property_attribute)
       << Property->getDeclName() << "getter" << inheritedName;
-  
-  if (Context.getCanonicalType(Property->getType()) != 
-          Context.getCanonicalType(SuperProperty->getType()))
-    Diag(Property->getLocation(), diag::warn_property_type)
-      << Property->getType() << inheritedName;
-  
+
+  QualType LHSType = 
+    Context.getCanonicalType(SuperProperty->getType());
+  QualType RHSType = 
+    Context.getCanonicalType(Property->getType());
+    
+  if (!Context.typesAreCompatible(LHSType, RHSType)) {
+    // FIXME: Incorporate this test with typesAreCompatible.
+    if (LHSType->isObjCQualifiedIdType() && RHSType->isObjCQualifiedIdType())
+      if (ObjCQualifiedIdTypesAreCompatible(LHSType, RHSType, false))
+        return;
+    Diag(Property->getLocation(), diag::warn_property_types_are_incompatible)
+      << Property->getType() << SuperProperty->getType() << inheritedName;
+  }
 }
 
 /// ComparePropertiesInBaseAndSuper - This routine compares property
