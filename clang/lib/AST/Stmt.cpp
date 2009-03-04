@@ -43,13 +43,12 @@ const char *Stmt::getStmtClassName() const {
   return getStmtInfoTableEntry(sClass).Name;
 }
 
-void Stmt::DestroyChildren(ASTContext& C) {
-  for (child_iterator I = child_begin(), E = child_end(); I !=E; ) {
+void Stmt::DestroyChildren(ASTContext &C) {
+  for (child_iterator I = child_begin(), E = child_end(); I !=E; )
     if (Stmt* Child = *I++) Child->Destroy(C);
-  }
 }
 
-void Stmt::Destroy(ASTContext& C) {
+void Stmt::Destroy(ASTContext &C) {
   DestroyChildren(C);
   // FIXME: Eventually all Stmts should be allocated with the allocator
   //  in ASTContext, just like with Decls.
@@ -57,7 +56,7 @@ void Stmt::Destroy(ASTContext& C) {
   C.Deallocate((void *)this);
 }
 
-void DeclStmt::Destroy(ASTContext& C) {
+void DeclStmt::Destroy(ASTContext &C) {
   this->~DeclStmt();
   C.Deallocate((void *)this);
 }

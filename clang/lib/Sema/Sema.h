@@ -995,7 +995,9 @@ public:
                                          SourceLocation EndLoc);
   virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
                                     SourceLocation DotDotDotLoc, ExprArg RHSVal,
-                                    SourceLocation ColonLoc, StmtArg SubStmt);
+                                    SourceLocation ColonLoc);
+  virtual void ActOnCaseStmtBody(StmtTy *CaseStmt, StmtArg SubStmt);
+  
   virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                             SourceLocation ColonLoc,
                                             StmtArg SubStmt, Scope *CurScope);

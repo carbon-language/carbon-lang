@@ -61,10 +61,9 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclTy *decl,
     DeclGroupRef DG(*decls.begin());                      
     return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
   }
-  else {
-    DeclGroupRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
-    return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
-  }
+
+  DeclGroupRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
+  return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
 }
 
 Action::OwningStmtResult
@@ -114,16 +113,14 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
 Action::OwningStmtResult
 Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
                     SourceLocation DotDotDotLoc, ExprArg rhsval,
-                    SourceLocation ColonLoc, StmtArg subStmt) {
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+                    SourceLocation ColonLoc) {
   assert((lhsval.get() != 0) && "missing expression in case statement");
 
   // C99 6.8.4.2p3: The expression shall be an integer constant.
   // However, GCC allows any evaluatable integer expression. 
-
   Expr *LHSVal = static_cast<Expr*>(lhsval.get());
   if (VerifyIntegerConstantExpression(LHSVal))
-    return Owned(SubStmt);
+    return StmtError();
 
   // GCC extension: The expression shall be an integer constant.
 
@@ -135,15 +132,22 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
 
   if (SwitchStack.empty()) {
     Diag(CaseLoc, diag::err_case_not_in_switch);
-    return Owned(SubStmt);
+    return StmtError();
   }
 
   // Only now release the smart pointers.
   lhsval.release();
   rhsval.release();
-  CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, SubStmt, CaseLoc);
+  CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc);
   SwitchStack.back()->addSwitchCase(CS);
   return Owned(CS);
+}
+
+/// ActOnCaseStmtBody - This installs a statement as the body of a case.
+void Sema::ActOnCaseStmtBody(StmtTy *caseStmt, StmtArg subStmt) {
+  CaseStmt *CS = static_cast<CaseStmt*>(caseStmt);
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+  CS->setSubStmt(SubStmt);
 }
 
 Action::OwningStmtResult

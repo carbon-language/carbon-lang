@@ -272,8 +272,7 @@ namespace {
                                            ExprArg LHSVal,
                                            SourceLocation DotDotDotLoc,
                                            ExprArg RHSVal,
-                                           SourceLocation ColonLoc,
-                                           StmtArg SubStmt) {
+                                           SourceLocation ColonLoc) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }

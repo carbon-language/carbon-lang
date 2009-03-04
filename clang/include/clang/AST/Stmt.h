@@ -147,7 +147,7 @@ public:
   }
   virtual ~Stmt() {}
   
-  virtual void Destroy(ASTContext& Ctx);
+  virtual void Destroy(ASTContext &Ctx);
 
   StmtClass getStmtClass() const { return sClass; }
   const char *getStmtClassName() const;
@@ -440,9 +440,9 @@ class CaseStmt : public SwitchCase {
                              // GNU "case 1 ... 4" extension
   SourceLocation CaseLoc;
 public:
-  CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt, SourceLocation caseLoc) 
+  CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc) 
     : SwitchCase(CaseStmtClass) {
-    SubExprs[SUBSTMT] = substmt;
+    SubExprs[SUBSTMT] = 0;
     SubExprs[LHS] = reinterpret_cast<Stmt*>(lhs);
     SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
     CaseLoc = caseLoc;

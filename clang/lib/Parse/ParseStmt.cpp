@@ -225,54 +225,112 @@ Parser::OwningStmtResult Parser::ParseLabeledStatement() {
 ///         'case' constant-expression ':' statement
 /// [GNU]   'case' constant-expression '...' constant-expression ':' statement
 ///
-/// Note that this does not parse the 'statement' at the end.
-///
 Parser::OwningStmtResult Parser::ParseCaseStatement() {
   assert(Tok.is(tok::kw_case) && "Not a case stmt!");
-  SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
-
-  OwningExprResult LHS(ParseConstantExpression());
-  if (LHS.isInvalid()) {
-    SkipUntil(tok::colon);
-    return StmtError();
-  }
-
-  // GNU case range extension.
-  SourceLocation DotDotDotLoc;
-  OwningExprResult RHS(Actions);
-  if (Tok.is(tok::ellipsis)) {
-    Diag(Tok, diag::ext_gnu_case_range);
-    DotDotDotLoc = ConsumeToken();
-
-    RHS = ParseConstantExpression();
-    if (RHS.isInvalid()) {
+  
+  // It is very very common for code to contain many case statements recursively
+  // nested, as in (but usually without indentation):
+  //  case 1:
+  //    case 2:
+  //      case 3:
+  //         case 4:
+  //           case 5: etc.
+  //
+  // Parsing this naively works, but is both inefficient and can cause us to run
+  // out of stack space in our recursive descent parser.  As a special case,
+  // flatten this recursion into an interative loop.  This is complex and gross,
+  // but all the grossness is constrained to ParseCaseStatement (and some
+  // wierdness in the actions), so this is just local grossness :).
+  
+  // TopLevelCase - This is the highest level we have parsed.  'case 1' in the
+  // example above.
+  OwningStmtResult TopLevelCase(Actions, true);
+  
+  // DeepestParsedCaseStmt - This is the deepest statement we have parsed, which
+  // gets updated each time a new case is parsed, and whose body is unset so
+  // far.  When parsing 'case 4', this is the 'case 3' node.
+  StmtTy *DeepestParsedCaseStmt = 0;
+  
+  // While we have case statements, eat and stack them.
+  do {
+    SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
+    
+    OwningExprResult LHS(ParseConstantExpression());
+    if (LHS.isInvalid()) {
       SkipUntil(tok::colon);
       return StmtError();
     }
-  }
 
-  if (Tok.isNot(tok::colon)) {
-    Diag(Tok, diag::err_expected_colon_after) << "'case'";
-    SkipUntil(tok::colon);
-    return StmtError();
-  }
+    // GNU case range extension.
+    SourceLocation DotDotDotLoc;
+    OwningExprResult RHS(Actions);
+    if (Tok.is(tok::ellipsis)) {
+      Diag(Tok, diag::ext_gnu_case_range);
+      DotDotDotLoc = ConsumeToken();
 
-  SourceLocation ColonLoc = ConsumeToken();
+      RHS = ParseConstantExpression();
+      if (RHS.isInvalid()) {
+        SkipUntil(tok::colon);
+        return StmtError();
+      }
+    }
 
-  // Diagnose the common error "switch (X) { case 4: }", which is not valid.
-  if (Tok.is(tok::r_brace)) {
+    if (Tok.isNot(tok::colon)) {
+      Diag(Tok, diag::err_expected_colon_after) << "'case'";
+      SkipUntil(tok::colon);
+      return StmtError();
+    }
+
+    SourceLocation ColonLoc = ConsumeToken();
+    
+    OwningStmtResult Case =
+      Actions.ActOnCaseStmt(CaseLoc, move(LHS), DotDotDotLoc,
+                            move(RHS), ColonLoc);
+    
+    // If we had a sema error parsing this case, then just ignore it and
+    // continue parsing the sub-stmt.
+    if (Case.isInvalid()) {
+      if (TopLevelCase.isInvalid())  // No parsed case stmts.
+        return ParseStatement();
+      // Otherwise, just don't add it as a nested case.
+    } else {
+      // If this is the first case statement we parsed, it becomes TopLevelCase.
+      // Otherwise we link it into the current chain.
+      StmtTy *NextDeepest = Case.get();
+      if (TopLevelCase.isInvalid())
+        TopLevelCase = move(Case);
+      else
+        Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, move(Case));
+      DeepestParsedCaseStmt = NextDeepest;
+    }
+    
+    // Handle all case statements.
+  } while (Tok.is(tok::kw_case));
+    
+  assert(!TopLevelCase.isInvalid() && "Should have parsed at least one case!");
+  
+  // If we found a non-case statement, start by parsing it.
+  OwningStmtResult SubStmt(Actions);
+  
+  if (Tok.isNot(tok::r_brace)) {
+    SubStmt = ParseStatement();
+  } else {
+    // Nicely diagnose the common error "switch (X) { case 4: }", which is
+    // not valid.
+    // FIXME: add insertion hint.
     Diag(Tok, diag::err_label_end_of_compound_statement);
-    return StmtError();
+    SubStmt = true;
   }
-
-  OwningStmtResult SubStmt(ParseStatement());
-
-  // Broken substmt shouldn't prevent the case from being added to the AST.
+  
+  // Broken sub-stmt shouldn't prevent forming the case statement properly.
   if (SubStmt.isInvalid())
-    SubStmt = Actions.ActOnNullStmt(ColonLoc);
+    SubStmt = Actions.ActOnNullStmt(SourceLocation());
+  
+  // Install the body into the most deeply-nested case.
+  Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, move(SubStmt));
 
-  return Actions.ActOnCaseStmt(CaseLoc, move(LHS), DotDotDotLoc,
-                               move(RHS), ColonLoc, move(SubStmt));
+  // Return the top level parsed statement tree.
+  return OwningStmtResult(Actions, TopLevelCase.release());
 }
 
 /// ParseDefaultStatement

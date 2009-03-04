@@ -414,7 +414,7 @@ void CaseStmt::EmitImpl(Serializer& S) const {
 CaseStmt* CaseStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation CaseLoc = SourceLocation::ReadVal(D);
   CaseStmt* stmt = new (C, llvm::alignof<CaseStmt>())
-                    CaseStmt(NULL,NULL,NULL,CaseLoc);
+                      CaseStmt(NULL,NULL,CaseLoc);
   D.ReadPtr(stmt->NextSwitchCase);
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubExprs[0], C);
   return stmt;

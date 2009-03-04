@@ -406,12 +406,18 @@ public:
   }
 
   /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
-  /// which can specify an RHS value.
+  /// which can specify an RHS value.  The sub-statement of the case is
+  /// specified in a separate action.
   virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
-                                    SourceLocation DotDotDotLoc, ExprArg RHSVal,
-                                    SourceLocation ColonLoc, StmtArg SubStmt) {
+                                         SourceLocation DotDotDotLoc,
+                                         ExprArg RHSVal,
+                                         SourceLocation ColonLoc) {
     return StmtEmpty();
   }
+  
+  /// ActOnCaseStmtBody - This installs a statement as the body of a case.
+  virtual void ActOnCaseStmtBody(StmtTy *CaseStmt, StmtArg SubStmt) {}
+  
   virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                             SourceLocation ColonLoc,
                                             StmtArg SubStmt, Scope *CurScope){
