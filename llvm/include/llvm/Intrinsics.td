@@ -260,7 +260,9 @@ let Properties = [IntrNoMem] in {
 //===------------------------ Debugger Intrinsics -------------------------===//
 //
 
-// None of these intrinsics accesses memory at all.
+// None of these intrinsics accesses memory at all...but that doesn't mean the
+// optimizers can change them aggressively.  Special handling needed in a few
+// places.
 let Properties = [IntrNoMem] in {
   def int_dbg_stoppoint    : Intrinsic<[llvm_void_ty],
                                        [llvm_i32_ty, llvm_i32_ty, 
