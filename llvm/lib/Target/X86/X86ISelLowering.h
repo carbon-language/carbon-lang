@@ -235,9 +235,9 @@ namespace llvm {
       PCMPEQB, PCMPEQW, PCMPEQD, PCMPEQQ,
       PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ,
 
-      // ADD, SUB, SMUL, UMUL, etc. - Arithmetic operations with FLAGS results.
-      ADD, SUB, SMUL, UMUL,
-      INC, DEC
+      // ADD, SUB, SMUL, UMUL - Arithmetic operations with overflow/carry
+      // intrinsics.
+      ADD, SUB, SMUL, UMUL
     };
   }
 
@@ -659,14 +659,6 @@ namespace llvm {
     MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
                                                           MachineBasicBlock *BB,
                                                         unsigned cmovOpc) const;
-
-    /// Emit nodes that will be selected as "test Op0,Op0", or something
-    /// equivalent.
-    SDValue EmitTest(SDValue Op0, SelectionDAG &DAG);
-
-    /// Emit nodes that will be selected as "cmp Op0,Op1", or something
-    /// equivalent.
-    SDValue EmitCmp(SDValue Op0, SDValue Op1, SelectionDAG &DAG);
   };
 
   namespace X86 {

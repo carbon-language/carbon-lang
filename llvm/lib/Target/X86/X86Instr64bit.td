@@ -1632,112 +1632,100 @@ def : Pat<(subc GR64:$src1, imm:$src2),
           (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
 //===----------------------------------------------------------------------===//
-// EFLAGS-defining Patterns
+// Overflow Patterns
 //===----------------------------------------------------------------------===//
 
-// Register-Register Addition with EFLAGS result
-def : Pat<(parallel (X86add_flag GR64:$src1, GR64:$src2),
+// Register-Register Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR64:$src1, GR64:$src2),
                     (implicit EFLAGS)),
           (ADD64rr GR64:$src1, GR64:$src2)>;
 
-// Register-Integer Addition with EFLAGS result
-def : Pat<(parallel (X86add_flag GR64:$src1, i64immSExt8:$src2),
+// Register-Integer Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(parallel (X86add_flag GR64:$src1, i64immSExt32:$src2),
+def : Pat<(parallel (X86add_ovf GR64:$src1, i64immSExt32:$src2),
                     (implicit EFLAGS)),
           (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
-// Register-Memory Addition with EFLAGS result
-def : Pat<(parallel (X86add_flag GR64:$src1, (loadi64 addr:$src2)),
+// Register-Memory Addition with Overflow
+def : Pat<(parallel (X86add_ovf GR64:$src1, (load addr:$src2)),
                     (implicit EFLAGS)),
           (ADD64rm GR64:$src1, addr:$src2)>;
 
-// Memory-Register Addition with EFLAGS result
-def : Pat<(parallel (store (X86add_flag (loadi64 addr:$dst), GR64:$src2),
+// Memory-Register Addition with Overflow
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), GR64:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (ADD64mr addr:$dst, GR64:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi64 addr:$dst), i64immSExt8:$src2),
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i64immSExt8:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (ADD64mi8 addr:$dst, i64immSExt8:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi64 addr:$dst), i64immSExt32:$src2),
+def : Pat<(parallel (store (X86add_ovf (load addr:$dst), i64immSExt32:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (ADD64mi32 addr:$dst, i64immSExt32:$src2)>;
 
-// Register-Register Subtraction with EFLAGS result
-def : Pat<(parallel (X86sub_flag GR64:$src1, GR64:$src2),
+// Register-Register Subtraction with Overflow
+def : Pat<(parallel (X86sub_ovf GR64:$src1, GR64:$src2),
                     (implicit EFLAGS)),
           (SUB64rr GR64:$src1, GR64:$src2)>;
 
-// Register-Memory Subtraction with EFLAGS result
-def : Pat<(parallel (X86sub_flag GR64:$src1, (loadi64 addr:$src2)),
+// Register-Memory Subtraction with Overflow
+def : Pat<(parallel (X86sub_ovf GR64:$src1, (load addr:$src2)),
                     (implicit EFLAGS)),
           (SUB64rm GR64:$src1, addr:$src2)>;
 
-// Register-Integer Subtraction with EFLAGS result
-def : Pat<(parallel (X86sub_flag GR64:$src1, i64immSExt8:$src2),
+// Register-Integer Subtraction with Overflow
+def : Pat<(parallel (X86sub_ovf GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(parallel (X86sub_flag GR64:$src1, i64immSExt32:$src2),
+def : Pat<(parallel (X86sub_ovf GR64:$src1, i64immSExt32:$src2),
                     (implicit EFLAGS)),
           (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
-// Memory-Register Subtraction with EFLAGS result
-def : Pat<(parallel (store (X86sub_flag (loadi64 addr:$dst), GR64:$src2),
+// Memory-Register Subtraction with Overflow
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), GR64:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (SUB64mr addr:$dst, GR64:$src2)>;
 
-// Memory-Integer Subtraction with EFLAGS result
-def : Pat<(parallel (store (X86sub_flag (loadi64 addr:$dst), i64immSExt8:$src2),
+// Memory-Integer Subtraction with Overflow
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i64immSExt8:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (SUB64mi8 addr:$dst, i64immSExt8:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi64 addr:$dst), i64immSExt32:$src2),
+def : Pat<(parallel (store (X86sub_ovf (load addr:$dst), i64immSExt32:$src2),
                            addr:$dst),
                     (implicit EFLAGS)),
           (SUB64mi32 addr:$dst, i64immSExt32:$src2)>;
 
-// Register-Register Signed Integer Multiplication with EFLAGS result
-def : Pat<(parallel (X86smul_flag GR64:$src1, GR64:$src2),
+// Register-Register Signed Integer Multiplication with Overflow
+def : Pat<(parallel (X86smul_ovf GR64:$src1, GR64:$src2),
                     (implicit EFLAGS)),
           (IMUL64rr GR64:$src1, GR64:$src2)>;
 
-// Register-Memory Signed Integer Multiplication with EFLAGS result
-def : Pat<(parallel (X86smul_flag GR64:$src1, (loadi64 addr:$src2)),
+// Register-Memory Signed Integer Multiplication with Overflow
+def : Pat<(parallel (X86smul_ovf GR64:$src1, (load addr:$src2)),
                     (implicit EFLAGS)),
           (IMUL64rm GR64:$src1, addr:$src2)>;
 
-// Register-Integer Signed Integer Multiplication with EFLAGS result
-def : Pat<(parallel (X86smul_flag GR64:$src1, i64immSExt8:$src2),
+// Register-Integer Signed Integer Multiplication with Overflow
+def : Pat<(parallel (X86smul_ovf GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (IMUL64rri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(parallel (X86smul_flag GR64:$src1, i64immSExt32:$src2),
+def : Pat<(parallel (X86smul_ovf GR64:$src1, i64immSExt32:$src2),
                     (implicit EFLAGS)),
           (IMUL64rri32 GR64:$src1, i64immSExt32:$src2)>;
 
-// Memory-Integer Signed Integer Multiplication with EFLAGS result
-def : Pat<(parallel (X86smul_flag (loadi64 addr:$src1), i64immSExt8:$src2),
+// Memory-Integer Signed Integer Multiplication with Overflow
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (IMUL64rmi8 addr:$src1, i64immSExt8:$src2)>;
-def : Pat<(parallel (X86smul_flag (loadi64 addr:$src1), i64immSExt32:$src2),
+def : Pat<(parallel (X86smul_ovf (load addr:$src1), i64immSExt32:$src2),
                     (implicit EFLAGS)),
           (IMUL64rmi32 addr:$src1, i64immSExt32:$src2)>;
-
-// INC and DEC with EFLAGS result. Note that these do not set CF.
-def : Pat<(parallel (X86inc_flag GR64:$src), (implicit EFLAGS)),
-          (INC64r GR64:$src)>;
-def : Pat<(parallel (store (i64 (X86inc_flag (loadi64 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (INC64m addr:$dst)>;
-def : Pat<(parallel (X86dec_flag GR64:$src), (implicit EFLAGS)),
-          (DEC64r GR64:$src)>;
-def : Pat<(parallel (store (i64 (X86dec_flag (loadi64 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (DEC64m addr:$dst)>;
 
 //===----------------------------------------------------------------------===//
 // X86-64 SSE Instructions
