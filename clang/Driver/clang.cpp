@@ -1554,11 +1554,7 @@ static bool isSerializedFile(const std::string& InFile) {
     return false;
   
   const char* s = InFile.c_str()+InFile.size()-4;
-  
-  return s[0] == '.' &&
-         s[1] == 'a' &&
-         s[2] == 's' &&
-         s[3] == 't';    
+  return s[0] == '.' && s[1] == 'a' && s[2] == 's' && s[3] == 't';    
 }
 
 
@@ -1568,7 +1564,6 @@ int main(int argc, char **argv) {
   
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
-  
   
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
@@ -1634,54 +1629,54 @@ int main(int argc, char **argv) {
     if (isSerializedFile(InFile)) {
       Diags.setClient(TextDiagClient);
       ProcessSerializedFile(InFile,Diags,FileMgr);
+      continue;
     }
-    else {            
-      /// Create a SourceManager object.  This tracks and owns all the file
-      /// buffers allocated to a translation unit.
-      if (!SourceMgr)
-        SourceMgr.reset(new SourceManager());
-      else
-        SourceMgr->clearIDTables();
-      
-      // Initialize language options, inferring file types from input filenames.
-      LangOptions LangInfo;
-      InitializeBaseLanguage();
-      LangKind LK = GetLanguage(InFile);
-      bool PCH = InitializeLangOptions(LangInfo, LK);
-      InitializeGCMode(LangInfo);
-      InitializeLanguageStandard(LangInfo, LK, Target.get());
-            
-      // Process the -I options and set them in the HeaderInfo.
-      HeaderSearch HeaderInfo(FileMgr);
-      
-      InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
-      
-      // Set up the preprocessor with these options.
-      DriverPreprocessorFactory PPFactory(InFile, Diags, LangInfo, *Target,
-                                          *SourceMgr.get(), HeaderInfo);
-      
-      llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
-            
-      if (!PP)
-        continue;
+    
+    /// Create a SourceManager object.  This tracks and owns all the file
+    /// buffers allocated to a translation unit.
+    if (!SourceMgr)
+      SourceMgr.reset(new SourceManager());
+    else
+      SourceMgr->clearIDTables();
+    
+    // Initialize language options, inferring file types from input filenames.
+    LangOptions LangInfo;
+    InitializeBaseLanguage();
+    LangKind LK = GetLanguage(InFile);
+    bool PCH = InitializeLangOptions(LangInfo, LK);
+    InitializeGCMode(LangInfo);
+    InitializeLanguageStandard(LangInfo, LK, Target.get());
+          
+    // Process the -I options and set them in the HeaderInfo.
+    HeaderSearch HeaderInfo(FileMgr);
+    
+    InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
+    
+    // Set up the preprocessor with these options.
+    DriverPreprocessorFactory PPFactory(InFile, Diags, LangInfo, *Target,
+                                        *SourceMgr.get(), HeaderInfo);
+    
+    llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
+          
+    if (!PP)
+      continue;
 
-      // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,
-      // always reset to using TextDiagClient.
-      llvm::OwningPtr<DiagnosticClient> TmpClient;
-      
-      if (!HTMLDiag.empty()) {
-        TmpClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, PP.get(),
-                                                   &PPFactory));
-        Diags.setClient(TmpClient.get());
-      }
-      else
-        Diags.setClient(TextDiagClient);
-
-      // Process the source file.
-      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
-      
-      HeaderInfo.ClearFileInfo();      
+    // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,
+    // always reset to using TextDiagClient.
+    llvm::OwningPtr<DiagnosticClient> TmpClient;
+    
+    if (!HTMLDiag.empty()) {
+      TmpClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, PP.get(),
+                                                 &PPFactory));
+      Diags.setClient(TmpClient.get());
     }
+    else
+      Diags.setClient(TextDiagClient);
+
+    // Process the source file.
+    ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
+    
+    HeaderInfo.ClearFileInfo();      
   }
 
   if (Verbose)
