@@ -381,7 +381,7 @@ protected:
   
   // FIXME: This is a horrible name.
   llvm::Constant *GetMethodVarType(const ObjCMethodDecl *D);
-  llvm::Constant *GetMethodVarType(const std::string &Name);
+  llvm::Constant *GetMethodVarType(FieldDecl *D);
   
   /// GetPropertyName - Return a unique constant for the given
   /// name. The return value has type char *.
@@ -1696,9 +1696,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
       Ivar[0] = GetMethodVarName(Field->getIdentifier());
     else
       Ivar[0] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-    std::string TypeStr;
-    CGM.getContext().getObjCEncodingForType(Field->getType(), TypeStr, Field);
-    Ivar[1] = GetMethodVarType(TypeStr);
+    Ivar[1] = GetMethodVarType(Field);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
   }
@@ -2467,11 +2465,14 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarName(const std::string &Name) {
   return GetMethodVarName(&CGM.getContext().Idents.get(Name));
 }
 
-llvm::Constant *CGObjCCommonMac::GetMethodVarType(const std::string &Name) {
-  llvm::GlobalVariable *&Entry = MethodVarTypes[Name];
+llvm::Constant *CGObjCCommonMac::GetMethodVarType(FieldDecl *Field) {
+  std::string TypeStr;
+  CGM.getContext().getObjCEncodingForType(Field->getType(), TypeStr, Field);
+
+  llvm::GlobalVariable *&Entry = MethodVarTypes[TypeStr];
 
   if (!Entry) {
-    llvm::Constant *C = llvm::ConstantArray::get(Name);
+    llvm::Constant *C = llvm::ConstantArray::get(TypeStr);
     Entry = 
       new llvm::GlobalVariable(C->getType(), false, 
                                llvm::GlobalValue::InternalLinkage,
@@ -2484,12 +2485,25 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const std::string &Name) {
   return getConstantGEP(Entry, 0, 0);
 }
 
-// FIXME: Merge into a single cstring creation function.
 llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
   std::string TypeStr;
   CGM.getContext().getObjCEncodingForMethodDecl(const_cast<ObjCMethodDecl*>(D),
                                                 TypeStr);
-  return GetMethodVarType(TypeStr);
+
+  llvm::GlobalVariable *&Entry = MethodVarTypes[TypeStr];
+
+  if (!Entry) {
+    llvm::Constant *C = llvm::ConstantArray::get(TypeStr);
+    Entry = 
+      new llvm::GlobalVariable(C->getType(), false, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, "\01L_OBJC_METH_VAR_TYPE_", 
+                               &CGM.getModule());
+    Entry->setSection("__TEXT,__cstring,cstring_literals");
+    UsedGlobals.push_back(Entry);
+  }
+
+  return getConstantGEP(Entry, 0, 0);
 }
 
 // FIXME: Merge into a single cstring creation function.
@@ -4077,9 +4091,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
       Ivar[1] = GetMethodVarName(Field->getIdentifier());
     else
       Ivar[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-    std::string TypeStr;
-    CGM.getContext().getObjCEncodingForType(Field->getType(), TypeStr, Field);
-    Ivar[2] = GetMethodVarType(TypeStr);
+    Ivar[2] = GetMethodVarType(Field);
     const llvm::Type *FieldTy =
       CGM.getTypes().ConvertTypeForMem(Field->getType());
     unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
