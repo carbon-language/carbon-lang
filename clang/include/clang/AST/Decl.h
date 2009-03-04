@@ -530,6 +530,7 @@ private:
   ///   int f(int x, int y) { return x + y; }
   FunctionDecl *PreviousDeclaration;
 
+  // FIXME: This can be packed into the bitfields in Decl.
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
   bool IsInline : 1;
@@ -718,6 +719,7 @@ protected:
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
 class FieldDecl : public ValueDecl {
+  // FIXME: This can be packed into the bitfields in Decl.
   bool Mutable : 1;
   Expr *BitWidth;
 protected:
@@ -881,6 +883,7 @@ public:
   };
 
 private:
+  // FIXME: This can be packed into the bitfields in Decl.
   /// TagDeclKind - The TagKind enum.
   unsigned TagDeclKind : 2;
 
@@ -1020,6 +1023,7 @@ protected:
 /// This decl will be marked invalid if *any* members are invalid.
 ///
 class RecordDecl : public TagDecl {
+  // FIXME: This can be packed into the bitfields in Decl.
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
   /// array member (e.g. int X[]) or if this union contains a struct that does.
   /// If so, this cannot be contained in arrays or other structs as a member.
