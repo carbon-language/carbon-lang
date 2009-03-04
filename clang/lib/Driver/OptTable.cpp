@@ -126,7 +126,7 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
   if (Str[0] != '-')
     return new PositionalArg(getOption(InputOpt), Index++);
 
-  for (unsigned j = UnknownOpt + 1; j < getNumOptions(); ++j) {
+  for (unsigned j = UnknownOpt + 1; j < LastOption; ++j) {
     const char *OptName = getOptionName((options::ID) j);
     
     // Arguments are only accepted by options which prefix them.

@@ -8,8 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Option.h"
+
+#include "clang/Driver/Arg.h"
+#include "clang/Driver/ArgList.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <algorithm>
 using namespace clang;
 using namespace clang::driver;
 
@@ -65,6 +69,8 @@ void Option::dump() const {
     llvm::errs() << " NumArgs:" << MOA->getNumArgs();
 
   llvm::errs() << ">\n";
+
+  llvm::errs().flush(); // FIXME
 }
 
 bool Option::matches(const Option *Opt) const {
@@ -116,8 +122,12 @@ FlagOption::FlagOption(options::ID ID, const char *Name,
 }
 
 Arg *FlagOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // Matches iff this is an exact match.  
+  // FIXME: Avoid strlen.
+  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+    return 0;
+
+  return new PositionalArg(this, Index++);
 }
 
 JoinedOption::JoinedOption(options::ID ID, const char *Name, 
@@ -126,8 +136,8 @@ JoinedOption::JoinedOption(options::ID ID, const char *Name,
 }
 
 Arg *JoinedOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // Always matches.
+  return new JoinedArg(this, Index++);
 }
 
 CommaJoinedOption::CommaJoinedOption(options::ID ID, const char *Name, 
@@ -137,8 +147,20 @@ CommaJoinedOption::CommaJoinedOption(options::ID ID, const char *Name,
 }
 
 Arg *CommaJoinedOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // Always matches. We count the commas now so we can answer
+  // getNumValues easily.
+  
+  // Get the suffix string.
+  // FIXME: Avoid strlen, and move to helper method?
+  const char *Suffix = Args.getArgString(Index) + strlen(getName());
+  const char *SuffixEnd = Suffix + strlen(Suffix);
+  
+  // Degenerate case, exact match has no values.
+  if (Suffix == SuffixEnd)
+    return new CommaJoinedArg(this, Index++, 0);
+
+  return new CommaJoinedArg(this, Index++, 
+                            std::count(Suffix, SuffixEnd, ',') + 1);
 }
 
 SeparateOption::SeparateOption(options::ID ID, const char *Name, 
@@ -147,8 +169,14 @@ SeparateOption::SeparateOption(options::ID ID, const char *Name,
 }
 
 Arg *SeparateOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // Matches iff this is an exact match.  
+  // FIXME: Avoid strlen.
+  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+    return 0;
+
+  // FIXME: Missing argument error.
+  Index += 2;
+  return new SeparateArg(this, Index - 2, 1);
 }
 
 MultiArgOption::MultiArgOption(options::ID ID, const char *Name, 
@@ -158,8 +186,14 @@ MultiArgOption::MultiArgOption(options::ID ID, const char *Name,
 }
 
 Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // Matches iff this is an exact match.  
+  // FIXME: Avoid strlen.
+  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+    return 0;
+
+  // FIXME: Missing argument error.
+  Index += 1 + NumArgs;
+  return new SeparateArg(this, Index - 1 - NumArgs, NumArgs);
 }
 
 JoinedOrSeparateOption::JoinedOrSeparateOption(options::ID ID, const char *Name,
@@ -169,8 +203,15 @@ JoinedOrSeparateOption::JoinedOrSeparateOption(options::ID ID, const char *Name,
 }
 
 Arg *JoinedOrSeparateOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // If this is not an exact match, it is a joined arg.
+  // FIXME: Avoid strlen.
+  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+    return new JoinedArg(this, Index++);
+
+  // Otherwise it must be separate.
+  // FIXME: Missing argument error.
+  Index += 2;
+  return new SeparateArg(this, Index - 2, 1);  
 }
 
 JoinedAndSeparateOption::JoinedAndSeparateOption(options::ID ID,
@@ -181,7 +222,10 @@ JoinedAndSeparateOption::JoinedAndSeparateOption(options::ID ID,
 }
 
 Arg *JoinedAndSeparateOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
-  return 0;
+  // Always matches.
+
+  // FIXME: Missing argument error.
+  Index += 2;
+  return new JoinedAndSeparateArg(this, Index - 2);
 }
 

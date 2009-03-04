@@ -41,8 +41,8 @@ void Arg::dump() const {
 
   llvm::errs() << " Index:" << Index;
 
-  if (const CommaJoinedArg *CJA = dyn_cast<CommaJoinedArg>(this))
-    llvm::errs() << " NumValues:" << CJA->getNumValues();
+  if (isa<CommaJoinedArg>(this) || isa<SeparateArg>(this))
+    llvm::errs() << " NumValues:" << getNumValues();
 
   llvm::errs() << ">\n";
 
