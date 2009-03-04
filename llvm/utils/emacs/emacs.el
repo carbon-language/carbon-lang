@@ -10,3 +10,27 @@
   '(c-basic-offset 2)
   '(indent-tabs-mode nil))
 
+
+;; Alternative to setting the global style.  Only files with "llvm" in
+;; their names will automatically set to the llvm.org coding style.
+(c-add-style "llvm.org"
+             '((fill-column . 80)
+	       (c++-indent-level . 2)
+	       (c-basic-offset . 2)
+	       (indent-tabs-mode . nil)))
+(add-hook 'c-mode-hook
+	  (function
+	   (lambda nil 
+	     (if (string-match "llvm" buffer-file-name)
+		 (progn
+		   (c-set-style "llvm.org")
+		   )
+	       ))))
+(add-hook 'c++-mode-hook
+	  (function
+	   (lambda nil 
+	     (if (string-match "llvm" buffer-file-name)
+		 (progn
+		   (c-set-style "llvm.org")
+		   )
+	       ))))
