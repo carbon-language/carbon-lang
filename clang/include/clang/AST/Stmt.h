@@ -422,7 +422,6 @@ public:
 
   void setNextSwitchCase(SwitchCase *SC) { NextSwitchCase = SC; }
 
-  virtual Stmt* v_getSubStmt() = 0;  
   Stmt *getSubStmt() { return v_getSubStmt(); }
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
@@ -432,6 +431,8 @@ public:
     T->getStmtClass() == DefaultStmtClass;
   }
   static bool classof(const SwitchCase *) { return true; }
+protected:
+  virtual Stmt* v_getSubStmt() = 0;  
 };
 
 class CaseStmt : public SwitchCase {
@@ -439,6 +440,7 @@ class CaseStmt : public SwitchCase {
   Stmt* SubExprs[END_EXPR];  // The expression for the RHS is Non-null for 
                              // GNU "case 1 ... 4" extension
   SourceLocation CaseLoc;
+  virtual Stmt* v_getSubStmt() { return getSubStmt(); }
 public:
   CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc) 
     : SwitchCase(CaseStmtClass) {
@@ -453,7 +455,6 @@ public:
   Expr *getLHS() { return reinterpret_cast<Expr*>(SubExprs[LHS]); }
   Expr *getRHS() { return reinterpret_cast<Expr*>(SubExprs[RHS]); }
   Stmt *getSubStmt() { return SubExprs[SUBSTMT]; }
-  virtual Stmt* v_getSubStmt() { return getSubStmt(); }
   const Expr *getLHS() const { 
     return reinterpret_cast<const Expr*>(SubExprs[LHS]); 
   }
@@ -467,8 +468,13 @@ public:
   void setRHS(Expr *Val) { SubExprs[RHS] = reinterpret_cast<Stmt*>(Val); }
   
   
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(CaseLoc, SubExprs[SUBSTMT]->getLocEnd()); 
+  virtual SourceRange getSourceRange() const {
+    // Handle deeply nested case statements with iteration instead of recursion.
+    const CaseStmt *CS = this;
+    while (const CaseStmt *CS2 = dyn_cast<CaseStmt>(getSubStmt()))
+      CS = CS2;
+    
+    return SourceRange(CaseLoc, CS->getSubStmt()->getLocEnd()); 
   }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass; 
@@ -486,12 +492,12 @@ public:
 class DefaultStmt : public SwitchCase {
   Stmt* SubStmt;
   SourceLocation DefaultLoc;
+  virtual Stmt* v_getSubStmt() { return getSubStmt(); }
 public:
   DefaultStmt(SourceLocation DL, Stmt *substmt) : 
     SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL) {}
     
   Stmt *getSubStmt() { return SubStmt; }
-  virtual Stmt* v_getSubStmt() { return getSubStmt(); }
   const Stmt *getSubStmt() const { return SubStmt; }
     
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
