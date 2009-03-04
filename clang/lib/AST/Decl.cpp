@@ -22,10 +22,21 @@
 
 using namespace clang;
 
+void Attr::Destroy(ASTContext &C) {
+  if (Next) {
+    Next->Destroy(C);
+    Next = 0;
+  }
+  this->~Attr();
+  C.Deallocate((void*)this);
+}
+
+
 //===----------------------------------------------------------------------===//
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
  
+
 TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   return new (C) TranslationUnitDecl();
 }

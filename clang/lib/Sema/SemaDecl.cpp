@@ -1575,8 +1575,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);  
-    NewVD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
-                                                SE->getByteLength())));
+    NewVD->addAttr(::new (Context) AsmLabelAttr(std::string(SE->getStrData(),
+                                                        SE->getByteLength())));
   }
 
   // Emit an error if an address space was applied to decl with local storage.
@@ -1804,8 +1804,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);  
-    NewFD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
-                                                SE->getByteLength())));
+    NewFD->addAttr(::new (Context) AsmLabelAttr(std::string(SE->getStrData(),
+                                                        SE->getByteLength())));
   }
 
   // Copy the parameter declarations from the declarator D to
@@ -2016,7 +2016,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (PrevDecl)
       Diag(PrevDecl->getLocation(), 
            diag::note_attribute_overloadable_prev_overload);
-    NewFD->addAttr(new OverloadableAttr);
+    NewFD->addAttr(::new (Context) OverloadableAttr());
   }
 
   if (getLangOptions().CPlusPlus) {
@@ -2713,7 +2713,8 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     bool HasVAListArg;
     if (Context.BuiltinInfo.isPrintfLike(BuiltinID, FormatIdx, HasVAListArg)) {
       if (!FD->getAttr<FormatAttr>())
-        FD->addAttr(new FormatAttr("printf", FormatIdx + 1, FormatIdx + 2));
+        FD->addAttr(::new (Context) FormatAttr("printf", FormatIdx + 1,
+                                               FormatIdx + 2));
     }
 
     // Mark const if we don't care about errno and that is the only
@@ -2722,7 +2723,7 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     if (!getLangOptions().MathErrno &&
         Context.BuiltinInfo.isConstWithoutErrno(BuiltinID)) {
       if (!FD->getAttr<ConstAttr>())
-        FD->addAttr(new ConstAttr());
+        FD->addAttr(::new (Context) ConstAttr());
     }
   }
 
@@ -2751,13 +2752,13 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
       // FIXME: We known better than our headers.
       const_cast<FormatAttr *>(Format)->setType("printf");
     } else 
-      FD->addAttr(new FormatAttr("printf", 1, 2));
+      FD->addAttr(::new (Context) FormatAttr("printf", 1, 2));
     break;
 
   case id_asprintf:
   case id_vasprintf:
     if (!FD->getAttr<FormatAttr>())
-      FD->addAttr(new FormatAttr("printf", 2, 3));
+      FD->addAttr(::new (Context) FormatAttr("printf", 2, 3));
     break;
 
   default:
@@ -3036,7 +3037,7 @@ CreateNewDecl:
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
     if (unsigned Alignment = getPragmaPackAlignment())
-      New->addAttr(new PackedAttr(Alignment * 8));
+      New->addAttr(::new (Context) PackedAttr(Alignment * 8));
   }
 
   if (getLangOptions().CPlusPlus && SS.isEmpty() && Name && !Invalid) {

@@ -69,16 +69,23 @@ private:
   bool Inherited : 1;
 
 protected:
+  void* operator new(size_t bytes) throw() {
+    assert(0 && "Attrs cannot be allocated with regular 'new'.");
+    return 0;
+  }
+  void operator delete(void* data) throw() {
+    assert(0 && "Attrs cannot be released with regular 'delete'.");
+  }
+  
+protected:
   Attr(Kind AK) : Next(0), AttrKind(AK), Inherited(false) {}
   virtual ~Attr() {
-    delete Next;
+    assert(Next == 0 && "Destroy didn't work");
   }
 public:
   
-  void Destroy(ASTContext &C) {
-    delete this;
-  }
-
+  void Destroy(ASTContext &C);
+  
   /// \brief Whether this attribute should be merged to new
   /// declarations.
   virtual bool isMerged() const { return true; }

@@ -231,18 +231,16 @@ IdentifierResolver::begin(DeclarationName Name) {
   void *Ptr = Name.getFETokenInfo<void>();
   if (!Ptr) return end();
 
-  if (isDeclPtr(Ptr)) {
-    NamedDecl *D = static_cast<NamedDecl*>(Ptr);
-    return iterator(D);
-  }
+  if (isDeclPtr(Ptr))
+    return iterator(static_cast<NamedDecl*>(Ptr));
 
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
 
   IdDeclInfo::DeclsTy::iterator I = IDI->decls_end();
   if (I != IDI->decls_begin())
     return iterator(I-1);
-  else // No decls found.
-    return end();
+  // No decls found.
+  return end();
 }
 
 //===----------------------------------------------------------------------===//
