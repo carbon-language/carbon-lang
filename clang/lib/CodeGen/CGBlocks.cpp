@@ -664,7 +664,7 @@ uint64_t CodeGenFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
   return BlockOffset-Size;
 }
 
-llvm::Value *CodeGenFunction::BuildCopyHelper(int flag) {
+llvm::Value *BlockFunction::BuildCopyHelper(int flag) {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: implement
@@ -674,7 +674,7 @@ llvm::Value *CodeGenFunction::BuildCopyHelper(int flag) {
   return V;
 }
 
-llvm::Value *CodeGenFunction::BuildDestroyHelper(int flag) {
+llvm::Value *BlockFunction::BuildDestroyHelper(int flag) {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: implement

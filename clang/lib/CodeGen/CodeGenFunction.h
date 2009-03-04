@@ -265,9 +265,6 @@ public:
   //                                  Block Bits
   //===--------------------------------------------------------------------===//
 
-  llvm::Value *BuildCopyHelper(int flag);
-  llvm::Value *BuildDestroyHelper(int flag);
-
   llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size);
 

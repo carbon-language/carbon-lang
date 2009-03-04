@@ -117,6 +117,14 @@ public:
     BLOCK_BYREF_CALLER      = 128  /* called from __block (byref) copy/dispose
                                       support routines */
   };
+
+  CGBuilderTy &Builder;
+
+  BlockFunction(CGBuilderTy &B) : Builder(B) { }
+
+  llvm::Value *BuildCopyHelper(int flag);
+  llvm::Value *BuildDestroyHelper(int flag);
+
 };
 
 }  // end namespace CodeGen
