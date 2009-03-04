@@ -21,6 +21,18 @@
 using namespace clang;
 using namespace CodeGen;
 
+// Temporary code to enable testing of __block variables
+// #include "clang/Frontend/CompileOptions.h"
+#include "llvm/Support/CommandLine.h"
+static llvm::cl::opt<bool>
+Enable__block("f__block",
+              // See all the FIXMEs for the various work that needs to be done
+              llvm::cl::desc("temporary option to turn on __block precessing "
+                             "even though the code isn't done yet"),
+              llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
+              llvm::cl::ZeroOrMore);
+
+
 llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
@@ -448,7 +460,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
 
   // FIXME: add support for copy/dispose helpers.
-  if (1 && E->isByRef())
+  if (!Enable__block && E->isByRef())
     ErrorUnsupported(E, "__block variable in block literal");
   else if (E->getType()->isBlockPointerType())
     ErrorUnsupported(E, "block pointer in block literal");
