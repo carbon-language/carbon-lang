@@ -69,6 +69,8 @@ public:
   virtual void print(llvm::raw_ostream& os) const;  
   
   Kind getKind() const { return kind; }  
+  
+  virtual bool isBoundable(ASTContext&) const { return true; }
 
   static bool classof(const MemRegion*) { return true; }
 };
@@ -83,6 +85,8 @@ public:
   //RegionExtent getExtent() const { return UndefinedExtent(); }
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  bool isBoundable(ASTContext &) const { return false; }
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == MemSpaceRegionKind;
@@ -156,6 +160,13 @@ public:
   QualType getDesugaredLValueType(ASTContext& C) const {
     return getLValueType(C)->getDesugaredType();
   }
+  
+  bool isBoundable(ASTContext &C) const {
+    // FIXME: This needs to be adjusted for structures and arrays.
+    // All this will reject right now is ObjCQualifiedIdType and
+    // BlockPointerType.
+    return getLValueType(C)->isPointerType();
+  }
 
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
@@ -182,6 +193,7 @@ public:
   }
 
   QualType getRValueType(ASTContext& C) const;
+  QualType getLValueType(ASTContext& C) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 

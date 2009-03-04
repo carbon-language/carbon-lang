@@ -1650,7 +1650,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
         }
         
-        if (R) {          
+        if (R && R->isBoundable(Ctx)) {          
           // Is the invalidated variable something that we were tracking?
           SymbolRef Sym = state.GetSValAsScalarOrLoc(R).getAsLocSymbol();
           if (Sym.isValid())

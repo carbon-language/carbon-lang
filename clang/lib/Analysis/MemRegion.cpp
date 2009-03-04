@@ -117,12 +117,22 @@ QualType SymbolicRegion::getRValueType(ASTContext& C) const {
   // Get the type of the symbol.
   QualType T = data.getType(C);
 
-  // Only when the symbol has pointer type it can have a symbolic region
-  // associated with it.
-  PointerType* PTy = cast<PointerType>(T.getTypePtr()->getDesugaredType());
+  if (const PointerType* PTy = T->getAsPointerType())
+    return PTy->getPointeeType();
+    
+  if (const BlockPointerType* PTy = T->getAsBlockPointerType())
+    return PTy->getPointeeType();
 
-  // The type of the symbolic region is the pointee type of the symbol.
-  return PTy->getPointeeType();
+  assert(!T->getAsObjCQualifiedIdType() &&
+         "There is no rvalue type for id<...>");  
+  
+  assert(Loc::IsLocType(T) && "Non-location type.");
+  return QualType();
+}
+
+QualType SymbolicRegion::getLValueType(ASTContext& C) const {
+  const SymbolData& data = SymMgr.getSymbolData(sym);
+  return data.getType(C);
 }
 
 QualType ElementRegion::getRValueType(ASTContext& C) const {
@@ -161,7 +171,7 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
 }
 
 void TypedViewRegion::print(llvm::raw_ostream& os) const {
-  os << "anon_type{" << T.getAsString() << ',';
+  os << "typed_view{" << T.getAsString() << ',';
   getSuperRegion()->print(os);
   os << '}';
 }

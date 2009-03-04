@@ -488,6 +488,12 @@ public:
   }  
 
   SVal GetSValAsScalarOrLoc(const GRState* state, const MemRegion *R) {
+    // We only want to do fetches from regions that we can actually bind
+    // values.  For example, SymbolicRegions of type 'id<...>' cannot
+    // have direct bindings (but their can be bindings on their subregions).
+    if (!R->isBoundable(getContext()))
+      return UnknownVal();
+    
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
       QualType T = TR->getRValueType(getContext());
       if (Loc::IsLocType(T) || T->isIntegerType())
