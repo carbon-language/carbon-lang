@@ -139,28 +139,33 @@ class SymbolConjured : public SymbolData {
   Stmt* S;
   QualType T;
   unsigned Count;
+  const void* SymbolTag;
 
 public:
-  SymbolConjured(SymbolRef Sym, Stmt* s, QualType t, unsigned count)
-    : SymbolData(ConjuredKind, Sym), S(s), T(t), Count(count) {}
+  SymbolConjured(SymbolRef Sym, Stmt* s, QualType t, unsigned count,
+                 const void* symbolTag)
+    : SymbolData(ConjuredKind, Sym), S(s), T(t), Count(count),
+      SymbolTag(symbolTag) {}
   
   Stmt* getStmt() const { return S; }
-  unsigned getCount() const { return Count; }    
+  unsigned getCount() const { return Count; }
+  const void* getTag() const { return SymbolTag; }
+  
   QualType getType(ASTContext&) const;
   
-  static void Profile(llvm::FoldingSetNodeID& profile,
-                      Stmt* S, QualType T, unsigned Count) {
-    
+  static void Profile(llvm::FoldingSetNodeID& profile, Stmt* S, QualType T,
+                      unsigned Count, const void* SymbolTag) {    
     profile.AddInteger((unsigned) ConjuredKind);
     profile.AddPointer(S);
     profile.Add(T);
     profile.AddInteger(Count);
+    profile.AddPointer(SymbolTag);
   }
-  
+
   virtual void Profile(llvm::FoldingSetNodeID& profile) {
-    Profile(profile, S, T, Count);
+    Profile(profile, S, T, Count, SymbolTag);
   }
-  
+
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
     return D->getKind() == ConjuredKind;
@@ -217,9 +222,12 @@ public:
 
   /// Make a unique symbol for MemRegion R according to its kind.
   SymbolRef getRegionRValueSymbol(const MemRegion* R);
-  SymbolRef getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount);
-  SymbolRef getConjuredSymbol(Expr* E, unsigned VisitCount) {
-    return getConjuredSymbol(E, E->getType(), VisitCount);
+  SymbolRef getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount,
+                              const void* SymbolTag = 0);
+
+  SymbolRef getConjuredSymbol(Expr* E, unsigned VisitCount,
+                              const void* SymbolTag = 0) {    
+    return getConjuredSymbol(E, E->getType(), VisitCount, SymbolTag);
   }
   
   const SymbolData& getSymbolData(SymbolRef ID) const;

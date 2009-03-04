@@ -52,10 +52,11 @@ SymbolRef SymbolManager::getRegionRValueSymbol(const MemRegion* R) {
   return SymbolCounter++;
 }
 
-SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count){
+SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count,
+                                           const void* SymbolTag) {
   
   llvm::FoldingSetNodeID profile;
-  SymbolConjured::Profile(profile, E, T, Count);
+  SymbolConjured::Profile(profile, E, T, Count, SymbolTag);
   void* InsertPos;
   
   SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
@@ -64,7 +65,7 @@ SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count){
     return SD->getSymbol();
   
   SD = (SymbolData*) BPAlloc.Allocate<SymbolConjured>();
-  new (SD) SymbolConjured(SymbolCounter, E, T, Count);
+  new (SD) SymbolConjured(SymbolCounter, E, T, Count, SymbolTag);
   
   DataSet.InsertNode(SD, InsertPos);  
   DataMap[SymbolCounter] = SD;
