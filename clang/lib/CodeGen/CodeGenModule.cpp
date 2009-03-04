@@ -605,6 +605,12 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
 
     if (D->getAttr<WeakAttr>())
       GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+
+    if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
+      // Prefaced with special LLVM marker to indicate that the name
+      // should not be munged.
+      GV->setName("\01" + ALA->getLabel());
+    }  
   }
   
   // Make sure the result is of the correct type.
