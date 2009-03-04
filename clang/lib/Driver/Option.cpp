@@ -15,7 +15,10 @@ using namespace clang::driver;
 
 Option::Option(OptionClass _Kind, const char *_Name,
                const OptionGroup *_Group, const Option *_Alias) 
-  : Kind(_Kind), Name(_Name), Group(_Group), Alias(_Alias) {
+  : Kind(_Kind), Name(_Name), Group(_Group), Alias(_Alias),
+    Unsupported(false), LinkerInput(false), NoOptAsInput(false),
+    ForceSeparateRender(false), ForceJoinedRender(false)
+{
 
   // Multi-level aliases are not supported, and alias options cannot
   // have groups. This just simplifies option tracking, it is not an

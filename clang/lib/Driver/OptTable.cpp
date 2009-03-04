@@ -95,21 +95,14 @@ Option *OptTable::constructOption(options::ID id) const {
     Opt = new JoinedAndSeparateOption(info.Name, Group, Alias); break;
   }
 
-  // FIXME: Set flags.
   for (const char *s = info.Flags; *s; ++s) {
     switch (*s) {
-    default:
-      assert(0 && "Invalid option flag.");
-    case 'l':
-      break;
-    case 'i':
-      break;
-    case 'J':
-      break;
-    case 'S':
-      break;
-    case 'U':
-      break;
+    default: assert(0 && "Invalid option flag.");
+    case 'l': Opt->setLinkerInput(true); break;
+    case 'i': Opt->setNoOptAsInput(true); break;
+    case 'J': Opt->setForceJoinedRender(true); break;
+    case 'S': Opt->setForceSeparateRender(true); break;
+    case 'U': Opt->setUnsupported(true); break;
     }
   }
 

@@ -61,6 +61,23 @@ namespace driver {
     /// Option that this is an alias for, if any.
     const Option *Alias;
 
+    /// Unsupported options will not be rejected.
+    bool Unsupported : 1;
+
+    /// Treat this option like a linker input?
+    bool LinkerInput : 1;
+    
+    /// When rendering as an input, don't render the option.
+
+    // FIXME: We should ditch the render/renderAsInput distinction.
+    bool NoOptAsInput : 1;
+
+    /// Always render this option as separate form its value.
+    bool ForceSeparateRender : 1;
+    
+    /// Always render this option joined with its value.
+    bool ForceJoinedRender : 1;    
+
   protected:
     Option(OptionClass Kind, const char *Name, 
            const OptionGroup *Group, const Option *Alias);
@@ -71,6 +88,21 @@ namespace driver {
     const char *getName() const { return Name; }
     const OptionGroup *getGroup() const { return Group; }
     const Option *getAlias() const { return Alias; }
+
+    bool isUnsupported() const { return Unsupported; }
+    void setUnsupported(bool Value) { Unsupported = Value; }
+
+    bool isLinkerInput() const { return LinkerInput; }
+    void setLinkerInput(bool Value) { LinkerInput = Value; }
+
+    bool isNoOptAsInput() const { return NoOptAsInput; }
+    void setNoOptAsInput(bool Value) { NoOptAsInput = Value; }
+
+    bool isForceSeparateRender() const { return ForceSeparateRender; }
+    void setForceSeparateRender(bool Value) { ForceSeparateRender = Value; }
+
+    bool isForceJoinedRender() const { return ForceJoinedRender; }
+    void setForceJoinedRender(bool Value) { ForceJoinedRender = Value; }
 
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).
