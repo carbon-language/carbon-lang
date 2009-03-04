@@ -1,0 +1,57 @@
+//===--- Options.def - Driver option info -----------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the driver option information. Users of this file
+// must define the OPTION macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef OPTION
+#error "Define OPTION prior to including this file!"
+#endif
+
+// OPTION(ID, KIND, NAME, GROUP, ALIAS, FLAGS, PARAM)
+
+// The first value provided to the macro specifies the internal name
+// of the option, and results in a clang::driver::options::XX enum
+// value for XX.
+
+// The second value is the option type, one of Group, Flag, Joined,
+// Separate, CommaJoined, JoinedOrSeparate, JoinedAndSeparate.
+
+// The third value is the option name.
+
+// The fourth value is the internal name of the option group, or 0 if
+// the option is not part of a group.
+
+// The fifth value is the internal name of an aliased option, or 0 if
+// the option is not an alias.
+
+// The sixth value is a string containing option flags. Valid values:
+//  l: The option is a linker input.
+//
+//  i: The option should not render the name when rendered as an
+//     input.
+//
+//  S: The option should be rendered separately, even if joined (only
+//     sensible on joined options).
+//
+//  J: The option should be rendered joined, even if separate (only
+//     sensible on single value separate options).
+//
+//  U: The option is unsupported, and the driver will reject command
+//     lines that use it.
+
+/// The seventh value is an arbitrary integer parameter; currently
+/// this is only used for specifying the number of arguments for
+/// Separate options.
+
+OPTION(ArchOpt, Separate, "-arch", 0, 0, "", 0)
+OPTION(PassExitCodesFlag, Flag, "-pass-exit-codes", 0, 0, "", 0)
+OPTION(PrintFileNameOpt, Joined, "-print-file-name=", 0, 0, "", 0)

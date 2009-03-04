@@ -8,12 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Option.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
 using namespace clang;
 using namespace clang::driver;
 
 Option::Option(OptionClass _Kind, const char *_Name,
-               OptionGroup *_Group, Option *_Alias) 
+               const OptionGroup *_Group, const Option *_Alias) 
   : Kind(_Kind), Name(_Name), Group(_Group), Alias(_Alias) {
 
   // Multi-level aliases are not supported, and alias options cannot
@@ -21,6 +22,46 @@ Option::Option(OptionClass _Kind, const char *_Name,
   // inherent limitation.
   assert((!Alias || (!Alias->Alias && !Group)) &&
          "Multi-level aliases and aliases with groups are unsupported.");    
+}
+
+Option::~Option() {
+}
+
+void Option::dump() const {
+  llvm::errs() << "<";
+  switch (Kind) {
+  default:
+    assert(0 && "Invalid kind");
+#define P(N) case N: llvm::errs() << #N; break
+    P(GroupClass);
+    P(InputClass);
+    P(UnknownClass);
+    P(FlagClass);
+    P(JoinedClass);
+    P(SeparateClass);
+    P(CommaJoinedClass);
+    P(MultiArgClass);
+    P(JoinedOrSeparateClass);
+    P(JoinedAndSeparateClass);
+#undef P
+  }
+
+  llvm::errs() << " Name:\"" << Name << '"';
+
+  if (Group) {
+    llvm::errs() << " Group:";
+    Group->dump();
+  }
+  
+  if (Alias) {
+    llvm::errs() << " Alias:";
+    Alias->dump();
+  }
+  
+  if (const MultiArgOption *MOA = dyn_cast<MultiArgOption>(this))
+    llvm::errs() << " NumArgs:" << MOA->getNumArgs();
+
+  llvm::errs() << ">\n";
 }
 
 bool Option::matches(const Option *Opt) const {
@@ -38,52 +79,102 @@ bool Option::matches(const Option *Opt) const {
   return false;
 }
 
-OptionGroup::OptionGroup(const char *Name, OptionGroup *Group)
-  : Option(Option::GroupOption, Name, Group, 0) {
+OptionGroup::OptionGroup(const char *Name, const OptionGroup *Group)
+  : Option(Option::GroupClass, Name, Group, 0) {
+}
+
+Arg *OptionGroup::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
 }
 
 InputOption::InputOption()
-  : Option(Option::InputOption, "<input>", 0, 0) {
+  : Option(Option::InputClass, "<input>", 0, 0) {
+}
+
+Arg *InputOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
 }
 
 UnknownOption::UnknownOption()
-  : Option(Option::UnknownOption, "<unknown>", 0, 0) {
+  : Option(Option::UnknownClass, "<unknown>", 0, 0) {
 }
 
-FlagOption::FlagOption(const char *Name, OptionGroup *Group, Option *Alias)
-  : Option(Option::FlagOption, Name, Group, Alias) {
+Arg *UnknownOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
 }
 
-
-JoinedOption::JoinedOption(const char *Name, OptionGroup *Group, Option *Alias)
-  : Option(Option::JoinedOption, Name, Group, Alias) {
+FlagOption::FlagOption(const char *Name, const OptionGroup *Group, 
+                       const Option *Alias)
+  : Option(Option::FlagClass, Name, Group, Alias) {
 }
 
-CommaJoinedOption::CommaJoinedOption(const char *Name, OptionGroup *Group, 
-                                     Option *Alias)
-  : Option(Option::CommaJoinedOption, Name, Group, Alias) {
+Arg *FlagOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
 }
 
-SeparateOption::SeparateOption(const char *Name, OptionGroup *Group, 
-                               Option *Alias)
-  : Option(Option::SeparateOption, Name, Group, Alias) {
+JoinedOption::JoinedOption(const char *Name, const OptionGroup *Group, 
+                           const Option *Alias)
+  : Option(Option::JoinedClass, Name, Group, Alias) {
 }
 
-MultiArgOption::MultiArgOption(const char *Name, OptionGroup *Group, 
-                               Option *Alias, unsigned _NumArgs)
-  : Option(Option::MultiArgOption, Name, Group, Alias), NumArgs(_NumArgs) {
+Arg *JoinedOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
+}
+
+CommaJoinedOption::CommaJoinedOption(const char *Name, const OptionGroup *Group, 
+                                     const Option *Alias)
+  : Option(Option::CommaJoinedClass, Name, Group, Alias) {
+}
+
+Arg *CommaJoinedOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
+}
+
+SeparateOption::SeparateOption(const char *Name, const OptionGroup *Group, 
+                               const Option *Alias)
+  : Option(Option::SeparateClass, Name, Group, Alias) {
+}
+
+Arg *SeparateOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
+}
+
+MultiArgOption::MultiArgOption(const char *Name, const OptionGroup *Group, 
+                               const Option *Alias, unsigned _NumArgs)
+  : Option(Option::MultiArgClass, Name, Group, Alias), NumArgs(_NumArgs) {
+}
+
+Arg *MultiArgOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
 }
 
 JoinedOrSeparateOption::JoinedOrSeparateOption(const char *Name, 
-                                               OptionGroup *Group, 
-                                               Option *Alias)
-  : Option(Option::JoinedOrSeparateOption, Name, Group, Alias) {
+                                               const OptionGroup *Group, 
+                                               const Option *Alias)
+  : Option(Option::JoinedOrSeparateClass, Name, Group, Alias) {
+}
+
+Arg *JoinedOrSeparateOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
 }
 
 JoinedAndSeparateOption::JoinedAndSeparateOption(const char *Name, 
-                                                 OptionGroup *Group, 
-                                                 Option *Alias)
-  : Option(Option::JoinedAndSeparateOption, Name, Group, Alias) {
+                                                 const OptionGroup *Group, 
+                                                 const Option *Alias)
+  : Option(Option::JoinedAndSeparateClass, Name, Group, Alias) {
 }
 
+Arg *JoinedAndSeparateOption::accept(ArgList &Args, unsigned Index) const {
+  assert(0 && "FIXME");
+  return 0;
+}
 

@@ -14,6 +14,9 @@
 
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
+#include "clang/Driver/Option.h"
+#include "clang/Driver/Options.h"
+
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/System/Signals.h"
 using namespace clang;

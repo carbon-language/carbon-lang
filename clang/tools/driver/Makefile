@@ -12,7 +12,7 @@ TOOLNAME = clang-driver
 CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 CXXFLAGS = -fno-rtti
 
-LINK_COMPONENTS := system
+LINK_COMPONENTS := system support
 USEDLIBS = clangDriver.a
 
 # This tool has no plugins, optimize startup time.
