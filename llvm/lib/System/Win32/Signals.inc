@@ -39,7 +39,7 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 static void (*InterruptFunction)() = 0;
 
 static std::vector<llvm::sys::Path> *FilesToRemove = NULL;
-static std::vector<llvm::sys::Path> *DirectoriesToRemove = NULL;
+static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
 static bool RegisteredUnhandledExceptionFilter = false;
 static bool CleanupExecuted = false;
 static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
@@ -98,37 +98,6 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
   return false;
 }
 
-// RemoveDirectoryOnSignal - The public API
-bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
-  // Not a directory?
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
-    MakeErrMsg(ErrMsg, path.toString() + ": can't get status of file");
-    return true;
-  }
-    
-  if (!(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-    if (ErrMsg)
-      *ErrMsg = path.toString() + ": not a directory";
-    return true;
-  }
-
-  RegisterHandler();
-
-  if (CleanupExecuted) {
-    if (ErrMsg)
-      *ErrMsg = "Process terminating -- cannot register for removal";
-    return true;
-  }
-
-  if (DirectoriesToRemove == NULL)
-    DirectoriesToRemove = new std::vector<sys::Path>;
-  DirectoriesToRemove->push_back(path);
-
-  LeaveCriticalSection(&CriticalSection);
-  return false;
-}
-
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void sys::PrintStackTraceOnErrorSignal() {
@@ -162,14 +131,9 @@ static void Cleanup() {
       FilesToRemove->pop_back();
     }
 
-  if (DirectoriesToRemove != NULL)
-    while (!DirectoriesToRemove->empty()) {
-      try {
-        DirectoriesToRemove->back().eraseFromDisk(true);
-      } catch (...) {
-      }
-      DirectoriesToRemove->pop_back();
-    }
+  if (CallBacksToRun)
+    for (unsigned i = 0, e = CallBacksToRun->size(); i != e; ++i)
+      (*CallBacksToRun)[i].first((*CallBacksToRun)[i].second);
 
   LeaveCriticalSection(&CriticalSection);
 }
@@ -259,7 +223,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 #endif
 
   } catch (...) {
-      assert(!"Crashed in LLVMUnhandledExceptionFilter");
+      assert(0 && "Crashed in LLVMUnhandledExceptionFilter");
   }
 
   // Allow dialog box to pop up allowing choice to start debugger.
@@ -290,5 +254,15 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
   // Allow normal processing to take place; i.e., the process dies.
   LeaveCriticalSection(&CriticalSection);
   return FALSE;
+}
+
+/// AddSignalHandler - Add a function to be called when a signal is delivered
+/// to the process.  The handler can have a cookie passed to it to identify
+/// what instance of the handler it is.
+void sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
+  if (CallBacksToRun == 0)
+    CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
+  CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
+  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
 

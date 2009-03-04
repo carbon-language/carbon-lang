@@ -31,15 +31,11 @@
 #endif
 using namespace llvm;
 
-namespace {
-
-static bool StackTraceRequested = false; 
-
 /// InterruptFunction - The function to call if ctrl-c is pressed.
 static void (*InterruptFunction)() = 0;
 
-static std::vector<sys::Path> *FilesToRemove = 0 ;
-static std::vector<sys::Path> *DirectoriesToRemove = 0;
+static std::vector<sys::Path> *FilesToRemove = 0;
+static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
 
 // IntSigs - Signals that may interrupt the program at any time.
 static const int IntSigs[] = {
@@ -59,17 +55,77 @@ static const int KillSigs[] = {
 static const int *const KillSigsEnd =
   KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
 
-#ifdef HAVE_BACKTRACE
-static void* StackTrace[256];
-#endif
+// SignalHandler - The signal handler that runs...
+static RETSIGTYPE SignalHandler(int Sig) {
+  if (FilesToRemove != 0)
+    while (!FilesToRemove->empty()) {
+      FilesToRemove->back().eraseFromDisk(true);
+      FilesToRemove->pop_back();
+    }
+
+  if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
+    if (InterruptFunction) {
+      void (*IF)() = InterruptFunction;
+      InterruptFunction = 0;
+      IF();        // run the interrupt function.
+      return;
+    }
+    exit(1);   // If this is an interrupt signal, exit the program
+  }
+
+  // Otherwise if it is a fault (like SEGV) run any handler.
+  if (CallBacksToRun)
+    for (unsigned i = 0, e = CallBacksToRun->size(); i != e; ++i)
+      (*CallBacksToRun)[i].first((*CallBacksToRun)[i].second);
+    
+  // Restore the signal behavior to default, so that the program actually
+  // crashes when we return and the signal reissues.
+  signal(Sig, SIG_DFL);
+}
+
+// Just call signal
+static void RegisterHandler(int Signal) { 
+  signal(Signal, SignalHandler); 
+}
+
+
+
+void sys::SetInterruptFunction(void (*IF)()) {
+  InterruptFunction = IF;
+  RegisterHandler(SIGINT);
+}
+
+// RemoveFileOnSignal - The public API
+bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
+  if (FilesToRemove == 0)
+    FilesToRemove = new std::vector<sys::Path>();
+
+  FilesToRemove->push_back(Filename);
+
+  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
+  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  return false;
+}
+
+/// AddSignalHandler - Add a function to be called when a signal is delivered
+/// to the process.  The handler can have a cookie passed to it to identify
+/// what instance of the handler it is.
+void sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
+  if (CallBacksToRun == 0)
+    CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
+  CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
+  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+}
+
 
 // PrintStackTrace - In the case of a program crash or fault, print out a stack
 // trace so that the user has an indication of why and where we died.
 //
 // On glibc systems we have the 'backtrace' function, which works nicely, but
 // doesn't demangle symbols.  
-static void PrintStackTrace() {
+static void PrintStackTrace(void *) {
 #ifdef HAVE_BACKTRACE
+  static void* StackTrace[256];
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace,
                         static_cast<int>(array_lengthof(StackTrace)));
@@ -118,91 +174,9 @@ static void PrintStackTrace() {
 #endif
 }
 
-// SignalHandler - The signal handler that runs...
-static RETSIGTYPE SignalHandler(int Sig) {
-  if (FilesToRemove != 0)
-    while (!FilesToRemove->empty()) {
-      FilesToRemove->back().eraseFromDisk(true);
-      FilesToRemove->pop_back();
-    }
-
-  if (DirectoriesToRemove != 0)
-    while (!DirectoriesToRemove->empty()) {
-      DirectoriesToRemove->back().eraseFromDisk(true);
-      DirectoriesToRemove->pop_back();
-    }
-
-  if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
-    if (InterruptFunction) {
-      void (*IF)() = InterruptFunction;
-      InterruptFunction = 0;
-      IF();        // run the interrupt function.
-      return;
-    } else {
-      exit(1);   // If this is an interrupt signal, exit the program
-    }
-  }
-
-  // Otherwise if it is a fault (like SEGV) output the stacktrace to
-  // STDERR (if we can) and reissue the signal to die...
-  if (StackTraceRequested)
-    PrintStackTrace();
-  signal(Sig, SIG_DFL);
-}
-
-// Just call signal
-static void RegisterHandler(int Signal) { 
-  signal(Signal, SignalHandler); 
-}
-
-}
-
-
-void sys::SetInterruptFunction(void (*IF)()) {
-  InterruptFunction = IF;
-  RegisterHandler(SIGINT);
-}
-
-// RemoveFileOnSignal - The public API
-bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
-  if (FilesToRemove == 0)
-    FilesToRemove = new std::vector<sys::Path>;
-
-  FilesToRemove->push_back(Filename);
-
-  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
-  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
-  return false;
-}
-
-// RemoveDirectoryOnSignal - The public API
-bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
-  // Not a directory?
-  struct stat buf;
-  if (0 != stat(path.c_str(), &buf)) {
-    MakeErrMsg(ErrMsg, path.toString() + ": can't get status of file");
-    return true;
-  }
-
-  if (!S_ISDIR(buf.st_mode)) {
-    if (ErrMsg)
-      *ErrMsg = path.toString() + " is not a directory";
-    return true;
-  }
-
-  if (DirectoriesToRemove == 0)
-    DirectoriesToRemove = new std::vector<sys::Path>;
-
-  DirectoriesToRemove->push_back(path);
-
-  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
-  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
-  return false;
-}
-
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void sys::PrintStackTraceOnErrorSignal() {
-  StackTraceRequested = true;
-  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  AddSignalHandler(PrintStackTrace, 0);
 }
+
