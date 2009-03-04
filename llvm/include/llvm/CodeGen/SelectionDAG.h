@@ -48,6 +48,7 @@ public:
 
   SDNode *provideInitialHead() const { return createSentinel(); }
   SDNode *ensureHead(SDNode*) const { return createSentinel(); }
+  static void noteHead(SDNode*, SDNode*) {}
 
   static void deleteNode(SDNode *) {
     assert(0 && "ilist_traits<SDNode> shouldn't see a deleteNode call!");

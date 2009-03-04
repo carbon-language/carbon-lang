@@ -44,6 +44,7 @@ template<> struct ilist_traits<Instruction>
 
   Instruction *provideInitialHead() const { return createSentinel(); }
   Instruction *ensureHead(Instruction*) const { return createSentinel(); }
+  static void noteHead(Instruction*, Instruction*) {}
 
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);

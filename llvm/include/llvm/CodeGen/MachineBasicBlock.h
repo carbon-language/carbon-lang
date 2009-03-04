@@ -40,6 +40,7 @@ public:
 
   MachineInstr *provideInitialHead() const { return createSentinel(); }
   MachineInstr *ensureHead(MachineInstr*) const { return createSentinel(); }
+  static void noteHead(MachineInstr*, MachineInstr*) {}
 
   void addNodeToList(MachineInstr* N);
   void removeNodeFromList(MachineInstr* N);

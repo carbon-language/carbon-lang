@@ -41,6 +41,7 @@ template<> struct ilist_traits<BasicBlock>
 
   BasicBlock *provideInitialHead() const { return createSentinel(); }
   BasicBlock *ensureHead(BasicBlock*) const { return createSentinel(); }
+  static void noteHead(BasicBlock*, BasicBlock*) {}
 
   static iplist<BasicBlock> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
@@ -59,6 +60,7 @@ template<> struct ilist_traits<Argument>
 
   Argument *provideInitialHead() const { return createSentinel(); }
   Argument *ensureHead(Argument*) const { return createSentinel(); }
+  static void noteHead(Argument*, Argument*) {}
 
   static iplist<Argument> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);

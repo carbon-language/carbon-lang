@@ -48,6 +48,7 @@ public:
   MachineBasicBlock *ensureHead(MachineBasicBlock*) const {
     return createSentinel();
   }
+  static void noteHead(MachineBasicBlock*, MachineBasicBlock*) {}
 
   void addNodeToList(MachineBasicBlock* MBB);
   void removeNodeFromList(MachineBasicBlock* MBB);

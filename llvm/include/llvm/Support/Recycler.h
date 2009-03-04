@@ -48,6 +48,7 @@ struct ilist_traits<RecyclerStruct> : ilist_default_traits<RecyclerStruct> {
 
   RecyclerStruct *provideInitialHead() const { return createSentinel(); }
   RecyclerStruct *ensureHead(RecyclerStruct*) const { return createSentinel(); }
+  static void noteHead(RecyclerStruct*, RecyclerStruct*) {}
 
   static void deleteNode(RecyclerStruct *) {
     assert(0 && "Recycler's ilist_traits shouldn't see a deleteNode call!");
