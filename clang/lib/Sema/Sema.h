@@ -226,6 +226,9 @@ public:
   /// extremely uncommon (only 1% of selectors are "overloaded").
   llvm::DenseMap<Selector, ObjCMethodList> InstanceMethodPool;
   llvm::DenseMap<Selector, ObjCMethodList> FactoryMethodPool;
+  
+  /// Private Helper predicate to check for 'self'.
+  bool isSelfExpr(Expr *RExpr);
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer);
   ~Sema() {

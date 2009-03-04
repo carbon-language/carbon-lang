@@ -2,7 +2,7 @@
 
 
 @interface Object
-- (id) new;
++ (id) new;
 @end
 
 @protocol GCObject

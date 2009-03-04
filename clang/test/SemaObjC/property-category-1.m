@@ -1,7 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
 @interface Object
-- (id)new;
++ (id)new;
 @end
 
 @interface ReadOnly : Object

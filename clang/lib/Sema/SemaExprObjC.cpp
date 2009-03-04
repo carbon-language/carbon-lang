@@ -202,6 +202,13 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
   return anyIncompatibleArgs;
 }
 
+bool Sema::isSelfExpr(Expr *RExpr) {
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(RExpr))
+    if (DRE->getDecl()->getIdentifier() == &Context.Idents.get("self"))
+      return true;
+  return false;
+}
+
 // Helper method for ActOnClassMethod/ActOnInstanceMethod.
 // Will search "local" class/category implementations for a method decl.
 // Returns 0 if no method is found.
@@ -385,6 +392,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // Handle messages to Class.
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCClassType())) {
     ObjCMethodDecl *Method = 0;
+    
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
         // First check the public methods in the class interface.
@@ -396,12 +404,15 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;
     }
-    // Look for any factory method named 'Sel'.
-    if (!Method)
-      Method = FactoryMethodPool[Sel].Method;
-    if (!Method)
-      Method = LookupInstanceMethodInGlobalPool(
-                               Sel, SourceRange(lbrac,rbrac));
+    if (!Method) {
+      // If not messaging 'self', look for any factory method named 'Sel'.
+      if (!isSelfExpr(RExpr)) {
+        Method = FactoryMethodPool[Sel].Method;
+        if (!Method)
+          Method = LookupInstanceMethodInGlobalPool(
+                                   Sel, SourceRange(lbrac,rbrac));
+      }
+    }
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
@@ -462,15 +473,17 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
           }
         }
       }
-      // If we still haven't found a method, look in the global pool. This
-      // behavior isn't very desirable, however we need it for GCC
-      // compatibility. FIXME: should we deviate??
-      if (!Method && OCIType->qual_empty()) {
-        Method = LookupInstanceMethodInGlobalPool(
-                             Sel, SourceRange(lbrac,rbrac));
-        if (Method && !OCIType->getDecl()->isForwardDecl())
-          Diag(lbrac, diag::warn_maynot_respond) 
-            << OCIType->getDecl()->getIdentifier()->getName() << Sel;
+      if (!isSelfExpr(RExpr)) {
+        // If we still haven't found a method, look in the global pool. This
+        // behavior isn't very desirable, however we need it for GCC
+        // compatibility. FIXME: should we deviate??
+        if (!Method && OCIType->qual_empty()) {
+          Method = LookupInstanceMethodInGlobalPool(
+                               Sel, SourceRange(lbrac,rbrac));
+          if (Method && !OCIType->getDecl()->isForwardDecl())
+            Diag(lbrac, diag::warn_maynot_respond) 
+              << OCIType->getDecl()->getIdentifier()->getName() << Sel;
+        }
       }
     }
     if (Method && DiagnoseUseOfDecl(Method, receiverLoc))

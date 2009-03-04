@@ -966,6 +966,8 @@ DIAG(err_catch_param_not_objc_type, ERROR,
      "@catch parameter is not an Objective-C class type")
 DIAG(err_illegal_qualifiers_on_catch_parm, ERROR,
      "illegal qualifiers on @catch parameter")
+DIAG(err_illegal_super_cast, ERROR,
+     "cannot cast 'super' (it isn't an expression)")
 
 
 // C++ casts

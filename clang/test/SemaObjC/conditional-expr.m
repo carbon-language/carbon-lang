@@ -36,7 +36,7 @@
 // No @interface declaration for DTFilterOutputStream3
 @implementation DTFilterOutputStream3 // expected-warning {{cannot find interface declaration for 'DTFilterOutputStream3'}}
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
-  id <DTOutputStreams> nextOutputStream = [self nextOutputStream]; // expected-warning {{DTFilterOutputStream3  may not respond to 'nextOutputStream'}}
+  id <DTOutputStreams> nextOutputStream = [self nextOutputStream]; // expected-warning {{method '-nextOutputStream' not found (return type defaults to 'id')}}
   // GCC warns about both of these as well (no errors).
   self = nextOutputStream; // expected-warning {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream3 *'}}
   return nextOutputStream ? nextOutputStream : self;
