@@ -609,12 +609,12 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
       return (void*)&__dso_handle;
 #endif
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
-    if (Ptr == 0) {
+    if (Ptr == 0 && !areDlsymStubsEnabled()) {
       cerr << "Could not resolve external global address: "
            << GV->getName() << "\n";
       abort();
-    addGlobalMapping(GV, Ptr);
     }
+    addGlobalMapping(GV, Ptr);
   } else {
     // GlobalVariable's which are not "constant" will cause trouble in a server
     // situation. It's returned in the same block of memory as code which may

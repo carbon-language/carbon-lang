@@ -1348,12 +1348,22 @@ void JIT::updateDlsymStubTable() {
   for (unsigned i = 0; i != GVs.size(); ++i)
     MCE->emitInt32(Offsets[i]);
   
-  // Emit the pointers
-  for (unsigned i = 0; i != GVs.size(); ++i)
+  // Emit the pointers.  Verify that they are at least 2-byte aligned, and set
+  // the low bit to 0 == GV, 1 == Function, so that the client code doing the
+  // relocation can write the relocated pointer at the appropriate place in
+  // the stub.
+  for (unsigned i = 0; i != GVs.size(); ++i) {
+    intptr_t Ptr = (intptr_t)Ptrs[i];
+    assert((Ptr & 1) == 0 && "Stub pointers must be at least 2-byte aligned!");
+    
+    if (isa<Function>(GVs[i]))
+      Ptr |= (intptr_t)1;
+           
     if (sizeof(void *) == 8)
-      MCE->emitInt64((intptr_t)Ptrs[i]);
+      MCE->emitInt64(Ptr);
     else
-      MCE->emitInt32((intptr_t)Ptrs[i]);
+      MCE->emitInt32(Ptr);
+  }
   
   // Emit the strings
   for (unsigned i = 0; i != GVs.size(); ++i)
