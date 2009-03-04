@@ -42,7 +42,10 @@ class TokenLexer {
 
   /// Tokens - This is the pointer to an array of tokens that the macro is
   /// defined to, with arguments expanded for function-like macros.  If this is
-  /// a token stream, these are the tokens we are returning.
+  /// a token stream, these are the tokens we are returning.  This points into
+  /// the macro definition we are lexing from, a scratch buffer allocated from
+  /// the preprocessor's bump pointer allocator, or some other buffer that we
+  /// may or may not own (depending on OwnsTokens).
   const Token *Tokens;
   
   /// NumTokens - This is the length of the Tokens array.

@@ -88,6 +88,7 @@ void TokenLexer::destroy() {
   if (OwnsTokens) {
     delete [] Tokens;
     Tokens = 0;
+    OwnsTokens = false;
   }
   
   // TokenLexer owns its formal arguments.
@@ -264,13 +265,19 @@ void TokenLexer::ExpandFunctionArguments() {
   
   // If anything changed, install this as the new Tokens list.
   if (MadeChange) {
+    assert(!OwnsTokens && "This would leak if we already own the token list");
     // This is deleted in the dtor.
     NumTokens = ResultToks.size();
-    Token *Res = new Token[ResultToks.size()];
+    llvm::BumpPtrAllocator &Alloc = PP.getPreprocessorAllocator();
+    Token *Res =
+      static_cast<Token *>(Alloc.Allocate(sizeof(Token)*ResultToks.size(),
+                                          llvm::alignof<Token>()));
     if (NumTokens)
       memcpy(Res, &ResultToks[0], NumTokens*sizeof(Token));
     Tokens = Res;
-    OwnsTokens = true;
+    
+    // The preprocessor bump pointer owns these tokens, not us.
+    OwnsTokens = false;
   }
 }
 

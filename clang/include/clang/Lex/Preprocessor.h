@@ -205,6 +205,8 @@ public:
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
+  llvm::BumpPtrAllocator &getPreprocessorAllocator() { return BP; }
+  
   
   void setPTHManager(PTHManager* pm);
 
