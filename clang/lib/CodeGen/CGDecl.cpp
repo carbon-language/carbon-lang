@@ -232,7 +232,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
       // A normal fixed sized variable becomes an alloca in the entry block.
-      const llvm::Type *LTy = ConvertType(Ty);
+      const llvm::Type *LTy = ConvertTypeForMem(Ty);
       if (isByRef)
         LTy = BuildByRefType(Ty, getContext().getDeclAlignInBytes(&D));
       llvm::AllocaInst *Alloc =
@@ -278,7 +278,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     }
     
     // Get the element type.
-    const llvm::Type *LElemTy = ConvertType(Ty);    
+    const llvm::Type *LElemTy = ConvertTypeForMem(Ty);    
     const llvm::Type *LElemPtrTy =
       llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
 
@@ -318,7 +318,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     }
     if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      Builder.CreateStore(V, Loc, D.getType().isVolatileQualified());
+      EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified());
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, D.getType().isVolatileQualified());
     } else {
@@ -410,7 +410,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
                                        llvm::GlobalValue::ExternalLinkage);
   } else {
     // A fixed sized single-value variable becomes an alloca in the entry block.
-    const llvm::Type *LTy = ConvertType(Ty);
+    const llvm::Type *LTy = ConvertTypeForMem(Ty);
     if (LTy->isSingleValueType()) {
       // TODO: Alignment
       std::string Name = D.getNameAsString();
@@ -418,7 +418,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
       DeclPtr = CreateTempAlloca(LTy, Name.c_str());
       
       // Store the initial value into the alloca.
-      Builder.CreateStore(Arg, DeclPtr,Ty.isVolatileQualified());
+      EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified());
     } else {
       // Otherwise, if this is an aggregate, just use the input pointer.
       DeclPtr = Arg;
