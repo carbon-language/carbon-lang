@@ -209,7 +209,7 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class VISIBILITY_HIDDEN ScanReachableSymbols : public SubRegionMap::Visitor  {
+class VISIBILITY_HIDDEN ScanReachableSymbols : public SubRegionMap::Visitor  {
   typedef llvm::DenseSet<const MemRegion*> VisitedRegionsTy;
 
   VisitedRegionsTy visited;
