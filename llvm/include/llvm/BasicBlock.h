@@ -41,6 +41,10 @@ template<> struct ilist_traits<Instruction>
     return static_cast<Instruction*>(&Sentinel);
   }
   static void destroySentinel(Instruction*) {}
+
+  Instruction *provideInitialHead() const { return createSentinel(); }
+  Instruction *ensureHead(Instruction*) const { return createSentinel(); }
+
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
   static int getListOffset();

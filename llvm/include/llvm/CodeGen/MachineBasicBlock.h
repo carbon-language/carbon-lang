@@ -38,6 +38,9 @@ public:
   }
   void destroySentinel(MachineInstr *) const {}
 
+  MachineInstr *provideInitialHead() const { return createSentinel(); }
+  MachineInstr *ensureHead(MachineInstr*) const { return createSentinel(); }
+
   void addNodeToList(MachineInstr* N);
   void removeNodeFromList(MachineInstr* N);
   void transferNodesFromList(ilist_traits &SrcTraits,

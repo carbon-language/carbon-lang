@@ -44,6 +44,11 @@ public:
   }
   void destroySentinel(MachineBasicBlock *) const {}
 
+  MachineBasicBlock *provideInitialHead() const { return createSentinel(); }
+  MachineBasicBlock *ensureHead(MachineBasicBlock*) const {
+    return createSentinel();
+  }
+
   void addNodeToList(MachineBasicBlock* MBB);
   void removeNodeFromList(MachineBasicBlock* MBB);
   void deleteNode(MachineBasicBlock *MBB);
@@ -363,8 +368,12 @@ template <> struct GraphTraits<const MachineFunction*> :
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef MachineFunction::const_iterator nodes_iterator;
-  static nodes_iterator nodes_begin(const MachineFunction *F) { return F->begin(); }
-  static nodes_iterator nodes_end  (const MachineFunction *F) { return F->end(); }
+  static nodes_iterator nodes_begin(const MachineFunction *F) {
+    return F->begin();
+  }
+  static nodes_iterator nodes_end  (const MachineFunction *F) {
+    return F->end();
+  }
 };
 
 

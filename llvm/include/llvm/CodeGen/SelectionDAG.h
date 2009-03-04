@@ -46,6 +46,9 @@ public:
   }
   static void destroySentinel(SDNode *) {}
 
+  SDNode *provideInitialHead() const { return createSentinel(); }
+  SDNode *ensureHead(SDNode*) const { return createSentinel(); }
+
   static void deleteNode(SDNode *) {
     assert(0 && "ilist_traits<SDNode> shouldn't see a deleteNode call!");
   }
@@ -112,7 +115,8 @@ class SelectionDAG {
   /// setGraphColorHelper - Implementation of setSubgraphColor.
   /// Return whether we had to truncate the search.
   ///
-  bool setSubgraphColorHelper(SDNode *N, const char *Color, DenseSet<SDNode *> &visited,
+  bool setSubgraphColorHelper(SDNode *N, const char *Color,
+                              DenseSet<SDNode *> &visited,
                               int level, bool &printed);
 
 public:

@@ -60,13 +60,45 @@ struct ilist_nextprev_traits {
   static void setNext(NodeTy *N, NodeTy *Next) { N->setNext(Next); }
 };
 
+template<typename NodeTy>
+struct ilist_traits;
+
 /// ilist_sentinel_traits - A fragment for template traits for intrusive list
 /// that provides default sentinel implementations for common operations.
 ///
+/// ilist_sentinel_traits implements a lazy dynamic sentinel allocation
+/// strategy. The sentinel is stored in the prev field of ilist's Head.
+///
 template<typename NodeTy>
 struct ilist_sentinel_traits {
+  /// createSentinel - create the dynamic sentinel
   static NodeTy *createSentinel() { return new NodeTy(); }
+
+  /// destroySentinel - deallocate the dynamic sentinel
   static void destroySentinel(NodeTy *N) { delete N; }
+
+  /// provideInitialHead - when constructing an ilist, provide a starting
+  /// value for its Head
+  /// @return null node to indicate that it needs to be allocated later
+  static NodeTy *provideInitialHead() { return 0; }
+
+  /// ensureHead - make sure that Head is either already
+  /// initialized or assigned a fresh sentinel
+  /// @return the sentinel
+  static NodeTy *ensureHead(NodeTy *&Head) {
+    if (!Head) {
+      Head = ilist_traits<NodeTy>::createSentinel();
+      ilist_traits<NodeTy>::noteHead(Head, Head);
+      ilist_traits<NodeTy>::setNext(Head, 0);
+      return Head;
+    }
+    return ilist_traits<NodeTy>::getPrev(Head);
+  }
+
+  /// noteHead - stash the sentinel into its default location
+  static void noteHead(NodeTy *NewHead, NodeTy *Sentinel) {
+    ilist_traits<NodeTy>::setPrev(NewHead, Sentinel);
+  }
 };
 
 /// ilist_node_traits - A fragment for template traits for intrusive list
@@ -284,17 +316,14 @@ class iplist : public Traits {
   // circularly linked list where we snip the 'next' link from the sentinel node
   // back to the first node in the list (to preserve assertions about going off
   // the end of the list).
-  NodeTy *getTail() { return this->getPrev(Head); }
-  const NodeTy *getTail() const { return this->getPrev(Head); }
-  void setTail(NodeTy *N) const { this->setPrev(Head, N); }
+  NodeTy *getTail() { return this->ensureHead(Head); }
+  const NodeTy *getTail() const { return this->ensureHead(Head); }
+  void setTail(NodeTy *N) const { this->noteHead(Head, N); }
 
   /// CreateLazySentinel - This method verifies whether the sentinel for the
   /// list has been created and lazily makes it if not.
   void CreateLazySentinel() const {
-    if (Head != 0) return;
-    Head = Traits::createSentinel();
-    this->setNext(Head, 0);
-    setTail(Head);
+    this->Traits::ensureHead(Head);
   }
 
   static bool op_less(NodeTy &L, NodeTy &R) { return L < R; }
@@ -318,7 +347,7 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(0) {}
+  iplist() : Head(this->Traits::provideInitialHead()) {}
   ~iplist() {
     if (!Head) return;
     clear();

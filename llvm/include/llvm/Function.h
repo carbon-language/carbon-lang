@@ -38,6 +38,10 @@ template<> struct ilist_traits<BasicBlock>
     return static_cast<BasicBlock*>(&Sentinel);
   }
   static void destroySentinel(BasicBlock*) {}
+
+  BasicBlock *provideInitialHead() const { return createSentinel(); }
+  BasicBlock *ensureHead(BasicBlock*) const { return createSentinel(); }
+
   static iplist<BasicBlock> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
   static int getListOffset();
@@ -52,6 +56,10 @@ template<> struct ilist_traits<Argument>
     return static_cast<Argument*>(&Sentinel);
   }
   static void destroySentinel(Argument*) {}
+
+  Argument *provideInitialHead() const { return createSentinel(); }
+  Argument *ensureHead(Argument*) const { return createSentinel(); }
+
   static iplist<Argument> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
   static int getListOffset();
