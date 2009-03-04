@@ -403,7 +403,14 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     if (isa<llvm::PointerType>(Src->getType()))
       return Builder.CreateBitCast(Src, DstTy, "conv");
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
-    return Builder.CreateIntToPtr(Src, DstTy, "conv");
+    // First, convert to the correct width so that we control the kind of
+    // extension.
+    const llvm::Type *MiddleTy = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+    bool InputSigned = SrcType->isSignedIntegerType();
+    llvm::Value* IntResult =
+        Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
+    // Then, cast to pointer.
+    return Builder.CreateIntToPtr(IntResult, DstTy, "conv");
   }
   
   if (isa<llvm::PointerType>(Src->getType())) {
