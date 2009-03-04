@@ -1666,6 +1666,12 @@ static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
   return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
 }
 
+ObjCImplementationDecl *getCurImplementationDecl(DeclContext *DC) {
+  while (DC && !isa<ObjCImplementationDecl>(DC))
+    DC = DC->getParent();
+  return dyn_cast_or_null<ObjCImplementationDecl>(DC);
+}
+
 Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -1797,9 +1803,17 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         ObjCInterfaceDecl *ClassOfMethodDecl = 0;
         if (ObjCMethodDecl *MD = getCurMethodDecl())
           ClassOfMethodDecl =  MD->getClassInterface();
-        if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
+        else if (FunctionDecl *FD = getCurFunctionDecl()) {
+          // FIXME: This isn't working yet. Will discuss with Fariborz.
+          // FIXME: Should be ObjCImplDecl, so categories can work.
+          // Need to fiddle with castToDeclContext/castFromDeclContext.
+          ObjCImplementationDecl *ImpDecl = getCurImplementationDecl(FD);
+          if (ImpDecl)
+            ClassOfMethodDecl = ImpDecl->getClassInterface();
+        }
+        if (IV->getAccessControl() == ObjCIvarDecl::Private) {
           if (ClassDeclared != IFTy->getDecl() || 
-              ClassOfMethodDecl != ClassDeclared)
+              (ClassOfMethodDecl && (ClassOfMethodDecl != ClassDeclared)))
             Diag(MemberLoc, diag::error_private_ivar_access) << IV->getDeclName();
         }
         // @protected

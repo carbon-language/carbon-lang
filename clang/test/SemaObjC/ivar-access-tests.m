@@ -73,8 +73,50 @@ int main (void)
 {
   MySuperClass *s = 0;
   int access;
-  access = s->private;   // expected-error {{instance variable 'private' is private}}
+  access = s->private;   // FIXME: {{instance variable 'private' is private}}
   access = s->protected; // expected-error {{instance variable 'protected' is protected}}
   return 0;
 }
 
+typedef signed char BOOL;
+typedef unsigned int NSUInteger;
+typedef struct _NSZone NSZone;
+@class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
+@protocol NSObject  - (BOOL)isEqual:(id)object;
+@end
+@protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
+@end 
+@interface NSObject <NSObject> {}
+@end
+extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
+@interface NSResponder : NSObject <NSCoding> {}
+@end 
+@protocol NSAnimatablePropertyContainer
+- (id)animator;
+@end
+extern NSString *NSAnimationTriggerOrderIn ;
+@interface NSView : NSResponder  <NSAnimatablePropertyContainer>  {
+  struct __VFlags2 {
+  }
+  _vFlags2;
+}
+@end
+@class NSFontDescriptor, NSAffineTransform, NSGraphicsContext;
+@interface NSScrollView : NSView {}
+@end
+
+@class CasperMixerView;
+@interface CasperDiffScrollView : NSScrollView {
+@private
+  CasperMixerView *_comparatorView;
+  NSView *someField;
+}
+@end
+
+@implementation CasperDiffScrollView
++ (void)initialize {}
+static void _CasperDiffScrollViewInstallMixerView(CasperDiffScrollView *scrollView) {
+  if (scrollView->someField != ((void *)0)) {
+  }
+}
+@end
