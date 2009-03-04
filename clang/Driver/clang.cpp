@@ -50,6 +50,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -1561,6 +1562,7 @@ static bool isSerializedFile(const std::string& InFile) {
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, " llvm clang cfe\n");
   llvm::sys::PrintStackTraceOnErrorSignal();
+  llvm::PrettyStackTraceProgram X(argc, argv);
   
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
