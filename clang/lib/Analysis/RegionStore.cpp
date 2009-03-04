@@ -850,6 +850,26 @@ const GRState* RegionStoreManager::setExtent(const GRState* St,
 
 
 static void UpdateLiveSymbols(SVal X, SymbolReaper& SymReaper) {
+  if (loc::MemRegionVal *XR = dyn_cast<loc::MemRegionVal>(&X)) {
+    const MemRegion *R = XR->getRegion();
+    
+    while (R) {
+      if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
+        SymReaper.markLive(SR->getSymbol());
+        return;
+      }
+      
+      if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
+        R = SR->getSuperRegion();
+        continue;
+      }
+      
+      break;
+    }
+    
+    return;
+  }
+  
   for (SVal::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();SI!=SE;++SI)
     SymReaper.markLive(*SI);
 }
