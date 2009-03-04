@@ -1611,9 +1611,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   SymbolRef ErrorSym = 0;                                        
   
   for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {    
-    SVal V = state.GetSVal(*I);
-    
+    SVal V = state.GetSValAsScalarOrLoc(*I);    
     SymbolRef Sym = V.getAsLocSymbol();
+
     if (Sym.isValid())
       if (RefBindings::data_type* T = state.get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, GetArgE(Summ, idx), hasErr);
@@ -1652,7 +1652,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         
         if (R) {          
           // Is the invalidated variable something that we were tracking?
-          SymbolRef Sym = state.GetSVal(Loc::MakeVal(R)).getAsLocSymbol();
+          SymbolRef Sym = state.GetSValAsScalarOrLoc(R).getAsLocSymbol();
           if (Sym.isValid())
             state = state.remove<RefBindings>(Sym);
           
@@ -1688,7 +1688,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   
   // Evaluate the effect on the message receiver.  
   if (!ErrorExpr && Receiver) {
-    SymbolRef Sym = state.GetSVal(Receiver).getAsLocSymbol();
+    SymbolRef Sym = state.GetSValAsScalarOrLoc(Receiver).getAsLocSymbol();
     if (Sym.isValid()) {
       if (const RefVal* T = state.get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, GetReceiverE(Summ), hasErr);
@@ -1743,14 +1743,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       unsigned idx = RE.getIndex();
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
-      SVal V = state.GetSVal(*(arg_beg+idx));
+      SVal V = state.GetSValAsScalarOrLoc(*(arg_beg+idx));
       state = state.BindExpr(Ex, V, false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
-      SVal V = state.GetSVal(Receiver);
+      SVal V = state.GetSValAsScalarOrLoc(Receiver);
       state = state.BindExpr(Ex, V, false);
       break;
     }
@@ -1826,7 +1826,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     // FIXME: Wouldn't it be great if this code could be reduced?  It's just
     // a chain of lookups.
     const GRState* St = Builder.GetState(Pred);
-    SVal V = Eng.getStateManager().GetSVal(St, Receiver);
+    SVal V = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
 
     SymbolRef Sym = V.getAsLocSymbol();
     if (Sym.isValid()) {
@@ -1852,7 +1852,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
       
       if (MD) {
         if (Expr* Receiver = ME->getReceiver()) {
-          SVal X = Eng.getStateManager().GetSVal(St, Receiver);
+          SVal X = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
           if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
             if (L->getRegion() == Eng.getStateManager().getSelfRegion(St)) {
               // Create a summmary where all of the arguments "StopTracking".
@@ -1977,7 +1977,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
     return;
   
   GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
-  SymbolRef Sym = state.GetSVal(RetE).getAsLocSymbol();
+  SymbolRef Sym = state.GetSValAsScalarOrLoc(RetE).getAsLocSymbol();
   
   if (!Sym.isValid())
     return;
@@ -2396,7 +2396,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
 
     if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Get the name of the callee (if it is available).
-      SVal X = CurrSt.GetSVal(CE->getCallee());        
+      SVal X = CurrSt.GetSValAsScalarOrLoc(CE->getCallee());        
       if (loc::FuncVal* FV = dyn_cast<loc::FuncVal>(&X))
         os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
       else
@@ -2457,7 +2457,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         
         // Retrieve the value of the argument.  Is it the symbol
         // we are interested in?
-        if (CurrSt.GetSVal(*AI).getAsLocSymbol() != Sym)
+        if (CurrSt.GetSValAsScalarOrLoc(*AI).getAsLocSymbol() != Sym)
           continue;
 
         // We have an argument.  Get the effect!
@@ -2466,7 +2466,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     }
     else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
       if (Expr *receiver = ME->getReceiver())
-        if (CurrSt.GetSVal(receiver).getAsLocSymbol() == Sym) {
+        if (CurrSt.GetSValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
           // The symbol we are tracking is the receiver.
           AEffects.push_back(Summ->getReceiverEffect());
         }
@@ -2482,7 +2482,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       // Get the name of the function.
       Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
       loc::FuncVal FV =
-        cast<loc::FuncVal>(CurrSt.GetSVal(cast<CallExpr>(S)->getCallee()));
+        cast<loc::FuncVal>(CurrSt.GetSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee()));
       const std::string& FName = FV.getDecl()->getNameAsString();
       
       if (TF.isGCEnabled()) {
@@ -2585,7 +2585,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   // to Sym.
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
     if (Expr* Exp = dyn_cast_or_null<Expr>(*I))
-      if (CurrSt.GetSVal(Exp).getAsLocSymbol() == Sym) {
+      if (CurrSt.GetSValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
         P->addRange(Exp->getSourceRange());
         break;
       }
@@ -2711,14 +2711,14 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
       
       // First check if 'S' itself binds to the symbol.
       if (Expr *Ex = dyn_cast<Expr>(S))
-        if (state.GetSVal(Ex).getAsLocSymbol() == Sym)
+        if (state.GetSValAsScalarOrLoc(Ex).getAsLocSymbol() == Sym)
           foundSymbol = true;
         
       if (!foundSymbol)
         for (Stmt::child_iterator I=S->child_begin(), E=S->child_end();
              I!=E; ++I)
           if (Expr *Ex = dyn_cast_or_null<Expr>(*I)) {
-            SVal X = state.GetSVal(Ex);
+            SVal X = state.GetSValAsScalarOrLoc(Ex);
             if (X.getAsLocSymbol() == Sym) {
               foundSymbol = true;        
               break;
