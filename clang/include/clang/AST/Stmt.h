@@ -471,7 +471,7 @@ public:
   virtual SourceRange getSourceRange() const {
     // Handle deeply nested case statements with iteration instead of recursion.
     const CaseStmt *CS = this;
-    while (const CaseStmt *CS2 = dyn_cast<CaseStmt>(getSubStmt()))
+    while (const CaseStmt *CS2 = dyn_cast<CaseStmt>(CS->getSubStmt()))
       CS = CS2;
     
     return SourceRange(CaseLoc, CS->getSubStmt()->getLocEnd()); 
