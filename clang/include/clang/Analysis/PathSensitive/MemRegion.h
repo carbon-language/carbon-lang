@@ -154,18 +154,16 @@ public:
   }
   
   QualType getDesugaredRValueType(ASTContext& C) const {
-    return getRValueType(C)->getDesugaredType();
+    QualType T = getRValueType(C);
+    return T.getTypePtr() ? T->getDesugaredType() : T;
   }
   
   QualType getDesugaredLValueType(ASTContext& C) const {
     return getLValueType(C)->getDesugaredType();
   }
-  
+
   bool isBoundable(ASTContext &C) const {
-    // FIXME: This needs to be adjusted for structures and arrays.
-    // All this will reject right now is ObjCQualifiedIdType and
-    // BlockPointerType.
-    return getLValueType(C)->isPointerType();
+    return !getRValueType(C).isNull();
   }
 
   static bool classof(const MemRegion* R) {

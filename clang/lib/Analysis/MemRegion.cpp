@@ -123,8 +123,9 @@ QualType SymbolicRegion::getRValueType(ASTContext& C) const {
   if (const BlockPointerType* PTy = T->getAsBlockPointerType())
     return PTy->getPointeeType();
 
-  assert(!T->getAsObjCQualifiedIdType() &&
-         "There is no rvalue type for id<...>");  
+  // There is no rvalue type of id<...>.
+  if (T->getAsObjCQualifiedIdType())
+    return QualType();
   
   assert(Loc::IsLocType(T) && "Non-location type.");
   return QualType();
