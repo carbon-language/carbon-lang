@@ -83,7 +83,7 @@ id objc_getClass(const char *s);
 }   
 - (int) instance_func5
 {
-   int i = (size_t)[Derived instance_func1]; // GCC currently warns.
+   int i = (size_t)[Derived instance_func1]; // expected-warning {{method '+instance_func1' not found (return type defaults to 'id')}} 
    return i + (size_t)[Object instance_func1]; // expected-warning {{method '+instance_func1' not found (return type defaults to 'id')}}
 }
 - (int) instance_func6

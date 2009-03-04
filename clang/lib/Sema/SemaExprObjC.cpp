@@ -314,8 +314,14 @@ Sema::ExprResult Sema::ActOnClassMessage(
     Method = LookupPrivateMethod(Sel, ClassDecl);
 
   // Before we give up, check if the selector is an instance method.
-  if (!Method)
-    Method = ClassDecl->lookupInstanceMethod(Sel);
+  // But only in the root. This matches gcc's behaviour and what the
+  // runtime expects.
+  if (!Method) {
+    ObjCInterfaceDecl *Root = ClassDecl;
+    while (Root->getSuperClass())
+      Root = Root->getSuperClass(); 
+    Method = Root->lookupInstanceMethod(Sel);
+  }
 
   if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
     return true;
@@ -400,6 +406,15 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         
         if (!Method)
           Method = LookupPrivateMethod(Sel, ClassDecl);
+        // Before we give up, check if the selector is an instance method.
+        // But only in the root. This matches gcc's behaviour and what the
+        // runtime expects.
+        if (!Method) {
+          ObjCInterfaceDecl *Root = ClassDecl;
+          while (Root->getSuperClass())
+            Root = Root->getSuperClass();
+          Method = Root->lookupInstanceMethod(Sel);
+        }
       }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;
@@ -408,9 +423,12 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       // If not messaging 'self', look for any factory method named 'Sel'.
       if (!isSelfExpr(RExpr)) {
         Method = FactoryMethodPool[Sel].Method;
-        if (!Method)
+        if (!Method) {
           Method = LookupInstanceMethodInGlobalPool(
                                    Sel, SourceRange(lbrac,rbrac));
+          if (Method)
+            Diag(receiverLoc, diag::warn_maynot_respond) << Sel;
+        }
       }
     }
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
