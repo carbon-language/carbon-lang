@@ -798,6 +798,8 @@ DIAG(err_block_return_missing_expr, ERROR,
      "non-void block should return a value")
 DIAG(err_block_with_return_type_requires_args, ERROR,
      "block with explicit return type requires argument list")
+DIAG(err_func_def_incomplete_result, ERROR,
+     "result type for function definition cannot be incomplete")
 
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,

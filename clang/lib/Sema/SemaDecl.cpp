@@ -2453,6 +2453,14 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
     }
   }
 
+  // The return type of a function definition must be complete
+  // (C99 6.9.1p3)
+  if (FD->getResultType()->isIncompleteType() &&
+      !FD->getResultType()->isVoidType()) {
+    Diag(FD->getLocation(), diag::err_func_def_incomplete_result) << FD;
+    FD->setInvalidDecl();
+  }
+
   PushDeclContext(FnBodyScope, FD);
 
   // Check the validity of our function parameters

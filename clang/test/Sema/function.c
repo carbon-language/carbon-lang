@@ -58,3 +58,5 @@ void f1static() {
   static void f2static(int); // expected-error{{function declared in block scope cannot have 'static' storage class}}
   register void f2register(int); // expected-error{{illegal storage class on function}}
 }
+
+struct incomplete_test a(void) {} // expected-error{{result type for function definition cannot be incomplete}}
