@@ -592,7 +592,30 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
   SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
-  EmitStmt(S.getSubStmt());
+  
+  // Recursively emitting the statement is acceptable, but is not wonderful for
+  // code where we have many case statements nested together, i.e.:
+  //  case 1:
+  //    case 2:
+  //      case 3: etc.
+  // Handling this recursively will create a new block for each case statement
+  // that falls through to the next case which is IR intensive.  It also causes
+  // deep recursion which can run into stack depth limitations.  Handle
+  // sequential non-range case statements specially.
+  const CaseStmt *CurCase = &S;
+  const CaseStmt *NextCase = dyn_cast<CaseStmt>(S.getSubStmt());
+
+  // Otherwise, iteratively add consequtive cases to this switch stmt.
+  while (NextCase && NextCase->getRHS() == 0) {
+    CurCase = NextCase;
+    CaseVal = CurCase->getLHS()->EvaluateAsInt(getContext());
+    SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
+
+    NextCase = dyn_cast<CaseStmt>(CurCase->getSubStmt());
+  }
+  
+  // Normal default recursion for non-cases.
+  EmitStmt(CurCase->getSubStmt());
 }
 
 void CodeGenFunction::EmitDefaultStmt(const DefaultStmt &S) {
