@@ -71,6 +71,8 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
 
     static bool classof(const Arg *) { return true; }    
+
+    void dump() const;
   };
 
   /// PositionalArg - A simple positional argument.

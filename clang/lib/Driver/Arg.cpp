@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Arg.h"
+#include "clang/Driver/Option.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang::driver;
 
@@ -19,6 +21,33 @@ Arg::Arg(ArgClass _Kind, const Option *_Opt, unsigned _Index)
 }
 
 Arg::~Arg() { }
+
+void Arg::dump() const {
+  llvm::errs() << "<";
+  switch (Kind) {
+  default:
+    assert(0 && "Invalid kind");
+#define P(N) case N: llvm::errs() << #N; break
+    P(PositionalClass);
+    P(JoinedClass);
+    P(SeparateClass);
+    P(CommaJoinedClass);
+    P(JoinedAndSeparateClass);
+#undef P
+  }
+
+  llvm::errs() << " Opt:";
+  Opt->dump();
+
+  llvm::errs() << " Index:" << Index;
+
+  if (const CommaJoinedArg *CJA = dyn_cast<CommaJoinedArg>(this))
+    llvm::errs() << " NumValues:" << CJA->getNumValues();
+
+  llvm::errs() << ">\n";
+
+  llvm::errs().flush(); // FIXME
+}
 
 PositionalArg::PositionalArg(const Option *Opt, unsigned Index)
   : Arg(PositionalClass, Opt, Index) {
@@ -54,6 +83,18 @@ void CommaJoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
 }
 
 const char *CommaJoinedArg::getValue(const ArgList &Args, unsigned N) const {
+  assert(0 && "FIXME: Implement");
+}
+
+SeparateArg::SeparateArg(const Option *Opt, unsigned Index, unsigned _NumValues)
+  : Arg(SeparateClass, Opt, Index), NumValues(_NumValues) {
+}
+
+void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
+  assert(0 && "FIXME: Implement");
+}
+
+const char *SeparateArg::getValue(const ArgList &Args, unsigned N) const { 
   assert(0 && "FIXME: Implement");
 }
 
