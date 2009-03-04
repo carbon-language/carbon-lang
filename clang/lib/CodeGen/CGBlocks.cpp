@@ -81,8 +81,8 @@ llvm::Constant *BlockModule::getNSConcreteGlobalBlock() {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
-  // same thing as CreateRuntimeFunction if there's already a variable with
-  // the same name.
+  // same thing as CreateRuntimeFunction if there's already a variable with the
+  // same name.
   NSConcreteGlobalBlock
     = new llvm::GlobalVariable(PtrToInt8Ty, false, 
                                llvm::GlobalValue::ExternalLinkage,
@@ -99,8 +99,8 @@ llvm::Constant *BlockModule::getNSConcreteStackBlock() {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
-  // same thing as CreateRuntimeFunction if there's already a variable with
-  // the same name.
+  // same thing as CreateRuntimeFunction if there's already a variable with the
+  // same name.
   NSConcreteStackBlock
     = new llvm::GlobalVariable(PtrToInt8Ty, false, 
                                llvm::GlobalValue::ExternalLinkage,
@@ -129,15 +129,15 @@ static void CollectBlockDeclRefInfo(const Stmt *S,
   }
 }
 
-/// CanBlockBeGlobal - Given a BlockInfo struct, determines if a block
-/// can be declared as a global variable instead of on the stack.
+/// CanBlockBeGlobal - Given a BlockInfo struct, determines if a block can be
+/// declared as a global variable instead of on the stack.
 static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info)
 {
   return Info.ByRefDeclRefs.empty() && Info.ByCopyDeclRefs.empty();
 }
 
-// FIXME: Push most into CGM, passing down a few bits, like current
-// function name.
+// FIXME: Push most into CGM, passing down a few bits, like current function
+// name.
 llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
   std::string Name = CurFn->getName();
@@ -145,10 +145,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   CollectBlockDeclRefInfo(BE->getBody(), Info);
 
   // Check if the block can be global.
-  // FIXME: This test doesn't work for nested blocks yet.  Longer
-  // term, I'd like to just have one code path.  We should move
-  // this function into CGM and pass CGF, then we can just check to
-  // see if CGF is 0.
+  // FIXME: This test doesn't work for nested blocks yet.  Longer term, I'd like
+  // to just have one code path.  We should move this function into CGM and pass
+  // CGF, then we can just check to see if CGF is 0.
   if (0 && CanBlockBeGlobal(Info))
     return CGM.GetAddrOfGlobalBlock(BE, Name.c_str());
     
@@ -275,9 +274,23 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           llvm::Value *Loc = r.getScalarVal();
           const llvm::Type *Ty = Types[i+5];
           if  (BDRE->isByRef()) {
+            // E is now the address of the value field, instead, we want the
+            // address of the actual ByRef struct.  We optimize this slightly
+            // compared to gcc by not grabbing the forwarding slot as this must
+            // be done during Block_copy for us, and we can postpone the work
+            // until then.
+            uint64_t offset = BlockDecls[BDRE->getDecl()];
+            
+            llvm::Value *BlockLiteral = LoadBlockStruct();
+            
+            Loc = Builder.CreateGEP(BlockLiteral,
+                                    llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                           offset),
+                                    "block.literal");
+            Ty = llvm::PointerType::get(Ty, 0);
             Loc = Builder.CreateBitCast(Loc, Ty);
-            Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
-            Loc = Builder.CreateBitCast(Loc, Ty);
+            Loc = Builder.CreateLoad(Loc, false);
+            // Loc = Builder.CreateBitCast(Loc, Ty);
           }
           Builder.CreateStore(Loc, Addr);
         } else if (r.isComplex())
@@ -479,7 +492,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   llvm::Value *V = Builder.CreateGEP(BlockLiteral,
                                      llvm::ConstantInt::get(llvm::Type::Int64Ty,
                                                             offset),
-                                     "tmp");
+                                     "block.literal");
   if (E->isByRef()) {
     bool needsCopyDispose = BlockRequiresCopying(E->getType());
     uint64_t Align = getContext().getDeclAlignInBytes(E->getDecl());
