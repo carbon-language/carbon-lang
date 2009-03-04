@@ -652,7 +652,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     if (!RegOp2MemOpTable2.insert(std::make_pair((unsigned*)RegOp,
                                                  MemOp)).second)
       assert(false && "Duplicated entries?");
-    unsigned AuxInfo = 2 | (1 << 4); // Index 1, folded load
+    unsigned AuxInfo = 2 | (1 << 4); // Index 2, folded load
     if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                    std::make_pair(RegOp, AuxInfo))).second)
       AmbEntries.push_back(MemOp);
