@@ -403,7 +403,7 @@ DIAG(err_attr_wrong_decl, ERROR,
 DIAG(warn_attribute_nonnull_no_pointers, WARNING,
      "'nonnull' attribute applied to function with no pointer arguments")
 DIAG(warn_transparent_union_nonpointer, WARNING,
-     "'transparent_union' attribute support incomplete; only supported for"
+     "'transparent_union' attribute support incomplete; only supported for "
      "pointer unions")
 DIAG(warn_attribute_sentinel_not_variadic, WARNING,
      "'sentinel' attribute only supported for variadic functions")
