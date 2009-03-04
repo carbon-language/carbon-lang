@@ -167,7 +167,7 @@ let Namespace = "X86" in {
   def ST7 : Register<"st(7)">, DwarfRegNum<[40, 19, 18]>; 
 
   // Status flags register
-  def EFLAGS : Register<"eflags">;
+  def EFLAGS : Register<"flags">;
 }
 
 

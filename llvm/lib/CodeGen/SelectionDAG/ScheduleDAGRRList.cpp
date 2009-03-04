@@ -580,6 +580,30 @@ static MVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
   return N->getValueType(NumRes);
 }
 
+/// CheckForLiveRegDef - Return true and update live register vector if the
+/// specified register def of the specified SUnit clobbers any "live" registers.
+static bool CheckForLiveRegDef(SUnit *SU, unsigned Reg,
+                               std::vector<SUnit*> &LiveRegDefs,
+                               SmallSet<unsigned, 4> &RegAdded,
+                               SmallVector<unsigned, 4> &LRegs,
+                               const TargetRegisterInfo *TRI) {
+  bool Added = false;
+  if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != SU) {
+    if (RegAdded.insert(Reg)) {
+      LRegs.push_back(Reg);
+      Added = true;
+    }
+  }
+  for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
+    if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
+      if (RegAdded.insert(*Alias)) {
+        LRegs.push_back(*Alias);
+        Added = true;
+      }
+    }
+  return Added;
+}
+
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
 /// scheduling of the given node to satisfy live physical register dependencies.
 /// If the specific node is the last one that's available to schedule, do
@@ -593,39 +617,44 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
   // If this node would clobber any "live" register, then it's not ready.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    if (I->isAssignedRegDep()) {
-      unsigned Reg = I->getReg();
-      if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != I->getSUnit()) {
-        if (RegAdded.insert(Reg))
-          LRegs.push_back(Reg);
-      }
-      for (const unsigned *Alias = TRI->getAliasSet(Reg);
-           *Alias; ++Alias)
-        if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != I->getSUnit()) {
-          if (RegAdded.insert(*Alias))
-            LRegs.push_back(*Alias);
-        }
-    }
+    if (I->isAssignedRegDep())
+      CheckForLiveRegDef(I->getSUnit(), I->getReg(), LiveRegDefs,
+                         RegAdded, LRegs, TRI);
   }
 
   for (SDNode *Node = SU->getNode(); Node; Node = Node->getFlaggedNode()) {
+    if (Node->getOpcode() == ISD::INLINEASM) {
+      // Inline asm can clobber physical defs.
+      unsigned NumOps = Node->getNumOperands();
+      if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
+        --NumOps;  // Ignore the flag operand.
+
+      for (unsigned i = 2; i != NumOps;) {
+        unsigned Flags =
+          cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
+        unsigned NumVals = Flags >> 3;
+
+        ++i; // Skip the ID value.
+        if ((Flags & 7) == 2 || (Flags & 7) == 6) {
+          // Check for def of register or earlyclobber register.
+          for (; NumVals; --NumVals, ++i) {
+            unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+            if (TargetRegisterInfo::isPhysicalRegister(Reg))
+              CheckForLiveRegDef(SU, Reg, LiveRegDefs, RegAdded, LRegs, TRI);
+          }
+        } else
+          i += NumVals;
+      }
+      continue;
+    }
+
     if (!Node->isMachineOpcode())
       continue;
     const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
     if (!TID.ImplicitDefs)
       continue;
-    for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg) {
-      if (LiveRegDefs[*Reg] && LiveRegDefs[*Reg] != SU) {
-        if (RegAdded.insert(*Reg))
-          LRegs.push_back(*Reg);
-      }
-      for (const unsigned *Alias = TRI->getAliasSet(*Reg);
-           *Alias; ++Alias)
-        if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
-          if (RegAdded.insert(*Alias))
-            LRegs.push_back(*Alias);
-        }
-    }
+    for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg)
+      CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
   }
   return !LRegs.empty();
 }
