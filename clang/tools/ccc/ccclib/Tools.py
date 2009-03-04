@@ -273,7 +273,9 @@ class Clang_CompileTool(Tool):
             # FIXME: Set --enable-unsafe-fp-math.
             if not arglist.getLastArg(arglist.parser.f_omitFramePointerOption):
                 cmd_args.append('--disable-fp-elim')
-            if not arglist.getLastArg(arglist.parser.f_zeroInitializedInBssOption):
+            if not arglist.hasFFlag(arglist.parser.f_zeroInitializedInBssOption,
+                                    arglist.parser.f_noZeroInitializedInBssOption,
+                                    True):
                 cmd_args.append('--nozero-initialized-in-bss')
             if arglist.getLastArg(arglist.parser.dAOption):
                 cmd_args.append('--asm-verbose')

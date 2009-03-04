@@ -849,6 +849,7 @@ class OptionParser:
         self.f_noUnwindTablesOption = self.addOption(FlagOption('-fno-unwind-tables', self.fGroup))
         self.f_writableStringsOption = self.addOption(FlagOption('-fwritable-strings', self.Clang_fGroup))
         self.f_zeroInitializedInBssOption = self.addOption(FlagOption('-fzero-initialized-in-bss', self.fGroup))
+        self.f_noZeroInitializedInBssOption = self.addOption(FlagOption('-fno-zero-initialized-in-bss', self.fGroup))
         self.fOption = self.addOption(JoinedOption('-f', self.fGroup))
 
         self.coverageOption = self.addOption(FlagOption('-coverage'))
