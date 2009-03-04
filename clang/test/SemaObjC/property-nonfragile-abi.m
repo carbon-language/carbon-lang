@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -arch x86_64 -verify %s 
+// RUN: clang -fsyntax-only -triple x86_64-apple-darwin9 -verify %s 
 
 typedef signed char BOOL;
 
