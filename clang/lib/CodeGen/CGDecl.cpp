@@ -127,11 +127,9 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
         GenerateStaticCXXBlockVarDeclInit(D, GV);
     } else {
       // The initializer may differ in type from the global. Rewrite
-      // the global to match the initializer!?
-      //
-      // FIXME: This matches what we have been doing historically, but
-      // it seems bad. Shouldn't the init expression have the right
-      // type?
+      // the global to match the initializer.  (We have to do this
+      // because some types, like unions, can't be completely represented
+      // in the LLVM type system.)
       if (GV->getType() != Init->getType()) {
         llvm::GlobalVariable *OldGV = GV;
         
