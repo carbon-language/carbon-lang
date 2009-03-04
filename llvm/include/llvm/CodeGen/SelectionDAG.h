@@ -39,13 +39,10 @@ class FunctionLoweringInfo;
 
 template<> struct ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
 private:
-  mutable SDNode Sentinel;
+  mutable ilist_node<SDNode> Sentinel;
 public:
-  ilist_traits() : Sentinel(ISD::DELETED_NODE, DebugLoc::getUnknownLoc(),
-                            SDVTList()) {}
-
   SDNode *createSentinel() const {
-    return &Sentinel;
+    return static_cast<SDNode*>(&Sentinel);
   }
   static void destroySentinel(SDNode *) {}
 

@@ -26,14 +26,16 @@ class MachineFunction;
 template <>
 struct ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
 private:
-  mutable MachineInstr Sentinel;
+  mutable ilist_node<MachineInstr> Sentinel;
 
   // this is only set by the MachineBasicBlock owning the LiveList
   friend class MachineBasicBlock;
   MachineBasicBlock* Parent;
 
 public:
-  MachineInstr *createSentinel() const { return &Sentinel; }
+  MachineInstr *createSentinel() const {
+    return static_cast<MachineInstr*>(&Sentinel);
+  }
   void destroySentinel(MachineInstr *) const {}
 
   void addNodeToList(MachineInstr* N);
