@@ -10,6 +10,7 @@
 #ifndef CLANG_DRIVER_ARGLIST_H_
 #define CLANG_DRIVER_ARGLIST_H_
 
+#include "Util.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -34,7 +35,7 @@ namespace driver {
     ArgStringList ArgStrings;
 
     /// The full list of arguments.
-    llvm::SmallVector<Arg*, 16> Args;
+    arglist_type Args;
 
     /// A map of arguments by option ID; in conjunction with the
     /// intrusive list in Arg instances this allows iterating over all
@@ -42,7 +43,7 @@ namespace driver {
     llvm::DenseMap<unsigned, Arg*> ArgMap;
 
   public:
-    ArgList(unsigned argc, const char **argv);
+    ArgList(const char **ArgBegin, const char **ArgEnd);
     ArgList(const ArgList &);
     ~ArgList();
 
