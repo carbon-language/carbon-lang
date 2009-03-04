@@ -94,7 +94,7 @@ namespace driver {
     /// argument.
     ///
     /// May issue a missing argument error.
-    virtual Arg *accept(ArgList &Args, unsigned Index) const = 0;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const = 0;
     
     void dump() const;
 
@@ -107,7 +107,7 @@ namespace driver {
   public:
     OptionGroup(const char *Name, const OptionGroup *Group);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::GroupClass; 
@@ -122,7 +122,7 @@ namespace driver {
   public:
     InputOption();
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::InputClass; 
@@ -135,7 +135,7 @@ namespace driver {
   public:
     UnknownOption();
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::UnknownClass; 
@@ -149,7 +149,7 @@ namespace driver {
   public:
     FlagOption(const char *Name, const OptionGroup *Group, const Option *Alias);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::FlagClass; 
@@ -162,7 +162,7 @@ namespace driver {
     JoinedOption(const char *Name, const OptionGroup *Group, 
                  const Option *Alias);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::JoinedClass; 
@@ -175,7 +175,7 @@ namespace driver {
     SeparateOption(const char *Name, const OptionGroup *Group, 
                    const Option *Alias);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::SeparateClass; 
@@ -188,13 +188,15 @@ namespace driver {
     CommaJoinedOption(const char *Name, const OptionGroup *Group, 
                       const Option *Alias);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::CommaJoinedClass; 
     }
     static bool classof(const CommaJoinedOption *) { return true; }
   };
+
+  // FIXME: Fold MultiArgOption into SeparateOption?
 
   /// MultiArgOption - An option which takes multiple arguments (these
   /// are always separate arguments).
@@ -207,7 +209,7 @@ namespace driver {
 
     unsigned getNumArgs() const { return NumArgs; }
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::MultiArgClass; 
@@ -222,7 +224,7 @@ namespace driver {
     JoinedOrSeparateOption(const char *Name, const OptionGroup *Group, 
                            const Option *Alias);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::JoinedOrSeparateClass; 
@@ -237,7 +239,7 @@ namespace driver {
     JoinedAndSeparateOption(const char *Name, const OptionGroup *Group, 
                             const Option *Alias);
 
-    virtual Arg *accept(ArgList &Args, unsigned Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) { 
       return O->getKind() == Option::JoinedAndSeparateClass; 

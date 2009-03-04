@@ -83,7 +83,7 @@ OptionGroup::OptionGroup(const char *Name, const OptionGroup *Group)
   : Option(Option::GroupClass, Name, Group, 0) {
 }
 
-Arg *OptionGroup::accept(ArgList &Args, unsigned Index) const {
+Arg *OptionGroup::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -92,7 +92,7 @@ InputOption::InputOption()
   : Option(Option::InputClass, "<input>", 0, 0) {
 }
 
-Arg *InputOption::accept(ArgList &Args, unsigned Index) const {
+Arg *InputOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -101,7 +101,7 @@ UnknownOption::UnknownOption()
   : Option(Option::UnknownClass, "<unknown>", 0, 0) {
 }
 
-Arg *UnknownOption::accept(ArgList &Args, unsigned Index) const {
+Arg *UnknownOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -111,7 +111,7 @@ FlagOption::FlagOption(const char *Name, const OptionGroup *Group,
   : Option(Option::FlagClass, Name, Group, Alias) {
 }
 
-Arg *FlagOption::accept(ArgList &Args, unsigned Index) const {
+Arg *FlagOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -121,7 +121,7 @@ JoinedOption::JoinedOption(const char *Name, const OptionGroup *Group,
   : Option(Option::JoinedClass, Name, Group, Alias) {
 }
 
-Arg *JoinedOption::accept(ArgList &Args, unsigned Index) const {
+Arg *JoinedOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -131,7 +131,7 @@ CommaJoinedOption::CommaJoinedOption(const char *Name, const OptionGroup *Group,
   : Option(Option::CommaJoinedClass, Name, Group, Alias) {
 }
 
-Arg *CommaJoinedOption::accept(ArgList &Args, unsigned Index) const {
+Arg *CommaJoinedOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -141,7 +141,7 @@ SeparateOption::SeparateOption(const char *Name, const OptionGroup *Group,
   : Option(Option::SeparateClass, Name, Group, Alias) {
 }
 
-Arg *SeparateOption::accept(ArgList &Args, unsigned Index) const {
+Arg *SeparateOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -151,7 +151,7 @@ MultiArgOption::MultiArgOption(const char *Name, const OptionGroup *Group,
   : Option(Option::MultiArgClass, Name, Group, Alias), NumArgs(_NumArgs) {
 }
 
-Arg *MultiArgOption::accept(ArgList &Args, unsigned Index) const {
+Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -162,7 +162,7 @@ JoinedOrSeparateOption::JoinedOrSeparateOption(const char *Name,
   : Option(Option::JoinedOrSeparateClass, Name, Group, Alias) {
 }
 
-Arg *JoinedOrSeparateOption::accept(ArgList &Args, unsigned Index) const {
+Arg *JoinedOrSeparateOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
@@ -173,7 +173,7 @@ JoinedAndSeparateOption::JoinedAndSeparateOption(const char *Name,
   : Option(Option::JoinedAndSeparateClass, Name, Group, Alias) {
 }
 
-Arg *JoinedAndSeparateOption::accept(ArgList &Args, unsigned Index) const {
+Arg *JoinedAndSeparateOption::accept(const ArgList &Args, unsigned &Index) const {
   assert(0 && "FIXME");
   return 0;
 }
