@@ -11,6 +11,7 @@
 #define CLANG_DRIVER_COMPILATION_H_
 
 namespace clang {
+namespace driver {
 
 /// Compilation - A set of tasks to perform for a single driver
 /// invocation.
@@ -24,6 +25,7 @@ public:
   int Execute() const;
 };
 
+} // end namespace driver
 } // end namespace clang
 
 #endif

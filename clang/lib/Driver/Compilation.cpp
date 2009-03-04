@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Compilation.h"
-using namespace clang;
+using namespace clang::driver;
 
 Compilation::Compilation() {
 }

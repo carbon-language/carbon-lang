@@ -11,20 +11,27 @@
 #define CLANG_DRIVER_DRIVER_H_
 
 namespace clang {
+namespace driver {
   class Compilation;
+  class OptTable;
 
 /// Driver - Encapsulate logic for constructing compilation processes
 /// from a set of gcc-driver-like command line arguments.
 class Driver {
+  OptTable *Opts;
+
 public:
   Driver();
   ~Driver();
+
+  const OptTable &getOpts() const { return *Opts; }
 
   /// BuildCompilation - Construct a compilation object for a command
   /// line argument vector.
   Compilation *BuildCompilation(int argc, const char **argv);
 };
 
+} // end namespace driver
 } // end namespace clang
 
 #endif

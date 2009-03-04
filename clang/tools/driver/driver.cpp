@@ -19,7 +19,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/System/Signals.h"
-using namespace clang;
+using namespace clang::driver;
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
