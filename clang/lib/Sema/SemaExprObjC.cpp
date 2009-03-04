@@ -211,8 +211,9 @@ bool Sema::isSelfExpr(Expr *RExpr) {
 
 // Helper method for ActOnClassMethod/ActOnInstanceMethod.
 // Will search "local" class/category implementations for a method decl.
+// If failed, then we search in class's root for an instance method.
 // Returns 0 if no method is found.
-ObjCMethodDecl *Sema::LookupPrivateMethod(Selector Sel,
+ObjCMethodDecl *Sema::LookupPrivateOrRootMethod(Selector Sel,
                                           ObjCInterfaceDecl *ClassDecl) {
   ObjCMethodDecl *Method = 0;
   
@@ -226,6 +227,15 @@ ObjCMethodDecl *Sema::LookupPrivateMethod(Selector Sel,
       if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
         Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
     }
+  }
+  // Before we give up, check if the selector is an instance method.
+  // But only in the root. This matches gcc's behaviour and what the
+  // runtime expects.
+  if (!Method) {
+    ObjCInterfaceDecl *Root = ClassDecl;
+    while (Root->getSuperClass())
+      Root = Root->getSuperClass();
+    Method = Root->lookupInstanceMethod(Sel);
   }
   return Method;
 }
@@ -311,17 +321,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   
   // If we have an implementation in scope, check "private" methods.
   if (!Method)
-    Method = LookupPrivateMethod(Sel, ClassDecl);
-
-  // Before we give up, check if the selector is an instance method.
-  // But only in the root. This matches gcc's behaviour and what the
-  // runtime expects.
-  if (!Method) {
-    ObjCInterfaceDecl *Root = ClassDecl;
-    while (Root->getSuperClass())
-      Root = Root->getSuperClass(); 
-    Method = Root->lookupInstanceMethod(Sel);
-  }
+    Method = LookupPrivateOrRootMethod(Sel, ClassDecl);
 
   if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
     return true;
@@ -405,16 +405,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         Method = ClassDecl->lookupClassMethod(Sel);
         
         if (!Method)
-          Method = LookupPrivateMethod(Sel, ClassDecl);
-        // Before we give up, check if the selector is an instance method.
-        // But only in the root. This matches gcc's behaviour and what the
-        // runtime expects.
-        if (!Method) {
-          ObjCInterfaceDecl *Root = ClassDecl;
-          while (Root->getSuperClass())
-            Root = Root->getSuperClass();
-          Method = Root->lookupInstanceMethod(Sel);
-        }
+          Method = LookupPrivateOrRootMethod(Sel, ClassDecl);
       }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;

@@ -1768,8 +1768,9 @@ public:
 
   // Helper method for ActOnClassMethod/ActOnInstanceMethod.
   // Will search "local" class/category implementations for a method decl.
+  // Will also search in class's root looking for instance method.
   // Returns 0 if no method is found.
-  ObjCMethodDecl *LookupPrivateMethod(Selector Sel, ObjCInterfaceDecl *CDecl);
+  ObjCMethodDecl *LookupPrivateOrRootMethod(Selector Sel, ObjCInterfaceDecl *CDecl);
   
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
