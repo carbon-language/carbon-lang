@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 
+#include "CGBlocks.h"
 #include "CGCall.h"
 
 #include <list>
@@ -62,7 +63,7 @@ namespace CodeGen {
 
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
-class CodeGenModule {
+  class CodeGenModule : public BlockModule {
   CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
   void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
 
@@ -138,15 +139,6 @@ class CodeGenModule {
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
-
-  enum {
-    BLOCK_NEEDS_FREE =        (1 << 24),
-    BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
-    BLOCK_HAS_CXX_OBJ =       (1 << 26),
-    BLOCK_IS_GC =             (1 << 27),
-    BLOCK_IS_GLOBAL =         (1 << 28),
-    BLOCK_HAS_DESCRIPTOR =    (1 << 29)
-  };
 
   /// NSConcreteGlobalBlock - Cached reference to the class pointer for global
   /// blocks.

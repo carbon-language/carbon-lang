@@ -25,6 +25,7 @@
 #include <vector>
 #include <map>
 
+#include "CGBlocks.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
 #include "CGValue.h"
@@ -61,7 +62,7 @@ namespace CodeGen {
 
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
-class CodeGenFunction {
+  class CodeGenFunction : public BlockFunction {
   CodeGenFunction(const CodeGenFunction&); // DO NOT IMPLEMENT
   void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
 public:
@@ -263,27 +264,6 @@ public:
   //===--------------------------------------------------------------------===//
   //                                  Block Bits
   //===--------------------------------------------------------------------===//
-
-  enum {
-    BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)),
-                                      block, ... */
-    BLOCK_FIELD_IS_BLOCK    =  7,  /* a block variable */
-    BLOCK_FIELD_IS_BYREF    =  8,  /* the on stack structure holding the __block
-                                      variable */
-    BLOCK_FIELD_IS_WEAK     = 16,  /* declared __weak, only used in byref copy
-                                      helpers */
-    BLOCK_BYREF_CALLER      = 128  /* called from __block (byref) copy/dispose
-                                      support routines */
-  };
-
-  enum {
-    BLOCK_NEEDS_FREE =        (1 << 24),
-    BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
-    BLOCK_HAS_CXX_OBJ =       (1 << 26),
-    BLOCK_IS_GC =             (1 << 27),
-    BLOCK_IS_GLOBAL =         (1 << 28),
-    BLOCK_HAS_DESCRIPTOR =    (1 << 29)
-  };
 
   llvm::Value *BuildCopyHelper(int flag);
   llvm::Value *BuildDestroyHelper(int flag);
