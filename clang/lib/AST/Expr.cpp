@@ -603,11 +603,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_Valid;
   case ChooseExprClass:
     // __builtin_choose_expr is an lvalue if the selected operand is.
-    if (cast<ChooseExpr>(this)->isConditionTrue(Ctx))
-      return cast<ChooseExpr>(this)->getLHS()->isLvalue(Ctx);
-    else
-      return cast<ChooseExpr>(this)->getRHS()->isLvalue(Ctx);
-
+    return cast<ChooseExpr>(this)->getChosenSubExpr(Ctx)->isLvalue(Ctx);
   case ExtVectorElementExprClass:
     if (cast<ExtVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;
@@ -1110,9 +1106,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXDefaultArgExprClass:
     return CheckICE(cast<CXXDefaultArgExpr>(E)->getExpr(), Ctx);
   case Expr::ChooseExprClass: {
-    const ChooseExpr *CE = cast<ChooseExpr>(E);
-    Expr *SubExpr = CE->isConditionTrue(Ctx) ? CE->getLHS() : CE->getRHS();
-    return CheckICE(SubExpr, Ctx);
+    return CheckICE(cast<ChooseExpr>(E)->getChosenSubExpr(Ctx), Ctx);
   }
   }
 }

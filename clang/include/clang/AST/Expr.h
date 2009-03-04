@@ -1493,9 +1493,12 @@ public:
 /// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
 /// This AST node is similar to the conditional operator (?:) in C, with 
 /// the following exceptions:
-/// - the test expression must be a constant expression.
-/// - the expression returned has it's type unaltered by promotion rules.
-/// - does not evaluate the expression that was not chosen.
+/// - the test expression must be a integer constant expression.
+/// - the expression returned acts like the chosen subexpression in every
+///   visible way: the type is the same as that of the chosen subexpression,
+///   and all predicates (whether it's an l-value, whether it's an integer
+///   constant expression, etc.) return the same result as for the chosen
+///   sub-expression.
 class ChooseExpr : public Expr {
   enum { COND, LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
@@ -1509,11 +1512,17 @@ public:
       SubExprs[LHS] = lhs;
       SubExprs[RHS] = rhs;
     }        
-  
-  /// isConditionTrue - Return true if the condition is true.  This is always
-  /// statically knowable for a well-formed choosexpr.
+
+  /// isConditionTrue - Return whether the condition is true (i.e. not
+  /// equal to zero).
   bool isConditionTrue(ASTContext &C) const;
-  
+
+  /// getChosenSubExpr - Return the subexpression chosen according to the
+  /// condition.
+  Expr *getChosenSubExpr(ASTContext &C) const {
+    return isConditionTrue(C) ? getLHS() : getRHS();
+  }
+
   Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
   Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }

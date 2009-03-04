@@ -178,11 +178,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CompoundLiteralExprClass:
     return EmitCompoundLiteralLValue(cast<CompoundLiteralExpr>(E));
   case Expr::ChooseExprClass:
-    // __builtin_choose_expr is the lvalue of the selected operand.
-    if (cast<ChooseExpr>(E)->isConditionTrue(getContext()))
-      return EmitLValue(cast<ChooseExpr>(E)->getLHS());
-    else
-      return EmitLValue(cast<ChooseExpr>(E)->getRHS());
+    return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr(getContext()));
   }
 }
 

@@ -389,10 +389,8 @@ APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
 }
 
 APValue PointerExprEvaluator::VisitChooseExpr(ChooseExpr *E) {
-  Expr* EvalExpr = E->isConditionTrue(Info.Ctx) ? E->getLHS() : E->getRHS();
-
   APValue Result;
-  if (EvaluatePointer(EvalExpr, Result, Info))
+  if (EvaluatePointer(E->getChosenSubExpr(Info.Ctx), Result, Info))
     return Result;
   return APValue();
 }
@@ -522,10 +520,8 @@ APValue VectorExprEvaluator::VisitConditionalOperator(const ConditionalOperator 
 }
 
 APValue VectorExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
-  Expr* EvalExpr = E->isConditionTrue(Info.Ctx) ? E->getLHS() : E->getRHS();
-
   APValue Result;
-  if (EvaluateVector(EvalExpr, Result, Info))
+  if (EvaluateVector(E->getChosenSubExpr(Info.Ctx), Result, Info))
     return Result;
   return APValue();
 }
@@ -1185,9 +1181,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
 }
 
 bool IntExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
-  Expr* EvalExpr = E->isConditionTrue(Info.Ctx) ? E->getLHS() : E->getRHS();
-
-  return Visit(EvalExpr);
+  return Visit(E->getChosenSubExpr(Info.Ctx));
 }
 
 bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {

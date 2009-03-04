@@ -509,8 +509,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitChooseExpr(ChooseExpr *E) {
-  // Emit the LHS or RHS as appropriate.
-  return Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() :E->getRHS());
+  return Visit(E->getChosenSubExpr(CGF.getContext()));
 }
 
 ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
