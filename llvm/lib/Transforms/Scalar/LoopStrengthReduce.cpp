@@ -2376,6 +2376,9 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
       AR->getStepRecurrence(*SE) != One)
     return Cond;
 
+  assert(AR->getLoop() == L &&
+         "Loop condition operand is an addrec in a different loop!");
+
   // Check the right operand of the select, and remember it, as it will
   // be used in the new comparison instruction.
   Value *NewRHS = 0;
