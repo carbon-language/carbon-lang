@@ -261,7 +261,6 @@ let Properties = [IntrNoMem] in {
 //
 
 // None of these intrinsics accesses memory at all.
-let Properties = [IntrNoMem] in {
   def int_dbg_stoppoint    : Intrinsic<[llvm_void_ty],
                                        [llvm_i32_ty, llvm_i32_ty, 
                                         llvm_descriptor_ty]>;
@@ -270,7 +269,6 @@ let Properties = [IntrNoMem] in {
   def int_dbg_func_start   : Intrinsic<[llvm_void_ty], [llvm_descriptor_ty]>;
   def int_dbg_declare      : Intrinsic<[llvm_void_ty],
                                        [llvm_descriptor_ty, llvm_descriptor_ty]>;
-}
 
 //===------------------ Exception Handling Intrinsics----------------------===//
 //
