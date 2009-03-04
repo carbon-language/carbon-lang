@@ -287,7 +287,8 @@ bool SROA::performScalarRepl(Function &F) {
     const Type *VectorTy = 0;
     bool HadAVector = false;
     if (CanConvertToScalar(AI, IsNotTrivial, VectorTy, HadAVector, 
-                           0, unsigned(AllocaSize)) && IsNotTrivial) {
+                           0, unsigned(AllocaSize)) && IsNotTrivial &&
+        AllocaSize <= 128) {
       AllocaInst *NewAI;
       // If we were able to find a vector type that can handle this with
       // insert/extract elements, and if there was at least one use that had
@@ -721,8 +722,9 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   
   // If this is a memcpy/memmove, construct the other pointer as the
-  // appropriate type.
+  // appropriate type.  The "Other" pointer is the pointer that goes to 
   Value *OtherPtr = 0;
+  unsigned MemAlignment = MI->getAlignment()->getZExtValue();
   if (MemCpyInst *MCI = dyn_cast<MemCpyInst>(MI)) {
     if (BCInst == MCI->getRawDest())
       OtherPtr = MCI->getRawSource();
@@ -771,22 +773,47 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // If this is a memcpy/memmove, emit a GEP of the other element address.
     Value *OtherElt = 0;
+    unsigned OtherEltAlign = MemAlignment;
+    
     if (OtherPtr) {
       Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
       OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
                                            OtherPtr->getNameStr()+"."+utostr(i),
                                            MI);
+      uint64_t EltOffset;
+      const PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
+      if (const StructType *ST =
+            dyn_cast<StructType>(OtherPtrTy->getElementType())) {
+        EltOffset = TD->getStructLayout(ST)->getElementOffset(i);
+      } else {
+        const Type *EltTy =
+          cast<SequentialType>(OtherPtr->getType())->getElementType();
+        EltOffset = TD->getTypePaddedSize(EltTy)*i;
+      }
+      
+      // The alignment of the other pointer is the guaranteed alignment of the
+      // element, which is affected by both the known alignment of the whole
+      // mem intrinsic and the alignment of the element.  If the alignment of
+      // the memcpy (f.e.) is 32 but the element is at a 4-byte offset, then the
+      // known alignment is just 4 bytes.
+      OtherEltAlign = (unsigned)MinAlign(OtherEltAlign, EltOffset);
     }
     
     Value *EltPtr = NewElts[i];
-    const Type *EltTy =cast<PointerType>(EltPtr->getType())->getElementType();
+    const Type *EltTy = cast<PointerType>(EltPtr->getType())->getElementType();
     
     // If we got down to a scalar, insert a load or store as appropriate.
     if (EltTy->isSingleValueType()) {
       if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
-        Value *Elt = new LoadInst(SROADest ? OtherElt : EltPtr, "tmp",
-                                  MI);
-        new StoreInst(Elt, SROADest ? EltPtr : OtherElt, MI);
+        if (SROADest) {
+          // From Other to Alloca.
+          Value *Elt = new LoadInst(OtherElt, "tmp", false, OtherEltAlign, MI);
+          new StoreInst(Elt, EltPtr, MI);
+        } else {
+          // From Alloca to Other.
+          Value *Elt = new LoadInst(EltPtr, "tmp", MI);
+          new StoreInst(Elt, OtherElt, false, OtherEltAlign, MI);
+        }
         continue;
       }
       assert(isa<MemSetInst>(MI));
@@ -852,7 +879,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
         ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
-        Zero  // Align
+        ConstantInt::get(Type::Int32Ty, OtherEltAlign)  // Align
       };
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
     } else {
