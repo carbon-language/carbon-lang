@@ -139,6 +139,15 @@ class CodeGenModule {
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
 
+  enum {
+    BLOCK_NEEDS_FREE =        (1 << 24),
+    BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
+    BLOCK_HAS_CXX_OBJ =       (1 << 26),
+    BLOCK_IS_GC =             (1 << 27),
+    BLOCK_IS_GLOBAL =         (1 << 28),
+    BLOCK_HAS_DESCRIPTOR =    (1 << 29)
+  };
+
   /// NSConcreteGlobalBlock - Cached reference to the class pointer for global
   /// blocks.
   llvm::Constant *NSConcreteGlobalBlock;

@@ -636,6 +636,17 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // local static?
       if (!VD->hasLocalStorage())
         attr = getContext().getObjCGCAttrKind(E->getType());
+      if (VD->getAttr<BlocksAttr>()) {
+        bool needsCopyDispose = BlockRequiresCopying(VD->getType());
+        const llvm::Type *PtrStructTy = V->getType();
+        const llvm::Type *Ty = PtrStructTy;
+        Ty = llvm::PointerType::get(Ty, 0);
+        V = Builder.CreateStructGEP(V, 1, "forwarding");
+        V = Builder.CreateBitCast(V, Ty);
+        V = Builder.CreateLoad(V, false);
+        V = Builder.CreateBitCast(V, PtrStructTy);
+        V = Builder.CreateStructGEP(V, needsCopyDispose*2 + 4, "x");
+      }
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
     }
     LValue::SetObjCNonGC(LV, VD->hasLocalStorage());
@@ -665,45 +676,6 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
   return LValue::MakeAddr(GetAddrOfBlockDecl(E), 0);
-}
-
-llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
-  // FIXME: ensure we don't need copy/dispose.
-  uint64_t &offset = BlockDecls[E->getDecl()];
-
-  const llvm::Type *Ty;
-  Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
-
-  if (E->isByRef())
-    ErrorUnsupported(E, "__block variable in block literal");
-  else if (E->getType()->isBlockPointerType())
-    ErrorUnsupported(E, "block pointer in block literal");
-  else if (E->getDecl()->getAttr<ObjCNSObjectAttr>() || 
-           getContext().isObjCNSObjectType(E->getType()))
-    ErrorUnsupported(E, "__attribute__((NSObject)) variable in block "
-                     "literal");
-  else if (getContext().isObjCObjectPointerType(E->getType()))
-    ErrorUnsupported(E, "Objective-C variable in block literal");
-
-  // See if we have already allocated an offset for this variable.
-  if (offset == 0) {
-    // if not, allocate one now.
-    offset = getBlockOffset(E);
-  }
-
-  llvm::Value *BlockLiteral = LoadBlockStruct();
-  llvm::Value *V = Builder.CreateGEP(BlockLiteral,
-                                     llvm::ConstantInt::get(llvm::Type::Int64Ty,
-                                                            offset),
-                                     "tmp");
-  Ty = llvm::PointerType::get(Ty, 0);
-  if (E->isByRef())
-    Ty = llvm::PointerType::get(Ty, 0);
-  V = Builder.CreateBitCast(V, Ty);
-  if (E->isByRef())
-    V = Builder.CreateLoad(V, false, "tmp");
-
-  return V;
 }
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {

@@ -21,15 +21,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-enum {
-  BLOCK_NEEDS_FREE =        (1 << 24),
-  BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
-  BLOCK_HAS_CXX_OBJ =       (1 << 26),
-  BLOCK_IS_GC =             (1 << 27),
-  BLOCK_IS_GLOBAL =         (1 << 28),
-  BLOCK_HAS_DESCRIPTOR =    (1 << 29)
-};
-
 llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
@@ -142,7 +133,11 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   CollectBlockDeclRefInfo(BE->getBody(), Info);
 
   // Check if the block can be global.
-  if (CanBlockBeGlobal(Info))
+  // FIXME: This test doesn't work for nested blocks yet.  Longer
+  // term, I'd like to just have one code path.  We should move
+  // this function into CGM and pass CGF, then we can just check to
+  // see if CGF is 0.
+  if (0 && CanBlockBeGlobal(Info))
     return CGM.GetAddrOfGlobalBlock(BE, Name.c_str());
     
   std::vector<llvm::Constant*> Elts;
@@ -209,9 +204,11 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       const Expr *E = subBlockDeclRefDecls[i];
       const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
       QualType Ty = E->getType();
-      if (BDRE && BDRE->isByRef())
-        Ty = getContext().getPointerType(Ty);
-      Types[i+5] = ConvertType(Ty);
+      if (BDRE && BDRE->isByRef()) {
+        uint64_t Align = getContext().getDeclAlignInBytes(BDRE->getDecl());
+        Types[i+5] = llvm::PointerType::get(BuildByRefType(Ty, Align), 0);
+      } else
+        Types[i+5] = ConvertType(Ty);
     }
 
     llvm::Type *Ty = llvm::StructType::get(Types, true);
@@ -237,23 +234,41 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
         VD = BDRE->getDecl();
 
+        llvm::Value* Addr = Builder.CreateStructGEP(V, i+5, "tmp");
         // FIXME: I want a better way to do this.
         if (LocalDeclMap[VD]) {
-          E = new (getContext()) DeclRefExpr (cast<NamedDecl>(VD),
-                                              VD->getType(), SourceLocation(),
-                                              false, false);
+          if (BDRE->isByRef()) {
+            const llvm::Type *Ty = Types[i+5];
+            llvm::Value *Loc = LocalDeclMap[VD];
+            Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
+            Loc = Builder.CreateLoad(Loc, false);
+            Loc = Builder.CreateBitCast(Loc, Ty);
+            Builder.CreateStore(Loc, Addr);
+            continue;
+          } else
+            E = new (getContext()) DeclRefExpr (cast<NamedDecl>(VD),
+                                                VD->getType(), SourceLocation(),
+                                                false, false);
         }
-        if (BDRE->isByRef())
+        if (BDRE->isByRef()) {
+          // FIXME: __block in nested literals
           E = new (getContext())
             UnaryOperator(E, UnaryOperator::AddrOf,
                           getContext().getPointerType(E->getType()),
                           SourceLocation());
+        }
 
-        llvm::Value* Addr = Builder.CreateStructGEP(V, i+5, "tmp");
         RValue r = EmitAnyExpr(E, Addr, false);
-        if (r.isScalar())
-          Builder.CreateStore(r.getScalarVal(), Addr);
-        else if (r.isComplex())
+        if (r.isScalar()) {
+          llvm::Value *Loc = r.getScalarVal();
+          const llvm::Type *Ty = Types[i+5];
+          if  (BDRE->isByRef()) {
+            Loc = Builder.CreateBitCast(Loc, Ty);
+            Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
+            Loc = Builder.CreateBitCast(Loc, Ty);
+          }
+          Builder.CreateStore(Loc, Addr);
+        } else if (r.isComplex())
           // FIXME: implement
           ErrorUnsupported(BE, "complex in block literal");
         else if (r.isAggregate())
@@ -426,6 +441,55 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
                   Func, Args);
 }
 
+llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
+  uint64_t &offset = BlockDecls[E->getDecl()];
+
+  const llvm::Type *Ty;
+  Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
+
+  // FIXME: add support for copy/dispose helpers.
+  if (1 && E->isByRef())
+    ErrorUnsupported(E, "__block variable in block literal");
+  else if (E->getType()->isBlockPointerType())
+    ErrorUnsupported(E, "block pointer in block literal");
+  else if (E->getDecl()->getAttr<ObjCNSObjectAttr>() || 
+           getContext().isObjCNSObjectType(E->getType()))
+    ErrorUnsupported(E, "__attribute__((NSObject)) variable in block "
+                     "literal");
+  else if (getContext().isObjCObjectPointerType(E->getType()))
+    ErrorUnsupported(E, "Objective-C variable in block literal");
+
+  // See if we have already allocated an offset for this variable.
+  if (offset == 0) {
+    // if not, allocate one now.
+    offset = getBlockOffset(E);
+  }
+
+  llvm::Value *BlockLiteral = LoadBlockStruct();
+  llvm::Value *V = Builder.CreateGEP(BlockLiteral,
+                                     llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                            offset),
+                                     "tmp");
+  if (E->isByRef()) {
+    bool needsCopyDispose = BlockRequiresCopying(E->getType());
+    uint64_t Align = getContext().getDeclAlignInBytes(E->getDecl());
+    const llvm::Type *PtrStructTy
+      = llvm::PointerType::get(BuildByRefType(E->getType(), Align), 0);
+    Ty = PtrStructTy;
+    Ty = llvm::PointerType::get(Ty, 0);
+    V = Builder.CreateBitCast(V, Ty);
+    V = Builder.CreateLoad(V, false);
+    V = Builder.CreateStructGEP(V, 1, "forwarding");
+    V = Builder.CreateLoad(V, false);
+    V = Builder.CreateBitCast(V, PtrStructTy);
+    V = Builder.CreateStructGEP(V, needsCopyDispose*2 + 4, "x");
+  } else {
+    Ty = llvm::PointerType::get(Ty, 0);
+    V = Builder.CreateBitCast(V, Ty);
+  }
+  return V;
+}
+
 llvm::Constant *
 CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   // Generate the block descriptor.
@@ -588,4 +652,24 @@ uint64_t CodeGenFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
 
   BlockOffset += Size;
   return BlockOffset-Size;
+}
+
+llvm::Value *CodeGenFunction::BuildCopyHelper(int flag) {
+  const llvm::PointerType *PtrToInt8Ty
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  // FIXME: implement
+  llvm::Value *V = llvm::ConstantInt::get(llvm::Type::Int32Ty, 43);
+  V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "tmp");
+  V = Builder.CreateBitCast(V, PtrToInt8Ty, "tmp");
+  return V;
+}
+
+llvm::Value *CodeGenFunction::BuildDestroyHelper(int flag) {
+  const llvm::PointerType *PtrToInt8Ty
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  // FIXME: implement
+  llvm::Value *V = llvm::ConstantInt::get(llvm::Type::Int32Ty, 44);
+  V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "tmp");
+  V = Builder.CreateBitCast(V, PtrToInt8Ty, "tmp");
+  return V;
 }

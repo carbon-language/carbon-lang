@@ -264,6 +264,30 @@ public:
   //                                  Block Bits
   //===--------------------------------------------------------------------===//
 
+  enum {
+    BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)),
+                                      block, ... */
+    BLOCK_FIELD_IS_BLOCK    =  7,  /* a block variable */
+    BLOCK_FIELD_IS_BYREF    =  8,  /* the on stack structure holding the __block
+                                      variable */
+    BLOCK_FIELD_IS_WEAK     = 16,  /* declared __weak, only used in byref copy
+                                      helpers */
+    BLOCK_BYREF_CALLER      = 128  /* called from __block (byref) copy/dispose
+                                      support routines */
+  };
+
+  enum {
+    BLOCK_NEEDS_FREE =        (1 << 24),
+    BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
+    BLOCK_HAS_CXX_OBJ =       (1 << 26),
+    BLOCK_IS_GC =             (1 << 27),
+    BLOCK_IS_GLOBAL =         (1 << 28),
+    BLOCK_HAS_DESCRIPTOR =    (1 << 29)
+  };
+
+  llvm::Value *BuildCopyHelper(int flag);
+  llvm::Value *BuildDestroyHelper(int flag);
+
   llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size);
 
@@ -318,6 +342,15 @@ public:
   std::map<const Decl*, uint64_t> BlockDecls;
 
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
+
+  const llvm::Type *BuildByRefType(QualType Ty, uint64_t Align);
+  bool BlockRequiresCopying(QualType Ty) {
+    if (Ty->isBlockPointerType())
+      return true;
+    if (getContext().isObjCNSObjectType(Ty))
+      return true;
+    return false;
+  }
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);

@@ -21,6 +21,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
@@ -188,20 +189,61 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   }
 }
   
+/// BuildByRefType - This routine changes a __block variable declared as T x
+///   into:
+///
+///      struct {
+///        void *__isa;
+///        void *__forwarding;
+///        int32_t __flags;
+///        int32_t __size;
+///        void *__copy_helper;
+///        void *__destroy_helper;
+///        T x;
+///      } x
+///
+/// Align is the alignment needed in bytes for x.
+const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
+                                                  uint64_t Align) {
+  const llvm::Type *LTy = ConvertType(Ty);
+  bool needsCopyDispose = BlockRequiresCopying(Ty);
+  std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
+  const llvm::PointerType *PtrToInt8Ty
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  Types[0] = PtrToInt8Ty;
+  Types[1] = PtrToInt8Ty;
+  Types[2] = llvm::Type::Int32Ty;
+  Types[3] = llvm::Type::Int32Ty;
+  if (needsCopyDispose) {
+    Types[4] = PtrToInt8Ty;
+    Types[5] = PtrToInt8Ty;
+  }
+  // FIXME: Align this on at least an Align boundary.
+  Types[needsCopyDispose*2 + 4] = LTy;
+  return llvm::StructType::get(Types, false);
+}
+
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
 void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
+  bool isByRef = D.getAttr<BlocksAttr>();
 
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
       // A normal fixed sized variable becomes an alloca in the entry block.
       const llvm::Type *LTy = ConvertType(Ty);
+      if (isByRef)
+        LTy = BuildByRefType(Ty, getContext().getDeclAlignInBytes(&D));
       llvm::AllocaInst *Alloc =
         CreateTempAlloca(LTy, CGM.getMangledName(&D));
-      Alloc->setAlignment(getContext().getDeclAlignInBytes(&D));
+      if (isByRef)
+        Alloc->setAlignment(std::max(getContext().getDeclAlignInBytes(&D),
+                                     getContext().getTypeAlign(getContext().VoidPtrTy) / 8));
+      else
+        Alloc->setAlignment(getContext().getDeclAlignInBytes(&D));
       DeclPtr = Alloc;
     } else {
       // Targets that don't support recursion emit locals as globals.
@@ -259,18 +301,77 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   // Emit debug info for local var declaration.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(D.getLocation());
-    DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
+    if (isByRef) {
+      llvm::Value *Loc;
+      bool needsCopyDispose = BlockRequiresCopying(Ty);
+      // FIXME: I think we need to indirect through the forwarding pointer first
+      Loc = Builder.CreateStructGEP(DeclPtr, needsCopyDispose*2+4, "x");
+      DI->EmitDeclareOfAutoVariable(&D, Loc, Builder);
+    } else
+      DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }
 
   // If this local has an initializer, emit it now.
   if (const Expr *Init = D.getInit()) {
+    llvm::Value *Loc = DeclPtr;
+    if (isByRef) {
+      bool needsCopyDispose = BlockRequiresCopying(Ty);
+      Loc = Builder.CreateStructGEP(DeclPtr, needsCopyDispose*2+4, "x");
+    }
     if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      Builder.CreateStore(V, DeclPtr, D.getType().isVolatileQualified());
+      Builder.CreateStore(V, Loc, D.getType().isVolatileQualified());
     } else if (Init->getType()->isAnyComplexType()) {
-      EmitComplexExprIntoAddr(Init, DeclPtr, D.getType().isVolatileQualified());
+      EmitComplexExprIntoAddr(Init, Loc, D.getType().isVolatileQualified());
     } else {
-      EmitAggExpr(Init, DeclPtr, D.getType().isVolatileQualified());
+      EmitAggExpr(Init, Loc, D.getType().isVolatileQualified());
+    }
+  }
+  if (isByRef) {
+    const llvm::PointerType *PtrToInt8Ty
+      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+
+    llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);
+    llvm::Value *forwarding_field = Builder.CreateStructGEP(DeclPtr, 1);
+    llvm::Value *flags_field = Builder.CreateStructGEP(DeclPtr, 2);
+    llvm::Value *size_field = Builder.CreateStructGEP(DeclPtr, 3);
+    llvm::Value *V;
+    int flag = 0;
+    int flags = 0;
+
+    if (Ty->isBlockPointerType()) {
+      flag |= BLOCK_FIELD_IS_BLOCK;
+      flags |= BLOCK_HAS_COPY_DISPOSE;
+    } else if (BlockRequiresCopying(Ty)) {
+      flags |= BLOCK_HAS_COPY_DISPOSE;
+      flag |= BLOCK_FIELD_IS_OBJECT;
+    }
+    // FIXME: Need to set BLOCK_FIELD_IS_WEAK as appropriate.
+
+    int isa = 0;
+    if (flag&BLOCK_FIELD_IS_WEAK)
+      isa = 1;
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, isa);
+    V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "tmp");
+    Builder.CreateStore(V, isa_field);
+
+    V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "tmp");
+    Builder.CreateStore(V, forwarding_field);
+
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, flags);
+    Builder.CreateStore(V, flags_field);
+
+    const llvm::Type *V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, CGM.getTargetData().getTypeStoreSizeInBits(V1) / 8);
+    Builder.CreateStore(V, size_field);
+
+    if (flags & BLOCK_HAS_COPY_DISPOSE) {
+      llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
+      llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
+
+      Builder.CreateStore(BuildCopyHelper(flag), copy_helper);
+
+      Builder.CreateStore(BuildDestroyHelper(flag), destroy_helper);
     }
   }
 
