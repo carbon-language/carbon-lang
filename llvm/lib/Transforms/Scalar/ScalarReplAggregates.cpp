@@ -721,7 +721,9 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   
   // If this is a memcpy/memmove, construct the other pointer as the
-  // appropriate type.  The "Other" pointer is the pointer that goes to 
+  // appropriate type.  The "Other" pointer is the pointer that goes to memory
+  // that doesn't have anything to do with the alloca that we are promoting. For
+  // memset, this Value* stays null.
   Value *OtherPtr = 0;
   unsigned MemAlignment = MI->getAlignment()->getZExtValue();
   if (MemCpyInst *MCI = dyn_cast<MemCpyInst>(MI)) {
