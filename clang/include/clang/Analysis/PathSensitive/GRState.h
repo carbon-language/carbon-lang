@@ -407,6 +407,17 @@ public:
   SVal GetSVal(const GRState* St, Stmt* Ex) {
     return St->getEnvironment().GetSVal(Ex, BasicVals);
   }
+  
+  SVal GetSValAsScalarOrLoc(const GRState* state, const Stmt *S) {
+    if (const Expr *Ex = dyn_cast<Expr>(S)) {
+      QualType T = Ex->getType();
+      if (Loc::IsLocType(T) || T->isIntegerType())
+        return GetSVal(state, S);
+    }
+    
+    return UnknownVal();
+  }
+    
 
   SVal GetSVal(const GRState* St, const Stmt* Ex) {
     return St->getEnvironment().GetSVal(const_cast<Stmt*>(Ex), BasicVals);
@@ -415,6 +426,8 @@ public:
   SVal GetBlkExprSVal(const GRState* St, Stmt* Ex) {
     return St->getEnvironment().GetBlkExprSVal(Ex, BasicVals);
   }
+  
+  
   
   const GRState* BindExpr(const GRState* St, Stmt* Ex, SVal V,
                           bool isBlkExpr, bool Invalidate) {
@@ -473,6 +486,16 @@ public:
   SVal GetSVal(const GRState* state, const MemRegion* R) {
     return StoreMgr->Retrieve(state, loc::MemRegionVal(R));
   }  
+
+  SVal GetSValAsScalarOrLoc(const GRState* state, const MemRegion *R) {
+    if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
+      QualType T = TR->getRValueType(getContext());
+      if (Loc::IsLocType(T) || T->isIntegerType())
+        return GetSVal(state, R);
+    }
+  
+    return UnknownVal();
+  }
   
   const GRState* BindLoc(const GRState* St, Loc LV, SVal V) {
     return StoreMgr->Bind(St, LV, V);
@@ -637,6 +660,10 @@ public:
     return Mgr->GetBlkExprSVal(St, Ex);
   }
   
+  SVal GetSValAsScalarOrLoc(const Expr *Ex) {
+    return Mgr->GetSValAsScalarOrLoc(St, Ex);
+  }
+
   SVal GetSVal(Loc LV, QualType T = QualType()) {
     return Mgr->GetSVal(St, LV, T);
   }
@@ -645,6 +672,10 @@ public:
     return Mgr->GetSVal(St, R);
   }
   
+  SVal GetSValAsScalarOrLoc(const MemRegion *R) {
+    return Mgr->GetSValAsScalarOrLoc(St, R);
+  }
+
   GRStateRef BindExpr(Stmt* Ex, SVal V, bool isBlkExpr, bool Invalidate) {
     return GRStateRef(Mgr->BindExpr(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
   }

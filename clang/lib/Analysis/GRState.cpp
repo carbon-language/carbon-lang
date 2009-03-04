@@ -257,7 +257,7 @@ bool ScanReachableSymbols::scan(SVal val) {
 }
   
 bool ScanReachableSymbols::scan(const MemRegion *R) {
-  if (visited.count(R))
+  if (isa<MemSpaceRegion>(R) || visited.count(R))
     return true;
   
   visited.insert(R);
@@ -273,7 +273,7 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
       return false;
   
   // Now look at the binding to this region (if any).
-  if (!scan(state.GetSVal(R)))
+  if (!scan(state.GetSValAsScalarOrLoc(R)))
     return false;
   
   // Now look at the subregions.
