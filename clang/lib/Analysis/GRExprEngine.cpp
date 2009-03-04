@@ -1778,6 +1778,12 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
       continue;
     }
+    
+    // Just pass through function and block pointers.
+    if (T->isBlockPointerType() || T->isFunctionPointerType()) {
+      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
+      continue;
+    }
   
     // Check for casts from pointers to integers.
     if (T->isIntegerType() && Loc::IsLocType(ExTy)) {
