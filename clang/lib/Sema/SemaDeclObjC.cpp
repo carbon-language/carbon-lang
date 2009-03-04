@@ -1032,25 +1032,23 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
 }
 
 void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
-  ObjCMethodList &FirstMethod = InstanceMethodPool[Method->getSelector()];
-  if (!FirstMethod.Method) {
+  ObjCMethodList &Entry = InstanceMethodPool[Method->getSelector()];
+  if (Entry.Method == 0) {
     // Haven't seen a method with this selector name yet - add it.
-    FirstMethod.Method = Method;
-    FirstMethod.Next = 0;
-  } else {
-    // We've seen a method with this name, now check the type signature(s).
-    bool match = MatchTwoMethodDeclarations(Method, FirstMethod.Method);
-    
-    for (ObjCMethodList *Next = FirstMethod.Next; !match && Next; 
-         Next = Next->Next)
-      match = MatchTwoMethodDeclarations(Method, Next->Method);
-      
-    if (!match) {
-      // We have a new signature for an existing method - add it.
-      // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-      FirstMethod.Next = new ObjCMethodList(Method, FirstMethod.Next);;
-    }
+    Entry.Method = Method;
+    Entry.Next = 0;
+    return;
   }
+  
+  // We've seen a method with this name, see if we have already seen this type
+  // signature.
+  for (ObjCMethodList *List = &Entry; List; List = List->Next)
+    if (MatchTwoMethodDeclarations(Method, List->Method))
+      return;
+    
+  // We have a new signature for an existing method - add it.
+  // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
+  Entry.Next = new ObjCMethodList(Method, Entry.Next);
 }
 
 // FIXME: Finish implementing -Wno-strict-selector-match.
