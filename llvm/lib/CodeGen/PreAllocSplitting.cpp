@@ -159,6 +159,12 @@ namespace {
                             MachineBasicBlock* MBB,
                             int& SS,
                             SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
+    MachineInstr* FoldRestore(unsigned vreg, 
+                              const TargetRegisterClass* RC,
+                              MachineInstr* Barrier,
+                              MachineBasicBlock* MBB,
+                              int SS,
+                              SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
     void RenumberValno(VNInfo* VN);
     void ReconstructLiveInterval(LiveInterval* LI);
     bool removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split);
@@ -1001,6 +1007,59 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
   return FMI;
 }
 
+MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg, 
+                                             const TargetRegisterClass* RC,
+                                             MachineInstr* Barrier,
+                                             MachineBasicBlock* MBB,
+                                             int SS,
+                                     SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
+  // Go top down if RefsInMBB is empty.
+  if (RefsInMBB.empty())
+    return 0;
+  
+  // Can't fold a restore between a call stack setup and teardown.
+  MachineBasicBlock::iterator FoldPt = Barrier;
+  while (FoldPt != MBB->getFirstTerminator() && !RefsInMBB.count(FoldPt)) {
+    ++FoldPt;
+    
+    if (FoldPt->getOpcode() == TRI->getCallFrameSetupOpcode()) {
+      while (FoldPt != MBB->getFirstTerminator() &&
+             FoldPt->getOpcode() != TRI->getCallFrameDestroyOpcode()) {
+        if (RefsInMBB.count(FoldPt))
+          return 0;
+        
+        ++FoldPt;
+      }
+      
+      ++FoldPt;
+    }
+  }
+  
+  if (FoldPt == MBB->getFirstTerminator())
+    return 0;
+  
+  int OpIdx = FoldPt->findRegisterUseOperandIdx(vreg, true);
+  if (OpIdx == -1)
+    return 0;
+  
+  SmallVector<unsigned, 1> Ops;
+  Ops.push_back(OpIdx);
+  
+  if (!TII->canFoldMemoryOperand(FoldPt, Ops))
+    return 0;
+  
+  MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),
+                                             FoldPt, Ops, SS);
+  
+  if (FMI) {
+    LIs->ReplaceMachineInstrInMaps(FoldPt, FMI);
+    FMI = MBB->insert(MBB->erase(FoldPt), FMI);
+    ++NumFolds;
+  }
+  
+  return FMI;
+}
+
 /// SplitRegLiveInterval - Split (spill and restore) the given live interval
 /// so it would not cross the barrier that's being processed. Shrink wrap
 /// (minimize) the live interval to the last uses.
@@ -1108,18 +1167,28 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     Def2SpillMap[ValNo->def] = SpillIndex;
 
   // Add restore.
-  TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
-  MachineInstr *LoadMI = prior(RestorePt);
-  LIs->InsertMachineInstrInMaps(LoadMI, RestoreIndex);
+  bool FoldedRestore = false;
+  if (MachineInstr* LMI = FoldRestore(CurrLI->reg, RC, Barrier,
+                                      BarrierMBB, SS, RefsInMBB)) {
+    RestorePt = LMI;
+    FoldedRestore = true;
+  } else {
+    TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
+    MachineInstr *LoadMI = prior(RestorePt);
+    LIs->InsertMachineInstrInMaps(LoadMI, RestoreIndex);
+  }
 
   // Update spill stack slot live interval.
   UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
                           LIs->getDefIndex(RestoreIndex));
 
   ReconstructLiveInterval(CurrLI);
-  unsigned RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
-  RestoreIdx = LiveIntervals::getDefIndex(RestoreIdx);
-  RenumberValno(CurrLI->findDefinedVNInfo(RestoreIdx));
+  
+  if (!FoldedRestore) {
+    unsigned RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
+    RestoreIdx = LiveIntervals::getDefIndex(RestoreIdx);
+    RenumberValno(CurrLI->findDefinedVNInfo(RestoreIdx));
+  }
   
   ++NumSplits;
   return true;
