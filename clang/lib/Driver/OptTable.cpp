@@ -9,6 +9,8 @@
 
 #include "clang/Driver/Options.h"
 
+#include "clang/Driver/Arg.h"
+#include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
 #include <cassert>
 
@@ -115,3 +117,24 @@ Option *OptTable::constructOption(options::ID id) const {
 
   return Opt;
 }
+
+Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index, 
+                           unsigned IndexEnd) const {
+  const char *Str = Args.getArgString(Index);
+
+  // Anything that doesn't start with '-' is an input.
+  if (Str[0] != '-')
+    return new PositionalArg(getOption(InputOpt), Index++);
+
+  for (unsigned j = UnknownOpt + 1; j < getNumOptions(); ++j) {
+    const char *OptName = getOptionName((options::ID) (j + 1));
+    
+    // Arguments are only accepted by options which prefix them.
+    if (memcmp(Str, OptName, strlen(OptName)) == 0)
+      if (Arg *A = getOption((options::ID) (j + 1))->accept(Args, Index))
+        return A;
+  }
+
+  return new PositionalArg(getOption(UnknownOpt), Index++);
+}
+

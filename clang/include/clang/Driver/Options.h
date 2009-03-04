@@ -24,6 +24,8 @@ namespace options {
   };
 }
   
+  class Arg;
+  class ArgList;
   class Option;
 
   /// OptTable - Provide access to the Option info table.
@@ -50,6 +52,18 @@ namespace options {
     /// getOption - Get the given \arg id's Option instance, lazily
     /// creating it if necessary.
     const Option *getOption(options::ID id) const;
+
+    /// parseOneArg - Parse a single argument; returning the new
+    /// argument and updating Index.
+    ///
+    /// \param [in] [out] Index - The current parsing position in the
+    /// argument string list; on return this will be the index of the
+    /// next option to parse.
+    ///
+    /// \param IndexEnd - The last argument string index to consider
+    /// when parsing.
+    Arg *ParseOneArg(const ArgList &Args, unsigned &Index, 
+                     unsigned IndexEnd) const;
   };
 }
 }
