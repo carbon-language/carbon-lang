@@ -80,9 +80,6 @@ public:
   };
     
 private:
-  /// Loc - The location that this decl.
-  SourceLocation Loc;
-  
   /// NextDeclarator - If this decl was part of a multi-declarator declaration,
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   Decl *NextDeclarator;
@@ -123,6 +120,9 @@ private:
     return reinterpret_cast<MultipleDC*>(DeclCtx & ~0x1);
   }
 
+  /// Loc - The location that this decl.
+  SourceLocation Loc;
+  
   /// DeclKind - This indicates which class this is.
   Kind DeclKind   :  8;
   
@@ -143,8 +143,9 @@ protected:
   friend class CXXClassMemberWrapper;
 
   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
-    : Loc(L), NextDeclarator(0), NextDeclInScope(0), 
-      DeclCtx(reinterpret_cast<uintptr_t>(DC)), DeclKind(DK), InvalidDecl(0),
+    : NextDeclarator(0), NextDeclInScope(0), 
+      DeclCtx(reinterpret_cast<uintptr_t>(DC)), 
+      Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
