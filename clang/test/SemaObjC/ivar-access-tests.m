@@ -73,7 +73,7 @@ int main (void)
 {
   MySuperClass *s = 0;
   int access;
-  access = s->private;   // FIXME: {{instance variable 'private' is private}}
+  access = s->private;   // expected-error {{instance variable 'private' is private}}
   access = s->protected; // expected-error {{instance variable 'protected' is protected}}
   return 0;
 }

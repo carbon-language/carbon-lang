@@ -517,7 +517,8 @@ namespace {
                                                       SourceLocation OpLoc,
                                                       tok::TokenKind OpKind,
                                                       SourceLocation MemberLoc,
-                                                      IdentifierInfo &Member) {
+                                                      IdentifierInfo &Member,
+                                                      DeclTy *ImplDecl) {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();
     }

@@ -1158,7 +1158,8 @@ public:
                                                     SourceLocation OpLoc,
                                                     tok::TokenKind OpKind,
                                                     SourceLocation MemberLoc,
-                                                    IdentifierInfo &Member);
+                                                    IdentifierInfo &Member,
+                                                    DeclTy *ImplDecl=0);
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
                                const FunctionProtoType *Proto,

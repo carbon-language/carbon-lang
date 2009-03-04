@@ -852,7 +852,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       if (!LHS.isInvalid()) {
         LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,
                                                OpKind, Tok.getLocation(),
-                                               *Tok.getIdentifierInfo());
+                                               *Tok.getIdentifierInfo(),
+                                               ObjCImpDecl);
       }
       ConsumeToken();
       break;

@@ -642,7 +642,8 @@ public:
                                                     SourceLocation OpLoc,
                                                     tok::TokenKind OpKind,
                                                     SourceLocation MemberLoc,
-                                                    IdentifierInfo &Member) {
+                                                    IdentifierInfo &Member,
+                                                    DeclTy *ObjCImpDecl) {
     return ExprEmpty();
   }
 

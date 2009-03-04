@@ -1666,16 +1666,11 @@ static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
   return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
 }
 
-ObjCImplementationDecl *getCurImplementationDecl(DeclContext *DC) {
-  while (DC && !isa<ObjCImplementationDecl>(DC))
-    DC = DC->getParent();
-  return dyn_cast_or_null<ObjCImplementationDecl>(DC);
-}
-
 Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
-                               IdentifierInfo &Member) {
+                               IdentifierInfo &Member,
+                               DeclTy *ObjCImpDecl) {
   Expr *BaseExpr = static_cast<Expr *>(Base.release());
   assert(BaseExpr && "no record expression");
 
@@ -1803,17 +1798,24 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         ObjCInterfaceDecl *ClassOfMethodDecl = 0;
         if (ObjCMethodDecl *MD = getCurMethodDecl())
           ClassOfMethodDecl =  MD->getClassInterface();
-        else if (FunctionDecl *FD = getCurFunctionDecl()) {
-          // FIXME: This isn't working yet. Will discuss with Fariborz.
-          // FIXME: Should be ObjCImplDecl, so categories can work.
-          // Need to fiddle with castToDeclContext/castFromDeclContext.
-          ObjCImplementationDecl *ImpDecl = getCurImplementationDecl(FD);
-          if (ImpDecl)
-            ClassOfMethodDecl = ImpDecl->getClassInterface();
+        else if (ObjCImpDecl && getCurFunctionDecl()) {
+          // Case of a c-function declared inside an objc implementation.
+          // FIXME: For a c-style function nested inside an objc implementation
+          // class, there is no implementation context available, so we pass down
+          // the context as argument to this routine. Ideally, this context need
+          // be passed down in the AST node and somehow calculated from the AST
+          // for a function decl.
+          Decl *ImplDecl = static_cast<Decl *>(ObjCImpDecl);
+          if (ObjCImplementationDecl *IMPD = 
+              dyn_cast<ObjCImplementationDecl>(ImplDecl))
+            ClassOfMethodDecl = IMPD->getClassInterface();
+          else if (ObjCCategoryImplDecl* CatImplClass =
+                      dyn_cast<ObjCCategoryImplDecl>(ImplDecl))
+            ClassOfMethodDecl = CatImplClass->getClassInterface();
         }
-        if (IV->getAccessControl() == ObjCIvarDecl::Private) {
+        if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
           if (ClassDeclared != IFTy->getDecl() || 
-              (ClassOfMethodDecl && (ClassOfMethodDecl != ClassDeclared)))
+              ClassOfMethodDecl != ClassDeclared)
             Diag(MemberLoc, diag::error_private_ivar_access) << IV->getDeclName();
         }
         // @protected

@@ -1082,12 +1082,15 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
 Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
+  DeclTy *Result = ObjCImpDecl;
   ConsumeToken(); // the "end" identifier
-  if (ObjCImpDecl)
+  if (ObjCImpDecl) {
     Actions.ActOnAtEnd(atLoc, ObjCImpDecl);
+    ObjCImpDecl = 0;
+  }
   else
     Diag(atLoc, diag::warn_expected_implementation); // missing @implementation
-  return ObjCImpDecl;
+  return Result;
 }
 
 ///   compatibility-alias-decl:
