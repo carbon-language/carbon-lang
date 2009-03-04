@@ -54,7 +54,7 @@ namespace driver {
     virtual unsigned getNumValues() const = 0;
     virtual const char *getValue(const ArgList &Args, unsigned N) const = 0;
 
-    const Option *getOption() const { return Opt; }
+    const Option &getOption() const { return *Opt; }
 
     unsigned getIndex() const { return Index; }
   };
