@@ -63,7 +63,7 @@ namespace CodeGen {
 
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
-  class CodeGenModule : public BlockModule {
+class CodeGenModule : public BlockModule {
   CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
   void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
 
@@ -140,21 +140,6 @@ namespace CodeGen {
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
 
-  /// NSConcreteGlobalBlock - Cached reference to the class pointer for global
-  /// blocks.
-  llvm::Constant *NSConcreteGlobalBlock;
-
-  /// NSConcreteStackBlock - Cached reference to the class poinnter for stack
-  /// blocks.
-  llvm::Constant *NSConcreteStackBlock;
-  
-  const llvm::Type *BlockDescriptorType;
-  const llvm::Type *GenericBlockLiteralType;
-  const llvm::Type *GenericExtendedBlockLiteralType;
-  struct {
-    int GlobalUniqueCount;
-  } Block;
-
   std::vector<llvm::Value *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M,
@@ -165,14 +150,6 @@ public:
 
   /// Release - Finalize LLVM code generation.
   void Release();
-
-  llvm::Constant *getNSConcreteGlobalBlock();
-  llvm::Constant *getNSConcreteStackBlock();
-  int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
-  const llvm::Type *getBlockDescriptorType();
-
-  const llvm::Type *getGenericBlockLiteralType();
-  const llvm::Type *getGenericExtendedBlockLiteralType();
 
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.

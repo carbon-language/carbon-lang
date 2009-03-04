@@ -62,7 +62,7 @@ namespace CodeGen {
 
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
-  class CodeGenFunction : public BlockFunction {
+class CodeGenFunction : public BlockFunction {
   CodeGenFunction(const CodeGenFunction&); // DO NOT IMPLEMENT
   void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
 public:

@@ -74,7 +74,7 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
   return C;
 }
 
-llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
+llvm::Constant *BlockModule::getNSConcreteGlobalBlock() {
   if (NSConcreteGlobalBlock)
     return NSConcreteGlobalBlock;
 
@@ -92,7 +92,7 @@ llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
   return NSConcreteGlobalBlock;
 }
 
-llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
+llvm::Constant *BlockModule::getNSConcreteStackBlock() {
   if (NSConcreteStackBlock)
     return NSConcreteStackBlock;
 
@@ -297,7 +297,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 }
 
 
-const llvm::Type *CodeGenModule::getBlockDescriptorType() {
+const llvm::Type *BlockModule::getBlockDescriptorType() {
   if (BlockDescriptorType)
     return BlockDescriptorType;
 
@@ -318,8 +318,7 @@ const llvm::Type *CodeGenModule::getBlockDescriptorType() {
   return BlockDescriptorType;
 }
 
-const llvm::Type *
-CodeGenModule::getGenericBlockLiteralType() {
+const llvm::Type *BlockModule::getGenericBlockLiteralType() {
   if (GenericBlockLiteralType)
     return GenericBlockLiteralType;
 
@@ -352,8 +351,7 @@ CodeGenModule::getGenericBlockLiteralType() {
   return GenericBlockLiteralType;
 }
 
-const llvm::Type *
-CodeGenModule::getGenericExtendedBlockLiteralType() {
+const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   if (GenericExtendedBlockLiteralType)
     return GenericExtendedBlockLiteralType;
 

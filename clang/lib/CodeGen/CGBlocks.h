@@ -14,6 +14,32 @@
 #ifndef CLANG_CODEGEN_CGBLOCKS_H
 #define CLANG_CODEGEN_CGBLOCKS_H
 
+#include "CodeGenTypes.h"
+#include "clang/AST/Type.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
+
+#include <vector>
+#include <map>
+
+#include "CGBuilder.h"
+#include "CGCall.h"
+#include "CGValue.h"
+
+namespace llvm {
+  class Module;
+  class Constant;
+  class Function;
+  class GlobalValue;
+  class TargetData;
+  class FunctionType;
+  class Value;
+}
+
 namespace clang {
 
 namespace CodeGen {
@@ -31,6 +57,43 @@ public:
 };
 
 class BlockModule : public BlockBase {
+  ASTContext &Context;
+  llvm::Module &TheModule;
+  CodeGenTypes &Types;
+  
+  ASTContext &getContext() const { return Context; }
+  llvm::Module &getModule() const { return TheModule; }
+  CodeGenTypes &getTypes() { return Types; }
+public:
+  llvm::Constant *getNSConcreteGlobalBlock();
+  llvm::Constant *getNSConcreteStackBlock();
+  int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
+  const llvm::Type *getBlockDescriptorType();
+
+  const llvm::Type *getGenericBlockLiteralType();
+  const llvm::Type *getGenericExtendedBlockLiteralType();
+
+  /// NSConcreteGlobalBlock - Cached reference to the class pointer for global
+  /// blocks.
+  llvm::Constant *NSConcreteGlobalBlock;
+
+  /// NSConcreteStackBlock - Cached reference to the class poinnter for stack
+  /// blocks.
+  llvm::Constant *NSConcreteStackBlock;
+  
+  const llvm::Type *BlockDescriptorType;
+  const llvm::Type *GenericBlockLiteralType;
+  const llvm::Type *GenericExtendedBlockLiteralType;
+  struct {
+    int GlobalUniqueCount;
+  } Block;
+
+  BlockModule(ASTContext &C, llvm::Module &M, CodeGenTypes &T)
+    : Context(C), TheModule(M), Types(T), NSConcreteGlobalBlock(0),
+      NSConcreteStackBlock(0), BlockDescriptorType(0),
+      GenericBlockLiteralType(0)  {
+    Block.GlobalUniqueCount = 0;
+  }
 };
 
 class BlockFunction : public BlockBase {
