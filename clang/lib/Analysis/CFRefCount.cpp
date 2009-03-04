@@ -645,6 +645,13 @@ private:
   void addNSObjectMethSummary(Selector S, RetainSummary *Summ) {
     ObjCMethodSummaries[S] = Summ;
   }
+
+  void addClassMethSummary(const char* Cls, const char* nullaryName,
+                           RetainSummary *Summ) {
+    IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
+    Selector S = GetNullarySelector(nullaryName, Ctx);
+    ObjCClassMethodSummaries[ObjCSummaryKey(ClsII, S)]  = Summ;
+  }
   
   void addInstMethSummary(const char* Cls, const char* nullaryName,
                           RetainSummary *Summ) {
@@ -1150,6 +1157,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   //  self-own themselves.  However, they only do this once they are displayed.
   //  Thus, we need to track an NSWindow's display status.
   //  This is tracked in <rdar://problem/6062711>.
+  //  See also http://llvm.org/bugs/show_bug.cgi?id=3714.
+  addClassMethSummary("NSWindow", "alloc",
+                      getPersistentSummary(RetEffect::MakeNoRet()));
+
+#if 0
   RetainSummary *NSWindowSumm =
     getPersistentSummary(RetEffect::MakeReceiverAlias(), StopTracking);
   
@@ -1158,6 +1170,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   addInstMethSummary("NSWindow", NSWindowSumm, "initWithContentRect",
                      "styleMask", "backing", "defer", "screen", NULL);
+#endif
     
   // For NSPanel (which subclasses NSWindow), allocated objects are not
   //  self-owned.

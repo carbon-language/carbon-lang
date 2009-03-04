@@ -84,5 +84,6 @@ void f2b() {
 
 
 void f3() {
-  NSWindow *window = [NSWindow alloc];  // expected-warning{{never read}} expected-warning{{leak}}
+  // FIXME: For now we don't track NSWindow.
+  NSWindow *window = [NSWindow alloc];  // expected-warning{{never read}}
 }
