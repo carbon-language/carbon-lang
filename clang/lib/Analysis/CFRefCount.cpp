@@ -1650,28 +1650,81 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
         }
         
-        if (R && R->isBoundable(Ctx)) {          
+        if (R) {          
           // Is the invalidated variable something that we were tracking?
           SymbolRef Sym = state.GetSValAsScalarOrLoc(R).getAsLocSymbol();
-          if (Sym.isValid())
-            state = state.remove<RefBindings>(Sym);
           
-          // Set the value of the variable to be a conjured symbol.
-          unsigned Count = Builder.getCurrentBlockCount();
-          QualType T = R->getRValueType(Ctx);
+          // Remove any existing reference-count binding.
+          if (Sym.isValid()) state = state.remove<RefBindings>(Sym);
           
-          // FIXME: handle structs.
-          if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
-            SymbolRef NewSym =
-              Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
-            
-            state = state.BindLoc(Loc::MakeVal(R),
-                                  Loc::IsLocType(T)
-                                  ? cast<SVal>(loc::SymbolVal(NewSym))
-                                  : cast<SVal>(nonloc::SymbolVal(NewSym)));
-          }
-          else {
-            state = state.BindLoc(*MR, UnknownVal());
+          if (R->isBoundable(Ctx)) {
+            // Set the value of the variable to be a conjured symbol.
+            unsigned Count = Builder.getCurrentBlockCount();
+            QualType T = R->getRValueType(Ctx);
+          
+            if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
+              SymbolRef NewSym =
+                Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
+              
+              state = state.BindLoc(Loc::MakeVal(R),
+                                    Loc::IsLocType(T)
+                                    ? cast<SVal>(loc::SymbolVal(NewSym))
+                                    : cast<SVal>(nonloc::SymbolVal(NewSym)));
+            }
+            else if (const RecordType *RT = T->getAsStructureType()) {
+              // Handle structs in a not so awesome way.  Here we just
+              // eagerly bind new symbols to the fields.  In reality we
+              // should have the store manager handle this.  The idea is just
+              // to prototype some basic functionality here.  All of this logic
+              // should one day soon just go away.
+              const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
+              
+              // No record definition.  There is nothing we can do.
+              if (!RD)
+                continue;
+              
+              MemRegionManager &MRMgr = state.getManager().getRegionManager();
+              
+              // Iterate through the fields and construct new symbols.
+              for (RecordDecl::field_iterator FI=RD->field_begin(),
+                   FE=RD->field_end(); FI!=FE; ++FI) {
+                
+                // For now just handle scalar fields.
+                FieldDecl *FD = *FI;
+                QualType FT = FD->getType();
+                
+                if (Loc::IsLocType(FT) || 
+                    (FT->isIntegerType() && FT->isScalarType())) {
+                  
+                  // Tag the symbol with the field decl so that we generate
+                  // a unique symbol.
+                  SymbolRef NewSym =
+                    Eng.getSymbolManager().getConjuredSymbol(*I, FT, Count, FD);
+                  
+                  // Create a region.
+                  // FIXME: How do we handle 'typedefs' in TypeViewRegions?
+                  //  e.g.:
+                  //     typedef struct *s foo;
+                  //  
+                  //     ((foo) x)->f vs. x->f
+                  //
+                  //  The cast will add a ViewTypeRegion.  Probably RegionStore
+                  //  needs to reason about typedefs explicitly when binding
+                  //  fields and elements.
+                  //
+                  const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
+                  
+                  state = state.BindLoc(Loc::MakeVal(FR),
+                                        Loc::IsLocType(FT)
+                                        ? cast<SVal>(loc::SymbolVal(NewSym))
+                                        : cast<SVal>(nonloc::SymbolVal(NewSym)));
+                }                
+              }
+            }
+            else {
+              // Just blast away other values.
+              state = state.BindLoc(*MR, UnknownVal());
+            }
           }
         }
         else

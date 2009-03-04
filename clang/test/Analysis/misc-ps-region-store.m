@@ -19,3 +19,28 @@ void checkaccess_union() {
       ).__i))) & 0xff00) >> 8) == 1)
         ret = 1;
 }
+
+
+// Check our handling of fields being invalidated by function calls.
+struct test2_struct { int x; int y; char* s; };
+void test2_helper(struct test2_struct* p);
+
+char test2() {
+  struct test2_struct s;
+  test2_help(&s);
+  char *p = 0;
+  
+  if (s.x > 1) {
+    if (s.s != 0) {
+      p = "hello";
+    }
+  }
+  
+  if (s.x > 1) {
+    if (s.s != 0) {
+      return *p;
+    }
+  }
+
+  return 'a';
+}
