@@ -15,6 +15,8 @@ namespace driver {
 namespace options {
   enum ID {
     NotOption = 0, // This is not an option ID.
+    InputOpt,      // Reserved ID for input option.
+    UnknownOpt,    // Reserved ID for unknown option.
 #define OPTION(ID, KIND, NAME, GROUP, ALIAS, FLAGS, PARAM) ID,
 #include "clang/Driver/Options.def"
     LastOption

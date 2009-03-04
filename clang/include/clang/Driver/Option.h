@@ -10,6 +10,8 @@
 #ifndef CLANG_DRIVER_OPTION_H_
 #define CLANG_DRIVER_OPTION_H_
 
+#include "Options.h"
+
 #include "llvm/Support/Casting.h"
 using llvm::isa;
 using llvm::cast;
@@ -52,6 +54,8 @@ namespace driver {
   private:
     OptionClass Kind;
 
+    options::ID ID;
+
     /// The option name.
     const char *Name; 
 
@@ -79,7 +83,7 @@ namespace driver {
     bool ForceJoinedRender : 1;    
 
   protected:
-    Option(OptionClass Kind, const char *Name, 
+    Option(OptionClass Kind, options::ID ID, const char *Name, 
            const OptionGroup *Group, const Option *Alias);
   public:
     virtual ~Option();
@@ -137,7 +141,7 @@ namespace driver {
   /// by the driver.
   class OptionGroup : public Option {
   public:
-    OptionGroup(const char *Name, const OptionGroup *Group);
+    OptionGroup(options::ID ID, const char *Name, const OptionGroup *Group);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
@@ -179,7 +183,8 @@ namespace driver {
 
   class FlagOption : public Option {
   public:
-    FlagOption(const char *Name, const OptionGroup *Group, const Option *Alias);
+    FlagOption(options::ID ID, const char *Name, const OptionGroup *Group, 
+               const Option *Alias);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
@@ -191,7 +196,7 @@ namespace driver {
 
   class JoinedOption : public Option {
   public:
-    JoinedOption(const char *Name, const OptionGroup *Group, 
+    JoinedOption(options::ID ID, const char *Name, const OptionGroup *Group, 
                  const Option *Alias);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
@@ -204,7 +209,7 @@ namespace driver {
 
   class SeparateOption : public Option {
   public:
-    SeparateOption(const char *Name, const OptionGroup *Group, 
+    SeparateOption(options::ID ID, const char *Name, const OptionGroup *Group, 
                    const Option *Alias);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
@@ -217,8 +222,8 @@ namespace driver {
 
   class CommaJoinedOption : public Option {
   public:
-    CommaJoinedOption(const char *Name, const OptionGroup *Group, 
-                      const Option *Alias);
+    CommaJoinedOption(options::ID ID, const char *Name, 
+                      const OptionGroup *Group, const Option *Alias);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
@@ -236,7 +241,7 @@ namespace driver {
     unsigned NumArgs;
 
   public:
-    MultiArgOption(const char *Name, const OptionGroup *Group, 
+    MultiArgOption(options::ID ID, const char *Name, const OptionGroup *Group, 
                    const Option *Alias, unsigned NumArgs);
 
     unsigned getNumArgs() const { return NumArgs; }
@@ -253,8 +258,8 @@ namespace driver {
   /// prefixes its (non-empty) value, or is follwed by a value.
   class JoinedOrSeparateOption : public Option {
   public:
-    JoinedOrSeparateOption(const char *Name, const OptionGroup *Group, 
-                           const Option *Alias);
+    JoinedOrSeparateOption(options::ID ID, const char *Name, 
+                           const OptionGroup *Group, const Option *Alias);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
@@ -268,8 +273,8 @@ namespace driver {
   /// value and is followed by another value.
   class JoinedAndSeparateOption : public Option {
   public:
-    JoinedAndSeparateOption(const char *Name, const OptionGroup *Group, 
-                            const Option *Alias);
+    JoinedAndSeparateOption(options::ID ID, const char *Name, 
+                            const OptionGroup *Group, const Option *Alias);
 
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 

@@ -26,6 +26,11 @@ struct Info {
 };
 
 static Info OptionInfos[] = {
+  // The InputOption info
+  { Option::InputClass, "<input>", 0, 0, "", 0 },
+  // The UnknownOption info
+  { Option::UnknownClass, "<unknown>", 0, 0, "", 0 },
+  
 #define OPTION(ID, KIND, NAME, GROUP, ALIAS, FLAGS, PARAM)      \
   { Option::KIND##Class, NAME, GROUP, ALIAS, FLAGS, PARAM },
 #include "clang/Driver/Options.def"
@@ -55,7 +60,7 @@ const char *OptTable::getOptionName(options::ID id) const {
 }
 
 const Option *OptTable::getOption(options::ID id) const {
-  if (id == 0)
+  if (id == NotOption)
     return 0;
 
   assert((unsigned) (id - 1) < numOptions && "Invalid ID.");
@@ -75,24 +80,26 @@ Option *OptTable::constructOption(options::ID id) const {
 
   Option *Opt = 0;
   switch (info.Kind) {
-  default:
-    assert(0 && "Invalid option kind.");
+  case Option::InputClass:
+    Opt = new InputOption(); break;
+  case Option::UnknownClass:
+    Opt = new UnknownOption(); break;
   case Option::GroupClass:
-    Opt = new OptionGroup(info.Name, Group); break;
+    Opt = new OptionGroup(id, info.Name, Group); break;
   case Option::FlagClass:
-    Opt = new FlagOption(info.Name, Group, Alias); break;
+    Opt = new FlagOption(id, info.Name, Group, Alias); break;
   case Option::JoinedClass:
-    Opt = new JoinedOption(info.Name, Group, Alias); break;
+    Opt = new JoinedOption(id, info.Name, Group, Alias); break;
   case Option::SeparateClass:
-    Opt = new SeparateOption(info.Name, Group, Alias); break;
+    Opt = new SeparateOption(id, info.Name, Group, Alias); break;
   case Option::CommaJoinedClass:
-    Opt = new CommaJoinedOption(info.Name, Group, Alias); break;
+    Opt = new CommaJoinedOption(id, info.Name, Group, Alias); break;
   case Option::MultiArgClass:
-    Opt = new MultiArgOption(info.Name, Group, Alias, info.Param); break;
+    Opt = new MultiArgOption(id, info.Name, Group, Alias, info.Param); break;
   case Option::JoinedOrSeparateClass:
-    Opt = new JoinedOrSeparateOption(info.Name, Group, Alias); break;
+    Opt = new JoinedOrSeparateOption(id, info.Name, Group, Alias); break;
   case Option::JoinedAndSeparateClass:
-    Opt = new JoinedAndSeparateOption(info.Name, Group, Alias); break;
+    Opt = new JoinedAndSeparateOption(id, info.Name, Group, Alias); break;
   }
 
   for (const char *s = info.Flags; *s; ++s) {
