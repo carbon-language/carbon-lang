@@ -238,7 +238,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement() {
   //
   // Parsing this naively works, but is both inefficient and can cause us to run
   // out of stack space in our recursive descent parser.  As a special case,
-  // flatten this recursion into an interative loop.  This is complex and gross,
+  // flatten this recursion into an iterative loop.  This is complex and gross,
   // but all the grossness is constrained to ParseCaseStatement (and some
   // wierdness in the actions), so this is just local grossness :).
   
@@ -330,7 +330,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement() {
   Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, move(SubStmt));
 
   // Return the top level parsed statement tree.
-  return OwningStmtResult(Actions, TopLevelCase.release());
+  return move(TopLevelCase);
 }
 
 /// ParseDefaultStatement
