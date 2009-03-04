@@ -410,7 +410,7 @@ public:
 /// SelectorTable - This table allows us to fully hide how we implement
 /// multi-keyword caching.
 class SelectorTable {
-  void *Impl;  // Actually a FoldingSet<MultiKeywordSelector>*
+  void *Impl;  // Actually a SelectorTableImpl
   SelectorTable(const SelectorTable&); // DISABLED: DO NOT IMPLEMENT
   void operator=(const SelectorTable&); // DISABLED: DO NOT IMPLEMENT
 public:

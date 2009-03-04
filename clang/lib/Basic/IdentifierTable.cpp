@@ -363,38 +363,50 @@ std::string Selector::getAsString() const {
 }
 
 
+namespace {
+  struct SelectorTableImpl {
+    llvm::FoldingSet<MultiKeywordSelector> Table;
+    llvm::BumpPtrAllocator Allocator;
+  };
+} // end anonymous namespace.
+
+static SelectorTableImpl &getSelectorTableImpl(void *P) {
+  return *static_cast<SelectorTableImpl*>(P);
+}
+
+
 Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
   if (nKeys < 2)
     return Selector(IIV[0], nKeys);
   
-  llvm::FoldingSet<MultiKeywordSelector> *SelTab;
-  
-  SelTab = static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
+  SelectorTableImpl &SelTabImpl = getSelectorTableImpl(Impl);
     
   // Unique selector, to guarantee there is one per name.
   llvm::FoldingSetNodeID ID;
   MultiKeywordSelector::Profile(ID, IIV, nKeys);
 
   void *InsertPos = 0;
-  if (MultiKeywordSelector *SI = SelTab->FindNodeOrInsertPos(ID, InsertPos))
+  if (MultiKeywordSelector *SI =
+        SelTabImpl.Table.FindNodeOrInsertPos(ID, InsertPos))
     return Selector(SI);
   
   // MultiKeywordSelector objects are not allocated with new because they have a
   // variable size array (for parameter types) at the end of them.
-  MultiKeywordSelector *SI = 
-    (MultiKeywordSelector*)malloc(sizeof(MultiKeywordSelector) + 
-                                  nKeys*sizeof(IdentifierInfo *));
+  unsigned Size = sizeof(MultiKeywordSelector) + nKeys*sizeof(IdentifierInfo *);
+  MultiKeywordSelector *SI =
+    (MultiKeywordSelector*)SelTabImpl.Allocator.Allocate(Size, 
+                                         llvm::alignof<MultiKeywordSelector>());
   new (SI) MultiKeywordSelector(nKeys, IIV);
-  SelTab->InsertNode(SI, InsertPos);
+  SelTabImpl.Table.InsertNode(SI, InsertPos);
   return Selector(SI);
 }
 
 SelectorTable::SelectorTable() {
-  Impl = new llvm::FoldingSet<MultiKeywordSelector>;
+  Impl = new SelectorTableImpl();
 }
 
 SelectorTable::~SelectorTable() {
-  delete static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
+  delete &getSelectorTableImpl(Impl);
 }
 
 //===----------------------------------------------------------------------===//
