@@ -417,8 +417,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         if (!Method) {
           Method = LookupInstanceMethodInGlobalPool(
                                    Sel, SourceRange(lbrac,rbrac));
-          if (Method)
-            Diag(receiverLoc, diag::warn_maynot_respond) << Sel;
         }
       }
     }
