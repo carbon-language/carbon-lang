@@ -11,7 +11,6 @@
 #define CLANG_DRIVER_ARG_H_
 
 #include "Util.h"
-#include "llvm/ADT/ilist_node.h"
 
 namespace clang {
 namespace driver {
@@ -25,7 +24,7 @@ namespace driver {
   /// instances have an intrusive double linked list which is used by
   /// ArgList to provide efficient iteration over all instances of a
   /// particular option.
-  class Arg : public llvm::ilist_node<Arg> {
+  class Arg {
   private:
     enum ArgClass {
       PositionalArg = 0,
