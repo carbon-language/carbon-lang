@@ -162,7 +162,6 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // Set up our simple checks.
   if (BatchAuditor)
     Builder->setAuditor(BatchAuditor.get());
-  
     
   // Create the cleaned state.  
   SymbolReaper SymReaper(Liveness, SymMgr);  
@@ -1743,8 +1742,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     Visit(Ex, Pred, S1);
   
   // Check for casting to "void".
-  if (T->isVoidType()) {
-    
+  if (T->isVoidType()) {    
     for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1)
       Dst.Add(*I1);
 
@@ -1761,14 +1759,12 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     SVal V = GetSVal(state, Ex);
 
     // Unknown?
-    
     if (V.isUnknown()) {
       Dst.Add(N);
       continue;
     }
     
     // Undefined?
-    
     if (V.isUndef()) {
       MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
       continue;
@@ -1826,6 +1822,28 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 
       const MemRegion* R = RV->getRegion();
       StoreManager& StoreMgr = getStoreManager();
+      
+      // Delegate to store manager to get the result of casting a region
+      // to a different type.
+      const StoreManager::CastResult& Res = StoreMgr.CastRegion(state, R, T);
+      
+      // Inspect the result.  If the MemRegion* returned is NULL, this
+      // expression evaluates to UnknownVal.
+      R = Res.getRegion();
+      if (R) { V = loc::MemRegionVal(R); } else { V = UnknownVal(); }
+      
+      // Generate the new node in the ExplodedGraph.
+      MakeNode(Dst, CastE, N, BindExpr(Res.getState(), CastE, V));
+      continue;
+    }
+
+    // If we are casting a symbolic value, make a symbolic region and a
+    // TypedViewRegion subregion.
+    if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V)) {
+      SymbolRef Sym = SV->getSymbol();
+      StoreManager& StoreMgr = getStoreManager();
+      const MemRegion* R =
+        StoreMgr.getRegionManager().getSymbolicRegion(Sym, getSymbolManager());
       
       // Delegate to store manager to get the result of casting a region
       // to a different type.
