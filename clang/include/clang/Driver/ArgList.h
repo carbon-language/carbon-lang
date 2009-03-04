@@ -48,6 +48,12 @@ namespace driver {
 
     const_iterator begin() const { return Args.begin(); }
     const_iterator end() const { return Args.end(); }
+    
+    /// append - Append \arg A to the arg list, taking ownership.
+    void append(Arg *A);
+
+    /// getArgString - Return the input argument string at \arg Index.
+    const char *getArgString(unsigned Index) const { return ArgStrings[Index]; }
   };
 } // end namespace driver
 } // end namespace clang
