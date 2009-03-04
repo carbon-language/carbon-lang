@@ -482,11 +482,11 @@ static bool DeclHasAttr(const Decl *decl, const Attr *target) {
 }
 
 /// MergeAttributes - append attributes from the Old decl to the New one.
-static void MergeAttributes(Decl *New, Decl *Old) {
-  Attr *attr = const_cast<Attr*>(Old->getAttrs()), *tmp;
+static void MergeAttributes(Decl *New, Decl *Old, ASTContext &C) {
+  Attr *attr = const_cast<Attr*>(Old->getAttrs());
 
   while (attr) {
-    tmp = attr;
+    Attr *tmp = attr;
     attr = attr->getNext();
 
     if (!DeclHasAttr(New, tmp) && tmp->isMerged()) {
@@ -494,7 +494,7 @@ static void MergeAttributes(Decl *New, Decl *Old) {
       New->addAttr(tmp);
     } else {
       tmp->setNext(0);
-      delete(tmp);
+      tmp->Destroy(C);
     }
   }
 
@@ -678,7 +678,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// \returns false
 bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   // Merge the attributes
-  MergeAttributes(New, Old);
+  MergeAttributes(New, Old, Context);
 
   // Merge the storage class.
   New->setStorageClass(Old->getStorageClass());
@@ -767,7 +767,7 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     return true;
   }
 
-  MergeAttributes(New, Old);
+  MergeAttributes(New, Old, Context);
 
   // Merge the types
   QualType MergedT = Context.mergeTypes(New->getType(), Old->getType());

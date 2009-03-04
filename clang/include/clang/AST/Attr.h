@@ -20,6 +20,7 @@
 #include <algorithm>
 
 namespace clang {
+  class ASTContext;
 
 /// Attr - This represents one attribute.
 class Attr {
@@ -69,9 +70,13 @@ private:
 
 protected:
   Attr(Kind AK) : Next(0), AttrKind(AK), Inherited(false) {}
-public:
   virtual ~Attr() {
     delete Next;
+  }
+public:
+  
+  void Destroy(ASTContext &C) {
+    delete this;
   }
 
   /// \brief Whether this attribute should be merged to new

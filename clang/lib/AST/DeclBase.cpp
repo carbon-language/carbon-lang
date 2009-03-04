@@ -121,15 +121,7 @@ Decl::~Decl() {
   if (isOutOfSemaDC())
     delete getMultipleDC();
 
-  if (!HasAttrs)
-    return;
-  
-  DeclAttrMapTy::iterator it = DeclAttrs->find(this);
-  assert(it != DeclAttrs->end() && "No attrs found but HasAttrs is true!");
-
-  // release attributes.
-  delete it->second;
-  invalidateAttrs();
+  assert(!HasAttrs && "attributes should have been freed by Destroy");
 }
 
 void Decl::addAttr(Attr *NewAttr) {
@@ -189,7 +181,18 @@ void Decl::swapAttrs(Decl *RHS) {
 }
 
 
-void Decl::Destroy(ASTContext& C) {
+void Decl::Destroy(ASTContext &C) {
+  // Free attributes for this decl.
+  if (HasAttrs) {
+    DeclAttrMapTy::iterator it = DeclAttrs->find(this);
+    assert(it != DeclAttrs->end() && "No attrs found but HasAttrs is true!");
+  
+    // release attributes.
+    it->second->Destroy(C);
+    invalidateAttrs();
+    HasAttrs = false;
+  }
+  
 #if 0
   // FIXME: Once ownership is fully understood, we can enable this code
   if (DeclContext *DC = dyn_cast<DeclContext>(this))
