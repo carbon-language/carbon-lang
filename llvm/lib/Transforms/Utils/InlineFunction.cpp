@@ -235,7 +235,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   // function.
   std::vector<ReturnInst*> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
-  Function::iterator FirstNewBlock, LastNewBlock;
+  Function::iterator FirstNewBlock;
 
   { // Scope to destroy ValueMap after cloning.
     DenseMap<const Value*, Value*> ValueMap;
@@ -312,7 +312,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
     // Remember the first block that is newly cloned over.
     FirstNewBlock = LastBlock; ++FirstNewBlock;
-    LastNewBlock = &Caller->back();
 
     // Update the callgraph if requested.
     if (CG)
@@ -538,9 +537,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // Add a branch to the merge points and remove return instructions.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
-      // A return in the last block in the function falls through.
-//      if (isa<InvokeInst>(TheCall) || RI->getParent() != LastNewBlock)
-        BranchInst::Create(AfterCallBB, RI);
+      BranchInst::Create(AfterCallBB, RI);
       RI->eraseFromParent();
     }
   } else if (!Returns.empty()) {
