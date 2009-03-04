@@ -127,11 +127,11 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
     return new PositionalArg(getOption(InputOpt), Index++);
 
   for (unsigned j = UnknownOpt + 1; j < getNumOptions(); ++j) {
-    const char *OptName = getOptionName((options::ID) (j + 1));
+    const char *OptName = getOptionName((options::ID) j);
     
     // Arguments are only accepted by options which prefix them.
     if (memcmp(Str, OptName, strlen(OptName)) == 0)
-      if (Arg *A = getOption((options::ID) (j + 1))->accept(Args, Index))
+      if (Arg *A = getOption((options::ID) j)->accept(Args, Index))
         return A;
   }
 
