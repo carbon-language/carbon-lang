@@ -501,7 +501,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
 }
 
 llvm::Constant *
-CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
+BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   // Generate the block descriptor.
   const llvm::Type *UnsignedLongTy = Types.ConvertType(Context.UnsignedLongTy);
   const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
@@ -534,9 +534,9 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   uint64_t subBlockSize, subBlockAlign;
   llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
   llvm::Function *Fn
-    = CodeGenFunction(*this).GenerateBlockFunction(BE, Info, subBlockSize,
-                                                   subBlockAlign,
-                                                   subBlockDeclRefDecls);
+    = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize,
+                                                 subBlockAlign,
+                                                 subBlockDeclRefDecls);
   assert(subBlockSize == BlockLiteralSize
          && "no imports allowed for global block");
 

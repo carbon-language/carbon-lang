@@ -43,6 +43,7 @@ namespace llvm {
 namespace clang {
 
 namespace CodeGen {
+class CodeGenModule;
 
 class BlockBase {
 public:
@@ -59,11 +60,14 @@ public:
 class BlockModule : public BlockBase {
   ASTContext &Context;
   llvm::Module &TheModule;
+  const llvm::TargetData &TheTargetData;
   CodeGenTypes &Types;
+  CodeGenModule &CGM;
   
   ASTContext &getContext() const { return Context; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
+  const llvm::TargetData &getTargetData() const { return TheTargetData; }
 public:
   llvm::Constant *getNSConcreteGlobalBlock();
   llvm::Constant *getNSConcreteStackBlock();
@@ -72,6 +76,8 @@ public:
 
   const llvm::Type *getGenericBlockLiteralType();
   const llvm::Type *getGenericExtendedBlockLiteralType();
+
+  llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
 
   /// NSConcreteGlobalBlock - Cached reference to the class pointer for global
   /// blocks.
@@ -88,9 +94,11 @@ public:
     int GlobalUniqueCount;
   } Block;
 
-  BlockModule(ASTContext &C, llvm::Module &M, CodeGenTypes &T)
-    : Context(C), TheModule(M), Types(T), NSConcreteGlobalBlock(0),
-      NSConcreteStackBlock(0), BlockDescriptorType(0),
+  BlockModule(ASTContext &C, llvm::Module &M, const llvm::TargetData &TD,
+              CodeGenTypes &T, CodeGenModule &CodeGen)
+    : Context(C), TheModule(M), TheTargetData(TD), Types(T),
+      CGM(CodeGen),
+      NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockDescriptorType(0),
       GenericBlockLiteralType(0)  {
     Block.GlobalUniqueCount = 0;
   }

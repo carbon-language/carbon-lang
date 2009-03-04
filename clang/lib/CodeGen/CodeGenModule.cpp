@@ -34,7 +34,7 @@ using namespace CodeGen;
 CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
                              Diagnostic &diags, bool GenerateDebugInfo)
-  : BlockModule(C, M, Types), Context(C), Features(LO), TheModule(M),
+  : BlockModule(C, M, TD, Types, *this), Context(C), Features(LO), TheModule(M),
     TheTargetData(TD), Diags(diags), Types(C, M, TD), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
 

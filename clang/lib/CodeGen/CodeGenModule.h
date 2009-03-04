@@ -217,8 +217,6 @@ public:
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
                                            const char *GlobalName=0);
 
-  llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
-
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
   llvm::Value *getBuiltinLibFunction(unsigned BuiltinID);
