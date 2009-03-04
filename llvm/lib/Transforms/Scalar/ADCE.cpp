@@ -18,6 +18,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -55,6 +56,7 @@ bool ADCE::runOnFunction(Function& F) {
   // Collect the set of "root" instructions that are known live.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isa<TerminatorInst>(I.getInstructionIterator()) ||
+        isa<DbgInfoIntrinsic>(I.getInstructionIterator()) ||
         I->mayWriteToMemory()) {
       alive.insert(I.getInstructionIterator());
       worklist.push_back(I.getInstructionIterator());
