@@ -746,23 +746,34 @@ TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDValue Op, 
                                                         const APInt &Demanded) {
   DebugLoc dl = Op.getDebugLoc();
+
   // FIXME: ISD::SELECT, ISD::SELECT_CC
   switch (Op.getOpcode()) {
   default: break;
-  case ISD::AND:
-  case ISD::OR:
   case ISD::XOR:
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
-      if (C->getAPIntValue().intersects(~Demanded)) {
-        MVT VT = Op.getValueType();
-        SDValue New = DAG.getNode(Op.getOpcode(), dl, VT, Op.getOperand(0),
-                                    DAG.getConstant(Demanded &
-                                                      C->getAPIntValue(), 
-                                                    VT));
-        return CombineTo(Op, New);
-      }
+  case ISD::AND:
+  case ISD::OR: {
+    ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+    if (!C) return false;
+
+    if (Op.getOpcode() == ISD::XOR &&
+        (C->getAPIntValue() | (~Demanded)).isAllOnesValue())
+      return false;
+
+    // if we can expand it to have all bits set, do it
+    if (C->getAPIntValue().intersects(~Demanded)) {
+      MVT VT = Op.getValueType();
+      SDValue New = DAG.getNode(Op.getOpcode(), dl, VT, Op.getOperand(0),
+                                DAG.getConstant(Demanded &
+                                                C->getAPIntValue(), 
+                                                VT));
+      return CombineTo(Op, New);
+    }
+
     break;
   }
+  }
+
   return false;
 }
 
