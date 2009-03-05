@@ -203,6 +203,9 @@ OBJ_ROOT := .
 # What to pass as rpath flag to g++
 RPATH := @RPATH@
 
+# What to pass as -rdynamic flag to g++
+RDYNAMIC := @RDYNAMIC@
+
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1):
 

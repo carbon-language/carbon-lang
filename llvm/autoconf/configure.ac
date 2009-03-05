@@ -636,8 +636,11 @@ AC_PATH_PROGS(OCAMLDEP, [ocamldep])
 AC_PATH_PROGS(OCAMLDOC, [ocamldoc])
 AC_PATH_PROGS(GAS, [gas as])
 
-dnl Determine if the linker supports the -R option.
+dnl Determine whether the linker supports the -R option.
 AC_LINK_USE_R
+
+dnl Determine whether the linker supports the -export-dynamic option.
+AC_LINK_EXPORT_DYNAMIC
 
 dnl Check for libtool and the library that has dlopen function (which must come
 dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
@@ -1013,15 +1016,24 @@ if test "$binding_prereqs_failed" = 1 ; then
   AC_MSG_ERROR([Prequisites for bindings not satisfied. Fix them or use configure --disable-bindings.])
 fi
 
-dnl Determine if the compiler supports -fvisibility-inlines-hidden.
+dnl Determine whether the compiler supports -fvisibility-inlines-hidden.
 AC_CXX_USE_VISIBILITY_INLINES_HIDDEN
 
 dnl Determine linker rpath flag
-case $llvm_cv_os_type in
-  SunOS) RPATH="-Wl,-R" ;;
-  *) RPATH="-Wl,-rpath" ;;
-esac
+if test "$llvm_cv_link_use_r" = "yes" ; then
+  RPATH="-Wl,-R"
+else
+  RPATH="-Wl,-rpath"
+fi
 AC_SUBST(RPATH)
+
+dnl Determine linker rdynamic flag
+if test "$llvm_cv_link_use_export_dynamic" = "yes" ; then
+  RDYNAMIC="-Wl,-export-dynamic"
+else
+  RDYNAMIC=""
+fi
+AC_SUBST(RDYNAMIC)
 
 dnl===-----------------------------------------------------------------------===
 dnl===
