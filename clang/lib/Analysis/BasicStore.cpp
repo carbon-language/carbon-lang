@@ -28,8 +28,7 @@ public:
   BasicStoreSubRegionMap() {}
 
   bool iterSubRegions(const MemRegion* R, Visitor& V) const {
-    // Do nothing.  No subregions.
-    return true;
+    return true; // Do nothing.  No subregions.
   }
 };
   
@@ -54,8 +53,7 @@ public:
   SVal Retrieve(const GRState *state, Loc loc, QualType T = QualType());  
 
   const GRState* Bind(const GRState* St, Loc L, SVal V) {
-    Store store = St->getStore();
-    store = BindInternal(store, L, V);
+    Store store = BindInternal(St->getStore(), L, V);
     return StateMgr.MakeStateWithStore(St, store);
   }
 
@@ -95,9 +93,7 @@ public:
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this
   ///  method returns NULL.
-  const MemRegion* getSelfRegion(Store) { 
-    return SelfRegion;  
-  }
+  const MemRegion* getSelfRegion(Store) { return SelfRegion; }
     
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It returns a new Store with these values removed, and populates LSymbols
@@ -110,14 +106,12 @@ public:
   void iterBindings(Store store, BindingsHandler& f);
 
   const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal InitVal) {
-    Store store = St->getStore();
-    store = BindDeclInternal(store, VD, &InitVal);
+    Store store = BindDeclInternal(St->getStore(), VD, &InitVal);
     return StateMgr.MakeStateWithStore(St, store);
   }
 
   const GRState* BindDeclWithNoInit(const GRState* St, const VarDecl* VD) {
-    Store store = St->getStore();
-    store = BindDeclInternal(store, VD, 0);
+    Store store = BindDeclInternal(St->getStore(), VD, 0);
     return StateMgr.MakeStateWithStore(St, store);
   }
 
