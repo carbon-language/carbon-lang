@@ -19,7 +19,7 @@
 
 using namespace clang;
 
-typedef llvm::ImmutableMap<const MemRegion*,SVal> VarBindingsTy;  
+typedef llvm::ImmutableMap<const MemRegion*,SVal> BindingsTy;  
 
 namespace {
   
@@ -34,7 +34,7 @@ public:
 };
   
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
-  VarBindingsTy::Factory VBFactory;
+  BindingsTy::Factory VBFactory;
   GRStateManager& StateMgr;
   const MemRegion* SelfRegion;
   
@@ -123,8 +123,8 @@ public:
 
   Store BindDeclInternal(Store store, const VarDecl* VD, SVal* InitVal);
 
-  static inline VarBindingsTy GetVarBindings(Store store) {
-    return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
+  static inline BindingsTy GetBindings(Store store) {
+    return BindingsTy(static_cast<const BindingsTy::TreeTy*>(store));
   }
 
   void print(Store store, std::ostream& Out, const char* nl, const char *sep);
@@ -306,8 +306,8 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
         return UnknownVal();
       
       Store store = state->getStore();
-      VarBindingsTy B = GetVarBindings(store);
-      VarBindingsTy::data_type* T = B.lookup(R);
+      BindingsTy B = GetBindings(store);
+      BindingsTy::data_type* T = B.lookup(R);
       return T ? *T : UnknownVal();
     }
       
@@ -339,7 +339,7 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
       if (!R)
         return store;
       
-      VarBindingsTy B = GetVarBindings(store);
+      BindingsTy B = GetBindings(store);
       return V.isUnknown()
         ? VBFactory.Remove(B, R).getRoot()
         : VBFactory.Add(B, R, V).getRoot();
@@ -359,7 +359,7 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
       if (!R)
         return store;
       
-      VarBindingsTy B = GetVarBindings(store);
+      BindingsTy B = GetBindings(store);
       return VBFactory.Remove(B, R).getRoot();
     }
     default:
@@ -375,11 +375,11 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
 {
   
   Store store = state->getStore();
-  VarBindingsTy B = GetVarBindings(store);
+  BindingsTy B = GetBindings(store);
   typedef SVal::symbol_iterator symbol_iterator;
   
   // Iterate over the variable bindings.
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
+  for (BindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
     const VarRegion *VR = cast<VarRegion>(I.getKey());
     if (SymReaper.isLive(Loc, VR->getDecl())) {
       RegionRoots.push_back(VR);      
@@ -428,7 +428,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   }
   
   // Remove dead variable bindings.  
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
+  for (BindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
     const VarRegion* R = cast<VarRegion>(I.getKey());
     
     if (!Marked.count(R)) {
@@ -554,12 +554,12 @@ void BasicStoreManager::print(Store store, std::ostream& O,
                               const char* nl, const char *sep) {
       
   llvm::raw_os_ostream Out(O);
-  VarBindingsTy B = GetVarBindings(store);
+  BindingsTy B = GetBindings(store);
   Out << "Variables:" << nl;
   
   bool isFirst = true;
   
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
+  for (BindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
     if (isFirst) isFirst = false;
     else Out << nl;
     
@@ -570,9 +570,9 @@ void BasicStoreManager::print(Store store, std::ostream& O,
 
 
 void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
-  VarBindingsTy B = GetVarBindings(store);
+  BindingsTy B = GetBindings(store);
   
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I)
+  for (BindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I)
     f.HandleBinding(*this, store, I.getKey(), I.getData());
 
 }
