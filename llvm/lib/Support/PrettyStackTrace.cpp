@@ -20,19 +20,27 @@ using namespace llvm;
 // FIXME: This should be thread local when llvm supports threads.
 static const PrettyStackTraceEntry *PrettyStackTraceHead = 0;
 
+static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
+  unsigned NextID = 0;
+  if (Entry->getNextEntry())
+    NextID = PrintStack(Entry->getNextEntry(), OS);
+  OS << NextID << ".\t";
+  Entry->print(OS);
+  
+  return NextID+1;
+}
+
 /// CrashHandler - This callback is run if a fatal signal is delivered to the
 /// process, it prints the pretty stack trace.
 static void CrashHandler(void *Cookie) {
+  // Don't print an empty trace.
+  if (PrettyStackTraceHead == 0) return;
+  
   // If there are pretty stack frames registered, walk and emit them.
   raw_ostream &OS = errs();
   OS << "Stack dump:\n";
   
-  unsigned i = 0;
-  for (const PrettyStackTraceEntry *Entry = PrettyStackTraceHead; Entry;
-       Entry = Entry->getNextEntry(), ++i) {
-    OS << i << ".\t";
-    Entry->print(OS);
-  }
+  PrintStack(PrettyStackTraceHead, OS);
   OS.flush();
 }
 
