@@ -62,8 +62,10 @@ void PrettyStackTraceString::print(raw_ostream &OS) const {
 }
 
 void PrettyStackTraceProgram::print(raw_ostream &OS) const {
+  OS << "Program arguments: ";
   // Print the argument list.
   for (unsigned i = 0, e = ArgC; i != e; ++i)
     OS << ArgV[i] << ' ';
   OS << '\n';
 }
+
