@@ -1719,18 +1719,12 @@ void GRExprEngine::VisitCastPointerToInteger(SVal V, const GRState* state,
   if (!V.isUnknownOrUndef()) {
     // FIXME: Determine if the number of bits of the target type is 
     // equal or exceeds the number of bits to store the pointer value.
-    // If not, flag an error.
-    
-    if (loc::ConcreteInt *CI = dyn_cast<loc::ConcreteInt>(&V)) {
-      V = nonloc::ConcreteInt(CI->getValue());
-    }
-    else {    
-      unsigned bits = getContext().getTypeSize(PtrTy);  
-      V = nonloc::LocAsInteger::Make(getBasicVals(), cast<Loc>(V), bits);
-    }
+    // If not, flag an error.    
+    MakeNode(Dst, CastE, Pred, BindExpr(state, CastE,
+                                        EvalCast(V, CastE->getType())));
   }
-  
-  MakeNode(Dst, CastE, Pred, BindExpr(state, CastE, V));
+  else  
+    MakeNode(Dst, CastE, Pred, BindExpr(state, CastE, V));
 }
 
   
@@ -1798,10 +1792,9 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
         V = LV->getLoc();
         MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
       }
-      else if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&V)) {
-        MakeNode(Dst, CastE, N,
-                 BindExpr(state, CastE, loc::ConcreteInt(CI->getValue())));
-      }
+      
+      MakeNode(Dst, CastE, N, BindExpr(state, CastE,
+                                       EvalCast(V, CastE->getType())));
       
       continue;      
     }
@@ -2729,7 +2722,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         // Evaluate operands and promote to result type.                    
         if (RightV.isUndef()) {            
           // Propagate undefined values (right-side).          
-          EvalStore(Dst,B, LHS, *I3, BindExpr(state, B, RightV), location,
+          EvalStore(Dst, B, LHS, *I3, BindExpr(state, B, RightV), location,
                     RightV);
           continue;
         }
