@@ -138,6 +138,21 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
   
 }
 
+// Code to verify a given function type is complete, i.e. the return type
+// and all of the argument types are complete.
+static const TagType *VerifyFuncTypeComplete(const Type* T) {
+  const FunctionType *FT = cast<FunctionType>(T);
+  if (const TagType* TT = FT->getResultType()->getAsTagType())
+    if (!TT->getDecl()->isDefinition())
+      return TT;
+  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(T))
+    for (unsigned i = 0; i < FPT->getNumArgs(); i++)
+      if (const TagType* TT = FPT->getArgType(i)->getAsTagType())
+        if (!TT->getDecl()->isDefinition())
+          return TT;
+  return 0;
+}
+
 /// UpdateCompletedType - When we find the full definition for a TagDecl,
 /// replace the 'opaque' type we previously made for it if applicable.
 void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
@@ -160,6 +175,26 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
 
   // Refine the old opaque type to its new definition.
   cast<llvm::OpaqueType>(OpaqueHolder.get())->refineAbstractTypeTo(NT);
+
+  // Since we just completed a tag type, check to see if any function types
+  // were completed along with the tag type.
+  // FIXME: This is very inefficient; if we track which function types depend
+  // on which tag types, though, it should be reasonably efficient.
+  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator i;
+  for (i = FunctionTypes.begin(); i != FunctionTypes.end(); ++i) {
+    if (const TagType* TT = VerifyFuncTypeComplete(i->first)) {
+      // This function type still depends on an incomplete tag type; make sure
+      // that tag type has an associated opaque type.
+      ConvertTagDeclType(TT->getDecl());
+    } else {
+      // This function no longer depends on an incomplete tag type; create the
+      // function type, and refine the opaque type to the new function type.
+      llvm::PATypeHolder OpaqueHolder = i->second;
+      const llvm::Type *NFT = ConvertNewType(QualType(i->first, 0));
+      cast<llvm::OpaqueType>(OpaqueHolder.get())->refineAbstractTypeTo(NFT);
+      FunctionTypes.erase(i);
+    }
+  }
 }
 
 static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
@@ -273,11 +308,25 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                                  VT.getNumElements());
   }
   case Type::FunctionNoProto:
-    return GetFunctionType(getFunctionInfo(cast<FunctionNoProtoType>(&Ty)), 
-                           true);
   case Type::FunctionProto: {
-    const FunctionProtoType *FTP = cast<FunctionProtoType>(&Ty);
-    return GetFunctionType(getFunctionInfo(FTP), FTP->isVariadic());
+    // First, check whether we can build the full function type.
+    if (const TagType* TT = VerifyFuncTypeComplete(&Ty)) {
+      // This function's type depends on an incomplete tag type; make sure
+      // we have an opaque type corresponding to the tag type.
+      ConvertTagDeclType(TT->getDecl());
+      // Create an opaque type for this function type, save it, and return it.
+      llvm::Type *ResultType = llvm::OpaqueType::get();
+      FunctionTypes.insert(std::make_pair(&Ty, ResultType));
+      return ResultType;
+    }
+    // The function type can be built; call the appropriate routines to
+    // build it.
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(&Ty)) {
+      return GetFunctionType(getFunctionInfo(FPT), FPT->isVariadic());
+    } else {
+      const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
+      return GetFunctionType(getFunctionInfo(FNPT), true);
+    }
   }
   
   case Type::ExtQual:

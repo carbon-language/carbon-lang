@@ -89,6 +89,8 @@ class CodeGenTypes {
 
   llvm::DenseMap<const Type*, llvm::PATypeHolder> TagDeclTypes;
 
+  llvm::DenseMap<const Type*, llvm::PATypeHolder> FunctionTypes;
+
   /// CGRecordLayouts - This maps llvm struct type with corresponding 
   /// record layout info. 
   /// FIXME : If CGRecordLayout is less than 16 bytes then use 
