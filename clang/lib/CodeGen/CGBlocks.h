@@ -94,19 +94,26 @@ public:
     int GlobalUniqueCount;
   } Block;
 
+  llvm::Value *BlockObjectDispose;
+  const llvm::Type *PtrToInt8Ty;
+
   BlockModule(ASTContext &C, llvm::Module &M, const llvm::TargetData &TD,
               CodeGenTypes &T, CodeGenModule &CodeGen)
     : Context(C), TheModule(M), TheTargetData(TD), Types(T),
       CGM(CodeGen),
       NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockDescriptorType(0),
-      GenericBlockLiteralType(0)  {
+      GenericBlockLiteralType(0), BlockObjectDispose(0) {
     Block.GlobalUniqueCount = 0;
+    PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   }
 };
 
 class BlockFunction : public BlockBase {
+  CodeGenModule &CGM;
+
 public:
-    enum {
+  const llvm::Type *PtrToInt8Ty;
+  enum {
     BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)),
                                       block, ... */
     BLOCK_FIELD_IS_BLOCK    =  7,  /* a block variable */
@@ -140,7 +147,10 @@ public:
 
   CGBuilderTy &Builder;
 
-  BlockFunction(CGBuilderTy &B) : Builder(B) { }
+  BlockFunction(CodeGenModule &cgm, CGBuilderTy &B)
+    : CGM(cgm), Builder(B) {
+    PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  }
 
   ImplicitParamDecl *BlockStructDecl;
   ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
@@ -148,6 +158,8 @@ public:
   llvm::Value *BuildCopyHelper(int flag);
   llvm::Value *BuildDestroyHelper(int flag);
 
+  llvm::Value *getBlockObjectDispose();
+  void BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr);
 };
 
 }  // end namespace CodeGen

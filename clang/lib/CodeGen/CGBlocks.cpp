@@ -34,8 +34,6 @@ Enable__block("f__block",
 
 
 llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   const llvm::Type *UnsignedLongTy
     = CGM.getTypes().ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *C;
@@ -78,8 +76,6 @@ llvm::Constant *BlockModule::getNSConcreteGlobalBlock() {
   if (NSConcreteGlobalBlock)
     return NSConcreteGlobalBlock;
 
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
   // same thing as CreateRuntimeFunction if there's already a variable with the
   // same name.
@@ -96,8 +92,6 @@ llvm::Constant *BlockModule::getNSConcreteStackBlock() {
   if (NSConcreteStackBlock)
     return NSConcreteStackBlock;
 
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
   // same thing as CreateRuntimeFunction if there's already a variable with the
   // same name.
@@ -164,8 +158,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     // __isa
     C = CGM.getNSConcreteStackBlock();
-    const llvm::PointerType *PtrToInt8Ty
-      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts.push_back(C);
 
@@ -335,9 +327,6 @@ const llvm::Type *BlockModule::getGenericBlockLiteralType() {
   if (GenericBlockLiteralType)
     return GenericBlockLiteralType;
 
-  const llvm::Type *Int8PtrTy =
-    llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-
   const llvm::Type *BlockDescPtrTy =
     llvm::PointerType::getUnqual(getBlockDescriptorType());
 
@@ -351,10 +340,10 @@ const llvm::Type *BlockModule::getGenericBlockLiteralType() {
   //   void (*__invoke)(void *);
   //   struct __block_descriptor *__descriptor;
   // };
-  GenericBlockLiteralType = llvm::StructType::get(Int8PtrTy,
+  GenericBlockLiteralType = llvm::StructType::get(PtrToInt8Ty,
                                                   IntTy,
                                                   IntTy,
-                                                  Int8PtrTy,
+                                                  PtrToInt8Ty,
                                                   BlockDescPtrTy,
                                                   NULL);
 
@@ -367,9 +356,6 @@ const llvm::Type *BlockModule::getGenericBlockLiteralType() {
 const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   if (GenericExtendedBlockLiteralType)
     return GenericExtendedBlockLiteralType;
-
-  const llvm::Type *Int8PtrTy =
-    llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
 
   const llvm::Type *BlockDescPtrTy =
     llvm::PointerType::getUnqual(getBlockDescriptorType());
@@ -386,13 +372,13 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   //   void *__copy_func_helper_decl;
   //   void *__destroy_func_decl;
   // };
-  GenericExtendedBlockLiteralType = llvm::StructType::get(Int8PtrTy,
+  GenericExtendedBlockLiteralType = llvm::StructType::get(PtrToInt8Ty,
                                                           IntTy,
                                                           IntTy,
-                                                          Int8PtrTy,
+                                                          PtrToInt8Ty,
                                                           BlockDescPtrTy,
-                                                          Int8PtrTy,
-                                                          Int8PtrTy,
+                                                          PtrToInt8Ty,
+                                                          PtrToInt8Ty,
                                                           NULL);
 
   getModule().addTypeName("struct.__block_literal_extended_generic",
@@ -678,8 +664,6 @@ uint64_t CodeGenFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
 }
 
 llvm::Value *BlockFunction::BuildCopyHelper(int flag) {
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: implement
   llvm::Value *V = llvm::ConstantInt::get(llvm::Type::Int32Ty, 43);
   V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "tmp");
@@ -688,11 +672,33 @@ llvm::Value *BlockFunction::BuildCopyHelper(int flag) {
 }
 
 llvm::Value *BlockFunction::BuildDestroyHelper(int flag) {
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   // FIXME: implement
   llvm::Value *V = llvm::ConstantInt::get(llvm::Type::Int32Ty, 44);
   V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "tmp");
   V = Builder.CreateBitCast(V, PtrToInt8Ty, "tmp");
   return V;
+}
+
+llvm::Value *BlockFunction::getBlockObjectDispose() {
+  if (CGM.BlockObjectDispose == 0) {
+    const llvm::FunctionType *FTy;
+    std::vector<const llvm::Type*> ArgTys;
+    const llvm::Type *ResultType = llvm::Type::VoidTy;
+    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(llvm::Type::Int32Ty);
+    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+    CGM.BlockObjectDispose  
+      = CGM.CreateRuntimeFunction(FTy, "_Block_object_dispose");
+  }
+  return CGM.BlockObjectDispose;
+}
+
+void BlockFunction::BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr) {
+  llvm::Value *F = getBlockObjectDispose();
+  llvm::Value *N, *V;
+  V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
+  V = Builder.CreateLoad(V, false);
+  V = Builder.CreateBitCast(V, PtrToInt8Ty);
+  N = llvm::ConstantInt::get(llvm::Type::Int32Ty, BLOCK_FIELD_IS_BYREF);
+  Builder.CreateCall2(F, V, N);
 }

@@ -1,4 +1,5 @@
-// RUN: clang %s -emit-llvm -o %t -fblocks -f__block
+// RUN: clang %s -emit-llvm -o %t -fblocks -f__block &&
+// RUN: grep "_Block_object_dispose" %t | count 3
 #include <stdio.h>
 
 void test1() {

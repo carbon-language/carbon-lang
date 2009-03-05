@@ -227,6 +227,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
 void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
   bool isByRef = D.getAttr<BlocksAttr>();
+  bool needsDispose = false;
 
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
@@ -371,6 +372,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
       Builder.CreateStore(BuildDestroyHelper(flag), destroy_helper);
     }
+    needsDispose = true;
   }
 
   // Handle the cleanup attribute
@@ -387,6 +389,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
                                   getContext().getPointerType(D.getType())));
       
     EmitCall(CGM.getTypes().getFunctionInfo(FD), F, Args);
+  }
+
+  if (needsDispose) {
+    CleanupScope scope(*this);
+    BuildBlockRelease(D, DeclPtr);
   }
 }
 
