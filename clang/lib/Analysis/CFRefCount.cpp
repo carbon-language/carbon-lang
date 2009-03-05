@@ -849,6 +849,10 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     const FunctionType* FT = FD->getType()->getAsFunctionType();
     const char* FName = FD->getIdentifier()->getName();
     
+    // Strip away preceding '_'.  Doing this here will effect all the checks
+    // down below.
+    while (*FName == '_') ++FName;
+    
     // Inspect the result type.
     QualType RetTy = FT->getResultType();
     
@@ -910,7 +914,13 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     // Check for release functions, the only kind of functions that we care
     // about that don't return a pointer type.
     if (FName[0] == 'C' && (FName[1] == 'F' || FName[1] == 'G')) {
-      if (isRelease(FD, FName+2))
+      // Test for 'CGCF'.
+      if (FName[1] == 'G' && FName[2] == 'C' && FName[3] == 'F')
+        FName += 4;
+      else
+        FName += 2;
+      
+      if (isRelease(FD, FName))
         S = getUnarySummary(FT, cfrelease);
       else {
         assert (ScratchArgs.empty());
