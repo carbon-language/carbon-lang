@@ -1720,8 +1720,8 @@ void GRExprEngine::VisitCastPointerToInteger(SVal V, const GRState* state,
     // FIXME: Determine if the number of bits of the target type is 
     // equal or exceeds the number of bits to store the pointer value.
     // If not, flag an error.    
-    MakeNode(Dst, CastE, Pred, BindExpr(state, CastE,
-                                        EvalCast(V, CastE->getType())));
+    MakeNode(Dst, CastE, Pred, BindExpr(state, CastE, EvalCast(cast<Loc>(V),
+                                                               CastE->getType())));
   }
   else  
     MakeNode(Dst, CastE, Pred, BindExpr(state, CastE, V));
