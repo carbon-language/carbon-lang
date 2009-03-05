@@ -7502,8 +7502,10 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 
   // If the allocation has multiple uses, only promote it if we are strictly
   // increasing the alignment of the resultant allocation.  If we keep it the
-  // same, we open the door to infinite loops of various kinds.
-  if (!AI.hasOneUse() && CastElTyAlign == AllocElTyAlign) return 0;
+  // same, we open the door to infinite loops of various kinds.  (A reference
+  // from a dbg.declare doesn't count as a use for this purpose.)
+  if (!AI.hasOneUse() && !hasOneUsePlusDeclare(&AI) &&
+      CastElTyAlign == AllocElTyAlign) return 0;
 
   uint64_t AllocElTySize = TD->getTypePaddedSize(AllocElTy);
   uint64_t CastElTySize = TD->getTypePaddedSize(CastElTy);
@@ -7551,10 +7553,15 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   InsertNewInstBefore(New, AI);
   New->takeName(&AI);
   
-  // If the allocation has multiple uses, insert a cast and change all things
-  // that used it to use the new cast.  This will also hack on CI, but it will
-  // die soon.
-  if (!AI.hasOneUse()) {
+  // If the allocation has one real use plus a dbg.declare, just remove the
+  // declare.
+  if (DbgDeclareInst *DI = hasOneUsePlusDeclare(&AI)) {
+    EraseInstFromFunction(*DI);
+  }
+  // If the allocation has multiple real uses, insert a cast and change all
+  // things that used it to use the new cast.  This will also hack on CI, but it
+  // will die soon.
+  else if (!AI.hasOneUse()) {
     AddUsesToWorkList(AI);
     // New is the allocation instruction, pointer typed. AI is the original
     // allocation instruction, also pointer typed. Thus, cast to use is BitCast.
