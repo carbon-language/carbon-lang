@@ -11565,9 +11565,15 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
         return Res;
 
   
-  // If this store is the last instruction in the basic block, and if the block
-  // ends with an unconditional branch, try to move it to the successor block.
-  BBI = &SI; ++BBI;
+  // If this store is the last instruction in the basic block (possibly
+  // excepting debug info instructions and the pointer bitcasts that feed
+  // into them), and if the block ends with an unconditional branch, try
+  // to move it to the successor block.
+  BBI = &SI; 
+  do {
+    ++BBI;
+  } while (isa<DbgInfoIntrinsic>(BBI) ||
+           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType())));
   if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
     if (BI->isUnconditional())
       if (SimplifyStoreAtEndOfBlock(SI))
@@ -11625,8 +11631,15 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // else' case.  there is an instruction before the branch.
   StoreInst *OtherStore = 0;
   if (OtherBr->isUnconditional()) {
-    // If this isn't a store, or isn't a store to the same location, bail out.
     --BBI;
+    // Skip over debugging info.
+    while (isa<DbgInfoIntrinsic>(BBI) ||
+           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
+      if (BBI==OtherBB->begin())
+        return false;
+      --BBI;
+    }
+    // If this isn't a store, or isn't a store to the same location, bail out.
     OtherStore = dyn_cast<StoreInst>(BBI);
     if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1))
       return false;
