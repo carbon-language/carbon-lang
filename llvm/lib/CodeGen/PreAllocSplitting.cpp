@@ -38,10 +38,12 @@ using namespace llvm;
 
 static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
 static cl::opt<int> DeadSplitLimit("dead-split-limit", cl::init(-1), cl::Hidden);
+static cl::opt<int> RestoreFoldLimit("restore-fold-limit", cl::init(-1), cl::Hidden);
 
 STATISTIC(NumSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
 STATISTIC(NumFolds, "Number of intervals split with spill folding");
+STATISTIC(NumRestoreFolds, "Number of intervals split with restore folding");
 STATISTIC(NumRenumbers, "Number of intervals renumbered into new registers");
 STATISTIC(NumDeadSpills, "Number of dead spills removed");
 
@@ -1013,15 +1015,32 @@ MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg,
                                              MachineBasicBlock* MBB,
                                              int SS,
                                      SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
+  if ((int)RestoreFoldLimit != -1 && RestoreFoldLimit == NumRestoreFolds)
+    return 0;
+                                       
   // Go top down if RefsInMBB is empty.
   if (RefsInMBB.empty())
     return 0;
   
   // Can't fold a restore between a call stack setup and teardown.
   MachineBasicBlock::iterator FoldPt = Barrier;
-  while (FoldPt != MBB->getFirstTerminator() && !RefsInMBB.count(FoldPt)) {
-    ++FoldPt;
+  
+  // Advance from barrier to call frame teardown.
+  while (FoldPt != MBB->getFirstTerminator() &&
+         FoldPt->getOpcode() != TRI->getCallFrameDestroyOpcode()) {
+    if (RefsInMBB.count(FoldPt))
+      return 0;
     
+    ++FoldPt;
+  }
+  
+  if (FoldPt == MBB->getFirstTerminator())
+    return 0;
+  else
+    ++FoldPt;
+  
+  // Now find the restore point.
+  while (FoldPt != MBB->getFirstTerminator() && !RefsInMBB.count(FoldPt)) {
     if (FoldPt->getOpcode() == TRI->getCallFrameSetupOpcode()) {
       while (FoldPt != MBB->getFirstTerminator() &&
              FoldPt->getOpcode() != TRI->getCallFrameDestroyOpcode()) {
@@ -1031,8 +1050,11 @@ MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg,
         ++FoldPt;
       }
       
-      ++FoldPt;
-    }
+      if (FoldPt == MBB->getFirstTerminator())
+        return 0;
+    } 
+    
+    ++FoldPt;
   }
   
   if (FoldPt == MBB->getFirstTerminator())
@@ -1054,7 +1076,7 @@ MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg,
   if (FMI) {
     LIs->ReplaceMachineInstrInMaps(FoldPt, FMI);
     FMI = MBB->insert(MBB->erase(FoldPt), FMI);
-    ++NumFolds;
+    ++NumRestoreFolds;
   }
   
   return FMI;
@@ -1171,6 +1193,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   if (MachineInstr* LMI = FoldRestore(CurrLI->reg, RC, Barrier,
                                       BarrierMBB, SS, RefsInMBB)) {
     RestorePt = LMI;
+    RestoreIndex = LIs->getInstructionIndex(RestorePt);
     FoldedRestore = true;
   } else {
     TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
