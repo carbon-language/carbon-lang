@@ -1720,8 +1720,14 @@ void GRExprEngine::VisitCastPointerToInteger(SVal V, const GRState* state,
     // FIXME: Determine if the number of bits of the target type is 
     // equal or exceeds the number of bits to store the pointer value.
     // If not, flag an error.
-    unsigned bits = getContext().getTypeSize(PtrTy);  
-    V = nonloc::LocAsInteger::Make(getBasicVals(), cast<Loc>(V), bits);
+    
+    if (loc::ConcreteInt *CI = dyn_cast<loc::ConcreteInt>(&V)) {
+      V = nonloc::ConcreteInt(CI->getValue());
+    }
+    else {    
+      unsigned bits = getContext().getTypeSize(PtrTy);  
+      V = nonloc::LocAsInteger::Make(getBasicVals(), cast<Loc>(V), bits);
+    }
   }
   
   MakeNode(Dst, CastE, Pred, BindExpr(state, CastE, V));
