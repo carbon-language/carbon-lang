@@ -1778,13 +1778,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
       continue;
     }
-    
-    // Just pass through function and block pointers.
-    if (T->isBlockPointerType() || T->isFunctionPointerType()) {
-      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
-      continue;
-    }
-  
+      
     // Check for casts from pointers to integers.
     if (T->isIntegerType() && Loc::IsLocType(ExTy)) {
       VisitCastPointerToInteger(V, state, ExTy, CastE, N, Dst);
@@ -1792,14 +1786,27 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     }
     
     // Check for casts from integers to pointers.
-    if (Loc::IsLocType(T) && ExTy->isIntegerType())
+    if (Loc::IsLocType(T) && ExTy->isIntegerType()) {
       if (nonloc::LocAsInteger *LV = dyn_cast<nonloc::LocAsInteger>(&V)) {
         // Just unpackage the lval and return it.
         V = LV->getLoc();
         MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
-        continue;
       }
-
+      else if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&V)) {
+        MakeNode(Dst, CastE, N,
+                 BindExpr(state, CastE, loc::ConcreteInt(CI->getValue())));
+      }
+      
+      continue;      
+    }
+    
+    // Just pass through function and block pointers.
+    if (ExTy->isBlockPointerType() || ExTy->isFunctionPointerType()) {
+      assert(Loc::IsLocType(T));
+      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
+      continue;
+    }
+    
     // Check for casts from array type to another type.
     if (ExTy->isArrayType()) {
       // We will always decay to a pointer.
