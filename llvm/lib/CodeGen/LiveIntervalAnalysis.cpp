@@ -684,11 +684,13 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
          getInstructionFromIndex(baseIndex) == 0)
     baseIndex += InstrSlots::NUM;
   unsigned end = baseIndex;
+  bool SeenDefUse = false;
   
   while (mi != MBB->end()) {
     if (mi->killsRegister(interval.reg, tri_)) {
       DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
+      SeenDefUse = true;
       goto exit;
     } else if (mi->modifiesRegister(interval.reg, tri_)) {
       // Another instruction redefines the register before it is ever read.
@@ -697,19 +699,22 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       // [defSlot(def), defSlot(def)+1)
       DOUT << " dead";
       end = getDefIndex(start) + 1;
+      SeenDefUse = true;
       goto exit;
     }
 
     baseIndex += InstrSlots::NUM;
-    while (baseIndex / InstrSlots::NUM < i2miMap_.size() && 
-           getInstructionFromIndex(baseIndex) == 0)
-      baseIndex += InstrSlots::NUM;
     ++mi;
+    if (mi != MBB->end()) {
+      while (baseIndex / InstrSlots::NUM < i2miMap_.size() && 
+             getInstructionFromIndex(baseIndex) == 0)
+        baseIndex += InstrSlots::NUM;
+    }
   }
 
 exit:
   // Live-in register might not be used at all.
-  if (end == MIIdx) {
+  if (!SeenDefUse) {
     if (isAlias) {
       DOUT << " dead";
       end = getDefIndex(MIIdx) + 1;
