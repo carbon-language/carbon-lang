@@ -673,8 +673,13 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
     // Needed to implement property "super.method" notation.
     if (D == 0 && II->isStr("super")) {
-      QualType T = Context.getPointerType(Context.getObjCInterfaceType(
-                     getCurMethodDecl()->getClassInterface()));
+      QualType T;
+      
+      if (getCurMethodDecl()->isInstanceMethod())
+        T = Context.getPointerType(Context.getObjCInterfaceType(
+                                   getCurMethodDecl()->getClassInterface()));
+      else
+        T = Context.getObjCClassType();
       return Owned(new (Context) ObjCSuperExpr(Loc, T));
     }
   }
@@ -1956,6 +1961,24 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
                        << &Member << BaseType);
   }
+  // Handle properties on ObjC 'Class' types.
+  if (OpKind == tok::period && (BaseType == Context.getObjCClassType())) {
+    // Also must look for a getter name which uses property syntax.
+    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    if (ObjCMethodDecl *MD = getCurMethodDecl()) {
+      ObjCMethodDecl *OMD;
+      // FIXME: need to also look locally in the implementation.
+      if ((OMD = MD->getClassInterface()->lookupClassMethod(Sel))) {
+        // Check the use of this method.
+        if (DiagnoseUseOfDecl(OMD, MemberLoc))
+          return ExprError();
+
+        return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel,
+                        OMD->getResultType(), OMD, OpLoc, MemberLoc, NULL, 0));
+      }
+    }
+  }
+  
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType()) {
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
