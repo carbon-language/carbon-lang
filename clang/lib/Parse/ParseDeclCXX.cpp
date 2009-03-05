@@ -73,6 +73,10 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     DeclTy *NamespcDecl =
       Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
 
+    PrettyStackTraceDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
+                                   PP.getSourceManager(),
+                                   "parsing namespace");
+    
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof))
       ParseExternalDeclaration();
     
