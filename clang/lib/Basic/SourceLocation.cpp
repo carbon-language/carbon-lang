@@ -13,13 +13,30 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
-
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// PrettyStackTraceLoc
+//===----------------------------------------------------------------------===//
+
+void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
+  if (Loc.isValid()) {
+    Loc.print(OS, SM);
+    OS << ": ";
+  }
+  OS << Message << '\n';
+}
+
+//===----------------------------------------------------------------------===//
+// SourceLocation
+//===----------------------------------------------------------------------===//
 
 void SourceLocation::Emit(llvm::Serializer& S) const {
   S.EmitInt(getRawEncoding());  
@@ -29,28 +46,31 @@ SourceLocation SourceLocation::ReadVal(llvm::Deserializer& D) {
   return SourceLocation::getFromRawEncoding(D.ReadInt());   
 }
 
-void SourceLocation::dump(const SourceManager &SM) const {
+void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
   if (!isValid()) {
-    fprintf(stderr, "<invalid loc>");
+    OS << "<invalid loc>";
     return;
   }
   
   if (isFileID()) {
     PresumedLoc PLoc = SM.getPresumedLoc(*this);
-    
     // The instantiation and spelling pos is identical for file locs.
-    fprintf(stderr, "%s:%d:%d",
-            PLoc.getFilename(), PLoc.getLine(), PLoc.getColumn());
+    OS << PLoc.getFilename() << ':' << PLoc.getLine()
+       << ':' << PLoc.getColumn();
     return;
   }
   
-  SM.getInstantiationLoc(*this).dump(SM);
-  
-  fprintf(stderr, " <Spelling=");
-  SM.getSpellingLoc(*this).dump(SM);
-  fprintf(stderr, ">");
+  SM.getInstantiationLoc(*this).print(OS, SM);
+
+  OS << " <Spelling=";
+  SM.getSpellingLoc(*this).print(OS, SM);
+  OS << '>';
 }
 
+void SourceLocation::dump(const SourceManager &SM) const {
+  print(llvm::errs(), SM);
+  llvm::errs().flush();
+}
 
 void SourceRange::Emit(llvm::Serializer& S) const {
   B.Emit(S);
@@ -62,6 +82,10 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
   SourceLocation B = SourceLocation::ReadVal(D);
   return SourceRange(A,B);
 }
+
+//===----------------------------------------------------------------------===//
+// FullSourceLoc
+//===----------------------------------------------------------------------===//
 
 FileID FullSourceLoc::getFileID() const {
   assert(isValid());

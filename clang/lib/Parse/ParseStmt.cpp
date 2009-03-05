@@ -15,10 +15,11 @@
 #include "clang/Parse/Parser.h"
 #include "ExtensionRAIIObject.h"
 #include "AstGuard.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/PrettyStackTrace.h"
+#include "clang/Basic/SourceManager.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -409,6 +410,10 @@ Parser::OwningStmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
 /// consume the '}' at the end of the block.  It does not manipulate the scope
 /// stack.
 Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
+  PrettyStackTraceLoc CrashInfo(PP.getSourceManager(), 
+                                Tok.getLocation(),
+                                "in compound statement ('{}')");
+  
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are

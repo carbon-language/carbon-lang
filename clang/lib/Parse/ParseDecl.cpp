@@ -1848,7 +1848,6 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
   // If we reached this point, we are either in C/ObjC or the token didn't
   // satisfy any of the C++-specific checks.
-
   if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
     assert(!getLang().CPlusPlus &&
            "There's a C++-specific check for tok::identifier above");
@@ -2080,7 +2079,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   // Enter function-declaration scope, limiting any declarators to the
   // function prototype scope, including parameter declarators.
-  ParseScope PrototypeScope(this, Scope::FunctionPrototypeScope|Scope::DeclScope);
+  ParseScope PrototypeScope(this,
+                            Scope::FunctionPrototypeScope|Scope::DeclScope);
   
   bool IsVariadic = false;
   SourceLocation EllipsisLoc;

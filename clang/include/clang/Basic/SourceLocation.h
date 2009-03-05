@@ -14,12 +14,13 @@
 #ifndef LLVM_CLANG_SOURCELOCATION_H
 #define LLVM_CLANG_SOURCELOCATION_H
 
-#include <cassert>
 #include "llvm/Bitcode/SerializationFwd.h"
 #include <utility>
+#include <cassert>
 
 namespace llvm {
   class MemoryBuffer;
+  class raw_ostream;
   template <typename T> struct DenseMapInfo;
 }
 
@@ -134,7 +135,8 @@ public:
   
   /// ReadVal - Read a SourceLocation object from Bitcode.
   static SourceLocation ReadVal(llvm::Deserializer& D);
-  
+
+  void print(llvm::raw_ostream &OS, const SourceManager &SM) const;
   void dump(const SourceManager &SM) const;
 };
 
