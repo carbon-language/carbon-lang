@@ -1,5 +1,28 @@
 // RUN: clang -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
 
+typedef struct objc_selector *SEL;
+typedef signed char BOOL;
+typedef int NSInteger;
+typedef unsigned int NSUInteger;
+typedef struct _NSZone NSZone;
+@class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
+@protocol NSObject  - (BOOL)isEqual:(id)object; @end
+@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end
+@protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone; @end
+@protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
+@interface NSObject <NSObject> {} - (id)init; @end
+extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
+@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
+- (NSUInteger)length;
++ (id)stringWithUTF8String:(const char *)nullTerminatedCString;
+@end extern NSString * const NSBundleDidLoadNotification;
+@interface NSAssertionHandler : NSObject {}
++ (NSAssertionHandler *)currentHandler;
+- (void)handleFailureInMethod:(SEL)selector object:(id)object file:(NSString *)fileName lineNumber:(NSInteger)line description:(NSString *)format,...;
+@end
+extern NSString * const NSConnectionReplyMode;
+
+
 //---------------------------------------------------------------------------
 // Test case 'checkaccess_union' differs for region store and basic store.
 // The basic store doesn't reason about compound literals, so the code
@@ -44,3 +67,24 @@ char test2() {
 
   return 'a';
 }
+
+///
+@interface Test3 : NSObject {
+  int flag;
+}
+- (void)test_self_tracking;
+@end
+
+@implementation Test3
+- (void)test_self_tracking {
+  char *p = 0;
+  char c;
+
+  if (flag)
+    p = "hello";
+
+  if (flag)
+    c = *p; // no-warning
+}
+@end
+
