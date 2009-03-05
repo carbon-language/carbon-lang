@@ -779,13 +779,24 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 llvm::GlobalValue *
 CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D,
                                              const llvm::Type *Ty) {
-  if (!Ty)
+  bool DoSetAttributes = true;
+  if (!Ty) {
     Ty = getTypes().ConvertType(D->getType());
+    if (!isa<llvm::FunctionType>(Ty)) {
+      // This function doesn't have a complete type (for example, the return
+      // type is an incomplete struct). Use a fake type instead, and make
+      // sure not to try to set attributes.
+      Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
+                                   std::vector<const llvm::Type*>(), false);
+      DoSetAttributes = false;
+    }
+  }
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
                                              getMangledName(D),
                                              &getModule());
-  SetFunctionAttributes(D, F);
+  if (DoSetAttributes)
+    SetFunctionAttributes(D, F);
   return F;
 }
 
