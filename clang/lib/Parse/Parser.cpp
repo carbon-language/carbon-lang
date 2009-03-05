@@ -43,8 +43,13 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 /// what the current token is.
 void PrettyStackTraceParserEntry::print(llvm::raw_ostream &OS) const {
   const Token &Tok = P.getCurToken();
-  if (Tok.getLocation().isInvalid()) {
+  if (Tok.is(tok::eof)) {
     OS << "<eof> parser at end of file\n";
+    return;
+  }
+  
+  if (Tok.getLocation().isInvalid()) {
+    OS << "<unknown> parser at unknown location\n";
     return;
   }
   
