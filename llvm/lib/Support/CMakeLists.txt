@@ -16,6 +16,7 @@ add_llvm_library(LLVMSupport
   ManagedStatic.cpp
   MemoryBuffer.cpp
   PluginLoader.cpp
+  PrettyStackTrace.cpp
   SlowOperationInformer.cpp
   SmallPtrSet.cpp
   Statistic.cpp
