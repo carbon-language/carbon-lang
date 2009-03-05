@@ -5382,13 +5382,19 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
            UE = Op.getNode()->use_end(); UI != UE; ++UI)
         if (UI->getOpcode() == ISD::STORE)
           goto default_case;
-      // An add of one will be selected as an INC.
       if (ConstantSDNode *C =
-            dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1)))
+            dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1))) {
+        // An add of one will be selected as an INC.
         if (C->getAPIntValue() == 1) {
           Opcode = X86ISD::INC;
           break;
         }
+        // An add of negative one (subtract of one) will be selected as a DEC.
+        if (C->getAPIntValue().isAllOnesValue()) {
+          Opcode = X86ISD::DEC;
+          break;
+        }
+      }
       // Otherwise use a regular EFLAGS-setting add.
       Opcode = X86ISD::ADD;
       break;
@@ -5399,13 +5405,6 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
            UE = Op.getNode()->use_end(); UI != UE; ++UI)
         if (UI->getOpcode() == ISD::STORE)
           goto default_case;
-      // A subtract of one will be selected as a DEC.
-      if (ConstantSDNode *C =
-            dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1)))
-        if (C->getAPIntValue() == 1) {
-          Opcode = X86ISD::DEC;
-          break;
-        }
       // Otherwise use a regular EFLAGS-setting sub.
       Opcode = X86ISD::SUB;
       break;
