@@ -5370,6 +5370,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
   // doing a separate TEST.
   if (Op.getResNo() == 0) {
     unsigned Opcode = 0;
+    unsigned NumOperands = 0;
     switch (Op.getNode()->getOpcode()) {
     case ISD::ADD:
       // Due to an isel shortcoming, be conservative if this add is likely to
@@ -5387,16 +5388,19 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
         // An add of one will be selected as an INC.
         if (C->getAPIntValue() == 1) {
           Opcode = X86ISD::INC;
+          NumOperands = 1;
           break;
         }
         // An add of negative one (subtract of one) will be selected as a DEC.
         if (C->getAPIntValue().isAllOnesValue()) {
           Opcode = X86ISD::DEC;
+          NumOperands = 1;
           break;
         }
       }
       // Otherwise use a regular EFLAGS-setting add.
       Opcode = X86ISD::ADD;
+      NumOperands = 2;
       break;
     case ISD::SUB:
       // Due to the ISEL shortcoming noted above, be conservative if this sub is
@@ -5407,6 +5411,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
           goto default_case;
       // Otherwise use a regular EFLAGS-setting sub.
       Opcode = X86ISD::SUB;
+      NumOperands = 2;
       break;
     case X86ISD::ADD:
     case X86ISD::SUB:
@@ -5420,7 +5425,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
     if (Opcode != 0) {
       const MVT *VTs = DAG.getNodeValueTypes(Op.getValueType(), MVT::i32);
       SmallVector<SDValue, 4> Ops;
-      for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i)
+      for (unsigned i = 0, e = NumOperands; i != e; ++i)
         Ops.push_back(Op.getOperand(i));
       SDValue New = DAG.getNode(Opcode, dl, VTs, 2, &Ops[0], Ops.size());
       DAG.ReplaceAllUsesWith(Op, New);
