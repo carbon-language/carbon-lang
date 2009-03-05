@@ -73,9 +73,9 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     DeclTy *NamespcDecl =
       Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
 
-    PrettyStackTraceDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
-                                   PP.getSourceManager(),
-                                   "parsing namespace");
+    PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
+                                          PP.getSourceManager(),
+                                          "parsing namespace");
     
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof))
       ParseExternalDeclaration();
@@ -793,9 +793,9 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
          TagType == DeclSpec::TST_union  ||
          TagType == DeclSpec::TST_class) && "Invalid TagType!");
 
-  PrettyStackTraceDecl CrashInfo(TagDecl, RecordLoc, Actions,
-                                 PP.getSourceManager(),
-                                 "parsing struct/union/class body");
+  PrettyStackTraceActionsDecl CrashInfo(TagDecl, RecordLoc, Actions,
+                                        PP.getSourceManager(),
+                                        "parsing struct/union/class body");
   
   SourceLocation LBraceLoc = ConsumeBrace();
 

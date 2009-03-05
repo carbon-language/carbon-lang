@@ -39,12 +39,13 @@ using namespace clang;
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN BackendConsumer  : public ASTConsumer {
+  class VISIBILITY_HIDDEN BackendConsumer : public ASTConsumer {
     BackendAction Action;
     CompileOptions CompileOpts;
     const std::string &InputFile;
     std::string OutputFile;
     bool GenerateDebugInfo;
+    ASTContext *Context;
 
     Timer LLVMIRGeneration;
     Timer CodeGenerationTime;
@@ -78,8 +79,8 @@ namespace {
   public:  
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
                     const LangOptions &langopts, const CompileOptions &compopts,
-                    const std::string& infile, const std::string& outfile,
-                    bool debug)  :
+                    const std::string &infile, const std::string &outfile,
+                    bool debug) :
       Action(action), 
       CompileOpts(compopts),
       InputFile(infile), 
@@ -105,6 +106,7 @@ namespace {
     }
 
     virtual void InitializeTU(TranslationUnit& TU) {
+      Context = &TU.getContext();
       
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.startTimer();
@@ -121,6 +123,9 @@ namespace {
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
+      PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
+                                     Context->getSourceManager(),
+                                     "LLVM IR generation of declaration");
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.startTimer();
       
@@ -131,15 +136,18 @@ namespace {
     }
     
     virtual void HandleTranslationUnit(TranslationUnit& TU) {
-      if (CompileOpts.TimePasses)
-        LLVMIRGeneration.startTimer();
+      {
+        PrettyStackTraceString CrashInfo("per-file LLVM IR generation");
+        if (CompileOpts.TimePasses)
+          LLVMIRGeneration.startTimer();
 
-      Gen->HandleTranslationUnit(TU);
+        Gen->HandleTranslationUnit(TU);
 
-      if (CompileOpts.TimePasses)
-        LLVMIRGeneration.stopTimer();
+        if (CompileOpts.TimePasses)
+          LLVMIRGeneration.stopTimer();
+      }
 
-      // EmitAssembly times itself.
+      // EmitAssembly times and registers crash info itself.
       EmitAssembly();
       
       // Force a flush here in case we never get released.
@@ -148,6 +156,9 @@ namespace {
     }
     
     virtual void HandleTagDeclDefinition(TagDecl *D) {
+      PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
+                                     Context->getSourceManager(),
+                                     "LLVM IR generation of declaration");
       Gen->HandleTagDeclDefinition(D);
     }
   };  
@@ -359,7 +370,6 @@ void BackendConsumer::EmitAssembly() {
     return;
   
   
-  
   TimeRegion Region(CompileOpts.TimePasses ? &CodeGenerationTime : 0);
 
   // Make sure IR generation is happy with the module. This is
@@ -388,6 +398,8 @@ void BackendConsumer::EmitAssembly() {
   // would like to have the option of streaming code generation.
 
   if (PerFunctionPasses) {
+    PrettyStackTraceString CrashInfo("per-function optimization");
+    
     PerFunctionPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (!I->isDeclaration())
@@ -395,10 +407,13 @@ void BackendConsumer::EmitAssembly() {
     PerFunctionPasses->doFinalization();
   }
   
-  if (PerModulePasses)
+  if (PerModulePasses) {
+    PrettyStackTraceString CrashInfo("per-module optimization passes");
     PerModulePasses->run(*M);
+  }
   
   if (CodeGenPasses) {
+    PrettyStackTraceString CrashInfo("code generation");
     CodeGenPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (!I->isDeclaration())

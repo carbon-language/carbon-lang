@@ -19,6 +19,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdio>
 #include <functional>
@@ -91,6 +92,27 @@ void Decl::addDeclKind(Kind k) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// PrettyStackTraceDecl Implementation
+//===----------------------------------------------------------------------===//
+  
+void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
+  SourceLocation TheLoc = Loc;
+  if (TheLoc.isInvalid() && TheDecl)
+    TheLoc = TheDecl->getLocation();
+  
+  if (TheLoc.isValid()) {
+    TheLoc.print(OS, SM);
+    OS << ": ";
+  }
+
+  OS << Message;
+
+  if (NamedDecl *DN = dyn_cast_or_null<NamedDecl>(TheDecl))
+    OS << " '" << DN->getQualifiedNameAsString() << '\'';
+  OS << '\n';
+}
+  
 //===----------------------------------------------------------------------===//
 // Decl Implementation
 //===----------------------------------------------------------------------===//

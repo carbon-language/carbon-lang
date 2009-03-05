@@ -18,6 +18,7 @@
 #include "clang/AST/Type.h"
 // FIXME: Layering violation
 #include "clang/Parse/AccessSpecifier.h"
+#include "llvm/Support/PrettyStackTrace.h"
 
 namespace clang {
 class DeclContext;
@@ -326,6 +327,22 @@ protected:
     assert (false && "Not implemented.");
   }
 };
+
+/// PrettyStackTraceDecl - If a crash occurs, indicate that it happened when
+/// doing something to a specific decl.
+class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
+  Decl *TheDecl;
+  SourceLocation Loc;
+  SourceManager &SM;
+  const char *Message;
+public:
+  PrettyStackTraceDecl(Decl *theDecl, SourceLocation L,
+                       SourceManager &sm, const char *Msg)
+  : TheDecl(theDecl), Loc(L), SM(sm), Message(Msg) {}
+  
+  virtual void print(llvm::raw_ostream &OS) const;
+};  
+  
 
 /// DeclContext - This is used only as base class of specific decl types that
 /// can act as declaration contexts. These decls are (only the top classes

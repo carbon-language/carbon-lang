@@ -1288,9 +1288,9 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
          
-  PrettyStackTraceDecl CrashInfo(Decl, LBraceLoc, Actions,
-                                 PP.getSourceManager(),
-                                 "parsing function body");
+  PrettyStackTraceActionsDecl CrashInfo(Decl, LBraceLoc, Actions,
+                                        PP.getSourceManager(),
+                                        "parsing function body");
   
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement

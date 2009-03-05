@@ -42,7 +42,7 @@ Action::DeclTy *Action::ActOnUsingDirective(Scope *CurScope,
 }
 
 
-void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
+void PrettyStackTraceActionsDecl::print(llvm::raw_ostream &OS) const {
   if (Loc.isValid()) {
     Loc.print(OS, SM);
     OS << ": ";

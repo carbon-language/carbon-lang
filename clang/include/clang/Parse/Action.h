@@ -1516,16 +1516,19 @@ public:
                                            AttributeList *AttrList);
 };
 
-  
-class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
+/// PrettyStackTraceActionsDecl - If a crash occurs in the parser while parsing
+/// something related to a virtualized decl, include that virtualized decl in
+/// the stack trace.
+class PrettyStackTraceActionsDecl : public llvm::PrettyStackTraceEntry {
   Action::DeclTy *TheDecl;
   SourceLocation Loc;
   Action &Actions;
   SourceManager &SM;
   const char *Message;
 public:
-  PrettyStackTraceDecl(Action::DeclTy *Decl, SourceLocation L,
-                       Action &actions, SourceManager &sm, const char *Msg)
+  PrettyStackTraceActionsDecl(Action::DeclTy *Decl, SourceLocation L,
+                              Action &actions, SourceManager &sm,
+                              const char *Msg)
   : TheDecl(Decl), Loc(L), Actions(actions), SM(sm), Message(Msg) {}
   
   virtual void print(llvm::raw_ostream &OS) const;
