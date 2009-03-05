@@ -25,7 +25,6 @@ namespace llvm {
 namespace clang {
   class DiagnosticClient;
   class SourceRange;
-  class SourceManager;
   class DiagnosticBuilder;
   class IdentifierInfo;
   
