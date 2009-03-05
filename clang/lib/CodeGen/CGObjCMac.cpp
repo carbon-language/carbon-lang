@@ -395,6 +395,11 @@ protected:
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
   
+  /// GetIvarLayoutName - Returns a unique constant for the given
+  /// ivar layout bitmap.
+  llvm::Constant *GetIvarLayoutName(IdentifierInfo *Ident,
+                                    const ObjCCommonTypesHelper &ObjCTypes);
+  
   const RecordDecl *GetFirstIvarInRecord(const ObjCInterfaceDecl *OID,
                                          RecordDecl::field_iterator &FIV,
                                          RecordDecl::field_iterator &PIV);  
@@ -1467,7 +1472,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
   // FIXME: Set ivar_layout
-  Values[10] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy); 
+  Values[10] = GetIvarLayoutName(0, ObjCTypes); 
   Values[11] = EmitClassExtension(ID);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
@@ -1598,7 +1603,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   // FIXME: Output weak_ivar_layout string.
-  Values[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[1] = GetIvarLayoutName(0, ObjCTypes);
   Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
 
@@ -2435,6 +2440,13 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
   }
 
   return getConstantGEP(Entry, 0, 0);
+}
+
+/// GetIvarLayoutName - Returns a unique constant for the given
+/// ivar layout bitmap.
+llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
+                                      const ObjCCommonTypesHelper &ObjCTypes) {
+  return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
@@ -3568,7 +3580,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
   // FIXME. ivarLayout is currently null!
-  Values[ 3] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[ 3] = GetIvarLayoutName(0, ObjCTypes);
   Values[ 4] = GetClassName(ID->getIdentifier());
   // const struct _method_list_t * const baseMethods;
   std::vector<llvm::Constant*> Methods;
@@ -3618,7 +3630,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   else
     Values[ 7] = EmitIvarList(ID);
   // FIXME. weakIvarLayout is currently null.
-  Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+  Values[ 8] = GetIvarLayoutName(0, ObjCTypes);
   if (flags & CLS_META)
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   else
