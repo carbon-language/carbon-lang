@@ -25,12 +25,25 @@ namespace clang {
   class PragmaHandler;
   class Scope;
   class DiagnosticBuilder;
+  class Parser;
 
+/// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
+/// an entry is printed for it.
+class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
+  const Parser &P;
+public:
+  PrettyStackTraceParserEntry(const Parser &p) : P(p) {}
+  virtual void print(llvm::raw_ostream &OS) const;
+};
+  
+  
 /// Parser - This implements a parser for the C family of languages.  After
 /// parsing units of the grammar, productions are invoked to handle whatever has
 /// been read.
 ///
 class Parser {
+  PrettyStackTraceParserEntry CrashInfo;
+  
   Preprocessor &PP;
   
   /// Tok - The current token we are peeking ahead.  All parsing methods assume
@@ -92,7 +105,10 @@ public:
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
   TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
+  Preprocessor &getPreprocessor() const { return PP; }
   Action &getActions() const { return Actions; }
+  
+  const Token &getCurToken() const { return Tok; }
   
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.

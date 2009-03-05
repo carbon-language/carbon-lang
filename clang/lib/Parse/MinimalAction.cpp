@@ -19,6 +19,29 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
+///  Out-of-line virtual destructor to provide home for Action class.
+ActionBase::~ActionBase() {}
+
+///  Out-of-line virtual destructor to provide home for Action class.
+Action::~Action() {}
+
+// Defined out-of-line here because of dependecy on AttributeList
+Action::DeclTy *Action::ActOnUsingDirective(Scope *CurScope,
+                                            SourceLocation UsingLoc,
+                                            SourceLocation NamespcLoc,
+                                            const CXXScopeSpec &SS,
+                                            SourceLocation IdentLoc,
+                                            IdentifierInfo *NamespcName,
+                                            AttributeList *AttrList) {
+  
+  // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
+  // passed AttributeList, however other actions don't free it, is it
+  // temporary state or bug?
+  delete AttrList;
+  return 0;
+}
+
+
 void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
   if (Loc.isValid()) {
     Loc.print(OS, SM);
