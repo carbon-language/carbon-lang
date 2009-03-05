@@ -419,7 +419,8 @@ public:
                        PathDiagnostic& pd, BugReporter& br)
     : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
                         
-  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal V) {
+  bool HandleBinding(StoreManager& SMgr, Store store,
+                     const MemRegion* R, SVal V) {
 
     SymbolRef ScanSym;
     
@@ -521,7 +522,8 @@ public:
                      PathDiagnostic& pd)
     : N(n), S(s), BR(br), PD(pd) {}
   
-  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal V) {
+  bool HandleBinding(StoreManager& SMgr, Store store,
+                     const MemRegion* R, SVal V) {
     SymbolRef ScanSym;
   
     if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))

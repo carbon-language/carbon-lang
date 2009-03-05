@@ -2663,13 +2663,14 @@ namespace {
 class VISIBILITY_HIDDEN FindUniqueBinding :
   public StoreManager::BindingsHandler {
     SymbolRef Sym;
-    MemRegion* Binding;
+    const MemRegion* Binding;
     bool First;
     
   public:
     FindUniqueBinding(SymbolRef sym) : Sym(sym), Binding(0), First(true) {}
     
-  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal val) {
+  bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
+                     SVal val) {
     SymbolRef SymV = val.getAsSymbol();
     
     if (!SymV.isValid() || SymV != Sym)
@@ -2686,7 +2687,7 @@ class VISIBILITY_HIDDEN FindUniqueBinding :
   }
     
   operator bool() { return First && Binding; }
-  MemRegion* getRegion() { return Binding; }
+  const MemRegion* getRegion() { return Binding; }
 };  
 }
 

@@ -543,9 +543,15 @@ public:
 
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
-};
-
-
-  
+};  
 } // end clang namespace
+
+namespace llvm {
+static inline raw_ostream& operator<<(raw_ostream& O,
+                                      const clang::MemRegion* R) { 
+  R->print(O);
+  return O;
+}
+} // end llvm namespace
+
 #endif

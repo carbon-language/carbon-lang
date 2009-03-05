@@ -156,7 +156,7 @@ public:
   public:    
     virtual ~BindingsHandler();
     virtual bool HandleBinding(StoreManager& SMgr, Store store,
-                               MemRegion* R, SVal val) = 0;
+                               const MemRegion* R, SVal val) = 0;
   };
   
   /// iterBindings - Iterate over the bindings in the Store.

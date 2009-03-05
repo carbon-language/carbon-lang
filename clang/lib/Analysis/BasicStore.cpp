@@ -19,7 +19,7 @@
 
 using namespace clang;
 
-typedef llvm::ImmutableMap<const VarDecl*,SVal> VarBindingsTy;  
+typedef llvm::ImmutableMap<const MemRegion*,SVal> VarBindingsTy;  
 
 namespace {
   
@@ -307,7 +307,7 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
       
       Store store = state->getStore();
       VarBindingsTy B = GetVarBindings(store);
-      VarBindingsTy::data_type* T = B.lookup(R->getDecl());      
+      VarBindingsTy::data_type* T = B.lookup(R);
       return T ? *T : UnknownVal();
     }
       
@@ -341,8 +341,8 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
       
       VarBindingsTy B = GetVarBindings(store);
       return V.isUnknown()
-        ? VBFactory.Remove(B, R->getDecl()).getRoot()
-        : VBFactory.Add(B, R->getDecl(), V).getRoot();
+        ? VBFactory.Remove(B, R).getRoot()
+        : VBFactory.Add(B, R, V).getRoot();
     }
     default:
       assert ("SetSVal for given Loc type not yet implemented.");
@@ -360,7 +360,7 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
         return store;
       
       VarBindingsTy B = GetVarBindings(store);
-      return VBFactory.Remove(B,R->getDecl()).getRoot();
+      return VBFactory.Remove(B, R).getRoot();
     }
     default:
       assert ("Remove for given Loc type not yet implemented.");
@@ -379,14 +379,16 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   typedef SVal::symbol_iterator symbol_iterator;
   
   // Iterate over the variable bindings.
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
-    if (SymReaper.isLive(Loc, I.getKey())) {
-      RegionRoots.push_back(MRMgr.getVarRegion(I.getKey()));      
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
+    const VarRegion *VR = cast<VarRegion>(I.getKey());
+    if (SymReaper.isLive(Loc, VR->getDecl())) {
+      RegionRoots.push_back(VR);      
       SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
         SymReaper.markLive(*SI);
     }
+  }
   
   // Scan for live variables and live symbols.
   llvm::SmallPtrSet<const VarRegion*, 10> Marked;
@@ -427,7 +429,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   
   // Remove dead variable bindings.  
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
-    const VarRegion* R = cast<VarRegion>(MRMgr.getVarRegion(I.getKey()));
+    const VarRegion* R = cast<VarRegion>(I.getKey());
     
     if (!Marked.count(R)) {
       store = Remove(store, Loc::MakeVal(R));
@@ -548,9 +550,10 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
   return store;
 }
 
-void BasicStoreManager::print(Store store, std::ostream& Out,
+void BasicStoreManager::print(Store store, std::ostream& O,
                               const char* nl, const char *sep) {
       
+  llvm::raw_os_ostream Out(O);
   VarBindingsTy B = GetVarBindings(store);
   Out << "Variables:" << nl;
   
@@ -560,7 +563,7 @@ void BasicStoreManager::print(Store store, std::ostream& Out,
     if (isFirst) isFirst = false;
     else Out << nl;
     
-    Out << ' ' << I.getKey()->getNameAsString() << " : ";
+    Out << ' ' << I.getKey() << " : ";
     I.getData().print(Out);
   }
 }
@@ -569,10 +572,9 @@ void BasicStoreManager::print(Store store, std::ostream& Out,
 void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
   VarBindingsTy B = GetVarBindings(store);
   
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I)
+    f.HandleBinding(*this, store, I.getKey(), I.getData());
 
-    f.HandleBinding(*this, store, MRMgr.getVarRegion(I.getKey()),I.getData());
-  }
 }
 
 StoreManager::BindingsHandler::~BindingsHandler() {}
