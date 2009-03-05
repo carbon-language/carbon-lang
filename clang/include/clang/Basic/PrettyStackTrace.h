@@ -22,7 +22,7 @@
 namespace clang {
 
   /// PrettyStackTraceLoc - If a crash happens while one of these objects are
-  /// live, .
+  /// live, the message is printed out along with the specified source location.
   class PrettyStackTraceLoc : public llvm::PrettyStackTraceEntry {
     SourceManager &SM;
     SourceLocation Loc;
