@@ -249,7 +249,7 @@ DIAG(err_not_bitfield_type, ERROR,
 DIAG(err_static_not_bitfield, ERROR,
      "static member %0 cannot be a bit-field")
 DIAG(err_not_integral_type_bitfield, ERROR,
-     "bit-field %0 with non-integral type")
+     "bit-field %0 has non-integral type")
 DIAG(err_member_initialization, ERROR,
     "%0 can only be initialized if it is a static const integral data member")
 DIAG(err_member_function_initialization, ERROR,

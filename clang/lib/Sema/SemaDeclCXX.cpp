@@ -547,11 +547,15 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   Decl *Member;
   bool InvalidDecl = false;
 
-  if (isInstField)
-    Member = static_cast<Decl*>(ActOnField(S, cast<CXXRecordDecl>(CurContext), 
-                                           Loc, D, BitWidth));
-  else
+  if (isInstField) {
+    FieldDecl *FD = 
+      HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth);
+    // Refresh our notion of bitwidth.
+    BitWidth = FD->getBitWidth();
+    Member = FD;
+  } else {
     Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
+  }
 
   if (!Member) return LastInGroup;
 

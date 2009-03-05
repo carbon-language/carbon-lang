@@ -361,6 +361,10 @@ public:
                          llvm::SmallVectorImpl<DeclTy*> &Decls);
   virtual DeclTy *ActOnField(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
+
+  FieldDecl *HandleField(Scope *S, RecordDecl *TagD, SourceLocation DeclStart,
+                         Declarator &D, Expr *BitfieldWidth);
+
   
   virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
                             Declarator &D, ExprTy *BitfieldWidth,

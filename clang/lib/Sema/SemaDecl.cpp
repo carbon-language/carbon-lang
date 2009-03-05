@@ -2575,7 +2575,8 @@ void Sema::RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
       }
     }
     if (isa<DeclStmt>(*i)) continue;
-    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap, ScopeStack, *i);
+    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
+                            ScopeStack, *i);
   }
 
   while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
@@ -3150,7 +3151,14 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclTy *TagD) {
 
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
                           QualType FieldTy, const Expr *BitWidth) {
-  // FIXME: 6.7.2.1p4 - verify the field type.
+  // C99 6.7.2.1p4 - verify the field type.
+
+  if (!FieldTy->isIntegralType()) {
+    // Handle incomplete types with specific error.
+    if (FieldTy->isIncompleteType())
+      return Diag(FieldLoc, diag::err_field_incomplete) << FieldTy;
+    return Diag(FieldLoc, diag::err_not_integral_type_bitfield) << FieldName;
+  }
   
   llvm::APSInt Value;
   if (VerifyIntegerConstantExpression(BitWidth, &Value))
@@ -3177,15 +3185,19 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
 Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
+  return HandleField(S, static_cast<RecordDecl*>(TagD), DeclStart, D,
+                     static_cast<Expr*>(BitfieldWidth));
+}
+
+/// HandleField - Analyze a field of a C struct or a C++ data member.
+///
+FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
+                             SourceLocation DeclStart,
+                             Declarator &D, Expr *BitWidth) {
   IdentifierInfo *II = D.getIdentifier();
-  Expr *BitWidth = (Expr*)BitfieldWidth;
   SourceLocation Loc = DeclStart;
-  RecordDecl *Record = (RecordDecl *)TagD;
   if (II) Loc = D.getIdentifierLoc();
   
-  // FIXME: Unnamed fields can be handled in various different ways, for
-  // example, unnamed unions inject all members into the struct namespace!
-
   QualType T = GetTypeForDeclarator(D, S);
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   bool InvalidDecl = false;
@@ -3210,8 +3222,11 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
   }
   
   if (BitWidth) {
-    if (VerifyBitField(Loc, II, T, BitWidth))
+    if (VerifyBitField(Loc, II, T, BitWidth)) {
       InvalidDecl = true;
+      DeleteExpr(BitWidth);
+      BitWidth = 0;
+    }
   } else {
     // Not a bitfield.
 
@@ -3290,8 +3305,11 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4
-    if (VerifyBitField(Loc, II, T, BitWidth))
+    if (VerifyBitField(Loc, II, T, BitWidth)) {
       InvalidDecl = true;
+      DeleteExpr(BitWidth);
+      BitWidth = 0;
+    }
   } else {
     // Not a bitfield.
     
@@ -3373,6 +3391,11 @@ void Sema::ActOnFields(Scope* S,
       // Remember all fields written by the user.
       RecFields.push_back(FD);
     }
+    
+    // If the field is already invalid for some reason, don't emit more
+    // diagnostics about it.
+    if (FD->isInvalidDecl())
+      continue;
       
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {
@@ -3466,7 +3489,8 @@ void Sema::ActOnFields(Scope* S,
              IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
           ObjCIvarDecl* Ivar = (*IVI);
           IdentifierInfo *II = Ivar->getIdentifier();
-          ObjCIvarDecl* prevIvar = ID->getSuperClass()->lookupInstanceVariable(II);
+          ObjCIvarDecl* prevIvar =
+            ID->getSuperClass()->lookupInstanceVariable(II);
           if (prevIvar) {
             Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
             Diag(prevIvar->getLocation(), diag::note_previous_declaration);

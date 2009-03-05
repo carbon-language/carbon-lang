@@ -1,4 +1,5 @@
 // RUN: clang %s -fsyntax-only -verify 
+enum e0;
 
 struct a {
   int a : -1; // expected-error{{bit-field 'a' has negative width}}
@@ -11,4 +12,10 @@ struct a {
 
   // rdar://6138816
   int e : 0;  // expected-error {{bit-field 'e' has zero width}}
+
+  float xx : 4;  // expected-error {{bit-field 'xx' has non-integral type}}
+
+  // PR3607
+  enum e0 f : 1; // expected-error {{field has incomplete type 'enum e0'}}
 };
+
