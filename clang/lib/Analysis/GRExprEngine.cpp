@@ -1818,7 +1818,14 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     }
 
     // Check for casts from a region to a specific type.
-    if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {
+    if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {      
+      // FIXME: For TypedViewRegions, we should handle the case where the
+      //  underlying symbolic pointer is a function pointer or
+      //  block pointer.
+      
+      // FIXME: We should handle the case where we strip off view layers to get
+      //  to a desugared type.
+      
       assert(Loc::IsLocType(T));
       assert(Loc::IsLocType(ExTy));
 
@@ -1848,6 +1855,14 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       // Just pass through symbols that are function or block pointers.
       if (SymTy->isFunctionPointerType() || SymTy->isBlockPointerType())
         goto PassThrough;
+      
+      // Are we casting to a function or block pointer?
+      if (T->isFunctionPointerType() || T->isBlockPointerType()) {
+        // FIXME: We should verify that the underlying type of the symbolic 
+        // pointer is a void* (or maybe char*).  Other things are an abuse
+        // of the type system.
+        goto PassThrough;        
+      }
 
       StoreManager& StoreMgr = getStoreManager();
       const MemRegion* R =
