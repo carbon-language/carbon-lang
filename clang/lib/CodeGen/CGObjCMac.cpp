@@ -395,6 +395,17 @@ protected:
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
   
+  /// BuildIvarLayout - Builds ivar layout bitmap for the class
+  /// implementation for the __strong or __weak case.
+  ///
+  llvm::Constant *BuildIvarLayout(ObjCImplementationDecl *OI,
+                                  bool ForStrongLayout);
+  
+  void BuildAggrIvarLayout(RecordDecl *RD, 
+                           const std::vector<FieldDecl*>& RecFields,
+                           unsigned int BytePos, bool ForStrongLayout,
+                           int &Index, int &SkIndex, bool &HasUnion);
+  
   /// GetIvarLayoutName - Returns a unique constant for the given
   /// ivar layout bitmap.
   llvm::Constant *GetIvarLayoutName(IdentifierInfo *Ident,
@@ -2447,6 +2458,45 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
 llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
                                       const ObjCCommonTypesHelper &ObjCTypes) {
   return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+}
+
+void CGObjCCommonMac::BuildAggrIvarLayout(RecordDecl *RD, 
+                              const std::vector<FieldDecl*>& RecFields,
+                              unsigned int BytePos, bool ForStrongLayout,
+                              int &Index, int &SkIndex, bool &HasUnion) {
+  return;
+}
+
+/// BuildIvarLayout - Builds ivar layout bitmap for the class
+/// implementation for the __strong or __weak case.
+/// The layout map displays which words in ivar list must be skipped 
+/// and which must be scanned by GC (see below). String is built of bytes. 
+/// Each byte is divided up in two nibbles (4-bit each). Left nibble is count 
+/// of words to skip and right nibble is count of words to scan. So, each
+/// nibble represents up to 15 workds to skip or scan. Skipping the rest is 
+/// represented by a 0x00 byte which also ends the string.
+/// 1. when ForStrongLayout is true, following ivars are scanned:
+/// - id, Class
+/// - object *
+/// - __strong anything
+/// 
+/// 2. When ForStrongLayout is false, following ivars are scanned:
+/// - __weak anything
+///
+llvm::Constant *CGObjCCommonMac::BuildIvarLayout(ObjCImplementationDecl *OMD,
+                                                 bool ForStrongLayout) {
+  int iIndex = -1;
+  int iSkIndex = -1;
+  bool hasUnion = false;
+  
+  std::vector<FieldDecl*> RecFields;
+  ObjCInterfaceDecl *OI = OMD->getClassInterface();
+  CGM.getContext().CollectObjCIvars(OI, RecFields);
+  if (RecFields.empty())
+    return 0;
+  BuildAggrIvarLayout (0, RecFields, 0, ForStrongLayout, 
+                       iIndex, iSkIndex, hasUnion);
+  return 0;
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
