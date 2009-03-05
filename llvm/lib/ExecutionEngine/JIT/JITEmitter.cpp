@@ -144,7 +144,9 @@ namespace {
     }
     
     void getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
-                           SmallVectorImpl<void*> &Ptrs);  
+                           SmallVectorImpl<void*> &Ptrs);
+    
+    GlobalValue *invalidateStub(void *Stub);
 
     /// getGOTIndexForAddress - Return a new or existing index in the GOT for
     /// an address.  This function only manages slots, it does not manage the
@@ -202,7 +204,7 @@ void *JITResolver::getFunctionStub(Function *F, bool empty) {
     TheJIT->updateGlobalMapping(F, Stub);
   }
 
-  DOUT << "JIT: Stub emitted at [" << Stub << "] for function '"
+  cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
        << F->getName() << "'\n";
 
   // Finally, keep track of the stub-to-Function mapping so that the
@@ -281,6 +283,35 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
     GVs.push_back(i->first);
     Ptrs.push_back(i->second);
   }
+}
+
+GlobalValue *JITResolver::invalidateStub(void *Stub) {
+  MutexGuard locked(TheJIT->lock);
+  
+  std::map<Function*,void*> &FM = state.getFunctionToStubMap(locked);
+  std::map<void*,Function*> &SM = state.getStubToFunctionMap(locked);
+  std::map<GlobalValue*,void*> &GM = state.getGlobalToIndirectSymMap(locked);
+  
+  // Look up the cheap way first, to see if it's a function stub we are
+  // invalidating.  If so, remove it from both the forward and reverse maps.
+  if (SM.find(Stub) != SM.end()) {
+    Function *F = SM[Stub];
+    SM.erase(Stub);
+    FM.erase(F);
+    return F;
+  }
+  
+  // Otherwise, it must be an indirect symbol stub.  Find it and remove it.
+  for (std::map<GlobalValue*,void*>::iterator i = GM.begin(), e = GM.end();
+       i != e; ++i) {
+    if (i->second != Stub)
+      continue;
+    GlobalValue *GV = i->first;
+    GM.erase(i);
+    return GV;
+  }
+  
+  return 0;
 }
 
 /// JITCompilerFn - This function is called when a lazy compilation stub has
@@ -538,8 +569,22 @@ namespace {
     // GVSet - a set to keep track of which globals have been seen
     SmallPtrSet<const GlobalVariable*, 8> GVSet;
 
+    // CurFn - The llvm function being emitted.  Only valid during 
+    // finishFunction().
+    const Function *CurFn;
+    
+    // CurFnStubUses - For a given Function, a vector of stubs that it
+    // references.  This facilitates the JIT detecting that a stub is no
+    // longer used, so that it may be deallocated.
+    DenseMap<const Function *, SmallVector<void*, 1> > CurFnStubUses;
+    
+    // StubFnRefs - For a given pointer to a stub, a set of Functions which
+    // reference the stub.  When the count of a stub's references drops to zero,
+    // the stub is unused.
+    DenseMap<void *, SmallPtrSet<const Function*, 1> > StubFnRefs;
+    
   public:
-    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit) {
+    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -599,11 +644,11 @@ namespace {
       return MBBLocations[MBB->getNumber()];
     }
 
+    void AddStubToCurrentFunction(void *Stub);
+    
     /// deallocateMemForFunction - Deallocate all memory for the specified
     /// function body.
-    void deallocateMemForFunction(Function *F) {
-      MemMgr->deallocateMemForFunction(F);
-    }
+    void deallocateMemForFunction(Function *F);
     
     virtual void emitLabel(uint64_t LabelID) {
       if (LabelLocations.size() <= LabelID)
@@ -650,11 +695,14 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   // If we have already compiled the function, return a pointer to its body.
   Function *F = cast<Function>(V);
   void *ResultPtr;
-  if (!DoesntNeedStub && !TheJIT->isLazyCompilationDisabled())
+  if (!DoesntNeedStub && !TheJIT->isLazyCompilationDisabled()) {
     // Return the function stub if it's already created.
     ResultPtr = Resolver.getFunctionStubIfAvailable(F);
-  else
+    if (ResultPtr)
+      AddStubToCurrentFunction(ResultPtr);
+  } else {
     ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
+  }
   if (ResultPtr) return ResultPtr;
 
   // If this is an external function pointer, we can force the JIT to
@@ -676,16 +724,40 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     return Resolver.AddCallbackAtLocation(F, Reference);
 
   // Otherwise, we have to emit a lazy resolving stub.
-  return Resolver.getFunctionStub(F);
+  void *StubAddr = Resolver.getFunctionStub(F);
+
+  // Add the stub to the current function's list of referenced stubs, so we can
+  // deallocate them if the current function is ever freed.
+  AddStubToCurrentFunction(StubAddr);
+  
+  return StubAddr;
 }
 
 void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
                                             bool NoNeedStub) {
-  // Make sure GV is emitted first.
-  // FIXME: For now, if the GV is an external function we force the JIT to
-  // compile it so the indirect symbol will contain the fully resolved address.
+  // Make sure GV is emitted first, and create a stub containing the fully
+  // resolved address.
   void *GVAddress = getPointerToGlobal(V, Reference, true);
-  return Resolver.getGlobalValueIndirectSym(V, GVAddress);
+  void *StubAddr = Resolver.getGlobalValueIndirectSym(V, GVAddress);
+  
+  // Add the stub to the current function's list of referenced stubs, so we can
+  // deallocate them if the current function is ever freed.
+  AddStubToCurrentFunction(StubAddr);
+  
+  return StubAddr;
+}
+
+void JITEmitter::AddStubToCurrentFunction(void *StubAddr) {
+  if (!TheJIT->areDlsymStubsEnabled())
+    return;
+  
+  assert(CurFn && "Stub added to current function, but current function is 0!");
+  
+  SmallVectorImpl<void*> &StubsUsed = CurFnStubUses[CurFn];
+  StubsUsed.push_back(StubAddr);
+
+  SmallPtrSet<const Function *, 1> &FnRefs = StubFnRefs[StubAddr];
+  FnRefs.insert(CurFn);
 }
 
 static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP) {
@@ -939,6 +1011,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     (unsigned char *)TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
 
   if (!Relocations.empty()) {
+    CurFn = F.getFunction();
     NumRelos += Relocations.size();
 
     // Resolve the relocations to concrete pointers.
@@ -989,6 +1062,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       }
     }
 
+    CurFn = 0;
     TheJIT->getJITInfo().relocate(BufferBegin, &Relocations[0],
                                   Relocations.size(), MemMgr->getGOTBase());
   }
@@ -1093,6 +1167,35 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
  
   return false;
 }
+
+/// deallocateMemForFunction - Deallocate all memory for the specified
+/// function body.  Also drop any references the function has to stubs.
+void JITEmitter::deallocateMemForFunction(Function *F) {
+  MemMgr->deallocateMemForFunction(F);
+
+  // If the function did not reference any stubs, return.
+  if (CurFnStubUses.find(F) == CurFnStubUses.end())
+    return;
+  
+  // For each referenced stub, erase the reference to this function, and then
+  // erase the list of referenced stubs.
+  SmallVectorImpl<void *> &StubList = CurFnStubUses[F];
+  for (unsigned i = 0, e = StubList.size(); i != e; ++i) {
+    void *Stub = StubList[i];
+    SmallPtrSet<const Function *, 1> &FnRefs = StubFnRefs[Stub];
+    FnRefs.erase(F);
+    
+    // If this function was the last reference to the stub, invalidate the stub
+    // in the JITResolver.  Were there a memory manager deallocateStub routine,
+    // we could call that at this point too.
+    if (FnRefs.empty()) {
+      Resolver.invalidateStub(Stub);
+      StubFnRefs.erase(F);
+    }
+  }
+  CurFnStubUses.erase(F);
+}
+
 
 void* JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
   if (BufferBegin)
@@ -1337,8 +1440,7 @@ void JIT::updateDlsymStubTable() {
     offset += GVs[i]->getName().length() + 1;
   }
   
-  // FIXME: This currently allocates new space every time it's called.  A
-  // different data structure could be used to make this unnecessary.
+  // Allocate space for the new "stub", which contains the dlsym table.
   JE->startGVStub(0, offset, 4);
   
   // Emit the number of records
@@ -1365,11 +1467,12 @@ void JIT::updateDlsymStubTable() {
       MCE->emitInt32(Ptr);
   }
   
-  // Emit the strings
+  // Emit the strings.
   for (unsigned i = 0; i != GVs.size(); ++i)
     MCE->emitString(GVs[i]->getName());
   
-  // Tell the JIT memory manager where it is.
+  // Tell the JIT memory manager where it is.  The JIT Memory Manager will
+  // deallocate space for the old one, if one existed.
   JE->getMemMgr()->SetDlsymTable(JE->finishGVStub(0));
 }
 
