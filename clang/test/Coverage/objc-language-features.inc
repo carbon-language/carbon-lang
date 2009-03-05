@@ -51,6 +51,9 @@
 @implementation A (Cat)
 @end
 
+@interface B
+@end
+
 int f0(id x) {
 #ifndef IRGENABLE_GNU
 #ifndef IRGENABLE
@@ -62,8 +65,13 @@ int f0(id x) {
 #ifndef IRGENABLE_GNU
   @try {
     @throw x;
+
   } @catch(A *e) {
     @throw;
+
+    // @catch param doesn't require name.
+  } @catch(B *) {
+
   } @finally {
     ;
   }

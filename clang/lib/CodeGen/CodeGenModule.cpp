@@ -170,8 +170,10 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  if (!mangleName(ND, Context, Out))
+  if (!mangleName(ND, Context, Out)) {
+    assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
     return ND->getIdentifier()->getName();
+  }
 
   Name += '\0';
   return MangledNames.GetOrCreateValue(Name.begin(), Name.end())

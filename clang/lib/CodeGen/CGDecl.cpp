@@ -236,8 +236,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       const llvm::Type *LTy = ConvertTypeForMem(Ty);
       if (isByRef)
         LTy = BuildByRefType(Ty, getContext().getDeclAlignInBytes(&D));
-      llvm::AllocaInst *Alloc =
-        CreateTempAlloca(LTy, CGM.getMangledName(&D));
+      llvm::AllocaInst *Alloc = 
+        CreateTempAlloca(LTy, D.getNameAsString().c_str());
       if (isByRef)
         Alloc->setAlignment(std::max(getContext().getDeclAlignInBytes(&D),
                                      getContext().getTypeAlign(getContext().VoidPtrTy) / 8));
