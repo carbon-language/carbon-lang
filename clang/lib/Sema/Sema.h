@@ -25,6 +25,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "clang/AST/DeclObjC.h"
 #include <string>
 #include <vector>
 
@@ -1678,6 +1679,11 @@ public:
                     SourceLocation AtCompatibilityAliasLoc,
                     IdentifierInfo *AliasName,  SourceLocation AliasLocation,
                     IdentifierInfo *ClassName, SourceLocation ClassLocation);
+
+  void CheckForwardProtocolDeclarationForCircularDependency(
+    IdentifierInfo *PName,
+    SourceLocation &PLoc, SourceLocation PrevLoc,
+    const ObjCList<ObjCProtocolDecl> &PList);
                     
   virtual DeclTy *ActOnStartProtocolInterface(
                     SourceLocation AtProtoInterfaceLoc,

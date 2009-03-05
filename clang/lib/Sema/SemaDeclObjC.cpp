@@ -215,6 +215,25 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   return AliasDecl;
 }
 
+void Sema::CheckForwardProtocolDeclarationForCircularDependency(
+  IdentifierInfo *PName,
+  SourceLocation &Ploc, SourceLocation PrevLoc,
+  const ObjCList<ObjCProtocolDecl> &PList) 
+{
+  for (ObjCList<ObjCProtocolDecl>::iterator I = PList.begin(),
+       E = PList.end(); I != E; ++I) {
+       
+    if (ObjCProtocolDecl *PDecl = ObjCProtocols[(*I)->getIdentifier()]) {
+      if (PDecl->getIdentifier() == PName) {
+        Diag(Ploc, diag::err_protocol_has_circular_dependency);
+        Diag(PrevLoc, diag::note_previous_definition);
+      }
+      CheckForwardProtocolDeclarationForCircularDependency(PName, Ploc, 
+        PDecl->getLocation(), PDecl->getReferencedProtocols());
+    }
+  }
+}
+
 Sema::DeclTy *
 Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
                                   IdentifierInfo *ProtocolName,
@@ -236,6 +255,12 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
       // FIXME: don't leak the objects passed in!
       return PDecl;
     }
+    ObjCList<ObjCProtocolDecl> PList;
+    PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context); 
+    CheckForwardProtocolDeclarationForCircularDependency(
+      ProtocolName, ProtocolLoc, PDecl->getLocation(), PList);
+    PList.Destroy(Context);
+    
     // Make sure the cached decl gets a valid start location.
     PDecl->setLocation(AtProtoInterfaceLoc);
     PDecl->setForwardDecl(false);

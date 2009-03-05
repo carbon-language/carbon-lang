@@ -135,6 +135,8 @@ DIAG(warn_undef_interface, WARNING,
      "cannot find interface declaration for %0")
 DIAG(err_duplicate_protocol_def, ERROR,
      "duplicate protocol definition of %0")
+DIAG(err_protocol_has_circular_dependency, ERROR,
+     "protocol has circular dependency")
 DIAG(err_undeclared_protocol, ERROR,
      "cannot find protocol declaration for %0")
 DIAG(warn_undef_protocolref, WARNING,
