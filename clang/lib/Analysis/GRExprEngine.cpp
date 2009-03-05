@@ -1757,6 +1757,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     NodeTy* N = *I1;
     const GRState* state = GetState(N);
     SVal V = GetSVal(state, Ex);
+    ASTContext& C = getContext();
 
     // Unknown?
     if (V.isUnknown()) {
@@ -1765,19 +1766,13 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     }
     
     // Undefined?
-    if (V.isUndef()) {
-      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
-      continue;
-    }
+    if (V.isUndef())
+      goto PassThrough;
     
     // For const casts, just propagate the value.
-    ASTContext& C = getContext();
-    
     if (C.getCanonicalType(T).getUnqualifiedType() == 
-        C.getCanonicalType(ExTy).getUnqualifiedType()) {
-      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
-      continue;
-    }
+        C.getCanonicalType(ExTy).getUnqualifiedType())
+      goto PassThrough;
       
     // Check for casts from pointers to integers.
     if (T->isIntegerType() && Loc::IsLocType(ExTy)) {
@@ -1791,19 +1786,16 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
         // Just unpackage the lval and return it.
         V = LV->getLoc();
         MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
+        continue;
       }
       
-      MakeNode(Dst, CastE, N, BindExpr(state, CastE,
-                                       EvalCast(V, CastE->getType())));
-      
-      continue;      
+      goto DispatchCast;
     }
     
     // Just pass through function and block pointers.
     if (ExTy->isBlockPointerType() || ExTy->isFunctionPointerType()) {
       assert(Loc::IsLocType(T));
-      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
-      continue;
+      goto PassThrough;
     }
     
     // Check for casts from array type to another type.
@@ -1813,10 +1805,8 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       
       // Are we casting from an array to a pointer?  If so just pass on
       // the decayed value.
-      if (T->isPointerType()) {
-        MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
-        continue;
-      }
+      if (T->isPointerType())
+        goto PassThrough;
       
       // Are we casting from an array to an integer?  If so, cast the decayed
       // pointer value to an integer.
@@ -1853,6 +1843,12 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     // TypedViewRegion subregion.
     if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V)) {
       SymbolRef Sym = SV->getSymbol();
+      QualType SymTy = getSymbolManager().getType(Sym);
+
+      // Just pass through symbols that are function or block pointers.
+      if (SymTy->isFunctionPointerType() || SymTy->isBlockPointerType())
+        goto PassThrough;
+
       StoreManager& StoreMgr = getStoreManager();
       const MemRegion* R =
         StoreMgr.getRegionManager().getSymbolicRegion(Sym, getSymbolManager());
@@ -1871,9 +1867,16 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       continue;
     }
 
-    // All other cases.
-    MakeNode(Dst, CastE, N, BindExpr(state, CastE,
-                                     EvalCast(V, CastE->getType())));
+        // All other cases.
+    DispatchCast: {
+      MakeNode(Dst, CastE, N, BindExpr(state, CastE,
+                                       EvalCast(V, CastE->getType())));
+      continue;
+    }
+    
+    PassThrough: {
+      MakeNode(Dst, CastE, N, BindExpr(state, CastE, V));
+    }
   }
 }
 
