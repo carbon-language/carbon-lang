@@ -57,6 +57,12 @@ static const int *const KillSigsEnd =
 
 // SignalHandler - The signal handler that runs...
 static RETSIGTYPE SignalHandler(int Sig) {
+  // Restore the signal behavior to default, so that the program actually
+  // crashes when we return and the signal reissues.  This also ensures that if
+  // we crash in our signal handler that the program will terminate immediately
+  // instead of recursing in the signal handler.
+  signal(Sig, SIG_DFL);
+
   if (FilesToRemove != 0)
     while (!FilesToRemove->empty()) {
       FilesToRemove->back().eraseFromDisk(true);
@@ -77,10 +83,6 @@ static RETSIGTYPE SignalHandler(int Sig) {
   if (CallBacksToRun)
     for (unsigned i = 0, e = CallBacksToRun->size(); i != e; ++i)
       (*CallBacksToRun)[i].first((*CallBacksToRun)[i].second);
-    
-  // Restore the signal behavior to default, so that the program actually
-  // crashes when we return and the signal reissues.
-  signal(Sig, SIG_DFL);
 }
 
 // Just call signal
