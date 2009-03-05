@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/InlineAsm.h"
@@ -123,7 +124,9 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
 /// (for use by the statement expression extension).
 RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
                                          llvm::Value *AggLoc, bool isAggVol) {
-
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),S.getLBracLoc(),
+                             "LLVM IR generation of compound statement ('{}')");
+  
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     EnsureInsertPoint();
