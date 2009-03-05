@@ -19,6 +19,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -222,6 +223,10 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         return MemDepResult::getDef(AI);
       continue;
     }
+
+    // Ignore debug info intrinsics.
+    if (isa<DbgInfoIntrinsic>(Inst))
+      continue;
     
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
     switch (AA->getModRefInfo(Inst, MemPtr, MemSize)) {
