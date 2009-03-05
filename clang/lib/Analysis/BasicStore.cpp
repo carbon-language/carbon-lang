@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ExprObjC.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
@@ -57,6 +58,8 @@ public:
     return StateMgr.MakeStateWithStore(St, store);
   }
 
+  Store scanForIvars(Stmt *B, const Decl* SelfDecl, Store St);
+  
   Store BindInternal(Store St, Loc loc, SVal V);  
   Store Remove(Store St, Loc loc);
   Store getInitialStore();
@@ -147,6 +150,19 @@ SVal BasicStoreManager::getLValueCompoundLiteral(const GRState* St,
 
 SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
                                       SVal Base) {
+  
+  if (Base.isUnknownOrUndef())
+    return Base;
+
+  Loc BaseL = cast<Loc>(Base);
+
+  if (isa<loc::MemRegionVal>(BaseL)) {
+    const MemRegion *BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
+
+    if (BaseR == SelfRegion)
+      return loc::MemRegionVal(MRMgr.getObjCIvarRegion(D, BaseR));
+  }
+  
   return UnknownVal();
 }
   
@@ -293,14 +309,12 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
   switch (loc.getSubKind()) {
 
     case loc::MemRegionKind: {
-      const VarRegion* R =
-        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(loc).getRegion());
+      const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
       
-      if (!R)
+      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
         return UnknownVal();
       
-      Store store = state->getStore();
-      BindingsTy B = GetBindings(store);
+      BindingsTy B = GetBindings(state->getStore());
       BindingsTy::data_type* T = B.lookup(R);
       return T ? *T : UnknownVal();
     }
@@ -327,12 +341,16 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
 Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {    
   switch (loc.getSubKind()) {      
     case loc::MemRegionKind: {
-      const VarRegion* R =
-        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(loc).getRegion());
+      const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
       
-      if (!R)
+      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
         return store;
       
+      // We only track bindings to self.ivar.
+      if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
+        if (IVR->getSuperRegion() != SelfRegion)
+          return store;
+
       BindingsTy B = GetBindings(store);
       return V.isUnknown()
         ? VBFactory.Remove(B, R).getRoot()
@@ -347,14 +365,12 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
 Store BasicStoreManager::Remove(Store store, Loc loc) {
   switch (loc.getSubKind()) {
     case loc::MemRegionKind: {
-      const VarRegion* R =
-        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(loc).getRegion());
+      const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
       
-      if (!R)
+      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
         return store;
       
-      BindingsTy B = GetBindings(store);
-      return VBFactory.Remove(B, R).getRoot();
+      return VBFactory.Remove(GetBindings(store), R).getRoot();
     }
     default:
       assert ("Remove for given Loc type not yet implemented.");
@@ -374,18 +390,26 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   
   // Iterate over the variable bindings.
   for (BindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
-    const VarRegion *VR = cast<VarRegion>(I.getKey());
-    if (SymReaper.isLive(Loc, VR->getDecl())) {
-      RegionRoots.push_back(VR);      
-      SVal X = I.getData();
-      
-      for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
-        SymReaper.markLive(*SI);
+    if (const VarRegion *VR = dyn_cast<VarRegion>(I.getKey())) {
+      if (SymReaper.isLive(Loc, VR->getDecl()))
+        RegionRoots.push_back(VR);
+      else
+        continue;
     }
+    else if (isa<ObjCIvarRegion>(I.getKey())) {
+      RegionRoots.push_back(I.getKey());
+    }
+    else
+      continue;
+    
+    // Mark the bindings in the data as live.
+    SVal X = I.getData();
+    for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
+      SymReaper.markLive(*SI);
   }
   
   // Scan for live variables and live symbols.
-  llvm::SmallPtrSet<const VarRegion*, 10> Marked;
+  llvm::SmallPtrSet<const MemRegion*, 10> Marked;
   
   while (!RegionRoots.empty()) {
     const MemRegion* MR = RegionRoots.back();
@@ -396,12 +420,12 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
         SymReaper.markLive(SymR->getSymbol());
         break;
       }
-      else if (const VarRegion* R = dyn_cast<VarRegion>(MR)) {
-        if (Marked.count(R))
+      else if (isa<VarRegion>(MR) || isa<ObjCIvarRegion>(MR)) {
+        if (Marked.count(MR))
           break;
         
-        Marked.insert(R);
-        SVal X = Retrieve(state, loc::MemRegionVal(R));
+        Marked.insert(MR);
+        SVal X = Retrieve(state, loc::MemRegionVal(MR));
     
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)
@@ -423,7 +447,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   
   // Remove dead variable bindings.  
   for (BindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
-    const VarRegion* R = cast<VarRegion>(I.getKey());
+    const MemRegion* R = I.getKey();
     
     if (!Marked.count(R)) {
       store = Remove(store, Loc::MakeVal(R));
@@ -433,19 +457,46 @@ BasicStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
         SymReaper.maybeDead(*SI);
     }
   }
-  
+
   return store;
 }
 
-Store BasicStoreManager::getInitialStore() {
+Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
+  for (Stmt::child_iterator CI=B->child_begin(), CE=B->child_end();
+       CI != CE; ++CI) {
+    
+    if (!*CI)
+      continue;
+    
+    // Check if the statement is an ivar reference.  We only
+    // care about self.ivar.
+    if (ObjCIvarRefExpr *IV = dyn_cast<ObjCIvarRefExpr>(*CI)) {
+      const Expr *Base = IV->getBase()->IgnoreParenCasts();
+      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Base)) {
+        if (DR->getDecl() == SelfDecl) {
+          const MemRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
+                                                         SelfRegion);
+          
+          SVal X = SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(),
+                                            IVR);
+          
+          St = BindInternal(St, Loc::MakeVal(IVR), X);
+        }
+      }
+    }
+    else
+      St = scanForIvars(*CI, SelfDecl, St);
+  }
   
+  return St;
+}
+
+Store BasicStoreManager::getInitialStore() {  
   // The LiveVariables information already has a compilation of all VarDecls
   // used in the function.  Iterate through this set, and "symbolicate"
   // any VarDecl whose value originally comes from outside the function.
-
   typedef LiveVariables::AnalysisDataTy LVDataTy;
   LVDataTy& D = StateMgr.getLiveVariables().getAnalysisData();
-
   Store St = VBFactory.GetEmptyMap().getRoot();
 
   for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
@@ -463,6 +514,10 @@ Store BasicStoreManager::getInitialStore() {
           
           St = BindInternal(St, Loc::MakeVal(MRMgr.getVarRegion(PD)),
                             Loc::MakeVal(SelfRegion));
+          
+          // Scan the method for ivar references.  While this requires an
+          // entire AST scan, the cost should not be high in practice.
+          St = scanForIvars(MD->getBody(), PD, St);
         }
       }
     }

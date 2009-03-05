@@ -68,23 +68,3 @@ char test2() {
   return 'a';
 }
 
-///
-@interface Test3 : NSObject {
-  int flag;
-}
-- (void)test_self_tracking;
-@end
-
-@implementation Test3
-- (void)test_self_tracking {
-  char *p = 0;
-  char c;
-
-  if (flag)
-    p = "hello";
-
-  if (flag)
-    c = *p; // no-warning
-}
-@end
-

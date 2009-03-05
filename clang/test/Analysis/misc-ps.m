@@ -3,9 +3,29 @@
 // RUN: clang -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=basic --verify -fblocks %s &&
 // RUN: clang -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=range --verify -fblocks %s
 
+typedef struct objc_selector *SEL;
+typedef signed char BOOL;
+typedef int NSInteger;
+typedef unsigned int NSUInteger;
+typedef struct _NSZone NSZone;
+@class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
+@protocol NSObject  - (BOOL)isEqual:(id)object; @end
+@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end
+@protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone; @end
+@protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
+@interface NSObject <NSObject> {} - (id)init; @end
+extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
+@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
+- (NSUInteger)length;
++ (id)stringWithUTF8String:(const char *)nullTerminatedCString;
+@end extern NSString * const NSBundleDidLoadNotification;
+@interface NSAssertionHandler : NSObject {}
++ (NSAssertionHandler *)currentHandler;
+- (void)handleFailureInMethod:(SEL)selector object:(id)object file:(NSString *)fileName lineNumber:(NSInteger)line description:(NSString *)format,...;
+@end
+extern NSString * const NSConnectionReplyMode;
 
 // Reduced test case from crash in <rdar://problem/6253157>
-@class NSObject;
 @interface A @end
 @implementation A
 - (void)foo:(void (^)(NSObject *x))block {
@@ -125,4 +145,23 @@ my_test_mm_movepi64_pi64(__a128vector a) {
   return (__a64vector)a[0];
 }
 
+// Test basic tracking of ivars associated with 'self'.
+@interface SelfIvarTest : NSObject {
+  int flag;
+}
+- (void)test_self_tracking;
+@end
+
+@implementation SelfIvarTest
+- (void)test_self_tracking {
+  char *p = 0;
+  char c;
+
+  if (flag)
+    p = "hello";
+
+  if (flag)
+    c = *p; // no-warning
+}
+@end
 
