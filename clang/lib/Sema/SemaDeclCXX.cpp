@@ -546,13 +546,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   Decl *Member;
   if (isInstField) {
-    FieldDecl *FD = 
-      HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth);
-    // Refresh our notion of bitwidth.
-    BitWidth = FD->getBitWidth();
-    Member = FD;
+    Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth);
+    assert(Member && "HandleField never returns null");
   } else {
     Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
+    if (!Member) {
+      if (BitWidth) DeleteExpr(BitWidth);
+      return LastInGroup;
+    }
 
     // Non-instance-fields can't have a bitfield.
     if (BitWidth) {
@@ -579,8 +580,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       Member->setInvalidDecl();
     }
   }
-
-  if (!Member) return LastInGroup;
 
   assert((Name || isInstField) && "No identifier for non-field ?");
 
