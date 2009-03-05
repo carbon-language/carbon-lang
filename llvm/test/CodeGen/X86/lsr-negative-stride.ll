@@ -1,6 +1,8 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep neg
-; RUN: llvm-as < %s | llc -march=x86 | not grep sub.*esp
-; RUN: llvm-as < %s | llc -march=x86 | not grep esi
+; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: not grep neg %t
+; RUN: not grep sub.*esp %t
+; RUN: not grep esi %t
+; RUN: not grep push %t
 
 ; This corresponds to:
 ;int t(int a, int b) {
