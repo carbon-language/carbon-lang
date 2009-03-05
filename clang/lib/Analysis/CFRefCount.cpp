@@ -2392,7 +2392,7 @@ static const char* Msgs[] = {
   // GC only
   "Code is compiled to only use garbage collection",    
   // No GC.
-  "Code is compiled to not use reference counts and not garbage collection",
+  "Code is compiled to use reference counts",
   // Hybrid, with GC.
   "Code is compiled to use either garbage collection (GC) or reference counts"
   " (non-GC).  The bug occurs with GC enabled",  
