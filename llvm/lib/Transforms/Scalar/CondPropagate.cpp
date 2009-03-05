@@ -153,7 +153,7 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
     return;
   BasicBlock::iterator BBI = BB->begin();
   BasicBlock::iterator BBE = BB->end();
-  while (BBI != BBE && isa<DbgInfoIntrinsic>(++BBI)) ;
+  while (BBI != BBE && isa<DbgInfoIntrinsic>(++BBI)) /* empty */;
   if (&*BBI != BI)
     return;
 
@@ -192,7 +192,7 @@ void CondProp::SimplifyPredecessors(SwitchInst *SI) {
     return;
   BasicBlock::iterator BBI = BB->begin();
   BasicBlock::iterator BBE = BB->end();
-  while (BBI != BBE && isa<DbgInfoIntrinsic>(++BBI)) ;
+  while (BBI != BBE && isa<DbgInfoIntrinsic>(++BBI)) /* empty */;
   if (&*BBI != SI)
     return;
 
