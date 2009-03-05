@@ -788,8 +788,7 @@ private:
   DeclTy *ParseDeclaration(unsigned Context);
   DeclTy *ParseSimpleDeclaration(unsigned Context);
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
-  DeclTy *ParseFunctionStatementBody(DeclTy *Decl, 
-                                     SourceLocation L, SourceLocation R);
+  DeclTy *ParseFunctionStatementBody(DeclTy *Decl);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                                   TemplateParameterLists *TemplateParams = 0);
   bool ParseOptionalTypeSpecifier(DeclSpec &DS, int &isInvalid, 

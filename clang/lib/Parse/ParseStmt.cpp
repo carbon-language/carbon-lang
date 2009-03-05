@@ -1284,8 +1284,10 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
   return true;
 }
 
-Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl, 
-                                           SourceLocation L, SourceLocation R) {
+Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl) {
+  assert(Tok.is(tok::l_brace));
+  SourceLocation LBraceLoc = Tok.getLocation();
+         
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement
   // list and put it into a CompoundStmt for safe keeping.
@@ -1293,7 +1295,8 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
 
   // If the function body could not be parsed, make a bogus compoundstmt.
   if (FnBody.isInvalid())
-    FnBody = Actions.ActOnCompoundStmt(L, R, MultiStmtArg(Actions), false);
+    FnBody = Actions.ActOnCompoundStmt(LBraceLoc, LBraceLoc, 
+                                       MultiStmtArg(Actions), false);
 
   return Actions.ActOnFinishFunctionBody(Decl, move(FnBody));
 }

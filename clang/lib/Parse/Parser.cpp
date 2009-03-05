@@ -590,7 +590,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     ParseConstructorInitializer(Res);
 
   SourceLocation BraceLoc = Tok.getLocation();
-  return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);
+  return ParseFunctionStatementBody(Res);
 }
 
 /// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides

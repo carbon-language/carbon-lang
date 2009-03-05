@@ -136,8 +136,8 @@ void Parser::ParseLexedMethodDefs() {
 
     if (Tok.is(tok::colon))
       ParseConstructorInitializer(LM.D);
-
-    ParseFunctionStatementBody(LM.D, Tok.getLocation(), Tok.getLocation());
+    // FIXME: What if ParseConstructorInitializer doesn't leave us with a '{'??
+    ParseFunctionStatementBody(LM.D);
   }
 }
 
