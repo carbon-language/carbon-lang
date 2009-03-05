@@ -3715,26 +3715,26 @@ def : Pat<(parallel (store (i8 (X86dec_flag (loadi8 addr:$dst))), addr:$dst),
           (DEC8m addr:$dst)>;
 
 def : Pat<(parallel (X86inc_flag GR16:$src), (implicit EFLAGS)),
-          (INC16r GR16:$src)>;
+          (INC16r GR16:$src)>, Requires<[In32BitMode]>;
 def : Pat<(parallel (store (i16 (X86inc_flag (loadi16 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
-          (INC16m addr:$dst)>;
+          (INC16m addr:$dst)>, Requires<[In32BitMode]>;
 def : Pat<(parallel (X86dec_flag GR16:$src), (implicit EFLAGS)),
-          (DEC16r GR16:$src)>;
+          (DEC16r GR16:$src)>, Requires<[In32BitMode]>;
 def : Pat<(parallel (store (i16 (X86dec_flag (loadi16 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
-          (DEC16m addr:$dst)>;
+          (DEC16m addr:$dst)>, Requires<[In32BitMode]>;
 
 def : Pat<(parallel (X86inc_flag GR32:$src), (implicit EFLAGS)),
-          (INC32r GR32:$src)>;
+          (INC32r GR32:$src)>, Requires<[In32BitMode]>;
 def : Pat<(parallel (store (i32 (X86inc_flag (loadi32 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
-          (INC32m addr:$dst)>;
+          (INC32m addr:$dst)>, Requires<[In32BitMode]>;
 def : Pat<(parallel (X86dec_flag GR32:$src), (implicit EFLAGS)),
-          (DEC32r GR32:$src)>;
+          (DEC32r GR32:$src)>, Requires<[In32BitMode]>;
 def : Pat<(parallel (store (i32 (X86dec_flag (loadi32 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
-          (DEC32m addr:$dst)>;
+          (DEC32m addr:$dst)>, Requires<[In32BitMode]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support
