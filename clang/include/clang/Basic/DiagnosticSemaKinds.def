@@ -213,6 +213,9 @@ DIAG(error_bad_property_context, ERROR,
 DIAG(error_missing_property_ivar_decl, ERROR,
      "synthesized property %0 must either be named the same as a compatible"
      " ivar or must explicitly name an ivar")
+DIAG(error_synthesized_ivar_yet_not_supported, ERROR,
+     "instance variable synthesis not yet supported"
+     " (need to declare %0 explicitly)")
 DIAG(error_property_ivar_type, ERROR,
      "type of property %0 does not match type of ivar %1") 
 DIAG(error_weak_property, ERROR,

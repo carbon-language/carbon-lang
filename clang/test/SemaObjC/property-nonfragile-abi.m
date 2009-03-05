@@ -16,7 +16,7 @@ typedef signed char BOOL;
 @end
 
 @implementation XCDeviceWillExecuteInfoBaton
-  // No error is produced with compiling for -arch x86_64 (or "non-fragile" ABI)
-  @synthesize sdkPath;
+  // Produce an error when compiling for -arch x86_64 (or "non-fragile" ABI)
+  @synthesize sdkPath; // expected-error{{instance variable synthesis not yet supported (need to declare 'sdkPath' explicitly)}}
 @end
 

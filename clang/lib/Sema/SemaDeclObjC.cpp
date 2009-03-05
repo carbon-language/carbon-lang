@@ -1757,7 +1757,10 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar);
     if (!Ivar) {
-      if (!getLangOptions().ObjCNonFragileABI)
+      if (getLangOptions().ObjCNonFragileABI)
+        Diag(PropertyLoc, diag::error_synthesized_ivar_yet_not_supported) 
+                          << PropertyId;
+      else
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
       return 0;
     }
