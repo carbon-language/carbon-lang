@@ -558,6 +558,7 @@
 		DEA09A860F3175CA000C2258 /* ParseDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParseDiagnostic.h; path = clang/Parse/ParseDiagnostic.h; sourceTree = "<group>"; };
 		DEA09A890F3175D9000C2258 /* SemaDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaDiagnostic.h; path = clang/Sema/SemaDiagnostic.h; sourceTree = "<group>"; };
 		DEA0EBD90DD2D3C8007A02A9 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteMacros.cpp; path = Driver/RewriteMacros.cpp; sourceTree = "<group>"; };
+		DEAABDF70F5F477C0098928A /* PrettyStackTrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrettyStackTrace.h; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
 		DEB076C90F3A221200F5A2BE /* DeclTemplate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclTemplate.h; path = clang/AST/DeclTemplate.h; sourceTree = "<group>"; };
@@ -1133,6 +1134,7 @@
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
 				DE8824560ED1244600CBC30A /* OperatorKinds.def */,
 				DE8824530ED1243E00CBC30A /* OperatorKinds.h */,
+				DEAABDF70F5F477C0098928A /* PrettyStackTrace.h */,
 				DED7D7350A524295003AD0FB /* SourceLocation.h */,
 				DED7D7360A524295003AD0FB /* SourceManager.h */,
 				DE46BF270AE0A82D00CC047C /* TargetInfo.h */,
