@@ -1015,7 +1015,7 @@ MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg,
                                              MachineBasicBlock* MBB,
                                              int SS,
                                      SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
-  if ((int)RestoreFoldLimit != -1 && RestoreFoldLimit == NumRestoreFolds)
+  if ((int)RestoreFoldLimit != -1 && RestoreFoldLimit == (int)NumRestoreFolds)
     return 0;
                                        
   // Go top down if RefsInMBB is empty.
