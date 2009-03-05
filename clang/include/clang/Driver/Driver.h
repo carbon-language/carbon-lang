@@ -12,6 +12,7 @@
 
 namespace clang {
 namespace driver {
+  class ArgList;
   class Compilation;
   class OptTable;
 
@@ -19,6 +20,10 @@ namespace driver {
 /// from a set of gcc-driver-like command line arguments.
 class Driver {
   OptTable *Opts;
+
+  /// ParseArgStrings - Parse the given list of strings into an
+  /// ArgList.
+  ArgList *ParseArgStrings(const char **ArgBegin, const char **ArgEnd);
 
 public:
   Driver();

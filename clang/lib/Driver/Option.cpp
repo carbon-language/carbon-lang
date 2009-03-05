@@ -127,7 +127,7 @@ Arg *FlagOption::accept(const ArgList &Args, unsigned &Index) const {
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
 
-  return new PositionalArg(this, Index++);
+  return new FlagArg(this, Index++);
 }
 
 JoinedOption::JoinedOption(options::ID ID, const char *Name, 
@@ -153,14 +153,7 @@ Arg *CommaJoinedOption::accept(const ArgList &Args, unsigned &Index) const {
   // Get the suffix string.
   // FIXME: Avoid strlen, and move to helper method?
   const char *Suffix = Args.getArgString(Index) + strlen(getName());
-  const char *SuffixEnd = Suffix + strlen(Suffix);
-  
-  // Degenerate case, exact match has no values.
-  if (Suffix == SuffixEnd)
-    return new CommaJoinedArg(this, Index++, 0);
-
-  return new CommaJoinedArg(this, Index++, 
-                            std::count(Suffix, SuffixEnd, ',') + 1);
+  return new CommaJoinedArg(this, Index++, Suffix);
 }
 
 SeparateOption::SeparateOption(options::ID ID, const char *Name, 

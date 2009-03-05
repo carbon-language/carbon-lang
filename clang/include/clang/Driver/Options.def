@@ -55,3 +55,4 @@
 OPTION(ArchOpt, Separate, "-arch", 0, 0, "", 0)
 OPTION(PassExitCodesFlag, Flag, "-pass-exit-codes", 0, 0, "", 0)
 OPTION(PrintFileNameOpt, Joined, "-print-file-name=", 0, 0, "", 0)
+OPTION(WpOpt, CommaJoined, "-Wp,", 0, 0, "", 0)

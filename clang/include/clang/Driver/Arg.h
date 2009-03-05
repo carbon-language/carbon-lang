@@ -18,6 +18,7 @@ using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 
 #include "Util.h"
+#include <vector>
 
 namespace clang {
 namespace driver {
@@ -34,7 +35,8 @@ namespace driver {
   class Arg {
   public:
     enum ArgClass {
-      PositionalClass = 0,
+      FlagClass = 0,
+      PositionalClass,
       JoinedClass,
       SeparateClass,
       CommaJoinedClass,
@@ -75,6 +77,22 @@ namespace driver {
     void dump() const;
   };
 
+  /// FlagArg - An argument with no value.
+  class FlagArg : public Arg {
+  public:
+    FlagArg(const Option *Opt, unsigned Index);
+
+    virtual void render(const ArgList &Args, ArgStringList &Output) const;
+
+    virtual unsigned getNumValues() const { return 0; }
+    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+
+    static bool classof(const Arg *A) { 
+      return A->getKind() == Arg::FlagClass; 
+    }
+    static bool classof(const FlagArg *) { return true; }
+  };
+
   /// PositionalArg - A simple positional argument.
   class PositionalArg : public Arg {
   public:
@@ -105,7 +123,7 @@ namespace driver {
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::JoinedClass; 
     }
-    static bool classof(const PositionalArg *) { return true; }
+    static bool classof(const JoinedArg *) { return true; }
   };
 
   /// SeparateArg - An argument where one or more values follow the
@@ -124,7 +142,7 @@ namespace driver {
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::SeparateClass; 
     }
-    static bool classof(const PositionalArg *) { return true; }
+    static bool classof(const SeparateArg *) { return true; }
   };
 
   /// CommaJoinedArg - An argument with multiple values joined by
@@ -134,20 +152,20 @@ namespace driver {
   /// separate arguments, which allows it to be used as a generic
   /// mechanism for passing arguments through to tools.
   class CommaJoinedArg : public Arg {
-    unsigned NumValues;
+    std::vector<std::string> Values;
 
   public:
-    CommaJoinedArg(const Option *Opt, unsigned Index, unsigned NumValues);
+    CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
-    virtual unsigned getNumValues() const { return NumValues; }
+    virtual unsigned getNumValues() const { return Values.size(); }
     virtual const char *getValue(const ArgList &Args, unsigned N) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::CommaJoinedClass; 
     }
-    static bool classof(const PositionalArg *) { return true; }
+    static bool classof(const CommaJoinedArg *) { return true; }
   };
 
   /// JoinedAndSeparateArg - An argument with both joined and separate
@@ -164,7 +182,7 @@ namespace driver {
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::JoinedAndSeparateClass; 
     }
-    static bool classof(const PositionalArg *) { return true; }
+    static bool classof(const JoinedAndSeparateArg *) { return true; }
   };
 } // end namespace driver
 } // end namespace clang
