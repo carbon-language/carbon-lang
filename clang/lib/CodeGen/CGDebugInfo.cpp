@@ -69,11 +69,13 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   const char *FileName = FE ? FE->getName() : "<unknown>";
   const char *DirName = FE ? FE->getDir()->getName() : "<unknown>";
   
+  bool isMain = (FE == SM.getFileEntryForID(SM.getMainFileID()));
   // Create new compile unit.
   // FIXME: Handle other language IDs as well.
   // FIXME: Do not know how to get clang version yet.
   return Unit = DebugFactory.CreateCompileUnit(llvm::dwarf::DW_LANG_C89,
-                                               FileName, DirName, "clang");
+                                               FileName, DirName, "clang",
+                                               isMain);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
