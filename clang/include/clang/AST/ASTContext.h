@@ -458,6 +458,8 @@ public:
   
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
   const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
+  void CollectObjCIvars(const ObjCInterfaceDecl *OI,
+                        std::vector<FieldDecl*> &Fields) const;
   const FieldDecl *getFieldDecl(const ObjCIvarRefExpr *MRef) {
     llvm::DenseMap<const ObjCIvarRefExpr *, const FieldDecl*>::iterator I 
       = ASTFieldForIvarRef.find(MRef);

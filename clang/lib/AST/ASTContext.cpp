@@ -576,8 +576,8 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
   Alignment = std::max(Alignment, FieldAlign);
 }
 
-static void CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                             std::vector<FieldDecl*> &Fields) {
+void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
+                             std::vector<FieldDecl*> &Fields) const {
   const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
   if (SuperClass)
     CollectObjCIvars(SuperClass, Fields);
