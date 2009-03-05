@@ -264,16 +264,18 @@ namespace {
 
 bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // Clone the program to try hacking it apart...
-  Module *M = CloneModule(BD.getProgram());
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *M = CloneModule(BD.getProgram(), ValueMap);
 
   // Convert list to set for fast lookup...
   std::set<BasicBlock*> Blocks;
   for (unsigned i = 0, e = BBs.size(); i != e; ++i) {
     // Convert the basic block from the original module to the new module...
     const Function *F = BBs[i]->getParent();
-    Function *CMF = M->getFunction(F->getName());
+    Function *CMF = cast<Function>(ValueMap[F]);
     assert(CMF && "Function not in module?!");
     assert(CMF->getFunctionType() == F->getFunctionType() && "wrong type?");
+    assert(CMF->getName() == F->getName() && "wrong name?");
 
     // Get the mapped basic block...
     Function::iterator CBI = CMF->begin();
