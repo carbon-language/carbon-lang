@@ -1355,6 +1355,11 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 ///
 Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   DeclTy *MDecl = ParseObjCMethodPrototype(ObjCImpDecl);
+  
+  PrettyStackTraceDecl CrashInfo(MDecl, Tok.getLocation(), Actions,
+                                 PP.getSourceManager(),
+                                 "parsing Objective-C method");
+  
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
