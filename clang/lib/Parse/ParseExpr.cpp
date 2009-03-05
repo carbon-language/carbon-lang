@@ -22,6 +22,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Basic/PrettyStackTrace.h"
 #include "ExtensionRAIIObject.h"
 #include "AstGuard.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1264,6 +1265,9 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   assert(Tok.is(tok::caret) && "block literal starts with ^");
   SourceLocation CaretLoc = ConsumeToken();
 
+  PrettyStackTraceLoc CrashInfo(PP.getSourceManager(), CaretLoc,
+                                "block literal parsing");
+
   // Enter a scope to hold everything within the block.  This includes the 
   // argument decls, decls within the compound expression, etc.  This also
   // allows determining whether a variable reference inside the block is
@@ -1274,7 +1278,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
 
   // Inform sema that we are starting a block.
   Actions.ActOnBlockStart(CaretLoc, CurScope);
-
+  
   // Parse the return type if present.
   DeclSpec DS;
   Declarator ParamInfo(DS, Declarator::BlockLiteralContext);
