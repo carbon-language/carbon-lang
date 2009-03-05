@@ -1096,6 +1096,10 @@ ParseStructDeclaration(DeclSpec &DS,
 ///
 void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                                   unsigned TagType, DeclTy *TagDecl) {
+  PrettyStackTraceDecl CrashInfo(TagDecl, RecordLoc, Actions,
+                                 PP.getSourceManager(),
+                                 "parsing struct/union body");
+  
   SourceLocation LBraceLoc = ConsumeBrace();
   
   ParseScope StructScope(this, Scope::ClassScope|Scope::DeclScope);

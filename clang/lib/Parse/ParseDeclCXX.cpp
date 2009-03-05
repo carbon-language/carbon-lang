@@ -793,6 +793,10 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
          TagType == DeclSpec::TST_union  ||
          TagType == DeclSpec::TST_class) && "Invalid TagType!");
 
+  PrettyStackTraceDecl CrashInfo(TagDecl, RecordLoc, Actions,
+                                 PP.getSourceManager(),
+                                 "parsing struct/union/class body");
+  
   SourceLocation LBraceLoc = ConsumeBrace();
 
   if (!CurScope->isClassScope() && // Not about to define a nested class.
