@@ -3152,12 +3152,14 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclTy *TagD) {
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
                           QualType FieldTy, const Expr *BitWidth) {
   // C99 6.7.2.1p4 - verify the field type.
-
+  // C++ 9.6p3: A bit-field shall have integral or enumeration type.
   if (!FieldTy->isIntegralType()) {
     // Handle incomplete types with specific error.
     if (FieldTy->isIncompleteType())
-      return Diag(FieldLoc, diag::err_field_incomplete) << FieldTy;
-    return Diag(FieldLoc, diag::err_not_integral_type_bitfield) << FieldName;
+      return Diag(FieldLoc, diag::err_field_incomplete)
+        << FieldTy << BitWidth->getSourceRange();
+    return Diag(FieldLoc, diag::err_not_integral_type_bitfield)
+      << FieldName << BitWidth->getSourceRange();
   }
   
   llvm::APSInt Value;

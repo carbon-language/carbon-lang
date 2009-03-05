@@ -20,7 +20,7 @@ public:
 
   int b : 1, w : 2;
   int : 1, : 2;
-  typedef int E : 1; // expected-error {{error: cannot declare 'E' to be a bit-field type}}
+  typedef int E : 1; // expected-error {{typedef member 'E' cannot be a bit-field}}
   static int sb : 1; // expected-error {{error: static member 'sb' cannot be a bit-field}}
   static int vs;
 

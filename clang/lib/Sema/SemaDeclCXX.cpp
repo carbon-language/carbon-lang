@@ -545,8 +545,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                       !isFunc);
 
   Decl *Member;
-  bool InvalidDecl = false;
-
   if (isInstField) {
     FieldDecl *FD = 
       HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth);
@@ -555,6 +553,31 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     Member = FD;
   } else {
     Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
+
+    // Non-instance-fields can't have a bitfield.
+    if (BitWidth) {
+      if (Member->isInvalidDecl()) {
+        // don't emit another diagnostic.
+      } else if (isa<CXXClassVarDecl>(Member)) {
+        // C++ 9.6p3: A bit-field shall not be a static member.
+        // "static member 'A' cannot be a bit-field"
+        Diag(Loc, diag::err_static_not_bitfield)
+          << Name << BitWidth->getSourceRange();
+      } else if (isa<TypedefDecl>(Member)) {
+        // "typedef member 'x' cannot be a bit-field"
+        Diag(Loc, diag::err_typedef_not_bitfield)
+          << Name << BitWidth->getSourceRange();
+      } else {
+        // A function typedef ("typedef int f(); f a;").
+        // C++ 9.6p3: A bit-field shall have integral or enumeration type.
+        Diag(Loc, diag::err_not_integral_type_bitfield)
+          << Name << BitWidth->getSourceRange();
+      }
+      
+      DeleteExpr(BitWidth);
+      BitWidth = 0;
+      Member->setInvalidDecl();
+    }
   }
 
   if (!Member) return LastInGroup;
@@ -579,7 +602,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (DS.isVirtualSpecified()) {
     if (!isFunc || DS.getStorageClassSpec() == DeclSpec::SCS_static) {
       Diag(DS.getVirtualSpecLoc(), diag::err_virtual_non_function);
-      InvalidDecl = true;
+      Member->setInvalidDecl();
     } else {
       cast<CXXMethodDecl>(Member)->setVirtual();
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(CurContext);
@@ -593,50 +616,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   // also virtual if it overrides an already virtual function. This is important
   // to do here because it decides the validity of a pure specifier.
 
-  if (BitWidth) {
-    // C++ 9.6p2: Only when declaring an unnamed bit-field may the
-    // constant-expression be a value equal to zero.
-    // FIXME: Check this.
-
-    if (D.isFunctionDeclarator()) {
-      // FIXME: Emit diagnostic about only constructors taking base initializers
-      // or something similar, when constructor support is in place.
-      Diag(Loc, diag::err_not_bitfield_type)
-        << Name << BitWidth->getSourceRange();
-      InvalidDecl = true;
-
-    } else if (isInstField) {
-      // C++ 9.6p3: A bit-field shall have integral or enumeration type.
-      if (!cast<FieldDecl>(Member)->getType()->isIntegralType()) {
-        Diag(Loc, diag::err_not_integral_type_bitfield)
-          << Name << BitWidth->getSourceRange();
-        InvalidDecl = true;
-      }
-
-    } else if (isa<FunctionDecl>(Member)) {
-      // A function typedef ("typedef int f(); f a;").
-      // C++ 9.6p3: A bit-field shall have integral or enumeration type.
-      Diag(Loc, diag::err_not_integral_type_bitfield)
-        << Name << BitWidth->getSourceRange();
-      InvalidDecl = true;
-
-    } else if (isa<TypedefDecl>(Member)) {
-      // "cannot declare 'A' to be a bit-field type"
-      Diag(Loc, diag::err_not_bitfield_type)
-        << Name << BitWidth->getSourceRange();
-      InvalidDecl = true;
-
-    } else {
-      assert(isa<CXXClassVarDecl>(Member) &&
-             "Didn't we cover all member kinds?");
-      // C++ 9.6p3: A bit-field shall not be a static member.
-      // "static member 'A' cannot be a bit-field"
-      Diag(Loc, diag::err_static_not_bitfield)
-        << Name << BitWidth->getSourceRange();
-      InvalidDecl = true;
-    }
-  }
-
   if (Init) {
     // C++ 9.2p4: A member-declarator can contain a constant-initializer only
     // if it declares a static member of const integral or const enumeration
@@ -649,13 +628,13 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
           CVD->getType()->isIntegralType()) {
         // constant-initializer
         if (CheckForConstantInitializer(Init, CVD->getType()))
-          InvalidDecl = true;
+          Member->setInvalidDecl();
 
       } else {
         // not const integral.
         Diag(Loc, diag::err_member_initialization)
           << Name << Init->getSourceRange();
-        InvalidDecl = true;
+        Member->setInvalidDecl();
       }
 
     } else {
@@ -672,23 +651,20 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
           else {
             Diag(Loc, diag::err_non_virtual_pure)
               << Name << Init->getSourceRange();
-            InvalidDecl = true;
+            Member->setInvalidDecl();
           }
         } else {
           Diag(Loc, diag::err_member_function_initialization)
             << Name << Init->getSourceRange();
-          InvalidDecl = true;
+          Member->setInvalidDecl();
         }
       } else {
         Diag(Loc, diag::err_member_initialization)
           << Name << Init->getSourceRange();
-        InvalidDecl = true;
+        Member->setInvalidDecl();
       }
     }
   }
-
-  if (InvalidDecl)
-    Member->setInvalidDecl();
 
   if (isInstField) {
     FieldCollector->Add(cast<FieldDecl>(Member));
