@@ -241,3 +241,20 @@ void f13_autorelease() {
 void f14_leakimmediately() {
   CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
 }
+
+// Test basic tracking of ivars associated with 'self'.  For the retain/release
+// checker we currently do not want to flag leaks associated with stores
+// of tracked objects to ivars.
+@interface SelfIvarTest : NSObject {
+  id myObj;
+}
+- (void)test_self_tracking;
+@end
+
+@implementation SelfIvarTest
+- (void)test_self_tracking {
+  myObj = (id) CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+@end
+
+
