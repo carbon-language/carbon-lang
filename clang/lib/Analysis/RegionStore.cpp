@@ -186,6 +186,8 @@ public:
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
 
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);
+  
+  SVal getLValueFieldOrIvar(const GRState* St, SVal Base, const Decl* D);
 
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
 
@@ -343,11 +345,16 @@ RegionStoreManager::getLValueCompoundLiteral(const GRState* St,
 
 SVal RegionStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
                                        SVal Base) {
-  return UnknownVal();
+  return getLValueFieldOrIvar(St, Base, D);
 }
 
 SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
                                         const FieldDecl* D) {
+  return getLValueFieldOrIvar(St, Base, D);
+}
+
+SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
+                                              const Decl* D) {
   if (Base.isUnknownOrUndef())
     return Base;
 
@@ -380,8 +387,13 @@ SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
     assert(0 && "Unhandled Base.");
     return Base;
   }
+  
+  // NOTE: We must have this check first because ObjCIvarDecl is a subclass
+  // of FieldDecl.
+  if (const ObjCIvarDecl *ID = dyn_cast<ObjCIvarDecl>(D))
+    return loc::MemRegionVal(MRMgr.getObjCIvarRegion(ID, BaseR));
 
-  return loc::MemRegionVal(MRMgr.getFieldRegion(D, BaseR));
+  return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
 }
 
 SVal RegionStoreManager::getLValueElement(const GRState* St, 
@@ -687,13 +699,28 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   if (state.contains<RegionKills>(R))
     return UnknownVal();
 
-  // If the region is an element of field, it may have a default value.
+  // If the region is an element or field, it may have a default value.
   if (isa<ElementRegion>(R) || isa<FieldRegion>(R)) {
     const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
     GRStateTrait<RegionDefaultValue>::lookup_type D = 
       state.get<RegionDefaultValue>(SuperR);
     if (D)
       return *D;
+  }
+  
+  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
+    const MemRegion *SR = IVR->getSuperRegion();
+
+    // If the super region is 'self' then return the symbol representing
+    // the value of the ivar upon entry to the method.
+    if (SR == SelfRegion) {
+      // FIXME: Do we need to handle the case where the super region
+      // has a view?  We want to canonicalize the bindings.
+      return SVal::GetRValueSymbolVal(getSymbolManager(), R);
+    }
+    
+    // Otherwise, we need a new symbol.  For now return Unknown.
+    return UnknownVal();
   }
 
   // The location does not have a bound value.  This means that it has
@@ -715,8 +742,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
       else
         return UnknownVal();
     }
-  }
-  
+  }  
 
   if (MRMgr.onStack(R) || MRMgr.onHeap(R)) {
     // All stack variables are considered to have undefined values
@@ -926,7 +952,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
         if (SymReaper.isLive(Loc, VR->getDecl()))
           RegionRoots.push_back(VR); // This is a live "root".
       }
-    } 
+    }
   }
   
   // Process the worklist of RegionRoots.  This performs a "mark-and-sweep"
@@ -973,8 +999,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   
   // We have now scanned the store, marking reachable regions and symbols
   // as live.  We now remove all the regions that are dead from the store
-  // as well as update DSymbols with the set symbols that are now dead.
-  
+  // as well as update DSymbols with the set symbols that are now dead.  
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     
