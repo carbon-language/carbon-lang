@@ -271,8 +271,8 @@ public:
   llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
                                         const BlockInfo& Info,
                                         uint64_t &Size, uint64_t &Align,
-                                        llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls);
-
+                      llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
+                                        bool &subBlockHasCopyDispose);
 
   llvm::Value *LoadBlockStruct();
 
@@ -288,6 +288,7 @@ public:
   uint64_t BlockOffset;
   /// BlockAlign - Maximal alignment needed for the Block expressed in bytes.
   uint64_t BlockAlign;
+
   /// getBlockOffset - Allocate an offset for the ValueDecl from a
   /// BlockDeclRefExpr in a block literal (BlockExpr).
   uint64_t getBlockOffset(const BlockDeclRefExpr *E);
@@ -298,13 +299,6 @@ public:
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
 
   const llvm::Type *BuildByRefType(QualType Ty, uint64_t Align);
-  bool BlockRequiresCopying(QualType Ty) {
-    if (Ty->isBlockPointerType())
-      return true;
-    if (getContext().isObjCNSObjectType(Ty))
-      return true;
-    return false;
-  }
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);

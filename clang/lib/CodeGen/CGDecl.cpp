@@ -338,6 +338,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     int flag = 0;
     int flags = 0;
 
+    // The block literal will need a copy/destroy helper.
+    BlockHasCopyDispose = true;
+
     if (Ty->isBlockPointerType()) {
       flag |= BLOCK_FIELD_IS_BLOCK;
       flags |= BLOCK_HAS_COPY_DISPOSE;
@@ -360,11 +363,15 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     V = llvm::ConstantInt::get(llvm::Type::Int32Ty, flags);
     Builder.CreateStore(V, flags_field);
 
-    const llvm::Type *V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, CGM.getTargetData().getTypeStoreSizeInBits(V1) / 8);
+    const llvm::Type *V1;
+    V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                               (CGM.getTargetData().getTypeStoreSizeInBits(V1)
+                                / 8));
     Builder.CreateStore(V, size_field);
 
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
+      BlockHasCopyDispose = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
       llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
 

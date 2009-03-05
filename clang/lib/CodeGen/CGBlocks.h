@@ -110,6 +110,7 @@ public:
 
 class BlockFunction : public BlockBase {
   CodeGenModule &CGM;
+  ASTContext &getContext() const;
 
 public:
   const llvm::Type *PtrToInt8Ty;
@@ -160,6 +161,14 @@ public:
 
   llvm::Value *getBlockObjectDispose();
   void BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr);
+
+  bool BlockRequiresCopying(QualType Ty) {
+    if (Ty->isBlockPointerType())
+      return true;
+    if (getContext().isObjCNSObjectType(Ty))
+      return true;
+    return false;
+  }
 };
 
 }  // end namespace CodeGen
