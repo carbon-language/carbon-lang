@@ -204,7 +204,7 @@ void *JITResolver::getFunctionStub(Function *F, bool empty) {
     TheJIT->updateGlobalMapping(F, Stub);
   }
 
-  cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
+  DOUT << "JIT: Stub emitted at [" << Stub << "] for function '"
        << F->getName() << "'\n";
 
   // Finally, keep track of the stub-to-Function mapping so that the
