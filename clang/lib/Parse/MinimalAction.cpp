@@ -16,7 +16,22 @@
 #include "clang/Parse/Scope.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
+
+void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
+  if (Loc.isValid()) {
+    Loc.print(OS, SM);
+    OS << ": ";
+  }
+  OS << Message;
+  
+  std::string Name = Actions.getDeclName(TheDecl);
+  if (!Name.empty())
+    OS << " '" << Name << '\'';
+  
+  OS << '\n';
+}
 
 /// TypeNameInfo - A link exists here for each scope that an identifier is
 /// defined.

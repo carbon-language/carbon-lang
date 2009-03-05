@@ -290,6 +290,11 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
+
+  /// getDeclName - Return a pretty name for the specified decl if possible, or
+  /// an empty string if not.  This is used for pretty crash reporting. 
+  virtual std::string getDeclName(DeclTy *D);
+  
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc, 
                               Scope *S, const CXXScopeSpec *SS);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup){

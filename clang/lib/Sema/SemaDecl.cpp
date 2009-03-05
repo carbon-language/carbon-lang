@@ -30,6 +30,15 @@
 #include <functional>
 using namespace clang;
 
+/// getDeclName - Return a pretty name for the specified decl if possible, or
+/// an empty string if not.  This is used for pretty crash reporting. 
+std::string Sema::getDeclName(DeclTy *d) {
+  Decl *D = static_cast<Decl *>(d);
+  if (NamedDecl *DN = dyn_cast_or_null<NamedDecl>(D))
+    return DN->getQualifiedNameAsString();
+  return "";
+}
+
 /// \brief If the identifier refers to a type name within this scope,
 /// return the declaration of that type.
 ///

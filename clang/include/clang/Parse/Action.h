@@ -20,6 +20,7 @@
 #include "clang/Basic/TypeTraits.h"
 #include "clang/Parse/AccessSpecifier.h"
 #include "clang/Parse/Ownership.h"
+#include "llvm/Support/PrettyStackTrace.h"
 
 namespace clang {
   // Semantic.
@@ -118,6 +119,11 @@ public:
 
   /// Statistics.
   virtual void PrintStats() const {}
+
+  /// getDeclName - Return a pretty name for the specified decl if possible, or
+  /// an empty string if not.  This is used for pretty crash reporting. 
+  virtual std::string getDeclName(DeclTy *D) { return ""; }
+  
   //===--------------------------------------------------------------------===//
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
@@ -266,8 +272,8 @@ public:
     return;
   }
 
-  /// ActOnFinishFunctionBody - This is called when a function body has completed
-  /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
+  /// ActOnFinishFunctionBody - This is called when a function body has
+  /// completed parsing. Decl is the DeclTy returned by ParseStartOfFunctionDef.
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body) {
     return Decl;
   }
@@ -1510,6 +1516,21 @@ public:
                                            AttributeList *AttrList);
 };
 
+  
+class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
+  Action::DeclTy *TheDecl;
+  SourceLocation Loc;
+  Action &Actions;
+  SourceManager &SM;
+  const char *Message;
+public:
+  PrettyStackTraceDecl(Action::DeclTy *Decl, SourceLocation L,
+                       Action &actions, SourceManager &sm, const char *Msg)
+  : TheDecl(Decl), Loc(L), Actions(actions), SM(sm), Message(Msg) {}
+  
+  virtual void print(llvm::raw_ostream &OS) const;
+};  
+  
 }  // end namespace clang
 
 #endif
