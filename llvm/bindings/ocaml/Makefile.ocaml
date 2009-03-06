@@ -37,7 +37,7 @@ UsedLibNames = $(shell $(LLVM_CONFIG) --libnames $(UsedComponents))
 endif
 
 # Tools
-OCAMLCFLAGS += -I $(OcamlDir) -I $(ObjDir)
+OCAMLCFLAGS += -I $(ObjDir) -I $(OcamlDir)
 ifneq ($(ObjectsO),)
 OCAMLAFLAGS += $(patsubst %,-cclib %, \
                  $(filter-out -L$(LibDir),-l$(LIBRARYNAME) \
@@ -297,7 +297,7 @@ endif
 
 $(ObjDir)/$(LIBRARYNAME).odoc: $(ObjectsCMI)
 	$(Echo) "Documenting $(notdir $@)"
-	$(Verb) $(OCAMLDOC) -I $(OcamlDir) -I $(ObjDir) -dump $@ $(OcamlHeaders)
+	$(Verb) $(OCAMLDOC) -I $(ObjDir) -I $(OcamlDir) -dump $@ $(OcamlHeaders)
 
 ocamldoc: $(ObjDir)/$(LIBRARYNAME).odoc
 
