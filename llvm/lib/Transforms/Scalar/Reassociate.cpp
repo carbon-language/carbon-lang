@@ -26,6 +26,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
@@ -120,7 +121,8 @@ static bool isUnmovableInstruction(Instruction *I) {
       I->getOpcode() == Instruction::Load ||
       I->getOpcode() == Instruction::Malloc ||
       I->getOpcode() == Instruction::Invoke ||
-      I->getOpcode() == Instruction::Call ||
+      (I->getOpcode() == Instruction::Call &&
+       !isa<DbgInfoIntrinsic>(I)) ||
       I->getOpcode() == Instruction::UDiv || 
       I->getOpcode() == Instruction::SDiv ||
       I->getOpcode() == Instruction::FDiv ||
