@@ -525,15 +525,14 @@ for completeness. In this snippet, <tt>%object</tt> is the object pointer, and
     ;; Compute the derived pointer.
     %derived = getelementptr %object, i32 0, i32 2, i32 %n</pre></blockquote>
 
-<p>The use of these intrinsics is naturally optional if the target GC does
-require the corresponding barrier. If so, the GC plugin will replace the
-intrinsic calls with the corresponding <tt>load</tt> or <tt>store</tt>
-instruction if they are used.</p>
+<p>LLVM does not enforce this relationship between the object and derived
+pointer (although a <a href="#plugin">plugin</a> might). However, it would be
+an unusual collector that violated it.</p>
 
-<p>LLVM does not enforce any particular relationship between the object and
-derived pointer (although a <a href="#plugin">plugin</a> might). However, it
-would be unusual that the derived pointer not be a <tt>getelementptr</tt> of the
-object pointer.</p>
+<p>The use of these intrinsics is naturally optional if the target GC does
+require the corresponding barrier. Such a GC plugin will replace the intrinsic
+calls with the corresponding <tt>load</tt> or <tt>store</tt> instruction if they
+are used.</p>
 
 </div>
 
