@@ -67,7 +67,7 @@ namespace {
     GlobalVariable *FindGlobalCtors(Module &M);
     bool OptimizeFunctions(Module &M);
     bool OptimizeGlobalVars(Module &M);
-    bool ResolveAliases(Module &M);
+    bool OptimizeGlobalAliases(Module &M);
     bool OptimizeGlobalCtorsList(GlobalVariable *&GCL);
     bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
   };
@@ -1808,6 +1808,9 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
   // Optimize functions.
   for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
     Function *F = FI++;
+    // Functions without names cannot be referenced outside this module.
+    if (!F->hasName() && !F->isDeclaration())
+      F->setLinkage(GlobalValue::InternalLinkage);
     F->removeDeadConstantUsers();
     if (F->use_empty() && (F->hasLocalLinkage() ||
                            F->hasLinkOnceLinkage())) {
@@ -1844,6 +1847,9 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; ) {
     GlobalVariable *GV = GVI++;
+    // Global variables without names cannot be referenced outside this module.
+    if (!GV->hasName() && !GV->isDeclaration())
+      GV->setLinkage(GlobalValue::InternalLinkage);
     if (!GV->isConstant() && GV->hasLocalLinkage() &&
         GV->hasInitializer())
       Changed |= ProcessInternalGlobal(GV, GVI);
@@ -2371,12 +2377,15 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   return true;
 }
 
-bool GlobalOpt::ResolveAliases(Module &M) {
+bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
   bool Changed = false;
 
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E;) {
     Module::alias_iterator J = I++;
+    // Aliases without names cannot be referenced outside this module.
+    if (!J->hasName() && !J->isDeclaration())
+      J->setLinkage(GlobalValue::InternalLinkage);
     // If the aliasee may change at link time, nothing can be done - bail out.
     if (J->mayBeOverridden())
       continue;
@@ -2447,7 +2456,7 @@ bool GlobalOpt::runOnModule(Module &M) {
     LocalChange |= OptimizeGlobalVars(M);
 
     // Resolve aliases, when possible.
-    LocalChange |= ResolveAliases(M);
+    LocalChange |= OptimizeGlobalAliases(M);
     Changed |= LocalChange;
   }
   
