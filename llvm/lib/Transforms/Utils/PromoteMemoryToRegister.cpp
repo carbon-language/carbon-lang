@@ -81,8 +81,14 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
       if (SI->isVolatile())
         return false;
     } else if (const BitCastInst *BC = dyn_cast<BitCastInst>(*UI)) {
-      // Uses by dbg info shouldn't inhibit promotion.
+      // A bitcast that does not feed into debug info inhibits promotion.
       if (!BC->hasOneUse() || !isa<DbgInfoIntrinsic>(*BC->use_begin()))
+        return false;
+      // If the only use is by debug info, this alloca will not exist in
+      // non-debug code, so don't try to promote; this ensures the same
+      // codegen with debug info.  Otherwise, debug info should not
+      // inhibit promotion (but we must examine other uses).
+      if (AI->hasOneUse())
         return false;
     } else {
       return false;
