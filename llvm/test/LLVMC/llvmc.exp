@@ -1,5 +1,6 @@
 load_lib llvm.exp
 
+# 'false.c' is really C++, so it must be treated differently.
 set special_file "$srcdir/$subdir/false.c"
 
 if [ llvm_gcc_supports c ] then {
