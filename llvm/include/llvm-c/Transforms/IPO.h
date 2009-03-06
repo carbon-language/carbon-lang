@@ -1,4 +1,4 @@
-/*===-- Scalar.h - Scalar Transformation Library C Interface ----*- C++ -*-===*\
+/*===-- IPO.h - Interprocedural Transformations C Interface -----*- C++ -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
@@ -7,17 +7,13 @@
 |*                                                                            *|
 |*===----------------------------------------------------------------------===*|
 |*                                                                            *|
-|* This header declares the C interface to libLLVMScalarOpts.a, which         *|
-|* implements various scalar transformations of the LLVM IR.                  *|
-|*                                                                            *|
-|* Many exotic languages can interoperate with C code but have a harder time  *|
-|* with C++ due to name mangling. So in addition to C, this interface enables *|
-|* tools written in such languages.                                           *|
+|* This header declares the C interface to libLLVMIPO.a, which implements     *|
+|* various interprocedural transformations of the LLVM IR.                    *|
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef LLVM_C_TRANSFORMS_SCALAR_H
-#define LLVM_C_TRANSFORMS_SCALAR_H
+#ifndef LLVM_C_TRANSFORMS_IPO_H
+#define LLVM_C_TRANSFORMS_IPO_H
 
 #include "llvm-c/Core.h"
 
