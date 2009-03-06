@@ -191,6 +191,9 @@ bool StackProtector::InsertStackProtectors() {
     // Split the basic block before the return instruction.
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
 
+    // Remove default branch instruction to the new BB.
+    BB->getTerminator()->eraseFromParent();
+
     // Move the newly created basic block to the point right after the old basic
     // block so that it's in the "fall through" position.
     NewBB->moveAfter(BB);
