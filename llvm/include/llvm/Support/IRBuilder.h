@@ -318,16 +318,48 @@ public:
         return Folder.CreateGetElementPtr(PC, &IC, 1);
     return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
   }
-  Value *CreateStructGEP(Value *Ptr, unsigned Idx, const char *Name = "") {
+  Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const char *Name = "") {
+    llvm::Value *Idx = ConstantInt::get(llvm::Type::Int32Ty, Idx0);
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateGetElementPtr(PC, &Idx, 1);
+
+    return Insert(GetElementPtrInst::Create(Ptr, &Idx, &Idx+1), Name);    
+  }
+  Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1, 
+                    const char *Name = "") {
     llvm::Value *Idxs[] = {
-      ConstantInt::get(llvm::Type::Int32Ty, 0),
-      ConstantInt::get(llvm::Type::Int32Ty, Idx)
+      ConstantInt::get(llvm::Type::Int32Ty, Idx0),
+      ConstantInt::get(llvm::Type::Int32Ty, Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, Idxs, 2);
 
-    return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);
+    return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);    
+  }
+  Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const char *Name = "") {
+    llvm::Value *Idx = ConstantInt::get(llvm::Type::Int64Ty, Idx0);
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateGetElementPtr(PC, &Idx, 1);
+
+    return Insert(GetElementPtrInst::Create(Ptr, &Idx, &Idx+1), Name);    
+  }
+  Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1, 
+                    const char *Name = "") {
+    llvm::Value *Idxs[] = {
+      ConstantInt::get(llvm::Type::Int64Ty, Idx0),
+      ConstantInt::get(llvm::Type::Int64Ty, Idx1)
+    };
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateGetElementPtr(PC, Idxs, 2);
+
+    return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);    
+  }
+  Value *CreateStructGEP(Value *Ptr, unsigned Idx, const char *Name = "") {
+    return CreateConstGEP2_32(Ptr, 0, Idx, Name);
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
     Constant *StrConstant = ConstantArray::get(Str, true);
