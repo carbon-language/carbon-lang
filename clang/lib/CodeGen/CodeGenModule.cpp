@@ -263,8 +263,12 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
         } else
           GV->setLinkage(llvm::Function::DLLImportLinkage);
       }
-    } else if (D->getAttr<WeakAttr>())
+    } else if (D->getAttr<WeakAttr>() || 
+               D->getAttr<WeakImportAttr>()) {
+      // "extern_weak" is overloaded in LLVM; we probably should have
+      // separate linkage types for this. 
       GV->setLinkage(llvm::Function::ExternalWeakLinkage);
+   }
   } else {
     if (IsInternal) {
       GV->setLinkage(llvm::Function::InternalLinkage);
@@ -276,7 +280,8 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
             GV->setLinkage(llvm::Function::DLLExportLinkage);
         } else
           GV->setLinkage(llvm::Function::DLLExportLinkage);
-      } else if (D->getAttr<WeakAttr>() || IsInline)
+      } else if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>() || 
+                 IsInline)
         GV->setLinkage(llvm::Function::WeakLinkage);
     }
   }
@@ -602,7 +607,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
     if (D->getStorageClass() == VarDecl::PrivateExtern)
       setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
 
-    if (D->getAttr<WeakAttr>())
+    if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
       GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
     if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
@@ -737,7 +742,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setLinkage(llvm::Function::DLLImportLinkage);
   else if (D->getAttr<DLLExportAttr>())
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (D->getAttr<WeakAttr>())
+  else if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
     GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
   else {
     // FIXME: This isn't right.  This should handle common linkage and other

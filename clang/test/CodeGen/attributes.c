@@ -13,6 +13,8 @@
 // RUN: grep '@t12 =.*section "SECT"' %t &&
 // RUN: grep '@t13 =.*section "SECT"' %t &&
 // RUN: grep '@t14.x =.*section "SECT"' %t
+// RUN: grep 'declare extern_weak i32 @t15()' %t &&
+// RUN: grep '@t16 = extern_weak global i32' %t
 
 void t1() __attribute__((noreturn));
 void t1() {}
@@ -47,3 +49,11 @@ struct s0 t13 __attribute__((section("SECT"))) = { 0 };
 void t14(void) {
   static int x __attribute__((section("SECT"))) = 0;
 }
+
+int __attribute__((weak_import)) t15(void);
+extern int t16 __attribute__((weak_import));
+int t17() {
+  return t15() + t16;
+}
+
+
