@@ -137,7 +137,7 @@ namespace {
     
     virtual void HandleTranslationUnit(TranslationUnit& TU) {
       {
-        PrettyStackTraceString CrashInfo("per-file LLVM IR generation");
+        PrettyStackTraceString CrashInfo("Per-file LLVM IR generation");
         if (CompileOpts.TimePasses)
           LLVMIRGeneration.startTimer();
 
@@ -398,7 +398,7 @@ void BackendConsumer::EmitAssembly() {
   // would like to have the option of streaming code generation.
 
   if (PerFunctionPasses) {
-    PrettyStackTraceString CrashInfo("per-function optimization");
+    PrettyStackTraceString CrashInfo("Per-function optimization");
     
     PerFunctionPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -408,12 +408,12 @@ void BackendConsumer::EmitAssembly() {
   }
   
   if (PerModulePasses) {
-    PrettyStackTraceString CrashInfo("per-module optimization passes");
+    PrettyStackTraceString CrashInfo("Per-module optimization passes");
     PerModulePasses->run(*M);
   }
   
   if (CodeGenPasses) {
-    PrettyStackTraceString CrashInfo("code generation");
+    PrettyStackTraceString CrashInfo("Code generation");
     CodeGenPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (!I->isDeclaration())
