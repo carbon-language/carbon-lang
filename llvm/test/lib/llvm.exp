@@ -7,7 +7,7 @@ proc execOneLine { test PRS outcome lineno line } {
     set code [lindex $::errorCode 0]
     set lineno [expr $lineno + 1]
     if { $PRS != ""} {
-      set PRS " for $PRS" 
+      set PRS " for $PRS"
     }
     set errmsg " at line $lineno\nwhile running: $line\n$errmsg"
     switch "$code" {
@@ -33,20 +33,20 @@ proc execOneLine { test PRS outcome lineno line } {
       NONE {
         # Any other error such as stderr output of a program, or syntax error in
         # the RUN line.
-        set resultmsg "$test$PRS\nFailed with unknown error (or has stderr output)$errmsg" 
+        set resultmsg "$test$PRS\nFailed with unknown error (or has stderr output)$errmsg"
       }
       default {
-        set resultmsg "$test$PRS\nFailed with unknown error$errmsg" 
+        set resultmsg "$test$PRS\nFailed with unknown error$errmsg"
       }
     }
-  } 
+  }
   return $resultmsg
 }
 
 # This procedure performs variable substitutions on the RUN: lines of a test
 # cases.
 proc substitute { line test tmpFile } {
-  global srcroot objroot srcdir objdir subdir target_triplet prcontext 
+  global srcroot objroot srcdir objdir subdir target_triplet prcontext
   global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers ocamlc
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir llvmdsymutil
   global valgrind grep gas
@@ -77,7 +77,7 @@ proc substitute { line test tmpFile } {
   regsub -all {%llvmdsymutil} $new_line "$llvmdsymutil" new_line
   #replace %llvmlibsdir with configure library directory
   regsub -all {%llvmlibsdir} $new_line "$llvmlibsdir" new_line
-  #replace %p with path to source, 
+  #replace %p with path to source,
   regsub -all {%p} $new_line [file join $srcdir $subdir] new_line
   #replace %s with filename
   regsub -all {%s} $new_line $test new_line
@@ -119,7 +119,7 @@ proc RunLLVMTests { test_source_files } {
   set timeout 60
 
   set path [file join $objdir $subdir]
-  
+
   #Make Output Directory if it does not exist already
   if { [file exists path] } {
     cd $path
@@ -127,22 +127,22 @@ proc RunLLVMTests { test_source_files } {
     file mkdir $path
     cd $path
   }
-  
+
   file mkdir Output
   cd Output
 
   foreach test $test_source_files {
     #Should figure out best way to set the timeout
     #set timeout 40
-    
+
     set filename [file tail $test]
     verbose "ABOUT TO RUN: $filename" 2
     set outcome PASS
     set tmpFile "$filename.tmp"
-    
+
     # Mark that it should not be XFAIL for this target.
     set targetPASS 0
-    
+
     #set hasRunline bool to check if testcase has a runline
     set numLines 0
 
@@ -153,7 +153,7 @@ proc RunLLVMTests { test_source_files } {
     foreach line [split [read $testFileId] \n] {
 
       # if its the END. line then stop parsing (optimization for big files)
-      if {[regexp {END.[[:space:]]*$} $line match endofscript]} {        
+      if {[regexp {END.[[:space:]]*$} $line match endofscript]} {
         break
 
       # if the line is continued, concatenate and continue the loop
@@ -161,7 +161,7 @@ proc RunLLVMTests { test_source_files } {
         set runline "$runline$oneline "
 
       # if its a terminating RUN: line then do substitution on the whole line
-      # and then save the line. 
+      # and then save the line.
       } elseif {[regexp {RUN: *(.+)$} $line match oneline suffix]} {
         set runline "$runline$oneline"
         set runline [ substitute $runline $test $tmpFile ]
@@ -218,11 +218,11 @@ proc RunLLVMTests { test_source_files } {
         }
       }
     }
-    
+
     # Done reading the script
     close $testFileId
-    
-    
+
+
     if { $numLines == 0 } {
       fail "$test: \nDoes not have a RUN line\n"
     } else {
@@ -274,9 +274,9 @@ proc llvm_gcc_supports { lang } {
   foreach supported_lang [split "$llvmgcc_langs" ,] {
     if { "$lang" == "$supported_lang" } {
       # FIXME: Knowing it is configured is not enough. We should do two more
-      # checks here. First, we need to run llvm-gcc -print-prog-name=$file to 
+      # checks here. First, we need to run llvm-gcc -print-prog-name=$file to
       # get the path to the compiler. If we don't get a path, the language isn't
-      # properly configured or built. If we do get a path, we should check to 
+      # properly configured or built. If we do get a path, we should check to
       # make sure that it is executable and perhaps even try executing it.
       return 1;
     }
