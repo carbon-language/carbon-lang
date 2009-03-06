@@ -14,11 +14,13 @@
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
@@ -272,4 +274,46 @@ bool llvm::OnlyUsedByDbgInfoIntrinsics(Instruction *I,
     }
   }
   return true;
+}
+
+/// UserIsDebugInfo - Return true if U is a constant expr used by 
+/// llvm.dbg.variable or llvm.dbg.global_variable
+bool llvm::UserIsDebugInfo(User *U) {
+  ConstantExpr *CE = dyn_cast<ConstantExpr>(U);
+
+  if (!CE || CE->getNumUses() != 1)
+    return false;
+
+  Constant *Init = dyn_cast<Constant>(CE->use_back());
+  if (!Init || Init->getNumUses() != 1)
+    return false;
+
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(Init->use_back());
+  if (!GV || !GV->hasInitializer() || GV->getInitializer() != Init)
+    return false;
+
+  DIVariable DV(GV);
+  if (!DV.isNull()) 
+    return true; // User is llvm.dbg.variable
+
+  DIGlobalVariable DGV(GV);
+  if (!DGV.isNull())
+    return true; // User is llvm.dbg.global_variable
+
+  return false;
+}
+
+/// RemoveDbgInfoUser - Remove an User which is representing debug info.
+void llvm::RemoveDbgInfoUser(User *U) {
+  assert (UserIsDebugInfo(U) && "Unexpected User!");
+  ConstantExpr *CE = cast<ConstantExpr>(U);
+  while (!CE->use_empty()) {
+    Constant *C = cast<Constant>(CE->use_back());
+    while (!C->use_empty()) {
+      GlobalVariable *GV = cast<GlobalVariable>(C->use_back());
+      GV->eraseFromParent();
+    }
+    C->destroyConstant();
+  }
+  CE->destroyConstant();
 }

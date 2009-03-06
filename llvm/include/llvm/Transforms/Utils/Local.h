@@ -17,6 +17,7 @@
 
 namespace llvm {
 
+class User;
 class BasicBlock;
 class Instruction;
 class Value;
@@ -100,6 +101,14 @@ AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
 /// with DbgInfoIntrinsic that use the instruction I.
 bool OnlyUsedByDbgInfoIntrinsics(Instruction *I, 
                            SmallVectorImpl<DbgInfoIntrinsic *> *DbgInUses = 0);
+
+/// UserIsDebugInfo - Return true if U is a constant expr used by 
+/// llvm.dbg.variable or llvm.dbg.global_variable
+bool UserIsDebugInfo(User *U);
+
+/// RemoveDbgInfoUser - Remove an User which is representing debug info.
+void RemoveDbgInfoUser(User *U);
+
 } // End llvm namespace
 
 #endif
