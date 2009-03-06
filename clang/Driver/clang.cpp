@@ -1563,7 +1563,7 @@ int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv,
-                              "LLVM 'Clang' frontend: http://clang.llvm.org\n");
+                              "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
   
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
