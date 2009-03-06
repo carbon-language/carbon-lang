@@ -50,12 +50,12 @@ struct Redecl {
   void zz(); // expected-error{{duplicate member 'zz'}} 
 };
 
-union { // expected-error{{anonymous unions must be struct or union members}}
+union { // expected-error{{declaration does not declare anything}}
   int int_val;
   float float_val;
 };
 
-static union { // expected-error{{anonymous unions must be struct or union members}}
+static union { // expected-error{{declaration does not declare anything}}
   int int_val2;
   float float_val2;
 };
@@ -66,7 +66,7 @@ void f() {
 }
 
 void g() {
-  union { // expected-error{{anonymous unions must be struct or union members}}
+  union { // expected-error{{declaration does not declare anything}}
     int i;
     float f2;
   };
@@ -87,3 +87,5 @@ struct s1 {
     int f0; // expected-error{{member of anonymous union redeclares 'f0'}}
   };
 };
+
+struct {}; // expected-error{{declaration does not declare anything}}

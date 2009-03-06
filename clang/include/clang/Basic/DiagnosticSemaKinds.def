@@ -1215,8 +1215,6 @@ DIAG(err_anonymous_union_with_storage_spec, ERROR,
      "anonymous union at class scope must not have a storage specifier")
 DIAG(err_anonymous_struct_not_member, ERROR,
      "anonymous %select{structs|structs and classes}0 must be %select{struct or union|class}0 members")
-DIAG(err_anonymous_union_not_member, ERROR,
-     "anonymous unions must be struct or union members")
 DIAG(err_anonymous_union_member_redecl, ERROR,
      "member of anonymous union redeclares %0")
 DIAG(err_anonymous_struct_member_redecl, ERROR,

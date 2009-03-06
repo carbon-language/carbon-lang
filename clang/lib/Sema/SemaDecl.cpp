@@ -922,8 +922,14 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     if (!Record->getDeclName() && Record->isDefinition() &&
-        DS.getStorageClassSpec() != DeclSpec::SCS_typedef)
-      return BuildAnonymousStructOrUnion(S, DS, Record);
+        DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
+      if (getLangOptions().CPlusPlus ||
+          Record->getDeclContext()->isRecord())
+        return BuildAnonymousStructOrUnion(S, DS, Record);
+
+      Diag(DS.getSourceRange().getBegin(), diag::err_no_declarators)
+        << DS.getSourceRange();
+    }
 
     // Microsoft allows unnamed struct/union fields. Don't complain
     // about them.
@@ -1102,14 +1108,7 @@ Sema::DeclTy *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
           Invalid = true;
       }
     }
-  } else {
-    // FIXME: Check GNU C semantics
-    if (Record->isUnion() && !Owner->isRecord()) {
-      Diag(Record->getLocation(), diag::err_anonymous_union_not_member)
-        << (int)getLangOptions().CPlusPlus;
-      Invalid = true;
-    }
-  }
+  } 
 
   if (!Record->isUnion() && !Owner->isRecord()) {
     Diag(Record->getLocation(), diag::err_anonymous_struct_not_member)
