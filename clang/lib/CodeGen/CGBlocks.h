@@ -94,6 +94,7 @@ public:
     int GlobalUniqueCount;
   } Block;
 
+  llvm::Value *BlockObjectAssign;
   llvm::Value *BlockObjectDispose;
   const llvm::Type *PtrToInt8Ty;
 
@@ -102,7 +103,7 @@ public:
     : Context(C), TheModule(M), TheTargetData(TD), Types(T),
       CGM(CodeGen),
       NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockDescriptorType(0),
-      GenericBlockLiteralType(0), BlockObjectDispose(0) {
+      GenericBlockLiteralType(0), BlockObjectAssign(0), BlockObjectDispose(0) {
     Block.GlobalUniqueCount = 0;
     PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   }
@@ -163,12 +164,13 @@ public:
   llvm::Constant *BuildCopyHelper();
   llvm::Constant *BuildDestroyHelper();
 
-  llvm::Constant *GeneratebyrefCopyHelperFunction();
+  llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag);
   llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, int);
 
-  llvm::Constant *BuildbyrefCopyHelper(int flag);
-  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type*, int flag);
+  llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T, int flag);
+  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, int flag);
 
+  llvm::Value *getBlockObjectAssign();
   llvm::Value *getBlockObjectDispose();
   void BuildBlockRelease(llvm::Value *DeclPtr, int flag = BLOCK_FIELD_IS_BYREF);
 

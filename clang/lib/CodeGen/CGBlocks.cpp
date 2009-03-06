@@ -755,15 +755,21 @@ llvm::Constant *BlockFunction::BuildDestroyHelper() {
   return CodeGenFunction(CGM).GenerateDestroyHelperFunction();
 }
 
-llvm::Constant *BlockFunction::GeneratebyrefCopyHelperFunction() {
+llvm::Constant *BlockFunction::
+GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
   // FIXME: This leaks
+  ImplicitParamDecl *Dst =
+    ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
+                              getContext().getPointerType(getContext().VoidTy));
+  Args.push_back(std::make_pair(Dst, Dst->getType()));
+
+  // FIXME: This leaks
   ImplicitParamDecl *Src =
     ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
                               getContext().getPointerType(getContext().VoidTy));
-
   Args.push_back(std::make_pair(Src, Src->getType()));
   
   const CGFunctionInfo &FI =
@@ -787,7 +793,27 @@ llvm::Constant *BlockFunction::GeneratebyrefCopyHelperFunction() {
                                           FunctionDecl::Static, false,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
-  // EmitStmt(BExpr->getBody());
+
+  // dst->x
+  llvm::Value *V = CGF.GetAddrOfLocalVar(Dst);
+  V = Builder.CreateBitCast(V, T);
+  V = Builder.CreateStructGEP(V, 6, "x");
+  llvm::Value *DstObj = Builder.CreateBitCast(V, PtrToInt8Ty);
+
+  // src->x
+  V = CGF.GetAddrOfLocalVar(Src);
+  V = Builder.CreateLoad(V);
+  V = Builder.CreateBitCast(V, T);
+  V = Builder.CreateStructGEP(V, 6, "x");
+  V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
+  llvm::Value *SrcObj = Builder.CreateLoad(V);
+  
+  flag |= BLOCK_BYREF_CALLER;
+
+  llvm::Value *N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
+  llvm::Value *F = getBlockObjectAssign();
+  Builder.CreateCall3(F, DstObj, SrcObj, N);
+
   CGF.FinishFunction();
 
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
@@ -845,8 +871,9 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
-llvm::Constant *BlockFunction::BuildbyrefCopyHelper(int flag) {
-  return CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction();
+llvm::Constant *BlockFunction::BuildbyrefCopyHelper(const llvm::Type *T,
+                                                    int flag) {
+  return CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, flag);
 }
 
 llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
@@ -866,6 +893,21 @@ llvm::Value *BlockFunction::getBlockObjectDispose() {
       = CGM.CreateRuntimeFunction(FTy, "_Block_object_dispose");
   }
   return CGM.BlockObjectDispose;
+}
+
+llvm::Value *BlockFunction::getBlockObjectAssign() {
+  if (CGM.BlockObjectAssign == 0) {
+    const llvm::FunctionType *FTy;
+    std::vector<const llvm::Type*> ArgTys;
+    const llvm::Type *ResultType = llvm::Type::VoidTy;
+    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(llvm::Type::Int32Ty);
+    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+    CGM.BlockObjectAssign
+      = CGM.CreateRuntimeFunction(FTy, "_Block_object_assign");
+  }
+  return CGM.BlockObjectAssign;
 }
 
 void BlockFunction::BuildBlockRelease(llvm::Value *V, int flag) {

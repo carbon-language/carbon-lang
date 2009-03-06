@@ -373,7 +373,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
       BlockHasCopyDispose = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
-      Builder.CreateStore(BuildbyrefCopyHelper(flag), copy_helper);
+      Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag),
+                          copy_helper);
 
       llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
       Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag),
