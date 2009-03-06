@@ -21,7 +21,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -1470,7 +1470,7 @@ bool GVN::performPRE(Function& F) {
       
       if (isa<AllocationInst>(CurInst) || isa<TerminatorInst>(CurInst) ||
           isa<PHINode>(CurInst) || CurInst->mayReadFromMemory() ||
-          CurInst->mayWriteToMemory())
+          CurInst->mayWriteToMemory() || isa<DbgInfoIntrinsic>(CurInst))
         continue;
       
       uint32_t valno = VN.lookup(CurInst);
