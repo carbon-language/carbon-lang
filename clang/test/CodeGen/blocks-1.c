@@ -1,7 +1,9 @@
 // RUN: clang %s -emit-llvm -o %t -fblocks -f__block &&
-// RUN: grep "_Block_object_dispose" %t | count 4
-// RUN: grep "__copy_helper_block_" %t | count 2
-// RUN: grep "__destroy_helper_block_" %t | count 2
+// RUN: grep "_Block_object_dispose" %t | count 5
+// RUN: grep "__copy_helper_block_" %t | count 6
+// RUN: grep "__destroy_helper_block_" %t | count 6
+// RUN: grep "__Block_byref_id_object_copy_" %t | count 2
+// RUN: grep "__Block_byref_id_object_dispose_" %t | count 2
 #include <stdio.h>
 
 void test1() {
@@ -31,8 +33,9 @@ void test2() {
 }
 
 void test3() {
+  __block int k;
   __block int (^j)(int);
-  ^{j=0;}();
+  ^{j=0; k=0;}();
 }
 
 int main() {

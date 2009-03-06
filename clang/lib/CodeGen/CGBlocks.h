@@ -160,8 +160,14 @@ public:
   llvm::Constant *GenerateCopyHelperFunction();
   llvm::Constant *GenerateDestroyHelperFunction();
 
-  llvm::Constant *BuildCopyHelper(int flag);
-  llvm::Constant *BuildDestroyHelper(int flag);
+  llvm::Constant *BuildCopyHelper();
+  llvm::Constant *BuildDestroyHelper();
+
+  llvm::Constant *GeneratebyrefCopyHelperFunction();
+  llvm::Constant *GeneratebyrefDestroyHelperFunction();
+
+  llvm::Constant *BuildbyrefCopyHelper(int flag);
+  llvm::Constant *BuildbyrefDestroyHelper(int flag);
 
   llvm::Value *getBlockObjectDispose();
   void BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr);

@@ -52,16 +52,10 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
 
   if (BlockHasCopyDispose) {
     // copy_func_helper_decl
-    // FIXME: implement
-    C = llvm::Constant::getNullValue(PtrToInt8Ty);
-    C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
-    Elts.push_back(C);
+    Elts.push_back(BuildCopyHelper());
 
     // destroy_func_decl
-    // FIXME: implement
-    C = llvm::Constant::getNullValue(PtrToInt8Ty);
-    C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
-    Elts.push_back(C);
+    Elts.push_back(BuildDestroyHelper());
   }
 
   C = llvm::ConstantStruct::get(Elts);
@@ -753,12 +747,96 @@ llvm::Constant *BlockFunction::GenerateDestroyHelperFunction() {
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
-llvm::Constant *BlockFunction::BuildCopyHelper(int flag) {
+llvm::Constant *BlockFunction::BuildCopyHelper() {
   return CodeGenFunction(CGM).GenerateCopyHelperFunction();
 }
 
-llvm::Constant *BlockFunction::BuildDestroyHelper(int flag) {
+llvm::Constant *BlockFunction::BuildDestroyHelper() {
   return CodeGenFunction(CGM).GenerateDestroyHelperFunction();
+}
+
+llvm::Constant *BlockFunction::GeneratebyrefCopyHelperFunction() {
+  QualType R = getContext().VoidTy;
+
+  FunctionArgList Args;
+  // FIXME: This leaks
+  ImplicitParamDecl *Src =
+    ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
+                              getContext().getPointerType(getContext().VoidTy));
+
+  Args.push_back(std::make_pair(Src, Src->getType()));
+  
+  const CGFunctionInfo &FI =
+    CGM.getTypes().getFunctionInfo(R, Args);
+
+  std::string Name = std::string("__Block_byref_id_object_copy_");
+  CodeGenTypes &Types = CGM.getTypes();
+  const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
+
+  llvm::Function *Fn =
+    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
+                           Name,
+                           &CGM.getModule());
+
+  IdentifierInfo *II
+    = &CGM.getContext().Idents.get("__Block_byref_id_object_copy_");
+
+  FunctionDecl *FD = FunctionDecl::Create(getContext(),
+                                          getContext().getTranslationUnitDecl(),
+                                          SourceLocation(), II, R,
+                                          FunctionDecl::Static, false,
+                                          true);
+  CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
+  // EmitStmt(BExpr->getBody());
+  CGF.FinishFunction();
+
+  return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
+}
+
+llvm::Constant *BlockFunction::GeneratebyrefDestroyHelperFunction() {
+  QualType R = getContext().VoidTy;
+
+  FunctionArgList Args;
+  // FIXME: This leaks
+  ImplicitParamDecl *Src =
+    ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
+                              getContext().getPointerType(getContext().VoidTy));
+
+  Args.push_back(std::make_pair(Src, Src->getType()));
+  
+  const CGFunctionInfo &FI =
+    CGM.getTypes().getFunctionInfo(R, Args);
+
+  std::string Name = std::string("__Block_byref_id_object_dispose_");
+  CodeGenTypes &Types = CGM.getTypes();
+  const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
+
+  llvm::Function *Fn =
+    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
+                           Name,
+                           &CGM.getModule());
+
+  IdentifierInfo *II
+    = &CGM.getContext().Idents.get("__Block_byref_id_object_dispose_");
+
+  FunctionDecl *FD = FunctionDecl::Create(getContext(),
+                                          getContext().getTranslationUnitDecl(),
+                                          SourceLocation(), II, R,
+                                          FunctionDecl::Static, false,
+                                          true);
+  CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
+  // EmitStmt(BExpr->getBody());
+  CGF.FinishFunction();
+
+  return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
+}
+
+llvm::Constant *BlockFunction::BuildbyrefCopyHelper(int flag) {
+  return CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction();
+}
+
+llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(int flag) {
+  return CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction();
 }
 
 llvm::Value *BlockFunction::getBlockObjectDispose() {
