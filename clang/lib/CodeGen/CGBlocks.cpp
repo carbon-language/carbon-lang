@@ -793,7 +793,9 @@ llvm::Constant *BlockFunction::GeneratebyrefCopyHelperFunction() {
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
-llvm::Constant *BlockFunction::GeneratebyrefDestroyHelperFunction() {
+llvm::Constant *
+BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
+                                                  int flag) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -825,7 +827,19 @@ llvm::Constant *BlockFunction::GeneratebyrefDestroyHelperFunction() {
                                           FunctionDecl::Static, false,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
-  // BuildBlockRelease(Src, flag);
+
+  llvm::Value *V = CGF.GetAddrOfLocalVar(Src);
+  V = Builder.CreateBitCast(V, T);
+  V = Builder.CreateStructGEP(V, 6, "x");
+  V = Builder.CreateBitCast(V, PtrToInt8Ty);
+
+  // FIXME: Move to other one.
+  // int flag = BLOCK_FIELD_IS_BYREF;
+  // FIXME: Add weak support
+  if (0)
+    flag |= BLOCK_FIELD_IS_WEAK;
+  flag |= BLOCK_BYREF_CALLER;
+  BuildBlockRelease(V, flag);
   CGF.FinishFunction();
 
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
@@ -835,8 +849,9 @@ llvm::Constant *BlockFunction::BuildbyrefCopyHelper(int flag) {
   return CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction();
 }
 
-llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(int flag) {
-  return CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction();
+llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
+                                                       int flag) {
+  return CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, flag);
 }
 
 llvm::Value *BlockFunction::getBlockObjectDispose() {
@@ -853,13 +868,11 @@ llvm::Value *BlockFunction::getBlockObjectDispose() {
   return CGM.BlockObjectDispose;
 }
 
-void BlockFunction::BuildBlockRelease(llvm::Value *DeclPtr) {
+void BlockFunction::BuildBlockRelease(llvm::Value *V, int flag) {
   llvm::Value *F = getBlockObjectDispose();
-  llvm::Value *N, *V;
-  V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-  V = Builder.CreateLoad(V, false);
+  llvm::Value *N;
   V = Builder.CreateBitCast(V, PtrToInt8Ty);
-  N = llvm::ConstantInt::get(llvm::Type::Int32Ty, BLOCK_FIELD_IS_BYREF);
+  N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
   Builder.CreateCall2(F, V, N);
 }
 

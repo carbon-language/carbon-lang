@@ -345,8 +345,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       flag |= BLOCK_FIELD_IS_BLOCK;
       flags |= BLOCK_HAS_COPY_DISPOSE;
     } else if (BlockRequiresCopying(Ty)) {
-      flags |= BLOCK_HAS_COPY_DISPOSE;
       flag |= BLOCK_FIELD_IS_OBJECT;
+      flags |= BLOCK_HAS_COPY_DISPOSE;
     }
     // FIXME: Need to set BLOCK_FIELD_IS_WEAK as appropriate.
 
@@ -373,11 +373,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
       BlockHasCopyDispose = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
-      llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
-
       Builder.CreateStore(BuildbyrefCopyHelper(flag), copy_helper);
 
-      Builder.CreateStore(BuildbyrefDestroyHelper(flag), destroy_helper);
+      llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
+      Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag),
+                          destroy_helper);
     }
     needsDispose = true;
   }
@@ -400,7 +400,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
     CleanupScope scope(*this);
-    BuildBlockRelease(DeclPtr);
+    llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
+    V = Builder.CreateLoad(V, false);
+    BuildBlockRelease(V);
   }
 }
 

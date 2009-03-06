@@ -164,13 +164,13 @@ public:
   llvm::Constant *BuildDestroyHelper();
 
   llvm::Constant *GeneratebyrefCopyHelperFunction();
-  llvm::Constant *GeneratebyrefDestroyHelperFunction();
+  llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, int);
 
   llvm::Constant *BuildbyrefCopyHelper(int flag);
-  llvm::Constant *BuildbyrefDestroyHelper(int flag);
+  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type*, int flag);
 
   llvm::Value *getBlockObjectDispose();
-  void BuildBlockRelease(llvm::Value *DeclPtr);
+  void BuildBlockRelease(llvm::Value *DeclPtr, int flag = BLOCK_FIELD_IS_BYREF);
 
   bool BlockRequiresCopying(QualType Ty) {
     if (Ty->isBlockPointerType())
