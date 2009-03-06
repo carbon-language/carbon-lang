@@ -25,26 +25,74 @@
 extern "C" {
 #endif
 
-/** See llvm::createConstantPropagationPass function. */
-void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM);
+/** See llvm::createAggressiveDCEPass function. */
+void LLVMAddAggressiveDCEPass(LLVMPassManagerRef PM);
 
-/** See llvm::createInstructionCombiningPass function. */
-void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
+/** See llvm::createCFGSimplificationPass function. */
+void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
 
-/** See llvm::createPromoteMemoryToRegisterPass function. */
-void LLVMAddPromoteMemoryToRegisterPass(LLVMPassManagerRef PM);
+/** See llvm::createCondPropagationPass function. */
+void LLVMAddCondPropagationPass(LLVMPassManagerRef PM);
 
-/** See llvm::demotePromoteMemoryToRegisterPass function. */
-void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
-
-/** See llvm::createReassociatePass function. */
-void LLVMAddReassociatePass(LLVMPassManagerRef PM);
+/** See llvm::createDeadStoreEliminationPass function. */
+void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM);
 
 /** See llvm::createGVNPass function. */
 void LLVMAddGVNPass(LLVMPassManagerRef PM);
 
-/** See llvm::createCFGSimplificationPass function. */
-void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
+/** See llvm::createIndVarSimplifyPass function. */
+void LLVMAddIndVarSimplifyPass(LLVMPassManagerRef PM);
+
+/** See llvm::createInstructionCombiningPass function. */
+void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
+
+/** See llvm::createJumpThreadingPass function. */
+void LLVMAddJumpThreadingPass(LLVMPassManagerRef PM);
+
+/** See llvm::createLICMPass function. */
+void LLVMAddLICMPass(LLVMPassManagerRef PM);
+
+/** See llvm::createLoopDeletionPass function. */
+void LLVMAddLoopDeletionPass(LLVMPassManagerRef PM);
+
+/** See llvm::createLoopIndexSplitPass function. */
+void LLVMAddLoopIndexSplitPass(LLVMPassManagerRef PM);
+
+/** See llvm::createLoopRotatePass function. */
+void LLVMAddLoopRotatePass(LLVMPassManagerRef PM);
+
+/** See llvm::createLoopUnrollPass function. */
+void LLVMAddLoopUnrollPass(LLVMPassManagerRef PM);
+
+/** See llvm::createLoopUnswitchPass function. */
+void LLVMAddLoopUnswitchPass(LLVMPassManagerRef PM);
+
+/** See llvm::createMemCpyOptPass function. */
+void LLVMAddMemCpyOptPass(LLVMPassManagerRef PM);
+
+/** See llvm::createPromoteMemoryToRegisterPass function. */
+void LLVMAddPromoteMemoryToRegisterPass(LLVMPassManagerRef PM);
+
+/** See llvm::createReassociatePass function. */
+void LLVMAddReassociatePass(LLVMPassManagerRef PM);
+
+/** See llvm::createSCCPPass function. */
+void LLVMAddSCCPPass(LLVMPassManagerRef PM);
+
+/** See llvm::createScalarReplAggregatesPass function. */
+void LLVMAddScalarReplAggregatesPass(LLVMPassManagerRef PM);
+
+/** See llvm::createSimplifyLibCallsPass function. */
+void LLVMAddSimplifyLibCallsPass(LLVMPassManagerRef PM);
+
+/** See llvm::createTailCallEliminationPass function. */
+void LLVMAddTailCallEliminationPass(LLVMPassManagerRef PM);
+
+/** See llvm::createConstantPropagationPass function. */
+void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM);
+
+/** See llvm::demotePromoteMemoryToRegisterPass function. */
+void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
 
 #ifdef __cplusplus
 }
