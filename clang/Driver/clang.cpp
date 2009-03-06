@@ -679,101 +679,6 @@ void InitializeGCMode(LangOptions &Options) {
 }
 
 //===----------------------------------------------------------------------===//
-// Our DiagnosticClient implementation
-//===----------------------------------------------------------------------===//
-
-// FIXME: Werror should take a list of things, -Werror=foo,bar
-static llvm::cl::opt<bool>
-WarningsAsErrors("Werror", llvm::cl::desc("Treat all warnings as errors"));
-
-static llvm::cl::opt<bool>
-SilenceWarnings("w", llvm::cl::desc("Do not emit any warnings"));
-
-static llvm::cl::opt<bool>
-WarnOnExtensions("pedantic", llvm::cl::init(false),
-                 llvm::cl::desc("Issue a warning on uses of GCC extensions"));
-
-static llvm::cl::opt<bool>
-ErrorOnExtensions("pedantic-errors",
-                  llvm::cl::desc("Issue an error on uses of GCC extensions"));
-
-static llvm::cl::opt<bool>
-SuppressSystemWarnings("suppress-system-warnings",
-                  llvm::cl::desc("Suppress warnings issued in system headers"),
-                       llvm::cl::init(true));
-
-static llvm::cl::opt<bool>
-WarnUnusedMacros("Wunused-macros",
-         llvm::cl::desc("Warn for unused macros in the main translation unit"));
-
-static llvm::cl::opt<bool>
-WarnFloatEqual("Wfloat-equal",
-   llvm::cl::desc("Warn about equality comparisons of floating point values"));
-
-static llvm::cl::opt<bool>
-WarnPropertyReadonlyAttrs("Wreadonly-setter-attrs",
-   llvm::cl::desc("Warn about readonly properties with writable attributes"));
-
-static llvm::cl::opt<bool>
-WarnNoFormatNonLiteral("Wno-format-nonliteral",
-   llvm::cl::desc("Do not warn about non-literal format strings"));
-
-static llvm::cl::opt<bool>
-WarnUndefMacros("Wundef",
-   llvm::cl::desc("Warn on use of undefined macros in #if's"));
-
-static llvm::cl::opt<bool>
-WarnImplicitFunctionDeclaration("Wimplicit-function-declaration",
-   llvm::cl::desc("Warn about uses of implicitly defined functions"));
-
-static llvm::cl::opt<bool>
-WarnNoStrictSelectorMatch("Wno-strict-selector-match",
-   llvm::cl::desc("Do not warn about duplicate methods that have the same size"
-                  " and alignment"),
-   llvm::cl::init(true));
-
-/// InitializeDiagnostics - Initialize the diagnostic object, based on the
-/// current command line option settings.
-static void InitializeDiagnostics(Diagnostic &Diags) {
-  Diags.setIgnoreAllWarnings(SilenceWarnings);
-  Diags.setWarningsAsErrors(WarningsAsErrors);
-  Diags.setWarnOnExtensions(WarnOnExtensions);
-  Diags.setErrorOnExtensions(ErrorOnExtensions);
-
-  // Suppress warnings in system headers unless requested not to.
-  Diags.setSuppressSystemWarnings(SuppressSystemWarnings);
-
-  // Silence the "macro is not used" warning unless requested.
-  if (!WarnUnusedMacros)
-    Diags.setDiagnosticMapping(diag::pp_macro_not_used, diag::MAP_IGNORE);
-               
-  // Silence "floating point comparison" warnings unless requested.
-  if (!WarnFloatEqual)
-    Diags.setDiagnosticMapping(diag::warn_floatingpoint_eq, diag::MAP_IGNORE);
-
-  if (!WarnPropertyReadonlyAttrs)
-    Diags.setDiagnosticMapping(diag::warn_objc_property_attr_mutually_exclusive,
-      diag::MAP_IGNORE);
-
-  // Silence "format string is not a string literal" warnings if requested
-  if (WarnNoFormatNonLiteral)
-    Diags.setDiagnosticMapping(diag::warn_printf_not_string_constant,
-                               diag::MAP_IGNORE);
-  if (!WarnUndefMacros)
-    Diags.setDiagnosticMapping(diag::warn_pp_undef_identifier,diag::MAP_IGNORE);
-    
-  if (WarnImplicitFunctionDeclaration)
-    Diags.setDiagnosticMapping(diag::ext_implicit_function_decl,
-                               diag::MAP_WARNING);
-  else
-    Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
-                               diag::MAP_IGNORE);
-  
-  
-  Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
-}
-
-//===----------------------------------------------------------------------===//
 // Target Triple Processing.
 //===----------------------------------------------------------------------===//
 
@@ -1599,7 +1504,11 @@ int main(int argc, char **argv) {
   // Configure our handling of diagnostics.
   llvm::OwningPtr<DiagnosticClient> DiagClient(TextDiagClient);
   Diagnostic Diags(DiagClient.get());
-  InitializeDiagnostics(Diags);  
+  if (ProcessWarningOptions(Diags)) {
+    fprintf(stderr, "Error in warning options.\n");
+    return 1;
+  }
+  //InitializeDiagnostics(Diags);  
 
   // -I- is a deprecated GCC feature, scan for it and reject it.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {

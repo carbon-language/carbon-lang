@@ -37,4 +37,5 @@ add_clang_executable(clang
   RewriteObjC.cpp
   RewriteTest.cpp
   SerializationTest.cpp
+  Warnings.cpp
   )

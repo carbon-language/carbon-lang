@@ -26,6 +26,10 @@ class ASTConsumer;
 class IdentifierTable;
 class SourceManager;
 
+/// ProcessWarningOptions - Initialize the diagnostic client and process the
+/// warning options specified on the command line.
+bool ProcessWarningOptions(Diagnostic &Diags);
+
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, const std::string& OutFile);
 
