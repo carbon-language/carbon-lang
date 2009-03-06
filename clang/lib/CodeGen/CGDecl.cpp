@@ -400,7 +400,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
     CleanupScope scope(*this);
-    BuildBlockRelease(D, DeclPtr);
+    BuildBlockRelease(DeclPtr);
   }
 }
 

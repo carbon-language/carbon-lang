@@ -170,7 +170,7 @@ public:
   llvm::Constant *BuildbyrefDestroyHelper(int flag);
 
   llvm::Value *getBlockObjectDispose();
-  void BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr);
+  void BuildBlockRelease(llvm::Value *DeclPtr);
 
   bool BlockRequiresCopying(QualType Ty) {
     if (Ty->isBlockPointerType())

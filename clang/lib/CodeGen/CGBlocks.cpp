@@ -825,7 +825,7 @@ llvm::Constant *BlockFunction::GeneratebyrefDestroyHelperFunction() {
                                           FunctionDecl::Static, false,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
-  // EmitStmt(BExpr->getBody());
+  // BuildBlockRelease(Src, flag);
   CGF.FinishFunction();
 
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
@@ -853,7 +853,7 @@ llvm::Value *BlockFunction::getBlockObjectDispose() {
   return CGM.BlockObjectDispose;
 }
 
-void BlockFunction::BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr) {
+void BlockFunction::BuildBlockRelease(llvm::Value *DeclPtr) {
   llvm::Value *F = getBlockObjectDispose();
   llvm::Value *N, *V;
   V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
