@@ -183,6 +183,16 @@ public:
   }
 
 /// @}
+/// @name Generic Value Accessors
+/// @{
+
+  /// getNamedValue - Return the first global value in the module with
+  /// the specified name, of arbitrary type.  This method returns null
+  /// if a global with the specified name is not found.
+  GlobalValue *getNamedValue(const std::string &Name) const;
+  GlobalValue *getNamedValue(const char *Name) const;
+
+/// @}
 /// @name Function Accessors
 /// @{
 public:
