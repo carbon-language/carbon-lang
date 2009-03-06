@@ -64,3 +64,30 @@ struct s2_4 {
 #pragma pack(pop)
 };
 extern int a2_4[offsetof(struct s2_4, f1) == 4 ? 1 : -1];
+
+#pragma pack(1)
+struct s3_0 {
+  char f0;
+  int f1;
+};
+#pragma pack()
+struct s3_1 {
+  char f0;
+  int f1;
+};
+extern int a3_0[offsetof(struct s3_0, f1) == 1 ? 1 : -1];
+extern int a3_1[offsetof(struct s3_1, f1) == 4 ? 1 : -1];
+
+// pack(0) is like pack()
+#pragma pack(1)
+struct s4_0 {
+  char f0;
+  int f1;
+};
+#pragma pack(0)
+struct s4_1 {
+  char f0;
+  int f1;
+};
+extern int a4_0[offsetof(struct s4_0, f1) == 1 ? 1 : -1];
+extern int a4_1[offsetof(struct s4_1, f1) == 4 ? 1 : -1];

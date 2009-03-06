@@ -102,8 +102,11 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   unsigned AlignmentVal = 0;
   if (Alignment) {
     llvm::APSInt Val;
+    
+    // pack(0) is like pack(), which just works out since that is what
+    // we use 0 for in PackAttr.
     if (!Alignment->isIntegerConstantExpr(Val, Context) ||
-        !Val.isPowerOf2() ||
+        !(Val == 0 || Val.isPowerOf2()) ||
         Val.getZExtValue() > 16) {
       Diag(PragmaLoc, diag::warn_pragma_pack_invalid_alignment);
       Alignment->Destroy(Context);
@@ -115,7 +118,6 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   
   if (PackContext == 0)
     PackContext = new PragmaPackStack();
-
   
   PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
   
