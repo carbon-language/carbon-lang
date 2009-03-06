@@ -112,6 +112,8 @@ DIAG(err_expected_semi_decl_list, ERROR,
      "expected ';' at end of declaration list")
 DIAG(ext_expected_semi_decl_list, EXTENSION,
      "expected ';' at end of declaration list")
+DIAG(err_expected_member_name_or_semi, ERROR,
+     "expected member name or ';' after declaration specifiers")
 DIAG(err_function_declared_typedef, ERROR,
      "function definition declared 'typedef'")
 DIAG(err_expected_fn_body, ERROR,

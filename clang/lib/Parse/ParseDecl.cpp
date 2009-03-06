@@ -1868,7 +1868,10 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // portion is empty), if an abstract-declarator is allowed.
     D.SetIdentifier(0, Tok.getLocation());
   } else {
-    if (getLang().CPlusPlus)
+    if (D.getContext() == Declarator::MemberContext)
+      Diag(Tok, diag::err_expected_member_name_or_semi)
+        << D.getDeclSpec().getSourceRange();
+    else if (getLang().CPlusPlus)
       Diag(Tok, diag::err_expected_unqualified_id);
     else
       Diag(Tok, diag::err_expected_ident_lparen);

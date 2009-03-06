@@ -13,7 +13,7 @@ namespace D {
   
   class C {
     
-    using namespace B ; // expected-error{{expected unqualified-id}}
+    using namespace B ; // expected-error{{expected member name or ';' after declaration specifiers}}
     //FIXME: this needs better error message
   };
   

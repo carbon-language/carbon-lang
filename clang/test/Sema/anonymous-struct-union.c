@@ -88,4 +88,11 @@ struct s1 {
   };
 };
 
+// PR3680
 struct {}; // expected-error{{declaration does not declare anything}}
+
+struct s2 {
+  union {
+    int a;
+  }
+}; // expected-error{{expected member name or ';' after declaration specifiers}}
