@@ -47,6 +47,20 @@ PathDiagnostic::~PathDiagnostic() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
 }
 
+
+PathDiagnostic::PathDiagnostic(const char* bugtype, const char* desc,
+                               const char* category)
+  : BugType(bugtype, GetNumCharsToLastNonPeriod(bugtype)),
+    Desc(desc, GetNumCharsToLastNonPeriod(desc)),
+    Category(category, GetNumCharsToLastNonPeriod(category)) {}
+
+PathDiagnostic::PathDiagnostic(const std::string& bugtype,
+                               const std::string& desc, 
+                               const std::string& category)
+  : BugType(bugtype, 0, GetNumCharsToLastNonPeriod(bugtype)),
+    Desc(desc, 0, GetNumCharsToLastNonPeriod(desc)),
+    Category(category, 0, GetNumCharsToLastNonPeriod(category)) {}
+
 void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                             const DiagnosticInfo &Info) {
   

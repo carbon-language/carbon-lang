@@ -94,21 +94,19 @@ public:
 class PathDiagnostic {
   std::list<PathDiagnosticPiece*> path;
   unsigned Size;
+  std::string BugType;
   std::string Desc;
   std::string Category;
-  std::string BugType;
   std::vector<std::string> OtherDesc;
 
 public:  
   PathDiagnostic() : Size(0) {}
 
-  PathDiagnostic(const char* bugtype, const char* desc, const char* category)
-    : Size(0), Desc(desc), Category(category), BugType(bugtype) {}
+  PathDiagnostic(const char* bugtype, const char* desc, const char* category);
   
   PathDiagnostic(const std::string& bugtype, const std::string& desc, 
-                 const std::string& category)
-    : Size(0), Desc(desc), Category(category), BugType(bugtype) {}
-  
+                 const std::string& category);
+
   ~PathDiagnostic();
 
   const std::string& getDescription() const { return Desc; }
