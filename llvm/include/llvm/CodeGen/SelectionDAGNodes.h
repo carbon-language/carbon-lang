@@ -1114,6 +1114,10 @@ private:
   friend struct ilist_traits<SDNode>;
 
 public:
+  
+  /// Default SDNode constructor.
+  SDNode() {}
+    
   //===--------------------------------------------------------------------===//
   //  Accessors
   //
