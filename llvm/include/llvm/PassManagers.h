@@ -88,7 +88,12 @@
 // MPPassManagers.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/PrettyStackTrace.h"
+
 namespace llvm {
+  class Pass;
+  class Value;
+  class Module;
 
 /// FunctionPassManager and PassManager, two top level managers, serve 
 /// as the public interface of pass manager infrastructure.
@@ -109,6 +114,24 @@ enum PassDebuggingString {
   ON_CG_MSG // "' on Call Graph ...\n'"
 };  
 
+/// PassManagerPrettyStackEntry - This is used 
+class PassManagerPrettyStackEntry : public PrettyStackTraceEntry {
+  Pass *P;
+  Value *V;
+  Module *M;
+public:
+  PassManagerPrettyStackEntry(Pass *p)
+    : P(p) {}  // When P is releaseMemory'd.
+  PassManagerPrettyStackEntry(Pass *p, Value &v)
+    : P(p), V(&v), M(0) {} // When P is run on V
+  PassManagerPrettyStackEntry(Pass *p, Module &m)
+    : P(p), V(0), M(&m) {}// When P is run on M
+  
+  /// print - Emit information about this stack frame to OS.
+  virtual void print(raw_ostream &OS) const;
+};
+  
+  
 //===----------------------------------------------------------------------===//
 // PMStack
 //

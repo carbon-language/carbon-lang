@@ -19,11 +19,11 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm-c/Core.h"
 #include <algorithm>
 #include <cstdio>
-#include <vector>
 #include <map>
 using namespace llvm;
 
@@ -59,6 +59,40 @@ PassDebugging("debug-pass", cl::Hidden,
   clEnumVal(Details   , "print pass details when it is executed"),
                              clEnumValEnd));
 } // End of llvm namespace
+
+void PassManagerPrettyStackEntry::print(raw_ostream &OS) const {
+  if (V == 0 && M == 0)
+    OS << "Releasing pass '";
+  else
+    OS << "Running pass '";
+  
+  OS << P->getPassName() << "'";
+  
+  if (M) {
+    OS << " on module '" << M->getModuleIdentifier() << "'.\n";
+    return;
+  }
+  if (V == 0) {
+    OS << '\n';
+    return;
+  }
+
+  std::string Name = V->getNameStr();
+  if (Name.empty())
+    Name = "<anonymous>";
+  else if (isa<GlobalValue>(V))
+    Name = "@" + Name;
+  else
+    Name = "%" + Name;
+
+  if (isa<Function>(V))
+    OS << " on function '" << Name << "'\n";
+  else if (isa<BasicBlock>(V))
+    OS << " on basic block '" << Name << "'\n";
+  else
+    OS << " on value '" << Name << "'\n";
+}
+
 
 namespace {
 
@@ -288,7 +322,6 @@ public:
   }
 
   inline void addTopLevelPass(Pass *P) {
-
     if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
       
       // P is a immutable pass and it will be managed by this
@@ -301,7 +334,6 @@ public:
     } else {
       P->assignPassManager(activeStack);
     }
-
   }
 
   MPPassManager *getContainedManager(unsigned N) {
@@ -309,7 +341,6 @@ public:
     MPPassManager *MP = static_cast<MPPassManager *>(PassManagers[N]);
     return MP;
   }
-
 };
 
 char PassManagerImpl::ID = 0;
@@ -318,11 +349,10 @@ char PassManagerImpl::ID = 0;
 namespace {
 
 //===----------------------------------------------------------------------===//
-// TimingInfo Class - This class is used to calculate information about the
-// amount of time each pass takes to execute.  This only happens when
-// -time-passes is enabled on the command line.
-//
-
+/// TimingInfo Class - This class is used to calculate information about the
+/// amount of time each pass takes to execute.  This only happens when
+/// -time-passes is enabled on the command line.
+///
 class VISIBILITY_HIDDEN TimingInfo {
   std::map<Pass*, Timer> TimingData;
   TimerGroup TG;
@@ -344,7 +374,6 @@ public:
   static void createTheTimeInfo();
 
   void passStarted(Pass *P) {
-
     if (dynamic_cast<PMDataManager *>(P)) 
       return;
 
@@ -354,7 +383,6 @@ public:
     I->second.startTimer();
   }
   void passEnded(Pass *P) {
-
     if (dynamic_cast<PMDataManager *>(P)) 
       return;
 
@@ -372,15 +400,13 @@ static TimingInfo *TheTimeInfo;
 // PMTopLevelManager implementation
 
 /// Initialize top level manager. Create first pass manager.
-PMTopLevelManager::PMTopLevelManager (enum TopLevelManagerType t) {
-
+PMTopLevelManager::PMTopLevelManager(enum TopLevelManagerType t) {
   if (t == TLM_Pass) {
     MPPassManager *MPP = new MPPassManager(1);
     MPP->setTopLevelManager(this);
     addPassManager(MPP);
     activeStack.push(MPP);
-  } 
-  else if (t == TLM_Function) {
+  } else if (t == TLM_Function) {
     FPPassManager *FPP = new FPPassManager(1);
     FPP->setTopLevelManager(this);
     addPassManager(FPP);
@@ -391,7 +417,6 @@ PMTopLevelManager::PMTopLevelManager (enum TopLevelManagerType t) {
 /// Set pass P as the last user of the given analysis passes.
 void PMTopLevelManager::setLastUser(SmallVector<Pass *, 12> &AnalysisPasses, 
                                     Pass *P) {
-
   for (SmallVector<Pass *, 12>::iterator I = AnalysisPasses.begin(),
          E = AnalysisPasses.end(); I != E; ++I) {
     Pass *AP = *I;
@@ -562,20 +587,15 @@ void PMTopLevelManager::dumpArguments() const {
 
   cerr << "Pass Arguments: ";
   for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
-         E = PassManagers.end(); I != E; ++I) {
-    PMDataManager *PMD = *I;
-    PMD->dumpPassArguments();
-  }
+         E = PassManagers.end(); I != E; ++I)
+    (*I)->dumpPassArguments();
   cerr << "\n";
 }
 
 void PMTopLevelManager::initializeAllAnalysisInfo() {
-  
   for (SmallVector<PMDataManager *, 8>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); I != E; ++I) {
-    PMDataManager *PMD = *I;
-    PMD->initializeAnalysisInfo();
-  }
+         E = PassManagers.end(); I != E; ++I)
+    (*I)->initializeAnalysisInfo();
   
   // Initailize other pass managers
   for (SmallVector<PMDataManager *, 8>::iterator I = IndirectPassManagers.begin(),
@@ -772,9 +792,14 @@ void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
 
     dumpPassInfo(*I, FREEING_MSG, DBG_STR, Msg);
 
-    if (TheTimeInfo) TheTimeInfo->passStarted(*I);
-    (*I)->releaseMemory();
-    if (TheTimeInfo) TheTimeInfo->passEnded(*I);
+    {
+      // If the pass crashes releasing memory, remember this.
+      PassManagerPrettyStackEntry X(*I);
+      
+      if (TheTimeInfo) TheTimeInfo->passStarted(*I);
+      (*I)->releaseMemory();
+      if (TheTimeInfo) TheTimeInfo->passEnded(*I);
+    }
     if (const PassInfo *PI = (*I)->getPassInfo()) {
       std::map<AnalysisID, Pass*>::iterator Pos =
         AvailableAnalysis.find(PI);
@@ -1008,8 +1033,7 @@ void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
   }
 }
 
-void PMDataManager::dumpRequiredSet(const Pass *P)
-  const {
+void PMDataManager::dumpRequiredSet(const Pass *P) const {
   if (PassDebugging < Details)
     return;
     
@@ -1018,8 +1042,7 @@ void PMDataManager::dumpRequiredSet(const Pass *P)
   dumpAnalysisUsage("Required", P, analysisUsage.getRequiredSet());
 }
 
-void PMDataManager::dumpPreservedSet(const Pass *P)
-  const {
+void PMDataManager::dumpPreservedSet(const Pass *P) const {
   if (PassDebugging < Details)
     return;
     
@@ -1029,17 +1052,16 @@ void PMDataManager::dumpPreservedSet(const Pass *P)
 }
 
 void PMDataManager::dumpAnalysisUsage(const char *Msg, const Pass *P,
-                                        const AnalysisUsage::VectorType &Set)
-  const {
+                                   const AnalysisUsage::VectorType &Set) const {
   assert(PassDebugging >= Details);
   if (Set.empty())
     return;
   cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
-    for (unsigned i = 0; i != Set.size(); ++i) {
-      if (i) cerr << ",";
-      cerr << " " << Set[i]->getPassName();
-    }
-    cerr << "\n";
+  for (unsigned i = 0; i != Set.size(); ++i) {
+    if (i) cerr << ",";
+    cerr << " " << Set[i]->getPassName();
+  }
+  cerr << "\n";
 }
 
 /// Add RequiredPass into list of lower level passes required by pass P.
@@ -1093,9 +1115,7 @@ Pass *AnalysisResolver::findImplPass(Pass *P, const PassInfo *AnalysisPI,
 /// Execute all of the passes scheduled for execution by invoking 
 /// runOnBasicBlock method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
-bool
-BBPassManager::runOnFunction(Function &F) {
-
+bool BBPassManager::runOnFunction(Function &F) {
   if (F.isDeclaration())
     return false;
 
@@ -1110,9 +1130,14 @@ BBPassManager::runOnFunction(Function &F) {
 
       initializeAnalysisImpl(BP);
 
-      if (TheTimeInfo) TheTimeInfo->passStarted(BP);
-      Changed |= BP->runOnBasicBlock(*I);
-      if (TheTimeInfo) TheTimeInfo->passEnded(BP);
+      {
+        // If the pass crashes, remember this.
+        PassManagerPrettyStackEntry X(BP, *I);
+      
+        if (TheTimeInfo) TheTimeInfo->passStarted(BP);
+        Changed |= BP->runOnBasicBlock(*I);
+        if (TheTimeInfo) TheTimeInfo->passEnded(BP);
+      }
 
       if (Changed) 
         dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG,
@@ -1132,10 +1157,8 @@ BBPassManager::runOnFunction(Function &F) {
 bool BBPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
-  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
-    BasicBlockPass *BP = getContainedPass(Index);
-    Changed |= BP->doInitialization(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
+    Changed |= getContainedPass(Index)->doInitialization(M);
 
   return Changed;
 }
@@ -1143,10 +1166,8 @@ bool BBPassManager::doInitialization(Module &M) {
 bool BBPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
-  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
-    BasicBlockPass *BP = getContainedPass(Index);
-    Changed |= BP->doFinalization(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
+    Changed |= getContainedPass(Index)->doFinalization(M);
 
   return Changed;
 }
@@ -1234,10 +1255,8 @@ bool FunctionPassManager::doFinalization() {
 bool FunctionPassManagerImpl::doInitialization(Module &M) {
   bool Changed = false;
 
-  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
-    FPPassManager *FP = getContainedManager(Index);
-    Changed |= FP->doInitialization(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
+    Changed |= getContainedManager(Index)->doInitialization(M);
 
   return Changed;
 }
@@ -1245,10 +1264,8 @@ bool FunctionPassManagerImpl::doInitialization(Module &M) {
 bool FunctionPassManagerImpl::doFinalization(Module &M) {
   bool Changed = false;
 
-  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
-    FPPassManager *FP = getContainedManager(Index);
-    Changed |= FP->doFinalization(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
+    Changed |= getContainedManager(Index)->doFinalization(M);
 
   return Changed;
 }
@@ -1256,19 +1273,15 @@ bool FunctionPassManagerImpl::doFinalization(Module &M) {
 // Execute all the passes managed by this top level manager.
 // Return true if any function is modified by a pass.
 bool FunctionPassManagerImpl::run(Function &F) {
-
   bool Changed = false;
-
   TimingInfo::createTheTimeInfo();
 
   dumpArguments();
   dumpPasses();
 
   initializeAllAnalysisInfo();
-  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
-    FPPassManager *FP = getContainedManager(Index);
-    Changed |= FP->runOnFunction(F);
-  }
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
+    Changed |= getContainedManager(Index)->runOnFunction(F);
   return Changed;
 }
 
@@ -1307,9 +1320,13 @@ bool FPPassManager::runOnFunction(Function &F) {
 
     initializeAnalysisImpl(FP);
 
-    if (TheTimeInfo) TheTimeInfo->passStarted(FP);
-    Changed |= FP->runOnFunction(F);
-    if (TheTimeInfo) TheTimeInfo->passEnded(FP);
+    {
+      PassManagerPrettyStackEntry X(FP, F);
+
+      if (TheTimeInfo) TheTimeInfo->passStarted(FP);
+      Changed |= FP->runOnFunction(F);
+      if (TheTimeInfo) TheTimeInfo->passEnded(FP);
+    }
 
     if (Changed) 
       dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getNameStart());
@@ -1338,10 +1355,8 @@ bool FPPassManager::runOnModule(Module &M) {
 bool FPPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
-  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-    FunctionPass *FP = getContainedPass(Index);
-    Changed |= FP->doInitialization(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
+    Changed |= getContainedPass(Index)->doInitialization(M);
 
   return Changed;
 }
@@ -1349,10 +1364,8 @@ bool FPPassManager::doInitialization(Module &M) {
 bool FPPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
-  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-    FunctionPass *FP = getContainedPass(Index);
-    Changed |= FP->doFinalization(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
+    Changed |= getContainedPass(Index)->doFinalization(M);
 
   return Changed;
 }
@@ -1376,9 +1389,12 @@ MPPassManager::runOnModule(Module &M) {
 
     initializeAnalysisImpl(MP);
 
-    if (TheTimeInfo) TheTimeInfo->passStarted(MP);
-    Changed |= MP->runOnModule(M);
-    if (TheTimeInfo) TheTimeInfo->passEnded(MP);
+    {
+      PassManagerPrettyStackEntry X(MP, M);
+      if (TheTimeInfo) TheTimeInfo->passStarted(MP);
+      Changed |= MP->runOnModule(M);
+      if (TheTimeInfo) TheTimeInfo->passEnded(MP);
+    }
 
     if (Changed) 
       dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG,
@@ -1444,10 +1460,8 @@ bool PassManagerImpl::run(Module &M) {
   dumpPasses();
 
   initializeAllAnalysisInfo();
-  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
-    MPPassManager *MP = getContainedManager(Index);
-    Changed |= MP->runOnModule(M);
-  }
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
+    Changed |= getContainedManager(Index)->runOnModule(M);
   return Changed;
 }
 

@@ -209,7 +209,6 @@ bool LPPassManager::runOnFunction(Function &F) {
 
     // Run all passes on current SCC
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-        
       Pass *P = getContainedPass(Index);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG, "");
@@ -217,11 +216,14 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       initializeAnalysisImpl(P);
 
-      StartPassTimer(P);
       LoopPass *LP = dynamic_cast<LoopPass *>(P);
-      assert (LP && "Invalid LPPassManager member");
-      Changed |= LP->runOnLoop(CurrentLoop, *this);
-      StopPassTimer(P);
+      {
+        PassManagerPrettyStackEntry X(LP, *CurrentLoop->getHeader());
+        StartPassTimer(P);
+        assert(LP && "Invalid LPPassManager member");
+        Changed |= LP->runOnLoop(CurrentLoop, *this);
+        StopPassTimer(P);
+      }
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG, "");
