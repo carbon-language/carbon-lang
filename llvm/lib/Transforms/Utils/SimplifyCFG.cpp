@@ -943,11 +943,22 @@ HoistTerminator:
 static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   // Only speculatively execution a single instruction (not counting the
   // terminator) for now.
-  BasicBlock::iterator BBI = BB1->begin();
-  ++BBI; // must have at least a terminator
-  if (BBI == BB1->end()) return false; // only one inst
-  ++BBI;
-  if (BBI != BB1->end()) return false; // more than 2 insts.
+  Instruction *HInst = NULL;
+  Instruction *Term = BB1->getTerminator();
+  for (BasicBlock::iterator BBI = BB1->begin(), BBE = BB1->end();
+       BBI != BBE; ++BBI) {
+    Instruction *I = BBI;
+    // Skip debug info.
+    if (isa<DbgInfoIntrinsic>(I))   continue;
+    if (I == Term)  break;
+
+    if (!HInst)
+      HInst = I;
+    else
+      return false;
+  }
+  if (!HInst)
+    return false;
 
   // Be conservative for now. FP select instruction can often be expensive.
   Value *BrCond = BI->getCondition();
@@ -976,13 +987,13 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   //     %t1 = icmp
   //     %t4 = add %t2, c
   //     %t3 = select i1 %t1, %t2, %t3
-  Instruction *I = BB1->begin();
-  switch (I->getOpcode()) {
+  switch (HInst->getOpcode()) {
   default: return false;  // Not safe / profitable to hoist.
   case Instruction::Add:
   case Instruction::Sub:
     // FP arithmetic might trap. Not worth doing for vector ops.
-    if (I->getType()->isFloatingPoint() || isa<VectorType>(I->getType()))
+    if (HInst->getType()->isFloatingPoint() 
+        || isa<VectorType>(HInst->getType()))
       return false;
     break;
   case Instruction::And:
@@ -992,14 +1003,14 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   case Instruction::LShr:
   case Instruction::AShr:
     // Don't mess with vector operations.
-    if (isa<VectorType>(I->getType()))
+    if (isa<VectorType>(HInst->getType()))
       return false;
     break;   // These are all cheap and non-trapping instructions.
   }
   
   // If the instruction is obviously dead, don't try to predicate it.
-  if (I->use_empty()) {
-    I->eraseFromParent();
+  if (HInst->use_empty()) {
+    HInst->eraseFromParent();
     return true;
   }
 
@@ -1012,7 +1023,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   Value *FalseV = NULL;
   
   BasicBlock *BB2 = BB1->getTerminator()->getSuccessor(0);
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+  for (Value::use_iterator UI = HInst->use_begin(), E = HInst->use_end();
        UI != E; ++UI) {
     // Ignore any user that is not a PHI node in BB2.  These can only occur in
     // unreachable blocks, because they would not be dominated by the instr.
@@ -1033,7 +1044,8 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   // Do not hoist the instruction if any of its operands are defined but not
   // used in this BB. The transformation will prevent the operand from
   // being sunk into the use block.
-  for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
+  for (User::op_iterator i = HInst->op_begin(), e = HInst->op_end(); 
+       i != e; ++i) {
     Instruction *OpI = dyn_cast<Instruction>(*i);
     if (OpI && OpI->getParent() == BIParent &&
         !OpI->isUsedInBasicBlock(BIParent))
@@ -1062,17 +1074,17 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
     }
   } else
     InsertPos = BI;
-  BIParent->getInstList().splice(InsertPos, BB1->getInstList(), I);
+  BIParent->getInstList().splice(InsertPos, BB1->getInstList(), HInst);
 
   // Create a select whose true value is the speculatively executed value and
   // false value is the previously determined FalseV.
   SelectInst *SI;
   if (Invert)
-    SI = SelectInst::Create(BrCond, FalseV, I,
-                            FalseV->getName() + "." + I->getName(), BI);
+    SI = SelectInst::Create(BrCond, FalseV, HInst,
+                            FalseV->getName() + "." + HInst->getName(), BI);
   else
-    SI = SelectInst::Create(BrCond, I, FalseV,
-                            I->getName() + "." + FalseV->getName(), BI);
+    SI = SelectInst::Create(BrCond, HInst, FalseV,
+                            HInst->getName() + "." + FalseV->getName(), BI);
 
   // Make the PHI node use the select for all incoming values for "then" and
   // "if" blocks.
