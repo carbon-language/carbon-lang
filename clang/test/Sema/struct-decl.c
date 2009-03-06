@@ -29,7 +29,7 @@ struct pppoe_tag {
  char tag_data[];
 };
 struct datatag {
- struct pppoe_tag hdr; //expected-warning{{variable sized type 'hdr' not at the end of a struct or class is a GNU extension}}
+ struct pppoe_tag hdr; //expected-warning{{field of variable sized type 'hdr' not at the end of a struct or class is a GNU extension}}
  char data;
 };
 

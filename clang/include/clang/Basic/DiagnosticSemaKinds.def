@@ -775,7 +775,7 @@ DIAG(err_field_declared_as_function, ERROR,
 DIAG(err_field_incomplete, ERROR,
      "field has incomplete type %0")
 DIAG(ext_variable_sized_type_in_struct, EXTWARN,
-     "variable sized type %0 not at the end of a struct or class is a "
+     "field of variable sized type %0 not at the end of a struct or class is a "
      "GNU extension")
 DIAG(err_flexible_array_empty_struct, ERROR,
      "flexible array %0 not allowed in otherwise empty struct")
