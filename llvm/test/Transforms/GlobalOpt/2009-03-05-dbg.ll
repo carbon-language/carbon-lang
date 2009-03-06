@@ -1,4 +1,6 @@
 ; RUN: llvm-as < %s | opt -globalopt -stats -disable-output |& grep "1 globalopt - Number of global vars shrunk to booleans"
+; XFAIL: *
+
 	type { }		; type %0
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, %0*, i8*, %0*, i32, i64, i64, i64, i32, i32 }
