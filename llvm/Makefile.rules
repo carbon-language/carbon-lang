@@ -1838,7 +1838,7 @@ printvars::
 ###
 # Debugging
 
-# General debugging rule, use 'make print-XXX' to print the
+# General debugging rule, use 'make dbg-print-XXX' to print the
 # definition, value and origin of XXX.
-print-%:
+make-print-%:
 	$(error PRINT: $(value $*) = "$($*)" (from $(origin $*)))
