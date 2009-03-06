@@ -26,7 +26,7 @@ namespace clang {
 
 class PathDiagnosticPiece {
 public:
-  enum Kind { ControlFlow, Event };
+  enum Kind { ControlFlow, Event, Macro };
   enum DisplayHint { Above, Below };
 
 private:
@@ -36,6 +36,7 @@ private:
   const Kind kind;
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
+  std::vector<PathDiagnosticPiece*> SubPieces;
   
   // Do not implement:
   PathDiagnosticPiece();
@@ -44,15 +45,17 @@ private:
   
 public:
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
-                      Kind k = Event,
-                      DisplayHint hint = Above);
+                      Kind k = Event, DisplayHint hint = Below);
   
   PathDiagnosticPiece(FullSourceLoc pos, const char* s,
-                      Kind k = Event,
-                      DisplayHint hint = Above);
+                      Kind k = Event, DisplayHint hint = Below);
+  
+  virtual ~PathDiagnosticPiece();
   
   const std::string& getString() const { return str; }
-   
+  
+  /// getDisplayHint - Return a hint indicating where the diagnostic should
+  ///  be displayed by the PathDiagnosticClient.
   DisplayHint getDisplayHint() const { return Hint; }
   
   Kind getKind() const { return kind; }
@@ -93,6 +96,24 @@ public:
   }
     
   FullSourceLoc getLocation() const { return Pos; }
+};
+  
+class PathDiagnosticMacroPiece : public PathDiagnosticPiece {
+  std::vector<PathDiagnosticPiece*> SubPieces;  
+public:
+  PathDiagnosticMacroPiece(FullSourceLoc pos, const std::string& s)
+    : PathDiagnosticPiece(pos, s, Macro) {}
+  
+  PathDiagnosticMacroPiece(FullSourceLoc pos, const char* s)
+    : PathDiagnosticPiece(pos, s, Macro) {}
+  
+  ~PathDiagnosticMacroPiece();
+  
+  void push_back(PathDiagnosticPiece* P) { SubPieces.push_back(P); }
+  
+  typedef std::vector<PathDiagnosticPiece*>::iterator iterator;
+  iterator begin() { return SubPieces.begin(); }
+  iterator end() { return SubPieces.end(); }
 };
   
 class PathDiagnostic {

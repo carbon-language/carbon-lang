@@ -49,6 +49,12 @@ PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
          "PathDiagnosticPiece's must have a valid location.");
 }
 
+PathDiagnosticPiece::~PathDiagnosticPiece() {}
+
+PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {
+  for (iterator I = begin(), E = end(); I != E; ++I) delete *I;
+}
+
 PathDiagnostic::PathDiagnostic() : Size(0) {}
 
 PathDiagnostic::~PathDiagnostic() {
