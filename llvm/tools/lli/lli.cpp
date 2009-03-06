@@ -25,6 +25,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
@@ -83,10 +84,12 @@ static void do_shutdown() {
 // main Driver function
 //
 int main(int argc, char **argv, char * const *envp) {
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv,
                               "llvm interpreter & dynamic compiler\n");
-  sys::PrintStackTraceOnErrorSignal();
 
   // If the user doesn't want core files, disable them.
   if (DisableCoreFiles)

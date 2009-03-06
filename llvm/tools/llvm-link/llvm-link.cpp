@@ -19,6 +19,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
@@ -79,10 +80,12 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 }
 
 int main(int argc, char **argv) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
+  // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
-  assert(InputFilenames.size() > 0 && "OneOrMore is not working");
+  PrettyStackTraceProgram X(argc, argv);
+  
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   unsigned BaseArg = 0;
   std::string ErrorMessage;

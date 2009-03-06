@@ -15,6 +15,7 @@
 #include "CLIDebugger.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 using namespace llvm;
@@ -49,12 +50,15 @@ namespace {
 // main Driver function
 //
 int main(int argc, char **argv, char * const *envp) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   std::cout << "NOTE: llvm-db is known useless right now.\n";
   try {
     cl::ParseCommandLineOptions(argc, argv,
                                 "llvm source-level debugger\n");
-    sys::PrintStackTraceOnErrorSignal();
 
     if (!Quiet)
       std::cout << "llvm-db: The LLVM source-level debugger\n";

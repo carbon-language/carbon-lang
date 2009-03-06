@@ -16,6 +16,7 @@
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <algorithm>
@@ -686,7 +687,10 @@ doReplaceOrInsert(std::string* ErrMsg) {
 
 // main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   // Have the command line options parsed and handle things
   // like --help and --version.
@@ -694,9 +698,6 @@ int main(int argc, char **argv) {
     "LLVM Archiver (llvm-ar)\n\n"
     "  This program archives bitcode files into single libraries\n"
   );
-
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
 
   int exitCode = 0;
 

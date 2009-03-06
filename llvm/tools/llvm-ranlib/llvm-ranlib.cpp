@@ -15,6 +15,7 @@
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <iomanip>
@@ -42,7 +43,11 @@ void printSymbolTable(Archive* TheArchive) {
 }
 
 int main(int argc, char **argv) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  // Print a stack trace if we signal out.
+  llvm::sys::PrintStackTraceOnErrorSignal();
+  llvm::PrettyStackTraceProgram X(argc, argv);
+  
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   // Have the command line options parsed and handle things
   // like --help and --version.
@@ -51,9 +56,6 @@ int main(int argc, char **argv) {
     "  This program adds or updates an index of bitcode symbols\n"
     "  to an LLVM archive file."
   );
-
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
 
   int exitCode = 0;
 

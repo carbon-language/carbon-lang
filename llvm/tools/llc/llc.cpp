@@ -31,6 +31,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/RegistryParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/Verifier.h"
@@ -192,9 +193,10 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
 // main - Entry point for the llc compiler.
 //
 int main(int argc, char **argv) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
   sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
 
   // Load the module to be compiled...
   std::string ErrorMessage;

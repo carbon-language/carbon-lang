@@ -22,6 +22,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "CallingConvEmitter.h"
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
@@ -130,6 +131,8 @@ static bool ParseFile(const std::string &Filename,
 }
 
 int main(int argc, char **argv) {
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 
   // Parse the input file.
