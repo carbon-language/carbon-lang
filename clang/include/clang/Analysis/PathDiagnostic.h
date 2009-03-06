@@ -101,7 +101,7 @@ class PathDiagnostic {
   std::string BugType;
   std::string Desc;
   std::string Category;
-  std::vector<std::string> OtherDesc;
+  std::list<std::string> OtherDesc;
   
 public:  
   PathDiagnostic();
@@ -117,7 +117,7 @@ public:
   const std::string& getBugType() const { return BugType; }
   const std::string& getCategory() const { return Category; }
   
-  typedef std::vector<std::string>::const_iterator meta_iterator;
+  typedef std::list<std::string>::const_iterator meta_iterator;
   meta_iterator meta_begin() const { return OtherDesc.begin(); }
   meta_iterator meta_end() const { return OtherDesc.end(); }
   void addMeta(const std::string& s) { OtherDesc.push_back(s); }
