@@ -55,7 +55,6 @@ class MachineInstr : public ilist_node<MachineInstr> {
   // Intrusive list support
   friend struct ilist_traits<MachineInstr>;
   friend struct ilist_traits<MachineBasicBlock>;
-  friend struct ilist_sentinel_traits<MachineInstr>;
   void setParent(MachineBasicBlock *P) { Parent = P; }
 
   /// MachineInstr ctor - This constructor creates a copy of the given

@@ -77,7 +77,6 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   bool IsLandingPad;
 
   // Intrusive list support
-  friend struct ilist_sentinel_traits<MachineBasicBlock>;
   MachineBasicBlock() {}
 
   explicit MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb);
