@@ -114,7 +114,8 @@ enum PassDebuggingString {
   ON_CG_MSG // "' on Call Graph ...\n'"
 };  
 
-/// PassManagerPrettyStackEntry - This is used 
+/// PassManagerPrettyStackEntry - This is used to print informative information
+/// about what pass is running when/if a stack trace is generated.
 class PassManagerPrettyStackEntry : public PrettyStackTraceEntry {
   Pass *P;
   Value *V;
@@ -125,7 +126,7 @@ public:
   PassManagerPrettyStackEntry(Pass *p, Value &v)
     : P(p), V(&v), M(0) {} // When P is run on V
   PassManagerPrettyStackEntry(Pass *p, Module &m)
-    : P(p), V(0), M(&m) {}// When P is run on M
+    : P(p), V(0), M(&m) {} // When P is run on M
   
   /// print - Emit information about this stack frame to OS.
   virtual void print(raw_ostream &OS) const;
