@@ -33,7 +33,8 @@ Enable__block("f__block",
               llvm::cl::ZeroOrMore,
               llvm::cl::init(false));
 
-llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
+llvm::Constant *CodeGenFunction::
+BuildDescriptorBlockDecl(uint64_t Size, const llvm::Type* Ty) {
   const llvm::Type *UnsignedLongTy
     = CGM.getTypes().ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *C;
@@ -52,10 +53,10 @@ llvm::Constant *CodeGenFunction::BuildDescriptorBlockDecl(uint64_t Size) {
 
   if (BlockHasCopyDispose) {
     // copy_func_helper_decl
-    Elts.push_back(BuildCopyHelper());
+    Elts.push_back(BuildCopyHelper(Ty));
 
     // destroy_func_decl
-    Elts.push_back(BuildDestroyHelper());
+    Elts.push_back(BuildDestroyHelper(Ty));
   }
 
   C = llvm::ConstantStruct::get(Elts);
@@ -180,10 +181,10 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     C = llvm::ConstantInt::get(IntTy, 0);
     Elts[2] = C;
 
-    // __descriptor
-    Elts[4] = BuildDescriptorBlockDecl(subBlockSize);
-
     if (subBlockDeclRefDecls.size() == 0) {
+      // __descriptor
+      Elts[4] = BuildDescriptorBlockDecl(subBlockSize, 0);
+
       // Optimize to being a global block.
       Elts[0] = CGM.getNSConcreteGlobalBlock();
       Elts[1] = llvm::ConstantInt::get(IntTy, flags|BLOCK_IS_GLOBAL);
@@ -295,6 +296,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         // FIXME: Ensure that the offset created by the backend for
         // the struct matches the previously computed offset in BlockDecls.
       }
+
+    // __descriptor
+    Elts[4] = BuildDescriptorBlockDecl(subBlockSize, Ty);
   }
 
   QualType BPT = BE->getType();
@@ -671,7 +675,7 @@ uint64_t CodeGenFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
   return BlockOffset-Size;
 }
 
-llvm::Constant *BlockFunction::GenerateCopyHelperFunction() {
+llvm::Constant *BlockFunction::GenerateCopyHelperFunction(const llvm::Type *Ty) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -709,7 +713,8 @@ llvm::Constant *BlockFunction::GenerateCopyHelperFunction() {
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
-llvm::Constant *BlockFunction::GenerateDestroyHelperFunction() {
+llvm::Constant *BlockFunction::
+GenerateDestroyHelperFunction(const llvm::Type* Ty) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -747,12 +752,12 @@ llvm::Constant *BlockFunction::GenerateDestroyHelperFunction() {
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
-llvm::Constant *BlockFunction::BuildCopyHelper() {
-  return CodeGenFunction(CGM).GenerateCopyHelperFunction();
+llvm::Constant *BlockFunction::BuildCopyHelper(const llvm::Type *Ty) {
+  return CodeGenFunction(CGM).GenerateCopyHelperFunction(Ty);
 }
 
-llvm::Constant *BlockFunction::BuildDestroyHelper() {
-  return CodeGenFunction(CGM).GenerateDestroyHelperFunction();
+llvm::Constant *BlockFunction::BuildDestroyHelper(const llvm::Type *Ty) {
+  return CodeGenFunction(CGM).GenerateDestroyHelperFunction(Ty);
 }
 
 llvm::Constant *BlockFunction::
