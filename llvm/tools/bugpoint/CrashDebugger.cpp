@@ -198,17 +198,16 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
     return false;
 
   // Clone the program to try hacking it apart...
-  Module *M = CloneModule(BD.getProgram());
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *M = CloneModule(BD.getProgram(), ValueMap);
 
   // Convert list to set for fast lookup...
   std::set<Function*> Functions;
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
-    // FIXME: bugpoint should add names to all stripped symbols.
-    assert(!Funcs[i]->getName().empty() &&
-           "Bugpoint doesn't work on stripped modules yet PR718!");
-    Function *CMF = M->getFunction(Funcs[i]->getName());
+    Function *CMF = cast<Function>(ValueMap[Funcs[i]]);
     assert(CMF && "Function not in module?!");
     assert(CMF->getFunctionType() == Funcs[i]->getFunctionType() && "wrong ty");
+    assert(CMF->getName() == Funcs[i]->getName() && "wrong name");
     Functions.insert(CMF);
   }
 
