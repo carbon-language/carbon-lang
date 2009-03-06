@@ -15,6 +15,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 // FIXME: This should be thread local when llvm supports threads.
@@ -30,18 +31,47 @@ static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
   return NextID+1;
 }
 
-/// CrashHandler - This callback is run if a fatal signal is delivered to the
-/// process, it prints the pretty stack trace.
-static void CrashHandler(void *Cookie) {
+/// PrintCurStackTrace - Print the current stack trace to the specified stream.
+static void PrintCurStackTrace(raw_ostream &OS) {
   // Don't print an empty trace.
   if (PrettyStackTraceHead == 0) return;
   
   // If there are pretty stack frames registered, walk and emit them.
-  raw_ostream &OS = errs();
   OS << "Stack dump:\n";
   
   PrintStack(PrettyStackTraceHead, OS);
   OS.flush();
+}
+
+// Integrate with crash reporter.
+#ifdef __APPLE__
+extern "C" const char *__crashreporter_info__;
+const char *__crashreporter_info__ = 0;
+#endif
+
+
+/// CrashHandler - This callback is run if a fatal signal is delivered to the
+/// process, it prints the pretty stack trace.
+static void CrashHandler(void *Cookie) {
+#ifndef __APPLE__
+  // On non-apple systems, just emit the crash stack trace to stderr.
+  PrintCurStackTrace(errs());
+#else
+  // Otherwise, emit to a smallvector of chars, send *that* to stderr, but also
+  // put it into __crashreporter_info__.
+  SmallString<2048> TmpStr;
+  {
+    raw_svector_ostream Stream(TmpStr);
+    PrintCurStackTrace(Stream);
+  }
+  
+  if (!TmpStr.empty()) {
+    __crashreporter_info__ = strdup(&TmpStr[0]);
+    errs() << __crashreporter_info__;
+    errs().flush();
+  }
+  
+#endif
 }
 
 static bool RegisterCrashPrinter() {
