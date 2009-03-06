@@ -1015,6 +1015,9 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
                                   LHS, RHS, "cmp");
     } else {
       // Unsigned integers and pointers.
+      // Casting becomes necessary with -fobjc-gc as one or the other my turn
+      // into an 'id' type due to generation of read barriers.
+      RHS = Builder.CreateBitCast(RHS, LHS->getType());
       Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
                                   LHS, RHS, "cmp");
     }
