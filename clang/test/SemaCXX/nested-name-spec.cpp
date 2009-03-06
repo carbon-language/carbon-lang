@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify -std=c++98 %s 
-// XFAIL
 // fails due to exact diagnostic matching
 namespace A {
   struct C {
@@ -10,8 +9,8 @@ namespace A {
 }
 
 A:: ; // expected-error {{expected unqualified-id}}
-::A::ax::undef ex3; // expected-error {{expected a class or namespace}} expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}}
-A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}}
+::A::ax::undef ex3; // expected-error {{expected a class or namespace}} expected-error {{invalid token after top level declarator}}
+A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{invalid token after top level declarator}}
 
 class C2 {
   void m(); // expected-note{{member declaration nearly matches}}
@@ -89,7 +88,8 @@ void f6(int A2::RC::x); // expected-error{{parameter declarator cannot be qualif
 
 int A2::RC::x; // expected-error{{non-static data member defined out-of-line}}
 
-void A2::CC::NC::m(); // expected-error{{out-of-line declaration of a member must be a definition}}
+void A2::CC::NC::m(); // expected-error{{out-of-line declaration of a member must be a definition}} \
+     //  expected-error{{out-of-line declaration of a member must be a definition}}
 
 
 namespace E {
@@ -150,3 +150,6 @@ namespace N {
 void ::global_func2(int) { } // expected-error{{definition or redeclaration of 'global_func2' cannot name the global scope}}
 
 void N::f() { } // okay
+
+X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}} \
+      // expected-error{{expected function body after function declarator}}

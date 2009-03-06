@@ -1209,7 +1209,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   }
 
   // See if this is a redefinition of a variable in the same scope.
-  if (!D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid()) {
+  if (D.getCXXScopeSpec().isInvalid()) {
+    DC = CurContext;
+    PrevDecl = 0;
+    InvalidDecl = true;
+  } else if (!D.getCXXScopeSpec().isSet()) {
     LookupNameKind NameKind = LookupOrdinaryName;
 
     // If the declaration we're planning to build will be a function
