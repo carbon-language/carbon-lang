@@ -26,9 +26,9 @@
 
   <li><a href="#quickstart">Getting started</a>
     <ul>
-    <li><a href="quickstart-compiler">In your compiler</a></li>
-    <li><a href="quickstart-runtime">In your runtime library</a></li>
-    <li><a href="shadow-stack">About the shadow stack</a></li>
+    <li><a href="#quickstart-compiler">In your compiler</a></li>
+    <li><a href="#quickstart-runtime">In your runtime library</a></li>
+    <li><a href="#shadow-stack">About the shadow stack</a></li>
     </ul>
   </li>
 
@@ -166,11 +166,12 @@ concerned are:</p>
 <ul>
   <li>Creation of GC-safe points within code where collection is allowed to
       execute safely.</li>
-  <li>Definition of a stack frame descriptor. For each safe point in the code,
-      a frame descriptor maps where object references are located within the
-      frame so that the GC may traverse and perhaps update them.</li>
-  <li>Write barriers when storing object references within the heap. These
-      are commonly used to optimize incremental scans.</li>
+  <li>Computation of the stack map. For each safe point in the code, object
+      references within the stack frame must be identified so that the
+      collector may traverse and perhaps update them.</li>
+  <li>Write barriers when storing object references to the heap. These are
+      commonly used to optimize incremental scans in generational
+      collectors.</li>
   <li>Emission of read barriers when loading object references. These are
       useful for interoperating with concurrent collectors.</li>
 </ul>
@@ -178,10 +179,13 @@ concerned are:</p>
 <p>There are additional areas that LLVM does not directly address:</p>
 
 <ul>
-  <li>Registration of global roots.</li>
-  <li>Discovery or registration of stack frame descriptors.</li>
+  <li>Registration of global roots with the runtime.</li>
+  <li>Registration of stack map entries with the runtime.</li>
   <li>The functions used by the program to allocate memory, trigger a
       collection, etc.</li>
+  <li>Computation or compilation of type maps, or registration of them with
+      the runtime. These are used to crawl the heap for object
+      references.</li>
 </ul>
 
 <p>In general, LLVM's support for GC does not include features which can be
@@ -208,11 +212,11 @@ compiler matures.</p>
   <li>Write a runtime library or find an existing one which implements a GC
       heap.<ol>
     <li>Implement a memory allocator.</li>
-    <li>Design a binary interface for frame descriptors, used to identify
-        references within a stack frame.*</li>
+    <li>Design a binary interface for the stack map, used to identify
+        references within a stack frame on the machine stack.*</li>
     <li>Implement a stack crawler to discover functions on the call stack.*</li>
     <li>Implement a registry for global roots.</li>
-    <li>Design a binary interface for type descriptors, used to map references
+    <li>Design a binary interface for type maps, used to identify references
         within heap objects.</li>
     <li>Implement a collection routine bringing together all of the above.</li>
   </ol></li>
@@ -225,12 +229,13 @@ compiler matures.</p>
         manipulate GC references, if necessary.</li>
     <li>Allocate memory using the GC allocation routine provided by the
         runtime library.</li>
-    <li>Generate type descriptors according to your runtime's binary interface.</li>
+    <li>Generate type maps according to your runtime's binary interface.</li>
   </ul></li>
   <li>Write a compiler plugin to interface LLVM with the runtime library.*<ul>
     <li>Lower <tt>@llvm.gcread</tt> and <tt>@llvm.gcwrite</tt> to appropriate
         code sequences.*</li>
-    <li>Generate stack maps according to the runtime's binary interface.*</li>
+    <li>Compile LLVM's stack map to the binary form expected by the
+        runtime.</li>
   </ul></li>
   <li>Load the plugin into the compiler. Use <tt>llc -load</tt> or link the
       plugin statically with your language's compiler.*</li>
@@ -290,14 +295,14 @@ code.)</p>
 </div>
 
 <div class="doc_code"><pre
->/// @brief A constant shadow stack frame descriptor. The compiler emits one of
-///        these for each function.
+>/// @brief The map for a single function's stack frame. One of these is
+///        compiled as constant data into the executable for each function.
 /// 
-/// Storage of metadata values is elided if the %meta parameter to @llvm.gcroot
-/// is null.
+/// Storage of metadata values is elided if the %metadata parameter to
+/// @llvm.gcroot is null.
 struct FrameMap {
   int32_t NumRoots;    //&lt; Number of roots in stack frame.
-  int32_t NumMeta;     //&lt; Number of metadata descriptors. May be &lt; NumRoots.
+  int32_t NumMeta;     //&lt; Number of metadata entries. May be &lt; NumRoots.
   const void *Meta[0]; //&lt; Metadata for each root.
 };
 
@@ -345,11 +350,13 @@ void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
 <div class="doc_text">
 
 <p>Unlike many GC algorithms which rely on a cooperative code generator to
-generate stack maps, this algorithm carefully maintains a linked list of stack
-root descriptors [<a href="#henderson02">Henderson2002</a>]. This so-called
-"shadow stack" mirrors the machine stack. Maintaining this data structure is
-slower than using stack maps, but has a significant portability advantage
-because it requires no special support from the target code generator.</p>
+compile stack maps, this algorithm carefully maintains a linked list of stack
+roots [<a href="#henderson02">Henderson2002</a>]. This so-called "shadow stack"
+mirrors the machine stack. Maintaining this data structure is slower than using
+a stack map compiled into the executable as constant data, but has a significant
+portability advantage because it requires no special support from the target
+code generator, and does not require tricky platform-specific code to crawl
+the machine stack.</p>
 
 <p>The tradeoff for this simplicity and portability is:</p>
 
@@ -358,7 +365,10 @@ because it requires no special support from the target code generator.</p>
   <li>Not thread-safe.</li>
 </ul>
 
-<p>Still, it's an easy way to get started.</p>
+<p>Still, it's an easy way to get started. After your compiler and runtime are
+up and running, writing a <a href="#plugin">plugin</a> will allow you to take
+advantage of <a href="#collector-algos">more advanced GC features</a> of LLVM
+in order to improve performance.</p>
 
 </div>
 
@@ -520,6 +530,11 @@ require the corresponding barrier. If so, the GC plugin will replace the
 intrinsic calls with the corresponding <tt>load</tt> or <tt>store</tt>
 instruction if they are used.</p>
 
+<p>LLVM does not enforce any particular relationship between the object and
+derived pointer (although a <a href="#plugin">plugin</a> might). However, it
+would be unusual that the derived pointer not be a <tt>getelementptr</tt> of the
+object pointer.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -581,15 +596,16 @@ function attribute or, equivalently, with the <tt>setGC</tt> method of
 <p>To implement a GC plugin, it is necessary to subclass
 <tt>llvm::GCStrategy</tt>, which can be accomplished in a few lines of
 boilerplate code. LLVM's infrastructure provides access to several important
-algorithms. For an uncontroversial collector, all that remains may be to emit
-the assembly code for the collector's unique stack map data structure, which
-might be accomplished in as few as 100 LOC.</p>
+algorithms. For an uncontroversial collector, all that remains may be to
+compile LLVM's computed stack map to assembly code (using the binary
+representation expected by the runtime library). This can be accomplished in
+about 100 lines of code.</p>
 
 <p>This is not the appropriate place to implement a garbage collected heap or a
 garbage collector itself. That code should exist in the language's runtime
 library. The compiler plugin is responsible for generating code which
 conforms to the binary interface defined by library, most essentially the
-<a href="stack-map">stack map</a>.</p>
+<a href="#stack-map">stack map</a>.</p>
 
 <p>To subclass <tt>llvm::GCStrategy</tt> and register it with the compiler:</p>
 
@@ -611,9 +627,21 @@ namespace {
   X("mygc", "My bespoke garbage collector.");
 }</pre></blockquote>
 
+<p>This boilerplate collector does nothing. More specifically:</p>
+
+<ul>
+  <li><tt>llvm.gcread</tt> calls are replaced with the corresponding
+      <tt>load</tt> instruction.</li>
+  <li><tt>llvm.gcwrite</tt> calls are replaced with the corresponding
+      <tt>store</tt> instruction.</li>
+  <li>No safe points are added to the code.</li>
+  <li>The stack map is not compiled into the executable.</li>
+</ul>
+
 <p>Using the LLVM makefiles (like the <a
 href="http://llvm.org/viewvc/llvm-project/llvm/trunk/projects/sample/">sample
-project</a>), this can be built into a plugin using a simple makefile:</p>
+project</a>), this code can be compiled as a plugin using a simple
+makefile:</p>
 
 <blockquote><pre
 ># lib/MyGC/Makefile
@@ -648,20 +676,11 @@ as a language-specific compiler front-end.</p>
 
 <div class="doc_text">
 
-<p>The boilerplate collector above does nothing. More specifically:</p>
-
-<ul>
-  <li><tt>llvm.gcread</tt> calls are replaced with the corresponding
-      <tt>load</tt> instruction.</li>
-  <li><tt>llvm.gcwrite</tt> calls are replaced with the corresponding
-      <tt>store</tt> instruction.</li>
-  <li>No stack map is emitted, and no safe points are added.</li>
-</ul>
-
-<p><tt>Collector</tt> provides a range of features through which a plugin
-collector may do useful work. This matrix summarizes the supported (and planned)
-features and correlates them with the collection techniques which typically
-require them.</p>
+<p><tt>GCStrategy</tt> provides a range of features through which a plugin
+may do useful work. Some of these are callbacks, some are algorithms that can
+be enabled, disabled, or customized. This matrix summarizes the supported (and
+planned) features and correlates them with the collection techniques which
+typically require them.</p>
 
 <table>
   <tr>
@@ -898,8 +917,7 @@ require them.</p>
 
 <dl>
   <dt>Shadow Stack</dt>
-  <dd>The mutator carefully maintains a linked list of stack root
-      descriptors.</dd>
+  <dd>The mutator carefully maintains a linked list of stack roots.</dd>
   <dt>Reference Counting</dt>
   <dd>The mutator maintains a reference count for each object and frees an
       object when its count falls to zero.</dd>
@@ -947,6 +965,33 @@ interest.</p>
 
 <div class="doc_text">
 
+<p>LLVM automatically computes a stack map. One of the most important features
+of a <tt>GCStrategy</tt> is to compile this information into the executable in
+the binary representation expected by the runtime library.</p>
+
+<p>The stack map consists of the location and identity of each GC root in the
+each function in the module. For each root:</p>
+
+<ul>
+  <li><tt>RootNum</tt>: The index of the root.</li>
+  <li><tt>StackOffset</tt>: The offset of the object relative to the frame
+      pointer.</li>
+  <li><tt>RootMetadata</tt>: The value passed as the <tt>%metadata</tt>
+      parameter to the <a href="#gcroot"><tt>@llvm.gcroot</tt></a> intrinsic.</li>
+</ul>
+
+<p>Also, for the function as a whole:</p>
+
+<ul>
+  <li><tt>getFrameSize()</tt>: The overall size of the function's initial
+      stack frame, not accounting for any dynamic allocation.</li>
+  <li><tt>roots_size()</tt>: The count of roots in the function.</li>
+</ul>
+
+<p>To access the stack map, use <tt>GCFunctionMetadata::roots_begin()</tt> and
+-<tt>end()</tt> from the <tt><a
+href="#assembly">GCMetadataPrinter</a></tt>:</p>
+
 <blockquote><pre
 >for (iterator I = begin(), E = end(); I != E; ++I) {
   GCFunctionInfo *FI = *I;
@@ -962,10 +1007,9 @@ interest.</p>
   }
 }</pre></blockquote>
 
-<p>LLVM automatically computes a stack map. All a <tt>GCStrategy</tt> needs to do
-is access it using <tt>GCFunctionMetadata::roots_begin()</tt> and
--<tt>end()</tt>. If the <tt>llvm.gcroot</tt> intrinsic is eliminated before code
-generation by a custom lowering pass, LLVM's stack map will be empty.</p>
+<p>If the <tt>llvm.gcroot</tt> intrinsic is eliminated before code generation by
+a custom lowering pass, LLVM will compute an empty stack map. This may be useful
+for collector plugins which implement reference counting or a shadow stack.</p>
 
 </div>
 
@@ -1027,8 +1071,8 @@ the corresponding intrinsics and instead calls
 <p>LLVM's default action for each intrinsic is as follows:</p>
 
 <ul>
-  <li><tt>llvm.gcroot</tt>: Pass through to the code generator to generate a
-                            stack map.</li>
+  <li><tt>llvm.gcroot</tt>: Leave it alone. The code generator must see it
+                            or the stack map will not be computed.</li>
   <li><tt>llvm.gcread</tt>: Substitute a <tt>load</tt> instruction.</li>
   <li><tt>llvm.gcwrite</tt>: Substitute a <tt>store</tt> instruction.</li>
 </ul>
@@ -1156,9 +1200,9 @@ safe point (because only the topmost function has been patched).</p>
 
 <div class="doc_text">
 
-<p>LLVM allows a GC to print arbitrary assembly code before and after the rest
-of a module's assembly code. At the end of the module, the GC can print stack
-maps built by the code generator. (At the beginning, this information is not
+<p>LLVM allows a plugin to print arbitrary assembly code before and after the
+rest of a module's assembly code. At the end of the module, the GC can compile
+the LLVM stack map into assembly code. (At the beginning, this information is not
 yet computed.)</p>
 
 <p>Since AsmWriter and CodeGen are separate components of LLVM, a separate
@@ -1171,6 +1215,8 @@ will look for such a subclass if the <tt>GCStrategy</tt> sets
 >MyGC::MyGC() {
   UsesMetadata = true;
 }</pre></blockquote>
+
+<p>This separation allows JIT-only clients to be smaller.</p>
 
 <p>Note that LLVM does not currently have analogous APIs to support code
 generation in the JIT, nor using the object writers.</p>
@@ -1249,7 +1295,7 @@ void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
     // Align to address width.
     AP.EmitAlignment(AddressAlignLog);
     
-    // Emit the symbol by which the stack map can be found.
+    // Emit the symbol by which the stack map entry can be found.
     std::string Symbol;
     Symbol += TAI.getGlobalPrefix();
     Symbol += "__gcmap_";
