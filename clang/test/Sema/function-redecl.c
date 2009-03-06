@@ -93,3 +93,16 @@ void outer_test3() {
 }
 
 static float outer8(float); // okay
+
+enum e { e1, e2 };
+
+// GNU extension: prototypes and K&R function definitions
+int isroot(short x, // expected-note{{previous declaration is here}}
+           enum e); 
+
+int isroot(x, y)
+     short x; // expected-warning{{promoted type 'int' of K&R function parameter is not compatible with the parameter type 'short' declared in a previous prototype}}
+     unsigned int y;
+{
+  return x == 1;
+}

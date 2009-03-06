@@ -510,6 +510,14 @@ static void MergeAttributes(Decl *New, Decl *Old, ASTContext &C) {
   Old->invalidateAttrs();
 }
 
+/// Used in MergeFunctionDecl to keep track of function parameters in
+/// C.
+struct GNUCompatibleParamWarning {
+  ParmVarDecl *OldParm;
+  ParmVarDecl *NewParm;
+  QualType PromotedType;
+};
+
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -617,10 +625,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // duplicate function decls like "void f(int); void f(enum X);" properly.
   if (!getLangOptions().CPlusPlus &&
       Context.typesAreCompatible(OldQType, NewQType)) {
+    const FunctionType *OldFuncType = OldQType->getAsFunctionType();
     const FunctionType *NewFuncType = NewQType->getAsFunctionType();
     const FunctionProtoType *OldProto = 0;
     if (isa<FunctionNoProtoType>(NewFuncType) &&
-        (OldProto = OldQType->getAsFunctionProtoType())) {
+        (OldProto = dyn_cast<FunctionProtoType>(OldFuncType))) {
       // The old declaration provided a function prototype, but the
       // new declaration does not. Merge in the prototype.
       llvm::SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
@@ -647,10 +656,69 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       }
 
       New->setParams(Context, &Params[0], Params.size());
-
-    }
+    } 
 
     return MergeCompatibleFunctionDecls(New, Old);
+  }
+
+  // GNU C permits a K&R definition to follow a prototype declaration
+  // if the declared types of the parameters in the K&R definition
+  // match the types in the prototype declaration, even when the
+  // promoted types of the parameters from the K&R definition differ
+  // from the types in the prototype. GCC then keeps the types from
+  // the prototype.
+  if (!getLangOptions().CPlusPlus &&
+      !getLangOptions().NoExtensions &&
+      Old->hasPrototype() && !New->hasPrototype() &&
+      New->getType()->getAsFunctionProtoType() &&
+      Old->getNumParams() == New->getNumParams()) {
+    llvm::SmallVector<QualType, 16> ArgTypes;
+    llvm::SmallVector<GNUCompatibleParamWarning, 16> Warnings;
+    const FunctionProtoType *OldProto 
+      = Old->getType()->getAsFunctionProtoType();
+    const FunctionProtoType *NewProto 
+      = New->getType()->getAsFunctionProtoType();
+    
+    // Determine whether this is the GNU C extension.
+    bool GNUCompatible = 
+      Context.typesAreCompatible(OldProto->getResultType(),
+                                 NewProto->getResultType()) &&
+      (OldProto->isVariadic() == NewProto->isVariadic());
+    for (unsigned Idx = 0, End = Old->getNumParams(); 
+         GNUCompatible && Idx != End; ++Idx) {
+      ParmVarDecl *OldParm = Old->getParamDecl(Idx);
+      ParmVarDecl *NewParm = New->getParamDecl(Idx);
+      if (Context.typesAreCompatible(OldParm->getType(), 
+                                     NewProto->getArgType(Idx))) {
+        ArgTypes.push_back(NewParm->getType());
+      } else if (Context.typesAreCompatible(OldParm->getType(),
+                                            NewParm->getType())) {
+        GNUCompatibleParamWarning Warn 
+          = { OldParm, NewParm, NewProto->getArgType(Idx) };
+        Warnings.push_back(Warn);
+        ArgTypes.push_back(NewParm->getType());
+      } else
+        GNUCompatible = false;
+    }
+
+    if (GNUCompatible) {
+      for (unsigned Warn = 0; Warn < Warnings.size(); ++Warn) {
+        Diag(Warnings[Warn].NewParm->getLocation(),
+             diag::ext_param_promoted_not_compatible_with_prototype)
+          << Warnings[Warn].PromotedType
+          << Warnings[Warn].OldParm->getType();
+        Diag(Warnings[Warn].OldParm->getLocation(), 
+             diag::note_previous_declaration);
+      }
+
+      New->setType(Context.getFunctionType(NewProto->getResultType(),
+                                           &ArgTypes[0], ArgTypes.size(),
+                                           NewProto->isVariadic(),
+                                           NewProto->getTypeQuals()));
+      return MergeCompatibleFunctionDecls(New, Old);
+    }
+
+    // Fall through to diagnose conflicting types.
   }
 
   // A function that has already been declared has been redeclared or defined

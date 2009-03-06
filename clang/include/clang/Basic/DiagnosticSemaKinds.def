@@ -470,6 +470,9 @@ DIAG(err_param_default_argument_references_this, ERROR,
 DIAG(err_param_default_argument_nonfunc, ERROR,
      "default arguments can only be specified for parameters in a function"
      " declaration")
+DIAG(ext_param_promoted_not_compatible_with_prototype, EXTWARN,
+     "promoted type %0 of K&R function parameter is not compatible with the "
+     "parameter type %1 declared in a previous prototype")
 
 // C++ Overloading Semantic Analysis.
 DIAG(err_ovl_diff_return_type, ERROR,

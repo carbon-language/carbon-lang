@@ -8,7 +8,7 @@ void f1(a, b) int a, b; {}
 void t1(void) { f1(1, 2, 3); }
 
 void f2(float); // expected-note{{previous declaration is here}}
-void f2(x) float x; { } // expected-error{{conflicting types for 'f2'}}
+void f2(x) float x; { } // expected-warning{{promoted type 'double' of K&R function parameter is not compatible with the parameter type 'float' declared in a previous prototype}}
 
 typedef void (*f3)(void);
 f3 t3(int b) { return b? f0 : f1; } // okay
