@@ -73,3 +73,14 @@ typedef enum { X = 0 }; // expected-warning{{typedef requires a name}}
 enum NotYetComplete { // expected-note{{definition of 'enum NotYetComplete' is not complete until the closing '}'}}
   NYC1 = sizeof(enum NotYetComplete) // expected-error{{invalid application of 'sizeof' to an incomplete type 'enum NotYetComplete'}}
 };
+
+/// PR3688
+struct s1 {
+  enum e1 (*bar)(void); // expected-warning{{ISO C forbids forward references to 'enum' types}}
+};
+
+enum e1 { YES, NO };
+
+static enum e1 badfunc(struct s1 *q) {
+  return q->bar();
+}

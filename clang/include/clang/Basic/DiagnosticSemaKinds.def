@@ -676,6 +676,8 @@ DIAG(err_use_with_wrong_tag, ERROR,
      "use of %0 with tag type that does not match previous declaration")
 DIAG(ext_forward_ref_enum, EXTENSION,
      "ISO C forbids forward references to 'enum' types")
+DIAG(err_forward_ref_enum, ERROR,
+     "ISO C++ forbids forward references to 'enum' types")
 DIAG(err_redefinition_of_enumerator, ERROR,
      "redefinition of enumerator %0")
 DIAG(err_duplicate_member, ERROR,

@@ -2976,8 +2976,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       }
     }
   } else if (TK == TK_Reference && SS.isEmpty() && Name &&
-             (Kind != TagDecl::TK_enum))  {
-    // C++ [basic.scope.pdecl]p5:
+             (Kind != TagDecl::TK_enum || !getLangOptions().CPlusPlus)) {
+    // C.scope.pdecl]p5:
     //   -- for an elaborated-type-specifier of the form 
     //
     //          class-key identifier
@@ -2993,7 +2993,10 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     //
     // C99 6.7.2.3p8 has a similar (but not identical!) provision for
     // C structs and unions.
-
+    //
+    // GNU C also supports this behavior as part of its incomplete
+    // enum types extension, while GNU C++ does not.
+    //
     // Find the context where we'll be declaring the tag.
     // FIXME: We would like to maintain the current DeclContext as the
     // lexical context, 
@@ -3027,7 +3030,11 @@ CreateNewDecl:
     New = EnumDecl::Create(Context, SearchDC, Loc, Name, 
                            cast_or_null<EnumDecl>(PrevDecl));
     // If this is an undefined enum, warn.
-    if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
+    if (TK != TK_Definition && !Invalid)  {
+      unsigned DK = getLangOptions().CPlusPlus? diag::err_forward_ref_enum
+                                              : diag::ext_forward_ref_enum;
+      Diag(Loc, DK);
+    }
   } else {
     // struct/union/class
 
