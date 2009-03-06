@@ -138,28 +138,17 @@ struct VISIBILITY_HIDDEN GlobalStatus {
 }
 
 /// ConstantIsDead - Return true if the specified constant is (transitively)
-/// dead.  The constant may be used by other constants (e.g. constant arrays,
-/// constant exprs, constant global variables) as long as they are dead, 
-/// but it cannot be used by anything else. If DeadGVs is not null then
-/// record dead constant GV users.
-static bool ConstantIsDead(Constant *C, 
-                           SmallPtrSet<GlobalVariable *, 4> *DeadGVs = false) {
+/// dead.  The constant may be used by other constants (e.g. constant arrays and
+/// constant exprs) as long as they are dead, but it cannot be used by anything
+/// else.
+static bool ConstantIsDead(Constant *C) {
   if (isa<GlobalValue>(C)) return false;
 
-  for (Value::use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI) {
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*UI)) {
-      if (!GV->isConstant() || !GV->hasLocalLinkage() || !GV->use_empty())
-        return false;
-      else {
-        if (DeadGVs)
-          DeadGVs->insert(GV);
-      }
-    }
-    else if (Constant *CU = dyn_cast<Constant>(*UI)) {
-      if (!ConstantIsDead(CU, DeadGVs)) return false;
+  for (Value::use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI)
+    if (Constant *CU = dyn_cast<Constant>(*UI)) {
+      if (!ConstantIsDead(CU)) return false;
     } else
       return false;
-  }
   return true;
 }
 
@@ -350,19 +339,8 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
     } else if (Constant *C = dyn_cast<Constant>(U)) {
       // If we have a chain of dead constantexprs or other things dangling from
       // us, and if they are all dead, nuke them without remorse.
-      SmallPtrSet<GlobalVariable *, 4> DeadGVs;
-      if (ConstantIsDead(C, &DeadGVs)) {
-        for (SmallPtrSet<GlobalVariable *, 4>::iterator TI = DeadGVs.begin(),
-               TE = DeadGVs.end(); TI != TE; ) {
-          GlobalVariable *TGV = *TI; ++TI;
-          if (TGV == C)
-            C = NULL;
-          TGV->eraseFromParent();
-        }
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
-          GV->eraseFromParent();
-        else if (C)
-          C->destroyConstant();
+      if (ConstantIsDead(C)) {
+        C->destroyConstant();
         // This could have invalidated UI, start over from scratch.
         CleanupConstantGlobalUsers(V, Init);
         return true;
