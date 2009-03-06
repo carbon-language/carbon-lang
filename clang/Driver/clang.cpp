@@ -1560,9 +1560,10 @@ static bool isSerializedFile(const std::string& InFile) {
 
 
 int main(int argc, char **argv) {
-  llvm::cl::ParseCommandLineOptions(argc, argv, " llvm clang cfe\n");
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
+  llvm::cl::ParseCommandLineOptions(argc, argv,
+                              "LLVM 'Clang' frontend: http://clang.llvm.org\n");
   
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
