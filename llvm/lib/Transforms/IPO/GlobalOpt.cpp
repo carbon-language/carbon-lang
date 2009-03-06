@@ -23,6 +23,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
@@ -1562,7 +1563,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // Walk the use list of the global seeing if all the uses are load or store.
   // If there is anything else, bail out.
   for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I)
-    if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
+    if (!isa<LoadInst>(I) && !isa<StoreInst>(I) && !UserIsDebugInfo(*I))
       return false;
   
   DOUT << "   *** SHRINKING TO BOOL: " << *GV;
@@ -1585,8 +1586,8 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
     IsOneZero = InitVal->isNullValue() && CI->isOne();
 
   while (!GV->use_empty()) {
-    Instruction *UI = cast<Instruction>(GV->use_back());
-    if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
+    User *GVU = GV->use_back();
+    if (StoreInst *SI = dyn_cast<StoreInst>(GVU)) {
       // Change the store into a boolean store.
       bool StoringOther = SI->getOperand(0) == OtherVal;
       // Only do this if we weren't storing a loaded value.
@@ -1614,9 +1615,9 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
         }
       }
       new StoreInst(StoreVal, NewGV, SI);
-    } else {
+      SI->eraseFromParent();
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(GVU)) {
       // Change the load into a load of bool then a select.
-      LoadInst *LI = cast<LoadInst>(UI);
       LoadInst *NLI = new LoadInst(NewGV, LI->getName()+".b", LI);
       Value *NSI;
       if (IsOneZero)
@@ -1625,8 +1626,9 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
         NSI = SelectInst::Create(NLI, OtherVal, InitVal, "", LI);
       NSI->takeName(LI);
       LI->replaceAllUsesWith(NSI);
-    }
-    UI->eraseFromParent();
+      LI->eraseFromParent();
+    } else 
+      RemoveDbgInfoUser(GVU);
   }
 
   GV->eraseFromParent();
