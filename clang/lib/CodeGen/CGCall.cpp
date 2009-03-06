@@ -473,8 +473,10 @@ X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum,
   // MEMORY is used as class.
   //
   // (f) Otherwise class SSE is used.
-  assert((Accum == NoClass || Accum == Integer || 
-          Accum == SSE || Accum == SSEUp) &&
+
+  // Accum should never be memory (we should have returned) or
+  // ComplexX87 (because this cannot be passed in a structure).
+  assert((Accum != Memory && Accum != ComplexX87) &&
          "Invalid accumulated classification during merge.");
   if (Accum == Field || Field == NoClass)
     return Accum;
@@ -807,11 +809,13 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
 
     // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
     // returned together with the previous X87 value in %st0.
-    //
-    // X87UP should always be preceeded by X87, so we don't need to do
-    // anything here.
   case X87Up:
-    assert(Lo == X87 && "Unexpected X87Up classification.");
+    // If X87Up is preceeded by X87, we don't need to do
+    // anything. However, in some cases with unions it may not be
+    // preceeded by X87. In such situations we follow gcc and pass the
+    // extra bits in an SSE reg.
+    if (Lo != X87) 
+      ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
     break;
   }
 
@@ -874,16 +878,20 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // which is passed in memory.
   case Memory:
   case X87:
-  case X87Up:
   case ComplexX87:
     assert(0 && "Invalid classification for hi word.");
+    break;
 
   case NoClass: break;
   case Integer:
     ResType = llvm::StructType::get(ResType, llvm::Type::Int64Ty, NULL);
     ++neededInt;
     break;
-  case SSE:    
+
+    // X87Up generally doesn't occur here (long double is passed in
+    // memory), except in situations involving unions.
+  case X87Up:
+  case SSE:
     ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
     ++neededSSE;
     break;
