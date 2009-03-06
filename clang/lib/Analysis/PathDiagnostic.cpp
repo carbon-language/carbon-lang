@@ -36,12 +36,20 @@ static inline size_t GetNumCharsToLastNonPeriod(const std::string &s) {
 PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
                                          const std::string& s,
                                          Kind k, DisplayHint hint)
-  : Pos(pos), str(s, 0, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
+  : Pos(pos), str(s, 0, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {
+    assert(Pos.isValid() &&
+           "PathDiagnosticPiece's must have a valid location.");
+}
 
 PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
                                          const char* s, Kind k,
                                          DisplayHint hint)
-  : Pos(pos), str(s, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
+  : Pos(pos), str(s, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {
+  assert(Pos.isValid() &&
+         "PathDiagnosticPiece's must have a valid location.");
+}
+
+PathDiagnostic::PathDiagnostic() : Size(0) {}
 
 PathDiagnostic::~PathDiagnostic() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
@@ -50,14 +58,16 @@ PathDiagnostic::~PathDiagnostic() {
 
 PathDiagnostic::PathDiagnostic(const char* bugtype, const char* desc,
                                const char* category)
-  : BugType(bugtype, GetNumCharsToLastNonPeriod(bugtype)),
+  : Size(0),
+    BugType(bugtype, GetNumCharsToLastNonPeriod(bugtype)),
     Desc(desc, GetNumCharsToLastNonPeriod(desc)),
     Category(category, GetNumCharsToLastNonPeriod(category)) {}
 
 PathDiagnostic::PathDiagnostic(const std::string& bugtype,
                                const std::string& desc, 
                                const std::string& category)
-  : BugType(bugtype, 0, GetNumCharsToLastNonPeriod(bugtype)),
+  : Size(0),
+    BugType(bugtype, 0, GetNumCharsToLastNonPeriod(bugtype)),
     Desc(desc, 0, GetNumCharsToLastNonPeriod(desc)),
     Category(category, 0, GetNumCharsToLastNonPeriod(category)) {}
 

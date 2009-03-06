@@ -37,8 +37,12 @@ private:
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
   
-public:
+  // Do not implement:
+  PathDiagnosticPiece();
+  PathDiagnosticPiece(const PathDiagnosticPiece &P);
+  PathDiagnosticPiece& operator=(const PathDiagnosticPiece &P);
   
+public:
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
                       Kind k = Event,
                       DisplayHint hint = Above);
@@ -98,10 +102,10 @@ class PathDiagnostic {
   std::string Desc;
   std::string Category;
   std::vector<std::string> OtherDesc;
-
+  
 public:  
-  PathDiagnostic() : Size(0) {}
-
+  PathDiagnostic();
+  
   PathDiagnostic(const char* bugtype, const char* desc, const char* category);
   
   PathDiagnostic(const std::string& bugtype, const std::string& desc, 
