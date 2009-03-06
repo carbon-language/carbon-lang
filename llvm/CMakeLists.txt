@@ -203,6 +203,7 @@ add_subdirectory(lib/AsmParser)
 add_subdirectory(lib/Debugger)
 add_subdirectory(lib/Archive)
 
+add_subdirectory(projects)
 add_subdirectory(tools)
 
 add_subdirectory(examples)
