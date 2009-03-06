@@ -1362,7 +1362,11 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       IsNotTrivial = true;
       continue;
     }
-    
+
+    // Ignore dbg intrinsic.
+    if (isa<DbgInfoIntrinsic>(User))
+      continue;
+
     // Otherwise, we cannot handle this!
     return false;
   }
@@ -1442,8 +1446,13 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
       MSI->eraseFromParent();
       continue;
     }
-        
-    
+
+    // If user is a dbg info intrinsic then it is safe to remove it.
+    if (isa<DbgInfoIntrinsic>(User)) {
+      User->eraseFromParent();
+      continue;
+    }
+
     assert(0 && "Unsupported operation!");
     abort();
   }
