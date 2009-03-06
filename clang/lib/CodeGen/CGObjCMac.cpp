@@ -4850,13 +4850,13 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   SelectorArgs.push_back(ObjCTypes.EHPersonalityPtr);
 
   // Construct the lists of (type, catch body) to handle.
-  llvm::SmallVector<std::pair<const Decl*, const Stmt*>, 8> Handlers;
+  llvm::SmallVector<std::pair<const ParmVarDecl*, const Stmt*>, 8> Handlers;
   bool HasCatchAll = false;
   if (isTry) {
     if (const ObjCAtCatchStmt* CatchStmt =
         cast<ObjCAtTryStmt>(S).getCatchStmts())  {
       for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
-        const Decl *CatchDecl = CatchStmt->getCatchParamDecl();
+        const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
         Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
 
         // catch(...) always matches.
@@ -4868,9 +4868,8 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
           break;
         }
 
-        const VarDecl *VD = cast<VarDecl>(CatchDecl);
-        if (CGF.getContext().isObjCIdType(VD->getType()) ||
-            VD->getType()->isObjCQualifiedIdType()) {
+        if (CGF.getContext().isObjCIdType(CatchDecl->getType()) ||
+            CatchDecl->getType()->isObjCQualifiedIdType()) {
           llvm::Value *IDEHType = 
             CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
           if (!IDEHType)
@@ -4884,7 +4883,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         } 
 
         // All other types should be Objective-C interface pointer types.
-        const PointerType *PT = VD->getType()->getAsPointerType();
+        const PointerType *PT = CatchDecl->getType()->getAsPointerType();
         assert(PT && "Invalid @catch type.");
         const ObjCInterfaceType *IT = 
           PT->getPointeeType()->getAsObjCInterfaceType();
@@ -4898,7 +4897,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // We use a cleanup unless there was already a catch all.
   if (!HasCatchAll) {
     SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
-    Handlers.push_back(std::make_pair((const Decl*) 0, (const Stmt*) 0));
+    Handlers.push_back(std::make_pair((const ParmVarDecl*) 0, (const Stmt*) 0));
   }
     
   llvm::Value *Selector = 
@@ -4906,7 +4905,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                            SelectorArgs.begin(), SelectorArgs.end(),
                            "selector");
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-    const Decl *CatchParam = Handlers[i].first;
+    const ParmVarDecl *CatchParam = Handlers[i].first;
     const Stmt *CatchBody = Handlers[i].second;
 
     llvm::BasicBlock *Next = 0;
@@ -4943,11 +4942,14 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
       // Bind the catch parameter if it exists.
       if (CatchParam) {
-        const VarDecl *VD = dyn_cast<VarDecl>(CatchParam);
-        ExcObject = CGF.Builder.CreateBitCast(ExcObject, 
-                                              CGF.ConvertType(VD->getType()));
-        CGF.EmitLocalBlockVarDecl(*VD);
-        CGF.Builder.CreateStore(ExcObject, CGF.GetAddrOfLocalVar(VD));
+        ExcObject = 
+          CGF.Builder.CreateBitCast(ExcObject, 
+                                    CGF.ConvertType(CatchParam->getType()));
+        // CatchParam is a ParmVarDecl because of the grammar
+        // construction used to handle this, but for codegen purposes
+        // we treat this as a local decl.
+        CGF.EmitLocalBlockVarDecl(*CatchParam);
+        CGF.Builder.CreateStore(ExcObject, CGF.GetAddrOfLocalVar(CatchParam));
       }
 
       CGF.ObjCEHValueStack.push_back(ExcObject);
