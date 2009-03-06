@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "loop-rotate"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Dominators.h"
@@ -161,7 +161,19 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
   // Check size of original header and reject
   // loop if it is very big.
-  if (OrigHeader->size() > MAX_HEADER_SIZE)
+  unsigned Size = 0;
+  
+  // FIXME: Use common api to estimate size.
+  for (BasicBlock::const_iterator OI = OrigHeader->begin(), 
+         OE = OrigHeader->end(); OI != OE; ++OI) {
+      if (isa<PHINode>(OI)) 
+        continue;           // PHI nodes don't count.
+      if (isa<DbgInfoIntrinsic>(OI))
+        continue;  // Debug intrinsics don't count as size.
+      Size++;
+  }
+
+  if (Size > MAX_HEADER_SIZE)
     return false;
 
   // Now, this loop is suitable for rotation.
