@@ -135,7 +135,7 @@ BugReport::getEndPath(BugReporter& BR,
     return NULL;
   
   FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(L, getDescription());
+  PathDiagnosticPiece* P = new PathDiagnosticEventPiece(L, getDescription());
   
   const SourceRange *Beg, *End;
   getRanges(BR, Beg, End);  
@@ -481,7 +481,7 @@ public:
       std::string msg = "'" + std::string(VD->getNameAsString()) +
       "' now aliases '" + MostRecent->getNameAsString() + "'";
       
-      PD.push_front(new PathDiagnosticPiece(L, msg));
+      PD.push_front(new PathDiagnosticEventPiece(L, msg));
     }
     
     return true;
@@ -643,8 +643,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           os << "Control jumps to line "
              << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str(), 
-                                             PathDiagnosticPiece::ControlFlow));
+          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
           break;
         }
           
@@ -712,8 +711,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
           }
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str(),
-                                             PathDiagnosticPiece::ControlFlow));
+          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
           break;
         }
           
@@ -722,8 +720,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
           ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
-          PD.push_front(new PathDiagnosticPiece(L, os.str(),
-                                            PathDiagnosticPiece::ControlFlow));
+          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
           break;
         }
 
@@ -737,8 +734,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           else
             os << "true.";
           
-          PD.push_front(new PathDiagnosticPiece(L, os.str(),
-                                            PathDiagnosticPiece::ControlFlow));          
+          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
           break;
         }
           
@@ -751,13 +747,11 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             os << "Loop condition is true. ";
             ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
             
-            PD.push_front(new PathDiagnosticPiece(L, os.str(),
-                                             PathDiagnosticPiece::ControlFlow));
+            PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
           }
           else
-            PD.push_front(new PathDiagnosticPiece(L,
-                              "Loop condition is false.  Exiting loop.",
-                              PathDiagnosticPiece::ControlFlow));
+            PD.push_front(new PathDiagnosticControlFlowPiece(L,
+                                    "Loop condition is false.  Exiting loop."));
           
           break;
         }
@@ -772,24 +766,22 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             os << "Loop condition is false. ";
             ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
 
-            PD.push_front(new PathDiagnosticPiece(L, os.str(),
-                                             PathDiagnosticPiece::ControlFlow));
+            PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
           }
           else
-            PD.push_front(new PathDiagnosticPiece(L,
-                            "Loop condition is true.  Entering loop body.",
-                            PathDiagnosticPiece::ControlFlow));
+            PD.push_front(new PathDiagnosticControlFlowPiece(L,
+                                                             "Loop condition is true.  Entering loop body."));
           
           break;
         }
           
         case Stmt::IfStmtClass: {          
           if (*(Src->succ_begin()+1) == Dst)
-            PD.push_front(new PathDiagnosticPiece(L, "Taking false branch.",
-                            PathDiagnosticPiece::ControlFlow));
+            PD.push_front(new PathDiagnosticControlFlowPiece(L,
+                                                       "Taking false branch."));
           else  
-            PD.push_front(new PathDiagnosticPiece(L, "Taking true branch.",
-                            PathDiagnosticPiece::ControlFlow));
+            PD.push_front(new PathDiagnosticControlFlowPiece(L,
+                                                       "Taking true branch."));
           
           break;
         }
@@ -872,7 +864,9 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
     return;
   
   if (D->empty()) { 
-    PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
+    PathDiagnosticPiece* piece =
+      new PathDiagnosticEventPiece(L, R.getDescription());
+
     for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
     D->push_back(piece);
   }

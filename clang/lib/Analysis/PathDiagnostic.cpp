@@ -50,6 +50,8 @@ PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
 }
 
 PathDiagnosticPiece::~PathDiagnosticPiece() {}
+PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
+PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
 
 PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete *I;
@@ -99,7 +101,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   Info.FormatDiagnostic(StrC);
   
   PathDiagnosticPiece *P =
-    new PathDiagnosticPiece(Info.getLocation(),
+    new PathDiagnosticEventPiece(Info.getLocation(),
                             std::string(StrC.begin(), StrC.end()));
   
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)

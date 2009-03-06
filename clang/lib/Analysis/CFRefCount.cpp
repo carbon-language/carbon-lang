@@ -2506,7 +2506,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     }
     
     FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
-    PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, os.str());
+    PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
     
     if (Expr* Exp = dyn_cast<Expr>(S))
       P->addRange(Exp->getSourceRange());
@@ -2655,7 +2655,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   
   Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
   FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, os.str());
+  PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
   
   // Add the range by scanning the children of the statement for any bindings
   // to Sym.
@@ -2844,7 +2844,7 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
           " +"
        << RV->getCount() << " (object leaked).";
   
-  return new PathDiagnosticPiece(L, os.str());
+  return new PathDiagnosticEventPiece(L, os.str());
 }
 
 

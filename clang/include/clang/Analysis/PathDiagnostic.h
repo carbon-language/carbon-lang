@@ -190,14 +190,15 @@ private:
   PathDiagnosticPiece();
   PathDiagnosticPiece(const PathDiagnosticPiece &P);
   PathDiagnosticPiece& operator=(const PathDiagnosticPiece &P);
-  
-public:
+
+protected:
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
                       Kind k = Event, DisplayHint hint = Below);
   
   PathDiagnosticPiece(FullSourceLoc pos, const char* s,
                       Kind k = Event, DisplayHint hint = Below);
   
+public:
   virtual ~PathDiagnosticPiece();
   
   const std::string& getString() const { return str; }
@@ -244,6 +245,40 @@ public:
   }
     
   FullSourceLoc getLocation() const { return Pos; }
+  
+  static inline bool classof(const PathDiagnosticPiece* P) {
+    return true;
+  }
+};
+  
+class PathDiagnosticEventPiece : public PathDiagnosticPiece {
+public:
+  PathDiagnosticEventPiece(FullSourceLoc pos, const std::string& s)
+  : PathDiagnosticPiece(pos, s, Event) {}
+  
+  PathDiagnosticEventPiece(FullSourceLoc pos, const char* s)
+  : PathDiagnosticPiece(pos, s, Event) {}
+  
+  ~PathDiagnosticEventPiece();
+
+  static inline bool classof(const PathDiagnosticPiece* P) {
+    return P->getKind() == Event;
+  }
+};
+  
+class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
+public:
+  PathDiagnosticControlFlowPiece(FullSourceLoc pos, const std::string& s)
+    : PathDiagnosticPiece(pos, s, Event) {}
+  
+  PathDiagnosticControlFlowPiece(FullSourceLoc pos, const char* s)
+    : PathDiagnosticPiece(pos, s, Event) {}
+  
+  ~PathDiagnosticControlFlowPiece();
+  
+  static inline bool classof(const PathDiagnosticPiece* P) {
+    return P->getKind() == ControlFlow;
+  }
 };
   
 class PathDiagnosticMacroPiece : public PathDiagnosticPiece {
@@ -262,6 +297,10 @@ public:
   typedef std::vector<PathDiagnosticPiece*>::iterator iterator;
   iterator begin() { return SubPieces.begin(); }
   iterator end() { return SubPieces.end(); }
+  
+  static inline bool classof(const PathDiagnosticPiece* P) {
+    return P->getKind() == Macro;
+  }
 };
 
 } //end clang namespace
