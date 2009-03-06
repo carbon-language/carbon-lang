@@ -31,21 +31,27 @@ public:
     AlwaysInline,
     Annotate,
     AsmLabel, // Represent GCC asm label extension.
+    Blocks,
+    Cleanup,
+    Const,
     Constructor,
+    DLLExport,
+    DLLImport,
     Deprecated,
     Destructor,
-    DLLImport,
-    DLLExport,
     FastCall,    
     Format,
     IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
-    NonNull,
     NoReturn,
     NoThrow,
-    ObjCNSObject,
+    Nodebug,
+    Noinline,
+    NonNull,
     ObjCException,
+    ObjCNSObject,
     Overloadable, // Clang-specific
     Packed,
+    Pure,
     Section,
     StdCall,
     TransparentUnion,
@@ -55,12 +61,7 @@ public:
     Visibility,
     WarnUnusedResult,
     Weak,
-    Blocks,
-    Const,
-    Pure,
-    Cleanup,
-    Nodebug,
-    Noinline
+    WeakImport
   };
     
 private:
@@ -298,6 +299,16 @@ public:
   static bool classof(const WeakAttr *A) { return true; }
 };
 
+class WeakImportAttr : public Attr {
+public:
+  WeakImportAttr() : Attr(WeakImport) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == WeakImport; }
+  static bool classof(const WeakImportAttr *A) { return true; }
+};
+
 class NoThrowAttr : public Attr {
 public:
   NoThrowAttr() : Attr(NoThrow) {}
@@ -520,7 +531,7 @@ public:
   WarnUnusedResultAttr() : Attr(WarnUnusedResult) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == WarnUnusedResult;}  
+  static bool classof(const Attr *A) { return A->getKind() == WarnUnusedResult;}
   static bool classof(const WarnUnusedResultAttr *A) { return true; }
 };
 

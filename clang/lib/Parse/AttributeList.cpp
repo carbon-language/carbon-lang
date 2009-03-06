@@ -105,6 +105,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
       return IgnoredAttribute; // FIXME: printf format string checking.
     break;
   case 11:
+    if (!memcmp(Str, "weak_import", 11)) return AT_weak_import;
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
     if (!memcmp(Str, "constructor", 11)) return AT_constructor;
     if (!memcmp(Str, "unavailable", 11)) return AT_unavailable;

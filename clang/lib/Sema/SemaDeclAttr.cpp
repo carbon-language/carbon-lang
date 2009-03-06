@@ -730,8 +730,45 @@ static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
+
+  // TODO: could also be applied to methods?
+  if (!isa<FunctionDecl>(D) && !isa<VarDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << "weak" << 2 /*variable and function*/;
+    return;
+  }
   
   D->addAttr(::new (S.Context) WeakAttr());
+}
+
+static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }  
+
+  // weak_import only applies to variable & function declarations.
+  bool isDef = false;
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    isDef = (!VD->hasExternalStorage() || VD->getInit());
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    isDef = FD->getBody();
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << "weak_import" << 2 /*variable and function*/;
+    return;
+  }
+
+  // Merge should handle any subsequent violations.
+  if (isDef) {
+    S.Diag(Attr.getLoc(), 
+           diag::warn_attribute_weak_import_invalid_on_definition)
+      << "weak_import" << 2 /*variable and function*/;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) WeakImportAttr());
 }
 
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -1441,6 +1478,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_warn_unused_result: HandleWarnUnusedResult(D,Attr,S);
     break;
   case AttributeList::AT_weak:        HandleWeakAttr      (D, Attr, S); break;
+  case AttributeList::AT_weak_import: HandleWeakImportAttr(D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;

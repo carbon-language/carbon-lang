@@ -376,6 +376,8 @@ DIAG(warn_attribute_weak_on_field, WARNING,
      "__weak attribute cannot be specified on a field declaration")
 DIAG(warn_attribute_weak_on_local, WARNING,
      "__weak attribute cannot be specified on an automatic variable")
+DIAG(warn_attribute_weak_import_invalid_on_definition, WARNING,
+    "'weak_import' attribute cannot be specified on a definition")
 DIAG(warn_attribute_wrong_decl_type, WARNING,
      "'%0' attribute only applies to %select{function|union|"
      "variable and function|function or method}1 types")
