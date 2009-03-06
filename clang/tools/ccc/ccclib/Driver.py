@@ -233,9 +233,8 @@ class Driver(object):
                     self.removeFiles(self.resultFiles, failOnError=True)
                 raise
         finally:
-            for f in self.tempFiles:
-                # Ignore failures in removing temporary files
-                self.removeFiles(self.resultFiles, failOnError=False)
+            # Ignore failures in removing temporary files
+            self.removeFiles(self.tempFiles, failOnError=False)
 
     def removeFiles(self, fileList, failOnError=False):
         for f in fileList:
