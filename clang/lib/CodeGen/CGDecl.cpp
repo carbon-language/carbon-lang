@@ -354,10 +354,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (flag&BLOCK_FIELD_IS_WEAK)
       isa = 1;
     V = llvm::ConstantInt::get(llvm::Type::Int32Ty, isa);
-    V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "tmp");
+    V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
-    V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "tmp");
+    V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "forwarding");
     Builder.CreateStore(V, forwarding_field);
 
     V = llvm::ConstantInt::get(llvm::Type::Int32Ty, flags);

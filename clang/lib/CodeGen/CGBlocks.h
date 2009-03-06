@@ -110,6 +110,7 @@ public:
 
 class BlockFunction : public BlockBase {
   CodeGenModule &CGM;
+  CodeGenFunction &CGF;
   ASTContext &getContext() const;
 
 public:
@@ -148,16 +149,19 @@ public:
 
   CGBuilderTy &Builder;
 
-  BlockFunction(CodeGenModule &cgm, CGBuilderTy &B)
-    : CGM(cgm), Builder(B) {
+  BlockFunction(CodeGenModule &cgm, CodeGenFunction &cgf, CGBuilderTy &B)
+    : CGM(cgm), CGF(cgf), Builder(B) {
     PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   }
 
   ImplicitParamDecl *BlockStructDecl;
   ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
 
-  llvm::Value *BuildCopyHelper(int flag);
-  llvm::Value *BuildDestroyHelper(int flag);
+  llvm::Constant *GenerateCopyHelperFunction();
+  llvm::Constant *GenerateDestroyHelperFunction();
+
+  llvm::Constant *BuildCopyHelper(int flag);
+  llvm::Constant *BuildDestroyHelper(int flag);
 
   llvm::Value *getBlockObjectDispose();
   void BuildBlockRelease(const VarDecl &D, llvm::Value *DeclPtr);

@@ -1,5 +1,7 @@
 // RUN: clang %s -emit-llvm -o %t -fblocks -f__block &&
-// RUN: grep "_Block_object_dispose" %t | count 3
+// RUN: grep "_Block_object_dispose" %t | count 4
+// RUN: grep "__copy_helper_block_" %t | count 2
+// RUN: grep "__destroy_helper_block_" %t | count 2
 #include <stdio.h>
 
 void test1() {
@@ -28,8 +30,14 @@ void test2() {
   printf("a is %d\n", a);
 }
 
+void test3() {
+  __block int (^j)(int);
+  ^{j=0;}();
+}
+
 int main() {
   test1();
   test2();
+  test3();
   return 0;
 }
