@@ -260,7 +260,7 @@ bool SROA::performScalarRepl(Function &F) {
     if ((isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType())) &&
         // Do not promote any struct into more than "32" separate vars.
-        getNumSAElements(AI->getAllocatedType()) < SRThreshold/4) {
+        getNumSAElements(AI->getAllocatedType()) <= SRThreshold/4) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
       switch (isSafeAllocaToScalarRepl(AI)) {
