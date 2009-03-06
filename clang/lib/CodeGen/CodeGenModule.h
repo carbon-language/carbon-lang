@@ -82,10 +82,11 @@ class CodeGenModule : public BlockModule {
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
 
-  /// RuntimeFunctions - List of runtime functions whose names must be protected
-  /// from introducing conflicts. These functions should be created unnamed, we
-  /// will name them and patch up conflicts when we release the module.
-  std::vector< std::pair<llvm::Function*, std::string> > RuntimeFunctions;
+  /// RuntimeGlobal - List of runtime globals whose names must be
+  /// protected from introducing conflicts. These globals should be
+  /// created unnamed, we will name them and patch up conflicts when
+  /// we release the module.
+  std::vector< std::pair<llvm::GlobalValue*, std::string> > RuntimeGlobals;
 
   /// GlobalDeclMap - Mapping of decl names (represented as unique
   /// character pointers from either the identifier table or the set
@@ -241,6 +242,10 @@ public:
   /// protected from collisions.
   llvm::Function *CreateRuntimeFunction(const llvm::FunctionType *Ty,
                                         const std::string &Name);
+  /// CreateRuntimeVariable - Create a new runtime global variable
+  /// whose name must be protected from collisions.
+  llvm::GlobalVariable *CreateRuntimeVariable(const llvm::Type *Ty,
+                                              const std::string &Name);
 
   void UpdateCompletedType(const TagDecl *D);
 
@@ -340,7 +345,7 @@ private:
   /// references to global which may otherwise be optimized out.
   void EmitLLVMUsed(void);
 
-  void BindRuntimeFunctions();
+  void BindRuntimeGlobals();
 
   /// MayDeferGeneration - Determine if the given decl can be emitted
   /// lazily; this is only relevant for definitions. The given decl

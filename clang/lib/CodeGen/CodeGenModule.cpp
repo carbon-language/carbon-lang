@@ -66,44 +66,47 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   EmitLLVMUsed();
-  BindRuntimeFunctions();
+  BindRuntimeGlobals();
 }
 
-void CodeGenModule::BindRuntimeFunctions() {
+void CodeGenModule::BindRuntimeGlobals() {
   // Deal with protecting runtime function names.
-  for (unsigned i = 0, e = RuntimeFunctions.size(); i < e; ++i) {
-    llvm::Function *Fn = RuntimeFunctions[i].first;
-    const std::string &Name = RuntimeFunctions[i].second;
+  for (unsigned i = 0, e = RuntimeGlobals.size(); i < e; ++i) {
+    llvm::GlobalValue *GV = RuntimeGlobals[i].first;
+    const std::string &Name = RuntimeGlobals[i].second;
     
-    // Discard unused runtime functions.
-    if (Fn->use_empty()) {
-      Fn->eraseFromParent();
+    // Discard unused runtime declarations.
+    if (GV->isDeclaration() && GV->use_empty()) {
+      GV->eraseFromParent();
       continue;
     }
       
     // See if there is a conflict against a function.
-    llvm::Function *Conflict = TheModule.getFunction(Name);
+    llvm::GlobalValue *Conflict = TheModule.getNamedValue(Name);
     if (Conflict) {
       // Decide which version to take. If the conflict is a definition
       // we are forced to take that, otherwise assume the runtime
       // knows best.
+
+      // FIXME: This will fail phenomenally when the conflict is the
+      // wrong type of value. Just bail on it for now. This should
+      // really reuse something inside the LLVM Linker code.
+      assert(GV->getValueID() == Conflict->getValueID() &&
+             "Unable to resolve conflict between globals of different types.");
       if (!Conflict->isDeclaration()) {
         llvm::Value *Casted = 
-          llvm::ConstantExpr::getBitCast(Conflict, Fn->getType());
-        Fn->replaceAllUsesWith(Casted);
-        Fn->eraseFromParent();
+          llvm::ConstantExpr::getBitCast(Conflict, GV->getType());
+        GV->replaceAllUsesWith(Casted);
+        GV->eraseFromParent();
       } else {
-        Fn->takeName(Conflict);
+        GV->takeName(Conflict);
         llvm::Value *Casted = 
-          llvm::ConstantExpr::getBitCast(Fn, Conflict->getType());
+          llvm::ConstantExpr::getBitCast(GV, Conflict->getType());
         Conflict->replaceAllUsesWith(Casted);
         Conflict->eraseFromParent();
       }
-    } else {
-      // FIXME: There still may be conflicts with aliases and
-      // variables. 
-      Fn->setName(Name);
-    }
+    } else
+      GV->setName(Name);
   }
 }
 
@@ -882,8 +885,19 @@ CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
   llvm::Function *Fn = llvm::Function::Create(FTy, 
                                               llvm::Function::ExternalLinkage,
                                               "", &TheModule);
-  RuntimeFunctions.push_back(std::make_pair(Fn, Name));
+  RuntimeGlobals.push_back(std::make_pair(Fn, Name));
   return Fn;
+}
+
+llvm::GlobalVariable *
+CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
+                                     const std::string &Name) {
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(Ty, /*Constant=*/false,
+                             llvm::GlobalValue::ExternalLinkage,
+                             0, "", &TheModule);
+  RuntimeGlobals.push_back(std::make_pair(GV, Name));
+  return GV;
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
