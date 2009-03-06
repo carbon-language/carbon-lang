@@ -3525,19 +3525,17 @@ void Sema::ActOnFields(Scope* S,
           // If this is a struct/class and this is not the last element, reject
           // it.  Note that GCC supports variable sized arrays in the middle of
           // structures.
-          if (i != NumFields-1) {
-            Diag(FD->getLocation(), diag::err_variable_sized_type_in_struct)
+          if (i != NumFields-1)
+            Diag(FD->getLocation(), diag::ext_variable_sized_type_in_struct)
               << FD->getDeclName();
-            FD->setInvalidDecl();
-            EnclosingDecl->setInvalidDecl();
-            continue;
+          else {
+            // We support flexible arrays at the end of structs in
+            // other structs as an extension.
+            Diag(FD->getLocation(), diag::ext_flexible_array_in_struct)
+              << FD->getDeclName();
+            if (Record)
+              Record->setHasFlexibleArrayMember(true);
           }
-          // We support flexible arrays at the end of structs in other structs
-          // as an extension.
-          Diag(FD->getLocation(), diag::ext_flexible_array_in_struct)
-            << FD->getDeclName();
-          if (Record)
-            Record->setHasFlexibleArrayMember(true);
         }
       }
     }
