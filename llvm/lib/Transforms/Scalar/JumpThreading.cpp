@@ -407,12 +407,6 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
   return true;
 }
 
-struct APIntUnsignedOrdering {
-  bool operator()(const APInt &LHS, const APInt &RHS) const {
-    return LHS.ult(RHS);
-  }
-};
-
 /// ProcessSwitchOnDuplicateCond - We found a block and a predecessor of that
 /// block that switch on exactly the same condition.  This means that we almost
 /// always know the direction of the edge in the DESTBB:
@@ -479,34 +473,6 @@ bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
     if (MadeChange)
       return true;
   }
-  
-#if 0
-  // Figure out on which of the condition allow us to get to DESTBB.  If DESTBB
-  // is the default label, we compute the set of values COND is known not to be
-  // otherwise we compute the set of options that COND could be.
-  SmallVector<APInt, 16> KnownValues;
-  bool DestBBIsDefault = PredSI->getSuccessor(0) == DestBB;
-  
-  if (DestBBIsDefault) {
-    // DestBB the default case.  Collect the values where PredBB can't branch to
-    // DestBB.
-    for (unsigned i = 1/*skip default*/, e = PredSI->getNumCases(); i != e; ++i)
-      if (PredSI->getSuccessor(i) != DestBB)
-        KnownValues.push_back(PredSI->getCaseValue(i)->getValue());
-  } else {
-    // Not the default case.  Collect the values where PredBB can branch to
-    // DestBB.
-    for (unsigned i = 1/*skip default*/, e = PredSI->getNumCases(); i != e; ++i)
-      if (PredSI->getSuccessor(i) == DestBB)
-        KnownValues.push_back(PredSI->getCaseValue(i)->getValue());
-  }
-  
-  std::sort(KnownValues.begin(), KnownValues.end(), APIntUnsignedOrdering());
-  return false;
-  cerr << "\nFOUND THREAD BLOCKS:\n";
-  PredBB->dump();
-  DestBB->dump();
-#endif
   
   return false;
 }
