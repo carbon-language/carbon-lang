@@ -344,6 +344,7 @@ class Selector {
   
   Selector(IdentifierInfo *II, unsigned nArgs) {
     InfoPtr = reinterpret_cast<uintptr_t>(II);
+    assert(II && "Null IdentifierInfo passed to Selector constructor.");
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
     assert(nArgs < 2 && "nArgs not equal to 0/1");
     InfoPtr |= nArgs+1;
