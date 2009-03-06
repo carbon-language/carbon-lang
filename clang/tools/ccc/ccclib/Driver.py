@@ -229,19 +229,27 @@ class Driver(object):
                 self.executeJobs(args, jobs)
             except:
                 if not args.getLastArg(self.parser.saveTempsOption):
-                    for f in self.resultFiles:
-                        # Fail if removing a result fails:
-                        if os.path.exists(f):
-                            os.remove(f)
+                    # Fail if removing a result fails.
+                    self.removeFiles(self.resultFiles, failOnError=True)
                 raise
         finally:
             for f in self.tempFiles:
                 # Ignore failures in removing temporary files
-                try:
-                    os.remove(f)
-                except:
-                    pass
-    
+                self.removeFiles(self.resultFiles, failOnError=False)
+
+    def removeFiles(self, fileList, failOnError=False):
+        for f in fileList:
+            try:
+                os.remove(f)
+            except OSError,e:
+                if failOnError:
+                    import errno
+                    if e.errno != errno.ENOENT:
+                        raise
+            except:
+                if failOnError:
+                    raise
+
     def executeJobs(self, args, jobs):
         vArg = args.getLastArg(self.parser.vOption)
         for j in jobs.iterjobs():
