@@ -385,7 +385,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       // only uses stuff defined outside of the condition.  If so, hoist it out.
       switch (I->getOpcode()) {
       default: return false;  // Cannot hoist this out safely.
-      case Instruction::Load:
+      case Instruction::Load: {
         // We can hoist loads that are non-volatile and obviously cannot trap.
         if (cast<LoadInst>(I)->isVolatile())
           return false;
@@ -397,9 +397,13 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
         // Finally, we have to check to make sure there are no instructions
         // before the load in its basic block, as we are going to hoist the loop
         // out to its predecessor.
-        if (PBB->begin() != BasicBlock::iterator(I))
+        BasicBlock::iterator IP = PBB->begin();
+        while (isa<DbgInfoIntrinsic>(IP))
+          IP++;
+        if (IP != BasicBlock::iterator(I))
           return false;
         break;
+      }
       case Instruction::Add:
       case Instruction::Sub:
       case Instruction::And:
