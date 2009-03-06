@@ -349,11 +349,13 @@ std::string MultiKeywordSelector::getName() const {
 }
 
 std::string Selector::getAsString() const {
-  if (IdentifierInfo *II = getAsIdentifierInfo()) {
-    if (getNumArgs() == 0)
-      return II->getName();
+  if (InfoPtr & ArgFlags) {
+    IdentifierInfo *II = getAsIdentifierInfo();
     
-    std::string Res = II->getName();
+    if (getNumArgs() == 0)
+      return II ? II->getName() : "";
+
+    std::string Res = II ? II->getName() : "";
     Res += ":";
     return Res;
   }
