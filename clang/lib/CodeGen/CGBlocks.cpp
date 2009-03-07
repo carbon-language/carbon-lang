@@ -31,7 +31,7 @@ Enable__block("f__block",
                              "even though the code isn't done yet"),
               llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
               llvm::cl::ZeroOrMore,
-              llvm::cl::init(false));
+              llvm::cl::init(true));
 
 llvm::Constant *CodeGenFunction::
 BuildDescriptorBlockDecl(uint64_t Size, const llvm::StructType* Ty,
@@ -479,7 +479,6 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   const llvm::Type *Ty;
   Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
 
-  // FIXME: add support for copy/dispose helpers.
   if (!Enable__block && E->isByRef())
     ErrorUnsupported(E, "__block variable in block literal");
   else if (!Enable__block && E->getType()->isBlockPointerType())
