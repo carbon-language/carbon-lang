@@ -1132,12 +1132,8 @@ llvm::Constant *
 CodeGenModule::GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *E) {
   std::string Str;
   getContext().getObjCEncodingForType(E->getEncodedType(), Str);
-  
-  llvm::Constant *C = llvm::ConstantArray::get(Str);
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &getModule());
-  return C;
+
+  return GetAddrOfConstantCString(Str);
 }
 
 
