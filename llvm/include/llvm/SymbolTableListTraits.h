@@ -45,8 +45,13 @@ public:
   /// getListOwner - Return the object that owns this list.  If this is a list
   /// of instructions, it returns the BasicBlock that owns them.
   ItemParentClass *getListOwner() {
-    return reinterpret_cast<ItemParentClass*>(reinterpret_cast<char*>(this)-
-                                              TraitsClass::getListOffset());
+    typedef iplist<ValueSubClass> ItemParentClass::*Sublist;
+		Sublist Sub(ItemParentClass::
+                getSublistAccess(static_cast<ValueSubClass*>(0)));
+    size_t Offset(size_t(&((ItemParentClass*)0->*Sub)));
+    iplist<ValueSubClass>* Anchor(static_cast<iplist<ValueSubClass>*>(this));
+    return reinterpret_cast<ItemParentClass*>(reinterpret_cast<char*>(Anchor)-
+                                              Offset);
   }
 
   void addNodeToList(ValueSubClass *V);

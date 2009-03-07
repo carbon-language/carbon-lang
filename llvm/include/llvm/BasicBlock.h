@@ -48,7 +48,6 @@ template<> struct ilist_traits<Instruction>
 
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
-  static int getListOffset();
 private:
   mutable ilist_node<Instruction> Sentinel;
 };
@@ -186,6 +185,9 @@ public:
   ///
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
+  static iplist<Instruction> BasicBlock::*getSublistAccess(Instruction*) {
+    return &BasicBlock::InstList;
+  }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BasicBlock *) { return true; }
@@ -224,18 +226,7 @@ public:
   /// the basic block).
   ///
   BasicBlock *splitBasicBlock(iterator I, const std::string &BBName = "");
-  
-  
-  static unsigned getInstListOffset() {
-    BasicBlock *Obj = 0;
-    return unsigned(reinterpret_cast<uintptr_t>(&Obj->InstList));
-  }
 };
-
-inline int 
-ilist_traits<Instruction>::getListOffset() {
-  return BasicBlock::getInstListOffset();
-}
 
 } // End llvm namespace
 

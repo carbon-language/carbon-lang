@@ -45,7 +45,6 @@ template<> struct ilist_traits<BasicBlock>
 
   static iplist<BasicBlock> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
-  static int getListOffset();
 private:
   mutable ilist_node<BasicBlock> Sentinel;
 };
@@ -64,7 +63,6 @@ template<> struct ilist_traits<Argument>
 
   static iplist<Argument> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
-  static int getListOffset();
 private:
   mutable ilist_node<Argument> Sentinel;
 };
@@ -305,9 +303,15 @@ public:
     CheckLazyArguments();
     return ArgumentList;
   }
+  static iplist<Argument> Function::*getSublistAccess(Argument*) {
+    return &Function::ArgumentList;
+  }
 
   const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
         BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
+  static iplist<BasicBlock> Function::*getSublistAccess(BasicBlock*) {
+    return &Function::BasicBlocks;
+  }
 
   const BasicBlock       &getEntryBlock() const   { return front(); }
         BasicBlock       &getEntryBlock()         { return front(); }
@@ -393,15 +397,6 @@ public:
   /// including any contained basic blocks.
   ///
   void dropAllReferences();
-  
-  static unsigned getBasicBlockListOffset() {
-    Function *Obj = 0;
-    return unsigned(reinterpret_cast<uintptr_t>(&Obj->BasicBlocks));
-  }
-  static unsigned getArgumentListOffset() {
-    Function *Obj = 0;
-    return unsigned(reinterpret_cast<uintptr_t>(&Obj->ArgumentList));
-  }
 };
 
 inline ValueSymbolTable *
@@ -413,17 +408,6 @@ inline ValueSymbolTable *
 ilist_traits<Argument>::getSymTab(Function *F) {
   return F ? &F->getValueSymbolTable() : 0;
 }
-
-inline int 
-ilist_traits<BasicBlock>::getListOffset() {
-  return Function::getBasicBlockListOffset();
-}
-
-inline int 
-ilist_traits<Argument>::getListOffset() {
-  return Function::getArgumentListOffset();
-}
-
 
 } // End llvm namespace
 
