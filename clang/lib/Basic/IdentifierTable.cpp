@@ -352,8 +352,9 @@ std::string Selector::getAsString() const {
   if (InfoPtr & ArgFlags) {
     IdentifierInfo *II = getAsIdentifierInfo();
     
+    // If the number of arguments is 0 then II is guaranteed to not be null.
     if (getNumArgs() == 0)
-      return II ? II->getName() : "";
+      return II->getName();
 
     std::string Res = II ? II->getName() : "";
     Res += ":";
