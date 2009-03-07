@@ -270,7 +270,7 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
                D->getAttr<WeakImportAttr>()) {
       // "extern_weak" is overloaded in LLVM; we probably should have
       // separate linkage types for this. 
-      GV->setLinkage(llvm::Function::ExternalWeakLinkage);
+      GV->setLinkage(llvm::Function::ExternalWeakAnyLinkage);
    }
   } else {
     if (IsInternal) {
@@ -285,7 +285,7 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
           GV->setLinkage(llvm::Function::DLLExportLinkage);
       } else if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>() || 
                  IsInline)
-        GV->setLinkage(llvm::Function::WeakLinkage);
+        GV->setLinkage(llvm::Function::WeakAnyLinkage);
     }
   }
 
@@ -611,7 +611,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
       setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
 
     if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
-      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+      GV->setLinkage(llvm::GlobalValue::ExternalWeakAnyLinkage);
 
     if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
       // Prefaced with special LLVM marker to indicate that the name
@@ -746,7 +746,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   else if (D->getAttr<DLLExportAttr>())
     GV->setLinkage(llvm::Function::DLLExportLinkage);
   else if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
-    GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
+    GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
   else {
     // FIXME: This isn't right.  This should handle common linkage and other
     // stuff.
@@ -757,7 +757,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       assert(0 && "Can't have auto or register globals");
     case VarDecl::None:
       if (!D->getInit())
-        GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
+        GV->setLinkage(llvm::GlobalVariable::CommonAnyLinkage);
       else
         GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
       break;

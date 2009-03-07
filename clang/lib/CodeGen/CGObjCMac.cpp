@@ -3885,7 +3885,9 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
     return Builder.CreateLoad(PTGV, false, "tmp");
   PTGV = new llvm::GlobalVariable(
                                 Init->getType(), false,
-                                llvm::GlobalValue::WeakLinkage,
+                                // FIXME: review, was WeakLinkage,
+                                // also review all other WeakLinkage changes
+                                llvm::GlobalValue::WeakAnyLinkage,
                                 Init,
                                 ProtocolName,
                                 &CGM.getModule());
@@ -4308,12 +4310,12 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   
   if (Entry) {
     // Already created, fix the linkage and update the initializer.
-    Entry->setLinkage(llvm::GlobalValue::WeakLinkage);
+    Entry->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry = 
     new llvm::GlobalVariable(ObjCTypes.ProtocolnfABITy, false,
-                             llvm::GlobalValue::WeakLinkage,
+                             llvm::GlobalValue::WeakAnyLinkage,
                              Init, 
                              std::string("\01l_OBJC_PROTOCOL_$_")+ProtocolName,
                              &CGM.getModule());
@@ -4327,7 +4329,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   // __DATA, __objc_protolist
   llvm::GlobalVariable *PTGV = new llvm::GlobalVariable(
                                       ObjCTypes.ProtocolnfABIPtrTy, false,
-                                      llvm::GlobalValue::WeakLinkage,
+                                      llvm::GlobalValue::WeakAnyLinkage,
                                       Entry, 
                                       std::string("\01l_OBJC_LABEL_PROTOCOL_$_")
                                                   +ProtocolName,
@@ -4547,7 +4549,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     Values[1] = GetMethodVarName(Sel);
     llvm::Constant *Init = llvm::ConstantStruct::get(Values);
     GV =  new llvm::GlobalVariable(Init->getType(), false,
-                                   llvm::GlobalValue::WeakLinkage,
+                                   llvm::GlobalValue::WeakAnyLinkage,
                                    Init,
                                    Name,
                                    &CGM.getModule());
@@ -5108,7 +5110,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceType *IT) {
 
   Entry = 
     new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
-                             llvm::GlobalValue::WeakLinkage,
+                             llvm::GlobalValue::WeakAnyLinkage,
                              Init, 
                              (std::string("OBJC_EHTYPE_$_") + 
                               ID->getIdentifier()->getName()),
