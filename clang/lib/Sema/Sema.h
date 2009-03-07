@@ -52,7 +52,7 @@ namespace clang {
   class TypedefDecl;
   class FunctionDecl;
   class QualType;
-  struct LangOptions;
+  class LangOptions;
   class Token;
   class IntegerLiteral;
   class StringLiteral;
@@ -79,7 +79,7 @@ namespace clang {
   class ObjCContainerDecl;
   struct BlockSemaInfo;
   class BasePaths;
-  class MemberLookupCriteria;
+  struct MemberLookupCriteria;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {

@@ -23,7 +23,7 @@ namespace llvm {
 
 namespace clang {
   class Diagnostic;
-  struct LangOptions;
+  class LangOptions;
   
   class CodeGenerator : public ASTConsumer {
   public:

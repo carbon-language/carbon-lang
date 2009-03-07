@@ -51,7 +51,7 @@ namespace clang {
   class NamedDecl;
   class ValueDecl;
   class VarDecl;
-  struct LangOptions;
+  class LangOptions;
   class Diagnostic;
   class AnnotateAttr;
 

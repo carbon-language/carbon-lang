@@ -21,7 +21,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
-  struct LangOptions;
+  class LangOptions;
   class Diagnostic;
   class IdentifierInfo;
   
@@ -776,7 +776,7 @@ private:
   DeclaratorChunk::ParamInfo InlineParams[16];
   bool InlineParamsUsed;
 
-  friend class DeclaratorChunk;
+  friend struct DeclaratorChunk;
 
 public:
   Declarator(const DeclSpec &ds, TheContext C)
