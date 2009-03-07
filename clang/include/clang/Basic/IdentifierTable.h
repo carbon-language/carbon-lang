@@ -267,24 +267,27 @@ public:
       HashTable.GetOrCreateValue(NameStart, NameEnd);
     
     IdentifierInfo *II = Entry.getValue();
+    if (II) return *II;
     
-    if (!II) {
-      while (1) {
-        if (ExternalLookup) {
-          II = ExternalLookup->get(NameStart, NameEnd);          
-          if (II) break;
-        }
-        
-        void *Mem = getAllocator().Allocate<IdentifierInfo>();
-        II = new (Mem) IdentifierInfo();
-        break;
+    // No entry; if we have an external lookup, look there first.
+    if (ExternalLookup) {
+      II = ExternalLookup->get(NameStart, NameEnd);
+      if (II) {
+        // Cache in the StringMap for subsequent lookups.
+        Entry.setValue(II);
+        return *II;
       }
-
-      Entry.setValue(II);
-      II->Entry = &Entry;
     }
 
-    assert(II->Entry != 0);
+    // Lookups failed, make a new IdentifierInfo.
+    void *Mem = getAllocator().Allocate<IdentifierInfo>();
+    II = new (Mem) IdentifierInfo();
+    Entry.setValue(II);
+
+    // Make sure getName() knows how to find the IdentifierInfo
+    // contents.
+    II->Entry = &Entry;
+
     return *II;
   }
   
