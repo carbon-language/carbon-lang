@@ -3554,7 +3554,6 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
 
       Diag(OpLoc, diag::ext_gnu_ptr_func_arith)
         << ResType << Op->getSourceRange();
-      return QualType();
     } else {
       DiagnoseIncompleteType(OpLoc, PT->getPointeeType(),
                              diag::err_typecheck_arithmetic_incomplete_type,
