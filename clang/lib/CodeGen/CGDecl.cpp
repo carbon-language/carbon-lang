@@ -340,6 +340,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
     // The block literal will need a copy/destroy helper.
     BlockHasCopyDispose = true;
+    needsDispose = true;
 
     if (Ty->isBlockPointerType()) {
       flag |= BLOCK_FIELD_IS_BLOCK;
@@ -348,7 +349,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       flag |= BLOCK_FIELD_IS_OBJECT;
       flags |= BLOCK_HAS_COPY_DISPOSE;
     }
-    // FIXME: Need to set BLOCK_FIELD_IS_WEAK as appropriate.
+
+    // FIXME: Someone double check this.
+    if (Ty.isObjCGCWeak())
+      flag |= BLOCK_FIELD_IS_WEAK;
 
     int isa = 0;
     if (flag&BLOCK_FIELD_IS_WEAK)
@@ -380,7 +384,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag),
                           destroy_helper);
     }
-    needsDispose = true;
   }
 
   // Handle the cleanup attribute

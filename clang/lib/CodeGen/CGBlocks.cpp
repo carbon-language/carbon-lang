@@ -254,8 +254,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           if (BDRE->isByRef()) {
             // FIXME: For only local, or all byrefs?
             NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
-              (0?BLOCK_FIELD_IS_WEAK : 0);
-            // FIXME: Add weak support
+              // FIXME: Someone double check this.
+              (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
             const llvm::Type *Ty = Types[i+5];
             llvm::Value *Loc = LocalDeclMap[VD];
             Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
@@ -484,7 +484,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
     ErrorUnsupported(E, "__block variable in block literal");
   else if (!Enable__block && E->getType()->isBlockPointerType())
     ErrorUnsupported(E, "block pointer in block literal");
-  else if (E->getDecl()->getAttr<ObjCNSObjectAttr>() ||
+  else if (!Enable__block && E->getDecl()->getAttr<ObjCNSObjectAttr>() ||
            getContext().isObjCNSObjectType(E->getType()))
     ErrorUnsupported(E, "__attribute__((NSObject)) variable in block "
                      "literal");
@@ -946,11 +946,6 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   V = Builder.CreateStructGEP(V, 6, "x");
   V = Builder.CreateBitCast(V, PtrToInt8Ty);
 
-  // FIXME: Move to other one.
-  // int flag = BLOCK_FIELD_IS_BYREF;
-  // FIXME: Add weak support
-  if (0)
-    flag |= BLOCK_FIELD_IS_WEAK;
   flag |= BLOCK_BYREF_CALLER;
   BuildBlockRelease(V, flag);
   CGF.FinishFunction();
