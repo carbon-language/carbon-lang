@@ -1531,10 +1531,12 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   const Type *GVElType = GV->getType()->getElementType();
   
   // If GVElType is already i1, it is already shrunk.  If the type of the GV is
-  // an FP value or vector, don't do this optimization because a select between
-  // them is very expensive and unlikely to lead to later simplification.
+  // an FP value, pointer or vector, don't do this optimization because a select
+  // between them is very expensive and unlikely to lead to later
+  // simplification.  In these cases, we typically end up with "cond ? v1 : v2"
+  // where v1 and v2 both require constant pool loads, a big loss.
   if (GVElType == Type::Int1Ty || GVElType->isFloatingPoint() ||
-      isa<VectorType>(GVElType))
+      isa<PointerType>(GVElType) || isa<VectorType>(GVElType))
     return false;
   
   // Walk the use list of the global seeing if all the uses are load or store.
