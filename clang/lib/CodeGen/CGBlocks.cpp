@@ -802,7 +802,29 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
                                           FunctionDecl::Static, false,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
-  // EmitStmt(BExpr->getBody());
+
+  llvm::Value *SrcObj = CGF.GetAddrOfLocalVar(Src);
+  llvm::Type *PtrPtrT;
+  PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
+  SrcObj = Builder.CreateBitCast(SrcObj, PtrPtrT);
+  SrcObj = Builder.CreateLoad(SrcObj);
+
+  for (unsigned i=0; i < NoteForHelper.size(); ++i) {
+    int flag = NoteForHelper[i].flag;
+    int index = NoteForHelper[i].index;
+
+    if ((NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF)
+        || NoteForHelper[i].RequiresCopying) {
+      llvm::Value *Srcv = SrcObj;
+      Srcv = Builder.CreateStructGEP(Srcv, index);
+      Srcv = Builder.CreateBitCast(Srcv,
+                                   llvm::PointerType::get(PtrToInt8Ty, 0));
+      Srcv = Builder.CreateLoad(Srcv);
+
+      BuildBlockRelease(Srcv, flag);
+    }
+  }
+
   CGF.FinishFunction();
 
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);

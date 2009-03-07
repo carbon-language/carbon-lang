@@ -1,5 +1,5 @@
 // RUN: clang %s -emit-llvm -o %t -fblocks -f__block &&
-// RUN: grep "_Block_object_dispose" %t | count 6 &&
+// RUN: grep "_Block_object_dispose" %t | count 10 &&
 // RUN: grep "__copy_helper_block_" %t | count 6 &&
 // RUN: grep "__destroy_helper_block_" %t | count 6 &&
 // RUN: grep "__Block_byref_id_object_copy_" %t | count 2 &&
