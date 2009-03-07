@@ -1011,7 +1011,7 @@ public:
     std::vector<char> buf;
     buf.reserve(strlen(FE->getName())+100);    
     
-    sprintf(&buf[0], "dev_%llx", (uint64_t) FE->getDevice());
+    sprintf(&buf[0], "dev_%llx", (unsigned long long) FE->getDevice());
     FName.appendComponent(&buf[0]);
     FName.createDirectoryOnDisk(true);
     if (!FName.canWrite() || !FName.isDirectory()) {
@@ -1019,7 +1019,8 @@ public:
       return;
     }
             
-    sprintf(&buf[0], "%s-%llX.ast", FE->getName(), (uint64_t) FE->getInode());
+    sprintf(&buf[0], "%s-%llX.ast", FE->getName(),
+            (unsigned long long) FE->getInode());
     FName.appendComponent(&buf[0]);    
     EmitASTBitcodeFile(&TU, FName);
     

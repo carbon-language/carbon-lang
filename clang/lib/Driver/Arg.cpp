@@ -145,4 +145,5 @@ const char *JoinedAndSeparateArg::getValue(const ArgList &Args,
                                            unsigned N) const {
   assert(N < getNumValues() && "Invalid index.");
   assert(0 && "FIXME: Implement");
+  return 0;
 }

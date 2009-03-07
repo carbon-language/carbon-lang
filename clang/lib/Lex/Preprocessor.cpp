@@ -440,7 +440,7 @@ static void DefineTypeSize(const char *MacroName, unsigned TypeWidth,
                            const char *ValSuffix, bool isSigned,
                            std::vector<char> &Buf) {
   char MacroBuf[60];
-  uint64_t MaxVal;
+  long long MaxVal;
   if (isSigned)
     MaxVal = (1LL << (TypeWidth - 1)) - 1;
   else
