@@ -1139,7 +1139,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     Diag(property->getLocation(), 
          diag::err_accessor_property_type_mismatch) 
       << property->getDeclName()
-      << GetterMethod->getSelector();
+      << GetterMethod->getSelector().getAsIdentifierInfo();
     Diag(GetterMethod->getLocation(), diag::note_declared_at);
   }
   
@@ -1152,7 +1152,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       Diag(property->getLocation(), 
            diag::err_accessor_property_type_mismatch) 
         << property->getDeclName()
-        << SetterMethod->getSelector();
+        << SetterMethod->getSelector().getAsIdentifierInfo();
       Diag(SetterMethod->getLocation(), diag::note_declared_at);
     }
   }

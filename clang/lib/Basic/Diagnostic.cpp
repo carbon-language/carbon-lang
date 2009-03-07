@@ -657,14 +657,6 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       OutStr.push_back('\'');
       break;
     }
-    case Diagnostic::ak_selector: {
-      Selector S = getArgSelector(ArgNo);
-      OutStr.push_back('\'');
-      const std::string &s = S.getAsString();
-      OutStr.append(&s[0], &s[0]+s.length());
-      OutStr.push_back('\'');
-      break;
-    }
     case Diagnostic::ak_qualtype:
     case Diagnostic::ak_declarationname:
     case Diagnostic::ak_nameddecl:

@@ -15,7 +15,6 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/IdentifierTable.h"
 #include <string>
 #include <cassert>
 
@@ -27,6 +26,7 @@ namespace clang {
   class DiagnosticClient;
   class SourceRange;
   class DiagnosticBuilder;
+  class IdentifierInfo;
   
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -142,8 +142,7 @@ public:
     ak_identifierinfo,  // IdentifierInfo
     ak_qualtype,        // QualType
     ak_declarationname, // DeclarationName
-    ak_nameddecl,       // NamedDecl *
-    ak_selector         // Selector
+    ak_nameddecl        // NamedDecl *
   };
   
 private:  
@@ -485,13 +484,6 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 }
   
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           Selector S) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(S.getAsOpaquePtr()),
-                  Diagnostic::ak_selector);
-  return DB;
-}  
-  
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const SourceRange &R) {
   DB.AddSourceRange(R);
   return DB;
@@ -574,12 +566,6 @@ public:
     return reinterpret_cast<IdentifierInfo*>(DiagObj->DiagArgumentsVal[Idx]);
   }
   
-  /// getArgSelector - Return the specified Selector argument.
-  Selector getArgSelector(unsigned Idx) const {
-    assert(getArgKind(Idx) == Diagnostic::ak_selector &&
-           "invalid argument accessor!");
-    return Selector(DiagObj->DiagArgumentsVal[Idx]);
-  }
   /// getRawArg - Return the specified non-string argument in an opaque form.
   intptr_t getRawArg(unsigned Idx) const {
     assert(getArgKind(Idx) != Diagnostic::ak_std_string &&
