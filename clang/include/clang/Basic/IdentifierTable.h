@@ -334,6 +334,8 @@ private:
 /// selectors that take no arguments and selectors that take 1 argument, which 
 /// accounts for 78% of all selectors in Cocoa.h.
 class Selector {
+  friend class DiagnosticInfo;
+  
   enum IdentifierInfoFlag {
     // MultiKeywordSelector = 0.
     ZeroArg  = 0x1,
