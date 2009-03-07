@@ -5363,12 +5363,31 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
 
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
+SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
+                                    SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
 
+  // CF and OF aren't always set the way we want. Determine which
+  // of these we need.
+  bool NeedCF = false;
+  bool NeedOF = false;
+  switch (X86CC) {
+  case X86::COND_A: case X86::COND_AE:
+  case X86::COND_B: case X86::COND_BE:
+    NeedCF = true;
+    break;
+  case X86::COND_G: case X86::COND_GE:
+  case X86::COND_L: case X86::COND_LE:
+  case X86::COND_O: case X86::COND_NO:
+    NeedOF = true;
+    break;
+  default: break;
+  }
+
   // See if we can use the EFLAGS value from the operand instead of
-  // doing a separate TEST.
-  if (Op.getResNo() == 0) {
+  // doing a separate TEST. TEST always sets OF and CF to 0, so unless
+  // we prove that the arithmetic won't overflow, we can't use OF or CF.
+  if (Op.getResNo() == 0 && !NeedOF && !NeedCF) {
     unsigned Opcode = 0;
     unsigned NumOperands = 0;
     switch (Op.getNode()->getOpcode()) {
@@ -5425,9 +5444,9 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
     if (Opcode != 0) {
       const MVT *VTs = DAG.getNodeValueTypes(Op.getValueType(), MVT::i32);
       SmallVector<SDValue, 4> Ops;
-      for (unsigned i = 0, e = NumOperands; i != e; ++i)
+      for (unsigned i = 0; i != NumOperands; ++i)
         Ops.push_back(Op.getOperand(i));
-      SDValue New = DAG.getNode(Opcode, dl, VTs, 2, &Ops[0], Ops.size());
+      SDValue New = DAG.getNode(Opcode, dl, VTs, 2, &Ops[0], NumOperands);
       DAG.ReplaceAllUsesWith(Op, New);
       return SDValue(New.getNode(), 1);
     }
@@ -5440,10 +5459,11 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, SelectionDAG &DAG) {
 
 /// Emit nodes that will be selected as "cmp Op0,Op1", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, SelectionDAG &DAG) {
+SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
+                                   SelectionDAG &DAG) {
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op1))
     if (C->getAPIntValue() == 0)
-      return EmitTest(Op0, DAG);
+      return EmitTest(Op0, X86CC, DAG);
 
   DebugLoc dl = Op0.getDebugLoc();
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
@@ -5511,7 +5531,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
   unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
 
-  SDValue Cond = EmitCmp(Op0, Op1, DAG);
+  SDValue Cond = EmitCmp(Op0, Op1, X86CC, DAG);
   return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                      DAG.getConstant(X86CC, MVT::i8), Cond);
 }
@@ -5677,7 +5697,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, DAG);
+    Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
 
   const MVT *VTs = DAG.getNodeValueTypes(Op.getValueType(),
@@ -5827,7 +5847,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, DAG);
+    Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
                      Chain, Dest, CC, Cond);

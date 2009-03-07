@@ -661,12 +661,13 @@ namespace llvm {
                                                         unsigned cmovOpc) const;
 
     /// Emit nodes that will be selected as "test Op0,Op0", or something
-    /// equivalent.
-    SDValue EmitTest(SDValue Op0, SelectionDAG &DAG);
+    /// equivalent, for use with the given x86 condition code.
+    SDValue EmitTest(SDValue Op0, unsigned X86CC, SelectionDAG &DAG);
 
     /// Emit nodes that will be selected as "cmp Op0,Op1", or something
-    /// equivalent.
-    SDValue EmitCmp(SDValue Op0, SDValue Op1, SelectionDAG &DAG);
+    /// equivalent, for use with the given x86 condition code.
+    SDValue EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
+                    SelectionDAG &DAG);
   };
 
   namespace X86 {
