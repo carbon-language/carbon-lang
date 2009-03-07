@@ -55,13 +55,23 @@ static const int KillSigs[] = {
 static const int *const KillSigsEnd =
   KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
 
-// SignalHandler - The signal handler that runs...
+static void UnregisterHandler(int Signal) {
+   signal(Signal, SIG_DFL); 
+}
+
+
+// SignalHandler - The signal handler that runs.
 static RETSIGTYPE SignalHandler(int Sig) {
   // Restore the signal behavior to default, so that the program actually
   // crashes when we return and the signal reissues.  This also ensures that if
   // we crash in our signal handler that the program will terminate immediately
   // instead of recursing in the signal handler.
-  signal(Sig, SIG_DFL);
+  std::for_each(KillSigs, KillSigsEnd, UnregisterHandler);
+
+  // Unmask all potentially blocked kill signals.
+  sigset_t SigMask;
+  sigfillset(&SigMask);
+  sigprocmask(SIG_UNBLOCK, &SigMask, 0);
 
   if (FilesToRemove != 0)
     while (!FilesToRemove->empty()) {
@@ -86,10 +96,9 @@ static RETSIGTYPE SignalHandler(int Sig) {
 }
 
 // Just call signal
-static void RegisterHandler(int Signal) { 
-  signal(Signal, SignalHandler); 
+static void RegisterHandler(int Signal) {
+   signal(Signal, SignalHandler); 
 }
-
 
 
 void sys::SetInterruptFunction(void (*IF)()) {
