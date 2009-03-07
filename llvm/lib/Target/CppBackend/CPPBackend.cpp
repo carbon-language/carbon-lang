@@ -294,10 +294,14 @@ namespace {
       Out << "GlobalValue::InternalLinkage"; break;
     case GlobalValue::PrivateLinkage:
       Out << "GlobalValue::PrivateLinkage"; break;
-    case GlobalValue::LinkOnceLinkage:
-      Out << "GlobalValue::LinkOnceLinkage "; break;
-    case GlobalValue::WeakLinkage:
-      Out << "GlobalValue::WeakLinkage"; break;
+    case GlobalValue::LinkOnceAnyLinkage:
+      Out << "GlobalValue::LinkOnceAnyLinkage "; break;
+    case GlobalValue::LinkOnceODRLinkage:
+      Out << "GlobalValue::LinkOnceODRLinkage "; break;
+    case GlobalValue::WeakAnyLinkage:
+      Out << "GlobalValue::WeakAnyLinkage"; break;
+    case GlobalValue::WeakODRLinkage:
+      Out << "GlobalValue::WeakODRLinkage"; break;
     case GlobalValue::AppendingLinkage:
       Out << "GlobalValue::AppendingLinkage"; break;
     case GlobalValue::ExternalLinkage:
@@ -306,12 +310,16 @@ namespace {
       Out << "GlobalValue::DLLImportLinkage"; break;
     case GlobalValue::DLLExportLinkage:
       Out << "GlobalValue::DLLExportLinkage"; break;
-    case GlobalValue::ExternalWeakLinkage:
-      Out << "GlobalValue::ExternalWeakLinkage"; break;
+    case GlobalValue::ExternalWeakAnyLinkage:
+      Out << "GlobalValue::ExternalWeakAnyLinkage"; break;
+    case GlobalValue::ExternalWeakODRLinkage:
+      Out << "GlobalValue::ExternalWeakODRLinkage"; break;
     case GlobalValue::GhostLinkage:
       Out << "GlobalValue::GhostLinkage"; break;
-    case GlobalValue::CommonLinkage:
-      Out << "GlobalValue::CommonLinkage"; break;
+    case GlobalValue::CommonAnyLinkage:
+      Out << "GlobalValue::CommonAnyLinkage"; break;
+    case GlobalValue::CommonODRLinkage:
+      Out << "GlobalValue::CommonODRLinkage"; break;
     }
   }
 

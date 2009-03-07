@@ -163,8 +163,10 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
    case Function::ExternalLinkage:
      O << "\t.globl " << CurrentFnName << "\n";
      break;
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
     O << TAI->getWeakRefDirective() << CurrentFnName << "\n";
     break;
   }
@@ -231,9 +233,12 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   // 2: Kind
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::WeakLinkage:
-   case GlobalValue::CommonLinkage:
+   case GlobalValue::LinkOnceAnyLinkage:
+   case GlobalValue::LinkOnceODRLinkage:
+   case GlobalValue::WeakAnyLinkage:
+   case GlobalValue::WeakODRLinkage:
+   case GlobalValue::CommonAnyLinkage:
+   case GlobalValue::CommonODRLinkage:
     O << TAI->getWeakRefDirective() << name << '\n';
     break;
    case GlobalValue::AppendingLinkage:

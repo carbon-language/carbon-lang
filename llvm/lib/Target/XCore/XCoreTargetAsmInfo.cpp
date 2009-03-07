@@ -73,7 +73,7 @@ XCoreTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
   if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
   {
-    if (!GVar->mayBeOverridden()) {
+    if (!GVar->isWeakForLinker()) {
       switch (Kind) {
       case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);

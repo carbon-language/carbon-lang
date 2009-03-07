@@ -455,9 +455,12 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     bool bCustomSegment = false;
 
     switch (I->getLinkage()) {
-    case GlobalValue::CommonLinkage:
-    case GlobalValue::LinkOnceLinkage:
-    case GlobalValue::WeakLinkage:
+    case GlobalValue::CommonAnyLinkage:
+    case GlobalValue::CommonODRLinkage:
+    case GlobalValue::LinkOnceAnyLinkage:
+    case GlobalValue::LinkOnceODRLinkage:
+    case GlobalValue::WeakAnyLinkage:
+    case GlobalValue::WeakODRLinkage:
       SwitchToDataSection("");
       O << name << "?\tsegment common 'COMMON'\n";
       bCustomSegment = true;

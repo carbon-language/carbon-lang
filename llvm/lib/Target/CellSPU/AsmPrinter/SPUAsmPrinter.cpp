@@ -445,8 +445,10 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
     O << "\t.global\t" << CurrentFnName << "\n"
       << "\t.type\t" << CurrentFnName << ", @function\n";
     break;
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
     O << "\t.global\t" << CurrentFnName << "\n";
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
     break;
@@ -534,7 +536,7 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->mayBeOverridden())) {
+       GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasExternalLinkage()) {
@@ -555,9 +557,12 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   switch (GVar->getLinkage()) {
     // Should never be seen for the CellSPU platform...
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::WeakLinkage:
-   case GlobalValue::CommonLinkage:
+   case GlobalValue::LinkOnceAnyLinkage:
+   case GlobalValue::LinkOnceODRLinkage:
+   case GlobalValue::WeakAnyLinkage:
+   case GlobalValue::WeakODRLinkage:
+   case GlobalValue::CommonAnyLinkage:
+   case GlobalValue::CommonODRLinkage:
     O << "\t.global " << name << '\n'
       << "\t.type " << name << ", @object\n"
       << "\t.weak " << name << '\n';

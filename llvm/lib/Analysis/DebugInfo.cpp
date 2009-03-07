@@ -344,7 +344,7 @@ DIAnchor DIFactory::GetOrCreateAnchor(unsigned TAG, const char *Name) {
   if (GV->hasInitializer()) 
     return SubProgramAnchor = DIAnchor(GV);
   
-  GV->setLinkage(GlobalValue::LinkOnceLinkage);
+  GV->setLinkage(GlobalValue::LinkOnceAnyLinkage);
   GV->setSection("llvm.metadata");
   GV->setConstant(true);
   M.addTypeName("llvm.dbg.anchor.type", EltTy);

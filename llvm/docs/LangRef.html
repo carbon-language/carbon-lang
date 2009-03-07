@@ -545,9 +545,24 @@ All Global Variables and Functions have one of the following types of linkage:
   </dd>
 
   <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
+
   <dd>The semantics of this linkage follow the ELF object file model: the
     symbol is weak until linked, if not linked, the symbol becomes null instead
     of being an undefined reference.
+  </dd>
+
+  <dt><tt><b><a name="linkage_linkonce">linkonce_odr</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_common">common_odr</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_weak">weak_odr</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_externweak">extern_weak_odr</a></b></tt>: </dt>
+  <dd>Some languages allow inequivalent globals to be merged, such as two
+    functions with different semantics.  Other languages, such as <tt>C++</tt>,
+    ensure that only equivalent globals are ever merged (the "one definition
+    rule" - <tt>odr</tt>).  Such languages can use the <tt>linkonce_odr</tt>,
+    <tt>common_odr</tt>, <tt>weak_odr</tt> and <tt>extern_weak_odr</tt> linkage
+    types to indicate that the global will only be merged with equivalent
+    globals.  These linkage types are otherwise the same as their
+    non-<tt>odr</tt> versions.
   </dd>
 
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
@@ -592,9 +607,9 @@ external (i.e., lacking any linkage declarations), they are accessible
 outside of the current module.</p>
 <p>It is illegal for a function <i>declaration</i>
 to have any linkage type other than "externally visible", <tt>dllimport</tt>,
-or <tt>extern_weak</tt>.</p>
-<p>Aliases can have only <tt>external</tt>, <tt>internal</tt> and <tt>weak</tt>
-linkages.</p>
+<tt>extern_weak</tt> or <tt>extern_weak_odr</tt>.</p>
+<p>Aliases can have only <tt>external</tt>, <tt>internal</tt>, <tt>weak</tt>
+or <tt>weak_odr</tt> linkages.</p>
 </div>
 
 <!-- ======================================================================= -->

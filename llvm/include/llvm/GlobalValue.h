@@ -31,16 +31,20 @@ public:
   /// @brief An enumeration for the kinds of linkage for global values.
   enum LinkageTypes {
     ExternalLinkage = 0,///< Externally visible function
-    LinkOnceLinkage,    ///< Keep one copy of function when linking (inline)
-    WeakLinkage,        ///< Keep one copy of named function when linking (weak)
+    LinkOnceAnyLinkage, ///< Keep one copy of function when linking (inline)
+    LinkOnceODRLinkage, ///< Same, but only replaced by something equivalent.
+    WeakAnyLinkage,     ///< Keep one copy of named function when linking (weak)
+    WeakODRLinkage,     ///< Same, but only replaced by something equivalent.
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
     InternalLinkage,    ///< Rename collisions when linking (static functions)
     PrivateLinkage,     ///< Like Internal, but omit from symbol table
     DLLImportLinkage,   ///< Function to be imported from DLL
     DLLExportLinkage,   ///< Function to be accessible from DLL
-    ExternalWeakLinkage,///< ExternalWeak linkage description
+    ExternalWeakAnyLinkage,///< ExternalWeak linkage description
+    ExternalWeakODRLinkage,///< Same, but only replaced by something equivalent.
     GhostLinkage,       ///< Stand-in functions for streaming fns from BC files
-    CommonLinkage       ///< Tentative definitions
+    CommonAnyLinkage,   ///< Tentative definitions
+    CommonODRLinkage    ///< Same, but only replaced by something equivalent.
   };
 
   /// @brief An enumeration for the kinds of visibility of global values.
@@ -99,31 +103,67 @@ public:
     return reinterpret_cast<const PointerType*>(User::getType());
   }
 
-  bool hasExternalLinkage()   const { return Linkage == ExternalLinkage; }
-  bool hasLinkOnceLinkage()   const { return Linkage == LinkOnceLinkage; }
-  bool hasWeakLinkage()       const { return Linkage == WeakLinkage; }
-  bool hasCommonLinkage()     const { return Linkage == CommonLinkage; }
-  bool hasAppendingLinkage()  const { return Linkage == AppendingLinkage; }
-  bool hasInternalLinkage()   const { return Linkage == InternalLinkage; }
-  bool hasPrivateLinkage()    const { return Linkage == PrivateLinkage; }
-  bool hasLocalLinkage()      const {
+  static LinkageTypes getLinkOnceLinkage(bool ODR) {
+    return ODR ? LinkOnceODRLinkage : LinkOnceAnyLinkage;
+  }
+  static LinkageTypes getWeakLinkage(bool ODR) {
+    return ODR ? WeakODRLinkage : WeakAnyLinkage;
+  }
+  static LinkageTypes getCommonLinkage(bool ODR) {
+    return ODR ? CommonODRLinkage : CommonAnyLinkage;
+  }
+  static LinkageTypes getExternalWeakLinkage(bool ODR) {
+    return ODR ? ExternalWeakODRLinkage : ExternalWeakAnyLinkage;
+  }
+
+  bool hasExternalLinkage() const { return Linkage == ExternalLinkage; }
+  bool hasLinkOnceLinkage() const {
+    return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
+  }
+  bool hasWeakLinkage() const {
+    return Linkage == WeakAnyLinkage || Linkage == WeakODRLinkage;
+  }
+  bool hasAppendingLinkage() const { return Linkage == AppendingLinkage; }
+  bool hasInternalLinkage() const { return Linkage == InternalLinkage; }
+  bool hasPrivateLinkage() const { return Linkage == PrivateLinkage; }
+  bool hasLocalLinkage() const {
     return Linkage == InternalLinkage || Linkage == PrivateLinkage;
   }
-  bool hasDLLImportLinkage()  const { return Linkage == DLLImportLinkage; }
-  bool hasDLLExportLinkage()  const { return Linkage == DLLExportLinkage; }
-  bool hasExternalWeakLinkage() const { return Linkage == ExternalWeakLinkage; }
-  bool hasGhostLinkage()      const { return Linkage == GhostLinkage; }
+  bool hasDLLImportLinkage() const { return Linkage == DLLImportLinkage; }
+  bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }
+  bool hasExternalWeakLinkage() const {
+    return Linkage == ExternalWeakAnyLinkage ||
+      Linkage == ExternalWeakODRLinkage;
+  }
+  bool hasGhostLinkage() const { return Linkage == GhostLinkage; }
+  bool hasCommonLinkage() const {
+    return Linkage == CommonAnyLinkage || Linkage == CommonODRLinkage;
+  }
+
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 
   /// mayBeOverridden - Whether the definition of this global may be replaced
-  /// at link time.  For example, if a function has weak linkage then the code
-  /// defining it may be replaced by different code.
+  /// by something non-equivalent at link time.  For example, if a function has
+  /// weak linkage then the code defining it may be replaced by different code.
   bool mayBeOverridden() const {
-    return (Linkage == WeakLinkage ||
-            Linkage == LinkOnceLinkage ||
-            Linkage == CommonLinkage ||
-            Linkage == ExternalWeakLinkage);
+    return (Linkage == WeakAnyLinkage ||
+            Linkage == LinkOnceAnyLinkage ||
+            Linkage == CommonAnyLinkage ||
+            Linkage == ExternalWeakAnyLinkage);
+  }
+
+  /// isWeakForLinker - Whether the definition of this global may be replaced at
+  /// link time, whether the replacement is equivalent to the original or not.
+  bool isWeakForLinker() const {
+    return (Linkage == WeakAnyLinkage ||
+            Linkage == WeakODRLinkage ||
+            Linkage == LinkOnceAnyLinkage ||
+            Linkage == LinkOnceODRLinkage ||
+            Linkage == CommonAnyLinkage ||
+            Linkage == CommonODRLinkage ||
+            Linkage == ExternalWeakAnyLinkage ||
+            Linkage == ExternalWeakODRLinkage);
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to

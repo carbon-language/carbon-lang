@@ -168,8 +168,10 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
     EmitAlignment(FnAlign, F);
     O << "\t.globl\t" << CurrentFnName << '\n';
     break;
-  case Function::LinkOnceLinkage:
-  case Function::WeakLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
     EmitAlignment(FnAlign, F);
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << '\n';
@@ -198,8 +200,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   O << CurrentFnName << ":\n";
   // Add some workaround for linkonce linkage on Cygwin\MinGW
   if (Subtarget->isTargetCygMing() &&
-      (F->getLinkage() == Function::LinkOnceLinkage ||
-       F->getLinkage() == Function::WeakLinkage))
+      (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
     O << "Lllvm$workaround$fake$stub$" << CurrentFnName << ":\n";
 }
 
@@ -386,7 +387,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (shouldPrintStub(TM, Subtarget)) {
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (GV->isDeclaration() || GV->mayBeOverridden()) {
+      if (GV->isDeclaration() || GV->isWeakForLinker()) {
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
           // Function stubs are no longer needed for Mac OS X 10.5 and up.
@@ -816,7 +817,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     }
 
     if (!GVar->isThreadLocal() &&
-        (GVar->hasLocalLinkage() || GVar->mayBeOverridden())) {
+        (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {
@@ -855,9 +856,12 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   switch (GVar->getLinkage()) {
-  case GlobalValue::CommonLinkage:
-  case GlobalValue::LinkOnceLinkage:
-  case GlobalValue::WeakLinkage:
+  case GlobalValue::CommonAnyLinkage:
+  case GlobalValue::CommonODRLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl " << name << '\n'
         << TAI->getWeakDefDirective() << name << '\n';

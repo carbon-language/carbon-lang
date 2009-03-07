@@ -139,7 +139,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     // already exists.
     if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))) {
       JBListHead = new GlobalVariable(PtrJBList, false,
-                                      GlobalValue::LinkOnceLinkage,
+                                      GlobalValue::LinkOnceAnyLinkage,
                                       Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
     }

@@ -580,8 +580,8 @@ void *JIT::getPointerToFunction(Function *F) {
   }
 
   if (F->isDeclaration()) {
-    bool AbortOnFailure = !areDlsymStubsEnabled() &&
-                          F->getLinkage() != GlobalValue::ExternalWeakLinkage;
+    bool AbortOnFailure =
+      !areDlsymStubsEnabled() && !F->hasExternalWeakLinkage();
     void *Addr = getPointerToNamedFunction(F->getName(), AbortOnFailure);
     addGlobalMapping(F, Addr);
     return Addr;

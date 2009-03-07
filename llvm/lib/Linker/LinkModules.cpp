@@ -460,7 +460,7 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
         LT = Src->getLinkage();
       }
     } else if (Dest->hasExternalWeakLinkage()) {
-      //If the Dest is weak, use the source linkage
+      // If the Dest is weak, use the source linkage.
       LinkFromSrc = true;
       LT = Src->getLinkage();
     } else {
@@ -683,15 +683,22 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
 static GlobalValue::LinkageTypes
 CalculateAliasLinkage(const GlobalValue *SGV, const GlobalValue *DGV) {
-  if (SGV->hasExternalLinkage() || DGV->hasExternalLinkage())
+  GlobalValue::LinkageTypes SL = SGV->getLinkage();
+  GlobalValue::LinkageTypes DL = DGV->getLinkage();
+  if (SL == GlobalValue::ExternalLinkage || DL == GlobalValue::ExternalLinkage)
     return GlobalValue::ExternalLinkage;
-  else if (SGV->hasWeakLinkage() || DGV->hasWeakLinkage())
-    return GlobalValue::WeakLinkage;
-  else if (SGV->hasInternalLinkage() && DGV->hasInternalLinkage())
+  else if (SL == GlobalValue::WeakAnyLinkage ||
+           DL == GlobalValue::WeakAnyLinkage)
+    return GlobalValue::WeakAnyLinkage;
+  else if (SL == GlobalValue::WeakODRLinkage ||
+           DL == GlobalValue::WeakODRLinkage)
+    return GlobalValue::WeakODRLinkage;
+  else if (SL == GlobalValue::InternalLinkage &&
+           DL == GlobalValue::InternalLinkage)
     return GlobalValue::InternalLinkage;
   else {
-    assert (SGV->hasPrivateLinkage() && DGV->hasPrivateLinkage() &&
-	    "Unexpected linkage type");
+    assert (SL == GlobalValue::PrivateLinkage &&
+            DL == GlobalValue::PrivateLinkage && "Unexpected linkage type");
     return GlobalValue::PrivateLinkage;
   }
 }

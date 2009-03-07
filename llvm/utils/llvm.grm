@@ -82,15 +82,19 @@ GlobalAssign ::= GlobalName "=" ;
 GVInternalLinkage
   ::= + internal
  | weak
+ | "weak_odr"
  | linkonce
+ | "linkonce_odr"
  | appending
  | dllexport
  | common
+ | "common_odr"
  ;
 
 GVExternalLinkage
   ::= dllimport
  | "extern_weak"
+ | "extern_weak_odr"
  | + external
  ;
 
@@ -105,17 +109,20 @@ FunctionDeclareLinkage
   ::= + _
  | dllimport
  | "extern_weak"
+ | "extern_weak_odr"
  ;
 
 FunctionDefineLinkage
   ::= + _
  | internal
  | linkonce
+ | "linkonce_odr"
  | weak
+ | "weak_odr"
  | dllexport
  ;
 
-AliasLinkage ::= + _ | weak | internal ;
+AliasLinkage ::= + _ | weak | "weak_odr" | internal ;
 
 OptCallingConv ::= + _ |
                  ccc |

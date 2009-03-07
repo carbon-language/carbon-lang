@@ -27,7 +27,7 @@
    ;; Hex constants
    '("\\b0x[0-9A-Fa-f]+\\b" . font-lock-preprocessor-face)
    ;; Keywords
-   '("\\bbegin\\b\\|\\bend\\b\\|\\btrue\\b\\|\\bfalse\\b\\|\\bzeroinitializer\\b\\|\\bdeclare\\b\\|\\bdefine\\b\\|\\bglobal\\b\\|\\bconstant\\b\\|\\bconst\\b\\|\\binternal\\b\\|\\blinkonce\\b\\|\\bweak\\b\\|\\bappending\\b\\|\\buninitialized\\b\\|\\bimplementation\\b\\|\\b\\.\\.\\.\\b\\|\\bnull\\b\\|\\bundef\\b\\|\\bto\\b\\|\\bexcept\\b\\|\\bnot\\b\\|\\btarget\\b\\|\\bendian\\b\\|\\blittle\\b\\|\\bbig\\b\\|\\bpointersize\\b\\|\\bdeplibs\\b\\|\\bvolatile\\b\\|\\bfastcc\\b\\|\\bcoldcc\\b\\|\\bcc\\b" . font-lock-keyword-face)
+   '("\\bbegin\\b\\|\\bend\\b\\|\\btrue\\b\\|\\bfalse\\b\\|\\bzeroinitializer\\b\\|\\bdeclare\\b\\|\\bdefine\\b\\|\\bglobal\\b\\|\\bconstant\\b\\|\\bconst\\b\\|\\binternal\\b\\|\\blinkonce\\b\\|\\blinkonce_odr\\b\\|\\bweak\\b\\|\\bweak_odr\\b\\|\\bappending\\b\\|\\buninitialized\\b\\|\\bimplementation\\b\\|\\b\\.\\.\\.\\b\\|\\bnull\\b\\|\\bundef\\b\\|\\bto\\b\\|\\bexcept\\b\\|\\bnot\\b\\|\\btarget\\b\\|\\bendian\\b\\|\\blittle\\b\\|\\bbig\\b\\|\\bpointersize\\b\\|\\bdeplibs\\b\\|\\bvolatile\\b\\|\\bfastcc\\b\\|\\bcoldcc\\b\\|\\bcc\\b" . font-lock-keyword-face)
    ;; Arithmetic and Logical Operators
    '("\\badd\\b\\|\\bsub\\b\\|\\bmul\\b\\|\\bdiv\\b\\|\\brem\\b\\|\\band\\b\\|\\bor\\b\\|\\bxor\\b\\|\\bset\\(ne\\b\\|\\beq\\b\\|\\blt\\b\\|\\bgt\\b\\|\\ble\\b\\|\\bge\\b\\)" . font-lock-keyword-face)
    ;; Special instructions

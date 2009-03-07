@@ -208,8 +208,10 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     SwitchToTextSection("\t.text", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
     if (Subtarget->isTargetDarwin()) {
       SwitchToTextSection(
                 ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
@@ -853,7 +855,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       }
     }
 
-    if (GVar->hasLocalLinkage() || GVar->mayBeOverridden()) {
+    if (GVar->hasLocalLinkage() || GVar->isWeakForLinker()) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (isDarwin) {
@@ -899,9 +901,12 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   SwitchToSection(TAI->SectionForGlobal(GVar));
   switch (GVar->getLinkage()) {
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::WeakLinkage:
+   case GlobalValue::CommonAnyLinkage:
+   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::LinkOnceAnyLinkage:
+   case GlobalValue::LinkOnceODRLinkage:
+   case GlobalValue::WeakAnyLinkage:
+   case GlobalValue::WeakODRLinkage:
     if (isDarwin) {
       O << "\t.globl " << name << "\n"
         << "\t.weak_definition " << name << "\n";

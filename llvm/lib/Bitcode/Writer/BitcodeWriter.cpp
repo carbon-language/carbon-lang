@@ -276,15 +276,19 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   default: assert(0 && "Invalid linkage!");
   case GlobalValue::GhostLinkage:  // Map ghost linkage onto external.
   case GlobalValue::ExternalLinkage:     return 0;
-  case GlobalValue::WeakLinkage:         return 1;
+  case GlobalValue::WeakAnyLinkage:      return 1;
   case GlobalValue::AppendingLinkage:    return 2;
   case GlobalValue::InternalLinkage:     return 3;
-  case GlobalValue::LinkOnceLinkage:     return 4;
+  case GlobalValue::LinkOnceAnyLinkage:  return 4;
   case GlobalValue::DLLImportLinkage:    return 5;
   case GlobalValue::DLLExportLinkage:    return 6;
-  case GlobalValue::ExternalWeakLinkage: return 7;
-  case GlobalValue::CommonLinkage:       return 8;
+  case GlobalValue::ExternalWeakAnyLinkage: return 7;
+  case GlobalValue::CommonAnyLinkage:    return 8;
   case GlobalValue::PrivateLinkage:      return 9;
+  case GlobalValue::WeakODRLinkage:      return 10;
+  case GlobalValue::LinkOnceODRLinkage:  return 11;
+  case GlobalValue::ExternalWeakODRLinkage: return 12;
+  case GlobalValue::CommonODRLinkage:    return 13;
   }
 }
 

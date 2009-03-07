@@ -51,7 +51,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
         // target is x86-64 or the symbol is definitely defined in the current
         // translation unit.
         return false;
-      return !isDirectCall && (isDecl || GV->mayBeOverridden());
+      return !isDirectCall && (isDecl || GV->isWeakForLinker());
     } else if (isTargetELF()) {
       // Extra load is needed for all externally visible.
       if (isDirectCall)

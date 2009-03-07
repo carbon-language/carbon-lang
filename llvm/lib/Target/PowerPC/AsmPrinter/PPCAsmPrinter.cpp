@@ -388,7 +388,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
-      if (GV->isDeclaration() || GV->mayBeOverridden()) {
+      if (GV->isDeclaration() || GV->isWeakForLinker()) {
         if (GV->hasHiddenVisibility()) {
           if (!GV->isDeclaration() && !GV->hasCommonLinkage())
             O << Name;
@@ -592,8 +592,10 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.global\t" << CurrentFnName << '\n'
       << "\t.type\t" << CurrentFnName << ", @function\n";
     break;
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
     O << "\t.global\t" << CurrentFnName << '\n';
     O << "\t.weak\t" << CurrentFnName << '\n';
     break;
@@ -689,7 +691,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->mayBeOverridden())) {
+       GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasExternalLinkage()) {
@@ -709,9 +711,12 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::WeakLinkage:
-   case GlobalValue::CommonLinkage:
+   case GlobalValue::LinkOnceAnyLinkage:
+   case GlobalValue::LinkOnceODRLinkage:
+   case GlobalValue::WeakAnyLinkage:
+   case GlobalValue::WeakODRLinkage:
+   case GlobalValue::CommonAnyLinkage:
+   case GlobalValue::CommonODRLinkage:
     O << "\t.global " << name << '\n'
       << "\t.type " << name << ", @object\n"
       << "\t.weak " << name << '\n';
@@ -785,8 +790,10 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::ExternalLinkage:
     O << "\t.globl\t" << CurrentFnName << '\n';
     break;
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
     O << "\t.globl\t" << CurrentFnName << '\n';
     O << "\t.weak_definition\t" << CurrentFnName << '\n';
     break;
@@ -918,7 +925,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->mayBeOverridden()) &&
+       GVar->isWeakForLinker()) &&
       TAI->SectionKindForGlobal(GVar) != SectionKind::RODataMergeStr) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
@@ -950,9 +957,12 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::WeakLinkage:
-   case GlobalValue::CommonLinkage:
+   case GlobalValue::LinkOnceAnyLinkage:
+   case GlobalValue::LinkOnceODRLinkage:
+   case GlobalValue::WeakAnyLinkage:
+   case GlobalValue::WeakODRLinkage:
+   case GlobalValue::CommonAnyLinkage:
+   case GlobalValue::CommonODRLinkage:
     O << "\t.globl " << name << '\n'
       << "\t.weak_definition " << name << '\n';
     break;

@@ -3322,11 +3322,12 @@ never change at runtime).</p>
     <p>Create a new global variable of the specified type. If
     <tt>isConstant</tt> is true then the global variable will be marked as
     unchanging for the program. The Linkage parameter specifies the type of
-    linkage (internal, external, weak, linkonce, appending) for the variable. If
-    the linkage is InternalLinkage, WeakLinkage, or LinkOnceLinkage,&nbsp; then
-    the resultant global variable will have internal linkage.  AppendingLinkage
-    concatenates together all instances (in different translation units) of the
-    variable into a single variable but is only applicable to arrays.  &nbsp;See
+    linkage (internal, external, weak, linkonce, appending) for the variable.
+    If the linkage is InternalLinkage, WeakAnyLinkage, WeakODRLinkage,
+    LinkOnceAnyLinkage or LinkOnceODRLinkage,&nbsp; then the resultant
+    global variable will have internal linkage.  AppendingLinkage concatenates
+    together all instances (in different translation units) of the variable
+    into a single variable but is only applicable to arrays.  &nbsp;See
     the <a href="LangRef.html#modulestructure">LLVM Language Reference</a> for
     further details on linkage types. Optionally an initializer, a name, and the
     module to put the variable into may be specified for the global variable as

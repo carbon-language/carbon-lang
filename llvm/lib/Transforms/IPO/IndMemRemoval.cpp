@@ -53,7 +53,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
   if (Function* F = M.getFunction("free")) {
     if (F->isDeclaration() && F->arg_size() == 1 && !F->use_empty()) {
       Function* FN = Function::Create(F->getFunctionType(),
-                                      GlobalValue::LinkOnceLinkage,
+                                      GlobalValue::LinkOnceAnyLinkage,
                                       "free_llvm_bounce", &M);
       BasicBlock* bb = BasicBlock::Create("entry",FN);
       Instruction* R = ReturnInst::Create(bb);
@@ -67,7 +67,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
   if (Function* F = M.getFunction("malloc")) {
     if (F->isDeclaration() && F->arg_size() == 1 && !F->use_empty()) {
       Function* FN = Function::Create(F->getFunctionType(), 
-                                      GlobalValue::LinkOnceLinkage, 
+                                      GlobalValue::LinkOnceAnyLinkage,
                                       "malloc_llvm_bounce", &M);
       FN->setDoesNotAlias(0);
       BasicBlock* bb = BasicBlock::Create("entry",FN);

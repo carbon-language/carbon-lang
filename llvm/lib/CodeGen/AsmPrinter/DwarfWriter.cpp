@@ -3135,9 +3135,8 @@ public:
     GlobalVariable *GV = getGlobalVariable(V);
     if (!GV)
       return false;
-    
-    if (GV->getLinkage() != GlobalValue::InternalLinkage
-        && GV->getLinkage() != GlobalValue::LinkOnceLinkage)
+
+    if (!GV->hasInternalLinkage () && !GV->hasLinkOnceLinkage())
       return false;
 
     DIDescriptor DI(GV);
@@ -3449,8 +3448,10 @@ class DwarfException : public Dwarf  {
     }
 
     // If corresponding function is weak definition, this should be too.
-    if ((linkage == Function::WeakLinkage ||
-         linkage == Function::LinkOnceLinkage) &&
+    if ((linkage == Function::WeakAnyLinkage ||
+         linkage == Function::WeakODRLinkage ||
+         linkage == Function::LinkOnceAnyLinkage ||
+         linkage == Function::LinkOnceODRLinkage) &&
         TAI->getWeakDefDirective())
       O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
 
@@ -3461,8 +3462,10 @@ class DwarfException : public Dwarf  {
     // unwind info is to be available for non-EH uses.
     if (!EHFrameInfo.hasCalls &&
         !UnwindTablesMandatory &&
-        ((linkage != Function::WeakLinkage &&
-          linkage != Function::LinkOnceLinkage) ||
+        ((linkage != Function::WeakAnyLinkage &&
+          linkage != Function::WeakODRLinkage &&
+          linkage != Function::LinkOnceAnyLinkage &&
+          linkage != Function::LinkOnceODRLinkage) ||
          !TAI->getWeakDefDirective() ||
          TAI->getSupportsWeakOmittedEHFrame()))
     {

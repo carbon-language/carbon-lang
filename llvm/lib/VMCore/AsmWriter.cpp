@@ -1183,22 +1183,26 @@ void AssemblyWriter::printModule(const Module *M) {
 
 static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   switch (LT) {
-  case GlobalValue::PrivateLinkage:      Out << "private "; break;
-  case GlobalValue::InternalLinkage:     Out << "internal "; break;
-  case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
-  case GlobalValue::WeakLinkage:         Out << "weak "; break;
-  case GlobalValue::CommonLinkage:       Out << "common "; break;
-  case GlobalValue::AppendingLinkage:    Out << "appending "; break;
-  case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
-  case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;
-  case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
+  case GlobalValue::PrivateLinkage:     Out << "private "; break;
+  case GlobalValue::InternalLinkage:    Out << "internal "; break;
+  case GlobalValue::LinkOnceAnyLinkage: Out << "linkonce "; break;
+  case GlobalValue::LinkOnceODRLinkage: Out << "linkonce_odr "; break;
+  case GlobalValue::WeakAnyLinkage:     Out << "weak "; break;
+  case GlobalValue::WeakODRLinkage:     Out << "weak_odr "; break;
+  case GlobalValue::CommonAnyLinkage:   Out << "common "; break;
+  case GlobalValue::CommonODRLinkage:   Out << "common_odr "; break;
+  case GlobalValue::AppendingLinkage:   Out << "appending "; break;
+  case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
+  case GlobalValue::DLLExportLinkage:   Out << "dllexport "; break;
+  case GlobalValue::ExternalWeakAnyLinkage: Out << "extern_weak "; break;
+  case GlobalValue::ExternalWeakODRLinkage: Out << "extern_weak_odr "; break;
   case GlobalValue::ExternalLinkage: break;
   case GlobalValue::GhostLinkage:
     Out << "GhostLinkage not allowed in AsmWriter!\n";
     abort();
   }
 }
-      
+
 
 static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
                             raw_ostream &Out) {

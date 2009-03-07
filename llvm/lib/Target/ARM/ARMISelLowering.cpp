@@ -854,7 +854,7 @@ static bool GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) {
   bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
   if (GV->hasHiddenVisibility() && (!isDecl && !GV->hasCommonLinkage()))
     return false;
-  return RelocM != Reloc::Static && (isDecl || GV->mayBeOverridden());
+  return RelocM != Reloc::Static && (isDecl || GV->isWeakForLinker());
 }
 
 SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,

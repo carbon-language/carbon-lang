@@ -174,8 +174,10 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
   case GlobalValue::ExternalLinkage:
     FnSym.SetBind(ELFWriter::ELFSym::STB_GLOBAL);
     break;
-  case GlobalValue::LinkOnceLinkage:
-  case GlobalValue::WeakLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
     FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
     break;
   case GlobalValue::PrivateLinkage:

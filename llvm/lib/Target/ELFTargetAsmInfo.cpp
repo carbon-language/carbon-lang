@@ -49,14 +49,16 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
      case Function::DLLExportLinkage:
      case Function::ExternalLinkage:
       return TextSection;
-     case Function::WeakLinkage:
-     case Function::LinkOnceLinkage:
+     case Function::WeakAnyLinkage:
+     case Function::WeakODRLinkage:
+     case Function::LinkOnceAnyLinkage:
+     case Function::LinkOnceODRLinkage:
       std::string Name = UniqueSectionForGlobal(GV, Kind);
       unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
       return getNamedSection(Name.c_str(), Flags);
     }
   } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->mayBeOverridden()) {
+    if (GVar->isWeakForLinker()) {
       std::string Name = UniqueSectionForGlobal(GVar, Kind);
       unsigned Flags = SectionFlagsForGlobal(GVar, Name.c_str());
       return getNamedSection(Name.c_str(), Flags);

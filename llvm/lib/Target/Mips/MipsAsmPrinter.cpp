@@ -504,7 +504,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&
-        (GVar->hasLocalLinkage() || GVar->mayBeOverridden())) {
+        (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasLocalLinkage())
@@ -519,9 +519,12 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     }
   }
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::WeakLinkage:
+   case GlobalValue::LinkOnceAnyLinkage:
+   case GlobalValue::LinkOnceODRLinkage:
+   case GlobalValue::CommonAnyLinkage:
+   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::WeakAnyLinkage:
+   case GlobalValue::WeakODRLinkage:
     // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
     O << "\t.weak " << name << '\n';
