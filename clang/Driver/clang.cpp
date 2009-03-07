@@ -1504,11 +1504,8 @@ int main(int argc, char **argv) {
   // Configure our handling of diagnostics.
   llvm::OwningPtr<DiagnosticClient> DiagClient(TextDiagClient);
   Diagnostic Diags(DiagClient.get());
-  if (ProcessWarningOptions(Diags)) {
-    fprintf(stderr, "Error in warning options.\n");
+  if (ProcessWarningOptions(Diags))
     return 1;
-  }
-  //InitializeDiagnostics(Diags);  
 
   // -I- is a deprecated GCC feature, scan for it and reject it.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
@@ -1527,7 +1524,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
             Triple.c_str());
     fprintf(stderr, "Please use -triple or -arch.\n");
-    exit(1);
+    return 1;
   }
   
   if (!InheritanceViewCls.empty())  // C++ visualization?

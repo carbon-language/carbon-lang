@@ -22,8 +22,7 @@
 // warn:   Emit a message, but don't fail the compilation
 // error:  Emit a message and fail the compilation
 //
-// Clang is parsed warning options. Each warning option controls any number of
-// actual warnings.
+// Each warning option controls any number of actual warnings.
 // Given a warning option 'foo', the following are valid:
 // -Wfoo=ignore  -> Ignore the controlled warnings.
 // -Wfoo=warn    -> Warn about the controlled warnings.
@@ -87,8 +86,11 @@ namespace {
       } else {
         Val.Name = ArgValue.substr(0, Eq);
         Val.Mapping = StrToMapping(ArgValue.substr(Eq+1));
-        if (Val.Mapping == diag::MAP_DEFAULT)
+        if (Val.Mapping == diag::MAP_DEFAULT) {
+          fprintf(stderr, "Illegal warning option value: %s\n",
+                  ArgValue.substr(Eq+1).c_str());
           return true;
+        }
       }
       return false;
     }
@@ -203,8 +205,10 @@ bool ProcessWarningOptions(Diagnostic &Diags) {
                                                   OptionTable + OptionTableSize,
                                                   Key);
     if (Found == OptionTable + OptionTableSize ||
-        strcmp(Found->Name, Key.Name) != 0)
+        strcmp(Found->Name, Key.Name) != 0) {
+      fprintf(stderr, "Unknown warning option: -W%s\n", Key.Name);
       return true;
+    }
 
     // Option exists.
     for (size_t i = 0; i < Found->NumMembers; ++i) {
