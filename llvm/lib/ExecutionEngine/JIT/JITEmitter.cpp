@@ -123,7 +123,7 @@ namespace {
     /// getFunctionStub - This returns a pointer to a function stub, creating
     /// one on demand as needed.  If empty is true, create a function stub
     /// pointing at address 0, to be filled in later.
-    void *getFunctionStub(Function *F, bool empty = false);
+    void *getFunctionStub(Function *F);
 
     /// getExternalFunctionStub - Return a stub for the function at the
     /// specified address, created lazily on demand.
@@ -174,26 +174,32 @@ void *JITResolver::getFunctionStubIfAvailable(Function *F) {
 
 /// getFunctionStub - This returns a pointer to a function stub, creating
 /// one on demand as needed.
-void *JITResolver::getFunctionStub(Function *F, bool empty) {
+void *JITResolver::getFunctionStub(Function *F) {
   MutexGuard locked(TheJIT->lock);
 
   // If we already have a stub for this function, recycle it.
   void *&Stub = state.getFunctionToStubMap(locked)[F];
   if (Stub) return Stub;
 
-  // Call the lazy resolver function unless we already KNOW it is an external
-  // function, in which case we just skip the lazy resolution step.
-  void *Actual = empty ? (void*)0 : (void*)(intptr_t)LazyResolverFn;
+  // Call the lazy resolver function unless we are JIT'ing non-lazily, in which
+  // case we must resolve the symbol now.
+  void *Actual =  TheJIT->isLazyCompilationDisabled() 
+    ? (void *)0 : (void *)(intptr_t)LazyResolverFn;
+   
+  // If this is an external declaration, attempt to resolve the address now
+  // to place in the stub.
   if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode()) {
     Actual = TheJIT->getPointerToFunction(F);
 
     // If we resolved the symbol to a null address (eg. a weak external)
-    // don't emit a stub. Return a null pointer to the application.
-    if (!Actual) return 0;
+    // don't emit a stub. Return a null pointer to the application.  If dlsym
+    // stubs are enabled, not being able to resolve the address is not
+    // meaningful.
+    if (!Actual && !TheJIT->areDlsymStubsEnabled()) return 0;
   }
 
-  // Otherwise, codegen a new stub.  For now, the stub will call the lazy
-  // resolver function.
+  // Codegen a new stub, calling the lazy resolver or the actual address of the
+  // external function, if it was resolved.
   Stub = TheJIT->getJITInfo().emitFunctionStub(F, Actual,
                                                *TheJIT->getCodeEmitter());
 
@@ -211,10 +217,12 @@ void *JITResolver::getFunctionStub(Function *F, bool empty) {
   // JITCompilerFn knows which function to compile!
   state.getStubToFunctionMap(locked)[Stub] = F;
   
-  // If this is an "empty" stub, then inform the JIT that it will need to
-  // JIT the function so an address can be provided.
-  if (empty)
-    TheJIT->addPendingFunction(F);
+  // If we are JIT'ing non-lazily but need to call a function that does not
+  // exist yet, add it to the JIT's work list so that we can fill in the stub
+  // address later.
+  if (!Actual && TheJIT->isLazyCompilationDisabled())
+    if (!F->isDeclaration() || F->hasNotBeenReadFromBitcode())
+      TheJIT->addPendingFunction(F);
   
   return Stub;
 }
@@ -706,30 +714,29 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   if (ResultPtr) return ResultPtr;
 
   // If this is an external function pointer, we can force the JIT to
-  // 'compile' it, which really just adds it to the map.
-  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode() && DoesntNeedStub)
+  // 'compile' it, which really just adds it to the map.  In dlsym mode, 
+  // external functions are forced through a stub, regardless of reloc type.
+  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode() &&
+      DoesntNeedStub && !TheJIT->areDlsymStubsEnabled())
     return TheJIT->getPointerToFunction(F);
 
-  // If we are jitting non-lazily but encounter a function that has not been
-  // jitted yet, we need to allocate a blank stub to call the function
-  // once we JIT it and its address is known.
-  if (TheJIT->isLazyCompilationDisabled())
-    if (!F->isDeclaration() || F->hasNotBeenReadFromBitcode())
-      return Resolver.getFunctionStub(F, true);
-  
   // Okay, the function has not been compiled yet, if the target callback
   // mechanism is capable of rewriting the instruction directly, prefer to do
-  // that instead of emitting a stub.
-  if (DoesntNeedStub)
+  // that instead of emitting a stub.  This uses the lazy resolver, so is not
+  // legal if lazy compilation is disabled.
+  if (DoesntNeedStub && !TheJIT->isLazyCompilationDisabled())
     return Resolver.AddCallbackAtLocation(F, Reference);
 
-  // Otherwise, we have to emit a lazy resolving stub.
+  // Otherwise, we have to emit a stub.
   void *StubAddr = Resolver.getFunctionStub(F);
 
   // Add the stub to the current function's list of referenced stubs, so we can
-  // deallocate them if the current function is ever freed.
-  AddStubToCurrentFunction(StubAddr);
-  
+  // deallocate them if the current function is ever freed.  It's possible to
+  // return null from getFunctionStub in the case of a weak extern that fails
+  // to resolve.
+  if (StubAddr)
+    AddStubToCurrentFunction(StubAddr);
+
   return StubAddr;
 }
 
@@ -1189,7 +1196,9 @@ void JITEmitter::deallocateMemForFunction(Function *F) {
     // in the JITResolver.  Were there a memory manager deallocateStub routine,
     // we could call that at this point too.
     if (FnRefs.empty()) {
-      Resolver.invalidateStub(Stub);
+      DOUT << "\nJIT: Invalidated Stub at [" << Stub << "]\n";
+      GlobalValue *GV = Resolver.invalidateStub(Stub);
+      TheJIT->updateGlobalMapping(GV, 0);
       StubFnRefs.erase(F);
     }
   }
