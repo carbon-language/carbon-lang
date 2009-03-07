@@ -2177,9 +2177,12 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
 llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj)
 {
+  const llvm::Type* DestTy =
+      cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy); 
   llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
                                                   AddrWeakObj, "weakread");
+  read_weak = CGF.Builder.CreateBitCast(read_weak, DestTy);
   return read_weak;
 }
 
@@ -4766,9 +4769,12 @@ llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
                                           CodeGen::CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj)
 {
+  const llvm::Type* DestTy =
+      cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy); 
   llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
                                                   AddrWeakObj, "weakread");
+  read_weak = CGF.Builder.CreateBitCast(read_weak, DestTy);
   return read_weak;
 }
 
