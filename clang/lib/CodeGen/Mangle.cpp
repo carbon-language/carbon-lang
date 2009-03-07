@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -49,6 +50,7 @@ namespace {
     void mangleType(const ArrayType *T);
     void mangleType(const MemberPointerType *T);
     void mangleType(const TemplateTypeParmType *T);
+    void mangleType(const ObjCInterfaceType *T);
     void mangleExpression(Expr *E);
   };
 }
@@ -377,6 +379,9 @@ void CXXNameMangler::mangleType(QualType T) {
     // GNU extension: vector types
     Out << "U8__vector";
     mangleType(VT->getElementType());
+  } else if (const ObjCInterfaceType *IT = 
+             dyn_cast<ObjCInterfaceType>(T.getTypePtr())) {
+    mangleType(IT);
   }
   // FIXME:  ::= G <type>   # imaginary (C 2000)
   // FIXME:  ::= U <source-name> <type>     # vendor extended type qualifier
@@ -502,6 +507,10 @@ void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
     Out << "T_";
   else
     Out << 'T' << (T->getIndex() - 1) << '_';
+}
+
+void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
+  mangleSourceName(T->getDecl()->getIdentifier());
 }
 
 void CXXNameMangler::mangleExpression(Expr *E) {
