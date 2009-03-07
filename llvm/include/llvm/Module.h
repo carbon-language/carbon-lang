@@ -31,7 +31,6 @@ template<> struct ilist_traits<Function>
   // createSentinel is used to create a node that marks the end of the list.
   static Function *createSentinel();
   static void destroySentinel(Function *F) { delete F; }
-  static iplist<Function> &getList(Module *M);
   static inline ValueSymbolTable *getSymTab(Module *M);
 };
 template<> struct ilist_traits<GlobalVariable>
@@ -39,7 +38,6 @@ template<> struct ilist_traits<GlobalVariable>
   // createSentinel is used to create a node that marks the end of the list.
   static GlobalVariable *createSentinel();
   static void destroySentinel(GlobalVariable *GV) { delete GV; }
-  static iplist<GlobalVariable> &getList(Module *M);
   static inline ValueSymbolTable *getSymTab(Module *M);
 };
 template<> struct ilist_traits<GlobalAlias>
@@ -47,7 +45,6 @@ template<> struct ilist_traits<GlobalAlias>
   // createSentinel is used to create a node that marks the end of the list.
   static GlobalAlias *createSentinel();
   static void destroySentinel(GlobalAlias *GA) { delete GA; }
-  static iplist<GlobalAlias> &getList(Module *M);
   static inline ValueSymbolTable *getSymTab(Module *M);
 };
 

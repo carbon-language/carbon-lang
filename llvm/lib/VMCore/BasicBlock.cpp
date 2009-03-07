@@ -31,10 +31,6 @@ ilist_traits<Instruction>::getSymTab(BasicBlock *BB) {
   return 0;
 }
 
-iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {
-  return BB->getInstList();
-}
-
 // Explicit instantiation of SymbolTableListTraits since some of the methods
 // are not in the public header file...
 template class SymbolTableListTraits<Instruction, BasicBlock>;

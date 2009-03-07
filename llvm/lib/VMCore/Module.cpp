@@ -52,16 +52,6 @@ GlobalAlias *ilist_traits<GlobalAlias>::createSentinel() {
   return Ret;
 }
 
-iplist<Function> &ilist_traits<Function>::getList(Module *M) {
-  return M->getFunctionList();
-}
-iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
-  return M->getGlobalList();
-}
-iplist<GlobalAlias> &ilist_traits<GlobalAlias>::getList(Module *M) {
-  return M->getAliasList();
-}
-
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file.
 template class SymbolTableListTraits<GlobalVariable, Module>;

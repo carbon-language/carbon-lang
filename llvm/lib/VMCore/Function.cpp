@@ -22,13 +22,6 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
-  return F->getBasicBlockList();
-}
-
-iplist<Argument> &ilist_traits<Argument>::getList(Function *F) {
-  return F->getArgumentList();
-}
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...

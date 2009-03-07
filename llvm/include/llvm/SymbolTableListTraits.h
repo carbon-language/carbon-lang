@@ -46,13 +46,17 @@ public:
   /// of instructions, it returns the BasicBlock that owns them.
   ItemParentClass *getListOwner() {
     typedef iplist<ValueSubClass> ItemParentClass::*Sublist;
-		Sublist Sub(ItemParentClass::
+    Sublist Sub(ItemParentClass::
                 getSublistAccess(static_cast<ValueSubClass*>(0)));
     size_t Offset(size_t(&((ItemParentClass*)0->*Sub)));
     iplist<ValueSubClass>* Anchor(static_cast<iplist<ValueSubClass>*>(this));
     return reinterpret_cast<ItemParentClass*>(reinterpret_cast<char*>(Anchor)-
                                               Offset);
   }
+
+  static iplist<ValueSubClass> &getList(ItemParentClass *Par) {
+  return Par->*(Par->getSublistAccess((ValueSubClass*)0));
+}
 
   void addNodeToList(ValueSubClass *V);
   void removeNodeFromList(ValueSubClass *V);
