@@ -516,6 +516,14 @@ ifdef UNIVERSAL
 
   # Building universal cannot compute dependencies automatically.
   DISABLE_AUTO_DEPENDENCIES=1
+else
+  ifeq ($(ARCH),x86_64)
+    CompileCommonOpts += -m64
+  else
+    ifeq ($(ARCH),i386)
+      CompileCommonOpts += -m32
+    endif
+  endif
 endif
 
 ifeq ($(OS),SunOS)
