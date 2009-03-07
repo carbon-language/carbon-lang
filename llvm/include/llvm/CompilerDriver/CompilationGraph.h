@@ -261,16 +261,19 @@ namespace llvmc {
       return *this;
     }
 
-    inline bool operator==(const ThisType& I) const
-    { return EdgeIter == I.EdgeIter; }
-    inline bool operator!=(const ThisType& I) const
-    { return EdgeIter != I.EdgeIter; }
+    inline bool operator==(const ThisType& I) const {
+      assert(OwningGraph == I.OwningGraph);
+      return EdgeIter == I.EdgeIter;
+    }
+    inline bool operator!=(const ThisType& I) const {
+      return !this->operator==(I);
+    }
 
     inline pointer operator*() const {
       return &OwningGraph->getNode((*EdgeIter)->ToolName());
     }
     inline pointer operator->() const {
-      return &OwningGraph->getNode((*EdgeIter)->ToolName());
+      return this->operator*();
     }
 
     ThisType& operator++() { ++EdgeIter; return *this; } // Preincrement
