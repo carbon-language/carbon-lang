@@ -1,4 +1,4 @@
-// RUN: clang -fblocks -fnext-runtime --emit-llvm -o %t %s -verify
+// RUN: clang -fblocks -fno-__block -fnext-runtime --emit-llvm -o %t %s -verify
 
 @class Foo;
 @protocol P;
