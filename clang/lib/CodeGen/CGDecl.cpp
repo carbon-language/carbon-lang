@@ -426,7 +426,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     // Targets that don't have stack use global address space for parameters.
     // Specify external linkage for such globals so that llvm optimizer do
     // not assume there values initialized as zero.
-    DeclPtr = CreateStaticBlockVarDecl(D, ".auto.",
+    DeclPtr = CreateStaticBlockVarDecl(D, ".arg.",
                                        llvm::GlobalValue::ExternalLinkage);
   } else {
     // A fixed sized single-value variable becomes an alloca in the entry block.
