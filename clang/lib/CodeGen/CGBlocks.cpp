@@ -483,8 +483,8 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
     ErrorUnsupported(E, "__block variable in block literal");
   else if (!Enable__block && E->getType()->isBlockPointerType())
     ErrorUnsupported(E, "block pointer in block literal");
-  else if (!Enable__block && E->getDecl()->getAttr<ObjCNSObjectAttr>() ||
-           getContext().isObjCNSObjectType(E->getType()))
+  else if (!Enable__block && (E->getDecl()->getAttr<ObjCNSObjectAttr>() ||
+                              getContext().isObjCNSObjectType(E->getType())))
     ErrorUnsupported(E, "__attribute__((NSObject)) variable in block "
                      "literal");
   else if (!Enable__block && getContext().isObjCObjectPointerType(E->getType()))
