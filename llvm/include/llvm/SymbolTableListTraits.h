@@ -55,8 +55,12 @@ public:
   }
 
   static iplist<ValueSubClass> &getList(ItemParentClass *Par) {
-  return Par->*(Par->getSublistAccess((ValueSubClass*)0));
-}
+    return Par->*(Par->getSublistAccess((ValueSubClass*)0));
+  }
+
+  static ValueSymbolTable *getSymTab(ItemParentClass *Par) {
+    return Par ? toPtr(Par->getValueSymbolTable()) : 0;
+  }
 
   void addNodeToList(ValueSubClass *V);
   void removeNodeFromList(ValueSubClass *V);
@@ -66,6 +70,8 @@ public:
 //private:
   template<typename TPtr>
   void setSymTabObject(TPtr *, TPtr);
+  static ValueSymbolTable *toPtr(ValueSymbolTable *P) { return P; }
+  static ValueSymbolTable *toPtr(ValueSymbolTable &R) { return &R; }
 };
 
 } // End llvm namespace

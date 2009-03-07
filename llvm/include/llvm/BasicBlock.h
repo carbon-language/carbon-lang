@@ -45,8 +45,6 @@ template<> struct ilist_traits<Instruction>
   Instruction *provideInitialHead() const { return createSentinel(); }
   Instruction *ensureHead(Instruction*) const { return createSentinel(); }
   static void noteHead(Instruction*, Instruction*) {}
-
-  static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
 private:
   mutable ilist_node<Instruction> Sentinel;
 };
@@ -184,9 +182,14 @@ public:
   ///
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
+
+  /// getSublistAccess() - returns pointer to member of instruction list
   static iplist<Instruction> BasicBlock::*getSublistAccess(Instruction*) {
     return &BasicBlock::InstList;
   }
+
+  /// getValueSymbolTable() - returns pointer to symbol table (if any)
+  ValueSymbolTable *getValueSymbolTable();
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BasicBlock *) { return true; }

@@ -31,21 +31,18 @@ template<> struct ilist_traits<Function>
   // createSentinel is used to create a node that marks the end of the list.
   static Function *createSentinel();
   static void destroySentinel(Function *F) { delete F; }
-  static inline ValueSymbolTable *getSymTab(Module *M);
 };
 template<> struct ilist_traits<GlobalVariable>
   : public SymbolTableListTraits<GlobalVariable, Module> {
   // createSentinel is used to create a node that marks the end of the list.
   static GlobalVariable *createSentinel();
   static void destroySentinel(GlobalVariable *GV) { delete GV; }
-  static inline ValueSymbolTable *getSymTab(Module *M);
 };
 template<> struct ilist_traits<GlobalAlias>
   : public SymbolTableListTraits<GlobalAlias, Module> {
   // createSentinel is used to create a node that marks the end of the list.
   static GlobalAlias *createSentinel();
   static void destroySentinel(GlobalAlias *GA) { delete GA; }
-  static inline ValueSymbolTable *getSymTab(Module *M);
 };
 
 /// A Module instance is used to store all the information related to an
@@ -408,22 +405,6 @@ inline std::ostream &operator<<(std::ostream &O, const Module &M) {
 inline raw_ostream &operator<<(raw_ostream &O, const Module &M) {
   M.print(O, 0);
   return O;
-}
-  
-
-inline ValueSymbolTable *
-ilist_traits<Function>::getSymTab(Module *M) {
-  return M ? &M->getValueSymbolTable() : 0;
-}
-
-inline ValueSymbolTable *
-ilist_traits<GlobalVariable>::getSymTab(Module *M) {
-  return M ? &M->getValueSymbolTable() : 0;
-}
-
-inline ValueSymbolTable *
-ilist_traits<GlobalAlias>::getSymTab(Module *M) {
-  return M ? &M->getValueSymbolTable() : 0;
 }
 
 } // End llvm namespace

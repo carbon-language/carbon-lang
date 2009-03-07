@@ -23,11 +23,9 @@
 #include <algorithm>
 using namespace llvm;
 
-inline ValueSymbolTable *
-ilist_traits<Instruction>::getSymTab(BasicBlock *BB) {
-  if (BB)
-    if (Function *F = BB->getParent())
-      return &F->getValueSymbolTable();
+ValueSymbolTable *BasicBlock::getValueSymbolTable() {
+  if (Function *F = getParent())
+    return &F->getValueSymbolTable();
   return 0;
 }
 
