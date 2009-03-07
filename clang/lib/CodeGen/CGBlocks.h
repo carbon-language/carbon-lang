@@ -103,7 +103,8 @@ public:
     : Context(C), TheModule(M), TheTargetData(TD), Types(T),
       CGM(CodeGen),
       NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockDescriptorType(0),
-      GenericBlockLiteralType(0), BlockObjectAssign(0), BlockObjectDispose(0) {
+      GenericBlockLiteralType(0), GenericExtendedBlockLiteralType(0),
+      BlockObjectAssign(0), BlockObjectDispose(0) {
     Block.GlobalUniqueCount = 0;
     PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   }
@@ -116,6 +117,12 @@ class BlockFunction : public BlockBase {
 
 public:
   const llvm::Type *PtrToInt8Ty;
+  struct HelperInfo {
+    int index;
+    int flag;
+    bool RequiresCopying;
+  };
+
   enum {
     BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)),
                                       block, ... */
@@ -150,19 +157,40 @@ public:
 
   CGBuilderTy &Builder;
 
-  BlockFunction(CodeGenModule &cgm, CodeGenFunction &cgf, CGBuilderTy &B)
-    : CGM(cgm), CGF(cgf), Builder(B) {
-    PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  }
+  BlockFunction(CodeGenModule &cgm, CodeGenFunction &cgf, CGBuilderTy &B);
+
+  /// BlockOffset - The offset in bytes for the next allocation of an
+  /// imported block variable.
+  uint64_t BlockOffset;
+  /// BlockAlign - Maximal alignment needed for the Block expressed in bytes.
+  uint64_t BlockAlign;
+
+  /// getBlockOffset - Allocate an offset for the ValueDecl from a
+  /// BlockDeclRefExpr in a block literal (BlockExpr).
+  uint64_t getBlockOffset(const BlockDeclRefExpr *E);
+
+  /// BlockHasCopyDispose - True iff the block uses copy/dispose.
+  bool BlockHasCopyDispose;
+
+  /// BlockDeclRefDecls - Decls from BlockDeclRefExprs in apperance order
+  /// in a block literal.  Decls without names are used for padding.
+  llvm::SmallVector<const Expr *, 8> BlockDeclRefDecls;
+
+  /// BlockDecls - Offsets for all Decls in BlockDeclRefExprs.
+  std::map<const Decl*, uint64_t> BlockDecls;
 
   ImplicitParamDecl *BlockStructDecl;
   ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
 
-  llvm::Constant *GenerateCopyHelperFunction(const llvm::Type *);
-  llvm::Constant *GenerateDestroyHelperFunction(const llvm::Type *);
+  llvm::Constant *GenerateCopyHelperFunction(bool, const llvm::StructType *,
+                                             std::vector<HelperInfo> &);
+  llvm::Constant *GenerateDestroyHelperFunction(bool, const llvm::StructType *,
+                                                std::vector<HelperInfo> &);
 
-  llvm::Constant *BuildCopyHelper(const llvm::Type *);
-  llvm::Constant *BuildDestroyHelper(const llvm::Type *);
+  llvm::Constant *BuildCopyHelper(const llvm::StructType *,
+                                  std::vector<HelperInfo> &);
+  llvm::Constant *BuildDestroyHelper(const llvm::StructType *,
+                                     std::vector<HelperInfo> &);
 
   llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag);
   llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, int);

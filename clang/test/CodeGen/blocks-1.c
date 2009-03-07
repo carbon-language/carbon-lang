@@ -5,7 +5,7 @@
 // RUN: grep "__Block_byref_id_object_copy_" %t | count 2 &&
 // RUN: grep "__Block_byref_id_object_dispose_" %t | count 2 &&
 // RUN: grep "i32 135)" %t | count 2 &&
-// RUN: grep "_Block_object_assign" %t | count 2
+// RUN: grep "_Block_object_assign" %t | count 6
 
 #include <stdio.h>
 

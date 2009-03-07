@@ -1326,8 +1326,7 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 }
 
 Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *BE) {
-  llvm::Value *V = CGF.BuildBlockLiteralTmp(BE);
-  return V;
+  return CGF.BuildBlockLiteralTmp(BE);
 }
 
 //===----------------------------------------------------------------------===//

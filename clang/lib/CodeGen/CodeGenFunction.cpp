@@ -32,7 +32,6 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
 
   // FIXME: We need to rearrange the code for copy/dispose so we have this
   // sooner, so we can calculate offsets correctly.
-  BlockHasCopyDispose = false;
   if (!BlockHasCopyDispose)
     BlockOffset = CGM.getTargetData()
       .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;

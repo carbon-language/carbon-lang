@@ -266,7 +266,9 @@ public:
   //===--------------------------------------------------------------------===//
 
   llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
-  llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size, const llvm::Type *);
+  llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size,
+                                           const llvm::StructType *,
+                                           std::vector<HelperInfo> *);
 
   llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
                                         const BlockInfo& Info,
@@ -275,26 +277,6 @@ public:
                                         bool &subBlockHasCopyDispose);
 
   llvm::Value *LoadBlockStruct();
-
-  /// BlockHasCopyDispose - True iff the block uses copy/dispose.
-  bool BlockHasCopyDispose;
-
-  /// BlockDeclRefDecls - Decls from BlockDeclRefExprs in apperance order
-  /// in a block literal.  Decls without names are used for padding.
-  llvm::SmallVector<const Expr *, 8> BlockDeclRefDecls;
-
-  /// BlockOffset - The offset in bytes for the next allocation of an
-  /// imported block variable.
-  uint64_t BlockOffset;
-  /// BlockAlign - Maximal alignment needed for the Block expressed in bytes.
-  uint64_t BlockAlign;
-
-  /// getBlockOffset - Allocate an offset for the ValueDecl from a
-  /// BlockDeclRefExpr in a block literal (BlockExpr).
-  uint64_t getBlockOffset(const BlockDeclRefExpr *E);
-
-  /// BlockDecls - Offsets for all Decls in BlockDeclRefExprs.
-  std::map<const Decl*, uint64_t> BlockDecls;
 
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
 
