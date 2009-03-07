@@ -1706,8 +1706,13 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   const RecordDecl *RD = GetFirstIvarInRecord(OID, ifield, pfield);
   for (RecordDecl::field_iterator e = RD->field_end(); ifield != e; ++ifield) {
     FieldDecl *Field = *ifield;
-    unsigned Offset = Layout->getElementOffset(CGM.getTypes().
-                                               getLLVMFieldNo(Field));
+    unsigned Offset;
+    if (Field->isBitField())
+      // Bit field staring offset is cached in FieldInfo[Field].
+      Offset = CGM.getTypes().getLLVMFieldNo(Field);
+    else
+      Offset = Layout->getElementOffset(CGM.getTypes().
+                                        getLLVMFieldNo(Field));
     if (Field->getIdentifier())
       Ivar[0] = GetMethodVarName(Field->getIdentifier());
     else
@@ -2267,8 +2272,9 @@ llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
   const llvm::StructLayout *Layout =
   CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
   FieldDecl *Field = Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  uint64_t Offset =
-  Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+  uint64_t Offset = 
+    Field->isBitField() ? CGM.getTypes().getLLVMFieldNo(Field) :
+      Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
   
   return llvm::ConstantInt::get(
                             CGM.getTypes().ConvertType(CGM.getContext().LongTy),
@@ -3841,14 +3847,18 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       const llvm::Type *FieldTy =
         CGM.getTypes().ConvertTypeForMem(Field->getType());
       unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
-      InstanceSize = Layout->getElementOffset(
-                                  CGM.getTypes().getLLVMFieldNo(Field)) + 
-                                  Size;
+      uint64_t Offset = 
+        Field->isBitField() ? CGM.getTypes().getLLVMFieldNo(Field) :
+          Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+      InstanceSize = Offset + Size;
       if (firstField == RD->field_end())
         InstanceStart = InstanceSize;
-      else
-        InstanceStart =  Layout->getElementOffset(CGM.getTypes().
-                                                  getLLVMFieldNo(*firstField));
+      else {
+        Field = *firstField;
+        InstanceStart =  
+          Field->isBitField() ? CGM.getTypes().getLLVMFieldNo(Field) :
+            Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+      }
     }
   }
   CLASS_RO_GV = BuildClassRoTInitializer(flags,
@@ -4150,8 +4160,13 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   
   for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {
     FieldDecl *Field = *i;
-    unsigned long offset = Layout->getElementOffset(CGM.getTypes().
-                                                    getLLVMFieldNo(Field));
+    unsigned long offset;
+    if (Field->isBitField())
+      // Bit field starting offset is cached in FieldInfo[Field].
+      offset = CGM.getTypes().getLLVMFieldNo(Field);
+    else
+      offset = Layout->getElementOffset(CGM.getTypes().
+                                        getLLVMFieldNo(Field));
     const ObjCIvarDecl *ivarDecl = *I++;
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), ivarDecl, offset);
     if (Field->getIdentifier())
