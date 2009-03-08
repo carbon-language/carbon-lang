@@ -32,8 +32,12 @@ ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
 /// token.
 SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
                                        const char *&DestPtr) {
-  if (BytesUsed+Len+1 > ScratchBufSize)
-    AllocScratchBuffer(Len);
+  if (BytesUsed+Len+2 > ScratchBufSize)
+    AllocScratchBuffer(Len+2);
+
+  // Prefix the token with a \n, so that it looks like it is the first thing on
+  // its own virtual line in caret diagnostics.
+  CurBuffer[BytesUsed++] = '\n';
   
   // Return a pointer to the character data.
   DestPtr = CurBuffer+BytesUsed;
@@ -56,7 +60,7 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   // Only pay attention to the requested length if it is larger than our default
   // page size.  If it is, we allocate an entire chunk for it.  This is to
   // support gigantic tokens, which almost certainly won't happen. :)
-  if (RequestLen+1 < ScratchBufSize)
+  if (RequestLen < ScratchBufSize)
     RequestLen = ScratchBufSize;
   
   llvm::MemoryBuffer *Buf = 
