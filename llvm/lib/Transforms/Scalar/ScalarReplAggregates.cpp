@@ -1356,6 +1356,16 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
         continue;
       }
     }
+
+    // If this is a memcpy or memmove into or out of the whole allocation, we
+    // can handle it like a load or store of the scalar type.
+    if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(User)) {
+      if (ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength()))
+        if (Len->getZExtValue() == AllocaSize && Offset == 0) {
+          IsNotTrivial = true;
+          continue;
+        }
+    }
     
     // Ignore dbg intrinsic.
     if (isa<DbgInfoIntrinsic>(User))
@@ -1438,6 +1448,44 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
                                              Offset, Builder);
       Builder.CreateStore(New, NewAI);
       MSI->eraseFromParent();
+      continue;
+    }
+
+    // If this is a memcpy or memmove into or out of the whole allocation, we
+    // can handle it like a load or store of the scalar type.
+    if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(User)) {
+      assert(Offset == 0 && "must be store to start of alloca");
+      
+      // If the source and destination are both to the same alloca, then this is
+      // a noop copy-to-self, just delete it.  Otherwise, emit a load and store
+      // as appropriate.
+      AllocaInst *OrigAI = cast<AllocaInst>(Ptr->getUnderlyingObject());
+      
+      if (MTI->getSource()->getUnderlyingObject() != OrigAI) {
+        // Dest must be OrigAI, change this to be a load from the original
+        // pointer (bitcasted), then a store to our new alloca.
+        assert(MTI->getRawDest() == Ptr && "Neither use is of pointer?");
+        Value *SrcPtr = MTI->getSource();
+        SrcPtr = Builder.CreateBitCast(SrcPtr, NewAI->getType());
+        
+        LoadInst *SrcVal = Builder.CreateLoad(SrcPtr, "srcval");
+        SrcVal->setAlignment(MTI->getAlignment());
+        Builder.CreateStore(SrcVal, NewAI);
+      } else if (MTI->getDest()->getUnderlyingObject() != OrigAI) {
+        // Src must be OrigAI, change this to be a load from NewAI then a store
+        // through the original dest pointer (bitcasted).
+        assert(MTI->getRawSource() == Ptr && "Neither use is of pointer?");
+        LoadInst *SrcVal = Builder.CreateLoad(NewAI, "srcval");
+
+        Value *DstPtr = Builder.CreateBitCast(MTI->getDest(), NewAI->getType());
+        StoreInst *NewStore = Builder.CreateStore(SrcVal, DstPtr);
+        NewStore->setAlignment(MTI->getAlignment());
+      } else {
+        // Noop transfer. Src == Dst
+      }
+          
+
+      MTI->eraseFromParent();
       continue;
     }
     
