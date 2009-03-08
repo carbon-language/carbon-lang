@@ -35,7 +35,23 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS, bool thumb)
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
-  if (TT.length() > 5) {
+  unsigned Len = TT.length();
+  if (Len >= 5) {
+    if (TT.substr(0, 4) == "armv") {
+      unsigned SubVer = TT[4];
+      if (SubVer > '4' && SubVer <= '9') {
+        if (SubVer >= '6')
+          ARMArchVersion = V6;
+        else if (SubVer == '5') {
+          ARMArchVersion = V5T;
+          if (Len >= 7 && TT[5] == 't' && TT[6] == 'e')
+            ARMArchVersion = V5TE;
+        }
+      }
+    }
+  }
+
+  if (Len > 5) {
     if (TT.find("-darwin") != std::string::npos)
       TargetType = isDarwin;
   } else if (TT.empty()) {
