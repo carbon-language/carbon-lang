@@ -570,8 +570,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   MVT VT = CFP->getValueType(0);
   ConstantFP *LLVMC = const_cast<ConstantFP*>(CFP->getConstantFPValue());
   if (!UseCP) {
-    if (VT!=MVT::f64 && VT!=MVT::f32)
-      assert(0 && "Invalid type expansion");
+    assert((VT == MVT::f64 || VT == MVT::f32) && "Invalid type expansion");
     return DAG.getConstant(LLVMC->getValueAPF().bitcastToAPInt(),
                            (VT == MVT::f64) ? MVT::i64 : MVT::i32);
   }
@@ -6016,7 +6015,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source, DebugLoc dl) {
                                       SignSet, Four, Zero);
     uint64_t FF = 0x5f800000ULL;
     if (TLI.isLittleEndian()) FF <<= 32;
-    static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+    Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
     SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
@@ -6170,7 +6169,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
   }
   if (TLI.isLittleEndian()) FF <<= 32;
-  static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+  Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
