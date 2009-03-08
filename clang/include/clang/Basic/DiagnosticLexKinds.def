@@ -152,7 +152,7 @@ DIAG(ext_pp_comma_expr, EXTENSION,
      "comma operator in operand of #if")
 DIAG(ext_pp_bad_vaargs_use, EXTENSION,
      "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro")
-DIAG(ext_pp_macro_redef, EXTENSION,
+DIAG(ext_pp_macro_redef, EXTWARN,
      "%0 macro redefined")
 DIAG(ext_variadic_macro, EXTENSION,
      "variadic macros were introduced in C99")
