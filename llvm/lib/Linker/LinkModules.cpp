@@ -477,7 +477,7 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
             "': can only link appending global with another appending global!");
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
-  } else if (Src->mayBeOverridden()) {
+  } else if (Src->isWeakForLinker()) {
     // At this point we know that Dest has LinkOnce, External*, Weak, Common,
     // or DLL* linkage.
     if ((Dest->hasLinkOnceLinkage() &&
@@ -489,7 +489,7 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (Dest->mayBeOverridden()) {
+  } else if (Dest->isWeakForLinker()) {
     // At this point we know that Src has External* or DLL* linkage.
     if (Src->hasExternalWeakLinkage()) {
       LinkFromSrc = false;
@@ -667,7 +667,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // The only valid mappings are:
       // - SGV is external declaration, which is effectively a no-op.
       // - SGV is weak, when we just need to throw SGV out.
-      if (!SGV->isDeclaration() && !SGV->mayBeOverridden())
+      if (!SGV->isDeclaration() && !SGV->isWeakForLinker())
         return Error(Err, "Global-Alias Collision on '" + SGV->getName() +
                      "': symbol multiple defined");
     }
@@ -769,7 +769,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (GlobalVariable *DGVar = dyn_cast_or_null<GlobalVariable>(DGV)) {
       // The only allowed way is to link alias with external declaration or weak
       // symbol..
-      if (DGVar->isDeclaration() || DGVar->mayBeOverridden()) {
+      if (DGVar->isDeclaration() || DGVar->isWeakForLinker()) {
         // But only if aliasee is global too...
         if (!isa<GlobalVariable>(DAliasee))
           return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
@@ -798,7 +798,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (Function *DF = dyn_cast_or_null<Function>(DGV)) {
       // The only allowed way is to link alias with external declaration or weak
       // symbol...
-      if (DF->isDeclaration() || DF->mayBeOverridden()) {
+      if (DF->isDeclaration() || DF->isWeakForLinker()) {
         // But only if aliasee is function too...
         if (!isa<Function>(DAliasee))
           return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
@@ -877,10 +877,10 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
               return Error(Err, "Global Variable Collision on '" +
                            SGV->getName() +
                            "': global variables have different initializers");
-          } else if (DGVar->mayBeOverridden()) {
+          } else if (DGVar->isWeakForLinker()) {
             // Nothing is required, mapped values will take the new global
             // automatically.
-          } else if (SGV->mayBeOverridden()) {
+          } else if (SGV->isWeakForLinker()) {
             // Nothing is required, mapped values will take the new global
             // automatically.
           } else if (DGVar->hasAppendingLinkage()) {
@@ -898,7 +898,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
         // thus we assert here.
         // FIXME: Should we weaken this assumption, 'dereference' alias and
         // check for initializer of aliasee?
-        assert(SGV->mayBeOverridden());
+        assert(SGV->isWeakForLinker());
       }
     }
   }
@@ -1007,7 +1007,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // The only valid mappings are:
       // - SF is external declaration, which is effectively a no-op.
       // - SF is weak, when we just need to throw SF out.
-      if (!SF->isDeclaration() && !SF->mayBeOverridden())
+      if (!SF->isDeclaration() && !SF->isWeakForLinker())
         return Error(Err, "Function-Alias Collision on '" + SF->getName() +
                      "': symbol multiple defined");
     }
