@@ -145,7 +145,6 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // Get information about the buffer it points into.
   std::pair<const char*, const char*> BufferInfo = SM.getBufferData(FID);
   const char *BufStart = BufferInfo.first;
-  const char *BufEnd = BufferInfo.second;
 
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   
@@ -157,8 +156,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // Compute the line end.  Scan forward from the error position to the end of
   // the line.
   const char *LineEnd = TokPtr;
-  while (LineEnd != BufEnd && 
-         *LineEnd != '\n' && *LineEnd != '\r')
+  while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
     ++LineEnd;
   
   // Copy the line of code into an std::string for ease of manipulation.
