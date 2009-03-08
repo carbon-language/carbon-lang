@@ -138,7 +138,7 @@ public:
   
   /// LexFromRawLexer - Lex a token from a designated raw lexer (one with no
   /// associated preprocessor object.  Return true if the 'next character to
-  /// read' pointer points and the end of the lexer buffer, false otherwise.
+  /// read' pointer points at the end of the lexer buffer, false otherwise.
   bool LexFromRawLexer(Token &Result) {
     assert(LexingRawMode && "Not already in raw mode!");
     Lex(Result);

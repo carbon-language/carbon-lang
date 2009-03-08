@@ -32,7 +32,7 @@ ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
 /// token.
 SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
                                        const char *&DestPtr) {
-  if (BytesUsed+Len > ScratchBufSize)
+  if (BytesUsed+Len+1 > ScratchBufSize)
     AllocScratchBuffer(Len);
   
   // Return a pointer to the character data.
@@ -42,16 +42,21 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
   memcpy(CurBuffer+BytesUsed, Buf, Len);
 
   // Remember that we used these bytes.
-  BytesUsed += Len;
+  BytesUsed += Len+1;
+  
+  // Add a NUL terminator to the token.  This keeps the tokens separated, in
+  // case they get relexed, and puts them on their own virtual lines in case a
+  // diagnostic points to one.
+  CurBuffer[BytesUsed-1] = '\0';
 
-  return BufferStartLoc.getFileLocWithOffset(BytesUsed-Len);
+  return BufferStartLoc.getFileLocWithOffset(BytesUsed-Len-1);
 }
 
 void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   // Only pay attention to the requested length if it is larger than our default
   // page size.  If it is, we allocate an entire chunk for it.  This is to
   // support gigantic tokens, which almost certainly won't happen. :)
-  if (RequestLen < ScratchBufSize)
+  if (RequestLen+1 < ScratchBufSize)
     RequestLen = ScratchBufSize;
   
   llvm::MemoryBuffer *Buf = 
@@ -59,5 +64,6 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   FileID FID = SourceMgr.createFileIDForMemBuffer(Buf);
   BufferStartLoc = SourceMgr.getLocForStartOfFile(FID);
   CurBuffer = const_cast<char*>(Buf->getBufferStart());
-  BytesUsed = 0;
+  BytesUsed = 1;
+  CurBuffer[0] = '0';  // Start out with a \0 for cleanliness.
 }

@@ -141,9 +141,8 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   // contents appear to have a space before them.
   StrVal[0] = ' ';
   
-  // Replace the terminating quote with a \n\0.
+  // Replace the terminating quote with a \n.
   StrVal[StrVal.size()-1] = '\n';
-  StrVal += '\0';
   
   // Remove escaped quotes and escapes.
   for (unsigned i = 0, e = StrVal.size(); i != e-1; ++i) {
@@ -165,8 +164,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.
   Lexer *TL = Lexer::Create_PragmaLexer(TokLoc, PragmaLoc, RParenLoc,
-                                        // do not include the null in the count.
-                                        StrVal.size()-1, *this);
+                                        StrVal.size(), *this);
 
   EnterSourceFileWithLexer(TL, 0);
 

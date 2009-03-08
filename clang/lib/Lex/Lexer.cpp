@@ -167,6 +167,7 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
   
   L->BufferPtr = StrData;
   L->BufferEnd = StrData+TokLen;
+  assert(L->BufferEnd[0] == 0 && "Buffer is not nul terminated!");
 
   // Set the SourceLocation with the remapping information.  This ensures that
   // GetMappedTokenLoc will remap the tokens as they are lexed.

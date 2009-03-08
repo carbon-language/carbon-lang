@@ -475,14 +475,10 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Loc = SourceMgr.getInstantiationRange(Loc).second;
     PresumedLoc PLoc = SourceMgr.getPresumedLoc(Loc);
     
-    // __LINE__ expands to a simple numeric value.  Add a space after it so that
-    // it will tokenize as a number (and not run into stuff after it in the temp
-    // buffer).
-    sprintf(TmpBuffer, "%u ", PLoc.getLine());
-    unsigned Length = strlen(TmpBuffer)-1;
+    // __LINE__ expands to a simple numeric value.
+    sprintf(TmpBuffer, "%u", PLoc.getLine());
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, Length+1, Tok, Tok.getLocation());
-    Tok.setLength(Length);  // Trim off space.
+    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     // C99 6.10.8: "__FILE__: The presumed name of the current source file (a
     // character string literal)". This can be affected by #line.
@@ -532,14 +528,10 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     for (; PLoc.isValid(); ++Depth)
       PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
     
-    // __INCLUDE_LEVEL__ expands to a simple numeric value.  Add a space after
-    // it so that it will tokenize as a number (and not run into stuff after it
-    // in the temp buffer).
-    sprintf(TmpBuffer, "%u ", Depth);
-    unsigned Length = strlen(TmpBuffer)-1;
+    // __INCLUDE_LEVEL__ expands to a simple numeric value.
+    sprintf(TmpBuffer, "%u", Depth);
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, Length, Tok, Tok.getLocation());
-    Tok.setLength(Length);  // Trim off space.
+    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else if (II == Ident__TIMESTAMP__) {
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
@@ -565,10 +557,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     TmpBuffer[0] = '"';
     strcpy(TmpBuffer+1, Result);
     unsigned Len = strlen(TmpBuffer);
-    TmpBuffer[Len-1] = '"';  // Replace the newline with a quote.
+    TmpBuffer[Len] = '"';  // Replace the newline with a quote.
     Tok.setKind(tok::string_literal);
     CreateString(TmpBuffer, Len+1, Tok, Tok.getLocation());
-    Tok.setLength(Len);  // Trim off space.
   } else {
     assert(0 && "Unknown identifier!");
   }

@@ -365,11 +365,9 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     // Get the RHS token.
     const Token &RHS = Tokens[CurToken];
   
-    bool isInvalid = false;
-
     // Allocate space for the result token.  This is guaranteed to be enough for
-    // the two tokens and a null terminator.
-    Buffer.resize(Tok.getLength() + RHS.getLength() + 1);
+    // the two tokens.
+    Buffer.resize(Tok.getLength() + RHS.getLength());
     
     // Get the spelling of the LHS token in Buffer.
     const char *BufPtr = &Buffer[0];
@@ -382,11 +380,8 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     if (BufPtr != &Buffer[LHSLen])   // Really, we want the chars in Buffer!
       memcpy(&Buffer[LHSLen], BufPtr, RHSLen);
     
-    // Add null terminator.
-    Buffer[LHSLen+RHSLen] = '\0';
-    
     // Trim excess space.
-    Buffer.resize(LHSLen+RHSLen+1);
+    Buffer.resize(LHSLen+RHSLen);
     
     // Plop the pasted result (including the trailing newline and null) into a
     // scratch buffer where we can lex it.
@@ -425,45 +420,43 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       // Make a lexer object so that we lex and expand the paste result.
       Lexer TL(SourceMgr.getLocForStartOfFile(LocFileID),
                PP.getLangOptions(), ScratchBufStart,
-               ResultTokStrPtr, 
-               ResultTokStrPtr+LHSLen+RHSLen /*don't include null*/);
+               ResultTokStrPtr, ResultTokStrPtr+LHSLen+RHSLen);
       
       // Lex a token in raw mode.  This way it won't look up identifiers
       // automatically, lexing off the end will return an eof token, and
       // warnings are disabled.  This returns true if the result token is the
       // entire buffer.
-      bool IsComplete = TL.LexFromRawLexer(Result);
+      bool isInvalid = !TL.LexFromRawLexer(Result);
       
       // If we got an EOF token, we didn't form even ONE token.  For example, we
       // did "/ ## /" to get "//".
-      IsComplete &= Result.isNot(tok::eof);
-      isInvalid = !IsComplete;
-    }
+      isInvalid |= Result.is(tok::eof);
     
-    // If pasting the two tokens didn't form a full new token, this is an error.
-    // This occurs with "x ## +"  and other stuff.  Return with Tok unmodified
-    // and with RHS as the next token to lex.
-    if (isInvalid) {
-      // Test for the Microsoft extension of /##/ turning into // here on the
-      // error path.
-      if (PP.getLangOptions().Microsoft && Tok.is(tok::slash) && 
-          RHS.is(tok::slash)) {
-        HandleMicrosoftCommentPaste(Tok);
-        return true;
-      }
+      // If pasting the two tokens didn't form a full new token, this is an
+      // error.  This occurs with "x ## +"  and other stuff.  Return with Tok
+      // unmodified and with RHS as the next token to lex.
+      if (isInvalid) {
+        // Test for the Microsoft extension of /##/ turning into // here on the
+        // error path.
+        if (PP.getLangOptions().Microsoft && Tok.is(tok::slash) && 
+            RHS.is(tok::slash)) {
+          HandleMicrosoftCommentPaste(Tok);
+          return true;
+        }
       
-      // TODO: If not in assembler language mode.
-      PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
+        // TODO: If not in assembler language mode.
+        PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
         << std::string(Buffer.begin(), Buffer.end()-1);
-      return false;
+        return false;
+      }
+    
+      // Turn ## into 'unknown' to avoid # ## # from looking like a paste
+      // operator.
+      if (Result.is(tok::hashhash))
+        Result.setKind(tok::unknown);
+      // FIXME: Turn __VA_ARGS__ into "not a token"?
     }
-    
-    // Turn ## into 'unknown' to avoid # ## # from looking like a paste
-    // operator.
-    if (Result.is(tok::hashhash))
-      Result.setKind(tok::unknown);
-    // FIXME: Turn __VA_ARGS__ into "not a token"?
-    
+      
     // Transfer properties of the LHS over the the Result.
     Result.setFlagValue(Token::StartOfLine , Tok.isAtStartOfLine());
     Result.setFlagValue(Token::LeadingSpace, Tok.hasLeadingSpace());
