@@ -5,4 +5,3 @@ directory builds into a library which can be used by various debugger
 front-ends to debug LLVM programs.  The current command line LLVM debugger, 
 llvm-db is currently the only client of this library, but others could be 
 built, to provide a GUI front-end for example.
-
