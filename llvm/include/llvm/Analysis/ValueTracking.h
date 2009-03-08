@@ -62,14 +62,14 @@ namespace llvm {
   /// If InsertBefore is not null, this function will duplicate (modified)
   /// insertvalues when a part of a nested struct is extracted.
   Value *FindInsertedValue(Value *V,
-                         const unsigned *idx_begin,
-                         const unsigned *idx_end,
-                         Instruction *InsertBefore = 0);
+                           const unsigned *idx_begin,
+                           const unsigned *idx_end,
+                           Instruction *InsertBefore = 0);
 
   /// This is a convenience wrapper for finding values indexed by a single index
   /// only.
   inline Value *FindInsertedValue(Value *V, const unsigned Idx,
-                                 Instruction *InsertBefore = 0) {
+                                  Instruction *InsertBefore = 0) {
     const unsigned Idxs[1] = { Idx };
     return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
   }
