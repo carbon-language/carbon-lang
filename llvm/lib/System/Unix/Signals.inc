@@ -101,13 +101,14 @@ static void RegisterHandler(int Signal) {
 }
 
 
-void sys::SetInterruptFunction(void (*IF)()) {
+void llvm::sys::SetInterruptFunction(void (*IF)()) {
   InterruptFunction = IF;
   RegisterHandler(SIGINT);
 }
 
 // RemoveFileOnSignal - The public API
-bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
+bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
+                                   std::string* ErrMsg) {
   if (FilesToRemove == 0)
     FilesToRemove = new std::vector<sys::Path>();
 
@@ -121,7 +122,7 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
 /// AddSignalHandler - Add a function to be called when a signal is delivered
 /// to the process.  The handler can have a cookie passed to it to identify
 /// what instance of the handler it is.
-void sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
+void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
   if (CallBacksToRun == 0)
     CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
   CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
@@ -187,7 +188,7 @@ static void PrintStackTrace(void *) {
 
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
-void sys::PrintStackTraceOnErrorSignal() {
+void llvm::sys::PrintStackTraceOnErrorSignal() {
   AddSignalHandler(PrintStackTrace, 0);
 }
 
