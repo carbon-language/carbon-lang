@@ -1317,6 +1317,23 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
   }
 }
 
+/// hasLaterNon2AddrUse - If the MI has another use of the specified virtual
+/// register later and it's not a two-address, return true. That means it's
+/// safe to mark the current use at 'i' isKill.
+static bool hasLaterNon2AddrUse(MachineInstr &MI, unsigned i, unsigned VirtReg){
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  ++i;
+  for (unsigned e = TID.getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || MO.getReg() != VirtReg)
+      continue;
+    if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
+      return true;
+  }
+  return false;
+}
+
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
@@ -1581,9 +1598,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         // apply, reuse it.
         bool CanReuse = true;
         int ti = TID.getOperandConstraint(i, TOI::TIED_TO);
-        if (ti != -1 &&
-            MI.getOperand(ti).isReg() &&
-            MI.getOperand(ti).getReg() == VirtReg) {
+        if (ti != -1) {
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value and there isn't an
           // earlier def that has already clobbered the physreg.
@@ -1637,9 +1652,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             PotentialDeadStoreSlots.push_back(ReuseSlot);
           }
 
-          // Assumes this is the last use. IsKill will be unset if reg is reused
-          // unless it's a two-address operand.
-          if (ti == -1)
+          // Mark is isKill if it's there no other uses of the same virtual
+          // register and it's not a two-address operand. IsKill will be
+          // unset if reg is reused.
+          if (ti == -1 && !hasLaterNon2AddrUse(MI, i, VirtReg))
             MI.getOperand(i).setIsKill();
           continue;
         }  // CanReuse
