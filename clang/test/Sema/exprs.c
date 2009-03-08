@@ -20,8 +20,11 @@ void test4() {
       static int var;
       var =+ 5;  // expected-warning {{use of unary operator that may be intended as compound assignment (+=)}}
       var =- 5;  // expected-warning {{use of unary operator that may be intended as compound assignment (-=)}}
-      var = +5;
+      var = +5;  // no warning when space between the = and +.
       var = -5;
+
+      var =+5;  // no warning when the subexpr of the unary op has no space before it.
+      var =-5;
 }
 
 // rdar://6319320
