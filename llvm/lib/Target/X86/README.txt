@@ -1840,3 +1840,43 @@ _f:
 	ret
 
 //===---------------------------------------------------------------------===//
+
+memcpy/memmove do not lower to SSE copies when possible.  A silly example is:
+define <16 x float> @foo(<16 x float> %A) nounwind {
+	%tmp = alloca <16 x float>, align 16
+	%tmp2 = alloca <16 x float>, align 16
+	store <16 x float> %A, <16 x float>* %tmp
+	%s = bitcast <16 x float>* %tmp to i8*
+	%s2 = bitcast <16 x float>* %tmp2 to i8*
+	call void @llvm.memcpy.i64(i8* %s, i8* %s2, i64 64, i32 16)
+	%R = load <16 x float>* %tmp2
+	ret <16 x float> %R
+}
+
+declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
+
+which compiles to:
+
+_foo:
+	subl	$140, %esp
+	movaps	%xmm3, 112(%esp)
+	movaps	%xmm2, 96(%esp)
+	movaps	%xmm1, 80(%esp)
+	movaps	%xmm0, 64(%esp)
+	movl	60(%esp), %eax
+	movl	%eax, 124(%esp)
+	movl	56(%esp), %eax
+	movl	%eax, 120(%esp)
+	movl	52(%esp), %eax
+        <many many more 32-bit copies>
+      	movaps	(%esp), %xmm0
+	movaps	16(%esp), %xmm1
+	movaps	32(%esp), %xmm2
+	movaps	48(%esp), %xmm3
+	addl	$140, %esp
+	ret
+
+On Nehalem, it may even be cheaper to just use movups when unaligned than to
+fall back to lower-granularity chunks.
+
+//===---------------------------------------------------------------------===//
