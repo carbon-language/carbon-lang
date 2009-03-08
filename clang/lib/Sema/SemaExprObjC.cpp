@@ -213,29 +213,56 @@ bool Sema::isSelfExpr(Expr *RExpr) {
 // Will search "local" class/category implementations for a method decl.
 // If failed, then we search in class's root for an instance method.
 // Returns 0 if no method is found.
-ObjCMethodDecl *Sema::LookupPrivateOrRootMethod(Selector Sel,
+ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
                                           ObjCInterfaceDecl *ClassDecl) {
   ObjCMethodDecl *Method = 0;
-  
-  if (ObjCImplementationDecl *ImpDecl = 
-      ObjCImplementations[ClassDecl->getIdentifier()])
-    Method = ImpDecl->getClassMethod(Sel);
+  // lookup in class and all superclasses
+  while (ClassDecl && !Method) {
+    if (ObjCImplementationDecl *ImpDecl = 
+        ObjCImplementations[ClassDecl->getIdentifier()])
+      Method = ImpDecl->getClassMethod(Sel);
     
-  // Look through local category implementations associated with the class.
-  if (!Method) {
-    for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
-      if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-        Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
+    // Look through local category implementations associated with the class.
+    if (!Method) {
+      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
+        if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
+          Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
+      }
     }
+    
+    // Before we give up, check if the selector is an instance method.
+    // But only in the root. This matches gcc's behaviour and what the
+    // runtime expects.
+    if (!Method && !ClassDecl->getSuperClass()) {
+      Method = ClassDecl->lookupInstanceMethod(Sel);
+      // Look through local category implementations associated 
+      // with the root class.
+      if (!Method) 
+        Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+    }
+    
+    ClassDecl = ClassDecl->getSuperClass();
   }
-  // Before we give up, check if the selector is an instance method.
-  // But only in the root. This matches gcc's behaviour and what the
-  // runtime expects.
-  if (!Method) {
-    ObjCInterfaceDecl *Root = ClassDecl;
-    while (Root->getSuperClass())
-      Root = Root->getSuperClass();
-    Method = Root->lookupInstanceMethod(Sel);
+  return Method;
+}
+
+ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
+                                              ObjCInterfaceDecl *ClassDecl) {
+  ObjCMethodDecl *Method = 0;
+  while (ClassDecl && !Method) {
+    // If we have implementations in scope, check "private" methods.
+    if (ObjCImplementationDecl *ImpDecl = 
+        ObjCImplementations[ClassDecl->getIdentifier()])
+      Method = ImpDecl->getInstanceMethod(Sel);
+    
+    // Look through local category implementations associated with the class.
+    if (!Method) {
+      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
+        if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
+          Method = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
+      }
+    }
+    ClassDecl = ClassDecl->getSuperClass();
   }
   return Method;
 }
@@ -321,7 +348,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   
   // If we have an implementation in scope, check "private" methods.
   if (!Method)
-    Method = LookupPrivateOrRootMethod(Sel, ClassDecl);
+    Method = LookupPrivateClassMethod(Sel, ClassDecl);
 
   if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
     return true;
@@ -367,8 +394,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       // If we have an interface in scope, check 'super' methods.
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass())
+        if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass()) {
           Method = SuperDecl->lookupInstanceMethod(Sel);
+          
+          if (!Method) 
+            // If we have implementations in scope, check "private" methods.
+            Method = LookupPrivateInstanceMethod(Sel, SuperDecl);
+        }
     }
 
     if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
@@ -405,7 +437,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         Method = ClassDecl->lookupClassMethod(Sel);
         
         if (!Method)
-          Method = LookupPrivateOrRootMethod(Sel, ClassDecl);
+          Method = LookupPrivateClassMethod(Sel, ClassDecl);
       }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;
@@ -467,24 +499,14 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       }
     }
     if (!Method) {
-      // If we have an implementation in scope, check "private" methods.
-      if (ClassDecl) {
-        if (ObjCImplementationDecl *ImpDecl = 
-              ObjCImplementations[ClassDecl->getIdentifier()])
-          Method = ImpDecl->getInstanceMethod(Sel);
-        // Look through local category implementations associated with the class.
-        if (!Method) {
-          for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
-            if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-              Method = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
-          }
-        }
-      }
-      if (!isSelfExpr(RExpr)) {
+      // If we have implementations in scope, check "private" methods.
+      Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+      
+      if (!Method && !isSelfExpr(RExpr)) {
         // If we still haven't found a method, look in the global pool. This
         // behavior isn't very desirable, however we need it for GCC
         // compatibility. FIXME: should we deviate??
-        if (!Method && OCIType->qual_empty()) {
+        if (OCIType->qual_empty()) {
           Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
           if (Method && !OCIType->getDecl()->isForwardDecl())
