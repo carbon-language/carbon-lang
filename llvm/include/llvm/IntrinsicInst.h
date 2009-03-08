@@ -220,26 +220,62 @@ namespace llvm {
     }
   };
 
-
-  /// MemCpyInst - This class wraps the llvm.memcpy intrinsic.
+  /// MemSetInst - This class wraps the llvm.memset intrinsic.
   ///
-  struct MemCpyInst : public MemIntrinsic {
+  struct MemSetInst : public MemIntrinsic {
+    /// get* - Return the arguments to the instruction.
+    ///
+    Value *getValue() const { return const_cast<Value*>(getOperand(2)); }
+    
+    void setValue(Value *Val) {
+      assert(getValue()->getType() == Val->getType() &&
+             "setSource called with pointer of wrong type!");
+      setOperand(2, Val);
+    }
+    
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const MemSetInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::memset;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+  
+  /// MemTransferInst - This class wraps the llvm.memcpy/memmove intrinsics.
+  ///
+  struct MemTransferInst : public MemIntrinsic {
     /// get* - Return the arguments to the instruction.
     ///
     Value *getRawSource() const { return const_cast<Value*>(getOperand(2)); }
-
+    
     /// getSource - This is just like getRawSource, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.
     Value *getSource() const { return getRawSource()->stripPointerCasts(); }
-
-
+    
     void setSource(Value *Ptr) {
       assert(getRawSource()->getType() == Ptr->getType() &&
              "setSource called with pointer of wrong type!");
       setOperand(2, Ptr);
     }
-
+    
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const MemTransferInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::memcpy ||
+             I->getIntrinsicID() == Intrinsic::memmove;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+  
+  
+  /// MemCpyInst - This class wraps the llvm.memcpy intrinsic.
+  ///
+  struct MemCpyInst : public MemTransferInst {
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemCpyInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
@@ -252,49 +288,11 @@ namespace llvm {
 
   /// MemMoveInst - This class wraps the llvm.memmove intrinsic.
   ///
-  struct MemMoveInst : public MemIntrinsic {
-    /// get* - Return the arguments to the instruction.
-    ///
-    Value *getRawSource() const { return const_cast<Value*>(getOperand(2)); }
-
-    /// getSource - This is just like getRawSource, but it strips off any cast
-    /// instructions that feed it, giving the original input.  The returned
-    /// value is guaranteed to be a pointer.
-    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
-
-    void setSource(Value *Ptr) {
-      assert(getRawSource()->getType() == Ptr->getType() &&
-             "setSource called with pointer of wrong type!");
-      setOperand(2, Ptr);
-    }
-
+  struct MemMoveInst : public MemTransferInst {
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemMoveInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memmove;
-    }
-    static inline bool classof(const Value *V) {
-      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
-    }
-  };
-
-  /// MemSetInst - This class wraps the llvm.memset intrinsic.
-  ///
-  struct MemSetInst : public MemIntrinsic {
-    /// get* - Return the arguments to the instruction.
-    ///
-    Value *getValue() const { return const_cast<Value*>(getOperand(2)); }
-
-    void setValue(Value *Val) {
-      assert(getValue()->getType() == Val->getType() &&
-             "setSource called with pointer of wrong type!");
-      setOperand(2, Val);
-    }
-
-    // Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const MemSetInst *) { return true; }
-    static inline bool classof(const IntrinsicInst *I) {
-      return I->getIntrinsicID() == Intrinsic::memset;
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));

@@ -9464,7 +9464,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // If we can determine a pointer alignment that is bigger than currently
     // set, update the alignment.
-    if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+    if (isa<MemTransferInst>(MI)) {
       if (Instruction *I = SimplifyMemTransfer(MI))
         return I;
     } else if (MemSetInst *MSI = dyn_cast<MemSetInst>(MI)) {

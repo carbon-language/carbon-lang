@@ -605,7 +605,7 @@ void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
     return MarkUnsafe(Info);
   
   // We only know about memcpy/memset/memmove.
-  if (!isa<MemCpyInst>(MI) && !isa<MemSetInst>(MI) && !isa<MemMoveInst>(MI))
+  if (!isa<MemIntrinsic>(MI))
     return MarkUnsafe(Info);
   
   // Otherwise, we can transform it.  Determine whether this is a memcpy/set
@@ -726,19 +726,12 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   // memset, this Value* stays null.
   Value *OtherPtr = 0;
   unsigned MemAlignment = MI->getAlignment()->getZExtValue();
-  if (MemCpyInst *MCI = dyn_cast<MemCpyInst>(MI)) {
-    if (BCInst == MCI->getRawDest())
-      OtherPtr = MCI->getRawSource();
+  if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI)) { // memmove/memcopy
+    if (BCInst == MTI->getRawDest())
+      OtherPtr = MTI->getRawSource();
     else {
-      assert(BCInst == MCI->getRawSource());
-      OtherPtr = MCI->getRawDest();
-    }
-  } else if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI)) {
-    if (BCInst == MMI->getRawDest())
-      OtherPtr = MMI->getRawSource();
-    else {
-      assert(BCInst == MMI->getRawSource());
-      OtherPtr = MMI->getRawDest();
+      assert(BCInst == MTI->getRawSource());
+      OtherPtr = MTI->getRawDest();
     }
   }
   
@@ -805,7 +798,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     
     // If we got down to a scalar, insert a load or store as appropriate.
     if (EltTy->isSingleValueType()) {
-      if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+      if (isa<MemTransferInst>(MI)) {
         if (SROADest) {
           // From Other to Alloca.
           Value *Elt = new LoadInst(OtherElt, "tmp", false, OtherEltAlign, MI);
@@ -875,7 +868,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     unsigned EltSize = TD->getTypePaddedSize(EltTy);
     
     // Finally, insert the meminst for this element.
-    if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+    if (isa<MemTransferInst>(MI)) {
       Value *Ops[] = {
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
@@ -1350,17 +1343,18 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       IsNotTrivial = true;
       continue;
     }
-    
+
     // If this is a constant sized memset of a constant value (e.g. 0) we can
     // handle it.
-    if (isa<MemSetInst>(User) &&
-        // Store of constant value.
-        isa<ConstantInt>(User->getOperand(2)) &&
-        // Store with constant size.
-        isa<ConstantInt>(User->getOperand(3))) {
-      VecTy = Type::VoidTy;
-      IsNotTrivial = true;
-      continue;
+    if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
+      // Store of constant value and constant size.
+      if (isa<ConstantInt>(MSI->getValue()) &&
+          isa<ConstantInt>(MSI->getLength())) {
+        // FIXME (!): Why reset VecTy?
+        VecTy = Type::VoidTy;
+        IsNotTrivial = true;
+        continue;
+      }
     }
 
     // Ignore dbg intrinsic.
@@ -1731,7 +1725,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
     
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
-    if (!isa<MemCpyInst>(*UI) && !isa<MemMoveInst>(*UI))
+    if (!isa<MemTransferInst>(*UI))
       return false;
 
     // If we already have seen a copy, reject the second one.
