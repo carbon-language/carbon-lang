@@ -219,7 +219,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.HasPHIUser = true;
       } else if (isa<CmpInst>(I)) {
-      } else if (isa<MemCpyInst>(I) || isa<MemMoveInst>(I)) {
+      } else if (isa<MemTransferInst>(I)) {
         if (I->getOperand(1) == V)
           GS.StoredType = GlobalStatus::isStored;
         if (I->getOperand(2) == V)
