@@ -223,7 +223,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
 }
 
 /// IsFunctionMallocLike - A function is malloc-like if it returns either null
-/// or a pointer that don't alias any other pointer visible to the caller.
+/// or a pointer that doesn't alias any other pointer visible to the caller.
 bool FunctionAttrs::IsFunctionMallocLike(Function *F,
                               SmallPtrSet<CallGraphNode*, 8> &SCCNodes) const {
   CallGraph &CG = getAnalysis<CallGraph>();
@@ -297,8 +297,8 @@ bool FunctionAttrs::AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC) {
   for (unsigned i = 0, e = SCC.size(); i != e; ++i)
     SCCNodes.insert(SCC[i]);
 
-  // Check each function in turn, determining which pointer arguments are not
-  // captured.
+  // Check each function in turn, determining which functions return noalias
+  // pointers.
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
 
