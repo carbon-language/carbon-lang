@@ -23,10 +23,12 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/UniqueVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
@@ -34,6 +36,7 @@ using namespace llvm;
 STATISTIC(NumReadNone, "Number of functions marked readnone");
 STATISTIC(NumReadOnly, "Number of functions marked readonly");
 STATISTIC(NumNoCapture, "Number of arguments marked nocapture");
+STATISTIC(NumNoAlias, "Number of function returns marked noalias");
 
 namespace {
   struct VISIBILITY_HIDDEN FunctionAttrs : public CallGraphSCCPass {
@@ -48,6 +51,13 @@ namespace {
 
     // AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
     bool AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC);
+
+    // IsFunctionMallocLike - Does this function allocate new memory?
+    bool IsFunctionMallocLike(Function *F,
+                              SmallPtrSet<CallGraphNode*, 8> &) const;
+
+    // AddNoAliasAttrs - Deduce noalias attributes for the SCC.
+    bool AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -212,8 +222,125 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
   return Changed;
 }
 
+/// IsFunctionMallocLike - A function is malloc-like if it returns either null
+/// or a pointer that don't alias any other pointer visible to the caller.
+bool FunctionAttrs::IsFunctionMallocLike(Function *F,
+                              SmallPtrSet<CallGraphNode*, 8> &SCCNodes) const {
+  CallGraph &CG = getAnalysis<CallGraph>();
+
+  UniqueVector<Value *> FlowsToReturn;
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    if (ReturnInst *Ret = dyn_cast<ReturnInst>(I->getTerminator()))
+      FlowsToReturn.insert(Ret->getReturnValue());
+
+  for (unsigned i = 0; i != FlowsToReturn.size(); ++i) {
+    Value *RetVal = FlowsToReturn[i+1];   // UniqueVector[0] is reserved.
+
+    if (Constant *C = dyn_cast<Constant>(RetVal)) {
+      if (!C->isNullValue() && !isa<UndefValue>(C))
+        return false;
+
+      continue;
+    }
+
+    if (isa<Argument>(RetVal))
+      return false;
+
+    if (Instruction *RVI = dyn_cast<Instruction>(RetVal))
+      switch (RVI->getOpcode()) {
+        // Extend the analysis by looking upwards.
+        case Instruction::GetElementPtr:
+        case Instruction::BitCast:
+          FlowsToReturn.insert(RVI->getOperand(0));
+          continue;
+        case Instruction::Select: {
+          SelectInst *SI = cast<SelectInst>(RVI);
+          FlowsToReturn.insert(SI->getTrueValue());
+          FlowsToReturn.insert(SI->getFalseValue());
+        } continue;
+        case Instruction::PHI: {
+          PHINode *PN = cast<PHINode>(RVI);
+          for (int i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+            FlowsToReturn.insert(PN->getIncomingValue(i));
+        } continue;
+
+        // Check whether the pointer came from an allocation.
+        case Instruction::Alloca:
+        case Instruction::Malloc:
+          break;
+        case Instruction::Call:
+        case Instruction::Invoke: {
+          CallSite CS(RVI);
+          if (CS.paramHasAttr(0, Attribute::NoAlias))
+            break;
+          if (CS.getCalledFunction() &&
+              SCCNodes.count(CG[CS.getCalledFunction()]))
+            break;
+        } // fall-through
+        default:
+          return false;  // Did not come from an allocation.
+      }
+
+    if (PointerMayBeCaptured(RetVal, false))
+      return false;
+  }
+
+  return true;
+}
+
+/// AddNoAliasAttrs - Deduce noalias attributes for the SCC.
+bool FunctionAttrs::AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC) {
+  SmallPtrSet<CallGraphNode*, 8> SCCNodes;
+
+  // Fill SCCNodes with the elements of the SCC.  Used for quickly
+  // looking up whether a given CallGraphNode is in this SCC.
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+    SCCNodes.insert(SCC[i]);
+
+  // Check each function in turn, determining which pointer arguments are not
+  // captured.
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+    Function *F = SCC[i]->getFunction();
+
+    if (F == 0)
+      // External node - skip it;
+      return false;
+
+    // Already noalias.
+    if (F->doesNotAlias(0))
+      continue;
+
+    // Definitions with weak linkage may be overridden at linktime, so
+    // treat them like declarations.
+    if (F->isDeclaration() || F->mayBeOverridden())
+      return false;
+
+    // We annotate noalias return values, which are only applicable to 
+    // pointer types.
+    if (!isa<PointerType>(F->getReturnType()))
+      continue;
+
+    if (!IsFunctionMallocLike(F, SCCNodes))
+      return false;
+  }
+
+  bool MadeChange = false;
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+    Function *F = SCC[i]->getFunction();
+    if (F->doesNotAlias(0) || !isa<PointerType>(F->getReturnType()))
+      continue;
+
+    F->setDoesNotAlias(0);
+    ++NumNoAlias;
+    MadeChange = true;
+  }
+
+  return MadeChange;
+}
+
 bool FunctionAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   bool Changed = AddReadAttrs(SCC);
   Changed |= AddNoCaptureAttrs(SCC);
+  Changed |= AddNoAliasAttrs(SCC);
   return Changed;
 }
