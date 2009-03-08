@@ -599,6 +599,7 @@
 		DED7D7D70A524302003AD0FB /* README.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		DED7D9170A52518C003AD0FB /* ScratchBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ScratchBuffer.h; sourceTree = "<group>"; };
 		DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ScratchBuffer.cpp; sourceTree = "<group>"; };
+		DEDFE5270F63A9230035BD10 /* DeclNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DeclNodes.def; path = clang/AST/DeclNodes.def; sourceTree = "<group>"; };
 		DEEBBD430C19C5D200A9FE82 /* TODO.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenTypes.h; path = lib/CodeGen/CodeGenTypes.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = lib/CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1050,6 +1051,7 @@
 				84AF36A00CB17A3B00C820A5 /* DeclObjC.h */,
 				35EE48AD0E0C4CB200715C54 /* DeclCXX.h */,
 				358D23090E8BEB850003DDCC /* DeclGroup.h */,
+				DEDFE5270F63A9230035BD10 /* DeclNodes.def */,
 				DEB076C90F3A221200F5A2BE /* DeclTemplate.h */,
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
 				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
