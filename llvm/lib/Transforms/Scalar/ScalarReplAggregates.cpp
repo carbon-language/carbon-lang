@@ -1350,8 +1350,6 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       // Store of constant value and constant size.
       if (isa<ConstantInt>(MSI->getValue()) &&
           isa<ConstantInt>(MSI->getLength())) {
-        // FIXME (!): Why reset VecTy?
-        VecTy = Type::VoidTy;
         IsNotTrivial = true;
         continue;
       }
@@ -1628,21 +1626,25 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   const Type *AllocaType = Old->getType();
 
   if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
-    // If the result alloca is a vector type, this is either an element
-    // access or a bitcast to another vector type.
-    if (isa<VectorType>(SV->getType())) {
-      SV = Builder.CreateBitCast(SV, AllocaType, "tmp");
-    } else {
-      // Must be an element insertion.
-      unsigned Elt = Offset/TD->getTypePaddedSizeInBits(VTy->getElementType());
-      
-      if (SV->getType() != VTy->getElementType())
-        SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
-      
-      SV = Builder.CreateInsertElement(Old, SV, 
-                                       ConstantInt::get(Type::Int32Ty, Elt), 
-                                       "tmp");
-    }
+    uint64_t VecSize = TD->getTypePaddedSizeInBits(VTy);
+    uint64_t ValSize = TD->getTypePaddedSizeInBits(SV->getType());
+    
+    // Changing the whole vector with memset or with an access of a different
+    // vector type?
+    if (ValSize == VecSize)
+      return Builder.CreateBitCast(SV, AllocaType, "tmp");
+
+    uint64_t EltSize = TD->getTypePaddedSizeInBits(VTy->getElementType());
+
+    // Must be an element insertion.
+    unsigned Elt = Offset/EltSize;
+    
+    if (SV->getType() != VTy->getElementType())
+      SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
+    
+    SV = Builder.CreateInsertElement(Old, SV, 
+                                     ConstantInt::get(Type::Int32Ty, Elt),
+                                     "tmp");
     return SV;
   }
   
