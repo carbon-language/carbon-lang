@@ -1,3 +1,4 @@
+// rdar://6657613
 // RUN: clang -emit-llvm %s -o %t && 
 
 @class C;
