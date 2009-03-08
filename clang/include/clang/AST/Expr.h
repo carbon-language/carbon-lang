@@ -910,13 +910,22 @@ public:
                               StmtClass SC);
 };
 
-/// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
+/// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
 class MemberExpr : public Expr {
+  /// Base - the expression for the base pointer or structure references.  In
+  /// X.F, this is "X".
   Stmt *Base;
+  
+  /// MemberDecl - This is the decl being referenced by the field/member name.
+  /// In X.F, this is the decl referenced by F.
   NamedDecl *MemberDecl;
+  
+  /// MemberLoc - This is the location of the member name.
   SourceLocation MemberLoc;
-  bool IsArrow;      // True if this is "X->F", false if this is "X.F".
+  
+  /// IsArrow - True if this is "X->F", false if this is "X.F".
+  bool IsArrow;
 public:
   MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
              QualType ty) 
@@ -928,6 +937,9 @@ public:
   NamedDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
   bool isArrow() const { return IsArrow; }
+  
+  /// getMemberLoc - Return the location of the "member", in X->F, it is the
+  /// location of 'F'.
   SourceLocation getMemberLoc() const { return MemberLoc; }
 
   virtual SourceRange getSourceRange() const {
