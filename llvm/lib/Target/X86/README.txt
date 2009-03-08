@@ -1818,3 +1818,25 @@ LBB1_1:	## bb1
 	jne	LBB1_1	## bb1
 
 //===---------------------------------------------------------------------===//
+
+test/CodeGen/X86/2009-03-07-FPConstSelect.ll compiles to:
+
+_f:
+	xorl	%eax, %eax
+	cmpl	$0, 4(%esp)
+	movl	$4, %ecx
+	cmovne	%eax, %ecx
+	flds	LCPI1_0(%ecx)
+	ret
+
+we should recognize cmov of 0 and a power of two and compile it into a 
+setcc+shift.  This would give us something like:
+
+_f:
+	xorl %eax,%eax
+	cmpl	$0, 4(%esp)
+	seteq  %al
+	flds	LCPI1_0(%ecx, %eax,4)
+	ret
+
+//===---------------------------------------------------------------------===//
