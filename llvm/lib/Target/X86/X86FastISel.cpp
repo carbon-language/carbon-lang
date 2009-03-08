@@ -30,9 +30,10 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-
 using namespace llvm;
 
+namespace {
+  
 class X86FastISel : public FastISel {
   /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
   /// make the right decision when generating code for different targets.
@@ -136,6 +137,8 @@ private:
 
   bool isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1 = false);
 };
+  
+} // end anonymous namespace.
 
 bool X86FastISel::isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1) {
   VT = TLI.getValueType(Ty, /*HandleUnknown=*/true);
