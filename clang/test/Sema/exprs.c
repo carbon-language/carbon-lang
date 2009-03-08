@@ -78,6 +78,6 @@ void test11(struct mystruct P, float F) {
 
 // PR3753
 int test12(const char *X) {
-  return X == "foo";  // expected-warning {{comparison against a string literal is undefined}}
+  return X == "foo";  // expected-warning {{comparison against a string literal is unspecified}}
 }
 
