@@ -471,15 +471,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
         break;
     }
-  // Check for GCC extension "Class<foo>".
-  } else if (ObjCQualifiedClassType *QIT = 
-               dyn_cast<ObjCQualifiedClassType>(ReceiverCType)) {
-    // Search protocols for class methods.
-    for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-      ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
-      if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
-        break;
-    }
   } else if (const ObjCInterfaceType *OCIType = 
                 ReceiverCType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
