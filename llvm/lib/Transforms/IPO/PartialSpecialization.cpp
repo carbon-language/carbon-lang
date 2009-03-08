@@ -65,7 +65,7 @@ SpecializeFunction(Function* F,
   DenseSet<unsigned> deleted;
   for (DenseMap<const Value*, Value*>::iterator 
          repb = replacements.begin(), repe = replacements.end();
-       repb != repe; ++ repb)
+       repb != repe; ++repb)
     deleted.insert(cast<Argument>(repb->first)->getArgNo());
 
   Function* NF = CloneFunction(F, replacements);
@@ -74,7 +74,7 @@ SpecializeFunction(Function* F,
 
   for (Value::use_iterator ii = F->use_begin(), ee = F->use_end(); 
        ii != ee; ) {
-    Value::use_iterator i = ii;;
+    Value::use_iterator i = ii;
     ++ii;
     if (isa<CallInst>(i) || isa<InvokeInst>(i)) {
       CallSite CS(cast<Instruction>(i));
@@ -85,16 +85,19 @@ SpecializeFunction(Function* F,
           if (!deleted.count(x))
             args.push_back(CS.getArgument(x));
         Value* NCall;
-        if (isa<CallInst>(i))
+        if (CallInst *CI = dyn_cast<CallInst>(i)) {
           NCall = CallInst::Create(NF, args.begin(), args.end(), 
-                                   CS.getInstruction()->getName(), 
-                                   CS.getInstruction());
-        else
-          NCall = InvokeInst::Create(NF, cast<InvokeInst>(i)->getNormalDest(),
-                                     cast<InvokeInst>(i)->getUnwindDest(),
+                                   CI->getName(), CI);
+          cast<CallInst>(NCall)->setTailCall(CI->isTailCall());
+          cast<CallInst>(NCall)->setCallingConv(CI->getCallingConv());
+        } else {
+          InvokeInst *II = cast<InvokeInst>(i);
+          NCall = InvokeInst::Create(NF, II->getNormalDest(),
+                                     II->getUnwindDest(),
                                      args.begin(), args.end(), 
-                                     CS.getInstruction()->getName(), 
-                                     CS.getInstruction());
+                                     II->getName(), II);
+          cast<InvokeInst>(NCall)->setCallingConv(II->getCallingConv());
+        }
         CS.getInstruction()->replaceAllUsesWith(NCall);
         CS.getInstruction()->eraseFromParent();
       }
