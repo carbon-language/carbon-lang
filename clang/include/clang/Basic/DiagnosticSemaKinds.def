@@ -1344,10 +1344,12 @@ DIAG(warn_ret_stack_ref, WARNING,
   "reference to stack memory associated with local variable %0 returned")
 
 
-// CHECK: for non-floating point, expressions of the form x == x or x != x
+// for non-floating point, expressions of the form x == x or x != x
 // should result in a warning, since these always evaluate to a constant.
-DIAG(warn_selfcomparison,WARNING,
-     "self-comparison always results in a constant value.")
+DIAG(warn_selfcomparison, WARNING,
+     "self-comparison always results in a constant value")
+DIAG(warn_stringcompare, WARNING,
+     "comparison against a string literal is undefined (use strcmp?)")
 
 
 // Blocks

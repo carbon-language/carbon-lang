@@ -72,7 +72,12 @@ void test10(int n,...) {
 #define MYMAX(A,B)    __extension__ ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
 
 struct mystruct {int A; };
-void foo(struct mystruct P, float F) {
+void test11(struct mystruct P, float F) {
   MYMAX(P, F);  // expected-error {{invalid operands to binary expression ('typeof(P)' (aka 'struct mystruct') and 'typeof(F)' (aka 'float'))}}
+}
+
+// PR3753
+int test12(const char *X) {
+  return X == "foo";  // expected-warning {{comparison against a string literal is undefined}}
 }
 

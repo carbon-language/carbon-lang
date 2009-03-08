@@ -3155,18 +3155,35 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
-  // For non-floating point types, check for self-comparisons of the form
-  // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
-  // often indicate logic errors in the program.
   if (!lType->isFloatingType()) {
-    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
-      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
+    // For non-floating point types, check for self-comparisons of the form
+    // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
+    // often indicate logic errors in the program.
+    Expr *LHSStripped = lex->IgnoreParens();
+    Expr *RHSStripped = rex->IgnoreParens();
+    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped))
+      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped))
         if (DRL->getDecl() == DRR->getDecl())
           Diag(Loc, diag::warn_selfcomparison);
+    
+    if (isa<CastExpr>(LHSStripped))
+      LHSStripped = LHSStripped->IgnoreParenCasts();
+    if (isa<CastExpr>(RHSStripped))
+      RHSStripped = RHSStripped->IgnoreParenCasts();
+    
+    // Warn about comparisons against a string constant (unless the other
+    // operand is null), the user probably wants strcmp.
+    if ((isa<StringLiteral>(LHSStripped) || isa<ObjCEncodeExpr>(LHSStripped)) &&
+        !RHSStripped->isNullPointerConstant(Context))
+      Diag(Loc, diag::warn_stringcompare) << lex->getSourceRange();
+    else if ((isa<StringLiteral>(RHSStripped) ||
+              isa<ObjCEncodeExpr>(RHSStripped)) &&
+             !LHSStripped->isNullPointerConstant(Context))
+      Diag(Loc, diag::warn_stringcompare) << rex->getSourceRange();
   }
 
   // The result of comparisons is 'bool' in C++, 'int' in C.
-  QualType ResultTy = getLangOptions().CPlusPlus? Context.BoolTy : Context.IntTy;
+  QualType ResultTy = getLangOptions().CPlusPlus? Context.BoolTy :Context.IntTy;
 
   if (isRelational) {
     if (lType->isRealType() && rType->isRealType())
@@ -3174,7 +3191,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   } else {
     // Check for comparisons of floating point operands using != and ==.
     if (lType->isFloatingType()) {
-      assert (rType->isFloatingType());
+      assert(rType->isFloatingType());
       CheckFloatComparison(Loc,lex,rex);
     }
 
