@@ -678,13 +678,11 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
                                  M->getParent()->getParent()->getParent(),
                                  M->getIntrinsicID(), Tys, 1);
     
-  std::vector<Value*> args;
-  args.push_back(M->getRawDest());
-  args.push_back(MDep->getRawSource());
-  args.push_back(M->getLength());
-  args.push_back(M->getAlignment());
+  Value *Args[4] = {
+    M->getRawDest(), MDep->getRawSource(), M->getLength(), M->getAlignmentCst()
+  };
   
-  CallInst* C = CallInst::Create(MemCpyFun, args.begin(), args.end(), "", M);
+  CallInst* C = CallInst::Create(MemCpyFun, Args, Args+4, "", M);
   
   
   // If C and M don't interfere, then this is a valid transformation.  If they

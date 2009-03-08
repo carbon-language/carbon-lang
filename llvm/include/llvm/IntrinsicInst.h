@@ -176,8 +176,12 @@ namespace llvm {
     Value *getRawDest() const { return const_cast<Value*>(getOperand(1)); }
 
     Value *getLength() const { return const_cast<Value*>(getOperand(3)); }
-    ConstantInt *getAlignment() const {
+    ConstantInt *getAlignmentCst() const {
       return cast<ConstantInt>(const_cast<Value*>(getOperand(4)));
+    }
+    
+    unsigned getAlignment() const {
+      return getAlignmentCst()->getZExtValue();
     }
 
     /// getDest - This is just like getRawDest, but it strips off any cast
@@ -198,12 +202,11 @@ namespace llvm {
              "setLength called with value of wrong type!");
       setOperand(3, L);
     }
-    void setAlignment(ConstantInt *A) {
-      assert(getAlignment()->getType() == A->getType() &&
-             "setAlignment called with value of wrong type!");
-      setOperand(4, A);
+    void setAlignment(unsigned A) {
+      const Type *Int32Ty = getOperand(4)->getType();
+      setOperand(4, ConstantInt::get(Int32Ty, A));
     }
-
+    
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemIntrinsic *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
