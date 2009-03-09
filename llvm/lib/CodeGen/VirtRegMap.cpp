@@ -1317,23 +1317,6 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
   }
 }
 
-/// hasLaterNon2AddrUse - If the MI has another use of the specified virtual
-/// register later and it's not a two-address, return true. That means it's
-/// safe to mark the current use at 'i' isKill.
-static bool hasLaterNon2AddrUse(MachineInstr &MI, unsigned i, unsigned VirtReg){
-  const TargetInstrDesc &TID = MI.getDesc();
-
-  ++i;
-  for (unsigned e = TID.getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || MO.getReg() != VirtReg)
-      continue;
-    if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
-      return true;
-  }
-  return false;
-}
-
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
@@ -1357,6 +1340,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
   SmallSet<MachineInstr*, 4> ReMatDefs;
 
   // Clear kill info.
+  SmallSet<unsigned, 2> KilledMIRegs;
   RegKills.reset();
   KillOps.clear();
   KillOps.resize(TRI->getNumRegs(), NULL);
@@ -1539,6 +1523,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
 
     // Process all of the spilled uses and all non spilled reg references.
     SmallVector<int, 2> PotentialDeadStoreSlots;
+    KilledMIRegs.clear();
     for (unsigned j = 0, e = VirtUseOps.size(); j != e; ++j) {
       unsigned i = VirtUseOps[j];
       MachineOperand &MO = MI.getOperand(i);
@@ -1655,8 +1640,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // Mark is isKill if it's there no other uses of the same virtual
           // register and it's not a two-address operand. IsKill will be
           // unset if reg is reused.
-          if (ti == -1 && !hasLaterNon2AddrUse(MI, i, VirtReg))
+          if (ti == -1 && KilledMIRegs.count(VirtReg) == 0) {
             MI.getOperand(i).setIsKill();
+            KilledMIRegs.insert(VirtReg);
+          }
+
           continue;
         }  // CanReuse
         
@@ -1751,8 +1739,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       Spills.addAvailable(SSorRMId, PhysReg);
       // Assumes this is the last use. IsKill will be unset if reg is reused
       // unless it's a two-address operand.
-      if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
+      if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1 &&
+          KilledMIRegs.count(VirtReg) == 0) {
         MI.getOperand(i).setIsKill();
+        KilledMIRegs.insert(VirtReg);
+      }
       unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       MI.getOperand(i).setReg(RReg);
       UpdateKills(*prior(MII), RegKills, KillOps, TRI);
