@@ -436,11 +436,19 @@ protected:
   /// This is a convenience wrapper which not only creates the
   /// variable, but also sets the section and alignment and adds the
   /// global to the UsedGlobals list.
+  ///
+  /// \param Name - The variable name.
+  /// \param Init - The variable initializer; this is also used to
+  /// define the type of the variable.
+  /// \param Section - The section the variable should go into, or 0.
+  /// \param Align - The alignment for the variable, or 0.
+  /// \param AddToUsed - Whether the variable should be added to
+  /// llvm.
   llvm::GlobalVariable *CreateMetadataVar(const std::string &Name,
                                           llvm::Constant *Init,
                                           const char *Section,
-                                          bool SetAlignment,
-                                          bool IsUsed);
+                                          unsigned Align,
+                                          bool AddToUsed);
 
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
@@ -1857,8 +1865,8 @@ llvm::GlobalVariable *
 CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
                                    llvm::Constant *Init,
                                    const char *Section,
-                                   bool SetAlignment,
-                                   bool IsUsed) {
+                                   unsigned Align,
+                                   bool AddToUsed) {
   const llvm::Type *Ty = Init->getType();
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(Ty, false,
@@ -1868,9 +1876,9 @@ CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
                              &CGM.getModule());
   if (Section)
     GV->setSection(Section);
-  if (SetAlignment)
-    GV->setAlignment(CGM.getTargetData().getPrefTypeAlignment(Ty));
-  if (IsUsed)
+  if (Align)
+    GV->setAlignment(Align);
+  if (AddToUsed)
     UsedGlobals.push_back(GV);
   return GV;
 }
