@@ -1046,8 +1046,6 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
   St = state.set<RegionDefaultValue>(R, NonLoc::MakeIntVal(getBasicVals(), 0, 
                                                            false));
 
-  Store store = St->getStore();
-
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
   llvm::APSInt Size(CAT->getSize(), false);
@@ -1076,7 +1074,7 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
       St = Bind(St, loc::MemRegionVal(ER), V);
     }
 
-    return StateMgr.MakeStateWithStore(St, store);
+    return St;
   }
 
 
@@ -1098,7 +1096,7 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
       St = Bind(St, Loc::MakeVal(ER), *VI);
   }
 
-  return StateMgr.MakeStateWithStore(St, store);
+  return St;
 }
 
 const GRState*
