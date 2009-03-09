@@ -68,6 +68,11 @@ public:
 
   unsigned size() const { return NumParams; }
 
+  const Decl* getParam(unsigned Idx) const {
+    assert(Idx < size() && "Template parameter index out-of-range");
+    return begin()[Idx];
+  }
+
   /// \btief Returns the minimum number of arguments needed to form a
   /// template specialization. This may be fewer than the number of
   /// template parameters, if some of the parameters have default
@@ -400,51 +405,72 @@ protected:
 /// specialization.
 class TemplateArgument {
   union {
-    uintptr_t TypeOrDeclaration;
+    uintptr_t TypeOrValue;
     char IntegralValue[sizeof(llvm::APInt)];
   };
+
+  /// \brief Location of the beginning of this template argument.
+  SourceLocation StartLoc;
 
 public:
   /// \brief The type of template argument we're storing.
   enum ArgKind {
     /// The template argument is a type. It's value is stored in the
-    /// TypeOrDeclaration field.
+    /// TypeOrValue field.
     Type = 0,
     /// The template argument is a declaration
     Declaration = 1,
     /// The template argument is an integral value stored in an llvm::APInt.
-    Integral = 2
+    Integral = 2,
+    /// The template argument is a value- or type-dependent expression
+    /// stored in an Expr*.
+    Expression = 3
   } Kind;
 
+  /// \brief Construct an empty, invalid template argument.
+  TemplateArgument() : TypeOrValue(0), StartLoc(), Kind(Type) { }
+
   /// \brief Construct a template type argument.
-  TemplateArgument(QualType T) : Kind(Type) {
-    assert(T->isCanonical() && 
-           "Template arguments always use the canonical type");
-    TypeOrDeclaration = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+  TemplateArgument(SourceLocation Loc, QualType T) : Kind(Type) {
+    TypeOrValue = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+    StartLoc = Loc;
   }
 
   /// \brief Construct a template argument that refers to a
   /// declaration, which is either an external declaration or a
   /// template declaration.
-  TemplateArgument(Decl *D) : Kind(Declaration) {
+  TemplateArgument(SourceLocation Loc, Decl *D) : Kind(Declaration) {
     // FIXME: Need to be sure we have the "canonical" declaration!
-    TypeOrDeclaration = reinterpret_cast<uintptr_t>(D);
+    TypeOrValue = reinterpret_cast<uintptr_t>(D);
+    StartLoc = Loc;
   }
 
   /// \brief Construct an integral constant template argument.
-  TemplateArgument(const llvm::APInt &Value) : Kind(Integral) {
+  TemplateArgument(SourceLocation Loc, const llvm::APInt &Value)
+    : Kind(Integral) {
     new (IntegralValue) llvm::APInt(Value);
+    StartLoc = Loc;
   }
+
+  /// \brief Construct a template argument that is an expression. 
+  ///
+  /// This form of template argument only occurs in template argument
+  /// lists used for dependent types and for expression; it will not
+  /// occur in a non-dependent, canonical template argument list.
+  TemplateArgument(Expr *E);
 
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
     if (Kind == Integral)
       new (IntegralValue) llvm::APInt(*Other.getAsIntegral());
     else
-      TypeOrDeclaration = Other.TypeOrDeclaration;
+      TypeOrValue = Other.TypeOrValue;
+    StartLoc = Other.StartLoc;
   }
 
   TemplateArgument& operator=(const TemplateArgument& Other) {
+    // FIXME: Does not provide the strong guarantee for exception
+    // safety.
     using llvm::APInt;
 
     if (Kind == Other.Kind && Kind == Integral) {
@@ -460,8 +486,10 @@ public:
       if (Other.Kind == Integral)
         new (IntegralValue) llvm::APInt(*Other.getAsIntegral());
       else
-        TypeOrDeclaration = Other.TypeOrDeclaration;
+        TypeOrValue = Other.TypeOrValue;
     }
+    StartLoc = Other.StartLoc;
+
     return *this;
   }
 
@@ -481,14 +509,14 @@ public:
       return QualType();
 
     return QualType::getFromOpaquePtr(
-                                 reinterpret_cast<void*>(TypeOrDeclaration));
+                                 reinterpret_cast<void*>(TypeOrValue));
   }
 
   /// \brief Retrieve the template argument as a declaration.
   Decl *getAsDecl() const {
     if (Kind != Declaration)
       return 0;
-    return reinterpret_cast<Decl *>(TypeOrDeclaration);
+    return reinterpret_cast<Decl *>(TypeOrValue);
   }
 
   /// \brief Retrieve the template argument as an integral value.
@@ -501,6 +529,17 @@ public:
   const llvm::APInt *getAsIntegral() const {
     return const_cast<TemplateArgument*>(this)->getAsIntegral();
   }
+
+  /// \brief Retrieve the template argument as an expression.
+  Expr *getAsExpr() const {
+    if (Kind != Expression)
+      return 0;
+
+    return reinterpret_cast<Expr *>(TypeOrValue);
+  }
+
+  /// \brief Retrieve the location where the template argument starts.
+  SourceLocation getLocation() const { return StartLoc; }
 
   /// \brief Used to insert TemplateArguments into FoldingSets.
   void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -516,6 +555,11 @@ public:
 
     case Integral:
       getAsIntegral()->Profile(ID);
+      break;
+
+    case Expression:
+      // FIXME: We need a canonical representation of expressions.
+      ID.AddPointer(getAsExpr());
       break;
     }
   }

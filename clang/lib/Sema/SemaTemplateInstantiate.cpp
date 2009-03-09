@@ -302,9 +302,44 @@ TemplateTypeInstantiator::
 InstantiateClassTemplateSpecializationType(
                                   const ClassTemplateSpecializationType *T,
                                   unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ClassTemplateSpecializationType yet");
-  return QualType();
+  llvm::SmallVector<TemplateArgument, 16> InstantiatedTemplateArgs;
+  InstantiatedTemplateArgs.reserve(T->getNumArgs());
+  for (ClassTemplateSpecializationType::iterator Arg = T->begin(), 
+                                              ArgEnd = T->end();
+       Arg != ArgEnd; ++Arg) {
+    switch (Arg->getKind()) {
+    case TemplateArgument::Type: {
+      QualType T = SemaRef.InstantiateType(Arg->getAsType(), 
+                                           TemplateArgs, NumTemplateArgs,
+                                           Arg->getLocation(),
+                                           DeclarationName());
+      if (T.isNull())
+        return QualType();
+
+      InstantiatedTemplateArgs.push_back(
+                                TemplateArgument(Arg->getLocation(), T));
+      break;
+    }
+
+    case TemplateArgument::Declaration:
+    case TemplateArgument::Integral:
+      InstantiatedTemplateArgs.push_back(*Arg);
+      break;
+
+    case TemplateArgument::Expression:
+      assert(false && "Cannot instantiate expressions yet");
+      break;
+    }
+  }
+
+  // FIXME: We're missing the locations of the template name, '<', and
+  // '>'.
+  return SemaRef.CheckClassTemplateId(cast<ClassTemplateDecl>(T->getTemplate()),
+                                      Loc,
+                                      SourceLocation(),
+                                      &InstantiatedTemplateArgs[0],
+                                      InstantiatedTemplateArgs.size(),
+                                      SourceLocation());
 }
 
 QualType 

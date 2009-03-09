@@ -383,7 +383,8 @@ Sema::BaseResult
 Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          TypeTy *basetype, SourceLocation BaseLoc) {
-  CXXRecordDecl *Class = (CXXRecordDecl*)classdecl;
+  AdjustDeclIfTemplate(classdecl);
+  CXXRecordDecl *Class = cast<CXXRecordDecl>((Decl*)classdecl);
   QualType BaseType = QualType::getFromOpaquePtr(basetype);
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
                                                       Virtual, Access,

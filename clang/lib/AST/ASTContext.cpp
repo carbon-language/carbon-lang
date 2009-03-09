@@ -1309,14 +1309,15 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
 
 QualType 
 ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
+                                               const TemplateArgument *Args,
                                                unsigned NumArgs,
-                                               uintptr_t *Args, bool *ArgIsType,
                                                QualType Canon) {
-  Canon = getCanonicalType(Canon);
+  if (!Canon.isNull())
+    Canon = getCanonicalType(Canon);
 
   llvm::FoldingSetNodeID ID;
-  ClassTemplateSpecializationType::Profile(ID, Template, NumArgs, Args, 
-                                           ArgIsType);
+  ClassTemplateSpecializationType::Profile(ID, Template, Args, NumArgs);
+
   void *InsertPos = 0;
   ClassTemplateSpecializationType *Spec
     = ClassTemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -1324,13 +1325,11 @@ ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
   if (Spec)
     return QualType(Spec, 0);
   
-  void *Mem = Allocate(sizeof(ClassTemplateSpecializationType) + 
-                       (sizeof(uintptr_t) * 
-                        (ClassTemplateSpecializationType::
-                           getNumPackedWords(NumArgs) + 
-                         NumArgs)), 8);
-  Spec = new (Mem) ClassTemplateSpecializationType(Template, NumArgs, Args,
-                                                   ArgIsType, Canon);
+  void *Mem = Allocate((sizeof(ClassTemplateSpecializationType) + 
+                        sizeof(TemplateArgument) * NumArgs),
+                       8);
+  Spec = new (Mem) ClassTemplateSpecializationType(Template, Args, NumArgs, 
+                                                   Canon);
   Types.push_back(Spec);
   ClassTemplateSpecializationTypes.InsertNode(Spec, InsertPos);
 

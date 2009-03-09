@@ -145,6 +145,15 @@ SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
 }
 
 //===----------------------------------------------------------------------===//
+// TemplateArgument Implementation
+//===----------------------------------------------------------------------===//
+
+TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
+  TypeOrValue = reinterpret_cast<uintptr_t>(E);
+  StartLoc = E->getSourceRange().getBegin();
+}
+
+//===----------------------------------------------------------------------===//
 // ClassTemplateSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
 ClassTemplateSpecializationDecl::

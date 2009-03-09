@@ -14,8 +14,7 @@ A<A<int> > *a6;
 // [temp.arg.type]p2
 void f() {
   class X { };
-  A<X> * a = 0; // expected-error{{template argument uses local type 'class X'}} \
-                // FIXME: expected-error{{use of undeclared identifier 'a'}}
+  A<X> * a = 0; // expected-error{{template argument uses local type 'class X'}}
 }
 
 struct { int x; } Unnamed; // expected-note{{unnamed type used in template argument was declared here}}

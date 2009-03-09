@@ -921,59 +921,77 @@ bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
 
-void 
+bool 
 ClassTemplateSpecializationType::
-packBooleanValues(unsigned NumArgs, bool *Values, uintptr_t *Words) {
-  const unsigned BitsPerWord = sizeof(uintptr_t) * 8;
+anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
+  for (unsigned Idx = 0; Idx < NumArgs; ++Idx) {
+    switch (Args[Idx].getKind()) {
+    case TemplateArgument::Type:
+      if (Args[Idx].getAsType()->isDependentType())
+        return true;
+      break;
+      
+    case TemplateArgument::Declaration:
+    case TemplateArgument::Integral:
+      // Never dependent
+      break;
 
-  for (unsigned PW = 0, NumPackedWords = getNumPackedWords(NumArgs), Arg = 0;
-       PW != NumPackedWords; ++PW) {
-    uintptr_t Word = 0;
-    for (unsigned Bit = 0; Bit < BitsPerWord && Arg < NumArgs; ++Bit, ++Arg) {
-      Word <<= 1;
-      Word |= Values[Arg];
+    case TemplateArgument::Expression:
+      if (Args[Idx].getAsExpr()->isTypeDependent() ||
+          Args[Idx].getAsExpr()->isValueDependent())
+        return true;
+      break;
     }
-    Words[PW] = Word;
   }
+
+  return false;
 }
 
 ClassTemplateSpecializationType::
-ClassTemplateSpecializationType(TemplateDecl *T, unsigned NumArgs,
-                                uintptr_t *Args, bool *ArgIsType,
-                                QualType Canon)
-  : Type(ClassTemplateSpecialization, Canon, /*FIXME:Dependent=*/false),
-    Template(T), NumArgs(NumArgs) 
+ClassTemplateSpecializationType(TemplateDecl *T, const TemplateArgument *Args,
+                                unsigned NumArgs, QualType Canon)
+  : Type(ClassTemplateSpecialization, 
+         Canon.isNull()? QualType(this, 0) : Canon,
+         /*FIXME: Check for dependent template */
+         anyDependentTemplateArguments(Args, NumArgs)),
+    Template(T), NumArgs(NumArgs)
 {
-  uintptr_t *Data = reinterpret_cast<uintptr_t *>(this + 1);
+  assert((!Canon.isNull() || 
+          anyDependentTemplateArguments(Args, NumArgs)) &&
+         "No canonical type for non-dependent class template specialization");
 
-  // Pack the argument-is-type values into the words just after the
-  // class template specialization type.
-  packBooleanValues(NumArgs, ArgIsType, Data);
-
-  // Copy the template arguments after the packed words.
-  Data += getNumPackedWords(NumArgs);
+  TemplateArgument *TemplateArgs 
+    = reinterpret_cast<TemplateArgument *>(this + 1);
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-    Data[Arg] = Args[Arg];
+    new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
 }
 
 void ClassTemplateSpecializationType::Destroy(ASTContext& C) {
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-    if (!isArgType(Arg))
-      getArgAsExpr(Arg)->Destroy(C);
+    if (Expr *E = getArg(Arg).getAsExpr())
+      E->Destroy(C);
 }
 
-uintptr_t
-ClassTemplateSpecializationType::getArgAsOpaqueValue(unsigned Arg) const {
-  const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);
-  Data += getNumPackedWords(NumArgs);
-  return Data[Arg];
+ClassTemplateSpecializationType::iterator
+ClassTemplateSpecializationType::end() const {
+  return begin() + getNumArgs();
 }
 
-bool ClassTemplateSpecializationType::isArgType(unsigned Arg) const {
-  const unsigned BitsPerWord = sizeof(uintptr_t) * 8;
-  const uintptr_t *Data = reinterpret_cast<const uintptr_t *>(this + 1);
-  Data += Arg / BitsPerWord;
-  return (*Data >> ((NumArgs - Arg) % BitsPerWord - 1)) & 0x01;
+const TemplateArgument &
+ClassTemplateSpecializationType::getArg(unsigned Idx) const {
+  assert(Idx < getNumArgs() && "Template argument out of range");
+  return getArgs()[Idx];
+}
+
+void 
+ClassTemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID, 
+                                         TemplateDecl *T, 
+                                         const TemplateArgument *Args, 
+                                         unsigned NumArgs) {
+  ID.AddPointer(T);
+
+  for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
+    Args[Idx].Profile(ID);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1280,11 +1298,24 @@ getAsStringInternal(std::string &InnerString) const {
     
     // Print the argument into a string.
     std::string ArgString;
-    if (isArgType(Arg))
-      getArgAsType(Arg).getAsStringInternal(ArgString);
-    else {
+    switch (getArg(Arg).getKind()) {
+    case TemplateArgument::Type:
+      getArg(Arg).getAsType().getAsStringInternal(ArgString);
+      break;
+
+    case TemplateArgument::Declaration:
+      ArgString = cast<NamedDecl>(getArg(Arg).getAsDecl())->getNameAsString();
+      break;
+
+    case TemplateArgument::Integral:
+      ArgString = getArg(Arg).getAsIntegral()->toString(10, true);
+      break;
+
+    case TemplateArgument::Expression: {
       llvm::raw_string_ostream s(ArgString);
-      getArgAsExpr(Arg)->printPretty(s);
+      getArg(Arg).getAsExpr()->printPretty(s);
+      break;
+    }
     }
 
     // If this is the first argument and its string representation

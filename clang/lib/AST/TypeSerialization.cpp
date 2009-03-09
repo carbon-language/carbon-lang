@@ -390,13 +390,7 @@ void ClassTemplateSpecializationType::EmitImpl(Serializer& S) const {
   S.Emit(getCanonicalTypeInternal());
   S.EmitPtr(Template);
   S.EmitInt(NumArgs);
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    S.EmitBool(isArgType(Arg));
-    if (isArgType(Arg))
-      S.Emit(getArgAsType(Arg));
-    else
-      S.EmitOwnedPtr(getArgAsExpr(Arg));
-  }
+  // FIXME: Serialize class template specialization types
 }
 
 Type* 
@@ -409,19 +403,10 @@ CreateImpl(ASTContext& Context, Deserializer& D) {
   TemplateDecl *Template = cast<TemplateDecl>(D.ReadPtr<Decl>());
   unsigned NumArgs = D.ReadInt();
 
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    bool IsType = D.ReadBool();
-    ArgIsType.push_back(IsType);
-    if (IsType)
-      Args.push_back(
-         reinterpret_cast<uintptr_t>(QualType::ReadVal(D).getAsOpaquePtr()));
-    else
-      Args.push_back(reinterpret_cast<uintptr_t>(D.ReadOwnedPtr<Expr>(Context)));
-  }
-
-  return Context.getClassTemplateSpecializationType(Template, NumArgs,
-                                                    &Args[0], &ArgIsType[0],
-                                                    Canon).getTypePtr();
+  // FIXME: De-serialize class template specialization types
+  (void)Template;
+  (void)NumArgs;
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//

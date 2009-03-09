@@ -46,6 +46,7 @@ namespace clang {
   class Stmt;
   class SourceLocation;
   class StmtIteratorBase;
+  class TemplateArgument;
 
   // Provide forward declarations for all of the *Type classes
 #define TYPE(Class, Base) class Class##Type;
@@ -1430,100 +1431,52 @@ class ClassTemplateSpecializationType
   // possibly with template-names preceded by a nested-name-specifier.
   TemplateDecl *Template;
 
+  /// \brief - The number of template arguments named in this class
+  /// template specialization.
   unsigned NumArgs;
 
-  ClassTemplateSpecializationType(TemplateDecl *T, unsigned NumArgs,
-                                  uintptr_t *Args, bool *ArgIsType,
-                                  QualType Canon);
+  ClassTemplateSpecializationType(TemplateDecl *T, 
+                                  const TemplateArgument *Args,
+                                  unsigned NumArgs, QualType Canon);
 
-  /// \brief Retrieve the number of packed words that precede the
-  /// actual arguments.
-  ///
-  /// The flags that specify whether each argument is a type or an
-  /// expression are packed into the
-  /// ClassTemplateSpecializationType. This routine computes the
-  /// number of pointer-sized words we need to store this information,
-  /// based on the number of template arguments
-  static unsigned getNumPackedWords(unsigned NumArgs) {
-    const unsigned BitsPerWord = sizeof(uintptr_t) * 8;
-    return NumArgs / BitsPerWord + (NumArgs % BitsPerWord > 0);
-  }
-
-  /// \brief Pack the given boolean values into words.
-  static void 
-  packBooleanValues(unsigned NumArgs, bool *Values, uintptr_t *Words);
-  
   virtual void Destroy(ASTContext& C);
 
   friend class ASTContext;  // ASTContext creates these
 
 public:
+  /// \brief Determine whether any of the given template arguments are
+  /// dependent.
+  static bool anyDependentTemplateArguments(const TemplateArgument *Args,
+                                            unsigned NumArgs);  
+
+  typedef const TemplateArgument * iterator;
+
+  iterator begin() const { return getArgs(); }
+  iterator end() const;
+
   /// \brief Retrieve the template that we are specializing.
   TemplateDecl *getTemplate() const { return Template; }
 
-  /// \briefe Retrieve the number of template arguments.
+  /// \brief Retrieve the template arguments.
+  const TemplateArgument *getArgs() const { 
+    return reinterpret_cast<const TemplateArgument *>(this + 1);
+  }
+
+  /// \brief Retrieve the number of template arguments.
   unsigned getNumArgs() const { return NumArgs; }
 
   /// \brief Retrieve a specific template argument as a type.
   /// \precondition @c isArgType(Arg)
-  QualType getArgAsType(unsigned Arg) const {
-    assert(isArgType(Arg) && "Argument is not a type");
-    return QualType::getFromOpaquePtr(
-                          reinterpret_cast<void *>(getArgAsOpaqueValue(Arg)));
-  }
-
-  /// \brief Retrieve a specific template argument as an expression.
-  /// \precondition @c !isArgType(Arg)
-  Expr *getArgAsExpr(unsigned Arg) const {
-    assert(!isArgType(Arg) && "Argument is not an expression");
-    return reinterpret_cast<Expr *>(getArgAsOpaqueValue(Arg));
-  }
-
-  /// \brief Retrieve the specified template argument as an opaque value.
-  uintptr_t getArgAsOpaqueValue(unsigned Arg) const;
-
-  /// \brief Determine whether the given template argument is a type.
-  bool isArgType(unsigned Arg) const;
+  const TemplateArgument &getArg(unsigned Idx) const;
 
   virtual void getAsStringInternal(std::string &InnerString) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    // Add the template
-    ID.AddPointer(Template);
-
-    // Add the packed words describing what kind of template arguments
-    // we have.
-    // FIXME: Would like to be smarter about the profile of expressions, 
-    // so that we can combine expression nodes more effectively.
-    uintptr_t *Data = reinterpret_cast<uintptr_t *>(this + 1);
-    for (unsigned Packed = 0, NumPacked = getNumPackedWords(NumArgs); 
-         Packed != NumPacked; ++Packed)
-      ID.AddInteger(Data[Packed]);
-
-    // Add the template arguments themselves.
-    for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-      ID.AddInteger(getArgAsOpaqueValue(Arg));
+    Profile(ID, Template, getArgs(), NumArgs);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateDecl *T,
-                      unsigned NumArgs, uintptr_t *Args, bool *ArgIsType) {
-    // Add the template
-    ID.AddPointer(T);
-
-    // Add the packed words describing what kind of template arguments
-    // we have.
-    unsigned NumPackedWords = getNumPackedWords(NumArgs);
-    unsigned NumPackedBytes = NumPackedWords * sizeof(uintptr_t);
-    uintptr_t *PackedWords 
-      = reinterpret_cast<uintptr_t *>(alloca(NumPackedBytes));
-    packBooleanValues(NumArgs, ArgIsType, PackedWords);
-    for (unsigned Packed = 0; Packed != NumPackedWords; ++Packed)
-      ID.AddInteger(PackedWords[Packed]);
-
-    // Add the template arguments themselves.
-    for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-      ID.AddInteger(Args[Arg]);
-  }
+                      const TemplateArgument *Args, unsigned NumArgs);
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ClassTemplateSpecialization; 

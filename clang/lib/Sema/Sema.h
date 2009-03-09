@@ -1601,6 +1601,13 @@ public:
                      AttributeList *Attr,
                      MultiTemplateParamsArg TemplateParameterLists);
 
+  QualType CheckClassTemplateId(ClassTemplateDecl *ClassTemplate,
+                                SourceLocation TemplateLoc,
+                                SourceLocation LAngleLoc,
+                                const TemplateArgument *TemplateArgs,
+                                unsigned NumTemplateArgs,
+                                SourceLocation RAngleLoc);
+
   virtual TypeResult
   ActOnClassTemplateId(DeclTy *Template, SourceLocation TemplateLoc,
                        SourceLocation LAngleLoc,
@@ -1630,8 +1637,8 @@ public:
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,
-                                 ASTTemplateArgsPtr& TemplateArgs,
-                                 SourceLocation *TemplateArgLocs,
+                                 const TemplateArgument *TemplateArgs,
+                                 unsigned NumTemplateArgs,
                                  SourceLocation RAngleLoc,
                        llvm::SmallVectorImpl<TemplateArgument> &Converted);
 

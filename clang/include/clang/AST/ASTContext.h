@@ -275,9 +275,9 @@ public:
                                    IdentifierInfo *Name = 0);
 
   QualType getClassTemplateSpecializationType(TemplateDecl *Template,
+                                              const TemplateArgument *Args,
                                               unsigned NumArgs,
-                                              uintptr_t *Args, bool *ArgIsType,
-                                              QualType Canon);
+                                              QualType Canon = QualType());
 
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and
