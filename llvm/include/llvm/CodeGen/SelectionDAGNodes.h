@@ -1114,10 +1114,6 @@ private:
   friend struct ilist_traits<SDNode>;
 
 public:
-  
-  /// Default SDNode constructor.
-  SDNode() {}
-    
   //===--------------------------------------------------------------------===//
   //  Accessors
   //
@@ -1936,6 +1932,8 @@ public:
 /// BuildVectorSDNode - A "pseudo-class" with methods for operating on
 /// BUILD_VECTORs.
 class BuildVectorSDNode : public SDNode {
+  // These are constructed as SDNodes and then cast to BuildVectorSDNodes.
+  explicit BuildVectorSDNode();        // Do not implement
 public:
   /// isConstantSplat - Check if this is a constant splat, and if so, find the
   /// smallest element size that splats the vector.  If MinSplatBits is
