@@ -1774,7 +1774,7 @@ LoopStrengthReduce::PrepareToStrengthReduceFromSmallerStride(
 }
 
 static bool IsImmFoldedIntoAddrMode(GlobalValue *GV, int64_t Offset,
-                                    const Type *ReplacedTy,
+                                    const Type *AccessTy,
                                    std::vector<BasedUser> &UsersToProcess,
                                    const TargetLowering *TLI) {
   SmallVector<Instruction*, 16> AddrModeInsts;
@@ -1783,7 +1783,7 @@ static bool IsImmFoldedIntoAddrMode(GlobalValue *GV, int64_t Offset,
       continue;
     ExtAddrMode AddrMode =
       AddressingModeMatcher::Match(UsersToProcess[i].OperandValToReplace,
-                                   ReplacedTy, UsersToProcess[i].Inst,
+                                   AccessTy, UsersToProcess[i].Inst,
                                    AddrModeInsts, *TLI);
     if (GV && GV != AddrMode.BaseGV)
       return false;
@@ -1858,7 +1858,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
         Offset = SC->getValue()->getSExtValue();
       if (GV || Offset)
-        DoSink = IsImmFoldedIntoAddrMode(GV, Offset, ReplacedTy,
+        // Pass VoidTy as the AccessTy to be conservative, because
+        // there could be multiple access types among all the uses.
+        DoSink = IsImmFoldedIntoAddrMode(GV, Offset, Type::VoidTy,
                                          UsersToProcess, TLI);
 
       if (DoSink) {
