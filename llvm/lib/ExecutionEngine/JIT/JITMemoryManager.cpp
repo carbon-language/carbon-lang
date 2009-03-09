@@ -278,10 +278,27 @@ namespace {
     /// startFunctionBody - When a function starts, allocate a block of free
     /// executable memory, returning a pointer to it and its actual size.
     unsigned char *startFunctionBody(const Function *F, uintptr_t &ActualSize) {
-      CurBlock = FreeMemoryList;
       
+      FreeRangeHeader* candidateBlock = FreeMemoryList;
+      FreeRangeHeader* head = FreeMemoryList;
+      FreeRangeHeader* iter = head->Next;
+
+      uintptr_t largest = candidateBlock->BlockSize;
+      
+      // Search for the largest free block
+      while (iter != head) {
+          if (iter->BlockSize > largest) {
+              largest = iter->BlockSize;
+              candidateBlock = iter;
+          }
+          iter = iter->Next;
+      }
+      
+      // Select this candidate block for allocation
+      CurBlock = candidateBlock;
+
       // Allocate the entire memory block.
-      FreeMemoryList = FreeMemoryList->AllocateBlock();
+      FreeMemoryList = candidateBlock->AllocateBlock();
       ActualSize = CurBlock->BlockSize-sizeof(MemoryRangeHeader);
       return (unsigned char *)(CurBlock+1);
     }
