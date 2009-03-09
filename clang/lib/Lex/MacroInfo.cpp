@@ -49,9 +49,14 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
   for (unsigned i = 0, e = ReplacementTokens.size(); i != e; ++i) {
     const Token &A = ReplacementTokens[i];
     const Token &B = Other.ReplacementTokens[i];
-    if (A.getKind() != B.getKind() || 
-        A.isAtStartOfLine() != B.isAtStartOfLine() ||
-        A.hasLeadingSpace() != B.hasLeadingSpace())
+    if (A.getKind() != B.getKind())
+      return false;
+    
+    // If this isn't the first first token, check that the whitespace and
+    // start-of-line characteristics match.
+    if (i != 0 &&
+        (A.isAtStartOfLine() != B.isAtStartOfLine() ||
+         A.hasLeadingSpace() != B.hasLeadingSpace()))
       return false;
     
     // If this is an identifier, it is easy.
