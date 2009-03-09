@@ -60,6 +60,19 @@ namespace {
       AU.setPreservesAll();
     }
   };
+
+  class VISIBILITY_HIDDEN StripDebugDeclare : public ModulePass {
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    explicit StripDebugDeclare()
+      : ModulePass(&ID) {}
+
+    virtual bool runOnModule(Module &M);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
 }
 
 char StripSymbols::ID = 0;
@@ -76,6 +89,14 @@ Y("strip-nondebug", "Strip all symbols, except dbg symbols, from a module");
 
 ModulePass *llvm::createStripNonDebugSymbolsPass() {
   return new StripNonDebugSymbols();
+}
+
+char StripDebugDeclare::ID = 0;
+static RegisterPass<StripDebugDeclare>
+Z("strip-debug-declare", "Strip all llvm.dbg.declare intrinsics");
+
+ModulePass *llvm::createStripDebugDeclarePass() {
+  return new StripDebugDeclare();
 }
 
 /// OnlyUsedBy - Return true if V is only used by Usr.
@@ -342,4 +363,45 @@ bool StripSymbols::runOnModule(Module &M) {
 
 bool StripNonDebugSymbols::runOnModule(Module &M) {
   return StripSymbolNames(M, true);
+}
+
+bool StripDebugDeclare::runOnModule(Module &M) {
+
+  Function *Declare = M.getFunction("llvm.dbg.declare");
+
+  if (!Declare) 
+    return false;
+
+  std::vector<Constant*> DeadConstants;
+
+  while (!Declare->use_empty()) {
+    CallInst *CI = cast<CallInst>(Declare->use_back());
+    Value *Arg1 = CI->getOperand(1);
+    Value *Arg2 = CI->getOperand(2);
+    assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
+    CI->eraseFromParent();
+    if (Arg1->use_empty()) {
+      if (Constant *C = dyn_cast<Constant>(Arg1)) 
+        DeadConstants.push_back(C);
+      else 
+        RecursivelyDeleteTriviallyDeadInstructions(Arg1, NULL);
+    }
+    if (Arg2->use_empty())
+      if (Constant *C = dyn_cast<Constant>(Arg2)) 
+        DeadConstants.push_back(C);
+  }
+  Declare->eraseFromParent();
+
+  while (!DeadConstants.empty()) {
+    Constant *C = DeadConstants.back();
+    DeadConstants.pop_back();
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
+      if (GV->hasLocalLinkage())
+        RemoveDeadConstant(GV);
+    }
+    else
+      RemoveDeadConstant(C);
+  }
+
+  return true;
 }

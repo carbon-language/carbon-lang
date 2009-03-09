@@ -35,10 +35,15 @@ ModulePass *createStripSymbolsPass(bool OnlyDebugInfo = false);
 
 //===----------------------------------------------------------------------===//
 //
-// These functions removes symbols from functions and modules.  
-// Only debugging information is not removed.
+// These functions strips symbols from functions and modules.  
+// Only debugging information is not stripped.
 //
 ModulePass *createStripNonDebugSymbolsPass();
+
+//===----------------------------------------------------------------------===//
+//
+// These pass removes llvm.dbg.declare intrinsics.
+ModulePass *createStripDebugDeclarePass();
 
 //===----------------------------------------------------------------------===//
 /// createLowerSetJmpPass - This function lowers the setjmp/longjmp intrinsics
