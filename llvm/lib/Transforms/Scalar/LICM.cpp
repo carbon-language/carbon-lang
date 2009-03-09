@@ -62,9 +62,9 @@ static cl::opt<bool>
 DisablePromotion("disable-licm-promotion", cl::Hidden,
                  cl::desc("Disable memory promotion in LICM pass"));
 
-// This feature is currently disabled by default because CodeGen is not yet capable
-// of rematerializing these constants in PIC mode, so it can lead to degraded
-// performance. Compile test/CodeGen/X86/remat-constant.ll with
+// This feature is currently disabled by default because CodeGen is not yet
+// capable of rematerializing these constants in PIC mode, so it can lead to
+// degraded performance. Compile test/CodeGen/X86/remat-constant.ll with
 // -relocation-model=pic to see an example of this.
 static cl::opt<bool>
 EnableLICMConstantMotion("enable-licm-constant-variables", cl::Hidden,
@@ -793,12 +793,12 @@ void LICM::FindPromotableValuesInLoop(
     // set, if the pointer is loop invariant, and if we are not eliminating any
     // volatile loads or stores.
     if (AS.isForwardingAliasSet() || !AS.isMod() || !AS.isMustAlias() ||
-        AS.isVolatile() || !CurLoop->isLoopInvariant(AS.begin()->first))
+        AS.isVolatile() || !CurLoop->isLoopInvariant(AS.begin()->getValue()))
       continue;
     
     assert(!AS.empty() &&
            "Must alias set should have at least one pointer element in it!");
-    Value *V = AS.begin()->first;
+    Value *V = AS.begin()->getValue();
 
     // Check that all of the pointers in the alias set have the same type.  We
     // cannot (yet) promote a memory location that is loaded and stored in
@@ -806,7 +806,7 @@ void LICM::FindPromotableValuesInLoop(
     {
       bool PointerOk = true;
       for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
-        if (V->getType() != I->first->getType()) {
+        if (V->getType() != I->getValue()->getType()) {
           PointerOk = false;
           break;
         }
@@ -859,7 +859,7 @@ void LICM::FindPromotableValuesInLoop(
     CurAST->copyValue(V, AI);
 
     for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
-      ValueToAllocaMap.insert(std::make_pair(I->first, AI));
+      ValueToAllocaMap.insert(std::make_pair(I->getValue(), AI));
 
     DOUT << "LICM: Promoting value: " << *V << "\n";
   }

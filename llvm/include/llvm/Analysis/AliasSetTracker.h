@@ -19,10 +19,11 @@
 
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/iterator.h"
-#include "llvm/ADT/hash_map.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include <vector>
 
 namespace llvm {
 
@@ -37,20 +38,21 @@ class AliasSet;
 class AliasSet : public ilist_node<AliasSet> {
   friend class AliasSetTracker;
 
-  class PointerRec;
-  typedef std::pair<Value* const, PointerRec> HashNodePair;
-
   class PointerRec {
-    HashNodePair **PrevInList, *NextInList;
+    Value *Val;  // The pointer this record corresponds to.
+    PointerRec **PrevInList, *NextInList;
     AliasSet *AS;
     unsigned Size;
   public:
-    PointerRec() : PrevInList(0), NextInList(0), AS(0), Size(0) {}
+    PointerRec(Value *V)
+      : Val(V), PrevInList(0), NextInList(0), AS(0), Size(0) {}
 
-    HashNodePair *getNext() const { return NextInList; }
+    Value *getValue() const { return Val; }
+    
+    PointerRec *getNext() const { return NextInList; }
     bool hasAliasSet() const { return AS != 0; }
 
-    HashNodePair** setPrevInList(HashNodePair **PIL) {
+    PointerRec** setPrevInList(PointerRec **PIL) {
       PrevInList = PIL;
       return &NextInList;
     }
@@ -77,21 +79,22 @@ class AliasSet : public ilist_node<AliasSet> {
       AS = as;
     }
 
-    void removeFromList() {
-      if (NextInList) NextInList->second.PrevInList = PrevInList;
+    void eraseFromList() {
+      if (NextInList) NextInList->PrevInList = PrevInList;
       *PrevInList = NextInList;
       if (AS->PtrListEnd == &NextInList) {
         AS->PtrListEnd = PrevInList;
         assert(*AS->PtrListEnd == 0 && "List not terminated right!");
       }
+      delete this;
     }
   };
 
-  HashNodePair *PtrList, **PtrListEnd;  // Doubly linked list of nodes
-  AliasSet *Forward;             // Forwarding pointer
-  AliasSet *Next, *Prev;         // Doubly linked list of AliasSets
+  PointerRec *PtrList, **PtrListEnd;  // Doubly linked list of nodes.
+  AliasSet *Forward;             // Forwarding pointer.
+  AliasSet *Next, *Prev;         // Doubly linked list of AliasSets.
 
-  std::vector<CallSite> CallSites; // All calls & invokes in this node
+  std::vector<CallSite> CallSites; // All calls & invokes in this alias set.
 
   // RefCount - Number of nodes pointing to this AliasSet plus the number of
   // AliasSets forwarding to it.
@@ -157,10 +160,10 @@ public:
   void dump() const;
 
   /// Define an iterator for alias sets... this is just a forward iterator.
-  class iterator : public forward_iterator<HashNodePair, ptrdiff_t> {
-    HashNodePair *CurNode;
+  class iterator : public forward_iterator<PointerRec, ptrdiff_t> {
+    PointerRec *CurNode;
   public:
-    explicit iterator(HashNodePair *CN = 0) : CurNode(CN) {}
+    explicit iterator(PointerRec *CN = 0) : CurNode(CN) {}
 
     bool operator==(const iterator& x) const {
       return CurNode == x.CurNode;
@@ -178,12 +181,12 @@ public:
     }
     value_type *operator->() const { return &operator*(); }
 
-    Value *getPointer() const { return CurNode->first; }
-    unsigned getSize() const { return CurNode->second.getSize(); }
+    Value *getPointer() const { return CurNode->getValue(); }
+    unsigned getSize() const { return CurNode->getSize(); }
 
     iterator& operator++() {                // Preincrement
       assert(CurNode && "Advancing past AliasSet.end()!");
-      CurNode = CurNode->second.getNext();
+      CurNode = CurNode->getNext();
       return *this;
     }
     iterator operator++(int) { // Postincrement
@@ -202,7 +205,7 @@ private:
   AliasSet(const AliasSet &AS);        // do not implement
   void operator=(const AliasSet &AS);  // do not implement
 
-  HashNodePair *getSomePointer() const {
+  PointerRec *getSomePointer() const {
     return PtrList;
   }
 
@@ -223,7 +226,7 @@ private:
 
   void removeFromTracker(AliasSetTracker &AST);
 
-  void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size,
+  void addPointer(AliasSetTracker &AST, PointerRec &Entry, unsigned Size,
                   bool KnownMustAlias = false);
   void addCallSite(CallSite CS, AliasAnalysis &AA);
   void removeCallSite(CallSite CS) {
@@ -253,7 +256,7 @@ class AliasSetTracker {
   ilist<AliasSet> AliasSets;
 
   // Map from pointers to their node
-  hash_map<Value*, AliasSet::PointerRec> PointerMap;
+  DenseMap<Value*, AliasSet::PointerRec*> PointerMap;
 public:
   /// AliasSetTracker ctor - Create an empty collection of AliasSets, and use
   /// the specified alias analysis object to disambiguate load and store
@@ -299,10 +302,7 @@ public:
   bool remove(Instruction *I);
   void remove(AliasSet &AS);
   
-  void clear() {
-    PointerMap.clear();
-    AliasSets.clear();
-  }
+  void clear();
 
   /// getAliasSets - Return the alias sets that are active.
   ///
@@ -362,11 +362,13 @@ private:
   friend class AliasSet;
   void removeAliasSet(AliasSet *AS);
 
-  AliasSet::HashNodePair &getEntryFor(Value *V) {
-    // Standard operator[], except that it returns the whole pair, not just
-    // ->second.
-    return *PointerMap.insert(AliasSet::HashNodePair(V,
-                                            AliasSet::PointerRec())).first;
+  // getEntryFor - Just like operator[] on the map, except that it creates an
+  // entry for the pointer if it doesn't already exist.
+  AliasSet::PointerRec &getEntryFor(Value *V) {
+    AliasSet::PointerRec *&Entry = PointerMap[V];
+    if (Entry == 0)
+      Entry = new AliasSet::PointerRec(V);
+    return *Entry;
   }
 
   AliasSet &addPointer(Value *P, unsigned Size, AliasSet::AccessType E,

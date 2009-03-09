@@ -39,11 +39,11 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
     // used to be must-alias sets, we can just check any pointer from each set
     // for aliasing.
     AliasAnalysis &AA = AST.getAliasAnalysis();
-    HashNodePair *L = getSomePointer();
-    HashNodePair *R = AS.getSomePointer();
+    PointerRec *L = getSomePointer();
+    PointerRec *R = AS.getSomePointer();
 
     // If the pointers are not a must-alias pair, this set becomes a may alias.
-    if (AA.alias(L->first, L->second.getSize(), R->first, R->second.getSize())
+    if (AA.alias(L->getValue(), L->getSize(), R->getValue(), R->getSize())
         != AliasAnalysis::MustAlias)
       AliasTy = MayAlias;
   }
@@ -62,7 +62,7 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
   // Merge the list of constituent pointers...
   if (AS.PtrList) {
     *PtrListEnd = AS.PtrList;
-    AS.PtrList->second.setPrevInList(PtrListEnd);
+    AS.PtrList->setPrevInList(PtrListEnd);
     PtrListEnd = AS.PtrListEnd;
 
     AS.PtrList = 0;
@@ -84,30 +84,30 @@ void AliasSet::removeFromTracker(AliasSetTracker &AST) {
   AST.removeAliasSet(this);
 }
 
-void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
+void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
                           unsigned Size, bool KnownMustAlias) {
-  assert(!Entry.second.hasAliasSet() && "Entry already in set!");
+  assert(!Entry.hasAliasSet() && "Entry already in set!");
 
   // Check to see if we have to downgrade to _may_ alias.
   if (isMustAlias() && !KnownMustAlias)
-    if (HashNodePair *P = getSomePointer()) {
+    if (PointerRec *P = getSomePointer()) {
       AliasAnalysis &AA = AST.getAliasAnalysis();
       AliasAnalysis::AliasResult Result =
-        AA.alias(P->first, P->second.getSize(), Entry.first, Size);
+        AA.alias(P->getValue(), P->getSize(), Entry.getValue(), Size);
       if (Result == AliasAnalysis::MayAlias)
         AliasTy = MayAlias;
       else                  // First entry of must alias must have maximum size!
-        P->second.updateSize(Size);
+        P->updateSize(Size);
       assert(Result != AliasAnalysis::NoAlias && "Cannot be part of must set!");
     }
 
-  Entry.second.setAliasSet(this);
-  Entry.second.updateSize(Size);
+  Entry.setAliasSet(this);
+  Entry.updateSize(Size);
 
   // Add it to the end of the list...
   assert(*PtrListEnd == 0 && "End of list is not null?");
   *PtrListEnd = &Entry;
-  PtrListEnd = Entry.second.setPrevInList(PtrListEnd);
+  PtrListEnd = Entry.setPrevInList(PtrListEnd);
   assert(*PtrListEnd == 0 && "End of list is not null?");
   addRef();               // Entry points to alias set...
 }
@@ -139,9 +139,9 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
 
     // If this is a set of MustAliases, only check to see if the pointer aliases
     // SOME value in the set...
-    HashNodePair *SomePtr = getSomePointer();
+    PointerRec *SomePtr = getSomePointer();
     assert(SomePtr && "Empty must-alias set??");
-    return AA.alias(SomePtr->first, SomePtr->second.getSize(), Ptr, Size);
+    return AA.alias(SomePtr->getValue(), SomePtr->getSize(), Ptr, Size);
   }
 
   // If this is a may-alias set, we have to check all of the pointers in the set
@@ -182,6 +182,18 @@ bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
       return true;
 
   return false;
+}
+
+void AliasSetTracker::clear() {
+  // Delete all the PointerRec entries.
+  for (DenseMap<Value*, AliasSet::PointerRec*>::iterator I = PointerMap.begin(),
+       E = PointerMap.end(); I != E; ++I)
+    I->second->eraseFromList();
+  
+  PointerMap.clear();
+  
+  // The alias sets should all be clear now.
+  AliasSets.clear();
 }
 
 
@@ -234,16 +246,16 @@ AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
 
 
 /// getAliasSetForPointer - Return the alias set that the specified pointer
-/// lives in...
+/// lives in.
 AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
                                                  bool *New) {
-  AliasSet::HashNodePair &Entry = getEntryFor(Pointer);
+  AliasSet::PointerRec &Entry = getEntryFor(Pointer);
 
   // Check to see if the pointer is already known...
-  if (Entry.second.hasAliasSet()) {
-    Entry.second.updateSize(Size);
+  if (Entry.hasAliasSet()) {
+    Entry.updateSize(Size);
     // Return the set!
-    return *Entry.second.getAliasSet(*this)->getForwardedTarget(*this);
+    return *Entry.getAliasSet(*this)->getForwardedTarget(*this);
   } else if (AliasSet *AS = findAliasSetForPointer(Pointer, Size)) {
     // Add it to the alias set it aliases...
     AS->addPointer(*this, Entry, Size);
@@ -371,17 +383,18 @@ void AliasSetTracker::remove(AliasSet &AS) {
   // Clear the alias set.
   unsigned NumRefs = 0;
   while (!AS.empty()) {
-    AliasSet::HashNodePair *P = AS.PtrList;
+    AliasSet::PointerRec *P = AS.PtrList;
+
+    Value *ValToRemove = P->getValue();
     
-    // Unlink from the list of values.
-    P->second.removeFromList();
+    // Unlink and delete entry from the list of values.
+    P->eraseFromList();
     
     // Remember how many references need to be dropped.
     ++NumRefs;
 
     // Finally, remove the entry.
-    Value *Remove = P->first;   // Take a copy because it is invalid to pass
-    PointerMap.erase(Remove);   // a reference to the data being erased.
+    PointerMap.erase(ValToRemove);
   }
   
   // Stop using the alias set, removing it.
@@ -472,17 +485,19 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
         AS->removeCallSite(CS);
 
   // First, look up the PointerRec for this pointer.
-  hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(PtrVal);
+  DenseMap<Value*, AliasSet::PointerRec*>::iterator I = PointerMap.find(PtrVal);
   if (I == PointerMap.end()) return;  // Noop
 
   // If we found one, remove the pointer from the alias set it is in.
-  AliasSet::HashNodePair &PtrValEnt = *I;
-  AliasSet *AS = PtrValEnt.second.getAliasSet(*this);
+  AliasSet::PointerRec *PtrValEnt = I->second;
+  AliasSet *AS = PtrValEnt->getAliasSet(*this);
 
-  // Unlink from the list of values...
-  PtrValEnt.second.removeFromList();
-  // Stop using the alias set
+  // Unlink and delete from the list of values.
+  PtrValEnt->eraseFromList();
+  
+  // Stop using the alias set.
   AS->dropRef(*this);
+  
   PointerMap.erase(I);
 }
 
@@ -496,16 +511,17 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   AA.copyValue(From, To);
 
   // First, look up the PointerRec for this pointer.
-  hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(From);
-  if (I == PointerMap.end() || !I->second.hasAliasSet())
+  DenseMap<Value*, AliasSet::PointerRec*>::iterator I = PointerMap.find(From);
+  if (I == PointerMap.end())
     return;  // Noop
+  assert(I->second->hasAliasSet() && "Dead entry?");
 
-  AliasSet::HashNodePair &Entry = getEntryFor(To);
-  if (Entry.second.hasAliasSet()) return;    // Already in the tracker!
+  AliasSet::PointerRec &Entry = getEntryFor(To);
+  if (Entry.hasAliasSet()) return;    // Already in the tracker!
 
   // Add it to the alias set it aliases...
-  AliasSet *AS = I->second.getAliasSet(*this);
-  AS->addPointer(*this, Entry, I->second.getSize(), true);
+  AliasSet *AS = I->second->getAliasSet(*this);
+  AS->addPointer(*this, Entry, I->second->getSize(), true);
 }
 
 
