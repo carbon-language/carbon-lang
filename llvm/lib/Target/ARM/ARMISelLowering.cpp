@@ -1591,6 +1591,9 @@ static bool isLegalAddressImmediate(int64_t V, MVT VT,
   if (V == 0)
     return true;
 
+  if (!VT.isSimple())
+    return false;
+
   if (Subtarget->isThumb()) {
     if (V < 0)
       return false;
