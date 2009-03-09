@@ -1819,6 +1819,21 @@ LBB1_1:	## bb1
 
 //===---------------------------------------------------------------------===//
 
+Test instructions can be eliminated by using EFLAGS values from arithmetic
+instructions. This is currently not done for and, or, xor, neg, shl, sra,
+srl, shld, shrd, atomic ops, and others. It is also currently not done for
+read-modify-write instructions.
+
+The shift operators have the complication that when the shift count is
+zero, EFLAGS is not set, so they can only subsume a test instruction if
+the shift count is known to be non-zero.
+
+In read-modify-write instructions, the root node in the isel match is
+the store, and isel has no way for the use of the EFLAGS result of the
+arithmetic to be remapped to the new node.
+
+//===---------------------------------------------------------------------===//
+
 test/CodeGen/X86/2009-03-07-FPConstSelect.ll compiles to:
 
 _f:
