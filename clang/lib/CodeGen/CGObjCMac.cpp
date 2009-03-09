@@ -1842,10 +1842,15 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
 
 uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
                                             FieldDecl *Field) {
-  return Field->isBitField() 
-           ? CGM.getTypes().getLLVMFieldNo(Field) 
-           : Layout->getElementOffset(
-               CGM.getTypes().getLLVMFieldNo(Field));
+  if (!Field->isBitField())
+    return Layout->getElementOffset(
+            CGM.getTypes().getLLVMFieldNo(Field));
+  // FIXME. Must be a better way of getting a bitfield base offset.
+  uint64_t offset = CGM.getTypes().getLLVMFieldNo(Field);
+  const llvm::Type *Ty = CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
+  uint64_t size = CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
+  offset = (offset*size)/8; 
+  return offset;
 }
 
 llvm::GlobalVariable *
@@ -4485,10 +4490,14 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
   llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
   V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
   
-  if (Ivar->isBitField())
-    return CGF.EmitLValueForBitfield(V, const_cast<FieldDecl *>(Field), 
-                                     CVRQualifiers);
-  
+  if (Ivar->isBitField()) {
+    CodeGenTypes::BitFieldInfo bitFieldInfo =
+                                 CGM.getTypes().getBitFieldInfo(Field);
+    return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
+                                Field->getType()->isSignedIntegerType(),
+                                Field->getType().getCVRQualifiers()|CVRQualifiers);
+  }
+
   LValue LV = LValue::MakeAddr(V, 
               Ivar->getType().getCVRQualifiers()|CVRQualifiers,
               CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
