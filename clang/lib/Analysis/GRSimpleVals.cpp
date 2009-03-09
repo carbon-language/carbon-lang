@@ -262,6 +262,17 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
 }
 
 // Pointer arithmetic.
+static Loc StripViews(Loc X) {
+  if (isa<loc::MemRegionVal>(X)) {
+    const SymbolicRegion *Region =
+      cast<loc::MemRegionVal>(X).getRegion()->getAs<SymbolicRegion>();
+    
+    if (Region)
+      return Loc::MakeVal(Region->getSymbol());
+  }
+  
+  return X;
+}
 
 SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
                              Loc L, NonLoc R) {  
@@ -274,7 +285,8 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
 SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
-  
+
+TryAgain:
   switch (L.getSubKind()) {
 
     default:
@@ -320,7 +332,20 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
       return UnknownVal();      
     }
       
-    case loc::MemRegionKind:
+    case loc::MemRegionKind: {
+      // See if 'L' and 'R' both wrap symbols.
+      Loc LTmp = StripViews(L);
+      Loc RTmp = StripViews(R);
+      
+      if (LTmp != L || RTmp != R) {
+        L = LTmp;
+        R = RTmp;
+        goto TryAgain;
+      }
+    }    
+    
+    // Fall-through.
+      
     case loc::FuncValKind:
     case loc::GotoLabelKind:
       return NonLoc::MakeIntTruthVal(BasicVals, L == R);
@@ -333,6 +358,7 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
 
+TryAgain:
   switch (L.getSubKind()) {
 
     default:
@@ -357,7 +383,7 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
       }
       
       break;
-      
+
     case loc::SymbolValKind: {
       if (isa<loc::ConcreteInt>(R)) {          
         const SymIntConstraint& C =
@@ -378,7 +404,18 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
       break;
     }
       
-    case loc::MemRegionKind:
+    case loc::MemRegionKind: {
+      // See if 'L' and 'R' both wrap symbols.
+      Loc LTmp = StripViews(L);
+      Loc RTmp = StripViews(R);
+      
+      if (LTmp != L || RTmp != R) {
+        L = LTmp;
+        R = RTmp;
+        goto TryAgain;
+      }
+    }
+      
     case loc::FuncValKind:
     case loc::GotoLabelKind:
       return NonLoc::MakeIntTruthVal(BasicVals, L != R);
