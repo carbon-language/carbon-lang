@@ -17,7 +17,6 @@
 #ifndef LLVM_ADT_HASHEXTRAS_H
 #define LLVM_ADT_HASHEXTRAS_H
 
-#include "llvm/ADT/hash_map.h"
 #include <string>
 
 // Cannot specialize hash template from outside of the std namespace.

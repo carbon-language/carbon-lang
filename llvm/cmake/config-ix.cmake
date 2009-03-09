@@ -86,14 +86,6 @@ else( MSVC )
   set(LTDL_DLOPEN_DEPLIBS 0)  # TODO
 endif( MSVC )
 
-if( NOT MSVC )
-  # hash_map.h.in and hash_set.h.in contain a special case for MSVC
-  include(CheckCxxHashmap)
-  include(CheckCxxHashset)
-  check_hashmap()
-  check_hashset()
-endif( NOT MSVC )
-
 # FIXME: Signal handler return type, currently hardcoded to 'void'
 set(RETSIGTYPE void)
 
@@ -124,12 +116,3 @@ configure_file(
   ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h
   )
 
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT/hash_map.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/ADT/hash_map.h
-  )
-
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT/hash_set.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/ADT/hash_set.h
-  )

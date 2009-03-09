@@ -117,8 +117,6 @@ debug-opt-prof:
 dist-hook::
 	$(Echo) Eliminating files constructed by configure
 	$(Verb) $(RM) -f \
-	  $(TopDistDir)/include/llvm/ADT/hash_map.h  \
-	  $(TopDistDir)/include/llvm/ADT/hash_set.h  \
 	  $(TopDistDir)/include/llvm/ADT/iterator.h  \
 	  $(TopDistDir)/include/llvm/Config/config.h  \
 	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
@@ -137,8 +135,6 @@ install-libs: install
 FilesToConfig := \
   include/llvm/Config/config.h \
   include/llvm/Support/DataTypes.h \
-  include/llvm/ADT/hash_map.h \
-  include/llvm/ADT/hash_set.h \
   include/llvm/ADT/iterator.h
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 

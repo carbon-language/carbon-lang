@@ -842,8 +842,6 @@ AC_FUNC_RAND48
 
 dnl Check for variations in the Standard C++ library and STL. These macros are
 dnl provided by LLVM in the autoconf/m4 directory.
-AC_CXX_HAVE_HASH_MAP
-AC_CXX_HAVE_HASH_SET
 AC_CXX_HAVE_STD_ITERATOR
 AC_CXX_HAVE_BI_ITERATOR
 AC_CXX_HAVE_FWD_ITERATOR
@@ -1048,8 +1046,6 @@ dnl contains the same list of files as AC_CONFIG_HEADERS below. This ensures the
 dnl files can be updated automatically when their *.in sources change.
 AC_CONFIG_HEADERS([include/llvm/Config/config.h])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
-AC_CONFIG_HEADERS([include/llvm/ADT/hash_map.h])
-AC_CONFIG_HEADERS([include/llvm/ADT/hash_set.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/iterator.h])
 
 dnl Configure the makefile's configuration data
