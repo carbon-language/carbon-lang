@@ -1864,7 +1864,7 @@ CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
   if (Section)
     GV->setSection(Section);
   if (SetAlignment)
-    GV->setAlignment(CGM.getTargetData().getPreferredAlignment(Ty));
+    GV->setAlignment(CGM.getTargetData().getPrefTypeAlignment(Ty));
   if (IsUsed)
     UsedGlobals.push_back(GV);
   return GV;
