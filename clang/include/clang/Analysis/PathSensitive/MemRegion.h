@@ -70,6 +70,8 @@ public:
   
   Kind getKind() const { return kind; }  
   
+  template<typename RegionTy> const RegionTy* getAs() const;
+  
   virtual bool isBoundable(ASTContext&) const { return true; }
 
   static bool classof(const MemRegion*) { return true; }
@@ -452,6 +454,26 @@ public:
     return R->getKind() == ElementRegionKind;
   }
 };
+  
+template<typename RegionTy>
+const RegionTy* MemRegion::getAs() const {
+  const MemRegion *R = this;
+  
+  do {
+    if (const RegionTy* RT = dyn_cast<RegionTy>(R))
+      return RT;
+    
+    if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
+      R = TR->getSuperRegion();
+      continue;
+    }
+    
+    break;
+  }
+  while (R);
+  
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 // MemRegionManager - Factory object for creating regions.
@@ -543,7 +565,7 @@ public:
 
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
-};  
+};
 } // end clang namespace
 
 namespace llvm {
