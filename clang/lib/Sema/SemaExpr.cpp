@@ -3499,7 +3499,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
           Loc.getFileLocWithOffset(1) == UO->getOperatorLoc() &&
           // And there is a space or other character before the subexpr of the
           // unary +/-.  We don't want to warn on "x=-1".
-          Loc.getFileLocWithOffset(2) != UO->getSubExpr()->getLocStart()) {
+          Loc.getFileLocWithOffset(2) != UO->getSubExpr()->getLocStart() &&
+          UO->getSubExpr()->getLocStart().isFileID()) {
         Diag(Loc, diag::warn_not_compound_assign)
           << (UO->getOpcode() == UnaryOperator::Plus ? "+" : "-")
           << SourceRange(UO->getOperatorLoc(), UO->getOperatorLoc());

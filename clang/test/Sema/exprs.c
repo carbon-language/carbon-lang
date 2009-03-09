@@ -25,6 +25,10 @@ void test4() {
 
       var =+5;  // no warning when the subexpr of the unary op has no space before it.
       var =-5;
+  
+#define FIVE 5
+      var=-FIVE;  // no warning with macros.
+      var=-FIVE;
 }
 
 // rdar://6319320
