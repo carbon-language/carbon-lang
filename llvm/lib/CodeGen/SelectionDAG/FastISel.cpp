@@ -319,8 +319,9 @@ bool FastISel::SelectCall(User *I) {
     DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
     if (DW && DW->ValidDebugInfo(SPI->getContext())) {
       DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
-      unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(),
-                                                 CU.getFilename());
+      std::string Dir, FN;
+      unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
+                                                 CU.getFilename(FN));
       unsigned Line = SPI->getLine();
       unsigned Col = SPI->getColumn();
       unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
@@ -361,8 +362,9 @@ bool FastISel::SelectCall(User *I) {
       // (most?) gdb expects.
       DISubprogram Subprogram(cast<GlobalVariable>(SP));
       DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-      unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(),
-                                                 CompileUnit.getFilename());
+      std::string Dir, FN;
+      unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(Dir),
+                                                 CompileUnit.getFilename(FN));
 
       // Record the source line but does not create a label for the normal
       // function start. It will be emitted at asm emission time. However,

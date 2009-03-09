@@ -59,8 +59,9 @@ void PrintDbgInfo::printVariableDeclaration(const Value *V)
 {
   if(const DbgDeclareInst* DDI = findDbgDeclare(V)) {
     DIVariable Var(cast<GlobalVariable>(DDI->getVariable()));
-    Out << "; variable " << Var.getName()
-      << " of type " << Var.getType().getName()
+    std::string Res1, Res2;
+    Out << "; variable " << Var.getName(Res1)
+      << " of type " << Var.getType().getName(Res2)
       << " at line " << Var.getLineNumber() << "\n";
   }
 }
@@ -83,8 +84,9 @@ void PrintDbgInfo::printStopPoint(const DbgStopPointInst *DSI)
 void PrintDbgInfo::printFuncStart(const DbgFuncStartInst *FS)
 {
   DISubprogram Subprogram(cast<GlobalVariable>(FS->getSubprogram()));
-  Out << ";fully qualified function name: " << Subprogram.getDisplayName()
-    << " return type: " << Subprogram.getType().getName()
+  std::string Res1, Res2;
+  Out << ";fully qualified function name: " << Subprogram.getDisplayName(Res1)
+    << " return type: " << Subprogram.getType().getName(Res2)
     << " at line " << Subprogram.getLineNumber()
     << "\n\n";
 }

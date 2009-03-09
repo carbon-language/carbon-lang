@@ -1287,8 +1287,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
       if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
         DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
-        unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(),
-                                                   CU.getFilename());
+        std::string Dir, FN;
+        unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
+                                                   CU.getFilename(FN));
 
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();

@@ -35,17 +35,23 @@ DIDescriptor::DIDescriptor(GlobalVariable *gv, unsigned RequiredTag) {
     GV = 0;
 }
 
+const std::string &
+DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
+  if (GV == 0) {
+    Result.clear();
+    return Result;
+  }
 
-std::string DIDescriptor::getStringField(unsigned Elt) const {
-  if (GV == 0) return "";
   Constant *C = GV->getInitializer();
-  if (C == 0 || Elt >= C->getNumOperands())
-    return "";
+  if (C == 0 || Elt >= C->getNumOperands()) {
+    Result.clear();
+    return Result;
+  }
   
-  std::string Result;
   // Fills in the string if it succeeds
   if (!GetConstantStringInfo(C->getOperand(Elt), Result))
     Result.clear();
+
   return Result;
 }
 
@@ -58,7 +64,6 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
     return CI->getZExtValue();
   return 0;
 }
-
 
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
   if (GV == 0) return DIDescriptor();
@@ -185,7 +190,8 @@ unsigned DIArray::getNumElements() const {
 bool DICompileUnit::Verify() const {
   if (isNull()) 
     return false;
-  if (getFilename().empty()) 
+  std::string Res;
+  if (getFilename(Res).empty()) 
     return false;
   // It is possible that directory and produce string is empty.
   return true;
@@ -864,16 +870,22 @@ namespace llvm {
 void DICompileUnit::dump() const {
   if (getLanguage())
     cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
-  cerr << " [" << getDirectory() << "/" << getFilename() << " ]";
+
+  std::string Res1, Res2;
+  cerr << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
 }
 
 /// dump - print type.
 void DIType::dump() const {
   if (isNull()) return;
-  if (!getName().empty())
-    cerr << " [" << getName() << "] ";
+
+  std::string Res;
+  if (!getName(Res).empty())
+    cerr << " [" << Res << "] ";
+
   unsigned Tag = getTag();
   cerr << " [" << dwarf::TagString(Tag) << "] ";
+
   // TODO : Print context
   getCompileUnit().dump();
   cerr << " [" 
@@ -882,10 +894,12 @@ void DIType::dump() const {
        << getAlignInBits() << ", "
        << getOffsetInBits() 
        << "] ";
+
   if (isPrivate()) 
     cerr << " [private] ";
   else if (isProtected())
     cerr << " [protected] ";
+
   if (isForwardDecl())
     cerr << " [fwd] ";
 
@@ -899,6 +913,7 @@ void DIType::dump() const {
     cerr << "Invalid DIType\n";
     return;
   }
+
   cerr << "\n";
 }
 
@@ -923,16 +938,20 @@ void DICompositeType::dump() const {
 
 /// dump - print global.
 void DIGlobal::dump() const {
+  std::string Res;
+  if (!getName(Res).empty())
+    cerr << " [" << Res << "] ";
 
-  if (!getName().empty())
-    cerr << " [" << getName() << "] ";
   unsigned Tag = getTag();
   cerr << " [" << dwarf::TagString(Tag) << "] ";
+
   // TODO : Print context
   getCompileUnit().dump();
   cerr << " [" << getLineNumber() << "] ";
+
   if (isLocalToUnit())
     cerr << " [local] ";
+
   if (isDefinition())
     cerr << " [def] ";
 
@@ -954,8 +973,10 @@ void DIGlobalVariable::dump() const {
 
 /// dump - print variable.
 void DIVariable::dump() const {
-  if (!getName().empty())
-    cerr << " [" << getName() << "] ";
+  std::string Res;
+  if (!getName(Res).empty())
+    cerr << " [" << Res << "] ";
+
   getCompileUnit().dump();
   cerr << " [" << getLineNumber() << "] ";
   getType().dump();
