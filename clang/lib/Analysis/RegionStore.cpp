@@ -665,7 +665,8 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
-  const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
+  const TypedRegion* R 
+    = cast<TypedRegion>(cast<loc::MemRegionVal>(L).getRegion());
   assert(R && "bad region");
 
   // FIXME: We should eventually handle funny addressing.  e.g.:
@@ -677,14 +678,12 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   //
   // Such funny addressing will occur due to layering of regions.
 
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    QualType T =TR->getRValueType(getContext());
-    if (T->isStructureType())
-      return RetrieveStruct(St, TR);
-    // FIXME: handle Vector types.
-    if (T->isVectorType())
+  QualType RTy = R->getRValueType(getContext());
+  if (RTy->isStructureType())
+    return RetrieveStruct(St, R);
+  // FIXME: handle Vector types.
+  if (RTy->isVectorType())
       return UnknownVal();
-  }
   
   RegionBindingsTy B = GetRegionBindings(St->getStore());
   RegionBindingsTy::data_type* V = B.lookup(R);
