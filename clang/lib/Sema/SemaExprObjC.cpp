@@ -489,7 +489,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
 
   // Handle messages to id.
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
-      ReceiverCType->getAsBlockPointerType()) {
+      ReceiverCType->isBlockPointerType()) {
     ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
     if (!Method)
@@ -582,8 +582,17 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     }
     if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
       return true;
-  } else {
+  } else if (!Context.getObjCIdType().isNull() &&
+             (ReceiverCType->isPointerType() ||
+              (ReceiverCType->isIntegerType() && 
+               ReceiverCType->isScalarType()))) {
+    // Implicitly convert integers and pointers to 'id' but emit a warning.
     Diag(lbrac, diag::warn_bad_receiver_type)
+      << RExpr->getType() << RExpr->getSourceRange();
+    ImpCastExprToType(RExpr, Context.getObjCIdType());
+  } else {
+    // Reject other random receiver types (e.g. structs).
+    Diag(lbrac, diag::err_bad_receiver_type)
       << RExpr->getType() << RExpr->getSourceRange();
     return true;
   }

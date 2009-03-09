@@ -75,3 +75,16 @@ int f2() {
     return 0;
 }
 
+
+// PR3766
+struct S { int X; } S;
+
+int test5(int X) {
+  int a = [X somemsg];  // expected-warning {{bad receiver type 'int'}} \
+                           expected-warning {{method '-somemsg' not found}} \
+                           expected-warning {{incompatible pointer to integer conversion initializing 'id', expected 'int'}}
+  int b = [S somemsg];  // expected-error {{bad receiver type 'struct S'}}
+}
+
+
+
