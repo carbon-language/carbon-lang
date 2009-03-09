@@ -18,6 +18,7 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/Statistic.h"
@@ -121,6 +122,8 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       // FreeInsts erase the entire structure
       PointerSize = ~0ULL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
+      // Debug intrinsics don't cause dependences.
+      if (isa<DbgInfoIntrinsic>(Inst)) break;
       CallSite InstCS = CallSite::get(Inst);
       // If these two calls do not interfere, look past it.
       switch (AA->getModRefInfo(CS, InstCS)) {
@@ -174,6 +177,9 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
+
+    // Debug intrinsics don't cause dependences.
+    if (isa<DbgInfoIntrinsic>(Inst)) continue;
 
     // Values depend on loads if the pointers are must aliased.  This means that
     // a load depends on another must aliased load from the same value.
