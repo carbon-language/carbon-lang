@@ -399,7 +399,11 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
 SVal RegionStoreManager::getLValueElement(const GRState* St, 
                                           SVal Base, SVal Offset) {
 
-  if (Base.isUnknownOrUndef())
+  // If the base is an unknown or undefined value, just return it back.
+  // FIXME: For absolute pointer addresses, we just return that value back as
+  //  well, although in reality we should return the offset added to that
+  //  value.
+  if (Base.isUnknownOrUndef() || isa<loc::ConcreteInt>(Base))
     return Base;
 
   // Only handle integer offsets... for now.
