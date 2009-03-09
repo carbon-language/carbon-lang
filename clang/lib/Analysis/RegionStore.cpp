@@ -751,8 +751,11 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
     return UndefinedVal();
   }
 
-  // All other values are symbolic.
-  return SVal::GetRValueSymbolVal(getSymbolManager(), R);
+  // All other integer values are symbolic.
+  if (Loc::IsLocType(RTy) || RTy->isIntegerType())
+    return SVal::GetRValueSymbolVal(getSymbolManager(), R);
+  else
+    return UnknownVal();
 }
 
 SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
