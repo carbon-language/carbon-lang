@@ -1189,7 +1189,7 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     return false;
   }
 
-  return DiagnoseIncompleteType(OpLoc, exprType,
+  return RequireCompleteType(OpLoc, exprType,
                                 isSizeof ? diag::err_sizeof_incomplete_type : 
                                            diag::err_alignof_incomplete_type,
                                 ExprRange);
@@ -1703,7 +1703,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // of the ObjC 'id' struct.
   if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
-    if (DiagnoseIncompleteType(OpLoc, BaseType,
+    if (RequireCompleteType(OpLoc, BaseType,
                                diag::err_typecheck_incomplete_tag,
                                BaseExpr->getSourceRange()))
       return ExprError();
@@ -2257,7 +2257,7 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
     if (literalType->isVariableArrayType())
       return ExprError(Diag(LParenLoc, diag::err_variable_object_no_init)
         << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd()));
-  } else if (DiagnoseIncompleteType(LParenLoc, literalType,
+  } else if (RequireCompleteType(LParenLoc, literalType,
                                     diag::err_typecheck_decl_incomplete_type,
                 SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd())))
     return ExprError();
@@ -3017,7 +3017,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
           Diag(Loc, diag::ext_gnu_ptr_func_arith)
             << lex->getType() << lex->getSourceRange();
         } else {
-          DiagnoseIncompleteType(Loc, PTy->getPointeeType(),
+          RequireCompleteType(Loc, PTy->getPointeeType(),
                                  diag::err_typecheck_arithmetic_incomplete_type,
                                  lex->getSourceRange(), SourceRange(),
                                  lex->getType());
@@ -3436,7 +3436,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   case Expr::MLV_IncompleteType:
   case Expr::MLV_IncompleteVoidType:
-    return S.DiagnoseIncompleteType(Loc, E->getType(),
+    return S.RequireCompleteType(Loc, E->getType(),
                       diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
                                     E->getSourceRange());
   case Expr::MLV_DuplicateVectorComponents:
@@ -3577,7 +3577,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
       Diag(OpLoc, diag::ext_gnu_ptr_func_arith)
         << ResType << Op->getSourceRange();
     } else {
-      DiagnoseIncompleteType(OpLoc, PT->getPointeeType(),
+      RequireCompleteType(OpLoc, PT->getPointeeType(),
                              diag::err_typecheck_arithmetic_incomplete_type,
                              Op->getSourceRange(), SourceRange(),
                              ResType);

@@ -893,7 +893,7 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
     // function declarator that is part of a function definition of
     // that function shall not have incomplete type.
     if (!Param->isInvalidDecl() &&
-        DiagnoseIncompleteType(Param->getLocation(), Param->getType(),
+        RequireCompleteType(Param->getLocation(), Param->getType(),
                                diag::err_typecheck_decl_incomplete_type)) {
       Param->setInvalidDecl();
       HasInvalidParm = true;
@@ -2255,7 +2255,7 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
           Var->getStorageClass() != VarDecl::PrivateExtern &&
           InitType->isRecordType()) {
         const CXXConstructorDecl *Constructor = 0;
-        if (!DiagnoseIncompleteType(Var->getLocation(), InitType, 
+        if (!RequireCompleteType(Var->getLocation(), InitType, 
                                     diag::err_invalid_incomplete_type_use))
           Constructor
             = PerformInitializationByConstructor(InitType, 0, 0, 
@@ -2333,7 +2333,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     if (IDecl->isBlockVarDecl() && 
         IDecl->getStorageClass() != VarDecl::Extern) {
       if (!IDecl->isInvalidDecl() &&
-          DiagnoseIncompleteType(IDecl->getLocation(), T, 
+          RequireCompleteType(IDecl->getLocation(), T, 
                                  diag::err_typecheck_decl_incomplete_type))
         IDecl->setInvalidDecl();
     }
@@ -2347,7 +2347,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
         // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
         // array to be completed. Don't issue a diagnostic.
       } else if (!IDecl->isInvalidDecl() &&
-                 DiagnoseIncompleteType(IDecl->getLocation(), T,
+                 RequireCompleteType(IDecl->getLocation(), T,
                                         diag::err_typecheck_decl_incomplete_type))
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
@@ -3488,7 +3488,7 @@ void Sema::ActOnFields(Scope* S,
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FDTy->isIncompleteType()) {
       if (!Record) {  // Incomplete ivar type is always an error.
-        DiagnoseIncompleteType(FD->getLocation(), FD->getType(), 
+        RequireCompleteType(FD->getLocation(), FD->getType(), 
                                diag::err_field_incomplete);
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
@@ -3497,7 +3497,7 @@ void Sema::ActOnFields(Scope* S,
       if (i != NumFields-1 ||                   // ... that the last member ...
           !Record->isStruct() ||  // ... of a structure ...
           !FDTy->isArrayType()) {         //... may have incomplete array type.
-        DiagnoseIncompleteType(FD->getLocation(), FD->getType(), 
+        RequireCompleteType(FD->getLocation(), FD->getType(), 
                                diag::err_field_incomplete);
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();

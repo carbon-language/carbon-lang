@@ -395,7 +395,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                               SourceLocation Loc, DeclarationName Entity) {
   // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
   // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
-  if (DiagnoseIncompleteType(Loc, T, 
+  if (RequireCompleteType(Loc, T, 
                              diag::err_illegal_decl_array_incomplete_type))
     return QualType();
 
@@ -992,13 +992,15 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
   }
 }
 
-/// @brief If the type T is incomplete and cannot be completed,
-/// produce a suitable diagnostic.
+/// @brief Ensure that the type T is a complete type. 
 ///
 /// This routine checks whether the type @p T is complete in any
 /// context where a complete type is required. If @p T is a complete
-/// type, returns false. If @p T is incomplete, issues the diagnostic
-/// @p diag (giving it the type @p T) and returns true.
+/// type, returns false. If @p T is a class template specialization,
+/// this routine then attempts to perform class template
+/// instantiation. If instantiation fails, or if @p T is incomplete
+/// and cannot be completed, issues the diagnostic @p diag (giving it
+/// the type @p T) and returns true.
 ///
 /// @param Loc  The location in the source that the incomplete type
 /// diagnostic should refer to.
@@ -1023,11 +1025,7 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 ///
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.
-///
-/// @todo When Clang gets proper support for C++ templates, this
-/// routine will also be able perform template instantiation when @p T
-/// is a class template specialization.
-bool Sema::DiagnoseIncompleteType(SourceLocation Loc, QualType T, unsigned diag,
+bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
                                   SourceRange Range1, SourceRange Range2,
                                   QualType PrintType) {
   // If we have a complete type, we're done.

@@ -350,7 +350,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   // C++ [class.derived]p2:
   //   The class-name in a base-specifier shall not be an incompletely
   //   defined class.
-  if (DiagnoseIncompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
+  if (RequireCompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
                              SpecifierRange))
     return 0;
 
@@ -2270,7 +2270,7 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
     DK = diag::err_catch_incomplete_ref;
   }
   if ((Mode == 0 || !BaseType->isVoidType()) && 
-      DiagnoseIncompleteType(Begin, BaseType, DK))
+      RequireCompleteType(Begin, BaseType, DK))
     Invalid = true;
 
   // FIXME: Need to test for ability to copy-construct and destroy the

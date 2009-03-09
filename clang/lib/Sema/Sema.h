@@ -283,7 +283,7 @@ public:
 
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 
-  bool DiagnoseIncompleteType(SourceLocation Loc, QualType T, unsigned diag,
+  bool RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
                               SourceRange Range1 = SourceRange(),
                               SourceRange Range2 = SourceRange(),
                               QualType PrintType = QualType());
