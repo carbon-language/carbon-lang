@@ -2606,6 +2606,12 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     AddUsersIfInteresting(I, L, Processed);
 
   if (!IVUsesByStride.empty()) {
+#ifndef NDEBUG
+    DOUT << "\nLSR on \"" << L->getHeader()->getParent()->getNameStart()
+         << "\" ";
+    DEBUG(L->dump());
+#endif
+
     // Optimize induction variables.  Some indvar uses can be transformed to use
     // strides that will be needed for other purposes.  A common example of this
     // is the exit test for the loop, which can often be rewritten to use the
@@ -2624,12 +2630,6 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     // If we only have one stride, we can more aggressively eliminate some
     // things.
     bool HasOneStride = IVUsesByStride.size() == 1;
-
-#ifndef NDEBUG
-    DOUT << "\nLSR on \"" << L->getHeader()->getParent()->getNameStart()
-         << "\" ";
-    DEBUG(L->dump());
-#endif
 
     // IVsByStride keeps IVs for one particular loop.
     assert(IVsByStride.empty() && "Stale entries in IVsByStride?");
