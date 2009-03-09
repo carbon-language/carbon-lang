@@ -536,6 +536,7 @@ class OptionParser:
         self.printMultiDirectoryOption = self.addOption(FlagOption('-print-multi-directory'))
         self.printMultiOsDirectoryOption = self.addOption(FlagOption('-print-multi-os-directory'))
         self.printMultiLibOption = self.addOption(FlagOption('-print-multi-lib'))
+        self.addOption(SeparateOption('-specs', unsupported=True))
 
         # Pipeline control
         self.hashHashHashOption = self.addOption(FlagOption('-###'))
@@ -625,6 +626,7 @@ class OptionParser:
         self.iwithprefixbeforeOption = self.addOption(JoinedOrSeparateOption('-iwithprefixbefore', self.iGroup))
         self.addOption(JoinedOrSeparateOption('-iquote', self.iGroup))
         self.isysrootOption = self.addOption(JoinedOrSeparateOption('-isysroot', self.iGroup))
+        self.iwithsysrootOption = self.addOption(JoinedOrSeparateOption('-iwithsysroot', self.iGroup))
         self.includeOption = self.addOption(JoinedOrSeparateOption('-include', self.iGroup))
 
         self.keep_private_externsOption = self.addOption(JoinedOrSeparateOption('-keep_private_externs'))
@@ -742,7 +744,13 @@ class OptionParser:
         self.IOption = self.addOption(JoinedOrSeparateOption('-I', self.IGroup))
 
         self.LOption = self.addOption(JoinedOrSeparateOption('-L'))
-        self.TOption = self.addOption(JoinedOrSeparateOption('-T'))
+
+        self.TGroup = OptionGroup('-T')
+        self.addOption(JoinedOrSeparateOption('-Tbss', self.TGroup))
+        self.addOption(JoinedOrSeparateOption('-Tdata', self.TGroup))
+        self.addOption(JoinedOrSeparateOption('-Ttext', self.TGroup))
+        self.addOption(JoinedOrSeparateOption('-T', self.TGroup))
+
         self.UOption = self.addOption(JoinedOrSeparateOption('-U'))
         self.ZOption = self.addOption(JoinedOrSeparateOption('-Z'))
 
@@ -1044,9 +1052,10 @@ class OptionParser:
         self.addOption(JoinedOption('--resource=', alias=self.f_compileResourceOption))
         self.addOption(SeparateOption('--resource', alias=self.f_compileResourceOption,
                                       forceJoinedRender=True))
-        self.addOption(JoinedOption('--specs=', alias=self.specsOption))
+        self.addOption(JoinedOption('--specs=', alias=self.specsOption, 
+                                    unsupported=True))
         self.addOption(SeparateOption('--specs', alias=self.specsOption,
-                                      forceJoinedRender=True))
+                                      forceJoinedRender=True, unsupported=True))
         self.addOption(JoinedOption('--std=', alias=self.stdOption))
         self.addOption(SeparateOption('--std', alias=self.stdOption,
                                       forceJoinedRender=True))

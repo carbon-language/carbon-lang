@@ -1239,7 +1239,7 @@ class Darwin_X86_LinkTool(Tool):
             # endfile_spec is empty.
             pass
 
-        arglist.addAllArgs(cmd_args, arglist.parser.TOption)
+        arglist.addAllArgs(cmd_args, arglist.parser.TGroup)
         arglist.addAllArgs(cmd_args, arglist.parser.FOption)
 
         jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('collect2'), 
