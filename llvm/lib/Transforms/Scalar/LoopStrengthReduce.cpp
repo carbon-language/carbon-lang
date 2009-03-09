@@ -2147,7 +2147,6 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   Value *NewCmpRHS = NULL;
   int64_t Scale = 1;
   SCEVHandle NewOffset = SE->getIntegerSCEV(0, UIntPtrTy);
-  std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
 
   if (ConstantInt *C = dyn_cast<ConstantInt>(Cond->getOperand(1))) {
     int64_t CmpVal = C->getValue().getSExtValue();
@@ -2611,6 +2610,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     DEBUG(L->dump());
 #endif
 
+    // Sort the StrideOrder so we process larger strides first.
+    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
+
     // Optimize induction variables.  Some indvar uses can be transformed to use
     // strides that will be needed for other purposes.  A common example of this
     // is the exit test for the loop, which can often be rewritten to use the
@@ -2628,9 +2630,6 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
     // IVsByStride keeps IVs for one particular loop.
     assert(IVsByStride.empty() && "Stale entries in IVsByStride?");
-
-    // Sort the StrideOrder so we process larger strides first.
-    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
 
     // Note: this processes each stride/type pair individually.  All users
     // passed into StrengthReduceStridedIVUsers have the same type AND stride.
