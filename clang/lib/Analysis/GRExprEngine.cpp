@@ -1037,12 +1037,10 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
   Loc LV = cast<Loc>(location);    
   
   // "Assume" that the pointer is not NULL.
-  
   bool isFeasibleNotNull = false;
   const GRState* StNotNull = Assume(state, LV, true, isFeasibleNotNull);
   
   // "Assume" that the pointer is NULL.
-  
   bool isFeasibleNull = false;
   GRStateRef StNull = GRStateRef(Assume(state, LV, false, isFeasibleNull),
                                  getStateManager());
