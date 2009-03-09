@@ -239,7 +239,7 @@ private:
                                   SCEVExpander &PreheaderRewriter);
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
-                                      Loop *L, bool isOnlyStride);
+                                      Loop *L);
     void DeleteTriviallyDeadInstructions();
   };
 }
@@ -1786,11 +1786,10 @@ static bool IsImmFoldedIntoAddrMode(GlobalValue *GV, int64_t Offset,
 
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
-/// may not be the only stride (we know it is if isOnlyStride is true).
+/// may not be the only stride.
 void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                                       IVUsersOfOneStride &Uses,
-                                                      Loop *L,
-                                                      bool isOnlyStride) {
+                                                      Loop *L) {
   // If all the users are moved to another stride, then there is nothing to do.
   if (Uses.Users.empty())
     return;
@@ -2627,10 +2626,6 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     // Need to be careful that IV's are all the same type.  Only works for
     // intptr_t indvars.
 
-    // If we only have one stride, we can more aggressively eliminate some
-    // things.
-    bool HasOneStride = IVUsesByStride.size() == 1;
-
     // IVsByStride keeps IVs for one particular loop.
     assert(IVsByStride.empty() && "Stale entries in IVsByStride?");
 
@@ -2646,7 +2641,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
       std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
         IVUsesByStride.find(StrideOrder[Stride]);
       assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
-      StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
+      StrengthReduceStridedIVUsers(SI->first, SI->second, L);
     }
   }
 
