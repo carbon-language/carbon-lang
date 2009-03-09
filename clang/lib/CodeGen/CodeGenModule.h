@@ -312,17 +312,14 @@ private:
 
   void EmitGlobalDefinition(const ValueDecl *D);
 
-  /// EmitForwardFunctionDefinition - Create a new function for the given decl
-  /// and set attributes as appropriate if ReplaceExisting is true, or if the
-  /// same named declaration doesn't already exist in the module table,
-  /// otherwise return the existing function from the module table.
+  /// EmitForwardFunctionDefinition - Create a new function for the
+  /// given decl and set attributes as appropriate.
   ///
-  /// \arg Ty - If non-null the LLVM function type to use for the decl; it is
-  /// the callers responsibility to make sure this is compatible with the
-  /// correct type.
+  /// \arg Ty - If non-null the LLVM function type to use for the
+  /// decl; it is the callers responsibility to make sure this is
+  /// compatible with the correct type.
   llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D,
-                                                   const llvm::Type *Ty,
-                                                   bool ReplaceExisting=false);
+                                                   const llvm::Type *Ty);
 
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);
@@ -340,19 +337,19 @@ private:
   void EmitAliases(void);
   void EmitAnnotations(void);
 
-  /// EmitDeferred - Emit any needed decls for which code generation was
-  /// deferred.
+  /// EmitDeferred - Emit any needed decls for which code generation
+  /// was deferred.
   void EmitDeferred(void);
 
-  /// EmitLLVMUsed - Emit the llvm.used metadata used to force references to
-  /// global which may otherwise be optimized out.
+  /// EmitLLVMUsed - Emit the llvm.used metadata used to force
+  /// references to global which may otherwise be optimized out.
   void EmitLLVMUsed(void);
 
   void BindRuntimeGlobals();
 
-  /// MayDeferGeneration - Determine if the given decl can be emitted lazily;
-  /// this is only relevant for definitions. The given decl must be either a
-  /// function or var decl.
+  /// MayDeferGeneration - Determine if the given decl can be emitted
+  /// lazily; this is only relevant for definitions. The given decl
+  /// must be either a function or var decl.
   bool MayDeferGeneration(const ValueDecl *D);
 };
 }  // end namespace CodeGen
