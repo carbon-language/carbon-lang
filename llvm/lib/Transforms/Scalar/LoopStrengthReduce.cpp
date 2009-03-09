@@ -567,6 +567,27 @@ static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
   return isAddress;
 }
 
+/// getAccessType - Return the type of the memory being accessed.
+static const Type *getAccessType(const Instruction *Inst) {
+  const Type *UseTy = Inst->getType();
+  if (const StoreInst *SI = dyn_cast<StoreInst>(Inst))
+    UseTy = SI->getOperand(0)->getType();
+  else if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    // Addressing modes can also be folded into prefetches and a variety
+    // of intrinsics.
+    switch (II->getIntrinsicID()) {
+    default: break;
+    case Intrinsic::x86_sse_storeu_ps:
+    case Intrinsic::x86_sse2_storeu_pd:
+    case Intrinsic::x86_sse2_storeu_dq:
+    case Intrinsic::x86_sse2_storel_dq:
+      UseTy = II->getOperand(1)->getType();
+      break;
+    }
+  }
+  return UseTy;
+}
+
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
@@ -1037,9 +1058,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
                                 SCEVHandle &Val, SCEVHandle &Imm,
                                 bool isAddress, Loop *L,
                                 ScalarEvolution *SE) {
-  const Type *UseTy = User->getType();
-  if (StoreInst *SI = dyn_cast<StoreInst>(User))
-    UseTy = SI->getOperand(0)->getType();
+  const Type *UseTy = getAccessType(User);
   MoveImmediateValues(TLI, UseTy, Val, Imm, isAddress, L, SE);
 }
 
@@ -1137,11 +1156,8 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // We may need the UseTy below, but only when isAddrUse, so compute it
     // only in that case.
     const Type *UseTy = 0;
-    if (isAddrUse) {
-      UseTy  = Uses[i].Inst->getType();
-      if (StoreInst *SI = dyn_cast<StoreInst>(Uses[i].Inst))
-        UseTy = SI->getOperand(0)->getType();
-    }
+    if (isAddrUse)
+      UseTy = getAccessType(Uses[i].Inst);
 
     // Split the expression into subexprs.
     SeparateSubExprs(SubExprs, Uses[i].Base, SE);
@@ -1186,9 +1202,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
         continue;
       // We know this is an addressing mode use; if there are any uses that
       // are not, FreeResult would be Zero.
-      const Type *UseTy = Uses[i].Inst->getType();
-      if (StoreInst *SI = dyn_cast<StoreInst>(Uses[i].Inst))
-        UseTy = SI->getOperand(0)->getType();
+      const Type *UseTy = getAccessType(Uses[i].Inst);
       if (!fitsInAddressMode(FreeResult, UseTy, TLI, Result!=Zero)) {
         // FIXME:  could split up FreeResult into pieces here, some hoisted
         // and some not.  There is no obvious advantage to this.
@@ -1258,10 +1272,9 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
   for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i) {
     // If this is a load or other access, pass the type of the access in.
     const Type *AccessTy = Type::VoidTy;
-    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
-      AccessTy = SI->getOperand(0)->getType();
-    else if (LoadInst *LI = dyn_cast<LoadInst>(UsersToProcess[i].Inst))
-      AccessTy = LI->getType();
+    if (isAddressUse(UsersToProcess[i].Inst,
+                     UsersToProcess[i].OperandValToReplace))
+      AccessTy = getAccessType(UsersToProcess[i].Inst);
     else if (isa<PHINode>(UsersToProcess[i].Inst))
       continue;
     
@@ -1541,9 +1554,7 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
         if (!CurImm) CurImm = SE->getIntegerSCEV(0, Stride->getType());
         if (!Imm)       Imm = SE->getIntegerSCEV(0, Stride->getType());
         const Instruction *Inst = UsersToProcess[i].Inst;
-        const Type *UseTy = Inst->getType();
-        if (const StoreInst *SI = dyn_cast<StoreInst>(Inst))
-          UseTy = SI->getOperand(0)->getType();
+        const Type *UseTy = getAccessType(Inst);
         SCEVHandle Diff = SE->getMinusSCEV(UsersToProcess[i].Imm, Imm);
         if (!Diff->isZero() &&
             (!AllUsesAreAddresses ||
