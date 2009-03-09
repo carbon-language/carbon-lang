@@ -428,7 +428,19 @@ public:
   Selector getNullarySelector(IdentifierInfo *ID) {
     return Selector(ID, 0);
   }
-  
+
+  /// constructSetterName - Return the setter name for the given
+  /// identifier, i.e. "set" + Name where the initial character of Name
+  /// has been capitalized.
+  static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
+                                             const IdentifierInfo *Name) {
+    llvm::SmallString<100> SelectorName;
+    SelectorName = "set";
+    SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
+    SelectorName[3] = toupper(SelectorName[3]);
+    return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
+  }
+
   // Emit - Emit a SelectorTable to bitcode.
   void Emit(llvm::Serializer& S) const;
   

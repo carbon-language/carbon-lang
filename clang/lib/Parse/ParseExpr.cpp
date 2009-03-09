@@ -569,6 +569,28 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
     }
 
+    // Support 'Class.property' notation.
+    // We don't use isTokObjCMessageIdentifierReceiver(), since it allows 
+    // 'super' (which is inappropriate here).
+    if (getLang().ObjC1 && 
+        Actions.getTypeName(*Tok.getIdentifierInfo(), 
+                            Tok.getLocation(), CurScope) &&
+        NextToken().is(tok::period)) {
+      IdentifierInfo &ReceiverName = *Tok.getIdentifierInfo();
+      SourceLocation IdentLoc = ConsumeToken();
+      SourceLocation DotLoc = ConsumeToken();
+      
+      if (Tok.isNot(tok::identifier)) {
+        Diag(Tok, diag::err_expected_ident);
+        return ExprError();
+      }
+      IdentifierInfo &PropertyName = *Tok.getIdentifierInfo();
+      SourceLocation PropertyLoc = ConsumeToken();
+      
+      Res = Actions.ActOnClassPropertyRefExpr(ReceiverName, PropertyName,
+                                              IdentLoc, PropertyLoc);
+      return move(Res);
+    }
     // Consume the identifier so that we can see if it is followed by a '('.
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
     // need to know whether or not this identifier is a function designator or

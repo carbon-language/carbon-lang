@@ -205,7 +205,6 @@ private:
   ObjCPropertyDecl *AsProperty;
   SourceLocation IdLoc;
   Stmt *Base;
-  
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t, 
                       SourceLocation l, Expr *base)
@@ -249,7 +248,10 @@ private:
   ObjCMethodDecl *Setter;
   ObjCMethodDecl *Getter;
   SourceLocation Loc;
+  // FIXME: Swizzle these into a single pointer.
   Stmt *Base;
+  ObjCInterfaceDecl *ClassProp;
+  SourceLocation ClassLoc;
     
 public:
   ObjCKVCRefExpr(ObjCMethodDecl *getter,
@@ -257,7 +259,14 @@ public:
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
     : Expr(ObjCKVCRefExprClass, t), Setter(setter),
-      Getter(getter), Loc(l), Base(base) {
+      Getter(getter), Loc(l), Base(base), ClassProp(0), ClassLoc(SourceLocation()) {
+    }
+  ObjCKVCRefExpr(ObjCMethodDecl *getter,
+                 QualType t, 
+                 ObjCMethodDecl *setter,
+                 SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
+    : Expr(ObjCKVCRefExprClass, t), Setter(setter),
+      Getter(getter), Loc(l), Base(0), ClassProp(C), ClassLoc(CL) {
     }
   
   ObjCMethodDecl *getGetterMethod() const {
@@ -267,8 +276,10 @@ public:
     return Setter;
   }
     
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(getBase()->getLocStart(), Loc); 
+  virtual SourceRange getSourceRange() const {
+    if (Base)
+      return SourceRange(getBase()->getLocStart(), Loc);
+    return SourceRange(ClassLoc, Loc);
   }
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }

@@ -1657,20 +1657,6 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
 }
 
 
-/// constructSetterName - Return the setter name for the given
-/// identifier, i.e. "set" + Name where the initial character of Name
-/// has been capitalized.
-// FIXME: Merge with same routine in Parser. But where should this
-// live?
-static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
-                                           const IdentifierInfo *Name) {
-  llvm::SmallString<100> SelectorName;
-  SelectorName = "set";
-  SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
-  SelectorName[3] = toupper(SelectorName[3]);
-  return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
-}
-
 Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -1900,8 +1886,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
-      IdentifierInfo *SetterName = constructSetterName(PP.getIdentifierTable(),
-                                                       &Member);
+      IdentifierInfo *SetterName = 
+        SelectorTable::constructSetterName(PP.getIdentifierTable(), &Member);
+        
       Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
       ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
       if (!Setter) {

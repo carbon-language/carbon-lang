@@ -1362,6 +1362,14 @@ public:
     return 0;
   }
                                      
+  virtual OwningExprResult ActOnClassPropertyRefExpr(
+    IdentifierInfo &receiverName,
+    IdentifierInfo &propertyName,
+    SourceLocation &receiverNameLoc,
+    SourceLocation &propertyNameLoc) {
+    return ExprEmpty();
+  }
+  
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from NumArgs.

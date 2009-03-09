@@ -199,18 +199,6 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   return ClsType;
 }
 
-/// constructSetterName - Return the setter name for the given
-/// identifier, i.e. "set" + Name where the initial character of Name
-/// has been capitalized.
-static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
-                                           const IdentifierInfo *Name) {
-  llvm::SmallString<100> SelectorName;
-  SelectorName = "set";
-  SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
-  SelectorName[3] = toupper(SelectorName[3]);
-  return &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
-}
-
 ///   objc-interface-decl-list:
 ///     empty
 ///     objc-interface-decl-list objc-property-decl [OBJC2]
@@ -340,8 +328,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
           PP.getSelectorTable().getNullarySelector(SelName);
         IdentifierInfo *SetterName = OCDS.getSetterName();
         if (!SetterName)
-          SetterName = constructSetterName(PP.getIdentifierTable(),
-                                           FD.D.getIdentifier());
+          SetterName = 
+            SelectorTable::constructSetterName(PP.getIdentifierTable(),
+                                               FD.D.getIdentifier());
         Selector SetterSel = 
           PP.getSelectorTable().getUnarySelector(SetterName);
         bool isOverridingProperty = false;

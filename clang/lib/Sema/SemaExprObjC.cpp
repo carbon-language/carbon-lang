@@ -16,6 +16,8 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
 #include "llvm/ADT/SmallString.h"
+#include "clang/Lex/Preprocessor.h"
+
 using namespace clang;
 
 Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs, 
@@ -266,6 +268,78 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
   }
   return Method;
 }
+
+Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
+  IdentifierInfo &receiverName,
+  IdentifierInfo &propertyName,
+  SourceLocation &receiverNameLoc,
+  SourceLocation &propertyNameLoc) {
+  
+  ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(&receiverName);
+  
+  // Search for a declared property first.
+  
+  Selector Sel = PP.getSelectorTable().getNullarySelector(&propertyName);
+  ObjCMethodDecl *Getter = IFace->lookupClassMethod(Sel);
+
+  // If this reference is in an @implementation, check for 'private' methods.
+  if (!Getter)
+    if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+        if (ObjCImplementationDecl *ImpDecl =
+            ObjCImplementations[ClassDecl->getIdentifier()])
+          Getter = ImpDecl->getClassMethod(Sel);
+
+  if (Getter) {
+    // FIXME: refactor/share with ActOnMemberReference().
+    // Check if we can reference this property.
+    if (DiagnoseUseOfDecl(Getter, propertyNameLoc))
+      return ExprError();
+  }
+  
+  // Look for the matching setter, in case it is needed.
+  IdentifierInfo *SetterName = 
+    SelectorTable::constructSetterName(PP.getIdentifierTable(), &propertyName);
+    
+  Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
+  ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
+  if (!Setter) {
+    // If this reference is in an @implementation, also check for 'private'
+    // methods.
+    if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+        if (ObjCImplementationDecl *ImpDecl =
+              ObjCImplementations[ClassDecl->getIdentifier()])
+          Setter = ImpDecl->getClassMethod(SetterSel);
+  }
+  // Look through local category implementations associated with the class.
+  if (!Setter) {
+    for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
+      if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
+        Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
+    }
+  }
+
+  if (Setter && DiagnoseUseOfDecl(Setter, propertyNameLoc))
+    return ExprError();
+
+  if (Getter || Setter) {
+    QualType PType;
+
+    if (Getter)
+      PType = Getter->getResultType();
+    else {
+      for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
+           E = Setter->param_end(); PI != E; ++PI)
+        PType = (*PI)->getType();
+    }
+    return Owned(new (Context) ObjCKVCRefExpr(Getter, PType, Setter, 
+                                  propertyNameLoc, IFace, receiverNameLoc));
+  }
+  return ExprError(Diag(propertyNameLoc, diag::err_property_not_found)
+                     << &propertyName << Context.getObjCInterfaceType(IFace));
+}
+
 
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions

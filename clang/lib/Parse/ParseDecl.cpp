@@ -1437,6 +1437,10 @@ bool Parser::isDeclarationSpecifier() {
   default: return false;
     
   case tok::identifier:   // foo::bar
+    // Unfortunate hack to support "Class.factoryMethod" notation.
+    if (getLang().ObjC1 && NextToken().is(tok::period))
+      return false;
+
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
