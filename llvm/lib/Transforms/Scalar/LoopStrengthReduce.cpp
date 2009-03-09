@@ -97,11 +97,9 @@ namespace {
     SCEVHandle  Stride;
     SCEVHandle  Base;
     PHINode    *PHI;
-    Value      *IncV;
 
-    IVExpr(const SCEVHandle &stride, const SCEVHandle &base, PHINode *phi,
-           Value *incv)
-      : Stride(stride), Base(base), PHI(phi), IncV(incv) {}
+    IVExpr(const SCEVHandle &stride, const SCEVHandle &base, PHINode *phi)
+      : Stride(stride), Base(base), PHI(phi) {}
   };
 
   /// IVsOfOneStride - This structure keeps track of all IV expression inserted
@@ -109,9 +107,8 @@ namespace {
   struct VISIBILITY_HIDDEN IVsOfOneStride {
     std::vector<IVExpr> IVs;
 
-    void addIV(const SCEVHandle &Stride, const SCEVHandle &Base, PHINode *PHI,
-               Value *IncV) {
-      IVs.push_back(IVExpr(Stride, Base, PHI, IncV));
+    void addIV(const SCEVHandle &Stride, const SCEVHandle &Base, PHINode *PHI) {
+      IVs.push_back(IVExpr(Stride, Base, PHI));
     }
   };
 
@@ -695,10 +692,7 @@ namespace {
 
     /// Phi - The induction variable that performs the striding that
     /// should be used for this user.
-    Value *Phi;
-
-    /// IncV - The post-incremented value of Phi.
-    Value *IncV;
+    PHINode *Phi;
 
     // isUseOfPostIncrementedValue - True if this should use the
     // post-incremented version of this IV, not the preincremented version.
@@ -1587,13 +1581,11 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
 /// If NegateStride is true, the stride should be negated by using a
 /// subtract instead of an add.
 ///
-/// Return the created phi node, and return the step instruction by
-/// reference in IncV.
+/// Return the created phi node.
 ///
 static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
                                 const Loop *L,
-                                SCEVExpander &Rewriter,
-                                Value *&IncV) {
+                                SCEVExpander &Rewriter) {
   assert(Start->isLoopInvariant(L) && "New PHI start is not loop invariant!");
   assert(Step->isLoopInvariant(L) && "New PHI stride is not loop invariant!");
 
@@ -1615,6 +1607,7 @@ static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
   // Insert an add instruction right before the terminator corresponding
   // to the back-edge.
   Value *StepV = Rewriter.expandCodeFor(IncAmount, Preheader->getTerminator());
+  Instruction *IncV;
   if (isNegative) {
     IncV = BinaryOperator::CreateSub(PN, StepV, "lsr.iv.next",
                                      LatchBlock->getTerminator());
@@ -1684,16 +1677,13 @@ LoopStrengthReduce::PrepareToStrengthReduceFully(
     SCEVHandle Imm = UsersToProcess[i].Imm;
     SCEVHandle Base = UsersToProcess[i].Base;
     SCEVHandle Start = SE->getAddExpr(CommonExprs, Base, Imm);
-    Value *IncV;
     PHINode *Phi = InsertAffinePhi(Start, Stride, L,
-                                   PreheaderRewriter,
-                                   IncV);
+                                   PreheaderRewriter);
     // Loop over all the users with the same base.
     do {
       UsersToProcess[i].Base = SE->getIntegerSCEV(0, Stride->getType());
       UsersToProcess[i].Imm = SE->getMinusSCEV(UsersToProcess[i].Imm, Imm);
       UsersToProcess[i].Phi = Phi;
-      UsersToProcess[i].IncV = IncV;
       assert(UsersToProcess[i].Imm->isLoopInvariant(L) &&
              "ShouldUseFullStrengthReductionMode should reject this!");
     } while (++i != e && Base == UsersToProcess[i].Base);
@@ -1713,25 +1703,19 @@ LoopStrengthReduce::PrepareToStrengthReduceWithNewPhi(
                                          SCEVExpander &PreheaderRewriter) {
   DOUT << "  Inserting new PHI:\n";
 
-  Value *IncV;
   PHINode *Phi = InsertAffinePhi(SE->getUnknown(CommonBaseV),
                                  Stride, L,
-                                 PreheaderRewriter,
-                                 IncV);
+                                 PreheaderRewriter);
 
   // Remember this in case a later stride is multiple of this.
-  IVsByStride[Stride].addIV(Stride, CommonExprs, Phi, IncV);
+  IVsByStride[Stride].addIV(Stride, CommonExprs, Phi);
 
   // All the users will share this new IV.
-  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i)
     UsersToProcess[i].Phi = Phi;
-    UsersToProcess[i].IncV = IncV;
-  }
 
   DOUT << "    IV=";
   DEBUG(WriteAsOperand(*DOUT, Phi, /*PrintType=*/false));
-  DOUT << ", INC=";
-  DEBUG(WriteAsOperand(*DOUT, IncV, /*PrintType=*/false));
   DOUT << "\n";
 }
 
@@ -1749,10 +1733,8 @@ LoopStrengthReduce::PrepareToStrengthReduceFromSmallerStride(
        << " and BASE " << *ReuseIV.Base << "\n";
 
   // All the users will share the reused IV.
-  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i)
     UsersToProcess[i].Phi = ReuseIV.PHI;
-    UsersToProcess[i].IncV = ReuseIV.IncV;
-  }
 
   Constant *C = dyn_cast<Constant>(CommonBaseV);
   if (C &&
@@ -1884,7 +1866,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   SCEVHandle RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
                    SE->getIntegerSCEV(0, Type::Int32Ty),
-                   0, 0);
+                   0);
 
   /// Choose a strength-reduction strategy and prepare for it by creating
   /// the necessary PHIs and adjusting the bookkeeping.
@@ -1957,7 +1939,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // after the post-inc and use its value instead of the PHI.
       Value *RewriteOp = User.Phi;
       if (User.isUseOfPostIncrementedValue) {
-        RewriteOp = User.IncV;
+        RewriteOp = User.Phi->getIncomingValueForBlock(LatchBlock);
 
         // If this user is in the loop, make sure it is the last thing in the
         // loop to ensure it is dominated by the increment.
