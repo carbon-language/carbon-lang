@@ -28,17 +28,17 @@ using namespace llvm;
 /// removeDeadUsersOfConstant - If the specified constantexpr is dead, remove
 /// it.  This involves recursively eliminating any dead users of the
 /// constantexpr.
-static bool removeDeadUsersOfConstant(Constant *C) {
+static bool removeDeadUsersOfConstant(const Constant *C) {
   if (isa<GlobalValue>(C)) return false; // Cannot remove this
 
   while (!C->use_empty()) {
-    Constant *User = dyn_cast<Constant>(C->use_back());
+    const Constant *User = dyn_cast<Constant>(C->use_back());
     if (!User) return false; // Non-constant usage;
     if (!removeDeadUsersOfConstant(User))
       return false; // Constant wasn't dead
   }
 
-  C->destroyConstant();
+  const_cast<Constant*>(C)->destroyConstant();
   return true;
 }
 
@@ -46,11 +46,11 @@ static bool removeDeadUsersOfConstant(Constant *C) {
 /// off of this global value, remove them.  This method is useful for clients
 /// that want to check to see if a global is unused, but don't want to deal
 /// with potentially dead constants hanging off of the globals.
-void GlobalValue::removeDeadConstantUsers() {
-  Value::use_iterator I = use_begin(), E = use_end();
-  Value::use_iterator LastNonDeadUser = E;
+void GlobalValue::removeDeadConstantUsers() const {
+  Value::use_const_iterator I = use_begin(), E = use_end();
+  Value::use_const_iterator LastNonDeadUser = E;
   while (I != E) {
-    if (Constant *User = dyn_cast<Constant>(*I)) {
+    if (const Constant *User = dyn_cast<Constant>(*I)) {
       if (!removeDeadUsersOfConstant(User)) {
         // If the constant wasn't dead, remember that this was the last live use
         // and move on to the next constant.

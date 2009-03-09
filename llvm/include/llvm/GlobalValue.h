@@ -205,7 +205,7 @@ public:
   /// off of this global value, remove them.  This method is useful for clients
   /// that want to check to see if a global is unused, but don't want to deal
   /// with potentially dead constants hanging off of the globals.
-  void removeDeadConstantUsers();
+  void removeDeadConstantUsers() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalValue *) { return true; }
