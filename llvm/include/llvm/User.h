@@ -82,12 +82,14 @@ public:
   void operator delete(void*, unsigned) {
     assert(0 && "Constructor throws?");
   }
+protected:
   template <unsigned Idx> Use &Op() {
     return OperandTraits<User>::op_begin(this)[Idx];
   }
   template <unsigned Idx> const Use &Op() const {
     return OperandTraits<User>::op_begin(const_cast<User*>(this))[Idx];
   }
+public:
   Value *getOperand(unsigned i) const {
     assert(i < NumOperands && "getOperand() out of range!");
     return OperandList[i];
