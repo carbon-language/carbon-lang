@@ -18,6 +18,7 @@
 #define LLVM_ASSEMBLY_WRITER_H
 
 #include <iosfwd>
+#include <string>
 
 namespace llvm {
 
