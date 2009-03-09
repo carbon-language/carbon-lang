@@ -467,6 +467,9 @@ endif
 
 ifeq ($(OS),Darwin)
   DARWIN_VERSION := `sw_vers -productVersion`
+  # Strip a number like 10.4.7 to 10.4
+  DARWIN_VERSION := $(shell echo $(DARWIN_VERSION)| sed -E 's/(10.[0-9]).*/\1/')
+     
   SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -bundle \
                     -mmacosx-version-min=$(DARWIN_VERSION)
   CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
