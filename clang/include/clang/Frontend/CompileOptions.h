@@ -21,6 +21,7 @@ namespace clang {
 struct CompileOptions {
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
+  unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC
                                   /// optimization selection.
   unsigned InlineFunctions   : 1; /// Should functions be inlined?
@@ -42,6 +43,7 @@ public:
   CompileOptions() {
     OptimizationLevel = 0;
     OptimizeSize = 0;
+    DebugInfo = 0;
     UnitAtATime = 1;
     InlineFunctions = SimplifyLibCalls = UnrollLoops = 0;
     VerifyModule = 1;

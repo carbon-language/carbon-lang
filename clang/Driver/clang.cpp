@@ -1167,6 +1167,7 @@ TargetCPU("mcpu",
 
 static void InitializeCompileOptions(CompileOptions &Opts) {
   Opts.OptimizeSize = OptSize;
+  Opts.DebugInfo = GenerateDebugInfo;
   if (OptSize) {
     // -Os implies -O2
     // FIXME: Diagnose conflicting options.
@@ -1246,7 +1247,7 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
     CompileOptions Opts;
     InitializeCompileOptions(Opts);
     return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
-                                 InFile, OutputFile, GenerateDebugInfo);
+                                 InFile, OutputFile);
   }
 
   case SerializeAST:

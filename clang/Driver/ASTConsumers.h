@@ -56,8 +56,7 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    const LangOptions &Features,
                                    const CompileOptions &CompileOpts,
                                    const std::string& InFile,
-                                   const std::string& OutFile,
-                                   bool GenerateDebugInfo);
+                                   const std::string& OutFile);
 
 ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
                                Preprocessor *PP, PreprocessorFactory* PPF);

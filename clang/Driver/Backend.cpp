@@ -44,7 +44,6 @@ namespace {
     CompileOptions CompileOpts;
     const std::string &InputFile;
     std::string OutputFile;
-    bool GenerateDebugInfo;
     ASTContext *Context;
 
     Timer LLVMIRGeneration;
@@ -79,16 +78,14 @@ namespace {
   public:  
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
                     const LangOptions &langopts, const CompileOptions &compopts,
-                    const std::string &infile, const std::string &outfile,
-                    bool debug) :
+                    const std::string &infile, const std::string &outfile) :
       Action(action), 
       CompileOpts(compopts),
       InputFile(infile), 
       OutputFile(outfile), 
-      GenerateDebugInfo(debug),
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, langopts, InputFile, GenerateDebugInfo)),
+      Gen(CreateLLVMCodeGen(Diags, langopts, InputFile, compopts.DebugInfo)),
       TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
       
@@ -427,14 +424,13 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           const LangOptions &LangOpts,
                                           const CompileOptions &CompileOpts,
                                           const std::string& InFile,
-                                          const std::string& OutFile,
-                                          bool GenerateDebugInfo) {
+                                          const std::string& OutFile) {
   // FIXME: If optimizing, disable all debug info generation.  The LLVM
   // optimizer and backend is not ready to handle it when optimizations
   // are enabled.
   if (CompileOpts.OptimizationLevel > 0)
-    GenerateDebugInfo = false;
+    const_cast<CompileOptions&>(CompileOpts).DebugInfo = false;
     
   return new BackendConsumer(Action, Diags, LangOpts, CompileOpts,
-                             InFile, OutFile, GenerateDebugInfo);  
+                             InFile, OutFile);  
 }
