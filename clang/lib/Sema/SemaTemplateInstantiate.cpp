@@ -134,9 +134,7 @@ InstantiateConstantArrayType(const ConstantArrayType *T,
   // BuildArrayType. Since we have already checked the size as part of
   // creating the dependent array type in the first place, we know
   // there aren't any errors.
-  // FIXME: Is IntTy big enough? Maybe not, but LongLongTy causes
-  // problems that I have yet to investigate.
-  IntegerLiteral ArraySize(T->getSize(), SemaRef.Context.IntTy, Loc);
+  IntegerLiteral ArraySize(T->getSize(), SemaRef.Context.getSizeType(), Loc);
   return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
                                 &ArraySize, T->getIndexTypeQualifier(), 
                                 Loc, Entity);
