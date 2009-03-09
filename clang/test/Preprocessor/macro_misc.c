@@ -1,4 +1,4 @@
-// RUN: clang %s -E 2>&1 | not grep error
+// RUN: clang %s -Eonly -verify
 
 // This should not be rejected.
 #ifdef defined
