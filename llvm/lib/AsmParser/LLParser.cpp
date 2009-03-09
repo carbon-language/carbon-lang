@@ -235,10 +235,6 @@ bool LLParser::ParseUnnamedType() {
  
   unsigned TypeID = NumberedTypes.size();
   
-  // We don't allow assigning names to void type
-  if (Ty == Type::VoidTy)
-    return Error(TypeLoc, "can't assign name to the void type");
-  
   // See if this type was previously referenced.
   std::map<unsigned, std::pair<PATypeHolder, LocTy> >::iterator
     FI = ForwardRefTypeIDs.find(TypeID);
@@ -270,10 +266,6 @@ bool LLParser::ParseNamedType() {
       ParseType(Ty))
     return true;
   
-  // We don't allow assigning names to void type
-  if (Ty == Type::VoidTy)
-    return Error(NameLoc, "can't assign name '" + Name + "' to the void type");
-
   // Set the type name, checking for conflicts as we do so.
   bool AlreadyExists = M->addTypeName(Name, Ty);
   if (!AlreadyExists) return false;
@@ -473,7 +465,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
       return true;
   }
 
-  if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || Ty == Type::VoidTy)
+  if (isa<FunctionType>(Ty) || Ty == Type::LabelTy)
     return Error(TyLoc, "invalid type for global variable");
   
   GlobalVariable *GV = 0;
@@ -873,12 +865,16 @@ bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
 //===----------------------------------------------------------------------===//
 
 /// ParseType - Parse and resolve a full type.
-bool LLParser::ParseType(PATypeHolder &Result) {
+bool LLParser::ParseType(PATypeHolder &Result, bool AllowVoid) {
+  LocTy TypeLoc = Lex.getLoc();
   if (ParseTypeRec(Result)) return true;
   
   // Verify no unresolved uprefs.
   if (!UpRefs.empty())
     return Error(UpRefs.back().Loc, "invalid unresolved type up reference");
+  
+  if (!AllowVoid && Result.get() == Type::VoidTy)
+    return Error(TypeLoc, "void type only allowed for function results");
   
   return false;
 }
@@ -1140,6 +1136,9 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
     if ((inType ? ParseTypeRec(ArgTy) : ParseType(ArgTy)) ||
         ParseOptionalAttrs(Attrs, 0)) return true;
     
+    if (ArgTy == Type::VoidTy)
+      return Error(TypeLoc, "argument can not have void type");
+    
     if (Lex.getKind() == lltok::LocalVar ||
         Lex.getKind() == lltok::StringConstant) { // FIXME: REMOVE IN LLVM 3.0
       Name = Lex.getStrVal();
@@ -1160,8 +1159,11 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
       
       // Otherwise must be an argument type.
       TypeLoc = Lex.getLoc();
-      if (ParseTypeRec(ArgTy) ||
+      if ((inType ? ParseTypeRec(ArgTy) : ParseType(ArgTy)) ||
           ParseOptionalAttrs(Attrs, 0)) return true;
+
+      if (ArgTy == Type::VoidTy)
+        return Error(TypeLoc, "argument can not have void type");
 
       if (Lex.getKind() == lltok::LocalVar ||
           Lex.getKind() == lltok::StringConstant) { // FIXME: REMOVE IN LLVM 3.0
@@ -1233,11 +1235,20 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   }
 
   std::vector<PATypeHolder> ParamsList;
+  LocTy EltTyLoc = Lex.getLoc();
   if (ParseTypeRec(Result)) return true;
   ParamsList.push_back(Result);
   
+  if (Result == Type::VoidTy)
+    return Error(EltTyLoc, "struct element can not have void type");
+  
   while (EatIfPresent(lltok::comma)) {
+    EltTyLoc = Lex.getLoc();
     if (ParseTypeRec(Result)) return true;
+    
+    if (Result == Type::VoidTy)
+      return Error(EltTyLoc, "struct element can not have void type");
+    
     ParamsList.push_back(Result);
   }
   
@@ -1272,6 +1283,9 @@ bool LLParser::ParseArrayVectorType(PATypeHolder &Result, bool isVector) {
   PATypeHolder EltTy(Type::VoidTy);
   if (ParseTypeRec(EltTy)) return true;
   
+  if (EltTy == Type::VoidTy)
+    return Error(TypeLoc, "array and vector element type cannot be void");
+
   if (ParseToken(isVector ? lltok::greater : lltok::rsquare,
                  "expected end of sequential type"))
     return true;
@@ -2081,7 +2095,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       ParseOptionalVisibility(Visibility) ||
       ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
-      ParseType(RetType, RetTypeLoc))
+      ParseType(RetType, RetTypeLoc, true /*void allowed*/))
     return true;
 
   // Verify that the linkage is ok.
@@ -2182,6 +2196,10 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
     Attrs.push_back(AttributeWithIndex::get(~0, FuncAttrs));
 
   AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+  
+  if (PAL.paramHasAttr(1, Attribute::StructRet) &&
+      RetType != Type::VoidTy)
+    return Error(RetTypeLoc, "functions with 'sret' argument must return void"); 
   
   const FunctionType *FT = FunctionType::get(RetType, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::getUnqual(FT);
@@ -2472,7 +2490,7 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
                         PerFunctionState &PFS) {
   PATypeHolder Ty(Type::VoidTy);
-  if (ParseType(Ty)) return true;
+  if (ParseType(Ty, true /*void allowed*/)) return true;
   
   if (Ty == Type::VoidTy) {
     Inst = ReturnInst::Create();
@@ -2602,7 +2620,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   Value *NormalBB, *UnwindBB;
   if (ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
-      ParseType(RetType, RetTypeLoc) ||
+      ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
       ParseOptionalAttrs(FnAttrs, 2) ||
@@ -2960,7 +2978,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   if ((isTail && ParseToken(lltok::kw_call, "expected 'tail call'")) ||
       ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
-      ParseType(RetType, RetTypeLoc) ||
+      ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
       ParseOptionalAttrs(FnAttrs, 2))
