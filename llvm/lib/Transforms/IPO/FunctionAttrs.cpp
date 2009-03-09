@@ -147,10 +147,6 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
           continue;
       }
 
-      // Ignore dbg info intrinsics.
-      if (isa<DbgInfoIntrinsic>(I))
-        continue;
-
       // Any remaining instructions need to be taken seriously!  Check if they
       // read or write memory.
       if (I->mayWriteToMemory())
