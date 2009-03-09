@@ -1599,16 +1599,11 @@ static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
 
   BasicBlock *Header = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
+  BasicBlock *LatchBlock = L->getLoopLatch();
 
   PHINode *PN = PHINode::Create(Start->getType(), "lsr.iv", Header->begin());
   PN->addIncoming(Rewriter.expandCodeFor(Start, Preheader->getTerminator()),
                   Preheader);
-
-  pred_iterator HPI = pred_begin(Header);
-  assert(HPI != pred_end(Header) && "Loop with zero preds???");
-  if (!L->contains(*HPI)) ++HPI;
-  assert(HPI != pred_end(Header) && L->contains(*HPI) &&
-         "No backedge in loop?");
 
   // If the stride is negative, insert a sub instead of an add for the
   // increment.
@@ -1622,17 +1617,14 @@ static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
   Value *StepV = Rewriter.expandCodeFor(IncAmount, Preheader->getTerminator());
   if (isNegative) {
     IncV = BinaryOperator::CreateSub(PN, StepV, "lsr.iv.next",
-                                     (*HPI)->getTerminator());
+                                     LatchBlock->getTerminator());
   } else {
     IncV = BinaryOperator::CreateAdd(PN, StepV, "lsr.iv.next",
-                                     (*HPI)->getTerminator());
+                                     LatchBlock->getTerminator());
   }
   if (!isa<ConstantInt>(StepV)) ++NumVariable;
 
-  pred_iterator PI = pred_begin(Header);
-  if (*PI == L->getLoopPreheader())
-    ++PI;
-  PN->addIncoming(IncV, *PI);
+  PN->addIncoming(IncV, LatchBlock);
 
   ++NumInserted;
   return PN;
