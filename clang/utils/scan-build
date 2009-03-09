@@ -82,6 +82,12 @@ sub DieDiag {
 ##----------------------------------------------------------------------------##
 
 my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
+
+# Also look for 'clang' in the same directory as scan-build.
+if (!defined $ClangSB || ! -x $ClangSB) {
+  $ClangSB = Cwd::realpath("$RealBin/clang");
+}
+
 my $Clang = $ClangSB;
 
 if (!defined $ClangSB || ! -x $ClangSB) {
