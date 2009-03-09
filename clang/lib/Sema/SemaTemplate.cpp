@@ -230,8 +230,10 @@ Sema::DeclTy *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   }
 
   T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
-  if (T.isNull())
+  if (T.isNull()) {
     T = Context.IntTy; // Recover with an 'int' type.
+    Invalid = true;
+  }
 
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, CurContext, D.getIdentifierLoc(),
