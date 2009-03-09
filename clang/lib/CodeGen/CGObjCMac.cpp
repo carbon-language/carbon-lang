@@ -1153,16 +1153,11 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
 
   llvm::Constant *Init = 
     llvm::ConstantStruct::get(ObjCTypes.ProtocolExtensionTy, Values);
-  llvm::GlobalVariable *GV = 
-      new llvm::GlobalVariable(ObjCTypes.ProtocolExtensionTy, false,
-                               llvm::GlobalValue::InternalLinkage,
-                               Init,
-                               "\01L_OBJC_PROTOCOLEXT_" + PD->getNameAsString(),
-                               &CGM.getModule());
-  // No special section, but goes in llvm.used
-  UsedGlobals.push_back(GV);
 
-  return GV;
+  // No special section, but goes in llvm.used
+  return CreateMetadataVar("\01L_OBJC_PROTOCOLEXT_" + PD->getNameAsString(),
+                           Init, 
+                           0, 0, true);
 }
 
 /*
@@ -1199,12 +1194,8 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
   
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             Name,
-                             &CGM.getModule());
-  GV->setSection("__OBJC,__cat_cls_meth,regular,no_dead_strip");
+    CreateMetadataVar(Name, Init, "__OBJC,__cat_cls_meth,regular,no_dead_strip",
+                      0, false);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
 }
 
@@ -1248,19 +1239,11 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
   Values[2] = llvm::ConstantArray::get(AT, Properties);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             Name,
-                             &CGM.getModule());
-  if (ObjCABI == 2)
-    GV->setSection("__DATA, __objc_const");
   // No special section on property lists?
-  UsedGlobals.push_back(GV);
-  return llvm::ConstantExpr::getBitCast(GV, 
-                                        ObjCTypes.PropertyListPtrTy);
-  
+  llvm::GlobalVariable *GV = 
+    CreateMetadataVar(Name, Init, (ObjCABI == 2) ? "__DATA, __objc_const" : 0,
+                      0, true);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.PropertyListPtrTy);
 }
 
 /*
@@ -1293,12 +1276,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   Values[1] = llvm::ConstantArray::get(AT, Methods);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init, Name, &CGM.getModule());
-  GV->setSection(Section);
-  UsedGlobals.push_back(GV);
+  llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 0, true);
   return llvm::ConstantExpr::getBitCast(GV, 
                                         ObjCTypes.MethodDescriptionListPtrTy);
 }
@@ -1374,13 +1352,9 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                                                    Values);
 
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(ObjCTypes.CategoryTy, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             std::string("\01L_OBJC_CATEGORY_")+ExtName,
-                             &CGM.getModule());
-  GV->setSection("__OBJC,__category,regular,no_dead_strip");
-  UsedGlobals.push_back(GV);
+    CreateMetadataVar(std::string("\01L_OBJC_CATEGORY_")+ExtName, Init,
+                      "__OBJC,__category,regular,no_dead_strip",
+                      0, true);
   DefinedCategories.push_back(GV);
 }
 
@@ -1513,15 +1487,10 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                                    Values);
 
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(ObjCTypes.ClassTy, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             std::string("\01L_OBJC_CLASS_")+ClassName,
-                             &CGM.getModule());
-  GV->setSection("__OBJC,__class,regular,no_dead_strip");
-  UsedGlobals.push_back(GV);
-  // FIXME: Why?
-  GV->setAlignment(32);
+    CreateMetadataVar(std::string("\01L_OBJC_CLASS_")+ClassName, Init,
+                      "__OBJC,__class,regular,no_dead_strip",
+                      32, // FIXME: Why?
+                      true);
   DefinedClasses.push_back(GV);
 }
 
@@ -1648,16 +1617,8 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
 
   llvm::Constant *Init = 
     llvm::ConstantStruct::get(ObjCTypes.ClassExtensionTy, Values);
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(ObjCTypes.ClassExtensionTy, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             "\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
-                             &CGM.getModule());
-  // No special section, but goes in llvm.used
-  UsedGlobals.push_back(GV);
-  
-  return GV;
+  return CreateMetadataVar("\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
+                           Init, 0, 0, true);
 }
 
 /// countInheritedIvars - count number of ivars in class and its super class(s)
@@ -1751,22 +1712,16 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   Values[1] = llvm::ConstantArray::get(AT, Ivars);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  const char *Prefix = (ForClass ? "\01L_OBJC_CLASS_VARIABLES_" :
-                        "\01L_OBJC_INSTANCE_VARIABLES_");
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             Prefix + ID->getNameAsString(),
-                             &CGM.getModule());
-  if (ForClass) {
-    GV->setSection("__OBJC,__cls_vars,regular,no_dead_strip");
-    // FIXME: Why is this only here?
-    GV->setAlignment(32);
-  } else {
-    GV->setSection("__OBJC,__instance_vars,regular,no_dead_strip");
-  }
-  UsedGlobals.push_back(GV);
+  llvm::GlobalVariable *GV;
+  if (ForClass)
+    GV = CreateMetadataVar("\01L_OBJC_CLASS_VARIABLES_" + ID->getNameAsString(),
+                           Init, "__OBJC,__cls_vars,regular,no_dead_strip", 
+                           32, true);
+  else
+    GV = CreateMetadataVar("\01L_OBJC_INSTANCE_VARIABLES_"
+                           + ID->getNameAsString(),
+                           Init, "__OBJC,__instance_vars,regular,no_dead_strip",
+                           0, true);
   return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.IvarListPtrTy);
 }
@@ -1818,14 +1773,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
   Values[2] = llvm::ConstantArray::get(AT, Methods);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             Name,
-                             &CGM.getModule());
-  GV->setSection(Section);
-  UsedGlobals.push_back(GV);
+  llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 0, true);
   return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.MethodListPtrTy);
 }
@@ -2363,20 +2311,19 @@ void CGObjCMac::EmitImageInfo() {
     llvm::ConstantInt::get(llvm::Type::Int32Ty, flags)
   };
   llvm::ArrayType *AT = llvm::ArrayType::get(llvm::Type::Int32Ty, 2);  
+
+  const char *Section;
+  if (ObjCABI == 1)
+    Section = "__OBJC, __image_info,regular";
+  else
+    Section = "__DATA, __objc_imageinfo, regular, no_dead_strip";
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(AT, true,
-                             llvm::GlobalValue::InternalLinkage,
-                             llvm::ConstantArray::get(AT, values, 2),
-                             "\01L_OBJC_IMAGE_INFO", 
-                             &CGM.getModule());
-
-  if (ObjCABI == 1) {
-    GV->setSection("__OBJC, __image_info,regular");
-  } else {
-    GV->setSection("__DATA, __objc_imageinfo, regular, no_dead_strip");
-  }
-
-  UsedGlobals.push_back(GV);
+    CreateMetadataVar("\01L_OBJC_IMAGE_INFO",
+                      llvm::ConstantArray::get(AT, values, 2),
+                      Section,
+                      0,
+                      true);
+  GV->setConstant(true);
 }
 
 
@@ -2399,16 +2346,10 @@ void CGObjCMac::EmitModuleInfo() {
   // This used to be the filename, now it is unused. <rdr://4327263>
   Values[2] = GetClassName(&CGM.getContext().Idents.get(""));
   Values[3] = EmitModuleSymbols();
-
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(ObjCTypes.ModuleTy, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             llvm::ConstantStruct::get(ObjCTypes.ModuleTy, 
-                                                       Values),
-                             "\01L_OBJC_MODULES", 
-                             &CGM.getModule());
-  GV->setSection("__OBJC,__module_info,regular,no_dead_strip");
-  UsedGlobals.push_back(GV);
+  CreateMetadataVar("\01L_OBJC_MODULES", 
+                    llvm::ConstantStruct::get(ObjCTypes.ModuleTy, Values),
+                    "__OBJC,__module_info,regular,no_dead_strip",
+                    0, true);
 }
 
 llvm::Constant *CGObjCMac::EmitModuleSymbols() {
@@ -2444,13 +2385,9 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);  
 
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             "\01L_OBJC_SYMBOLS", 
-                             &CGM.getModule());
-  GV->setSection("__OBJC,__symbols,regular,no_dead_strip");
-  UsedGlobals.push_back(GV);
+    CreateMetadataVar("\01L_OBJC_SYMBOLS", Init,
+                      "__OBJC,__symbols,regular,no_dead_strip",
+                      0, true);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.SymtabPtrTy);
 }
 
@@ -2465,12 +2402,9 @@ llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
       llvm::ConstantExpr::getBitCast(GetClassName(ID->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
     Entry = 
-      new llvm::GlobalVariable(ObjCTypes.ClassPtrTy, false,
-                               llvm::GlobalValue::InternalLinkage,
-                               Casted, "\01L_OBJC_CLASS_REFERENCES_",
-                               &CGM.getModule());
-    Entry->setSection("__OBJC,__cls_refs,literal_pointers,no_dead_strip");
-    UsedGlobals.push_back(Entry);
+      CreateMetadataVar("\01L_OBJC_CLASS_REFERENCES_", Casted,
+                        "__OBJC,__cls_refs,literal_pointers,no_dead_strip",
+                        0, true);
   }
 
   return Builder.CreateLoad(Entry, false, "tmp");
@@ -2484,12 +2418,9 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
       llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
                                      ObjCTypes.SelectorPtrTy);
     Entry = 
-      new llvm::GlobalVariable(ObjCTypes.SelectorPtrTy, false,
-                               llvm::GlobalValue::InternalLinkage,
-                               Casted, "\01L_OBJC_SELECTOR_REFERENCES_",
-                               &CGM.getModule());
-    Entry->setSection("__OBJC,__message_refs,literal_pointers,no_dead_strip");
-    UsedGlobals.push_back(Entry);
+      CreateMetadataVar("\01L_OBJC_SELECTOR_REFERENCES_", Casted,
+                        "__OBJC,__message_refs,literal_pointers,no_dead_strip",
+                        0, true);
   }
 
   return Builder.CreateLoad(Entry, false, "tmp");
@@ -2498,16 +2429,11 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
 llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
   llvm::GlobalVariable *&Entry = ClassNames[Ident];
 
-  if (!Entry) {
-    llvm::Constant *C = llvm::ConstantArray::get(Ident->getName());
-    Entry = 
-      new llvm::GlobalVariable(C->getType(), false, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, "\01L_OBJC_CLASS_NAME_", 
-                               &CGM.getModule());
-    Entry->setSection("__TEXT,__cstring,cstring_literals");
-    UsedGlobals.push_back(Entry);
-  }
+  if (!Entry)
+    Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_", 
+                              llvm::ConstantArray::get(Ident->getName()), 
+                              "__TEXT,__cstring,cstring_literals",
+                              0, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
@@ -2561,17 +2487,12 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(ObjCImplementationDecl *OMD,
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
   llvm::GlobalVariable *&Entry = MethodVarNames[Sel];
 
-  if (!Entry) {
-    // FIXME: Avoid std::string copying.
-    llvm::Constant *C = llvm::ConstantArray::get(Sel.getAsString());
-    Entry = 
-      new llvm::GlobalVariable(C->getType(), false, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, "\01L_OBJC_METH_VAR_NAME_", 
-                               &CGM.getModule());
-    Entry->setSection("__TEXT,__cstring,cstring_literals");
-    UsedGlobals.push_back(Entry);
-  }
+  // FIXME: Avoid std::string copying.
+  if (!Entry)
+    Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_NAME_", 
+                              llvm::ConstantArray::get(Sel.getAsString()),
+                              "__TEXT,__cstring,cstring_literals",
+                              0, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
@@ -2592,17 +2513,12 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(FieldDecl *Field) {
 
   llvm::GlobalVariable *&Entry = MethodVarTypes[TypeStr];
 
-  if (!Entry) {
-    llvm::Constant *C = llvm::ConstantArray::get(TypeStr);
-    Entry = 
-      new llvm::GlobalVariable(C->getType(), false, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, "\01L_OBJC_METH_VAR_TYPE_", 
-                               &CGM.getModule());
-    Entry->setSection("__TEXT,__cstring,cstring_literals");
-    UsedGlobals.push_back(Entry);
-  }
-
+  if (!Entry)
+    Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
+                              llvm::ConstantArray::get(TypeStr),
+                              "__TEXT,__cstring,cstring_literals",
+                              0, true);
+    
   return getConstantGEP(Entry, 0, 0);
 }
 
@@ -2631,24 +2547,20 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
 llvm::Constant *CGObjCCommonMac::GetPropertyName(IdentifierInfo *Ident) {
   llvm::GlobalVariable *&Entry = PropertyNames[Ident];
   
-  if (!Entry) {
-    llvm::Constant *C = llvm::ConstantArray::get(Ident->getName());
-    Entry = 
-      new llvm::GlobalVariable(C->getType(), false, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, "\01L_OBJC_PROP_NAME_ATTR_", 
-                               &CGM.getModule());
-    Entry->setSection("__TEXT,__cstring,cstring_literals");
-    UsedGlobals.push_back(Entry);
-  }
+  if (!Entry)
+    Entry = CreateMetadataVar("\01L_OBJC_PROP_NAME_ATTR_", 
+                              llvm::ConstantArray::get(Ident->getName()),
+                              "__TEXT,__cstring,cstring_literals",
+                              0, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
 
 // FIXME: Merge into a single cstring creation function.
 // FIXME: This Decl should be more precise.
-llvm::Constant *CGObjCCommonMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
-                                                 const Decl *Container) {
+llvm::Constant *
+  CGObjCCommonMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
+                                         const Decl *Container) {
   std::string TypeStr;
   CGM.getContext().getObjCEncodingForPropertyDecl(PD, Container, TypeStr);
   return GetPropertyName(&CGM.getContext().Idents.get(TypeStr));
