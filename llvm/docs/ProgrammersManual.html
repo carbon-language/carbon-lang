@@ -1187,20 +1187,15 @@ factors, and produces a lot of malloc traffic.  It should be avoided.</p>
 
 <p>
 The STL provides several other options, such as std::multiset and the various 
-"hash_set" like containers (whether from C++ TR1 or from the SGI library).</p>
+"hash_set" like containers (whether from C++ TR1 or from the SGI library). We
+never use hash_set and unordered_set because they are generally very expensive 
+(each insertion requires a malloc) and very non-portable.
+</p>
 
 <p>std::multiset is useful if you're not interested in elimination of
 duplicates, but has all the drawbacks of std::set.  A sorted vector (where you 
 don't delete duplicate entries) or some other approach is almost always
 better.</p>
-
-<p>The various hash_set implementations (exposed portably by
-"llvm/ADT/hash_set") is a simple chained hashtable.  This algorithm is as malloc
-intensive as std::set (performing an allocation for each element inserted,
-thus having really high constant factors) but (usually) provides O(1)
-insertion/deletion of elements.  This can be useful if your elements are large
-(thus making the constant-factor cost relatively low) or if comparisons are
-expensive.  Element iteration does not visit elements in a useful order.</p>
 
 </div>
 
@@ -1340,19 +1335,13 @@ another element takes place).</p>
 
 <p>
 The STL provides several other options, such as std::multimap and the various 
-"hash_map" like containers (whether from C++ TR1 or from the SGI library).</p>
+"hash_map" like containers (whether from C++ TR1 or from the SGI library). We
+never use hash_set and unordered_set because they are generally very expensive 
+(each insertion requires a malloc) and very non-portable.</p>
 
 <p>std::multimap is useful if you want to map a key to multiple values, but has
 all the drawbacks of std::map.  A sorted vector or some other approach is almost
 always better.</p>
-
-<p>The various hash_map implementations (exposed portably by
-"llvm/ADT/hash_map") are simple chained hash tables.  This algorithm is as
-malloc intensive as std::map (performing an allocation for each element
-inserted, thus having really high constant factors) but (usually) provides O(1)
-insertion/deletion of elements.  This can be useful if your elements are large
-(thus making the constant-factor cost relatively low) or if comparisons are
-expensive.  Element iteration does not visit elements in a useful order.</p>
 
 </div>
 
