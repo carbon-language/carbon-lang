@@ -1834,7 +1834,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   if (TLI && HaveCommonExprs && AllUsesAreAddresses) {
     SCEVHandle NewCommon = CommonExprs;
     SCEVHandle Imm = SE->getIntegerSCEV(0, ReplacedTy);
-    MoveImmediateValues(TLI, ReplacedTy, NewCommon, Imm, true, L, SE);
+    MoveImmediateValues(TLI, Type::VoidTy, NewCommon, Imm, true, L, SE);
     if (!Imm->isZero()) {
       bool DoSink = true;
 
@@ -1933,7 +1933,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // this by forcing a BitCast (noop cast) to be inserted into the preheader 
     // in this case.
     if (Constant *C = dyn_cast<Constant>(BaseV)) {
-      if (!C->isNullValue() && !fitsInAddressMode(Base, ReplacedTy, 
+      if (!C->isNullValue() && !fitsInAddressMode(Base, getAccessType(Inst),
                                                  TLI, false)) {
         // We want this constant emitted into the preheader! This is just
         // using cast as a copy so BitCast (no-op cast) is appropriate
