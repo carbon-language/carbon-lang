@@ -1903,7 +1903,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // the immediate field, if any.
     RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
                                     AllUsesAreOutsideLoop,
-                                    Stride, ReuseIV, CommonExprs->getType(),
+                                    Stride, ReuseIV, ReplacedTy,
                                     UsersToProcess);
     if (isa<SCEVConstant>(RewriteFactor) &&
         cast<SCEVConstant>(RewriteFactor)->isZero())
