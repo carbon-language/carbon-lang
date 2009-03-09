@@ -196,9 +196,8 @@ CFDateRef f8() {
 CFDateRef f9() {
   CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
   int *p = 0;
-  // test that the checker assumes that CFDateCreate returns a non-null
-  // pointer
-  if (!date) *p = 1; // no-warning
+  // When allocations fail, CFDateCreate can return null.
+  if (!date) *p = 1; // expected-warning{{null}}
   return date;
 }
 
@@ -316,7 +315,7 @@ static void rdar_6659160(char *inkind, char *inname)
     kindC = [kind UTF8String];
   if(name)
     nameC = [name UTF8String];
-  if(!isFoo(kindC[0])) // no-warning
+  if(!isFoo(kindC[0])) // expected-warning{{null}}
     return;
   if(!isFoo(nameC[0])) // no-warning
     return;

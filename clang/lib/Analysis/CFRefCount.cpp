@@ -1840,12 +1840,16 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(), RetT));      
       state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
 
-      // FIXME: Add a flag to the checker where allocations are allowed to fail.      
+
+      // FIXME: Add a flag to the checker where allocations are assumed to
+      // *not fail.
+#if 0
       if (RE.getKind() == RetEffect::OwnedAllocatedSymbol) {
         bool isFeasible;
         state = state.Assume(loc::SymbolVal(Sym), true, isFeasible);
         assert(isFeasible && "Cannot assume fresh symbol is non-null.");        
       }
+#endif
       
       break;
     }
