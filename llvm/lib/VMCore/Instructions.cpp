@@ -1037,26 +1037,30 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
   init(Ptr, Idx, Name);
 }
 
-// getIndexedType - Returns the type of the element that would be loaded with
-// a load instruction with the specified parameters.
-//
-// The Idxs pointer should point to a continuous piece of memory containing the
-// indices, either as Value* or uint64_t.
-//
-// A null type is returned if the indices are invalid for the specified
-// pointer type.
-//
+/// getIndexedType - Returns the type of the element that would be accessed with
+/// a gep instruction with the specified parameters.
+///
+/// The Idxs pointer should point to a continuous piece of memory containing the
+/// indices, either as Value* or uint64_t.
+///
+/// A null type is returned if the indices are invalid for the specified
+/// pointer type.
+///
 template <typename IndexTy>
-static const Type* getIndexedTypeInternal(const Type *Ptr,
-                                  IndexTy const *Idxs,
-                                  unsigned NumIdx) {
+static const Type* getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
+                                          unsigned NumIdx) {
   const PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
   const Type *Agg = PTy->getElementType();
 
-  // Handle the special case of the empty set index set...
+  // Handle the special case of the empty set index set, which is always valid.
   if (NumIdx == 0)
     return Agg;
+  
+  // If there is at least one index, the top level type must be sized, otherwise
+  // it cannot be 'stepped over'.
+  if (!Agg->isSized())
+    return 0;
 
   unsigned CurIdx = 1;
   for (; CurIdx != NumIdx; ++CurIdx) {
