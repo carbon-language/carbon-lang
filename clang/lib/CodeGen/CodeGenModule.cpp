@@ -788,7 +788,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
 llvm::GlobalValue *
 CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D,
-                                             const llvm::Type *Ty) {
+                                             const llvm::Type *Ty,
+                                             bool ReplaceExisting) {
   bool DoSetAttributes = true;
   if (!Ty) {
     Ty = getTypes().ConvertType(D->getType());
@@ -801,10 +802,13 @@ CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D,
       DoSetAttributes = false;
     }
   }
-  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
-                                             llvm::Function::ExternalLinkage,
-                                             getMangledName(D),
-                                             &getModule());
+  const char *Name = getMangledName(D);
+  llvm::Function *F = getModule().getFunction(Name);
+  if (ReplaceExisting || !F || !F->hasExternalLinkage())
+    F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
+                               llvm::Function::ExternalLinkage,
+                               Name,
+                               &getModule());
   if (DoSetAttributes)
     SetFunctionAttributes(D, F);
   return F;
@@ -838,33 +842,33 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry) {
     Entry = EmitForwardFunctionDefinition(D, Ty);
-  } else {
-    // If the types mismatch then we have to rewrite the definition.
-    if (Entry->getType() != llvm::PointerType::getUnqual(Ty)) {
-      // Otherwise, we have a definition after a prototype with the
-      // wrong type.  F is the Function* for the one with the wrong
-      // type, we must make a new Function* and update everything that
-      // used F (a declaration) with the new Function* (which will be
-      // a definition).
-      //
-      // This happens if there is a prototype for a function
-      // (e.g. "int f()") and then a definition of a different type
-      // (e.g. "int f(int x)").  Start by making a new function of the
-      // correct type, RAUW, then steal the name.
-      llvm::GlobalValue *NewFn = EmitForwardFunctionDefinition(D, Ty);
-      NewFn->takeName(Entry);
-      
-      // Replace uses of F with the Function we will endow with a body.
-      llvm::Constant *NewPtrForOldDecl = 
-        llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
-      Entry->replaceAllUsesWith(NewPtrForOldDecl);
-            
-      // Ok, delete the old function now, which is dead.
-      assert(Entry->isDeclaration() && "Shouldn't replace non-declaration");
-      Entry->eraseFromParent();
-      
-      Entry = NewFn;
-    }
+  }
+
+  // If the types mismatch then we have to rewrite the definition.
+  if (Entry->getType() != llvm::PointerType::getUnqual(Ty)) {
+    // Otherwise, we have a definition after a prototype with the
+    // wrong type.  F is the Function* for the one with the wrong
+    // type, we must make a new Function* and update everything that
+    // used F (a declaration) with the new Function* (which will be
+    // a definition).
+    //
+    // This happens if there is a prototype for a function
+    // (e.g. "int f()") and then a definition of a different type
+    // (e.g. "int f(int x)").  Start by making a new function of the
+    // correct type, RAUW, then steal the name.
+    llvm::GlobalValue *NewFn = EmitForwardFunctionDefinition(D, Ty, true);
+    NewFn->takeName(Entry);
+  
+    // Replace uses of F with the Function we will endow with a body.
+    llvm::Constant *NewPtrForOldDecl = 
+      llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
+    Entry->replaceAllUsesWith(NewPtrForOldDecl);
+
+    // Ok, delete the old function now, which is dead.
+    assert(Entry->isDeclaration() && "Shouldn't replace non-declaration");
+    Entry->eraseFromParent();
+
+    Entry = NewFn;
   }
 
   llvm::Function *Fn = cast<llvm::Function>(Entry);    
