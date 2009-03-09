@@ -2199,6 +2199,13 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                                               AI->getName()));
       InstResult = AllocaTmps.back();     
     } else if (CallInst *CI = dyn_cast<CallInst>(CurInst)) {
+
+      // Debug info can safely be ignored here.
+      if (isa<DbgInfoIntrinsic>(CI)) {
+        ++CurInst;
+        continue;
+      }
+
       // Cannot handle inline asm.
       if (isa<InlineAsm>(CI->getOperand(0))) return false;
 
@@ -2224,7 +2231,6 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           return false;
         
         Constant *RetVal;
-        
         // Execute the call, if successful, use the return value.
         if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
                               MutatedMemory, AllocaTmps))
