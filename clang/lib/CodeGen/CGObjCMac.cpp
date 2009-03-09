@@ -1086,6 +1086,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
                                std::string("\01L_OBJC_PROTOCOL_")+ProtocolName,
                                &CGM.getModule());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
+    Entry->setAlignment(4);
     UsedGlobals.push_back(Entry);
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
@@ -1108,6 +1109,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocolRef(const ObjCProtocolDecl *PD) {
                                "\01L_OBJC_PROTOCOL_" + PD->getNameAsString(),
                                &CGM.getModule());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
+    Entry->setAlignment(4);
     UsedGlobals.push_back(Entry);
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
@@ -1195,7 +1197,7 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(Name, Init, "__OBJC,__cat_cls_meth,regular,no_dead_strip",
-                      0, false);
+                      4, false);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
 }
 
@@ -1354,7 +1356,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(std::string("\01L_OBJC_CATEGORY_")+ExtName, Init,
                       "__OBJC,__category,regular,no_dead_strip",
-                      0, true);
+                      4, true);
   DefinedCategories.push_back(GV);
 }
 
@@ -1489,8 +1491,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(std::string("\01L_OBJC_CLASS_")+ClassName, Init,
                       "__OBJC,__class,regular,no_dead_strip",
-                      32, // FIXME: Why?
-                      true);
+                      4, true);
   DefinedClasses.push_back(GV);
 }
 
@@ -1559,9 +1560,8 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                   &CGM.getModule());
   }
   GV->setSection("__OBJC,__meta_class,regular,no_dead_strip");
+  GV->setAlignment(4);
   UsedGlobals.push_back(GV);
-  // FIXME: Why?
-  GV->setAlignment(32);
 
   return GV;
 }
@@ -1715,8 +1715,8 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   llvm::GlobalVariable *GV;
   if (ForClass)
     GV = CreateMetadataVar("\01L_OBJC_CLASS_VARIABLES_" + ID->getNameAsString(),
-                           Init, "__OBJC,__cls_vars,regular,no_dead_strip", 
-                           32, true);
+                           Init, "__OBJC,__class_vars,regular,no_dead_strip", 
+                           4, true);
   else
     GV = CreateMetadataVar("\01L_OBJC_INSTANCE_VARIABLES_"
                            + ID->getNameAsString(),
@@ -2349,7 +2349,7 @@ void CGObjCMac::EmitModuleInfo() {
   CreateMetadataVar("\01L_OBJC_MODULES", 
                     llvm::ConstantStruct::get(ObjCTypes.ModuleTy, Values),
                     "__OBJC,__module_info,regular,no_dead_strip",
-                    0, true);
+                    4, true);
 }
 
 llvm::Constant *CGObjCMac::EmitModuleSymbols() {
@@ -3493,8 +3493,7 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                                Init,
                                "\01L_OBJC_LABEL_CLASS_$",
                                &CGM.getModule());
-    GV->setAlignment(
-      CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.Int8PtrTy));
+    GV->setAlignment(8);
     GV->setSection("__DATA, __objc_classlist, regular, no_dead_strip");
     UsedGlobals.push_back(GV);
   }
@@ -3521,6 +3520,7 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                                Init,
                                "\01L_OBJC_LABEL_CATEGORY_$",
                                &CGM.getModule());
+    GV->setAlignment(8);
     GV->setSection("__DATA, __objc_catlist, regular, no_dead_strip");
     UsedGlobals.push_back(GV);
   }
