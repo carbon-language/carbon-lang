@@ -142,18 +142,6 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Does not have <hash_map> */
-#undef HAVE_GLOBAL_HASH_MAP
-
-/* Does not have hash_set in global namespace */
-#undef HAVE_GLOBAL_HASH_SET
-
-/* Does not have ext/hash_map */
-#undef HAVE_GNU_EXT_HASH_MAP
-
-/* Does not have hash_set in gnu namespace */
-#undef HAVE_GNU_EXT_HASH_SET
-
 /* Define if the Graphviz program is available */
 #undef HAVE_GRAPHVIZ
 
@@ -347,12 +335,6 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
-
-/* Does not have ext/hash_map> */
-#undef HAVE_STD_EXT_HASH_MAP
-
-/* Does not have hash_set in std namespace */
-#undef HAVE_STD_EXT_HASH_SET
 
 /* Set to 1 if the std::isinf function is found in <cmath> */
 #undef HAVE_STD_ISINF_IN_CMATH
