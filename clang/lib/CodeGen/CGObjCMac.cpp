@@ -430,6 +430,18 @@ protected:
   uint64_t GetIvarBaseOffset(const llvm::StructLayout *Layout,
                              FieldDecl *Field);
   
+  /// CreateMetadataVar - Create a global variable with internal
+  /// linkage for use by the Objective-C runtime.
+  ///
+  /// This is a convenience wrapper which not only creates the
+  /// variable, but also sets the section and alignment and adds the
+  /// global to the UsedGlobals list.
+  llvm::GlobalVariable *CreateMetadataVar(const std::string &Name,
+                                          llvm::Constant *Init,
+                                          const char *Section,
+                                          bool SetAlignment,
+                                          bool IsUsed);
+
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -1834,6 +1846,28 @@ uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
            ? CGM.getTypes().getLLVMFieldNo(Field) 
            : Layout->getElementOffset(
                CGM.getTypes().getLLVMFieldNo(Field));
+}
+
+llvm::GlobalVariable *
+CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
+                                   llvm::Constant *Init,
+                                   const char *Section,
+                                   bool SetAlignment,
+                                   bool IsUsed) {
+  const llvm::Type *Ty = Init->getType();
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(Ty, false,
+                             llvm::GlobalValue::InternalLinkage,
+                             Init,
+                             Name,
+                             &CGM.getModule());
+  if (Section)
+    GV->setSection(Section);
+  if (SetAlignment)
+    GV->setAlignment(CGM.getTargetData().getPreferredAlignment(Ty));
+  if (IsUsed)
+    UsedGlobals.push_back(GV);
+  return GV;
 }
 
 llvm::Function *CGObjCMac::ModuleInitFunction() { 
