@@ -165,13 +165,6 @@ OutputFile("o",
  llvm::cl::value_desc("path"),
  llvm::cl::desc("Specify output file (for --serialize, this is a directory)"));
 
-//===----------------------------------------------------------------------===//
-// Code Generator Options
-//===----------------------------------------------------------------------===//
-static llvm::cl::opt<bool>
-GenerateDebugInfo("g",
-                  llvm::cl::desc("Generate source level debug information"));
-
 
 //===----------------------------------------------------------------------===//
 // PTH.
@@ -1142,6 +1135,10 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 //===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
+GenerateDebugInfo("g",
+                  llvm::cl::desc("Generate source level debug information"));
+
+static llvm::cl::opt<bool>
 OptSize("Os", llvm::cl::desc("Optimize for size"));
 
 // It might be nice to add bounds to the CommandLine library directly.
@@ -1198,8 +1195,9 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
 //===----------------------------------------------------------------------===//
 
 /// CreateASTConsumer - Create the ASTConsumer for the corresponding program
-///  action.  These consumers can operate on both ASTs that are freshly
-///  parsed from source files as well as those deserialized from Bitcode.
+/// action.  These consumers can operate on both ASTs that are freshly
+/// parsed from source files as well as those deserialized from Bitcode.
+/// Note that PP and PPF may be null here.
 static ASTConsumer *CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts,
