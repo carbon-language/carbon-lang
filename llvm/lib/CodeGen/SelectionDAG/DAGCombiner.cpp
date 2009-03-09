@@ -1311,14 +1311,15 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
                        DAG.getConstant(N1C->getAPIntValue().logBase2(),
                                        getShiftAmountTy()));
   // fold (mul x, -(1 << c)) -> -(x << c) or (-x) << c
-  if (N1C && isPowerOf2_64(-N1C->getSExtValue()))
+  if (N1C && (-N1C->getAPIntValue()).isPowerOf2()) {
+    unsigned Log2Val = (-N1C->getAPIntValue()).logBase2();
     // FIXME: If the input is something that is easily negated (e.g. a
     // single-use add), we should put the negate there.
     return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
                        DAG.getConstant(0, VT),
                        DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
-                            DAG.getConstant(Log2_64(-N1C->getSExtValue()),
-                                            getShiftAmountTy())));
+                            DAG.getConstant(Log2Val, getShiftAmountTy())));
+  }
   // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
   if (N1C && N0.getOpcode() == ISD::SHL &&
       isa<ConstantSDNode>(N0.getOperand(1))) {
