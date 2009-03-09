@@ -1058,8 +1058,10 @@ static const Type* getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
     return Agg;
   
   // If there is at least one index, the top level type must be sized, otherwise
-  // it cannot be 'stepped over'.
-  if (!Agg->isSized())
+  // it cannot be 'stepped over'.  We explicitly allow abstract types (those
+  // that contain opaque types) under the assumption that it will be resolved to
+  // a sane type later.
+  if (!Agg->isSized() && !Agg->isAbstract())
     return 0;
 
   unsigned CurIdx = 1;
