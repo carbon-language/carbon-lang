@@ -218,6 +218,7 @@
 		DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBBD430C19C5D200A9FE82 /* TODO.txt */; };
 		DEEBC3BA0C2363B800A9FE82 /* CodeGenTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */; };
 		DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */; };
+		DEF1614F0F65B66B0098507F /* Warnings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF1614E0F65B66B0098507F /* Warnings.cpp */; };
 		DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */; };
 		DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */; };
 		DEF2EFF30C6CDD74000C4259 /* CGExprAgg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */; };
@@ -603,6 +604,7 @@
 		DEEBBD430C19C5D200A9FE82 /* TODO.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenTypes.h; path = lib/CodeGen/CodeGenTypes.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = lib/CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEF1614E0F65B66B0098507F /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = Driver/Warnings.cpp; sourceTree = "<group>"; };
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = lib/AST/StmtDumper.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprAgg.cpp; path = lib/CodeGen/CGExprAgg.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1027,6 +1029,7 @@
 				035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */,
 				DE4DC79D0EA1C09E00069E5A /* RewriteTest.cpp */,
 				352981080CC58344008B5E84 /* SerializationTest.cpp */,
+				DEF1614E0F65B66B0098507F /* Warnings.cpp */,
 			);
 			name = Driver;
 			sourceTree = "<group>";
@@ -1451,6 +1454,7 @@
 				35544B880F5C7FD700D92AA9 /* RangeConstraintManager.cpp in Sources */,
 				35544B890F5C7FD700D92AA9 /* SimpleConstraintManager.cpp in Sources */,
 				35544B8C0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp in Sources */,
+				DEF1614F0F65B66B0098507F /* Warnings.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

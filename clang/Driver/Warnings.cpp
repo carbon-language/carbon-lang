@@ -108,9 +108,8 @@ static llvm::cl::opt<bool> OptPedantic("pedantic");
 static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 static llvm::cl::opt<bool>
-OptSuppressSystemWarnings("suppress-system-warnings",
-                  llvm::cl::desc("Suppress warnings issued in system headers"),
-                          llvm::cl::init(true));
+OptWarnInSystemHeaders("Wsystem-headers",
+           llvm::cl::desc("Do not suppress warnings issued in system headers"));
 
 namespace {
   struct WarningOption {
@@ -171,7 +170,7 @@ bool ProcessWarningOptions(Diagnostic &Diags) {
                              diag::MAP_IGNORE);
 
   Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
-  Diags.setSuppressSystemWarnings(OptSuppressSystemWarnings);
+  Diags.setSuppressSystemWarnings(!OptWarnInSystemHeaders);
 
   for (OptionsList::iterator it = Options.begin(), e = Options.end();
       it != e; ++it) {
