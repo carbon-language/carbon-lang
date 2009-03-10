@@ -1302,13 +1302,38 @@ class DwarfDebug : public Dwarf {
 
   std::vector<FunctionDebugFrameInfo> DebugFrames;
 
-public:
-  /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
-  /// be emitted.
-  ///
-  bool ShouldEmitDwarfDebug() const { return shouldEmit; }
-
 private:
+  /// getSourceDirsectoryAndFileIds - Return the directory and file ids that
+  /// maps to the source id. Source id starts at 1.
+  std::pair<unsigned, unsigned>
+  getSourceDirsectoryAndFileIds(unsigned SId) const {
+    return SourceIds[SId-1];
+  }
+
+  /// getNumSourceDirectories - Return the number of source directories in the
+  /// debug info.
+  unsigned getNumSourceDirectories() const {
+    return DirectoryNames.size();
+  }
+
+  /// getSourceDirectoryName - Return the name of the directory corresponding
+  /// to the id.
+  const std::string &getSourceDirectoryName(unsigned Id) const {
+    return DirectoryNames[Id - 1];
+  }
+
+  /// getSourceFileName - Return the name of the source file corresponding
+  /// to the id.
+  const std::string &getSourceFileName(unsigned Id) const {
+    return SourceFileNames[Id - 1];
+  }
+
+  /// getNumSourceIds - Return the number of unique source ids.
+  ///
+  unsigned getNumSourceIds() const {
+    return SourceIds.size();
+  }
+
   /// AssignAbbrevNumber - Define a unique number for the abbreviation.
   ///
   void AssignAbbrevNumber(DIEAbbrev &Abbrev) {
@@ -2792,10 +2817,48 @@ private:
     }
   }
 
+  /// GetOrCreateSourceID - Look up the source id with the given directory and
+  /// source file names. If none currently exists, create a new id and insert it
+  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
+  /// as well.
+  unsigned GetOrCreateSourceID(const std::string &DirName,
+                               const std::string &FileName) {
+    unsigned DId;
+    StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
+    if (DI != DirectoryIdMap.end()) {
+      DId = DI->getValue();
+    } else {
+      DId = DirectoryNames.size() + 1;
+      DirectoryIdMap[DirName] = DId;
+      DirectoryNames.push_back(DirName);
+    }
+  
+    unsigned FId;
+    StringMap<unsigned>::iterator FI = SourceFileIdMap.find(FileName);
+    if (FI != SourceFileIdMap.end()) {
+      FId = FI->getValue();
+    } else {
+      FId = SourceFileNames.size() + 1;
+      SourceFileIdMap[FileName] = FId;
+      SourceFileNames.push_back(FileName);
+    }
+
+    DenseMap<std::pair<unsigned, unsigned>, unsigned>::iterator SI =
+      SourceIdMap.find(std::make_pair(DId, FId));
+    if (SI != SourceIdMap.end())
+      return SI->second;
+
+    unsigned SrcId = SourceIds.size() + 1;  // DW_AT_decl_file cannot be 0.
+    SourceIdMap[std::make_pair(DId, FId)] = SrcId;
+    SourceIds.push_back(std::make_pair(DId, FId));
+
+    return SrcId;
+  }
+
   void ConstructCompileUnit(GlobalVariable *GV) {
     DICompileUnit DIUnit(GV);
     std::string Dir, FN, Prod;
-    unsigned ID = getOrCreateSourceID(DIUnit.getDirectory(Dir),
+    unsigned ID = GetOrCreateSourceID(DIUnit.getDirectory(Dir),
                                       DIUnit.getFilename(FN));
 
     DIE *Die = new DIE(DW_TAG_compile_unit);
@@ -2972,6 +3035,10 @@ public:
 
     delete DebugTimer;
   }
+
+  /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
+  /// be emitted.
+  bool ShouldEmitDwarfDebug() const { return shouldEmit; }
 
   /// SetDebugInfo - Create global DIEs and emit initial debug info sections.
   /// This is inovked by the target AsmPrinter.
@@ -3266,89 +3333,28 @@ public:
     return ID;
   }
 
-  unsigned getRecordSourceLineCount() {
+  /// getRecordSourceLineCount - Return the number of source lines in the debug
+  /// info.
+  unsigned getRecordSourceLineCount() const {
     return Lines.size();
   }
                             
-  /// getNumSourceDirectories - Return the number of source directories in the
-  /// debug info.
-  unsigned getNumSourceDirectories() const {
-    return DirectoryNames.size();
-  }
-
-  /// getSourceDirectoryName - Return the name of the directory corresponding
-  /// to the id.
-  const std::string &getSourceDirectoryName(unsigned Id) const {
-    return DirectoryNames[Id - 1];
-  }
-
   /// getNumSourceFiles - Return the number of source files in the debug info.
-  ///
   unsigned getNumSourceFiles() const {
     return SourceFileNames.size();
   }
 
-  /// getSourceFileName - Return the name of the source file corresponding
-  /// to the id.
-  const std::string &getSourceFileName(unsigned Id) const {
-    return SourceFileNames[Id - 1];
-  }
-
-  /// getNumSourceIds - Return the number of unique source ids.
-  ///
-  unsigned getNumSourceIds() const {
-    return SourceIds.size();
-  }
-
-  /// getSourceDirsectoryAndFileIds - Return the directory and file ids that
-  /// maps to the source id. Source id starts at 1.
-  std::pair<unsigned, unsigned>
-  getSourceDirsectoryAndFileIds(unsigned SId) const {
-    return SourceIds[SId-1];
-  }
-
-  /// getOrCreateSourceID - Look up the source id with the given directory and
-  /// source file names. If none currently exists, create a new id and insert it
-  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
-  /// as well.
+  /// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
+  /// timed. Look up the source id with the given directory and source file
+  /// names. If none currently exists, create a new id and insert it in the
+  /// SourceIds map. This can update DirectoryNames and SourceFileNames maps as
+  /// well.
   unsigned getOrCreateSourceID(const std::string &DirName,
                                const std::string &FileName) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
 
-    unsigned DId;
-    StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
-    if (DI != DirectoryIdMap.end()) {
-      DId = DI->getValue();
-    } else {
-      DId = DirectoryNames.size() + 1;
-      DirectoryIdMap[DirName] = DId;
-      DirectoryNames.push_back(DirName);
-    }
-  
-    unsigned FId;
-    StringMap<unsigned>::iterator FI = SourceFileIdMap.find(FileName);
-    if (FI != SourceFileIdMap.end()) {
-      FId = FI->getValue();
-    } else {
-      FId = SourceFileNames.size() + 1;
-      SourceFileIdMap[FileName] = FId;
-      SourceFileNames.push_back(FileName);
-    }
-
-    DenseMap<std::pair<unsigned, unsigned>, unsigned>::iterator SI =
-      SourceIdMap.find(std::make_pair(DId, FId));
-
-    if (SI != SourceIdMap.end()) {
-      if (TimePassesIsEnabled)
-        DebugTimer->stopTimer();
-
-      return SI->second;
-    }
-
-    unsigned SrcId = SourceIds.size() + 1;  // DW_AT_decl_file cannot be 0.
-    SourceIdMap[std::make_pair(DId, FId)] = SrcId;
-    SourceIds.push_back(std::make_pair(DId, FId));
+    unsigned SrcId = GetOrCreateSourceID(DirName, FileName);
 
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
@@ -3357,7 +3363,6 @@ public:
   }
 
   /// RecordRegionStart - Indicate the start of a region.
-  ///
   unsigned RecordRegionStart(GlobalVariable *V) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
@@ -3373,7 +3378,6 @@ public:
   }
 
   /// RecordRegionEnd - Indicate the end of a region.
-  ///
   unsigned RecordRegionEnd(GlobalVariable *V) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
@@ -3389,7 +3393,6 @@ public:
   }
 
   /// RecordVariable - Indicate the declaration of  a local variable.
-  ///
   void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
