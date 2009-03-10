@@ -33,7 +33,6 @@ class Value;
 class Module;
 class GlobalVariable;
 class TargetAsmInfo;
-class Timer;
 class raw_ostream;
 
 //===----------------------------------------------------------------------===//
@@ -50,9 +49,6 @@ private:
   ///
   DwarfException *DE;
 
-  /// DwarfTimer - Timer for the Dwarf writer.
-  /// 
-  Timer *DwarfTimer;
 public:
   static char ID; // Pass identification, replacement for typeid
 

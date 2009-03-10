@@ -1286,8 +1286,11 @@ class DwarfDebug : public Dwarf {
   //
   DbgScope *RootDbgScope;
   
-  // DbgScopeMap - Tracks the scopes in the current function.
+  /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
+
+  /// DebugTimer - Timer for the Dwarf debug writer.
+  Timer *DebugTimer;
   
   struct FunctionDebugFrameInfo {
     unsigned Number;
@@ -1300,12 +1303,12 @@ class DwarfDebug : public Dwarf {
   std::vector<FunctionDebugFrameInfo> DebugFrames;
 
 public:
-
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.
   ///
   bool ShouldEmitDwarfDebug() const { return shouldEmit; }
 
+private:
   /// AssignAbbrevNumber - Define a unique number for the abbreviation.
   ///
   void AssignAbbrevNumber(DIEAbbrev &Abbrev) {
@@ -1515,8 +1518,6 @@ public:
 
     Die->AddValue(Attribute, Block->BestForm(), Value);
   }
-
-private:
 
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
@@ -2956,33 +2957,37 @@ public:
   // Main entry points.
   //
   DwarfDebug(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
-  : Dwarf(OS, A, T, "dbg")
-  , MainCU(NULL)
-  , AbbreviationsSet(InitAbbreviationsSetSize)
-  , Abbreviations()
-  , ValuesSet(InitValuesSetSize)
-  , Values()
-  , StringPool()
-  , SectionMap()
-  , SectionSourceLines()
-  , didInitial(false)
-  , shouldEmit(false)
-  , RootDbgScope(NULL)
-  {
+    : Dwarf(OS, A, T, "dbg"), MainCU(0),
+      AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
+      ValuesSet(InitValuesSetSize), Values(), StringPool(), SectionMap(),
+      SectionSourceLines(), didInitial(false), shouldEmit(false),
+      RootDbgScope(0), DebugTimer(0) {
+    if (TimePassesIsEnabled)
+      DebugTimer = new Timer("Dwarf Debug Writer",
+                             *getDwarfTimerGroup());
   }
   virtual ~DwarfDebug() {
     for (unsigned j = 0, M = Values.size(); j < M; ++j)
       delete Values[j];
+
+    delete DebugTimer;
   }
 
   /// SetDebugInfo - Create global DIEs and emit initial debug info sections.
   /// This is inovked by the target AsmPrinter.
   void SetDebugInfo(MachineModuleInfo *mmi) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     // Create all the compile unit DIEs.
     ConstructCompileUnits();
       
-    if (CompileUnits.empty())
+    if (CompileUnits.empty()) {
+      if (TimePassesIsEnabled)
+        DebugTimer->startTimer();
+
       return;
+    }
 
     // Create DIEs for each of the externally visible global variables.
     bool globalDIEs = ConstructGlobalVariableDIEs();
@@ -2992,8 +2997,12 @@ public:
 
     // If there is not any debug info available for any global variables
     // and any subprograms then there is not any debug info to emit.
-    if (!globalDIEs && !subprogramDIEs)
+    if (!globalDIEs && !subprogramDIEs) {
+      if (TimePassesIsEnabled)
+        DebugTimer->startTimer();
+
       return;
+    }
 
     MMI = mmi;
     shouldEmit = true;
@@ -3020,6 +3029,9 @@ public:
 
     // Emit initial sections
     EmitInitial();
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
   }
 
   /// BeginModule - Emit all Dwarf sections that should come prior to the
@@ -3031,7 +3043,11 @@ public:
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///
   void EndModule() {
-    if (!ShouldEmitDwarfDebug()) return;
+    if (!ShouldEmitDwarfDebug())
+      return;
+
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
 
     // Standard sections final addresses.
     Asm->SwitchToSection(TAI->getTextSection());
@@ -3082,14 +3098,20 @@ public:
 
     // Emit info into a debug macinfo section.
     EmitDebugMacInfo();
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
   }
 
   /// BeginFunction - Gather pre-function debug information.  Assumes being
   /// emitted immediately after the function entry point.
   void BeginFunction(MachineFunction *MF) {
-    this->MF = MF;
-
     if (!ShouldEmitDwarfDebug()) return;
+
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
+    this->MF = MF;
 
     // Begin accumulating function debug information.
     MMI->BeginFunction(MF);
@@ -3103,12 +3125,18 @@ public:
       const SrcLineInfo &LineInfo = Lines[0];
       Asm->printLabel(LineInfo.getLabelID());
     }
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
   }
 
   /// EndFunction - Gather and emit post-function debug information.
   ///
   void EndFunction(MachineFunction *MF) {
     if (!ShouldEmitDwarfDebug()) return;
+
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
 
     // Define end label for subprogram.
     EmitLabel("func_end", SubprogramCount);
@@ -3147,10 +3175,12 @@ public:
       DbgScopeMap.clear();
       RootDbgScope = NULL;
     }
-    Lines.clear();
-  }
 
-public:
+    Lines.clear();
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+  }
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
   bool ValidDebugInfo(Value *V) {
@@ -3167,11 +3197,19 @@ public:
     if (!GV->hasInternalLinkage () && !GV->hasLinkOnceLinkage())
       return false;
 
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     DIDescriptor DI(GV);
+
     // Check current version. Allow Version6 for now.
     unsigned Version = DI.getVersion();
-    if (Version != LLVMDebugVersion && Version != LLVMDebugVersion6)
+    if (Version != LLVMDebugVersion && Version != LLVMDebugVersion6) {
+      if (TimePassesIsEnabled)
+        DebugTimer->stopTimer();
+
       return false;
+    }
 
     unsigned Tag = DI.getTag();
     switch (Tag) {
@@ -3188,6 +3226,9 @@ public:
       break;
     }
 
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return true;
   }
 
@@ -3195,10 +3236,17 @@ public:
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
   unsigned RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     CompileUnit *Unit = CompileUnitMap[V];
     assert(Unit && "Unable to find CompileUnit");
     unsigned ID = MMI->NextLabelID();
     Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return ID;
   }
   
@@ -3206,8 +3254,15 @@ public:
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
   unsigned RecordSourceLine(unsigned Line, unsigned Col, unsigned Src) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     unsigned ID = MMI->NextLabelID();
     Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return ID;
   }
 
@@ -3258,11 +3313,14 @@ public:
   /// as well.
   unsigned getOrCreateSourceID(const std::string &DirName,
                                const std::string &FileName) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     unsigned DId;
     StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
-    if (DI != DirectoryIdMap.end())
+    if (DI != DirectoryIdMap.end()) {
       DId = DI->getValue();
-    else {
+    } else {
       DId = DirectoryNames.size() + 1;
       DirectoryIdMap[DirName] = DId;
       DirectoryNames.push_back(DirName);
@@ -3270,9 +3328,9 @@ public:
   
     unsigned FId;
     StringMap<unsigned>::iterator FI = SourceFileIdMap.find(FileName);
-    if (FI != SourceFileIdMap.end())
+    if (FI != SourceFileIdMap.end()) {
       FId = FI->getValue();
-    else {
+    } else {
       FId = SourceFileNames.size() + 1;
       SourceFileIdMap[FileName] = FId;
       SourceFileNames.push_back(FileName);
@@ -3280,37 +3338,65 @@ public:
 
     DenseMap<std::pair<unsigned, unsigned>, unsigned>::iterator SI =
       SourceIdMap.find(std::make_pair(DId, FId));
-    if (SI != SourceIdMap.end())
+
+    if (SI != SourceIdMap.end()) {
+      if (TimePassesIsEnabled)
+        DebugTimer->stopTimer();
+
       return SI->second;
+    }
+
     unsigned SrcId = SourceIds.size() + 1;  // DW_AT_decl_file cannot be 0.
     SourceIdMap[std::make_pair(DId, FId)] = SrcId;
     SourceIds.push_back(std::make_pair(DId, FId));
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return SrcId;
   }
 
   /// RecordRegionStart - Indicate the start of a region.
   ///
   unsigned RecordRegionStart(GlobalVariable *V) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     DbgScope *Scope = getOrCreateScope(V);
     unsigned ID = MMI->NextLabelID();
     if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return ID;
   }
 
   /// RecordRegionEnd - Indicate the end of a region.
   ///
   unsigned RecordRegionEnd(GlobalVariable *V) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     DbgScope *Scope = getOrCreateScope(V);
     unsigned ID = MMI->NextLabelID();
     Scope->setEndLabelID(ID);
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return ID;
   }
 
   /// RecordVariable - Indicate the declaration of  a local variable.
   ///
   void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     DIDescriptor Desc(GV);
     DbgScope *Scope = NULL;
+
     if (Desc.getTag() == DW_TAG_variable) {
       // GV is a global variable.
       DIGlobalVariable DG(GV);
@@ -3320,9 +3406,13 @@ public:
       DIVariable DV(GV);
       Scope = getOrCreateScope(DV.getContext().getGV());
     }
+
     assert(Scope && "Unable to find variable' scope");
     DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex);
     Scope->AddVariable(DV);
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
   }
 };
 
@@ -3364,6 +3454,9 @@ class DwarfException : public Dwarf  {
   /// shouldEmitFrameModule - Per-module flag to indicate if frame moves
   /// should be emitted.
   bool shouldEmitMovesModule;
+
+  /// ExceptionTimer - Timer for the Dwarf exception writer.
+  Timer *ExceptionTimer;
 
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
@@ -3977,14 +4070,17 @@ public:
   // Main entry points.
   //
   DwarfException(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
-  : Dwarf(OS, A, T, "eh")
-  , shouldEmitTable(false)
-  , shouldEmitMoves(false)
-  , shouldEmitTableModule(false)
-  , shouldEmitMovesModule(false)
-  {}
+  : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
+    shouldEmitTableModule(false), shouldEmitMovesModule(false),
+    ExceptionTimer(0) {
+    if (TimePassesIsEnabled) 
+      ExceptionTimer = new Timer("Dwarf Exception Writer",
+                                 *getDwarfTimerGroup());
+  }
 
-  virtual ~DwarfException() {}
+  virtual ~DwarfException() {
+    delete ExceptionTimer;
+  }
 
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
@@ -4001,6 +4097,9 @@ public:
   /// EndModule - Emit all exception information that should come after the
   /// content.
   void EndModule() {
+    if (TimePassesIsEnabled)
+      ExceptionTimer->startTimer();
+
     if (shouldEmitMovesModule || shouldEmitTableModule) {
       const std::vector<Function *> Personalities = MMI->getPersonalities();
       for (unsigned i = 0; i < Personalities.size(); ++i)
@@ -4010,17 +4109,24 @@ public:
              E = EHFrames.end(); I != E; ++I)
         EmitEHFrame(*I);
     }
+
+    if (TimePassesIsEnabled)
+      ExceptionTimer->stopTimer();
   }
 
   /// BeginFunction - Gather pre-function exception information.  Assumes being
   /// emitted immediately after the function entry point.
   void BeginFunction(MachineFunction *MF) {
+    if (TimePassesIsEnabled)
+      ExceptionTimer->startTimer();
+
     this->MF = MF;
     shouldEmitTable = shouldEmitMoves = false;
-    if (MMI && TAI->doesSupportExceptionHandling()) {
 
+    if (MMI && TAI->doesSupportExceptionHandling()) {
       // Map all labels and get rid of any dead landing pads.
       MMI->TidyLandingPads();
+
       // If any landing pads survive, we need an EH table.
       if (MMI->getLandingPads().size())
         shouldEmitTable = true;
@@ -4033,13 +4139,20 @@ public:
         // Assumes in correct section after the entry point.
         EmitLabel("eh_func_begin", ++SubprogramCount);
     }
+
     shouldEmitTableModule |= shouldEmitTable;
     shouldEmitMovesModule |= shouldEmitMoves;
+
+    if (TimePassesIsEnabled)
+      ExceptionTimer->stopTimer();
   }
 
   /// EndFunction - Gather and emit post-function exception information.
   ///
   void EndFunction() {
+    if (TimePassesIsEnabled) 
+      ExceptionTimer->startTimer();
+
     if (shouldEmitMoves || shouldEmitTable) {
       EmitLabel("eh_func_end", SubprogramCount);
       EmitExceptionTable();
@@ -4047,13 +4160,16 @@ public:
       // Save EH frame information
       EHFrames.
         push_back(FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
-                                    SubprogramCount,
-                                    MMI->getPersonalityIndex(),
-                                    MF->getFrameInfo()->hasCalls(),
-                                    !MMI->getLandingPads().empty(),
-                                    MMI->getFrameMoves(),
-                                    MF->getFunction()));
-      }
+                                      SubprogramCount,
+                                      MMI->getPersonalityIndex(),
+                                      MF->getFrameInfo()->hasCalls(),
+                                      !MMI->getLandingPads().empty(),
+                                      MMI->getFrameMoves(),
+                                      MF->getFunction()));
+    }
+
+    if (TimePassesIsEnabled) 
+      ExceptionTimer->stopTimer();
   }
 };
 
@@ -4377,15 +4493,11 @@ void DIE::dump() {
 ///
 
 DwarfWriter::DwarfWriter()
-  : ImmutablePass(&ID), DD(0), DE(0), DwarfTimer(0) {
-  if (TimePassesIsEnabled) 
-    DwarfTimer = new Timer("Dwarf Writer", *getDwarfTimerGroup());
-}
+  : ImmutablePass(&ID), DD(0), DE(0) {}
 
 DwarfWriter::~DwarfWriter() {
   delete DE;
   delete DD;
-  delete DwarfTimer;
   delete DwarfTimerGroup; DwarfTimerGroup = 0;
 }
 
@@ -4395,74 +4507,42 @@ void DwarfWriter::BeginModule(Module *M,
                               MachineModuleInfo *MMI,
                               raw_ostream &OS, AsmPrinter *A,
                               const TargetAsmInfo *T) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
   DE = new DwarfException(OS, A, T);
   DD = new DwarfDebug(OS, A, T);
   DE->BeginModule(M);
   DD->BeginModule(M);
   DD->SetDebugInfo(MMI);
   DE->SetModuleInfo(MMI);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfWriter::EndModule() {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
   DE->EndModule();
   DD->EndModule();
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
 }
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfWriter::BeginFunction(MachineFunction *MF) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
   DE->BeginFunction(MF);
   DD->BeginFunction(MF);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
 }
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
 void DwarfWriter::EndFunction(MachineFunction *MF) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
   DD->EndFunction(MF);
   DE->EndFunction();
 
   if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
     // Clear function debug information.
     MMI->EndFunction();
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
 }
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
 bool DwarfWriter::ValidDebugInfo(Value *V) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  bool Res = DD && DD->ValidDebugInfo(V);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD && DD->ValidDebugInfo(V);
 }
 
 /// RecordSourceLine - Records location information and associates it with a 
@@ -4470,15 +4550,7 @@ bool DwarfWriter::ValidDebugInfo(Value *V) {
 /// correspondence to the source line list.
 unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
                                        unsigned Src) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  unsigned Res = DD->RecordSourceLine(Line, Col, Src);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD->RecordSourceLine(Line, Col, Src);
 }
 
 /// getOrCreateSourceID - Look up the source id with the given directory and
@@ -4487,78 +4559,32 @@ unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col,
 /// as well.
 unsigned DwarfWriter::getOrCreateSourceID(const std::string &DirName,
                                           const std::string &FileName) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  unsigned Res = DD->getOrCreateSourceID(DirName, FileName);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD->getOrCreateSourceID(DirName, FileName);
 }
 
 /// RecordRegionStart - Indicate the start of a region.
 unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  unsigned Res = DD->RecordRegionStart(V);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD->RecordRegionStart(V);
 }
 
 /// RecordRegionEnd - Indicate the end of a region.
 unsigned DwarfWriter::RecordRegionEnd(GlobalVariable *V) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  unsigned Res = DD->RecordRegionEnd(V);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD->RecordRegionEnd(V);
 }
 
 /// getRecordSourceLineCount - Count source lines.
 unsigned DwarfWriter::getRecordSourceLineCount() {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  unsigned Res = DD->getRecordSourceLineCount();
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD->getRecordSourceLineCount();
 }
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
 void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
   DD->RecordVariable(GV, FrameIndex);
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
 /// be emitted.
 bool DwarfWriter::ShouldEmitDwarfDebug() const {
-  if (TimePassesIsEnabled)
-    DwarfTimer->startTimer();
-
-  bool Res = DD->ShouldEmitDwarfDebug();
-
-  if (TimePassesIsEnabled)
-    DwarfTimer->stopTimer();
-
-  return Res;
+  return DD->ShouldEmitDwarfDebug();
 }
