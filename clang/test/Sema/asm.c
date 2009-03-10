@@ -50,13 +50,16 @@ void test4(const volatile void *addr)
 }
 
 // <rdar://problem/6512595>
-void test5()
-{
+void test5() {
   asm("nop" : : "X" (8)); 
 }
 
 // PR3385
-void test6(long i)
-{
+void test6(long i) {
   asm("nop" : : "er"(i));
+}
+
+void test7() {
+  asm("%!");   // simple asm string, %! is not an error.   
+  asm("%!" : );   // expected-error {{invalid % escape in inline assembly string}}
 }

@@ -12,7 +12,11 @@ __ASTSTART      = DIAG_START_AST,
 #undef ASTSTART
 #endif
 
-DIAG(note_comma_in_ice, NOTE,
-     "C does not permit evaluated commas in an integer constant expression")
+//DIAG(note_comma_in_ice, NOTE,
+//     "C does not permit evaluated commas in an integer constant expression")
 DIAG(note_expr_divide_by_zero, NOTE,
     "division by zero")
+
+// inline asm related.
+DIAG(err_asm_invalid_escape, ERROR,
+    "invalid %% escape in inline assembly string")

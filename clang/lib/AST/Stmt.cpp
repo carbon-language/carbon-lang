@@ -16,6 +16,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTDiagnostic.h"
 using namespace clang;
 
 static struct StmtClassNameTable {
@@ -186,23 +187,24 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
                                    ASTContext &C, unsigned &DiagOffs) const {
   const char *StrStart = getAsmString()->getStrData();
   const char *StrEnd = StrStart + getAsmString()->getByteLength();
+  const char *CurPtr = StrStart;
   
   // "Simple" inline asms have no constraints or operands, just convert the asm
   // string to escape $'s.
   if (isSimple()) {
     std::string Result;
-    for (; StrStart != StrEnd; ++StrStart) {
-      switch (*StrStart) {
+    for (; CurPtr != StrEnd; ++CurPtr) {
+      switch (*CurPtr) {
       case '$':
         Result += "$$";
         break;
       default:
-        Result += *StrStart;
+        Result += *CurPtr;
         break;
       }
     }
     Pieces.push_back(AsmStringPiece(Result));
-    return false;
+    return 0;
   }
 
   // CurStringPiece - The current string that we are building up as we scan the
@@ -211,13 +213,13 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
   
   while (1) {
     // Done with the string?
-    if (StrStart == StrEnd) {
+    if (CurPtr == StrEnd) {
       if (!CurStringPiece.empty())
         Pieces.push_back(AsmStringPiece(CurStringPiece));
-      return false;
+      return 0;
     }
     
-    char CurChar = *StrStart++;
+    char CurChar = *CurPtr++;
     if (CurChar == '$') {
       CurStringPiece += "$$";
       continue;
@@ -228,9 +230,9 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     
     // Escaped "%" character in asm string.
     // FIXME: This should be caught during Sema.
-    assert(StrStart != StrEnd && "Trailing '%' in asm string.");
+    assert(CurPtr != StrEnd && "Trailing '%' in asm string.");
     
-    char EscapedChar = *StrStart++;
+    char EscapedChar = *CurPtr++;
     if (EscapedChar == '%') {  // %% -> %
       // Escaped percentage sign.
       CurStringPiece += '%';
@@ -253,15 +255,15 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     char Modifier = '\0';
     if (isalpha(EscapedChar)) {
       Modifier = EscapedChar;
-      EscapedChar = *StrStart++;
+      EscapedChar = *CurPtr++;
     }
     
     if (isdigit(EscapedChar)) {
       // %n - Assembler operand n
       char *End;
-      unsigned long N = strtoul(StrStart-1, &End, 10);
-      assert(End != StrStart-1 && "We know that EscapedChar is a digit!");
-      StrStart = End;
+      unsigned long N = strtoul(CurPtr-1, &End, 10);
+      assert(End != CurPtr-1 && "We know that EscapedChar is a digit!");
+      CurPtr = End;
       
       // FIXME: This should be caught during Sema.
       //unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
@@ -273,12 +275,12 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     
     // Handle %[foo], a symbolic operand reference.
     if (EscapedChar == '[') {
-      const char *NameEnd = (const char*)memchr(StrStart, ']', StrEnd-StrStart);
+      const char *NameEnd = (const char*)memchr(CurPtr, ']', StrEnd-CurPtr);
       // FIXME: Should be caught by sema.
       // FIXME: Does sema catch multiple operands with the same name?
       assert(NameEnd != 0 && "Could not parse symbolic name");
-      std::string SymbolicName(StrStart, NameEnd);
-      StrStart = NameEnd+1;
+      std::string SymbolicName(CurPtr, NameEnd);
+      CurPtr = NameEnd+1;
       
       int N = getNamedOperand(SymbolicName);
       assert(N != -1 && "FIXME: Catch in Sema.");
@@ -286,8 +288,8 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       continue;
     }
     
-    assert(0 && "FIXME: Reject");
-    return true;
+    DiagOffs = CurPtr-StrStart;
+    return diag::err_asm_invalid_escape;
   }
 }
 

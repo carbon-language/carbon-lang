@@ -1179,6 +1179,8 @@ DIAG(ext_typecheck_expression_not_constant_but_accepted, EXTENSION,
      "expression is not a constant, but is accepted as one by GNU extensions")
 DIAG(warn_unused_expr, WARNING,
      "expression result unused")
+     
+// inline asm.
 DIAG(err_asm_wide_character, ERROR,
     "wide string is invalid in 'asm'")
 DIAG(err_asm_invalid_lvalue_in_output, ERROR,
@@ -1193,6 +1195,7 @@ DIAG(err_asm_invalid_type_in_input, ERROR,
      "invalid type %0 in asm input for constraint '%1'")
 DIAG(err_asm_unknown_register_name, ERROR,
     "unknown register name '%0' in asm")
+    
 DIAG(err_invalid_conversion_between_vectors, ERROR,
     "invalid conversion between vector type %0 and %1 of different size")
 DIAG(err_invalid_conversion_between_vector_and_integer, ERROR,
