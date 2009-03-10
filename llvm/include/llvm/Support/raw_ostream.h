@@ -35,7 +35,7 @@ protected:
   bool Unbuffered;
 
 public:
-  raw_ostream(bool unbuffered=false) : Unbuffered(unbuffered) {
+  explicit raw_ostream(bool unbuffered=false) : Unbuffered(unbuffered) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
