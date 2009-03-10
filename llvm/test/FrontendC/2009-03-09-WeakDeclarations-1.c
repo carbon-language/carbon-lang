@@ -1,8 +1,8 @@
 // RUN: $llvmgcc $test -c -o /dev/null |& \
 // RUN: egrep {(14|15|22): warning:} |	\
 // RUN: wc -l | grep --quiet 3
-// TARGET: *-*-darwin
-// XFAIL: alpha|ia64|sparc
+// XTARGET: darwin
+// XFAIL: *
 // END.
 // Insist upon warnings for inappropriate weak attributes.
 // Note the line numbers (14|15|22) embedded in the check.
