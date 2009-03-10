@@ -124,8 +124,8 @@ struct HungoffOperandTraits {
   inline op_iterator op_end(); \
   inline const_op_iterator op_end() const; \
   protected: \
-  template <unsigned> inline Use &Op(); \
-  template <unsigned> inline const Use &Op() const; \
+  template <int> inline Use &Op(); \
+  template <int> inline const Use &Op() const; \
   public: \
   inline unsigned getNumOperands() const
 
@@ -157,12 +157,11 @@ void CLASS::setOperand(unsigned i_nocapture, VALUECLASS *Val_nocapture) { \
 unsigned CLASS::getNumOperands() const { \
   return OperandTraits<CLASS>::operands(this);  \
 } \
-template <unsigned Idx_nocapture> Use &CLASS::Op() { \
-  return OperandTraits<CLASS>::op_begin(this)[Idx_nocapture]; \
+template <int Idx_nocapture> Use &CLASS::Op() { \
+  return this->OpFrom<Idx_nocapture>(this); \
 } \
-template <unsigned Idx_nocapture> const Use &CLASS::Op() const { \
-  return OperandTraits<CLASS>::op_begin( \
-    const_cast<CLASS*>(this))[Idx_nocapture]; \
+template <int Idx_nocapture> const Use &CLASS::Op() const { \
+  return this->OpFrom<Idx_nocapture>(this); \
 }
 
 
@@ -195,12 +194,11 @@ void CLASS::setOperand(unsigned i_nocapture, VALUECLASS *Val_nocapture) { \
 unsigned CLASS::getNumOperands() const { \
   return OperandTraits<CLASS>::operands(this); \
 } \
-template <unsigned Idx_nocapture> Use &CLASS::Op() { \
-  return OperandTraits<CLASS>::op_begin(this)[Idx_nocapture]; \
+template <int Idx_nocapture> Use &CLASS::Op() { \
+  return this->OpFrom<Idx_nocapture>(this); \
 } \
-template <unsigned Idx_nocapture> const Use &CLASS::Op() const { \
-  return OperandTraits<CLASS>::op_begin( \
-    const_cast<CLASS*>(this))[Idx_nocapture]; \
+template <int Idx_nocapture> const Use &CLASS::Op() const { \
+  return this->OpFrom<Idx_nocapture>(this); \
 }
 
 

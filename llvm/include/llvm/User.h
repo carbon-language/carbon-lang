@@ -83,11 +83,16 @@ public:
     assert(0 && "Constructor throws?");
   }
 protected:
-  template <unsigned Idx> Use &Op() {
-    return OperandTraits<User>::op_begin(this)[Idx];
+  template <int Idx, typename U> static Use &OpFrom(const U *that) {
+    return Idx < 0
+      ? OperandTraits<U>::op_end(const_cast<U*>(that))[Idx]
+      : OperandTraits<U>::op_begin(const_cast<U*>(that))[Idx];
   }
-  template <unsigned Idx> const Use &Op() const {
-    return OperandTraits<User>::op_begin(const_cast<User*>(this))[Idx];
+  template <int Idx> Use &Op() {
+    return OpFrom<Idx>(this);
+  }
+  template <int Idx> const Use &Op() const {
+    return OpFrom<Idx>(this);
   }
 public:
   Value *getOperand(unsigned i) const {
