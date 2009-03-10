@@ -973,8 +973,8 @@ public:
   /// true, otherwise return false.  This handles canonicalization and
   /// translation of strings from GCC syntax to LLVM IR syntax, and handles
   //// flattening of named references like %[foo] to Operand AsmStringPiece's. 
-  bool AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece> &Pieces,
-                        ASTContext &C) const;
+  unsigned AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece> &Pieces,
+                            ASTContext &C, unsigned &DiagOffs) const;
   
   
   //===--- Output operands ---===//

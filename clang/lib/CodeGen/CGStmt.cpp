@@ -756,7 +756,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
   llvm::SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
-  S.AnalyzeAsmString(Pieces, getContext());
+  unsigned DiagOffs;
+  S.AnalyzeAsmString(Pieces, getContext(), DiagOffs);
   
   // Assemble the pieces into the final asm string.
   std::string AsmString;

@@ -182,8 +182,8 @@ int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
 /// AnalyzeAsmString - Analyze the asm string of the current asm, decomposing
 /// it into pieces.  If the asm string is erroneous, emit errors and return
 /// true, otherwise return false.
-bool AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece> &Pieces,
-                               ASTContext &C) const {
+unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
+                                   ASTContext &C, unsigned &DiagOffs) const {
   const char *StrStart = getAsmString()->getStrData();
   const char *StrEnd = StrStart + getAsmString()->getByteLength();
   

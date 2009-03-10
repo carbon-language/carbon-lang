@@ -958,10 +958,24 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   exprs.release();
   asmString.release();
   clobbers.release();
-  return Owned(new (Context) AsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs,
-                                     NumInputs, Names, Constraints, Exprs,
-                                     AsmString, NumClobbers,
-                                     Clobbers, RParenLoc));
+  AsmStmt *NS =
+    new (Context) AsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs, NumInputs,
+                          Names, Constraints, Exprs, AsmString, NumClobbers,
+                          Clobbers, RParenLoc);
+  // Validate the asm string, ensuring it makes sense given the operands we
+  // have.
+  llvm::SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;
+  unsigned DiagOffs;
+  if (unsigned DiagID = NS->AnalyzeAsmString(Pieces, Context, DiagOffs)) {
+    // FIXME: get offsets in strings working.
+    // StringLiteralParser::getOffsetOfStringByte
+    Diag(AsmString->getLocStart(), DiagID) << AsmString->getSourceRange();
+    DeleteStmt(NS);
+    return StmtError();
+  }
+  
+  
+  return Owned(NS);
 }
 
 Action::OwningStmtResult
