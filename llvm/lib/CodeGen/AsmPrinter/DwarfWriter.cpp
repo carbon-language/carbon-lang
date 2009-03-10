@@ -48,15 +48,11 @@ static RegisterPass<DwarfWriter>
 X("dwarfwriter", "DWARF Information Writer");
 char DwarfWriter::ID = 0;
 
-namespace {
-
 static TimerGroup *DwarfTimerGroup = 0;
 static TimerGroup *getDwarfTimerGroup() {
   if (DwarfTimerGroup) return DwarfTimerGroup;
   return DwarfTimerGroup = new TimerGroup("Dwarf Exception and Debugging");
 }
-
-} // end anonymous namespace
 
 namespace llvm {
 
