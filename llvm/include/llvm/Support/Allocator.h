@@ -75,9 +75,9 @@ public:
   /// Allocate space for a specific count of elements and with a specified
   /// alignment.
   template <typename T>
-  T *Allocate(size_t Num, unsigned Alignment) {
+  T *Allocate(size_t Num, size_t Alignment) {
     // Round EltSize up to the specified alignment.
-    unsigned EltSize = (sizeof(T)+Alignment-1)&(-Alignment);
+    size_t EltSize = (sizeof(T)+Alignment-1)&(-Alignment);
     return static_cast<T*>(Allocate(Num * EltSize, Alignment));
   }
 
