@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86
 ; PR3686
+; rdar://6661799
+
 define i32 @x(i32 %y) nounwind readnone {
 entry:
 	%tmp14 = zext i32 %y to i80		; <i80> [#uses=1]
