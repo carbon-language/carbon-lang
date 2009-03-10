@@ -28,7 +28,7 @@ void t6(void) {
   __asm__ volatile("" : : "i" (t6));
 }
 
-// RUN: grep "T7 NAMED: \$2" %t
+// RUN: grep "T7 NAMED: \$2" %t &&
 void t7(int a) {
   __asm__ volatile("T7 NAMED: %[input]" : "+r"(a): [input] "i" (4));
 }
@@ -36,4 +36,10 @@ void t7(int a) {
 // RUN: grep "T8 NAMED MODIFIER: \${0:c}" %t
 void t8() {
   __asm__ volatile("T8 NAMED MODIFIER: %c[input]" :: [input] "i" (4));
+}
+
+// PR3682
+unsigned t9(unsigned int a) {
+  asm("bswap %0 %1" : "+r" (a));
+  return a;
 }

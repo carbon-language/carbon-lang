@@ -707,8 +707,6 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
   
   std::string Result;
   
-  unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
-  
   while (1) {
     // Done with the string?
     if (StrStart == StrEnd)
@@ -754,7 +752,8 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
       StrStart = End;
       
       // FIXME: This should be caught during Sema.
-      assert(N < NumOperands && "Operand number out of range!");
+      //unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
+      //assert(N < NumOperands && "Operand number out of range!");
       
       if (Modifier == '\0')
         Result += '$' + llvm::utostr(N);
