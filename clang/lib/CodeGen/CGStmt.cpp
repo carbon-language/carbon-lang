@@ -919,8 +919,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
 
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
-    std::string OutputConstraint(S.getOutputConstraint(i)->getStrData(),
-                                 S.getOutputConstraint(i)->getByteLength());
+    std::string OutputConstraint(S.getOutputConstraint(i));
     
     TargetInfo::ConstraintInfo Info;
     bool result = Target.validateOutputConstraint(OutputConstraint.c_str(), 
@@ -973,8 +972,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   for (unsigned i = 0, e = S.getNumInputs(); i != e; i++) {
     const Expr *InputExpr = S.getInputExpr(i);
 
-    std::string InputConstraint(S.getInputConstraint(i)->getStrData(),
-                                S.getInputConstraint(i)->getByteLength());
+    std::string InputConstraint(S.getInputConstraint(i));
     
     TargetInfo::ConstraintInfo Info;
     bool result = Target.validateInputConstraint(InputConstraint.c_str(),

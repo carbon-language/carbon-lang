@@ -397,7 +397,7 @@ void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
       OS << "] ";
     }
     
-    VisitStringLiteral(Node->getOutputConstraint(i));
+    VisitStringLiteral(Node->getOutputConstraintLiteral(i));
     OS << " ";
     Visit(Node->getOutputExpr(i));
   }
@@ -416,7 +416,7 @@ void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
       OS << "] ";
     }
     
-    VisitStringLiteral(Node->getInputConstraint(i));
+    VisitStringLiteral(Node->getInputConstraintLiteral(i));
     OS << " ";
     Visit(Node->getInputExpr(i));
   }

@@ -130,17 +130,28 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
-const Expr* AsmStmt::getOutputExpr(unsigned i) const {
+Expr *AsmStmt::getOutputExpr(unsigned i) {
   return cast<Expr>(Exprs[i]);
 }
-Expr* AsmStmt::getOutputExpr(unsigned i) {
-  return cast<Expr>(Exprs[i]);
+
+/// getOutputConstraint - Return the constraint string for the specified
+/// output operand.  All output constraints are known to be non-empty (either
+/// '=' or '+').
+std::string AsmStmt::getOutputConstraint(unsigned i) const {
+  return std::string(Constraints[i]->getStrData(),
+                     Constraints[i]->getByteLength());
 }
-Expr* AsmStmt::getInputExpr(unsigned i) {
+
+
+Expr *AsmStmt::getInputExpr(unsigned i) {
   return cast<Expr>(Exprs[i + NumOutputs]);
 }
-const Expr* AsmStmt::getInputExpr(unsigned i) const {
-  return cast<Expr>(Exprs[i + NumOutputs]);
+
+/// getInputConstraint - Return the specified input constraint.  Unlike output
+/// constraints, these can be empty.
+std::string AsmStmt::getInputConstraint(unsigned i) const {
+  return std::string(Constraints[i + NumOutputs]->getStrData(),
+                     Constraints[i + NumOutputs]->getByteLength());
 }
 
 //===----------------------------------------------------------------------===//

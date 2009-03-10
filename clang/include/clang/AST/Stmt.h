@@ -923,36 +923,65 @@ public:
   bool isVolatile() const { return IsVolatile; }
   bool isSimple() const { return IsSimple; }
 
+  //===--- Output operands ---===//
+
   unsigned getNumOutputs() const { return NumOutputs; }
 
   const std::string &getOutputName(unsigned i) const {
     return Names[i];
   }
 
-  const StringLiteral *getOutputConstraint(unsigned i) const {
+  /// getOutputConstraint - Return the constraint string for the specified
+  /// output operand.  All output constraints are known to be non-empty (either
+  /// '=' or '+').
+  std::string getOutputConstraint(unsigned i) const;
+  
+  const StringLiteral *getOutputConstraintLiteral(unsigned i) const {
     return Constraints[i];
   }
-
-  StringLiteral *getOutputConstraint(unsigned i)
-    { return Constraints[i]; }
-
-  const Expr *getOutputExpr(unsigned i) const;
+  StringLiteral *getOutputConstraintLiteral(unsigned i) {
+    return Constraints[i];
+  }
+  
+  
   Expr *getOutputExpr(unsigned i);
+  
+  const Expr *getOutputExpr(unsigned i) const {
+    return const_cast<AsmStmt*>(this)->getOutputExpr(i);
+  }
+  
+  /// isOutputPlusConstraint - Return true if the specified output constraint
+  /// is a "+" constraint (which is both an input and an output) or false if it
+  /// is an "=" constraint (just an output).
+  bool isOutputPlusConstraint(unsigned i) const {
+    return getOutputConstraint(i)[0] == '+';
+  }
+  
+  //===--- Input operands ---===//
   
   unsigned getNumInputs() const { return NumInputs; }  
   
   const std::string &getInputName(unsigned i) const {
     return Names[i + NumOutputs];
   }
-  StringLiteral *getInputConstraint(unsigned i) {
+  
+  /// getInputConstraint - Return the specified input constraint.  Unlike output
+  /// constraints, these can be empty.
+  std::string getInputConstraint(unsigned i) const;
+  
+  const StringLiteral *getInputConstraintLiteral(unsigned i) const {
     return Constraints[i + NumOutputs];
   }
-  const StringLiteral *getInputConstraint(unsigned i) const {
+  StringLiteral *getInputConstraintLiteral(unsigned i) {
     return Constraints[i + NumOutputs];
   }
-
+  
+  
   Expr *getInputExpr(unsigned i);
-  const Expr *getInputExpr(unsigned i) const;
+  
+  const Expr *getInputExpr(unsigned i) const {
+    return const_cast<AsmStmt*>(this)->getInputExpr(i);
+  }
 
   const StringLiteral *getAsmString() const { return AsmStr; }
   StringLiteral *getAsmString() { return AsmStr; }
