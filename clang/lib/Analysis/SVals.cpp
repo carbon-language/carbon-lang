@@ -350,7 +350,7 @@ Loc Loc::MakeVal(SymbolRef sym) { return loc::SymbolVal(sym); }
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 
-void SVal::printStdErr() const { print(llvm::errs()); llvm::errs().flush(); }
+void SVal::printStdErr() const { print(llvm::errs()); }
 
 void SVal::print(std::ostream& Out) const {
   llvm::raw_os_ostream out(Out);

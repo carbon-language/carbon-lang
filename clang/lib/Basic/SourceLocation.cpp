@@ -69,7 +69,6 @@ void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
 
 void SourceLocation::dump(const SourceManager &SM) const {
   print(llvm::errs(), SM);
-  llvm::errs().flush();
 }
 
 void SourceRange::Emit(llvm::Serializer& S) const {

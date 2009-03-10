@@ -69,8 +69,6 @@ void Option::dump() const {
     llvm::errs() << " NumArgs:" << MOA->getNumArgs();
 
   llvm::errs() << ">\n";
-
-  llvm::errs().flush(); // FIXME
 }
 
 bool Option::matches(const Option *Opt) const {

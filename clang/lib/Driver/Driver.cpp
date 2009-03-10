@@ -59,8 +59,6 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
       llvm::errs() << '"' << A->getValue(*Args, j) << '"';
     }
     llvm::errs() << "}\n";
-
-    llvm::errs().flush(); // FIXME
   }
 
   return new Compilation();

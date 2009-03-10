@@ -47,8 +47,6 @@ void Arg::dump() const {
     llvm::errs() << " NumValues:" << getNumValues();
 
   llvm::errs() << ">\n";
-
-  llvm::errs().flush(); // FIXME
 }
 
 FlagArg::FlagArg(const Option *Opt, unsigned Index)

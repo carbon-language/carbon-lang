@@ -67,7 +67,6 @@ void APValue::MakeUninit() {
 void APValue::dump() const {
   print(llvm::errs());
   llvm::errs() << '\n';
-  llvm::errs().flush();
 }
 
 static double GetApproxValue(const llvm::APFloat &F) {

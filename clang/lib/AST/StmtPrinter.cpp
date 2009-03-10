@@ -1223,9 +1223,7 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty() const {
-  llvm::raw_ostream &OS = llvm::errs();
-  printPretty(OS);
-  OS.flush();
+  printPretty(llvm::errs());
 }
 
 void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper,

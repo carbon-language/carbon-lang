@@ -127,8 +127,6 @@ void ABIArgInfo::dump() const {
   case Coerce: 
     fprintf(stderr, "Coerce Type=");
     getCoerceToType()->print(llvm::errs());
-    // FIXME: This is ridiculous.
-    llvm::errs().flush();
     break;
   case Indirect: 
     fprintf(stderr, "Indirect Align=%d", getIndirectAlign());
