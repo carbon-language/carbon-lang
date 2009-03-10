@@ -25,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -46,6 +47,16 @@ using namespace llvm::dwarf;
 static RegisterPass<DwarfWriter>
 X("dwarfwriter", "DWARF Information Writer");
 char DwarfWriter::ID = 0;
+
+namespace {
+
+static TimerGroup *DwarfTimerGroup = 0;
+static TimerGroup *getDwarfTimerGroup() {
+  if (DwarfTimerGroup) return DwarfTimerGroup;
+  return DwarfTimerGroup = new TimerGroup("Dwarf Exception and Debugging");
+}
+
+} // end anonymous namespace
 
 namespace llvm {
 
@@ -4365,12 +4376,17 @@ void DIE::dump() {
 /// DwarfWriter Implementation
 ///
 
-DwarfWriter::DwarfWriter() : ImmutablePass(&ID), DD(NULL), DE(NULL) {
+DwarfWriter::DwarfWriter()
+  : ImmutablePass(&ID), DD(0), DE(0), DwarfTimer(0) {
+  if (TimePassesIsEnabled) 
+    DwarfTimer = new Timer("Dwarf Writer", *getDwarfTimerGroup());
 }
 
 DwarfWriter::~DwarfWriter() {
   delete DE;
   delete DD;
+  delete DwarfTimer;
+  delete DwarfTimerGroup; DwarfTimerGroup = 0;
 }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the
@@ -4379,42 +4395,74 @@ void DwarfWriter::BeginModule(Module *M,
                               MachineModuleInfo *MMI,
                               raw_ostream &OS, AsmPrinter *A,
                               const TargetAsmInfo *T) {
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
   DE = new DwarfException(OS, A, T);
   DD = new DwarfDebug(OS, A, T);
   DE->BeginModule(M);
   DD->BeginModule(M);
   DD->SetDebugInfo(MMI);
   DE->SetModuleInfo(MMI);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfWriter::EndModule() {
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
   DE->EndModule();
   DD->EndModule();
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
 }
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfWriter::BeginFunction(MachineFunction *MF) {
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
   DE->BeginFunction(MF);
   DD->BeginFunction(MF);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
 }
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
 void DwarfWriter::EndFunction(MachineFunction *MF) {
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
   DD->EndFunction(MF);
   DE->EndFunction();
 
   if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
     // Clear function debug information.
     MMI->EndFunction();
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
 }
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
 bool DwarfWriter::ValidDebugInfo(Value *V) {
-  return DD && DD->ValidDebugInfo(V);
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  bool Res = DD && DD->ValidDebugInfo(V);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
 
 /// RecordSourceLine - Records location information and associates it with a 
@@ -4422,7 +4470,15 @@ bool DwarfWriter::ValidDebugInfo(Value *V) {
 /// correspondence to the source line list.
 unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
                                        unsigned Src) {
-  return DD->RecordSourceLine(Line, Col, Src);
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  unsigned Res = DD->RecordSourceLine(Line, Col, Src);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
 
 /// getOrCreateSourceID - Look up the source id with the given directory and
@@ -4431,32 +4487,78 @@ unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col,
 /// as well.
 unsigned DwarfWriter::getOrCreateSourceID(const std::string &DirName,
                                           const std::string &FileName) {
-  return DD->getOrCreateSourceID(DirName, FileName);
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  unsigned Res = DD->getOrCreateSourceID(DirName, FileName);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
 
 /// RecordRegionStart - Indicate the start of a region.
 unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V) {
-  return DD->RecordRegionStart(V);
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  unsigned Res = DD->RecordRegionStart(V);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
 
 /// RecordRegionEnd - Indicate the end of a region.
 unsigned DwarfWriter::RecordRegionEnd(GlobalVariable *V) {
-  return DD->RecordRegionEnd(V);
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  unsigned Res = DD->RecordRegionEnd(V);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
 
 /// getRecordSourceLineCount - Count source lines.
 unsigned DwarfWriter::getRecordSourceLineCount() {
-  return DD->getRecordSourceLineCount();
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  unsigned Res = DD->getRecordSourceLineCount();
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
 void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
   DD->RecordVariable(GV, FrameIndex);
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
 /// be emitted.
 bool DwarfWriter::ShouldEmitDwarfDebug() const {
-  return DD->ShouldEmitDwarfDebug();
+  if (TimePassesIsEnabled)
+    DwarfTimer->startTimer();
+
+  bool Res = DD->ShouldEmitDwarfDebug();
+
+  if (TimePassesIsEnabled)
+    DwarfTimer->stopTimer();
+
+  return Res;
 }
