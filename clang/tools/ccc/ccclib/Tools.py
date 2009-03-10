@@ -415,6 +415,11 @@ class Clang_CompileTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.wOption)
         arglist.addAllArgs3(cmd_args, arglist.parser.stdOption, arglist.parser.ansiOption, arglist.parser.trigraphsOption)
 
+        arg = arglist.getLastArg(arglist.parser.f_templateDepthOption)
+        if arg:
+            cmd_args.append('-ftemplate-depth')
+            cmd_args.append(arglist.getValue(arg))
+
         arglist.addAllArgs(cmd_args, arglist.parser.Clang_fGroup)
 
         arglist.addLastArg(cmd_args, arglist.parser.dMOption)
