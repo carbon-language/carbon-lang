@@ -515,7 +515,10 @@ static llvm::cl::list<std::string>
 TargetFeatures("mattr", llvm::cl::CommaSeparated,
         llvm::cl::desc("Target specific attributes (-mattr=help for details)"));
 
-
+static llvm::cl::opt<unsigned>
+TemplateDepth("ftemplate-depth", llvm::cl::init(99),
+              llvm::cl::desc("Maximum depth of recursive template "
+                             "instantiation"));
 
 // FIXME: add:
 //   -fdollars-in-identifiers
@@ -641,6 +644,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.Freestanding = 1;
 
   Options.MathErrno = MathErrno;
+
+  Options.InstantiationDepth = TemplateDepth;
 
   // Override the default runtime if the user requested it.
   if (NeXTRuntime)

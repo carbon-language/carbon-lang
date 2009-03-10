@@ -1664,6 +1664,61 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation
   //
+
+  /// \brief A template instantiation that is currently in progress.
+  struct ActiveTemplateInstantiation {
+    /// \brief The point of instantiation within the source code.
+    SourceLocation PointOfInstantiation;
+
+    /// \brief The entity that is being instantiated.
+    ClassTemplateSpecializationDecl *Entity;
+
+    /// \brief The source range that covers the construct that cause
+    /// the instantiation, e.g., the template-id that causes a class
+    /// template instantiation.
+    SourceRange InstantiationRange;
+  };
+
+  /// \brief List of active template instantiations.
+  ///
+  /// This vector is treated as a stack. As one template instantiation
+  /// requires another template instantiation, additional
+  /// instantiations are pushed onto the stack up to a
+  /// user-configurable limit LangOptions::InstantiationDepth.
+  llvm::SmallVector<ActiveTemplateInstantiation, 16> 
+    ActiveTemplateInstantiations;
+
+  /// \brief A stack object to be created when performing template
+  /// instantiation.
+  ///
+  /// Construction of an object of type \c InstantiatingTemplate
+  /// pushes the current instantiation onto the stack of active
+  /// instantiations. If the size of this stack exceeds the maximum
+  /// number of recursive template instantiations, construction
+  /// produces an error and evaluates true.
+  ///
+  /// Destruction of this object will pop the named instantiation off
+  /// the stack.
+  struct InstantiatingTemplate {
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          ClassTemplateSpecializationDecl *Entity,
+                          SourceRange InstantiationRange = SourceRange());
+    ~InstantiatingTemplate();
+
+    /// \brief Determines whether we have exceeded the maximum
+    /// recursive template instantiations.
+    operator bool() const { return Invalid; }
+
+  private:
+    Sema &SemaRef;
+    bool Invalid;
+
+    InstantiatingTemplate(const InstantiatingTemplate&); // not implemented
+
+    InstantiatingTemplate& 
+    operator=(const InstantiatingTemplate&); // not implemented
+  };
+
   QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,
                            unsigned NumTemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);

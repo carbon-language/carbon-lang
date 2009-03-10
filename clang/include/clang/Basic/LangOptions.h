@@ -62,6 +62,7 @@ private:
                    // this enum as unsigned because MSVC insists on making enums
                    // signed.  Set/Query this value using accessors.  
 public:  
+  unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
   enum GCMode { NonGC, GCOnly, HybridGC };
   
@@ -80,6 +81,8 @@ public:
     Blocks = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
+
+    InstantiationDepth = 99;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

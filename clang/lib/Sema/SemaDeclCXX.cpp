@@ -351,7 +351,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   //   The class-name in a base-specifier shall not be an incompletely
   //   defined class.
   if (RequireCompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
-                             SpecifierRange))
+                          SpecifierRange))
     return 0;
 
   // If the base class is polymorphic, the new one is, too.

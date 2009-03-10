@@ -21,6 +21,35 @@
 
 using namespace clang;
 
+Sema::InstantiatingTemplate::
+InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                      ClassTemplateSpecializationDecl *Entity,
+                      SourceRange InstantiationRange)
+  :  SemaRef(SemaRef) {
+  if (SemaRef.ActiveTemplateInstantiations.size() 
+        > SemaRef.getLangOptions().InstantiationDepth) {
+    SemaRef.Diag(PointOfInstantiation, 
+                 diag::err_template_recursion_depth_exceeded)
+      << SemaRef.getLangOptions().InstantiationDepth
+      << InstantiationRange;
+    SemaRef.Diag(PointOfInstantiation, diag::note_template_recursion_depth)
+      << SemaRef.getLangOptions().InstantiationDepth;
+    Invalid = true;
+  } else {
+    ActiveTemplateInstantiation Inst;
+    Inst.PointOfInstantiation = PointOfInstantiation;
+    Inst.Entity = Entity;
+    Inst.InstantiationRange = InstantiationRange;
+    SemaRef.ActiveTemplateInstantiations.push_back(Inst);
+    Invalid = false;
+  }
+}
+
+Sema::InstantiatingTemplate::~InstantiatingTemplate() {
+  if (!Invalid)
+    SemaRef.ActiveTemplateInstantiations.pop_back();
+}
+
 //===----------------------------------------------------------------------===/
 // Template Instantiation for Types
 //===----------------------------------------------------------------------===/
@@ -526,6 +555,11 @@ Sema::InstantiateClassTemplateSpecialization(
 
   bool Invalid = false;
   
+  InstantiatingTemplate Inst(*this, ClassTemplateSpec->getLocation(),
+                             ClassTemplateSpec);
+  if (Inst)
+    return true;
+
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
   DeclContext *PreviousContext = CurContext;
