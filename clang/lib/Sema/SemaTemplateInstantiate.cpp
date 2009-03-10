@@ -56,7 +56,10 @@ Sema::InstantiatingTemplate::~InstantiatingTemplate() {
 
 /// \brief Post-diagnostic hook for printing the instantiation stack.
 void Sema::PrintInstantiationStackHook(unsigned, void *Cookie) {
-  static_cast<Sema*>(Cookie)->PrintInstantiationStack();
+  Sema &SemaRef = *static_cast<Sema*>(Cookie);
+  SemaRef.PrintInstantiationStack();
+  SemaRef.LastTemplateInstantiationErrorContext 
+    = SemaRef.ActiveTemplateInstantiations.back().Entity;
 }
 
 /// \brief Prints the current instantiation stack through a series of
@@ -503,7 +506,7 @@ Sema::InstantiateBaseSpecifiers(
   for (ClassTemplateSpecializationDecl::base_class_iterator
          Base = ClassTemplate->getTemplatedDecl()->bases_begin(),
          BaseEnd = ClassTemplate->getTemplatedDecl()->bases_end();
-       Base != BaseEnd && !Invalid; ++Base) {
+       Base != BaseEnd; ++Base) {
     if (!Base->getType()->isDependentType()) {
       // FIXME: Allocate via ASTContext
       InstantiatedBases.push_back(new CXXBaseSpecifier(*Base));
@@ -533,7 +536,8 @@ Sema::InstantiateBaseSpecifiers(
       Invalid = true;
   }
 
-  if (AttachBaseSpecifiers(ClassTemplateSpec, &InstantiatedBases[0],
+  if (!Invalid &&
+      AttachBaseSpecifiers(ClassTemplateSpec, &InstantiatedBases[0],
                            InstantiatedBases.size()))
     Invalid = true;
 

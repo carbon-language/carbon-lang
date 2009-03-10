@@ -243,7 +243,10 @@ public:
   /// The primitive diagnostic helpers.
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
     DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
-    if (!Diags.isBuiltinNote(DiagID) && !ActiveTemplateInstantiations.empty())
+    if (!Diags.isBuiltinNote(DiagID) && 
+        !ActiveTemplateInstantiations.empty() &&
+        ActiveTemplateInstantiations.back().Entity 
+          != LastTemplateInstantiationErrorContext)
       DB << PostDiagnosticHook(PrintInstantiationStackHook, this);
     return DB;
   }
@@ -1690,6 +1693,15 @@ public:
   /// user-configurable limit LangOptions::InstantiationDepth.
   llvm::SmallVector<ActiveTemplateInstantiation, 16> 
     ActiveTemplateInstantiations;
+
+  /// \brief The last template from which a template instantiation
+  /// error or warning was produced.
+  ///
+  /// This value is used to suppress printing of redundant template
+  /// instantiation backtraces when there are multiple errors in the
+  /// same instantiation. FIXME: Does this belong in Sema? It's tough
+  /// to implement it anywhere else.
+  ClassTemplateSpecializationDecl *LastTemplateInstantiationErrorContext;
 
   /// \brief A stack object to be created when performing template
   /// instantiation.
