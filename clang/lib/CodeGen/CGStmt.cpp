@@ -680,112 +680,6 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   CaseRangeBlock = SavedCRBlock;
 }
 
-/// ConvertAsmString - Convert the GNU-style asm string to the LLVM-style asm
-/// string.
-static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
-  Failed = false;
-  
-  const char *StrStart = S.getAsmString()->getStrData();
-  const char *StrEnd = StrStart + S.getAsmString()->getByteLength();
-
-  // "Simple" inline asms have no constraints or operands, just convert the asm
-  // string to escape $'s.
-  if (S.isSimple()) {
-    std::string Result;
-    for (; StrStart != StrEnd; ++StrStart) {
-      switch (*StrStart) {
-      case '$':
-        Result += "$$";
-        break;
-      default:
-        Result += *StrStart;
-        break;
-      }
-    }
-    return Result;
-  }
-  
-  std::string Result;
-  
-  while (1) {
-    // Done with the string?
-    if (StrStart == StrEnd)
-      return Result;
-
-    char CurChar = *StrStart++;
-    if (CurChar == '$') {
-      Result += "$$";
-      continue;
-    } else if (CurChar != '%') {
-      Result += CurChar;
-      continue;
-    }
-
-    // Escaped "%" character in asm string.
-    // FIXME: This should be caught during Sema.
-    assert(StrStart != StrEnd && "Trailing '%' in asm string.");
-      
-    char EscapedChar = *StrStart++;
-    if (EscapedChar == '%') {  // %% -> %
-      // Escaped percentage sign.
-      Result += '%';
-      continue;
-    }
-    
-    if (EscapedChar == '=') {  // %= -> Generate an unique ID.
-      Result += "${:uid}";
-      continue;
-    }
-    
-    // Handle %x4 and %x[foo] by capturing x as the modifier character.
-    char Modifier = '\0';
-    if (isalpha(EscapedChar)) {
-      Modifier = EscapedChar;
-      EscapedChar = *StrStart++;
-    }
-    
-    if (isdigit(EscapedChar)) {
-      // %n - Assembler operand n
-      char *End;
-      unsigned long N = strtoul(StrStart-1, &End, 10);
-      assert(End != StrStart-1 && "We know that EscapedChar is a digit!");
-      StrStart = End;
-      
-      // FIXME: This should be caught during Sema.
-      //unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
-      //assert(N < NumOperands && "Operand number out of range!");
-      
-      if (Modifier == '\0')
-        Result += '$' + llvm::utostr(N);
-      else
-        Result += "${" + llvm::utostr(N) + ':' + Modifier + '}';
-      continue;
-    }
-    
-    // Handle %[foo], a symbolic operand reference.
-    if (EscapedChar == '[') {
-      const char *NameEnd = (const char*)memchr(StrStart, ']', StrEnd-StrStart);
-      // FIXME: Should be caught by sema.
-      // FIXME: Does sema catch multiple operands with the same name?
-      assert(NameEnd != 0 && "Could not parse symbolic name");
-      std::string SymbolicName(StrStart, NameEnd);
-      StrStart = NameEnd+1;
-      
-      int N = S.getNamedOperand(SymbolicName);
-      assert(N != -1 && "FIXME: Catch in Sema.");
-
-      if (Modifier == '\0')
-        Result += '$' + llvm::utostr(N);
-      else
-        Result += "${" + llvm::utostr(N) + ':' + Modifier + '}';
-      continue;
-    }
-     
-    Failed = true;
-    return "";
-  }
-}
-
 static std::string SimplifyConstraint(const char* Constraint,
                                       TargetInfo &Target,
                                       const std::string *OutputNamesBegin = 0,
@@ -859,12 +753,21 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 }
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
-  bool Failed;
-  std::string AsmString = ConvertAsmString(S, Failed);
-
-  if (Failed) {
-    ErrorUnsupported(&S, "asm string");
-    return;
+  // Analyze the asm string to decompose it into its pieces.  We know that Sema
+  // has already done this, so it is guaranteed to be successful.
+  llvm::SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
+  S.AnalyzeAsmString(Pieces, getContext());
+  
+  // Assemble the pieces into the final asm string.
+  std::string AsmString;
+  for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
+    if (Pieces[i].isString())
+      AsmString += Pieces[i].getString();
+    else if (Pieces[i].getModifier() == '\0')
+      AsmString += '$' + llvm::utostr(Pieces[i].getOperandNo());
+    else
+      AsmString += "${" + llvm::utostr(Pieces[i].getOperandNo()) + ':' +
+                   Pieces[i].getModifier() + '}';
   }
   
   std::string Constraints;

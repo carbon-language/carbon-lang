@@ -24,7 +24,6 @@
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "clang/AST/ASTContext.h"
 #include <string>
-
 using llvm::dyn_cast_or_null;
 
 namespace clang {
@@ -923,6 +922,61 @@ public:
   bool isVolatile() const { return IsVolatile; }
   bool isSimple() const { return IsSimple; }
 
+  //===--- Asm String Analysis ---===//
+
+  const StringLiteral *getAsmString() const { return AsmStr; }
+  StringLiteral *getAsmString() { return AsmStr; }
+  
+  /// AsmStringPiece - this is part of a decomposed asm string specification
+  /// (for use with the AnalyzeAsmString function below).  An asm string is
+  /// considered to be a concatenation of these parts.
+  class AsmStringPiece {
+  public:
+    enum Kind {
+      String,  // String in .ll asm string form, "$" -> "$$" and "%%" -> "%".
+      Operand  // Operand reference, with optional modifier %c4.
+    };
+  private:
+    Kind MyKind;
+    std::string Str;
+    unsigned OperandNo;
+  public:
+    AsmStringPiece(const std::string &S) : MyKind(String), Str(S) {}
+    AsmStringPiece(unsigned OpNo, char Modifier)
+      : MyKind(Operand), Str(), OperandNo(OpNo) {
+      Str += Modifier;
+    }
+    
+    bool isString() const { return MyKind == String; }
+    bool isOperand() const { return MyKind == Operand; }
+    
+    const std::string &getString() const {
+      assert(isString());
+      return Str;
+    }
+
+    unsigned getOperandNo() const {
+      assert(isOperand());
+      return OperandNo;
+    }
+    
+    /// getModifier - Get the modifier for this operand, if present.  This
+    /// returns '\0' if there was no modifier.
+    char getModifier() const {
+      assert(isOperand());
+      return Str[0];
+    }
+  };
+  
+  /// AnalyzeAsmString - Analyze the asm string of the current asm, decomposing
+  /// it into pieces.  If the asm string is erroneous, emit errors and return
+  /// true, otherwise return false.  This handles canonicalization and
+  /// translation of strings from GCC syntax to LLVM IR syntax, and handles
+  //// flattening of named references like %[foo] to Operand AsmStringPiece's. 
+  bool AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece> &Pieces,
+                        ASTContext &C) const;
+  
+  
   //===--- Output operands ---===//
 
   unsigned getNumOutputs() const { return NumOutputs; }
@@ -991,9 +1045,6 @@ public:
   int getNamedOperand(const std::string &SymbolicName) const;
 
   
-
-  const StringLiteral *getAsmString() const { return AsmStr; }
-  StringLiteral *getAsmString() { return AsmStr; }
 
   unsigned getNumClobbers() const { return Clobbers.size(); }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
