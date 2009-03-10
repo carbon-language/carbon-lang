@@ -154,6 +154,31 @@ std::string AsmStmt::getInputConstraint(unsigned i) const {
                      Constraints[i + NumOutputs]->getByteLength());
 }
 
+
+/// getNamedOperand - Given a symbolic operand reference like %[foo],
+/// translate this into a numeric value needed to reference the same operand.
+/// This returns -1 if the operand name is invalid.
+int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
+  unsigned NumPlusOperands = 0;
+  
+  // Check if this is an output operand.
+  for (unsigned i = 0, e = getNumOutputs(); i != e; ++i) {
+    if (getOutputName(i) == SymbolicName)
+      return i;
+    
+    // Keep track of the number of '+' operands.
+    if (isOutputPlusConstraint(i)) ++NumPlusOperands;
+  }
+  
+  for (unsigned i = 0, e = getNumInputs(); i != e; ++i)
+    if (getInputName(i) == SymbolicName)
+      return getNumOutputs() + NumPlusOperands + i;
+
+  // Not found.
+  return -1;
+}
+
+
 //===----------------------------------------------------------------------===//
 // Constructors
 //===----------------------------------------------------------------------===//

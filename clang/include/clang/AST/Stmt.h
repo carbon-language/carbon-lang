@@ -982,6 +982,15 @@ public:
   const Expr *getInputExpr(unsigned i) const {
     return const_cast<AsmStmt*>(this)->getInputExpr(i);
   }
+  
+  //===--- Other ---===//
+  
+  /// getNamedOperand - Given a symbolic operand reference like %[foo],
+  /// translate this into a numeric value needed to reference the same operand.
+  /// This returns -1 if the operand name is invalid.
+  int getNamedOperand(const std::string &SymbolicName) const;
+
+  
 
   const StringLiteral *getAsmString() const { return AsmStr; }
   StringLiteral *getAsmString() { return AsmStr; }

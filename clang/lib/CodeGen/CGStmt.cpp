@@ -771,34 +771,15 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
     if (EscapedChar == '[') {
       const char *NameEnd = (const char*)memchr(StrStart, ']', StrEnd-StrStart);
       // FIXME: Should be caught by sema.
+      // FIXME: Does sema catch multiple operands with the same name?
       assert(NameEnd != 0 && "Could not parse symbolic name");
-      
       std::string SymbolicName(StrStart, NameEnd);
-      
       StrStart = NameEnd+1;
       
-      int Index = -1;
-      
-      // Check if this is an output operand.
-      for (unsigned i = 0; i != S.getNumOutputs(); ++i) {
-        if (S.getOutputName(i) == SymbolicName) {
-          Index = i;
-          break;
-        }
-      }
-      
-      if (Index == -1) {
-        for (unsigned i = 0; i != S.getNumInputs(); ++i) {
-          if (S.getInputName(i) == SymbolicName) {
-            Index = S.getNumOutputs() + i;
-            break;
-          }
-        }
-      }
-      
-      assert(Index != -1 && "Did not find right operand!");
-     
-      Result += '$' + llvm::utostr(Index);
+      int OperandIndex = S.getNamedOperand(SymbolicName);
+      assert(OperandIndex != -1 && "FIXME: Catch in Sema.");
+
+      Result += '$' + llvm::utostr(unsigned(OperandIndex));
       continue;
     }
      
