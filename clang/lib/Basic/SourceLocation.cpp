@@ -142,3 +142,7 @@ std::pair<const char*, const char*> FullSourceLoc::getBufferData() const {
   const llvm::MemoryBuffer *Buf = getBuffer();
   return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
 }
+
+std::pair<FileID, unsigned> FullSourceLoc::getDecomposedLoc() const {
+  return SrcMgr->getDecomposedLoc(*this);
+}
