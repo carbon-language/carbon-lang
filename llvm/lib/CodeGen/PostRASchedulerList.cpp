@@ -258,22 +258,19 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator I = Current; I != MBB->begin(); ) {
       MachineInstr *MI = prior(I);
       if (isSchedulingBoundary(MI, Fn)) {
-        if (I != Current) {
-          Scheduler.Run(MBB, I, Current, CurrentCount);
-          Scheduler.EmitSchedule();
-        }
-        Scheduler.Observe(MI, Count);
+        Scheduler.Run(MBB, I, Current, CurrentCount);
+        Scheduler.EmitSchedule();
         Current = MI;
         CurrentCount = Count - 1;
+        Scheduler.Observe(MI, CurrentCount);
       }
       I = MI;
       --Count;
     }
     assert(Count == 0 && "Instruction count mismatch!");
-    if (MBB->begin() != Current) {
-      assert(CurrentCount != 0 && "Instruction count mismatch!");
-      Scheduler.Run(MBB, MBB->begin(), Current, CurrentCount);
-    }
+    assert(MBB->begin() == Current || CurrentCount != 0 &&
+           "Instruction count mismatch!");
+    Scheduler.Run(MBB, MBB->begin(), Current, CurrentCount);
     Scheduler.EmitSchedule();
 
     // Clean up register live-range state.
@@ -392,6 +389,22 @@ void SchedulePostRATDList::Schedule() {
 /// instruction, which will not be scheduled.
 ///
 void SchedulePostRATDList::Observe(MachineInstr *MI, unsigned Count) {
+  assert(Count < InsertPosIndex && "Instruction index out of expected range!");
+
+  // Any register which was defined within the previous scheduling region
+  // may have been rescheduled and its lifetime may overlap with registers
+  // in ways not reflected in our current liveness state. For each such
+  // register, adjust the liveness state to be conservatively correct.
+  for (unsigned Reg = 0; Reg != TargetRegisterInfo::FirstVirtualRegister; ++Reg)
+    if (DefIndices[Reg] < InsertPosIndex && DefIndices[Reg] >= Count) {
+      assert(KillIndices[Reg] == ~0u && "Clobbered register is live!");
+      // Mark this register to be non-renamable.
+      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      // Move the def index to the end of the previous region, to reflect
+      // that the def could theoretically have been scheduled at the end.
+      DefIndices[Reg] = InsertPosIndex;
+    }
+
   PrescanInstruction(MI);
   ScanInstruction(MI, Count);
 }
