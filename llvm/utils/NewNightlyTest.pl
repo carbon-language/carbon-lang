@@ -36,6 +36,7 @@ use Socket;
 #  -disable-jit     Disable JIT tests in the nightly tester.
 #  -disable-cbe     Disable C backend tests in the nightly tester.
 #  -disable-lto     Disable link time optimization.
+#  -disable-bindings     Disable building LLVM bindings.
 #  -verbose         Turn on some debug output
 #  -debug           Print information useful only to maintainers of this script.
 #  -nice            Checkout/Configure/Build with "nice" to reduce impact
@@ -154,6 +155,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
   if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
                              $CONFIGUREARGS .= " --disable-jit"; next; }
+  if (/^-disable-bindings$/)    { $CONFIGUREARGS .= " --disable-bindings"; next; }
   if (/^-disable-cbe$/)    { $PROGTESTOPTS .= " DISABLE_CBE=1"; next; }
   if (/^-disable-lto$/)    { $PROGTESTOPTS .= " DISABLE_LTO=1"; next; }
   if (/^-test-opts$/)      { $PROGTESTOPTS .= " $ARGV[0]"; shift; next; }
