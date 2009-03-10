@@ -714,10 +714,6 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
   
   unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
   
-  // FIXME: Static counters are not thread safe or reproducible.
-  static unsigned AsmCounter = 0;
-  AsmCounter++;
-  
   while (*Start) {
     switch (*Start) {
     default:
@@ -729,10 +725,8 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
     case '%':
       // Escaped character
       Start++;
-      if (!*Start) {
-        // FIXME: This should be caught during Sema.
-        assert(0 && "Trailing '%' in asm string.");
-      }
+      // FIXME: This should be caught during Sema.
+      assert(*Start && "Trailing '%' in asm string.");
       
       char EscapedChar = *Start;
       if (EscapedChar == '%') {
@@ -740,7 +734,7 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
         Result += '%';
       } else if (EscapedChar == '=') {
         // Generate an unique ID.
-        Result += llvm::utostr(AsmCounter);
+        Result += "${:uid}";
       } else if (isdigit(EscapedChar)) {
         // %n - Assembler operand n
         char *End;
@@ -823,8 +817,7 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
 static std::string SimplifyConstraint(const char* Constraint,
                                       TargetInfo &Target,
                                       const std::string *OutputNamesBegin = 0,
-                                      const std::string *OutputNamesEnd = 0)
-{
+                                      const std::string *OutputNamesEnd = 0) {
   std::string Result;
   
   while (*Constraint) {
@@ -862,8 +855,7 @@ static std::string SimplifyConstraint(const char* Constraint,
 llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
                                            TargetInfo::ConstraintInfo Info, 
                                            const Expr *InputExpr,
-                                           std::string &ConstraintStr)
-{
+                                           std::string &ConstraintStr) {
   llvm::Value *Arg;
   if ((Info & TargetInfo::CI_AllowsRegister) ||
       !(Info & TargetInfo::CI_AllowsMemory)) { 
