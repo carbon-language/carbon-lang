@@ -77,20 +77,17 @@ void PassManagerPrettyStackEntry::print(raw_ostream &OS) const {
     return;
   }
 
-  std::string Name = V->getNameStr();
-  if (Name.empty())
-    Name = "<anonymous>";
-  else if (isa<GlobalValue>(V))
-    Name = "@" + Name;
-  else
-    Name = "%" + Name;
-
+  OS << " on ";
   if (isa<Function>(V))
-    OS << " on function '" << Name << "'\n";
+    OS << "function";
   else if (isa<BasicBlock>(V))
-    OS << " on basic block '" << Name << "'\n";
+    OS << "basic block";
   else
-    OS << " on value '" << Name << "'\n";
+    OS << "value";
+
+  OS << " '";
+  WriteAsOperand(OS, V, /*PrintTy=*/false, M);
+  OS << "'\n";
 }
 
 
