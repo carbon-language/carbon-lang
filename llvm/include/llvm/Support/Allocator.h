@@ -77,7 +77,7 @@ public:
   template <typename T>
   T *Allocate(size_t Num, unsigned Alignment) {
     // Round EltSize up to the specified alignment.
-    unsigned EltSize = (sizeof(T)+Alignment-1)&~Alignment;
+    unsigned EltSize = (sizeof(T)+Alignment-1)&(-Alignment);
     return static_cast<T*>(Allocate(Num * EltSize, Alignment));
   }
 
