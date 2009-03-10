@@ -275,7 +275,11 @@ public:
   ObjCMethodDecl *getSetterMethod() const {
     return Setter;
   }
-    
+
+  ObjCInterfaceDecl *getClassProp() const {
+    return ClassProp;
+  }
+  
   virtual SourceRange getSourceRange() const {
     if (Base)
       return SourceRange(getBase()->getLocStart(), Loc);

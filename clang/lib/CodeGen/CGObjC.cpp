@@ -327,10 +327,17 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
   else {
     const ObjCKVCRefExpr *KE = cast<ObjCKVCRefExpr>(Exp);
     Selector S = KE->getGetterMethod()->getSelector();
+    llvm::Value *Receiver;
+    if (KE->getClassProp()) {
+      const ObjCInterfaceDecl *OID = KE->getClassProp();
+      Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
+    }
+    else 
+      Receiver = EmitScalarExpr(KE->getBase());
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Exp->getType(), S, 
-                                 EmitScalarExpr(KE->getBase()), 
-                                 false, CallArgList());
+                                 Receiver, 
+                                 KE->getClassProp() != 0, CallArgList());
   }
 }
 
@@ -348,10 +355,17 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
   else if (const ObjCKVCRefExpr *E = dyn_cast<ObjCKVCRefExpr>(Exp)) {
     Selector S = E->getSetterMethod()->getSelector();
     CallArgList Args;
+    llvm::Value *Receiver;
+    if (E->getClassProp()) {
+      const ObjCInterfaceDecl *OID = E->getClassProp();
+      Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
+    }
+    else 
+      Receiver = EmitScalarExpr(E->getBase());
     Args.push_back(std::make_pair(Src, E->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
-                                             EmitScalarExpr(E->getBase()), 
-                                             false, Args);
+                                             Receiver, 
+                                             E->getClassProp() != 0, Args);
   }
   else
     assert (0 && "bad expression node in EmitObjCPropertySet");
