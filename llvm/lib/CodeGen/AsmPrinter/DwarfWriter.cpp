@@ -3050,7 +3050,7 @@ public:
       
     if (CompileUnits.empty()) {
       if (TimePassesIsEnabled)
-        DebugTimer->startTimer();
+        DebugTimer->stopTimer();
 
       return;
     }
@@ -3065,7 +3065,7 @@ public:
     // and any subprograms then there is not any debug info to emit.
     if (!globalDIEs && !subprogramDIEs) {
       if (TimePassesIsEnabled)
-        DebugTimer->startTimer();
+        DebugTimer->stopTimer();
 
       return;
     }
