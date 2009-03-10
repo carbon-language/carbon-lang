@@ -18,6 +18,7 @@
 #include "clang/Driver/Options.h"
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Config/config.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 using namespace clang::driver;
@@ -30,8 +31,11 @@ int main(int argc, const char **argv) {
   // is that the path derived from this will influence search paths.
   llvm::sys::Path Path(argv[0]);
 
+  // FIXME: Use the triple of the host, not the triple that we were
+  // compiled on.
   llvm::OwningPtr<Driver> TheDriver(new Driver(Path.getBasename().c_str(),
-                                               Path.getDirname().c_str()));
+                                               Path.getDirname().c_str(),
+                                               LLVM_HOSTTRIPLE));
 
   llvm::OwningPtr<Compilation> C(TheDriver->BuildCompilation(argc, argv));
 

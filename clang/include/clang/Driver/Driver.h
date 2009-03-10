@@ -38,6 +38,9 @@ public:
   /// The path the driver executable was in, as invoked from the
   /// command line.
   std::string Dir;
+  
+  /// Default host triple.
+  std::string DefaultHostTriple;
 
   /// Host information for the platform the driver is running as. This
   /// will generally be the actual host platform, but not always.
@@ -73,7 +76,8 @@ public:
   std::list<std::string> ResultFiles;
 
 public:
-  Driver(const char *_Name, const char *_Dir);
+  Driver(const char *_Name, const char *_Dir,
+         const char *_DefaultHostTriple);
   ~Driver();
 
   
@@ -85,6 +89,10 @@ public:
 
   /// PrintOptions - Print the given list of arguments.
   void PrintOptions(const ArgList *Args);
+
+  /// GetHostInfo - Construct a new host info object for the given
+  /// host triple.
+  static HostInfo *GetHostInfo(const char *HostTriple);
 };
 
 } // end namespace driver

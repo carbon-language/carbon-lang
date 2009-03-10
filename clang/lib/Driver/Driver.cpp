@@ -12,15 +12,18 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
+#include "clang/Driver/HostInfo.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 
 #include "llvm/Support/raw_ostream.h"
 using namespace clang::driver;
 
-Driver::Driver(const char *_Name, const char *_Dir) 
+Driver::Driver(const char *_Name, const char *_Dir,
+               const char *_DefaultHostTriple) 
   : Opts(new OptTable()),
-    Name(_Name), Dir(_Dir), Host(0),
+    Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
+    Host(0),
     CCCIsCXX(false), CCCEcho(false), 
     CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false)
 {
@@ -53,6 +56,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   bool CCCPrintOptions = false, CCCPrintPhases = false;
 
   const char **Start = argv + 1, **End = argv + argc;
+  const char *HostTriple = DefaultHostTriple.c_str();
 
   // Read -ccc args. 
   //
@@ -94,18 +98,9 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
         }
       }
 
-    } else if (!strcmp(Opt, "host-bits")) {
+    } else if (!strcmp(Opt, "host-triple")) {
       assert(Start+1 < End && "FIXME: -ccc- argument handling.");
-      HostBits = *++Start;
-    } else if (!strcmp(Opt, "host-machine")) {
-      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
-      HostMachine = *++Start;
-    } else if (!strcmp(Opt, "host-release")) {
-      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
-      HostRelease = *++Start;
-    } else if (!strcmp(Opt, "host-system")) {
-      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
-      HostSystem = *++Start;
+      HostTriple = *++Start;
 
     } else {
       // FIXME: Error handling.
@@ -113,7 +108,9 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
       exit(1);
     }
   }
-  
+
+  Host = Driver::GetHostInfo(HostTriple);
+
   ArgList *Args = ParseArgStrings(Start, End);
 
   // FIXME: This behavior shouldn't be here.
@@ -121,7 +118,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     PrintOptions(Args);
     exit(0);
   }
-
+  
   assert(0 && "FIXME: Implement");
 
   return new Compilation();
@@ -142,4 +139,27 @@ void Driver::PrintOptions(const ArgList *Args) {
     }
     llvm::errs() << "}\n";
   }
+}
+
+HostInfo *Driver::GetHostInfo(const char *Triple) {
+  // Dice into arch, platform, and OS. This matches 
+  //  arch,platform,os = '(.*?)-(.*?)-(.*?)'
+  // and missing fields are left empty.
+  std::string Arch, Platform, OS;
+
+  if (const char *ArchEnd = strchr(Triple, '-')) {
+    Arch = std::string(Triple, ArchEnd);
+
+    if (const char *PlatformEnd = strchr(ArchEnd+1, '-')) {
+      Platform = std::string(ArchEnd+1, PlatformEnd);
+      OS = PlatformEnd+1;
+    } else
+      Platform = ArchEnd+1;
+  } else
+    Arch = Triple;
+
+  if (memcmp(&Platform[0], "darwin", 6) == 0)
+    return new DarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
+    
+  return new UnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
 }
