@@ -32,8 +32,10 @@ namespace llvm {
 class raw_ostream {
 protected:
   char *OutBufStart, *OutBufEnd, *OutBufCur;
+  bool Unbuffered;
+
 public:
-  raw_ostream() {
+  raw_ostream(bool unbuffered=false) : Unbuffered(unbuffered) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
@@ -57,6 +59,16 @@ public:
     OutBufStart = new char[Size];
     OutBufEnd = OutBufStart+Size;
     OutBufCur = OutBufStart;
+  }
+
+  /// SetUnbuffered - Set the streams buffering status. When
+  /// unbuffered the stream will flush after every write. This routine
+  /// will also flush the buffer immediately when the stream is being
+  /// set to unbuffered.
+  void SetUnbuffered(bool unbuffered) {
+    Unbuffered = unbuffered;
+    if (Unbuffered)
+      flush();
   }
 
   //===--------------------------------------------------------------------===//
@@ -165,9 +177,11 @@ public:
   raw_fd_ostream(const char *Filename, bool Binary, std::string &ErrorInfo);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
-  /// ShouldClose is true, this closes the file when
-  raw_fd_ostream(int fd, bool shouldClose) : FD(fd), ShouldClose(shouldClose) {}
-
+  /// ShouldClose is true, this closes the file when the stream is destroyed.
+  raw_fd_ostream(int fd, bool shouldClose, 
+                 bool unbuffered=false) : raw_ostream(unbuffered), FD(fd), 
+                                          ShouldClose(shouldClose) {}
+  
   ~raw_fd_ostream();
 
   /// flush_impl - The is the piece of the class that is implemented by

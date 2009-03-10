@@ -141,6 +141,9 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
     break;
   }
   OutBufCur += Size;
+
+  if (Unbuffered)
+    flush_impl();
   return *this;
 }
 
@@ -266,7 +269,8 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
 //===----------------------------------------------------------------------===//
 
 raw_stdout_ostream::raw_stdout_ostream():raw_fd_ostream(STDOUT_FILENO, false) {}
-raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false) {}
+raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false, 
+                                                        true) {}
 
 // An out of line virtual method to provide a home for the class vtable.
 void raw_stdout_ostream::handle() {}
