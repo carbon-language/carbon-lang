@@ -328,6 +328,17 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
+  ObjCInterfaceDecl *SClass = Decl->getSuperClass();
+  if (SClass) {
+    llvm::DIType SClassTy = 
+      getOrCreateType(M->getContext().getObjCInterfaceType(SClass), Unit);
+    llvm::DIType InhTag = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_inheritance,
+                                     Unit, "", Unit, 0, 0, 0,
+                                     0 /* offset */, 0, SClassTy);
+    EltTys.push_back(InhTag);
+  }
+
   const ASTRecordLayout &RL = M->getContext().getASTObjCInterfaceLayout(Decl);
 
   unsigned FieldNo = 0;
