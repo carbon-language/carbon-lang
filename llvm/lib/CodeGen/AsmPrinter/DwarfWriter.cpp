@@ -1303,10 +1303,10 @@ class DwarfDebug : public Dwarf {
   std::vector<FunctionDebugFrameInfo> DebugFrames;
 
 private:
-  /// getSourceDirsectoryAndFileIds - Return the directory and file ids that
+  /// getSourceDirectoryAndFileIds - Return the directory and file ids that
   /// maps to the source id. Source id starts at 1.
   std::pair<unsigned, unsigned>
-  getSourceDirsectoryAndFileIds(unsigned SId) const {
+  getSourceDirectoryAndFileIds(unsigned SId) const {
     return SourceIds[SId-1];
   }
 
@@ -1329,7 +1329,6 @@ private:
   }
 
   /// getNumSourceIds - Return the number of unique source ids.
-  ///
   unsigned getNumSourceIds() const {
     return SourceIds.size();
   }
@@ -2503,7 +2502,7 @@ private:
     // Emit files.
     for (unsigned SI = 1, SE = getNumSourceIds()+1; SI != SE; ++SI) {
       // Remember source id starts at 1.
-      std::pair<unsigned, unsigned> Id = getSourceDirsectoryAndFileIds(SI);
+      std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(SI);
       Asm->EmitString(getSourceFileName(Id.second));
       Asm->EOL("Source");
       Asm->EmitULEB128Bytes(Id.first);
@@ -2545,7 +2544,7 @@ private:
           Asm->EOL();
         else {
           std::pair<unsigned, unsigned> SourceID =
-            getSourceDirsectoryAndFileIds(LineInfo.getSourceID());
+            getSourceDirectoryAndFileIds(LineInfo.getSourceID());
           O << '\t' << TAI->getCommentString() << ' '
             << getSourceDirectoryName(SourceID.first) << ' '
             << getSourceFileName(SourceID.second)
@@ -3083,7 +3082,7 @@ public:
     if (TAI->hasDotLocAndDotFile()) {
       for (unsigned i = 1, e = getNumSourceIds()+1; i != e; ++i) {
         // Remember source id starts at 1.
-        std::pair<unsigned, unsigned> Id = getSourceDirsectoryAndFileIds(i);
+        std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(i);
         sys::Path FullPath(getSourceDirectoryName(Id.first));
         bool AppendOk =
           FullPath.appendComponent(getSourceFileName(Id.second));
@@ -3339,11 +3338,6 @@ public:
     return Lines.size();
   }
                             
-  /// getNumSourceFiles - Return the number of source files in the debug info.
-  unsigned getNumSourceFiles() const {
-    return SourceFileNames.size();
-  }
-
   /// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
   /// timed. Look up the source id with the given directory and source file
   /// names. If none currently exists, create a new id and insert it in the
