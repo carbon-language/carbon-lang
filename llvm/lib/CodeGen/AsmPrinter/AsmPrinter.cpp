@@ -1185,7 +1185,7 @@ void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 /// or other bits of target-specific knowledge into the asmstrings.  The
 /// syntax used is ${:comment}.  Targets can override this to add support
 /// for their own strange codes.
-void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) {
+void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
   if (!strcmp(Code, "private")) {
     O << TAI->getPrivateGlobalPrefix();
   } else if (!strcmp(Code, "comment")) {
@@ -1307,6 +1307,25 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         HasCurlyBraces = true;
       }
       
+      // If we have ${:foo}, then this is not a real operand reference, it is a
+      // "magic" string reference, just like in .td files.  Arrange to call
+      // PrintSpecial.
+      if (HasCurlyBraces && *LastEmitted == ':') {
+        ++LastEmitted;
+        const char *StrStart = LastEmitted;
+        const char *StrEnd = strchr(StrStart, '}');
+        if (StrEnd == 0) {
+          cerr << "Unterminated ${:foo} operand in inline asm string: '" 
+               << AsmStr << "'\n";
+          exit(1);
+        }
+        
+        std::string Val(StrStart, StrEnd);
+        PrintSpecial(MI, Val.c_str());
+        LastEmitted = StrEnd+1;
+        break;
+      }
+            
       const char *IDStart = LastEmitted;
       char *IDEnd;
       errno = 0;

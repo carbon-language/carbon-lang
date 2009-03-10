@@ -176,7 +176,7 @@ namespace llvm {
     /// or other bits of target-specific knowledge into the asmstrings.  The
     /// syntax used is ${:comment}.  Targets can override this to add support
     /// for their own strange codes.
-    virtual void PrintSpecial(const MachineInstr *MI, const char *Code);
+    virtual void PrintSpecial(const MachineInstr *MI, const char *Code) const;
 
     /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
     /// instruction, using the specified assembler variant.  Targets should
