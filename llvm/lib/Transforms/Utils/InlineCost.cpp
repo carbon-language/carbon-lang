@@ -224,6 +224,13 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   if (CalleeFI.NeverInline)
     return InlineCost::getNever();
 
+  // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
+  // could move this up and avoid computing the FunctionInfo for
+  // things we are going to just return always inline for. This
+  // requires handling setjmp somewhere else, however.
+  if (!Callee->isDeclaration() && Callee->hasFnAttr(Attribute::AlwaysInline))
+    return InlineCost::getAlways();
+    
   if (CalleeFI.usesDynamicAlloca) {
     // Get infomation about the caller...
     FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
@@ -239,13 +246,6 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
       return InlineCost::getNever();
   }
 
-  // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
-  // could move this up and avoid computing the FunctionInfo for
-  // things we are going to just return always inline for. This
-  // requires handling setjmp somewhere else, however.
-  if (!Callee->isDeclaration() && Callee->hasFnAttr(Attribute::AlwaysInline))
-    return InlineCost::getAlways();
-    
   // Add to the inline quality for properties that make the call valuable to
   // inline.  This includes factors that indicate that the result of inlining
   // the function will be optimizable.  Currently this just looks at arguments
