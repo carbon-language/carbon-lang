@@ -278,15 +278,19 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   OS.write(OutStr.begin(), OutStr.size());
   OS << '\n';
   
-  // If caret diagnostics are enabled and we have location, we want to emit the
-  // caret.  However, we only do this if the location moved from the last
-  // diagnostic, or if the diagnostic has ranges.  We don't want to emit the
-  // same caret multiple times if one loc has multiple diagnostics.
+  // If caret diagnostics are enabled and we have location, we want to
+  // emit the caret.  However, we only do this if the location moved
+  // from the last diagnostic, if the last diagnostic was a note that
+  // was part of a different warning or error diagnostic, or if the
+  // diagnostic has ranges.  We don't want to emit the same caret
+  // multiple times if one loc has multiple diagnostics.
   if (CaretDiagnostics && Info.getLocation().isValid() &&
       ((LastLoc != Info.getLocation()) || Info.getNumRanges() || 
+       (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
        Info.getNumCodeModificationHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Info.getLocation();
+    LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
 
     // Get the ranges into a local array we can hack on.
     SourceRange Ranges[20];

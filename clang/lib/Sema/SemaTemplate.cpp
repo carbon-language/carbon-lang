@@ -825,10 +825,15 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
         // If the argument type is dependent, instantiate it now based
         // on the previously-computed template arguments.
-        if (ArgType->isDependentType())
+        if (ArgType->isDependentType()) {
+          InstantiatingTemplate Inst(*this, TemplateLoc, 
+                                     Template, &Converted[0], 
+                                     Converted.size(),
+                                     SourceRange(TemplateLoc, RAngleLoc));
           ArgType = InstantiateType(ArgType, &Converted[0], Converted.size(),
                                     TTP->getDefaultArgumentLoc(),
                                     TTP->getDeclName());
+        }
 
         if (ArgType.isNull())
           return true;
@@ -888,6 +893,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       QualType NTTPType = NTTP->getType();
       if (NTTPType->isDependentType()) {
         // Instantiate the type of the non-type template parameter.
+        InstantiatingTemplate Inst(*this, TemplateLoc, 
+                                   Template, &Converted[0], 
+                                   Converted.size(),
+                                   SourceRange(TemplateLoc, RAngleLoc));
+
         NTTPType = InstantiateType(NTTPType, 
                                    &Converted[0], Converted.size(),
                                    NTTP->getLocation(),

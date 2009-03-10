@@ -1287,10 +1287,9 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
     InnerString = Name->getName() + InnerString;
 }
 
-/// \brief Print a template argument list, including the '<' and '>'
-/// enclosing the template arguments.
-static std::string printTemplateArgumentList(const TemplateArgument *Args,
-                                             unsigned NumArgs) {
+std::string ClassTemplateSpecializationType::PrintTemplateArgumentList(
+                                              const TemplateArgument *Args,
+                                              unsigned NumArgs) {
   std::string SpecString;
   SpecString += '<';
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
@@ -1343,7 +1342,7 @@ void
 ClassTemplateSpecializationType::
 getAsStringInternal(std::string &InnerString) const {
   std::string SpecString = Template->getNameAsString();
-  SpecString += printTemplateArgumentList(getArgs(), getNumArgs());
+  SpecString += PrintTemplateArgumentList(getArgs(), getNumArgs());
   if (InnerString.empty())
     InnerString.swap(SpecString);
   else
@@ -1409,8 +1408,9 @@ void TagType::getAsStringInternal(std::string &InnerString) const {
   if (ClassTemplateSpecializationDecl *Spec 
         = dyn_cast<ClassTemplateSpecializationDecl>(getDecl())) {
     std::string TemplateArgs 
-      = printTemplateArgumentList(Spec->getTemplateArgs(),
-                                  Spec->getNumTemplateArgs());
+      = ClassTemplateSpecializationType::PrintTemplateArgumentList(
+                                                  Spec->getTemplateArgs(),
+                                                  Spec->getNumTemplateArgs());
     InnerString = TemplateArgs + InnerString;
   }
 

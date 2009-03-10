@@ -245,7 +245,7 @@ public:
     DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
     if (!Diags.isBuiltinNote(DiagID) && 
         !ActiveTemplateInstantiations.empty() &&
-        ActiveTemplateInstantiations.back().Entity 
+        ActiveTemplateInstantiations.back() 
           != LastTemplateInstantiationErrorContext)
       DB << PostDiagnosticHook(PrintInstantiationStackHook, this);
     return DB;
@@ -1673,16 +1673,61 @@ public:
 
   /// \brief A template instantiation that is currently in progress.
   struct ActiveTemplateInstantiation {
+    /// \brief The kind of template instantiation we are performing
+    enum {
+      /// We are instantiating a template declaration. The entity is
+      /// the declaration we're instantiation (e.g., a
+      /// ClassTemplateSpecializationDecl).
+      TemplateInstantiation,
+
+      /// We are instantiating a default argument for a template
+      /// parameter. The Entity is the template, and
+      /// TemplateArgs/NumTemplateArguments provides the template
+      /// arguments as specified.
+      DefaultTemplateArgumentInstantiation
+    } Kind;
+
     /// \brief The point of instantiation within the source code.
     SourceLocation PointOfInstantiation;
 
     /// \brief The entity that is being instantiated.
-    ClassTemplateSpecializationDecl *Entity;
+    uintptr_t Entity;
+
+    // \brief If this the instantiation of a default template
+    // argument, the list of tempalte arguments.
+    const TemplateArgument *TemplateArgs;
+
+    /// \brief The number of template arguments in TemplateArgs.
+    unsigned NumTemplateArgs;
 
     /// \brief The source range that covers the construct that cause
     /// the instantiation, e.g., the template-id that causes a class
     /// template instantiation.
     SourceRange InstantiationRange;
+
+    friend bool operator==(const ActiveTemplateInstantiation &X,
+                           const ActiveTemplateInstantiation &Y) {
+      if (X.Kind != Y.Kind)
+        return false;
+
+      if (X.Entity != Y.Entity)
+        return false;
+
+      switch (X.Kind) {
+      case TemplateInstantiation:
+        return true;
+
+      case DefaultTemplateArgumentInstantiation:
+        return X.TemplateArgs == Y.TemplateArgs;
+      }
+
+      return true;
+    }
+
+    friend bool operator!=(const ActiveTemplateInstantiation &X,
+                           const ActiveTemplateInstantiation &Y) {
+      return !(X == Y);
+    }
   };
 
   /// \brief List of active template instantiations.
@@ -1701,7 +1746,7 @@ public:
   /// instantiation backtraces when there are multiple errors in the
   /// same instantiation. FIXME: Does this belong in Sema? It's tough
   /// to implement it anywhere else.
-  ClassTemplateSpecializationDecl *LastTemplateInstantiationErrorContext;
+  ActiveTemplateInstantiation LastTemplateInstantiationErrorContext;
 
   /// \brief A stack object to be created when performing template
   /// instantiation.
@@ -1715,9 +1760,19 @@ public:
   /// Destruction of this object will pop the named instantiation off
   /// the stack.
   struct InstantiatingTemplate {
+    /// \brief Note that we are instantiating a class template.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           ClassTemplateSpecializationDecl *Entity,
                           SourceRange InstantiationRange = SourceRange());
+
+    /// \brief Note that we are instantiating a default argument in a
+    /// template-id.
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          TemplateDecl *Template,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceRange InstantiationRange = SourceRange());
+
     ~InstantiatingTemplate();
 
     /// \brief Determines whether we have exceeded the maximum
@@ -1727,6 +1782,9 @@ public:
   private:
     Sema &SemaRef;
     bool Invalid;
+
+    bool CheckInstantiationDepth(SourceLocation PointOfInstantiation,
+                                 SourceRange InstantiationRange);
 
     InstantiatingTemplate(const InstantiatingTemplate&); // not implemented
 

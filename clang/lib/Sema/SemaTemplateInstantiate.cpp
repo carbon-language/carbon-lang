@@ -30,19 +30,38 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                       ClassTemplateSpecializationDecl *Entity,
                       SourceRange InstantiationRange)
   :  SemaRef(SemaRef) {
-  if (SemaRef.ActiveTemplateInstantiations.size() 
-        > SemaRef.getLangOptions().InstantiationDepth) {
-    SemaRef.Diag(PointOfInstantiation, 
-                 diag::err_template_recursion_depth_exceeded)
-      << SemaRef.getLangOptions().InstantiationDepth
-      << InstantiationRange;
-    SemaRef.Diag(PointOfInstantiation, diag::note_template_recursion_depth)
-      << SemaRef.getLangOptions().InstantiationDepth;
-    Invalid = true;
-  } else {
+
+  Invalid = CheckInstantiationDepth(PointOfInstantiation,
+                                    InstantiationRange);
+  if (!Invalid) {
     ActiveTemplateInstantiation Inst;
+    Inst.Kind = ActiveTemplateInstantiation::TemplateInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
-    Inst.Entity = Entity;
+    Inst.Entity = reinterpret_cast<uintptr_t>(Entity);
+    Inst.InstantiationRange = InstantiationRange;
+    SemaRef.ActiveTemplateInstantiations.push_back(Inst);
+    Invalid = false;
+  }
+}
+
+Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef, 
+                                         SourceLocation PointOfInstantiation,
+                                         TemplateDecl *Template,
+                                         const TemplateArgument *TemplateArgs,
+                                         unsigned NumTemplateArgs,
+                                         SourceRange InstantiationRange)
+  : SemaRef(SemaRef) {
+
+  Invalid = CheckInstantiationDepth(PointOfInstantiation,
+                                    InstantiationRange);
+  if (!Invalid) {
+    ActiveTemplateInstantiation Inst;
+    Inst.Kind 
+      = ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation;
+    Inst.PointOfInstantiation = PointOfInstantiation;
+    Inst.Entity = reinterpret_cast<uintptr_t>(Template);
+    Inst.TemplateArgs = TemplateArgs;
+    Inst.NumTemplateArgs = NumTemplateArgs;
     Inst.InstantiationRange = InstantiationRange;
     SemaRef.ActiveTemplateInstantiations.push_back(Inst);
     Invalid = false;
@@ -54,12 +73,28 @@ Sema::InstantiatingTemplate::~InstantiatingTemplate() {
     SemaRef.ActiveTemplateInstantiations.pop_back();
 }
 
+bool Sema::InstantiatingTemplate::CheckInstantiationDepth(
+                                        SourceLocation PointOfInstantiation,
+                                           SourceRange InstantiationRange) {
+  if (SemaRef.ActiveTemplateInstantiations.size() 
+       <= SemaRef.getLangOptions().InstantiationDepth)
+    return false;
+
+  SemaRef.Diag(PointOfInstantiation, 
+               diag::err_template_recursion_depth_exceeded)
+    << SemaRef.getLangOptions().InstantiationDepth
+    << InstantiationRange;
+  SemaRef.Diag(PointOfInstantiation, diag::note_template_recursion_depth)
+    << SemaRef.getLangOptions().InstantiationDepth;
+  return true;
+}
+
 /// \brief Post-diagnostic hook for printing the instantiation stack.
 void Sema::PrintInstantiationStackHook(unsigned, void *Cookie) {
   Sema &SemaRef = *static_cast<Sema*>(Cookie);
   SemaRef.PrintInstantiationStack();
   SemaRef.LastTemplateInstantiationErrorContext 
-    = SemaRef.ActiveTemplateInstantiations.back().Entity;
+    = SemaRef.ActiveTemplateInstantiations.back();
 }
 
 /// \brief Prints the current instantiation stack through a series of
@@ -70,10 +105,30 @@ void Sema::PrintInstantiationStack() {
          ActiveEnd = ActiveTemplateInstantiations.rend();
        Active != ActiveEnd;
        ++Active) {
-    Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
-                 diag::note_template_class_instantiation_here)
-      << Context.getTypeDeclType(Active->Entity)
-      << Active->InstantiationRange;
+    switch (Active->Kind) {
+    case ActiveTemplateInstantiation::TemplateInstantiation: {
+      ClassTemplateSpecializationDecl *Spec
+        = cast<ClassTemplateSpecializationDecl>((Decl*)Active->Entity);
+      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
+                   diag::note_template_class_instantiation_here)
+        << Context.getTypeDeclType(Spec)
+        << Active->InstantiationRange;
+      break;
+    }
+
+    case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation: {
+      TemplateDecl *Template = cast<TemplateDecl>((Decl *)Active->Entity);
+      std::string TemplateArgsStr
+        = ClassTemplateSpecializationType::PrintTemplateArgumentList(
+                                                      Active->TemplateArgs, 
+                                                      Active->NumTemplateArgs);
+      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+                   diag::note_default_arg_instantiation_here)
+        << (Template->getNameAsString() + TemplateArgsStr)
+        << Active->InstantiationRange;
+      break;
+    }
+    }
   }
 }
 
@@ -482,6 +537,10 @@ QualType Sema::InstantiateType(QualType T,
                                const TemplateArgument *TemplateArgs,
                                unsigned NumTemplateArgs,
                                SourceLocation Loc, DeclarationName Entity) {
+  assert(!ActiveTemplateInstantiations.empty() &&
+         "Cannot perform an instantiation without some context on the "
+         "instantiation stack");
+
   // If T is not a dependent type, there is nothing to do.
   if (!T->isDependentType())
     return T;

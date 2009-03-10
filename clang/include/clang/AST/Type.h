@@ -1449,6 +1449,11 @@ public:
   static bool anyDependentTemplateArguments(const TemplateArgument *Args,
                                             unsigned NumArgs);  
 
+  /// \brief Print a template argument list, including the '<' and '>'
+  /// enclosing the template arguments.
+  static std::string PrintTemplateArgumentList(const TemplateArgument *Args,
+                                               unsigned NumArgs);
+
   typedef const TemplateArgument * iterator;
 
   iterator begin() const { return getArgs(); }
