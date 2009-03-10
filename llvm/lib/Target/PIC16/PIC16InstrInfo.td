@@ -123,6 +123,7 @@ include "PIC16InstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 // W = W Op F : Load the value from F and do Op to W.
+let isTwoAddress = 1 in
 class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs GPR:$dst),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -132,6 +133,9 @@ class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
                                              (i8 imm:$offset))))]>;
 
 // F = F Op W : Load the value from F, do op with W and store in F.
+// This insn class is not marked as TwoAddress because the reg is
+// being used as a source operand only. (Remember a TwoAddress insn
+// needs a copyRegToReg.)
 class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -144,6 +148,7 @@ class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
                                              )]>;
 
 // W = W Op L : Do Op of L with W and place result in W.
+let isTwoAddress = 1 in
 class BinOpLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
@@ -200,6 +205,12 @@ def set_fsrhi:
              "movwf ${dst}H",
              []>;
 
+//----------------------------
+// copyRegToReg 
+// copyRegToReg insns. These are dummy. They should always be deleted
+// by the optimizer and never be present in the final generated code.
+// if they are, then we have to write correct macros for these insns.
+//----------------------------
 def copy_fsr:
   Pseudo<(outs FSR16:$dst), (ins FSR16:$src), "copy_fsr $dst, $src", []>;
 
@@ -209,28 +220,26 @@ def copy_w:
 //--------------------------
 // Store to memory
 //-------------------------
+
 // Direct store.
-def movwf : 
+// Input operands are: val = W, ptrlo = GA, offset = offset, ptrhi = banksel.
+class MOVWF_INSN<bits<6> OpCode, SDNode OpNodeDest, SDNode Op>:
   ByteFormat<0, (outs), 
              (ins GPR:$val, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
              "movwf ${ptrlo} + ${offset}",
-             [(PIC16Store GPR:$val, tglobaladdr:$ptrlo, (i8 imm:$ptrhi), 
+             [(Op GPR:$val, OpNodeDest:$ptrlo, (i8 imm:$ptrhi), 
                (i8 imm:$offset))]>;
 
-def movwf_1 : 
-  ByteFormat<0, (outs), 
-             (ins GPR:$val, i8mem:$ptrlo, i8imm:$ptrhi, i8imm:$offset),
-             "movwf ${ptrlo} + ${offset}",
-             [(PIC16Store GPR:$val, texternalsym:$ptrlo, (i8 imm:$ptrhi), 
-               (i8 imm:$offset))]>;
+// Store W to a Global Address.
+def movwf : MOVWF_INSN<0, tglobaladdr, PIC16Store>;
+
+// Store W to an External Symobol.
+def movwf_1 : MOVWF_INSN<0, texternalsym, PIC16Store>;
 
 // Store with InFlag and OutFlag
-def movwf_2 : 
-  ByteFormat<0, (outs), 
-             (ins GPR:$val, i8mem:$ptrlo, i8imm:$ptrhi, i8imm:$offset),
-             "movwf ${ptrlo} + ${offset}",
-             [(PIC16StWF GPR:$val, texternalsym:$ptrlo, (i8 imm:$ptrhi), 
-               (i8 imm:$offset))]>;
+// This is same as movwf_1 but has a flag. A flag is required to 
+// order the stores while passing the params to function.
+def movwf_2 : MOVWF_INSN<0, texternalsym, PIC16StWF>;
 
 // Indirect store. Matched via a DAG replacement pattern.
 def store_indirect : 
@@ -243,31 +252,26 @@ def store_indirect :
 // Load from memory
 //----------------------------
 // Direct load.
-def movf : 
+// Input Operands are: ptrlo = GA, offset = offset, ptrhi = banksel.
+// Output: dst = W
+class MOVF_INSN<bits<6> OpCode, SDNode OpNodeSrc, SDNode Op>:
   ByteFormat<0, (outs GPR:$dst), 
              (ins i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
              "movf ${ptrlo} + ${offset}, W",
              [(set GPR:$dst, 
-               (PIC16Load tglobaladdr:$ptrlo, (i8 imm:$ptrhi),
+               (Op OpNodeSrc:$ptrlo, (i8 imm:$ptrhi),
                (i8 imm:$offset)))]>;
 
-def movf_1 : 
-  ByteFormat<0, (outs GPR:$dst), 
-             (ins i8mem:$ptrlo, i8imm:$ptrhi, i8imm:$offset),
-             "movf ${ptrlo} + ${offset}, W",
-             [(set GPR:$dst, 
-               (PIC16Load texternalsym:$ptrlo, (i8 imm:$ptrhi),
-               (i8 imm:$offset)))]>;
+// Load from a GA.
+def movf : MOVF_INSN<0, tglobaladdr, PIC16Load>;
+
+// Load from an ES.
+def movf_1 : MOVF_INSN<0, texternalsym, PIC16Load>;
 
 // Load with InFlag and OutFlag
-def movf_2 : 
-  ByteFormat<0, (outs GPR:$dst), 
-             (ins i8mem:$ptrlo, i8imm:$ptrhi, i8imm:$offset),
-             "movf ${ptrlo} + ${offset}, W",
-             [(set GPR:$dst, 
-               (PIC16LdWF texternalsym:$ptrlo, (i8 imm:$ptrhi),
-               (i8 imm:$offset)))]>;
-
+// This is same as movf_1 but has a flag. A flag is required to 
+// order the loads while copying the return value of a function.
+def movf_2 : MOVF_INSN<0, texternalsym, PIC16LdWF>;
 
 // Indirect load. Matched via a DAG replacement pattern.
 def load_indirect : 
@@ -279,12 +283,13 @@ def load_indirect :
 //-------------------------
 // Bitwise operations patterns
 //--------------------------
-let isTwoAddress = 1 in {
+// W = W op [F]
+let Defs = [STATUS] in {
 def OrFW :  BinOpFW<0, "iorwf", or>;
 def XOrFW : BinOpFW<0, "xorwf", xor>;
 def AndFW : BinOpFW<0, "andwf", and>;
-}
 
+// F = W op [F]
 def OrWF :  BinOpWF<0, "iorwf", or>;
 def XOrWF : BinOpWF<0, "xorwf", xor>;
 def AndWF : BinOpWF<0, "andwf", and>;
@@ -293,17 +298,22 @@ def AndWF : BinOpWF<0, "andwf", and>;
 // Various add/sub patterns.
 //-------------------------
 
-let isTwoAddress = 1 in {
+// W = W + [F]
 def addfw_1: BinOpFW<0, "addwf", add>;
 def addfw_2: BinOpFW<0, "addwf", addc>;
-def addfwc: BinOpFW<0, "addwfc", adde>;  // With Carry.
-}
 
+let Uses = [STATUS] in
+def addfwc: BinOpFW<0, "addwfc", adde>;  // With Carry.
+
+// F = W + [F]
 def addwf_1: BinOpWF<0, "addwf", add>;
 def addwf_2: BinOpWF<0, "addwf", addc>;
+let Uses = [STATUS] in
 def addwfc: BinOpWF<0, "addwfc", adde>;  // With Carry.
+}
 
 // W -= [F] ; load from F and sub the value from W.
+let isTwoAddress = 1 in
 class SUBFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs GPR:$dst),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -311,10 +321,13 @@ class SUBFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
              [(set GPR:$dst, (OpNode (PIC16Load diraddr:$ptrlo,
                                       (i8 imm:$ptrhi), (i8 imm:$offset)),
                                       GPR:$src))]>;
-let isTwoAddress = 1 in {
+let Defs = [STATUS] in {
 def subfw_1: SUBFW<0, "subwf", sub>;
 def subfw_2: SUBFW<0, "subwf", subc>;
+
+let Uses = [STATUS] in
 def subfwb: SUBFW<0, "subwfb", sube>;  // With Borrow.
+
 def subfw_cc: SUBFW<0, "subwf", PIC16Subcc>;
 }
 
@@ -328,20 +341,25 @@ class SUBWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
                                       GPR:$src), diraddr:$ptrlo,
                                       (i8 imm:$ptrhi), (i8 imm:$offset))]>;
 
+let Defs = [STATUS] in {
 def subwf_1: SUBWF<0, "subwf", sub>;
 def subwf_2: SUBWF<0, "subwf", subc>;
-def subwfb: SUBWF<0, "subwfb", sube>;  // With Borrow.
-def subwf_cc: SUBWF<0, "subwf", PIC16Subcc>;
 
-// addlw 
-let isTwoAddress = 1 in {
-def addlw_1 : BinOpLW<0, "addlw", add>;
-def addlw_2 : BinOpLW<0, "addlw", addc>;
-def addlwc : BinOpLW<0, "addlwc", adde>; // With Carry. (Assembler macro).
+let Uses = [STATUS] in
+  def subwfb: SUBWF<0, "subwfb", sube>;  // With Borrow.
+
+def subwf_cc: SUBWF<0, "subwf", PIC16Subcc>;
 }
 
+// addlw 
+let Defs = [STATUS] in {
+def addlw_1 : BinOpLW<0, "addlw", add>;
+def addlw_2 : BinOpLW<0, "addlw", addc>;
+
+let Uses = [STATUS] in
+def addlwc : BinOpLW<0, "addlwc", adde>; // With Carry. (Assembler macro).
+
 // bitwise operations involving a literal and w.
-let isTwoAddress = 1 in {
 def andlw : BinOpLW<0, "andlw", and>;
 def xorlw : BinOpLW<0, "xorlw", xor>;
 def orlw  : BinOpLW<0, "iorlw", or>;
@@ -349,13 +367,14 @@ def orlw  : BinOpLW<0, "iorlw", or>;
 
 // sublw 
 // W = C - W ; sub W from literal. (Without borrow).
+let isTwoAddress = 1 in
 class SUBLW<bits<6> opcode, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
                 "sublw $literal",
                 [(set GPR:$dst, (OpNode (i8 imm:$literal), GPR:$src))]>;
 
-let isTwoAddress = 1 in {
+let Defs = [STATUS] in {
 def sublw_1 : SUBLW<0, sub>;
 def sublw_2 : SUBLW<0, subc>;
 def sublw_cc : SUBLW<0, PIC16Subcc>;
@@ -368,6 +387,7 @@ let isCall = 1 in {
             [(PIC16call diraddr:$func)]>;
 }
 
+let Uses = [STATUS] in
 def pic16brcond: ControlFormat<0x0, (outs), (ins brtarget:$dst, CCOp:$cc),
                           "b$cc $dst",
                           [(PIC16Brcond bb:$dst, imm:$cc)]>;
