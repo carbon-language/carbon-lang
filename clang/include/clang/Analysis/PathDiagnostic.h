@@ -75,7 +75,7 @@ public:
   meta_iterator meta_end() const { return OtherDesc.end(); }
   void addMeta(const std::string& s) { OtherDesc.push_back(s); }
   void addMeta(const char* s) { OtherDesc.push_back(s); }
-  
+
   void push_front(PathDiagnosticPiece* piece) {
     path.push_front(piece);
     ++Size;
@@ -96,6 +96,8 @@ public:
   
   unsigned size() const { return Size; }
   bool empty() const { return Size == 0; }
+  
+  void resetPath(bool deletePieces = true);
   
   class iterator {
   public:  
@@ -218,7 +220,7 @@ public:
   void addCodeModificationHint(const CodeModificationHint& Hint) {
     CodeModificationHints.push_back(Hint);
   }
-
+  
   typedef const SourceRange* range_iterator;
   
   range_iterator ranges_begin() const {
@@ -269,10 +271,10 @@ public:
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
 public:
   PathDiagnosticControlFlowPiece(FullSourceLoc pos, const std::string& s)
-    : PathDiagnosticPiece(pos, s, Event) {}
+    : PathDiagnosticPiece(pos, s, ControlFlow) {}
   
   PathDiagnosticControlFlowPiece(FullSourceLoc pos, const char* s)
-    : PathDiagnosticPiece(pos, s, Event) {}
+    : PathDiagnosticPiece(pos, s, ControlFlow) {}
   
   ~PathDiagnosticControlFlowPiece();
   
@@ -284,19 +286,22 @@ public:
 class PathDiagnosticMacroPiece : public PathDiagnosticPiece {
   std::vector<PathDiagnosticPiece*> SubPieces;  
 public:
-  PathDiagnosticMacroPiece(FullSourceLoc pos, const std::string& s)
-    : PathDiagnosticPiece(pos, s, Macro) {}
-  
-  PathDiagnosticMacroPiece(FullSourceLoc pos, const char* s)
-    : PathDiagnosticPiece(pos, s, Macro) {}
+  PathDiagnosticMacroPiece(FullSourceLoc pos)
+    : PathDiagnosticPiece(pos, "", Macro) {}
   
   ~PathDiagnosticMacroPiece();
   
+  bool containsEvent() const;
+
   void push_back(PathDiagnosticPiece* P) { SubPieces.push_back(P); }
   
   typedef std::vector<PathDiagnosticPiece*>::iterator iterator;
   iterator begin() { return SubPieces.begin(); }
   iterator end() { return SubPieces.end(); }
+  
+  typedef std::vector<PathDiagnosticPiece*>::const_iterator const_iterator;
+  const_iterator begin() const { return SubPieces.begin(); }
+  const_iterator end() const { return SubPieces.end(); }
   
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == Macro;
