@@ -48,10 +48,9 @@ static RegisterPass<DwarfWriter>
 X("dwarfwriter", "DWARF Information Writer");
 char DwarfWriter::ID = 0;
 
-static TimerGroup *DwarfTimerGroup = 0;
-static TimerGroup *getDwarfTimerGroup() {
-  if (DwarfTimerGroup) return DwarfTimerGroup;
-  return DwarfTimerGroup = new TimerGroup("Dwarf Exception and Debugging");
+static TimerGroup &getDwarfTimerGroup() {
+  static TimerGroup DwarfTimerGroup("Dwarf Exception and Debugging");
+  return DwarfTimerGroup;
 }
 
 namespace llvm {
@@ -3022,7 +3021,7 @@ public:
       RootDbgScope(0), DebugTimer(0) {
     if (TimePassesIsEnabled)
       DebugTimer = new Timer("Dwarf Debug Writer",
-                             *getDwarfTimerGroup());
+                             getDwarfTimerGroup());
   }
   virtual ~DwarfDebug() {
     for (unsigned j = 0, M = Values.size(); j < M; ++j)
@@ -4068,7 +4067,7 @@ public:
     ExceptionTimer(0) {
     if (TimePassesIsEnabled) 
       ExceptionTimer = new Timer("Dwarf Exception Writer",
-                                 *getDwarfTimerGroup());
+                                 getDwarfTimerGroup());
   }
 
   virtual ~DwarfException() {
@@ -4491,7 +4490,6 @@ DwarfWriter::DwarfWriter()
 DwarfWriter::~DwarfWriter() {
   delete DE;
   delete DD;
-  delete DwarfTimerGroup; DwarfTimerGroup = 0;
 }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the
