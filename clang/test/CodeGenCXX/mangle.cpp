@@ -16,6 +16,11 @@ void f(s) { }
 typedef enum { foo } e;
 void f(e) { }
 
-// RUN: grep _Z1f1u %t | count 1
+// RUN: grep _Z1f1u %t | count 1 &&
 typedef union { int a; } u;
 void f(u) { }
+
+// RUN: grep _Z1f1x %t | count 1
+typedef struct { int a; } x,y;
+void f(y) { }
+

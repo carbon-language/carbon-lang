@@ -871,7 +871,8 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);  
 };
 
-
+class TypedefDecl;
+  
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
 class TagDecl : public TypeDecl, public DeclContext {
 public:
@@ -890,10 +891,15 @@ private:
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
+  
+  /// TypedefForAnonDecl - If a TagDecl is anonymous and part of a typedef,
+  /// this points to the TypedefDecl. Used for mangling.
+  TypedefDecl *TypedefForAnonDecl;
+  
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
           IdentifierInfo *Id)
-    : TypeDecl(DK, DC, L, Id), DeclContext(DK) {
+    : TypeDecl(DK, DC, L, Id), DeclContext(DK), TypedefForAnonDecl(0) {
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
@@ -942,6 +948,9 @@ public:
   bool isClass()  const { return getTagKind() == TK_class; }
   bool isUnion()  const { return getTagKind() == TK_union; }
   bool isEnum()   const { return getTagKind() == TK_enum; }
+  
+  TypedefDecl *getTypedefForAnonDecl() const { return TypedefForAnonDecl; }
+  void setTypedefForAnonDecl(TypedefDecl *TDD) { TypedefForAnonDecl = TDD; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

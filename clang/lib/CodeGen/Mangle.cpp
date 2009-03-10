@@ -43,7 +43,6 @@ namespace {
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
     void mangleCVQualifiers(unsigned Quals);
     void mangleType(QualType T);
-    void mangleType(const TypedefType *T);
     void mangleType(const BuiltinType *T);
     void mangleType(const FunctionType *T);
     void mangleBareFunctionType(const FunctionType *T, bool MangleReturnType);
@@ -330,15 +329,16 @@ void CXXNameMangler::mangleCVQualifiers(unsigned Quals) {
 }
 
 void CXXNameMangler::mangleType(QualType T) {
+  // Only operate on the canonical type!
+  T = Context.getCanonicalType(T);
+
   // FIXME: Should we have a TypeNodes.def to make this easier? (YES!)
 
   //  <type> ::= <CV-qualifiers> <type>
   mangleCVQualifiers(T.getCVRQualifiers());
 
-  if (const TypedefType *TT = dyn_cast<TypedefType>(T.getTypePtr()))
-    mangleType(TT);
   //         ::= <builtin-type>
-  else if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr()))
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr()))
     mangleType(BT);
   //         ::= <function-type>
   else if (const FunctionType *FT = dyn_cast<FunctionType>(T.getTypePtr()))
@@ -382,25 +382,11 @@ void CXXNameMangler::mangleType(QualType T) {
   } else if (const ObjCInterfaceType *IT = 
              dyn_cast<ObjCInterfaceType>(T.getTypePtr())) {
     mangleType(IT);
-  } 
+  }
   // FIXME:  ::= G <type>   # imaginary (C 2000)
   // FIXME:  ::= U <source-name> <type>     # vendor extended type qualifier
   else
     assert(false && "Cannot mangle unknown type");
-}
-
-void CXXNameMangler::mangleType(const TypedefType *T) {
-  QualType DeclTy = T->getDecl()->getUnderlyingType();
-  
-  if (const TagType *TT = dyn_cast<TagType>(DeclTy)) {
-    // If the tag type is anonymous, use the name of the typedef.
-    if (!TT->getDecl()->getIdentifier()) {
-      mangleName(T->getDecl());
-      return;
-    }
-  }
-  
-  mangleType(DeclTy);
 }
 
 void CXXNameMangler::mangleType(const BuiltinType *T) {
@@ -488,7 +474,11 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
 
 void CXXNameMangler::mangleType(const TagType *T) {
   //  <class-enum-type> ::= <name>
-  mangleName(T->getDecl());
+  
+  if (!T->getDecl()->getIdentifier())
+    mangleName(T->getDecl()->getTypedefForAnonDecl());
+  else
+    mangleName(T->getDecl());
 }
 
 void CXXNameMangler::mangleType(const ArrayType *T) {

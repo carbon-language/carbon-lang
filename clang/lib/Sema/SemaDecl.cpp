@@ -2867,6 +2867,16 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                            D.getIdentifierLoc(),
                                            D.getIdentifier(), 
                                            T);
+  
+  if (TagType *TT = dyn_cast<TagType>(T)) {
+    TagDecl *TD = TT->getDecl();
+    
+    // If the TagDecl that the TypedefDecl points to is an anonymous decl
+    // keep track of the TypedefDecl.
+    if (!TD->getIdentifier() && !TD->getTypedefForAnonDecl())
+      TD->setTypedefForAnonDecl(NewTD);
+  }
+
   NewTD->setNextDeclarator(LastDeclarator);
   if (D.getInvalidType())
     NewTD->setInvalidDecl();
