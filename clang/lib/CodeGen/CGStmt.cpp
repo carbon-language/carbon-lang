@@ -705,113 +705,106 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
     return Result;
   }
   
-  // FIXME: No need to create new std::string here, we could just make sure
-  // that we don't read past the end of the string data.
-  std::string str(StrStart, StrEnd);
   std::string Result;
-
-  const char *Start = str.c_str();
   
   unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
   
-  while (*Start) {
-    switch (*Start) {
-    default:
-      Result += *Start;
-      break;
-    case '$':
+  while (1) {
+    // Done with the string?
+    if (StrStart == StrEnd)
+      return Result;
+
+    char CurChar = *StrStart++;
+    if (CurChar == '$') {
       Result += "$$";
-      break;
-    case '%':
-      // Escaped character
-      Start++;
-      // FIXME: This should be caught during Sema.
-      assert(*Start && "Trailing '%' in asm string.");
+      continue;
+    } else if (CurChar != '%') {
+      Result += CurChar;
+      continue;
+    }
+
+    // Escaped "%" character in asm string.
+    // FIXME: This should be caught during Sema.
+    assert(StrStart != StrEnd && "Trailing '%' in asm string.");
       
-      char EscapedChar = *Start;
-      if (EscapedChar == '%') {
-        // Escaped percentage sign.
-        Result += '%';
-      } else if (EscapedChar == '=') {
-        // Generate an unique ID.
-        Result += "${:uid}";
-      } else if (isdigit(EscapedChar)) {
-        // %n - Assembler operand n
-        char *End;
-        unsigned long n = strtoul(Start, &End, 10);
-        if (Start == End) {
-          // FIXME: This should be caught during Sema.
-          assert(0 && "Missing operand!");
-        } else if (n >= NumOperands) {
-          // FIXME: This should be caught during Sema.
-          assert(0 && "Operand number out of range!");
+    char EscapedChar = *StrStart++;
+    if (EscapedChar == '%') {  // %% -> %
+      // Escaped percentage sign.
+      Result += '%';
+      continue;
+    }
+    
+    if (EscapedChar == '=') {  // %= -> Generate an unique ID.
+      Result += "${:uid}";
+      continue;
+    }
+    
+    if (isdigit(EscapedChar)) {
+      // %n - Assembler operand n
+      char *End;
+      unsigned long N = strtoul(StrStart-1, &End, 10);
+      assert(End != StrStart-1 && "We know that EscapedChar is a digit!");
+      
+      // FIXME: This should be caught during Sema.
+      assert(N < NumOperands && "Operand number out of range!");
+      
+      Result += '$' + llvm::utostr(N);
+      StrStart = End;
+      continue;
+    }
+    
+    if (isalpha(EscapedChar)) {
+      char *End;
+      // Skip the single letter escape and read the number, e.g. "%x4".
+      unsigned long N = strtoul(StrStart, &End, 10);
+      // FIXME: This should be caught during Sema.
+      assert(End != StrStart && "Missing operand!");
+      // FIXME: This should be caught during Sema.
+      assert(N < NumOperands && "Operand number out of range!");
+      
+      Result += "${" + llvm::utostr(N) + ':' + EscapedChar + '}';
+      StrStart = End;
+      continue;
+    }
+    
+    // Handle %[foo], a symbolic operand reference.
+    if (EscapedChar == '[') {
+      const char *NameEnd = (const char*)memchr(StrStart, ']', StrEnd-StrStart);
+      // FIXME: Should be caught by sema.
+      assert(NameEnd != 0 && "Could not parse symbolic name");
+      
+      std::string SymbolicName(StrStart, NameEnd);
+      
+      StrStart = NameEnd+1;
+      
+      int Index = -1;
+      
+      // Check if this is an output operand.
+      for (unsigned i = 0; i != S.getNumOutputs(); ++i) {
+        if (S.getOutputName(i) == SymbolicName) {
+          Index = i;
+          break;
         }
-        
-        Result += '$' + llvm::utostr(n);
-        Start = End - 1;
-      } else if (isalpha(EscapedChar)) {
-        char *End;
-        
-        unsigned long n = strtoul(Start + 1, &End, 10);
-        if (Start == End) {
-          // FIXME: This should be caught during Sema.
-          assert(0 && "Missing operand!");
-        } else if (n >= NumOperands) {
-          // FIXME: This should be caught during Sema.
-          assert(0 && "Operand number out of range!");
-        }
-        
-        Result += "${" + llvm::utostr(n) + ':' + EscapedChar + '}';
-        Start = End - 1;
-      } else if (EscapedChar == '[') {
-        std::string SymbolicName;
-        
-        Start++;
-        
-        while (*Start && *Start != ']') {
-          SymbolicName += *Start;
-          
-          Start++;
-        }
-        
-        if (!Start) {
-          // FIXME: Should be caught by sema.
-          assert(0 && "Could not parse symbolic name");
-        }
-        
-        assert(*Start == ']' && "Error parsing symbolic name");
-        
-        int Index = -1;
-        
-        // Check if this is an output operand.
-        for (unsigned i = 0; i < S.getNumOutputs(); i++) {
-          if (S.getOutputName(i) == SymbolicName) {
-            Index = i;
+      }
+      
+      if (Index == -1) {
+        for (unsigned i = 0; i != S.getNumInputs(); ++i) {
+          if (S.getInputName(i) == SymbolicName) {
+            Index = S.getNumOutputs() + i;
             break;
           }
         }
-        
-        if (Index == -1) {
-          for (unsigned i = 0; i < S.getNumInputs(); i++) {
-            if (S.getInputName(i) == SymbolicName) {
-              Index = S.getNumOutputs() + i;
-            }
-          }
-        }
-        
-        assert(Index != -1 && "Did not find right operand!");
-       
-        Result += '$' + llvm::utostr(Index);
-
-      } else {
-        Failed = true;
-        return "";
       }
+      
+      assert(Index != -1 && "Did not find right operand!");
+     
+      Result += '$' + llvm::utostr(Index);
+      continue;
     }
-    Start++;
+     
+    Failed = true;
+    return "";
   }
-  
-  return Result;
 }
 
 static std::string SimplifyConstraint(const char* Constraint,
