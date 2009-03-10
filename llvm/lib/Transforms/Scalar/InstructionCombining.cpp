@@ -12566,12 +12566,15 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
           BasicBlock::iterator I = Term; --I;
 
           DOUT << "IC: DCE: " << *I;
-          ++NumDeadInst;
-
+          // A debug intrinsic shouldn't force another iteration if we weren't
+          // going to do one without it.
+          if (!isa<DbgInfoIntrinsic>(I)) {
+            ++NumDeadInst;
+            Changed = true;
+          }
           if (!I->use_empty())
             I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
-          Changed = true;
         }
       }
   }
