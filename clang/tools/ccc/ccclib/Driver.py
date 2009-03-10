@@ -30,7 +30,6 @@ class Driver(object):
         self.cccHostSystem = self.cccHostRelease = None
         self.cccCXX = False
         self.cccEcho = False
-        self.cccFallback = False
         self.cccNoClang = self.cccNoClangCXX = self.cccNoClangPreprocessor = False
         self.cccClangArchs = None
 
@@ -139,8 +138,6 @@ class Driver(object):
                 self.cccCXX = True
             elif opt == 'echo':
                 self.cccEcho = True
-            elif opt == 'fallback':
-                self.cccFallback = True
 
             elif opt == 'no-clang':
                 self.cccNoClang = True

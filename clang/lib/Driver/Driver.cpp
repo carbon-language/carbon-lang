@@ -18,7 +18,12 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang::driver;
 
-Driver::Driver() : Opts(new OptTable()) {
+Driver::Driver(const char *_Name, const char *_Dir) 
+  : Opts(new OptTable()),
+    Name(_Name), Dir(_Dir), Host(0),
+    CCCIsCXX(false), CCCEcho(false), 
+    CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false)
+{
   
 }
 
@@ -43,11 +48,88 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
 }
 
 Compilation *Driver::BuildCompilation(int argc, const char **argv) {
-  ArgList *Args = ParseArgStrings(argv + 1, argv + argc);
+  // FIXME: This stuff needs to go into the Compilation, not the
+  // driver.
+  bool CCCPrintOptions = false, CCCPrintPhases = false;
 
-  // Hard coded to print-options behavior.
+  const char **Start = argv + 1, **End = argv + argc;
+
+  // Read -ccc args. 
+  //
+  // FIXME: We need to figure out where this behavior should
+  // live. Most of it should be outside in the client; the parts that
+  // aren't should have proper options, either by introducing new ones
+  // or by overloading gcc ones like -V or -b.
+  for (; Start != End && memcmp(*Start, "-ccc-", 5) == 0; ++Start) {
+    const char *Opt = *Start + 5;
+    
+    if (!strcmp(Opt, "print-options")) {
+      CCCPrintOptions = true;
+    } else if (!strcmp(Opt, "print-phases")) {
+      CCCPrintPhases = true;
+    } else if (!strcmp(Opt, "cxx")) {
+      CCCIsCXX = true;
+    } else if (!strcmp(Opt, "echo")) {
+      CCCEcho = true;
+      
+    } else if (!strcmp(Opt, "no-clang")) {
+      CCCNoClang = true;
+    } else if (!strcmp(Opt, "no-clang-cxx")) {
+      CCCNoClangCXX = true;
+    } else if (!strcmp(Opt, "no-clang-cpp")) {
+      CCCNoClangCPP = true;
+    } else if (!strcmp(Opt, "clang-archs")) {
+      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
+      const char *Cur = *++Start;
+    
+      for (;;) {
+        const char *Next = strchr(Cur, ',');
+
+        if (Next) {
+          CCCClangArchs.insert(std::string(Cur, Next));
+          Cur = Next + 1;
+        } else {
+          CCCClangArchs.insert(std::string(Cur));
+          break;
+        }
+      }
+
+    } else if (!strcmp(Opt, "host-bits")) {
+      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
+      HostBits = *++Start;
+    } else if (!strcmp(Opt, "host-machine")) {
+      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
+      HostMachine = *++Start;
+    } else if (!strcmp(Opt, "host-release")) {
+      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
+      HostRelease = *++Start;
+    } else if (!strcmp(Opt, "host-system")) {
+      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
+      HostSystem = *++Start;
+
+    } else {
+      // FIXME: Error handling.
+      llvm::errs() << "invalid option: " << *Start << "\n";
+      exit(1);
+    }
+  }
+  
+  ArgList *Args = ParseArgStrings(Start, End);
+
+  // FIXME: This behavior shouldn't be here.
+  if (CCCPrintOptions) {
+    PrintOptions(Args);
+    exit(0);
+  }
+
+  assert(0 && "FIXME: Implement");
+
+  return new Compilation();
+}
+
+void Driver::PrintOptions(const ArgList *Args) {
   unsigned i = 0;
-  for (ArgList::iterator it = Args->begin(), ie = Args->end(); 
+  for (ArgList::const_iterator it = Args->begin(), ie = Args->end(); 
        it != ie; ++it, ++i) {
     Arg *A = *it;
     llvm::errs() << "Option " << i << " - "
@@ -60,6 +142,4 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     }
     llvm::errs() << "}\n";
   }
-
-  return new Compilation();
 }
