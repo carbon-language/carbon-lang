@@ -647,6 +647,8 @@ DIAG(note_template_recursion_depth, NOTE,
      "instantiation depth")
 DIAG(err_template_implicit_instantiate_undefined, ERROR,
      "implicit instantiation of undefined template %0")
+DIAG(note_template_class_instantiation_here, NOTE,
+     "in instantiation of template class %0 requested here")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")

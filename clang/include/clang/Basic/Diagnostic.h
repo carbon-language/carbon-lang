@@ -123,6 +123,33 @@ public:
   }
 };
 
+/// \brief A hook function that will be invoked after we have
+/// completed processing of the current diagnostic.
+///
+/// Hook functions are typically used to emit further diagnostics
+/// (typically notes) that give more information about this
+/// diagnostic.
+struct PostDiagnosticHook {
+  /// \brief The type of the hook function itself.
+  ///
+  /// DiagID is the ID of the diagnostic to which the hook was
+  /// attached, and Cookie is a user-specified value that can be used
+  /// to store extra data for the hook.
+  typedef void (*HookTy)(unsigned DiagID, void *Cookie);
+
+  PostDiagnosticHook() {}
+
+  PostDiagnosticHook(HookTy Hook, void *Cookie) : Hook(Hook), Cookie(Cookie) {
+    assert(Hook && "No hook provided!");
+  }
+
+  /// \brief The hook function.
+  HookTy Hook;
+
+  /// \brief The cookie that will be passed along to the hook function.
+  void *Cookie;
+};
+
 /// Diagnostic - This concrete class is used by the front-end to report
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
@@ -144,7 +171,7 @@ public:
     ak_declarationname, // DeclarationName
     ak_nameddecl        // NamedDecl *
   };
-  
+
 private:  
   bool IgnoreAllWarnings;     // Ignore all warnings: -w
   bool WarningsAsErrors;      // Treat warnings like errors: 
@@ -282,6 +309,10 @@ public:
   /// call on NOTEs.
   static bool isBuiltinWarningOrExtension(unsigned DiagID);
 
+  /// \brief Determine whether the given built-in diagnostic ID is a
+  /// Note.
+  static bool isBuiltinNote(unsigned DiagID);
+
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
@@ -330,7 +361,10 @@ private:
   /// \brief The number of code modifications hints in the
   /// CodeModificationHints array.
   unsigned char NumCodeModificationHints;
-  
+  /// \brief The number of post-diagnostic hooks in the
+  /// PostDiagnosticHooks array.
+  unsigned char NumPostDiagnosticHooks;
+
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
   /// is in DiagArgumentsStr or in DiagArguments.
@@ -357,6 +391,15 @@ private:
   /// to insert, remove, or modify at a particular position.
   CodeModificationHint CodeModificationHints[MaxCodeModificationHints];
 
+  enum { MaxPostDiagnosticHooks = 10 };
+  
+  /// \brief Functions that will be invoked after the diagnostic has
+  /// been emitted.
+  PostDiagnosticHook PostDiagnosticHooks[MaxPostDiagnosticHooks];
+
+  /// \brief Whether we're already within a post-diagnostic hook.
+  bool InPostDiagnosticHook;
+
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
   void ProcessDiag();
@@ -379,15 +422,16 @@ private:
 /// for example.
 class DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
-  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints;
+  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints, 
+                   NumPostDiagnosticHooks;
   
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class Diagnostic;
   explicit DiagnosticBuilder(Diagnostic *diagObj)
     : DiagObj(diagObj), NumArgs(0), NumRanges(0), 
-      NumCodeModificationHints(0) {}
-public:
-  
+      NumCodeModificationHints(0), NumPostDiagnosticHooks(0) {}
+
+public:  
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.
   DiagnosticBuilder(const DiagnosticBuilder &D) {
@@ -405,6 +449,7 @@ public:
     DiagObj->NumDiagArgs = NumArgs;
     DiagObj->NumDiagRanges = NumRanges;
     DiagObj->NumCodeModificationHints = NumCodeModificationHints;
+    DiagObj->NumPostDiagnosticHooks = NumPostDiagnosticHooks;
 
     // Process the diagnostic, sending the accumulated information to the
     // DiagnosticClient.
@@ -444,6 +489,15 @@ public:
     assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
            "Too many code modification hints!");
     DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
+  }
+
+  void AddPostDiagnosticHook(const PostDiagnosticHook &Hook) const {
+    assert(!DiagObj->InPostDiagnosticHook &&
+           "Can't add a post-diagnostic hook to a diagnostic inside "
+           "a post-diagnostic hook");
+    assert(NumPostDiagnosticHooks < Diagnostic::MaxPostDiagnosticHooks &&
+           "Too many post-diagnostic hooks");
+    DiagObj->PostDiagnosticHooks[NumPostDiagnosticHooks++] = Hook;
   }
 };
 
@@ -492,6 +546,12 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const CodeModificationHint &Hint) {
   DB.AddCodeModificationHint(Hint);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const PostDiagnosticHook &Hook) {
+  DB.AddPostDiagnosticHook(Hook);
   return DB;
 }
   

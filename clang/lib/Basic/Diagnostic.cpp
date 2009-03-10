@@ -201,6 +201,8 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
+
+  InPostDiagnosticHook = false;
 }
 
 Diagnostic::~Diagnostic() {
@@ -223,6 +225,12 @@ unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
 /// call on NOTEs.
 bool Diagnostic::isBuiltinWarningOrExtension(unsigned DiagID) {
   return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) < ERROR;
+}
+
+/// \brief Determine whether the given built-in diagnostic ID is a
+/// Note.
+bool Diagnostic::isBuiltinNote(unsigned DiagID) {
+  return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) == NOTE;
 }
 
 
@@ -373,6 +381,16 @@ void Diagnostic::ProcessDiag() {
   // Finally, report it.
   Client->HandleDiagnostic(DiagLevel, Info);
   if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;
+
+  // Invoke any post-diagnostic hooks.
+  unsigned LastDiag = CurDiagID;
+  CurDiagID = ~0U;
+  
+  InPostDiagnosticHook = true;
+  for (unsigned Hook = 0; Hook < NumPostDiagnosticHooks; ++Hook)
+    PostDiagnosticHooks[Hook].Hook(LastDiag, 
+                                   PostDiagnosticHooks[Hook].Cookie);
+  InPostDiagnosticHook = false;
 }
 
 

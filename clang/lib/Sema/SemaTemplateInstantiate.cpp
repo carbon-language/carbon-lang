@@ -21,6 +21,10 @@
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===/
+// Template Instantiation Support
+//===----------------------------------------------------------------------===/
+
 Sema::InstantiatingTemplate::
 InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                       ClassTemplateSpecializationDecl *Entity,
@@ -48,6 +52,26 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
 Sema::InstantiatingTemplate::~InstantiatingTemplate() {
   if (!Invalid)
     SemaRef.ActiveTemplateInstantiations.pop_back();
+}
+
+/// \brief Post-diagnostic hook for printing the instantiation stack.
+void Sema::PrintInstantiationStackHook(unsigned, void *Cookie) {
+  static_cast<Sema*>(Cookie)->PrintInstantiationStack();
+}
+
+/// \brief Prints the current instantiation stack through a series of
+/// notes.
+void Sema::PrintInstantiationStack() {
+  for (llvm::SmallVector<ActiveTemplateInstantiation, 16>::reverse_iterator
+         Active = ActiveTemplateInstantiations.rbegin(),
+         ActiveEnd = ActiveTemplateInstantiations.rend();
+       Active != ActiveEnd;
+       ++Active) {
+    Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
+                 diag::note_template_class_instantiation_here)
+      << Context.getTypeDeclType(Active->Entity)
+      << Active->InstantiationRange;
+  }
 }
 
 //===----------------------------------------------------------------------===/

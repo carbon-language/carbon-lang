@@ -242,7 +242,10 @@ public:
 
   /// The primitive diagnostic helpers.
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
-    return Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
+    DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
+    if (!Diags.isBuiltinNote(DiagID) && !ActiveTemplateInstantiations.empty())
+      DB << PostDiagnosticHook(PrintInstantiationStackHook, this);
+    return DB;
   }
 
   virtual void DeleteExpr(ExprTy *E);
@@ -1718,6 +1721,9 @@ public:
     InstantiatingTemplate& 
     operator=(const InstantiatingTemplate&); // not implemented
   };
+
+  static void PrintInstantiationStackHook(unsigned DiagID, void *Cookie);
+  void PrintInstantiationStack();
 
   QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,
                            unsigned NumTemplateArgs,
