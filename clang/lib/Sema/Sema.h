@@ -451,7 +451,6 @@ public:
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
   bool MergeVarDecl(VarDecl *New, Decl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
-  void CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD);
 
   /// C++ Overloading.
   bool IsOverload(FunctionDecl *New, Decl* OldD, 

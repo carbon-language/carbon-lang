@@ -21,7 +21,9 @@ int test() {
   return sizeof(enum e) ;
 }
 
-enum gccForwardEnumExtension ve; // expected-warning{{ISO C forbids forward references to 'enum' types}}
+enum gccForwardEnumExtension ve; // expected-warning{{ISO C forbids forward references to 'enum' types}} \
+// expected-error{{tentative definition has type 'enum gccForwardEnumExtension' that is never completed}} \
+// expected-note{{forward declaration of 'enum gccForwardEnumExtension'}}
 
 int test2(int i)
 {

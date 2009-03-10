@@ -5,7 +5,10 @@ struct a x1; // expected-note 2{{forward declaration of 'struct a'}}
 static struct a x2; // expected-error{{variable has incomplete type 'struct a'}}
 struct a x3[10]; // expected-error{{array has incomplete element type 'struct a'}}
 struct a {int x;};
-struct b x4; // FIXME: error because 'struct b' is never defined
+static struct a x2_okay;
+struct a x3_okay[10];
+struct b x4; // expected-error{{tentative definition has type 'struct b' that is never completed}} \
+            // expected-note{{forward declaration of 'struct b'}}
 
 const int a [1] = {1};
 extern const int a[];
@@ -23,8 +26,8 @@ int i1;
 extern int i1; // expected-note {{previous definition is here}}
 static int i1; // expected-error{{static declaration of 'i1' follows non-static declaration}}
 
-static int i2 = 5; // expected-note 2 {{previous definition is here}}
-int i2 = 3; // expected-error{{redefinition of 'i2'}} expected-error{{non-static declaration of 'i2' follows static declaration}}
+static int i2 = 5; // expected-note 1 {{previous definition is here}}
+int i2 = 3; // expected-error{{non-static declaration of 'i2' follows static declaration}}
 
 __private_extern__ int pExtern;
 int pExtern = 0;

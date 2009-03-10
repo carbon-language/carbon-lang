@@ -218,7 +218,52 @@ void Sema::DeleteStmt(StmtTy *S) {
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
 void Sema::ActOnEndOfTranslationUnit() {
+  // C99 6.9.2p2:
+  //   A declaration of an identifier for an object that has file
+  //   scope without an initializer, and without a storage-class
+  //   specifier or with the storage-class specifier static,
+  //   constitutes a tentative definition. If a translation unit
+  //   contains one or more tentative definitions for an identifier,
+  //   and the translation unit contains no external definition for
+  //   that identifier, then the behavior is exactly as if the
+  //   translation unit contains a file scope declaration of that
+  //   identifier, with the composite type as of the end of the
+  //   translation unit, with an initializer equal to 0.
+  if (!getLangOptions().CPlusPlus) {
+    // Note: we traverse the scope's list of declarations rather than
+    // the DeclContext's list, because we only want to see the most
+    // recent declaration of each identifier.
+    for (Scope::decl_iterator I = TUScope->decl_begin(), 
+                           IEnd = TUScope->decl_end();
+         I != IEnd; ++I) {
+      Decl *D = static_cast<Decl *>(*I);
+      if (D->isInvalidDecl())
+        continue;
 
+      if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+        if (VD->isTentativeDefinition(Context)) {
+          if (const IncompleteArrayType *ArrayT 
+                = Context.getAsIncompleteArrayType(VD->getType())) {
+            if (RequireCompleteType(VD->getLocation(), 
+                                    ArrayT->getElementType(),
+                                 diag::err_tentative_def_incomplete_type_arr))
+              VD->setInvalidDecl();
+            else {
+              // Set the length of the array to 1 (C99 6.9.2p5).
+              llvm::APSInt One(Context.getTypeSize(Context.getSizeType()), 
+                               true);
+              QualType T 
+                = Context.getConstantArrayType(ArrayT->getElementType(),
+                                               One, ArrayType::Normal, 0);
+              VD->setType(T);
+            }
+          } else if (RequireCompleteType(VD->getLocation(), VD->getType(), 
+                                    diag::err_tentative_def_incomplete_type))
+            VD->setInvalidDecl();
+        }
+      }
+    }
+  }
 }
 
 

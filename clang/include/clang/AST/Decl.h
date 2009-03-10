@@ -233,6 +233,9 @@ private:
   /// condition, e.g., if (int x = foo()) { ... }.
   bool DeclaredInCondition : 1;
 
+  /// \brief The previous declaration of this variable.
+  VarDecl *PreviousDeclaration;
+
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
   friend class StmtIteratorBase;
@@ -240,8 +243,9 @@ protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
           QualType T, StorageClass SC, SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T), Init(0),
-          ThreadSpecified(false), HasCXXDirectInit(false),
-          DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
+      ThreadSpecified(false), HasCXXDirectInit(false),
+      DeclaredInCondition(false), PreviousDeclaration(0), 
+      TypeSpecStartLoc(TSSL) { 
     SClass = SC; 
   }
 public:
@@ -261,6 +265,12 @@ public:
   Expr *getInit() { return (Expr*) Init; }
   void setInit(Expr *I) { Init = (Stmt*) I; }
       
+  /// \brief Retrieve the definition of this variable, which may come
+  /// from a previous declaration. Def will be set to the VarDecl that
+  /// contains the initializer, and the result will be that
+  /// initializer.
+  const Expr *getDefinition(const VarDecl *&Def);
+
   void setThreadSpecified(bool T) { ThreadSpecified = T; }
   bool isThreadSpecified() const {
     return ThreadSpecified;
@@ -288,6 +298,14 @@ public:
   }
   void setDeclaredInCondition(bool InCondition) { 
     DeclaredInCondition = InCondition; 
+  }
+
+  /// getPreviousDeclaration - Return the previous declaration of this
+  /// variable.
+  const VarDecl *getPreviousDeclaration() const { return PreviousDeclaration; }
+
+  void setPreviousDeclaration(VarDecl * PrevDecl) {
+    PreviousDeclaration = PrevDecl;
   }
 
   /// hasLocalStorage - Returns true if a variable with function scope
@@ -337,6 +355,10 @@ public:
     }
     return false;
   }
+
+  /// \brief Determine whether this is a tentative definition of a
+  /// variable in C.
+  bool isTentativeDefinition(ASTContext &Context) const;
   
   /// \brief Determines whether this variable is a variable with
   /// external, C linkage.

@@ -273,6 +273,22 @@ void VarDecl::Destroy(ASTContext& C) {
 VarDecl::~VarDecl() {
 }
 
+bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
+  if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
+    return false;
+
+  return (!getInit() &&
+          (getStorageClass() == None || getStorageClass() == Static));
+}
+
+const Expr *VarDecl::getDefinition(const VarDecl *&Def) {
+  Def = this;
+  while (Def && !Def->getInit())
+    Def = Def->getPreviousDeclaration();
+
+  return Def? Def->getInit() : 0;
+}
+
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//

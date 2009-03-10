@@ -776,56 +776,6 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   return false;
 }
 
-/// Predicate for C "tentative" external object definitions (C99 6.9.2).
-static bool isTentativeDefinition(VarDecl *VD) {
-  if (VD->isFileVarDecl())
-    return (!VD->getInit() &&
-            (VD->getStorageClass() == VarDecl::None ||
-             VD->getStorageClass() == VarDecl::Static));
-  return false;
-}
-
-/// CheckForFileScopedRedefinitions - Make sure we forgo redefinition errors
-/// when dealing with C "tentative" external object definitions (C99 6.9.2).
-void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
-  bool VDIsTentative = isTentativeDefinition(VD);
-  bool VDIsIncompleteArray = VD->getType()->isIncompleteArrayType();
-  
-  // FIXME: I don't think this will actually see all of the
-  // redefinitions. Can't we check this property on-the-fly?
-  for (IdentifierResolver::iterator I = IdResolver.begin(VD->getIdentifier()), 
-                                    E = IdResolver.end(); 
-       I != E; ++I) {
-    if (*I != VD && isDeclInScope(*I, VD->getDeclContext(), S)) {
-      VarDecl *OldDecl = dyn_cast<VarDecl>(*I);
-      
-      // Handle the following case:
-      //   int a[10];
-      //   int a[];   - the code below makes sure we set the correct type. 
-      //   int a[11]; - this is an error, size isn't 10.
-      if (OldDecl && VDIsTentative && VDIsIncompleteArray && 
-          OldDecl->getType()->isConstantArrayType())
-        VD->setType(OldDecl->getType());
-      
-      // Check for "tentative" definitions. We can't accomplish this in 
-      // MergeVarDecl since the initializer hasn't been attached.
-      if (!OldDecl || isTentativeDefinition(OldDecl) || VDIsTentative)
-        continue;
-  
-      // Handle __private_extern__ just like extern.
-      if (OldDecl->getStorageClass() != VarDecl::Extern &&
-          OldDecl->getStorageClass() != VarDecl::PrivateExtern &&
-          VD->getStorageClass() != VarDecl::Extern &&
-          VD->getStorageClass() != VarDecl::PrivateExtern) {
-        Diag(VD->getLocation(), diag::err_redefinition) << VD->getDeclName();
-        Diag(OldDecl->getLocation(), diag::note_previous_definition);
-        // One redefinition error is enough.
-        break;
-      }
-    }
-  }
-}
-
 /// MergeVarDecl - We just parsed a variable 'New' which has the same name
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
@@ -876,6 +826,10 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(Old->getLocation(), diag::note_previous_definition);
     return true;
   }
+
+  // Keep a chain of previous declarations.
+  New->setPreviousDeclaration(Old);
+
   return false;
 }
 
@@ -2168,6 +2122,15 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
     return;
   }
 
+  const VarDecl *Def = 0;
+  if (VDecl->getDefinition(Def)) {
+    Diag(VDecl->getLocation(), diag::err_redefinition) 
+      << VDecl->getDeclName();
+    Diag(Def->getLocation(), diag::note_previous_definition);
+    VDecl->setInvalidDecl();
+    return;
+  }
+
   // Take ownership of the expression, now that we're sure we have somewhere
   // to put it.
   Expr *Init = static_cast<Expr *>(init.release());
@@ -2349,7 +2312,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (!getLangOptions().CPlusPlus && isTentativeDefinition(IDecl)) {
+    if (IDecl->isTentativeDefinition(Context)) {
       QualType CheckType = T;
       unsigned DiagID = diag::err_typecheck_decl_incomplete_type;
 
@@ -2369,8 +2332,6 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
         IDecl->setInvalidDecl();
       }
     }
-    if (IDecl->isFileVarDecl())
-      CheckForFileScopedRedefinitions(S, IDecl);
   }
   return NewGroup;
 }
