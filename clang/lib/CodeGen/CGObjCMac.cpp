@@ -307,10 +307,19 @@ public:
 };
   
 class CGObjCCommonMac : public CodeGen::CGObjCRuntime {
+  class GC_IVAR {
+    unsigned int ivar_bytepos;
+    unsigned int ivar_size;
+    GC_IVAR() : ivar_bytepos(0), ivar_size(0) {}
+  };
+  
 protected:
   CodeGen::CodeGenModule &CGM;
   // FIXME! May not be needing this after all.
   unsigned ObjCABI;
+  
+  llvm::SmallVector<GC_IVAR, 8> SkipIvars;
+  llvm::SmallVector<GC_IVAR, 8> IvarsInfo;
   
   /// LazySymbols - Symbols to generate a lazy reference for. See
   /// DefinedSymbols and FinishModule().
@@ -398,10 +407,12 @@ protected:
   /// BuildIvarLayout - Builds ivar layout bitmap for the class
   /// implementation for the __strong or __weak case.
   ///
-  llvm::Constant *BuildIvarLayout(ObjCImplementationDecl *OI,
+  llvm::Constant *BuildIvarLayout(const llvm::StructLayout *Layout,
+                                  ObjCImplementationDecl *OI,
                                   bool ForStrongLayout);
   
-  void BuildAggrIvarLayout(RecordDecl *RD, 
+  void BuildAggrIvarLayout(const llvm::StructLayout *Layout,
+                           const RecordDecl *RD,
                            const std::vector<FieldDecl*>& RecFields,
                            unsigned int BytePos, bool ForStrongLayout,
                            int &Index, int &SkIndex, bool &HasUnion);
@@ -2445,10 +2456,46 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
   return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
 }
 
-void CGObjCCommonMac::BuildAggrIvarLayout(RecordDecl *RD, 
+void CGObjCCommonMac::BuildAggrIvarLayout(const llvm::StructLayout *Layout,
+                              const RecordDecl *RD,
                               const std::vector<FieldDecl*>& RecFields,
                               unsigned int BytePos, bool ForStrongLayout,
                               int &Index, int &SkIndex, bool &HasUnion) {
+  bool is_union = (RD && RD->isUnion());
+  unsigned int base = 0;
+  if (RecFields.empty())
+    return;
+  if (is_union)
+    base = BytePos + GetIvarBaseOffset(Layout, RecFields[0]);
+
+  for (unsigned i = 0; i < RecFields.size(); i++) {
+    FieldDecl *Field = RecFields[i];
+    // Skip over unnamed or bitfields
+    if (!Field->getIdentifier() || Field->isBitField())
+      continue;
+    QualType FQT = Field->getType();
+    if (FQT->isAggregateType()) {
+      std::vector<FieldDecl*> NestedRecFields;
+      if (FQT->isUnionType())
+        HasUnion = true;
+      const RecordType *RT = FQT->getAsRecordType();
+      const RecordDecl *RD = RT->getDecl();
+      // FIXME - Find a more efficiant way of passing records down.
+      unsigned j = 0;
+      for (RecordDecl::field_iterator i = RD->field_begin(),
+           e = RD->field_end(); i != e; ++i)
+        NestedRecFields[j++] = (*i);
+      // FIXME - Is Layout correct?
+      BuildAggrIvarLayout(Layout, RD, NestedRecFields,
+                          BytePos + GetIvarBaseOffset(Layout, Field),
+                          ForStrongLayout, Index, SkIndex,
+                          HasUnion);
+      continue;
+    }
+    else if (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
+        FQT = Array->getElementType();
+    }
+  }
   return;
 }
 
@@ -2468,8 +2515,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(RecordDecl *RD,
 /// 2. When ForStrongLayout is false, following ivars are scanned:
 /// - __weak anything
 ///
-llvm::Constant *CGObjCCommonMac::BuildIvarLayout(ObjCImplementationDecl *OMD,
-                                                 bool ForStrongLayout) {
+llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
+                                            const llvm::StructLayout *Layout,
+                                            ObjCImplementationDecl *OMD,
+                                            bool ForStrongLayout) {
   int iIndex = -1;
   int iSkIndex = -1;
   bool hasUnion = false;
@@ -2479,7 +2528,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(ObjCImplementationDecl *OMD,
   CGM.getContext().CollectObjCIvars(OI, RecFields);
   if (RecFields.empty())
     return 0;
-  BuildAggrIvarLayout (0, RecFields, 0, ForStrongLayout, 
+  BuildAggrIvarLayout (Layout, 0, RecFields, 0, ForStrongLayout, 
                        iIndex, iSkIndex, hasUnion);
   return 0;
 }
