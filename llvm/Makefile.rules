@@ -1346,9 +1346,6 @@ INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 .PRECIOUS: $(INCTMPFiles) $(INCFiles)
 
-# All of these files depend on tblgen and the .td files.
-$(INCTMPFiles) : $(TBLGEN) $(TDFiles)
-
 # INCFiles rule: All of the tblgen generated files are emitted to
 # $(ObjDir)/%.inc.tmp, instead of emitting them directly to %.inc.  This allows
 # us to only "touch" the real file if the contents of it change.  IOW, if
@@ -1369,6 +1366,9 @@ TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
            $(LLVM_SRC_ROOT)/include/llvm/Target/TargetSelectionDAG.td \
            $(LLVM_SRC_ROOT)/include/llvm/CodeGen/ValueTypes.td) \
            $(wildcard $(LLVM_SRC_ROOT)/include/llvm/Intrinsics*.td)
+
+# All of these files depend on tblgen and the .td files.
+$(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 
 $(TARGET:%=$(ObjDir)/%GenRegisterNames.inc.tmp): \
 $(ObjDir)/%GenRegisterNames.inc.tmp : %.td $(ObjDir)/.dir
