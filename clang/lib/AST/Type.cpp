@@ -1388,8 +1388,15 @@ void TagType::getAsStringInternal(std::string &InnerString) const {
   const char *ID;
   if (const IdentifierInfo *II = getDecl()->getIdentifier())
     ID = II->getName();
-  else
+  else if (TypedefDecl *Typedef = getDecl()->getTypedefForAnonDecl()) {
+    Kind = 0;
+    assert(Typedef->getIdentifier() && "Typedef without identifier?");
+    ID = Typedef->getIdentifier()->getName();
+  } else
     ID = "<anonymous>";
 
-  InnerString = std::string(Kind) + " " + ID + InnerString;
+  if (Kind)
+    InnerString = std::string(Kind) + " " + ID + InnerString;
+  else
+    InnerString = ID + InnerString;
 }
