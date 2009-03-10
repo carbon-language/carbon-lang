@@ -507,6 +507,12 @@ namespace llvm {
   /// Finds the dbg.declare intrinsic corresponding to this value if any.
   /// It looks through pointer casts too.
   const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts = true);
+
+  /// Find the debug info descriptor corresponding to this global variable.
+  Value *findDbgGlobalDeclare(GlobalVariable *V);
+
+  bool getLocationInfo(const Value *V, std::string &DisplayName, std::string &Type, 
+                       unsigned &LineNo, std::string &File, std::string &Dir); 
 } // end namespace llvm
 
 #endif

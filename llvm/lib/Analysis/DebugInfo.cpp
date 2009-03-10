@@ -841,6 +841,34 @@ namespace llvm {
     return 0;
   }
 
+  Value *findDbgGlobalDeclare(GlobalVariable *V)
+  {
+    const Module *M = V->getParent();
+    const Type *Ty = M->getTypeByName("llvm.dbg.global_variable.type");
+    if (!Ty)
+      return 0;
+    Ty = PointerType::get(Ty, 0);
+
+    Value *Val = V->stripPointerCasts();
+    for (Value::use_iterator I = Val->use_begin(), E =Val->use_end();
+         I != E; ++I) {
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I)) {
+        if (CE->getOpcode() == Instruction::BitCast) {
+          Value *VV = CE;
+          while (VV->hasOneUse()) {
+            VV = *VV->use_begin();
+          }
+          if (VV->getType() == Ty)
+            return VV;
+        }
+      }
+    }
+    
+    if (Val->getType() == Ty)
+      return Val;
+    return 0;
+  }
+
   /// Finds the dbg.declare intrinsic corresponding to this value if any.
   /// It looks through pointer casts too.
   const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts)
@@ -863,6 +891,36 @@ namespace llvm {
         return DDI;
     }
     return 0;
+  }
+
+  bool getLocationInfo(const Value *V, std::string &DisplayName, std::string &Type,
+                       unsigned &LineNo, std::string &File, std::string &Dir)
+  {
+    DICompileUnit Unit;
+    DIType TypeD;
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(const_cast<Value*>(V))) {
+      Value *DIGV = findDbgGlobalDeclare(GV);
+      if (!DIGV)
+        return false;
+      DIGlobalVariable Var(cast<GlobalVariable>(DIGV));
+      Var.getDisplayName(DisplayName);
+      LineNo = Var.getLineNumber();
+      Unit = Var.getCompileUnit();
+      TypeD = Var.getType();
+    } else {
+      const DbgDeclareInst *DDI = findDbgDeclare(V);
+      if (!DDI)
+        return false;
+      DIVariable Var(cast<GlobalVariable>(DDI->getVariable()));
+      Var.getName(DisplayName);
+      LineNo = Var.getLineNumber();
+      Unit = Var.getCompileUnit();
+      TypeD = Var.getType();
+    }
+    TypeD.getName(Type);
+    Unit.getFilename(File);
+    Unit.getDirectory(Dir);
+    return true;
   }
 }
 

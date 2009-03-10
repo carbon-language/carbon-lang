@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Value.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -57,12 +58,17 @@ FunctionPass *llvm::createDbgInfoPrinterPass() { return new PrintDbgInfo(); }
 
 void PrintDbgInfo::printVariableDeclaration(const Value *V)
 {
-  if(const DbgDeclareInst* DDI = findDbgDeclare(V)) {
-    DIVariable Var(cast<GlobalVariable>(DDI->getVariable()));
-    std::string Res1, Res2;
-    Out << "; variable " << Var.getName(Res1)
-      << " of type " << Var.getType().getName(Res2)
-      << " at line " << Var.getLineNumber() << "\n";
+  std::string DisplayName, File, Directory, Type;
+  unsigned LineNo;
+  if (getLocationInfo(V, DisplayName, Type, LineNo, File, Directory)) {
+    Out << "; ";
+    WriteAsOperand(Out, V, false, 0);
+    Out << " is variable " << DisplayName
+      << " of type " << Type << " declared at ";
+    if (PrintDirectory) {
+      Out << Directory << "/";
+    }
+    Out << File << ":" << LineNo << "\n";
   }
 }
 
@@ -140,6 +146,11 @@ bool PrintDbgInfo::runOnFunction(Function &F)
         }
         Out << *i;
         printVariableDeclaration(i);
+        if (const User *U = dyn_cast<User>(i)) {
+          for(unsigned i=0;i<U->getNumOperands();i++) {
+            printVariableDeclaration(U->getOperand(i));
+          }
+        }
       }
     }
   }
