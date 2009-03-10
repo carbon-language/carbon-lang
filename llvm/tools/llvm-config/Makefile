@@ -57,11 +57,16 @@ llvm-config.in: $(ConfigInIn) $(ConfigStatusScript)
 # Build our final script.
 $(ToolDir)/llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Echo) "Building llvm-config script."
-	$(Verb) $(ECHO) 's,@LLVM_CPPFLAGS@,$(SUB_CPPFLAGS),' > temp.sed
-	$(Verb) $(ECHO) 's,@LLVM_CFLAGS@,$(SUB_CFLAGS),' >> temp.sed
-	$(Verb) $(ECHO) 's,@LLVM_CXXFLAGS@,$(SUB_CXXFLAGS),' >> temp.sed
-	$(Verb) $(ECHO) 's,@LLVM_LDFLAGS@,$(SUB_LDFLAGS),' >> temp.sed
-	$(Verb) $(ECHO) 's,@LLVM_BUILDMODE@,$(BuildMode),' >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_CPPFLAGS@/$(subst /,\/,$(SUB_CPPFLAGS))/' \
+	  > temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_CFLAGS@/$(subst /,\/,$(SUB_CFLAGS))/' \
+	  >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_CXXFLAGS@/$(subst /,\/,$(SUB_CXXFLAGS))/' \
+	  >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_LDFLAGS@/$(subst /,\/,$(SUB_LDFLAGS))/' \
+	  >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_BUILDMODE@/$(subst /,\/,$(BuildMode))/' \
+	  >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 	$(Verb) cat $(FinalLibDeps) >> $@
