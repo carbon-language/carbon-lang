@@ -288,7 +288,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       continue;
     }
     
-    DiagOffs = CurPtr-StrStart;
+    DiagOffs = CurPtr-StrStart-1;
     return diag::err_asm_invalid_escape;
   }
 }

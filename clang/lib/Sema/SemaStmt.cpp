@@ -967,9 +967,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   llvm::SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;
   unsigned DiagOffs;
   if (unsigned DiagID = NS->AnalyzeAsmString(Pieces, Context, DiagOffs)) {
-    // FIXME: get offsets in strings working.
-    // StringLiteralParser::getOffsetOfStringByte
-    Diag(AsmString->getLocStart(), DiagID) << AsmString->getSourceRange();
+    Diag(getLocationOfStringLiteralByte(AsmString, DiagOffs), DiagID)
+           << AsmString->getSourceRange();
     DeleteStmt(NS);
     return StmtError();
   }
