@@ -739,31 +739,27 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
       continue;
     }
     
+    // Handle %x4 and %x[foo] by capturing x as the modifier character.
+    char Modifier = '\0';
+    if (isalpha(EscapedChar)) {
+      Modifier = EscapedChar;
+      EscapedChar = *StrStart++;
+    }
+    
     if (isdigit(EscapedChar)) {
       // %n - Assembler operand n
       char *End;
       unsigned long N = strtoul(StrStart-1, &End, 10);
       assert(End != StrStart-1 && "We know that EscapedChar is a digit!");
+      StrStart = End;
       
       // FIXME: This should be caught during Sema.
       assert(N < NumOperands && "Operand number out of range!");
       
-      Result += '$' + llvm::utostr(N);
-      StrStart = End;
-      continue;
-    }
-    
-    if (isalpha(EscapedChar)) {
-      char *End;
-      // Skip the single letter escape and read the number, e.g. "%x4".
-      unsigned long N = strtoul(StrStart, &End, 10);
-      // FIXME: This should be caught during Sema.
-      assert(End != StrStart && "Missing operand!");
-      // FIXME: This should be caught during Sema.
-      assert(N < NumOperands && "Operand number out of range!");
-      
-      Result += "${" + llvm::utostr(N) + ':' + EscapedChar + '}';
-      StrStart = End;
+      if (Modifier == '\0')
+        Result += '$' + llvm::utostr(N);
+      else
+        Result += "${" + llvm::utostr(N) + ':' + Modifier + '}';
       continue;
     }
     
@@ -776,10 +772,13 @@ static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
       std::string SymbolicName(StrStart, NameEnd);
       StrStart = NameEnd+1;
       
-      int OperandIndex = S.getNamedOperand(SymbolicName);
-      assert(OperandIndex != -1 && "FIXME: Catch in Sema.");
+      int N = S.getNamedOperand(SymbolicName);
+      assert(N != -1 && "FIXME: Catch in Sema.");
 
-      Result += '$' + llvm::utostr(unsigned(OperandIndex));
+      if (Modifier == '\0')
+        Result += '$' + llvm::utostr(N);
+      else
+        Result += "${" + llvm::utostr(N) + ':' + Modifier + '}';
       continue;
     }
      
