@@ -298,10 +298,10 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
   }
   
   // Look for the matching setter, in case it is needed.
-  IdentifierInfo *SetterName = 
-    SelectorTable::constructSetterName(PP.getIdentifierTable(), &propertyName);
+  Selector SetterSel = 
+    SelectorTable::constructSetterName(PP.getIdentifierTable(), 
+                                       PP.getSelectorTable(), &propertyName);
     
-  Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
   ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
   if (!Setter) {
     // If this reference is in an @implementation, also check for 'private'

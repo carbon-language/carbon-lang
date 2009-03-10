@@ -328,11 +328,12 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
           PP.getSelectorTable().getNullarySelector(SelName);
         IdentifierInfo *SetterName = OCDS.getSetterName();
         if (!SetterName)
-          SetterName = 
-            SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                               FD.D.getIdentifier());
+          SetterName = FD.D.getIdentifier();
+          
         Selector SetterSel = 
-          PP.getSelectorTable().getUnarySelector(SetterName);
+            SelectorTable::constructSetterName(PP.getIdentifierTable(),
+                                               PP.getSelectorTable(),
+                                               SetterName);
         bool isOverridingProperty = false;
         DeclTy *Property = Actions.ActOnProperty(CurScope, AtLoc, FD, OCDS,
                                                  GetterSel, SetterSel,

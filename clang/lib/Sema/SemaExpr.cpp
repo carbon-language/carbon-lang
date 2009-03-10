@@ -1886,10 +1886,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
-      IdentifierInfo *SetterName = 
-        SelectorTable::constructSetterName(PP.getIdentifierTable(), &Member);
-        
-      Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
+      Selector SetterSel = 
+        SelectorTable::constructSetterName(PP.getIdentifierTable(), 
+                                           PP.getSelectorTable(), &Member);
       ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
