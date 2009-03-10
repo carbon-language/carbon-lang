@@ -680,36 +680,43 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   CaseRangeBlock = SavedCRBlock;
 }
 
-static std::string ConvertAsmString(const AsmStmt& S, bool &Failed)
-{
-  // FIXME: No need to create new std::string here, we could just make sure
-  // that we don't read past the end of the string data.
-  std::string str(S.getAsmString()->getStrData(),
-                  S.getAsmString()->getByteLength());
-  const char *Start = str.c_str();
-  
-  unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
-  bool IsSimple = S.isSimple();
+/// ConvertAsmString - Convert the GNU-style asm string to the LLVM-style asm
+/// string.
+static std::string ConvertAsmString(const AsmStmt& S, bool &Failed) {
   Failed = false;
+  
+  const char *StrStart = S.getAsmString()->getStrData();
+  const char *StrEnd = StrStart + S.getAsmString()->getByteLength();
 
-  static unsigned AsmCounter = 0;
-  AsmCounter++;
-  std::string Result;
-  if (IsSimple) {
-    while (*Start) {
-      switch (*Start) {
-      default:
-        Result += *Start;
-        break;
+  // "Simple" inline asms have no constraints or operands, just convert the asm
+  // string to escape $'s.
+  if (S.isSimple()) {
+    std::string Result;
+    for (; StrStart != StrEnd; ++StrStart) {
+      switch (*StrStart) {
       case '$':
         Result += "$$";
         break;
+      default:
+        Result += *StrStart;
+        break;
       }
-      Start++;
     }
-    
     return Result;
   }
+  
+  // FIXME: No need to create new std::string here, we could just make sure
+  // that we don't read past the end of the string data.
+  std::string str(StrStart, StrEnd);
+  std::string Result;
+
+  const char *Start = str.c_str();
+  
+  unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
+  
+  // FIXME: Static counters are not thread safe or reproducible.
+  static unsigned AsmCounter = 0;
+  AsmCounter++;
   
   while (*Start) {
     switch (*Start) {
@@ -889,8 +896,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   bool Failed;
-  std::string AsmString = 
-    ConvertAsmString(S, Failed);
+  std::string AsmString = ConvertAsmString(S, Failed);
 
   if (Failed) {
     ErrorUnsupported(&S, "asm string");
