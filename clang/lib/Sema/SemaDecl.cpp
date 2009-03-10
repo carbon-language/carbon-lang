@@ -1749,6 +1749,13 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
+  if (!InvalidDecl && R->isVoidType() && !NewVD->hasExternalStorage()) {
+    Diag(NewVD->getLocation(), diag::err_typecheck_decl_incomplete_type)
+      << R;
+    InvalidDecl = true;
+  }
+
+
   // If this is a locally-scoped extern C variable, update the map of
   // such variables.
   if (CurContext->isFunctionOrMethod() && NewVD->isExternC(Context) &&
@@ -2342,17 +2349,25 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (isTentativeDefinition(IDecl)) {
-      if (T->isIncompleteArrayType()) {
-        // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
-        // array to be completed. Don't issue a diagnostic.
-      } else if (!IDecl->isInvalidDecl() &&
-                 RequireCompleteType(IDecl->getLocation(), T,
-                                        diag::err_typecheck_decl_incomplete_type))
+    if (!getLangOptions().CPlusPlus && isTentativeDefinition(IDecl)) {
+      QualType CheckType = T;
+      unsigned DiagID = diag::err_typecheck_decl_incomplete_type;
+
+      const IncompleteArrayType *ArrayT = Context.getAsIncompleteArrayType(T);
+      if (ArrayT) {
+        CheckType = ArrayT->getElementType();
+        DiagID = diag::err_illegal_decl_array_incomplete_type;
+      }
+
+      if (IDecl->isInvalidDecl()) {
+        // Do nothing with invalid declarations
+      } else if ((ArrayT || IDecl->getStorageClass() == VarDecl::Static) &&
+                 RequireCompleteType(IDecl->getLocation(), CheckType, DiagID)) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
         // declared type shall not be an incomplete type.
         IDecl->setInvalidDecl();
+      }
     }
     if (IDecl->isFileVarDecl())
       CheckForFileScopedRedefinitions(S, IDecl);
@@ -3243,9 +3258,8 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   // C++ 9.6p3: A bit-field shall have integral or enumeration type.
   if (!FieldTy->isIntegralType()) {
     // Handle incomplete types with specific error.
-    if (FieldTy->isIncompleteType())
-      return Diag(FieldLoc, diag::err_field_incomplete)
-        << FieldTy << BitWidth->getSourceRange();
+    if (RequireCompleteType(FieldLoc, FieldTy, diag::err_field_incomplete))
+      return true;
     return Diag(FieldLoc, diag::err_not_integral_type_bitfield)
       << FieldName << BitWidth->getSourceRange();
   }

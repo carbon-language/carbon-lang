@@ -1,9 +1,9 @@
 // RUN: clang -fsyntax-only -verify %s
 
-struct foo; // expected-note 4 {{forward declaration of 'struct foo'}}
+struct foo; // expected-note 3 {{forward declaration of 'struct foo'}}
 
 void b;  // expected-error {{variable has incomplete type 'void'}}
-struct foo f; // expected-error {{variable has incomplete type 'struct foo'}}
+struct foo f; // // FIXME: error because 'struct foo' is never defined
 
 static void c; // expected-error {{variable has incomplete type 'void'}}
 static struct foo g;  // expected-error {{variable has incomplete type 'struct foo'}}

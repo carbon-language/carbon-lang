@@ -1,5 +1,5 @@
 // RUN: clang %s -fsyntax-only -verify 
-enum e0;
+enum e0; // expected-note{{forward declaration of 'enum e0'}}
 
 struct a {
   int a : -1; // expected-error{{bit-field 'a' has negative width}}

@@ -1,5 +1,12 @@
 // RUN: clang %s -fsyntax-only -verify
 
+// PR3310
+struct a x1; // expected-note 2{{forward declaration of 'struct a'}}
+static struct a x2; // expected-error{{variable has incomplete type 'struct a'}}
+struct a x3[10]; // expected-error{{array has incomplete element type 'struct a'}}
+struct a {int x;};
+struct b x4; // FIXME: error because 'struct b' is never defined
+
 const int a [1] = {1};
 extern const int a[];
 
@@ -43,3 +50,4 @@ void func2(void)
   extern double *p;
   extern double *p;
 }
+

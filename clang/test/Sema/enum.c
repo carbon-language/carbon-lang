@@ -21,13 +21,11 @@ int test() {
   return sizeof(enum e) ;
 }
 
-enum gccForwardEnumExtension ve; // expected-error {{variable has incomplete type 'enum gccForwardEnumExtension'}} \
-                                 // expected-warning{{ISO C forbids forward references to 'enum' types}} \
-                                 // expected-note{{forward declaration of 'enum gccForwardEnumExtension'}}
+enum gccForwardEnumExtension ve; // expected-warning{{ISO C forbids forward references to 'enum' types}}
 
 int test2(int i)
 {
-  ve + i;
+  ve + i; // expected-error{{invalid operands to binary expression}}
 }
 
 // PR2020
