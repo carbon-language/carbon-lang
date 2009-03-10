@@ -563,6 +563,98 @@ public:
 };
 }
 
+/// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
+///  and collapses PathDiagosticPieces that are expanded by macros.
+static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
+  typedef std::vector<std::pair<PathDiagnosticMacroPiece*, SourceLocation> >
+          MacroStackTy;
+  
+  typedef std::vector<PathDiagnosticPiece*>
+          PiecesTy;
+  
+  MacroStackTy MacroStack;
+  PiecesTy Pieces;
+  
+  for (PathDiagnostic::iterator I = PD.begin(), E = PD.end(); I!=E; ++I) {
+    // Get the location of the PathDiagnosticPiece.
+    const FullSourceLoc Loc = I->getLocation();    
+    
+    // Determine the instantiation location, which is the location we group
+    // related PathDiagnosticPieces.
+    SourceLocation InstantiationLoc = Loc.isMacroID() ? 
+                                      SM.getInstantiationLoc(Loc) :
+                                      SourceLocation();
+    
+    if (Loc.isFileID()) {
+      MacroStack.clear();
+      Pieces.push_back(&*I);
+      continue;
+    }
+
+    assert(Loc.isMacroID());
+    
+    // Is the PathDiagnosticPiece within the same macro group?
+    if (!MacroStack.empty() && InstantiationLoc == MacroStack.back().second) {
+      MacroStack.back().first->push_back(&*I);
+      continue;
+    }
+
+    // We aren't in the same group.  Are we descending into a new macro
+    // or are part of an old one?
+    PathDiagnosticMacroPiece *MacroGroup = 0;
+
+    SourceLocation ParentInstantiationLoc = InstantiationLoc.isMacroID() ?
+                                          SM.getInstantiationLoc(Loc) :
+                                          SourceLocation();
+    
+    // Walk the entire macro stack.
+    while (!MacroStack.empty()) {
+      if (InstantiationLoc == MacroStack.back().second) {
+        MacroGroup = MacroStack.back().first;
+        break;
+      }
+      
+      if (ParentInstantiationLoc == MacroStack.back().second) {
+        MacroGroup = MacroStack.back().first;
+        break;
+      }
+      
+      MacroStack.pop_back();
+    }
+    
+    if (!MacroGroup || ParentInstantiationLoc == MacroStack.back().second) {
+      // Create a new macro group and add it to the stack.
+      PathDiagnosticMacroPiece *NewGroup = new PathDiagnosticMacroPiece(Loc);
+
+      if (MacroGroup)
+        MacroGroup->push_back(NewGroup);
+      else {
+        assert(InstantiationLoc.isFileID());
+        Pieces.push_back(NewGroup);
+      }
+      
+      MacroGroup = NewGroup;
+      MacroStack.push_back(std::make_pair(MacroGroup, InstantiationLoc));
+    }
+
+    // Finally, add the PathDiagnosticPiece to the group.
+    MacroGroup->push_back(&*I);
+  }
+  
+  // Now take the pieces and construct a new PathDiagnostic.
+  PD.resetPath(false);
+    
+  for (PiecesTy::iterator I=Pieces.begin(), E=Pieces.end(); I!=E; ++I) {
+    if (PathDiagnosticMacroPiece *MP=dyn_cast<PathDiagnosticMacroPiece>(*I))
+      if (!MP->containsEvent()) {
+        delete MP;
+        continue;
+      }
+    
+    PD.push_back(*I);
+  }
+}
+
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                            BugReportEquivClass& EQ) {
   
@@ -799,6 +891,10 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       getStateManager().iterBindings(N->getState(), SNS);
     }
   }
+  
+  // After constructing the full PathDiagnostic, do a pass over it to compact
+  // PathDiagnosticPieces that occur within a macro.
+  CompactPathDiagnostic(PD, getSourceManager());
 }
 
 

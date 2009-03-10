@@ -20,6 +20,7 @@
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/Rewrite/HTMLRewrite.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
@@ -48,6 +49,10 @@ public:
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
   
+  unsigned ProcessMacroPiece(llvm::raw_ostream& os,
+                             const PathDiagnosticMacroPiece& P,
+                             unsigned num);
+    
   void HandlePiece(Rewriter& R, FileID BugFileID,
                    const PathDiagnosticPiece& P, unsigned num, unsigned max);
   
@@ -364,7 +369,32 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     PosNo += *c == '\t' ? 8 : 1;
   
   // Create the html for the message.
-  {
+
+  const char *Kind = 0;
+  switch (P.getKind()) {
+    case PathDiagnosticPiece::Event:  Kind = "Event"; break;
+    case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
+      // Setting Kind to "Control" is intentional.
+    case PathDiagnosticPiece::Macro: Kind = "Control"; break;
+  }
+    
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
+    
+  os << "\n<tr><td class=\"num\"></td><td class=\"line\"><div id=\"";
+    
+  if (num == max)
+    os << "EndPath";
+  else
+    os << "Path" << num;
+    
+  os << "\" class=\"msg";
+  if (Kind)
+    os << " msg" << Kind;  
+  os << "\" style=\"margin-left:" << PosNo << "ex";
+    
+  // Output a maximum size.
+  if (!isa<PathDiagnosticMacroPiece>(P)) {
     // Get the string and determining its maximum substring.
     const std::string& Msg = P.getString();
     unsigned max_token = 0;
@@ -383,9 +413,10 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
           cnt = 0;
       }
     
-    if (cnt > max_token) max_token = cnt;
+    if (cnt > max_token)
+      max_token = cnt;
     
-    // Next, determine the approximate size of the message bubble in em.
+    // Determine the approximate size of the message bubble in em.
     unsigned em;
     const unsigned max_line = 120;
     
@@ -394,7 +425,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     else {
       unsigned characters = max_line;
       unsigned lines = len / max_line;
-      
+    
       if (lines > 0) {
         for (; characters > max_token; --characters)
           if (len / characters > lines) {
@@ -402,60 +433,71 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
             break;
           }
       }
-      
+    
       em = characters / 2;
     }
+  
+    if (em < max_line/2)
+      os << "; max-width:" << em << "em";      
+  }
+  else
+    os << "; max-width:100em";
+  
+  os << "\">";
+  
+  if (max > 1) {
+    os << "<table class=\"msgT\"><tr><td valign=\"top\">";
+    os << "<div class=\"PathIndex";
+    if (Kind) os << " PathIndex" << Kind;
+    os << "\">" << num << "</div>";
+    os << "</td><td>";
+  }
+
+  if (const PathDiagnosticMacroPiece *MP =
+        dyn_cast<PathDiagnosticMacroPiece>(&P)) {        
+
+    os << "Within the expansion of the macro '";
     
-    // Now generate the message bubble. 
-    const char *Kind = 0;
-    switch (P.getKind()) {
-      case PathDiagnosticPiece::Event:  Kind = "Event"; break;
-      case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
-      case PathDiagnosticPiece::Macro: Kind = "Macro"; break;
+    // Get the name of the macro by relexing it.
+    {
+      FullSourceLoc L = MP->getLocation().getInstantiationLoc();
+      assert(L.isFileID());
+      std::pair<const char*, const char*> BufferInfo = L.getBufferData();
+      const char* MacroName = L.getDecomposedLoc().second + BufferInfo.first;
+      Lexer rawLexer(L, PP->getLangOptions(), BufferInfo.first,
+                     MacroName, BufferInfo.second);
+      
+      Token TheTok;
+      rawLexer.LexFromRawLexer(TheTok);
+      for (unsigned i = 0, n = TheTok.getLength(); i < n; ++i)
+        os << MacroName[i];
     }
+      
+    os << "':\n";
     
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
-    
-    os << "\n<tr><td class=\"num\"></td><td class=\"line\"><div id=\"";
-    
-    if (num == max)
-      os << "EndPath";
-    else
-      os << "Path" << num;
-    
-    os << "\" class=\"msg";
-    if (Kind) os << " msg" << Kind;
-    os << "\" style=\"margin-left:" << PosNo << "ex";
-    if (em < max_line/2) os << "; max-width:" << em << "em";
-    os << "\">";
-    
-    if (max > 1) {
-      os << "<table class=\"msgT\"><tr><td valign=\"top\">";
-      os << "<div class=\"PathIndex";
-      if (Kind) os << " PathIndex" << Kind;
-      os << "\">" << num << "</div>";
-      os << "</td><td>";
-    }
-    
-    os << html::EscapeText(Msg);
-    
-    if (max > 1) {
+    if (max > 1)
       os << "</td></tr></table>";
-    }
+
+    // Within a macro piece.  Write out each event.
+    ProcessMacroPiece(os, *MP, 0);
+  }
+  else {
+    os << html::EscapeText(P.getString());
     
-    os << "</div></td></tr>";
-
-    // Insert the new html.
-    unsigned DisplayPos = LineEnd - FileStart;    
-    SourceLocation Loc = 
-      SM.getLocForStartOfFile(LPosInfo.first).getFileLocWithOffset(DisplayPos);
-
-    R.InsertStrBefore(Loc, os.str());
+    if (max > 1)
+      os << "</td></tr></table>";
   }
   
-  // Now highlight the ranges.
-  
+  os << "</div></td></tr>";
+
+  // Insert the new html.
+  unsigned DisplayPos = LineEnd - FileStart;    
+  SourceLocation Loc = 
+    SM.getLocForStartOfFile(LPosInfo.first).getFileLocWithOffset(DisplayPos);
+
+  R.InsertStrBefore(Loc, os.str());
+
+  // Now highlight the ranges.  
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
         I != E; ++I)
     HighlightRange(R, LPosInfo.first, *I);
@@ -480,6 +522,50 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     }
   }
 #endif
+}
+
+static void EmitAlphaCounter(llvm::raw_ostream& os, unsigned n) {
+  llvm::SmallVector<char, 10> buf;
+
+  do {
+    unsigned x = n % ('z' - 'a');
+    buf.push_back('a' + x);
+    n = n / ('z' - 'a');
+  } while (n);
+  
+  assert(!buf.empty());
+  
+  for (llvm::SmallVectorImpl<char>::reverse_iterator I=buf.rbegin(),
+       E=buf.rend(); I!=E; ++I)
+    os << *I;
+}
+
+unsigned HTMLDiagnostics::ProcessMacroPiece(llvm::raw_ostream& os,
+                                            const PathDiagnosticMacroPiece& P,
+                                            unsigned num) {
+  
+  for (PathDiagnosticMacroPiece::const_iterator I=P.begin(), E=P.end();
+        I!=E; ++I) {
+    
+    if (const PathDiagnosticMacroPiece *MP =
+          dyn_cast<PathDiagnosticMacroPiece>(*I)) {
+      num = ProcessMacroPiece(os, *MP, num);
+      continue;
+    }
+
+    if (PathDiagnosticEventPiece *EP = dyn_cast<PathDiagnosticEventPiece>(*I)) {
+      os << "<div class=\"msg msgEvent\" style=\"width:94%; "
+            "margin-left:5px\">"
+            "<table class=\"msgT\"><tr>"
+            "<td valign=\"top\"><div class=\"PathIndex PathIndexEvent\">";
+      EmitAlphaCounter(os, num++);
+      os << "</div></td><td valign=\"top\">"
+         << html::EscapeText(EP->getString())
+         << "</td></tr></table></div>\n";
+    }
+  }
+  
+  return num;
 }
 
 void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,

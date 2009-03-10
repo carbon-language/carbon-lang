@@ -13,8 +13,24 @@
 
 #include "clang/Analysis/PathDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Casting.h"
 #include <sstream>
 using namespace clang;
+using llvm::dyn_cast;
+using llvm::isa;
+
+bool PathDiagnosticMacroPiece::containsEvent() const {
+  for (const_iterator I = begin(), E = end(); I!=E; ++I) {
+    if (isa<PathDiagnosticEventPiece>(*I))
+      return true;
+    
+    if (PathDiagnosticMacroPiece *MP = dyn_cast<PathDiagnosticMacroPiece>(*I))
+      if (MP->containsEvent())
+        return true;
+  }
+
+  return false;
+}
 
 static size_t GetNumCharsToLastNonPeriod(const char *s) {
   const char *start = s;
@@ -61,6 +77,16 @@ PathDiagnostic::PathDiagnostic() : Size(0) {}
 
 PathDiagnostic::~PathDiagnostic() {
   for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
+}
+
+void PathDiagnostic::resetPath(bool deletePieces) {
+  Size = 0;
+
+  if (deletePieces)
+    for (iterator I=begin(), E=end(); I!=E; ++I)
+      delete &*I;
+  
+  path.clear();
 }
 
 
