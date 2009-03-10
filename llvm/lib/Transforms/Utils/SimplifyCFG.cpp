@@ -1112,8 +1112,10 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
   
   // If this basic block contains anything other than a PHI (which controls the
   // branch) and branch itself, bail out.  FIXME: improve this in the future.
-  for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI, ++Size) {
+  for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI) {
     if (Size > 10) return false;  // Don't clone large BB's.
+    if (!isa<DbgInfoIntrinsic>(BBI))
+      ++Size;
     
     // We can only support instructions that are do not define values that are
     // live outside of the current basic block.
