@@ -65,15 +65,15 @@ is:</p>
      <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
 
   </ul>
-  <li>Non-mac users: Paths to system header files are currently hard coded
-      into clang; as a result, if clang can't find your system headers,
-      please follow these instructions:</li>
+  <li>If you intend to work on clang C++ support, you may need to tell it how
+      to find your C++ standard library headers.  If clang can't find your 
+      system libstdc++ headers, please follow these instructions:</li>
 
   <ul>
-    <li>'<tt>touch empty.c; gcc -v empty.c -fsyntax-only</tt>' to get the
+    <li>'<tt>touch empty.cpp; gcc -v empty.cpp -fsyntax-only</tt>' to get the
     path.</li>
     <li>Look for the comment "FIXME: temporary hack:
-    hard-coded paths" in <tt>clang/lib/Driver/InitHeaderSearch.cpp</tt> and
+    hard-coded paths" in <tt>clang/lib/Frontend/InitHeaderSearch.cpp</tt> and
     change the lines below to include that path.</li>
   </ul>
 
