@@ -159,8 +159,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   // Create a new rewriter to generate HTML.
   Rewriter R(SMgr);
   
-  // Process the path.
-  
+  // Process the path.  
   unsigned n = D.size();
   unsigned max = n;
   
@@ -376,7 +375,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
       switch (*I) {
         default:
           ++cnt;
-          continue;          
+          continue;    
         case ' ':
         case '\t':
         case '\n':
@@ -410,9 +409,9 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     // Now generate the message bubble. 
     const char *Kind = 0;
     switch (P.getKind()) {
-      default: break;
       case PathDiagnosticPiece::Event:  Kind = "Event"; break;
       case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
+      case PathDiagnosticPiece::Macro: Kind = "Macro"; break;
     }
     
     std::string sbuf;

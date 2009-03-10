@@ -136,10 +136,14 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
 #endif
   // Output the PathDiagnosticPiece::Kind.
   Indent(o, indent) << "<key>kind</key>\n";
-  Indent(o, indent) << "<string>"
-    << (P.getKind() == PathDiagnosticPiece::Event 
-        ? "Event" : "ControlFlow")
-    << "</string>\n";
+  Indent(o, indent) << "<string>";
+  
+  switch (P.getKind()) {
+    case PathDiagnosticPiece::Event: o << "Event"; break;
+    case PathDiagnosticPiece::ControlFlow: o << "ControlFlow"; break;
+    case PathDiagnosticPiece::Macro: o << "Macro"; break;
+  }
+  o << "</string>\n";
   
   
   // Finish up.
