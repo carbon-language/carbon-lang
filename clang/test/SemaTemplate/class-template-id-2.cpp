@@ -4,7 +4,7 @@ namespace N {
 
   template<> class A<int> { };
 
-  template<> class A<float>; // expected-note{{forward declaration of 'class A'}}
+  template<> class A<float>; // expected-note{{forward declaration of 'class A<float>'}}
 
   class B : public A<int> { };
 }

@@ -1287,10 +1287,11 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
     InnerString = Name->getName() + InnerString;
 }
 
-void 
-ClassTemplateSpecializationType::
-getAsStringInternal(std::string &InnerString) const {
-  std::string SpecString = Template->getNameAsString();
+/// \brief Print a template argument list, including the '<' and '>'
+/// enclosing the template arguments.
+static std::string printTemplateArgumentList(const TemplateArgument *Args,
+                                             unsigned NumArgs) {
+  std::string SpecString;
   SpecString += '<';
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
     if (Arg)
@@ -1298,22 +1299,22 @@ getAsStringInternal(std::string &InnerString) const {
     
     // Print the argument into a string.
     std::string ArgString;
-    switch (getArg(Arg).getKind()) {
+    switch (Args[Arg].getKind()) {
     case TemplateArgument::Type:
-      getArg(Arg).getAsType().getAsStringInternal(ArgString);
+      Args[Arg].getAsType().getAsStringInternal(ArgString);
       break;
 
     case TemplateArgument::Declaration:
-      ArgString = cast<NamedDecl>(getArg(Arg).getAsDecl())->getNameAsString();
+      ArgString = cast<NamedDecl>(Args[Arg].getAsDecl())->getNameAsString();
       break;
 
     case TemplateArgument::Integral:
-      ArgString = getArg(Arg).getAsIntegral()->toString(10, true);
+      ArgString = Args[Arg].getAsIntegral()->toString(10, true);
       break;
 
     case TemplateArgument::Expression: {
       llvm::raw_string_ostream s(ArgString);
-      getArg(Arg).getAsExpr()->printPretty(s);
+      Args[Arg].getAsExpr()->printPretty(s);
       break;
     }
     }
@@ -1335,6 +1336,14 @@ getAsStringInternal(std::string &InnerString) const {
 
   SpecString += '>';
 
+  return SpecString;
+}
+
+void 
+ClassTemplateSpecializationType::
+getAsStringInternal(std::string &InnerString) const {
+  std::string SpecString = Template->getNameAsString();
+  SpecString += printTemplateArgumentList(getArgs(), getNumArgs());
   if (InnerString.empty())
     InnerString.swap(SpecString);
   else
@@ -1394,6 +1403,16 @@ void TagType::getAsStringInternal(std::string &InnerString) const {
     ID = Typedef->getIdentifier()->getName();
   } else
     ID = "<anonymous>";
+
+  // If this is a class template specialization, print the template
+  // arguments.
+  if (ClassTemplateSpecializationDecl *Spec 
+        = dyn_cast<ClassTemplateSpecializationDecl>(getDecl())) {
+    std::string TemplateArgs 
+      = printTemplateArgumentList(Spec->getTemplateArgs(),
+                                  Spec->getNumTemplateArgs());
+    InnerString = TemplateArgs + InnerString;
+  }
 
   if (Kind)
     InnerString = std::string(Kind) + " " + ID + InnerString;

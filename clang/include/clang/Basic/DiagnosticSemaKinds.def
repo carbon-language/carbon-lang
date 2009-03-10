@@ -643,7 +643,7 @@ DIAG(err_template_spec_redecl_global_scope, ERROR,
 DIAG(err_template_recursion_depth_exceeded, ERROR,
      "recursive template instantiation exceeded maximum depth of %0")
 DIAG(note_template_recursion_depth, NOTE,
-     "use -ftemplate-depth=N to increase recursive template "
+     "use -ftemplate-depth-N to increase recursive template "
      "instantiation depth")
 DIAG(err_template_implicit_instantiate_undefined, ERROR,
      "implicit instantiation of undefined template %0")

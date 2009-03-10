@@ -1006,7 +1006,8 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod())
     return Diag(ArgLoc, diag::err_template_arg_local_type)
       << QualType(Tag, 0);
-  else if (Tag && !Tag->getDecl()->getDeclName()) {
+  else if (Tag && !Tag->getDecl()->getDeclName() && 
+           !Tag->getDecl()->getTypedefForAnonDecl()) {
     Diag(ArgLoc, diag::err_template_arg_unnamed_type);
     Diag(Tag->getDecl()->getLocation(), diag::note_template_unnamed_type_here);
     return true;
