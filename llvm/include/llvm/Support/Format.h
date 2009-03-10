@@ -1,4 +1,4 @@
-//===--- Format.h - Efficient printf-style formatting for streams etc -----===//
+//===- Format.h - Efficient printf-style formatting for streams -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
