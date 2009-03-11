@@ -3135,12 +3135,12 @@ public:
   /// BeginFunction - Gather pre-function debug information.  Assumes being
   /// emitted immediately after the function entry point.
   void BeginFunction(MachineFunction *MF) {
+    this->MF = MF;
+
     if (!ShouldEmitDwarfDebug()) return;
 
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
-
-    this->MF = MF;
 
     // Begin accumulating function debug information.
     MMI->BeginFunction(MF);
