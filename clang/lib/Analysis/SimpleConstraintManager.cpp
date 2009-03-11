@@ -20,6 +20,10 @@ namespace clang {
 
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
+bool SimpleConstraintManager::canReasonAbout(SVal X) const {
+  return true;
+}
+  
 const GRState*
 SimpleConstraintManager::Assume(const GRState* St, SVal Cond, bool Assumption,
                                 bool& isFeasible) {

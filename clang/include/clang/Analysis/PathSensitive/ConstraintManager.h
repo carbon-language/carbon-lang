@@ -51,6 +51,13 @@ public:
                      const char* nl, const char *sep) = 0;
 
   virtual void EndPath(const GRState* St) {}
+  
+  /// canReasonAbout - Not all ConstraintManagers can accurately reason about
+  ///  all SVal values.  This method returns true if the ConstraintManager can
+  ///  reasonably handle a given SVal value.  This is typically queried by
+  ///  GRExprEngine to determine if the value should be replaced with a
+  ///  conjured symbolic value in order to recover some precision.
+  virtual bool canReasonAbout(SVal X) const = 0;
 };
 
 ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr);

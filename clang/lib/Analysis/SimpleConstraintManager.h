@@ -26,6 +26,9 @@ public:
   SimpleConstraintManager(GRStateManager& statemgr) 
     : StateMgr(statemgr) {}
   virtual ~SimpleConstraintManager();
+  
+  bool canReasonAbout(SVal X) const;
+  
   virtual const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
                                 bool& isFeasible);
 
