@@ -400,9 +400,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
       BHasPHIKill |= DLR->valno->hasPHIKill;
       assert(DLR->valno->def == DefIdx);
-      if (BHasSubRegs)
-        // Don't know how to update sub-register live intervals.
-        return false;
       BDeadValNos.push_back(DLR->valno);
       BExtend[DLR->start] = DLR->end;
       JoinedCopies.insert(UseMI);
@@ -418,8 +415,17 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   DOUT << "\nExtending: "; IntB.print(DOUT, tri_);
 
   // Remove val#'s defined by copies that will be coalesced away.
-  for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i)
+  for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i) {
+    VNInfo *DeadVNI = BDeadValNos[i];
+    if (BHasSubRegs) {
+      for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
+        LiveInterval &SRLI = li_->getInterval(*SR);
+        const LiveRange *SRLR = SRLI.getLiveRangeContaining(DeadVNI->def);
+        SRLI.removeValNo(SRLR->valno);
+      }
+    }
     IntB.removeValNo(BDeadValNos[i]);
+  }
 
   // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
   // is updated. Kills are also updated.
@@ -443,7 +449,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
     // If the IntB live range is assigned to a physical register, and if that
     // physreg has sub-registers, update their live intervals as well. 
-    if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
+    if (BHasSubRegs) {
       for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
         LiveInterval &SRLI = li_->getInterval(*SR);
         SRLI.MergeInClobberRange(AI->start, End, li_->getVNInfoAllocator());
