@@ -75,6 +75,18 @@ public:
   const llvm::APSInt& getValue(const llvm::APInt& X, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, QualType T);
+  
+  const llvm::APSInt& ConvertSignedness(const llvm::APSInt& To,
+                                        const llvm::APSInt& From) {
+    assert(To.getBitWidth() == From.getBitWidth());
+
+    // Same sign?  Just return.
+    if (To.isUnsigned() == From.isUnsigned())
+      return From;
+    
+    // Convert!
+    return getValue(llvm::APSInt((llvm::APInt&) From, To.isUnsigned()));
+  }
 
   const llvm::APSInt& getIntValue(uint64_t X, bool isUnsigned) {
     QualType T = isUnsigned ? Ctx.UnsignedIntTy : Ctx.IntTy;
