@@ -12,7 +12,7 @@ PARALLEL_DIRS = Utils Instrumentation Scalar IPO Hello
 
 # No support for plugins on windows targets
 ifeq ($(OS), $(filter $(OS), Cygwin MingW))
-  PARALLEL_DIRS := $(filter-out Hello, $(DIRS))
+  PARALLEL_DIRS = $(filter-out Hello, $(PARALLEL_DIRS))
 endif
 
 include $(LEVEL)/Makefile.common
