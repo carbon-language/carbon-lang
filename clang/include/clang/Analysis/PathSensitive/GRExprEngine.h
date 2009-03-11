@@ -430,6 +430,10 @@ public:
 
   StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }
   
+  ConstraintManager& getConstraintManager() {
+    return StateMgr.getConstraintManager();
+  }
+  
   BasicValueFactory& getBasicVals() {
     return StateMgr.getBasicVals();
   }
