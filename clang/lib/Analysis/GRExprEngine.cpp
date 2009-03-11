@@ -3015,7 +3015,6 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
 #endif
 
 #ifndef NDEBUG
-
 template <typename ITERATOR>
 GRExprEngine::NodeTy* GetGraphNode(ITERATOR I) { return *I; }
 
@@ -3025,42 +3024,27 @@ GetGraphNode<llvm::DenseMap<GRExprEngine::NodeTy*, Expr*>::iterator>
   (llvm::DenseMap<GRExprEngine::NodeTy*, Expr*>::iterator I) {
   return I->first;
 }
-
-template <typename ITERATOR>
-static void AddSources(std::vector<GRExprEngine::NodeTy*>& Sources,
-                       ITERATOR I, ITERATOR E) {
-  
-  llvm::SmallSet<ProgramPoint,10> CachedSources;
-  
-  for ( ; I != E; ++I ) {
-    GRExprEngine::NodeTy* N = GetGraphNode(I);
-    ProgramPoint P = N->getLocation();
-    
-    if (CachedSources.count(P))
-      continue;
-    
-    CachedSources.insert(P);    
-    Sources.push_back(N);
-  }
-}
 #endif
 
 void GRExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG  
   if (trim) {
     std::vector<NodeTy*> Src;
-    
-    // FIXME: Migrate over to the new way of adding nodes.
-    AddSources(Src, null_derefs_begin(), null_derefs_end());
-    AddSources(Src, undef_derefs_begin(), undef_derefs_end());
-    AddSources(Src, explicit_bad_divides_begin(), explicit_bad_divides_end());
-    AddSources(Src, undef_results_begin(), undef_results_end());
-    AddSources(Src, bad_calls_begin(), bad_calls_end());
-    AddSources(Src, undef_arg_begin(), undef_arg_end());
-    AddSources(Src, undef_branches_begin(), undef_branches_end());
-    
-    // FIXME: Enhance BugReporter to have a clean way to query if a node
-    // is involved in an error... and what kind.
+
+    // Flush any outstanding reports to make sure we cover all the nodes.
+    // This does not cause them to get displayed.
+    for (BugReporter::iterator I=BR.begin(), E=BR.end(); I!=E; ++I)
+      const_cast<BugType*>(*I)->FlushReports(BR);
+
+    // Iterate through the reports and get their nodes.
+    for (BugReporter::iterator I=BR.begin(), E=BR.end(); I!=E; ++I) {
+      for (BugType::const_iterator I2=(*I)->begin(), E2=(*I)->end(); I2!=E2; ++I2) {        
+        const BugReportEquivClass& EQ = *I2;
+        const BugReport &R = **EQ.begin();
+        NodeTy *N = const_cast<NodeTy*>(R.getEndNode());
+        if (N) Src.push_back(N);
+      }
+    }
     
     ViewGraph(&Src[0], &Src[0]+Src.size());
   }
