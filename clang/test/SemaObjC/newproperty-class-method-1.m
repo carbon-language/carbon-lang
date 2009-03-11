@@ -22,12 +22,9 @@ int _magicNumber = 0;
 
 + (void) classMeth
 {
-#if 0
-// FIXME: implement.
 	self.magicNumber = 10;
 	if (self.magicNumber != 10)
 	  abort ();
-#endif
 }
 @end
 
