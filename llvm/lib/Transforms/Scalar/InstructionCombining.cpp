@@ -10954,10 +10954,10 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       InsertNewInstBefore(New, AI);
 
       // Scan to the end of the allocation instructions, to skip over a block of
-      // allocas if possible...
+      // allocas if possible...also skip interleaved debug info
       //
       BasicBlock::iterator It = New;
-      while (isa<AllocationInst>(*It)) ++It;
+      while (isa<AllocationInst>(*It) || isa<DbgInfoIntrinsic>(*It)) ++It;
 
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
