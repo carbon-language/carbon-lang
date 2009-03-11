@@ -308,9 +308,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
 
   case MachineOperand::MO_Immediate:
-    if (Modifier && !strcmp(Modifier, "call"))
-      O << '*';
-    else if (!Modifier ||
+    if (!Modifier ||
         (strcmp(Modifier, "debug") && strcmp(Modifier, "mem")))
       O << '$';
     O << MO.getImm();
