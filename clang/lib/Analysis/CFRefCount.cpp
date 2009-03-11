@@ -2373,13 +2373,13 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
   const char* name = 0;
   
   if (isGCEnabled())
-    name = "[naming convention] leak of returned object (GC)";
+    name = "leak of returned object (GC)";
   else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
     name = "[naming convention] leak of returned object (hybrid MM, "
            "non-GC)";
   else {
     assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "[naming convention] leak of returned object";
+    name = "leak of returned object";
   }
   
   leakAtReturn = new LeakAtReturn(this, name);
