@@ -215,14 +215,14 @@ static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
     if (!is32Or64BitBasicType(FD->getType(), Context))
       return false;
     
-    // If this is a bit-field we need to make sure it is still a
-    // 32-bit or 64-bit type.
-    if (Expr *BW = FD->getBitWidth()) {
-      unsigned Width = BW->getIntegerConstantExprValue(Context).getZExtValue();
-      if (Width <= 16)
-        return false;
-    }
+    // FIXME: Reject bitfields wholesale; there are two problems, we
+    // don't know how to expand them yet, and the predicate for
+    // telling if a bitfield still counts as "basic" is more
+    // complicated than what we were doing previously.
+    if (FD->isBitField())
+      return false;
   }
+
   return true;
 }
 
