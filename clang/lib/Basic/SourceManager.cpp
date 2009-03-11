@@ -129,6 +129,7 @@ public:
   void clear() {
     FilenameIDs.clear();
     FilenamesByID.clear();
+    LineEntries.clear();
   }
   
   ~LineTableInfo() {}
