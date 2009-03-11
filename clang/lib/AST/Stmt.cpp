@@ -278,7 +278,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       
       --CurPtr;
       while (CurPtr != StrEnd && isdigit(*CurPtr))
-        N = N*10+((*CurPtr++)-'0');
+        N = N*10 + ((*CurPtr++)-'0');
       
       unsigned NumOperands =
         getNumOutputs() + getNumPlusOperands() + getNumInputs();
