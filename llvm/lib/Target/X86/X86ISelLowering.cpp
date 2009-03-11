@@ -3900,15 +3900,29 @@ SDValue LowerVECTOR_SHUFFLEv16i8(SDValue V1, SDValue V2,
     SDValue Elt0Src = Elt0 < 16 ? V1 : V2;
     SDValue Elt1Src = Elt1 < 16 ? V1 : V2;
     SDValue InsElt;
-    
+
+    // If Elt0 and Elt1 are defined, are consecutive, and can be load
+    // using a single extract together, load it and store it.
+    if ((Elt0 >= 0) && ((Elt0 + 1) == Elt1) && ((Elt0 & 1) == 0)) {
+      InsElt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, Elt1Src,
+                           DAG.getIntPtrConstant(Elt1 / 2));
+      NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, InsElt,
+                        DAG.getIntPtrConstant(i));
+      continue;
+    }
+
     // If Elt1 is defined, extract it from the appropriate source.  If the
-    // source byte is not also odd, shift the extracted word left 8 bits.
+    // source byte is not also odd, shift the extracted word left 8 bits
+    // otherwise clear the bottom 8 bits if we need to do an or.
     if (Elt1 >= 0) {
       InsElt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, Elt1Src,
                            DAG.getIntPtrConstant(Elt1 / 2));
       if ((Elt1 & 1) == 0)
         InsElt = DAG.getNode(ISD::SHL, dl, MVT::i16, InsElt,
                              DAG.getConstant(8, TLI.getShiftAmountTy()));
+      else if (Elt0 >= 0)
+        InsElt = DAG.getNode(ISD::AND, dl, MVT::i16, InsElt,
+                             DAG.getConstant(0xFF00, MVT::i16));
     }
     // If Elt0 is defined, extract it from the appropriate source.  If the
     // source byte is not also even, shift the extracted word right 8 bits. If
@@ -3920,6 +3934,9 @@ SDValue LowerVECTOR_SHUFFLEv16i8(SDValue V1, SDValue V2,
       if ((Elt0 & 1) != 0)
         InsElt0 = DAG.getNode(ISD::SRL, dl, MVT::i16, InsElt0,
                               DAG.getConstant(8, TLI.getShiftAmountTy()));
+      else if (Elt1 >= 0)
+        InsElt0 = DAG.getNode(ISD::AND, dl, MVT::i16, InsElt0,
+                             DAG.getConstant(0x00FF, MVT::i16));
       InsElt = Elt1 >= 0 ? DAG.getNode(ISD::OR, dl, MVT::i16, InsElt, InsElt0)
                          : InsElt0;
     }
