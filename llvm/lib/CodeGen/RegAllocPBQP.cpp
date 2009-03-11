@@ -33,6 +33,7 @@
 
 #include "PBQP.h"
 #include "VirtRegMap.h"
+#include "Spiller.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

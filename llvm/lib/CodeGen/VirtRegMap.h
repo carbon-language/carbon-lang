@@ -430,19 +430,6 @@ namespace llvm {
     VRM.print(OS);
     return OS;
   }
-
-  /// Spiller interface: Implementations of this interface assign spilled
-  /// virtual registers to stack slots, rewriting the code.
-  struct Spiller {
-    virtual ~Spiller();
-    virtual bool runOnMachineFunction(MachineFunction &MF,
-                                      VirtRegMap &VRM) = 0;
-  };
-
-  /// createSpiller - Create an return a spiller object, as specified on the
-  /// command line.
-  Spiller* createSpiller();
-
 } // End llvm namespace
 
 #endif

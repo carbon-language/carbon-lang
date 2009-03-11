@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "regalloc"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
+#include "Spiller.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
