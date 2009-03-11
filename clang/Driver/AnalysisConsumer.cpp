@@ -546,13 +546,13 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.
   ExplodedNodeImpl::SetAuditor(0);
-  
-  // Display warnings.
-  Eng.getBugReporter().FlushReports();
-  
+
   // Visualize the exploded graph.
   if (mgr.shouldVisualizeGraphviz())
     Eng.ViewGraph(mgr.shouldTrimGraph());
+  
+  // Display warnings.
+  Eng.getBugReporter().FlushReports();
 }
 
 static void ActionCheckerCFRefAux(AnalysisManager& mgr, bool GCEnabled,
