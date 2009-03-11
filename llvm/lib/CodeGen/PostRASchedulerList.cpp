@@ -268,7 +268,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       --Count;
     }
     assert(Count == 0 && "Instruction count mismatch!");
-    assert(MBB->begin() == Current || CurrentCount != 0 &&
+    assert((MBB->begin() == Current || CurrentCount != 0) &&
            "Instruction count mismatch!");
     Scheduler.Run(MBB, MBB->begin(), Current, CurrentCount);
     Scheduler.EmitSchedule();
