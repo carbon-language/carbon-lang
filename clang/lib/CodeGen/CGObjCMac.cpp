@@ -308,6 +308,7 @@ public:
   
 class CGObjCCommonMac : public CodeGen::CGObjCRuntime {
   class GC_IVAR {
+  public:
     unsigned int ivar_bytepos;
     unsigned int ivar_size;
     GC_IVAR() : ivar_bytepos(0), ivar_size(0) {}
@@ -2461,11 +2462,15 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const llvm::StructLayout *Layout,
                               const std::vector<FieldDecl*>& RecFields,
                               unsigned int BytePos, bool ForStrongLayout,
                               int &Index, int &SkIndex, bool &HasUnion) {
-  bool is_union = (RD && RD->isUnion());
+  bool IsUnion = (RD && RD->isUnion());
+  uint64_t MaxUnionIvarSize = 0;
+  uint64_t MaxSkippedUnionIvarSize = 0;
+  FieldDecl *MaxField = 0;
+  FieldDecl *MaxSkippedField = 0;
   unsigned int base = 0;
   if (RecFields.empty())
     return;
-  if (is_union)
+  if (IsUnion)
     base = BytePos + GetIvarBaseOffset(Layout, RecFields[0]);
 
   for (unsigned i = 0; i < RecFields.size(); i++) {
@@ -2478,6 +2483,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const llvm::StructLayout *Layout,
       std::vector<FieldDecl*> NestedRecFields;
       if (FQT->isUnionType())
         HasUnion = true;
+      else
+        assert(FQT->isRecordType() && 
+               "only union/record is supported for ivar layout bitmap");
+
       const RecordType *RT = FQT->getAsRecordType();
       const RecordDecl *RD = RT->getDecl();
       // FIXME - Find a more efficiant way of passing records down.
@@ -2493,8 +2502,124 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const llvm::StructLayout *Layout,
       continue;
     }
     else if (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
-        FQT = Array->getElementType();
+      const ConstantArrayType *CArray = 
+                                 dyn_cast_or_null<ConstantArrayType>(Array);
+      assert(CArray && "only array with know element size is supported");
+      FQT = CArray->getElementType();
+      assert(!FQT->isUnionType() && 
+             "layout for array of unions not supported");
+      if (FQT->isRecordType()) {
+        uint64_t ElCount = CArray->getSize().getZExtValue();
+        int OldIndex = Index;
+        int OldSkIndex = SkIndex;
+        
+        std::vector<FieldDecl*> ElementRecFields;
+        // FIXME - Use a common routine with the above!
+        const RecordType *RT = FQT->getAsRecordType();
+        const RecordDecl *RD = RT->getDecl();
+        // FIXME - Find a more efficiant way of passing records down.
+        unsigned j = 0;
+        for (RecordDecl::field_iterator i = RD->field_begin(),
+             e = RD->field_end(); i != e; ++i)
+          ElementRecFields[j++] = (*i);
+        BuildAggrIvarLayout(Layout, RD,
+                            ElementRecFields,
+                            BytePos + GetIvarBaseOffset(Layout, Field),
+                            ForStrongLayout, Index, SkIndex,
+                            HasUnion);
+        // Replicate layout information for each array element. Note that
+        // one element is already done.
+        uint64_t ElIx = 1;
+        for (int FirstIndex = Index, FirstSkIndex = SkIndex;
+             ElIx < ElCount; ElIx++) {
+          uint64_t Size = CGM.getContext().getTypeSize(RT);
+          for (int i = OldIndex+1; i <= FirstIndex; ++i)
+          {
+            IvarsInfo[++Index].ivar_bytepos = 
+              IvarsInfo[i].ivar_bytepos + Size*ElIx;
+            IvarsInfo[Index].ivar_size = IvarsInfo[i].ivar_size;
+          }
+          
+          for (int i = OldSkIndex+1; i <= FirstSkIndex; ++i)
+          {
+            SkipIvars[++SkIndex].ivar_bytepos = 
+              SkipIvars[i].ivar_bytepos + Size*ElIx;
+            SkipIvars[SkIndex].ivar_size = SkipIvars[i].ivar_size;
+          }
+        }
+        continue;
+      }
     }
+    // At this point, we are done with Record/Union and array there of.
+    // For other arrays we are down to its element type.
+    QualType::GCAttrTypes GCAttr = QualType::GCNone;
+    do {
+      if (FQT.isObjCGCStrong() || FQT.isObjCGCWeak()) {
+        GCAttr = FQT.isObjCGCStrong() ? QualType::Strong : QualType::Weak;
+        break;
+      }
+      else if (FQT->hasObjCPointerRepresentation()) {
+        GCAttr = QualType::Strong;
+        break;
+      }
+      else if (const PointerType *PT = FQT->getAsPointerType()) {
+        FQT = PT->getPointeeType();
+      }
+      else {
+        break;
+      }
+    } while (true);
+    if ((ForStrongLayout && GCAttr == QualType::Strong)
+        || (!ForStrongLayout && GCAttr == QualType::Weak)) {
+      if (IsUnion)
+      {
+        uint64_t UnionIvarSize = CGM.getContext().getTypeSize(Field->getType());
+        if (UnionIvarSize > MaxUnionIvarSize)
+        {
+          MaxUnionIvarSize = UnionIvarSize;
+          MaxField = Field;
+        }
+      }
+      else
+      {
+        IvarsInfo[++Index].ivar_bytepos = 
+          BytePos + GetIvarBaseOffset(Layout, Field);
+        IvarsInfo[Index].ivar_size = 
+          CGM.getContext().getTypeSize(Field->getType());
+      }
+    }
+    else if ((ForStrongLayout && 
+              (GCAttr == QualType::GCNone || GCAttr == QualType::Weak))
+             || (!ForStrongLayout && GCAttr != QualType::Weak)) {
+      if (IsUnion)
+      {
+        uint64_t UnionIvarSize = CGM.getContext().getTypeSize(Field->getType());
+        if (UnionIvarSize > MaxSkippedUnionIvarSize)
+        {
+          MaxSkippedUnionIvarSize = UnionIvarSize;
+          MaxSkippedField = Field;
+        }
+      }
+      else
+      {
+        SkipIvars[++SkIndex].ivar_bytepos = 
+          BytePos + GetIvarBaseOffset(Layout, Field);
+        SkipIvars[SkIndex].ivar_size = 
+          CGM.getContext().getTypeSize(Field->getType());
+      }
+    }
+  }
+  if (MaxField)
+  {
+    IvarsInfo[++Index].ivar_bytepos = 
+      BytePos + GetIvarBaseOffset(Layout, MaxField);
+    IvarsInfo[Index].ivar_size = MaxUnionIvarSize;
+  }
+  if (MaxSkippedField)
+  {
+    SkipIvars[++SkIndex].ivar_bytepos = 
+      BytePos + GetIvarBaseOffset(Layout, MaxSkippedField);
+    SkipIvars[SkIndex].ivar_size = MaxSkippedUnionIvarSize;
   }
   return;
 }

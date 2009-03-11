@@ -369,6 +369,10 @@ public:
   /// interface types.
   bool hasPointerRepresentation() const;
 
+  /// hasObjCPointerRepresentation - Whether this type can represent
+  /// an objective pointer type for the purpose of GC'ability
+  bool hasObjCPointerRepresentation() const; 
+
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.
@@ -1863,6 +1867,11 @@ inline bool Type::isOverloadType() const {
 inline bool Type::hasPointerRepresentation() const {
   return (isPointerType() || isReferenceType() || isBlockPointerType() ||
           isObjCInterfaceType() || isObjCQualifiedIdType() || 
+          isObjCQualifiedInterfaceType());
+}
+
+inline bool Type::hasObjCPointerRepresentation() const {
+  return (isObjCInterfaceType() || isObjCQualifiedIdType() || 
           isObjCQualifiedInterfaceType());
 }
 
