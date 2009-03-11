@@ -18,6 +18,7 @@
 
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/PrettyStackTrace.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/Support/Compiler.h"
@@ -152,6 +153,10 @@ const GRState* GRExprEngine::getInitialState() {
 
 void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                S->getLocStart(),
+                                "Error evaluating statement");
+  
   Builder = &builder;
   EntryNode = builder.getLastNode();
   
@@ -221,8 +226,11 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = NULL;
 }
 
-void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
-  
+void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {  
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                S->getLocStart(),
+                                "Error evaluating statement");
+
   // FIXME: add metadata to the CFG so that we can disable
   //  this check when we KNOW that there is no block-level subexpression.
   //  The motivation is that this check requires a hashtable lookup.
@@ -534,6 +542,10 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
 
 void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
+  
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                Condition->getLocStart(),
+                                "Error evaluating branch");
 
   // Remove old bindings for subexpressions.
   const GRState* PrevState =
