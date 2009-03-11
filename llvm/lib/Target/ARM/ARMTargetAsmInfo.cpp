@@ -185,8 +185,12 @@ unsigned ARMTargetAsmInfo<BaseTAI>::getInlineAsmLength(const char *s) const {
             Str++;
           break;
         }
+      
+      if (*Str == 0) break;
+      
       // Ignore everything from comment char(s) to EOL
-      if (strncmp(Str, BaseTAI::CommentString, strlen(BaseTAI::CommentString))==-0)
+      if (strncmp(Str, BaseTAI::CommentString,
+                  strlen(BaseTAI::CommentString)) == 0)
         atInsnStart = false;
       // FIXME do something like the following for non-Darwin
       else if (*Str == '.' && Subtarget->isTargetDarwin()) {
