@@ -193,13 +193,12 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   IntB.addRange(LiveRange(FillerStart, FillerEnd, BValNo));
 
   // If the IntB live range is assigned to a physical register, and if that
-  // physreg has aliases, 
+  // physreg has sub-registers, update their live intervals as well. 
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    // Update the liveintervals of sub-registers.
-    for (const unsigned *AS = tri_->getSubRegisters(IntB.reg); *AS; ++AS) {
-      LiveInterval &AliasLI = li_->getInterval(*AS);
-      AliasLI.addRange(LiveRange(FillerStart, FillerEnd,
-              AliasLI.getNextValue(FillerStart, 0, li_->getVNInfoAllocator())));
+    for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
+      LiveInterval &SRLI = li_->getInterval(*SR);
+      SRLI.addRange(LiveRange(FillerStart, FillerEnd,
+                 SRLI.getNextValue(FillerStart, 0, li_->getVNInfoAllocator())));
     }
   }
 
@@ -367,6 +366,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     BExtend[ALR->end] = BLR->end;
 
   // Update uses of IntA of the specific Val# with IntB.
+  bool BHasSubRegs = false;
+  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
+    BHasSubRegs = *tri_->getSubRegisters(IntB.reg);
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
          UE = mri_->use_end(); UI != UE;) {
     MachineOperand &UseMO = UI.getOperand();
@@ -398,6 +400,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
       BHasPHIKill |= DLR->valno->hasPHIKill;
       assert(DLR->valno->def == DefIdx);
+      if (BHasSubRegs)
+        // Don't know how to update sub-register live intervals.
+        return false;
       BDeadValNos.push_back(DLR->valno);
       BExtend[DLR->start] = DLR->end;
       JoinedCopies.insert(UseMI);
@@ -435,6 +440,15 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     if (EI != BExtend.end())
       End = EI->second;
     IntB.addRange(LiveRange(AI->start, End, ValNo));
+
+    // If the IntB live range is assigned to a physical register, and if that
+    // physreg has sub-registers, update their live intervals as well. 
+    if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
+      for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
+        LiveInterval &SRLI = li_->getInterval(*SR);
+        SRLI.MergeInClobberRange(AI->start, End, li_->getVNInfoAllocator());
+      }
+    }
   }
   IntB.addKills(ValNo, BKills);
   ValNo->hasPHIKill = BHasPHIKill;

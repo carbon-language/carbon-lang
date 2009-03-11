@@ -551,6 +551,20 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
   }
 }
 
+VNInfo *LiveInterval::getUnknownValNo(BumpPtrAllocator &VNInfoAllocator) {
+  unsigned i = getNumValNums();
+  if (i) {
+    do {
+      --i;
+      VNInfo *VNI = getValNumInfo(i);
+      if (VNI->def == ~0U && !VNI->copy &&
+          !VNI->hasPHIKill && !VNI->redefByEC && VNI->kills.empty())
+        return VNI;
+    } while (i != 0);
+  }
+  return getNextValue(~0U, 0, VNInfoAllocator);
+}
+
 
 /// MergeInClobberRanges - For any live ranges that are not defined in the
 /// current interval, but are defined in the Clobbers interval, mark them
@@ -561,8 +575,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
   
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
-  // FIXME: Use a single sentinal number for these!
-  VNInfo *ClobberValNo = getNextValue(~0U, 0, VNInfoAllocator);
+  VNInfo *ClobberValNo = getUnknownValNo(VNInfoAllocator);
   
   iterator IP = begin();
   for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
@@ -585,6 +598,32 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
     // Insert the clobber interval.
     IP = addRangeFrom(LiveRange(Start, End, ClobberValNo), IP);
   }
+}
+
+void LiveInterval::MergeInClobberRange(unsigned Start, unsigned End,
+                                       BumpPtrAllocator &VNInfoAllocator) {
+  // Find a value # to use for the clobber ranges.  If there is already a value#
+  // for unknown values, use it.
+  VNInfo *ClobberValNo = getUnknownValNo(VNInfoAllocator);
+  
+  iterator IP = begin();
+  IP = std::upper_bound(IP, end(), Start);
+    
+  // If the start of this range overlaps with an existing liverange, trim it.
+  if (IP != begin() && IP[-1].end > Start) {
+    Start = IP[-1].end;
+    // Trimmed away the whole range?
+    if (Start >= End) return;
+  }
+  // If the end of this range overlaps with an existing liverange, trim it.
+  if (IP != end() && End > IP->start) {
+    End = IP->start;
+    // If this trimmed away the whole range, ignore it.
+    if (Start == End) return;
+  }
+    
+  // Insert the clobber interval.
+  addRangeFrom(LiveRange(Start, End, ClobberValNo), IP);
 }
 
 /// MergeValueNumberInto - This method is called when two value nubmers

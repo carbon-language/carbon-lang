@@ -212,6 +212,10 @@ namespace llvm {
       return VNI;
     }
 
+    /// getUnknownValNo - Find a value# for unknown values, if there isn't one
+    /// create a new one.
+    VNInfo *getUnknownValNo(BumpPtrAllocator &VNInfoAllocator);
+
     /// addKill - Add a kill instruction index to the specified value
     /// number.
     static void addKill(VNInfo *VNI, unsigned KillIdx) {
@@ -295,6 +299,11 @@ namespace llvm {
     /// VNInfoAllocator since it will create a new val#.
     void MergeInClobberRanges(const LiveInterval &Clobbers,
                               BumpPtrAllocator &VNInfoAllocator);
+
+    /// MergeInClobberRange - Same as MergeInClobberRanges except it merge in a
+    /// single LiveRange only.
+    void MergeInClobberRange(unsigned Start, unsigned End,
+                             BumpPtrAllocator &VNInfoAllocator);
 
     /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
     /// in RHS into this live interval as the specified value number.
