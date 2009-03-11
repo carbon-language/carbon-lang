@@ -1038,7 +1038,10 @@ while (@ARGV) {
       DieDiag("'-o' option requires a target directory name.\n");
     }
     
-    $HtmlDir = shift @ARGV;
+    # Construct an absolute path.  Uses the current working directory
+    # as a base if the original path was not absolute.
+    $HtmlDir = abs_path(shift @ARGV);
+    
     next;
   }
 
