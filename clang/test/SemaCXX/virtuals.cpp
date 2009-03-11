@@ -8,9 +8,14 @@ class A {
   void i() = 1; // expected-error {{initializer on function does not look like a pure-specifier}}
   void j() = 0u; // expected-error {{initializer on function does not look like a pure-specifier}}
 
+
+  void k();
+
 public:
   A(int);
 };
+
+virtual void A::k() { } // expected-error{{'virtual' can only be specified inside the class definition}}
 
 class B : public A {
   // Needs to recognize that overridden function is virtual.

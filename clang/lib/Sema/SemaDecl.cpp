@@ -1431,9 +1431,14 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     DC = 0;
   }
 
-  // Check that there are no default arguments (C++ only).
-  if (getLangOptions().CPlusPlus)
+  if (getLangOptions().CPlusPlus) {
+    // Check that there are no default arguments (C++ only).
     CheckExtraCXXDefaultArguments(D);
+
+    if (D.getDeclSpec().isVirtualSpecified())
+      Diag(D.getDeclSpec().getVirtualSpecLoc(), 
+           diag::err_virtual_non_function);
+  }
 
   TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, LastDeclarator);
   if (!NewTD) return 0;
@@ -1579,6 +1584,10 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       << Name.getAsString();
     return 0;
   }
+
+  if (D.getDeclSpec().isVirtualSpecified())
+    Diag(D.getDeclSpec().getVirtualSpecLoc(), 
+         diag::err_virtual_non_function);
 
   bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
   if (!DC->isRecord() && S->getFnParent() == 0) {
@@ -1751,9 +1760,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   bool isInline = D.getDeclSpec().isInlineSpecified();
-  // bool isVirtual = D.getDeclSpec().isVirtualSpecified();
+  bool isVirtual = D.getDeclSpec().isVirtualSpecified();
   bool isExplicit = D.getDeclSpec().isExplicitSpecified();
 
+  bool isVirtualOkay = false;
   FunctionDecl *NewFD;
   if (D.getKind() == Declarator::DK_Constructor) {
     // This is a C++ constructor declaration.
@@ -1784,6 +1794,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       if (InvalidDecl)
         NewFD->setInvalidDecl();
+
+      isVirtualOkay = true;
     } else {
       Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
 
@@ -1811,12 +1823,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         
       if (InvalidDecl)
         NewFD->setInvalidDecl();
+
+      isVirtualOkay = true;
     }
   } else if (DC->isRecord()) {
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R,
                                   (SC == FunctionDecl::Static), isInline);
+
+    isVirtualOkay = (SC != FunctionDecl::Static);
   } else {
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
@@ -1834,6 +1850,34 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // scope specifier, the lexical context will be different
   // from the semantic context.
   NewFD->setLexicalDeclContext(CurContext);
+
+  // C++ [dcl.fct.spec]p5:
+  //   The virtual specifier shall only be used in declarations of
+  //   nonstatic class member functions that appear within a
+  //   member-specification of a class declaration; see 10.3.
+  //
+  // FIXME: Checking the 'virtual' specifier is not sufficient. A
+  // function is also virtual if it overrides an already virtual
+  // function. This is important to do here because it's part of the
+  // declaration.
+  if (isVirtual && !InvalidDecl) {
+    if (!isVirtualOkay) {
+       Diag(D.getDeclSpec().getVirtualSpecLoc(), 
+           diag::err_virtual_non_function);
+    } else if (!CurContext->isRecord()) {
+      // 'virtual' was specified outside of the class.
+      Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_virtual_out_of_class)
+        << CodeModificationHint::CreateRemoval(
+                             SourceRange(D.getDeclSpec().getVirtualSpecLoc()));
+    } else {
+      // Okay: Add virtual to the method.
+      cast<CXXMethodDecl>(NewFD)->setVirtual();
+      CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
+      CurClass->setAggregate(false);
+      CurClass->setPOD(false);
+      CurClass->setPolymorphic(true);
+    }
+  }
 
   // Handle GNU asm-label extension (encoded as an attribute).
   if (Expr *E = (Expr*) D.getAsmLabel()) {
@@ -2109,9 +2153,38 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
   if (RealDecl == 0)
     return;
   
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(RealDecl)) {
+    // With declarators parsed the way they are, the parser cannot
+    // distinguish between a normal initializer and a pure-specifier.
+    // Thus this grotesque test.
+    IntegerLiteral *IL;
+    Expr *Init = static_cast<Expr *>(init.get());
+    if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
+        Context.getCanonicalType(IL->getType()) == Context.IntTy) {
+      if (Method->isVirtual())
+        Method->setPure();
+      else {
+        Diag(Method->getLocation(), diag::err_non_virtual_pure)
+          << Method->getDeclName() << Init->getSourceRange();
+        Method->setInvalidDecl();
+      }
+    } else {
+      Diag(Method->getLocation(), diag::err_member_function_initialization)
+        << Method->getDeclName() << Init->getSourceRange();
+      Method->setInvalidDecl();
+    }
+    return;
+  }
+
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
-    Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
+    if (getLangOptions().CPlusPlus &&
+        RealDecl->getLexicalDeclContext()->isRecord() &&
+        isa<NamedDecl>(RealDecl))
+      Diag(RealDecl->getLocation(), diag::err_member_initialization)
+        << cast<NamedDecl>(RealDecl)->getDeclName();
+    else
+      Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
     return;
   }
@@ -2148,6 +2221,52 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
       if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
         if (SC == VarDecl::Static) // C99 6.7.8p4.
           CheckForConstantInitializer(Init, DclT);
+      }
+    }
+  } else if (VDecl->isStaticDataMember() && 
+             VDecl->getLexicalDeclContext()->isRecord()) {
+    // This is an in-class initialization for a static data member, e.g.,
+    //
+    // struct S {
+    //   static const int value = 17;
+    // };
+
+    // Attach the initializer
+    VDecl->setInit(Init);
+
+    // C++ [class.mem]p4:
+    //   A member-declarator can contain a constant-initializer only
+    //   if it declares a static member (9.4) of const integral or
+    //   const enumeration type, see 9.4.2.
+    QualType T = VDecl->getType();
+    if (!T->isDependentType() && 
+        (!Context.getCanonicalType(T).isConstQualified() ||
+         !T->isIntegralType())) {
+      Diag(VDecl->getLocation(), diag::err_member_initialization)
+        << VDecl->getDeclName() << Init->getSourceRange();
+      VDecl->setInvalidDecl();
+    } else {
+      // C++ [class.static.data]p4:
+      //   If a static data member is of const integral or const
+      //   enumeration type, its declaration in the class definition
+      //   can specify a constant-initializer which shall be an
+      //   integral constant expression (5.19).
+      if (!Init->isTypeDependent() &&
+          !Init->getType()->isIntegralType()) {
+        // We have a non-dependent, non-integral or enumeration type.
+        Diag(Init->getSourceRange().getBegin(), 
+             diag::err_in_class_initializer_non_integral_type)
+          << Init->getType() << Init->getSourceRange();
+        VDecl->setInvalidDecl();
+      } else if (!Init->isTypeDependent() && !Init->isValueDependent()) {
+        // Check whether the expression is a constant expression.
+        llvm::APSInt Value;
+        SourceLocation Loc;
+        if (!Init->isIntegerConstantExpr(Value, Context, &Loc)) {
+          Diag(Loc, diag::err_in_class_initializer_non_constant)
+            << Init->getSourceRange();
+          VDecl->setInvalidDecl();
+        }
       }
     }
   } else if (VDecl->isFileVarDecl()) {
@@ -3252,6 +3371,7 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
 Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
+
   return HandleField(S, static_cast<RecordDecl*>(TagD), DeclStart, D,
                      static_cast<Expr*>(BitfieldWidth),
                      AS_public);
@@ -3269,8 +3389,13 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
  
   QualType T = GetTypeForDeclarator(D, S);
 
-  if (getLangOptions().CPlusPlus)
+  if (getLangOptions().CPlusPlus) {
     CheckExtraCXXDefaultArguments(D);
+
+    if (D.getDeclSpec().isVirtualSpecified())
+      Diag(D.getDeclSpec().getVirtualSpecLoc(), 
+           diag::err_virtual_non_function);
+  }
 
   NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
   if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))

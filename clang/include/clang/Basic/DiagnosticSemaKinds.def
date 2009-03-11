@@ -248,6 +248,8 @@ DIAG(err_mutable_nonmember, ERROR,
      "'mutable' can only be applied to member variables")
 DIAG(err_virtual_non_function, ERROR,
      "'virtual' can only appear on non-static member functions")
+DIAG(err_virtual_out_of_class, ERROR,
+     "'virtual' can only be specified inside the class definition")
 DIAG(err_static_not_bitfield, ERROR,
      "static member %0 cannot be a bit-field")
 DIAG(err_typedef_not_bitfield, ERROR,
@@ -1229,6 +1231,10 @@ DIAG(err_base_init_does_not_name_class, ERROR,
 DIAG(err_base_init_direct_and_virtual, ERROR,
      "base class initializer %0 names both a direct base class and an"
      " inherited virtual base class")
+DIAG(err_in_class_initializer_non_integral_type, ERROR,
+     "in-class initializer has non-integral, non-enumeration type %0")
+DIAG(err_in_class_initializer_non_constant, ERROR,
+     "in-class initializer is not an integral constant expression")
 
 // C++ anonymous unions and GNU anonymous structs/unions
 DIAG(ext_anonymous_union, EXTENSION,

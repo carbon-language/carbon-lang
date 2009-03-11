@@ -344,6 +344,19 @@ public:
     return false;
   }
   
+  /// \brief Determines whether this is a static data member.
+  ///
+  /// This will only be true in C++, and applies to, e.g., the
+  /// variable 'x' in:
+  /// \code
+  /// struct S {
+  ///   static int x;
+  /// };
+  /// \endcode
+  bool isStaticDataMember() const {
+    return getDeclContext()->isRecord();
+  }
+
   /// isFileVarDecl - Returns true for file scoped variable declaration.
   bool isFileVarDecl() const {
     if (getKind() != Decl::Var)

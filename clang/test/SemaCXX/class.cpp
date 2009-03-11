@@ -35,7 +35,7 @@ public:
   int i = 0; // expected-error {{error: 'i' can only be initialized if it is a static const integral data member}}
   static int si = 0; // expected-error {{error: 'si' can only be initialized if it is a static const integral data member}}
   static const NestedC ci = 0; // expected-error {{error: 'ci' can only be initialized if it is a static const integral data member}}
-  static const int nci = vs; // expected-error {{error: initializer element is not a compile-time constant}}
+  static const int nci = vs; // expected-error {{in-class initializer is not an integral constant expression}}
   static const int vi = 0;
   static const E evi = 0;
 
@@ -53,7 +53,7 @@ public:
 
   typedef int A;
 
-  virtual int viv; // expected-error {{error: 'virtual' can only appear on non-static member functions}}
+  virtual int viv; // expected-error {{'virtual' can only appear on non-static member functions}}
   virtual static int vsif(); // expected-error {{error: 'virtual' can only appear on non-static member functions}}
   virtual int vif();
 
