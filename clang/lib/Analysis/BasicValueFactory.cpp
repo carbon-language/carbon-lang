@@ -92,7 +92,7 @@ const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, unsigned BitWidth,
 const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, QualType T) {
   
   unsigned bits = Ctx.getTypeSize(T);
-  llvm::APSInt V(bits, T->isUnsignedIntegerType());
+  llvm::APSInt V(bits, T->isUnsignedIntegerType() || Loc::IsLocType(T));
   V = X;
   return getValue(V);
 }

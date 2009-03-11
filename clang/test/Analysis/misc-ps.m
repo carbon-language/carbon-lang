@@ -178,3 +178,18 @@ char pr3770(int x) {
   return 'a';
 }
 
+// PR 3780
+// - We just want to test that this doesn't crash the analyzer.
+typedef struct st ST;
+struct st { char *name; };
+extern ST *Cur_Pu;
+
+void pr3780(void)
+{
+  static ST *last_Cur_Pu;
+  if (last_Cur_Pu == Cur_Pu) {
+    return;
+  } 
+}
+
+
