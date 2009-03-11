@@ -59,3 +59,32 @@
 
 @end
 
+static int g_val;
+
+@interface Root 
++ alloc;
+- init;
+@end
+
+@interface Subclass : Root
+{
+    int setterOnly;
+}
+- (void) setSetterOnly:(int)value;
+@end
+
+@implementation Subclass
+- (void) setSetterOnly:(int)value {
+    setterOnly = value;
+    g_val = setterOnly;
+}
+@end
+
+int main (void) {
+    Subclass *x = [[Subclass alloc] init];
+
+    x.setterOnly = 4;
+    if (g_val != 4)
+      abort ();
+    return 0;
+}

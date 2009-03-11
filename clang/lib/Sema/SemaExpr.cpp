@@ -1883,38 +1883,47 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // Check if we can reference this property.
       if (DiagnoseUseOfDecl(Getter, MemberLoc))
         return ExprError();
-
-      // If we found a getter then this may be a valid dot-reference, we
-      // will look for the matching setter, in case it is needed.
-      Selector SetterSel = 
-        SelectorTable::constructSetterName(PP.getIdentifierTable(), 
-                                           PP.getSelectorTable(), &Member);
-      ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
-      if (!Setter) {
-        // If this reference is in an @implementation, also check for 'private'
-        // methods.
-        if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-          if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-            if (ObjCImplementationDecl *ImpDecl =
-                  ObjCImplementations[ClassDecl->getIdentifier()])
-              Setter = ImpDecl->getInstanceMethod(SetterSel);
+    }
+    // If we found a getter then this may be a valid dot-reference, we
+    // will look for the matching setter, in case it is needed.
+    Selector SetterSel = 
+      SelectorTable::constructSetterName(PP.getIdentifierTable(), 
+                                         PP.getSelectorTable(), &Member);
+    ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
+    if (!Setter) {
+      // If this reference is in an @implementation, also check for 'private'
+      // methods.
+      if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+        if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+          if (ObjCImplementationDecl *ImpDecl =
+                ObjCImplementations[ClassDecl->getIdentifier()])
+            Setter = ImpDecl->getInstanceMethod(SetterSel);
+    }
+    // Look through local category implementations associated with the class.
+    if (!Setter) {
+      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
+        if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
+          Setter = ObjCCategoryImpls[i]->getInstanceMethod(SetterSel);
       }
-      // Look through local category implementations associated with the class.
-      if (!Setter) {
-        for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
-          if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-            Setter = ObjCCategoryImpls[i]->getInstanceMethod(SetterSel);
-        }
-      }
-
-      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
-        return ExprError();
-
-      // FIXME: we must check that the setter has property type.
-      return Owned(new (Context) ObjCKVCRefExpr(Getter, Getter->getResultType(),
-                                      Setter, MemberLoc, BaseExpr));
     }
 
+    if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
+      return ExprError();
+
+    if (Getter || Setter) {
+      QualType PType;
+
+      if (Getter)
+        PType = Getter->getResultType();
+      else {
+        for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
+             E = Setter->param_end(); PI != E; ++PI)
+          PType = (*PI)->getType();
+      }
+      // FIXME: we must check that the setter has property type.
+      return Owned(new (Context) ObjCKVCRefExpr(Getter, PType,
+                                      Setter, MemberLoc, BaseExpr));
+    }
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
       << &Member << BaseType);
   }
