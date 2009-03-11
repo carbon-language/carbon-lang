@@ -1011,6 +1011,10 @@ public:
     return getOutputConstraint(i)[0] == '+';
   }
   
+  /// getNumPlusOperands - Return the number of output operands that have a "+"
+  /// constraint.
+  unsigned getNumPlusOperands() const;
+  
   //===--- Input operands ---===//
   
   unsigned getNumInputs() const { return NumInputs; }  

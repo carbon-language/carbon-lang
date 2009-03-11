@@ -143,6 +143,17 @@ std::string AsmStmt::getOutputConstraint(unsigned i) const {
                      Constraints[i]->getByteLength());
 }
 
+/// getNumPlusOperands - Return the number of output operands that have a "+"
+/// constraint.
+unsigned AsmStmt::getNumPlusOperands() const {
+  unsigned Res = 0;
+  for (unsigned i = 0, e = getNumOutputs(); i != e; ++i)
+    if (isOutputPlusConstraint(i))
+      ++Res;
+  return Res;
+}
+
+
 
 Expr *AsmStmt::getInputExpr(unsigned i) {
   return cast<Expr>(Exprs[i + NumOutputs]);
@@ -266,12 +277,15 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       char *End;
       unsigned long N = strtoul(CurPtr-1, &End, 10);
       assert(End != CurPtr-1 && "We know that EscapedChar is a digit!");
+      
+      unsigned NumOperands =
+        getNumOutputs() + getNumPlusOperands() + getNumInputs();
+      if (N >= NumOperands) {
+        DiagOffs = CurPtr-StrStart-1;
+        return diag::err_asm_invalid_operand_number;
+      }
+
       CurPtr = End;
-      
-      // FIXME: This should be caught during Sema.
-      //unsigned NumOperands = S.getNumOutputs() + S.getNumInputs();
-      //assert(N < NumOperands && "Operand number out of range!");
-      
       Pieces.push_back(AsmStringPiece(N, Modifier));
       continue;
     }

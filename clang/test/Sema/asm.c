@@ -55,7 +55,7 @@ void test6(long i) {
   asm("nop" : : "er"(i));
 }
 
-void asm_string_tests() {
+void asm_string_tests(int i) {
   asm("%!");   // simple asm string, %! is not an error.   
   asm("%!" : );   // expected-error {{invalid % escape in inline assembly string}}
   asm("xyz %" : );   // expected-error {{invalid % escape in inline assembly string}}
@@ -64,4 +64,8 @@ void asm_string_tests() {
   asm ("%[somename]" :: "i"(4)); // expected-error {{unknown symbolic operand name in inline assembly string}}
   asm ("%[somename" :: "i"(4)); // expected-error {{unterminated symbolic operand name in inline assembly string}}
   asm ("%[]" :: "i"(4)); // expected-error {{empty symbolic operand name in inline assembly string}}
+  
+  // PR3258
+  asm("%9" :: "i"(4)); // expected-error {{invalid operand number in inline asm string}}
+  asm("%1" : "+r"(i)); // ok, referring to input.
 }

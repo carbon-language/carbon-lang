@@ -27,3 +27,5 @@ DIAG(err_asm_unterminated_symbolic_operand_name, ERROR,
      "unterminated symbolic operand name in inline assembly string")
 DIAG(err_asm_empty_symbolic_operand_name, ERROR,
      "empty symbolic operand name in inline assembly string")
+DIAG(err_asm_invalid_operand_number, ERROR,
+     "invalid operand number in inline asm string")
