@@ -252,7 +252,9 @@ public:
   void print(llvm::raw_ostream& os) const;
   
   QualType getRValueType(ASTContext&) const {
-    return T;
+    const PointerType* PTy = T->getAsPointerType();
+    assert(PTy);
+    return PTy->getPointeeType();
   }
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
