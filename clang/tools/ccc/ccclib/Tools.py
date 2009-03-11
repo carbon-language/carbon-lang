@@ -193,7 +193,13 @@ class Clang_CompileTool(Tool):
         elif outputType is Types.LLVMBCType:
             cmd_args.append('-emit-llvm-bc')
         elif outputType is Types.AsmTypeNoPP:
-            cmd_args.append('-S')
+            # FIXME: This is hackish, it would be better if we had the
+            # action instead of just looking at types.
+            assert len(inputs) == 1
+            if inputs[0].type is Types.AsmType:
+                cmd_args.append('-E')
+            else:
+                cmd_args.append('-S')
         elif (inputs[0].type.preprocess and 
               outputType is inputs[0].type.preprocess):
             cmd_args.append('-E')
@@ -453,7 +459,9 @@ class Darwin_X86_CC1Tool(Tool):
         """getCC1Name(type) -> name, use-cpp, is-cxx"""
         
         # FIXME: Get bool results from elsewhere.
-        if type is Types.CType or type is Types.CHeaderType:
+        if type is Types.AsmType:
+            return 'cc1',True,False
+        elif type is Types.CType or type is Types.CHeaderType:
             return 'cc1',True,False
         elif type is Types.CTypeNoPP or type is Types.CHeaderNoPPType:
             return 'cc1',False,False

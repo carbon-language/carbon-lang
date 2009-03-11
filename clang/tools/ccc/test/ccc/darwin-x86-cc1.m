@@ -11,5 +11,14 @@
 // RUN: xcc -ccc-no-clang -ccc-host-bits 32 -ccc-host-machine i386 -ccc-host-system darwin -ccc-host-release 10.5.0 -### -x objective-c-header %s -o /tmp/x.gch &> %t.opts &&
 // RUN: grep ' "/usr/libexec/gcc/i686-apple-darwin10/4.2.1/cc1obj" "-quiet" "-D__DYNAMIC__" ".*darwin-x86-cc1.m" "-fPIC" "-quiet" "-dumpbase" "darwin-x86-cc1.m" "-mmacosx-version-min=10.6.5" "-mtune=core2" "-auxbase" ".*" "-o" "/dev/null" "--output-pch=" "/tmp/x.gch"' %t.opts &&
 
+// RUN: touch %t.s &&
+// RUN: xcc -ccc-no-clang -ccc-host-bits 32 -ccc-host-machine i386 -ccc-host-system darwin -ccc-host-release 10.5.0 -### -c -x assembler %t.s &> %t.opts &&
+// RUN: grep /cc1 %t.opts | count 0 &&
+// RUN: grep ' "/usr/libexec/gcc/i686-apple-darwin10/4.2.1/as" "-arch" "i386" "-force_cpusubtype_ALL" "-o" ".*darwin-x86-cc1.m.out.tmp.s"' %t.opts &&
+
+// RUN: xcc -ccc-no-clang -ccc-host-bits 32 -ccc-host-machine i386 -ccc-host-system darwin -ccc-host-release 10.5.0 -### -c -x assembler-with-cpp %t.s &> %t.opts &&
+// RUN: grep ' "/usr/libexec/gcc/i686-apple-darwin10/4.2.1/cc1" "-E" "-quiet" "-D__DYNAMIC__" ".*darwin-x86-cc1.m.out.tmp.s" "-o" ".*" "-fPIC" "-mmacosx-version-min=10.6.5" "-mtune=core2"' %t.opts &&
+// RUN: grep ' "/usr/libexec/gcc/i686-apple-darwin10/4.2.1/as" "-arch" "i386" "-force_cpusubtype_ALL" "-o" ".*"' %t.opts &&
+
 // RUN: true
 

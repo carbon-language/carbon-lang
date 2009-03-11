@@ -148,14 +148,15 @@ kTypeSpecifierMap = {
 }
 
 # Set of C family types.
-cTypesSet = set([CType, CTypeNoPP, 
-                 ObjCType, ObjCTypeNoPP,
-                 CXXType, CXXTypeNoPP,
-                 ObjCXXType, ObjCXXTypeNoPP,
-                 CHeaderType, CHeaderNoPPType,
-                 ObjCHeaderType, ObjCHeaderNoPPType,
-                 CXXHeaderType, CXXHeaderNoPPType,
-                 ObjCXXHeaderType, ObjCXXHeaderNoPPType])
+clangableTypesSet = set([AsmType, # Assembler to preprocess
+                         CType, CTypeNoPP, 
+                         ObjCType, ObjCTypeNoPP,
+                         CXXType, CXXTypeNoPP,
+                         ObjCXXType, ObjCXXTypeNoPP,
+                         CHeaderType, CHeaderNoPPType,
+                         ObjCHeaderType, ObjCHeaderNoPPType,
+                         CXXHeaderType, CXXHeaderNoPPType,
+                         ObjCXXHeaderType, ObjCXXHeaderNoPPType])
 
 # Set of C++ family types.
 cxxTypesSet = set([CXXType, CXXTypeNoPP,

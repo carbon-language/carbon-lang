@@ -57,14 +57,14 @@ class ToolChain(object):
 
     def shouldUseClangCompiler(self, action):
         # If user requested no clang, or this isn't a "compile" phase,
-        # or this isn't a C family option, then don't use clang.
+        # or this isn't an input clang understands, then don't use clang.
         if (self.driver.cccNoClang or 
             not isinstance(action.phase, (Phases.PreprocessPhase,
                                           Phases.CompilePhase,
                                           Phases.SyntaxOnlyPhase,
                                           Phases.EmitLLVMPhase,
                                           Phases.PrecompilePhase)) or
-            action.inputs[0].type not in Types.cTypesSet):
+            action.inputs[0].type not in Types.clangableTypesSet):
             return False
 
         if self.driver.cccNoClangPreprocessor:
