@@ -630,8 +630,12 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
 
   // Only support concrete integer indexes for now.
   if (Base && Offset) {
-    SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, *Offset);
-
+    // For now, convert the signedness of offset in case it doesn't match.
+    const llvm::APSInt &I =
+      getBasicVals().ConvertSignedness(Base->getValue(), Offset->getValue());    
+    nonloc::ConcreteInt OffsetConverted(I);
+    
+    SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffsetConverted);
     const MemRegion* NewER = MRMgr.getElementRegion(NewIdx, 
                                                     ER->getArrayRegion());
     return Loc::MakeVal(NewER);
