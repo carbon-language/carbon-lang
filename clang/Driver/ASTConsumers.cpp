@@ -904,11 +904,6 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<implicit parameter> " << IPD->getNameAsString() << "\n";
       break;
     }
-    case Decl::CXXClassVar: {
-      CXXClassVarDecl* CVD = cast<CXXClassVarDecl>(*I);
-      Out << "<static member var> " << CVD->getNameAsString() << "\n";
-      break;
-    }
     case Decl::ParmVar: {
       ParmVarDecl* PVD = cast<ParmVarDecl>(*I);
       Out << "<parameter> " << PVD->getNameAsString() << "\n";

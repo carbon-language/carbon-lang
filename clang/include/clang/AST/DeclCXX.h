@@ -759,34 +759,6 @@ public:
   static CXXConversionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// CXXClassVarDecl - Represents a static data member of a struct/union/class.
-class CXXClassVarDecl : public VarDecl {
-
-  CXXClassVarDecl(CXXRecordDecl *RD, SourceLocation L,
-              IdentifierInfo *Id, QualType T)
-    : VarDecl(CXXClassVar, RD, L, Id, T, None) {}
-public:
-  static CXXClassVarDecl *Create(ASTContext &C, CXXRecordDecl *RD,
-                             SourceLocation L,IdentifierInfo *Id,
-                             QualType T);
-  
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == CXXClassVar; }
-  static bool classof(const CXXClassVarDecl *D) { return true; }
-  
-protected:
-  /// EmitImpl - Serialize this CXXClassVarDecl. Called by Decl::Emit.
-  // FIXME: Implement this.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a CXXClassVarDecl.  Called by Decl::Create.
-  // FIXME: Implement this.
-  static CXXClassVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-};
-
-
 /// CXXClassMemberWrapper - A wrapper class for C++ class member decls.
 /// Common functions like set/getAccess are included here to avoid bloating
 /// the interface of non-C++ specific decl classes, like NamedDecl.

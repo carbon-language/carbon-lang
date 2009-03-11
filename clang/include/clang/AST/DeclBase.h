@@ -212,7 +212,6 @@ public:
     case Typedef:
     case EnumConstant:
     case Var:
-    case CXXClassVar:
     case ImplicitParam:
     case ParmVar:
     case OriginalParmVar:

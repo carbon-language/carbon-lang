@@ -560,7 +560,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     if (BitWidth) {
       if (Member->isInvalidDecl()) {
         // don't emit another diagnostic.
-      } else if (isa<CXXClassVarDecl>(Member)) {
+      } else if (isa<VarDecl>(Member)) {
         // C++ 9.6p3: A bit-field shall not be a static member.
         // "static member 'A' cannot be a bit-field"
         Diag(Loc, diag::err_static_not_bitfield)
@@ -621,7 +621,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     // C++ 9.2p4: A member-declarator can contain a constant-initializer only
     // if it declares a static member of const integral or const enumeration
     // type.
-    if (CXXClassVarDecl *CVD = dyn_cast<CXXClassVarDecl>(Member)) {
+    if (VarDecl *CVD = dyn_cast<VarDecl>(Member)) {
       // ...static member of...
       CVD->setInit(Init);
       // ...const integral or const enumeration type.

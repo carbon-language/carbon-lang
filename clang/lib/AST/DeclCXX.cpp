@@ -316,12 +316,6 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXConversionDecl(RD, L, N, T, isInline, isExplicit);
 }
 
-CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
-                                   SourceLocation L, IdentifierInfo *Id,
-                                   QualType T) {
-  return new (C) CXXClassVarDecl(RD, L, Id, T);
-}
-
 OverloadedFunctionDecl *
 OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                DeclarationName N) {

@@ -1744,7 +1744,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
                                             MemberLoc, MemberType));
-    } else if (CXXClassVarDecl *Var = dyn_cast<CXXClassVarDecl>(MemberDecl))
+    } else if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl))
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                   Var, MemberLoc,
                                   Var->getType().getNonReferenceType()));

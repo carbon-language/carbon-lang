@@ -511,7 +511,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
           return LV_Valid;
 
       //   -- If E2 is a static data member [...] then E1.E2 is an lvalue.
-      if (isa<CXXClassVarDecl>(Member))
+      if (isa<VarDecl>(Member) && Member->getDeclContext()->isRecord())
         return LV_Valid;
 
       //   -- If E2 is a non-static data member [...]. If E1 is an

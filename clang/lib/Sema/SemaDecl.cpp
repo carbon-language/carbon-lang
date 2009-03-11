@@ -1580,27 +1580,20 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     return 0;
   }
 
-  if (DC->isRecord()) {
-    // This is a static data member for a C++ class.
-    NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                    D.getIdentifierLoc(), II,
-                                    R);
-  } else {
-    bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
-    if (S->getFnParent() == 0) {
-      // C99 6.9p2: The storage-class specifiers auto and register shall not
-      // appear in the declaration specifiers in an external declaration.
-      if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
-        InvalidDecl = true;
-      }
+  bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
+  if (!DC->isRecord() && S->getFnParent() == 0) {
+    // C99 6.9p2: The storage-class specifiers auto and register shall not
+    // appear in the declaration specifiers in an external declaration.
+    if (SC == VarDecl::Auto || SC == VarDecl::Register) {
+      Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
+      InvalidDecl = true;
     }
-    NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
-                            II, R, SC, 
-                            // FIXME: Move to DeclGroup...
-                            D.getDeclSpec().getSourceRange().getBegin());
-    NewVD->setThreadSpecified(ThreadSpecified);
   }
+  NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
+                          II, R, SC, 
+                          // FIXME: Move to DeclGroup...
+                          D.getDeclSpec().getSourceRange().getBegin());
+  NewVD->setThreadSpecified(ThreadSpecified);
   NewVD->setNextDeclarator(LastDeclarator);
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
