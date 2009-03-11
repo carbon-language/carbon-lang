@@ -138,7 +138,7 @@ public:
   ///
   void Solve(Function &F);
   
-  void Print(Function &F, std::ostream &OS);
+  void Print(Function &F, std::ostream &OS) const;
 
   /// getLatticeState - Return the LatticeVal object that corresponds to the
   /// value.  If an value is not in the map, it is returned as untracked,

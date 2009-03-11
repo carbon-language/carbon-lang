@@ -310,7 +310,7 @@ void SparseSolver::Solve(Function &F) {
   }
 }
 
-void SparseSolver::Print(Function &F, std::ostream &OS) {
+void SparseSolver::Print(Function &F, std::ostream &OS) const {
   OS << "\nFUNCTION: " << F.getNameStr() << "\n";
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!BBExecutable.count(BB))
