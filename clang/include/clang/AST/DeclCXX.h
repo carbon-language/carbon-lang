@@ -759,36 +759,6 @@ public:
   static CXXConversionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// CXXClassMemberWrapper - A wrapper class for C++ class member decls.
-/// Common functions like set/getAccess are included here to avoid bloating
-/// the interface of non-C++ specific decl classes, like NamedDecl.
-/// FIXME: Doug would like to remove this class.
-class CXXClassMemberWrapper {
-  Decl *MD;
-
-public:
-  CXXClassMemberWrapper(Decl *D) : MD(D) {
-    assert(isMember(D) && "Not a C++ class member!");
-  }
-
-  AccessSpecifier getAccess() const {
-    return AccessSpecifier(MD->Access);
-  }
-
-  void setAccess(AccessSpecifier AS) {
-    assert(AS != AS_none && "Access must be specified.");
-    MD->Access = AS;
-  }
-
-  CXXRecordDecl *getParent() const {
-    return dyn_cast<CXXRecordDecl>(MD->getDeclContext());
-  }
-
-  static bool isMember(Decl *D) {
-    return isa<CXXRecordDecl>(D->getDeclContext());
-  }
-};
-  
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
 ///   extern "C" void foo();
 ///

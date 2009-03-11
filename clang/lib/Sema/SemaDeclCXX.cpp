@@ -585,10 +585,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   assert((Name || isInstField) && "No identifier for non-field ?");
 
-  // set/getAccess is not part of Decl's interface to avoid bloating it with C++
-  // specific methods. Use a wrapper class that can be used with all C++ class
-  // member decls.
-  CXXClassMemberWrapper(Member).setAccess(AS);
+  Member->setAccess(AS);
 
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is an array or a class (clause 9) with [...] no
