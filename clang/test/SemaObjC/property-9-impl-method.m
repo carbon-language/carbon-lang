@@ -62,3 +62,33 @@ NSSize minimumSize;
 }
 @end
 
+@class NSImage;
+
+@interface XCImageArchiveEntry : NSObject
+{
+  NSImage *_cachedImage;
+}
+
+@end
+
+@implementation XCImageArchiveEntry
+
+- (NSImage *)image
+{
+  return _cachedImage;
+}
+
+@end
+
+@interface XCImageArchive : NSObject
+@end
+
+@implementation XCImageArchive
+
+- (NSImage *)imageNamed:(NSString *)name
+{
+    XCImageArchiveEntry * entry;
+    return entry ? entry.image : ((void *)0);
+}
+
+@end

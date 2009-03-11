@@ -1866,11 +1866,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     // If this reference is in an @implementation, check for 'private' methods.
     if (!Getter)
-      if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-        if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-          if (ObjCImplementationDecl *ImpDecl =
-              ObjCImplementations[ClassDecl->getIdentifier()])
-            Getter = ImpDecl->getInstanceMethod(Sel);
+      if (ObjCImplementationDecl *ImpDecl =
+          ObjCImplementations[IFace->getIdentifier()])
+        Getter = ImpDecl->getInstanceMethod(Sel);
 
     // Look through local category implementations associated with the class.
     if (!Getter) {
@@ -1893,11 +1891,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (!Setter) {
       // If this reference is in an @implementation, also check for 'private'
       // methods.
-      if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-        if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-          if (ObjCImplementationDecl *ImpDecl =
-                ObjCImplementations[ClassDecl->getIdentifier()])
-            Setter = ImpDecl->getInstanceMethod(SetterSel);
+      if (ObjCImplementationDecl *ImpDecl =
+          ObjCImplementations[IFace->getIdentifier()])
+        Setter = ImpDecl->getInstanceMethod(SetterSel);
     }
     // Look through local category implementations associated with the class.
     if (!Setter) {
