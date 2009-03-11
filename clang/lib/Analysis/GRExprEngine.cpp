@@ -543,10 +543,6 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
 void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
   
-  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
-                                Condition->getLocStart(),
-                                "Error evaluating branch");
-
   // Remove old bindings for subexpressions.
   const GRState* PrevState =
     StateMgr.RemoveSubExprBindings(builder.getState());
@@ -556,6 +552,10 @@ void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
     builder.markInfeasible(false);
     return;
   }
+  
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                Condition->getLocStart(),
+                                "Error evaluating branch");
   
   SVal V = GetSVal(PrevState, Condition);
   
@@ -2380,11 +2380,10 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         continue;
       }
       
-      // Handle all other values.
-      
+      // Handle all other values.      
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
-      
+
       SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U));      
       state = BindExpr(state, U, U->isPostfix() ? V2 : Result);
 
