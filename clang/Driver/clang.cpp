@@ -441,7 +441,7 @@ LangStd("std", llvm::cl::desc("Language standard to compile for"),
                               "Upcoming ISO C++ 200x with amendments"),
                    clEnumValN(lang_gnucxx0x, "gnu++0x",
                               "Upcoming ISO C++ 200x with amendments and GNU "
-                              "extensions (default for C++)"),
+                              "extensions"),
                    clEnumValEnd));
 
 static llvm::cl::opt<bool>
