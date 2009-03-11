@@ -270,7 +270,7 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
                D->getAttr<WeakImportAttr>()) {
       // "extern_weak" is overloaded in LLVM; we probably should have
       // separate linkage types for this. 
-      GV->setLinkage(llvm::Function::ExternalWeakAnyLinkage);
+      GV->setLinkage(llvm::Function::ExternalWeakLinkage);
    }
   } else {
     if (IsInternal) {
@@ -611,7 +611,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
       setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
 
     if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
-      GV->setLinkage(llvm::GlobalValue::ExternalWeakAnyLinkage);
+      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
     if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
       // Prefaced with special LLVM marker to indicate that the name
