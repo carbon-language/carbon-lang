@@ -274,9 +274,11 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     
     if (isdigit(EscapedChar)) {
       // %n - Assembler operand n
-      char *End;
-      unsigned long N = strtoul(CurPtr-1, &End, 10);
-      assert(End != CurPtr-1 && "We know that EscapedChar is a digit!");
+      unsigned N = 0;
+      
+      --CurPtr;
+      while (CurPtr != StrEnd && isdigit(*CurPtr))
+        N = N*10+((*CurPtr++)-'0');
       
       unsigned NumOperands =
         getNumOutputs() + getNumPlusOperands() + getNumInputs();
@@ -285,7 +287,6 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
         return diag::err_asm_invalid_operand_number;
       }
 
-      CurPtr = End;
       Pieces.push_back(AsmStringPiece(N, Modifier));
       continue;
     }
