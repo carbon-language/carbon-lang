@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_HOSTINFO,_H_
+#ifndef CLANG_DRIVER_HOSTINFO_H_
 #define CLANG_DRIVER_HOSTINFO_H_
 
 #include <string>
