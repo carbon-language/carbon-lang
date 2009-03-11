@@ -3630,8 +3630,11 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
     // Rewrite the MaskVals and assign NewV to V1 if NewV now contains all the
     // source words for the shuffle, to aid later transformations.
     bool AllWordsInNewV = true;
+    bool InOrder[2] = { true, true };
     for (unsigned i = 0; i != 8; ++i) {
       int idx = MaskVals[i];
+      if (idx != (int)i)
+        InOrder[i/4] = false;
       if (idx < 0 || (idx/4) == BestLoQuad || (idx/4) == BestHiQuad)
         continue;
       AllWordsInNewV = false;
@@ -3658,7 +3661,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
 
     // If we've eliminated the use of V2, and the new mask is a pshuflw or
     // pshufhw, that's as cheap as it gets.  Return the new shuffle.
-    if (pshufhw || pshuflw) {
+    if ((pshufhw && InOrder[0]) || (pshuflw && InOrder[1])) {
       MaskV.clear();
       for (unsigned i = 0; i != 8; ++i)
         MaskV.push_back((MaskVals[i] < 0) ? DAG.getUNDEF(MVT::i16)
