@@ -884,6 +884,15 @@ public:
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
   }
 
+  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation LParenLoc, 
+                                               ExprArg AssertExpr,
+                                               SourceLocation CommaLoc,
+                                               ExprArg AssertMessageExpr,
+                                               SourceLocation RParenLoc) {
+    return 0;
+  }
+  
+                                          
   //===------------------------- C++ Expressions --------------------------===//
   
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.

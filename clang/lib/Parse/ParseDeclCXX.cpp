@@ -217,6 +217,55 @@ Parser::DeclTy *Parser::ParseUsingDeclaration(unsigned Context,
   return 0;
 }
 
+/// ParseStaticAssertDeclaration - Parse C++0x static_assert-declaratoion.
+///
+///      static_assert-declaration:
+///        static_assert ( constant-expression  ,  string-literal  ) ;
+///
+Parser::DeclTy *Parser::ParseStaticAssertDeclaration() {
+  assert(Tok.is(tok::kw_static_assert) && "Not a static_assert declaration");
+  SourceLocation StaticAssertLoc = ConsumeToken();
+  
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(Tok, diag::err_expected_lparen);
+    return 0;
+  }
+  
+  SourceLocation LParenLoc = ConsumeParen();
+  
+  OwningExprResult AssertExpr(ParseConstantExpression());
+  if (AssertExpr.isInvalid()) {
+    SkipUntil(tok::semi);
+    return 0;
+  }
+  
+  if (Tok.isNot(tok::comma)) {
+    Diag(Tok, diag::err_expected_comma);
+    SkipUntil(tok::semi);
+    return 0;
+  }
+  
+  SourceLocation CommaLoc = ConsumeToken();
+  
+  if (Tok.isNot(tok::string_literal)) {
+    Diag(Tok, diag::err_expected_string_literal);
+    SkipUntil(tok::semi);
+    return 0;
+  }
+  
+  OwningExprResult AssertMessage(ParseStringLiteralExpression());
+  if (AssertMessage.isInvalid()) 
+    return 0;
+
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after_static_assert);
+
+  return Actions.ActOnStaticAssertDeclaration(LParenLoc, move(AssertExpr), 
+                                              CommaLoc, move(AssertMessage), 
+                                              RParenLoc);
+}
+
 /// ParseClassName - Parse a C++ class-name, which names a class. Note
 /// that we only check that the result names a type; semantic analysis
 /// will need to verify that the type names a class. The result is
@@ -568,7 +617,7 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///         function-definition ';'[opt]
 ///         ::[opt] nested-name-specifier template[opt] unqualified-id ';'[TODO]
 ///         using-declaration                                            [TODO]
-/// [C++0x] static_assert-declaration                                    [TODO]
+/// [C++0x] static_assert-declaration
 ///         template-declaration                                         [TODO]
 /// [GNU]   '__extension__' member-declaration
 ///
@@ -588,6 +637,10 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///         '=' constant-expression
 ///
 Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
+  // static_assert-declaration
+  if (Tok.is(tok::kw_static_assert))
+    return ParseStaticAssertDeclaration();
+      
   // Handle:  member-declaration ::= '__extension__' member-declaration
   if (Tok.is(tok::kw___extension__)) {
     // __extension__ silences extension warnings in the subexpression.

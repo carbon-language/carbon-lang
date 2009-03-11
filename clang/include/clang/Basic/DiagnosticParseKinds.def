@@ -142,6 +142,8 @@ DIAG(err_expected_semi_after_expr, ERROR,
      "expected ';' after expression")
 DIAG(err_expected_semi_after_method_proto, ERROR,
      "expected ';' after method prototype")
+DIAG(err_expected_semi_after_static_assert, ERROR,
+     "expected ';' after static_assert")
 DIAG(err_expected_semi_for, ERROR,
      "expected ';' in 'for' statement specifier")
 DIAG(err_expected_colon_after, ERROR,

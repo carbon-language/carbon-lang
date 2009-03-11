@@ -989,6 +989,7 @@ private:
   DeclTy *ParseUsingDirectiveOrDeclaration(unsigned Context);
   DeclTy *ParseUsingDirective(unsigned Context, SourceLocation UsingLoc);
   DeclTy *ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc);
+  DeclTy *ParseStaticAssertDeclaration();
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.

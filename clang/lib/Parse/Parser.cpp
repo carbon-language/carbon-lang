@@ -408,6 +408,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::kw_typedef:
   case tok::kw_template:
   case tok::kw_export:    // As in 'export template'
+  case tok::kw_static_assert:
     // A function definition cannot start with a these keywords.
     return ParseDeclaration(Declarator::FileContext);
   default:

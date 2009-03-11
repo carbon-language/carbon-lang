@@ -225,6 +225,7 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 /// [C++]   namespace-definition
 /// [C++]   using-directive
 /// [C++]   using-declaration [TODO]
+//  [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///
 Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
@@ -236,6 +237,8 @@ Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
     return ParseNamespace(Context);
   case tok::kw_using:
     return ParseUsingDirectiveOrDeclaration(Context);
+  case tok::kw_static_assert:
+    return ParseStaticAssertDeclaration();
   default:
     return ParseSimpleDeclaration(Context);
   }

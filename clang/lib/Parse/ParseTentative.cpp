@@ -29,7 +29,7 @@ using namespace clang;
 ///           namespace-alias-definition
 ///           using-declaration
 ///           using-directive
-/// [C++0x]   static_assert-declaration                          [TODO]
+/// [C++0x]   static_assert-declaration
 ///
 ///         asm-definition:
 ///           'asm' '(' string-literal ')' ';'
@@ -46,9 +46,6 @@ using namespace clang;
 ///           'using' 'namespace' '::'[opt] nested-name-specifier[opt]
 ///                 namespace-name ';'
 ///
-/// [C++0x] static_assert-declaration:                           [TODO]
-/// [C++0x]   static_assert '(' constant-expression ',' string-literal ')' ';'
-///
 bool Parser::isCXXDeclarationStatement() {
   switch (Tok.getKind()) {
     // asm-definition
@@ -58,6 +55,9 @@ bool Parser::isCXXDeclarationStatement() {
     // using-declaration
     // using-directive
   case tok::kw_using:
+    return true;
+  case tok::kw_static_assert:
+    // static_assert-declaration
     return true;
   default:
     // simple-declaration
