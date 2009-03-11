@@ -493,7 +493,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   // Long double always uses X87.
-  if (!UseSoftFloat) {
+  if (!UseSoftFloat && !NoImplicitFloat) {
     addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
     setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
@@ -582,7 +582,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
   // with -msoft-float, disable use of MMX as well.
-  if (!UseSoftFloat && !DisableMMX && Subtarget->hasMMX()) {
+  if (!UseSoftFloat && !NoImplicitFloat && !DisableMMX && Subtarget->hasMMX()) {
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
@@ -654,7 +654,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i16, Custom);
 
-    setTruncStoreAction(MVT::v8i16, MVT::v8i8, Expand);
+    setTruncStoreAction(MVT::v8i16,             MVT::v8i8, Expand);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i8, Expand);
     setOperationAction(ISD::SELECT,             MVT::v8i8, Promote);
     setOperationAction(ISD::SELECT,             MVT::v4i16, Promote);
@@ -662,7 +662,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v1i64, Custom);
   }
 
-  if (!UseSoftFloat && Subtarget->hasSSE1()) {
+  if (!UseSoftFloat && !NoImplicitFloat && Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
@@ -679,11 +679,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSETCC,             MVT::v4f32, Custom);
   }
 
-  if (!UseSoftFloat && Subtarget->hasSSE2()) {
+  if (!UseSoftFloat && !NoImplicitFloat && Subtarget->hasSSE2()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
 
-    // FIXME: Unfortunately -soft-float means XMM registers cannot be used even
-    // for integer operations.
+    // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
+    // registers cannot be used even for integer operations.
     addRegisterClass(MVT::v16i8, X86::VR128RegisterClass);
     addRegisterClass(MVT::v8i16, X86::VR128RegisterClass);
     addRegisterClass(MVT::v4i32, X86::VR128RegisterClass);
@@ -727,12 +727,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
     }
+
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f64, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2f64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i64, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
+
     if (Subtarget->is64Bit()) {
       setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
@@ -888,7 +890,7 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
   // cases like PR2962.  This should be removed when PR2962 is fixed.
-  if (Subtarget->getStackAlignment() >= 16) {
+  if (!NoImplicitFloat && Subtarget->getStackAlignment() >= 16) {
     if ((isSrcConst || isSrcStr) && Subtarget->hasSSE2() && Size >= 16)
       return MVT::v4i32;
     if ((isSrcConst || isSrcStr) && Subtarget->hasSSE1() && Size >= 16)
@@ -898,7 +900,6 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
     return MVT::i64;
   return MVT::i32;
 }
-
 
 /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
 /// jumptable.
@@ -1434,13 +1435,13 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
       assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
              "SSE register cannot be used when SSE is disabled!");
-      assert(!(NumXMMRegs && UseSoftFloat) &&
+      assert(!(NumXMMRegs && UseSoftFloat && NoImplicitFloat) &&
              "SSE register cannot be used when SSE is disabled!");
-      if (UseSoftFloat || !Subtarget->hasSSE1()) {
+      if (UseSoftFloat || NoImplicitFloat || !Subtarget->hasSSE1())
         // Kernel mode asks for SSE to be disabled, so don't push them
         // on the stack.
         TotalNumXMMRegs = 0;
-      }
+
       // For X86-64, if there are vararg parameters that are passed via
       // registers, then we must store them to their spots on the stack so they
       // may be loaded by deferencing the result of va_next.

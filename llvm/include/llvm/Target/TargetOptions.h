@@ -65,6 +65,12 @@ namespace llvm {
   /// target FP instructions.
   extern bool UseSoftFloat;
 
+  /// NoImplicitFloat - This flag is enabled when the -no-implicit-float flag is
+  /// specified on the command line.  When this flag is on, the code generator
+  /// won't generate any implicit floating point instructions. I.e., no XMM or
+  /// x87 or vectorized memcpy/memmove instructions. This is for X86 only.
+  extern bool NoImplicitFloat;
+
   /// NoZerosInBSS - By default some codegens place zero-initialized data to
   /// .bss section. This flag disables such behaviour (necessary, e.g. for
   /// crt*.o compiling).
