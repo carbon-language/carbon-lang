@@ -141,9 +141,23 @@ public:
     BugReport* operator*() const { return *impl; }
     BugReport* operator->() const { return *impl; }
   };
+  
+  class const_iterator {
+    std::list<BugReport*>::const_iterator impl;
+  public:
+    const_iterator(std::list<BugReport*>::const_iterator i) : impl(i) {}
+    const_iterator& operator++() { ++impl; return *this; }
+    bool operator==(const const_iterator& I) const { return I.impl == impl; }
+    bool operator!=(const const_iterator& I) const { return I.impl != impl; }
+    const BugReport* operator*() const { return *impl; }
+    const BugReport* operator->() const { return *impl; }
+  };
     
   iterator begin() { return iterator(Reports.begin()); }
   iterator end() { return iterator(Reports.end()); }
+  
+  const_iterator begin() const { return const_iterator(Reports.begin()); }
+  const_iterator end() const { return const_iterator(Reports.end()); }
 };
   
 class BugType {
@@ -162,6 +176,14 @@ public:
 
   virtual void FlushReports(BugReporter& BR);  
   void AddReport(BugReport* BR);  
+  
+  typedef llvm::FoldingSet<BugReportEquivClass>::iterator iterator;
+  iterator begin() { return EQClasses.begin(); }
+  iterator end() { return EQClasses.end(); }
+  
+  typedef llvm::FoldingSet<BugReportEquivClass>::const_iterator const_iterator;
+  const_iterator begin() const { return EQClasses.begin(); }
+  const_iterator end() const { return EQClasses.end(); }
 };
   
 //===----------------------------------------------------------------------===//
@@ -243,6 +265,10 @@ public:
   PathDiagnosticClient* getPathDiagnosticClient() {
     return D.getPathDiagnosticClient();
   }
+  
+  typedef BugTypesTy::iterator iterator;
+  iterator begin() { return BugTypes.begin(); }
+  iterator end() { return BugTypes.end(); }
   
   ASTContext& getContext() { return D.getContext(); }
   
