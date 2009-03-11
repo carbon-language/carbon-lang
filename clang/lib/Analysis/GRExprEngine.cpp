@@ -1978,7 +1978,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       
       // Recover some path-sensitivity if a scalar value evaluated to
       // UnknownVal.
-      if (InitVal.isUnknown()) {
+      if (InitVal.isUnknown() || 
+          !getConstraintManager().canReasonAbout(InitVal)) {
         if (Loc::IsLocType(T)) {
           SymbolRef Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
           InitVal = loc::SymbolVal(Sym);
@@ -2593,8 +2594,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // FIXME: Handle structs.
           QualType T = RHS->getType();
           
-          if (RightV.isUnknown() && (Loc::IsLocType(T) || 
-                                  (T->isScalarType() && T->isIntegerType()))) {
+          if ((RightV.isUnknown() || 
+               !getConstraintManager().canReasonAbout(RightV))              
+              && (Loc::IsLocType(T) || 
+                  (T->isScalarType() && T->isIntegerType()))) {
             unsigned Count = Builder->getCurrentBlockCount();
             SymbolRef Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
@@ -2604,8 +2607,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           }
           
           // Simulate the effects of a "store":  bind the value of the RHS
-          // to the L-Value represented by the LHS.
-          
+          // to the L-Value represented by the LHS.          
           EvalStore(Dst, B, LHS, *I2, BindExpr(state, B, RightV), LeftV,
                     RightV);
           continue;
@@ -2760,8 +2762,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         
         SVal LHSVal;
         
-        if (Result.isUnknown() && (Loc::IsLocType(CTy) 
-                            || (CTy->isScalarType() && CTy->isIntegerType()))) {
+        if ((Result.isUnknown() || 
+             !getConstraintManager().canReasonAbout(Result))
+            && (Loc::IsLocType(CTy) 
+                || (CTy->isScalarType() && CTy->isIntegerType()))) {
           
           unsigned Count = Builder->getCurrentBlockCount();
           
