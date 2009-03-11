@@ -172,7 +172,7 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
 }
 
 void TypedViewRegion::print(llvm::raw_ostream& os) const {
-  os << "typed_view{" << T.getAsString() << ',';
+  os << "typed_view{" << LValueType.getAsString() << ',';
   getSuperRegion()->print(os);
   os << '}';
 }

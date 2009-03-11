@@ -239,10 +239,10 @@ public:
 class TypedViewRegion : public TypedRegion {
   friend class MemRegionManager;
 
-  QualType T;
+  QualType LValueType;
 
-  TypedViewRegion(QualType t, const MemRegion* sreg)
-    : TypedRegion(sreg, TypedViewRegionKind), T(t) {}
+  TypedViewRegion(QualType lvalueType, const MemRegion* sreg)
+    : TypedRegion(sreg, TypedViewRegionKind), LValueType(lvalueType) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
                             const MemRegion* superRegion);
@@ -252,13 +252,17 @@ public:
   void print(llvm::raw_ostream& os) const;
   
   QualType getRValueType(ASTContext&) const {
-    const PointerType* PTy = T->getAsPointerType();
+    const PointerType* PTy = LValueType->getAsPointerType();
     assert(PTy);
     return PTy->getPointeeType();
   }
+  
+  bool isBoundable(ASTContext &C) const {
+    return isa<PointerType>(LValueType);
+  }  
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ProfileRegion(ID, T, superRegion);
+    ProfileRegion(ID, LValueType, superRegion);
   }
 
   static bool classof(const MemRegion* R) {
@@ -561,7 +565,8 @@ public:
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
 
-  TypedViewRegion* getTypedViewRegion(QualType t, const MemRegion* superRegion);
+  TypedViewRegion* getTypedViewRegion(QualType LValueType,
+                                      const MemRegion* superRegion);
 
   bool hasStackStorage(const MemRegion* R);
 
