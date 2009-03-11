@@ -253,7 +253,7 @@ DIAG(err_static_not_bitfield, ERROR,
 DIAG(err_typedef_not_bitfield, ERROR,
      "typedef member %0 cannot be a bit-field")
 DIAG(err_not_integral_type_bitfield, ERROR,
-     "bit-field %0 has non-integral type")
+     "bit-field %0 has non-integral type %1")
 DIAG(err_member_initialization, ERROR,
     "%0 can only be initialized if it is a static const integral data member")
 DIAG(err_member_function_initialization, ERROR,
@@ -655,6 +655,8 @@ DIAG(note_template_class_instantiation_here, NOTE,
      "in instantiation of template class %0 requested here")
 DIAG(note_default_arg_instantiation_here, NOTE,
      "in instantiation of default argument for '%0' required here")
+DIAG(err_field_instantiates_to_function, ERROR,
+     "data member instantiated with function type %0")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name %0: expected expression")

@@ -573,7 +573,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
         // A function typedef ("typedef int f(); f a;").
         // C++ 9.6p3: A bit-field shall have integral or enumeration type.
         Diag(Loc, diag::err_not_integral_type_bitfield)
-          << Name << BitWidth->getSourceRange();
+          << Name << cast<ValueDecl>(Member)->getType() 
+          << BitWidth->getSourceRange();
       }
       
       DeleteExpr(BitWidth);

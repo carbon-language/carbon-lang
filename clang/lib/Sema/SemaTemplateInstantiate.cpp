@@ -664,7 +664,7 @@ Sema::InstantiateClassTemplateSpecialization(
   // instantiation. Should this be a typedef or something like it?
 
   RecordDecl *Pattern = Template->getTemplatedDecl();
-
+  llvm::SmallVector<DeclTy *, 32> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
                               MemberEnd = Pattern->decls_end();
        Member != MemberEnd; ++Member) {
@@ -690,17 +690,52 @@ Sema::InstantiateClassTemplateSpecialization(
                               Typedef->getIdentifier(),
                               T);
       ClassTemplateSpec->addDecl(New);
+    } 
+    else if (FieldDecl *Field = dyn_cast<FieldDecl>(*Member)) {
+      // FIXME: Simplified instantiation of fields needs to be made
+      // "real".
+      QualType T = Field->getType();
+      if (T->isDependentType())  {
+        T = InstantiateType(T, ClassTemplateSpec->getTemplateArgs(),
+                            ClassTemplateSpec->getNumTemplateArgs(),
+                            Field->getLocation(),
+                            Field->getDeclName());
+        if (!T.isNull() && T->isFunctionType()) {
+          // C++ [temp.arg.type]p3:
+          //   If a declaration acquires a function type through a type
+          //   dependent on a template-parameter and this causes a
+          //   declaration that does not use the syntactic form of a
+          //   function declarator to have function type, the program is
+          //   ill-formed.
+          Diag(Field->getLocation(), diag::err_field_instantiates_to_function) 
+            << T;
+          T = QualType();
+        }
+      }
+
+      FieldDecl *New = CheckFieldDecl(Field->getDeclName(), T,
+                                      ClassTemplateSpec, 
+                                      Field->getLocation(),
+                                      Field->isMutable(),
+                                      Field->getBitWidth(),
+                                      0);
+      if (New) {
+        ClassTemplateSpec->addDecl(New);
+        Fields.push_back(New);
+
+        if (New->isInvalidDecl())
+          Invalid = true;
+      }
     }
   }
 
-  // FIXME: Instantiate all of the members.
-  
+  // Finish checking fields.
+  ActOnFields(0, ClassTemplateSpec->getLocation(), ClassTemplateSpec,
+              &Fields[0], Fields.size(), SourceLocation(), SourceLocation(),
+              0);
+
   // Add any implicitly-declared members that we might need.
   AddImplicitlyDeclaredMembersToClass(ClassTemplateSpec);
-
-  // Finish the definition of this instantiation.
-  // FIXME: ActOnFields does more checking, which we'll eventually need.
-  ClassTemplateSpec->completeDefinition(Context);
 
   // Exit the scope of this instantiation.
   CurContext = PreviousContext;

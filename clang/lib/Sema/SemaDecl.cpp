@@ -3219,14 +3219,19 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
                           QualType FieldTy, const Expr *BitWidth) {
   // C99 6.7.2.1p4 - verify the field type.
   // C++ 9.6p3: A bit-field shall have integral or enumeration type.
-  if (!FieldTy->isIntegralType()) {
+  if (!FieldTy->isDependentType() && !FieldTy->isIntegralType()) {
     // Handle incomplete types with specific error.
     if (RequireCompleteType(FieldLoc, FieldTy, diag::err_field_incomplete))
       return true;
     return Diag(FieldLoc, diag::err_not_integral_type_bitfield)
-      << FieldName << BitWidth->getSourceRange();
+      << FieldName << FieldTy << BitWidth->getSourceRange();
   }
-  
+
+  // If the bit-width is type- or value-dependent, don't try to check
+  // it now.
+  if (BitWidth->isValueDependent() || BitWidth->isTypeDependent())
+    return false;
+
   llvm::APSInt Value;
   if (VerifyIntegerConstantExpression(BitWidth, &Value))
     return true;
@@ -3238,11 +3243,13 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   if (Value.isNegative())
     return Diag(FieldLoc, diag::err_bitfield_has_negative_width) << FieldName;
 
-  uint64_t TypeSize = Context.getTypeSize(FieldTy);
-  // FIXME: We won't need the 0 size once we check that the field type is valid.
-  if (TypeSize && Value.getZExtValue() > TypeSize)
-    return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
-       << FieldName << (unsigned)TypeSize;
+  if (!FieldTy->isDependentType()) {
+    uint64_t TypeSize = Context.getTypeSize(FieldTy);
+    // FIXME: We won't need the 0 size once we check that the field type is valid.
+    if (TypeSize && Value.getZExtValue() > TypeSize)
+      return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
+        << FieldName << (unsigned)TypeSize;
+  }
 
   return false;
 }
@@ -3264,10 +3271,55 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   IdentifierInfo *II = D.getIdentifier();
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
-  
+ 
   QualType T = GetTypeForDeclarator(D, S);
-  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
+
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+
+  NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
+  if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))
+    PrevDecl = 0;
+
+  FieldDecl *NewFD 
+    = CheckFieldDecl(II, T, Record, Loc,
+               D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable,
+                     BitWidth, PrevDecl, &D);
+  if (NewFD->isInvalidDecl() && PrevDecl) {
+    // Don't introduce NewFD into scope; there's already something
+    // with the same name in the same scope.
+  } else if (II) {
+    PushOnScopeChains(NewFD, S);
+  } else
+    Record->addDecl(NewFD);
+
+  return NewFD;
+}
+
+/// \brief Build a new FieldDecl and check its well-formedness.
+///
+/// This routine builds a new FieldDecl given the fields name, type,
+/// record, etc. \p PrevDecl should refer to any previous declaration
+/// with the same name and in the same scope as the field to be
+/// created.
+///
+/// \returns a new FieldDecl.
+///
+/// \todo The Declarator argument is a hack. It will be removed once 
+FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T, 
+                                RecordDecl *Record, SourceLocation Loc,
+                                bool Mutable, Expr *BitWidth, 
+                                NamedDecl *PrevDecl,
+                                Declarator *D) {
+  IdentifierInfo *II = Name.getAsIdentifierInfo();
   bool InvalidDecl = false;
+
+  // If we receive a broken type, recover by assuming 'int' and
+  // marking this declaration as invalid.
+  if (T.isNull()) {
+    InvalidDecl = true;
+    T = Context.IntTy;
+  }
 
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
@@ -3288,52 +3340,36 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     }
   }
   
-  if (BitWidth) {
-    if (VerifyBitField(Loc, II, T, BitWidth)) {
-      InvalidDecl = true;
-      DeleteExpr(BitWidth);
-      BitWidth = 0;
-    }
-  } else {
-    // Not a bitfield.
-
-    // validate II.
-    
+  // If this is declared as a bit-field, check the bit-field.
+  if (BitWidth && VerifyBitField(Loc, II, T, BitWidth)) {
+    InvalidDecl = true;
+    DeleteExpr(BitWidth);
+    BitWidth = 0;
   }
   
-  FieldDecl *NewFD = FieldDecl::Create(Context, Record,
-                                       Loc, II, T, BitWidth,
-                                       D.getDeclSpec().getStorageClassSpec() ==
-                                       DeclSpec::SCS_mutable);
+  FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, BitWidth,
+                                       Mutable);
 
-  if (II) {
-    NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
-    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)
-        && !isa<TagDecl>(PrevDecl)) {
-      Diag(Loc, diag::err_duplicate_member) << II;
-      Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
-      NewFD->setInvalidDecl();
-      Record->setInvalidDecl();
-    }
+  if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
+    Diag(Loc, diag::err_duplicate_member) << II;
+    Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
+    NewFD->setInvalidDecl();
+    Record->setInvalidDecl();
   }
 
-  if (getLangOptions().CPlusPlus) {
-    CheckExtraCXXDefaultArguments(D);
-    if (!T->isPODType())
-      cast<CXXRecordDecl>(Record)->setPOD(false);
-  }
+  if (getLangOptions().CPlusPlus && !T->isPODType())
+    cast<CXXRecordDecl>(Record)->setPOD(false);
 
-  ProcessDeclAttributes(NewFD, D);
+  // FIXME: We need to pass in the attributes given an AST
+  // representation, not a parser representation.
+  if (D)
+    ProcessDeclAttributes(NewFD, *D);
+
   if (T.isObjCGCWeak())
     Diag(Loc, diag::warn_attribute_weak_on_field);
 
-  if (D.getInvalidType() || InvalidDecl)
+  if (InvalidDecl)
     NewFD->setInvalidDecl();
-
-  if (II) {
-    PushOnScopeChains(NewFD, S);
-  } else
-    Record->addDecl(NewFD);
 
   return NewFD;
 }

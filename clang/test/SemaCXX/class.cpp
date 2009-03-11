@@ -27,8 +27,8 @@ public:
   typedef int func();
   func tm;
   func *ptm;
-  func btm : 1; // expected-error {{error: bit-field 'btm' has non-integral type}}
-  NestedC bc : 1; // expected-error {{error: bit-field 'bc' has non-integral type}}
+  func btm : 1; // expected-error {{bit-field 'btm' has non-integral type}}
+  NestedC bc : 1; // expected-error {{bit-field 'bc' has non-integral type}}
 
   enum E1 { en1, en2 };
 
