@@ -8098,74 +8098,72 @@ static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
 
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
-                                      const X86Subtarget *Subtarget) {
-  DebugLoc dl = N->getDebugLoc();
+                                    const X86Subtarget *Subtarget) {
+  DebugLoc DL = N->getDebugLoc();
   SDValue Cond = N->getOperand(0);
-
+  // Get the LHS/RHS of the select.
+  SDValue LHS = N->getOperand(1);
+  SDValue RHS = N->getOperand(2);
+  
   // If we have SSE[12] support, try to form min/max nodes.
   if (Subtarget->hasSSE2() &&
-      (N->getValueType(0) == MVT::f32 || N->getValueType(0) == MVT::f64)) {
-    if (Cond.getOpcode() == ISD::SETCC) {
-      // Get the LHS/RHS of the select.
-      SDValue LHS = N->getOperand(1);
-      SDValue RHS = N->getOperand(2);
-      ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+      (LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64) &&
+      Cond.getOpcode() == ISD::SETCC) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
-      unsigned Opcode = 0;
-      if (LHS == Cond.getOperand(0) && RHS == Cond.getOperand(1)) {
-        switch (CC) {
-        default: break;
-        case ISD::SETOLE: // (X <= Y) ? X : Y -> min
-        case ISD::SETULE:
-        case ISD::SETLE:
-          if (!UnsafeFPMath) break;
-          // FALL THROUGH.
-        case ISD::SETOLT:  // (X olt/lt Y) ? X : Y -> min
-        case ISD::SETLT:
-          Opcode = X86ISD::FMIN;
-          break;
+    unsigned Opcode = 0;
+    if (LHS == Cond.getOperand(0) && RHS == Cond.getOperand(1)) {
+      switch (CC) {
+      default: break;
+      case ISD::SETOLE: // (X <= Y) ? X : Y -> min
+      case ISD::SETULE:
+      case ISD::SETLE:
+        if (!UnsafeFPMath) break;
+        // FALL THROUGH.
+      case ISD::SETOLT:  // (X olt/lt Y) ? X : Y -> min
+      case ISD::SETLT:
+        Opcode = X86ISD::FMIN;
+        break;
 
-        case ISD::SETOGT: // (X > Y) ? X : Y -> max
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          if (!UnsafeFPMath) break;
-          // FALL THROUGH.
-        case ISD::SETUGE:  // (X uge/ge Y) ? X : Y -> max
-        case ISD::SETGE:
-          Opcode = X86ISD::FMAX;
-          break;
-        }
-      } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
-        switch (CC) {
-        default: break;
-        case ISD::SETOGT: // (X > Y) ? Y : X -> min
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          if (!UnsafeFPMath) break;
-          // FALL THROUGH.
-        case ISD::SETUGE:  // (X uge/ge Y) ? Y : X -> min
-        case ISD::SETGE:
-          Opcode = X86ISD::FMIN;
-          break;
-
-        case ISD::SETOLE:   // (X <= Y) ? Y : X -> max
-        case ISD::SETULE:
-        case ISD::SETLE:
-          if (!UnsafeFPMath) break;
-          // FALL THROUGH.
-        case ISD::SETOLT:   // (X olt/lt Y) ? Y : X -> max
-        case ISD::SETLT:
-          Opcode = X86ISD::FMAX;
-          break;
-        }
+      case ISD::SETOGT: // (X > Y) ? X : Y -> max
+      case ISD::SETUGT:
+      case ISD::SETGT:
+        if (!UnsafeFPMath) break;
+        // FALL THROUGH.
+      case ISD::SETUGE:  // (X uge/ge Y) ? X : Y -> max
+      case ISD::SETGE:
+        Opcode = X86ISD::FMAX;
+        break;
       }
+    } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
+      switch (CC) {
+      default: break;
+      case ISD::SETOGT: // (X > Y) ? Y : X -> min
+      case ISD::SETUGT:
+      case ISD::SETGT:
+        if (!UnsafeFPMath) break;
+        // FALL THROUGH.
+      case ISD::SETUGE:  // (X uge/ge Y) ? Y : X -> min
+      case ISD::SETGE:
+        Opcode = X86ISD::FMIN;
+        break;
 
-      if (Opcode)
-        return DAG.getNode(Opcode, dl, N->getValueType(0), LHS, RHS);
+      case ISD::SETOLE:   // (X <= Y) ? Y : X -> max
+      case ISD::SETULE:
+      case ISD::SETLE:
+        if (!UnsafeFPMath) break;
+        // FALL THROUGH.
+      case ISD::SETOLT:   // (X olt/lt Y) ? Y : X -> max
+      case ISD::SETLT:
+        Opcode = X86ISD::FMAX;
+        break;
+      }
     }
 
+    if (Opcode)
+      return DAG.getNode(Opcode, DL, N->getValueType(0), LHS, RHS);
   }
-
+  
   return SDValue();
 }
 
@@ -8186,7 +8184,7 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
 
   SDValue ShAmtOp = N->getOperand(1);
   MVT EltVT = VT.getVectorElementType();
-  DebugLoc dl = N->getDebugLoc();
+  DebugLoc DL = N->getDebugLoc();
   SDValue BaseShAmt;
   if (ShAmtOp.getOpcode() == ISD::BUILD_VECTOR) {
     unsigned NumElts = VT.getVectorNumElements();
@@ -8206,15 +8204,15 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
     }
   } else if (ShAmtOp.getOpcode() == ISD::VECTOR_SHUFFLE &&
              isSplatMask(ShAmtOp.getOperand(2).getNode())) {
-      BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, ShAmtOp,
+      BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, ShAmtOp,
                               DAG.getIntPtrConstant(0));
   } else
     return SDValue();
 
   if (EltVT.bitsGT(MVT::i32))
-    BaseShAmt = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, BaseShAmt);
+    BaseShAmt = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, BaseShAmt);
   else if (EltVT.bitsLT(MVT::i32))
-    BaseShAmt = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, BaseShAmt);
+    BaseShAmt = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, BaseShAmt);
 
   // The shift amount is identical so we can do a vector shift.
   SDValue  ValOp = N->getOperand(0);
@@ -8224,39 +8222,39 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
     break;
   case ISD::SHL:
     if (VT == MVT::v2i64)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
                          ValOp, BaseShAmt);
     if (VT == MVT::v4i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
                          ValOp, BaseShAmt);
     if (VT == MVT::v8i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
                          ValOp, BaseShAmt);
     break;
   case ISD::SRA:
     if (VT == MVT::v4i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrai_d, MVT::i32),
                          ValOp, BaseShAmt);
     if (VT == MVT::v8i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
                          ValOp, BaseShAmt);
     break;
   case ISD::SRL:
     if (VT == MVT::v2i64)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
                          ValOp, BaseShAmt);
     if (VT == MVT::v4i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_d, MVT::i32),
                          ValOp, BaseShAmt);
     if (VT ==  MVT::v8i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
                          DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
                          ValOp, BaseShAmt);
     break;
@@ -8298,33 +8296,33 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
       }
     }
     if (Ld) {
-      DebugLoc dl = N->getDebugLoc();
+      DebugLoc DL = N->getDebugLoc();
       // If we are a 64-bit capable x86, lower to a single movq load/store pair.
       if (Subtarget->is64Bit()) {
-        SDValue NewLd = DAG.getLoad(MVT::i64, dl, Ld->getChain(),
+        SDValue NewLd = DAG.getLoad(MVT::i64, DL, Ld->getChain(),
                                       Ld->getBasePtr(), Ld->getSrcValue(),
                                       Ld->getSrcValueOffset(), Ld->isVolatile(),
                                       Ld->getAlignment());
         SDValue NewChain = NewLd.getValue(1);
         if (TokenFactorIndex != -1) {
           Ops.push_back(NewChain);
-          NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Ops[0],
+          NewChain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &Ops[0],
                                  Ops.size());
         }
-        return DAG.getStore(NewChain, dl, NewLd, St->getBasePtr(),
+        return DAG.getStore(NewChain, DL, NewLd, St->getBasePtr(),
                             St->getSrcValue(), St->getSrcValueOffset(),
                             St->isVolatile(), St->getAlignment());
       }
 
       // Otherwise, lower to two 32-bit copies.
       SDValue LoAddr = Ld->getBasePtr();
-      SDValue HiAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, LoAddr,
+      SDValue HiAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, LoAddr,
                                      DAG.getConstant(4, MVT::i32));
 
-      SDValue LoLd = DAG.getLoad(MVT::i32, dl, Ld->getChain(), LoAddr,
+      SDValue LoLd = DAG.getLoad(MVT::i32, DL, Ld->getChain(), LoAddr,
                                    Ld->getSrcValue(), Ld->getSrcValueOffset(),
                                    Ld->isVolatile(), Ld->getAlignment());
-      SDValue HiLd = DAG.getLoad(MVT::i32, dl, Ld->getChain(), HiAddr,
+      SDValue HiLd = DAG.getLoad(MVT::i32, DL, Ld->getChain(), HiAddr,
                                    Ld->getSrcValue(), Ld->getSrcValueOffset()+4,
                                    Ld->isVolatile(),
                                    MinAlign(Ld->getAlignment(), 4));
@@ -8333,23 +8331,23 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
       if (TokenFactorIndex != -1) {
         Ops.push_back(LoLd);
         Ops.push_back(HiLd);
-        NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Ops[0],
+        NewChain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &Ops[0],
                                Ops.size());
       }
 
       LoAddr = St->getBasePtr();
-      HiAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, LoAddr,
+      HiAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, LoAddr,
                            DAG.getConstant(4, MVT::i32));
 
-      SDValue LoSt = DAG.getStore(NewChain, dl, LoLd, LoAddr,
+      SDValue LoSt = DAG.getStore(NewChain, DL, LoLd, LoAddr,
                           St->getSrcValue(), St->getSrcValueOffset(),
                           St->isVolatile(), St->getAlignment());
-      SDValue HiSt = DAG.getStore(NewChain, dl, HiLd, HiAddr,
+      SDValue HiSt = DAG.getStore(NewChain, DL, HiLd, HiAddr,
                                     St->getSrcValue(),
                                     St->getSrcValueOffset() + 4,
                                     St->isVolatile(),
                                     MinAlign(St->getAlignment(), 4));
-      return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, LoSt, HiSt);
+      return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, LoSt, HiSt);
     }
   }
   return SDValue();
