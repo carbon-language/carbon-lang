@@ -47,6 +47,7 @@ add_llvm_library(LLVMCodeGen
   ScheduleDAGPrinter.cpp
   ShadowStackGC.cpp
   SimpleRegisterCoalescing.cpp
+  Spiller.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
   StrongPHIElimination.cpp
