@@ -333,6 +333,7 @@ public:
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
   MemRegionManager& getRegionManager() { return StoreMgr->getRegionManager(); }
   StoreManager& getStoreManager() { return *StoreMgr; }
+  ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
 
   const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal IVal) {
     // Store manager should return a persistent state.
