@@ -757,7 +757,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       assert(0 && "Can't have auto or register globals");
     case VarDecl::None:
       if (!D->getInit())
-        GV->setLinkage(llvm::GlobalVariable::CommonAnyLinkage);
+        GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
       else
         GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
       break;
