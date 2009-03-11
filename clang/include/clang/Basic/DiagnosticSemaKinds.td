@@ -109,7 +109,7 @@ def err_duplicate_protocol_def : Error<"duplicate protocol definition of %0">;
 def err_undeclared_protocol : Error<"cannot find protocol declaration for %0">;
 def warn_undef_protocolref : Warning<"cannot find protocol definition for %0">;
 def warn_readonly_property : Warning<
-  "attribute 'readonly' of property %0 restricts attribute " "'readwrite' of property inherited from %1">;
+  "attribute 'readonly' of property %0 restricts attribute 'readwrite' of property inherited from %1">;
 
 def warn_property_attribute : Warning<
   "property %0 '%1' attribute does not match the property inherited from %2">;
@@ -166,7 +166,7 @@ def error_bad_category_property_decl : Error<
 def error_bad_property_context : Error<
   "property implementation must be in a class or category implementation">;
 def error_missing_property_ivar_decl : Error<
-  "synthesized property %0 must either be named the same as a compatible" " ivar or must explicitly name an ivar">;
+  "synthesized property %0 must either be named the same as a compatible ivar or must explicitly name an ivar">;
 def error_property_ivar_type : Error<
   "type of property %0 does not match type of ivar %1">;
 def error_weak_property : Error<
@@ -304,7 +304,7 @@ def warn_attribute_weak_on_field : Warning<
 def warn_attribute_weak_on_local : Warning<
   "__weak attribute cannot be specified on an automatic variable">;
 def warn_attribute_wrong_decl_type : Warning<
-  "'%0' attribute only applies to %select{function|union|" "variable and function|function or method}1 types">;
+  "'%0' attribute only applies to %select{function|union|variable and function|function or method}1 types">;
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;
 def warn_transparent_union_attribute_field_size : Warning<
