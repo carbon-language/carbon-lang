@@ -298,8 +298,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   switch (GVar->getLinkage()) {
    case GlobalValue::LinkOnceAnyLinkage:
    case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
     // Nonnull linkonce -> weak

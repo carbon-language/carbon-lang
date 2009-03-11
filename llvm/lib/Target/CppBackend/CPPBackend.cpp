@@ -314,10 +314,8 @@ namespace {
       Out << "GlobalValue::ExternalWeakLinkage"; break;
     case GlobalValue::GhostLinkage:
       Out << "GlobalValue::GhostLinkage"; break;
-    case GlobalValue::CommonAnyLinkage:
-      Out << "GlobalValue::CommonAnyLinkage"; break;
-    case GlobalValue::CommonODRLinkage:
-      Out << "GlobalValue::CommonODRLinkage"; break;
+    case GlobalValue::CommonLinkage:
+      Out << "GlobalValue::CommonLinkage"; break;
     }
   }
 

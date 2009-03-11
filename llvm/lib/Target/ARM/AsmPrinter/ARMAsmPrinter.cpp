@@ -901,8 +901,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   SwitchToSection(TAI->SectionForGlobal(GVar));
   switch (GVar->getLinkage()) {
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
    case GlobalValue::LinkOnceAnyLinkage:
    case GlobalValue::LinkOnceODRLinkage:
    case GlobalValue::WeakAnyLinkage:

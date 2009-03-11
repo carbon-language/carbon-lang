@@ -715,8 +715,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::LinkOnceODRLinkage:
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
     O << "\t.global " << name << '\n'
       << "\t.type " << name << ", @object\n"
       << "\t.weak " << name << '\n';
@@ -961,8 +960,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::LinkOnceODRLinkage:
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
     O << "\t.globl " << name << '\n'
       << "\t.weak_definition " << name << '\n';
     break;

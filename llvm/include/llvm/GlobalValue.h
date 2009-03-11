@@ -42,8 +42,7 @@ public:
     DLLExportLinkage,   ///< Function to be accessible from DLL
     ExternalWeakLinkage,///< ExternalWeak linkage description
     GhostLinkage,       ///< Stand-in functions for streaming fns from BC files
-    CommonAnyLinkage,   ///< Tentative definitions
-    CommonODRLinkage    ///< Same, but only replaced by something equivalent.
+    CommonLinkage       ///< Tentative definitions
   };
 
   /// @brief An enumeration for the kinds of visibility of global values.
@@ -108,9 +107,6 @@ public:
   static LinkageTypes getWeakLinkage(bool ODR) {
     return ODR ? WeakODRLinkage : WeakAnyLinkage;
   }
-  static LinkageTypes getCommonLinkage(bool ODR) {
-    return ODR ? CommonODRLinkage : CommonAnyLinkage;
-  }
 
   bool hasExternalLinkage() const { return Linkage == ExternalLinkage; }
   bool hasLinkOnceLinkage() const {
@@ -129,9 +125,7 @@ public:
   bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }
   bool hasExternalWeakLinkage() const { return Linkage == ExternalWeakLinkage; }
   bool hasGhostLinkage() const { return Linkage == GhostLinkage; }
-  bool hasCommonLinkage() const {
-    return Linkage == CommonAnyLinkage || Linkage == CommonODRLinkage;
-  }
+  bool hasCommonLinkage() const { return Linkage == CommonLinkage; }
 
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
@@ -142,7 +136,7 @@ public:
   bool mayBeOverridden() const {
     return (Linkage == WeakAnyLinkage ||
             Linkage == LinkOnceAnyLinkage ||
-            Linkage == CommonAnyLinkage ||
+            Linkage == CommonLinkage ||
             Linkage == ExternalWeakLinkage);
   }
 
@@ -153,8 +147,7 @@ public:
             Linkage == WeakODRLinkage ||
             Linkage == LinkOnceAnyLinkage ||
             Linkage == LinkOnceODRLinkage ||
-            Linkage == CommonAnyLinkage ||
-            Linkage == CommonODRLinkage ||
+            Linkage == CommonLinkage ||
             Linkage == ExternalWeakLinkage);
   }
 

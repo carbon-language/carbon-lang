@@ -122,7 +122,6 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_appending:     // OptionalLinkage
     case lltok::kw_dllexport:     // OptionalLinkage
     case lltok::kw_common:        // OptionalLinkage
-    case lltok::kw_common_odr:    // OptionalLinkage
     case lltok::kw_dllimport:     // OptionalLinkage
     case lltok::kw_extern_weak:   // OptionalLinkage
     case lltok::kw_external: {    // OptionalLinkage
@@ -748,7 +747,6 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
 ///   ::= 'appending'
 ///   ::= 'dllexport'
 ///   ::= 'common'
-///   ::= 'common_odr'
 ///   ::= 'dllimport'
 ///   ::= 'extern_weak'
 ///   ::= 'external'
@@ -764,8 +762,7 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_linkonce_odr: Res = GlobalValue::LinkOnceODRLinkage; break;
   case lltok::kw_appending:    Res = GlobalValue::AppendingLinkage; break;
   case lltok::kw_dllexport:    Res = GlobalValue::DLLExportLinkage; break;
-  case lltok::kw_common:       Res = GlobalValue::CommonAnyLinkage; break;
-  case lltok::kw_common_odr:   Res = GlobalValue::CommonODRLinkage; break;
+  case lltok::kw_common:       Res = GlobalValue::CommonLinkage; break;
   case lltok::kw_dllimport:    Res = GlobalValue::DLLImportLinkage; break;
   case lltok::kw_extern_weak:  Res = GlobalValue::ExternalWeakLinkage; break;
   case lltok::kw_external:     Res = GlobalValue::ExternalLinkage; break;
@@ -2114,8 +2111,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
     break;
   case GlobalValue::AppendingLinkage:
   case GlobalValue::GhostLinkage:
-  case GlobalValue::CommonAnyLinkage:
-  case GlobalValue::CommonODRLinkage:
+  case GlobalValue::CommonLinkage:
     return Error(LinkageLoc, "invalid function linkage type");
   }
   

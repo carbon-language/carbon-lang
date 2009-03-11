@@ -552,15 +552,14 @@ All Global Variables and Functions have one of the following types of linkage:
   </dd>
 
   <dt><tt><b><a name="linkage_linkonce">linkonce_odr</a></b></tt>: </dt>
-  <dt><tt><b><a name="linkage_common">common_odr</a></b></tt>: </dt>
   <dt><tt><b><a name="linkage_weak">weak_odr</a></b></tt>: </dt>
   <dd>Some languages allow inequivalent globals to be merged, such as two
     functions with different semantics.  Other languages, such as <tt>C++</tt>,
     ensure that only equivalent globals are ever merged (the "one definition
-    rule" - <tt>odr</tt>).  Such languages can use the <tt>linkonce_odr</tt>,
-    <tt>common_odr</tt> and <tt>weak_odr</tt> linkage types to indicate that
-    the global will only be merged with equivalent globals.  These linkage
-    types are otherwise the same as their non-<tt>odr</tt> versions.
+    rule" - <tt>odr</tt>).  Such languages can use the <tt>linkonce_odr</tt>
+    and <tt>weak_odr</tt> linkage types to indicate that the global will only
+    be merged with equivalent globals.  These linkage types are otherwise the
+    same as their non-<tt>odr</tt> versions.
   </dd>
 
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>

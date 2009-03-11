@@ -455,8 +455,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     bool bCustomSegment = false;
 
     switch (I->getLinkage()) {
-    case GlobalValue::CommonAnyLinkage:
-    case GlobalValue::CommonODRLinkage:
+    case GlobalValue::CommonLinkage:
     case GlobalValue::LinkOnceAnyLinkage:
     case GlobalValue::LinkOnceODRLinkage:
     case GlobalValue::WeakAnyLinkage:

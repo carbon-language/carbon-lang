@@ -1189,8 +1189,7 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   case GlobalValue::LinkOnceODRLinkage: Out << "linkonce_odr "; break;
   case GlobalValue::WeakAnyLinkage:     Out << "weak "; break;
   case GlobalValue::WeakODRLinkage:     Out << "weak_odr "; break;
-  case GlobalValue::CommonAnyLinkage:   Out << "common "; break;
-  case GlobalValue::CommonODRLinkage:   Out << "common_odr "; break;
+  case GlobalValue::CommonLinkage:      Out << "common "; break;
   case GlobalValue::AppendingLinkage:   Out << "appending "; break;
   case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
   case GlobalValue::DLLExportLinkage:   Out << "dllexport "; break;

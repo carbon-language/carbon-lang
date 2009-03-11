@@ -561,8 +561,7 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::LinkOnceODRLinkage:
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
     O << "\t.global " << name << '\n'
       << "\t.type " << name << ", @object\n"
       << "\t.weak " << name << '\n';

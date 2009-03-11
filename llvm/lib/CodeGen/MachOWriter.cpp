@@ -960,8 +960,7 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::CommonAnyLinkage:
-  case GlobalValue::CommonODRLinkage:
+  case GlobalValue::CommonLinkage:
     assert(!isa<Function>(gv) && "Unexpected linkage type for Function!");
   case GlobalValue::ExternalLinkage:
     GVName = TAI->getGlobalPrefix() + name;

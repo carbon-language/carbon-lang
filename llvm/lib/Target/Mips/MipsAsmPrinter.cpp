@@ -521,8 +521,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
   switch (GVar->getLinkage()) {
    case GlobalValue::LinkOnceAnyLinkage:
    case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
     // FIXME: Verify correct for weak.

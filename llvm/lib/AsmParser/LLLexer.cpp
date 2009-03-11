@@ -463,7 +463,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(dllimport);
   KEYWORD(dllexport);
   KEYWORD(common);
-  KEYWORD(common_odr);
   KEYWORD(default);
   KEYWORD(hidden);
   KEYWORD(protected);

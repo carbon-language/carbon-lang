@@ -130,9 +130,7 @@ typedef enum {
   LLVMExternalWeakLinkage,/**< ExternalWeak linkage description */
   LLVMGhostLinkage,       /**< Stand-in functions for streaming fns from
                                bitcode */
-  LLVMCommonAnyLinkage,   /**< Tentative definitions */
-  LLVMCommonODRLinkage    /**< Same, but only replaced by something
-                            equivalent. */
+  LLVMCommonLinkage       /**< Tentative definitions */
 } LLVMLinkage;
 
 typedef enum {

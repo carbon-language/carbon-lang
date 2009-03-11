@@ -237,8 +237,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::LinkOnceODRLinkage:
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonAnyLinkage:
-   case GlobalValue::CommonODRLinkage:
+   case GlobalValue::CommonLinkage:
     O << TAI->getWeakRefDirective() << name << '\n';
     break;
    case GlobalValue::AppendingLinkage:
