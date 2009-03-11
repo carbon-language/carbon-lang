@@ -547,7 +547,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   Decl *Member;
   if (isInstField) {
-    Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth);
+    Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth,
+                         AS);
     assert(Member && "HandleField never returns null");
   } else {
     Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
@@ -581,21 +582,11 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       BitWidth = 0;
       Member->setInvalidDecl();
     }
+
+    Member->setAccess(AS);
   }
 
   assert((Name || isInstField) && "No identifier for non-field ?");
-
-  Member->setAccess(AS);
-
-  // C++ [dcl.init.aggr]p1:
-  //   An aggregate is an array or a class (clause 9) with [...] no
-  //   private or protected non-static data members (clause 11).
-  // A POD must be an aggregate.
-  if (isInstField && (AS == AS_private || AS == AS_protected)) {
-    CXXRecordDecl *Record = cast<CXXRecordDecl>(CurContext);
-    Record->setAggregate(false);
-    Record->setPOD(false);
-  }
 
   if (DS.isVirtualSpecified()) {
     if (!isFunc || DS.getStorageClassSpec() == DeclSpec::SCS_static) {

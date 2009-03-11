@@ -718,6 +718,7 @@ Sema::InstantiateClassTemplateSpecialization(
                                       Field->getLocation(),
                                       Field->isMutable(),
                                       Field->getBitWidth(),
+                                      Field->getAccess(),
                                       0);
       if (New) {
         ClassTemplateSpec->addDecl(New);

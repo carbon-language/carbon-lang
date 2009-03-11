@@ -3253,14 +3253,16 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagD,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
   return HandleField(S, static_cast<RecordDecl*>(TagD), DeclStart, D,
-                     static_cast<Expr*>(BitfieldWidth));
+                     static_cast<Expr*>(BitfieldWidth),
+                     AS_public);
 }
 
 /// HandleField - Analyze a field of a C struct or a C++ data member.
 ///
 FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
                              SourceLocation DeclStart,
-                             Declarator &D, Expr *BitWidth) {
+                             Declarator &D, Expr *BitWidth,
+                             AccessSpecifier AS) {
   IdentifierInfo *II = D.getIdentifier();
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
@@ -3277,7 +3279,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   FieldDecl *NewFD 
     = CheckFieldDecl(II, T, Record, Loc,
                D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable,
-                     BitWidth, PrevDecl, &D);
+                     BitWidth, AS, PrevDecl, &D);
   if (NewFD->isInvalidDecl() && PrevDecl) {
     // Don't introduce NewFD into scope; there's already something
     // with the same name in the same scope.
@@ -3302,7 +3304,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T, 
                                 RecordDecl *Record, SourceLocation Loc,
                                 bool Mutable, Expr *BitWidth, 
-                                NamedDecl *PrevDecl,
+                                AccessSpecifier AS, NamedDecl *PrevDecl,
                                 Declarator *D) {
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   bool InvalidDecl = false;
@@ -3363,6 +3365,19 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
 
   if (InvalidDecl)
     NewFD->setInvalidDecl();
+
+  NewFD->setAccess(AS);
+
+  // C++ [dcl.init.aggr]p1:
+  //   An aggregate is an array or a class (clause 9) with [...] no
+  //   private or protected non-static data members (clause 11).
+  // A POD must be an aggregate.
+  if (getLangOptions().CPlusPlus &&
+      (AS == AS_private || AS == AS_protected)) {
+    CXXRecordDecl *CXXRecord = cast<CXXRecordDecl>(Record);
+    CXXRecord->setAggregate(false);
+    CXXRecord->setPOD(false);
+  }
 
   return NewFD;
 }

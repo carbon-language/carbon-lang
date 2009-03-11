@@ -369,12 +369,13 @@ public:
                              Declarator &D, ExprTy *BitfieldWidth);
 
   FieldDecl *HandleField(Scope *S, RecordDecl *TagD, SourceLocation DeclStart,
-                         Declarator &D, Expr *BitfieldWidth);
+                         Declarator &D, Expr *BitfieldWidth,
+                         AccessSpecifier AS);
 
   FieldDecl *CheckFieldDecl(DeclarationName Name, QualType T, 
                             RecordDecl *Record, SourceLocation Loc,
                             bool Mutable, Expr *BitfieldWidth,
-                            NamedDecl *PrevDecl,
+                            AccessSpecifier AS, NamedDecl *PrevDecl,
                             Declarator *D = 0);
   
   virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
