@@ -422,7 +422,7 @@ function:</p>
 /// the function.  This is used for mutable variables etc.
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const std::string &amp;VarName) {
-  IRBuilder TmpB(&amp;TheFunction-&gt;getEntryBlock(),
+  IRBuilder&lt;&gt; TmpB(&amp;TheFunction-&gt;getEntryBlock(),
                  TheFunction-&gt;getEntryBlock().begin());
   return TmpB.CreateAlloca(Type::DoubleTy, 0, VarName.c_str());
 }
@@ -1605,7 +1605,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static IRBuilder Builder;
+static IRBuilder&lt;&gt; Builder;
 static std::map&lt;std::string, AllocaInst*&gt; NamedValues;
 static FunctionPassManager *TheFPM;
 
@@ -1615,7 +1615,7 @@ Value *ErrorV(const char *Str) { Error(Str); return 0; }
 /// the function.  This is used for mutable variables etc.
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const std::string &amp;VarName) {
-  IRBuilder TmpB(&amp;TheFunction-&gt;getEntryBlock(),
+  IRBuilder&lt;&gt; TmpB(&amp;TheFunction-&gt;getEntryBlock(),
                  TheFunction-&gt;getEntryBlock().begin());
   return TmpB.CreateAlloca(Type::DoubleTy, 0, VarName.c_str());
 }

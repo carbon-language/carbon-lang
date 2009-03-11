@@ -111,7 +111,7 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  IRBuilder builder(entry);
+  IRBuilder&lt;&gt; builder(entry);
   Value* xEqualsY = builder.CreateICmpEQ(x, y, &quot;tmp&quot;);
   builder.CreateCondBr(xEqualsY, ret, cond_false);
 </pre>

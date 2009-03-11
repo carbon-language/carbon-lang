@@ -115,7 +115,7 @@ undeclared parameter):</p>
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 static Module *TheModule;
-static IRBuilder Builder;
+static IRBuilder&lt;&gt; Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 </pre>
 </div>
@@ -128,8 +128,8 @@ uses to contain code.</p>
 <p>The <tt>Builder</tt> object is a helper object that makes it easy to generate
 LLVM instructions.  Instances of the <a 
 href="http://llvm.org/doxygen/IRBuilder_8h-source.html"><tt>IRBuilder</tt></a> 
-class keep track of the current place to insert instructions and has methods to
-create new instructions.</p>
+class template keep track of the current place to insert instructions and has
+methods to create new instructions.</p>
 
 <p>The <tt>NamedValues</tt> map keeps track of which values are defined in the
 current scope and what their LLVM representation is.  (In other words, it is a
@@ -1027,7 +1027,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static IRBuilder Builder;
+static IRBuilder&lt;&gt; Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
