@@ -2937,6 +2937,24 @@ def TLS_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
                     (load (add X86TLStp, (X86Wrapper tglobaltlsaddr:$src))))]>,
                   SegGS;
 
+let AddedComplexity = 15 in
+def TLS_ext16_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
+                        "movzwl\t%gs:${src:mem}, $dst",
+                        [(set GR32:$dst,
+                          (extloadi32i16
+                            (add X86TLStp,
+                              (X86Wrapper tglobaltlsaddr:$src))))]>,
+                        SegGS;
+
+let AddedComplexity = 15 in
+def TLS_ext8_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
+                        "movzbl\t%gs:${src:mem}, $dst",
+                        [(set GR32:$dst,
+                          (extloadi32i8
+                            (add X86TLStp,
+                              (X86Wrapper tglobaltlsaddr:$src))))]>,
+                        SegGS;
+
 def TLS_tp : I<0x8B, Pseudo, (outs GR32:$dst), (ins),
                "movl\t%gs:0, $dst",
                [(set GR32:$dst, X86TLStp)]>, SegGS;
