@@ -2,6 +2,11 @@
 namespace A {
   struct C {
     static int cx;
+
+    static int cx2;
+
+    static int Ag1();
+    static int Ag2();
   };
   int ax;
   void Af();
@@ -10,6 +15,15 @@ namespace A {
 A:: ; // expected-error {{expected unqualified-id}}
 ::A::ax::undef ex3; // expected-error {{expected a class or namespace}} expected-error {{invalid token after top level declarator}}
 A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{invalid token after top level declarator}}
+
+int A::C::Ag1() { return 0; }
+
+static int A::C::Ag2() { return 0; } // expected-error{{'static' can not be specified on an out-of-line static member}}
+
+int A::C::cx = 17;
+
+
+static int A::C::cx2 = 17; // expected-error{{'static' can not be specified on an out-of-line static member}}
 
 class C2 {
   void m(); // expected-note{{member declaration nearly matches}}

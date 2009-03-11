@@ -581,7 +581,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
     const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
-    if (OldMethod && NewMethod) {
+    if (OldMethod && NewMethod && 
+        OldMethod->getLexicalDeclContext() == 
+          NewMethod->getLexicalDeclContext()) {
       //    -- Member function declarations with the same name and the 
       //       same parameter types cannot be overloaded if any of them 
       //       is a static member function declaration.
@@ -595,21 +597,18 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       //   [...] A member shall not be declared twice in the
       //   member-specification, except that a nested class or member
       //   class template can be declared and then later defined.
-      if (OldMethod->getLexicalDeclContext() == 
-            NewMethod->getLexicalDeclContext()) {
-        unsigned NewDiag;
-        if (isa<CXXConstructorDecl>(OldMethod))
-          NewDiag = diag::err_constructor_redeclared;
-        else if (isa<CXXDestructorDecl>(NewMethod))
-          NewDiag = diag::err_destructor_redeclared;
-        else if (isa<CXXConversionDecl>(NewMethod))
-          NewDiag = diag::err_conv_function_redeclared;
-        else
-          NewDiag = diag::err_member_redeclared;
-
-        Diag(New->getLocation(), NewDiag);
-        Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-      }
+      unsigned NewDiag;
+      if (isa<CXXConstructorDecl>(OldMethod))
+        NewDiag = diag::err_constructor_redeclared;
+      else if (isa<CXXDestructorDecl>(NewMethod))
+        NewDiag = diag::err_destructor_redeclared;
+      else if (isa<CXXConversionDecl>(NewMethod))
+        NewDiag = diag::err_conv_function_redeclared;
+      else
+        NewDiag = diag::err_member_redeclared;
+      
+      Diag(New->getLocation(), NewDiag);
+      Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
     }
 
     // (C++98 8.3.5p3):
@@ -805,6 +804,7 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     return true;
   }
   New->setType(MergedT);
+
   // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
   if (New->getStorageClass() == VarDecl::Static &&
       (Old->getStorageClass() == VarDecl::None ||
@@ -821,7 +821,10 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     return true;
   }
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
-  if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl()) {
+  if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl() &&
+      // Don't complain about out-of-line definitions of static members.
+      !(Old->getLexicalDeclContext()->isRecord() &&
+        !New->getLexicalDeclContext()->isRecord())) {
     Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return true;
@@ -1331,10 +1334,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
   if (New == 0)
     return 0;
   
-  // Set the lexical context. If the declarator has a C++ scope specifier, the
-  // lexical context will be different from the semantic context.
-  New->setLexicalDeclContext(CurContext);
-
   // If this has an identifier and is not an invalid redeclaration,
   // add it to the scope stack.
   if (Name && !(Redeclaration && InvalidDecl))
@@ -1598,12 +1597,26 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       InvalidDecl = true;
     }
   }
+  if (DC->isRecord() && !CurContext->isRecord()) {
+    // This is an out-of-line definition of a static data member.
+    if (SC == VarDecl::Static) {
+      Diag(D.getDeclSpec().getStorageClassSpecLoc(), 
+           diag::err_static_out_of_line)
+        << CodeModificationHint::CreateRemoval(
+                       SourceRange(D.getDeclSpec().getStorageClassSpecLoc()));
+    } else if (SC == VarDecl::None)
+      SC = VarDecl::Static;
+  }
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
                           II, R, SC, 
                           // FIXME: Move to DeclGroup...
                           D.getDeclSpec().getSourceRange().getBegin());
   NewVD->setThreadSpecified(ThreadSpecified);
   NewVD->setNextDeclarator(LastDeclarator);
+
+  // Set the lexical context. If the declarator has a C++ scope specifier, the
+  // lexical context will be different from the semantic context.
+  NewVD->setLexicalDeclContext(CurContext);
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(NewVD, D);
@@ -1697,13 +1710,11 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Redeclaration = true;
     if (MergeVarDecl(NewVD, PrevDecl))
       InvalidDecl = true;
-
-    if (D.getCXXScopeSpec().isSet()) {
-      // No previous declaration in the qualifying scope.
-      Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
-        << Name << D.getCXXScopeSpec().getRange();
-      InvalidDecl = true;
-    }
+  } else if (D.getCXXScopeSpec().isSet()) {
+    // No previous declaration in the qualifying scope.
+    Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
+      << Name << D.getCXXScopeSpec().getRange();
+    InvalidDecl = true;
   }
 
   if (!InvalidDecl && R->isVoidType() && !NewVD->hasExternalStorage()) {
@@ -1743,7 +1754,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
   case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
   case DeclSpec::SCS_static: {
-    if (DC->getLookupContext()->isFunctionOrMethod()) {
+    if (CurContext->getLookupContext()->isFunctionOrMethod()) {
       // C99 6.7.1p5:
       //   The declaration of an identifier for a function that has
       //   block scope shall have no explicit storage-class specifier
@@ -1877,6 +1888,21 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CurClass->setPOD(false);
       CurClass->setPolymorphic(true);
     }
+  }
+
+  if (SC == FunctionDecl::Static && isa<CXXMethodDecl>(NewFD) && 
+      !CurContext->isRecord()) {
+    // C++ [class.static]p1:
+    //   A data or function member of a class may be declared static
+    //   in a class definition, in which case it is a static member of
+    //   the class.
+
+    // Complain about the 'static' specifier if it's on an out-of-line
+    // member function definition.
+    Diag(D.getDeclSpec().getStorageClassSpecLoc(), 
+         diag::err_static_out_of_line)
+      << CodeModificationHint::CreateRemoval(
+                      SourceRange(D.getDeclSpec().getStorageClassSpecLoc()));
   }
 
   // Handle GNU asm-label extension (encoded as an attribute).

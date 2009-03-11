@@ -252,6 +252,8 @@ DIAG(err_virtual_out_of_class, ERROR,
      "'virtual' can only be specified inside the class definition")
 DIAG(err_static_not_bitfield, ERROR,
      "static member %0 cannot be a bit-field")
+DIAG(err_static_out_of_line, ERROR,
+     "'static' can not be specified on an out-of-line static member definition")
 DIAG(err_typedef_not_bitfield, ERROR,
      "typedef member %0 cannot be a bit-field")
 DIAG(err_not_integral_type_bitfield, ERROR,

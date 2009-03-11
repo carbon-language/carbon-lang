@@ -33,8 +33,7 @@ N::M::template; // expected-error{{expected template name after 'template' keywo
 
 N::M::template Promote; // expected-error{{expected '<' after 'template Promote' in nested name specifier}} \
 // expected-error{{C++ requires a type specifier for all declarations}} \
-// expected-error{{redefinition of 'Promote' as different kind of symbol}} \
-// expected-error{{no member named 'Promote'}}
+// expected-error{{redefinition of 'Promote' as different kind of symbol}}
 
 namespace N {
   template<typename T> struct A;
