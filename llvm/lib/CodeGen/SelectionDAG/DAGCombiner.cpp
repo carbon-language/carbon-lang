@@ -14,8 +14,10 @@
 
 #define DEBUG_TYPE "dagcombine"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -2891,8 +2893,7 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
       return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT,
                          N0.getOperand(0), N0.getOperand(1),
                          N1, N2, N0.getOperand(2));
-    else
-      return SimplifySelect(N->getDebugLoc(), N0, N1, N2);
+    return SimplifySelect(N->getDebugLoc(), N0, N1, N2);
   }
 
   return SDValue();
@@ -5675,9 +5676,14 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
   return false;
 }
 
+/// SimplifySelectCC - Simplify an expression of the form (N0 cond N1) ? N2 : N3
+/// where 'cond' is the comparison specified by CC.
 SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
                                       SDValue N2, SDValue N3,
                                       ISD::CondCode CC, bool NotExtCompare) {
+  // (x ? y : y) -> y.
+  if (N2 == N3) return N2;
+  
   MVT VT = N2.getValueType();
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
@@ -5713,6 +5719,53 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         return DAG.getNode(ISD::FABS, DL, VT, N3);
     }
   }
+  
+  // Turn "(a cond b) ? 1.0f : 2.0f" into "load (tmp + ((a cond b) ? 0 : 4)"
+  // where "tmp" is a constant pool entry containing an array with 1.0 and 2.0
+  // in it.  This is a win when the constant is not otherwise available because
+  // it replaces two constant pool loads with one.  We only do this if the FP
+  // type is known to be legal, because if it isn't, then we are before legalize
+  // types an we want the other legalization to happen first (e.g. to avoid
+  // messing with soft float).
+  if (ConstantFPSDNode *TV = dyn_cast<ConstantFPSDNode>(N2))
+    if (ConstantFPSDNode *FV = dyn_cast<ConstantFPSDNode>(N3)) {
+      if (TLI.isTypeLegal(N2.getValueType()) &&
+          // If both constants have multiple uses, then we won't need to do an
+          // extra load, they are likely around in registers for other users.
+          (TV->hasOneUse() || FV->hasOneUse())) {
+        Constant *Elts[] = {
+          const_cast<ConstantFP*>(FV->getConstantFPValue()),
+          const_cast<ConstantFP*>(TV->getConstantFPValue())
+        };
+        const Type *FPTy = Elts[0]->getType();
+        const TargetData &TD = *TLI.getTargetData();
+        
+        // Create a ConstantArray of the two constants.
+        Constant *CA = ConstantArray::get(ArrayType::get(FPTy, 2), Elts, 2);
+        SDValue CPIdx = DAG.getConstantPool(CA, TLI.getPointerTy(),
+                                            TD.getPrefTypeAlignment(FPTy));
+        unsigned Alignment =
+          1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+
+        // Get the offsets to the 0 and 1 element of the array so that we can
+        // select between them.
+        SDValue Zero = DAG.getIntPtrConstant(0);
+        unsigned EltSize = (unsigned)TD.getTypePaddedSize(Elts[0]->getType());
+        SDValue One = DAG.getIntPtrConstant(EltSize);
+        
+        SDValue Cond = DAG.getSetCC(DL,
+                                    TLI.getSetCCResultType(N0.getValueType()),
+                                    N0, N1, CC);
+        SDValue CstOffset = DAG.getNode(ISD::SELECT, DL, Zero.getValueType(),
+                                        Cond, One, Zero);
+        CPIdx = DAG.getNode(ISD::ADD, DL, TLI.getPointerTy(), CPIdx,
+                            CstOffset);
+        return DAG.getLoad(TV->getValueType(0), DL, DAG.getEntryNode(), CPIdx,
+                           PseudoSourceValue::getConstantPool(), 0, false,
+                           Alignment);
+
+      }
+    }  
 
   // Check to see if we can perform the "gzip trick", transforming
   // (select_cc setlt X, 0, A, 0) -> (and (sra X, (sub size(X), 1), A)
