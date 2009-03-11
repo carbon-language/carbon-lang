@@ -123,7 +123,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       PointerSize = ~0ULL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
       // Debug intrinsics don't cause dependences.
-      if (isa<DbgInfoIntrinsic>(Inst)) break;
+      if (isa<DbgInfoIntrinsic>(Inst)) continue;
       CallSite InstCS = CallSite::get(Inst);
       // If these two calls do not interfere, look past it.
       switch (AA->getModRefInfo(CS, InstCS)) {
