@@ -5,7 +5,7 @@
 @end
 
 void __raiseExc1() {
- [objc_lookUpClass("NSString") retain]; // expected-warning {{ "bad receiver type 'int'" }} \
+ [objc_lookUpClass("NSString") retain]; // expected-warning {{receiver type 'int' is not 'id'}} \
     expected-warning {{method '-retain' not found}}
 }
 
@@ -14,6 +14,6 @@ typedef const struct __CFString * CFStringRef;
 void func() {
   CFStringRef obj;
 
-  [obj self]; // expected-warning {{bad receiver type 'CFStringRef' (aka 'struct __CFString const *')}} \\
+  [obj self]; // expected-warning {{receiver type 'CFStringRef' (aka 'struct __CFString const *') is not 'id'}} \\
                  expected-warning {{method '-self' not found}}
 }

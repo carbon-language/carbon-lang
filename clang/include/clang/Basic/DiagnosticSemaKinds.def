@@ -982,7 +982,7 @@ DIAG(error_no_super_class, ERROR,
 DIAG(err_invalid_receiver_to_message, ERROR,
      "invalid receiver to message expression")
 DIAG(warn_bad_receiver_type, WARNING,
-     "bad receiver type %0")
+     "receiver type %0 is not 'id' or Objective-C interface pointer, consider casting it to 'id'")
 DIAG(err_bad_receiver_type, ERROR,
      "bad receiver type %0")
 DIAG(error_objc_throw_expects_object, ERROR,
