@@ -4591,11 +4591,18 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
   // Ensure that CurBlock is deleted.
   llvm::OwningPtr<BlockSemaInfo> CC(CurBlock);
 
+  // Before popping CurBlock, set ActiveScope to this scope's function
+  // or block parent.
+  ActiveScope = CurBlock->TheScope->getParent();
+  while (ActiveScope &&
+         ((ActiveScope->getFlags() & (Scope::FnScope | Scope::BlockScope)) == 0))
+    ActiveScope = ActiveScope->getParent();
+
   // Pop off CurBlock, handle nested blocks.
   CurBlock = CurBlock->PrevBlockInfo;
 
   // FIXME: Delete the ParmVarDecl objects as well???
-
+  
 }
 
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
@@ -4608,8 +4615,12 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
 
   PopDeclContext();
 
-  // Before poping CurBlock, set ActiveScope to this scopes parent.
+  // Before popping CurBlock, set ActiveScope to this scope's function
+  // or block parent.
   ActiveScope = CurBlock->TheScope->getParent();
+  while (ActiveScope &&
+         ((ActiveScope->getFlags() & (Scope::FnScope | Scope::BlockScope)) == 0))
+    ActiveScope = ActiveScope->getParent();
   
   // Pop off CurBlock, handle nested blocks.
   CurBlock = CurBlock->PrevBlockInfo;
