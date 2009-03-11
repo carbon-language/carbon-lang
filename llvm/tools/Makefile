@@ -31,4 +31,9 @@ ifeq ($(ENABLE_PIC),1)
   endif
 endif
 
+# No support for lto / gold on windows targets
+ifeq ($(OS), $(filter $(OS), Cygwin MingW))
+  DIRS := $(filter-out lto gold, $(DIRS))
+endif
+
 include $(LEVEL)/Makefile.common
