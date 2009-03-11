@@ -1,8 +1,6 @@
 // RUN: clang %s -arch=i386 -verify -fsyntax-only
 
-void
-f()
-{
+void f() {
   int i;
 
   asm ("foo\n" : : "a" (i + 2));
@@ -17,9 +15,7 @@ f()
   asm ("foo\n" : "=a" (i) : "[symbolic_name]" (i)); // expected-error {{invalid input constraint '[symbolic_name]' in asm}}
 }
 
-void
-clobbers()
-{
+void clobbers() {
   asm ("nop" : : : "ax", "#ax", "%ax");
   asm ("nop" : : : "eax", "rax", "ah", "al");
   asm ("nop" : : : "0", "%0", "#0");
@@ -59,7 +55,13 @@ void test6(long i) {
   asm("nop" : : "er"(i));
 }
 
-void test7() {
+void asm_string_tests() {
   asm("%!");   // simple asm string, %! is not an error.   
   asm("%!" : );   // expected-error {{invalid % escape in inline assembly string}}
+  asm("xyz %" : );   // expected-error {{invalid % escape in inline assembly string}}
+
+  asm ("%[somename]" :: [somename] "i"(4)); // ok
+  asm ("%[somename]" :: "i"(4)); // expected-error {{unknown symbolic operand name in inline assembly string}}
+  asm ("%[somename" :: "i"(4)); // expected-error {{unterminated symbolic operand name in inline assembly string}}
+  asm ("%[]" :: "i"(4)); // expected-error {{empty symbolic operand name in inline assembly string}}
 }

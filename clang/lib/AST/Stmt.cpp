@@ -229,8 +229,11 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     }
     
     // Escaped "%" character in asm string.
-    // FIXME: This should be caught during Sema.
-    assert(CurPtr != StrEnd && "Trailing '%' in asm string.");
+    if (CurPtr == StrEnd) {
+      // % at end of string is invalid (no escape).
+      DiagOffs = CurPtr-StrStart-1;
+      return diag::err_asm_invalid_escape;
+    }
     
     char EscapedChar = *CurPtr++;
     if (EscapedChar == '%') {  // %% -> %
@@ -275,16 +278,26 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     
     // Handle %[foo], a symbolic operand reference.
     if (EscapedChar == '[') {
+      DiagOffs = CurPtr-StrStart-1;
+      
+      // Find the ']'.
       const char *NameEnd = (const char*)memchr(CurPtr, ']', StrEnd-CurPtr);
-      // FIXME: Should be caught by sema.
-      // FIXME: Does sema catch multiple operands with the same name?
-      assert(NameEnd != 0 && "Could not parse symbolic name");
+      if (NameEnd == 0)
+        return diag::err_asm_unterminated_symbolic_operand_name;
+      if (NameEnd == CurPtr)
+        return diag::err_asm_empty_symbolic_operand_name;
+      
       std::string SymbolicName(CurPtr, NameEnd);
-      CurPtr = NameEnd+1;
       
       int N = getNamedOperand(SymbolicName);
-      assert(N != -1 && "FIXME: Catch in Sema.");
+      if (N == -1) {
+        // Verify that an operand with that name exists.
+        DiagOffs = CurPtr-StrStart;
+        return diag::err_asm_unknown_symbolic_operand_name;
+      }
       Pieces.push_back(AsmStringPiece(N, Modifier));
+      
+      CurPtr = NameEnd+1;
       continue;
     }
     
