@@ -4344,6 +4344,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   if (!Dependent && !ArgTy->isRecordType())
     return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy;
 
+  // FIXME: Does the type need to be complete?
+
   // Otherwise, create a null pointer as the base, and iteratively process
   // the offsetof designators.
   QualType ArgTyPtr = Context.getPointerType(ArgTy);

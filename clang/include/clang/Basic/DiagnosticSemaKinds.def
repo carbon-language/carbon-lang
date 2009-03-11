@@ -231,6 +231,10 @@ DIAG(error_property_implemented, ERROR,
 DIAG(warn_objc_property_attr_mutually_exclusive, WARNING,
      "property attributes '%0' and '%1' are mutually exclusive")
 
+// C++ name lookup
+DIAG(err_incomplete_nested_name_spec, ERROR,
+     "incomplete type %0 named in nested name specifier")
+
 // C++ class members
 DIAG(err_storageclass_invalid_for_member, ERROR,
      "storage class specified for a member declaration")

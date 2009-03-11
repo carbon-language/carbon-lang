@@ -1394,6 +1394,8 @@ public:
                                                TypeTy *Ty,
                                                SourceLocation RParen);
 
+  bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
+
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,

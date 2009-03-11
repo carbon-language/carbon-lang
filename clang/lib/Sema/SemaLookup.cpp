@@ -1035,7 +1035,7 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
                        bool RedeclarationOnly, bool AllowBuiltinCreation,
                        SourceLocation Loc) {
   if (SS) {
-    if (SS->isInvalid())
+    if (SS->isInvalid() || RequireCompleteDeclContext(*SS))
       return LookupResult::CreateLookupResult(Context, 0);
 
     if (SS->isSet())

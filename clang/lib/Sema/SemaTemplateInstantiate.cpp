@@ -655,12 +655,43 @@ Sema::InstantiateClassTemplateSpecialization(
   // Start the definition of this instantiation.
   ClassTemplateSpec->startDefinition();
 
-  // FIXME: Create the injected-class-name for the
-  // instantiation. Should this be a typedef or something like it?
 
   // Instantiate the base class specifiers.
   if (InstantiateBaseSpecifiers(ClassTemplateSpec, Template))
     Invalid = true;
+
+  // FIXME: Create the injected-class-name for the
+  // instantiation. Should this be a typedef or something like it?
+
+  RecordDecl *Pattern = Template->getTemplatedDecl();
+
+  for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
+                              MemberEnd = Pattern->decls_end();
+       Member != MemberEnd; ++Member) {
+    if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(*Member)) {
+      // FIXME: Simplified instantiation of typedefs needs to be made
+      // "real".
+      QualType T = Typedef->getUnderlyingType();
+      if (T->isDependentType()) {
+        T = InstantiateType(T, ClassTemplateSpec->getTemplateArgs(),
+                            ClassTemplateSpec->getNumTemplateArgs(),
+                            Typedef->getLocation(),
+                            Typedef->getDeclName());
+        if (T.isNull()) {
+          Invalid = true;
+          T = Context.IntTy;
+        }
+      }
+       
+      // Create the new typedef
+      TypedefDecl *New 
+        = TypedefDecl::Create(Context, ClassTemplateSpec,
+                              Typedef->getLocation(),
+                              Typedef->getIdentifier(),
+                              T);
+      ClassTemplateSpec->addDecl(New);
+    }
+  }
 
   // FIXME: Instantiate all of the members.
   

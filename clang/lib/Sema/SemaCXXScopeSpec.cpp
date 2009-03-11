@@ -17,6 +17,36 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
+/// \brief Require that the context specified by SS be complete.
+///
+/// If SS refers to a type, this routine checks whether the type is
+/// complete enough (or can be made complete enough) for name lookup
+/// into the DeclContext. A type that is not yet completed can be
+/// considered "complete enough" if it is a class/struct/union/enum
+/// that is currently being defined. Or, if we have a type that names
+/// a class template specialization that is not a complete type, we
+/// will attempt to instantiate that class template.
+bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
+  if (!SS.isSet() || SS.isInvalid())
+    return false;
+  
+  DeclContext *DC = static_cast<DeclContext *>(SS.getScopeRep());
+  if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
+    // If we're currently defining this type, then lookup into the
+    // type is okay: don't complain that it isn't complete yet.
+    const TagType *TagT = Context.getTypeDeclType(Tag)->getAsTagType();
+    if (TagT->isBeingDefined())
+      return false;
+
+    // The type must be complete.
+    return RequireCompleteType(SS.getRange().getBegin(),
+                               Context.getTypeDeclType(Tag),
+                               diag::err_incomplete_nested_name_spec,
+                               SS.getRange());
+  }
+
+  return false;
+}
 
 /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
 /// global scope ('::').

@@ -1,5 +1,4 @@
-// RUN: clang -fsyntax-only -verify -std=c++98 %s 
-// fails due to exact diagnostic matching
+// RUN: clang -fsyntax-only -std=c++98 -verify %s 
 namespace A {
   struct C {
     static int cx;
@@ -151,5 +150,10 @@ void ::global_func2(int) { } // expected-error{{definition or redeclaration of '
 
 void N::f() { } // okay
 
+struct Y;  // expected-note{{forward declaration of 'struct Y'}}
+Y::foo y; // expected-error{{incomplete type 'struct Y' named in nested name specifier}} \
+         // FIXME: ugly: expected-error{{invalid token after top level declarator}}
+
 X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}} \
       // expected-error{{expected function body after function declarator}}
+
