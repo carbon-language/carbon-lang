@@ -505,7 +505,7 @@ Init *TGParser::ParseIDValue(Record *CurRec,
 ///
 ///   SimpleValue ::= IDValue
 ///   SimpleValue ::= INTVAL
-///   SimpleValue ::= STRVAL
+///   SimpleValue ::= STRVAL+
 ///   SimpleValue ::= CODEFRAGMENT
 ///   SimpleValue ::= '?'
 ///   SimpleValue ::= '{' ValueList '}'
@@ -523,7 +523,19 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   switch (Lex.getCode()) {
   default: TokError("Unknown token when parsing a value"); break;
   case tgtok::IntVal: R = new IntInit(Lex.getCurIntVal()); Lex.Lex(); break;
-  case tgtok::StrVal: R = new StringInit(Lex.getCurStrVal()); Lex.Lex(); break;
+  case tgtok::StrVal: {
+    std::string Val = Lex.getCurStrVal();
+    Lex.Lex();
+    
+    // Handle multiple consequtive concatenated strings.
+    while (Lex.getCode() == tgtok::StrVal) {
+      Val += Lex.getCurStrVal();
+      Lex.Lex();
+    }
+    
+    R = new StringInit(Val);
+    break;
+  }
   case tgtok::CodeFragment:
       R = new CodeInit(Lex.getCurStrVal()); Lex.Lex(); break;
   case tgtok::question: R = new UnsetInit(); Lex.Lex(); break;
