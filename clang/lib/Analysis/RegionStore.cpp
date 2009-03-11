@@ -620,9 +620,21 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
   if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
 
-  const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
+  const TypedRegion* TR 
+    = cast<TypedRegion>(cast<loc::MemRegionVal>(L).getRegion());
 
-  const ElementRegion* ER = cast<ElementRegion>(MR);
+  const ElementRegion* ER = dyn_cast<ElementRegion>(TR);
+  
+  if (!ER) {
+    // If the region is not element region, create one with index 0. This can
+    // happen in the following example:
+    // char *p = foo();
+    // p += 3;
+    // Note that p binds to a TypedViewRegion(SymbolicRegion).
+    nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
+    ER = MRMgr.getElementRegion(Idx, TR);
+  }
+
   SVal Idx = ER->getIndex();
 
   nonloc::ConcreteInt* Base = dyn_cast<nonloc::ConcreteInt>(&Idx);
@@ -632,7 +644,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
   if (Base && Offset) {
     // For now, convert the signedness of offset in case it doesn't match.
     const llvm::APSInt &I =
-      getBasicVals().ConvertSignedness(Base->getValue(), Offset->getValue());    
+      getBasicVals().ConvertSignedness(Base->getValue(), Offset->getValue());
     nonloc::ConcreteInt OffsetConverted(I);
     
     SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffsetConverted);

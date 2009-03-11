@@ -5,3 +5,10 @@ void f1() {
   int *p = a;
   ++p;
 }
+
+char* foo();
+
+void f2() {
+  char *p = foo();
+  ++p;
+}
