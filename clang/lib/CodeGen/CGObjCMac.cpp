@@ -416,11 +416,15 @@ protected:
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
   
+  /// GetInterfaceDeclStructLayout - Get layout for ivars of given
+  /// interface declaration.
+  const llvm::StructLayout *GetInterfaceDeclStructLayout(
+                                          const ObjCInterfaceDecl *ID) const;
+  
   /// BuildIvarLayout - Builds ivar layout bitmap for the class
   /// implementation for the __strong or __weak case.
   ///
-  llvm::Constant *BuildIvarLayout(const llvm::StructLayout *Layout,
-                                  ObjCImplementationDecl *OI,
+  llvm::Constant *BuildIvarLayout(ObjCImplementationDecl *OI,
                                   bool ForStrongLayout,
                                   const ObjCCommonTypesHelper &ObjCTypes);
   
@@ -1706,10 +1710,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   
   ObjCInterfaceDecl *OID = 
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
-  const llvm::Type *InterfaceTy = 
-    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(OID));
-  const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
+  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
   
   RecordDecl::field_iterator ifield, pfield;
   const RecordDecl *RD = GetFirstIvarInRecord(OID, ifield, pfield);
@@ -2292,10 +2293,7 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
 llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                        ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
-  const llvm::Type *InterfaceLTy =
-  CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
-  const llvm::StructLayout *Layout =
-  CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
+  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(Interface);
   FieldDecl *Field = Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   uint64_t Offset = GetIvarBaseOffset(Layout, Field);
   return llvm::ConstantInt::get(
@@ -2460,6 +2458,19 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
                               0, true);
 
   return getConstantGEP(Entry, 0, 0);
+}
+
+/// GetInterfaceDeclStructLayout - Get layout for ivars of given
+/// interface declaration.
+const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
+                                        const ObjCInterfaceDecl *OID) const {
+  const llvm::Type *InterfaceTy =
+    CGM.getTypes().ConvertType(
+      CGM.getContext().getObjCInterfaceType(
+                                        const_cast<ObjCInterfaceDecl*>(OID)));
+  const llvm::StructLayout *Layout =
+    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
+  return Layout;
 }
 
 /// GetIvarLayoutName - Returns a unique constant for the given
@@ -2666,7 +2677,6 @@ IvarBytePosCompare (const void *a, const void *b)
 /// - __weak anything
 ///
 llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
-                                      const llvm::StructLayout *Layout,
                                       ObjCImplementationDecl *OMD,
                                       bool ForStrongLayout,
                                       const ObjCCommonTypesHelper &ObjCTypes) {
@@ -2681,7 +2691,8 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   CGM.getContext().CollectObjCIvars(OI, RecFields);
   if (RecFields.empty())
     return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
-    
+  
+  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OI);
   BuildAggrIvarLayout (Layout, 0, RecFields, 0, ForStrongLayout, 
                        Index, SkIndex, hasUnion);
   if (Index == -1)
@@ -4129,10 +4140,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (ObjCInterfaceDecl *OID = 
       const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
     // FIXME. Share this with the one in EmitIvarList.
-    const llvm::Type *InterfaceTy = 
-    CGM.getTypes().ConvertType(CGM.getContext().buildObjCInterfaceType(OID));
-    const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
+    const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
     
     RecordDecl::field_iterator firstField, lastField;
     const RecordDecl *RD = GetFirstIvarInRecord(OID, firstField, lastField);
@@ -4442,11 +4450,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   assert(OID && "CGObjCNonFragileABIMac::EmitIvarList - null interface");
   
   // FIXME. Consolidate this with similar code in GenerateClass.
-  const llvm::Type *InterfaceTy =
-    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(
-                                        const_cast<ObjCInterfaceDecl*>(OID)));
-  const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
+  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
   
   RecordDecl::field_iterator i,p;
   const RecordDecl *RD = GetFirstIvarInRecord(OID, i,p);
