@@ -132,16 +132,16 @@ StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
   
-  if (inDeclGroup()) {
-    VarDecl* VD = cast<VarDecl>(*DGI);
-    return VD->Init;
-  }
-  
-  assert (inDecl() || inSizeOfTypeVA());
-  
   if (VariableArrayType* VAPtr = getVAPtr()) {
     assert (VAPtr->SizeExpr);
     return VAPtr->SizeExpr;
+  }
+
+  assert (inDecl() || inDeclGroup());
+  
+  if (inDeclGroup()) {
+    VarDecl* VD = cast<VarDecl>(*DGI);
+    return VD->Init;
   }
   
   assert (inDecl());

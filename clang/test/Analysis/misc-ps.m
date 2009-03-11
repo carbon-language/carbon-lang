@@ -178,13 +178,13 @@ char pr3770(int x) {
   return 'a';
 }
 
-// PR 3780
+// PR 3772
 // - We just want to test that this doesn't crash the analyzer.
 typedef struct st ST;
 struct st { char *name; };
 extern ST *Cur_Pu;
 
-void pr3780(void)
+void pr3772(void)
 {
   static ST *last_Cur_Pu;
   if (last_Cur_Pu == Cur_Pu) {
@@ -192,4 +192,6 @@ void pr3780(void)
   } 
 }
 
+// PR 3780 - This tests that StmtIterator isn't broken for VLAs in DeclGroups.
+void pr3780(int sz) { typedef double MAT[sz][sz]; }
 
