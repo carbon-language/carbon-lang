@@ -165,3 +165,16 @@ my_test_mm_movepi64_pi64(__a128vector a) {
 }
 @end
 
+// PR 3770
+char pr3770(int x) {
+  int y = x & 0x2;
+  char *p = 0;
+  if (y == 1)
+    p = "hello";
+
+  if (y == 1)
+    return p[0]; // no-warning
+    
+  return 'a';
+}
+

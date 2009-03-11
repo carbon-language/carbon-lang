@@ -21,6 +21,19 @@ namespace clang {
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
+  if (nonloc::SymIntConstraintVal *Y = dyn_cast<nonloc::SymIntConstraintVal>(&X)) {
+    const SymIntConstraint& C = Y->getConstraint();
+    switch (C.getOpcode()) {
+        // We don't reason yet about bitwise-constraints on symbolic values.
+      case BinaryOperator::And:
+      case BinaryOperator::Or:
+      case BinaryOperator::Xor:
+        return false;
+      default:
+        return true;
+    }
+  }
+
   return true;
 }
   
