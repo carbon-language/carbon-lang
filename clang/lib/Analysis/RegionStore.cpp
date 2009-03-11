@@ -1129,7 +1129,9 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
 
   RecordType* RT = cast<RecordType>(T.getTypePtr());
   RecordDecl* RD = RT->getDecl();
-  assert(RD->isDefinition());
+
+  if (!RD->isDefinition())
+    return St;
 
   if (V.isUnknown())
     return KillStruct(St, R);
