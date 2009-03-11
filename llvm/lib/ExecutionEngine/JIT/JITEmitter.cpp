@@ -309,7 +309,7 @@ GlobalValue *JITResolver::invalidateStub(void *Stub) {
     return F;
   }
   
-  // Otherwise, it must be an indirect symbol stub.  Find it and remove it.
+  // Otherwise, it might be an indirect symbol stub.  Find it and remove it.
   for (std::map<GlobalValue*,void*>::iterator i = GM.begin(), e = GM.end();
        i != e; ++i) {
     if (i->second != Stub)
@@ -317,6 +317,15 @@ GlobalValue *JITResolver::invalidateStub(void *Stub) {
     GlobalValue *GV = i->first;
     GM.erase(i);
     return GV;
+  }
+  
+  // Lastly, check to see if it's in the ExternalFnToStubMap.
+  for (std::map<void *, void *>::iterator i = ExternalFnToStubMap.begin(),
+       e = ExternalFnToStubMap.end(); i != e; ++i) {
+    if (i->second != Stub)
+      continue;
+    ExternalFnToStubMap.erase(i);
+    break;
   }
   
   return 0;
@@ -591,6 +600,10 @@ namespace {
     // the stub is unused.
     DenseMap<void *, SmallPtrSet<const Function*, 1> > StubFnRefs;
     
+    // ExtFnStubs - A map of external function names to stubs which have entries
+    // in the JITResolver's ExternalFnToStubMap.
+    StringMap<void *> ExtFnStubs;
+    
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
@@ -652,11 +665,18 @@ namespace {
       return MBBLocations[MBB->getNumber()];
     }
 
-    void AddStubToCurrentFunction(void *Stub);
-    
     /// deallocateMemForFunction - Deallocate all memory for the specified
     /// function body.
     void deallocateMemForFunction(Function *F);
+
+    /// AddStubToCurrentFunction - Mark the current function being JIT'd as
+    /// using the stub at the specified address. Allows
+    /// deallocateMemForFunction to also remove stubs no longer referenced.
+    void AddStubToCurrentFunction(void *Stub);
+    
+    /// getExternalFnStubs - Accessor for the JIT to find stubs emitted for
+    /// MachineRelocations that reference external functions by name.
+    const StringMap<void*> &getExternalFnStubs() const { return ExtFnStubs; }
     
     virtual void emitLabel(uint64_t LabelID) {
       if (LabelLocations.size() <= LabelID)
@@ -1033,8 +1053,18 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                << ResultPtr << "]\n";  
 
           // If the target REALLY wants a stub for this function, emit it now.
-          if (!MR.doesntNeedStub())
-            ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
+          if (!MR.doesntNeedStub()) {
+            if (!TheJIT->areDlsymStubsEnabled()) {
+              ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
+            } else {
+              void *&Stub = ExtFnStubs[MR.getExternalSymbol()];
+              if (!Stub) {
+                Stub = Resolver.getExternalFunctionStub((void *)&Stub);
+                AddStubToCurrentFunction(Stub);
+              }
+              ResultPtr = Stub;
+            }
+          }
         } else if (MR.isGlobalValue()) {
           ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                          BufferBegin+MR.getMachineCodeOffset(),
@@ -1189,6 +1219,11 @@ void JITEmitter::deallocateMemForFunction(Function *F) {
   SmallVectorImpl<void *> &StubList = CurFnStubUses[F];
   for (unsigned i = 0, e = StubList.size(); i != e; ++i) {
     void *Stub = StubList[i];
+    
+    // If we already invalidated this stub for this function, continue.
+    if (StubFnRefs.count(Stub) == 0)
+      continue;
+      
     SmallPtrSet<const Function *, 1> &FnRefs = StubFnRefs[Stub];
     FnRefs.erase(F);
     
@@ -1197,9 +1232,23 @@ void JITEmitter::deallocateMemForFunction(Function *F) {
     // we could call that at this point too.
     if (FnRefs.empty()) {
       DOUT << "\nJIT: Invalidated Stub at [" << Stub << "]\n";
+      StubFnRefs.erase(Stub);
+
+      // Invalidate the stub.  If it is a GV stub, update the JIT's global
+      // mapping for that GV to zero, otherwise, search the string map of
+      // external function names to stubs and remove the entry for this stub.
       GlobalValue *GV = Resolver.invalidateStub(Stub);
-      TheJIT->updateGlobalMapping(GV, 0);
-      StubFnRefs.erase(F);
+      if (GV) {
+        TheJIT->updateGlobalMapping(GV, 0);
+      } else {
+        for (StringMapIterator<void*> i = ExtFnStubs.begin(),
+             e = ExtFnStubs.end(); i != e; ++i) {
+          if (i->second == Stub) {
+            ExtFnStubs.erase(i);
+            break;
+          }
+        }
+      }
     }
   }
   CurFnStubUses.erase(F);
@@ -1428,35 +1477,43 @@ void JIT::updateDlsymStubTable() {
   
   SmallVector<GlobalValue*, 8> GVs;
   SmallVector<void*, 8> Ptrs;
+  const StringMap<void *> &ExtFns = JE->getExternalFnStubs();
 
   JE->getJITResolver().getRelocatableGVs(GVs, Ptrs);
 
+  unsigned nStubs = GVs.size() + ExtFns.size();
+  
   // If there are no relocatable stubs, return.
-  if (GVs.empty())
+  if (nStubs == 0)
     return;
 
   // If there are no new relocatable stubs, return.
   void *CurTable = JE->getMemMgr()->getDlsymTable();
-  if (CurTable && (*(unsigned *)CurTable == GVs.size()))
+  if (CurTable && (*(unsigned *)CurTable == nStubs))
     return;
   
   // Calculate the size of the stub info
-  unsigned offset    = 4 + 4 * GVs.size() + sizeof(intptr_t) * GVs.size();
+  unsigned offset = 4 + 4 * nStubs + sizeof(intptr_t) * nStubs;
   
   SmallVector<unsigned, 8> Offsets;
   for (unsigned i = 0; i != GVs.size(); ++i) {
     Offsets.push_back(offset);
     offset += GVs[i]->getName().length() + 1;
   }
+  for (StringMapConstIterator<void*> i = ExtFns.begin(), e = ExtFns.end(); 
+       i != e; ++i) {
+    Offsets.push_back(offset);
+    offset += strlen(i->first()) + 1;
+  }
   
   // Allocate space for the new "stub", which contains the dlsym table.
   JE->startGVStub(0, offset, 4);
   
   // Emit the number of records
-  MCE->emitInt32(GVs.size());
+  MCE->emitInt32(nStubs);
   
   // Emit the string offsets
-  for (unsigned i = 0; i != GVs.size(); ++i)
+  for (unsigned i = 0; i != nStubs; ++i)
     MCE->emitInt32(Offsets[i]);
   
   // Emit the pointers.  Verify that they are at least 2-byte aligned, and set
@@ -1470,7 +1527,16 @@ void JIT::updateDlsymStubTable() {
     if (isa<Function>(GVs[i]))
       Ptr |= (intptr_t)1;
            
-    if (sizeof(void *) == 8)
+    if (sizeof(Ptr) == 8)
+      MCE->emitInt64(Ptr);
+    else
+      MCE->emitInt32(Ptr);
+  }
+  for (StringMapConstIterator<void*> i = ExtFns.begin(), e = ExtFns.end(); 
+       i != e; ++i) {
+    intptr_t Ptr = (intptr_t)i->second | 1;
+
+    if (sizeof(Ptr) == 8)
       MCE->emitInt64(Ptr);
     else
       MCE->emitInt32(Ptr);
@@ -1479,6 +1545,9 @@ void JIT::updateDlsymStubTable() {
   // Emit the strings.
   for (unsigned i = 0; i != GVs.size(); ++i)
     MCE->emitString(GVs[i]->getName());
+  for (StringMapConstIterator<void*> i = ExtFns.begin(), e = ExtFns.end(); 
+       i != e; ++i)
+    MCE->emitString(i->first());
   
   // Tell the JIT memory manager where it is.  The JIT Memory Manager will
   // deallocate space for the old one, if one existed.
