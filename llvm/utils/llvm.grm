@@ -94,7 +94,6 @@ GVInternalLinkage
 GVExternalLinkage
   ::= dllimport
  | "extern_weak"
- | "extern_weak_odr"
  | + external
  ;
 
@@ -109,7 +108,6 @@ FunctionDeclareLinkage
   ::= + _
  | dllimport
  | "extern_weak"
- | "extern_weak_odr"
  ;
 
 FunctionDefineLinkage

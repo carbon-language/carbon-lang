@@ -1194,8 +1194,7 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   case GlobalValue::AppendingLinkage:   Out << "appending "; break;
   case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
   case GlobalValue::DLLExportLinkage:   Out << "dllexport "; break;
-  case GlobalValue::ExternalWeakAnyLinkage: Out << "extern_weak "; break;
-  case GlobalValue::ExternalWeakODRLinkage: Out << "extern_weak_odr "; break;
+  case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
   case GlobalValue::ExternalLinkage: break;
   case GlobalValue::GhostLinkage:
     Out << "GhostLinkage not allowed in AsmWriter!\n";

@@ -127,9 +127,7 @@ typedef enum {
   LLVMPrivateLinkage,     /**< Like Internal, but omit from symbol table */
   LLVMDLLImportLinkage,   /**< Function to be imported from DLL */
   LLVMDLLExportLinkage,   /**< Function to be accessible from DLL */
-  LLVMExternalWeakAnyLinkage,/**< ExternalWeak linkage description */
-  LLVMExternalWeakODRLinkage,/**< Same, but only replaced by something
-                               equivalent. */
+  LLVMExternalWeakLinkage,/**< ExternalWeak linkage description */
   LLVMGhostLinkage,       /**< Stand-in functions for streaming fns from
                                bitcode */
   LLVMCommonAnyLinkage,   /**< Tentative definitions */

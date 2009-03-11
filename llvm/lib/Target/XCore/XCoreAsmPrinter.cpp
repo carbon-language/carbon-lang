@@ -438,8 +438,7 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
       switch (I->getLinkage()) {
       default:
         assert(0 && "Unexpected linkage");
-      case Function::ExternalWeakAnyLinkage:
-      case Function::ExternalWeakODRLinkage:
+      case Function::ExternalWeakLinkage:
         ExtWeakSymbols.insert(I);
         // fallthrough
       case Function::ExternalLinkage:

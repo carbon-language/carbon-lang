@@ -40,8 +40,7 @@ public:
     PrivateLinkage,     ///< Like Internal, but omit from symbol table
     DLLImportLinkage,   ///< Function to be imported from DLL
     DLLExportLinkage,   ///< Function to be accessible from DLL
-    ExternalWeakAnyLinkage,///< ExternalWeak linkage description
-    ExternalWeakODRLinkage,///< Same, but only replaced by something equivalent.
+    ExternalWeakLinkage,///< ExternalWeak linkage description
     GhostLinkage,       ///< Stand-in functions for streaming fns from BC files
     CommonAnyLinkage,   ///< Tentative definitions
     CommonODRLinkage    ///< Same, but only replaced by something equivalent.
@@ -112,9 +111,6 @@ public:
   static LinkageTypes getCommonLinkage(bool ODR) {
     return ODR ? CommonODRLinkage : CommonAnyLinkage;
   }
-  static LinkageTypes getExternalWeakLinkage(bool ODR) {
-    return ODR ? ExternalWeakODRLinkage : ExternalWeakAnyLinkage;
-  }
 
   bool hasExternalLinkage() const { return Linkage == ExternalLinkage; }
   bool hasLinkOnceLinkage() const {
@@ -131,10 +127,7 @@ public:
   }
   bool hasDLLImportLinkage() const { return Linkage == DLLImportLinkage; }
   bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }
-  bool hasExternalWeakLinkage() const {
-    return Linkage == ExternalWeakAnyLinkage ||
-      Linkage == ExternalWeakODRLinkage;
-  }
+  bool hasExternalWeakLinkage() const { return Linkage == ExternalWeakLinkage; }
   bool hasGhostLinkage() const { return Linkage == GhostLinkage; }
   bool hasCommonLinkage() const {
     return Linkage == CommonAnyLinkage || Linkage == CommonODRLinkage;
@@ -150,7 +143,7 @@ public:
     return (Linkage == WeakAnyLinkage ||
             Linkage == LinkOnceAnyLinkage ||
             Linkage == CommonAnyLinkage ||
-            Linkage == ExternalWeakAnyLinkage);
+            Linkage == ExternalWeakLinkage);
   }
 
   /// isWeakForLinker - Whether the definition of this global may be replaced at
@@ -162,8 +155,7 @@ public:
             Linkage == LinkOnceODRLinkage ||
             Linkage == CommonAnyLinkage ||
             Linkage == CommonODRLinkage ||
-            Linkage == ExternalWeakAnyLinkage ||
-            Linkage == ExternalWeakODRLinkage);
+            Linkage == ExternalWeakLinkage);
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to

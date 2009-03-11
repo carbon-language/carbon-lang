@@ -125,7 +125,6 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_common_odr:    // OptionalLinkage
     case lltok::kw_dllimport:     // OptionalLinkage
     case lltok::kw_extern_weak:   // OptionalLinkage
-    case lltok::kw_extern_weak_odr: // OptionalLinkage
     case lltok::kw_external: {    // OptionalLinkage
       unsigned Linkage, Visibility;
       if (ParseOptionalLinkage(Linkage) ||
@@ -458,8 +457,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   // present.
   Constant *Init = 0;
   if (!HasLinkage || (Linkage != GlobalValue::DLLImportLinkage &&
-                      Linkage != GlobalValue::ExternalWeakAnyLinkage &&
-                      Linkage != GlobalValue::ExternalWeakODRLinkage &&
+                      Linkage != GlobalValue::ExternalWeakLinkage &&
                       Linkage != GlobalValue::ExternalLinkage)) {
     if (ParseGlobalValue(Ty, Init))
       return true;
@@ -574,10 +572,10 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
       return 0;
     }
     
-    FwdVal = Function::Create(FT, GlobalValue::ExternalWeakAnyLinkage, Name, M);
+    FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
   } else {
     FwdVal = new GlobalVariable(PTy->getElementType(), false,
-                                GlobalValue::ExternalWeakAnyLinkage, 0, Name, M);
+                                GlobalValue::ExternalWeakLinkage, 0, Name, M);
   }
   
   ForwardRefVals[Name] = std::make_pair(FwdVal, Loc);
@@ -618,10 +616,10 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
       Error(Loc, "function may not return opaque type");
       return 0;
     }
-    FwdVal = Function::Create(FT, GlobalValue::ExternalWeakAnyLinkage, "", M);
+    FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, "", M);
   } else {
     FwdVal = new GlobalVariable(PTy->getElementType(), false,
-                                GlobalValue::ExternalWeakAnyLinkage, 0, "", M);
+                                GlobalValue::ExternalWeakLinkage, 0, "", M);
   }
   
   ForwardRefValIDs[ID] = std::make_pair(FwdVal, Loc);
@@ -753,7 +751,6 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
 ///   ::= 'common_odr'
 ///   ::= 'dllimport'
 ///   ::= 'extern_weak'
-///   ::= 'extern_weak_odr'
 ///   ::= 'external'
 bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   HasLinkage = false;
@@ -770,9 +767,7 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_common:       Res = GlobalValue::CommonAnyLinkage; break;
   case lltok::kw_common_odr:   Res = GlobalValue::CommonODRLinkage; break;
   case lltok::kw_dllimport:    Res = GlobalValue::DLLImportLinkage; break;
-  case lltok::kw_extern_weak:  Res = GlobalValue::ExternalWeakAnyLinkage; break;
-  case lltok::kw_extern_weak_odr:
-                               Res = GlobalValue::ExternalWeakODRLinkage; break;
+  case lltok::kw_extern_weak:  Res = GlobalValue::ExternalWeakLinkage; break;
   case lltok::kw_external:     Res = GlobalValue::ExternalLinkage; break;
   }
   Lex.Lex();
@@ -2103,8 +2098,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   case GlobalValue::ExternalLinkage:
     break; // always ok.
   case GlobalValue::DLLImportLinkage:
-  case GlobalValue::ExternalWeakAnyLinkage:
-  case GlobalValue::ExternalWeakODRLinkage:
+  case GlobalValue::ExternalWeakLinkage:
     if (isDefine)
       return Error(LinkageLoc, "invalid linkage for function definition");
     break;

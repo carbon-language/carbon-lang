@@ -39,7 +39,7 @@ namespace lltok {
     kw_private, kw_internal, kw_linkonce, kw_linkonce_odr, kw_weak, kw_weak_odr,
     kw_appending, kw_dllimport, kw_dllexport, kw_common, kw_common_odr,
     kw_default, kw_hidden, kw_protected,
-    kw_extern_weak, kw_extern_weak_odr,
+    kw_extern_weak,
     kw_external, kw_thread_local,
     kw_zeroinitializer,
     kw_undef, kw_null,

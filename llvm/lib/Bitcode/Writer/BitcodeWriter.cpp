@@ -282,12 +282,11 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::LinkOnceAnyLinkage:  return 4;
   case GlobalValue::DLLImportLinkage:    return 5;
   case GlobalValue::DLLExportLinkage:    return 6;
-  case GlobalValue::ExternalWeakAnyLinkage: return 7;
+  case GlobalValue::ExternalWeakLinkage: return 7;
   case GlobalValue::CommonAnyLinkage:    return 8;
   case GlobalValue::PrivateLinkage:      return 9;
   case GlobalValue::WeakODRLinkage:      return 10;
   case GlobalValue::LinkOnceODRLinkage:  return 11;
-  case GlobalValue::ExternalWeakODRLinkage: return 12;
   case GlobalValue::CommonODRLinkage:    return 13;
   }
 }
