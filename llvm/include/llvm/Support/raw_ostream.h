@@ -84,6 +84,8 @@ public:
     if (OutBufCur >= OutBufEnd)
       flush_impl();
     *OutBufCur++ = C;
+    if (Unbuffered)
+      flush_impl();
     return *this;
   }
 
@@ -91,6 +93,8 @@ public:
     if (OutBufCur >= OutBufEnd)
       flush_impl();
     *OutBufCur++ = C;
+    if (Unbuffered)
+      flush_impl();
     return *this;
   }
 
@@ -98,6 +102,8 @@ public:
     if (OutBufCur >= OutBufEnd)
       flush_impl();
     *OutBufCur++ = C;
+    if (Unbuffered)
+      flush_impl();
     return *this;
   }
 
