@@ -15,6 +15,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/Support/Compiler.h"
@@ -38,6 +39,8 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
     Inst.Kind = ActiveTemplateInstantiation::TemplateInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
     Inst.Entity = reinterpret_cast<uintptr_t>(Entity);
+    Inst.TemplateArgs = 0;
+    Inst.NumTemplateArgs = 0;
     Inst.InstantiationRange = InstantiationRange;
     SemaRef.ActiveTemplateInstantiations.push_back(Inst);
     Invalid = false;
@@ -553,45 +556,81 @@ QualType Sema::InstantiateType(QualType T,
 //===----------------------------------------------------------------------===/
 // Template Instantiation for Expressions
 //===----------------------------------------------------------------------===/
+namespace {
+  class VISIBILITY_HIDDEN TemplateExprInstantiator 
+    : public StmtVisitor<TemplateExprInstantiator, Sema::OwningExprResult> {
+    Sema &SemaRef;
+    const TemplateArgument *TemplateArgs;
+    unsigned NumTemplateArgs;
+
+  public:
+    TemplateExprInstantiator(Sema &SemaRef, 
+                             const TemplateArgument *TemplateArgs,
+                             unsigned NumTemplateArgs)
+      : SemaRef(SemaRef), TemplateArgs(TemplateArgs), 
+        NumTemplateArgs(NumTemplateArgs) { }
+
+    // FIXME: Once we get closer to completion, replace these
+    // manually-written declarations with automatically-generated ones
+    // from clang/AST/StmtNodes.def.
+    Sema::OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
+    Sema::OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
+    Sema::OwningExprResult VisitParenExpr(ParenExpr *E);
+
+    // Base case. I'm supposed to ignore this.
+    Sema::OwningExprResult VisitStmt(Stmt *) { return SemaRef.ExprError(); }
+  };
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitIntegerLiteral(IntegerLiteral *E) {
+  // FIXME: Can't we just re-use the expression node?
+  return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(E->getValue(), 
+                                                            E->getType(),
+                                                            E->getLocation()));
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
+  Decl *D = E->getDecl();
+  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
+    assert(NTTP->getDepth() == 0 && "No nested templates yet");
+    QualType T = NTTP->getType();
+    if (T->isDependentType()) {
+      // FIXME: We'll be doing this instantiation a lot. Should we
+      // cache this information in the TemplateArgument itself?
+      T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
+                                  E->getSourceRange().getBegin(),
+                                  NTTP->getDeclName());
+      if (T.isNull())
+        return SemaRef.ExprError();
+    }
+    return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
+                           *TemplateArgs[NTTP->getPosition()].getAsIntegral(),
+                            T, E->getSourceRange().getBegin()));
+  } else
+    assert(false && "Can't handle arbitrary declaration references");
+
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitParenExpr(ParenExpr *E) {
+  Sema::OwningExprResult SubExpr
+    = SemaRef.InstantiateExpr(E->getSubExpr(), TemplateArgs, NumTemplateArgs);
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+
+  return SemaRef.Owned(new (SemaRef.Context) ParenExpr(
+                                               E->getLParen(), E->getRParen(), 
+                                               (Expr *)SubExpr.release()));
+}
+
 Sema::OwningExprResult 
 Sema::InstantiateExpr(Expr *E, const TemplateArgument *TemplateArgs,
                       unsigned NumTemplateArgs) {
-  if (IntegerLiteral *IL = dyn_cast<IntegerLiteral>(E))
-    return Owned(new (Context) IntegerLiteral(IL->getValue(), IL->getType(),
-                                              IL->getSourceRange().getBegin()));
-  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
-    Decl *D = DRE->getDecl();
-    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
-      assert(NTTP->getDepth() == 0 && "No nested templates yet");
-      QualType T = NTTP->getType();
-      if (T->isDependentType()) {
-        // FIXME: We'll be doing this instantiation a lot. Should we
-        // cache this information in the TemplateArgument itself?
-        T = InstantiateType(T, TemplateArgs, NumTemplateArgs,
-                            E->getSourceRange().getBegin(),
-                            NTTP->getDeclName());
-        if (T.isNull())
-          return ExprError();
-      }
-      return Owned(new (Context) IntegerLiteral(
-                            *TemplateArgs[NTTP->getPosition()].getAsIntegral(),
-                            T, E->getSourceRange().getBegin()));
-    } else
-      assert(false && "Yes, this is lame");
-  } else if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
-    OwningExprResult SubExpr
-      = InstantiateExpr(PE->getSubExpr(), TemplateArgs,
-                        NumTemplateArgs);
-    if (SubExpr.isInvalid())
-      return ExprError();
-
-    return Owned(new (Context) ParenExpr(E->getSourceRange().getBegin(),
-                                         E->getSourceRange().getEnd(),
-                                         (Expr *)SubExpr.release()));
-  } else 
-    assert(false && "Yes, this is lame");
-
-  return ExprError();
+  TemplateExprInstantiator Instantiator(*this, TemplateArgs, NumTemplateArgs);
+  return Instantiator.Visit(E);
 }
 
 /// \brief Instantiate the base class specifiers of the given class

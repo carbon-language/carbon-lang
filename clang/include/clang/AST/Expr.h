@@ -372,6 +372,9 @@ public:
   const llvm::APInt &getValue() const { return Value; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
+  /// \brief Retrieve the location of the literal.
+  SourceLocation getLocation() const { return Loc; }
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IntegerLiteralClass; 
   }
@@ -562,6 +565,12 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
   virtual SourceRange getSourceRange() const { return SourceRange(L, R); }
+
+  /// \brief Get the location of the left parentheses '('.
+  SourceLocation getLParen() const { return L; }
+
+  /// \brief Get the location of the right parentheses ')'.
+  SourceLocation getRParen() const { return R; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ParenExprClass; 
