@@ -14,5 +14,9 @@ def err_drv_unsupported_opt : Error<"unsupported option '%0'">
 def err_drv_unknown_stdin_type : Error<
     "-E or -x required when input is from standard input">
 def err_drv_unknown_language : Error<"language not recognized: '%0'">
+def err_drv_invalid_opt_with_multiple_archs : Error<
+     "option '%0' cannot be used with multiple -arch options">
+def err_drv_invalid_output_with_multiple_archs : Error<
+     "cannot use '%0' output with multiple -arch options">
 
 }

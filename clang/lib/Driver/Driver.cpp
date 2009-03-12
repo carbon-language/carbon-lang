@@ -19,6 +19,7 @@
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Types.h"
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 using namespace clang::driver;
@@ -171,8 +172,73 @@ void Driver::PrintActions(const ActionList &Actions) const {
 }
 
 void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
-  // FIXME: Implement
-  BuildActions(Args, Actions);
+  llvm::StringMap<Arg *> Archs;
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
+       it != ie; ++it) {
+    Arg *A = *it;
+
+    if (A->getOption().getId() == options::OPT_arch) {
+      // FIXME: We need to handle canonicalization of the specified
+      // arch?
+
+      Archs[A->getValue(Args)] = A;
+    }
+  }
+
+  // When there is no explicit arch for this platform, get one from
+  // the host so that -Xarch_ is handled correctly.
+  if (!Archs.size()) {
+    const char *Arch = Host->getArchName().c_str();
+    Archs[Arch] = Args.MakeSeparateArg(getOpts().getOption(options::OPT_arch),
+                                       Arch);
+  }
+
+  // FIXME: We killed off some others but these aren't yet detected in
+  // a functional manner. If we added information to jobs about which
+  // "auxiliary" files they wrote then we could detect the conflict
+  // these cause downstream.
+  if (Archs.size() > 1) {
+    // No recovery needed, the point of this is just to prevent
+    // overwriting the same files.
+    if (const Arg *A = Args.getLastArg(options::OPT_M_Group))
+      Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs) 
+        << A->getOption().getName();
+    if (const Arg *A = Args.getLastArg(options::OPT_save_temps))
+      Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs) 
+        << A->getOption().getName();
+  }
+
+  ActionList SingleActions;
+  BuildActions(Args, SingleActions);
+
+  // Add in arch binding and lipo (if necessary) for every top level
+  // action.
+  for (unsigned i = 0, e = SingleActions.size(); i != e; ++i) {
+    Action *Act = SingleActions[i];
+
+    // Make sure we can lipo this kind of output. If not (and it is an
+    // actual output) then we disallow, since we can't create an
+    // output file with the right name without overwriting it. We
+    // could remove this oddity by just changing the output names to
+    // include the arch, which would also fix
+    // -save-temps. Compatibility wins for now.
+
+    if (Archs.size() > 1 && types::canLipoType(Act->getType()))
+      Diag(clang::diag::err_drv_invalid_output_with_multiple_archs)
+        << types::getTypeName(Act->getType());
+
+    ActionList Inputs;
+    for (llvm::StringMap<Arg*>::iterator it = Archs.begin(), ie = Archs.end();
+         it != ie; ++it)
+      Inputs.push_back(new BindArchAction(Act, it->second->getValue(Args)));
+
+    // Lipo if necessary, We do it this way because we need to set the
+    // arch flag so that -Xarch_ gets overwritten.
+    if (Inputs.size() == 1 || Act->getType() == types::TY_Nothing)
+      Actions.append(Inputs.begin(), Inputs.end());
+    else
+      Actions.push_back(new LipoJobAction(Inputs, Act->getType()));
+  }
 }
 
 void Driver::BuildActions(ArgList &Args, ActionList &Actions) {

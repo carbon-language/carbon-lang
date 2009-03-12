@@ -20,3 +20,7 @@ DIAG(err_drv_unknown_stdin_type, ERROR,
      "-E or -x required when input is from standard input")
 DIAG(err_drv_unknown_language, ERROR,
      "language not recognized: '%0'")
+DIAG(err_drv_invalid_opt_with_multiple_archs, ERROR,
+     "option '%0' cannot be used with multiple -arch options")
+DIAG(err_drv_invalid_output_with_multiple_archs, ERROR,
+     "cannot use '%0' output with multiple -arch options")
