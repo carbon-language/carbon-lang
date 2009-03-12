@@ -34,7 +34,7 @@ bool ArgList::hasArg(options::ID Id) const {
   // FIXME: Make search efficient?
 
   // FIXME: This needs to not require loading of the option.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++ie)
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it)
     if ((*it)->getOption().matches(Id))
       return true;
   
