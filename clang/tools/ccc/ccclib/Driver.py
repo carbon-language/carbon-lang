@@ -318,15 +318,16 @@ class Driver(object):
         def printPhase(p, f, steps, arch=None):
             if p in steps:
                 return steps[p]
-            elif isinstance(p, Phases.BindArchAction):
-                for kid in p.inputs:
-                    printPhase(kid, f, steps, p.arch)
-                steps[p] = len(steps)
-                return
 
             if isinstance(p, Phases.InputAction):
                 phaseName = 'input'
                 inputStr = '"%s"' % args.getValue(p.filename)
+            elif isinstance(p, Phases.BindArchAction):
+                phaseName = 'bind-arch'
+                inputs = [printPhase(i, f, steps, p.arch) 
+                          for i in p.inputs]
+                inputStr = '"%s", {%s}' % (args.getValue(p.arch), 
+                                           ', '.join(map(str, inputs)))
             else:
                 phaseName = p.phase.name
                 inputs = [printPhase(i, f, steps, arch) 
