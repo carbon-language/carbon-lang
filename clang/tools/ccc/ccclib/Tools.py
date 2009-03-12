@@ -1272,7 +1272,8 @@ class LipoTool(Tool):
 
     def constructJob(self, phase, arch, jobs, inputs,
                      output, outputType, arglist, linkingOutput):
-        assert outputType is Types.ImageType
+
+        assert outputType in (Types.ObjectType, Types.ImageType)
 
         cmd_args = ['-create']
         cmd_args.extend(arglist.render(output))
