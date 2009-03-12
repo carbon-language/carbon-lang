@@ -606,9 +606,9 @@ public:
   /// function. The variant that accepts a FunctionDecl pointer will
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
-  Stmt *getBody(const FunctionDecl *&Definition) const;
+  CompoundStmt *getBody(const FunctionDecl *&Definition) const;
 
-  virtual Stmt *getBody() const { 
+  virtual CompoundStmt *getBody() const { 
     const FunctionDecl* Definition;
     return getBody(Definition);
   }
@@ -619,7 +619,7 @@ public:
   /// previous definition); for that information, use getBody.
   bool isThisDeclarationADefinition() const { return Body != 0; }
 
-  void setBody(Stmt *B) { Body = B; }
+  void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   /// Whether this function is virtual, either by explicit marking, or by
   /// overriding a virtual function. Only valid on C++ member functions.
@@ -1198,8 +1198,8 @@ public:
 
   SourceLocation getCaretLocation() const { return getLocation(); }
 
-  Stmt *getBody() const { return Body; }
-  void setBody(Stmt *B) { Body = B; }
+  CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
+  void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   void setArgs(ParmVarDecl **args, unsigned numargs) {
     Args.clear(); 

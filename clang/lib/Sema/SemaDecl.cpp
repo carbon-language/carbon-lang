@@ -2774,11 +2774,11 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtArg BodyArg) {
   Decl *dcl = static_cast<Decl *>(D);
   Stmt *Body = static_cast<Stmt*>(BodyArg.release());
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
-    FD->setBody(Body);
+    FD->setBody(cast<CompoundStmt>(Body));
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
-    MD->setBody((Stmt*)Body);
+    MD->setBody(cast<CompoundStmt>(Body));
   } else {
     Body->Destroy(Context);
     return 0;

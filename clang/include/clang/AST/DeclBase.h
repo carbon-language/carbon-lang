@@ -39,6 +39,7 @@ class ObjCCategoryImplDecl;
 class LinkageSpecDecl;
 class BlockDecl;
 class DeclarationName;
+class CompoundStmt;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
@@ -293,7 +294,7 @@ public:
   // getBody - If this Decl represents a declaration for a body of code,
   //  such as a function or method definition, this method returns the top-level
   //  Stmt* of that body.  Otherwise this method returns null.  
-  virtual Stmt* getBody() const { return 0; }
+  virtual CompoundStmt* getBody() const { return 0; }
   
   // global temp stats (until we have a per-module visitor)
   static void addDeclKind(Kind k);

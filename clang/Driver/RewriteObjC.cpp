@@ -4426,11 +4426,13 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     // definitions using the same code.
     RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
-    if (Stmt *Body = FD->getBody()) {
+    if (CompoundStmt *Body = FD->getBody()) {
       CurFunctionDef = FD;
       CollectPropertySetters(Body);
       CurrentBody = Body;
-      FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      Body =
+       cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
+      FD->setBody(Body);
       CurrentBody = 0;
       if (PropParentMap) {
         delete PropParentMap;
@@ -4444,11 +4446,13 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     return;
   }
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    if (Stmt *Body = MD->getBody()) {
+    if (CompoundStmt *Body = MD->getBody()) {
       CurMethodDef = MD;
       CollectPropertySetters(Body);
       CurrentBody = Body;
-      MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      Body =
+       cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
+      MD->setBody(Body);
       CurrentBody = 0;
       if (PropParentMap) {
         delete PropParentMap;

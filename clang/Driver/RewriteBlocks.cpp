@@ -1076,9 +1076,9 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
     // definitions using the same code.
     RewriteFunctionProtoType(FD->getType(), FD);
     
-    if (Stmt *Body = FD->getBody()) {
+    if (CompoundStmt *Body = FD->getBody()) {
       CurFunctionDef = FD;
-      FD->setBody(RewriteFunctionBody(Body));
+      FD->setBody(cast_or_null<CompoundStmt>(RewriteFunctionBody(Body)));
       // This synthesizes and inserts the block "impl" struct, invoke function,
       // and any copy/dispose helper functions.
       InsertBlockLiteralsWithinFunction(FD);
