@@ -24,6 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include <queue>
 
 using namespace clang;
 
@@ -298,18 +299,19 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
                                GTrim->getContext());
   
-  // Sometimes the trimmed graph can contain a cycle.  Perform a reverse DFS
+  // Sometimes the trimmed graph can contain a cycle.  Perform a reverse BFS
   // to the root node, and then construct a new graph that contains only
   // a single path.
   llvm::DenseMap<const void*,unsigned> Visited;
-  llvm::SmallVector<const ExplodedNode<GRState>*, 10> WS;
-  WS.push_back(N);
+  std::queue<const ExplodedNode<GRState>*> WS;
+  WS.push(N);
+  
   unsigned cnt = 0;
   const ExplodedNode<GRState>* Root = 0;
   
   while (!WS.empty()) {
-    const ExplodedNode<GRState>* Node = WS.back();
-    WS.pop_back();
+    const ExplodedNode<GRState>* Node = WS.front();
+    WS.pop();
     
     if (Visited.find(Node) != Visited.end())
       continue;
@@ -323,12 +325,12 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     
     for (ExplodedNode<GRState>::const_pred_iterator I=Node->pred_begin(),
          E=Node->pred_end(); I!=E; ++I)
-      WS.push_back(*I);
+      WS.push(*I);
   }
   
   assert (Root);
   
-  // Now walk from the root down the DFS path, always taking the successor
+  // Now walk from the root down the BFS path, always taking the successor
   // with the lowest number.
   ExplodedNode<GRState> *Last = 0, *First = 0;  
   NodeBackMap *BM = new NodeBackMap();

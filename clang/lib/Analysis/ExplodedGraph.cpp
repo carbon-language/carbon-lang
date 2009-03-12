@@ -18,7 +18,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
-#include <list>
 
 using namespace clang;
 
@@ -133,10 +132,9 @@ const {
   typedef llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> Pass2Ty;
   Pass2Ty& Pass2 = M->M;
   
-  std::list<const ExplodedNodeImpl*> WL1;
-  llvm::SmallVector<const ExplodedNodeImpl*, 10> WL2;
+  llvm::SmallVector<const ExplodedNodeImpl*, 10> WL1, WL2;
 
-  // ===- Pass 1 (reverse BFS) -===
+  // ===- Pass 1 (reverse DFS) -===
   for (const ExplodedNodeImpl* const* I = BeginSources; I != EndSources; ++I) {
     assert(*I);
     WL1.push_back(*I);
@@ -163,7 +161,7 @@ const {
       
     // Visit our predecessors and enqueue them.
     for (ExplodedNodeImpl** I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I)
-      WL1.push_front(*I);
+      WL1.push_back(*I);
   }
   
   // We didn't hit a root? Return with a null pointer for the new graph.
