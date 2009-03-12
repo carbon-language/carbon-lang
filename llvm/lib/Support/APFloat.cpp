@@ -75,484 +75,482 @@ namespace llvm {
                                                 / (351 * integerPartWidth));
 }
 
-/* Put a bunch of private, handy routines in an anonymous namespace.  */
-namespace {
+/* A bunch of private, handy routines.  */
 
-  static inline unsigned int
-  partCountForBits(unsigned int bits)
-  {
-    return ((bits) + integerPartWidth - 1) / integerPartWidth;
-  }
+static inline unsigned int
+partCountForBits(unsigned int bits)
+{
+  return ((bits) + integerPartWidth - 1) / integerPartWidth;
+}
 
-  /* Returns 0U-9U.  Return values >= 10U are not digits.  */
-  static inline unsigned int
-  decDigitValue(unsigned int c)
-  {
-    return c - '0';
-  }
+/* Returns 0U-9U.  Return values >= 10U are not digits.  */
+static inline unsigned int
+decDigitValue(unsigned int c)
+{
+  return c - '0';
+}
 
-  static unsigned int
-  hexDigitValue(unsigned int c)
-  {
-    unsigned int r;
+static unsigned int
+hexDigitValue(unsigned int c)
+{
+  unsigned int r;
 
-    r = c - '0';
-    if(r <= 9)
-      return r;
+  r = c - '0';
+  if(r <= 9)
+    return r;
 
-    r = c - 'A';
-    if(r <= 5)
-      return r + 10;
+  r = c - 'A';
+  if(r <= 5)
+    return r + 10;
 
-    r = c - 'a';
-    if(r <= 5)
-      return r + 10;
+  r = c - 'a';
+  if(r <= 5)
+    return r + 10;
 
-    return -1U;
-  }
+  return -1U;
+}
 
-  static inline void
-  assertArithmeticOK(const llvm::fltSemantics &semantics) {
-    assert(semantics.arithmeticOK
-           && "Compile-time arithmetic does not support these semantics");
-  }
+static inline void
+assertArithmeticOK(const llvm::fltSemantics &semantics) {
+  assert(semantics.arithmeticOK
+         && "Compile-time arithmetic does not support these semantics");
+}
 
-  /* Return the value of a decimal exponent of the form
-     [+-]ddddddd.
+/* Return the value of a decimal exponent of the form
+   [+-]ddddddd.
 
-     If the exponent overflows, returns a large exponent with the
-     appropriate sign.  */
-  static int
-  readExponent(const char *p)
-  {
-    bool isNegative;
-    unsigned int absExponent;
-    const unsigned int overlargeExponent = 24000;  /* FIXME.  */
+   If the exponent overflows, returns a large exponent with the
+   appropriate sign.  */
+static int
+readExponent(const char *p)
+{
+  bool isNegative;
+  unsigned int absExponent;
+  const unsigned int overlargeExponent = 24000;  /* FIXME.  */
 
-    isNegative = (*p == '-');
-    if (*p == '-' || *p == '+')
-      p++;
-
-    absExponent = decDigitValue(*p++);
-    assert (absExponent < 10U);
-
-    for (;;) {
-      unsigned int value;
-
-      value = decDigitValue(*p);
-      if (value >= 10U)
-        break;
-
-      p++;
-      value += absExponent * 10;
-      if (absExponent >= overlargeExponent) {
-        absExponent = overlargeExponent;
-        break;
-      }
-      absExponent = value;
-    }
-
-    if (isNegative)
-      return -(int) absExponent;
-    else
-      return (int) absExponent;
-  }
-
-  /* This is ugly and needs cleaning up, but I don't immediately see
-     how whilst remaining safe.  */
-  static int
-  totalExponent(const char *p, int exponentAdjustment)
-  {
-    int unsignedExponent;
-    bool negative, overflow;
-    int exponent;
-
-    /* Move past the exponent letter and sign to the digits.  */
+  isNegative = (*p == '-');
+  if (*p == '-' || *p == '+')
     p++;
-    negative = *p == '-';
-    if(*p == '-' || *p == '+')
-      p++;
 
-    unsignedExponent = 0;
-    overflow = false;
-    for(;;) {
-      unsigned int value;
+  absExponent = decDigitValue(*p++);
+  assert (absExponent < 10U);
 
-      value = decDigitValue(*p);
-      if(value >= 10U)
-        break;
+  for (;;) {
+    unsigned int value;
 
-      p++;
-      unsignedExponent = unsignedExponent * 10 + value;
-      if(unsignedExponent > 65535)
-        overflow = true;
+    value = decDigitValue(*p);
+    if (value >= 10U)
+      break;
+
+    p++;
+    value += absExponent * 10;
+    if (absExponent >= overlargeExponent) {
+      absExponent = overlargeExponent;
+      break;
     }
+    absExponent = value;
+  }
 
-    if(exponentAdjustment > 65535 || exponentAdjustment < -65536)
+  if (isNegative)
+    return -(int) absExponent;
+  else
+    return (int) absExponent;
+}
+
+/* This is ugly and needs cleaning up, but I don't immediately see
+   how whilst remaining safe.  */
+static int
+totalExponent(const char *p, int exponentAdjustment)
+{
+  int unsignedExponent;
+  bool negative, overflow;
+  int exponent;
+
+  /* Move past the exponent letter and sign to the digits.  */
+  p++;
+  negative = *p == '-';
+  if(*p == '-' || *p == '+')
+    p++;
+
+  unsignedExponent = 0;
+  overflow = false;
+  for(;;) {
+    unsigned int value;
+
+    value = decDigitValue(*p);
+    if(value >= 10U)
+      break;
+
+    p++;
+    unsignedExponent = unsignedExponent * 10 + value;
+    if(unsignedExponent > 65535)
       overflow = true;
-
-    if(!overflow) {
-      exponent = unsignedExponent;
-      if(negative)
-        exponent = -exponent;
-      exponent += exponentAdjustment;
-      if(exponent > 65535 || exponent < -65536)
-        overflow = true;
-    }
-
-    if(overflow)
-      exponent = negative ? -65536: 65535;
-
-    return exponent;
   }
 
-  static const char *
-  skipLeadingZeroesAndAnyDot(const char *p, const char **dot)
-  {
-    *dot = 0;
+  if(exponentAdjustment > 65535 || exponentAdjustment < -65536)
+    overflow = true;
+
+  if(!overflow) {
+    exponent = unsignedExponent;
+    if(negative)
+      exponent = -exponent;
+    exponent += exponentAdjustment;
+    if(exponent > 65535 || exponent < -65536)
+      overflow = true;
+  }
+
+  if(overflow)
+    exponent = negative ? -65536: 65535;
+
+  return exponent;
+}
+
+static const char *
+skipLeadingZeroesAndAnyDot(const char *p, const char **dot)
+{
+  *dot = 0;
+  while(*p == '0')
+    p++;
+
+  if(*p == '.') {
+    *dot = p++;
     while(*p == '0')
       p++;
-
-    if(*p == '.') {
-      *dot = p++;
-      while(*p == '0')
-        p++;
-    }
-
-    return p;
   }
 
-  /* Given a normal decimal floating point number of the form
+  return p;
+}
 
-       dddd.dddd[eE][+-]ddd
+/* Given a normal decimal floating point number of the form
 
-     where the decimal point and exponent are optional, fill out the
-     structure D.  Exponent is appropriate if the significand is
-     treated as an integer, and normalizedExponent if the significand
-     is taken to have the decimal point after a single leading
-     non-zero digit.
+     dddd.dddd[eE][+-]ddd
 
-     If the value is zero, V->firstSigDigit points to a non-digit, and
-     the return exponent is zero.
-  */
-  struct decimalInfo {
-    const char *firstSigDigit;
-    const char *lastSigDigit;
-    int exponent;
-    int normalizedExponent;
-  };
+   where the decimal point and exponent are optional, fill out the
+   structure D.  Exponent is appropriate if the significand is
+   treated as an integer, and normalizedExponent if the significand
+   is taken to have the decimal point after a single leading
+   non-zero digit.
 
-  static void
-  interpretDecimal(const char *p, decimalInfo *D)
-  {
-    const char *dot;
+   If the value is zero, V->firstSigDigit points to a non-digit, and
+   the return exponent is zero.
+*/
+struct decimalInfo {
+  const char *firstSigDigit;
+  const char *lastSigDigit;
+  int exponent;
+  int normalizedExponent;
+};
 
-    p = skipLeadingZeroesAndAnyDot (p, &dot);
+static void
+interpretDecimal(const char *p, decimalInfo *D)
+{
+  const char *dot;
 
-    D->firstSigDigit = p;
-    D->exponent = 0;
-    D->normalizedExponent = 0;
+  p = skipLeadingZeroesAndAnyDot (p, &dot);
 
-    for (;;) {
-      if (*p == '.') {
-        assert(dot == 0);
-        dot = p++;
-      }
-      if (decDigitValue(*p) >= 10U)
-        break;
-      p++;
+  D->firstSigDigit = p;
+  D->exponent = 0;
+  D->normalizedExponent = 0;
+
+  for (;;) {
+    if (*p == '.') {
+      assert(dot == 0);
+      dot = p++;
     }
+    if (decDigitValue(*p) >= 10U)
+      break;
+    p++;
+  }
 
-    /* If number is all zerooes accept any exponent.  */
-    if (p != D->firstSigDigit) {
-      if (*p == 'e' || *p == 'E')
-        D->exponent = readExponent(p + 1);
+  /* If number is all zerooes accept any exponent.  */
+  if (p != D->firstSigDigit) {
+    if (*p == 'e' || *p == 'E')
+      D->exponent = readExponent(p + 1);
 
-      /* Implied decimal point?  */
-      if (!dot)
-        dot = p;
+    /* Implied decimal point?  */
+    if (!dot)
+      dot = p;
 
-      /* Drop insignificant trailing zeroes.  */
+    /* Drop insignificant trailing zeroes.  */
+    do
       do
-        do
-          p--;
-        while (*p == '0');
-      while (*p == '.');
+        p--;
+      while (*p == '0');
+    while (*p == '.');
 
-      /* Adjust the exponents for any decimal point.  */
-      D->exponent += static_cast<exponent_t>((dot - p) - (dot > p));
-      D->normalizedExponent = (D->exponent +
-                static_cast<exponent_t>((p - D->firstSigDigit)
-                                        - (dot > D->firstSigDigit && dot < p)));
-    }
-
-    D->lastSigDigit = p;
+    /* Adjust the exponents for any decimal point.  */
+    D->exponent += static_cast<exponent_t>((dot - p) - (dot > p));
+    D->normalizedExponent = (D->exponent +
+              static_cast<exponent_t>((p - D->firstSigDigit)
+                                      - (dot > D->firstSigDigit && dot < p)));
   }
 
-  /* Return the trailing fraction of a hexadecimal number.
-     DIGITVALUE is the first hex digit of the fraction, P points to
-     the next digit.  */
-  static lostFraction
-  trailingHexadecimalFraction(const char *p, unsigned int digitValue)
-  {
-    unsigned int hexDigit;
+  D->lastSigDigit = p;
+}
 
-    /* If the first trailing digit isn't 0 or 8 we can work out the
-       fraction immediately.  */
-    if(digitValue > 8)
-      return lfMoreThanHalf;
-    else if(digitValue < 8 && digitValue > 0)
-      return lfLessThanHalf;
+/* Return the trailing fraction of a hexadecimal number.
+   DIGITVALUE is the first hex digit of the fraction, P points to
+   the next digit.  */
+static lostFraction
+trailingHexadecimalFraction(const char *p, unsigned int digitValue)
+{
+  unsigned int hexDigit;
 
-    /* Otherwise we need to find the first non-zero digit.  */
-    while(*p == '0')
-      p++;
-
-    hexDigit = hexDigitValue(*p);
-
-    /* If we ran off the end it is exactly zero or one-half, otherwise
-       a little more.  */
-    if(hexDigit == -1U)
-      return digitValue == 0 ? lfExactlyZero: lfExactlyHalf;
-    else
-      return digitValue == 0 ? lfLessThanHalf: lfMoreThanHalf;
-  }
-
-  /* Return the fraction lost were a bignum truncated losing the least
-     significant BITS bits.  */
-  static lostFraction
-  lostFractionThroughTruncation(const integerPart *parts,
-                                unsigned int partCount,
-                                unsigned int bits)
-  {
-    unsigned int lsb;
-
-    lsb = APInt::tcLSB(parts, partCount);
-
-    /* Note this is guaranteed true if bits == 0, or LSB == -1U.  */
-    if(bits <= lsb)
-      return lfExactlyZero;
-    if(bits == lsb + 1)
-      return lfExactlyHalf;
-    if(bits <= partCount * integerPartWidth
-       && APInt::tcExtractBit(parts, bits - 1))
-      return lfMoreThanHalf;
-
+  /* If the first trailing digit isn't 0 or 8 we can work out the
+     fraction immediately.  */
+  if(digitValue > 8)
+    return lfMoreThanHalf;
+  else if(digitValue < 8 && digitValue > 0)
     return lfLessThanHalf;
+
+  /* Otherwise we need to find the first non-zero digit.  */
+  while(*p == '0')
+    p++;
+
+  hexDigit = hexDigitValue(*p);
+
+  /* If we ran off the end it is exactly zero or one-half, otherwise
+     a little more.  */
+  if(hexDigit == -1U)
+    return digitValue == 0 ? lfExactlyZero: lfExactlyHalf;
+  else
+    return digitValue == 0 ? lfLessThanHalf: lfMoreThanHalf;
+}
+
+/* Return the fraction lost were a bignum truncated losing the least
+   significant BITS bits.  */
+static lostFraction
+lostFractionThroughTruncation(const integerPart *parts,
+                              unsigned int partCount,
+                              unsigned int bits)
+{
+  unsigned int lsb;
+
+  lsb = APInt::tcLSB(parts, partCount);
+
+  /* Note this is guaranteed true if bits == 0, or LSB == -1U.  */
+  if(bits <= lsb)
+    return lfExactlyZero;
+  if(bits == lsb + 1)
+    return lfExactlyHalf;
+  if(bits <= partCount * integerPartWidth
+     && APInt::tcExtractBit(parts, bits - 1))
+    return lfMoreThanHalf;
+
+  return lfLessThanHalf;
+}
+
+/* Shift DST right BITS bits noting lost fraction.  */
+static lostFraction
+shiftRight(integerPart *dst, unsigned int parts, unsigned int bits)
+{
+  lostFraction lost_fraction;
+
+  lost_fraction = lostFractionThroughTruncation(dst, parts, bits);
+
+  APInt::tcShiftRight(dst, parts, bits);
+
+  return lost_fraction;
+}
+
+/* Combine the effect of two lost fractions.  */
+static lostFraction
+combineLostFractions(lostFraction moreSignificant,
+                     lostFraction lessSignificant)
+{
+  if(lessSignificant != lfExactlyZero) {
+    if(moreSignificant == lfExactlyZero)
+      moreSignificant = lfLessThanHalf;
+    else if(moreSignificant == lfExactlyHalf)
+      moreSignificant = lfMoreThanHalf;
   }
 
-  /* Shift DST right BITS bits noting lost fraction.  */
-  static lostFraction
-  shiftRight(integerPart *dst, unsigned int parts, unsigned int bits)
-  {
-    lostFraction lost_fraction;
+  return moreSignificant;
+}
 
-    lost_fraction = lostFractionThroughTruncation(dst, parts, bits);
+/* The error from the true value, in half-ulps, on multiplying two
+   floating point numbers, which differ from the value they
+   approximate by at most HUE1 and HUE2 half-ulps, is strictly less
+   than the returned value.
 
-    APInt::tcShiftRight(dst, parts, bits);
+   See "How to Read Floating Point Numbers Accurately" by William D
+   Clinger.  */
+static unsigned int
+HUerrBound(bool inexactMultiply, unsigned int HUerr1, unsigned int HUerr2)
+{
+  assert(HUerr1 < 2 || HUerr2 < 2 || (HUerr1 + HUerr2 < 8));
 
-    return lost_fraction;
-  }
+  if (HUerr1 + HUerr2 == 0)
+    return inexactMultiply * 2;  /* <= inexactMultiply half-ulps.  */
+  else
+    return inexactMultiply + 2 * (HUerr1 + HUerr2);
+}
 
-  /* Combine the effect of two lost fractions.  */
-  static lostFraction
-  combineLostFractions(lostFraction moreSignificant,
-                       lostFraction lessSignificant)
-  {
-    if(lessSignificant != lfExactlyZero) {
-      if(moreSignificant == lfExactlyZero)
-        moreSignificant = lfLessThanHalf;
-      else if(moreSignificant == lfExactlyHalf)
-        moreSignificant = lfMoreThanHalf;
-    }
+/* The number of ulps from the boundary (zero, or half if ISNEAREST)
+   when the least significant BITS are truncated.  BITS cannot be
+   zero.  */
+static integerPart
+ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
+{
+  unsigned int count, partBits;
+  integerPart part, boundary;
 
-    return moreSignificant;
-  }
+  assert (bits != 0);
 
-  /* The error from the true value, in half-ulps, on multiplying two
-     floating point numbers, which differ from the value they
-     approximate by at most HUE1 and HUE2 half-ulps, is strictly less
-     than the returned value.
+  bits--;
+  count = bits / integerPartWidth;
+  partBits = bits % integerPartWidth + 1;
 
-     See "How to Read Floating Point Numbers Accurately" by William D
-     Clinger.  */
-  static unsigned int
-  HUerrBound(bool inexactMultiply, unsigned int HUerr1, unsigned int HUerr2)
-  {
-    assert(HUerr1 < 2 || HUerr2 < 2 || (HUerr1 + HUerr2 < 8));
+  part = parts[count] & (~(integerPart) 0 >> (integerPartWidth - partBits));
 
-    if (HUerr1 + HUerr2 == 0)
-      return inexactMultiply * 2;  /* <= inexactMultiply half-ulps.  */
+  if (isNearest)
+    boundary = (integerPart) 1 << (partBits - 1);
+  else
+    boundary = 0;
+
+  if (count == 0) {
+    if (part - boundary <= boundary - part)
+      return part - boundary;
     else
-      return inexactMultiply + 2 * (HUerr1 + HUerr2);
+      return boundary - part;
   }
 
-  /* The number of ulps from the boundary (zero, or half if ISNEAREST)
-     when the least significant BITS are truncated.  BITS cannot be
-     zero.  */
-  static integerPart
-  ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
-  {
-    unsigned int count, partBits;
-    integerPart part, boundary;
+  if (part == boundary) {
+    while (--count)
+      if (parts[count])
+        return ~(integerPart) 0; /* A lot.  */
 
-    assert (bits != 0);
+    return parts[0];
+  } else if (part == boundary - 1) {
+    while (--count)
+      if (~parts[count])
+        return ~(integerPart) 0; /* A lot.  */
 
-    bits--;
-    count = bits / integerPartWidth;
-    partBits = bits % integerPartWidth + 1;
+    return -parts[0];
+  }
 
-    part = parts[count] & (~(integerPart) 0 >> (integerPartWidth - partBits));
+  return ~(integerPart) 0; /* A lot.  */
+}
 
-    if (isNearest)
-      boundary = (integerPart) 1 << (partBits - 1);
-    else
-      boundary = 0;
+/* Place pow(5, power) in DST, and return the number of parts used.
+   DST must be at least one part larger than size of the answer.  */
+static unsigned int
+powerOf5(integerPart *dst, unsigned int power)
+{
+  static const integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
+                                                  15625, 78125 };
+  static integerPart pow5s[maxPowerOfFiveParts * 2 + 5] = { 78125 * 5 };
+  static unsigned int partsCount[16] = { 1 };
 
-    if (count == 0) {
-      if (part - boundary <= boundary - part)
-        return part - boundary;
-      else
-        return boundary - part;
+  integerPart scratch[maxPowerOfFiveParts], *p1, *p2, *pow5;
+  unsigned int result;
+
+  assert(power <= maxExponent);
+
+  p1 = dst;
+  p2 = scratch;
+
+  *p1 = firstEightPowers[power & 7];
+  power >>= 3;
+
+  result = 1;
+  pow5 = pow5s;
+
+  for (unsigned int n = 0; power; power >>= 1, n++) {
+    unsigned int pc;
+
+    pc = partsCount[n];
+
+    /* Calculate pow(5,pow(2,n+3)) if we haven't yet.  */
+    if (pc == 0) {
+      pc = partsCount[n - 1];
+      APInt::tcFullMultiply(pow5, pow5 - pc, pow5 - pc, pc, pc);
+      pc *= 2;
+      if (pow5[pc - 1] == 0)
+        pc--;
+      partsCount[n] = pc;
     }
 
-    if (part == boundary) {
-      while (--count)
-        if (parts[count])
-          return ~(integerPart) 0; /* A lot.  */
+    if (power & 1) {
+      integerPart *tmp;
 
-      return parts[0];
-    } else if (part == boundary - 1) {
-      while (--count)
-        if (~parts[count])
-          return ~(integerPart) 0; /* A lot.  */
+      APInt::tcFullMultiply(p2, p1, pow5, result, pc);
+      result += pc;
+      if (p2[result - 1] == 0)
+        result--;
 
-      return -parts[0];
+      /* Now result is in p1 with partsCount parts and p2 is scratch
+         space.  */
+      tmp = p1, p1 = p2, p2 = tmp;
     }
 
-    return ~(integerPart) 0; /* A lot.  */
+    pow5 += pc;
   }
 
-  /* Place pow(5, power) in DST, and return the number of parts used.
-     DST must be at least one part larger than size of the answer.  */
-  static unsigned int
-  powerOf5(integerPart *dst, unsigned int power)
-  {
-    static const integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
-                                                    15625, 78125 };
-    static integerPart pow5s[maxPowerOfFiveParts * 2 + 5] = { 78125 * 5 };
-    static unsigned int partsCount[16] = { 1 };
+  if (p1 != dst)
+    APInt::tcAssign(dst, p1, result);
 
-    integerPart scratch[maxPowerOfFiveParts], *p1, *p2, *pow5;
-    unsigned int result;
+  return result;
+}
 
-    assert(power <= maxExponent);
+/* Zero at the end to avoid modular arithmetic when adding one; used
+   when rounding up during hexadecimal output.  */
+static const char hexDigitsLower[] = "0123456789abcdef0";
+static const char hexDigitsUpper[] = "0123456789ABCDEF0";
+static const char infinityL[] = "infinity";
+static const char infinityU[] = "INFINITY";
+static const char NaNL[] = "nan";
+static const char NaNU[] = "NAN";
 
-    p1 = dst;
-    p2 = scratch;
+/* Write out an integerPart in hexadecimal, starting with the most
+   significant nibble.  Write out exactly COUNT hexdigits, return
+   COUNT.  */
+static unsigned int
+partAsHex (char *dst, integerPart part, unsigned int count,
+           const char *hexDigitChars)
+{
+  unsigned int result = count;
 
-    *p1 = firstEightPowers[power & 7];
-    power >>= 3;
+  assert (count != 0 && count <= integerPartWidth / 4);
 
-    result = 1;
-    pow5 = pow5s;
-
-    for (unsigned int n = 0; power; power >>= 1, n++) {
-      unsigned int pc;
-
-      pc = partsCount[n];
-
-      /* Calculate pow(5,pow(2,n+3)) if we haven't yet.  */
-      if (pc == 0) {
-        pc = partsCount[n - 1];
-        APInt::tcFullMultiply(pow5, pow5 - pc, pow5 - pc, pc, pc);
-        pc *= 2;
-        if (pow5[pc - 1] == 0)
-          pc--;
-        partsCount[n] = pc;
-      }
-
-      if (power & 1) {
-        integerPart *tmp;
-
-        APInt::tcFullMultiply(p2, p1, pow5, result, pc);
-        result += pc;
-        if (p2[result - 1] == 0)
-          result--;
-
-        /* Now result is in p1 with partsCount parts and p2 is scratch
-           space.  */
-        tmp = p1, p1 = p2, p2 = tmp;
-      }
-
-      pow5 += pc;
-    }
-
-    if (p1 != dst)
-      APInt::tcAssign(dst, p1, result);
-
-    return result;
+  part >>= (integerPartWidth - 4 * count);
+  while (count--) {
+    dst[count] = hexDigitChars[part & 0xf];
+    part >>= 4;
   }
 
-  /* Zero at the end to avoid modular arithmetic when adding one; used
-     when rounding up during hexadecimal output.  */
-  static const char hexDigitsLower[] = "0123456789abcdef0";
-  static const char hexDigitsUpper[] = "0123456789ABCDEF0";
-  static const char infinityL[] = "infinity";
-  static const char infinityU[] = "INFINITY";
-  static const char NaNL[] = "nan";
-  static const char NaNU[] = "NAN";
+  return result;
+}
 
-  /* Write out an integerPart in hexadecimal, starting with the most
-     significant nibble.  Write out exactly COUNT hexdigits, return
-     COUNT.  */
-  static unsigned int
-  partAsHex (char *dst, integerPart part, unsigned int count,
-             const char *hexDigitChars)
-  {
-    unsigned int result = count;
+/* Write out an unsigned decimal integer.  */
+static char *
+writeUnsignedDecimal (char *dst, unsigned int n)
+{
+  char buff[40], *p;
 
-    assert (count != 0 && count <= integerPartWidth / 4);
+  p = buff;
+  do
+    *p++ = '0' + n % 10;
+  while (n /= 10);
 
-    part >>= (integerPartWidth - 4 * count);
-    while (count--) {
-      dst[count] = hexDigitChars[part & 0xf];
-      part >>= 4;
-    }
+  do
+    *dst++ = *--p;
+  while (p != buff);
 
-    return result;
-  }
+  return dst;
+}
 
-  /* Write out an unsigned decimal integer.  */
-  static char *
-  writeUnsignedDecimal (char *dst, unsigned int n)
-  {
-    char buff[40], *p;
+/* Write out a signed decimal integer.  */
+static char *
+writeSignedDecimal (char *dst, int value)
+{
+  if (value < 0) {
+    *dst++ = '-';
+    dst = writeUnsignedDecimal(dst, -(unsigned) value);
+  } else
+    dst = writeUnsignedDecimal(dst, value);
 
-    p = buff;
-    do
-      *p++ = '0' + n % 10;
-    while (n /= 10);
-
-    do
-      *dst++ = *--p;
-    while (p != buff);
-
-    return dst;
-  }
-
-  /* Write out a signed decimal integer.  */
-  static char *
-  writeSignedDecimal (char *dst, int value)
-  {
-    if (value < 0) {
-      *dst++ = '-';
-      dst = writeUnsignedDecimal(dst, -(unsigned) value);
-    } else
-      dst = writeUnsignedDecimal(dst, value);
-
-    return dst;
-  }
+  return dst;
 }
 
 /* Constructors.  */
