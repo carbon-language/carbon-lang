@@ -1080,7 +1080,7 @@ namespace {
 }
 
 /// closestSucc - Returns the scheduled cycle of the successor which is
-/// closet to the current cycle.
+/// closest to the current cycle.
 static unsigned closestSucc(const SUnit *SU) {
   unsigned MaxHeight = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
