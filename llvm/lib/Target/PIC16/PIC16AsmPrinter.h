@@ -27,7 +27,7 @@ namespace llvm {
     PIC16AsmPrinter(raw_ostream &O, TargetMachine &TM,
                     const TargetAsmInfo *T, bool F)
       : AsmPrinter(O, TM, T, F) {
-      CurrentBankselLabelInBasicBlock = "";
+      CurBank = "";
       IsRomData = false;
     }
     private :
@@ -50,10 +50,9 @@ namespace llvm {
     protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    bool inSameBank(char *s1, char *s2);
 
     private:
-    std::string CurrentBankselLabelInBasicBlock;
+    std::string CurBank;
     bool IsRomData;
   };
 } // end of namespace
