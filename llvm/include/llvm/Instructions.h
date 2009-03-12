@@ -1157,13 +1157,13 @@ public:
   /// indirect function invocation.
   ///
   Function *getCalledFunction() const {
-    return dyn_cast<Function>(getOperand(0));
+    return dyn_cast<Function>(Op<0>());
   }
 
   /// getCalledValue - Get a pointer to the function that is invoked by this
   /// instruction
-  const Value *getCalledValue() const { return getOperand(0); }
-        Value *getCalledValue()       { return getOperand(0); }
+  const Value *getCalledValue() const { return Op<0>(); }
+        Value *getCalledValue()       { return Op<0>(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }
