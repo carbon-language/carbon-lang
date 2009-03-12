@@ -46,6 +46,7 @@ static Info &getInfo(unsigned id) {
 }
 
 OptTable::OptTable() : Options(new Option*[numOptions]) { 
+  memset(Options, 0, sizeof(*Options) * numOptions);
 }
 
 OptTable::~OptTable() { 
@@ -108,11 +109,11 @@ Option *OptTable::constructOption(options::ID id) const {
   for (const char *s = info.Flags; *s; ++s) {
     switch (*s) {
     default: assert(0 && "Invalid option flag.");
-    case 'l': Opt->setLinkerInput(true); break;
-    case 'i': Opt->setNoOptAsInput(true); break;
     case 'J': Opt->setForceJoinedRender(true); break;
     case 'S': Opt->setForceSeparateRender(true); break;
-    case 'U': Opt->setUnsupported(true); break;
+    case 'i': Opt->setNoOptAsInput(true); break;
+    case 'l': Opt->setLinkerInput(true); break;
+    case 'u': Opt->setUnsupported(true); break;
     }
   }
 

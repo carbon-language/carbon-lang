@@ -190,6 +190,7 @@ MultiArgOption::MultiArgOption(options::ID ID, const char *Name,
                                const OptionGroup *Group, const Option *Alias, 
                                unsigned _NumArgs)
   : Option(Option::MultiArgClass, ID, Name, Group, Alias), NumArgs(_NumArgs) {
+  assert(NumArgs > 1  && "Invalid MultiArgOption!");
 }
 
 Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
