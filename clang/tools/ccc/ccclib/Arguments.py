@@ -568,7 +568,6 @@ class OptionParser:
         # FIXME: This is broken in Darwin cc1, it wants std* and this
         # is std=. May need an option group for this as well.
         self.stdOption = self.addOption(JoinedOption('-std='))
-        self.addOption(JoinedOrSeparateOption('--sysroot'))
 
         # Blanket pass-through options.
 
@@ -668,8 +667,6 @@ class OptionParser:
         self.addOption(FlagOption('--constant-cfstrings'))
         self.traditionalOption = self.addOption(FlagOption('-traditional'))
         self.traditionalCPPOption = self.addOption(FlagOption('-traditional-cpp'))
-        # FIXME: Alias.
-        self.addOption(FlagOption('--traditional'))
         self.no_dead_strip_inits_and_termsOption = self.addOption(FlagOption('-no_dead_strip_inits_and_terms'))
         self.addOption(JoinedOption('-weak-l', isLinkerInput=True))
         self.addOption(SeparateOption('-weak_framework', isLinkerInput=True))
@@ -794,11 +791,6 @@ class OptionParser:
         # want to avoid passing them to gcc/cc1 (which will generally
         # not eat them), or should we let the user sort it out.
 
-        self.fblocksGroup = OptionGroup('-fblocks')
-        self.f_blocks = self.addOption(FlagOption('-fblocks', self.fblocksGroup))
-        self.f_noblocks = self.addOption(FlagOption('-fno-blocks', self.fblocksGroup))
-        # self.fblocksOption = self.addOption(JoinedOption('-fblocks', self.fblocksGroup))
-        
         self.fGroup = OptionGroup('-f')
         self.Clang_fGroup = OptionGroup('-f', self.fGroup)
         self.fastOption = self.addOption(FlagOption('-fast', self.fGroup))
@@ -806,6 +798,8 @@ class OptionParser:
         self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
 
         self.f_appleKextOption = self.addOption(FlagOption('-fapple-kext', self.fGroup))
+        self.f_blocksOption = self.addOption(FlagOption('-fblocks', self.Clang_fGroup))
+        self.f_noBlocksOption = self.addOption(FlagOption('-fno-blocks', self.Clang_fGroup))
         self.f_bootclasspathOption = self.addOption(JoinedOption('-fbootclasspath=', self.fGroup))        
         self.f_classpathOption = self.addOption(JoinedOption('-fclasspath=', self.fGroup))        
         self.f_compileResourceOption = self.addOption(JoinedOption('-fcompile-resource=', self.fGroup))
@@ -972,7 +966,6 @@ class OptionParser:
         self.addOption(FlagOption('--dependencies', alias=self.MOption))
         self.addOption(FlagOption('--entry', alias=self.eOption))
         self.addOption(FlagOption('--extra-warnings', alias=self.WOption))
-        self.addOption(FlagOption('--coverage', alias=self.coverageOption))
         self.addOption(FlagOption('--include-barrier', alias=self.I_Option))
         self.addOption(FlagOption('--no-integrated-cpp', alias=self.noIntegratedCPPOption))
         self.addOption(FlagOption('--no-line-commands', alias=self.POption))
