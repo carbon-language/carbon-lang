@@ -40,3 +40,39 @@ Arg *ArgList::getLastArg(options::ID Id) const {
   
   return 0;
 }
+
+unsigned ArgList::MakeIndex(const char *String0) {
+  unsigned Index = ArgStrings.size();
+
+  // Tuck away so we have a reliable const char *.
+  SynthesizedStrings.push_back(String0);
+  ArgStrings.push_back(SynthesizedStrings.back().c_str());
+
+  return Index;
+}
+
+unsigned ArgList::MakeIndex(const char *String0, const char *String1) {
+  unsigned Index0 = MakeIndex(String0);
+  unsigned Index1 = MakeIndex(String1);
+  assert(Index0 == Index1 && "Unexpected non-consecutive indices!");
+  (void) Index1;
+  return Index0;
+}
+
+Arg *ArgList::MakeFlagArg(const Option *Opt) {
+  return new FlagArg(Opt, MakeIndex(Opt->getName()));
+}
+
+Arg *ArgList::MakePositionalArg(const Option *Opt, const char *Value) {
+  return new PositionalArg(Opt, MakeIndex(Value));
+}
+
+Arg *ArgList::MakeSeparateArg(const Option *Opt, const char *Value) {
+  return new SeparateArg(Opt, MakeIndex(Opt->getName(), Value), 1);
+}
+
+Arg *ArgList::MakeJoinedArg(const Option *Opt, const char *Value) {
+  std::string Joined(Opt->getName());
+  Joined += Value;
+  return new JoinedArg(Opt, MakeIndex(Joined.c_str()));
+}

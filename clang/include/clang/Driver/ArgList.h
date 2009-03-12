@@ -15,6 +15,8 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 
+#include <list>
+
 namespace clang {
 namespace driver {
   class Arg;
@@ -37,6 +39,9 @@ namespace driver {
 
     /// The full list of arguments.
     arglist_type Args;
+
+    /// Strings for synthesized arguments.
+    std::list<std::string> SynthesizedStrings;
 
   public:
     ArgList(const char **ArgBegin, const char **ArgEnd);
@@ -62,6 +67,33 @@ namespace driver {
 
     /// getLastArg - Return the last argument matching \arg Id, or null.
     Arg *getLastArg(options::ID Id) const;
+
+    /// @name Arg Synthesis
+    /// @{
+
+  private:    
+    /// MakeIndex - Get an index for the given string(s).
+    unsigned MakeIndex(const char *String0);
+    unsigned MakeIndex(const char *String0, const char *String1);
+
+  public:
+    /// MakeFlagArg - Construct a new FlagArg for the given option
+    /// \arg Id.
+    Arg *MakeFlagArg(const Option *Opt);
+
+    /// MakePositionalArg - Construct a new Positional arg for the
+    /// given option \arg Id, with the provided \arg Value.
+    Arg *MakePositionalArg(const Option *Opt, const char *Value);
+
+    /// MakeSeparateArg - Construct a new Positional arg for the
+    /// given option \arg Id, with the provided \arg Value.
+    Arg *MakeSeparateArg(const Option *Opt, const char *Value);
+
+    /// MakeJoinedArg - Construct a new Positional arg for the
+    /// given option \arg Id, with the provided \arg Value.
+    Arg *MakeJoinedArg(const Option *Opt, const char *Value);
+
+    /// @}
   };
 } // end namespace driver
 } // end namespace clang
