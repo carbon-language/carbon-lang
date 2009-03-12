@@ -115,6 +115,14 @@ public:
 };
 } // end anonymous namespace
 
+// RemoveDeadBindings:
+//  - Remove subexpression bindings.
+//  - Remove dead block expression bindings.
+//  - Keep live block expression bindings:
+//   - Mark their reachable symbols live in SymbolReaper, 
+//     see ScanReachableSymbols.
+//   - Mark the region in DRoots if the binding is a loc::MemRegionVal.
+
 Environment 
 EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
                                        SymbolReaper& SymReaper,
