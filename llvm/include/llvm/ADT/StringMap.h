@@ -303,6 +303,27 @@ public:
     return find(key_start, key_start + Key.size());
   }
 
+   /// lookup - Return the entry for the specified key, or a default
+  /// constructed value if no such entry exists.
+  ValueTy lookup(const char *KeyStart, const char *KeyEnd) const {
+    const_iterator it = find(KeyStart, KeyEnd);
+    if (it != end())
+      return it->second;
+    return ValueTy();
+  }
+  ValueTy lookup(const char *Key) const {
+    const_iterator it = find(Key);
+    if (it != end())
+      return it->second;
+    return ValueTy();
+  }
+  ValueTy lookup(const std::string &Key) const {
+    const_iterator it = find(Key);
+    if (it != end())
+      return it->second;
+    return ValueTy();
+  }
+
   ValueTy& operator[](const char *Key) {
     return GetOrCreateValue(Key, Key + strlen(Key)).getValue();
   }
