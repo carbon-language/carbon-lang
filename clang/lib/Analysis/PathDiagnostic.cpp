@@ -65,6 +65,13 @@ PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
          "PathDiagnosticPiece's must have a valid location.");
 }
 
+PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos, Kind k,
+                                         DisplayHint hint)
+  : Pos(pos), kind(k), Hint(hint) {
+  assert(Pos.isValid() &&
+         "PathDiagnosticPiece's must have a valid location.");
+}  
+
 PathDiagnosticPiece::~PathDiagnosticPiece() {}
 PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
 PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}

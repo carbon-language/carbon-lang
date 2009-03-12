@@ -17,10 +17,12 @@
 #include "clang/Basic/FileManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
+using llvm::cast;
 
 typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
@@ -67,8 +69,7 @@ static unsigned GetFID(const FIDMap& FIDs, SourceManager* SM, SourceLocation L){
 }
 
 static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
-  for (unsigned i = 0; i < indent; ++i)
-    o << ' ';
+  for (unsigned i = 0; i < indent; ++i) o << ' ';
   return o;
 }
 
@@ -95,22 +96,49 @@ static void EmitRange(llvm::raw_ostream& o, SourceManager* SM, SourceRange R,
   Indent(o, indent) << "</array>\n";
 }
 
-static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
-                       const FIDMap& FM, SourceManager* SM) {
+static void ReportControlFlow(llvm::raw_ostream& o,
+                              const PathDiagnosticControlFlowPiece& P,
+                              const FIDMap& FM, SourceManager *SM,
+                              unsigned indent) {
   
-  unsigned indent = 4;
   Indent(o, indent) << "<dict>\n";
   ++indent;
   
+  Indent(o, indent) << "<key>kind</key><string>control</string>\n";
+  
+  // Output the start and end locations.
+  Indent(o, indent) << "<key>start</key>\n";
+  EmitLocation(o, SM, P.getStartLocation(), FM, indent);
+  Indent(o, indent) << "<key>end</key>\n";
+  EmitLocation(o, SM, P.getEndLocation(), FM, indent);
+  
+  // Output any helper text.
+  const std::string& s = P.getString();
+  if (!s.empty()) {
+    Indent(o, indent) << "<key>alternate</key><string>" << s << "</string>\n";
+  }
+  
+  --indent;
+  Indent(o, indent) << "</dict>\n";  
+}
+
+static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
+                        const FIDMap& FM, SourceManager* SM, unsigned indent) {
+  
+  Indent(o, indent) << "<dict>\n";
+  ++indent;
+
+  Indent(o, indent) << "<key>kind</key><string>event</string>\n";
+  
   // Output the location.
   FullSourceLoc L = P.getLocation();
-
+  
   Indent(o, indent) << "<key>location</key>\n";
   EmitLocation(o, SM, L, FM, indent);
-
+  
   // Output the ranges (if any).
   PathDiagnosticPiece::range_iterator RI = P.ranges_begin(),
-                                      RE = P.ranges_end();
+  RE = P.ranges_end();
   
   if (RI != RE) {
     Indent(o, indent) << "<key>ranges</key>\n";
@@ -122,33 +150,53 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   }
   
   // Output the text.
+  assert(!P.getString().empty());
   Indent(o, indent) << "<key>message</key>\n";
   Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
-  
-  // Output the hint.
-#if 0
-  // Disable the display hint until we clear up its meaning.
-  Indent(o, indent) << "<key>displayhint</key>\n";
-  Indent(o, indent) << "<string>"
-                    << (P.getDisplayHint() == PathDiagnosticPiece::Above 
-                        ? "above" : "below")
-                    << "</string>\n";
-#endif
-  // Output the PathDiagnosticPiece::Kind.
-  Indent(o, indent) << "<key>kind</key>\n";
-  Indent(o, indent) << "<string>";
-  
-  switch (P.getKind()) {
-    case PathDiagnosticPiece::Event: o << "Event"; break;
-    case PathDiagnosticPiece::ControlFlow: o << "ControlFlow"; break;
-    case PathDiagnosticPiece::Macro: o << "Macro"; break;
-  }
-  o << "</string>\n";
-  
-  
+
   // Finish up.
   --indent;
   Indent(o, indent); o << "</dict>\n";
+}
+
+static void ReportMacro(llvm::raw_ostream& o,
+                        const PathDiagnosticMacroPiece& P,
+                        const FIDMap& FM, SourceManager *SM,
+                        unsigned indent) {
+  
+  for (PathDiagnosticMacroPiece::const_iterator I=P.begin(), E=P.end();
+       I!=E; ++I) {
+    
+    switch ((*I)->getKind()) {
+      default:
+        break;
+      case PathDiagnosticPiece::Event:
+        ReportEvent(o, cast<PathDiagnosticEventPiece>(**I), FM, SM, indent);
+        break;
+      case PathDiagnosticPiece::Macro:
+        ReportMacro(o, cast<PathDiagnosticMacroPiece>(**I), FM, SM, indent);
+        break;
+    }      
+  }    
+}
+
+static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
+                       const FIDMap& FM, SourceManager* SM) {
+
+  unsigned indent = 4;
+  
+  switch (P.getKind()) {
+    case PathDiagnosticPiece::ControlFlow:
+      ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
+                        indent);
+      break;
+    case PathDiagnosticPiece::Event:
+      ReportEvent(o, cast<PathDiagnosticEventPiece>(P), FM, SM, indent);
+      break;
+    case PathDiagnosticPiece::Macro:
+      ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, indent);
+      break;
+  }
 }
 
 void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
@@ -238,11 +286,14 @@ PlistDiagnostics::~PlistDiagnostics() {
     o << "   </array>\n";
     
     // Output the bug type and bug category.  
-    o << "   <key>description</key>\n   <string>" << D->getDescription()
+    o << "   <key>description</key><string>" << D->getDescription()
       << "</string>\n"
-      << "   <key>category</key>\n   <string>" << D->getCategory()
+      << "   <key>category</key><string>" << D->getCategory()
       << "</string>\n"
-      << "  </dict>\n";    
+      << "   <key>type</key><string>" << D->getBugType()
+      << "</string>\n"
+      << "  </dict>\n";
+
   }
 
   o << " </array>\n";

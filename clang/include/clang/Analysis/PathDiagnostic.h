@@ -186,7 +186,6 @@ private:
   const Kind kind;
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
-  std::vector<PathDiagnosticPiece*> SubPieces;
   
   // Do not implement:
   PathDiagnosticPiece();
@@ -195,10 +194,12 @@ private:
 
 protected:
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
-                      Kind k = Event, DisplayHint hint = Below);
+                      Kind k, DisplayHint hint = Below);
   
   PathDiagnosticPiece(FullSourceLoc pos, const char* s,
-                      Kind k = Event, DisplayHint hint = Below);
+                      Kind k, DisplayHint hint = Below);
+
+  PathDiagnosticPiece(FullSourceLoc pos, Kind k, DisplayHint hint = Below);
   
 public:
   virtual ~PathDiagnosticPiece();
@@ -269,14 +270,23 @@ public:
 };
   
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
+  const SourceLocation EndPos;
 public:
-  PathDiagnosticControlFlowPiece(FullSourceLoc pos, const std::string& s)
-    : PathDiagnosticPiece(pos, s, ControlFlow) {}
+  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos,
+                                 const std::string& s)
+    : PathDiagnosticPiece(startPos, s, ControlFlow), EndPos(endPos) {}
   
-  PathDiagnosticControlFlowPiece(FullSourceLoc pos, const char* s)
-    : PathDiagnosticPiece(pos, s, ControlFlow) {}
+  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos,
+                                 const char* s)
+    : PathDiagnosticPiece(startPos, s, ControlFlow), EndPos(endPos) {}
+  
+  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos)
+    : PathDiagnosticPiece(startPos, ControlFlow), EndPos(endPos) {}  
   
   ~PathDiagnosticControlFlowPiece();
+  
+  SourceLocation getStartLocation() const { return getLocation(); }
+  SourceLocation getEndLocation() const { return EndPos; }  
   
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == ControlFlow;

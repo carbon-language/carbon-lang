@@ -84,21 +84,40 @@ static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 // Diagnostics for 'execution continues on line XXX'.
 //===----------------------------------------------------------------------===//
 
-static inline void ExecutionContinues(llvm::raw_string_ostream& os,
-                                      SourceManager& SMgr,
-                                      const ExplodedNode<GRState>* N,
-                                      const Decl& D) {
+static SourceLocation ExecutionContinues(SourceManager& SMgr,
+                                         const ExplodedNode<GRState>* N,
+                                         const Decl& D,
+                                         bool* OutHasStmt = 0) {
+  if (Stmt *S = GetNextStmt(N)) {
+    if (OutHasStmt) *OutHasStmt = true;
+    return S->getLocStart();
+  }
+  else {
+    if (OutHasStmt) *OutHasStmt = false;
+    return D.getBody()->getRBracLoc();
+  }
+}
+  
+static SourceLocation ExecutionContinues(llvm::raw_string_ostream& os,
+                                         SourceManager& SMgr,
+                                         const ExplodedNode<GRState>* N,
+                                         const Decl& D) {
   
   // Slow, but probably doesn't matter.
   if (os.str().empty())
     os << ' ';
   
-  if (Stmt *S = GetNextStmt(N))
+  bool hasStmt;
+  SourceLocation Loc = ExecutionContinues(SMgr, N, D, &hasStmt);
+  
+  if (hasStmt)
     os << "Execution continues on line "
-    << SMgr.getInstantiationLineNumber(S->getLocStart()) << '.';
+    << SMgr.getInstantiationLineNumber(Loc) << '.';
   else
     os << "Execution jumps to the end of the "
        << (isa<ObjCMethodDecl>(D) ? "method" : "function") << '.';
+  
+  return Loc;
 }
 
 //===----------------------------------------------------------------------===//
@@ -706,36 +725,33 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     ProgramPoint P = N->getLocation();
     
     if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
-      
       CFGBlock* Src = BE->getSrc();
       CFGBlock* Dst = BE->getDst();
-      
       Stmt* T = Src->getTerminator();
       
       if (!T)
         continue;
       
-      FullSourceLoc L(T->getLocStart(), SMgr);
+      FullSourceLoc Start(T->getLocStart(), SMgr);
       
       switch (T->getStmtClass()) {
         default:
           break;
           
         case Stmt::GotoStmtClass:
-        case Stmt::IndirectGotoStmtClass: {
-          
+        case Stmt::IndirectGotoStmtClass: {          
           Stmt* S = GetNextStmt(N);
           
           if (!S)
             continue;
           
           std::string sbuf;
-          llvm::raw_string_ostream os(sbuf);
+          llvm::raw_string_ostream os(sbuf);          
+          SourceLocation End = S->getLocStart();
           
-          os << "Control jumps to line "
-             << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
-          
-          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
+          os << "Control jumps to line " << SMgr.getInstantiationLineNumber(End);
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
           break;
         }
           
@@ -743,67 +759,70 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           // Figure out what case arm we took.
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-
-          if (Stmt* S = Dst->getLabel())
+          SourceLocation End;
+          
+          if (Stmt* S = Dst->getLabel()) {
+            End = S->getLocStart();
+          
             switch (S->getStmtClass()) {
-            default:
-              os << "No cases match in the switch statement. "
-                    "Control jumps to line "
-                 << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
-              break;
-            case Stmt::DefaultStmtClass:
-              os << "Control jumps to the 'default' case at line "
-                 << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
-              break;
-              
-            case Stmt::CaseStmtClass: {
-              os << "Control jumps to 'case ";
-              
-              CaseStmt* Case = cast<CaseStmt>(S);              
-              Expr* LHS = Case->getLHS()->IgnoreParenCasts();
-              
-              // Determine if it is an enum.
-              
-              bool GetRawInt = true;
-              
-              if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
+              default:
+                os << "No cases match in the switch statement. "
+                      "Control jumps to line "
+                   << SMgr.getInstantiationLineNumber(End);
+                break;
+              case Stmt::DefaultStmtClass:
+                os << "Control jumps to the 'default' case at line "
+                   << SMgr.getInstantiationLineNumber(End);
+                break;
+                
+              case Stmt::CaseStmtClass: {
+                os << "Control jumps to 'case ";              
+                CaseStmt* Case = cast<CaseStmt>(S);              
+                Expr* LHS = Case->getLHS()->IgnoreParenCasts();
+                
+                // Determine if it is an enum.              
+                bool GetRawInt = true;
+                
+                if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
+                  // FIXME: Maybe this should be an assertion.  Are there cases
+                  // were it is not an EnumConstantDecl?
+                  EnumConstantDecl* D =
+                    dyn_cast<EnumConstantDecl>(DR->getDecl());
 
-                // FIXME: Maybe this should be an assertion.  Are there cases
-                // were it is not an EnumConstantDecl?
-                EnumConstantDecl* D = dyn_cast<EnumConstantDecl>(DR->getDecl());
-                if (D) {
-                  GetRawInt = false;
-                  os << D->getNameAsString();
+                  if (D) {
+                    GetRawInt = false;
+                    os << D->getNameAsString();
+                  }
                 }
+
+                if (GetRawInt) {
+                
+                  // Not an enum.
+                  Expr* CondE = cast<SwitchStmt>(T)->getCond();
+                  unsigned bits = Ctx.getTypeSize(CondE->getType());
+                  llvm::APSInt V(bits, false);
+                  
+                  if (!LHS->isIntegerConstantExpr(V, Ctx, 0, true)) {
+                    assert (false && "Case condition must be constant.");
+                    continue;
+                  }
+                  
+                  os << V;
+                }       
+                
+                os << ":'  at line " << SMgr.getInstantiationLineNumber(End);
+                break;
               }
-
-              if (GetRawInt) {
-              
-                // Not an enum.
-                Expr* CondE = cast<SwitchStmt>(T)->getCond();
-                unsigned bits = Ctx.getTypeSize(CondE->getType());
-                llvm::APSInt V(bits, false);
-                
-                if (!LHS->isIntegerConstantExpr(V, Ctx, 0, true)) {
-                  assert (false && "Case condition must be constant.");
-                  continue;
-                }
-                
-                os << V;
-              }       
-              
-              os << ":'  at line " 
-                 << SMgr.getInstantiationLineNumber(S->getLocStart()) << ".\n";
-              
-              break;
             }
           }
           else {
             os << "'Default' branch taken. ";
-            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
+            End = ExecutionContinues(os, SMgr, N,
+                                     getStateManager().getCodeDecl());
           }
           
-          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
           break;
         }
           
@@ -811,8 +830,10 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ContinueStmtClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
-          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
+          SourceLocation End = ExecutionContinues(os, SMgr, N,
+                                                  getStateManager().getCodeDecl());
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
           break;
         }
 
@@ -822,58 +843,73 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           os << "'?' condition evaluates to ";
 
           if (*(Src->succ_begin()+1) == Dst)
-            os << "false.";
+            os << "false";
           else
-            os << "true.";
+            os << "true";
           
-          PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
+          SourceLocation End =
+            ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
+          
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
           break;
         }
           
-        case Stmt::DoStmtClass:  {
-          
+        case Stmt::DoStmtClass:  {          
           if (*(Src->succ_begin()) == Dst) {
             std::string sbuf;
             llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
-            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
-            
-            PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
+            SourceLocation End =
+              ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             os.str()));
           }
-          else
-            PD.push_front(new PathDiagnosticControlFlowPiece(L,
-                                    "Loop condition is false.  Exiting loop."));
+          else {
+            SourceLocation End =
+              ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                    "Loop condition is false.  Exiting loop"));
+          }
           
           break;
         }
           
         case Stmt::WhileStmtClass:
-        case Stmt::ForStmtClass: {
-          
+        case Stmt::ForStmtClass: {          
           if (*(Src->succ_begin()+1) == Dst) {
             std::string sbuf;
             llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
-            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
+            SourceLocation End = 
+              ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
 
-            PD.push_front(new PathDiagnosticControlFlowPiece(L, os.str()));
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             os.str()));
           }
-          else
-            PD.push_front(new PathDiagnosticControlFlowPiece(L,
-                                                             "Loop condition is true.  Entering loop body."));
+          else {
+            SourceLocation End =
+              ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
+            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                               "Loop condition is true.  Entering loop body"));
+          }
           
           break;
         }
           
-        case Stmt::IfStmtClass: {          
+        case Stmt::IfStmtClass: {
+          SourceLocation End =
+            ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
+          
           if (*(Src->succ_begin()+1) == Dst)
-            PD.push_front(new PathDiagnosticControlFlowPiece(L,
-                                                       "Taking false branch."));
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                       "Taking false branch"));
           else  
-            PD.push_front(new PathDiagnosticControlFlowPiece(L,
-                                                       "Taking true branch."));
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                       "Taking true branch"));
           
           break;
         }
