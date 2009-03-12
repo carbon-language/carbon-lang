@@ -30,12 +30,12 @@ struct Info {
 
 static Info OptionInfos[] = {
   // The InputOption info
-  { "<input>", "", Option::InputClass, 0, 0, 0 },
+  { "<input>", "", Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
   // The UnknownOption info
-  { "<unknown>", "", Option::UnknownClass, 0, 0, 0 },
+  { "<unknown>", "", Option::UnknownClass, OPT_INVALID, OPT_INVALID, 0 },
   
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM) \
-  { NAME, FLAGS, Option::KIND##Class, GROUP, ALIAS, PARAM },
+#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM)              \
+  { NAME, FLAGS, Option::KIND##Class, OPT_##GROUP, OPT_##ALIAS, PARAM },
 #include "clang/Driver/Options.def"
 };
 static const unsigned numOptions = sizeof(OptionInfos) / sizeof(OptionInfos[0]);
@@ -63,7 +63,7 @@ const char *OptTable::getOptionName(options::ID id) const {
 }
 
 const Option *OptTable::getOption(options::ID id) const {
-  if (id == NotOption)
+  if (id == OPT_INVALID)
     return 0;
 
   assert((unsigned) (id - 1) < numOptions && "Invalid ID.");
@@ -125,9 +125,9 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
 
   // Anything that doesn't start with '-' is an input.
   if (Str[0] != '-')
-    return new PositionalArg(getOption(InputOpt), Index++);
+    return new PositionalArg(getOption(OPT_INPUT), Index++);
 
-  for (unsigned j = UnknownOpt + 1; j < LastOption; ++j) {
+  for (unsigned j = OPT_UNKNOWN + 1; j < LastOption; ++j) {
     const char *OptName = getOptionName((options::ID) j);
     
     // Arguments are only accepted by options which prefix them.
@@ -136,6 +136,6 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
         return A;
   }
 
-  return new PositionalArg(getOption(UnknownOpt), Index++);
+  return new PositionalArg(getOption(OPT_UNKNOWN), Index++);
 }
 

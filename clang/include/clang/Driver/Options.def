@@ -27,11 +27,11 @@
 // The third value is the option type, one of Group, Flag, Joined,
 // Separate, CommaJoined, JoinedOrSeparate, JoinedAndSeparate.
 
-// The fourth value is the internal name of the option group, or 0 if
-// the option is not part of a group.
+// The fourth value is the internal name of the option group, or
+// INVALID if the option is not part of a group.
 
-// The fifth value is the internal name of an aliased option, or 0 if
-// the option is not an alias.
+// The fifth value is the internal name of an aliased option, or
+// INVALID if the option is not an alias.
 
 // The sixth value is a string containing option flags. Valid values:
 //  l: The option is a linker input.
@@ -48,11 +48,11 @@
 //  U: The option is unsupported, and the driver will reject command
 //     lines that use it.
 
-/// The seventh value is an arbitrary integer parameter; currently
-/// this is only used for specifying the number of arguments for
-/// Separate options.
+// The seventh value is an arbitrary integer parameter; currently
+// this is only used for specifying the number of arguments for
+// Separate options.
 
-OPTION("-arch", ArchOpt, Separate, 0, 0, "", 0)
-OPTION("-pass-exit-codes", PassExitCodesFlag, Flag, 0, 0, "", 0)
-OPTION("-print-file-name=", PrintFileNameOpt, Joined, 0, 0, "", 0)
-OPTION("-Wp,", WpOpt, CommaJoined, 0, 0, "", 0)
+OPTION("-arch", ArchOpt, Separate, INVALID, INVALID, "", 0)
+OPTION("-pass-exit-codes", PassExitCodesFlag, Flag, INVALID, INVALID, "", 0)
+OPTION("-print-file-name=", PrintFileNameOpt, Joined, INVALID, INVALID, "", 0)
+OPTION("-Wp,", WpOpt, CommaJoined, INVALID, INVALID, "", 0)
