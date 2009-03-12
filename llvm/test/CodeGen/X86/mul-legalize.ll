@@ -5,7 +5,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-pc-linux-gnu"
 @.str = constant [13 x i8] c"c45531m.adb\00\00"		
 
-define void @main() {
+define void @main() nounwind {
 entry:
 	%tmp1 = call i1 @report__equal( i32 3, i32 3 )		
 	%b.0 = select i1 %tmp1, i64 35184372088832, i64 0		
@@ -19,7 +19,7 @@ return:
 	ret void
 }
 
-define i1 @report__equal(i32 %x, i32 %y) {
+define i1 @report__equal(i32 %x, i32 %y) nounwind {
 	%tmp = icmp eq i32 %x, %y		
 	ret i1 %tmp
 }
