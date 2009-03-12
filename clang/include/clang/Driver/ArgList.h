@@ -10,7 +10,9 @@
 #ifndef CLANG_DRIVER_ARGLIST_H_
 #define CLANG_DRIVER_ARGLIST_H_
 
-#include "Util.h"
+#include "clang/Driver/Options.h"
+
+#include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
@@ -54,6 +56,9 @@ namespace driver {
 
     /// getArgString - Return the input argument string at \arg Index.
     const char *getArgString(unsigned Index) const { return ArgStrings[Index]; }
+
+    /// hasArg - Does the arg list contain any option matching \arg Id.
+    bool hasArg(options::ID Id) const;
   };
 } // end namespace driver
 } // end namespace clang
