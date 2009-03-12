@@ -1122,14 +1122,13 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
   unsigned Size = 0;
   
-  // If this basic block contains anything other than a PHI (which controls the
-  // branch) and branch itself, bail out.  FIXME: improve this in the future.
   for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI) {
+    if (isa<DbgInfoIntrinsic>(BBI))
+      continue;
     if (Size > 10) return false;  // Don't clone large BB's.
-    if (!isa<DbgInfoIntrinsic>(BBI))
-      ++Size;
+    ++Size;
     
-    // We can only support instructions that are do not define values that are
+    // We can only support instructions that do not define values that are
     // live outside of the current basic block.
     for (Value::use_iterator UI = BBI->use_begin(), E = BBI->use_end();
          UI != E; ++UI) {
