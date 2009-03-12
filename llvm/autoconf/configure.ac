@@ -233,6 +233,13 @@ if test "$llvm_cv_target_arch" = "Unknown" ; then
   AC_MSG_WARN([Configuring LLVM for an unknown target archicture])
 fi
 
+if test "$llvm_cv_os_type" = "Linux" -a "$llvm_cv_target_arch" = "x86_64" ; then
+  AC_IS_LINUX_MIXED
+  if test "$llvm_cv_linux_mixed" = "yes"; then
+    llvm_cv_target_arch="x86"
+  fi
+fi
+
 dnl Define a substitution, ARCH, for the target architecture
 AC_SUBST(ARCH,$llvm_cv_target_arch)
 
