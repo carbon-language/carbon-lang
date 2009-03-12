@@ -53,6 +53,11 @@ namespace driver {
     /// ArgList.
     unsigned Index;
 
+    /// Flag indicating whether this argument was used to effect
+    /// compilation; used for generating "argument unused"
+    /// diagnostics.
+    bool Claimed;
+
   protected:
     Arg(ArgClass Kind, const Option *Opt, unsigned Index);
     
@@ -67,10 +72,16 @@ namespace driver {
     unsigned getIndex() const { return Index; }
 
     virtual unsigned getNumValues() const = 0;
-    virtual const char *getValue(const ArgList &Args, unsigned N) const = 0;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
     
     /// render - Append the argument onto the given array as strings.
     virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
+
+    /// claim - Set the Arg claimed bit.
+    
+    // FIXME: We need to deal with derived arguments and set the bit
+    // in the original argument; not the derived one.
+    void claim() { Claimed = true; }
 
     static bool classof(const Arg *) { return true; }    
 
@@ -85,7 +96,7 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     virtual unsigned getNumValues() const { return 0; }
-    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::FlagClass; 
@@ -101,7 +112,7 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     virtual unsigned getNumValues() const { return 1; }
-    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::PositionalClass; 
@@ -118,7 +129,7 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     virtual unsigned getNumValues() const { return 1; }
-    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::JoinedClass; 
@@ -137,7 +148,7 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     virtual unsigned getNumValues() const { return NumValues; }
-    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::SeparateClass; 
@@ -160,7 +171,7 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     virtual unsigned getNumValues() const { return Values.size(); }
-    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::CommaJoinedClass; 
@@ -177,7 +188,7 @@ namespace driver {
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     virtual unsigned getNumValues() const { return 2; }
-    virtual const char *getValue(const ArgList &Args, unsigned N) const;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) { 
       return A->getKind() == Arg::JoinedAndSeparateClass; 
