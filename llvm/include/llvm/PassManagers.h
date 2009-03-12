@@ -122,7 +122,7 @@ class PassManagerPrettyStackEntry : public PrettyStackTraceEntry {
   Module *M;
 public:
   PassManagerPrettyStackEntry(Pass *p)
-    : P(p) {}  // When P is releaseMemory'd.
+    : P(p), V(0), M(0) {}  // When P is releaseMemory'd.
   PassManagerPrettyStackEntry(Pass *p, Value &v)
     : P(p), V(&v), M(0) {} // When P is run on V
   PassManagerPrettyStackEntry(Pass *p, Module &m)
