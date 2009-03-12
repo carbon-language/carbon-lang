@@ -109,8 +109,10 @@ let isCall = 1 in
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
               XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
       Uses = [RSP] in {
-    def CALL64pcrel32 : I<0xE8, RawFrm, (outs), (ins i64imm:$dst, variable_ops),
-                          "call\t${dst:call}", []>;
+    def CALL64pcrel32 : I<0xE8, RawFrm,
+                          (outs), (ins i64i32imm:$dst, variable_ops),
+                          "call\t${dst:call}", [(X86call imm:$dst)]>,
+                        Requires<[In64BitMode]>;
     def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                           "call\t{*}$dst", [(X86call GR64:$dst)]>;
     def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),

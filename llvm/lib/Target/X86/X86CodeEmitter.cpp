@@ -589,7 +589,13 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       } else if (MO.isSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
       } else if (MO.isImm()) {
-        emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
+        if (Opcode == X86::CALLpcrel32 || Opcode == X86::CALL64pcrel32) {
+          // Fix up immediate operand for pc relative calls.
+          intptr_t Imm = (intptr_t)MO.getImm();
+          Imm = Imm - MCE.getCurrentPCValue() - 4;
+          emitConstant(Imm, X86InstrInfo::sizeOfImm(Desc));
+        } else
+          emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
       } else {
         assert(0 && "Unknown RawFrm operand!");
       }
