@@ -33,6 +33,10 @@ protected:
 public:
   virtual ~HostInfo();
 
+  const std::string &getArchName() const { return Arch; }
+  const std::string &getPlatformName() const { return Platform; }
+  const std::string &getOSName() const { return OS; }
+
   /// useDriverDriver - Whether the driver should act as a driver
   /// driver for this host and support -arch, -Xarch, etc.
   virtual bool useDriverDriver() const = 0;
