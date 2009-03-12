@@ -25,60 +25,63 @@
 using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
-bool PIC16AsmPrinter::inSameBank (char *s1, char *s2){
 
-  assert (s1 && s2 && "Null pointer assignment");
-
-  if ((*s1 == '.') && (*s2 == '.')) { //skip if they both start with '.'
-    s1++;
-    s2++;
-  }
-  while (*s1 && *s2) {
-    if (*s1 != *s2) 
-      goto _NotInSameBank;
-
-    if ((*s1 == '.') && (*s2 == '.')) //both symbols in same function
-      goto _InSameBank;               //in the same bank
-
-    s1++;
-    s2++;
-  }
-
-  if (*s1 && *s1) {
-  _InSameBank:
+inline static bool isLocalToFunc (std::string &FuncName, std::string &VarName) {
+  if (VarName.find(FuncName + ".auto.") != std::string::npos 
+      || VarName.find(FuncName + ".arg.") != std::string::npos)
     return true;
-  }
 
- _NotInSameBank:
+  return false;
+}
+
+inline static bool isLocalName (std::string &Name) {
+  if (Name.find(".auto.") != std::string::npos 
+      || Name.find(".arg.") != std::string::npos) 
+    return true;
+
   return false;
 }
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  std::string NewBankselLabel;
+  std::string NewBank = "";
   unsigned Operands = MI->getNumOperands();
   if (Operands > 1) {
     // Global address or external symbol should be second operand from last
     // if we want to print banksel for it.
-    const MachineOperand &Op = MI->getOperand(Operands-2);
+    unsigned BankSelVar = Operands - 2;
+    // In cases where an instruction has a def or use defined in td file,
+    // that def or use becomes a machine instruction operand.
+    // eg. addfw_1 instruction defines STATUS register. So the machine
+    // instruction for it has MO_Register Operand as its last operand.
+    while ((MI->getOperand(BankSelVar + 1).getType() ==
+           MachineOperand::MO_Register) && (BankSelVar > 0))
+     BankSelVar--;
+    const MachineOperand &Op = MI->getOperand(BankSelVar);
     unsigned OpType = Op.getType();
     if (OpType == MachineOperand::MO_GlobalAddress ||
-        OpType == MachineOperand::MO_ExternalSymbol) { 
+        OpType == MachineOperand::MO_ExternalSymbol) {
       if (OpType == MachineOperand::MO_GlobalAddress ) 
-        NewBankselLabel =  Mang->getValueName(Op.getGlobal());
-      else 
-        NewBankselLabel =  Op.getSymbolName();
-
+        NewBank = Op.getGlobal()->getSection(); 
+      else {
+        // External Symbol is generated for temp data. Temp data in in
+        // fdata.<functionname>.# section.
+        NewBank = "fdata." + CurrentFnName +".#";
+      }
       // Operand after global address or external symbol should be  banksel.
       // Value 1 for this operand means we need to generate banksel else do not
       // generate banksel.
-      const MachineOperand &BS = MI->getOperand(Operands-1);
+      const MachineOperand &BS = MI->getOperand(BankSelVar+1);
+      // If Section names are same then the variables are in same section.
+      // This is not true for external variables as section names for global
+      // variables in all files are same at this time. For eg. initialized 
+      // data in put in idata.# section in all files. 
       if (((int)BS.getImm() == 1) &&
-          (!inSameBank ((char *)CurrentBankselLabelInBasicBlock.c_str(),
-			(char *)NewBankselLabel.c_str()))) {
-        CurrentBankselLabelInBasicBlock = NewBankselLabel;
+          ((Op.isGlobal() && Op.getGlobal()->hasExternalLinkage()) ||
+           (NewBank.compare(CurBank) != 0))) { 
         O << "\tbanksel ";
-        printOperand(MI, Operands-2);
+        printOperand(MI, BankSelVar);
         O << "\n";
+        CurBank = NewBank;
       }
     }
   }
@@ -119,7 +122,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
     else
       O << CurrentFnName << ":\n";
-    CurrentBankselLabelInBasicBlock = "";
+    CurBank = "";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -219,7 +222,7 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
     // Any variables reaching here with ".auto." in its name is a local scope
     // variable and should not be printed in global data section.
     std::string Name = Mang->getValueName(I);
-    if (Name.find(".auto.") != std::string::npos)
+    if (isLocalName (Name))
       continue;
 
     if (I->isDeclaration())
@@ -231,7 +234,7 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
 
 void PIC16AsmPrinter::EmitInitData (Module &M) {
   SwitchToSection(TAI->getDataSection());
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer())   // External global require no code.
       continue;
@@ -247,11 +250,12 @@ void PIC16AsmPrinter::EmitInitData (Module &M) {
 
       // Any variables reaching here with "." in its name is a local scope
       // variable and should not be printed in global data section.
-      std::string name = Mang->getValueName(I);
-      if (name.find(".auto.") != std::string::npos)
+      std::string Name = Mang->getValueName(I);
+      if (isLocalName(Name))
         continue;
 
-      O << name;
+      I->setSection(TAI->getDataSection()->getName());
+      O << Name;
       EmitGlobalConstant(C, AddrSpace);
     }
   }
@@ -261,7 +265,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 {
   SwitchToSection(TAI->getReadOnlySection());
   IsRomData = true;
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer())   // External global require no code.
       continue;
@@ -280,6 +284,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
       if (name.find(".") != std::string::npos)
         continue;
 
+      I->setSection(TAI->getReadOnlySection()->getName());
       O << name;
       EmitGlobalConstant(C, AddrSpace);
       O << "\n";
@@ -293,7 +298,7 @@ void PIC16AsmPrinter::EmitUnInitData (Module &M)
   SwitchToSection(TAI->getBSSSection_());
   const TargetData *TD = TM.getTargetData();
 
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer())   // External global require no code.
       continue;
@@ -309,6 +314,8 @@ void PIC16AsmPrinter::EmitUnInitData (Module &M)
       std::string name = Mang->getValueName(I);
       if (name.find(".") != std::string::npos)
         continue;
+
+      I->setSection(TAI->getBSSSection_()->getName());
 
       const Type *Ty = C->getType();
       unsigned Size = TD->getTypePaddedSize(Ty);
@@ -328,7 +335,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
 void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   std::string FuncName = Mang->getValueName(F);
-  const Module *M = F->getParent();
+  Module *M = const_cast<Module *>(F->getParent());
   const TargetData *TD = TM.getTargetData();
   unsigned FrameSize = 0;
   // Emit the data section name.
@@ -354,7 +361,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   // Therefore to get the variable belonging to this function entire
   // global list will be traversed and variables belonging to this function
   // will be emitted in the current data section.
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I) {
     std::string VarName = Mang->getValueName(I);
     
@@ -363,9 +370,10 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     // Static local varilabes of a function does not have .auto. in their
     // name. They are not printed as part of function data but module
     // level global data.
-    if (!(VarName.find(FuncName + ".auto.") == 0 ? true : false))
-      continue;
+    if (! isLocalToFunc(FuncName, VarName))
+     continue;
 
+    I->setSection("fdata." + CurrentFnName + ".#");
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
     unsigned Size = TD->getTypePaddedSize(Ty);
