@@ -595,19 +595,11 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   Decl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
-    QualType T = NTTP->getType();
-    if (T->isDependentType()) {
-      // FIXME: We'll be doing this instantiation a lot. Should we
-      // cache this information in the TemplateArgument itself?
-      T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
-                                  E->getSourceRange().getBegin(),
-                                  NTTP->getDeclName());
-      if (T.isNull())
-        return SemaRef.ExprError();
-    }
+    const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
     return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
-                           *TemplateArgs[NTTP->getPosition()].getAsIntegral(),
-                            T, E->getSourceRange().getBegin()));
+                                                 *Arg.getAsIntegral(),
+                                                 Arg.getIntegralType(), 
+                                       E->getSourceRange().getBegin()));
   } else
     assert(false && "Can't handle arbitrary declaration references");
 

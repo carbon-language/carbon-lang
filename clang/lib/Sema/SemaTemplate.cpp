@@ -1280,7 +1280,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                IntegerType->isSignedIntegerType());
       CanonicalArg = Value;
 
-      Converted->push_back(TemplateArgument(StartLoc, CanonicalArg));
+      Converted->push_back(TemplateArgument(StartLoc, CanonicalArg,
+                                   Context.getCanonicalType(IntegerType)));
     }
 
     return false;

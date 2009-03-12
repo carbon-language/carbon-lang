@@ -406,7 +406,10 @@ protected:
 class TemplateArgument {
   union {
     uintptr_t TypeOrValue;
-    char IntegralValue[sizeof(llvm::APInt)];
+    struct {
+      char Value[sizeof(llvm::APInt)];
+      void *Type;
+    } Integer;
   };
 
   /// \brief Location of the beginning of this template argument.
@@ -446,9 +449,11 @@ public:
   }
 
   /// \brief Construct an integral constant template argument.
-  TemplateArgument(SourceLocation Loc, const llvm::APInt &Value)
+  TemplateArgument(SourceLocation Loc, const llvm::APInt &Value,
+                   QualType Type)
     : Kind(Integral) {
-    new (IntegralValue) llvm::APInt(Value);
+    new (Integer.Value) llvm::APInt(Value);
+    Integer.Type = Type.getAsOpaquePtr();
     StartLoc = Loc;
   }
 
@@ -461,8 +466,10 @@ public:
 
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
-    if (Kind == Integral)
-      new (IntegralValue) llvm::APInt(*Other.getAsIntegral());
+    if (Kind == Integral) {
+      new (Integer.Value) llvm::APInt(*Other.getAsIntegral());
+      Integer.Type = Other.Integer.Type;
+    }
     else
       TypeOrValue = Other.TypeOrValue;
     StartLoc = Other.StartLoc;
@@ -476,6 +483,7 @@ public:
     if (Kind == Other.Kind && Kind == Integral) {
       // Copy integral values.
       *this->getAsIntegral() = *Other.getAsIntegral();
+      Integer.Type = Other.Integer.Type; 
     } else {
       // Destroy the current integral value, if that's what we're holding.
       if (Kind == Integral)
@@ -483,9 +491,10 @@ public:
       
       Kind = Other.Kind;
       
-      if (Other.Kind == Integral)
-        new (IntegralValue) llvm::APInt(*Other.getAsIntegral());
-      else
+      if (Other.Kind == Integral) {
+        new (Integer.Value) llvm::APInt(*Other.getAsIntegral());
+        Integer.Type = Other.Integer.Type;
+      } else
         TypeOrValue = Other.TypeOrValue;
     }
     StartLoc = Other.StartLoc;
@@ -523,11 +532,19 @@ public:
   llvm::APInt *getAsIntegral() {
     if (Kind != Integral)
       return 0;
-    return reinterpret_cast<llvm::APInt*>(&IntegralValue[0]);
+    return reinterpret_cast<llvm::APInt*>(&Integer.Value[0]);
   }
 
   const llvm::APInt *getAsIntegral() const {
     return const_cast<TemplateArgument*>(this)->getAsIntegral();
+  }
+
+  /// \brief Retrieve the type of the integral value.
+  QualType getIntegralType() const {
+    if (Kind != Integral)
+      return QualType();
+
+    return QualType::getFromOpaquePtr(Integer.Type);
   }
 
   /// \brief Retrieve the template argument as an expression.
@@ -555,6 +572,7 @@ public:
 
     case Integral:
       getAsIntegral()->Profile(ID);
+      getIntegralType().Profile(ID);
       break;
 
     case Expression:
