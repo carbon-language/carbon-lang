@@ -64,6 +64,12 @@ bool types::appendSuffixForType(ID Id) {
   return strchr(getInfo(Id).Flags, 'A'); 
 }
 
+bool types::canLipoType(ID Id) { 
+  return (Id == TY_Nothing ||
+          Id == TY_Image ||
+          Id == TY_Object); 
+}
+
 types::ID types::lookupTypeForExtension(const char *Ext) {
   unsigned N = strlen(Ext);
 

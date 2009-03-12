@@ -49,6 +49,11 @@ namespace types {
   /// suffix).
   bool appendSuffixForType(ID Id);
 
+  /// canLipoType - Is this type acceptable as the output of a
+  /// universal build (currently, just the Nothing, Image, and Object
+  /// types).
+  bool canLipoType(ID Id);
+
   /// lookupTypeForExtension - Lookup the type to use for the file
   /// extension \arg Ext.
   ID lookupTypeForExtension(const char *Ext);
