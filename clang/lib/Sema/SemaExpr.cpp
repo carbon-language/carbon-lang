@@ -3886,8 +3886,6 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)Op;
 
   switch (Opc) {
-  default:
-    assert(0 && "Unknown binary expr!");
   case BinaryOperator::Assign:
     ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, QualType());
     break;

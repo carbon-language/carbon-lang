@@ -190,7 +190,8 @@ unsigned CallExpr::isBuiltinCall(ASTContext &Context) const {
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
-  default: assert(0 && "Unknown binary operator");
+  case PtrMemD:   return ".*";
+  case PtrMemI:   return "->*";
   case Mul:       return "*";
   case Div:       return "/";
   case Rem:       return "%";
@@ -222,6 +223,8 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   case OrAssign:  return "|=";
   case Comma:     return ",";
   }
+
+  return "";
 }
 
 InitListExpr::InitListExpr(SourceLocation lbraceloc, 
