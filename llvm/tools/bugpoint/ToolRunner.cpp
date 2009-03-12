@@ -671,8 +671,11 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   std::vector<const char*> GCCArgs;
   
   GCCArgs.push_back(GCCPath.c_str());
-  
-  
+
+  for (std::vector<std::string>::const_iterator
+         I = gccArgs.begin(), E = gccArgs.end(); I != E; ++I)
+    GCCArgs.push_back(I->c_str());
+
   // Compile the C/asm file into a shared object
   GCCArgs.push_back("-x");
   GCCArgs.push_back(fileType == AsmFile ? "assembler" : "c");
