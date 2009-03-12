@@ -719,6 +719,16 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   return false;
 }
 
+/// A sorting function for the std::set's in the following function which track
+/// the values in switches.  This forces deterministic behavior by comparing
+/// the values rather than the pointers.
+class Sorter {
+public:
+  bool operator() (ConstantInt * const &p, ConstantInt * const &q) const {
+    return p->getSExtValue() < q->getSExtValue();
+  }
+};
+
 /// FoldValueComparisonIntoPredecessors - The specified terminator is a value
 /// equality comparison instruction (either a switch or a branch on "X == c").
 /// See if any of the predecessors of the terminator block are value comparisons
@@ -754,7 +764,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       if (PredDefault == BB) {
         // If this is the default destination from PTI, only the edges in TI
         // that don't occur in PTI, or that branch to BB will be activated.
-        std::set<ConstantInt*> PTIHandled;
+        std::set<ConstantInt*, Sorter> PTIHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           if (PredCases[i].second != BB)
             PTIHandled.insert(PredCases[i].first);
@@ -782,7 +792,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
         // If this is not the default destination from PSI, only the edges
         // in SI that occur in PSI with a destination of BB will be
         // activated.
-        std::set<ConstantInt*> PTIHandled;
+        std::set<ConstantInt*, Sorter> PTIHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           if (PredCases[i].second == BB) {
             PTIHandled.insert(PredCases[i].first);
@@ -803,7 +813,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
 
         // If there are any constants vectored to BB that TI doesn't handle,
         // they must go to the default destination of TI.
-        for (std::set<ConstantInt*>::iterator I = PTIHandled.begin(),
+        for (std::set<ConstantInt*, Sorter>::iterator I = PTIHandled.begin(),
                E = PTIHandled.end(); I != E; ++I) {
           PredCases.push_back(std::make_pair(*I, BBDefault));
           NewSuccessors.push_back(BBDefault);
