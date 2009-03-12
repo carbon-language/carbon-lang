@@ -48,6 +48,10 @@ static unsigned char DiagnosticFlagsDriver[] = {
 #include "clang/Basic/DiagnosticDriverKinds.def"
   0
 };
+static unsigned char DiagnosticFlagsFrontend[] = {
+#include "clang/Basic/DiagnosticFrontendKinds.def"
+  0
+};
 static unsigned char DiagnosticFlagsLex[] = {
 #include "clang/Basic/DiagnosticLexKinds.def"
   0
@@ -78,8 +82,10 @@ static unsigned getBuiltinDiagClass(unsigned DiagID) {
   unsigned res;
   if (DiagID < diag::DIAG_START_DRIVER)
     res = DiagnosticFlagsCommon[DiagID];
-  else if (DiagID < diag::DIAG_START_LEX)
+  else if (DiagID < diag::DIAG_START_FRONTEND)
     res = DiagnosticFlagsDriver[DiagID - diag::DIAG_START_DRIVER - 1];
+  else if (DiagID < diag::DIAG_START_LEX)
+    res = DiagnosticFlagsFrontend[DiagID - diag::DIAG_START_FRONTEND - 1];
   else if (DiagID < diag::DIAG_START_PARSE)
     res = DiagnosticFlagsLex[DiagID - diag::DIAG_START_LEX - 1];
   else if (DiagID < diag::DIAG_START_AST)
@@ -102,6 +108,10 @@ static const char * const DiagnosticTextCommon[] = {
 };
 static const char * const DiagnosticTextDriver[] = {
 #include "clang/Basic/DiagnosticDriverKinds.def"
+  0
+};
+static const char * const DiagnosticTextFrontend[] = {
+#include "clang/Basic/DiagnosticFrontendKinds.def"
   0
 };
 static const char * const DiagnosticTextLex[] = {
@@ -249,8 +259,10 @@ bool Diagnostic::isBuiltinNote(unsigned DiagID) {
 const char *Diagnostic::getDescription(unsigned DiagID) const {
   if (DiagID < diag::DIAG_START_DRIVER)
     return DiagnosticTextCommon[DiagID];
-  else if (DiagID < diag::DIAG_START_LEX)
+  else if (DiagID < diag::DIAG_START_FRONTEND)
     return DiagnosticTextDriver[DiagID - diag::DIAG_START_DRIVER - 1];
+  else if (DiagID < diag::DIAG_START_LEX)
+    return DiagnosticTextFrontend[DiagID - diag::DIAG_START_FRONTEND - 1];
   else if (DiagID < diag::DIAG_START_PARSE)
     return DiagnosticTextLex[DiagID - diag::DIAG_START_LEX - 1];
   else if (DiagID < diag::DIAG_START_AST)

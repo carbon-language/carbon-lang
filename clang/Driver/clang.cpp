@@ -25,8 +25,9 @@
 #include "clang.h"
 #include "ASTConsumers.h"
 #include "clang/Frontend/CompileOptions.h"
-#include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/InitHeaderSearch.h"
+#include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Analysis/PathDiagnostic.h"
@@ -857,14 +858,16 @@ static bool InitializePreprocessor(Preprocessor &PP,
       const FileEntry *File = FileMgr.getFile(InFile);
       if (File) SourceMgr.createMainFileID(File, SourceLocation());
       if (SourceMgr.getMainFileID().isInvalid()) {
-        fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
+        PP.getDiagnostics().Report(FullSourceLoc(), diag::err_fe_error_reading) 
+          << InFile.c_str();
         return true;
       }
     } else {
       llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
       if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
       if (SourceMgr.getMainFileID().isInvalid()) {
-        fprintf(stderr, "Error reading standard input!  Empty?\n");
+        PP.getDiagnostics().Report(FullSourceLoc(), 
+                                   diag::err_fe_error_reading_stdin);
         return true;
       }
     }
@@ -1525,9 +1528,8 @@ int main(int argc, char **argv) {
   llvm::OwningPtr<TargetInfo> Target(TargetInfo::CreateTargetInfo(Triple));
   
   if (Target == 0) {
-    fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
-            Triple.c_str());
-    fprintf(stderr, "Please use -triple or -arch.\n");
+    Diags.Report(FullSourceLoc(), diag::err_fe_unknown_triple) 
+      << Triple.c_str();
     return 1;
   }
   

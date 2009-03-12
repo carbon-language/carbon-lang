@@ -9,10 +9,10 @@
 
 let Component = "Driver" in {
 
-def driver_no_such_file : Error<"no such file or directory: '%0'">
-def driver_unsupported_opt : Error<"unsupported option '%0'">
-def driver_unknown_stdin_type : Error<
+def err_drv_no_such_file : Error<"no such file or directory: '%0'">
+def err_drv_unsupported_opt : Error<"unsupported option '%0'">
+def err_drv_unknown_stdin_type : Error<
     "-E or -x required when input is from standard input">
-def driver_unknown_language : Error<"language not recognized: '%0'">
+def err_drv_unknown_language : Error<"language not recognized: '%0'">
 
 }
