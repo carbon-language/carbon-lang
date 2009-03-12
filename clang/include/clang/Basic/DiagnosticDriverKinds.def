@@ -12,11 +12,11 @@ __DRIVERSTART      =  DIAG_START_DRIVER,
 #undef DRIVERSTART
 #endif
 
-DIAG(driver_no_such_file, ERROR,
+DIAG(err_drv_no_such_file, ERROR,
      "no such file or directory: '%0'")
-DIAG(driver_unsupported_opt, ERROR,
+DIAG(err_drv_unsupported_opt, ERROR,
      "unsupported option '%0'")
-DIAG(driver_unknown_stdin_type, ERROR,
+DIAG(err_drv_unknown_stdin_type, ERROR,
      "-E or -x required when input is from standard input")
-DIAG(driver_unknown_language, ERROR,
+DIAG(err_drv_unknown_language, ERROR,
      "language not recognized: '%0'")

@@ -48,7 +48,7 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
     Arg *A = getOpts().ParseOneArg(*Args, Index, End);
     if (A) {
       if (A->getOption().isUnsupported()) {
-        Diag(clang::diag::driver_unsupported_opt) << A->getOption().getName();
+        Diag(clang::diag::err_drv_unsupported_opt) << A->getOption().getName();
         continue;
       }
 
@@ -201,7 +201,7 @@ void Driver::BuildActions(const ArgList &Args,
           // Otherwise emit an error but still use a valid type to
           // avoid spurious errors (e.g., no inputs).
           if (!Args.hasArg(options::OPT_E))
-            Diag(clang::diag::driver_unknown_stdin_type);
+            Diag(clang::diag::err_drv_unknown_stdin_type);
           Ty = types::TY_C;
         } else {
           // Otherwise lookup by extension, and fallback to ObjectType
@@ -235,7 +235,7 @@ void Driver::BuildActions(const ArgList &Args,
       // just adds an extra stat to the equation, but this is gcc
       // compatible.
       if (memcmp(Value, "-", 2) != 0 && !llvm::sys::Path(Value).exists())
-        Diag(clang::diag::driver_no_such_file) << A->getValue(Args);
+        Diag(clang::diag::err_drv_no_such_file) << A->getValue(Args);
       else
         Inputs.push_back(std::make_pair(Ty, A));
 
@@ -253,7 +253,7 @@ void Driver::BuildActions(const ArgList &Args,
       // unknown; but this isn't very important, we might as well be
       // bug comatible.
       if (!InputType) {
-        Diag(clang::diag::driver_unknown_language) << A->getValue(Args);
+        Diag(clang::diag::err_drv_unknown_language) << A->getValue(Args);
         InputType = types::TY_Object;
       }
     }
