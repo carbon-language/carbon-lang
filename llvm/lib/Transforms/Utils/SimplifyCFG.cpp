@@ -725,7 +725,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
 class Sorter {
 public:
   bool operator() (ConstantInt * const &p, ConstantInt * const &q) const {
-    return p->getSExtValue() < q->getSExtValue();
+    return p->getValue().slt(q->getValue());
   }
 };
 
