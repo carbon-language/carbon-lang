@@ -86,6 +86,22 @@ bool Option::matches(const Option *Opt) const {
   return false;
 }
 
+bool Option::matches(options::ID Id) const {
+  // FIXME: Decide what to do here; we should either pull out the
+  // handling of alias on the option for Id from the other matches, or
+  // find some other solution (which hopefully doesn't require using
+  // the option table).
+  if (Alias)
+    return Alias->matches(Id);
+  
+  if (ID == Id)
+    return true;
+  
+  if (Group)
+    return Group->matches(Id);
+  return false;
+}
+
 OptionGroup::OptionGroup(options::ID ID, const char *Name, 
                          const OptionGroup *Group)
   : Option(Option::GroupClass, ID, Name, Group, 0) {

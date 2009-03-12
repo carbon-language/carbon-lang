@@ -88,6 +88,7 @@ namespace driver {
   public:
     virtual ~Option();
 
+    options::ID getId() const { return ID; }
     OptionClass getKind() const { return Kind; }
     const char *getName() const { return Name; }
     const OptionGroup *getGroup() const { return Group; }
@@ -124,6 +125,7 @@ namespace driver {
     /// matches - Predicate for whether this option is part of the
     /// given option (which may be a group).
     bool matches(const Option *Opt) const;
+    bool matches(options::ID Id) const;
 
     /// accept - Potentially accept the current argument, returning a
     /// new Arg instance, or 0 if the option does not accept this
