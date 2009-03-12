@@ -719,15 +719,16 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   return false;
 }
 
-/// A sorting function for the std::set's in the following function which track
-/// the values in switches.  This forces deterministic behavior by comparing
-/// the values rather than the pointers.
-class Sorter {
-public:
-  bool operator() (ConstantInt * const &p, ConstantInt * const &q) const {
-    return p->getValue().slt(q->getValue());
-  }
-};
+namespace {
+  /// ConstantIntOrdering - This class implements a stable ordering of constant
+  /// integers that does not depend on their address.  This is important for
+  /// applications that sort ConstantInt's to ensure uniqueness.
+  struct ConstantIntOrdering {
+    bool operator()(const ConstantInt *LHS, const ConstantInt *RHS) const {
+      return LHS->getValue().ult(RHS->getValue());
+    }
+  };
+}
 
 /// FoldValueComparisonIntoPredecessors - The specified terminator is a value
 /// equality comparison instruction (either a switch or a branch on "X == c").
@@ -764,7 +765,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       if (PredDefault == BB) {
         // If this is the default destination from PTI, only the edges in TI
         // that don't occur in PTI, or that branch to BB will be activated.
-        std::set<ConstantInt*, Sorter> PTIHandled;
+        std::set<ConstantInt*, ConstantIntOrdering> PTIHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           if (PredCases[i].second != BB)
             PTIHandled.insert(PredCases[i].first);
@@ -792,7 +793,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
         // If this is not the default destination from PSI, only the edges
         // in SI that occur in PSI with a destination of BB will be
         // activated.
-        std::set<ConstantInt*, Sorter> PTIHandled;
+        std::set<ConstantInt*, ConstantIntOrdering> PTIHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           if (PredCases[i].second == BB) {
             PTIHandled.insert(PredCases[i].first);
@@ -813,7 +814,8 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
 
         // If there are any constants vectored to BB that TI doesn't handle,
         // they must go to the default destination of TI.
-        for (std::set<ConstantInt*, Sorter>::iterator I = PTIHandled.begin(),
+        for (std::set<ConstantInt*, ConstantIntOrdering>::iterator I = 
+                                    PTIHandled.begin(),
                E = PTIHandled.end(); I != E; ++I) {
           PredCases.push_back(std::make_pair(*I, BBDefault));
           NewSuccessors.push_back(BBDefault);
@@ -1742,17 +1744,6 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   return true;
 }
 
-
-namespace {
-  /// ConstantIntOrdering - This class implements a stable ordering of constant
-  /// integers that does not depend on their address.  This is important for
-  /// applications that sort ConstantInt's to ensure uniqueness.
-  struct ConstantIntOrdering {
-    bool operator()(const ConstantInt *LHS, const ConstantInt *RHS) const {
-      return LHS->getValue().ult(RHS->getValue());
-    }
-  };
-}
 
 /// SimplifyCFG - This function is used to do simplification of a CFG.  For
 /// example, it adjusts branches to branches to eliminate the extra hop, it
