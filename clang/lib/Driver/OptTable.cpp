@@ -44,8 +44,7 @@ static Info &getInfo(unsigned id) {
   return OptionInfos[id - 1];
 }
 
-OptTable::OptTable() : Options(new Option*[numOptions]) { 
-  memset(Options, 0, sizeof(*Options) * numOptions);
+OptTable::OptTable() : Options(new Option*[numOptions]()) { 
 }
 
 OptTable::~OptTable() { 
