@@ -244,7 +244,9 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
 void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
   types::ID InputType = types::TY_INVALID;
   Arg *InputTypeArg = 0;
-  
+
+  // Start by constructing the list of inputs and their types.
+
   llvm::SmallVector<std::pair<types::ID, const Arg*>, 16> Inputs;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
        it != ie; ++it) {
@@ -323,6 +325,46 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
     }
   }
 
+  if (Inputs.empty()) {
+    Diag(clang::diag::err_drv_no_input_files);
+    return;
+  }
+
+  // Determine which compilation mode we are in. We look for options
+  // which affect the phase, starting with the earliest phases, and
+  // record which option we used to determine the final phase.
+  Arg *FinalPhaseOpt = 0;
+  PhaseOrder FinalPhase;
+
+  // -{E,M,MM} only run the preprocessor.
+  if ((FinalPhaseOpt = Args.getLastArg(options::OPT_E)) ||
+      (FinalPhaseOpt = Args.getLastArg(options::OPT_M)) ||
+      (FinalPhaseOpt = Args.getLastArg(options::OPT_MM))) {
+    FinalPhase = PreprocessPhaseOrder;
+    
+    // -{-analyze,fsyntax-only,S} only run up to the compiler.
+  } else if ((FinalPhaseOpt = Args.getLastArg(options::OPT__analyze)) ||
+             (FinalPhaseOpt = Args.getLastArg(options::OPT_fsyntax_only)) ||
+             (FinalPhaseOpt = Args.getLastArg(options::OPT_S))) {
+    FinalPhase = CompilePhaseOrder;
+
+    // -c only runs up to the assembler.
+  } else if ((FinalPhaseOpt = Args.getLastArg(options::OPT_c))) {
+    FinalPhase = AssemblePhaseOrder;
+    
+    // Otherwise do everything.
+  } else
+    FinalPhase = PostAssemblePhaseOrder;
+
+  if (FinalPhaseOpt)
+    FinalPhaseOpt->claim();
+
+  // Reject -Z* at the top level, these options should never have been
+  // exposed by gcc.
+  if (Arg *A = Args.getLastArg(options::OPT_Z))
+    Diag(clang::diag::err_drv_use_of_Z_option) << A->getValue(Args);
+
+  // FIXME: This is just debugging code.
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
     llvm::errs() << "input " << i << ": " 
                  << Inputs[i].second->getValue(Args) << "\n";

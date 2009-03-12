@@ -29,6 +29,25 @@ namespace driver {
 /// Driver - Encapsulate logic for constructing compilation processes
 /// from a set of gcc-driver-like command line arguments.
 class Driver {
+  /// PhaseOrder - Ordered values for successive stages in the
+  /// compilation process which interact with user options.
+  enum PhaseOrder {
+    /// Nothing.
+    NoPhaseOrder = 0,
+
+    /// Only run the preprocessor.
+    PreprocessPhaseOrder,
+
+    /// Only run the preprocessor and compiler.
+    CompilePhaseOrder,
+
+    /// Only run the preprocessor, compiler, and assembler.
+    AssemblePhaseOrder,
+
+    /// Run everything.
+    PostAssemblePhaseOrder
+  };
+
   OptTable *Opts;
 
   Diagnostic &Diags;

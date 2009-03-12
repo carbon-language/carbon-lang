@@ -24,3 +24,7 @@ DIAG(err_drv_invalid_opt_with_multiple_archs, ERROR,
      "option '%0' cannot be used with multiple -arch options")
 DIAG(err_drv_invalid_output_with_multiple_archs, ERROR,
      "cannot use '%0' output with multiple -arch options")
+DIAG(err_drv_no_input_files, ERROR,
+     "no input files")
+DIAG(err_drv_use_of_Z_option, ERROR,
+     "unsupported use of internal gcc -Z option '%0'")

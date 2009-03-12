@@ -111,7 +111,7 @@ OPTION("--bootclasspath=", _bootclasspath_EQ, Joined, INVALID, fbootclasspath_EQ
 OPTION("--bootclasspath", _bootclasspath, Separate, INVALID, fbootclasspath_EQ, "J", 0)
 OPTION("--classpath=", _classpath_EQ, Joined, INVALID, fclasspath_EQ, "", 0)
 OPTION("--classpath", _classpath, Separate, INVALID, fclasspath_EQ, "J", 0)
-OPTION("--combine", _combine, Flag, INVALID, combine, "", 0)
+OPTION("--combine", _combine, Flag, INVALID, combine, "u", 0)
 OPTION("--comments-in-macros", _comments_in_macros, Flag, INVALID, CC, "", 0)
 OPTION("--comments", _comments, Flag, INVALID, C, "", 0)
 OPTION("--compile", _compile, Flag, INVALID, c, "", 0)
