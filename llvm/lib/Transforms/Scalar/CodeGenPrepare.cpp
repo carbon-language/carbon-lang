@@ -327,12 +327,6 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
   assert(isa<PHINode>(Dest->begin()) &&
          "This should only be called if Dest has a PHI!");
 
-  // Do not split edges to EH landing pads.
-  if (InvokeInst *Invoke = dyn_cast<InvokeInst>(TI)) {
-    if (Invoke->getSuccessor(1) == Dest)
-      return;
-  }
-
   // As a hack, never split backedges of loops.  Even though the copy for any
   // PHIs inserted on the backedge would be dead for exits from the loop, we
   // assume that the cost of *splitting* the backedge would be too high.

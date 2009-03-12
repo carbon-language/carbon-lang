@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | not grep jmp
 ; rdar://6647639
+; XFAIL: *
 
 	%struct.FetchPlanHeader = type { i8*, i8*, i32, i8*, i8*, i8*, i8*, i8*, %struct.NSObject* (%struct.NSObject*, %struct.objc_selector*, ...)*, %struct.__attributeDescriptionFlags }
 	%struct.NSArray = type { %struct.NSObject }
