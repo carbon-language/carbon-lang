@@ -16,16 +16,16 @@
 #error "Define OPTION prior to including this file!"
 #endif
 
-// OPTION(ID, KIND, NAME, GROUP, ALIAS, FLAGS, PARAM)
+// OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM)
 
-// The first value provided to the macro specifies the internal name
-// of the option, and results in a clang::driver::options::XX enum
+// The first value is the option name as a string.
+
+// The second value is the internal option id, which must be a valid
+// C++ identifier, and results in a clang::driver::options::XX enum
 // value for XX.
 
-// The second value is the option type, one of Group, Flag, Joined,
+// The third value is the option type, one of Group, Flag, Joined,
 // Separate, CommaJoined, JoinedOrSeparate, JoinedAndSeparate.
-
-// The third value is the option name.
 
 // The fourth value is the internal name of the option group, or 0 if
 // the option is not part of a group.
@@ -52,7 +52,7 @@
 /// this is only used for specifying the number of arguments for
 /// Separate options.
 
-OPTION(ArchOpt, Separate, "-arch", 0, 0, "", 0)
-OPTION(PassExitCodesFlag, Flag, "-pass-exit-codes", 0, 0, "", 0)
-OPTION(PrintFileNameOpt, Joined, "-print-file-name=", 0, 0, "", 0)
-OPTION(WpOpt, CommaJoined, "-Wp,", 0, 0, "", 0)
+OPTION("-arch", ArchOpt, Separate, 0, 0, "", 0)
+OPTION("-pass-exit-codes", PassExitCodesFlag, Flag, 0, 0, "", 0)
+OPTION("-print-file-name=", PrintFileNameOpt, Joined, 0, 0, "", 0)
+OPTION("-Wp,", WpOpt, CommaJoined, 0, 0, "", 0)

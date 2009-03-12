@@ -19,22 +19,23 @@ using namespace clang::driver;
 using namespace clang::driver::options;
 
 struct Info {
-  Option::OptionClass Kind;
   const char *Name;
+  const char *Flags;
+
+  Option::OptionClass Kind;
   unsigned GroupID;
   unsigned AliasID;
-  const char *Flags;
   unsigned Param;
 };
 
 static Info OptionInfos[] = {
   // The InputOption info
-  { Option::InputClass, "<input>", 0, 0, "", 0 },
+  { "<input>", "", Option::InputClass, 0, 0, 0 },
   // The UnknownOption info
-  { Option::UnknownClass, "<unknown>", 0, 0, "", 0 },
+  { "<unknown>", "", Option::UnknownClass, 0, 0, 0 },
   
-#define OPTION(ID, KIND, NAME, GROUP, ALIAS, FLAGS, PARAM)      \
-  { Option::KIND##Class, NAME, GROUP, ALIAS, FLAGS, PARAM },
+#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM) \
+  { NAME, FLAGS, Option::KIND##Class, GROUP, ALIAS, PARAM },
 #include "clang/Driver/Options.def"
 };
 static const unsigned numOptions = sizeof(OptionInfos) / sizeof(OptionInfos[0]);
