@@ -53,8 +53,6 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableValueProp("enable-value-prop", cl::Hidden);
-static cl::opt<bool>
 DisableLegalizeTypes("disable-legalize-types", cl::Hidden);
 #ifndef NDEBUG
 static cl::opt<bool>
@@ -644,7 +642,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
   
-  if (!Fast && EnableValueProp)
+  if (!Fast)
     ComputeLiveOutVRegInfo();
 
   // Third, instruction select all of the operations to machine code, adding the
