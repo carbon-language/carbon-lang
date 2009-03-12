@@ -557,7 +557,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   CodeGenFunction::BlockInfo Info(0, n);
   uint64_t subBlockSize, subBlockAlign;
   llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
-  bool subBlockHasCopyDispose;
+  bool subBlockHasCopyDispose = false;
   llvm::Function *Fn
     = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize,
                                                  subBlockAlign,
@@ -567,7 +567,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
          && "no imports allowed for global block");
   // FIXME: This causes a failure on clang-i686-linux, not sure why,
   // disable for now.
-  // assert(!subBlockHasCopyDispose && "no imports allowed for global block");
+  assert(!subBlockHasCopyDispose && "no imports allowed for global block");
 
   // isa
   LiteralFields[0] = getNSConcreteGlobalBlock();
