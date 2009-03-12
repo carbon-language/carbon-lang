@@ -247,10 +247,9 @@ reference</a> - an excellent reference for the STL and other parts of the
 standard C++ library.</li>
 
 <li><a href="http://www.tempest-sw.com/cpp/">C++ In a Nutshell</a> - This is an
-O'Reilly book in the making.  It has a decent 
-Standard Library
-Reference that rivals Dinkumware's, and is unfortunately no longer free since the book has been 
-published.</li>
+O'Reilly book in the making.  It has a decent Standard Library
+Reference that rivals Dinkumware's, and is unfortunately no longer free since the
+book has been published.</li>
 
 <li><a href="http://www.parashift.com/c++-faq-lite/">C++ Frequently Asked
 Questions</a></li>
@@ -890,11 +889,12 @@ prev/next pointers for the list.</p>
 requires an <tt>ilist_traits</tt> implementation for the element type, but it
 provides some novel characteristics.  In particular, it can efficiently store
 polymorphic objects, the traits class is informed when an element is inserted or
-removed from the list, and ilists are guaranteed to support a constant-time splice
-operation.</p>
+removed from the list, and <tt>ilist</tt>s are guaranteed to support a
+constant-time splice operation.</p>
 
-<p>These properties are exactly what we want for things like <tt>Instruction</tt>s
-and basic blocks, which is why these are implemented with <tt>ilist</tt>s.</p>
+<p>These properties are exactly what we want for things like
+<tt>Instruction</tt>s and basic blocks, which is why these are implemented with
+<tt>ilist</tt>s.</p>
 
 Related classes of interest are explained in the following subsections:
     <ul>
@@ -922,8 +922,8 @@ publicly derive from this traits class.</p>
 
 <div class="doc_text">
 <p><tt>iplist&lt;T&gt;</tt> is <tt>ilist&lt;T&gt;</tt>'s base and as such
-supports a slightly narrower interface. Notably, inserters from <tt>T&amp;</tt>
-are absent.</p>
+supports a slightly narrower interface. Notably, inserters from
+<tt>T&amp;</tt> are absent.</p>
 
 <p><tt>ilist_traits&lt;T&gt;</tt> is a public base of this class and can be
 used for a wide variety of customizations.</p>
@@ -940,7 +940,8 @@ that are expected by the <tt>ilist&lt;T&gt;</tt> (and analogous containers)
 in the default manner.</p>
 
 <p><tt>ilist_node&lt;T&gt;</tt>s are meant to be embedded in the node type
-<tt>T</tt>.</p>
+<tt>T</tt>, usually <tt>T</tt> publicly derives from
+<tt>ilist_node&lt;T&gt;</tt>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
