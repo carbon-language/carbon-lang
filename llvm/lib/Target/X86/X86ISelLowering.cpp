@@ -5710,7 +5710,8 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
         !isScalarFPTypeInSSEReg(VT))  // FPStack?
       IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSExtValue());
 
-    if ((isX86LogicalCmp(Cmp) && !IllegalFPCMov) || Opc == X86ISD::BT) { // FIXME
+    if ((isX86LogicalCmp(Cmp) && !IllegalFPCMov) ||
+        Opc == X86ISD::BT) { // FIXME
       Cond = Cmp;
       addTest = false;
     }
@@ -8185,8 +8186,88 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(Opcode, DL, N->getValueType(0), LHS, RHS);
   }
   
+  // If this is a select between two integer constants, try to do some
+  // optimizations.
+  if (ConstantSDNode *LHSC = dyn_cast<ConstantSDNode>(LHS)) {
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS))
+      // Don't do this for crazy integer types.
+      if (DAG.getTargetLoweringInfo().isTypeLegal(LHS.getValueType())) {
+        // If this is efficiently invertible, canonicalize the LHSC/RHSC values
+        // so that LHSC (the true value) is larger than RHSC (the false value).
+        bool NeedsCondInvert = false;
+        
+        if (LHSC->getAPIntValue().ult(RHSC->getAPIntValue()) &&
+            // Efficiently invertible.
+            (Cond.getOpcode() == ISD::SETCC ||  // setcc -> invertible.
+             (Cond.getOpcode() == ISD::XOR &&   // xor(X, C) -> invertible.
+              isa<ConstantSDNode>(Cond.getOperand(1))))) {
+          NeedsCondInvert = true;
+          std::swap(LHSC, RHSC);
+        }
+   
+        // Optimize C ? 8 : 0 -> zext(C) << 3.  Likewise for any pow2/0.
+        if (RHSC->getAPIntValue() == 0 && LHSC->getAPIntValue().isPowerOf2()) {
+          if (NeedsCondInvert) // Invert the condition if needed.
+            Cond = DAG.getNode(ISD::XOR, DL, Cond.getValueType(), Cond,
+                               DAG.getConstant(1, Cond.getValueType()));
+          
+          // Zero extend the condition if needed.
+          Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, LHS.getValueType(), Cond);
+          
+          unsigned ShAmt = LHSC->getAPIntValue().logBase2();
+          return DAG.getNode(ISD::SHL, DL, LHS.getValueType(), Cond,
+                             DAG.getConstant(ShAmt, MVT::i8));
+        }
+      }
+  }
+      
   return SDValue();
 }
+
+/// Optimize X86ISD::CMOV [LHS, RHS, CONDCODE (e.g. X86::COND_NE), CONDVAL]
+static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
+                                  TargetLowering::DAGCombinerInfo &DCI) {
+  DebugLoc DL = N->getDebugLoc();
+  
+  // If the flag operand isn't dead, don't touch this CMOV.
+  if (N->getNumValues() == 2 && !SDValue(N, 1).use_empty())
+    return SDValue();
+  
+  // If this is a select between two integer constants, try to do some
+  // optimizations.  Note that the operands are ordered the opposite of SELECT
+  // operands.
+  if (ConstantSDNode *TrueC = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+    if (ConstantSDNode *FalseC = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
+      // Canonicalize the TrueC/FalseC values so that TrueC (the true value) is
+      // larger than FalseC (the false value).
+      X86::CondCode CC = (X86::CondCode)N->getConstantOperandVal(2);
+        
+      if (TrueC->getAPIntValue().ult(FalseC->getAPIntValue())) {
+        CC = X86::GetOppositeBranchCondition(CC);
+        std::swap(TrueC, FalseC);
+      }
+        
+      // Optimize C ? 8 : 0 -> zext(setcc(C)) << 3.  Likewise for any pow2/0.
+      if (FalseC->getAPIntValue() == 0 && TrueC->getAPIntValue().isPowerOf2()) {
+        SDValue Cond = N->getOperand(3);
+        Cond = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
+                           DAG.getConstant(CC, MVT::i8), Cond);
+      
+        // Zero extend the condition if needed.
+        Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, TrueC->getValueType(0), Cond);
+        
+        unsigned ShAmt = TrueC->getAPIntValue().logBase2();
+        Cond = DAG.getNode(ISD::SHL, DL, Cond.getValueType(), Cond,
+                           DAG.getConstant(ShAmt, MVT::i8));
+        if (N->getNumValues() == 2)  // Dead flag value?
+          return DCI.CombineTo(N, Cond, SDValue());
+        return Cond;
+      }
+    }
+  }
+  return SDValue();
+}
+
 
 /// PerformShiftCombine - Transforms vector shift nodes to use vector shifts
 ///                       when possible.
@@ -8448,6 +8529,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::BUILD_VECTOR:
     return PerformBuildVectorCombine(N, DAG, DCI, Subtarget, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
+  case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);

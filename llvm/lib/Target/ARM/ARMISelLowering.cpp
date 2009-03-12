@@ -256,7 +256,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   // We have target-specific dag combine patterns for the following nodes:
   // ARMISD::FMRRD  - No need to call setTargetDAGCombine
-  
+  setTargetDAGCombine(ISD::ADD);
+  setTargetDAGCombine(ISD::SUB);
+      
+      
   setStackPointerRegisterToSaveRestore(ARM::SP);
   setSchedulingPreference(SchedulingForRegPressure);
   setIfCvtBlockSizeLimit(Subtarget->isThumb() ? 0 : 10);
@@ -1562,6 +1565,102 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
 
+static
+SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
+                            TargetLowering::DAGCombinerInfo &DCI) {
+  
+  SelectionDAG &DAG = DCI.DAG;
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  MVT VT = N->getValueType(0);
+  unsigned Opc = N->getOpcode();
+  bool isSlctCC = Slct.getOpcode() == ISD::SELECT_CC;
+  SDValue LHS = isSlctCC ? Slct.getOperand(2) : Slct.getOperand(1);
+  SDValue RHS = isSlctCC ? Slct.getOperand(3) : Slct.getOperand(2);
+  ISD::CondCode CC = ISD::SETCC_INVALID;
+
+  if (isSlctCC) {
+    CC = cast<CondCodeSDNode>(Slct.getOperand(4))->get();
+  } else {
+    SDValue CCOp = Slct.getOperand(0);
+    if (CCOp.getOpcode() == ISD::SETCC)
+      CC = cast<CondCodeSDNode>(CCOp.getOperand(2))->get();
+  }
+
+  bool DoXform = false;
+  bool InvCC = false;
+  assert ((Opc == ISD::ADD || (Opc == ISD::SUB && Slct == N->getOperand(1))) &&
+          "Bad input!");
+
+  if (LHS.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(LHS)->isNullValue()) {
+    DoXform = true;
+  } else if (CC != ISD::SETCC_INVALID &&
+             RHS.getOpcode() == ISD::Constant &&
+             cast<ConstantSDNode>(RHS)->isNullValue()) {
+    std::swap(LHS, RHS);
+    SDValue Op0 = Slct.getOperand(0);
+    MVT OpVT = isSlctCC ? Op0.getValueType() :
+                          Op0.getOperand(0).getValueType();
+    bool isInt = OpVT.isInteger();
+    CC = ISD::getSetCCInverse(CC, isInt);
+
+    if (!TLI.isCondCodeLegal(CC, OpVT))
+      return SDValue();         // Inverse operator isn't legal.
+
+    DoXform = true;
+    InvCC = true;
+  }
+
+  if (DoXform) {
+    SDValue Result = DAG.getNode(Opc, RHS.getDebugLoc(), VT, OtherOp, RHS);
+    if (isSlctCC)
+      return DAG.getSelectCC(N->getDebugLoc(), OtherOp, Result,
+                             Slct.getOperand(0), Slct.getOperand(1), CC);
+    SDValue CCOp = Slct.getOperand(0);
+    if (InvCC)
+      CCOp = DAG.getSetCC(Slct.getDebugLoc(), CCOp.getValueType(),
+                          CCOp.getOperand(0), CCOp.getOperand(1), CC);
+    return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
+                       CCOp, OtherOp, Result);
+  }
+  return SDValue();
+}
+
+/// PerformADDCombine - Target-specific dag combine xforms for ISD::ADD.
+static SDValue PerformADDCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  // added by evan in r37685 with no testcase.
+  SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
+  
+  // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
+  if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
+    SDValue Result = combineSelectAndUse(N, N0, N1, DCI);
+    if (Result.getNode()) return Result;
+  }
+  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
+    SDValue Result = combineSelectAndUse(N, N1, N0, DCI);
+    if (Result.getNode()) return Result;
+  }
+  
+  return SDValue();
+}
+
+/// PerformSUBCombine - Target-specific dag combine xforms for ISD::SUB.
+static SDValue PerformSUBCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  // added by evan in r37685 with no testcase.
+  SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
+  
+  // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
+  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
+    SDValue Result = combineSelectAndUse(N, N1, N0, DCI);
+    if (Result.getNode()) return Result;
+  }
+  
+  return SDValue();
+}
+
+
 /// PerformFMRRDCombine - Target-specific dag combine xforms for ARMISD::FMRRD.
 static SDValue PerformFMRRDCombine(SDNode *N, 
                                      TargetLowering::DAGCombinerInfo &DCI) {
@@ -1576,6 +1675,8 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
                                                DAGCombinerInfo &DCI) const {
   switch (N->getOpcode()) {
   default: break;
+  case ISD::ADD:      return PerformADDCombine(N, DCI);
+  case ISD::SUB:      return PerformSUBCombine(N, DCI);
   case ARMISD::FMRRD: return PerformFMRRDCombine(N, DCI);
   }
   

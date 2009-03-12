@@ -543,8 +543,10 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
   if (AddTo) {
     // Push the new nodes and any users onto the worklist
     for (unsigned i = 0, e = NumTo; i != e; ++i) {
-      AddToWorkList(To[i].getNode());
-      AddUsersToWorkList(To[i].getNode());
+      if (To[i].getNode()) {
+        AddToWorkList(To[i].getNode());
+        AddUsersToWorkList(To[i].getNode());
+      }
     }
   }
 
@@ -944,65 +946,6 @@ SDValue combineShlAddConstant(DebugLoc DL, SDValue N0, SDValue N1,
   return SDValue();
 }
 
-static
-SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
-                            SelectionDAG &DAG, const TargetLowering &TLI,
-                            bool LegalOperations) {
-  MVT VT = N->getValueType(0);
-  unsigned Opc = N->getOpcode();
-  bool isSlctCC = Slct.getOpcode() == ISD::SELECT_CC;
-  SDValue LHS = isSlctCC ? Slct.getOperand(2) : Slct.getOperand(1);
-  SDValue RHS = isSlctCC ? Slct.getOperand(3) : Slct.getOperand(2);
-  ISD::CondCode CC = ISD::SETCC_INVALID;
-
-  if (isSlctCC) {
-    CC = cast<CondCodeSDNode>(Slct.getOperand(4))->get();
-  } else {
-    SDValue CCOp = Slct.getOperand(0);
-    if (CCOp.getOpcode() == ISD::SETCC)
-      CC = cast<CondCodeSDNode>(CCOp.getOperand(2))->get();
-  }
-
-  bool DoXform = false;
-  bool InvCC = false;
-  assert ((Opc == ISD::ADD || (Opc == ISD::SUB && Slct == N->getOperand(1))) &&
-          "Bad input!");
-
-  if (LHS.getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(LHS)->isNullValue()) {
-    DoXform = true;
-  } else if (CC != ISD::SETCC_INVALID &&
-             RHS.getOpcode() == ISD::Constant &&
-             cast<ConstantSDNode>(RHS)->isNullValue()) {
-    std::swap(LHS, RHS);
-    SDValue Op0 = Slct.getOperand(0);
-    MVT OpVT = isSlctCC ? Op0.getValueType() :
-                          Op0.getOperand(0).getValueType();
-    bool isInt = OpVT.isInteger();
-    CC = ISD::getSetCCInverse(CC, isInt);
-
-    if (LegalOperations && !TLI.isCondCodeLegal(CC, OpVT))
-      return SDValue();         // Inverse operator isn't legal.
-
-    DoXform = true;
-    InvCC = true;
-  }
-
-  if (DoXform) {
-    SDValue Result = DAG.getNode(Opc, RHS.getDebugLoc(), VT, OtherOp, RHS);
-    if (isSlctCC)
-      return DAG.getSelectCC(N->getDebugLoc(), OtherOp, Result,
-                             Slct.getOperand(0), Slct.getOperand(1), CC);
-    SDValue CCOp = Slct.getOperand(0);
-    if (InvCC)
-      CCOp = DAG.getSetCC(Slct.getDebugLoc(), CCOp.getValueType(),
-                          CCOp.getOperand(0), CCOp.getOperand(1), CC);
-    return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
-                       CCOp, OtherOp, Result);
-  }
-  return SDValue();
-}
-
 SDValue DAGCombiner::visitADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -1123,16 +1066,6 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     if (Result.getNode()) return Result;
   }
 
-  // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
-  if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N0, N1, DAG, TLI, LegalOperations);
-    if (Result.getNode()) return Result;
-  }
-  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N1, N0, DAG, TLI, LegalOperations);
-    if (Result.getNode()) return Result;
-  }
-
   return SDValue();
 }
 
@@ -1246,11 +1179,6 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
       N0.getOperand(1).getOperand(1) == N1)
     return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT,
                        N0.getOperand(0), N0.getOperand(1).getOperand(0));
-  // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
-  if (N1.getOpcode() == ISD::SELECT && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineSelectAndUse(N, N1, N0, DAG, TLI, LegalOperations);
-    if (Result.getNode()) return Result;
-  }
 
   // If either operand of a sub is undef, the result is undef
   if (N0.getOpcode() == ISD::UNDEF)
