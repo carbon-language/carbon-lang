@@ -122,10 +122,10 @@ namespace llvm {
       /// operand produced by a CMP instruction.
       SETCC,
 
-      /// X86 conditional moves. Operand 1 and operand 2 are the two values
-      /// to select from (operand 1 is a R/W operand). Operand 3 is the
-      /// condition code, and operand 4 is the flag operand produced by a CMP
-      /// or TEST instruction. It also writes a flag result.
+      /// X86 conditional moves. Operand 0 and operand 1 are the two values
+      /// to select from. Operand 2 is the condition code, and operand 3 is the
+      /// flag operand produced by a CMP or TEST instruction. It also writes a
+      /// flag result.
       CMOV,
 
       /// X86 conditional branches. Operand 1 is the chain operand, operand 2
