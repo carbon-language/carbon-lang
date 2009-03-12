@@ -124,8 +124,8 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
                            unsigned IndexEnd) const {
   const char *Str = Args.getArgString(Index);
 
-  // Anything that doesn't start with '-' is an input.
-  if (Str[0] != '-')
+  // Anything that doesn't start with '-' is an input, as is '-' itself.
+  if (Str[0] != '-' || Str[1] == '\0')
     return new PositionalArg(getOption(OPT_INPUT), Index++);
 
   for (unsigned j = OPT_UNKNOWN + 1; j < LastOption; ++j) {
