@@ -792,7 +792,7 @@ class OptionParser:
         # not eat them), or should we let the user sort it out.
 
         self.fGroup = OptionGroup('-f')
-        self.Clang_fGroup = OptionGroup('-f', self.fGroup)
+        self.Clang_fGroup = OptionGroup('-clang-f', self.fGroup)
         self.fastOption = self.addOption(FlagOption('-fast', self.fGroup))
         self.fastfOption = self.addOption(FlagOption('-fastf', self.fGroup))
         self.fastcpOption = self.addOption(FlagOption('-fastcp', self.fGroup))
@@ -915,7 +915,7 @@ class OptionParser:
         self.OOption = self.addOption(JoinedOption('-O'))
 
         self.WGroup = OptionGroup('-W')
-        self.ClangWGroup = OptionGroup('-W', self.WGroup)
+        self.ClangWGroup = OptionGroup('-clang-W', self.WGroup)
 
         self.WallOption = self.addOption(FlagOption('-Wall', self.WGroup))
         self.addOption(FlagOption('-Wunused-macros', self.ClangWGroup))
