@@ -1,0 +1,22 @@
+//==--- DiagnosticDriverKinds.def - libdriver diagnostics -------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifdef DRIVERSTART
+__DRIVERSTART      =  DIAG_START_DRIVER,
+#undef DRIVERSTART
+#endif
+
+DIAG(driver_no_such_file, ERROR,
+     "no such file or directory: '%0'")
+DIAG(driver_unsupported_opt, ERROR,
+     "unsupported option '%0'")
+DIAG(driver_unknown_stdin_type, ERROR,
+     "-E or -x required when input is from standard input")
+DIAG(driver_unknown_language, ERROR,
+     "language not recognized: '%0'")

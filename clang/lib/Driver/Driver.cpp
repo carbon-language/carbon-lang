@@ -13,6 +13,7 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/HostInfo.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
@@ -23,8 +24,9 @@
 using namespace clang::driver;
 
 Driver::Driver(const char *_Name, const char *_Dir,
-               const char *_DefaultHostTriple) 
-  : Opts(new OptTable()),
+               const char *_DefaultHostTriple,
+               Diagnostic &_Diags) 
+  : Opts(new OptTable()), Diags(_Diags), 
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     Host(0),
     CCCIsCXX(false), CCCEcho(false), 
@@ -46,7 +48,7 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
     Arg *A = getOpts().ParseOneArg(*Args, Index, End);
     if (A) {
       if (A->getOption().isUnsupported()) {
-        Diag("unsupported option: ") << A->getOption().getName() << "\n";
+        Diag(clang::diag::driver_unsupported_opt) << A->getOption().getName();
         continue;
       }
 
@@ -189,7 +191,7 @@ void Driver::BuildActions(const ArgList &Args,
       types::ID Ty = types::TY_INVALID;
 
       // Infer the input type if necessary.
-      if (!InputType) {
+      if (InputType == types::TY_INVALID) {
         // stdin must be handled specially.
         if (memcmp(Value, "-", 2) == 0) {
           // If running with -E, treat as a C input (this changes the
@@ -199,7 +201,7 @@ void Driver::BuildActions(const ArgList &Args,
           // Otherwise emit an error but still use a valid type to
           // avoid spurious errors (e.g., no inputs).
           if (!Args.hasArg(options::OPT_E))
-            Diag("-E or -x required when input is from standard input");
+            Diag(clang::diag::driver_unknown_stdin_type);
           Ty = types::TY_C;
         } else {
           // Otherwise lookup by extension, and fallback to ObjectType
@@ -233,7 +235,7 @@ void Driver::BuildActions(const ArgList &Args,
       // just adds an extra stat to the equation, but this is gcc
       // compatible.
       if (memcmp(Value, "-", 2) != 0 && !llvm::sys::Path(Value).exists())
-        Diag("no such file or directory: ") << A->getValue(Args) << "\n";
+        Diag(clang::diag::driver_no_such_file) << A->getValue(Args);
       else
         Inputs.push_back(std::make_pair(Ty, A));
 
@@ -251,7 +253,7 @@ void Driver::BuildActions(const ArgList &Args,
       // unknown; but this isn't very important, we might as well be
       // bug comatible.
       if (!InputType) {
-        Diag("language not recognized: ") << A->getValue(Args) << "\n";
+        Diag(clang::diag::driver_unknown_language) << A->getValue(Args);
         InputType = types::TY_Object;
       }
     }
@@ -285,9 +287,4 @@ HostInfo *Driver::GetHostInfo(const char *Triple) {
     return new DarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
     
   return new UnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
-}
-
-// FIXME: Migrate to a normal diagnostics client.
-llvm::raw_ostream &Driver::Diag(const char *Message) const {
-  return (llvm::errs() << Message);
 }

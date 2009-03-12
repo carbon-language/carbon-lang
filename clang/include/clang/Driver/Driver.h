@@ -10,6 +10,8 @@
 #ifndef CLANG_DRIVER_DRIVER_H_
 #define CLANG_DRIVER_DRIVER_H_
 
+#include "clang/Basic/Diagnostic.h"
+
 #include <list>
 #include <set>
 #include <string>
@@ -32,9 +34,16 @@ namespace driver {
 class Driver {
   OptTable *Opts;
 
+  Diagnostic &Diags;
+
   /// ParseArgStrings - Parse the given list of strings into an
   /// ArgList.
   ArgList *ParseArgStrings(const char **ArgBegin, const char **ArgEnd);
+
+  // Diag - Forwarding function for diagnostics.
+  DiagnosticBuilder Diag(unsigned DiagID) {
+    return Diags.Report(FullSourceLoc(), DiagID);
+  }
 
   // FIXME: Privatize once interface is stable.
 public:
@@ -83,7 +92,8 @@ public:
 
 public:
   Driver(const char *_Name, const char *_Dir,
-         const char *_DefaultHostTriple);
+         const char *_DefaultHostTriple,
+         Diagnostic &_Diags);
   ~Driver();
 
   const OptTable &getOpts() const { return *Opts; }
@@ -117,8 +127,6 @@ public:
   /// \param Actions - The list to store the resulting actions onto.
   void BuildActions(const ArgList &Args, 
                     llvm::SmallVector<Action*, 2> &Actions);
-
-  llvm::raw_ostream &Diag(const char *Message) const;
 };
 
 } // end namespace driver
