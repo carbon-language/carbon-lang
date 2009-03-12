@@ -21,8 +21,8 @@
 // The first value is the option name as a string.
 
 // The second value is the internal option id, which must be a valid
-// C++ identifier, and results in a clang::driver::options::XX enum
-// value for XX.
+// C++ identifier, and results in a clang::driver::options::OPT_XX
+// enum constant for XX.
 // 
 // We want to unamiguously be able to refer to options from the driver
 // source code, for this reason the option name is mangled into an
