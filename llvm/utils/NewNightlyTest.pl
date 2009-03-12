@@ -197,7 +197,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 if ($ENV{'LLVMGCCDIR'}) {
   $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
-  $LLVMGCCPATH = $ENV{'LLVMGCCDIR'};
+  $LLVMGCCPATH = $ENV{'LLVMGCCDIR'} . '/bin';
 }
 else {
   $LLVMGCCPATH = "";
