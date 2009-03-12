@@ -2117,8 +2117,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ReturnInst, Value)
 ///
 class BranchInst : public TerminatorInst {
   /// Ops list - Branches are strange.  The operands are ordered:
-  ///  TrueDest, FalseDest, Cond.  This makes some accessors faster because
-  /// they don't have to check for cond/uncond branchness.
+  ///  [Cond, FalseDest,] TrueDest.  This makes some accessors faster because
+  /// they don't have to check for cond/uncond branchness. These are mostly
+  /// accessed relative from op_end().
   BranchInst(const BranchInst &BI);
   void AssertOK();
   // BranchInst constructors (where {B, T, F} are blocks, and C is a condition):
@@ -2136,24 +2137,21 @@ class BranchInst : public TerminatorInst {
              BasicBlock *InsertAtEnd);
 public:
   static BranchInst *Create(BasicBlock *IfTrue, Instruction *InsertBefore = 0) {
-    return new(1) BranchInst(IfTrue, InsertBefore);
+    return new(1, true) BranchInst(IfTrue, InsertBefore);
   }
   static BranchInst *Create(BasicBlock *IfTrue, BasicBlock *IfFalse,
                             Value *Cond, Instruction *InsertBefore = 0) {
     return new(3) BranchInst(IfTrue, IfFalse, Cond, InsertBefore);
   }
   static BranchInst *Create(BasicBlock *IfTrue, BasicBlock *InsertAtEnd) {
-    return new(1) BranchInst(IfTrue, InsertAtEnd);
+    return new(1, true) BranchInst(IfTrue, InsertAtEnd);
   }
   static BranchInst *Create(BasicBlock *IfTrue, BasicBlock *IfFalse,
                             Value *Cond, BasicBlock *InsertAtEnd) {
     return new(3) BranchInst(IfTrue, IfFalse, Cond, InsertAtEnd);
   }
 
-  ~BranchInst() {
-    if (NumOperands == 1)
-      NumOperands = (unsigned)((Use*)this - OperandList);
-  }
+  ~BranchInst();
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -2165,23 +2163,24 @@ public:
 
   Value *getCondition() const {
     assert(isConditional() && "Cannot get condition of an uncond branch!");
-    return getOperand(2);
+    return Op<-3>();
   }
 
   void setCondition(Value *V) {
     assert(isConditional() && "Cannot set condition of unconditional branch!");
-    setOperand(2, V);
+    Op<-3>() = V;
   }
 
   // setUnconditionalDest - Change the current branch to an unconditional branch
   // targeting the specified block.
   // FIXME: Eliminate this ugly method.
   void setUnconditionalDest(BasicBlock *Dest) {
-    Op<0>() = Dest;
+    Op<-1>() = Dest;
     if (isConditional()) {  // Convert this to an uncond branch.
-      Op<1>().set(0);
-      Op<2>().set(0);
+      Op<-2>() = 0;
+      Op<-3>() = 0;
       NumOperands = 1;
+      OperandList = op_begin();
     }
   }
 
@@ -2189,12 +2188,12 @@ public:
 
   BasicBlock *getSuccessor(unsigned i) const {
     assert(i < getNumSuccessors() && "Successor # out of range for Branch!");
-    return cast_or_null<BasicBlock>(getOperand(i));
+    return cast_or_null<BasicBlock>((&Op<-1>() - i)->get());
   }
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for Branch!");
-    setOperand(idx, NewSucc);
+    *(&Op<-1>() - idx) = NewSucc;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -2212,11 +2211,7 @@ private:
 };
 
 template <>
-struct OperandTraits<BranchInst> : HungoffOperandTraits<> {
-  // we need to access operands via OperandList, since
-  // the NumOperands may change from 3 to 1
-  static inline void *allocate(unsigned); // FIXME
-};
+struct OperandTraits<BranchInst> : VariadicOperandTraits<1> {};
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BranchInst, Value)
 
