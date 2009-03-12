@@ -9,7 +9,10 @@
 
 #define DEBUG_TYPE "spiller"
 #include "Spiller.h"
-
+#include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 
