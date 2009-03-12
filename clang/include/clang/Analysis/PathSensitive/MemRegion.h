@@ -238,7 +238,6 @@ public:
 
 class TypedViewRegion : public TypedRegion {
   friend class MemRegionManager;
-
   QualType LValueType;
 
   TypedViewRegion(QualType lvalueType, const MemRegion* sreg)
@@ -251,6 +250,10 @@ public:
 
   void print(llvm::raw_ostream& os) const;
   
+  QualType getLValueType(ASTContext&) const {
+    return LValueType;
+  }
+
   QualType getRValueType(ASTContext&) const {
     const PointerType* PTy = LValueType->getAsPointerType();
     assert(PTy);
