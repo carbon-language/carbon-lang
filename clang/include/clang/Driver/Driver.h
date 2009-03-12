@@ -14,8 +14,14 @@
 #include <set>
 #include <string>
 
+namespace llvm {
+  template<typename T, unsigned N> class SmallVector;
+  class raw_ostream;
+}
+
 namespace clang {
 namespace driver {
+  class Action;
   class ArgList;
   class Compilation;
   class HostInfo;
@@ -80,19 +86,39 @@ public:
          const char *_DefaultHostTriple);
   ~Driver();
 
-  
   const OptTable &getOpts() const { return *Opts; }
 
   /// BuildCompilation - Construct a compilation object for a command
   /// line argument vector.
   Compilation *BuildCompilation(int argc, const char **argv);
 
-  /// PrintOptions - Print the given list of arguments.
-  void PrintOptions(const ArgList *Args);
+  /// PrintOptions - Print the list of arguments.
+  void PrintOptions(const ArgList &Args);
+
+  /// PrintActions - Print the list of actions.
+  void PrintActions(const llvm::SmallVector<Action*, 2> &Actions);
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
   static HostInfo *GetHostInfo(const char *HostTriple);
+
+  /// BuildUniversalActions - Construct the list of actions to perform
+  /// for the given arguments, which may require a universal build.
+  ///
+  /// \param Args - The input arguments.
+  /// \param Actions - The list to store the resulting actions onto.
+  void BuildUniversalActions(const ArgList &Args, 
+                             llvm::SmallVector<Action*, 2> &Actions);
+
+  /// BuildActions - Construct the list of actions to perform for the
+  /// given arguments, which are only done for a single architecture.
+  ///
+  /// \param Args - The input arguments.
+  /// \param Actions - The list to store the resulting actions onto.
+  void BuildActions(const ArgList &Args, 
+                    llvm::SmallVector<Action*, 2> &Actions);
+
+  llvm::raw_ostream &Diag(const char *Message) const;
 };
 
 } // end namespace driver

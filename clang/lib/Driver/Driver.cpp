@@ -9,14 +9,17 @@
 
 #include "clang/Driver/Driver.h"
 
+#include "clang/Driver/Action.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/HostInfo.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/Types.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Path.h"
 using namespace clang::driver;
 
 Driver::Driver(const char *_Name, const char *_Dir,
@@ -41,8 +44,14 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
   while (Index < End) {
     unsigned Prev = Index;
     Arg *A = getOpts().ParseOneArg(*Args, Index, End);
-    if (A)
+    if (A) {
+      if (A->getOption().isUnsupported()) {
+        Diag("unsupported option: ") << A->getOption().getName() << "\n";
+        continue;
+      }
+
       Args->append(A);
+    }
 
     assert(Index > Prev && "Parser failed to consume argument.");
   }
@@ -53,7 +62,7 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
 Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   // FIXME: This stuff needs to go into the Compilation, not the
   // driver.
-  bool CCCPrintOptions = false, CCCPrintPhases = false;
+  bool CCCPrintOptions = false, CCCPrintActions = false;
 
   const char **Start = argv + 1, **End = argv + argc;
   const char *HostTriple = DefaultHostTriple.c_str();
@@ -70,7 +79,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     if (!strcmp(Opt, "print-options")) {
       CCCPrintOptions = true;
     } else if (!strcmp(Opt, "print-phases")) {
-      CCCPrintPhases = true;
+      CCCPrintActions = true;
     } else if (!strcmp(Opt, "cxx")) {
       CCCIsCXX = true;
     } else if (!strcmp(Opt, "echo")) {
@@ -115,18 +124,32 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
-    PrintOptions(Args);
+    PrintOptions(*Args);
     exit(0);
   }
-  
+
+  // Construct the list of abstract actions to perform for this
+  // compilation.
+  llvm::SmallVector<Action*, 2> Actions;
+  if (Host->useDriverDriver())
+    BuildUniversalActions(*Args, Actions);
+  else
+    BuildActions(*Args, Actions);
+
+  // FIXME: This behavior shouldn't be here.
+  if (CCCPrintActions) {
+    PrintActions(Actions);
+    exit(0);
+  }
+    
   assert(0 && "FIXME: Implement");
 
   return new Compilation();
 }
 
-void Driver::PrintOptions(const ArgList *Args) {
+void Driver::PrintOptions(const ArgList &Args) {
   unsigned i = 0;
-  for (ArgList::const_iterator it = Args->begin(), ie = Args->end(); 
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
        it != ie; ++it, ++i) {
     Arg *A = *it;
     llvm::errs() << "Option " << i << " - "
@@ -135,10 +158,110 @@ void Driver::PrintOptions(const ArgList *Args) {
     for (unsigned j = 0; j < A->getNumValues(); ++j) {
       if (j)
         llvm::errs() << ", ";
-      llvm::errs() << '"' << A->getValue(*Args, j) << '"';
+      llvm::errs() << '"' << A->getValue(Args, j) << '"';
     }
     llvm::errs() << "}\n";
   }
+}
+
+void Driver::PrintActions(const llvm::SmallVector<Action*, 2> &Actions) {
+  llvm::errs() << "FIXME: Print actions.";
+}
+
+void Driver::BuildUniversalActions(const ArgList &Args, 
+                                   llvm::SmallVector<Action*, 2> &Actions) {
+  // FIXME: Implement
+  BuildActions(Args, Actions);
+}
+
+void Driver::BuildActions(const ArgList &Args, 
+                          llvm::SmallVector<Action*, 2> &Actions) {
+  types::ID InputType = types::TY_INVALID;
+  Arg *InputTypeArg = 0;
+  
+  llvm::SmallVector<std::pair<types::ID, const Arg*>, 16> Inputs;
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
+       it != ie; ++it) {
+    Arg *A = *it;
+
+    if (isa<InputOption>(A->getOption())) {
+      const char *Value = A->getValue(Args);
+      types::ID Ty = types::TY_INVALID;
+
+      // Infer the input type if necessary.
+      if (!InputType) {
+        // stdin must be handled specially.
+        if (memcmp(Value, "-", 2) == 0) {
+          // If running with -E, treat as a C input (this changes the
+          // builtin macros, for example). This may be overridden by
+          // -ObjC below.
+          //
+          // Otherwise emit an error but still use a valid type to
+          // avoid spurious errors (e.g., no inputs).
+          if (!Args.hasArg(options::OPT_E))
+            Diag("-E or -x required when input is from standard input");
+          Ty = types::TY_C;
+        } else {
+          // Otherwise lookup by extension, and fallback to ObjectType
+          // if not found.
+          if (const char *Ext = strrchr(Value, '.'))
+            Ty = types::lookupTypeForExtension(Ext + 1);
+          if (Ty == types::TY_INVALID)
+            Ty = types::TY_Object;
+        }
+
+        // -ObjC and -ObjC++ override the default language, but only
+        // -for "source files". We just treat everything that isn't a
+        // -linker input as a source file.
+        // 
+        // FIXME: Clean this up if we move the phase sequence into the
+        // type.
+        if (Ty != types::TY_Object) {
+          if (Args.hasArg(options::OPT_ObjC))
+            Ty = types::TY_ObjC;
+          else if (Args.hasArg(options::OPT_ObjCXX))
+            Ty = types::TY_ObjCXX;
+        }
+      } else {
+        assert(InputTypeArg && "InputType set w/o InputTypeArg");
+        InputTypeArg->claim();
+        Ty = InputType;
+      }
+
+      // Check that the file exists. It isn't clear this is worth
+      // doing, since the tool presumably does this anyway, and this
+      // just adds an extra stat to the equation, but this is gcc
+      // compatible.
+      if (memcmp(Value, "-", 2) != 0 && !llvm::sys::Path(Value).exists())
+        Diag("no such file or directory: ") << A->getValue(Args) << "\n";
+      else
+        Inputs.push_back(std::make_pair(Ty, A));
+
+    } else if (A->getOption().isLinkerInput()) {
+      // Just treat as object type, we could make a special type for
+      // this if necessary.
+      Inputs.push_back(std::make_pair(types::TY_Object, A));
+
+    } else if (A->getOption().getId() == options::OPT_x) {
+      InputTypeArg = A;      
+      InputType = types::lookupTypeForTypeSpecifier(A->getValue(Args));
+
+      // Follow gcc behavior and treat as linker input for invalid -x
+      // options. Its not clear why we shouldn't just revert to
+      // unknown; but this isn't very important, we might as well be
+      // bug comatible.
+      if (!InputType) {
+        Diag("language not recognized: ") << A->getValue(Args) << "\n";
+        InputType = types::TY_Object;
+      }
+    }
+  }
+
+  for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
+    llvm::errs() << "input " << i << ": " 
+                 << Inputs[i].second->getValue(Args) << "\n";
+  }
+  exit(0);
 }
 
 HostInfo *Driver::GetHostInfo(const char *Triple) {
@@ -162,4 +285,9 @@ HostInfo *Driver::GetHostInfo(const char *Triple) {
     return new DarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
     
   return new UnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
+}
+
+// FIXME: Migrate to a normal diagnostics client.
+llvm::raw_ostream &Driver::Diag(const char *Message) const {
+  return (llvm::errs() << Message);
 }
