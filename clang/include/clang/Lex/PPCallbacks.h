@@ -21,6 +21,7 @@
 namespace clang {
   class SourceLocation;
   class IdentifierInfo;
+  class MacroInfo;
     
 /// PPCallbacks - This interface provides a way to observe the actions of the
 /// preprocessor as it does its thing.  Clients can define their hooks here to
@@ -54,6 +55,10 @@ public:
                              const std::string &Str) {
   }
   
+  /// MacroExpands - This is called Preprocessor::HandleMacroExpandedIdentifier
+  /// when a macro invocation is found.
+  virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
+  }
 };
 
 }  // end namespace clang
