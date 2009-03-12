@@ -14,7 +14,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <algorithm>
-using namespace clang;
 using namespace clang::driver;
 
 Option::Option(OptionClass _Kind, options::ID _ID, const char *_Name,

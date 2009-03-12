@@ -14,7 +14,6 @@
 #include "clang/Driver/Option.h"
 #include <cassert>
 
-using namespace clang;
 using namespace clang::driver;
 using namespace clang::driver::options;
 

@@ -12,7 +12,6 @@
 #include <string.h>
 #include <cassert>
 
-using namespace clang;
 using namespace clang::driver;
 using namespace clang::driver::types;
 
