@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static |\
+; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static -disable-fp-elim |\
 ; RUN:   %prcontext 65534 1 | grep movl | count 1
 ; PR2536
 
@@ -30,13 +30,13 @@ bb5:		; preds = %bb
 
 bb7.preheader:		; preds = %bb5, %bb
 	icmp eq i16 %p_56_addr.1.reg2mem.0, 0		; <i1>:7 [#uses=1]
-	%.0 = select i1 %7, i32 1, i32 0		; <i32> [#uses=1]
+	%.0 = select i1 %7, i32 1, i32 %3		; <i32> [#uses=1]
 	urem i32 1, %.0		; <i32>:8 [#uses=1]
 	icmp eq i32 %8, 0		; <i1>:9 [#uses=1]
 	%.not = xor i1 %9, true		; <i1> [#uses=1]
 	%.not1 = xor i1 %5, true		; <i1> [#uses=1]
 	%brmerge = or i1 %.not, %.not1		; <i1> [#uses=1]
-	%iftmp.6.0 = select i1 %brmerge, i32 1, i32 0		; <i32> [#uses=1]
+	%iftmp.6.0 = select i1 %brmerge, i32 3, i32 0		; <i32> [#uses=1]
 	mul i32 %iftmp.6.0, %3		; <i32>:10 [#uses=1]
 	icmp eq i32 %10, 0		; <i1>:11 [#uses=1]
 	%p_56_addr.0 = select i1 %11, i16 %p_56_addr.1.reg2mem.0, i16 1		; <i16> [#uses=1]
