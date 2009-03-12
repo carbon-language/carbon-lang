@@ -12,14 +12,11 @@
 
 #include "clang/Basic/Diagnostic.h"
 
+#include "clang/Driver/Util.h"
+
 #include <list>
 #include <set>
 #include <string>
-
-namespace llvm {
-  template<typename T, unsigned N> class SmallVector;
-  class raw_ostream;
-}
 
 namespace clang {
 namespace driver {
@@ -103,10 +100,10 @@ public:
   Compilation *BuildCompilation(int argc, const char **argv);
 
   /// PrintOptions - Print the list of arguments.
-  void PrintOptions(const ArgList &Args);
+  void PrintOptions(const ArgList &Args) const;
 
   /// PrintActions - Print the list of actions.
-  void PrintActions(const llvm::SmallVector<Action*, 2> &Actions);
+  void PrintActions(const ActionList &Actions) const;
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
@@ -117,16 +114,14 @@ public:
   ///
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildUniversalActions(const ArgList &Args, 
-                             llvm::SmallVector<Action*, 2> &Actions);
+  void BuildUniversalActions(ArgList &Args, ActionList &Actions);
 
   /// BuildActions - Construct the list of actions to perform for the
   /// given arguments, which are only done for a single architecture.
   ///
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildActions(const ArgList &Args, 
-                    llvm::SmallVector<Action*, 2> &Actions);
+  void BuildActions(ArgList &Args, ActionList &Actions);
 };
 
 } // end namespace driver

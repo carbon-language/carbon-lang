@@ -132,7 +132,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   // Construct the list of abstract actions to perform for this
   // compilation.
-  llvm::SmallVector<Action*, 2> Actions;
+  ActionList Actions;
   if (Host->useDriverDriver())
     BuildUniversalActions(*Args, Actions);
   else
@@ -149,7 +149,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   return new Compilation();
 }
 
-void Driver::PrintOptions(const ArgList &Args) {
+void Driver::PrintOptions(const ArgList &Args) const {
   unsigned i = 0;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
        it != ie; ++it, ++i) {
@@ -166,18 +166,16 @@ void Driver::PrintOptions(const ArgList &Args) {
   }
 }
 
-void Driver::PrintActions(const llvm::SmallVector<Action*, 2> &Actions) {
+void Driver::PrintActions(const ActionList &Actions) const {
   llvm::errs() << "FIXME: Print actions.";
 }
 
-void Driver::BuildUniversalActions(const ArgList &Args, 
-                                   llvm::SmallVector<Action*, 2> &Actions) {
+void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
   // FIXME: Implement
   BuildActions(Args, Actions);
 }
 
-void Driver::BuildActions(const ArgList &Args, 
-                          llvm::SmallVector<Action*, 2> &Actions) {
+void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
   types::ID InputType = types::TY_INVALID;
   Arg *InputTypeArg = 0;
   
