@@ -550,6 +550,50 @@ QualType Sema::InstantiateType(QualType T,
   return Instantiator(T);
 }
 
+//===----------------------------------------------------------------------===/
+// Template Instantiation for Expressions
+//===----------------------------------------------------------------------===/
+Sema::OwningExprResult 
+Sema::InstantiateExpr(Expr *E, const TemplateArgument *TemplateArgs,
+                      unsigned NumTemplateArgs) {
+  if (IntegerLiteral *IL = dyn_cast<IntegerLiteral>(E))
+    return Owned(new (Context) IntegerLiteral(IL->getValue(), IL->getType(),
+                                              IL->getSourceRange().getBegin()));
+  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    Decl *D = DRE->getDecl();
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
+      assert(NTTP->getDepth() == 0 && "No nested templates yet");
+      QualType T = NTTP->getType();
+      if (T->isDependentType()) {
+        // FIXME: We'll be doing this instantiation a lot. Should we
+        // cache this information in the TemplateArgument itself?
+        T = InstantiateType(T, TemplateArgs, NumTemplateArgs,
+                            E->getSourceRange().getBegin(),
+                            NTTP->getDeclName());
+        if (T.isNull())
+          return ExprError();
+      }
+      return Owned(new (Context) IntegerLiteral(
+                            *TemplateArgs[NTTP->getPosition()].getAsIntegral(),
+                            T, E->getSourceRange().getBegin()));
+    } else
+      assert(false && "Yes, this is lame");
+  } else if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+    OwningExprResult SubExpr
+      = InstantiateExpr(PE->getSubExpr(), TemplateArgs,
+                        NumTemplateArgs);
+    if (SubExpr.isInvalid())
+      return ExprError();
+
+    return Owned(new (Context) ParenExpr(E->getSourceRange().getBegin(),
+                                         E->getSourceRange().getEnd(),
+                                         (Expr *)SubExpr.release()));
+  } else 
+    assert(false && "Yes, this is lame");
+
+  return ExprError();
+}
+
 /// \brief Instantiate the base class specifiers of the given class
 /// template specialization.
 ///
@@ -694,6 +738,7 @@ Sema::InstantiateClassTemplateSpecialization(
     else if (FieldDecl *Field = dyn_cast<FieldDecl>(*Member)) {
       // FIXME: Simplified instantiation of fields needs to be made
       // "real".
+      bool InvalidDecl = false;
       QualType T = Field->getType();
       if (T->isDependentType())  {
         T = InstantiateType(T, ClassTemplateSpec->getTemplateArgs(),
@@ -710,19 +755,39 @@ Sema::InstantiateClassTemplateSpecialization(
           Diag(Field->getLocation(), diag::err_field_instantiates_to_function) 
             << T;
           T = QualType();
+          InvalidDecl = true;
         }
+      }
+
+      Expr *BitWidth = Field->getBitWidth();
+      if (InvalidDecl)
+        BitWidth = 0;
+      if (BitWidth && 
+          (BitWidth->isTypeDependent() || BitWidth->isValueDependent())) {
+        OwningExprResult InstantiatedBitWidth
+          = InstantiateExpr(BitWidth, 
+                            ClassTemplateSpec->getTemplateArgs(),
+                            ClassTemplateSpec->getNumTemplateArgs());
+        if (InstantiatedBitWidth.isInvalid()) {
+          Invalid = InvalidDecl = true;
+          BitWidth = 0;
+        } else
+          BitWidth = (Expr *)InstantiatedBitWidth.release();
       }
 
       FieldDecl *New = CheckFieldDecl(Field->getDeclName(), T,
                                       ClassTemplateSpec, 
                                       Field->getLocation(),
                                       Field->isMutable(),
-                                      Field->getBitWidth(),
+                                      BitWidth,
                                       Field->getAccess(),
                                       0);
       if (New) {
         ClassTemplateSpec->addDecl(New);
         Fields.push_back(New);
+
+        if (InvalidDecl)
+          New->setInvalidDecl();
 
         if (New->isInvalidDecl())
           Invalid = true;

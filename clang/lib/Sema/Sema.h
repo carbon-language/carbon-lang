@@ -1805,6 +1805,11 @@ public:
   QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,
                            unsigned NumTemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);
+
+  OwningExprResult InstantiateExpr(Expr *E, 
+                                   const TemplateArgument *TemplateArgs,
+                                   unsigned NumTemplateArgs);
+
   bool 
   InstantiateBaseSpecifiers(ClassTemplateSpecializationDecl *ClassTemplateSpec,
                             ClassTemplateDecl *ClassTemplate);
@@ -2305,7 +2310,7 @@ struct BlockSemaInfo {
 template <typename T>
 class ExprOwningPtr : public Action::ExprArg {
 public:
-  ExprOwningPtr(Sema *S, T *expr) : Action::ExprArg(*S, expr) {};
+  ExprOwningPtr(Sema *S, T *expr) : Action::ExprArg(*S, expr) {}
   
   void reset(T* p) { Action::ExprArg::operator=(p); }
   T* get() const { return static_cast<T*>(Action::ExprArg::get()); }
