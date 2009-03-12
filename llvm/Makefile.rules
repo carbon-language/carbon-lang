@@ -420,6 +420,26 @@ endif
 # Adjust to user's request
 #--------------------------------------------------------------------
 
+ifeq ($(OS),Darwin)
+  DARWIN_VERSION := `sw_vers -productVersion`
+  # Strip a number like 10.4.7 to 10.4
+  DARWIN_VERSION := $(shell echo $(DARWIN_VERSION)| sed -E 's/(10.[0-9]).*/\1/')
+  # Get "4" out of 10.4 for later pieces in the makefile.
+  DARWIN_MAJVERS := $(shell echo $(DARWIN_VERSION)| sed -E 's/10.([0-9]).*/\1/')
+     
+  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -bundle \
+                    -mmacosx-version-min=$(DARWIN_VERSION)
+  CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
+else
+  ifeq ($(OS),Cygwin)
+    SharedLinkOptions=-shared -nostdlib -Wl,--export-all-symbols \
+                      -Wl,--enable-auto-import -Wl,--enable-auto-image-base \
+                      -Wl,--enable-runtime-pseudo-relocs
+  else
+    SharedLinkOptions=-shared
+  endif
+endif
+
 # Adjust LD.Flags depending on the kind of library that is to be built. Note
 # that if LOADABLE_MODULE is specified then the resulting shared library can
 # be opened with dlopen.
@@ -428,7 +448,9 @@ ifdef LOADABLE_MODULE
 endif
 
 ifdef SHARED_LIBRARY
+ifneq ($(DARWIN_MAJVERS),4)
   LD.Flags += $(RPATH) -Wl,$(LibDir)
+endif
 endif
 
 ifdef TOOL_VERBOSE
@@ -456,6 +478,7 @@ endif
 
 # Adjust linker flags for building an executable
 ifneq ($(OS),Darwin)
+ifneq ($(DARWIN_MAJVERS),4)
 ifdef TOOLNAME
 ifdef EXAMPLE_TOOL
   LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(RDYNAMIC)
@@ -464,25 +487,6 @@ else
 endif
 endif
 endif
-
-ifeq ($(OS),Darwin)
-  DARWIN_VERSION := `sw_vers -productVersion`
-  # Strip a number like 10.4.7 to 10.4
-  DARWIN_VERSION := $(shell echo $(DARWIN_VERSION)| sed -E 's/(10.[0-9]).*/\1/')
-  # Get "4" out of 10.4 for later pieces in the makefile.
-  DARWIN_MAJVERS := $(shell echo $(DARWIN_VERSION)| sed -E 's/10.([0-9]).*/\1/')
-     
-  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -bundle \
-                    -mmacosx-version-min=$(DARWIN_VERSION)
-  CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
-else
-  ifeq ($(OS),Cygwin)
-    SharedLinkOptions=-shared -nostdlib -Wl,--export-all-symbols \
-                      -Wl,--enable-auto-import -Wl,--enable-auto-image-base \
-                      -Wl,--enable-runtime-pseudo-relocs
-  else
-    SharedLinkOptions=-shared
-  endif
 endif
 
 #----------------------------------------------------------
