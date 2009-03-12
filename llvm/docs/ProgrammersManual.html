@@ -901,6 +901,7 @@ Related classes of interest are explained in the following subsections:
       <li><a href="#dss_ilist_traits">ilist_traits</a></li>
       <li><a href="#dss_iplist">iplist</a></li>
       <li><a href="#dss_ilist_node">llvm/ADT/ilist_node.h</a></li>
+      <li><a href="#dss_ilist_sentinel">Sentinels</a></li>
     </ul>
 </div>
 
@@ -942,6 +943,44 @@ in the default manner.</p>
 <p><tt>ilist_node&lt;T&gt;</tt>s are meant to be embedded in the node type
 <tt>T</tt>, usually <tt>T</tt> publicly derives from
 <tt>ilist_node&lt;T&gt;</tt>.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_ilist_sentinel">Sentinels</a>
+</div>
+
+<div class="doc_text">
+<p><tt>ilist</tt>s have another speciality that must be considered. To be a good
+citizen in the C++ ecosystem, it needs to support the standard container
+operations, such as <tt>begin</tt> and <tt>end</tt> iterators, etc. Also, the
+<tt>operator--</tt> must work correctly on the <tt>end</tt> iterator in the
+case of non-empty <tt>ilist</tt>s.</p>
+
+<p>The only sensible solution to this problem is to allocate a so-called
+<i>sentinel</i> along with the intrusive list, which serves as the <tt>end</tt>
+iterator, providing the back-link to the last element. However conforming to the
+C++ convention it is illegal to <tt>operator++</tt> beyond the sentinel and it
+also must not be dereferenced.</p>
+
+<p>These constraints allow for some implementation freedom to the <tt>ilist</tt>
+how to allocate and store the sentinel. The corresponding policy is dictated
+by <tt>ilist_traits&lt;T&gt;</tt>. By default a <tt>T</tt> gets heap-allocated
+whenever the need for a sentinel arises.</p>
+
+<p>While the default policy is sufficient in most cases, it may break down when
+<tt>T</tt> does not provide a default constructor. Also, in the case of many
+instances of <tt>ilist</tt>s, the memory overhead of the associated sentinels
+is wasted. To alleviate the situation with numerous and voluminous
+<tt>T</tt>-sentinels, sometimes a trick is employed, leading to <i>ghostly
+sentinels</i>.</p>
+
+<p>Ghostly sentinels are obtained by specially-crafted <tt>ilist_traits&lt;T&gt;</tt>
+which superpose the sentinel with the <tt>ilist</tt> instance in memory. Pointer
+arithmetic is used to obtain the sentinel, which is relative to the
+<tt>ilist</tt>'s <tt>this</tt> pointer. The <tt>ilist</tt> is augmented by an
+extra pointer, which serves as the back-link of the sentinel. This is the only
+field in the ghostly sentinel which can be legally accessed.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
