@@ -2121,33 +2121,33 @@ public:
   /// or a null QualType (indicating an error diagnostic was issued).
 
   /// type checking binary operators (subroutines of CreateBuiltinBinOp).
-  inline QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   QualType CheckPointerToMemberOperands( // C++ 5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isIndirect);
-  inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
+  QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckRemainderOperands( // C99 6.5.5
+  QualType CheckRemainderOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckAdditionOperands( // C99 6.5.6
+  QualType CheckAdditionOperands( // C99 6.5.6
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckSubtractionOperands( // C99 6.5.6
+  QualType CheckSubtractionOperands( // C99 6.5.6
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckShiftOperands( // C99 6.5.7
+  QualType CheckShiftOperands( // C99 6.5.7
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckCompareOperands( // C99 6.5.8/9
+  QualType CheckCompareOperands( // C99 6.5.8/9
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isRelational);
-  inline QualType CheckBitwiseOperands( // C99 6.5.[10...12]
+  QualType CheckBitwiseOperands( // C99 6.5.[10...12]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckLogicalOperands( // C99 6.5.[13,14]
+  QualType CheckLogicalOperands( // C99 6.5.[13,14]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   // CheckAssignmentOperands is used for both simple and compound assignment.
   // For simple assignment, pass both expressions and a null converted type.
   // For compound assignment, pass both expressions and the converted type.
-  inline QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
+  QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
     Expr *lex, Expr *&rex, SourceLocation OpLoc, QualType convertedType);
-  inline QualType CheckCommaOperands( // C99 6.5.17
+  QualType CheckCommaOperands( // C99 6.5.17
     Expr *lex, Expr *&rex, SourceLocation OpLoc);
-  inline QualType CheckConditionalOperands( // C99 6.5.15
+  QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
 
   /// type checking for vector binary operators.

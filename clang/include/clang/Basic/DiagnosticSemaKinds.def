@@ -770,7 +770,7 @@ DIAG(err_illegal_initializer_type, ERROR,
 DIAG(err_implicit_empty_initializer, ERROR,
      "initializer for aggregate with no elements requires explicit braces")
 DIAG(err_bitfield_has_negative_width, ERROR,
-     "bit-field %0 has negative width")
+     "bit-field %0 has negative width (%1)")
 DIAG(err_bitfield_has_zero_width, ERROR,
      "bit-field %0 has zero width")
 DIAG(err_bitfield_width_exceeds_type_size, ERROR,

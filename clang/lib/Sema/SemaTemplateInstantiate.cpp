@@ -576,9 +576,13 @@ namespace {
     Sema::OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
     Sema::OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
     Sema::OwningExprResult VisitParenExpr(ParenExpr *E);
+    Sema::OwningExprResult VisitBinaryOperator(BinaryOperator *E);
 
     // Base case. I'm supposed to ignore this.
-    Sema::OwningExprResult VisitStmt(Stmt *) { return SemaRef.ExprError(); }
+    Sema::OwningExprResult VisitStmt(Stmt *) { 
+      assert(false && "Cannot instantiate this kind of expression");
+      return SemaRef.ExprError(); 
+    }
   };
 }
 
@@ -616,6 +620,29 @@ TemplateExprInstantiator::VisitParenExpr(ParenExpr *E) {
   return SemaRef.Owned(new (SemaRef.Context) ParenExpr(
                                                E->getLParen(), E->getRParen(), 
                                                (Expr *)SubExpr.release()));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitBinaryOperator(BinaryOperator *E) {
+  Sema::OwningExprResult LHS = Visit(E->getLHS());
+  if (LHS.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult RHS = Visit(E->getRHS());
+  if (RHS.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult Result
+    = SemaRef.CreateBuiltinBinOp(E->getOperatorLoc(), 
+                                 E->getOpcode(),
+                                 (Expr *)LHS.get(),
+                                 (Expr *)RHS.get());
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+  LHS.release();
+  RHS.release();
+  return move(Result);
 }
 
 Sema::OwningExprResult 

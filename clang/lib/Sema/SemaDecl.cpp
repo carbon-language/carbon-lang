@@ -3379,7 +3379,8 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
     return Diag(FieldLoc, diag::err_bitfield_has_zero_width) << FieldName;
   
   if (Value.isNegative())
-    return Diag(FieldLoc, diag::err_bitfield_has_negative_width) << FieldName;
+    return Diag(FieldLoc, diag::err_bitfield_has_negative_width) 
+             << FieldName << Value.toString(10);
 
   if (!FieldTy->isDependentType()) {
     uint64_t TypeSize = Context.getTypeSize(FieldTy);
