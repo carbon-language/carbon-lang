@@ -58,7 +58,10 @@ namespace driver {
     const char *getArgString(unsigned Index) const { return ArgStrings[Index]; }
 
     /// hasArg - Does the arg list contain any option matching \arg Id.
-    bool hasArg(options::ID Id) const;
+    bool hasArg(options::ID Id) const { return getLastArg(Id) != 0; }
+
+    /// getLastArg - Return the last argument matching \arg Id, or null.
+    Arg *getLastArg(options::ID Id) const;
   };
 } // end namespace driver
 } // end namespace clang

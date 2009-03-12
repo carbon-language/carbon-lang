@@ -30,13 +30,13 @@ void ArgList::append(Arg *A) {
   Args.push_back(A);
 }
 
-bool ArgList::hasArg(options::ID Id) const {
+Arg *ArgList::getLastArg(options::ID Id) const {
   // FIXME: Make search efficient?
 
   // FIXME: This needs to not require loading of the option.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it)
     if ((*it)->getOption().matches(Id))
-      return true;
+      return *it;
   
-  return false;
+  return 0;
 }
