@@ -239,14 +239,9 @@ Parser::DeclTy *Parser::ParseStaticAssertDeclaration() {
     return 0;
   }
   
-  if (Tok.isNot(tok::comma)) {
-    Diag(Tok, diag::err_expected_comma);
-    SkipUntil(tok::semi);
+  if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::semi))
     return 0;
-  }
-  
-  SourceLocation CommaLoc = ConsumeToken();
-  
+
   if (Tok.isNot(tok::string_literal)) {
     Diag(Tok, diag::err_expected_string_literal);
     SkipUntil(tok::semi);
@@ -261,8 +256,8 @@ Parser::DeclTy *Parser::ParseStaticAssertDeclaration() {
   
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_static_assert);
 
-  return Actions.ActOnStaticAssertDeclaration(LParenLoc, move(AssertExpr), 
-                                              CommaLoc, move(AssertMessage), 
+  return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc, move(AssertExpr), 
+                                              move(AssertMessage), 
                                               RParenLoc);
 }
 

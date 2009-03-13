@@ -884,9 +884,8 @@ public:
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
   }
 
-  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation LParenLoc, 
+  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
                                                ExprArg AssertExpr,
-                                               SourceLocation CommaLoc,
                                                ExprArg AssertMessageExpr,
                                                SourceLocation RParenLoc) {
     return 0;
