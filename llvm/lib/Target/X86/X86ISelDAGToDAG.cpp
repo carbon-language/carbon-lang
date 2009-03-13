@@ -907,6 +907,19 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
         !MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1))
       return false;
     AM = Backup;
+
+    // If we couldn't fold both operands into the address at the same time,
+    // see if we can just put each operand into a register and fold at least
+    // the add.
+    if (AM.BaseType == X86ISelAddressMode::RegBase &&
+        !AM.Base.Reg.getNode() &&
+        !AM.IndexReg.getNode() &&
+        !AM.isRIPRel) {
+      AM.Base.Reg = N.getNode()->getOperand(0);
+      AM.IndexReg = N.getNode()->getOperand(1);
+      AM.Scale = 1;
+      return false;
+    }
     break;
   }
 
