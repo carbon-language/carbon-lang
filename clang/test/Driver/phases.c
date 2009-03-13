@@ -23,4 +23,25 @@
 // RUN: grep -F '20: assembler, {19}, object' %t &&
 // RUN: grep -F '21: linker, {3, 7, 11, 13, 16, 20}, image' %t &&
 
+// Universal linked image.
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -x c %s -arch ppc -arch i386 &> %t &&
+// RUN: grep -F '0: input, "phases.c", c' %t &&
+// RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
+// RUN: grep -F '2: compiler, {1}, assembler' %t &&
+// RUN: grep -F '3: assembler, {2}, object' %t &&
+// RUN: grep -F '4: linker, {3}, image' %t &&
+// RUN: grep -F '5: bind-arch, "ppc", {4}, image' %t &&
+// RUN: grep -F '6: bind-arch, "i386", {4}, image' %t &&
+// RUN: grep -F '7: lipo, {5, 6}, image' %t &&
+
+// Universal object file.
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x c %s -arch ppc -arch i386 &> %t &&
+// RUN: grep -F '0: input, "phases.c", c' %t &&
+// RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
+// RUN: grep -F '2: compiler, {1}, assembler' %t &&
+// RUN: grep -F '3: assembler, {2}, object' %t &&
+// RUN: grep -F '4: bind-arch, "ppc", {3}, object' %t &&
+// RUN: grep -F '5: bind-arch, "i386", {3}, object' %t &&
+// RUN: grep -F '6: lipo, {4, 5}, object' %t &&
+
 // RUN: true
