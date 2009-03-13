@@ -76,16 +76,18 @@ public:
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, QualType T);
   
-  const llvm::APSInt& ConvertSignedness(const llvm::APSInt& To,
-                                        const llvm::APSInt& From) {
-    assert(To.getBitWidth() == From.getBitWidth());
-
-    // Same sign?  Just return.
-    if (To.isUnsigned() == From.isUnsigned())
+  /// Convert - Create a new persistent APSInt with the same value as 'From'
+  ///  but with the bitwidth and signeness of 'To'.
+  const llvm::APSInt& Convert(const llvm::APSInt& To,
+                              const llvm::APSInt& From) {
+    
+    if (To.isUnsigned() == From.isUnsigned() &&
+        To.getBitWidth() == From.getBitWidth())
       return From;
     
-    // Convert!
-    return getValue(llvm::APSInt((llvm::APInt&) From, To.isUnsigned()));
+    return getValue(From.getSExtValue(),
+                    To.getBitWidth(),
+                    To.isUnsigned());
   }
 
   const llvm::APSInt& getIntValue(uint64_t X, bool isUnsigned) {

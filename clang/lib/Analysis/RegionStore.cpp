@@ -642,12 +642,13 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
 
   // Only support concrete integer indexes for now.
   if (Base && Offset) {
-    // For now, convert the signedness of offset in case it doesn't match.
-    const llvm::APSInt &I =
-      getBasicVals().ConvertSignedness(Base->getValue(), Offset->getValue());
-    nonloc::ConcreteInt OffsetConverted(I);
-    
-    SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffsetConverted);
+    // FIXME: For now, convert the signedness and bitwidth of offset in case
+    //  they don't match.  This can result from pointer arithmetic.  In reality,
+    //  we should figure out what are the proper semantics and implement them.
+    // 
+    nonloc::ConcreteInt OffConverted(getBasicVals().Convert(Base->getValue(),
+                                                           Offset->getValue()));
+    SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffConverted);
     const MemRegion* NewER = MRMgr.getElementRegion(NewIdx, 
                                                     ER->getArrayRegion());
     return Loc::MakeVal(NewER);
