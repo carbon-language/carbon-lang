@@ -31,9 +31,9 @@ Driver::Driver(const char *_Name, const char *_Dir,
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     Host(0),
     CCCIsCXX(false), CCCEcho(false), 
-    CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false)
+    CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false),
+    SuppressMissingInputWarning(false)
 {
-  
 }
 
 Driver::~Driver() {
@@ -325,7 +325,7 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
     }
   }
 
-  if (Inputs.empty()) {
+  if (!SuppressMissingInputWarning && Inputs.empty()) {
     Diag(clang::diag::err_drv_no_input_files);
     return;
   }

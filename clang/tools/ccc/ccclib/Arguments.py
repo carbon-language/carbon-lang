@@ -526,16 +526,16 @@ class OptionParser:
 
         # Misc driver options
         self.passExitCodesOption = self.addOption(FlagOption('-pass-exit-codes'))
-        self.dumpspecsOption = self.addOption(FlagOption('-dumpspecs'))
-        self.dumpversionOption = self.addOption(FlagOption('-dumpversion'))
-        self.dumpmachineOption = self.addOption(FlagOption('-dumpmachine'))
-        self.printSearchDirsOption = self.addOption(FlagOption('-print-search-dirs'))
+        self.dumpspecsOption = self.addOption(FlagOption('-dumpspecs', unsupported=True))
+        self.dumpversionOption = self.addOption(FlagOption('-dumpversion', unsupported=True))
+        self.dumpmachineOption = self.addOption(FlagOption('-dumpmachine', unsupported=True))
+        self.printSearchDirsOption = self.addOption(FlagOption('-print-search-dirs', unsupported=True))
         self.printLibgccFileNameOption = self.addOption(FlagOption('-print-libgcc-file-name'))
         self.printFileNameOption = self.addOption(JoinedOption('-print-file-name='))
         self.printProgNameOption = self.addOption(JoinedOption('-print-prog-name='))
-        self.printMultiDirectoryOption = self.addOption(FlagOption('-print-multi-directory'))
-        self.printMultiOsDirectoryOption = self.addOption(FlagOption('-print-multi-os-directory'))
-        self.printMultiLibOption = self.addOption(FlagOption('-print-multi-lib'))
+        self.printMultiDirectoryOption = self.addOption(FlagOption('-print-multi-directory', unsupported=True))
+        self.printMultiOsDirectoryOption = self.addOption(FlagOption('-print-multi-os-directory', unsupported=True))
+        self.printMultiLibOption = self.addOption(FlagOption('-print-multi-lib', unsupported=True))
         self.addOption(SeparateOption('-specs', unsupported=True))
 
         # Pipeline control

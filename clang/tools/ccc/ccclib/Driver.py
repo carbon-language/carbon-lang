@@ -371,19 +371,6 @@ class Driver(object):
             self.printVersion()
             self.suppressMissingInputWarning = True
 
-        arg = (args.getLastArg(self.parser.dumpmachineOption) or
-               args.getLastArg(self.parser.dumpversionOption) or
-               args.getLastArg(self.parser.printSearchDirsOption))
-        if arg:
-            raise NotImplementedError('%s unsupported' % arg.opt.name)
-
-        arg = (args.getLastArg(self.parser.dumpspecsOption) or
-               args.getLastArg(self.parser.printMultiDirectoryOption) or
-               args.getLastArg(self.parser.printMultiOsDirectoryOption) or
-               args.getLastArg(self.parser.printMultiLibOption))
-        if arg:
-            raise Arguments.InvalidArgumentsError('%s unsupported by this driver' % arg.opt.name)
-
         arg = args.getLastArg(self.parser.printFileNameOption)
         if arg:
             print self.getFilePath(args.getValue(arg))
