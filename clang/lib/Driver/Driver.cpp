@@ -345,10 +345,14 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
 }
 
 void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
-  types::ID InputType = types::TY_INVALID;
-  Arg *InputTypeArg = 0;
-
   // Start by constructing the list of inputs and their types.
+
+  // Track the current user specified (-x) input. We also explicitly
+  // track the argument used to set the type; we only want to claim
+  // the type when we actually use it, so we warn about unused -x
+  // arguments.
+  types::ID InputType = types::TY_Nothing;
+  Arg *InputTypeArg = 0;
 
   llvm::SmallVector<std::pair<types::ID, const Arg*>, 16> Inputs;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
@@ -360,7 +364,11 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
       types::ID Ty = types::TY_INVALID;
 
       // Infer the input type if necessary.
-      if (InputType == types::TY_INVALID) {
+      if (InputType == types::TY_Nothing) {
+        // If there was an explicit arg for this, claim it.
+        if (InputTypeArg)
+          InputTypeArg->claim();
+
         // stdin must be handled specially.
         if (memcmp(Value, "-", 2) == 0) {
           // If running with -E, treat as a C input (this changes the
