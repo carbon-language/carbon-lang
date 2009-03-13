@@ -41,9 +41,20 @@ void test3() {
   ^{j=0; k=0;}();
 }
 
+int test4() {
+  extern int g;
+  static int i = 1;
+  ^(int j){ i = j; g = 0; }(0);
+  return i + g;
+}
+
+int g;
+
 int main() {
+  int rv = 0;
   test1();
   test2();
   test3();
-  return 0;
+  rv += test4();
+  return rv;
 }

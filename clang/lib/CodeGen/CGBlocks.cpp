@@ -155,7 +155,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     uint64_t subBlockSize, subBlockAlign;
     llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
     llvm::Function *Fn
-      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize,
+      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, LocalDeclMap,
+                                                   subBlockSize,
                                                    subBlockAlign,
                                                    subBlockDeclRefDecls,
                                                    BlockHasCopyDispose);
@@ -558,8 +559,10 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   uint64_t subBlockSize, subBlockAlign;
   llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
   bool subBlockHasCopyDispose = false;
+  llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
   llvm::Function *Fn
-    = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, subBlockSize,
+    = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, LocalDeclMap,
+                                                 subBlockSize,
                                                  subBlockAlign,
                                                  subBlockDeclRefDecls,
                                                  subBlockHasCopyDispose);
@@ -602,10 +605,24 @@ llvm::Value *CodeGenFunction::LoadBlockStruct() {
 llvm::Function *
 CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                        const BlockInfo& Info,
+                                  llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                        uint64_t &Size,
                                        uint64_t &Align,
                        llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                        bool &subBlockHasCopyDispose) {
+  // Arrange for local static and local extern declarations to appear
+  // to be local to this function as well, as they are directly referenced
+  // in a block.
+  for (llvm::DenseMap<const Decl *, llvm::Value*>::iterator i = ldm.begin();
+       i != ldm.end();
+       ++i) {
+    const VarDecl *VD = dyn_cast<VarDecl>(i->first);
+    
+    if (VD->getStorageClass() == VarDecl::Static
+        || VD->getStorageClass() == VarDecl::Extern)
+      LocalDeclMap[VD] = i->second;
+  }
+
   const FunctionProtoType *FTy =
     cast<FunctionProtoType>(BExpr->getFunctionType());
 

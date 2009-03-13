@@ -272,6 +272,7 @@ public:
 
   llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
                                         const BlockInfo& Info,
+                                  llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                         uint64_t &Size, uint64_t &Align,
                       llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                         bool &subBlockHasCopyDispose);
