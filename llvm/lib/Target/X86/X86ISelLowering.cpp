@@ -8218,6 +8218,18 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
           return DAG.getNode(ISD::SHL, DL, LHS.getValueType(), Cond,
                              DAG.getConstant(ShAmt, MVT::i8));
         }
+        
+        // Optimize Cond ? cst+1 : cst -> zext(setcc(C)+cst.
+        if (RHSC->getAPIntValue()+1 == LHSC->getAPIntValue()) {
+          if (NeedsCondInvert) // Invert the condition if needed.
+            Cond = DAG.getNode(ISD::XOR, DL, Cond.getValueType(), Cond,
+                               DAG.getConstant(1, Cond.getValueType()));
+          
+          // Zero extend the condition if needed.
+          Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, RHSC->getValueType(0), Cond);
+          return DAG.getNode(ISD::ADD, DL, Cond.getValueType(), Cond,
+                             SDValue(RHSC, 0));
+        }
       }
   }
       
@@ -8259,6 +8271,21 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
         unsigned ShAmt = TrueC->getAPIntValue().logBase2();
         Cond = DAG.getNode(ISD::SHL, DL, Cond.getValueType(), Cond,
                            DAG.getConstant(ShAmt, MVT::i8));
+        if (N->getNumValues() == 2)  // Dead flag value?
+          return DCI.CombineTo(N, Cond, SDValue());
+        return Cond;
+      }
+
+      // Optimize Cond ? cst+1 : cst -> zext(setcc(C)+cst.
+      if (FalseC->getAPIntValue()+1 == TrueC->getAPIntValue()) {
+        SDValue Cond = N->getOperand(3);
+        Cond = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
+                           DAG.getConstant(CC, MVT::i8), Cond);
+        
+        // Zero extend the condition if needed.
+        Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, FalseC->getValueType(0), Cond);
+        Cond = DAG.getNode(ISD::ADD, DL, Cond.getValueType(), Cond,
+                           SDValue(FalseC, 0));
         if (N->getNumValues() == 2)  // Dead flag value?
           return DCI.CombineTo(N, Cond, SDValue());
         return Cond;
