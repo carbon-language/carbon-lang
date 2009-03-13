@@ -2920,6 +2920,10 @@ def MOV32_mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32_:$src),
 // Thread Local Storage Instructions
 //
 
+// FIXME: there is duplication with the non-TLS case.
+// There is a suggestion on how to fix this at
+// http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20090309/075212.html
+
 let Uses = [EBX] in
 def TLS_addr32 : I<0, Pseudo, (outs GR32:$dst), (ins i32imm:$sym),
                   "leal\t${sym:mem}(,%ebx,1), $dst",
@@ -2936,6 +2940,22 @@ def TLS_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
                   [(set GR32:$dst,
                     (load (add X86TLStp, (X86Wrapper tglobaltlsaddr:$src))))]>,
                   SegGS;
+
+let AddedComplexity = 15 in
+def TLS16_gs_ri : I<0x8B, Pseudo, (outs GR16:$dst), (ins i32imm:$src),
+                    "movw\t%gs:${src:mem}, $dst",
+                    [(set GR16:$dst,
+                      (load (add X86TLStp,
+                        (X86Wrapper tglobaltlsaddr:$src))))]>,
+                    SegGS;
+
+let AddedComplexity = 15 in
+def TLS8_gs_ri : I<0x8B, Pseudo, (outs GR8:$dst), (ins i32imm:$src),
+                   "movb\t%gs:${src:mem}, $dst",
+                   [(set GR8:$dst,
+                     (load (add X86TLStp,
+                       (X86Wrapper tglobaltlsaddr:$src))))]>,
+                   SegGS;
 
 let AddedComplexity = 15 in
 def TLS_ext16_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
