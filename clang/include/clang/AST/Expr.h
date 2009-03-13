@@ -253,13 +253,21 @@ public:
   /// or CastExprs, returning their operand.
   Expr *IgnoreParenCasts();
   
+  /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
+  /// value (including ptr->int casts of the same size).  Strip off any
+  /// ParenExpr or CastExprs, returning their operand.
+  Expr *IgnoreParenNoopCasts(ASTContext &Ctx);
+  
   const Expr* IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
   const Expr *IgnoreParenCasts() const {
     return const_cast<Expr*>(this)->IgnoreParenCasts();
   }
-
+  const Expr *IgnoreParenNoopCasts(ASTContext &Ctx) const {
+    return const_cast<Expr*>(this)->IgnoreParenNoopCasts(Ctx);
+  }
+  
   static bool hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs);
   static bool hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs);
 

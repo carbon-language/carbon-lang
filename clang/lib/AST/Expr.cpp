@@ -796,6 +796,40 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
+/// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
+/// value (including ptr->int casts of the same size).  Strip off any
+/// ParenExpr or CastExprs, returning their operand.
+Expr *Expr::IgnoreParenNoopCasts(ASTContext &Ctx) {
+  Expr *E = this;
+  while (true) {
+    if (ParenExpr *P = dyn_cast<ParenExpr>(E)) {
+      E = P->getSubExpr();
+      continue;
+    }
+    
+    if (CastExpr *P = dyn_cast<CastExpr>(E)) {
+      // We ignore integer <-> casts that are of the same width, ptr<->ptr and
+      // ptr<->int casts of the same width.  We also ignore all identify casts.
+      Expr *SE = P->getSubExpr();
+      
+      if (Ctx.hasSameUnqualifiedType(E->getType(), SE->getType())) {
+        E = SE;
+        continue;
+      }
+      
+      if ((E->getType()->isPointerType() || E->getType()->isIntegralType()) &&
+          (SE->getType()->isPointerType() || SE->getType()->isIntegralType()) &&
+          Ctx.getTypeSize(E->getType()) == Ctx.getTypeSize(SE->getType())) {
+        E = SE;
+        continue;
+      }
+    }
+    
+    return E;
+  }
+}
+
+
 /// hasAnyTypeDependentArguments - Determines if any of the expressions
 /// in Exprs is type-dependent.
 bool Expr::hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs) {
