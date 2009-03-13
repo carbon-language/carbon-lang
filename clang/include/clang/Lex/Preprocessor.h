@@ -45,7 +45,7 @@ class DirectoryLookup;
 /// like the #include stack, token expansion, etc.
 ///
 class Preprocessor {
-  Diagnostic        &Diags;
+  Diagnostic        *Diags;
   const LangOptions &Features;
   TargetInfo        &Target;
   FileManager       &FileMgr;
@@ -196,7 +196,7 @@ public:
 
   ~Preprocessor();
 
-  Diagnostic &getDiagnostics() const { return Diags; }
+  Diagnostic &getDiagnostics() const { return *Diags; }
   const LangOptions &getLangOptions() const { return Features; }
   TargetInfo &getTargetInfo() const { return Target; }
   FileManager &getFileManager() const { return FileMgr; }
@@ -452,12 +452,12 @@ public:
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
-    return Diags.Report(FullSourceLoc(Loc, getSourceManager()), DiagID);
+    return Diags->Report(FullSourceLoc(Loc, getSourceManager()), DiagID);
   }
   
   DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID) {
-    return Diags.Report(FullSourceLoc(Tok.getLocation(), getSourceManager()),
-                        DiagID);
+    return Diags->Report(FullSourceLoc(Tok.getLocation(), getSourceManager()),
+                         DiagID);
   }
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
