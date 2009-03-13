@@ -171,10 +171,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     return 0;
   }
 
-  
-  assert(0 && "FIXME: Implement");
-
-  return new Compilation();
+  return BuildJobs(*Args, Actions);
 }
 
 void Driver::PrintOptions(const ArgList &Args) const {
@@ -274,7 +271,7 @@ void Driver::PrintActions(const ArgList &Args,
     PrintActions1(Args, *it, Ids);
 }
 
-void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
+void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) const {
   // Collect the list of architectures. Duplicates are allowed, but
   // should only be handled once (in the order seen).
   llvm::StringSet<> ArchNames;
@@ -348,7 +345,7 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
   }
 }
 
-void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
+void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
   // Start by constructing the list of inputs and their types.
 
   // Track the current user specified (-x) input. We also explicitly
@@ -563,6 +560,12 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   }
 
   assert(0 && "invalid phase in ConstructPhaseAction");
+  return 0;
+}
+
+Compilation *Driver::BuildJobs(const ArgList &Args, 
+                               const ActionList &Actions) const {
+  assert(0 && "FIXME: Implement");
   return 0;
 }
 

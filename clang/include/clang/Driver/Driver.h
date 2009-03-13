@@ -37,12 +37,8 @@ class Driver {
 
   Diagnostic &Diags;
 
-  /// ParseArgStrings - Parse the given list of strings into an
-  /// ArgList.
-  ArgList *ParseArgStrings(const char **ArgBegin, const char **ArgEnd);
-
   // Diag - Forwarding function for diagnostics.
-  DiagnosticBuilder Diag(unsigned DiagID) {
+  DiagnosticBuilder Diag(unsigned DiagID) const {
     return Diags.Report(FullSourceLoc(), DiagID);
   }
 
@@ -123,19 +119,27 @@ public:
   /// @name Driver Steps
   /// @{
 
-  /// BuildUniversalActions - Construct the list of actions to perform
-  /// for the given arguments, which may require a universal build.
-  ///
-  /// \param Args - The input arguments.
-  /// \param Actions - The list to store the resulting actions onto.
-  void BuildUniversalActions(ArgList &Args, ActionList &Actions);
+  /// ParseArgStrings - Parse the given list of strings into an
+  /// ArgList.
+  ArgList *ParseArgStrings(const char **ArgBegin, const char **ArgEnd);
 
   /// BuildActions - Construct the list of actions to perform for the
   /// given arguments, which are only done for a single architecture.
   ///
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildActions(ArgList &Args, ActionList &Actions);
+  void BuildActions(ArgList &Args, ActionList &Actions) const;
+
+  /// BuildUniversalActions - Construct the list of actions to perform
+  /// for the given arguments, which may require a universal build.
+  ///
+  /// \param Args - The input arguments.
+  /// \param Actions - The list to store the resulting actions onto.
+  void BuildUniversalActions(ArgList &Args, ActionList &Actions) const;
+
+  /// BuildJobs - Bind actions to concrete tools and translate
+  /// arguments to form the list of jobs to run.
+  Compilation *BuildJobs(const ArgList &Args, const ActionList &Actions) const;
 
   /// @}
   /// @name Helper Methods
