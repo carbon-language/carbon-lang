@@ -14,6 +14,7 @@
 #ifndef TGSOURCEMGR_H
 #define TGSOURCEMGR_H
 
+#include <cassert>
 #include <vector>
 
 namespace llvm {
