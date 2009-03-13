@@ -1113,7 +1113,7 @@ TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
 
 void TreePattern::error(const std::string &Msg) const {
   dump();
-  throw "In " + TheRecord->getName() + ": " + Msg;
+  throw TGError(TheRecord->getLoc(), "In " + TheRecord->getName() + ": " + Msg);
 }
 
 TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {

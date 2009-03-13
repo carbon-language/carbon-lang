@@ -114,7 +114,7 @@ RecordKeeper llvm::Records;
 
 static TGSourceMgr SrcMgr;
 
-void PrintError(TGLoc ErrorLoc, const std::string &Msg) {
+void llvm::PrintError(TGLoc ErrorLoc, const std::string &Msg) {
   SrcMgr.PrintError(ErrorLoc, Msg);
 }
 
@@ -229,31 +229,26 @@ int main(int argc, char **argv) {
       assert(1 && "Invalid Action");
       return 1;
     }
+    
+    if (Out != cout.stream()) 
+      delete Out;                               // Close the file
+    return 0;
+    
+  } catch (const TGError &Error) {
+    cerr << argv[0] << ": error:\n";
+    PrintError(Error.getLoc(), Error.getMessage());
+    
   } catch (const std::string &Error) {
     cerr << argv[0] << ": " << Error << "\n";
-    if (Out != cout.stream()) {
-      delete Out;                             // Close the file
-      std::remove(OutputFilename.c_str());    // Remove the file, it's broken
-    }
-    return 1;
   } catch (const char *Error) {
     cerr << argv[0] << ": " << Error << "\n";
-    if (Out != cout.stream()) {
-      delete Out;                             // Close the file
-      std::remove(OutputFilename.c_str());    // Remove the file, it's broken
-    }
-    return 1;
   } catch (...) {
     cerr << argv[0] << ": Unknown unexpected exception occurred.\n";
-    if (Out != cout.stream()) {
-      delete Out;                             // Close the file
-      std::remove(OutputFilename.c_str());    // Remove the file, it's broken
-    }
-    return 2;
   }
-
+  
   if (Out != cout.stream()) {
-    delete Out;                               // Close the file
+    delete Out;                             // Close the file
+    std::remove(OutputFilename.c_str());    // Remove the file, it's broken
   }
-  return 0;
+  return 1;
 }

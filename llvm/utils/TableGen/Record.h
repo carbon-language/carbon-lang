@@ -1195,6 +1195,17 @@ struct LessRecordFieldName {
   }
 };
 
+
+class TGError {
+  TGLoc Loc;
+  std::string Message;
+public:
+  TGError(TGLoc loc, const std::string &message) : Loc(loc), Message(message) {}
+  
+  TGLoc getLoc() const { return Loc; }
+  const std::string &getMessage() const { return Message; }
+};
+  
   
 std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK);
 
