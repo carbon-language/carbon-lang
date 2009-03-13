@@ -23,8 +23,10 @@ namespace llvm {
 ///
 class ClangDiagsDefsEmitter : public TableGenBackend {
   RecordKeeper &Records;
+  const std::string& Component;
 public:
-  explicit ClangDiagsDefsEmitter(RecordKeeper &R) : Records(R) {}
+  explicit ClangDiagsDefsEmitter(RecordKeeper &R, const std::string& component)
+    : Records(R), Component(component) {}
 
   // run - Output the .def file contents
   void run(std::ostream &OS);

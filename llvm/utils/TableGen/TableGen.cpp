@@ -110,6 +110,11 @@ namespace {
   cl::list<std::string>
   IncludeDirs("I", cl::desc("Directory of include files"),
               cl::value_desc("directory"), cl::Prefix);
+  
+  cl::opt<std::string>
+  ClangComponent("clang-component",
+                 cl::desc("Only use warnings from specified component"),
+                 cl::value_desc("component"), cl::Hidden);
 }
 
 
@@ -202,7 +207,7 @@ int main(int argc, char **argv) {
       AsmWriterEmitter(Records).run(*Out);
       break;
     case GenClangDiagsDefs:
-      ClangDiagsDefsEmitter(Records).run(*Out);
+      ClangDiagsDefsEmitter(Records, ClangComponent).run(*Out);
       break;
     case GenDAGISel:
       DAGISelEmitter(Records).run(*Out);
