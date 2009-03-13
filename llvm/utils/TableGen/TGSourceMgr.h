@@ -20,9 +20,25 @@
 
 namespace llvm {
   class MemoryBuffer;
+  class TGSourceMgr;
   
-/// FIXME: Make this a struct that is opaque.
-typedef const char *TGLocTy;
+class TGLoc {
+  const char *Ptr;
+public:
+  TGLoc() : Ptr(0) {}
+  TGLoc(const TGLoc &RHS) : Ptr(RHS.Ptr) {}
+  
+  bool operator==(const TGLoc &RHS) const { return RHS.Ptr == Ptr; }
+  bool operator!=(const TGLoc &RHS) const { return RHS.Ptr != Ptr; }
+
+  const char *getPointer() const { return Ptr; }
+  
+  static TGLoc getFromPointer(const char *Ptr) {
+    TGLoc L;
+    L.Ptr = Ptr;
+    return L;
+  }
+};
 
 /// TGSourceMgr - This owns the files read by tblgen, handles include stacks,
 /// and handles printing of diagnostics.
@@ -33,7 +49,7 @@ class TGSourceMgr {
     
     /// IncludeLoc - This is the location of the parent include, or null if at
     /// the top level.
-    TGLocTy IncludeLoc;
+    TGLoc IncludeLoc;
   };
   
   /// Buffers - This is all of the buffers that we are reading from.
@@ -55,12 +71,12 @@ public:
     return Buffers[i].Buffer;
   }
   
-  TGLocTy getParentIncludeLoc(unsigned i) const {
+  TGLoc getParentIncludeLoc(unsigned i) const {
     assert(i < Buffers.size() && "Invalid Buffer ID!");
     return Buffers[i].IncludeLoc;
   }
   
-  unsigned AddNewSourceBuffer(MemoryBuffer *F, TGLocTy IncludeLoc) {
+  unsigned AddNewSourceBuffer(MemoryBuffer *F, TGLoc IncludeLoc) {
     SrcBuffer NB;
     NB.Buffer = F;
     NB.IncludeLoc = IncludeLoc;
@@ -70,19 +86,19 @@ public:
   
   /// FindBufferContainingLoc - Return the ID of the buffer containing the
   /// specified location, returning -1 if not found.
-  int FindBufferContainingLoc(TGLocTy Loc) const;
+  int FindBufferContainingLoc(TGLoc Loc) const;
   
   /// FindLineNumber - Find the line number for the specified location in the
   /// specified file.  This is not a fast method.
-  unsigned FindLineNumber(TGLocTy Loc, int BufferID = -1) const;
+  unsigned FindLineNumber(TGLoc Loc, int BufferID = -1) const;
   
   
   /// PrintError - Emit an error message about the specified location with the
   /// specified string.
-  void PrintError(TGLocTy ErrorLoc, const std::string &Msg) const;
+  void PrintError(TGLoc ErrorLoc, const std::string &Msg) const;
   
 private:
-  void PrintIncludeStack(TGLocTy IncludeLoc) const;
+  void PrintIncludeStack(TGLoc IncludeLoc) const;
 };
   
 }  // end llvm namespace

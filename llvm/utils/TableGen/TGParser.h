@@ -15,6 +15,7 @@
 #define TGPARSER_H
 
 #include "TGLexer.h"
+#include "TGSourceMgr.h"
 #include <map>
 
 namespace llvm {
@@ -29,9 +30,9 @@ namespace llvm {
     std::string Name;
     std::vector<unsigned> Bits;
     Init *Value;
-    TGLexer::LocTy Loc;
+    TGLoc Loc;
     LetRecord(const std::string &N, const std::vector<unsigned> &B, Init *V,
-              TGLexer::LocTy L)
+              TGLoc L)
       : Name(N), Bits(B), Value(V), Loc(L) {
     }
   };
@@ -45,7 +46,6 @@ class TGParser {
   /// current value.
   MultiClass *CurMultiClass;
 public:
-  typedef TGLexer::LocTy LocTy;
   
   TGParser(TGSourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
   
@@ -55,7 +55,7 @@ public:
   /// routines return true on error, or false on success.
   bool ParseFile();
   
-  bool Error(LocTy L, const std::string &Msg) const {
+  bool Error(TGLoc L, const std::string &Msg) const {
     Lex.PrintError(L, Msg);
     return true;
   }
@@ -63,8 +63,8 @@ public:
     return Error(Lex.getLoc(), Msg);
   }
 private:  // Semantic analysis methods.
-  bool AddValue(Record *TheRec, LocTy Loc, const RecordVal &RV);
-  bool SetValue(Record *TheRec, LocTy Loc, const std::string &ValName, 
+  bool AddValue(Record *TheRec, TGLoc Loc, const RecordVal &RV);
+  bool SetValue(Record *TheRec, TGLoc Loc, const std::string &ValName, 
                 const std::vector<unsigned> &BitList, Init *V);
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
 
@@ -89,7 +89,7 @@ private:  // Parser methods.
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
 
   Init *ParseIDValue(Record *CurRec);
-  Init *ParseIDValue(Record *CurRec, const std::string &Name, LocTy NameLoc);
+  Init *ParseIDValue(Record *CurRec, const std::string &Name, TGLoc NameLoc);
   Init *ParseSimpleValue(Record *CurRec);
   Init *ParseValue(Record *CurRec);
   std::vector<Init*> ParseValueList(Record *CurRec);

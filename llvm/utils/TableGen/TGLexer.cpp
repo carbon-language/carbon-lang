@@ -31,6 +31,10 @@ TGLexer::TGLexer(TGSourceMgr &SM) : SrcMgr(SM) {
   TokStart = 0;
 }
 
+TGLoc TGLexer::getLoc() const {
+  return TGLoc::getFromPointer(TokStart);
+}
+
 
 /// ReturnError - Set the error to the specified string at the specified
 /// location.  This is defined to always return tgtok::Error.
@@ -40,9 +44,14 @@ tgtok::TokKind TGLexer::ReturnError(const char *Loc, const std::string &Msg) {
 }
 
 
-void TGLexer::PrintError(LocTy Loc, const std::string &Msg) const {
+void TGLexer::PrintError(const char *Loc, const std::string &Msg) const {
+  SrcMgr.PrintError(TGLoc::getFromPointer(Loc), Msg);
+}
+
+void TGLexer::PrintError(TGLoc Loc, const std::string &Msg) const {
   SrcMgr.PrintError(Loc, Msg);
 }
+
 
 int TGLexer::getNextChar() {
   char CurChar = *CurPtr++;
@@ -57,11 +66,11 @@ int TGLexer::getNextChar() {
     
     // If this is the end of an included file, pop the parent file off the
     // include stack.
-    TGLocTy ParentIncludeLoc = SrcMgr.getParentIncludeLoc(CurBuffer);
-    if (ParentIncludeLoc != TGLocTy()) {
+    TGLoc ParentIncludeLoc = SrcMgr.getParentIncludeLoc(CurBuffer);
+    if (ParentIncludeLoc != TGLoc()) {
       CurBuffer = SrcMgr.FindBufferContainingLoc(ParentIncludeLoc);
       CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
-      CurPtr = ParentIncludeLoc;
+      CurPtr = ParentIncludeLoc.getPointer();
       return getNextChar();
     }
     
@@ -239,7 +248,7 @@ bool TGLexer::LexInclude() {
   }
   
   // Save the line number and lex buffer of the includer.
-  CurBuffer = SrcMgr.AddNewSourceBuffer(NewBuf, CurPtr);
+  CurBuffer = SrcMgr.AddNewSourceBuffer(NewBuf, TGLoc::getFromPointer(CurPtr));
   
   CurBuf = NewBuf;
   CurPtr = CurBuf->getBufferStart();

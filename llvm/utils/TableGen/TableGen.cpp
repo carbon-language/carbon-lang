@@ -17,7 +17,6 @@
 
 #include "Record.h"
 #include "TGParser.h"
-#include "TGSourceMgr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
@@ -124,7 +123,7 @@ static bool ParseFile(const std::string &Filename,
   }
   
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
-  SrcMgr.AddNewSourceBuffer(F, TGLocTy());
+  SrcMgr.AddNewSourceBuffer(F, TGLoc());
   
   TGParser Parser(SrcMgr);
 
