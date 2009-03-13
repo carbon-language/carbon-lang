@@ -113,31 +113,38 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::UINT_TO_FP       , MVT::i16  , Promote);
 
   if (Subtarget->is64Bit()) {
-    setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
   } else {
-    if (X86ScalarSSEf64) {
+    if (!UseSoftFloat && !NoImplicitFloat && X86ScalarSSEf64) {
       // We have an impenetrably clever algorithm for ui64->double only.
       setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
 
       // We have faster algorithm for ui32->single only.
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
-    } else
+    } else {
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
+    }
   }
 
   // Promote i1/i8 SINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have
   // this operation.
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
-  // SSE has no i16 to fp conversion, only i32
-  if (X86ScalarSSEf32) {
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
-    // f32 and f64 cases are Legal, f80 case is not
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+
+  if (!UseSoftFloat && !NoImplicitFloat) {
+    // SSE has no i16 to fp conversion, only i32
+    if (X86ScalarSSEf32) {
+      setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
+      // f32 and f64 cases are Legal, f80 case is not
+      setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+    } else {
+      setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Custom);
+      setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+    }
   } else {
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Custom);
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Promote);
   }
 
   // In 32-bit mode these are custom lowered.  In 64-bit mode F32 and F64
@@ -4975,8 +4982,8 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
-                                 StackSlot,
-                                 PseudoSourceValue::getFixedStack(SSFI), 0);
+                               StackSlot,
+                               PseudoSourceValue::getFixedStack(SSFI), 0);
 
   // Build the FILD
   SDVTList Tys;
