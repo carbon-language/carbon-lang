@@ -583,7 +583,7 @@ HostInfo *Driver::GetHostInfo(const char *Triple) {
   } else
     Arch = Triple;
 
-  if (memcmp(&Platform[0], "darwin", 6) == 0)
+  if (memcmp(&OS[0], "darwin", 6) == 0)
     return new DarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
     
   return new UnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
