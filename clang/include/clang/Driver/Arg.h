@@ -19,6 +19,7 @@ using llvm::dyn_cast_or_null;
 
 #include "Util.h"
 #include <vector>
+#include <string>
 
 namespace clang {
 namespace driver {
