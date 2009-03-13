@@ -1017,7 +1017,7 @@ public:
     assert(0 && "Name does not exist in record!");
   }
 
-  bool isSubClassOf(Record *R) const {
+  bool isSubClassOf(const Record *R) const {
     for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
       if (SuperClasses[i] == R)
         return true;
