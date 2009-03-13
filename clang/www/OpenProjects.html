@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Clang - Get Involved</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
+</head>
+<body>
+
+<!--#include virtual="menu.html.incl"-->
+
+<div id="content">
+
+<h1>Open Clang Projects</h1>
+
+<p>Here are a few tasks that are available for newcomers to work on, depending
+on what your interests are.  This list is provided to generate ideas, it is not
+intended to be comprehensive.  Please ask on cfe-dev for more specifics or to
+verify that one of these isn't already completed. :)</p>
+
+<ul>
+<li><b>Compile your favorite C/ObjC project with Clang</b>:
+Clang's type-checking and code generation is very close to complete (but not bug free!) for C and Objective-C. We appreciate all reports of code that is
+rejected or miscompiled by the front-end. If you notice invalid code that is not rejected, or poor diagnostics when code is rejected, that is also very important to us.  For make-based projects,
+the <a href="get_started.html#ccc"><code>ccc</code></a> driver works as a drop-in replacement for GCC.</li>
+
+<li><b>Overflow detection</b>: an interesting project would be to add a -ftrapv
+compilation mode that causes -emit-llvm to generate overflow tests for all
+signed integer arithmetic operators, and call abort if they overflow.  Overflow
+is undefined in C and hard for people to reason about.  LLVM IR also has
+intrinsics for generating arithmetic with overflow checks directly.</li>
+
+<li><b>Undefined behavior checking</b>: similar to adding -ftrapv, codegen could
+insert runtime checks for all sorts of different undefined behaviors, from 
+reading uninitialized variables, buffer overflows, and many other things.  This
+checking would be expensive, but the optimizers could eliminate many of the 
+checks in some cases, and it would be very interesting to test code in this mode
+for certain crowds of people.  Because the inserted code is coming from clang,
+the "abort" message could be very detailed about exactly what went wrong.</li>
+
+<li><b>Continue work on C++ support</b>: Implementing all of C++ is a very big
+job, but there are lots of little pieces that can be picked off and implemented.
+See the <a href="cxx_status.html">C++ status report page</a> to find out what is
+missing and what is already at least partially supported.</li>
+
+<li><b>Improve target support</b>: The current target interfaces are heavily
+stubbed out and need to be implemented fully.  See the FIXME's in TargetInfo.
+Additionally, the actual target implementations (instances of TargetInfoImpl)
+also need to be completed.</li>
+
+<li><b>Implement an tool to generate code documentation</b>: Clang's
+library-based design allows it to be used by a variety of tools that reason
+about source code. One great application of Clang would be to build an
+auto-documentation system like doxygen that generates code documentation from
+source code. The advantage of using Clang for such a tool is that the tool would
+use the same preprocessor/parser/ASTs as the compiler itself, giving it a very
+rich understanding of the code.</li> 
+
+<li><b>Use clang libraries to implement better versions of existing tools</b>:
+Clang is built as a set of libraries, which means that it is possible to
+implement capabilities similar to other source language tools, improving them
+in various ways.  Two examples are <a href="http://distcc.samba.org/">distcc</a>
+and the <a href="http://delta.tigris.org/">delta testcase reduction tool</a>.
+The former can be improved to scale better and be more efficient.  The later
+could also be faster and more efficient at reducing C-family programs if built
+on the clang preprocessor.</li>
+
+<li><b>Use clang libraries to extend Ragel with a JIT</b>: <a 
+href="http://research.cs.queensu.ca/~thurston/ragel/">Ragel</a> is a state
+machine compiler that lets you embed C code into state machines and generate
+C code.  It would be relatively easy to turn this into a JIT compiler using
+LLVM.</li>
+
+<li><b>Self-testing using clang</b>: There are several neat ways to
+improve the quality of clang by self-testing. Some examples:
+<ul>
+  <li>Improve the reliability of AST printing and serialization by
+  ensuring that the AST produced by clang on an input doesn't change
+  when it is reparsed or unserialized.
+
+  <li>Improve parser reliability and error generation by automatically
+  or randomly changing the input checking that clang doesn't crash and
+  that it doesn't generate excessive errors for small input
+  changes. Manipulating the input at both the text and token levels is
+  likely to produce interesting test cases.
+</ul>
+</li>
+
+</ul>
+
+<p>If you hit a bug with clang, it is very useful for us if you reduce the code
+that demonstrates the problem down to something small.  There are many ways to
+do this; ask on cfe-dev for advice.</p>
+
+</div>
+</body>
+</html>
