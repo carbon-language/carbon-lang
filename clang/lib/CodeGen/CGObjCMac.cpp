@@ -2239,6 +2239,10 @@ llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
@@ -2252,6 +2256,10 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
@@ -2265,6 +2273,10 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignIvarFn,
@@ -2278,6 +2290,10 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
@@ -5096,6 +5112,10 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
 void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignIvarFn,
@@ -5110,6 +5130,10 @@ void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
                                          CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
@@ -5139,6 +5163,10 @@ llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
 void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
@@ -5152,6 +5180,10 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst)
 {
+  if (!isa<llvm::PointerType>(src->getType())) {
+    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+    src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
+  }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
