@@ -169,19 +169,12 @@ Action::OwningStmtResult
 Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                      SourceLocation ColonLoc, StmtArg subStmt) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
-
   // Look up the record for this label identifier.
-  Scope::LabelMapTy::iterator I = ActiveScope->LabelMap.find(II);
+  LabelStmt *&LabelDecl = LabelMap[II];
 
-  LabelStmt *LabelDecl;
-  
   // If not forward referenced or defined already, just create a new LabelStmt.
-  if (I == ActiveScope->LabelMap.end()) {
-    LabelDecl = new (Context) LabelStmt(IdentLoc, II, SubStmt);
-    ActiveScope->LabelMap.insert(std::make_pair(II, LabelDecl));
-    return Owned(LabelDecl);
-  } else
-    LabelDecl = static_cast<LabelStmt *>(I->second);
+  if (LabelDecl == 0)
+    return Owned(LabelDecl = new (Context) LabelStmt(IdentLoc, II, SubStmt));
 
   assert(LabelDecl->getID() == II && "Label mismatch!");
 
@@ -683,16 +676,11 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
     return StmtError(Diag(GotoLoc, diag::err_goto_in_block));
 
   // Look up the record for this label identifier.
-  Scope::LabelMapTy::iterator I = ActiveScope->LabelMap.find(LabelII);
+  LabelStmt *&LabelDecl = LabelMap[LabelII];
 
-  LabelStmt *LabelDecl;
-  
-  // If not forward referenced or defined already, just create a new LabelStmt.
-  if (I == ActiveScope->LabelMap.end()) {
+  // If we haven't seen this label yet, create a forward reference.
+  if (LabelDecl == 0)
     LabelDecl = new (Context) LabelStmt(LabelLoc, LabelII, 0);
-    ActiveScope->LabelMap.insert(std::make_pair(LabelII, LabelDecl));
-  } else
-    LabelDecl = static_cast<LabelStmt *>(I->second);
 
   return Owned(new (Context) GotoStmt(LabelDecl, GotoLoc, LabelLoc));
 }

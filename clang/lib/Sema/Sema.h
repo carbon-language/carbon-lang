@@ -104,14 +104,15 @@ public:
   /// the active block object that represents it.
   BlockSemaInfo *CurBlock;
 
-  /// ActiveScope - If inside of a function, method, or block definition, 
-  /// this contains a pointer to the active scope that represents it.
-  Scope *ActiveScope;
-  
   /// PackContext - Manages the stack for #pragma pack. An alignment
   /// of 0 indicates default alignment.
   void *PackContext; // Really a "PragmaPackStack*"
 
+  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
+  /// it (which acts like the label decl in some ways).  Forward referenced
+  /// labels have a LabelStmt created for them with a null location & SubStmt.
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
   
   /// ExtVectorDecls - This is a list all the extended vector types. This allows

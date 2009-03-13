@@ -37,8 +37,6 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // Allow all of Sema to see that we are entering a method definition.
   PushDeclContext(FnBodyScope, MDecl);
 
-  ActiveScope = FnBodyScope;
-
   // Create Decl objects for each parameter, entrring them in the scope for
   // binding to their use.
 
