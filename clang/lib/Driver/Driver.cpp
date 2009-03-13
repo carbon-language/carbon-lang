@@ -19,7 +19,7 @@
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Types.h"
 
-#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
@@ -275,16 +275,22 @@ void Driver::PrintActions(const ArgList &Args,
 }
 
 void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
-  llvm::StringMap<Arg *> Archs;
+  // Collect the list of architectures. Duplicates are allowed, but
+  // should only be handled once (in the order seen).
+  llvm::StringSet<> ArchNames;
+  llvm::SmallVector<const char *, 4> Archs;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 
        it != ie; ++it) {
     Arg *A = *it;
 
     if (A->getOption().getId() == options::OPT_arch) {
+      const char *Name = A->getValue(Args);
+
       // FIXME: We need to handle canonicalization of the specified
       // arch?
 
-      Archs[A->getValue(Args)] = A;
+      if (ArchNames.insert(Name))
+        Archs.push_back(Name);
     }
   }
 
@@ -292,8 +298,7 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
   // the host so that -Xarch_ is handled correctly.
   if (!Archs.size()) {
     const char *Arch = Host->getArchName().c_str();
-    Archs[Arch] = Args.MakeSeparateArg(getOpts().getOption(options::OPT_arch),
-                                       Arch);
+    Archs.push_back(Arch);
   }
 
   // FIXME: We killed off some others but these aren't yet detected in
@@ -331,9 +336,8 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
         << types::getTypeName(Act->getType());
 
     ActionList Inputs;
-    for (llvm::StringMap<Arg*>::iterator it = Archs.begin(), ie = Archs.end();
-         it != ie; ++it)
-      Inputs.push_back(new BindArchAction(Act, it->second->getValue(Args)));
+    for (unsigned i = 0, e = Archs.size(); i != e; ++i )
+      Inputs.push_back(new BindArchAction(Act, Archs[i]));
 
     // Lipo if necessary, We do it this way because we need to set the
     // arch flag so that -Xarch_ gets overwritten.
