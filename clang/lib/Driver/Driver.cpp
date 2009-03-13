@@ -232,7 +232,6 @@ bool Driver::HandleImmediateArgs(const ArgList &Args) {
   return true;
 }
 
-// FIXME: This shouldn't be here?
 static unsigned PrintActions1(const ArgList &Args,
                               Action *A, 
                               std::map<Action*, unsigned> &Ids) {
@@ -261,7 +260,7 @@ static unsigned PrintActions1(const ArgList &Args,
 
   unsigned Id = Ids.size();
   Ids[A] = Id;
-  llvm::outs() << Id << ": " << os.str() << ", " 
+  llvm::errs() << Id << ": " << os.str() << ", " 
                << types::getTypeName(A->getType()) << "\n";
 
   return Id;
@@ -271,9 +270,8 @@ void Driver::PrintActions(const ArgList &Args,
                           const ActionList &Actions) const {
   std::map<Action*, unsigned> Ids;
   for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
-       it != ie; ++it) {
+       it != ie; ++it)
     PrintActions1(Args, *it, Ids);
-  }
 }
 
 void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
