@@ -646,6 +646,8 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
     //  they don't match.  This can result from pointer arithmetic.  In reality,
     //  we should figure out what are the proper semantics and implement them.
     // 
+    //  This addresses the test case test/Analysis/ptr-arith.c
+    //
     nonloc::ConcreteInt OffConverted(getBasicVals().Convert(Base->getValue(),
                                                            Offset->getValue()));
     SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffConverted);
