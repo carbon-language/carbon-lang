@@ -31,6 +31,7 @@
 using namespace llvm;
 
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
+STATISTIC(NumEH,     "Number of EH try blocks skipped");
 
 namespace {
   class VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
@@ -64,6 +65,9 @@ namespace {
     /// is killed in the BB.
     ///
     void analyzePHINodes(const MachineFunction& Fn);
+
+    void WalkPassEHTryRange(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator &I, unsigned SrcReg);
 
     typedef std::pair<const MachineBasicBlock*, unsigned> BBVRegPair;
     typedef std::map<BBVRegPair, unsigned> VRegPHIUse;
@@ -138,6 +142,39 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
       return false;
   }
   return true;
+}
+
+void PNE::WalkPassEHTryRange(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator &I, unsigned SrcReg) {
+  if (I == MBB.begin())
+    return;
+  MachineBasicBlock::iterator PI = prior(I);
+  if (PI->getOpcode() != TargetInstrInfo::EH_LABEL)
+    return;
+
+  // Trying to walk pass the EH try range. If we run into a use instruction,
+  // we want to insert the copy there.
+  SmallPtrSet<MachineInstr*, 4> UsesInMBB;
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineInstr *UseMI = &*UI;
+    if (UseMI->getParent() == &MBB)
+      UsesInMBB.insert(UseMI);
+  }
+
+  while (PI != MBB.begin()) {
+    --PI;
+    if (PI->getOpcode() == TargetInstrInfo::EH_LABEL) {
+      ++NumEH;
+      I = PI;
+      return;
+    } else if (UsesInMBB.count(&*PI)) {
+      ++NumEH;
+      I = next(PI);
+      return;
+    }
+  }
+  return;
 }
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
@@ -237,6 +274,9 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     // Find a safe location to insert the copy, this may be the first terminator
     // in the block (or end()).
     MachineBasicBlock::iterator InsertPos = opBlock.getFirstTerminator();
+
+    // Walk pass EH try range if needed.
+    WalkPassEHTryRange(opBlock, InsertPos, SrcReg);
 
     // Insert the copy.
     TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
