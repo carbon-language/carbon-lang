@@ -156,6 +156,20 @@ class Driver(object):
                 self.cccHostSystem,argv = argv[0],argv[1:]
             elif opt == 'host-release':
                 self.cccHostRelease,argv = argv[0],argv[1:]
+            elif opt == 'host-triple':
+                # This is a complete hack, but only exists for testing
+                # compatibility with the new driver. We will be six
+                # feet under soon enough.
+                triple,argv = argv[0],argv[1:]
+                self.cccHostMachine,_,self.cccHostSystem = triple.split('-', 2)
+                if self.cccHostSystem.startswith('darwin'):
+                    self.cccHostSystem = 'darwin'
+                    self.cccHostRelease = '10.5.0'
+                if self.cccHostMachine == 'x86_64':
+                    self.cccHostMachine = 'i386'
+                    self.cccHostBits = '64'
+                elif self.cccHostMachine == 'i386':
+                    self.cccHostBits = '32'
             else:
                 raise Arguments.InvalidArgumentsError("invalid option: %r" % fullOpt)
 
