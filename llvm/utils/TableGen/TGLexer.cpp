@@ -151,6 +151,8 @@ tgtok::TokKind TGLexer::LexToken() {
 tgtok::TokKind TGLexer::LexString() {
   const char *StrStart = CurPtr;
   
+  CurStrVal = "";
+  
   while (*CurPtr != '"') {
     // If we hit the end of the buffer, report an error.
     if (*CurPtr == 0 && CurPtr == CurBuf->getBufferEnd())
@@ -159,10 +161,32 @@ tgtok::TokKind TGLexer::LexString() {
     if (*CurPtr == '\n' || *CurPtr == '\r')
       return ReturnError(StrStart, "End of line in string literal");
     
+    if (*CurPtr != '\\') {
+      CurStrVal += *CurPtr++;
+      continue;
+    }
+
     ++CurPtr;
+    
+    switch (*CurPtr) {
+    case '\\': case '\'': case '"':
+      // These turn into their literal character.
+      CurStrVal += *CurPtr++;
+      break;
+    case '\n':
+    case '\r':
+      return ReturnError(CurPtr, "escaped newlines not supported in tblgen");
+
+    // If we hit the end of the buffer, report an error.
+    case '\0':
+      if (CurPtr == CurBuf->getBufferEnd())
+        return ReturnError(StrStart, "End of file in string literal");
+      // FALL THROUGH
+    default:
+      return ReturnError(CurPtr, "invalid escape in string literal");
+    }
   }
   
-  CurStrVal.assign(StrStart, CurPtr);
   ++CurPtr;
   return tgtok::StrVal;
 }
