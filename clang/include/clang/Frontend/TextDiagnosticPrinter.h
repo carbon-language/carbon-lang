@@ -33,11 +33,14 @@ class TextDiagnosticPrinter : public DiagnosticClient {
   bool ShowColumn;
   bool CaretDiagnostics;
   bool ShowLocation;
+  bool PrintRangeInfo;
 public:
   TextDiagnosticPrinter(llvm::raw_ostream &os, bool showColumn = true,
-                        bool caretDiagnistics = true, bool showLocation = true)
+                        bool caretDiagnistics = true, bool showLocation = true,
+                        bool printRangeInfo = true)
     : LastCaretDiagnosticWasNote(false), OS(os), ShowColumn(showColumn), 
-      CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation) {}
+      CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
+      PrintRangeInfo(printRangeInfo) {}
 
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 

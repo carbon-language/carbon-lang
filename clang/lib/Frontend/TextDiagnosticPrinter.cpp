@@ -261,6 +261,38 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       if (ShowColumn)
         if (unsigned ColNo = PLoc.getColumn())
           OS << ColNo << ':';
+      
+      if (PrintRangeInfo && Info.getNumRanges()) {
+        FileID CaretFileID =
+          SM.getFileID(SM.getInstantiationLoc(Info.getLocation()));
+        bool PrintedRange = false;
+        
+        for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i) {
+          SourceLocation B = Info.getRange(i).getBegin();
+          SourceLocation E = Info.getRange(i).getEnd();
+          std::pair<FileID, unsigned> BInfo=SM.getDecomposedInstantiationLoc(B);
+          
+          E = SM.getInstantiationLoc(E);
+          std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
+          
+          // If the start or end of the range is in another file, just discard
+          // it.
+          if (BInfo.first != CaretFileID || EInfo.first != CaretFileID)
+            continue;
+          
+          // Add in the length of the token, so that we cover multi-char tokens.
+          unsigned TokSize = Lexer::MeasureTokenLength(E, SM);
+          
+          OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
+             << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
+             << SM.getLineNumber(EInfo.first, EInfo.second) << ':'
+             << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize) << '}';
+          PrintedRange = true;
+        }
+        
+        if (PrintedRange)
+          OS << ':';
+      }
       OS << ' ';
     }
   }

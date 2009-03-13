@@ -202,6 +202,10 @@ NoCaretDiagnostics("fno-caret-diagnostics",
                    llvm::cl::desc("Do not include source line and caret with"
                                   " diagnostics"));
 
+static llvm::cl::opt<bool>
+PrintSourceRangeInfo("fprint-source-range-info",
+                    llvm::cl::desc("Print source range spans in numeric form"));
+
 
 //===----------------------------------------------------------------------===//
 // C++ Visualization.
@@ -799,6 +803,8 @@ static std::string CreateTargetTriple() {
 //   -A...    - Play with #assertions
 //   -undef   - Undefine all predefined macros
 
+// FIXME: -imacros
+
 static llvm::cl::list<std::string>
 D_macros("D", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
        llvm::cl::desc("Predefine the specified macro"));
@@ -809,7 +815,6 @@ U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
 static llvm::cl::list<std::string>
 ImplicitIncludes("include", llvm::cl::value_desc("file"),
                  llvm::cl::desc("Include file before parsing"));
-
 
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
@@ -910,7 +915,6 @@ static bool InitializePreprocessor(Preprocessor &PP,
 // FIXME: -nostdinc,-nostdinc++
 // FIXME: -imultilib
 //
-// FIXME: -imacros
 
 static llvm::cl::opt<bool>
 nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
@@ -1496,7 +1500,8 @@ int main(int argc, char **argv) {
     TextDiagClient = new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
                                                !NoCaretDiagnostics,
-                                               !NoShowLocation);
+                                               !NoShowLocation,
+                                               PrintSourceRangeInfo);
   } else {
     // When checking diagnostics, just buffer them up.
     TextDiagClient = new TextDiagnosticBuffer();
