@@ -26,10 +26,19 @@ namespace clang {
 // C++ Expressions.
 //===--------------------------------------------------------------------===//
 
-/// CXXOperatorCallExpr - Represents a call to an overloaded operator
-/// written using operator syntax, e.g., "x + y" or "*p". While
-/// semantically equivalent to a normal call, this AST node provides
-/// better information about the syntactic representation of the call.
+/// \brief A call to an overloaded operator written using operator
+/// syntax.
+///
+/// Represents a call to an overloaded operator written using operator
+/// syntax, e.g., "x + y" or "*p". While semantically equivalent to a
+/// normal call, this AST node provides better information about the
+/// syntactic representation of the call.
+///
+/// In a C++ template, this expression node kind will be used whenever
+/// any of the arguments are type-dependent. In this case, the
+/// function itself will be a (possibly empty) set of functions and
+/// function templates that were found by name lookup at template
+/// definition time.
 class CXXOperatorCallExpr : public CallExpr {
 public:
   CXXOperatorCallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,

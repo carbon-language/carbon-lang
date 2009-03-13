@@ -577,6 +577,7 @@ namespace {
     Sema::OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
     Sema::OwningExprResult VisitParenExpr(ParenExpr *E);
     Sema::OwningExprResult VisitBinaryOperator(BinaryOperator *E);
+    Sema::OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
 
     // Base case. I'm supposed to ignore this.
     Sema::OwningExprResult VisitStmt(Stmt *) { 
@@ -643,6 +644,32 @@ TemplateExprInstantiator::VisitBinaryOperator(BinaryOperator *E) {
   LHS.release();
   RHS.release();
   return move(Result);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+  // FIXME: HACK HACK HACK. This is so utterly and completely wrong
+  // that I don't want to explain it here. I'll just fix it tomorrow
+  // instead.
+  Sema::OwningExprResult LHS = Visit(E->getArg(0));
+  if (LHS.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult RHS = Visit(E->getArg(1));
+  if (RHS.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult Result
+    = SemaRef.CreateBuiltinBinOp(E->getOperatorLoc(), 
+                                 BinaryOperator::Add,
+                                 (Expr *)LHS.get(),
+                                 (Expr *)RHS.get());
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+  LHS.release();
+  RHS.release();
+  return move(Result);  
 }
 
 Sema::OwningExprResult 

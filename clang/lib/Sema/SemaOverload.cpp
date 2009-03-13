@@ -2308,42 +2308,6 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   }
 }
 
-/// IsAcceptableNonMemberOperatorCandidate - Determine whether Fn is
-/// an acceptable non-member overloaded operator for a call whose
-/// arguments have types T1 (and, if non-empty, T2). This routine
-/// implements the check in C++ [over.match.oper]p3b2 concerning
-/// enumeration types.
-static bool 
-IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
-                                       QualType T1, QualType T2,
-                                       ASTContext &Context) {
-  if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
-    return true;
-
-  const FunctionProtoType *Proto = Fn->getType()->getAsFunctionProtoType();
-  if (Proto->getNumArgs() < 1)
-    return false;
-
-  if (T1->isEnumeralType()) {
-    QualType ArgType = Proto->getArgType(0).getNonReferenceType();
-    if (Context.getCanonicalType(T1).getUnqualifiedType()
-          == Context.getCanonicalType(ArgType).getUnqualifiedType())
-      return true;
-  }
-
-  if (Proto->getNumArgs() < 2)
-    return false;
-
-  if (!T2.isNull() && T2->isEnumeralType()) {
-    QualType ArgType = Proto->getArgType(1).getNonReferenceType();
-    if (Context.getCanonicalType(T2).getUnqualifiedType()
-          == Context.getCanonicalType(ArgType).getUnqualifiedType())
-      return true;
-  }
-
-  return false;
-}
-
 /// AddOperatorCandidates - Add the overloaded operator candidates for
 /// the operator Op that was used in an operator expression such as "x
 /// Op y". S is the scope in which the expression occurred (used for
@@ -2383,6 +2347,8 @@ bool Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                          /*SuppressUserConversions=*/false);
   }
 
+  FunctionSet Functions;
+
   //     -- The set of non-member candidates is the result of the
   //        unqualified lookup of operator@ in the context of the
   //        expression according to the usual rules for name lookup in
@@ -2394,24 +2360,19 @@ bool Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   //        type, or (if there is a right operand) a second parameter
   //        of type T2 or “reference to (possibly cv-qualified) T2”,
   //        when T2 is an enumeration type, are candidate functions.
-  LookupResult Operators = LookupName(S, OpName, LookupOperatorName);
-  
-  if (Operators.isAmbiguous())
-    return DiagnoseAmbiguousLookup(Operators, OpName, OpLoc, OpRange);
-  else if (Operators) {
-    for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();
-         Op != OpEnd; ++Op) {
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op))
-        if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
-          AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
-                               /*SuppressUserConversions=*/false);
-    }
-  }
+  LookupOverloadedOperatorName(Op, S, T1, T2, Functions);
 
   // Since the set of non-member candidates corresponds to
   // *unqualified* lookup of the operator name, we also perform
   // argument-dependent lookup (C++ [basic.lookup.argdep]).
-  AddArgumentDependentLookupCandidates(OpName, Args, NumArgs, CandidateSet);
+  ArgumentDependentLookup(OpName, Args, NumArgs, Functions);
+
+  // Add all of the functions found via operator name lookup and
+  // argument-dependent lookup to the candidate set.
+  for (FunctionSet::iterator Func = Functions.begin(),
+                          FuncEnd = Functions.end();
+       Func != FuncEnd; ++Func)
+    AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet);
 
   // Add builtin overload candidates (C++ [over.built]).
   AddBuiltinOperatorCandidates(Op, Args, NumArgs, CandidateSet);
@@ -3250,62 +3211,33 @@ void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            Expr **Args, unsigned NumArgs,
                                            OverloadCandidateSet& CandidateSet) {
-  // Find all of the associated namespaces and classes based on the
-  // arguments we have.
-  AssociatedNamespaceSet AssociatedNamespaces;
-  AssociatedClassSet AssociatedClasses;
-  FindAssociatedClassesAndNamespaces(Args, NumArgs, 
-                                     AssociatedNamespaces, AssociatedClasses);
+  FunctionSet Functions;
 
-  // C++ [basic.lookup.argdep]p3:
-  //
-  //   Let X be the lookup set produced by unqualified lookup (3.4.1)
-  //   and let Y be the lookup set produced by argument dependent
-  //   lookup (defined as follows). If X contains [...] then Y is
-  //   empty. Otherwise Y is the set of declarations found in the
-  //   namespaces associated with the argument types as described
-  //   below. The set of declarations found by the lookup of the name
-  //   is the union of X and Y.
-  //
-  // Here, we compute Y and add its members to the overloaded
-  // candidate set.
-  llvm::SmallPtrSet<FunctionDecl *, 16> KnownCandidates;
-  for (AssociatedNamespaceSet::iterator NS = AssociatedNamespaces.begin(),
-                                     NSEnd = AssociatedNamespaces.end(); 
-       NS != NSEnd; ++NS) { 
-    //   When considering an associated namespace, the lookup is the
-    //   same as the lookup performed when the associated namespace is
-    //   used as a qualifier (3.4.3.2) except that:
-    //
-    //     -- Any using-directives in the associated namespace are
-    //        ignored.
-    //
-    //     -- FIXME: Any namespace-scope friend functions declared in
-    //        associated classes are visible within their respective
-    //        namespaces even if they are not visible during an ordinary
-    //        lookup (11.4).
-    DeclContext::lookup_iterator I, E;
-    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
-      FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
-      if (!Func)
-        break;
+  // Record all of the function candidates that we've already
+  // added to the overload set, so that we don't add those same
+  // candidates a second time.
+  for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
+                                   CandEnd = CandidateSet.end();
+       Cand != CandEnd; ++Cand)
+    if (Cand->Function)
+      Functions.insert(Cand->Function);
 
-      if (KnownCandidates.empty()) {
-        // Record all of the function candidates that we've already
-        // added to the overload set, so that we don't add those same
-        // candidates a second time.
-        for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
-                                         CandEnd = CandidateSet.end();
-             Cand != CandEnd; ++Cand)
-          KnownCandidates.insert(Cand->Function);
-      }
+  ArgumentDependentLookup(Name, Args, NumArgs, Functions);
 
-      // If we haven't seen this function before, add it as a
-      // candidate.
-      if (KnownCandidates.insert(Func))
-        AddOverloadCandidate(Func, Args, NumArgs, CandidateSet);
-    }
-  }
+  // Erase all of the candidates we already knew about.
+  // FIXME: This is suboptimal. Is there a better way?
+  for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
+                                   CandEnd = CandidateSet.end();
+       Cand != CandEnd; ++Cand)
+    if (Cand->Function)
+      Functions.erase(Cand->Function);
+
+  // For each of the ADL candidates we found, add it to the overload
+  // set.
+  for (FunctionSet::iterator Func = Functions.begin(),
+                          FuncEnd = Functions.end();
+       Func != FuncEnd; ++Func)
+    AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet);
 }
 
 /// isBetterOverloadCandidate - Determines whether the first overload

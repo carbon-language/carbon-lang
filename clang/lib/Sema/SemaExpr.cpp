@@ -3977,6 +3977,32 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                                       CompTy, OpLoc));
 }
 
+static OverloadedOperatorKind 
+getOverloadedOperator(BinaryOperator::Opcode Opc) {
+  static const OverloadedOperatorKind OverOps[] = {
+    // Overloading .* is not possible.
+    static_cast<OverloadedOperatorKind>(0), OO_ArrowStar,
+    OO_Star, OO_Slash, OO_Percent,
+    OO_Plus, OO_Minus,
+    OO_LessLess, OO_GreaterGreater,
+    OO_Less, OO_Greater, OO_LessEqual, OO_GreaterEqual,
+    OO_EqualEqual, OO_ExclaimEqual,
+    OO_Amp,
+    OO_Caret,
+    OO_Pipe,
+    OO_AmpAmp,
+    OO_PipePipe,
+    OO_Equal, OO_StarEqual,
+    OO_SlashEqual, OO_PercentEqual,
+    OO_PlusEqual, OO_MinusEqual,
+    OO_LessLessEqual, OO_GreaterGreaterEqual,
+    OO_AmpEqual, OO_CaretEqual,
+    OO_PipeEqual,
+    OO_Comma
+  };
+  return OverOps[Opc];
+}
+
 // Binary Operators.  'Tok' is the token for the operator.
 Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                           tok::TokenKind Kind,
@@ -3988,16 +4014,39 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
 
   // If either expression is type-dependent, just build the AST.
-  // FIXME: We'll need to perform some caching of the result of name
-  // lookup for operator+.
   if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
-    if (Opc > BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign)
-      return Owned(new (Context) CompoundAssignOperator(lhs, rhs, Opc,
-                                              Context.DependentTy,
-                                              Context.DependentTy, TokLoc));
-    else
+    // .* cannot be overloaded.
+    if (Opc == BinaryOperator::PtrMemD)
       return Owned(new (Context) BinaryOperator(lhs, rhs, Opc,
                                                 Context.DependentTy, TokLoc));
+    
+    // Find all of the overloaded operators visible from the template
+    // definition. We perform both an operator-name lookup from the
+    // local scope and an argument-dependent lookup based on the types
+    // of the arguments.
+    FunctionSet Functions;
+    OverloadedOperatorKind OverOp = getOverloadedOperator(Opc);
+    LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
+                                 Functions);
+    Expr *Args[2] = { lhs, rhs };
+    DeclarationName OpName 
+      = Context.DeclarationNames.getCXXOperatorName(OverOp);
+    ArgumentDependentLookup(OpName, Args, 2, Functions);
+
+    OverloadedFunctionDecl *Overloads 
+      = OverloadedFunctionDecl::Create(Context, CurContext, OpName);
+    for (FunctionSet::iterator Func = Functions.begin(), 
+                            FuncEnd = Functions.end();
+         Func != FuncEnd; ++Func)
+      Overloads->addOverload(*Func);
+
+    DeclRefExpr *Fn = new (Context) DeclRefExpr(Overloads, Context.OverloadTy,
+                                                TokLoc, false, false);
+    
+    return Owned(new (Context) CXXOperatorCallExpr(Context, Fn,
+                                                   Args, 2, 
+                                                   Context.DependentTy,
+                                                   TokLoc));
   }
 
   if (getLangOptions().CPlusPlus && Opc != BinaryOperator::PtrMemD &&
@@ -4012,32 +4061,11 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
     }
 
     // Determine which overloaded operator we're dealing with.
-    static const OverloadedOperatorKind OverOps[] = {
-      // Overloading .* is not possible.
-      static_cast<OverloadedOperatorKind>(0), OO_ArrowStar,
-      OO_Star, OO_Slash, OO_Percent,
-      OO_Plus, OO_Minus,
-      OO_LessLess, OO_GreaterGreater,
-      OO_Less, OO_Greater, OO_LessEqual, OO_GreaterEqual,
-      OO_EqualEqual, OO_ExclaimEqual,
-      OO_Amp,
-      OO_Caret,
-      OO_Pipe,
-      OO_AmpAmp,
-      OO_PipePipe,
-      OO_Equal, OO_StarEqual,
-      OO_SlashEqual, OO_PercentEqual,
-      OO_PlusEqual, OO_MinusEqual,
-      OO_LessLessEqual, OO_GreaterGreaterEqual,
-      OO_AmpEqual, OO_CaretEqual,
-      OO_PipeEqual,
-      OO_Comma
-    };
-    OverloadedOperatorKind OverOp = OverOps[Opc];
 
     // Add the appropriate overloaded operators (C++ [over.match.oper])
     // to the candidate set.
     OverloadCandidateSet CandidateSet;
+    OverloadedOperatorKind OverOp = getOverloadedOperator(Opc);
     Expr *Args[2] = { lhs, rhs };
     if (AddOperatorCandidates(OverOp, S, TokLoc, Args, 2, CandidateSet))
       return ExprError();

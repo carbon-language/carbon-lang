@@ -1382,3 +1382,118 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
     }
   }
 }
+
+/// IsAcceptableNonMemberOperatorCandidate - Determine whether Fn is
+/// an acceptable non-member overloaded operator for a call whose
+/// arguments have types T1 (and, if non-empty, T2). This routine
+/// implements the check in C++ [over.match.oper]p3b2 concerning
+/// enumeration types.
+static bool 
+IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
+                                       QualType T1, QualType T2,
+                                       ASTContext &Context) {
+  if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
+    return true;
+
+  const FunctionProtoType *Proto = Fn->getType()->getAsFunctionProtoType();
+  if (Proto->getNumArgs() < 1)
+    return false;
+
+  if (T1->isEnumeralType()) {
+    QualType ArgType = Proto->getArgType(0).getNonReferenceType();
+    if (Context.getCanonicalType(T1).getUnqualifiedType()
+          == Context.getCanonicalType(ArgType).getUnqualifiedType())
+      return true;
+  }
+
+  if (Proto->getNumArgs() < 2)
+    return false;
+
+  if (!T2.isNull() && T2->isEnumeralType()) {
+    QualType ArgType = Proto->getArgType(1).getNonReferenceType();
+    if (Context.getCanonicalType(T2).getUnqualifiedType()
+          == Context.getCanonicalType(ArgType).getUnqualifiedType())
+      return true;
+  }
+
+  return false;
+}
+
+void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
+                                        QualType T1, QualType T2, 
+                                        FunctionSet &Functions) {
+  // C++ [over.match.oper]p3:
+  //     -- The set of non-member candidates is the result of the
+  //        unqualified lookup of operator@ in the context of the
+  //        expression according to the usual rules for name lookup in
+  //        unqualified function calls (3.4.2) except that all member
+  //        functions are ignored. However, if no operand has a class
+  //        type, only those non-member functions in the lookup set
+  //        that have a first parameter of type T1 or “reference to
+  //        (possibly cv-qualified) T1”, when T1 is an enumeration
+  //        type, or (if there is a right operand) a second parameter
+  //        of type T2 or “reference to (possibly cv-qualified) T2”,
+  //        when T2 is an enumeration type, are candidate functions.
+  DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
+  LookupResult Operators = LookupName(S, OpName, LookupOperatorName);
+  
+  assert(!Operators.isAmbiguous() && "Operator lookup cannot be ambiguous");
+
+  if (!Operators)
+    return;
+
+  for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();
+       Op != OpEnd; ++Op) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op))
+      if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
+        Functions.insert(FD); // FIXME: canonical FD
+  }
+}
+
+void Sema::ArgumentDependentLookup(DeclarationName Name,
+                                   Expr **Args, unsigned NumArgs,
+                                   FunctionSet &Functions) {
+  // Find all of the associated namespaces and classes based on the
+  // arguments we have.
+  AssociatedNamespaceSet AssociatedNamespaces;
+  AssociatedClassSet AssociatedClasses;
+  FindAssociatedClassesAndNamespaces(Args, NumArgs, 
+                                     AssociatedNamespaces, AssociatedClasses);
+
+  // C++ [basic.lookup.argdep]p3:
+  //
+  //   Let X be the lookup set produced by unqualified lookup (3.4.1)
+  //   and let Y be the lookup set produced by argument dependent
+  //   lookup (defined as follows). If X contains [...] then Y is
+  //   empty. Otherwise Y is the set of declarations found in the
+  //   namespaces associated with the argument types as described
+  //   below. The set of declarations found by the lookup of the name
+  //   is the union of X and Y.
+  //
+  // Here, we compute Y and add its members to the overloaded
+  // candidate set.
+  for (AssociatedNamespaceSet::iterator NS = AssociatedNamespaces.begin(),
+                                     NSEnd = AssociatedNamespaces.end(); 
+       NS != NSEnd; ++NS) { 
+    //   When considering an associated namespace, the lookup is the
+    //   same as the lookup performed when the associated namespace is
+    //   used as a qualifier (3.4.3.2) except that:
+    //
+    //     -- Any using-directives in the associated namespace are
+    //        ignored.
+    //
+    //     -- FIXME: Any namespace-scope friend functions declared in
+    //        associated classes are visible within their respective
+    //        namespaces even if they are not visible during an ordinary
+    //        lookup (11.4).
+    DeclContext::lookup_iterator I, E;
+    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
+      FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
+      if (!Func)
+        break;
+
+      Functions.insert(Func);
+    }
+  }
+}
+

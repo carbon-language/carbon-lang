@@ -928,9 +928,18 @@ public:
                                 bool RedeclarationOnly = false,
                                 bool AllowBuiltinCreation = true,
                                 SourceLocation Loc = SourceLocation());
-  
+
+  typedef llvm::SmallPtrSet<FunctionDecl *, 16> FunctionSet;
   typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
+
+  void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
+                                    QualType T1, QualType T2, 
+                                    FunctionSet &Functions);
+                          
+  void ArgumentDependentLookup(DeclarationName Name,
+                               Expr **Args, unsigned NumArgs,
+                               FunctionSet &Functions);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
