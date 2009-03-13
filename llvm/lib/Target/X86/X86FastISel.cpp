@@ -1002,7 +1002,9 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
     return false;
   MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
   MVT DstVT = TLI.getValueType(I->getType());
-  if (DstVT != MVT::i8)
+  
+  // This code only handles truncation to byte right now.
+  if (DstVT != MVT::i8 && DstVT != MVT::i1)
     // All other cases should be handled by the tblgen generated code.
     return false;
   if (SrcVT != MVT::i16 && SrcVT != MVT::i32)
@@ -1022,7 +1024,7 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   BuildMI(MBB, DL, TII.get(CopyOpc), CopyReg).addReg(InputReg);
 
   // Then issue an extract_subreg.
-  unsigned ResultReg = FastEmitInst_extractsubreg(DstVT.getSimpleVT(),
+  unsigned ResultReg = FastEmitInst_extractsubreg(MVT::i8,
                                                   CopyReg, X86::SUBREG_8BIT);
   if (!ResultReg)
     return false;
