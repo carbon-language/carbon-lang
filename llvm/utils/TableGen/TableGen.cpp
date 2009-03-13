@@ -34,6 +34,7 @@
 #include "SubtargetEmitter.h"
 #include "IntrinsicEmitter.h"
 #include "LLVMCConfigurationEmitter.h"
+#include "ClangDiagnosticsEmitter.h"
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -46,6 +47,7 @@ enum ActionType {
   GenRegisterEnums, GenRegister, GenRegisterHeader,
   GenInstrEnums, GenInstrs, GenAsmWriter,
   GenCallingConv,
+  GenClangDiagsDefs,
   GenDAGISel,
   GenFastISel,
   GenSubtarget,
@@ -86,6 +88,8 @@ namespace {
                                "Generate intrinsic information"),
                     clEnumValN(GenTgtIntrinsic, "gen-tgt-intrinsic",
                                "Generate target intrinsic information"),
+                    clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
+                               "Generate Clang diagnostics definitions"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
                     clEnumValN(PrintEnums, "print-enums",
@@ -185,7 +189,6 @@ int main(int argc, char **argv) {
     case GenRegisterHeader:
       RegisterInfoEmitter(Records).runHeader(*Out);
       break;
-
     case GenInstrEnums:
       InstrEnumEmitter(Records).run(*Out);
       break;
@@ -198,7 +201,9 @@ int main(int argc, char **argv) {
     case GenAsmWriter:
       AsmWriterEmitter(Records).run(*Out);
       break;
-
+    case GenClangDiagsDefs:
+      ClangDiagsDefsEmitter(Records).run(*Out);
+      break;
     case GenDAGISel:
       DAGISelEmitter(Records).run(*Out);
       break;

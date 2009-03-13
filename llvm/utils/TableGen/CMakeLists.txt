@@ -19,6 +19,7 @@ add_executable(tblgen
   TableGen.cpp
   TableGenBackend.cpp
   FastISelEmitter.cpp
+  ClangDiagnosticsEmitter.cpp
   )
 
 target_link_libraries(tblgen LLVMSupport LLVMSystem)
