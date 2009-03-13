@@ -814,6 +814,7 @@ class OptionParser:
         self.f_extdirsOption = self.addOption(JoinedOption('-fextdirs=', self.fGroup))
         self.f_freestandingOption = self.addOption(FlagOption('-ffreestanding', self.Clang_fGroup))
         self.f_gnuRuntimeOption = self.addOption(FlagOption('-fgnu-runtime', self.Clang_fGroup))
+        self.addOption(FlagOption('-fheinous-gnu-extensions', self.Clang_fGroup))
         self.f_indirectVirtualCallsOption = self.addOption(FlagOption('-findirect-virtual-calls', self.fGroup))
         self.f_laxVectorConversionsOption = self.addOption(FlagOption('-flax-vector-conversions', self.Clang_fGroup))
         self.f_limitedPrecisionOption = self.addOption(JoinedOption('-flimited-precision=', self.fGroup))
