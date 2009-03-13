@@ -282,6 +282,14 @@ ifndef REQUIRES_RTTI
 #  CXX.Flags += -fno-rtti
 endif
 
+ifdef ENABLE_COVERAGE
+  BuildMode := $(BuildMode)+Coverage
+  # These only go to .NoRelink because otherwise we will end up
+  # linking -lgcov into the .o libraries that get built.
+  CXX.Flags.NoRelink += -ftest-coverage -fprofile-arcs
+  C.Flags.NoRelink   += -ftest-coverage -fprofile-arcs
+endif
+
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
 # then disable assertions by defining the appropriate preprocessor symbols.
 ifdef DISABLE_ASSERTIONS
@@ -550,20 +558,26 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         $(LLVM_OBJ_ROOT) $(LLVM_SRC_ROOT))) \
 	         $(CPP.BaseFlags)
 
- ifeq ($(BUILD_COMPONENT), 1)
-  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c
-  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
-                  $(LD.Flags) $(Strip)
+ifeq ($(BUILD_COMPONENT), 1)
+  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(C.Flags.NoRelink) \
+                  $(CompileCommonOpts) -c
+  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+                  $(CompileCommonOpts) -c
+  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) \
+                  $(CXX.Flags.NoRelink) -E
+  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+                  $(CompileCommonOpts) $(LD.Flags) $(Strip)
   Relink        = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
 		  $(Relink.Flags)
 else
-  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c
-  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
-                  $(LD.Flags) $(Strip)
+  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(C.Flags.NoRelink) \
+                  $(CompileCommonOpts) -c
+  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+                  $(CompileCommonOpts) -c
+  Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) \
+                  $(CXX.Flags.NoRelink) -E
+  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+                  $(CompileCommonOpts) $(LD.Flags) $(Strip)
   Relink        = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
 		  $(Relink.Flags)
 endif
