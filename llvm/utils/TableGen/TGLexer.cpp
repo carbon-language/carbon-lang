@@ -173,6 +173,15 @@ tgtok::TokKind TGLexer::LexString() {
       // These turn into their literal character.
       CurStrVal += *CurPtr++;
       break;
+    case 't':
+      CurStrVal += "\\t";
+      ++CurPtr;
+      break;
+    case 'n':
+      CurStrVal += "\\n";
+      ++CurPtr;
+      break;
+        
     case '\n':
     case '\r':
       return ReturnError(CurPtr, "escaped newlines not supported in tblgen");
