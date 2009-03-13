@@ -238,7 +238,8 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
 
   // This is the end of the top-level file.  If the diag::pp_macro_not_used
   // diagnostic is enabled, look for macros that have not been used.
-  if (Diags.getDiagnosticLevel(diag::pp_macro_not_used) != Diagnostic::Ignored){
+  if (getDiagnostics().getDiagnosticLevel(diag::pp_macro_not_used) != 
+        Diagnostic::Ignored) {
     for (macro_iterator I = macro_begin(), E = macro_end(); I != E; ++I)
       if (!I->second->isUsed())
         Diag(I->second->getDefinitionLoc(), diag::pp_macro_not_used);

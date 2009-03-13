@@ -1314,7 +1314,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     // It is very common for system headers to have tons of macro redefinitions
     // and for warnings to be disabled in system headers.  If this is the case,
     // then don't bother calling MacroInfo::isIdenticalTo.
-    if (!Diags.getSuppressSystemWarnings() ||
+    if (!getDiagnostics().getSuppressSystemWarnings() ||
         !SourceMgr.isInSystemHeader(DefineTok.getLocation())) {
       if (!OtherMI->isUsed())
         Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
