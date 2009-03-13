@@ -52,6 +52,8 @@ int main(int argc, const char **argv) {
   // If there were errors building the compilation, quit now.
   if (Diags.getNumErrors())
     return 1;
+  if (!C.get())
+    return 0;
 
   return C->Execute();
 }

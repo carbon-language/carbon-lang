@@ -152,7 +152,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
     PrintOptions(*Args);
-    exit(0);
+    return 0;
   }
 
   if (!HandleImmediateArgs(*Args))
@@ -166,12 +166,12 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   else
     BuildActions(*Args, Actions);
 
-  // FIXME: This behavior shouldn't be here.
   if (CCCPrintActions) {
     PrintActions(*Args, Actions);
-    exit(0);
+    return 0;
   }
-    
+
+  
   assert(0 && "FIXME: Implement");
 
   return new Compilation();
