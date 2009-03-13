@@ -47,10 +47,10 @@ public:
   /// default toolchain, for example in the presence of -m32 or -m64.
   ///
   /// \param ArchName - The architecture to return a toolchain for, or
-  /// 0 if unspecified. This will only be non-zero for hosts which
-  /// support a driver driver.
+  /// 0 if unspecified. This will only ever be non-zero for hosts
+  /// which support a driver driver.
   virtual ToolChain *getToolChain(const ArgList &Args, 
-                                  const char *ArchName) const = 0;
+                                  const char *ArchName=0) const = 0;
 };
 
 /// DarwinHostInfo - Darwin host information implementation.

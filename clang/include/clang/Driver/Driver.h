@@ -14,6 +14,8 @@
 
 #include "clang/Driver/Util.h"
 
+#include "llvm/System/Path.h" // FIXME: Kill when CompilationInfo
+                              // lands.
 #include <list>
 #include <set>
 #include <string>
@@ -25,6 +27,7 @@ namespace driver {
   class Compilation;
   class HostInfo;
   class OptTable;
+  class ToolChain;
 
 /// Driver - Encapsulate logic for constructing compilation processes
 /// from a set of gcc-driver-like command line arguments.
@@ -77,6 +80,11 @@ public:
   /// will generally be the actual host platform, but not always.
   HostInfo *Host;
 
+  /// The default tool chain for this host.
+  // FIXME: This shouldn't be here; this should be in a
+  // CompilationInfo structure.
+  ToolChain *DefaultToolChain;
+
   /// Information about the host which can be overriden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
 
@@ -112,21 +120,26 @@ public:
          Diagnostic &_Diags);
   ~Driver();
 
+  /// @name Accessors
+  /// @{
+
   const OptTable &getOpts() const { return *Opts; }
+
+  /// @}
+  /// @name Primary Functionality
+  /// @{
 
   /// BuildCompilation - Construct a compilation object for a command
   /// line argument vector.
+  ///
+  /// \return A compilation, or 0 if none was built for the given
+  /// argument vector. A null return value does not necessarily
+  /// indicate an error condition, the diagnostics should be queried
+  /// to determine if an error occurred.
   Compilation *BuildCompilation(int argc, const char **argv);
 
-  /// PrintOptions - Print the list of arguments.
-  void PrintOptions(const ArgList &Args) const;
-
-  /// PrintActions - Print the list of actions.
-  void PrintActions(const ActionList &Actions) const;
-
-  /// GetHostInfo - Construct a new host info object for the given
-  /// host triple.
-  static HostInfo *GetHostInfo(const char *HostTriple);
+  /// @name Driver Steps
+  /// @{
 
   /// BuildUniversalActions - Construct the list of actions to perform
   /// for the given arguments, which may require a universal build.
@@ -141,6 +154,41 @@ public:
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
   void BuildActions(ArgList &Args, ActionList &Actions);
+
+  /// @}
+  /// @name Helper Methods
+  /// @{
+
+  /// PrintOptions - Print the list of arguments.
+  void PrintOptions(const ArgList &Args) const;
+
+  /// PrintVersion - Print the driver version.
+  void PrintVersion() const;
+
+  /// PrintActions - Print the list of actions.
+  void PrintActions(const ActionList &Actions) const;
+
+  /// GetFilePath - Lookup \arg Name in the list of file search paths.
+  // FIXME: This should be in CompilationInfo.
+  llvm::sys::Path GetFilePath(const char *Name) const;
+
+  /// GetProgramPath - Lookup \arg Name in the list of program search
+  /// paths.
+  // FIXME: This should be in CompilationInfo.
+  llvm::sys::Path GetProgramPath(const char *Name) const;
+
+  /// HandleImmediateArgs - Handle any arguments which should be
+  /// treated before building actions or binding tools.
+  ///
+  /// \return Whether any compilation should be built for this
+  /// invocation.
+  bool HandleImmediateArgs(const ArgList &Args);
+
+  /// GetHostInfo - Construct a new host info object for the given
+  /// host triple.
+  static HostInfo *GetHostInfo(const char *HostTriple);
+
+  /// @}
 };
 
 } // end namespace driver

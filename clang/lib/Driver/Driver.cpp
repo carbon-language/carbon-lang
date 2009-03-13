@@ -63,6 +63,14 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
 }
 
 Compilation *Driver::BuildCompilation(int argc, const char **argv) {
+  // FIXME: Handle environment options which effect driver behavior,
+  // somewhere (client?). GCC_EXEC_PREFIX, COMPILER_PATH,
+  // LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS, QA_OVERRIDE_GCC3_OPTIONS.
+
+  // FIXME: What are we going to do with -V and -b?
+
+  // FIXME: Handle CCC_ADD_ARGS.
+
   // FIXME: This stuff needs to go into the Compilation, not the
   // driver.
   bool CCCPrintOptions = false, CCCPrintActions = false;
@@ -121,15 +129,19 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     }
   }
 
-  Host = Driver::GetHostInfo(HostTriple);
-
   ArgList *Args = ParseArgStrings(Start, End);
+
+  Host = Driver::GetHostInfo(HostTriple);
+  DefaultToolChain = Host->getToolChain(*Args);
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
     PrintOptions(*Args);
     exit(0);
   }
+
+  if (!HandleImmediateArgs(*Args))
+    return 0;
 
   // Construct the list of abstract actions to perform for this
   // compilation.
@@ -165,6 +177,44 @@ void Driver::PrintOptions(const ArgList &Args) const {
     }
     llvm::errs() << "}\n";
   }
+}
+
+void Driver::PrintVersion() const {
+  // FIXME: Get a reasonable version number.
+
+  // FIXME: The following handlers should use a callback mechanism, we
+  // don't know what the client would like to do.
+  llvm::outs() << "ccc version 1.0" << "\n";
+}
+
+bool Driver::HandleImmediateArgs(const ArgList &Args) {
+  // The order these options are handled in in gcc is all over the
+  // place, but we don't expect inconsistencies w.r.t. that to matter
+  // in practice.
+  if (Args.hasArg(options::OPT_v) || 
+      Args.hasArg(options::OPT__HASH_HASH_HASH)) {
+    PrintVersion();
+    SuppressMissingInputWarning = true;
+  }
+
+  // FIXME: The following handlers should use a callback mechanism, we
+  // don't know what the client would like to do.
+  if (Arg *A = Args.getLastArg(options::OPT_print_file_name_EQ)) {
+    llvm::outs() << GetFilePath(A->getValue(Args)).toString() << "\n";
+    return false;
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_print_prog_name_EQ)) {
+    llvm::outs() << GetProgramPath(A->getValue(Args)).toString() << "\n";
+    return false;
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_print_libgcc_file_name)) {
+    llvm::outs() << GetProgramPath("libgcc.a").toString() << "\n";
+    return false;
+  }
+
+  return true;
 }
 
 void Driver::PrintActions(const ActionList &Actions) const {
@@ -370,6 +420,16 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
                  << Inputs[i].second->getValue(Args) << "\n";
   }
   exit(0);
+}
+
+llvm::sys::Path Driver::GetFilePath(const char *Name) const {
+  // FIXME: Implement.
+  return llvm::sys::Path(Name);
+}
+
+llvm::sys::Path Driver::GetProgramPath(const char *Name) const {
+  // FIXME: Implement.
+  return llvm::sys::Path(Name);
 }
 
 HostInfo *Driver::GetHostInfo(const char *Triple) {
