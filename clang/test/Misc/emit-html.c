@@ -9,3 +9,10 @@ int main(int argc, char **argv) {
   return F(argc, 1);
 }
 
+// PR3798
+#define FOR_ALL_FILES(f,i) i
+
+#if 0
+  FOR_ALL_FILES(f) { }
+#endif
+

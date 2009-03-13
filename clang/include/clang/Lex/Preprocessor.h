@@ -197,6 +197,9 @@ public:
   ~Preprocessor();
 
   Diagnostic &getDiagnostics() const { return *Diags; }
+  void setDiagnostics(Diagnostic &D) { Diags = &D; }
+
+  
   const LangOptions &getLangOptions() const { return Features; }
   TargetInfo &getTargetInfo() const { return Target; }
   FileManager &getFileManager() const { return FileMgr; }

@@ -424,6 +424,17 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
   }
 }
 
+namespace {
+/// IgnoringDiagClient - This is a diagnostic client that just ignores all
+/// diags.
+class IgnoringDiagClient : public DiagnosticClient {
+  void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                        const DiagnosticInfo &Info) {
+    // Just ignore it.
+  }
+};
+}
+
 /// HighlightMacros - This uses the macro table state from the end of the
 /// file, to re-expand macros and insert (into the HTML) information about the
 /// macro expansions.  This won't be perfectly perfect, but it will be
@@ -465,6 +476,14 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     
     if (Tok.is(tok::eof)) break;
   }
+  
+  // Temporarily change the diagnostics object so that we ignore any generated
+  // diagnostics from this pass.
+  IgnoringDiagClient TmpDC;
+  Diagnostic TmpDiags(&TmpDC);
+  
+  Diagnostic *OldDiags = &PP.getDiagnostics();
+  PP.setDiagnostics(TmpDiags);
   
   // Inform the preprocessor that we don't want comments.
   PP.SetCommentRetentionState(false, false);
@@ -542,6 +561,9 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     HighlightRange(R, LLoc.first, LLoc.second,
                    "<span class='macro'>", Expansion.c_str());
   }
+
+  // Restore diagnostics object back to its own thing.
+  PP.setDiagnostics(*OldDiags);
 }
 
 void html::HighlightMacros(Rewriter &R, FileID FID,
