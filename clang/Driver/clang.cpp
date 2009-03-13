@@ -480,6 +480,11 @@ EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"),
              llvm::cl::ZeroOrMore);
 
 static llvm::cl::opt<bool>
+EnableHeinousExtensions("fheinous-gnu-extensions",
+   llvm::cl::desc("enable GNU extensions that you really really shouldn't use"),
+                        llvm::cl::ValueDisallowed, llvm::cl::Hidden);
+
+static llvm::cl::opt<bool>
 ObjCNonFragileABI("fobjc-nonfragile-abi",
                   llvm::cl::desc("enable objective-c's nonfragile abi"));
 
@@ -647,6 +652,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (Freestanding)
     Options.Freestanding = 1;
+  if (EnableHeinousExtensions)
+    Options.HeinousExtensions = 1;
 
   Options.MathErrno = MathErrno;
 

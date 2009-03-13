@@ -57,6 +57,8 @@ public:
   unsigned MathErrno         : 1; // Math functions must respect errno
                                   // (modulo the platform support).
 
+  unsigned HeinousExtensions : 1; // Extensions that we really don't like and
+                                  // may be ripped out at any time.
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -75,6 +77,7 @@ public:
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
     Exceptions = NeXTRuntime = Freestanding = 0;
     LaxVectorConversions = 1;
+    HeinousExtensions = 0;
     
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;

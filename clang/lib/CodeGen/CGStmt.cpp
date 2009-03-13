@@ -730,6 +730,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
     if (Ty->isSingleValueType()) {
       Arg = EmitScalarExpr(InputExpr);
     } else {
+      InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
       LValue Dest = EmitLValue(InputExpr);
 
       uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
@@ -744,6 +745,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
       }
     }
   } else {
+    InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
     LValue Dest = EmitLValue(InputExpr);
     Arg = Dest.getAddress();
     ConstraintStr += '*';
@@ -799,7 +801,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     // Simplify the output constraint.
     OutputConstraint = SimplifyConstraint(OutputConstraint.c_str() + 1, Target);
     
-    LValue Dest = EmitLValue(S.getOutputExpr(i));
+    const Expr *OutExpr = S.getOutputExpr(i);
+    OutExpr = OutExpr->IgnoreParenNoopCasts(getContext());
+    
+    LValue Dest = EmitLValue(OutExpr);
     const llvm::Type *DestValueType = 
       cast<llvm::PointerType>(Dest.getAddress()->getType())->getElementType();
     

@@ -641,9 +641,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         return StmtError(Diag(VD->getLocation(),
                               diag::err_non_variable_decl_in_for));
     } else {
-      Expr::isLvalueResult lval = cast<Expr>(First)->isLvalue(Context);
-
-      if (lval != Expr::LV_Valid)
+      if (cast<Expr>(First)->isLvalue(Context) != Expr::LV_Valid)
         return StmtError(Diag(First->getLocStart(),
                    diag::err_selector_element_not_lvalue)
           << First->getSourceRange());
@@ -833,6 +831,36 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
   return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
 }
 
+/// CheckAsmLValue - GNU C has an extremely ugly extension whereby they silently
+/// ignore "noop" casts in places where an lvalue is required by an inline asm.
+/// We emulate this behavior when -fheinous-gnu-extensions is specified, but
+/// provide a strong guidance to not use it.
+///
+/// This method checks to see if the argument is an acceptable l-value and
+/// returns false if it is a case we can handle.
+static bool CheckAsmLValue(const Expr *E, Sema &S) {
+  if (E->isLvalue(S.Context) == Expr::LV_Valid)
+    return false;  // Cool, this is an lvalue.
+
+  // Okay, this is not an lvalue, but perhaps it is the result of a cast that we
+  // are supposed to allow.
+  const Expr *E2 = E->IgnoreParenNoopCasts(S.Context);
+  if (E != E2 && E2->isLvalue(S.Context) == Expr::LV_Valid) {
+    if (!S.getLangOptions().HeinousExtensions)
+      S.Diag(E2->getLocStart(), diag::err_invalid_asm_cast_lvalue)
+        << E->getSourceRange();
+    else
+      S.Diag(E2->getLocStart(), diag::warn_invalid_asm_cast_lvalue)
+        << E->getSourceRange();
+    // Accept, even if we emitted an error diagnostic.
+    return false;
+  }
+
+  // None of the above, just randomly invalid non-lvalue.
+  return true;
+}
+
+
 Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                           bool IsSimple,
                                           bool IsVolatile,
@@ -875,8 +903,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
 
     // Check that the output exprs are valid lvalues.
     ParenExpr *OutputExpr = cast<ParenExpr>(Exprs[i]);
-    Expr::isLvalueResult Result = OutputExpr->isLvalue(Context);
-    if (Result != Expr::LV_Valid) {
+    if (CheckAsmLValue(OutputExpr, *this)) {
       return StmtError(Diag(OutputExpr->getSubExpr()->getLocStart(),
                   diag::err_asm_invalid_lvalue_in_output)
         << OutputExpr->getSubExpr()->getSourceRange());
@@ -909,7 +936,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     // Only allow void types for memory constraints.
     if ((info & TargetInfo::CI_AllowsMemory) 
         && !(info & TargetInfo::CI_AllowsRegister)) {
-      if (InputExpr->isLvalue(Context) != Expr::LV_Valid)
+      if (CheckAsmLValue(InputExpr, *this))
         return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
                               diag::err_asm_invalid_lvalue_in_input)
           << InputConstraint << InputExpr->getSubExpr()->getSourceRange());
