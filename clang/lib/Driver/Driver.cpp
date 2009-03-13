@@ -45,6 +45,16 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
   
   unsigned Index = 0, End = ArgEnd - ArgBegin;
   while (Index < End) {
+    // gcc's handling of empty arguments doesn't make
+    // sense, but this is not a common use case. :)
+    //
+    // We just ignore them here (note that other things may
+    // still take them as arguments).
+    if (Args->getArgString(Index)[0] == '\0') {
+      ++Index;
+      continue;
+    }
+
     unsigned Prev = Index;
     Arg *A = getOpts().ParseOneArg(*Args, Index, End);
     if (A) {
@@ -209,7 +219,7 @@ bool Driver::HandleImmediateArgs(const ArgList &Args) {
     return false;
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_print_libgcc_file_name)) {
+  if (Args.hasArg(options::OPT_print_libgcc_file_name)) {
     llvm::outs() << GetProgramPath("libgcc.a").toString() << "\n";
     return false;
   }
