@@ -69,6 +69,37 @@ bool types::canLipoType(ID Id) {
           Id == TY_Object); 
 }
 
+bool types::isAcceptedByClang(ID Id) {
+  switch (Id) {
+  default:
+    return false;
+
+  case TY_Asm:
+  case TY_C: case TY_PP_C:
+  case TY_ObjC: case TY_PP_ObjC:
+  case TY_CXX: case TY_PP_CXX:
+  case TY_ObjCXX: case TY_PP_ObjCXX:
+  case TY_CHeader: case TY_PP_CHeader:
+  case TY_ObjCHeader: case TY_PP_ObjCHeader:
+  case TY_CXXHeader: case TY_PP_CXXHeader:
+  case TY_ObjCXXHeader: case TY_PP_ObjCXXHeader:
+    return true;
+  }
+}
+
+bool types::isCXX(ID Id) {
+  switch (Id) {
+  default:
+    return false;
+
+  case TY_CXX: case TY_PP_CXX:
+  case TY_ObjCXX: case TY_PP_ObjCXX:
+  case TY_CXXHeader: case TY_PP_CXXHeader:
+  case TY_ObjCXXHeader: case TY_PP_ObjCXXHeader:
+    return true;
+  }
+}
+
 types::ID types::lookupTypeForExtension(const char *Ext) {
   unsigned N = strlen(Ext);
 
