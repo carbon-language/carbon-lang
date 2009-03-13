@@ -650,9 +650,6 @@ Sema::OwningExprResult
 TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   // FIXME: Only handles binary operators at the moment.
 
-  // FIXME: Can we optimize this further if neither the left- nor the
-  // right-hand sides are type-dependent? It depends on whether we
-  // need to perform ADL again
   Sema::OwningExprResult LHS = Visit(E->getArg(0));
   if (LHS.isInvalid())
     return SemaRef.ExprError();
