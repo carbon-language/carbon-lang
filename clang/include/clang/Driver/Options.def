@@ -360,6 +360,7 @@ OPTION("-foutput-class-dir=", foutput_class_dir_EQ, Joined, f_Group, INVALID, ""
 OPTION("-fpascal-strings", fpascal_strings, Flag, clang_f_Group, INVALID, "", 0)
 OPTION("-fpic", fpic, Flag, f_Group, INVALID, "", 0)
 OPTION("-fpie", fpie, Flag, f_Group, INVALID, "", 0)
+OPTION("-fprint-source-range-info", fprint_source_range_info, Flag, clang_f_Group, INVALID, "", 0)
 OPTION("-fprofile-arcs", fprofile_arcs, Flag, f_Group, INVALID, "", 0)
 OPTION("-fprofile-generate", fprofile_generate, Flag, f_Group, INVALID, "", 0)
 OPTION("-framework", framework, Separate, INVALID, INVALID, "l", 0)

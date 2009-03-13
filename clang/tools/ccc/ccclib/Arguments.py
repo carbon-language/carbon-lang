@@ -842,6 +842,7 @@ class OptionParser:
         self.f_PIEOption = self.addOption(FlagOption('-fPIE', self.fGroup))
         self.f_picOption = self.addOption(FlagOption('-fpic', self.fGroup))
         self.f_PICOption = self.addOption(FlagOption('-fPIC', self.fGroup))
+        self.addOption(FlagOption('-fprint-source-range-info', self.Clang_fGroup))
         self.f_profileArcsOption = self.addOption(FlagOption('-fprofile-arcs', self.fGroup))
         self.f_profileGenerateOption = self.addOption(FlagOption('-fprofile-generate', self.fGroup))
         self.f_terminatedVtablesOption = self.addOption(FlagOption('-fterminated-vtables', self.fGroup))
