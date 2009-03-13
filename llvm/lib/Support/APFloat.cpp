@@ -439,8 +439,8 @@ powerOf5(integerPart *dst, unsigned int power)
 {
   static const integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
                                                   15625, 78125 };
-  static integerPart pow5s[maxPowerOfFiveParts * 2 + 5] = { 78125 * 5 };
-  static unsigned int partsCount[16] = { 1 };
+  integerPart pow5s[maxPowerOfFiveParts * 2 + 5] = { 78125 * 5 };
+  unsigned int partsCount[16] = { 1 };
 
   integerPart scratch[maxPowerOfFiveParts], *p1, *p2, *pow5;
   unsigned int result;
