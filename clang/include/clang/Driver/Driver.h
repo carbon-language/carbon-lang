@@ -148,7 +148,7 @@ public:
   void PrintVersion() const;
 
   /// PrintActions - Print the list of actions.
-  void PrintActions(const ActionList &Actions) const;
+  void PrintActions(const ArgList &Args, const ActionList &Actions) const;
 
   /// GetFilePath - Lookup \arg Name in the list of file search paths.
   // FIXME: This should be in CompilationInfo.

@@ -22,6 +22,9 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+
+#include <map>
+
 using namespace clang::driver;
 
 Driver::Driver(const char *_Name, const char *_Dir,
@@ -165,7 +168,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintActions) {
-    PrintActions(Actions);
+    PrintActions(*Args, Actions);
     exit(0);
   }
     
@@ -229,8 +232,48 @@ bool Driver::HandleImmediateArgs(const ArgList &Args) {
   return true;
 }
 
-void Driver::PrintActions(const ActionList &Actions) const {
-  llvm::errs() << "FIXME: Print actions.";
+// FIXME: This shouldn't be here?
+static unsigned PrintActions1(const ArgList &Args,
+                              Action *A, 
+                              std::map<Action*, unsigned> &Ids) {
+  if (Ids.count(A))
+    return Ids[A];
+  
+  std::string str;
+  llvm::raw_string_ostream os(str);
+  
+  os << Action::getClassName(A->getKind()) << ", ";
+  if (InputAction *IA = dyn_cast<InputAction>(A)) {    
+    os << IA->getInputArg().getValue(Args) << "\"";
+  } else if (BindArchAction *BIA = dyn_cast<BindArchAction>(A)) {
+    os << "\"" << BIA->getArchName() << "\", "
+       << "{" << PrintActions1(Args, *BIA->begin(), Ids) << "}";
+  } else {
+    os << "{";
+    for (Action::iterator it = A->begin(), ie = A->end(); it != ie;) {
+      os << PrintActions1(Args, *it, Ids);
+      ++it;
+      if (it != ie)
+        os << ", ";
+    }
+    os << "}";
+  }
+
+  unsigned Id = Ids.size();
+  Ids[A] = Id;
+  llvm::outs() << Id << ": " << os.str() << ", " 
+               << types::getTypeName(A->getType()) << "\n";
+
+  return Id;
+}
+
+void Driver::PrintActions(const ArgList &Args, 
+                          const ActionList &Actions) const {
+  std::map<Action*, unsigned> Ids;
+  for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
+       it != ie; ++it) {
+    PrintActions1(Args, *it, Ids);
+  }
 }
 
 void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
