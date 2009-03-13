@@ -33,31 +33,29 @@ static cl::opt<bool>
 PrintDirectory("print-fullpath", cl::desc("Print fullpath when printing debug info"), cl::Hidden);
 
 namespace {
-	struct VISIBILITY_HIDDEN PrintDbgInfo : public FunctionPass {
+  struct VISIBILITY_HIDDEN PrintDbgInfo : public FunctionPass {
     private:
       raw_ostream &Out;
       void printStopPoint(const DbgStopPointInst *DSI);
       void printFuncStart(const DbgFuncStartInst *FS);
       void printVariableDeclaration(const Value *V);
-		public:
-			static char ID; // Pass identification
-			PrintDbgInfo() : FunctionPass(&ID), Out(outs()) {}
+  public:
+      static char ID; // Pass identification
+      PrintDbgInfo() : FunctionPass(&ID), Out(outs()) {}
 
-			virtual bool runOnFunction(Function &F);
-			virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-				AU.setPreservesAll();
-			}
-
-	};
-	char PrintDbgInfo::ID = 0;
-	static RegisterPass<PrintDbgInfo> X("print-dbginfo",
-      "Print debug info in human readable form");
+      virtual bool runOnFunction(Function &F);
+      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+        AU.setPreservesAll();
+      }
+  };
+  char PrintDbgInfo::ID = 0;
+  static RegisterPass<PrintDbgInfo> X("print-dbginfo",
+                                     "Print debug info in human readable form");
 }
 
 FunctionPass *llvm::createDbgInfoPrinterPass() { return new PrintDbgInfo(); }
 
-void PrintDbgInfo::printVariableDeclaration(const Value *V)
-{
+void PrintDbgInfo::printVariableDeclaration(const Value *V) {
   std::string DisplayName, File, Directory, Type;
   unsigned LineNo;
   if (getLocationInfo(V, DisplayName, Type, LineNo, File, Directory)) {
@@ -75,24 +73,22 @@ void PrintDbgInfo::printVariableDeclaration(const Value *V)
 void PrintDbgInfo::printStopPoint(const DbgStopPointInst *DSI)
 {
   if (PrintDirectory) {
-    std::string dir;
-		GetConstantStringInfo(DSI->getDirectory(), dir);
-    Out << dir << "/";
+    const char *Dir = GetConstantStringInfo(DSI->getDirectory());
+    Out << (Dir ? Dir : "") << "/";
   }
-  std::string file;
-  GetConstantStringInfo(DSI->getFileName(), file);
-  Out << file << ":" << DSI->getLine();
-  if (unsigned Col = DSI->getColumn()) {
+
+  const char *FN = GetConstantStringInfo(DSI->getFileName());
+  Out << (FN ? FN : "") << ":" << DSI->getLine();
+
+  if (unsigned Col = DSI->getColumn())
     Out << ":" << Col;
-  }
 }
 
 void PrintDbgInfo::printFuncStart(const DbgFuncStartInst *FS)
 {
   DISubprogram Subprogram(cast<GlobalVariable>(FS->getSubprogram()));
-  std::string Res1, Res2;
-  Out << ";fully qualified function name: " << Subprogram.getDisplayName(Res1)
-    << " return type: " << Subprogram.getType().getName(Res2)
+  Out << ";fully qualified function name: " << Subprogram.getDisplayName()
+    << " return type: " << Subprogram.getType().getName()
     << " at line " << Subprogram.getLineNumber()
     << "\n\n";
 }

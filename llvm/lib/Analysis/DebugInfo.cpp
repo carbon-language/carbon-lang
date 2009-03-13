@@ -35,24 +35,16 @@ DIDescriptor::DIDescriptor(GlobalVariable *gv, unsigned RequiredTag) {
     GV = 0;
 }
 
-const std::string &
-DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
-  if (GV == 0) {
-    Result.clear();
-    return Result;
-  }
+const char *DIDescriptor::getStringField(unsigned Elt) const {
+  if (GV == 0)
+    return 0;
 
   Constant *C = GV->getInitializer();
-  if (C == 0 || Elt >= C->getNumOperands()) {
-    Result.clear();
-    return Result;
-  }
+  if (C == 0 || Elt >= C->getNumOperands())
+    return 0;
   
   // Fills in the string if it succeeds
-  if (!GetConstantStringInfo(C->getOperand(Elt), Result))
-    Result.clear();
-
-  return Result;
+  return GetConstantStringInfo(C->getOperand(Elt));
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
@@ -190,11 +182,9 @@ unsigned DIArray::getNumElements() const {
 bool DICompileUnit::Verify() const {
   if (isNull()) 
     return false;
-  std::string Res;
-  if (getFilename(Res).empty()) 
-    return false;
+
   // It is possible that directory and produce string is empty.
-  return true;
+  return getFilename();
 }
 
 /// Verify - Verify that a type descriptor is well formed.
@@ -505,7 +495,7 @@ DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
 
 /// CreateBasicType - Create a basic type like int, float, etc.
 DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
-                                      const std::string &Name,
+                                       const std::string &Name,
                                        DICompileUnit CompileUnit,
                                        unsigned LineNumber,
                                        uint64_t SizeInBits,
@@ -894,8 +884,7 @@ namespace llvm {
   }
 
   bool getLocationInfo(const Value *V, std::string &DisplayName, std::string &Type,
-                       unsigned &LineNo, std::string &File, std::string &Dir)
-  {
+                       unsigned &LineNo, std::string &File, std::string &Dir) {
     DICompileUnit Unit;
     DIType TypeD;
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(const_cast<Value*>(V))) {
@@ -903,7 +892,11 @@ namespace llvm {
       if (!DIGV)
         return false;
       DIGlobalVariable Var(cast<GlobalVariable>(DIGV));
-      Var.getDisplayName(DisplayName);
+      const char *DN = Var.getDisplayName();
+      if (DN)
+        DisplayName = DN;
+      else
+        DisplayName.clear();
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
@@ -912,14 +905,24 @@ namespace llvm {
       if (!DDI)
         return false;
       DIVariable Var(cast<GlobalVariable>(DDI->getVariable()));
-      Var.getName(DisplayName);
+      const char *DN = Var.getName();
+      if (DN)
+        DisplayName = DN;
+      else
+        DisplayName.clear();
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
     }
-    TypeD.getName(Type);
-    Unit.getFilename(File);
-    Unit.getDirectory(Dir);
+    Type.clear();
+    File.clear();
+    Dir.clear();
+    const char *Str = TypeD.getName();
+    if (Str) Type = Str;
+    Str = Unit.getFilename();
+    if (Str) File = Str;
+    Str = Unit.getDirectory();
+    if (Str) Dir = Str;
     return true;
   }
 }
@@ -929,17 +932,17 @@ void DICompileUnit::dump() const {
   if (getLanguage())
     cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
 
-  std::string Res1, Res2;
-  cerr << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
+  const char *Dir = getDirectory();
+  const char *FN = getFilename();
+  cerr << " [" << (Dir ? Dir : "") << "/" << (FN ? FN : "") << " ]";
 }
 
 /// dump - print type.
 void DIType::dump() const {
   if (isNull()) return;
 
-  std::string Res;
-  if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
+  if (const char *N = getName())
+    cerr << " [" << N << "] ";
 
   unsigned Tag = getTag();
   cerr << " [" << dwarf::TagString(Tag) << "] ";
@@ -996,9 +999,8 @@ void DICompositeType::dump() const {
 
 /// dump - print global.
 void DIGlobal::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
+  if (const char *N = getName())
+    cerr << " [" << N << "] ";
 
   unsigned Tag = getTag();
   cerr << " [" << dwarf::TagString(Tag) << "] ";
@@ -1031,9 +1033,8 @@ void DIGlobalVariable::dump() const {
 
 /// dump - print variable.
 void DIVariable::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
+  if (const char *N = getName())
+    cerr << " [" << N << "] ";
 
   getCompileUnit().dump();
   cerr << " [" << getLineNumber() << "] ";
