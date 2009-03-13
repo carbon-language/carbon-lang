@@ -71,6 +71,6 @@ LinkJobAction::LinkJobAction(ActionList &Inputs, types::ID Type)
   : JobAction(LinkJobClass, Inputs, Type) {
 }
 
-LipoJobAction(ActionList &Inputs, types::ID Type)     
+LipoJobAction::LipoJobAction(ActionList &Inputs, types::ID Type)     
   : JobAction(LipoJobClass, Inputs, Type) {
 }
