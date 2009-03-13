@@ -514,3 +514,20 @@ void BlockDecl::Destroy(ASTContext& C) {
     
   Decl::Destroy(C);
 }
+
+void BlockDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
+                          unsigned NParms) {
+  assert(ParamInfo == 0 && "Already has param info!");
+  
+  // Zero params -> null pointer.
+  if (NParms) {
+    NumParams = NParms;
+    void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
+    ParamInfo = new (Mem) ParmVarDecl*[NumParams];
+    memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
+  }
+}
+
+unsigned BlockDecl::getNumParams() const {
+  return NumParams;
+}

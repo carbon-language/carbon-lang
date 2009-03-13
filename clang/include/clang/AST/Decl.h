@@ -1183,12 +1183,18 @@ protected:
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
 ///
 class BlockDecl : public Decl, public DeclContext {
-  llvm::SmallVector<ParmVarDecl*, 8> Args;
+  /// ParamInfo - new[]'d array of pointers to ParmVarDecls for the formal
+  /// parameters of this function.  This is null if a prototype or if there are
+  /// no formals.
+  ParmVarDecl **ParamInfo;
+  unsigned NumParams;
+  
   Stmt *Body;
   
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
-    : Decl(Block, DC, CaretLoc), DeclContext(Block), Body(0) {}
+    : Decl(Block, DC, CaretLoc), DeclContext(Block), 
+      ParamInfo(0), NumParams(0), Body(0) {}
 
   virtual ~BlockDecl();
   virtual void Destroy(ASTContext& C);
@@ -1201,16 +1207,28 @@ public:
   CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
-  void setArgs(ParmVarDecl **args, unsigned numargs) {
-    Args.clear(); 
-    Args.insert(Args.begin(), args, args+numargs);
-  }
+  // Iterator access to formal parameters.
+  unsigned param_size() const { return getNumParams(); }
+  typedef ParmVarDecl **param_iterator;
+  typedef ParmVarDecl * const *param_const_iterator;
   
-  /// arg_iterator - Iterate over the ParmVarDecl's for this block.
-  typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;
-  bool param_empty() const { return Args.empty(); }
-  param_iterator param_begin() const { return Args.begin(); }
-  param_iterator param_end() const { return Args.end(); }
+  bool param_empty() const { return NumParams == 0; }
+  param_iterator param_begin()  { return ParamInfo; }
+  param_iterator param_end()   { return ParamInfo+param_size(); }
+  
+  param_const_iterator param_begin() const { return ParamInfo; }
+  param_const_iterator param_end() const   { return ParamInfo+param_size(); }
+  
+  unsigned getNumParams() const;
+  const ParmVarDecl *getParamDecl(unsigned i) const {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }
+  ParmVarDecl *getParamDecl(unsigned i) {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }
+  void setParams(ASTContext& C, ParmVarDecl **NewParamInfo, unsigned NumParams);
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Block; }

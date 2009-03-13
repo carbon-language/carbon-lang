@@ -624,7 +624,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   Args.push_back(std::make_pair(SelfDecl, SelfDecl->getType()));
   BlockStructDecl = SelfDecl;
 
-  for (BlockDecl::param_iterator i = BD->param_begin(),
+  for (BlockDecl::param_const_iterator i = BD->param_begin(),
        e = BD->param_end(); i != e; ++i)
     Args.push_back(std::make_pair(*i, (*i)->getType()));
 
