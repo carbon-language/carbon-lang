@@ -315,7 +315,7 @@ class Driver(object):
                                                                        for v in values]))
 
     def printPhases(self, phases, args):
-        def printPhase(p, f, steps, arch=None):
+        def printPhase(p, f, steps):
             if p in steps:
                 return steps[p]
 
@@ -324,17 +324,15 @@ class Driver(object):
                 inputStr = '"%s"' % args.getValue(p.filename)
             elif isinstance(p, Phases.BindArchAction):
                 phaseName = 'bind-arch'
-                inputs = [printPhase(i, f, steps, p.arch) 
+                inputs = [printPhase(i, f, steps) 
                           for i in p.inputs]
                 inputStr = '"%s", {%s}' % (args.getValue(p.arch), 
                                            ', '.join(map(str, inputs)))
             else:
                 phaseName = p.phase.name
-                inputs = [printPhase(i, f, steps, arch) 
+                inputs = [printPhase(i, f, steps) 
                           for i in p.inputs]
                 inputStr = '{%s}' % ', '.join(map(str, inputs))
-            if arch is not None:
-                phaseName += '-' + args.getValue(arch)
             steps[p] = index = len(steps)
             print "%d: %s, %s, %s" % (index,phaseName,inputStr,p.type.name)
             return index
