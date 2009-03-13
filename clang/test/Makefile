@@ -12,7 +12,7 @@ endif
 ifdef VERBOSE
 ifeq ($(VERBOSE),0)
 PROGRESS = :
-REPORTFAIL = echo 'FAILED: clang' $(TARGET_TRIPLE) $(subst $(LLVM_SRC_ROOT)/tools/clang/,,$<)
+REPORTFAIL = echo 'FAIL: clang' $(TARGET_TRIPLE) $(subst $(LLVM_SRC_ROOT)/tools/clang/,,$<)
 else
 PROGRESS = echo $<
 REPORTFAIL = cat $@
@@ -32,7 +32,7 @@ Output/%.testresults: %
 all::
 	@ mkdir -p $(addprefix Output/, $(TESTDIRS))
 	@ rm -f $(TESTS)
-	@ echo '--- Running clang tests ---'
+	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
 	@ $(MAKE) $(TESTS)
 	@ $(DONE)
 	@ !(cat $(TESTS) | grep -q " FAILED! ")
