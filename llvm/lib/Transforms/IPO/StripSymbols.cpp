@@ -368,29 +368,27 @@ bool StripNonDebugSymbols::runOnModule(Module &M) {
 bool StripDebugDeclare::runOnModule(Module &M) {
 
   Function *Declare = M.getFunction("llvm.dbg.declare");
-
-  if (!Declare) 
-    return false;
-
   std::vector<Constant*> DeadConstants;
 
-  while (!Declare->use_empty()) {
-    CallInst *CI = cast<CallInst>(Declare->use_back());
-    Value *Arg1 = CI->getOperand(1);
-    Value *Arg2 = CI->getOperand(2);
-    assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
-    CI->eraseFromParent();
-    if (Arg1->use_empty()) {
-      if (Constant *C = dyn_cast<Constant>(Arg1)) 
-        DeadConstants.push_back(C);
-      else 
-        RecursivelyDeleteTriviallyDeadInstructions(Arg1, NULL);
+  if (Declare) {
+    while (!Declare->use_empty()) {
+      CallInst *CI = cast<CallInst>(Declare->use_back());
+      Value *Arg1 = CI->getOperand(1);
+      Value *Arg2 = CI->getOperand(2);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
+      CI->eraseFromParent();
+      if (Arg1->use_empty()) {
+        if (Constant *C = dyn_cast<Constant>(Arg1)) 
+          DeadConstants.push_back(C);
+        else 
+          RecursivelyDeleteTriviallyDeadInstructions(Arg1, NULL);
+      }
+      if (Arg2->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg2)) 
+          DeadConstants.push_back(C);
     }
-    if (Arg2->use_empty())
-      if (Constant *C = dyn_cast<Constant>(Arg2)) 
-        DeadConstants.push_back(C);
+    Declare->eraseFromParent();
   }
-  Declare->eraseFromParent();
 
   // Delete all llvm.dbg.global_variables.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
