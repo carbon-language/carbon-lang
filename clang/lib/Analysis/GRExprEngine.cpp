@@ -540,6 +540,45 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
   }
 }
 
+/// RecoverCastedSymbol - A helper function for ProcessBranch that is used
+/// to try to recover some path-sensitivity for casts of symbolic
+/// integers that promote their values (which are currently not tracked well).
+/// This function returns the SVal bound to Condition->IgnoreCasts if all the
+//  cast(s) did was sign-extend the original value.
+static SVal RecoverCastedSymbol(GRStateManager& StateMgr, const GRState* state,
+                                Stmt* Condition, ASTContext& Ctx) {
+
+  Expr *Ex = dyn_cast<Expr>(Condition);
+  if (!Ex)
+    return UnknownVal();
+
+  uint64_t bits = 0;
+  bool bitsInit = false;
+    
+  while (CastExpr *CE = dyn_cast<CastExpr>(Ex)) {
+    QualType T = CE->getType();
+
+    if (!T->isIntegerType())
+      return UnknownVal();
+    
+    uint64_t newBits = Ctx.getTypeSize(T);
+    if (!bitsInit || newBits < bits) {
+      bitsInit = true;
+      bits = newBits;
+    }
+      
+    Ex = CE->getSubExpr();
+  }
+
+  // We reached a non-cast.  Is it a symbolic value?
+  QualType T = Ex->getType();
+
+  if (!bitsInit || !T->isIntegerType() || Ctx.getTypeSize(T) > bits)
+    return UnknownVal();
+  
+  return StateMgr.GetSVal(state, Ex);
+}
+
 void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
   
@@ -563,10 +602,28 @@ void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
     default:
       break;
 
-    case SVal::UnknownKind:
+    case SVal::UnknownKind: {
+      if (Expr *Ex = dyn_cast<Expr>(Condition)) {
+          if (Ex->getType()->isIntegerType()) {
+          // Try to recover some path-sensitivity.  Right now casts of symbolic
+          // integers that promote their values are currently not tracked well.
+          // If 'Condition' is such an expression, try and recover the
+          // underlying value and use that instead.
+          SVal recovered = RecoverCastedSymbol(getStateManager(),
+                                               builder.getState(), Condition,
+                                               getContext());
+            
+          if (!recovered.isUnknown()) {
+            V = recovered;
+            break;
+          }
+        }
+      }
+    
       builder.generateNode(MarkBranch(PrevState, Term, true), true);
       builder.generateNode(MarkBranch(PrevState, Term, false), false);
       return;
+    }
       
     case SVal::UndefinedKind: {      
       NodeTy* N = builder.generateNode(PrevState, true);
