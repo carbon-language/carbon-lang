@@ -98,7 +98,7 @@ namespace {
     /// external functions.
     std::map<void*, void*> ExternalFnToStubMap;
 
-    //map addresses to indexes in the GOT
+    /// revGOTMap - map addresses to indexes in the GOT
     std::map<void*, unsigned> revGOTMap;
     unsigned nextGOTIndex;
 
@@ -562,6 +562,10 @@ namespace {
     ///
     void *ConstantPoolBase;
 
+    /// ConstPoolAddresses - Addresses of individual constant pool entries.
+    ///
+    SmallVector<uintptr_t, 8> ConstPoolAddresses;
+
     /// JumpTable - The jump tables for the current function.
     ///
     MachineJumpTableInfo *JumpTable;
@@ -787,15 +791,19 @@ void JITEmitter::AddStubToCurrentFunction(void *StubAddr) {
   FnRefs.insert(CurFn);
 }
 
-static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP) {
+static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
+                                           const TargetData *TD) {
   const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return 0;
 
-  MachineConstantPoolEntry CPE = Constants.back();
-  unsigned Size = CPE.Offset;
-  const Type *Ty = CPE.isMachineConstantPoolEntry()
-    ? CPE.Val.MachineCPVal->getType() : CPE.Val.ConstVal->getType();
-  Size += TheJIT->getTargetData()->getTypePaddedSize(Ty);
+  unsigned Size = 0;
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    MachineConstantPoolEntry CPE = Constants[i];
+    unsigned AlignMask = CPE.getAlignment() - 1;
+    Size = (Size + AlignMask) & ~AlignMask;
+    const Type *Ty = CPE.getType();
+    Size += TD->getTypePaddedSize(Ty);
+  }
   return Size;
 }
 
@@ -979,11 +987,10 @@ void JITEmitter::startFunction(MachineFunction &F) {
     ActualSize = RoundUpToAlign(ActualSize, 16);
     
     // Add the alignment of the constant pool
-    ActualSize = RoundUpToAlign(ActualSize, 
-                                1 << MCP->getConstantPoolAlignment());
+    ActualSize = RoundUpToAlign(ActualSize, MCP->getConstantPoolAlignment());
 
     // Add the constant pool size
-    ActualSize += GetConstantPoolSizeInBytes(MCP);
+    ActualSize += GetConstantPoolSizeInBytes(MCP, TheJIT->getTargetData());
 
     // Add the aligment of the jump table info
     ActualSize = RoundUpToAlign(ActualSize, MJTI->getAlignment());
@@ -1139,6 +1146,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
        << ": " << (FnEnd-FnStart) << " bytes of text, "
        << Relocations.size() << " relocations\n";
   Relocations.clear();
+  ConstPoolAddresses.clear();
 
   // Mark code region readable and executable if it's not so already.
   MemMgr->setMemoryExecutable();
@@ -1274,13 +1282,8 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
-  MachineConstantPoolEntry CPE = Constants.back();
-  unsigned Size = CPE.Offset;
-  const Type *Ty = CPE.isMachineConstantPoolEntry()
-    ? CPE.Val.MachineCPVal->getType() : CPE.Val.ConstVal->getType();
-  Size += TheJIT->getTargetData()->getTypePaddedSize(Ty);
-
-  unsigned Align = 1 << MCP->getConstantPoolAlignment();
+  unsigned Size = GetConstantPoolSizeInBytes(MCP, TheJIT->getTargetData());
+  unsigned Align = MCP->getConstantPoolAlignment();
   ConstantPoolBase = allocateSpace(Size, Align);
   ConstantPool = MCP;
 
@@ -1290,16 +1293,26 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
        << "] (size: " << Size << ", alignment: " << Align << ")\n";
 
   // Initialize the memory for all of the constant pool entries.
+  unsigned Offset = 0;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    void *CAddr = (char*)ConstantPoolBase+Constants[i].Offset;
-    if (Constants[i].isMachineConstantPoolEntry()) {
+    MachineConstantPoolEntry CPE = Constants[i];
+    unsigned AlignMask = CPE.getAlignment() - 1;
+    Offset = (Offset + AlignMask) & ~AlignMask;
+
+    uintptr_t CAddr = (uintptr_t)ConstantPoolBase + Offset;
+    ConstPoolAddresses.push_back(CAddr);
+    if (CPE.isMachineConstantPoolEntry()) {
       // FIXME: add support to lower machine constant pool values into bytes!
       cerr << "Initialize memory with machine specific constant pool entry"
            << " has not been implemented!\n";
       abort();
     }
-    TheJIT->InitializeMemory(Constants[i].Val.ConstVal, CAddr);
-    DOUT << "JIT:   CP" << i << " at [" << CAddr << "]\n";
+    TheJIT->InitializeMemory(CPE.Val.ConstVal, (void*)CAddr);
+    DOUT << "JIT:   CP" << i << " at [0x"
+         << std::hex << CAddr << std::dec << "]\n";
+
+    const Type *Ty = CPE.Val.ConstVal->getType();
+    Offset += TheJIT->getTargetData()->getTypePaddedSize(Ty);
   }
 }
 
@@ -1398,8 +1411,7 @@ void *JITEmitter::finishGVStub(const GlobalValue* GV) {
 uintptr_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) const {
   assert(ConstantNum < ConstantPool->getConstants().size() &&
          "Invalid ConstantPoolIndex!");
-  return (uintptr_t)ConstantPoolBase +
-         ConstantPool->getConstants()[ConstantNum].Offset;
+  return ConstPoolAddresses[ConstantNum];
 }
 
 // getJumpTableEntryAddress - Return the address of the JumpTable with index

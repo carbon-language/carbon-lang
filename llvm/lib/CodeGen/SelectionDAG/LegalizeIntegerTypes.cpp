@@ -2289,8 +2289,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     if (TLI.isBigEndian()) std::swap(Zero, Four);
     SDValue Offset = DAG.getNode(ISD::SELECT, dl, Zero.getValueType(), SignSet,
                                  Zero, Four);
-    unsigned Alignment =
-      1 << cast<ConstantPoolSDNode>(FudgePtr)->getAlignment();
+    unsigned Alignment = cast<ConstantPoolSDNode>(FudgePtr)->getAlignment();
     FudgePtr = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), FudgePtr, Offset);
     Alignment = std::min(Alignment, 4u);
 

@@ -298,11 +298,10 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
     const Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      Align = TM.getTargetData()->getPreferredTypeAlignmentShift(Type);
+      Align = TM.getTargetData()->getPrefTypeAlignment(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
         Align = TM.getTargetData()->getTypePaddedSize(Type);
-        Align = Log2_64(Align);
       }
     }
     

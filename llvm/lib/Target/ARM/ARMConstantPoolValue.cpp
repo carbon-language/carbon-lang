@@ -47,11 +47,11 @@ ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv,
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
-  unsigned AlignMask = (1 << Alignment)-1;
+  unsigned AlignMask = Alignment - 1;
   const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     if (Constants[i].isMachineConstantPoolEntry() &&
-        (Constants[i].Offset & AlignMask) == 0) {
+        (Constants[i].getAlignment() & AlignMask) == 0) {
       ARMConstantPoolValue *CPV =
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
       if (CPV->GV == GV &&

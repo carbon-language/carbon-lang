@@ -1480,11 +1480,10 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   }
   
   // MachineConstantPool wants an explicit alignment.
-  unsigned Align = TD.getPreferredTypeAlignmentShift(C->getType());
+  unsigned Align = TD.getPrefTypeAlignment(C->getType());
   if (Align == 0) {
     // Alignment of vector types.  FIXME!
     Align = TD.getTypePaddedSize(C->getType());
-    Align = Log2_64(Align);
   }
   
   // x86-32 PIC requires a PIC base register for constant pools.

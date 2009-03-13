@@ -1840,7 +1840,7 @@ class ConstantPoolSDNode : public SDNode {
     MachineConstantPoolValue *MachineCPVal;
   } Val;
   int Offset;  // It's a MachineConstantPoolValue if top bit is set.
-  unsigned Alignment;
+  unsigned Alignment;  // Minimum alignment requirement of CP (not log2 value).
 protected:
   friend class SelectionDAG;
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT VT, int o=0)
@@ -1896,7 +1896,7 @@ public:
   }
 
   // Return the alignment of this constant pool object, which is either 0 (for
-  // default alignment) or log2 of the desired value.
+  // default alignment) or the desired value.
   unsigned getAlignment() const { return Alignment; }
 
   const Type *getType() const;

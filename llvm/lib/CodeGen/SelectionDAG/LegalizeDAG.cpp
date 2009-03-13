@@ -592,7 +592,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   }
 
   SDValue CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
-  unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+  unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   if (Extend)
     return DAG.getExtLoad(ISD::EXTLOAD, dl,
                           OrigVT, DAG.getEntryNode(),
@@ -5547,7 +5547,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     }
     Constant *CP = ConstantVector::get(CV);
     SDValue CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-    unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+    unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     return DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                        PseudoSourceValue::getConstantPool(), 0,
                        false, Alignment);
@@ -6019,7 +6019,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source, DebugLoc dl) {
     Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
     SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
-    unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+    unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     CPIdx = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), CPIdx, CstOffset);
     Alignment = std::min(Alignment, 4u);
     SDValue FudgeInReg;
@@ -6173,7 +6173,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
-  unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+  unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   CPIdx = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), CPIdx, CstOffset);
   Alignment = std::min(Alignment, 4u);
   SDValue FudgeInReg;

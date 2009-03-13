@@ -240,6 +240,16 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   IncrementFunctionNumber();
 }
 
+namespace {
+  // SectionCPs - Keep track the alignment, constpool entries per Section.
+  struct SectionCPs {
+    const Section *S;
+    unsigned Alignment;
+    SmallVector<unsigned, 4> CPEs;
+    SectionCPs(const Section *s, unsigned a) : S(s), Alignment(a) {};
+  };
+}
+
 /// EmitConstantPool - Print to the current output stream assembly
 /// representations of the constants in the constant pool MCP. This is
 /// used to print out constants which have been "spilled to memory" by
@@ -251,48 +261,60 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
 
   // Calculate sections for constant pool entries. We collect entries to go into
   // the same section together to reduce amount of section switch statements.
-  typedef
-    std::multimap<const Section*,
-                  std::pair<MachineConstantPoolEntry, unsigned> > CPMap;
-  CPMap  CPs;
-  SmallPtrSet<const Section*, 5> Sections;
-
+  SmallVector<SectionCPs, 4> CPSections;
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     MachineConstantPoolEntry CPE = CP[i];
+    unsigned Align = CPE.getAlignment();
     const Section* S = TAI->SelectSectionForMachineConst(CPE.getType());
-    CPs.insert(std::make_pair(S, std::make_pair(CPE, i)));
-    Sections.insert(S);
+    // The number of sections are small, just do a linear search from the
+    // last section to the first.
+    bool Found = false;
+    unsigned SecIdx = CPSections.size();
+    while (SecIdx != 0) {
+      if (CPSections[--SecIdx].S == S) {
+        Found = true;
+        break;
+      }
+    }
+    if (!Found) {
+      SecIdx = CPSections.size();
+      CPSections.push_back(SectionCPs(S, Align));
+    }
+
+    if (Align > CPSections[SecIdx].Alignment)
+      CPSections[SecIdx].Alignment = Align;
+    CPSections[SecIdx].CPEs.push_back(i);
   }
 
   // Now print stuff into the calculated sections.
-  for (SmallPtrSet<const Section*, 5>::iterator IS = Sections.begin(),
-         ES = Sections.end(); IS != ES; ++IS) {
-    SwitchToSection(*IS);
-    EmitAlignment(MCP->getConstantPoolAlignment());
+  for (unsigned i = 0, e = CPSections.size(); i != e; ++i) {
+    SwitchToSection(CPSections[i].S);
+    EmitAlignment(Log2_32(CPSections[i].Alignment));
 
-    std::pair<CPMap::iterator, CPMap::iterator> II = CPs.equal_range(*IS);
-    for (CPMap::iterator I = II.first, E = II.second; I != E; ++I) {
-      CPMap::iterator J = next(I);
-      MachineConstantPoolEntry Entry = I->second.first;
-      unsigned index = I->second.second;
-
-      O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
-        << index << ":\t\t\t\t\t";
-    // O << TAI->getCommentString() << ' ' << 
-    //      WriteTypeSymbolic(O, CP[i].first.getType(), 0);
-      O << '\n';
-      if (Entry.isMachineConstantPoolEntry())
-        EmitMachineConstantPoolValue(Entry.Val.MachineCPVal);
-      else
-        EmitGlobalConstant(Entry.Val.ConstVal);
+    unsigned Offset = 0;
+    for (unsigned j = 0, ee = CPSections[i].CPEs.size(); j != ee; ++j) {
+      unsigned CPI = CPSections[i].CPEs[j];
+      MachineConstantPoolEntry CPE = CP[CPI];
 
       // Emit inter-object padding for alignment.
-      if (J != E) {
-        const Type *Ty = Entry.getType();
-        unsigned EntSize = TM.getTargetData()->getTypePaddedSize(Ty);
-        unsigned ValEnd = Entry.getOffset() + EntSize;
-        EmitZeros(J->second.first.getOffset()-ValEnd);
+      unsigned AlignMask = CPE.getAlignment() - 1;
+      unsigned NewOffset = (Offset + AlignMask) & ~AlignMask;
+      EmitZeros(NewOffset - Offset);
+
+      const Type *Ty = CPE.getType();
+      Offset = NewOffset + TM.getTargetData()->getTypePaddedSize(Ty);
+
+      O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+        << CPI << ":\t\t\t\t\t";
+      if (VerboseAsm) {
+        O << TAI->getCommentString() << ' ';
+        WriteTypeSymbolic(O, CPE.getType(), 0);
       }
+      O << '\n';
+      if (CPE.isMachineConstantPoolEntry())
+        EmitMachineConstantPoolValue(CPE.Val.MachineCPVal);
+      else
+        EmitGlobalConstant(CPE.Val.ConstVal);
     }
   }
 }

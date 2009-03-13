@@ -2186,7 +2186,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     Constant *C = LoadMI->getOpcode() == X86::V_SET0 ?
                     ConstantVector::getNullValue(Ty) :
                     ConstantVector::getAllOnesValue(Ty);
-    unsigned CPI = MCP.getConstantPoolIndex(C, /*AlignmentLog2=*/4);
+    unsigned CPI = MCP.getConstantPoolIndex(C, 16);
 
     // Create operands to load from the constant pool entry.
     MOs.push_back(MachineOperand::CreateReg(PICBase, false));

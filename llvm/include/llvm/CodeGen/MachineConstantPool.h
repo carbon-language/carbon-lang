@@ -70,28 +70,26 @@ public:
     MachineConstantPoolValue *MachineCPVal;
   } Val;
 
-  /// The offset of the constant from the start of the pool. The top bit is set
-  /// when Val is a MachineConstantPoolValue.
-  unsigned Offset;
+  /// The required alignment for this entry. The top bit is set when Val is
+  /// a MachineConstantPoolValue.
+  unsigned Alignment;
 
-  MachineConstantPoolEntry(Constant *V, unsigned O)
-    : Offset(O) {
-    assert((int)Offset >= 0 && "Offset is too large");
+  MachineConstantPoolEntry(Constant *V, unsigned A)
+    : Alignment(A) {
     Val.ConstVal = V;
   }
-  MachineConstantPoolEntry(MachineConstantPoolValue *V, unsigned O)
-    : Offset(O){
-    assert((int)Offset >= 0 && "Offset is too large");
+  MachineConstantPoolEntry(MachineConstantPoolValue *V, unsigned A)
+    : Alignment(A) {
     Val.MachineCPVal = V; 
-    Offset |= 1 << (sizeof(unsigned)*8-1);
+    Alignment |= 1 << (sizeof(unsigned)*8-1);
   }
 
   bool isMachineConstantPoolEntry() const {
-    return (int)Offset < 0;
+    return (int)Alignment < 0;
   }
 
-  int getOffset() const { 
-    return Offset & ~(1 << (sizeof(unsigned)*8-1));
+  int getAlignment() const { 
+    return Alignment & ~(1 << (sizeof(unsigned)*8-1));
   }
 
   const Type *getType() const;
@@ -117,13 +115,13 @@ public:
     : TD(td), PoolAlignment(1) {}
   ~MachineConstantPool();
     
-  /// getConstantPoolAlignment - Return the log2 of the alignment required by
+  /// getConstantPoolAlignment - Return the the alignment required by
   /// the whole constant pool, of which the first element must be aligned.
   unsigned getConstantPoolAlignment() const { return PoolAlignment; }
   
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
-  /// an existing one.  User must specify the log2 of the minimum required
-  /// alignment for the object.
+  /// an existing one.  User must specify the minimum required alignment for
+  /// the object.
   unsigned getConstantPoolIndex(Constant *C, unsigned Alignment);
   unsigned getConstantPoolIndex(MachineConstantPoolValue *V,unsigned Alignment);
   

@@ -276,7 +276,7 @@ public:
 
     Constant *CP = ConstantVector::get(CV);
     SDValue CPIdx = CurDAG->getConstantPool(CP, SPUtli.getPointerTy());
-    unsigned Alignment = 1 << cast<ConstantPoolSDNode > (CPIdx)->getAlignment();
+    unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     SDValue CGPoolOffset =
             SPU::LowerConstantPool(CPIdx, *CurDAG,
                                    SPUtli.getSPUTargetMachine());

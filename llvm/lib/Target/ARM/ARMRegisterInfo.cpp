@@ -184,7 +184,7 @@ void ARMRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   Constant *C = ConstantInt::get(Type::Int32Ty, Val);
-  unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
+  unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
   if (isThumb)
     BuildMI(MBB, MBBI, dl, 
             TII->get(ARM::tLDRcp),DestReg).addConstantPoolIndex(Idx);

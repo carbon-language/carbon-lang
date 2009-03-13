@@ -5672,8 +5672,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         Constant *CA = ConstantArray::get(ArrayType::get(FPTy, 2), Elts, 2);
         SDValue CPIdx = DAG.getConstantPool(CA, TLI.getPointerTy(),
                                             TD.getPrefTypeAlignment(FPTy));
-        unsigned Alignment =
-          1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
+        unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
 
         // Get the offsets to the 0 and 1 element of the array so that we can
         // select between them.

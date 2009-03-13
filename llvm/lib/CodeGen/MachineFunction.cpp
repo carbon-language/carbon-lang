@@ -521,19 +521,12 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
   // Check to see if we already have this constant.
   //
   // FIXME, this could be made much more efficient for large constant pools.
-  unsigned AlignMask = (1 << Alignment)-1;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-    if (Constants[i].Val.ConstVal == C && (Constants[i].Offset & AlignMask)== 0)
+    if (Constants[i].Val.ConstVal == C &&
+        (Constants[i].getAlignment() & (Alignment - 1)) == 0)
       return i;
   
-  unsigned Offset = 0;
-  if (!Constants.empty()) {
-    Offset = Constants.back().getOffset();
-    Offset += TD->getTypePaddedSize(Constants.back().getType());
-    Offset = (Offset+AlignMask)&~AlignMask;
-  }
-  
-  Constants.push_back(MachineConstantPoolEntry(C, Offset));
+  Constants.push_back(MachineConstantPoolEntry(C, Alignment));
   return Constants.size()-1;
 }
 
@@ -545,19 +538,11 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
   // Check to see if we already have this constant.
   //
   // FIXME, this could be made much more efficient for large constant pools.
-  unsigned AlignMask = (1 << Alignment)-1;
   int Idx = V->getExistingMachineCPValue(this, Alignment);
   if (Idx != -1)
     return (unsigned)Idx;
-  
-  unsigned Offset = 0;
-  if (!Constants.empty()) {
-    Offset = Constants.back().getOffset();
-    Offset += TD->getTypePaddedSize(Constants.back().getType());
-    Offset = (Offset+AlignMask)&~AlignMask;
-  }
-  
-  Constants.push_back(MachineConstantPoolEntry(V, Offset));
+
+  Constants.push_back(MachineConstantPoolEntry(V, Alignment));
   return Constants.size()-1;
 }
 
@@ -568,7 +553,7 @@ void MachineConstantPool::print(raw_ostream &OS) const {
       Constants[i].Val.MachineCPVal->print(OS);
     else
       OS << *(Value*)Constants[i].Val.ConstVal;
-    OS << " , offset=" << Constants[i].getOffset();
+    OS << " , alignment=" << Constants[i].getAlignment();
     OS << "\n";
   }
 }

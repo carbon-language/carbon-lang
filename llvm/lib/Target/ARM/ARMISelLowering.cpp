@@ -540,7 +540,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
                                                            ARMCP::CPStub, 4);
-      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 2);
+      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl, 
                            DAG.getEntryNode(), CPAddr, NULL, 0); 
@@ -559,7 +559,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(Sym, ARMPCLabelIndex,
                                                            ARMCP::CPStub, 4);
-      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 2);
+      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
                            DAG.getEntryNode(), CPAddr, NULL, 0); 
@@ -744,7 +744,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   ARMConstantPoolValue *CPV =
     new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex, ARMCP::CPValue,
                              PCAdj, "tlsgd", true);
-  SDValue Argument = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+  SDValue Argument = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   Argument = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Argument);
   Argument = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Argument, NULL, 0);
   SDValue Chain = Argument.getValue(1);
@@ -785,7 +785,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex, ARMCP::CPValue,
                                PCAdj, "gottpoff", true);
-    Offset = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    Offset = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset, NULL, 0);
     Chain = Offset.getValue(1);
@@ -798,7 +798,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     // local exec model
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GV, ARMCP::CPValue, "tpoff");
-    Offset = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    Offset = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset, NULL, 0);
   }
@@ -832,7 +832,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
     bool UseGOTOFF = GV->hasLocalLinkage() || GV->hasHiddenVisibility();
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GV, ARMCP::CPValue, UseGOTOFF ? "GOTOFF":"GOT");
-    SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), 
                                  CPAddr, NULL, 0);
@@ -843,7 +843,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
       Result = DAG.getLoad(PtrVT, dl, Chain, Result, NULL, 0);
     return Result;
   } else {
-    SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
+    SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
     CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
   }
@@ -869,7 +869,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   bool IsIndirect = GVIsIndirectSymbol(GV, RelocM);
   SDValue CPAddr;
   if (RelocM == Reloc::Static)
-    CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
+    CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
   else {
     unsigned PCAdj = (RelocM != Reloc::PIC_)
       ? 0 : (Subtarget->isThumb() ? 4 : 8);
@@ -877,7 +877,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
       : ARMCP::CPValue;
     ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
                                                          Kind, PCAdj);
-    CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   }
   CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
 
@@ -904,7 +904,7 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
   ARMConstantPoolValue *CPV = new ARMConstantPoolValue("_GLOBAL_OFFSET_TABLE_",
                                                        ARMPCLabelIndex,
                                                        ARMCP::CPValue, PCAdj);
-  SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+  SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
   SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
