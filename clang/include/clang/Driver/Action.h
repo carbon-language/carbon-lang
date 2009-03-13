@@ -84,8 +84,7 @@ public:
 class InputAction : public Action {
   const Arg &Input;
 public:
-  InputAction(const Arg &_Input, types::ID _Type) : Action(InputClass, _Type),
-                                                    Input(_Input) {}
+  InputAction(const Arg &_Input, types::ID _Type);
 
   const Arg &getInputArg() const { return Input; }
 
@@ -99,9 +98,7 @@ class BindArchAction : public Action {
   const char *ArchName;
 
 public:
-  BindArchAction(Action *Input, const char *_ArchName) 
-    : Action(BindArchClass, Input, Input->getType()), ArchName(_ArchName) {
-  }
+  BindArchAction(Action *Input, const char *_ArchName);
 
   const char *getArchName() const { return ArchName; }
 
@@ -113,10 +110,8 @@ public:
 
 class JobAction : public Action {
 protected:
-  JobAction(ActionClass Kind, Action *Input, types::ID Type) 
-    : Action(Kind, Input, Type) {}
-  JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type) 
-    : Action(Kind, Inputs, Type) {}
+  JobAction(ActionClass Kind, Action *Input, types::ID Type);
+  JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type);
 
 public:
   static bool classof(const Action *A) { 
@@ -128,9 +123,7 @@ public:
 
 class PreprocessJobAction : public JobAction {
 public:
-  PreprocessJobAction(Action *Input, types::ID OutputType)
-    : JobAction(PreprocessJobClass, Input, OutputType) {
-  }
+  PreprocessJobAction(Action *Input, types::ID OutputType);
 
   static bool classof(const Action *A) { 
     return A->getKind() == PreprocessJobClass;
@@ -140,9 +133,7 @@ public:
 
 class PrecompileJobAction : public JobAction {
 public:
-  PrecompileJobAction(Action *Input, types::ID OutputType)
-    : JobAction(PrecompileJobClass, Input, OutputType) {
-  }
+  PrecompileJobAction(Action *Input, types::ID OutputType);
 
   static bool classof(const Action *A) { 
     return A->getKind() == PrecompileJobClass;
@@ -152,9 +143,7 @@ public:
 
 class AnalyzeJobAction : public JobAction {
 public:
-  AnalyzeJobAction(Action *Input, types::ID OutputType)
-    : JobAction(AnalyzeJobClass, Input, OutputType) {
-  }
+  AnalyzeJobAction(Action *Input, types::ID OutputType);
 
   static bool classof(const Action *A) { 
     return A->getKind() == AnalyzeJobClass;
@@ -164,9 +153,7 @@ public:
 
 class CompileJobAction : public JobAction {
 public:
-  CompileJobAction(Action *Input, types::ID OutputType)
-    : JobAction(CompileJobClass, Input, OutputType) {
-  }
+  CompileJobAction(Action *Input, types::ID OutputType);
 
   static bool classof(const Action *A) { 
     return A->getKind() == CompileJobClass;
@@ -176,9 +163,7 @@ public:
 
 class AssembleJobAction : public JobAction {
 public:
-  AssembleJobAction(Action *Input, types::ID OutputType)
-    : JobAction(AssembleJobClass, Input, OutputType) {
-  }
+  AssembleJobAction(Action *Input, types::ID OutputType);
 
   static bool classof(const Action *A) { 
     return A->getKind() == AssembleJobClass;
@@ -188,8 +173,7 @@ public:
 
 class LinkJobAction : public JobAction {
 public:
-  LinkJobAction(ActionList &Inputs, types::ID Type) 
-    : JobAction(LinkJobClass, Inputs, Type) {}
+  LinkJobAction(ActionList &Inputs, types::ID Type);
 
   static bool classof(const Action *A) { 
     return A->getKind() == LinkJobClass;
@@ -199,8 +183,7 @@ public:
 
 class LipoJobAction : public JobAction {
 public:
-  LipoJobAction(ActionList &Inputs, types::ID Type) 
-    : JobAction(LipoJobClass, Inputs, Type) {}
+  LipoJobAction(ActionList &Inputs, types::ID Type);
 
   static bool classof(const Action *A) { 
     return A->getKind() == LipoJobClass;

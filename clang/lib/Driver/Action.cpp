@@ -30,3 +30,47 @@ const char *Action::getClassName(ActionClass AC) {
   assert(0 && "invalid class");
   return 0;
 }
+
+InputAction::InputAction(const Arg &_Input, types::ID _Type) 
+  : Action(InputClass, _Type), Input(_Input) {
+}
+
+BindArchAction::BindArchAction(Action *Input, const char *_ArchName) 
+  : Action(BindArchClass, Input, Input->getType()), ArchName(_ArchName) {
+}
+
+JobAction::JobAction(ActionClass Kind, Action *Input, types::ID Type)
+  : Action(Kind, Input, Type) {
+}
+
+JobAction::JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type) 
+  : Action(Kind, Inputs, Type) {
+}
+
+PreprocessJobAction::PreprocessJobAction(Action *Input, types::ID OutputType)
+  : JobAction(PreprocessJobClass, Input, OutputType) {
+}
+
+PrecompileJobAction::PrecompileJobAction(Action *Input, types::ID OutputType)
+  : JobAction(PrecompileJobClass, Input, OutputType) {
+}
+
+AnalyzeJobAction::AnalyzeJobAction(Action *Input, types::ID OutputType)
+  : JobAction(AnalyzeJobClass, Input, OutputType) {
+}
+
+CompileJobAction::CompileJobAction(Action *Input, types::ID OutputType)
+  : JobAction(CompileJobClass, Input, OutputType) {
+}
+
+AssembleJobAction::AssembleJobAction(Action *Input, types::ID OutputType)
+  : JobAction(AssembleJobClass, Input, OutputType) {
+}
+
+LinkJobAction::LinkJobAction(ActionList &Inputs, types::ID Type) 
+  : JobAction(LinkJobClass, Inputs, Type) {
+}
+
+LipoJobAction(ActionList &Inputs, types::ID Type)     
+  : JobAction(LipoJobClass, Inputs, Type) {
+}
