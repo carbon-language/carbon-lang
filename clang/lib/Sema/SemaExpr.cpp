@@ -4336,7 +4336,8 @@ Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
                                       SourceLocation LabLoc,
                                       IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = LabelMap[LabelII];
+  LabelStmt *&LabelDecl = CurBlock ? CurBlock->LabelMap[LabelII] : 
+                                     LabelMap[LabelII];
 
   // If we haven't seen this label yet, create a forward reference. It
   // will be validated and/or cleaned up in ActOnFinishFunctionBody.

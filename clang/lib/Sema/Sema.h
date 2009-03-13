@@ -2310,6 +2310,11 @@ struct BlockSemaInfo {
   /// return types, if any, in the block body.
   Type *ReturnType;
   
+  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
+  /// it (which acts like the label decl in some ways).  Forward referenced
+  /// labels have a LabelStmt created for them with a null location & SubStmt.
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  
   /// PrevBlockInfo - If this is nested inside another block, this points
   /// to the outer block.
   BlockSemaInfo *PrevBlockInfo;
