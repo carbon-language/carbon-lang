@@ -48,6 +48,7 @@ public:
 
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
   unsigned Freestanding      : 1; // Freestanding implementation
+  unsigned NoBuiltin         : 1; // Do not use builtin functions (-fno-builtin)
 
   unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
                                   // by locks.
@@ -75,7 +76,7 @@ public:
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
-    Exceptions = NeXTRuntime = Freestanding = 0;
+    Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
     

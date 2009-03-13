@@ -231,6 +231,11 @@ Freestanding("ffreestanding",
                             "freestanding environment"));
 
 static llvm::cl::opt<bool>
+NoBuiltin("fno-builtin",
+          llvm::cl::desc("Disable implicit builtin knowledge of functions"));
+
+
+static llvm::cl::opt<bool>
 MathErrno("fmath-errno", 
           llvm::cl::desc("Require math functions to respect errno"),
           llvm::cl::init(true), llvm::cl::AllowInverse);
@@ -650,8 +655,11 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
 
+  if (NoBuiltin)
+    Options.NoBuiltin = 1;
   if (Freestanding)
-    Options.Freestanding = 1;
+    Options.Freestanding = Options.NoBuiltin = 1;
+  
   if (EnableHeinousExtensions)
     Options.HeinousExtensions = 1;
 
@@ -1195,7 +1203,7 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
   // FIXME: There are llvm-gcc options to control these selectively.
   Opts.InlineFunctions = (Opts.OptimizationLevel > 1);
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
-  Opts.SimplifyLibCalls = !Freestanding;
+  Opts.SimplifyLibCalls = !NoBuiltin;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;

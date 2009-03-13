@@ -38,12 +38,11 @@ const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
 /// such.
 void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
                                           const TargetInfo &Target,
-                                          bool Freestanding) {
+                                          bool NoBuiltins) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
     if (!BuiltinInfo[i].Suppressed &&
-        (!Freestanding || 
-         !strchr(BuiltinInfo[i].Attributes, 'f')))
+        (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f')))
       Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
   
   // Step #2: Get target builtins.
@@ -52,7 +51,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
   // Step #3: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     if (!TSRecords[i].Suppressed &&
-        (!Freestanding || 
+        (!NoBuiltins || 
          (TSRecords[i].Attributes && 
           !strchr(TSRecords[i].Attributes, 'f'))))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);

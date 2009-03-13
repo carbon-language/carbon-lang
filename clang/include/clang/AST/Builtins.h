@@ -56,7 +56,7 @@ public:
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
   void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target,
-                          bool Freestanding = false);
+                          bool NoBuiltins = false);
   
   /// Builtin::GetName - Return the identifier name for the specified builtin,
   /// e.g. "__builtin_abs".
