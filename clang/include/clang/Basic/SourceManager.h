@@ -402,7 +402,7 @@ public:
   // SourceLocation manipulation methods.
   //===--------------------------------------------------------------------===//
   
-  /// getFileIDSlow - Return the FileID for a SourceLocation.  This is a very
+  /// getFileID - Return the FileID for a SourceLocation.  This is a very
   /// hot method that is used for all SourceManager queries that start with a
   /// SourceLocation object.  It is responsible for finding the entry in
   /// SLocEntryTable which contains the specified location.
