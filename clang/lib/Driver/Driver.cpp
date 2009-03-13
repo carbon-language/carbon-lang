@@ -243,7 +243,7 @@ static unsigned PrintActions1(const ArgList &Args,
   
   os << Action::getClassName(A->getKind()) << ", ";
   if (InputAction *IA = dyn_cast<InputAction>(A)) {    
-    os << IA->getInputArg().getValue(Args) << "\"";
+    os << "\"" << IA->getInputArg().getValue(Args) << "\"";
   } else if (BindArchAction *BIA = dyn_cast<BindArchAction>(A)) {
     os << "\"" << BIA->getArchName() << "\", "
        << "{" << PrintActions1(Args, *BIA->begin(), Ids) << "}";
@@ -326,7 +326,7 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) {
     // include the arch, which would also fix
     // -save-temps. Compatibility wins for now.
 
-    if (Archs.size() > 1 && types::canLipoType(Act->getType()))
+    if (Archs.size() > 1 && !types::canLipoType(Act->getType()))
       Diag(clang::diag::err_drv_invalid_output_with_multiple_archs)
         << types::getTypeName(Act->getType());
 

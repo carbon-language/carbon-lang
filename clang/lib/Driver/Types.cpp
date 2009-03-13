@@ -122,7 +122,7 @@ types::ID types::lookupTypeForTypeSpecifier(const char *Name) {
   for (unsigned i=0; i<numTypes; ++i) {
     types::ID Id = (types::ID) (i + 1);
     if (canTypeBeUserSpecified(Id) && 
-        memcmp(Name, getInfo(Id).Name, N) == 0)
+        memcmp(Name, getInfo(Id).Name, N + 1) == 0)
       return Id;
   }
 
