@@ -11144,7 +11144,8 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 
     // If we see a free or a call (which might do a free) the pointer could be
     // marked invalid.
-    if (isa<FreeInst>(BBI) || isa<CallInst>(BBI))
+    if (isa<FreeInst>(BBI) || 
+        (isa<CallInst>(BBI) && !isa<DbgInfoIntrinsic>(BBI)))
       return false;
     
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
