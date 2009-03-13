@@ -799,8 +799,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   lss = &getAnalysis<LiveStacks>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
-  std::auto_ptr<VirtRegMap> vrmAutoPtr(new VirtRegMap(*mf));
-  vrm = vrmAutoPtr.get();
+  vrm = &getAnalysis<VirtRegMap>();
 
   DOUT << "PBQP Register Allocating for " << mf->getFunction()->getName() << "\n";
 

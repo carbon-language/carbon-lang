@@ -105,7 +105,7 @@ namespace {
                                 greater_ptr<LiveInterval> > IntervalHeap;
     IntervalHeap unhandled_;
     std::auto_ptr<PhysRegTracker> prt_;
-    std::auto_ptr<VirtRegMap> vrm_;
+    VirtRegMap* vrm_;
     std::auto_ptr<Spiller> spiller_;
 
   public:
@@ -126,6 +126,8 @@ namespace {
       AU.addPreserved<LiveStacks>();
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineLoopInfo>();
+      AU.addRequired<VirtRegMap>();
+      AU.addPreserved<VirtRegMap>();
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
@@ -305,7 +307,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
     ComputeRelatedRegClasses();
   
   if (!prt_.get()) prt_.reset(new PhysRegTracker(*tri_));
-  vrm_.reset(new VirtRegMap(*mf_));
+  vrm_ = &getAnalysis<VirtRegMap>();
   if (!spiller_.get()) spiller_.reset(createSpiller());
 
   initIntervalSets();
@@ -314,7 +316,6 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
 
   // Rewrite spill code and update the PhysRegsUsed set.
   spiller_->runOnMachineFunction(*mf_, *vrm_);
-  vrm_.reset();  // Free the VirtRegMap
 
   assert(unhandled_.empty() && "Unhandled live intervals remain!");
   fixed_.clear();

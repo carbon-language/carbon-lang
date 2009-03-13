@@ -17,6 +17,7 @@
 #ifndef LLVM_CODEGEN_VIRTREGMAP_H
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
@@ -30,7 +31,7 @@ namespace llvm {
   class MachineFunction;
   class TargetInstrInfo;
 
-  class VirtRegMap {
+  class VirtRegMap : public MachineFunctionPass {
   public:
     enum {
       NO_PHYS_REG = 0,
@@ -43,9 +44,9 @@ namespace llvm {
                           std::pair<unsigned, ModRef> > MI2VirtMapTy;
 
   private:
-    const TargetInstrInfo &TII;
+    const TargetInstrInfo *TII;
 
-    MachineFunction &MF;
+    MachineFunction *MF;
     /// Virt2PhysMap - This is a virtual to physical register
     /// mapping. Each virtual register is required to have an entry in
     /// it; even spilled virtual registers (the register mapped to a
@@ -125,7 +126,19 @@ namespace llvm {
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
 
   public:
-    explicit VirtRegMap(MachineFunction &mf);
+    static char ID;
+    VirtRegMap() : MachineFunctionPass(&ID), Virt2PhysMap(NO_PHYS_REG),
+                   Virt2StackSlotMap(NO_STACK_SLOT), 
+                   Virt2ReMatIdMap(NO_STACK_SLOT), Virt2SplitMap(0),
+                   Virt2SplitKillMap(0), ReMatMap(NULL),
+                   ReMatId(MAX_STACK_SLOT+1),
+                   LowSpillSlot(NO_STACK_SLOT), HighSpillSlot(NO_STACK_SLOT) { }
+    virtual bool runOnMachineFunction(MachineFunction &MF);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
 
     void grow();
 
@@ -417,7 +430,7 @@ namespace llvm {
     /// the folded instruction map and spill point map.
     void RemoveMachineInstrFromMaps(MachineInstr *MI);
 
-    void print(std::ostream &OS) const;
+    void print(std::ostream &OS, const Module* M = 0) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }
     void dump() const;
   };
