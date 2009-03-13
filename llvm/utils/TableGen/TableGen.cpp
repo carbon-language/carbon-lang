@@ -17,6 +17,7 @@
 
 #include "Record.h"
 #include "TGParser.h"
+#include "TGSourceMgr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
@@ -113,15 +114,19 @@ RecordKeeper llvm::Records;
 /// ParseFile - this function begins the parsing of the specified tablegen
 /// file.
 static bool ParseFile(const std::string &Filename,
-                      const std::vector<std::string> &IncludeDirs) {
+                      const std::vector<std::string> &IncludeDirs,
+                      TGSourceMgr &SrcMgr) {
   std::string ErrorStr;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {
     cerr << "Could not open input file '" + Filename + "': " << ErrorStr <<"\n";
     return true;
   }
-
-  TGParser Parser(F);
+  
+  // Tell SrcMgr about this buffer, which is what TGParser will pick up.
+  SrcMgr.AddNewSourceBuffer(F, TGLocTy());
+  
+  TGParser Parser(SrcMgr);
 
   // Record the location of the include directory so that the lexer can find
   // it later.
@@ -135,8 +140,10 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 
+  TGSourceMgr SrcMgr;
+  
   // Parse the input file.
-  if (ParseFile(InputFilename, IncludeDirs))
+  if (ParseFile(InputFilename, IncludeDirs, SrcMgr))
     return 1;
 
   std::ostream *Out = cout.stream();

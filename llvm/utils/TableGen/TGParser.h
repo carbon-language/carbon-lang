@@ -47,7 +47,7 @@ class TGParser {
 public:
   typedef TGLexer::LocTy LocTy;
   
-  TGParser(MemoryBuffer *StartBuf) : Lex(StartBuf), CurMultiClass(0) {}
+  TGParser(TGSourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
   
   void setIncludeDirs(const std::vector<std::string> &D){Lex.setIncludeDirs(D);}
 

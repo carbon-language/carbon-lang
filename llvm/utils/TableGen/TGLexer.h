@@ -22,6 +22,7 @@
 
 namespace llvm {
 class MemoryBuffer;
+class TGSourceMgr;
   
 namespace tgtok {
   enum TokKind {
@@ -55,33 +56,27 @@ namespace tgtok {
 
 /// TGLexer - TableGen Lexer class.
 class TGLexer {
+  TGSourceMgr &SrcMgr;
+  
   const char *CurPtr;
-  unsigned CurLineNo;
-  MemoryBuffer *CurBuf;
+  const MemoryBuffer *CurBuf;
 
   // Information about the current token.
   const char *TokStart;
   tgtok::TokKind CurCode;
   std::string CurStrVal;  // This is valid for ID, STRVAL, VARNAME, CODEFRAGMENT
   int64_t CurIntVal;      // This is valid for INTVAL.
-  
-  /// IncludeRec / IncludeStack - This captures the current set of include
-  /// directives we are nested within.
-  struct IncludeRec {
-    MemoryBuffer *Buffer;
-    const char *CurPtr;
-    unsigned LineNo;
-    IncludeRec(MemoryBuffer *buffer, const char *curPtr, unsigned lineNo)
-      : Buffer(buffer), CurPtr(curPtr), LineNo(lineNo) {}
-  };
-  std::vector<IncludeRec> IncludeStack;
+
+  /// CurBuffer - This is the current buffer index we're lexing from as managed
+  /// by the SourceMgr object.
+  int CurBuffer;
   
   // IncludeDirectories - This is the list of directories we should search for
   // include files in.
   std::vector<std::string> IncludeDirectories;
 public:
-  TGLexer(MemoryBuffer *StartBuf);
-  ~TGLexer();
+  TGLexer(TGSourceMgr &SrcMgr);
+  ~TGLexer() {}
   
   void setIncludeDirs(const std::vector<std::string> &Dirs) {
     IncludeDirectories = Dirs;
@@ -108,8 +103,6 @@ public:
   LocTy getLoc() const { return TokStart; }
 
   void PrintError(LocTy Loc, const std::string &Msg) const;
-  
-  void PrintIncludeStack(std::ostream &OS) const;
   
 private:
   /// LexToken - Read the next token and return its code.
