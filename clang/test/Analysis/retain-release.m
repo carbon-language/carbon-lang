@@ -60,9 +60,10 @@ typedef struct _NSZone NSZone;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end  @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
-@end    @interface NSObject <NSObject> {
-}
+@end
+@interface NSObject <NSObject> {}
 + (id)alloc;
++ (id)allocWithZone:(NSZone *)zone;
 @end   typedef float CGFloat;
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
 - (const char *)UTF8String;
@@ -323,4 +324,13 @@ static void rdar_6659160(char *inkind, char *inname)
   [kind release];
   [name release];
 }
+
+// PR 3677 - 'allocWithZone' should be treated as following the Cocoa naming
+//  conventions with respect to 'return'ing ownership.
+@interface PR3677: NSObject @end
+@implementation PR3677
++ (id)allocWithZone:(NSZone *)inZone {
+  return [super allocWithZone:inZone];  // no-warning
+}
+@end
 
