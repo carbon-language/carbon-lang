@@ -17,6 +17,7 @@
 
 namespace clang {
 namespace driver {
+  class Arg;
 
 /// Action - Represent an abstract compilation step to perform. 
 ///
@@ -34,6 +35,9 @@ class Action {
   ActionList Inputs;
 
 protected:
+  Action(types::ID _Type) : Type(_Type) {}
+  Action(Action *Input, types::ID _Type) : Type(_Type),
+                                           Inputs(&Input, &Input + 1) {}
   Action(const ActionList &_Inputs, types::ID _Type) : Type(_Type),
                                                        Inputs(_Inputs) {}  
 public:
@@ -43,6 +47,10 @@ public:
 };
 
 class InputAction : public Action {
+  const Arg &Input;
+public:
+  InputAction(const Arg &_Input, types::ID _Type) : Action(_Type),
+                                                    Input(_Input) {}
 };
 
 class BindArchAction : public Action {
@@ -50,15 +58,55 @@ class BindArchAction : public Action {
 
 public:
   BindArchAction(Action *Input, const char *_ArchName) 
-    : Action(ActionList(&Input, &Input + 1), Input->getType()),
-      ArchName(_ArchName) {
+    : Action(Input, Input->getType()), ArchName(_ArchName) {
   }
 };
 
 class JobAction : public Action {
 protected:
-  JobAction(ActionList &Inputs, types::ID Type) 
-    : Action(Inputs, Type) {}
+  JobAction(Action *Input, types::ID Type) : Action(Input, Type) {}
+  JobAction(const ActionList &Inputs, types::ID Type) : Action(Inputs, Type) {}
+};
+
+class PreprocessJobAction : public JobAction {
+public:
+  PreprocessJobAction(Action *Input, types::ID OutputType)
+    : JobAction(Input, OutputType) {
+  }
+};
+
+class PrecompileJobAction : public JobAction {
+public:
+  PrecompileJobAction(Action *Input, types::ID OutputType)
+    : JobAction(Input, OutputType) {
+  }
+};
+
+class AnalyzeJobAction : public JobAction {
+public:
+  AnalyzeJobAction(Action *Input, types::ID OutputType)
+    : JobAction(Input, OutputType) {
+  }
+};
+
+class CompileJobAction : public JobAction {
+public:
+  CompileJobAction(Action *Input, types::ID OutputType)
+    : JobAction(Input, OutputType) {
+  }
+};
+
+class AssembleJobAction : public JobAction {
+public:
+  AssembleJobAction(Action *Input, types::ID OutputType)
+    : JobAction(Input, OutputType) {
+  }
+};
+
+class LinkJobAction : public JobAction {
+public:
+  LinkJobAction(ActionList &Inputs, types::ID Type) 
+    : JobAction(Inputs, Type) {}
 };
 
 class LipoJobAction : public JobAction {
