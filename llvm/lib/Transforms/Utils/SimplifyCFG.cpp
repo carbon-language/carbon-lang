@@ -1069,9 +1069,12 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   }
 
   // If we get here, we can hoist the instruction. Try to place it
-  // before the icmp instruction preceeding the conditional branch.
+  // before the icmp instruction preceding the conditional branch.
   BasicBlock::iterator InsertPos = BI;
-  if (InsertPos != BIParent->begin()) 
+  if (InsertPos != BIParent->begin())
+    --InsertPos;
+  // Skip debug info between condition and branch.
+  while (InsertPos != BIParent->begin() && isa<DbgInfoIntrinsic>(InsertPos))
     --InsertPos;
   if (InsertPos == BrCond && !isa<PHINode>(BrCond)) {
     SmallPtrSet<Instruction *, 4> BB1Insns;
