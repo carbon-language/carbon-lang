@@ -12,3 +12,15 @@ entry:
 	%iftmp.0.0 = select i1 %1, i32 -1, i32 -2		; <i32> [#uses=1]
 	ret i32 %iftmp.0.0
 }
+
+; 	setl	%al
+;	movzbl	%al, %eax
+;	leal	4(%eax,%eax,8), %eax
+define i32 @test2(i32* nocapture %P) nounwind readonly {
+entry:
+	%0 = load i32* %P, align 4		; <i32> [#uses=1]
+	%1 = icmp sgt i32 %0, 41		; <i1> [#uses=1]
+	%iftmp.0.0 = select i1 %1, i32 4, i32 13		; <i32> [#uses=1]
+	ret i32 %iftmp.0.0
+}
+
