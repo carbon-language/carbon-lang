@@ -1275,7 +1275,14 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       QualType IntegerType = Context.getCanonicalType(ParamType);
       if (const EnumType *Enum = IntegerType->getAsEnumType())
         IntegerType = Enum->getDecl()->getIntegerType();
-      
+
+      if (Arg->isValueDependent()) {
+        // The argument is value-dependent. Create a new
+        // TemplateArgument with the converted expression.
+        Converted->push_back(TemplateArgument(Arg));
+        return false;
+      } 
+
       llvm::APInt CanonicalArg(Context.getTypeSize(IntegerType), 0, 
                                IntegerType->isSignedIntegerType());
       CanonicalArg = Value;

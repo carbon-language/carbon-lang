@@ -216,7 +216,10 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(CXXConstructorDecl *Cons,
                                                Expr **Args,
                                                unsigned NumArgs, 
                                                SourceLocation rParenLoc)
-  : Expr(CXXTemporaryObjectExprClass, writtenTy),
+  : Expr(CXXTemporaryObjectExprClass, writtenTy,
+         writtenTy->isDependentType(),
+         (writtenTy->isDependentType() ||
+          CallExpr::hasAnyValueDependentArguments(Args, NumArgs))),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc),
     Constructor(Cons), Args(0), NumArgs(NumArgs) {
   if (NumArgs > 0) {

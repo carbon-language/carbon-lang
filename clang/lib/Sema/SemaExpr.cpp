@@ -1220,6 +1220,50 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
   return CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
 }
 
+/// \brief Build a sizeof or alignof expression given a type operand.
+Action::OwningExprResult 
+Sema::CreateSizeOfAlignOfExpr(QualType T, SourceLocation OpLoc, 
+                              bool isSizeOf, SourceRange R) {
+  if (T.isNull())
+    return ExprError();
+
+  if (!T->isDependentType() &&
+      CheckSizeOfAlignOfOperand(T, OpLoc, R, isSizeOf))
+    return ExprError();
+
+  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+  return Owned(new (Context) SizeOfAlignOfExpr(isSizeOf, T,
+                                               Context.getSizeType(), OpLoc,
+                                               R.getEnd()));
+}
+
+/// \brief Build a sizeof or alignof expression given an expression
+/// operand.
+Action::OwningExprResult 
+Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc, 
+                              bool isSizeOf, SourceRange R) {
+  // Verify that the operand is valid.
+  bool isInvalid = false;
+  if (E->isTypeDependent()) {
+    // Delay type-checking for type-dependent expressions.
+  } else if (!isSizeOf) {
+    isInvalid = CheckAlignOfExpr(E, OpLoc, R);
+  } else if (E->isBitField()) {  // C99 6.5.3.4p1.
+    Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
+    isInvalid = true;
+  } else {
+    isInvalid = CheckSizeOfAlignOfOperand(E->getType(), OpLoc, R, true);
+  }
+
+  if (isInvalid)
+    return ExprError();
+
+  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+  return Owned(new (Context) SizeOfAlignOfExpr(isSizeOf, E,
+                                               Context.getSizeType(), OpLoc,
+                                               R.getEnd()));
+}
+
 /// ActOnSizeOfAlignOfExpr - Handle @c sizeof(type) and @c sizeof @c expr and
 /// the same for @c alignof and @c __alignof
 /// Note that the ArgRange is invalid if isType is false.
@@ -1229,42 +1273,20 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
   // If error parsing type, ignore.
   if (TyOrEx == 0) return ExprError();
 
-  QualType ArgTy;
-  SourceRange Range;
   if (isType) {
-    ArgTy = QualType::getFromOpaquePtr(TyOrEx);
-    Range = ArgRange;
-    
-    // Verify that the operand is valid.
-    if (CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, isSizeof))
-      return ExprError();
-  } else {
-    // Get the end location.
-    Expr *ArgEx = (Expr *)TyOrEx;
-    Range = ArgEx->getSourceRange();
-    ArgTy = ArgEx->getType();
-    
-    // Verify that the operand is valid.
-    bool isInvalid;
-    if (!isSizeof) {
-      isInvalid = CheckAlignOfExpr(ArgEx, OpLoc, Range);
-    } else if (ArgEx->isBitField()) {  // C99 6.5.3.4p1.
-      Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
-      isInvalid = true;
-    } else {
-      isInvalid = CheckSizeOfAlignOfOperand(ArgTy, OpLoc, Range, true);
-    }
-    
-    if (isInvalid) {
-      DeleteExpr(ArgEx);
-      return ExprError();
-    }
-  }
+    QualType ArgTy = QualType::getFromOpaquePtr(TyOrEx);
+    return CreateSizeOfAlignOfExpr(ArgTy, OpLoc, isSizeof, ArgRange);
+  } 
 
-  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(new (Context) SizeOfAlignOfExpr(isSizeof, isType, TyOrEx,
-                                               Context.getSizeType(), OpLoc,
-                                               Range.getEnd()));
+  // Get the end location.
+  Expr *ArgEx = (Expr *)TyOrEx;
+  Action::OwningExprResult Result
+    = CreateSizeOfAlignOfExpr(ArgEx, OpLoc, isSizeof, ArgEx->getSourceRange());
+
+  if (Result.isInvalid())
+    DeleteExpr(ArgEx);
+
+  return move(Result);
 }
 
 QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {

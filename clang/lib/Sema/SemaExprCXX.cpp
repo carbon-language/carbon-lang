@@ -122,6 +122,13 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   SourceLocation TyBeginLoc = TypeRange.getBegin();
   SourceRange FullRange = SourceRange(TyBeginLoc, RParenLoc);
 
+  if (Ty->isDependentType() || 
+      CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
+    return new (Context) CXXTemporaryObjectExpr(0, Ty, TyBeginLoc,
+                                                Exprs, NumExprs, RParenLoc);
+  }
+
+
   // C++ [expr.type.conv]p1:
   // If the expression list is a single expression, the type conversion
   // expression is equivalent (in definedness, and if defined in meaning) to the
@@ -133,8 +140,6 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     return new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(), Ty,
                                                TyBeginLoc, Exprs[0], RParenLoc);
   }
-
-  // FIXME: What AST node to create when the type is dependent?
 
   if (const RecordType *RT = Ty->getAsRecordType()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());

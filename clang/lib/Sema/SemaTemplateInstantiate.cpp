@@ -17,6 +17,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Lex/Preprocessor.h" // for the identifier table
 #include "clang/Basic/LangOptions.h"
 #include "llvm/Support/Compiler.h"
 
@@ -441,7 +442,12 @@ InstantiateClassTemplateSpecializationType(
       break;
 
     case TemplateArgument::Expression:
-      assert(false && "Cannot instantiate expressions yet");
+      Sema::OwningExprResult E 
+        = SemaRef.InstantiateExpr(Arg->getAsExpr(), TemplateArgs,
+                                  NumTemplateArgs);
+      if (E.isInvalid())
+        return QualType();
+      InstantiatedTemplateArgs.push_back((Expr *)E.release());
       break;
     }
   }
@@ -564,6 +570,8 @@ namespace {
     unsigned NumTemplateArgs;
 
   public:
+    typedef Sema::OwningExprResult OwningExprResult;
+
     TemplateExprInstantiator(Sema &SemaRef, 
                              const TemplateArgument *TemplateArgs,
                              unsigned NumTemplateArgs)
@@ -573,11 +581,13 @@ namespace {
     // FIXME: Once we get closer to completion, replace these
     // manually-written declarations with automatically-generated ones
     // from clang/AST/StmtNodes.def.
-    Sema::OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
-    Sema::OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
-    Sema::OwningExprResult VisitParenExpr(ParenExpr *E);
-    Sema::OwningExprResult VisitBinaryOperator(BinaryOperator *E);
-    Sema::OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
+    OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
+    OwningExprResult VisitParenExpr(ParenExpr *E);
+    OwningExprResult VisitBinaryOperator(BinaryOperator *E);
+    OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
 
     // Base case. I'm supposed to ignore this.
     Sema::OwningExprResult VisitStmt(Stmt *) { 
@@ -692,6 +702,9 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
     DeclRefExpr *DRE = cast<DeclRefExpr>(E->getCallee());
     OverloadedFunctionDecl *Overloads 
       = cast<OverloadedFunctionDecl>(DRE->getDecl());
+
+    // FIXME: Do we have to check
+    // IsAcceptableNonMemberOperatorCandidate for each of these?
     for (OverloadedFunctionDecl::function_iterator 
            F = Overloads->function_begin(),
            FEnd = Overloads->function_end();
@@ -714,6 +727,90 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   LHS.release();
   RHS.release();
   return move(Result);  
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+  bool isSizeOf = E->isSizeOf();
+
+  if (E->isArgumentType()) {
+    QualType T = E->getArgumentType();
+    if (T->isDependentType()) {
+      T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
+                                  /*FIXME*/E->getOperatorLoc(),
+                                  &SemaRef.PP.getIdentifierTable().get("sizeof"));
+      if (T.isNull())
+        return SemaRef.ExprError();
+    }
+
+    return SemaRef.CreateSizeOfAlignOfExpr(T, E->getOperatorLoc(), isSizeOf,
+                                           E->getSourceRange());
+  } 
+
+  Sema::OwningExprResult Arg = Visit(E->getArgumentExpr());
+  if (Arg.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult Result
+    = SemaRef.CreateSizeOfAlignOfExpr((Expr *)Arg.get(), E->getOperatorLoc(),
+                                      isSizeOf, E->getSourceRange());
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+  Arg.release();
+  return move(Result);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
+                                                  CXXTemporaryObjectExpr *E) {
+  QualType T = E->getType();
+  if (T->isDependentType()) {
+    T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
+                                E->getTypeBeginLoc(), DeclarationName());
+    if (T.isNull())
+      return SemaRef.ExprError();
+  }
+
+  llvm::SmallVector<Expr *, 16> Args;
+  Args.reserve(E->getNumArgs());
+  bool Invalid = false;
+  for (CXXTemporaryObjectExpr::arg_iterator Arg = E->arg_begin(), 
+                                         ArgEnd = E->arg_end();
+       Arg != ArgEnd; ++Arg) {
+    OwningExprResult InstantiatedArg = Visit(*Arg);
+    if (InstantiatedArg.isInvalid()) {
+      Invalid = true;
+      break;
+    }
+
+    Args.push_back((Expr *)InstantiatedArg.release());
+  }
+
+  if (!Invalid) {
+    SourceLocation CommaLoc;
+    // FIXME: HACK!
+    if (Args.size() > 1)
+      CommaLoc 
+        = SemaRef.PP.getLocForEndOfToken(Args[0]->getSourceRange().getEnd());
+    Sema::ExprResult Result 
+      = SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc()
+                                                      /*, FIXME*/),
+                                          T.getAsOpaquePtr(),
+                                          /*FIXME*/E->getTypeBeginLoc(),
+                                          (void**)&Args[0], Args.size(),
+                                          /*HACK*/&CommaLoc,
+                                          E->getSourceRange().getEnd());
+    if (!Result.isInvalid())
+      return SemaRef.Owned(Result);
+  }
+
+  // Clean up the instantiated arguments.
+  // FIXME: Would rather do this with RAII.
+  for (unsigned Idx = 0; Idx < Args.size(); ++Idx)
+    SemaRef.DeleteExpr(Args[Idx]);
+
+  return SemaRef.ExprError();
 }
 
 Sema::OwningExprResult 

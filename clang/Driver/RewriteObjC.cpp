@@ -2553,8 +2553,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                             FT->getResultType(), SourceLocation());
     
     // Build sizeof(returnType)
-    SizeOfAlignOfExpr *sizeofExpr = new (Context) SizeOfAlignOfExpr(true, true,
-                                      returnType.getAsOpaquePtr(),
+    SizeOfAlignOfExpr *sizeofExpr = new (Context) SizeOfAlignOfExpr(true, 
+                                      returnType,
                                       Context->getSizeType(),
                                       SourceLocation(), SourceLocation());
     // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))

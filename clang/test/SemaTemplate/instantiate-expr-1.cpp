@@ -43,3 +43,13 @@ void test_BitfieldDivide() {
   (void)sizeof(BitfieldDivide<5, 1>);
   (void)sizeof(BitfieldDivide<5, 0>); // expected-note{{in instantiation of template class 'struct BitfieldDivide<5, 0>' requested here}}
 }
+
+template<typename T, T I, int J>
+struct BitfieldDep {
+  int bitfield : I + J;
+};
+
+void test_BitfieldDep() {
+  (void)sizeof(BitfieldDep<int, 1, 5>);
+}
+

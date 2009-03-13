@@ -692,20 +692,26 @@ class SizeOfAlignOfExpr : public Expr {
   } Argument;
   SourceLocation OpLoc, RParenLoc;
 public:
-  SizeOfAlignOfExpr(bool issizeof, bool istype, void *argument,
+  SizeOfAlignOfExpr(bool issizeof, QualType T, 
                     QualType resultType, SourceLocation op,
                     SourceLocation rp) :
       Expr(SizeOfAlignOfExprClass, resultType,
-           false, // Never type-dependent.
+           false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
-           (istype ? QualType::getFromOpaquePtr(argument)->isDependentType()
-                   : static_cast<Expr*>(argument)->isTypeDependent())),
-      isSizeof(issizeof), isType(istype), OpLoc(op), RParenLoc(rp) {
-    if (isType)
-      Argument.Ty = argument;
-    else
-      // argument was an Expr*, so cast it back to that to be safe
-      Argument.Ex = static_cast<Expr*>(argument);
+           T->isDependentType()),
+      isSizeof(issizeof), isType(true), OpLoc(op), RParenLoc(rp) {
+    Argument.Ty = T.getAsOpaquePtr();
+  }
+
+  SizeOfAlignOfExpr(bool issizeof, Expr *E, 
+                    QualType resultType, SourceLocation op,
+                    SourceLocation rp) :
+      Expr(SizeOfAlignOfExprClass, resultType,
+           false, // Never type-dependent (C++ [temp.dep.expr]p3).
+           // Value-dependent if the argument is type-dependent.
+           E->isTypeDependent()),
+      isSizeof(issizeof), isType(false), OpLoc(op), RParenLoc(rp) {
+    Argument.Ex = E;
   }
 
   virtual void Destroy(ASTContext& C);

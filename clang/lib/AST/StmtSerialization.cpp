@@ -832,9 +832,14 @@ SizeOfAlignOfExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType Res = QualType::ReadVal(D);
   SourceLocation OpLoc = SourceLocation::ReadVal(D);
   SourceLocation RParenLoc = SourceLocation::ReadVal(D);
-  
-  return new SizeOfAlignOfExpr(isSizeof, isType, Argument, Res,
-                               OpLoc, RParenLoc);
+
+  if (isType)
+    return new (C) SizeOfAlignOfExpr(isSizeof, 
+                                     QualType::getFromOpaquePtr(Argument),
+                                     Res, OpLoc, RParenLoc);
+
+  return new (C) SizeOfAlignOfExpr(isSizeof, (Expr *)Argument,
+                                   Res, OpLoc, RParenLoc);
 }
 
 void StmtExpr::EmitImpl(Serializer& S) const {

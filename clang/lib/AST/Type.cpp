@@ -967,9 +967,12 @@ ClassTemplateSpecializationType(TemplateDecl *T, const TemplateArgument *Args,
 }
 
 void ClassTemplateSpecializationType::Destroy(ASTContext& C) {
-  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-    if (Expr *E = getArg(Arg).getAsExpr())
-      E->Destroy(C);
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    // FIXME: Not all expressions get cloned, so we can't yet perform
+    // this destruction.
+    //    if (Expr *E = getArg(Arg).getAsExpr())
+    //      E->Destroy(C);
+  }
 }
 
 ClassTemplateSpecializationType::iterator

@@ -1392,6 +1392,9 @@ static bool
 IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
                                        QualType T1, QualType T2,
                                        ASTContext &Context) {
+  if (T1->isDependentType() || (!T2.isNull() && T2->isDependentType()))
+    return true;
+
   if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
     return true;
 

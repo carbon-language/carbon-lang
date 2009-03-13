@@ -467,6 +467,8 @@ public:
   const_arg_iterator arg_begin() const { return Args; }
   const_arg_iterator arg_end() const { return Args + NumArgs; }
   
+  unsigned getNumArgs() const { return NumArgs; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(TyBeginLoc, RParenLoc);
   }
