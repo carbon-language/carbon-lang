@@ -130,11 +130,20 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
 
     // Emit a constant string fragment.
     if (DollarPos != LastEmitted) {
-      // TODO: this should eventually handle escaping.
-      if (CurVariant == Variant || CurVariant == ~0U)
-        AddLiteralString(std::string(AsmString.begin()+LastEmitted,
-                                     AsmString.begin()+DollarPos));
-      LastEmitted = DollarPos;
+      if (CurVariant == Variant || CurVariant == ~0U) {
+        for (; LastEmitted != DollarPos; ++LastEmitted)
+          switch (AsmString[LastEmitted]) {
+          case '\n': AddLiteralString("\\n"); break;
+          case '\t': AddLiteralString("\\t"); break;
+          case '"': AddLiteralString("\\\""); break;
+          case '\\': AddLiteralString("\\\\"); break;
+          default:
+            AddLiteralString(std::string(1, AsmString[LastEmitted]));
+            break;
+          }
+      } else {
+        LastEmitted = DollarPos;
+      }
     } else if (AsmString[DollarPos] == '\\') {
       if (DollarPos+1 != AsmString.size() &&
           (CurVariant == Variant || CurVariant == ~0U)) {

@@ -174,11 +174,11 @@ tgtok::TokKind TGLexer::LexString() {
       CurStrVal += *CurPtr++;
       break;
     case 't':
-      CurStrVal += "\\t";
+      CurStrVal += '\t';
       ++CurPtr;
       break;
     case 'n':
-      CurStrVal += "\\n";
+      CurStrVal += '\n';
       ++CurPtr;
       break;
         
