@@ -43,6 +43,8 @@ Driver::~Driver() {
 ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
   ArgList *Args = new ArgList(ArgBegin, ArgEnd);
   
+  // FIXME: Handle '@' args (or at least error on them).
+
   unsigned Index = 0, End = ArgEnd - ArgBegin;
   while (Index < End) {
     // gcc's handling of empty arguments doesn't make
@@ -393,43 +395,122 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) {
   // Determine which compilation mode we are in. We look for options
   // which affect the phase, starting with the earliest phases, and
   // record which option we used to determine the final phase.
-  Arg *FinalPhaseOpt = 0;
-  PhaseOrder FinalPhase;
+  Arg *FinalPhaseArg = 0;
+  phases::ID FinalPhase;
 
   // -{E,M,MM} only run the preprocessor.
-  if ((FinalPhaseOpt = Args.getLastArg(options::OPT_E)) ||
-      (FinalPhaseOpt = Args.getLastArg(options::OPT_M)) ||
-      (FinalPhaseOpt = Args.getLastArg(options::OPT_MM))) {
-    FinalPhase = PreprocessPhaseOrder;
+  if ((FinalPhaseArg = Args.getLastArg(options::OPT_E)) ||
+      (FinalPhaseArg = Args.getLastArg(options::OPT_M)) ||
+      (FinalPhaseArg = Args.getLastArg(options::OPT_MM))) {
+    FinalPhase = phases::Preprocess;
     
     // -{-analyze,fsyntax-only,S} only run up to the compiler.
-  } else if ((FinalPhaseOpt = Args.getLastArg(options::OPT__analyze)) ||
-             (FinalPhaseOpt = Args.getLastArg(options::OPT_fsyntax_only)) ||
-             (FinalPhaseOpt = Args.getLastArg(options::OPT_S))) {
-    FinalPhase = CompilePhaseOrder;
+  } else if ((FinalPhaseArg = Args.getLastArg(options::OPT__analyze)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT_S))) {
+    FinalPhase = phases::Compile;
 
     // -c only runs up to the assembler.
-  } else if ((FinalPhaseOpt = Args.getLastArg(options::OPT_c))) {
-    FinalPhase = AssemblePhaseOrder;
+  } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_c))) {
+    FinalPhase = phases::Assemble;
     
     // Otherwise do everything.
   } else
-    FinalPhase = PostAssemblePhaseOrder;
+    FinalPhase = phases::Link;
 
-  if (FinalPhaseOpt)
-    FinalPhaseOpt->claim();
+  if (FinalPhaseArg)
+    FinalPhaseArg->claim();
 
   // Reject -Z* at the top level, these options should never have been
   // exposed by gcc.
   if (Arg *A = Args.getLastArg(options::OPT_Z))
     Diag(clang::diag::err_drv_use_of_Z_option) << A->getValue(Args);
 
-  // FIXME: This is just debugging code.
+  // Construct the actions to perform.
+  ActionList LinkerInputs;
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
-    llvm::errs() << "input " << i << ": " 
-                 << Inputs[i].second->getValue(Args) << "\n";
+    types::ID InputType = Inputs[i].first;
+    const Arg *InputArg = Inputs[i].second;
+
+    unsigned NumSteps = types::getNumCompilationPhases(InputType);
+    assert(NumSteps && "Invalid number of steps!");
+
+    // If the first step comes after the final phase we are doing as
+    // part of this compilation, warn the user about it.
+    phases::ID InitialPhase = types::getCompilationPhase(InputType, 0);
+    if (InitialPhase > FinalPhase) {
+      Diag(clang::diag::warn_drv_input_file_unused) 
+        << InputArg->getValue(Args)
+        << getPhaseName(InitialPhase)
+        << FinalPhaseArg->getOption().getName();
+      continue;
+    }
+    
+    // Build the pipeline for this file.
+    Action *Current = new InputAction(*InputArg, InputType);
+    for (unsigned i = 0; i != NumSteps; ++i) {
+      phases::ID Phase = types::getCompilationPhase(InputType, i);
+
+      // We are done if this step is past what the user requested.
+      if (Phase > FinalPhase)
+        break;
+
+      // Queue linker inputs.
+      if (Phase == phases::Link) {
+        assert(i + 1 == NumSteps && "linking must be final compilation step.");
+        LinkerInputs.push_back(Current);
+        Current = 0;
+        break;
+      }
+
+      // Otherwise construct the appropriate action.
+      Current = ConstructPhaseAction(Args, Phase, Current);
+      if (Current->getType() == types::TY_Nothing)
+        break;
+    }
+
+    // If we ended with something, add to the output list.
+    if (Current)
+      Actions.push_back(Current);
   }
-  exit(0);
+
+  // Add a link action if necessary.
+  if (!LinkerInputs.empty())
+    Actions.push_back(new LinkJobAction(LinkerInputs, types::TY_Image));
+}
+
+Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
+                                     Action *Input) const {
+  // Build the appropriate action.
+  switch (Phase) {
+  case phases::Link: assert(0 && "link action invalid here.");
+  case phases::Preprocess: {
+    types::ID OutputTy = types::getPreprocessedType(Input->getType());
+    assert(OutputTy != types::TY_INVALID &&
+           "Cannot preprocess this input type!");
+    return new PreprocessJobAction(Input, OutputTy);
+  }
+  case phases::Precompile:
+    return new PrecompileJobAction(Input, types::TY_PCH);    
+  case phases::Compile: {
+    if (Args.hasArg(options::OPT_fsyntax_only)) {
+      return new CompileJobAction(Input, types::TY_Nothing);
+    } else if (Args.hasArg(options::OPT__analyze)) {
+      return new AnalyzeJobAction(Input, types::TY_Plist);
+    } else if (Args.hasArg(options::OPT_emit_llvm)) {
+      types::ID Output = 
+        Args.hasArg(options::OPT_S) ? types::TY_LLVMAsm : types::TY_LLVMBC;
+      return new CompileJobAction(Input, Output);
+    } else {
+      return new CompileJobAction(Input, types::TY_PP_Asm);
+    }
+  }
+  case phases::Assemble:
+    return new AssembleJobAction(Input, types::TY_Object);
+  }
+
+  assert(0 && "invalid phase in ConstructPhaseAction");
+  return 0;
 }
 
 llvm::sys::Path Driver::GetFilePath(const char *Name) const {

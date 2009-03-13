@@ -12,6 +12,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 
+#include "clang/Driver/Phases.h"
 #include "clang/Driver/Util.h"
 
 #include "llvm/System/Path.h" // FIXME: Kill when CompilationInfo
@@ -32,25 +33,6 @@ namespace driver {
 /// Driver - Encapsulate logic for constructing compilation processes
 /// from a set of gcc-driver-like command line arguments.
 class Driver {
-  /// PhaseOrder - Ordered values for successive stages in the
-  /// compilation process which interact with user options.
-  enum PhaseOrder {
-    /// Nothing.
-    NoPhaseOrder = 0,
-
-    /// Only run the preprocessor.
-    PreprocessPhaseOrder,
-
-    /// Only run the preprocessor and compiler.
-    CompilePhaseOrder,
-
-    /// Only run the preprocessor, compiler, and assembler.
-    AssemblePhaseOrder,
-
-    /// Run everything.
-    PostAssemblePhaseOrder
-  };
-
   OptTable *Opts;
 
   Diagnostic &Diags;
@@ -183,6 +165,12 @@ public:
   /// \return Whether any compilation should be built for this
   /// invocation.
   bool HandleImmediateArgs(const ArgList &Args);
+
+  /// ConstructAction - Construct the appropriate action to do for
+  /// \arg Phase on the \arg Input, taking in to account arguments
+  /// like -fsyntax-only or --analyze.
+  Action *ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
+                               Action *Input) const;
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.

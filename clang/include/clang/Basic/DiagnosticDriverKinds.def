@@ -28,3 +28,6 @@ DIAG(err_drv_no_input_files, ERROR,
      "no input files")
 DIAG(err_drv_use_of_Z_option, ERROR,
      "unsupported use of internal gcc -Z option '%0'")
+
+DIAG(warn_drv_input_file_unused, WARNING,
+     "%0: '%1' input file unused when '%2' is present")
