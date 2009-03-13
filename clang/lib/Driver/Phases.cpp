@@ -15,11 +15,11 @@ using namespace clang::driver;
 
 const char *phases::getPhaseName(ID Id) {
   switch (Id) {
-  case Preprocess: return "preprocess";
-  case Precompile: return "precompile";
-  case Compile: return "compile";
-  case Assemble: return "assemble";
-  case Link: return "link";
+  case Preprocess: return "preprocesser";
+  case Precompile: return "precompiler";
+  case Compile: return "compiler";
+  case Assemble: return "assembler";
+  case Link: return "linker";
   }
 
   assert(0 && "Invalid phase id.");
