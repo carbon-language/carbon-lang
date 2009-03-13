@@ -10,6 +10,8 @@
 #ifndef CLANG_DRIVER_TYPES_H_
 #define CLANG_DRIVER_TYPES_H_
 
+#include "clang/Driver/Phases.h"
+
 namespace clang {
 namespace driver {
 namespace types {
@@ -61,6 +63,14 @@ namespace types {
   /// lookupTypeForTypSpecifier - Lookup the type to use for a user
   /// specified type name.
   ID lookupTypeForTypeSpecifier(const char *Name);
+
+  /// getNumCompilationPhases - Return the complete number of phases
+  /// to be done for this type.
+  unsigned getNumCompilationPhases(ID Id);
+
+  /// getCompilationPhase - Return the \args N th compilation phase to
+  /// be done for this type.
+  phases::ID getCompilationPhase(ID Id, unsigned N);
 
 } // end namespace types
 } // end namespace driver

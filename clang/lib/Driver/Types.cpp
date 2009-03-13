@@ -128,3 +128,47 @@ types::ID types::lookupTypeForTypeSpecifier(const char *Name) {
 
   return TY_INVALID;
 }
+
+// FIXME: Why don't we just put this list in the defs file, eh.
+
+unsigned types::getNumCompilationPhases(ID Id) {  
+  if (Id == TY_Object)
+    return 1;
+    
+  unsigned N = 0;
+  if (getPreprocessedType(Id) != TY_INVALID)
+    N += 1;
+  
+  if (onlyAssembleType(Id))
+    return N + 2; // assemble, link
+  if (onlyPrecompileType(Id))
+    return N + 1; // precompile
+  
+  return N + 3; // compile, assemble, link
+}
+
+phases::ID types::getCompilationPhase(ID Id, unsigned N) {
+  assert(N < getNumCompilationPhases(Id) && "Invalid index.");
+  
+  if (Id == TY_Object)
+    return phases::Link;
+
+  if (getPreprocessedType(Id) != TY_INVALID) {
+    if (N == 0)
+      return phases::Preprocess;
+    --N;
+  }
+
+  if (onlyAssembleType(Id))
+    return N == 0 ? phases::Assemble : phases::Link;
+
+  if (onlyPrecompileType(Id))
+    return phases::Precompile;
+
+  if (N == 0)
+    return phases::Compile;
+  if (N == 1)
+    return phases::Assemble;
+  
+  return phases::Link;
+}
