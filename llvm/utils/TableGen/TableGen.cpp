@@ -108,7 +108,17 @@ namespace {
               cl::value_desc("directory"), cl::Prefix);
 }
 
+
+// FIXME: Eliminate globals from tblgen.
 RecordKeeper llvm::Records;
+
+static TGSourceMgr SrcMgr;
+
+void PrintError(TGLoc ErrorLoc, const std::string &Msg) {
+  SrcMgr.PrintError(ErrorLoc, Msg);
+}
+
+
 
 /// ParseFile - this function begins the parsing of the specified tablegen
 /// file.
@@ -139,7 +149,6 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 
-  TGSourceMgr SrcMgr;
   
   // Parse the input file.
   if (ParseFile(InputFilename, IncludeDirs, SrcMgr))

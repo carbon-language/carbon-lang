@@ -15,15 +15,13 @@
 #ifndef RECORD_H
 #define RECORD_H
 
+#include "TGSourceMgr.h"
 #include "llvm/Support/DataTypes.h"
-#include <string>
-#include <vector>
 #include <map>
 #include <ostream>
-#include <cassert>
 
 namespace llvm {
-
+  
 // RecTy subclasses.
 class BitRecTy;
 class BitsRecTy;
@@ -962,16 +960,20 @@ inline std::ostream &operator<<(std::ostream &OS, const RecordVal &RV) {
 
 class Record {
   std::string Name;
+  TGLoc Loc;
   std::vector<std::string> TemplateArgs;
   std::vector<RecordVal> Values;
   std::vector<Record*> SuperClasses;
 public:
 
-  explicit Record(const std::string &N) : Name(N) {}
+  explicit Record(const std::string &N, TGLoc loc) : Name(N), Loc(loc) {}
   ~Record() {}
-
+  
   const std::string &getName() const { return Name; }
   void setName(const std::string &Name);  // Also updates RecordKeeper.
+  
+  TGLoc getLoc() const { return Loc; }
+  
   const std::vector<std::string> &getTemplateArgs() const {
     return TemplateArgs;
   }
@@ -1198,6 +1200,9 @@ std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK);
 
 extern RecordKeeper Records;
 
+void PrintError(TGLoc ErrorLoc, const std::string &Msg);
+
+  
 } // End llvm namespace
 
 #endif

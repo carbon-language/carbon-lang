@@ -14,9 +14,9 @@
 #ifndef TGSOURCEMGR_H
 #define TGSOURCEMGR_H
 
-#include <cassert>
-#include <vector>
 #include <string>
+#include <vector>
+#include <cassert>
 
 namespace llvm {
   class MemoryBuffer;
