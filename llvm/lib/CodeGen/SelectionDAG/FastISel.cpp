@@ -497,7 +497,14 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
   if (!InputReg)
     // Unhandled operand.  Halt "fast" selection and bail.
     return false;
-    
+
+  // If the operand is i1, arrange for the high bits in the register to be zero.
+  if (I->getOperand(0)->getType() == Type::Int1Ty) {
+   InputReg = FastEmitZExtFromI1(SrcVT.getSimpleVT(), InputReg);
+   if (!InputReg)
+     return false;
+  }
+
   unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
                                   DstVT.getSimpleVT(),
                                   Opcode,
@@ -969,4 +976,10 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
       ResultReg = 0;
   }
   return ResultReg;
+}
+
+/// FastEmitZExtFromI1 - Emit MachineInstrs to compute the value of Op
+/// with all but the least significant bit set to zero.
+unsigned FastISel::FastEmitZExtFromI1(MVT::SimpleValueType VT, unsigned Op) {
+  return FastEmit_ri(VT, VT, ISD::AND, Op, 1);
 }
