@@ -40,14 +40,19 @@ namespace clang {
 /// function templates that were found by name lookup at template
 /// definition time.
 class CXXOperatorCallExpr : public CallExpr {
+  /// \brief The overloaded operator.
+  OverloadedOperatorKind Operator;
+
 public:
-  CXXOperatorCallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
-                      QualType t, SourceLocation operatorloc)
-    : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc){}
+  CXXOperatorCallExpr(ASTContext& C, OverloadedOperatorKind Op, Expr *fn, 
+                      Expr **args, unsigned numargs, QualType t, 
+                      SourceLocation operatorloc)
+    : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc),
+      Operator(Op) {}
 
   /// getOperator - Returns the kind of overloaded operator that this
   /// expression refers to.
-  OverloadedOperatorKind getOperator() const;
+  OverloadedOperatorKind getOperator() const { return Operator; }
 
   /// getOperatorLoc - Returns the location of the operator symbol in
   /// the expression. When @c getOperator()==OO_Call, this is the

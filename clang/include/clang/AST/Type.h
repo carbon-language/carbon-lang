@@ -361,7 +361,7 @@ public:
   /// that its definition somehow depends on a template parameter 
   /// (C++ [temp.dep.type]).
   bool isDependentType() const { return Dependent; }
-  bool isOverloadType() const;                  // C++ overloaded function
+  bool isOverloadableType() const;
 
   /// hasPointerRepresentation - Whether this type is represented
   /// natively as a pointer; this includes pointers, references, block
@@ -1860,8 +1860,10 @@ inline bool Type::isSpecificBuiltinType(unsigned K) const {
   return false;
 }
 
-inline bool Type::isOverloadType() const {
-  return isSpecificBuiltinType(BuiltinType::Overload);
+/// \brief Determines whether this is a type for which one can define
+/// an overloaded operator.
+inline bool Type::isOverloadableType() const {
+  return isDependentType() || isRecordType() || isEnumeralType();
 }
 
 inline bool Type::hasPointerRepresentation() const {

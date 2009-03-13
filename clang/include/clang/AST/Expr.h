@@ -1245,6 +1245,14 @@ public:
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
 
+  /// \brief Retrieve the binary opcode that corresponds to the given
+  /// overloaded operator.
+  static Opcode getOverloadedOpcode(OverloadedOperatorKind OO);
+
+  /// \brief Retrieve the overloaded operator kind that corresponds to
+  /// the given binary opcode.
+  static OverloadedOperatorKind getOverloadedOperator(Opcode Opc);
+
   /// predicates to categorize the respective opcodes.
   bool isMultiplicativeOp() const { return Opc >= Mul && Opc <= Rem; }
   bool isAdditiveOp() const { return Opc == Add || Opc == Sub; }

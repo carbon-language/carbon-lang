@@ -648,9 +648,11 @@ TemplateExprInstantiator::VisitBinaryOperator(BinaryOperator *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
-  // FIXME: HACK HACK HACK. This is so utterly and completely wrong
-  // that I don't want to explain it here. I'll just fix it tomorrow
-  // instead.
+  // FIXME: Only handles binary operators at the moment.
+
+  // FIXME: Can we optimize this further if neither the left- nor the
+  // right-hand sides are type-dependent? It depends on whether we
+  // need to perform ADL again
   Sema::OwningExprResult LHS = Visit(E->getArg(0));
   if (LHS.isInvalid())
     return SemaRef.ExprError();
@@ -659,11 +661,56 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   if (RHS.isInvalid())
     return SemaRef.ExprError();
 
-  Sema::OwningExprResult Result
-    = SemaRef.CreateBuiltinBinOp(E->getOperatorLoc(), 
-                                 BinaryOperator::Add,
-                                 (Expr *)LHS.get(),
-                                 (Expr *)RHS.get());
+  Expr *lhs = (Expr *)LHS.get(), *rhs = (Expr *)RHS.get();
+  Expr *Args[2] = { lhs, rhs };
+
+  if (!E->isTypeDependent()) { 
+    // Since our original expression was not type-dependent, we do not
+    // perform lookup again at instantiation time (C++ [temp.dep]p1).
+    // Instead, we just build the new overloaded operator call
+    // expression.
+    LHS.release();
+    RHS.release();
+    return SemaRef.Owned(new (SemaRef.Context) CXXOperatorCallExpr(
+                                                       SemaRef.Context, 
+                                                       E->getOperator(),
+                                                       E->getCallee(), 
+                                                       Args, 2, E->getType(), 
+                                                       E->getOperatorLoc()));
+  }
+
+  BinaryOperator::Opcode Opc = 
+    BinaryOperator::getOverloadedOpcode(E->getOperator());
+  Sema::OwningExprResult Result(SemaRef);
+  if (!lhs->getType()->isOverloadableType() && 
+      !rhs->getType()->isOverloadableType()) {
+    // Neither LHS nor RHS is an overloadable type, so try create a
+    // built-in binary operation.
+    Result = SemaRef.CreateBuiltinBinOp(E->getOperatorLoc(), Opc, 
+                                        lhs, rhs);
+  } else {
+    // Compute the set of functions that were found at template
+    // definition time.
+    Sema::FunctionSet Functions;
+    DeclRefExpr *DRE = cast<DeclRefExpr>(E->getCallee());
+    OverloadedFunctionDecl *Overloads 
+      = cast<OverloadedFunctionDecl>(DRE->getDecl());
+    for (OverloadedFunctionDecl::function_iterator 
+           F = Overloads->function_begin(),
+           FEnd = Overloads->function_end();
+         F != FEnd; ++F)
+      Functions.insert(*F);
+
+    // Add any functions found via argument-dependent lookup.
+    DeclarationName OpName 
+      = SemaRef.Context.DeclarationNames.getCXXOperatorName(E->getOperator());
+    SemaRef.ArgumentDependentLookup(OpName, Args, 2, Functions);
+
+    // Create the overloaded operator.
+    Result = SemaRef.CreateOverloadedBinOp(E->getOperatorLoc(), Opc, 
+                                           Functions, lhs, rhs);
+  }
+
   if (Result.isInvalid())
     return SemaRef.ExprError();
 

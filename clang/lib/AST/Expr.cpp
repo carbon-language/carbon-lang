@@ -227,6 +227,68 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   return "";
 }
 
+BinaryOperator::Opcode 
+BinaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO) {
+  switch (OO) {
+  case OO_Plus: return Add;
+  case OO_Minus: return Sub;
+  case OO_Star: return Mul;
+  case OO_Slash: return Div;
+  case OO_Percent: return Rem;
+  case OO_Caret: return Xor;
+  case OO_Amp: return And;
+  case OO_Pipe: return Or;
+  case OO_Equal: return Assign;
+  case OO_Less: return LT;
+  case OO_Greater: return GT;
+  case OO_PlusEqual: return AddAssign;
+  case OO_MinusEqual: return SubAssign;
+  case OO_StarEqual: return MulAssign;
+  case OO_SlashEqual: return DivAssign;
+  case OO_PercentEqual: return RemAssign;
+  case OO_CaretEqual: return XorAssign;
+  case OO_AmpEqual: return AndAssign;
+  case OO_PipeEqual: return OrAssign;
+  case OO_LessLess: return Shl;
+  case OO_GreaterGreater: return Shr;
+  case OO_LessLessEqual: return ShlAssign;
+  case OO_GreaterGreaterEqual: return ShrAssign;
+  case OO_EqualEqual: return EQ;
+  case OO_ExclaimEqual: return NE;
+  case OO_LessEqual: return LE;
+  case OO_GreaterEqual: return GE;
+  case OO_AmpAmp: return LAnd;
+  case OO_PipePipe: return LOr;
+  case OO_Comma: return Comma;
+  case OO_ArrowStar: return PtrMemI;
+  default: assert(false && "Not an overloadable binary operator");
+  }
+}
+
+OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
+  static const OverloadedOperatorKind OverOps[] = {
+    /* .* Cannot be overloaded */OO_None, OO_ArrowStar,
+    OO_Star, OO_Slash, OO_Percent,
+    OO_Plus, OO_Minus,
+    OO_LessLess, OO_GreaterGreater,
+    OO_Less, OO_Greater, OO_LessEqual, OO_GreaterEqual,
+    OO_EqualEqual, OO_ExclaimEqual,
+    OO_Amp,
+    OO_Caret,
+    OO_Pipe,
+    OO_AmpAmp,
+    OO_PipePipe,
+    OO_Equal, OO_StarEqual,
+    OO_SlashEqual, OO_PercentEqual,
+    OO_PlusEqual, OO_MinusEqual,
+    OO_LessLessEqual, OO_GreaterGreaterEqual,
+    OO_AmpEqual, OO_CaretEqual,
+    OO_PipeEqual,
+    OO_Comma
+  };
+  return OverOps[Opc];
+}
+
 InitListExpr::InitListExpr(SourceLocation lbraceloc, 
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)

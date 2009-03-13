@@ -800,7 +800,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Function_To_Pointer:
-    if (FromType->isOverloadType()) {
+    if (Context.getCanonicalType(FromType) == Context.OverloadTy) {
       FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType, true);
       if (!Fn)
         return true;

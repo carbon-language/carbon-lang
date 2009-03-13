@@ -523,10 +523,18 @@ public:
     OR_Deleted              ///< Overload resoltuion refers to a deleted function.
   };
 
+  typedef llvm::SmallPtrSet<FunctionDecl *, 16> FunctionSet;
+  typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
+  typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
+
   void AddOverloadCandidate(FunctionDecl *Function, 
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions = false);
+  void AddFunctionCandidates(const FunctionSet &Functions,
+                             Expr **Args, unsigned NumArgs,
+                             OverloadCandidateSet& CandidateSet,
+                             bool SuppressUserConversions = false);
   void AddMethodCandidate(CXXMethodDecl *Method,
                           Expr *Object, Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
@@ -538,11 +546,16 @@ public:
                              const FunctionProtoType *Proto,
                              Expr *Object, Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet);
-  bool AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
+  void AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                              SourceLocation OpLoc,
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
                              SourceRange OpRange = SourceRange());
+  void AddMemberOperatorCandidates(OverloadedOperatorKind Op,
+                                   SourceLocation OpLoc,
+                                   Expr **Args, unsigned NumArgs,
+                                   OverloadCandidateSet& CandidateSet,
+                                   SourceRange OpRange = SourceRange());
   void AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys, 
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
@@ -572,6 +585,12 @@ public:
                                         SourceLocation *CommaLocs, 
                                         SourceLocation RParenLoc,
                                         bool &ArgumentDependentLookup);
+
+  OwningExprResult CreateOverloadedBinOp(SourceLocation OpLoc,
+                                         unsigned Opc,
+                                         FunctionSet &Functions,
+                                         Expr *LHS, Expr *RHS);
+
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
                             SourceLocation LParenLoc, Expr **Args, 
@@ -929,10 +948,6 @@ public:
                                 bool RedeclarationOnly = false,
                                 bool AllowBuiltinCreation = true,
                                 SourceLocation Loc = SourceLocation());
-
-  typedef llvm::SmallPtrSet<FunctionDecl *, 16> FunctionSet;
-  typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
-  typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2, 

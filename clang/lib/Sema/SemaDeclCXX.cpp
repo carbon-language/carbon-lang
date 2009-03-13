@@ -1694,7 +1694,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   // If the initializer is the address of an overloaded function, try
   // to resolve the overloaded function. If all goes well, T2 is the
   // type of the resulting function.
-  if (T2->isOverloadType()) {
+  if (Context.getCanonicalType(T2) == Context.OverloadTy) {
     FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Init, DeclType, 
                                                           ICS != 0);
     if (Fn) {

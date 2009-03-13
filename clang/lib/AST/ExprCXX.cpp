@@ -160,27 +160,6 @@ bool UnaryTypeTraitExpr::EvaluateTrait() const {
   }
 }
 
-OverloadedOperatorKind CXXOperatorCallExpr::getOperator() const {
-  // All simple function calls (e.g. func()) are implicitly cast to pointer to
-  // function. As a result, we try and obtain the DeclRefExpr from the 
-  // ImplicitCastExpr.
-  const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(getCallee());
-  if (!ICE) // FIXME: deal with more complex calls (e.g. (func)(), (*func)()).
-    return OO_None;
-  
-  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr());
-  if (!DRE)
-    return OO_None;
-  
-  if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl()))
-    return FDecl->getDeclName().getCXXOverloadedOperator();  
-  else if (const OverloadedFunctionDecl *Ovl 
-             = dyn_cast<OverloadedFunctionDecl>(DRE->getDecl()))
-    return Ovl->getDeclName().getCXXOverloadedOperator();
-  else
-    return OO_None;
-}
-
 SourceRange CXXOperatorCallExpr::getSourceRange() const {
   OverloadedOperatorKind Kind = getOperator();
   if (Kind == OO_PlusPlus || Kind == OO_MinusMinus) {
