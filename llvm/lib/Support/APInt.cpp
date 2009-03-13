@@ -623,16 +623,94 @@ unsigned APInt::getBitsNeeded(const char* str, unsigned slen, uint8_t radix) {
   return isNegative + tmp.logBase2() + 1;
 }
 
-uint64_t APInt::getHashValue() const {
-  // Put the bit width into the low order bits.
-  uint64_t hash = BitWidth;
+// From http://www.burtleburtle.net, byBob Jenkins.
+// When targeting x86, both GCC and LLVM seem to recognize this as a
+// rotate instruction.
+#define rot(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
 
-  // Add the sum of the words to the hash.
+// From http://www.burtleburtle.net, by Bob Jenkins.
+#define mix(a,b,c) \
+  { \
+    a -= c;  a ^= rot(c, 4);  c += b; \
+    b -= a;  b ^= rot(a, 6);  a += c; \
+    c -= b;  c ^= rot(b, 8);  b += a; \
+    a -= c;  a ^= rot(c,16);  c += b; \
+    b -= a;  b ^= rot(a,19);  a += c; \
+    c -= b;  c ^= rot(b, 4);  b += a; \
+  }
+
+// From http://www.burtleburtle.net, by Bob Jenkins.
+#define final(a,b,c) \
+  { \
+    c ^= b; c -= rot(b,14); \
+    a ^= c; a -= rot(c,11); \
+    b ^= a; b -= rot(a,25); \
+    c ^= b; c -= rot(b,16); \
+    a ^= c; a -= rot(c,4);  \
+    b ^= a; b -= rot(a,14); \
+    c ^= b; c -= rot(b,24); \
+  }
+
+// hashword() was adapted from http://www.burtleburtle.net, by Bob
+// Jenkins.  k is a pointer to an array of uint32_t values; length is
+// the length of the key, in 32-bit chunks.  This version only handles
+// keys that are a multiple of 32 bits in size.
+static inline uint32_t hashword(const uint64_t *k64, size_t length)
+{
+  const uint32_t *k = reinterpret_cast<const uint32_t *>(k64);
+  uint32_t a,b,c;
+
+  /* Set up the internal state */
+  a = b = c = 0xdeadbeef + (((uint32_t)length)<<2);
+
+  /*------------------------------------------------- handle most of the key */
+  while (length > 3)
+    {
+      a += k[0];
+      b += k[1];
+      c += k[2];
+      mix(a,b,c);
+      length -= 3;
+      k += 3;
+    }
+
+  /*------------------------------------------- handle the last 3 uint32_t's */
+  switch(length)                     /* all the case statements fall through */
+    {
+    case 3 : c+=k[2];
+    case 2 : b+=k[1];
+    case 1 : a+=k[0];
+      final(a,b,c);
+    case 0:     /* case 0: nothing left to add */
+      break;
+    }
+  /*------------------------------------------------------ report the result */
+  return c;
+}
+
+// hashword8() was adapted from http://www.burtleburtle.net, by Bob
+// Jenkins.  This computes a 32-bit hash from one 64-bit word.  When
+// targeting x86 (32 or 64 bit), both LLVM and GCC compile this
+// function into about 35 instructions when inlined.
+static inline uint32_t hashword8(const uint64_t k64)
+{
+  uint32_t a,b,c;
+  a = b = c = 0xdeadbeef + 4;
+  b += k64 >> 32;
+  a += k64 & 0xffffffff;
+  final(a,b,c);
+  return c;
+}
+#undef final
+#undef mix
+#undef rot
+
+uint64_t APInt::getHashValue() const {
+  uint64_t hash;
   if (isSingleWord())
-    hash += VAL << 6; // clear separation of up to 64 bits
+    hash = hashword8(VAL);
   else
-    for (unsigned i = 0; i < getNumWords(); ++i)
-      hash += pVal[i] << 6; // clear sepration of up to 64 bits
+    hash = hashword(pVal, getNumWords()*2);
   return hash;
 }
 
