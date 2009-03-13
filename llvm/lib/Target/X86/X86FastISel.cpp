@@ -1413,6 +1413,19 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectFPTrunc(I);
   case Instruction::ExtractValue:
     return X86SelectExtractValue(I);
+  case Instruction::IntToPtr: // Deliberate fall-through.
+  case Instruction::PtrToInt: {
+    MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+    MVT DstVT = TLI.getValueType(I->getType());
+    if (DstVT.bitsGT(SrcVT))
+      return X86SelectZExt(I);
+    if (DstVT.bitsLT(SrcVT))
+      return X86SelectTrunc(I);
+    unsigned Reg = getRegForValue(I->getOperand(0));
+    if (Reg == 0) return false;
+    UpdateValueMap(I, Reg);
+    return true;
+  }
   }
 
   return false;

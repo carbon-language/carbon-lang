@@ -477,33 +477,41 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
   MVT DstVT = TLI.getValueType(I->getType());
     
   if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-      DstVT == MVT::Other || !DstVT.isSimple() ||
-      !TLI.isTypeLegal(DstVT))
+      DstVT == MVT::Other || !DstVT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
     
-  // Check if the source operand is legal. Or as a special case,
-  // it may be i1 if we're doing zero-extension because that's
-  // trivially easy and somewhat common.
-  if (!TLI.isTypeLegal(SrcVT)) {
-    if (SrcVT == MVT::i1 && Opcode == ISD::ZERO_EXTEND)
-      SrcVT = TLI.getTypeToTransformTo(SrcVT);
-    else
+  // Check if the destination type is legal. Or as a special case,
+  // it may be i1 if we're doing a truncate because that's
+  // easy and somewhat common.
+  if (!TLI.isTypeLegal(DstVT))
+    if (DstVT != MVT::i1 || Opcode != ISD::TRUNCATE)
       // Unhandled type. Halt "fast" selection and bail.
       return false;
-  }
-    
+
+  // Check if the source operand is legal. Or as a special case,
+  // it may be i1 if we're doing zero-extension because that's
+  // easy and somewhat common.
+  if (!TLI.isTypeLegal(SrcVT))
+    if (SrcVT != MVT::i1 || Opcode != ISD::ZERO_EXTEND)
+      // Unhandled type. Halt "fast" selection and bail.
+      return false;
+
   unsigned InputReg = getRegForValue(I->getOperand(0));
   if (!InputReg)
     // Unhandled operand.  Halt "fast" selection and bail.
     return false;
 
   // If the operand is i1, arrange for the high bits in the register to be zero.
-  if (I->getOperand(0)->getType() == Type::Int1Ty) {
+  if (SrcVT == MVT::i1) {
+   SrcVT = TLI.getTypeToTransformTo(SrcVT);
    InputReg = FastEmitZExtFromI1(SrcVT.getSimpleVT(), InputReg);
    if (!InputReg)
      return false;
   }
+  // If the result is i1, truncate to the target's type for i1 first.
+  if (DstVT == MVT::i1)
+    DstVT = TLI.getTypeToTransformTo(DstVT);
 
   unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
                                   DstVT.getSimpleVT(),
