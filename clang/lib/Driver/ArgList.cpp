@@ -54,7 +54,7 @@ unsigned ArgList::MakeIndex(const char *String0) {
 unsigned ArgList::MakeIndex(const char *String0, const char *String1) {
   unsigned Index0 = MakeIndex(String0);
   unsigned Index1 = MakeIndex(String1);
-  assert(Index0 == Index1 && "Unexpected non-consecutive indices!");
+  assert(Index0 + 1 == Index1 && "Unexpected non-consecutive indices!");
   (void) Index1;
   return Index0;
 }
