@@ -91,6 +91,36 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   }
 }
 
+UnaryOperator::Opcode 
+UnaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO, bool Postfix) {
+  switch (OO) {
+  case OO_PlusPlus: return Postfix? PostInc : PreInc;
+  case OO_MinusMinus: return Postfix? PostDec : PreDec;
+  case OO_Amp: return AddrOf;
+  case OO_Star: return Deref;
+  case OO_Plus: return Plus;
+  case OO_Minus: return Minus;
+  case OO_Tilde: return Not;
+  case OO_Exclaim: return LNot;
+  default: assert(false && "No unary operator for overloaded function");
+  }
+}
+
+OverloadedOperatorKind UnaryOperator::getOverloadedOperator(Opcode Opc) {
+  switch (Opc) {
+  case PostInc: case PreInc: return OO_PlusPlus;
+  case PostDec: case PreDec: return OO_MinusMinus;
+  case AddrOf: return OO_Amp;
+  case Deref: return OO_Star;
+  case Plus: return OO_Plus;
+  case Minus: return OO_Minus;
+  case Not: return OO_Tilde;
+  case LNot: return OO_Exclaim;
+  default: return OO_None;
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 // Postfix Operators.
 //===----------------------------------------------------------------------===//

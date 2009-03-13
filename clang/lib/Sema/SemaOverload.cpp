@@ -3623,6 +3623,153 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
   return 0;
 }
 
+/// \brief Create a unary operation that may resolve to an overloaded
+/// operator.
+///
+/// \param OpLoc The location of the operator itself (e.g., '*').
+///
+/// \param OpcIn The UnaryOperator::Opcode that describes this
+/// operator.
+///
+/// \param Functions The set of non-member functions that will be
+/// considered by overload resolution. The caller needs to build this
+/// set based on the context using, e.g.,
+/// LookupOverloadedOperatorName() and ArgumentDependentLookup(). This
+/// set should not contain any member functions; those will be added
+/// by CreateOverloadedUnaryOp().
+///
+/// \param input The input argument.
+Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
+                                                     unsigned OpcIn,
+                                                     FunctionSet &Functions,
+                                                     ExprArg input) {  
+  UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
+  Expr *Input = (Expr *)input.get();
+
+  OverloadedOperatorKind Op = UnaryOperator::getOverloadedOperator(Opc);
+  assert(Op != OO_None && "Invalid opcode for overloaded unary operator");
+  DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
+
+  Expr *Args[2] = { Input, 0 };
+  unsigned NumArgs = 1;
+    
+  // For post-increment and post-decrement, add the implicit '0' as
+  // the second argument, so that we know this is a post-increment or
+  // post-decrement.
+  if (Opc == UnaryOperator::PostInc || Opc == UnaryOperator::PostDec) {
+    llvm::APSInt Zero(Context.getTypeSize(Context.IntTy), false);
+    Args[1] = new (Context) IntegerLiteral(Zero, Context.IntTy, 
+                                           SourceLocation());
+    NumArgs = 2;
+  }
+
+  if (Input->isTypeDependent()) {
+    OverloadedFunctionDecl *Overloads 
+      = OverloadedFunctionDecl::Create(Context, CurContext, OpName);
+    for (FunctionSet::iterator Func = Functions.begin(), 
+                            FuncEnd = Functions.end();
+         Func != FuncEnd; ++Func)
+      Overloads->addOverload(*Func);
+
+    DeclRefExpr *Fn = new (Context) DeclRefExpr(Overloads, Context.OverloadTy,
+                                                OpLoc, false, false);
+    
+    input.release();
+    return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
+                                                   &Args[0], NumArgs,
+                                                   Context.DependentTy,
+                                                   OpLoc));
+  }
+
+  // Build an empty overload set.
+  OverloadCandidateSet CandidateSet;
+
+  // Add the candidates from the given function set.
+  AddFunctionCandidates(Functions, &Args[0], NumArgs, CandidateSet, false);
+
+  // Add operator candidates that are member functions.
+  AddMemberOperatorCandidates(Op, OpLoc, &Args[0], NumArgs, CandidateSet);
+
+  // Add builtin operator candidates.
+  AddBuiltinOperatorCandidates(Op, &Args[0], NumArgs, CandidateSet);
+
+  // Perform overload resolution.
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, Best)) {
+  case OR_Success: {
+    // We found a built-in operator or an overloaded operator.
+    FunctionDecl *FnDecl = Best->Function;
+    
+    if (FnDecl) {
+      // We matched an overloaded operator. Build a call to that
+      // operator.
+      
+      // Convert the arguments.
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+        if (PerformObjectArgumentInitialization(Input, Method))
+          return ExprError();
+      } else {
+        // Convert the arguments.
+        if (PerformCopyInitialization(Input,
+                                      FnDecl->getParamDecl(0)->getType(),
+                                      "passing"))
+          return ExprError();
+      }
+
+      // Determine the result type
+      QualType ResultTy
+        = FnDecl->getType()->getAsFunctionType()->getResultType();
+      ResultTy = ResultTy.getNonReferenceType();
+      
+      // Build the actual expression node.
+      Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
+                                               SourceLocation());
+      UsualUnaryConversions(FnExpr);
+      
+      input.release();
+      return Owned(new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
+                                                     &Input, 1, ResultTy, 
+                                                     OpLoc));
+    } else {
+      // We matched a built-in operator. Convert the arguments, then
+      // break out so that we will build the appropriate built-in
+      // operator node.
+        if (PerformImplicitConversion(Input, Best->BuiltinTypes.ParamTypes[0],
+                                      Best->Conversions[0], "passing"))
+          return ExprError();
+
+        break;
+      }
+    }
+
+    case OR_No_Viable_Function:
+      // No viable function; fall through to handling this as a
+      // built-in operator, which will produce an error message for us.
+      break;
+
+    case OR_Ambiguous:
+      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
+          << UnaryOperator::getOpcodeStr(Opc)
+          << Input->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
+
+    case OR_Deleted:
+      Diag(OpLoc, diag::err_ovl_deleted_oper)
+        << Best->Function->isDeleted()
+        << UnaryOperator::getOpcodeStr(Opc)
+        << Input->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
+    }
+
+  // Either we found no viable overloaded operator or we matched a
+  // built-in operator. In either case, fall through to trying to
+  // build a built-in operation.
+  input.release();
+  return CreateBuiltinUnaryOp(OpLoc, Opc, Owned(Input));
+}
+
 /// \brief Create a binary operation that may resolve to an overloaded
 /// operator.
 ///
@@ -3645,7 +3792,6 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                             unsigned OpcIn, 
                             FunctionSet &Functions,
                             Expr *LHS, Expr *RHS) {
-  OverloadCandidateSet CandidateSet;
   Expr *Args[2] = { LHS, RHS };
 
   BinaryOperator::Opcode Opc = static_cast<BinaryOperator::Opcode>(OpcIn);
@@ -3688,6 +3834,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       !LHS->getType()->isOverloadableType())
     return CreateBuiltinBinOp(OpLoc, Opc, LHS, RHS);
 
+  // Build an empty overload set.
+  OverloadCandidateSet CandidateSet;
 
   // Add the candidates from the given function set.
   AddFunctionCandidates(Functions, Args, 2, CandidateSet, false);

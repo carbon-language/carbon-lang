@@ -660,6 +660,14 @@ public:
   /// corresponds to, e.g. "sizeof" or "[pre]++"
   static const char *getOpcodeStr(Opcode Op);
 
+  /// \brief Retrieve the unary opcode that corresponds to the given
+  /// overloaded operator.
+  static Opcode getOverloadedOpcode(OverloadedOperatorKind OO, bool Postfix);
+
+  /// \brief Retrieve the overloaded operator kind that corresponds to
+  /// the given unary opcode.
+  static OverloadedOperatorKind getOverloadedOperator(Opcode Opc);
+
   virtual SourceRange getSourceRange() const {
     if (isPostfix())
       return SourceRange(Val->getLocStart(), Loc);

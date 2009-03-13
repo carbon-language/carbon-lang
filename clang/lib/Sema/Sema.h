@@ -586,6 +586,11 @@ public:
                                         SourceLocation RParenLoc,
                                         bool &ArgumentDependentLookup);
 
+  OwningExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
+                                           unsigned Opc,
+                                           FunctionSet &Functions,
+                                           ExprArg input);
+
   OwningExprResult CreateOverloadedBinOp(SourceLocation OpLoc,
                                          unsigned Opc,
                                          FunctionSet &Functions,
@@ -1182,16 +1187,19 @@ public:
                                               unsigned NumToks);
 
   // Binary/Unary Operators.  'Tok' is the token for the operator.
+  OwningExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc,
+                                        unsigned OpcIn, 
+                                        ExprArg InputArg);
   virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                         tok::TokenKind Op, ExprArg Input);
-  virtual OwningExprResult
-    ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
-                           void *TyOrEx, const SourceRange &ArgRange);
 
   OwningExprResult CreateSizeOfAlignOfExpr(QualType T, SourceLocation OpLoc, 
                                            bool isSizeOf, SourceRange R);
   OwningExprResult CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc, 
                                            bool isSizeOf, SourceRange R);
+  virtual OwningExprResult
+    ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
+                           void *TyOrEx, const SourceRange &ArgRange);
                                            
   bool CheckAlignOfExpr(Expr *E, SourceLocation OpLoc, const SourceRange &R);
   bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,

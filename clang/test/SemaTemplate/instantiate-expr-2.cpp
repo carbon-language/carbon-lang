@@ -50,3 +50,18 @@ void test_bin_op_overload(A<1> *a1, A<2> *a2, A<4> *a4, A<8> *a8) {
   ZZ *zz = a8;
 }
 
+namespace N3 {
+  eight_bytes operator-(::N3::Z);
+}
+
+namespace N4 {
+  template<typename T>
+  struct UnaryOpOverload {
+    typedef A<sizeof(-T())> type;
+  };
+}
+
+void test_unary_op_overload(A<8> *a8) {
+  typedef N4::UnaryOpOverload<N3::Z>::type UZ;
+  UZ *uz = a8;
+}

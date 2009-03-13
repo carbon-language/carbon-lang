@@ -53,3 +53,19 @@ void test_BitfieldDep() {
   (void)sizeof(BitfieldDep<int, 1, 5>);
 }
 
+template<int I>
+struct BitfieldNeg {
+  int bitfield : (-I); // expected-error{{bit-field 'bitfield' has negative width (-5)}}
+};
+
+template<typename T, T I>
+struct BitfieldNeg2 {
+  int bitfield : (-I); // expected-error{{bit-field 'bitfield' has negative width (-5)}}
+};
+
+void test_BitfieldNeg() {
+  (void)sizeof(BitfieldNeg<-5>); // okay
+  (void)sizeof(BitfieldNeg<5>); // expected-note{{in instantiation of template class 'struct BitfieldNeg<5>' requested here}}
+  (void)sizeof(BitfieldNeg2<int, -5>); // okay
+  (void)sizeof(BitfieldNeg2<int, 5>); // expected-note{{in instantiation of template class 'struct BitfieldNeg2<int, 5>' requested here}}
+}

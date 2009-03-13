@@ -4036,114 +4036,22 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
 }
 
-// Unary Operators.  'Tok' is the token for the operator.
-Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
-                                            tok::TokenKind Op, ExprArg input) {
-  // FIXME: Input is modified later, but smart pointer not reassigned.
-  Expr *Input = (Expr*)input.get();
-  UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
+Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
+                                                    unsigned OpcIn, 
+                                                    ExprArg InputArg) {
+  UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
 
-  if (getLangOptions().CPlusPlus &&
-      (Input->getType()->isRecordType()
-       || Input->getType()->isEnumeralType())) {
-    // Determine which overloaded operator we're dealing with.
-    static const OverloadedOperatorKind OverOps[] = {
-      OO_None, OO_None,
-      OO_PlusPlus, OO_MinusMinus,
-      OO_Amp, OO_Star,
-      OO_Plus, OO_Minus,
-      OO_Tilde, OO_Exclaim,
-      OO_None, OO_None,
-      OO_None,
-      OO_None
-    };
-    OverloadedOperatorKind OverOp = OverOps[Opc];
-
-    // Add the appropriate overloaded operators (C++ [over.match.oper])
-    // to the candidate set.
-    OverloadCandidateSet CandidateSet;
-    if (OverOp != OO_None)
-      AddOperatorCandidates(OverOp, S, OpLoc, &Input, 1, CandidateSet);
-
-    // Perform overload resolution.
-    OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Best)) {
-    case OR_Success: {
-      // We found a built-in operator or an overloaded operator.
-      FunctionDecl *FnDecl = Best->Function;
-
-      if (FnDecl) {
-        // We matched an overloaded operator. Build a call to that
-        // operator.
-
-        // Convert the arguments.
-        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
-          if (PerformObjectArgumentInitialization(Input, Method))
-            return ExprError();
-        } else {
-          // Convert the arguments.
-          if (PerformCopyInitialization(Input,
-                                        FnDecl->getParamDecl(0)->getType(),
-                                        "passing"))
-            return ExprError();
-        }
-
-        // Determine the result type
-        QualType ResultTy
-          = FnDecl->getType()->getAsFunctionType()->getResultType();
-        ResultTy = ResultTy.getNonReferenceType();
-
-        // Build the actual expression node.
-        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                                 SourceLocation());
-        UsualUnaryConversions(FnExpr);
-
-        input.release();
-        return Owned(new (Context) CXXOperatorCallExpr(Context, OverOp, FnExpr,
-                                                       &Input, 1, ResultTy, 
-                                                       OpLoc));
-      } else {
-        // We matched a built-in operator. Convert the arguments, then
-        // break out so that we will build the appropriate built-in
-        // operator node.
-        if (PerformImplicitConversion(Input, Best->BuiltinTypes.ParamTypes[0],
-                                      Best->Conversions[0], "passing"))
-          return ExprError();
-
-        break;
-      }
-    }
-
-    case OR_No_Viable_Function:
-      // No viable function; fall through to handling this as a
-      // built-in operator, which will produce an error message for us.
-      break;
-
-    case OR_Ambiguous:
-      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
-          << UnaryOperator::getOpcodeStr(Opc)
-          << Input->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return ExprError();
-
-    case OR_Deleted:
-      Diag(OpLoc, diag::err_ovl_deleted_oper)
-        << Best->Function->isDeleted()
-        << UnaryOperator::getOpcodeStr(Opc)
-        << Input->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return ExprError();
-    }
-
-    // Either we found no viable overloaded operator or we matched a
-    // built-in operator. In either case, fall through to trying to
-    // build a built-in operation.
-  }
-
+  // FIXME: Input is modified below, but InputArg is not updated
+  // appropriately.
+  Expr *Input = (Expr *)InputArg.get();
   QualType resultType;
   switch (Opc) {
-  default:
-    assert(0 && "Unimplemented unary expr!");
+  case UnaryOperator::PostInc:
+  case UnaryOperator::PostDec:
+  case UnaryOperator::OffsetOf:
+    assert(false && "Invalid unary operator");
+    break;
+
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
     resultType = CheckIncrementDecrementOperand(Input, OpLoc,
@@ -4211,8 +4119,36 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
   }
   if (resultType.isNull())
     return ExprError();
-  input.release();
+
+  InputArg.release();
   return Owned(new (Context) UnaryOperator(Input, Opc, resultType, OpLoc));
+}
+
+// Unary Operators.  'Tok' is the token for the operator.
+Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
+                                            tok::TokenKind Op, ExprArg input) {
+  Expr *Input = (Expr*)input.get();
+  UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
+
+  if (getLangOptions().CPlusPlus && Input->getType()->isOverloadableType()) {
+    // Find all of the overloaded operators visible from this
+    // point. We perform both an operator-name lookup from the local
+    // scope and an argument-dependent lookup based on the types of
+    // the arguments.
+    FunctionSet Functions;
+    OverloadedOperatorKind OverOp = UnaryOperator::getOverloadedOperator(Opc);
+    if (OverOp != OO_None) {
+      LookupOverloadedOperatorName(OverOp, S, Input->getType(), QualType(),
+                                   Functions);
+      DeclarationName OpName 
+        = Context.DeclarationNames.getCXXOperatorName(OverOp);
+      ArgumentDependentLookup(OpName, &Input, 1, Functions);
+    }
+
+    return CreateOverloadedUnaryOp(OpLoc, Opc, Functions, move(input));
+  }
+
+  return CreateBuiltinUnaryOp(OpLoc, Opc, move(input));
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
