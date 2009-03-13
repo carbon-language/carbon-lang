@@ -48,11 +48,19 @@ entry:
 	ret i32 %tmp2
 }
 
-define i1 @ptrtoint(i8* %p) nounwind {
+define i1 @ptrtoint_i1(i8* %p) nounwind {
   %t = ptrtoint i8* %p to i1
   ret i1 %t
 }
-define i8* @inttoptr(i1 %p) nounwind {
+define i8* @inttoptr_i1(i1 %p) nounwind {
   %t = inttoptr i1 %p to i8*
+  ret i8* %t
+}
+define i32 @ptrtoint_i32(i8* %p) nounwind {
+  %t = ptrtoint i8* %p to i32
+  ret i32 %t
+}
+define i8* @inttoptr_i32(i32 %p) nounwind {
+  %t = inttoptr i32 %p to i8*
   ret i8* %t
 }
