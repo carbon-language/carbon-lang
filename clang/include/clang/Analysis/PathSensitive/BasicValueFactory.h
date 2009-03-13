@@ -77,7 +77,7 @@ public:
   const llvm::APSInt& getValue(uint64_t X, QualType T);
   
   /// Convert - Create a new persistent APSInt with the same value as 'From'
-  ///  but with the bitwidth and signeness of 'To'.
+  ///  but with the bitwidth and signedness of 'To'.
   const llvm::APSInt& Convert(const llvm::APSInt& To,
                               const llvm::APSInt& From) {
     
