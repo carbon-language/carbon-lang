@@ -511,7 +511,8 @@ void BlockDecl::Destroy(ASTContext& C) {
 
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     (*I)->Destroy(C);
-    
+  
+  C.Deallocate(ParamInfo);    
   Decl::Destroy(C);
 }
 
