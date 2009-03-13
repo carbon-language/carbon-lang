@@ -10,8 +10,13 @@ TESTDIRS +=
 endif
 
 ifdef VERBOSE
+ifeq ($(VERBOSE),0)
+PROGRESS = :
+REPORTFAIL = echo 'FAILED: clang' $(TARGET_TRIPLE) $(subst $(LLVM_SRC_ROOT)/tools/clang/,,$<)
+else
 PROGRESS = echo $<
 REPORTFAIL = cat $@
+endif
 DONE = true
 else
 PROGRESS = printf '.'
