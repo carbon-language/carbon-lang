@@ -39,3 +39,13 @@ class Option<string name, list<OptionControlled> members> : OptionControlled {
   string Name = name;
   list<OptionControlled> Members = members;
 }
+
+include "DiagnosticASTKinds.td"
+include "DiagnosticAnalysisKinds.td"
+include "DiagnosticCommonKinds.td"
+include "DiagnosticDriverKinds.td"
+include "DiagnosticFrontendKinds.td"
+include "DiagnosticLexKinds.td"
+include "DiagnosticParseKinds.td"
+include "DiagnosticSemaKinds.td"
+
