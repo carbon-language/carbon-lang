@@ -70,7 +70,7 @@ class PrecompilePhase(Phase):
 
 class AnalyzePhase(Phase):
     def __init__(self):
-        super(AnalyzePhase, self).__init__("analyze", Phase.eOrderCompile)
+        super(AnalyzePhase, self).__init__("analyzer", Phase.eOrderCompile)
 
 class SyntaxOnlyPhase(Phase):
     def __init__(self):

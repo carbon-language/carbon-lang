@@ -18,12 +18,12 @@ const char *Action::getClassName(ActionClass AC) {
   switch (AC) {
   case InputClass: return "input";
   case BindArchClass: return "bind-arch";
-  case PreprocessJobClass: return "preprocess";
-  case PrecompileJobClass: return "precompile";
-  case AnalyzeJobClass: return "analyze";
-  case CompileJobClass: return "compile";
-  case AssembleJobClass: return "assemble";
-  case LinkJobClass: return "link";
+  case PreprocessJobClass: return "preprocessor";
+  case PrecompileJobClass: return "precompiler";
+  case AnalyzeJobClass: return "analyzer";
+  case CompileJobClass: return "compiler";
+  case AssembleJobClass: return "assembler";
+  case LinkJobClass: return "linker";
   case LipoJobClass: return "lipo";
   }
   

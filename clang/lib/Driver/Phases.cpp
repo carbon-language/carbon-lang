@@ -15,7 +15,7 @@ using namespace clang::driver;
 
 const char *phases::getPhaseName(ID Id) {
   switch (Id) {
-  case Preprocess: return "preprocesser";
+  case Preprocess: return "preprocessor";
   case Precompile: return "precompiler";
   case Compile: return "compiler";
   case Assemble: return "assembler";
