@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <vector>
+#include <string>
 
 namespace llvm {
   class MemoryBuffer;
