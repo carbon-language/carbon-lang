@@ -1619,12 +1619,14 @@ private:
   /// ConstructTypeDIE - Construct basic type die from DIBasicType.
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DIBasicType BTy) {
+    
     // Get core information.
-    const char *Name = BTy.getName();
+    std::string Name;
+    BTy.getName(Name);
     Buffer.setTag(DW_TAG_base_type);
     AddUInt(&Buffer, DW_AT_encoding,  DW_FORM_data1, BTy.getEncoding());
     // Add name if not anonymous or intermediate type.
-    if (Name)
+    if (!Name.empty())
       AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
     uint64_t Size = BTy.getSizeInBits() >> 3;
     AddUInt(&Buffer, DW_AT_byte_size, 0, Size);
@@ -1633,8 +1635,10 @@ private:
   /// ConstructTypeDIE - Construct derived type die from DIDerivedType.
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DIDerivedType DTy) {
+
     // Get core information.
-    const char *Name = DTy.getName();
+    std::string Name;
+    DTy.getName(Name);
     uint64_t Size = DTy.getSizeInBits() >> 3;
     unsigned Tag = DTy.getTag();
 
@@ -1648,7 +1652,7 @@ private:
     AddType(DW_Unit, &Buffer, FromTy);
 
     // Add name if not anonymous or intermediate type.
-    if (Name)
+    if (!Name.empty())
       AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
 
     // Add size if non-zero (derived types might be zero-sized.)
@@ -1665,7 +1669,8 @@ private:
   void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DICompositeType CTy) {
     // Get core information.
-    const char *Name = CTy.getName();
+    std::string Name;
+    CTy.getName(Name);
 
     uint64_t Size = CTy.getSizeInBits() >> 3;
     unsigned Tag = CTy.getTag();
@@ -1741,7 +1746,7 @@ private:
     }
 
     // Add name if not anonymous or intermediate type.
-    if (Name)
+    if (!Name.empty())
       AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
 
     if (Tag == DW_TAG_enumeration_type || Tag == DW_TAG_structure_type
@@ -1806,7 +1811,8 @@ private:
   DIE *ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
 
     DIE *Enumerator = new DIE(DW_TAG_enumerator);
-    const char *Name = ETy->getName();
+    std::string Name;
+    ETy->getName(Name);
     AddString(Enumerator, DW_AT_name, DW_FORM_string, Name);
     int64_t Value = ETy->getEnumValue();                             
     AddSInt(Enumerator, DW_AT_const_value, DW_FORM_sdata, Value);
@@ -1817,10 +1823,12 @@ private:
   DIE *CreateGlobalVariableDIE(CompileUnit *DW_Unit, const DIGlobalVariable &GV)
   {
     DIE *GVDie = new DIE(DW_TAG_variable);
-    const char *Name = GV.getDisplayName();
+    std::string Name;
+    GV.getDisplayName(Name);
     AddString(GVDie, DW_AT_name, DW_FORM_string, Name);
-    const char *LinkageName = GV.getLinkageName();
-    if (LinkageName)
+    std::string LinkageName;
+    GV.getLinkageName(LinkageName);
+    if (!LinkageName.empty())
       AddString(GVDie, DW_AT_MIPS_linkage_name, DW_FORM_string, LinkageName);
     AddType(DW_Unit, GVDie, GV.getType());
     if (!GV.isLocalToUnit())
@@ -1832,8 +1840,9 @@ private:
   /// CreateMemberDIE - Create new member DIE.
   DIE *CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT) {
     DIE *MemberDie = new DIE(DT.getTag());
-    const char *Name = DT.getName();
-    if (Name)
+    std::string Name;
+    DT.getName(Name);
+    if (!Name.empty())
       AddString(MemberDie, DW_AT_name, DW_FORM_string, Name);
 
     AddType(DW_Unit, MemberDie, DT.getTypeDerivedFrom());
@@ -1876,10 +1885,12 @@ private:
                            const  DISubprogram &SP,
                            bool IsConstructor = false) {
     DIE *SPDie = new DIE(DW_TAG_subprogram);
-    const char *Name = SP.getName();
+    std::string Name;
+    SP.getName(Name);
     AddString(SPDie, DW_AT_name, DW_FORM_string, Name);
-    const char *LinkageName = SP.getLinkageName();
-    if (LinkageName)
+    std::string LinkageName;
+    SP.getLinkageName(LinkageName);
+    if (!LinkageName.empty())
       AddString(SPDie, DW_AT_MIPS_linkage_name, DW_FORM_string, 
                 LinkageName);
     AddSourceLine(SPDie, &SP);
@@ -1945,7 +1956,8 @@ private:
 
     // Define variable debug information entry.
     DIE *VariableDie = new DIE(Tag);
-    const char *Name = VD.getName();
+    std::string Name;
+    VD.getName(Name);
     AddString(VariableDie, DW_AT_name, DW_FORM_string, Name);
 
     // Add source line info if available.
@@ -2807,23 +2819,24 @@ private:
 
   void ConstructCompileUnit(GlobalVariable *GV) {
     DICompileUnit DIUnit(GV);
-    const char *Dir = DIUnit.getDirectory();
-    const char *FN = DIUnit.getFilename();
-    unsigned ID = GetOrCreateSourceID(Dir, FN);
+    std::string Dir, FN, Prod;
+    unsigned ID = GetOrCreateSourceID(DIUnit.getDirectory(Dir),
+                                      DIUnit.getFilename(FN));
 
     DIE *Die = new DIE(DW_TAG_compile_unit);
     AddSectionOffset(Die, DW_AT_stmt_list, DW_FORM_data4,
                      DWLabel("section_line", 0), DWLabel("section_line", 0),
                      false);
-    AddString(Die, DW_AT_producer, DW_FORM_string, DIUnit.getProducer());
+    AddString(Die, DW_AT_producer, DW_FORM_string, DIUnit.getProducer(Prod));
     AddUInt(Die, DW_AT_language, DW_FORM_data1, DIUnit.getLanguage());
     AddString(Die, DW_AT_name, DW_FORM_string, FN);
-    if (Dir)
+    if (!Dir.empty())
       AddString(Die, DW_AT_comp_dir, DW_FORM_string, Dir);
     if (DIUnit.isOptimized())
       AddUInt(Die, DW_AT_APPLE_optimized, DW_FORM_flag, 1);
-    const char *Flags = DIUnit.getFlags();
-    if (Flags)
+    std::string Flags;
+    DIUnit.getFlags(Flags);
+    if (!Flags.empty())
       AddString(Die, DW_AT_APPLE_flags, DW_FORM_string, Flags);
     unsigned RVer = DIUnit.getRunTimeVersion();
     if (RVer)
@@ -2882,7 +2895,8 @@ private:
     // Add to context owner.
     DW_Unit->getDie()->AddChild(VariableDie);
     // Expose as global. FIXME - need to check external flag.
-    DW_Unit->AddGlobal(DI_GV.getName(), VariableDie);
+    std::string Name;
+    DW_Unit->AddGlobal(DI_GV.getName(Name), VariableDie);
     return true;
   }
 
@@ -2934,7 +2948,8 @@ private:
     // Add to context owner.
     Unit->getDie()->AddChild(SubprogramDie);
     // Expose as global.
-    Unit->AddGlobal(SP.getName(), SubprogramDie);
+    std::string Name;
+    Unit->AddGlobal(SP.getName(Name), SubprogramDie);
     return true;
   }
 

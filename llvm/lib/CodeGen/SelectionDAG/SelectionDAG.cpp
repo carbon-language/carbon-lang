@@ -2931,11 +2931,8 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
     return false;
 
   GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-  if (GV) {
-    const char *SI = GetConstantStringInfo(GV, SrcDelta, false);
-    Str = (SI ? SI : "");
-    if (!Str.empty()) return true;
-  }
+  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
+    return true;
 
   return false;
 }

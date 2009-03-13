@@ -117,10 +117,10 @@ SourceFileInfo::SourceFileInfo(const GlobalVariable *Desc,
         if (ConstantInt *CUI = dyn_cast<ConstantInt>(CS->getOperand(1)))
           Version = CUI->getZExtValue();
 
-        const char *SI = GetConstantStringInfo(CS->getOperand(3));
-        BaseName = (SI ? SI : "");
-        SI = GetConstantStringInfo(CS->getOperand(4));
-        Directory = (SI ? SI : "");
+        if (!GetConstantStringInfo(CS->getOperand(3), BaseName))
+          BaseName = "";
+        if (!GetConstantStringInfo(CS->getOperand(4), Directory))
+          Directory = "";
       }
 }
 
@@ -160,8 +160,8 @@ SourceFunctionInfo::SourceFunctionInfo(ProgramInfo &PI,
           SourceFile = &PI.getSourceFile(GV);
 
         // Entry #2 is the function name.
-        const char *SI = GetConstantStringInfo(CS->getOperand(2));
-        Name = (SI ? SI : "");
+        if (!GetConstantStringInfo(CS->getOperand(2), Name))
+          Name = "";
       }
 }
 

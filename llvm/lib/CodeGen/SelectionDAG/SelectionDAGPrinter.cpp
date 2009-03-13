@@ -179,8 +179,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     }
   } else if (const DbgStopPointSDNode *D = dyn_cast<DbgStopPointSDNode>(Node)) {
     DICompileUnit CU(cast<GlobalVariable>(D->getCompileUnit()));
-    const char *FN = CU.getFilename();
-    Op += ": " + std::string(FN ? FN : "");
+    std::string FN;
+    Op += ": " + CU.getFilename(FN);
     Op += ":" + utostr(D->getLine());
     if (D->getColumn() != 0)
       Op += ":" + utostr(D->getColumn());

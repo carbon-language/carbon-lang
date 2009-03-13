@@ -11043,12 +11043,11 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(CI)) {
     // Instead of loading constant c string, use corresponding integer value
     // directly if string length is small enough.
-    const char *Str = GetConstantStringInfo(CE->getOperand(0));
-    if (Str) {
-      unsigned len = strlen(Str);
+    std::string Str;
+    if (GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
+      unsigned len = Str.length();
       const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
       unsigned numBits = Ty->getPrimitiveSizeInBits();
-
       // Replace LI with immediate integer store.
       if ((numBits >> 3) == len + 1) {
         APInt StrVal(numBits, 0);

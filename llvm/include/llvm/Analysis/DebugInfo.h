@@ -40,7 +40,7 @@ namespace llvm {
     /// not, the debug info is corrupt and we ignore it.
     DIDescriptor(GlobalVariable *GV, unsigned RequiredTag);
 
-    const char *getStringField(unsigned Elt) const;
+    const std::string &getStringField(unsigned Elt, std::string &Result) const;
     unsigned getUnsignedField(unsigned Elt) const {
       return (unsigned)getUInt64Field(Elt);
     }
@@ -106,14 +106,14 @@ namespace llvm {
     explicit DICompileUnit(GlobalVariable *GV = 0);
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
-    const char *getFilename() const {
-      return getStringField(3);
+    const std::string &getFilename(std::string &F) const {
+      return getStringField(3, F);
     }
-    const char *getDirectory() const {
-      return getStringField(4);
+    const std::string &getDirectory(std::string &F) const {
+      return getStringField(4, F);
     }
-    const char *getProducer() const {
-      return getStringField(5);
+    const std::string &getProducer(std::string &F) const {
+      return getStringField(5, F);
     }
     
     /// isMain - Each input file is encoded as a separate compile unit in LLVM
@@ -127,7 +127,9 @@ namespace llvm {
 
     bool isMain() const                { return getUnsignedField(6); }
     bool isOptimized() const           { return getUnsignedField(7); }
-    const char *getFlags() const       { return getStringField(8);   }
+    const std::string &getFlags(std::string &F) const {
+      return getStringField(8, F);
+    }
     unsigned getRunTimeVersion() const { return getUnsignedField(9); }
 
     /// Verify - Verify that a compile unit is well formed.
@@ -144,8 +146,8 @@ namespace llvm {
   public:
     explicit DIEnumerator(GlobalVariable *GV = 0);
 
-    const char *getName() const {
-      return getStringField(1);
+    const std::string &getName(std::string &F) const {
+      return getStringField(1, F);
     }
     uint64_t getEnumValue() const { return getUInt64Field(2); }
   };
@@ -190,7 +192,9 @@ namespace llvm {
     virtual ~DIType() {}
 
     DIDescriptor getContext() const     { return getDescriptorField(1); }
-    const char *getName() const         { return getStringField(2);  }
+    const std::string &getName(std::string &F) const {
+      return getStringField(2, F);
+    }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -272,14 +276,14 @@ namespace llvm {
     virtual ~DIGlobal() {}
 
     DIDescriptor getContext() const     { return getDescriptorField(2); }
-    const char *getName() const {
-      return getStringField(3);
+    const std::string &getName(std::string &F) const {
+      return getStringField(3, F);
     }
-    const char *getDisplayName() const {
-      return getStringField(4);
+    const std::string &getDisplayName(std::string &F) const {
+      return getStringField(4, F);
     }
-    const char *getLinkageName() const {
-      return getStringField(5);
+    const std::string &getLinkageName(std::string &F) const {
+      return getStringField(5, F);
     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(6); }
     unsigned getLineNumber() const      { return getUnsignedField(7); }
@@ -327,8 +331,8 @@ namespace llvm {
     explicit DIVariable(GlobalVariable *GV = 0);
 
     DIDescriptor getContext() const { return getDescriptorField(1); }
-    const char *getName() const {
-      return getStringField(2);
+    const std::string &getName(std::string &F) const {
+      return getStringField(2, F);
     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }

@@ -551,10 +551,9 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
 
     // Otherwise, the character is a constant, see if the first argument is
     // a string literal.  If so, we can constant fold.
-    const char *SI = GetConstantStringInfo(SrcStr);
-    if (!SI)
+    std::string Str;
+    if (!GetConstantStringInfo(SrcStr, Str))
       return 0;
-    std::string Str = SI;
     
     // strchr can find the nul character.
     Str += '\0';
@@ -593,28 +592,27 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     if (Str1P == Str2P)      // strcmp(x,x)  -> 0
       return ConstantInt::get(CI->getType(), 0);
     
-    const char *Str1 = GetConstantStringInfo(Str1P);
-    const char *Str2 = GetConstantStringInfo(Str1P);
-
-    if (Str1)                   // strcmp("", x) -> *x
+    std::string Str1, Str2;
+    bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
+    bool HasStr2 = GetConstantStringInfo(Str2P, Str2);
+    
+    if (HasStr1 && Str1.empty()) // strcmp("", x) -> *x
       return B.CreateZExt(B.CreateLoad(Str2P, "strcmpload"), CI->getType());
     
-    if (Str2)                   // strcmp(x,"") -> *x
+    if (HasStr2 && Str2.empty()) // strcmp(x,"") -> *x
       return B.CreateZExt(B.CreateLoad(Str1P, "strcmpload"), CI->getType());
     
     // strcmp(x, y)  -> cnst  (if both x and y are constant strings)
-    if (Str1 && Str2)
-      return ConstantInt::get(CI->getType(), strcmp(Str1, Str2));
+    if (HasStr1 && HasStr2)
+      return ConstantInt::get(CI->getType(), strcmp(Str1.c_str(),Str2.c_str()));
 
     // strcmp(P, "x") -> memcmp(P, "x", 2)
     uint64_t Len1 = GetStringLength(Str1P);
     uint64_t Len2 = GetStringLength(Str2P);
-
     if (Len1 || Len2) {
       // Choose the smallest Len excluding 0 which means 'unknown'.
       if (!Len1 || (Len2 && Len2 < Len1))
         Len1 = Len2;
-
       return EmitMemCmp(Str1P, Str2P,
                         ConstantInt::get(TD->getIntPtrType(), Len1), B);
     }
@@ -649,21 +647,21 @@ struct VISIBILITY_HIDDEN StrNCmpOpt : public LibCallOptimization {
     
     if (Length == 0) // strncmp(x,y,0)   -> 0
       return ConstantInt::get(CI->getType(), 0);
-
-    const char *Str1 = GetConstantStringInfo(Str1P);
-    const char *Str2 = GetConstantStringInfo(Str2P);
-
-    if (Str1)                   // strncmp("", x, n) -> *x
+    
+    std::string Str1, Str2;
+    bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
+    bool HasStr2 = GetConstantStringInfo(Str2P, Str2);
+    
+    if (HasStr1 && Str1.empty())  // strncmp("", x, n) -> *x
       return B.CreateZExt(B.CreateLoad(Str2P, "strcmpload"), CI->getType());
     
-    if (Str2)                   // strncmp(x, "", n) -> *x
+    if (HasStr2 && Str2.empty())  // strncmp(x, "", n) -> *x
       return B.CreateZExt(B.CreateLoad(Str1P, "strcmpload"), CI->getType());
     
     // strncmp(x, y)  -> cnst  (if both x and y are constant strings)
-    if (Str1 && Str2)
+    if (HasStr1 && HasStr2)
       return ConstantInt::get(CI->getType(),
-                              strncmp(Str1, Str2, Length));
-
+                              strncmp(Str1.c_str(), Str2.c_str(), Length));
     return 0;
   }
 };
@@ -1118,9 +1116,9 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
       return 0;
     
     // Check for a fixed format string.
-    const char *FormatCStr = GetConstantStringInfo(CI->getOperand(1));
-    if (!FormatCStr) return 0;
-    std::string FormatStr = FormatCStr;
+    std::string FormatStr;
+    if (!GetConstantStringInfo(CI->getOperand(1), FormatStr))
+      return 0;
 
     // Empty format string -> noop.
     if (FormatStr.empty())  // Tolerate printf's declared void.
@@ -1178,9 +1176,9 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
       return 0;
 
     // Check for a fixed format string.
-    const char *FormatCStr = GetConstantStringInfo(CI->getOperand(2));
-    if (!FormatCStr) return 0;
-    std::string FormatStr = FormatCStr;
+    std::string FormatStr;
+    if (!GetConstantStringInfo(CI->getOperand(2), FormatStr))
+      return 0;
     
     // If we just have a format string (nothing else crazy) transform it.
     if (CI->getNumOperands() == 3) {
@@ -1299,9 +1297,9 @@ struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
       return 0;
     
     // All the optimizations depend on the format string.
-    const char *FormatCStr = GetConstantStringInfo(CI->getOperand(2));
-    if (!FormatCStr) return 0;
-    std::string FormatStr = FormatCStr;
+    std::string FormatStr;
+    if (!GetConstantStringInfo(CI->getOperand(2), FormatStr))
+      return 0;
 
     // fprintf(F, "foo") --> fwrite("foo", 3, 1, F)
     if (CI->getNumOperands() == 3) {
