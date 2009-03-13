@@ -380,8 +380,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
   case Type::BlockPointer: {
     const QualType FTy = cast<BlockPointerType>(Ty).getPointeeType();
-    return llvm::PointerType::get(ConvertTypeRecursive(FTy), 
-                                  FTy.getAddressSpace());
+    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
+    PointersToResolve.push_back(std::make_pair(FTy, PointeeType));
+    return llvm::PointerType::get(PointeeType, FTy.getAddressSpace());
   }
 
   case Type::MemberPointer:
