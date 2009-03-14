@@ -2234,3 +2234,30 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   ProcessDeclAttributes(ExDecl, D);
   return ExDecl;
 }
+
+Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
+                                                 ExprArg assertexpr,
+                                                 ExprArg assertmessageexpr,
+                                                 SourceLocation RParenLoc) {
+  Expr *AssertExpr = (Expr *)assertexpr.get();
+  StringLiteral *AssertMessage = 
+    cast<StringLiteral>((Expr *)assertmessageexpr.get());
+
+  llvm::APSInt Value(32);
+  if (!AssertExpr->isIntegerConstantExpr(Value, Context)) {
+    Diag(AssertLoc, diag::err_static_assert_expression_is_not_constant) <<
+      AssertExpr->getSourceRange();
+    return 0;
+  }
+
+  Decl *Decl = StaticAssertDecl::Create(Context, CurContext, AssertLoc, 
+                                        AssertExpr, AssertMessage);
+  if (Value == 0) {
+    std::string str(AssertMessage->getStrData(), 
+                    AssertMessage->getByteLength());
+    Diag(AssertLoc, diag::err_static_assert_failed) << str;
+  }
+  
+  CurContext->addDecl(Decl);
+  return Decl;
+}

@@ -548,7 +548,7 @@
 		DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticLexKinds.def; sourceTree = "<group>"; };
 		DEA09A060F302C65000C2258 /* DiagnosticParseKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticParseKinds.def; sourceTree = "<group>"; };
 		DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.def; sourceTree = "<group>"; };
-		DEA09A6E0F31756F000C2258 /* ASTDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDiagnostic.h; path = clang/AST/ASTDiagnostic.h; sourceTree = "<group>"; };
+		DEA09A6E0F31756F000C2258 /* ASTDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ASTDiagnostic.h; path = clang/AST/ASTDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEA09A830F3175BF000C2258 /* LexDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LexDiagnostic.h; sourceTree = "<group>"; };
 		DEA09A860F3175CA000C2258 /* ParseDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ParseDiagnostic.h; path = clang/Parse/ParseDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEA09A890F3175D9000C2258 /* SemaDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaDiagnostic.h; path = clang/Sema/SemaDiagnostic.h; sourceTree = "<group>"; };
@@ -556,7 +556,7 @@
 		DEAABDF70F5F477C0098928A /* PrettyStackTrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrettyStackTrace.h; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
-		DEB076C90F3A221200F5A2BE /* DeclTemplate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclTemplate.h; path = clang/AST/DeclTemplate.h; sourceTree = "<group>"; };
+		DEB076C90F3A221200F5A2BE /* DeclTemplate.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclTemplate.h; path = clang/AST/DeclTemplate.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEB076CE0F3A222200F5A2BE /* DeclTemplate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclTemplate.cpp; path = lib/AST/DeclTemplate.cpp; sourceTree = "<group>"; };
 		DEB077930F44F96000F5A2BE /* TokenConcatenation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TokenConcatenation.h; sourceTree = "<group>"; };
 		DEB077980F44F97800F5A2BE /* TokenConcatenation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TokenConcatenation.cpp; sourceTree = "<group>"; };
@@ -594,7 +594,7 @@
 		DED7D7D70A524302003AD0FB /* README.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		DED7D9170A52518C003AD0FB /* ScratchBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ScratchBuffer.h; sourceTree = "<group>"; };
 		DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ScratchBuffer.cpp; sourceTree = "<group>"; };
-		DEDFE5270F63A9230035BD10 /* DeclNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DeclNodes.def; path = clang/AST/DeclNodes.def; sourceTree = "<group>"; };
+		DEDFE5270F63A9230035BD10 /* DeclNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = DeclNodes.def; path = clang/AST/DeclNodes.def; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBBD430C19C5D200A9FE82 /* TODO.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenTypes.h; path = lib/CodeGen/CodeGenTypes.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = lib/CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; tabWidth = 2; };

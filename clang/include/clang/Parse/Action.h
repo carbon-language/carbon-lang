@@ -884,6 +884,7 @@ public:
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
   }
 
+  /// ActOnStaticAssertDeclaration - Parse a C++0x static_assert declaration.
   virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
                                                ExprArg AssertExpr,
                                                ExprArg AssertMessageExpr,

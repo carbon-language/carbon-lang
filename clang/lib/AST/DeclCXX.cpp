@@ -13,6 +13,7 @@
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
@@ -337,5 +338,21 @@ UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                                DeclContext *CommonAncestor) {
   return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, IdentLoc,
                                     Used, CommonAncestor);
+}
+
+StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
+                                           SourceLocation L, Expr *AssertExpr,
+                                           StringLiteral *Message) {
+  return new (C) StaticAssertDecl(DC, L, AssertExpr, Message);
+}
+
+void StaticAssertDecl::Destroy(ASTContext& C) {
+  AssertExpr->Destroy(C);
+  Message->Destroy(C);
+  this->~StaticAssertDecl();
+  C.Deallocate((void *)this);
+}
+
+StaticAssertDecl::~StaticAssertDecl() {
 }
 

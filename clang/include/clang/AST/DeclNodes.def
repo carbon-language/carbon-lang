@@ -120,6 +120,7 @@ DECL(ObjCPropertyImpl, Decl)
 DECL(ObjCForwardProtocol, Decl)
 DECL(ObjCClass, Decl)
 DECL(FileScopeAsm, Decl)
+DECL(StaticAssert, Decl)
 LAST_DECL(Block, Decl)
 
 // Declaration contexts. DECL_CONTEXT_BASE indicates that it has subclasses.

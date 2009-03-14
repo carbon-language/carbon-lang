@@ -886,6 +886,30 @@ public:
   friend class DeclContext;
 };
 
+class StaticAssertDecl : public Decl {
+  SourceLocation AssertLoc;
+
+  Expr *AssertExpr;
+  StringLiteral *Message;
+  
+  StaticAssertDecl(DeclContext *DC, SourceLocation L, 
+                   Expr *assertexpr, StringLiteral *message)
+    : Decl(StaticAssert, DC, L), AssertExpr(assertexpr), Message(message) { }
+  
+public:
+  static StaticAssertDecl *Create(ASTContext &C, DeclContext *DC,
+                                  SourceLocation L, Expr *AssertExpr,
+                                  StringLiteral *Message);
+  
+  virtual ~StaticAssertDecl();
+  virtual void Destroy(ASTContext& C);
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::StaticAssert;
+  }
+  static bool classof(StaticAssertDecl *D) { return true; }
+};
+  
 } // end namespace clang
 
 #endif

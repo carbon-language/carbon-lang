@@ -1554,6 +1554,11 @@ public:
   virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *Param);
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);
 
+  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
+                                               ExprArg AssertExpr,
+                                               ExprArg AssertMessageExpr,
+                                               SourceLocation RParenLoc);
+  
   bool CheckConstructorDeclarator(Declarator &D, QualType &R,
                                   FunctionDecl::StorageClass& SC);
   bool CheckConstructor(CXXConstructorDecl *Constructor);
