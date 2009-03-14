@@ -1,0 +1,8 @@
+tablegen(DiagnosticAnalysisKinds.inc -gen-clang-diags-def -clang-component=Analysis)
+tablegen(DiagnosticASTKinds.inc -gen-clang-diags-def -clang-component=AST)
+tablegen(DiagnosticCommonKinds.inc -gen-clang-diags-def -clang-component=Common)
+tablegen(DiagnosticDriverKinds.inc -gen-clang-diags-def -clang-component=Driver)
+tablegen(DiagnosticFrontendKinds.inc -gen-clang-diags-def -clang-component=Frontend)
+tablegen(DiagnosticLexKinds.inc -gen-clang-diags-def -clang-component=Lex)
+tablegen(DiagnosticParseKinds.inc -gen-clang-diags-def -clang-component=Parse)
+tablegen(DiagnosticSemaKinds.inc -gen-clang-diags-def -clang-component=Sema)
