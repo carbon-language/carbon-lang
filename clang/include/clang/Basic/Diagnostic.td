@@ -27,11 +27,12 @@ class OptionControlled;
 class Warning<string text> : Diagnostic<text>, OptionControlled {
   string DefaultMapping = "warning";
 }
-// Special cases of warnings.
-class Extension<string text> : Warning<text> {
-  let DefaultMapping = "ignore";
+class Extension<string text> : Diagnostic<text>, OptionControlled {
+  string DefaultMapping = "ignore";
 }
-class ExtWarn<string text> : Warning<text>;
+class ExtWarn<string text> : Diagnostic<text>, OptionControlled {
+  string DefaultMapping = "warning";
+}
 
 
 

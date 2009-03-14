@@ -46,7 +46,8 @@ def ext_c99_compound_literal : Extension<
 def ext_c99_enumerator_list_comma : Extension<
   "commas at the end of enumerator lists are a C99-specific feature">;
 
-def ext_gnu_indirect_goto : Extension<"use of GNU indirect-goto extension">;
+def ext_gnu_indirect_goto : Extension<
+  "use of GNU indirect-goto extension">;
 def ext_gnu_address_of_label : Extension<
   "use of GNU address-of-label extension">;
 def ext_gnu_statement_expr : Extension<
@@ -63,6 +64,7 @@ def ext_gnu_old_style_field_designator : Extension<
   "use of GNU old-style field designator extension">;
 def ext_gnu_case_range : Extension<"use of GNU case range extension">;
 
+// Generic errors.
 def err_parse_error : Error<"parse error">;
 def err_expected_expression : Error<"expected expression">;
 def err_expected_type : Error<"expected a type">;
@@ -80,6 +82,8 @@ def err_expected_semi_decl_list : Error<
   "expected ';' at end of declaration list">;
 def ext_expected_semi_decl_list : Extension<
   "expected ';' at end of declaration list">;
+def err_expected_member_name_or_semi : Error<
+  "expected member name or ';' after declaration specifiers">;
 def err_function_declared_typedef : Error<
   "function definition declared 'typedef'">;
 def err_expected_fn_body : Error<
@@ -99,6 +103,8 @@ def err_expected_semi_after : Error<"expected ';' after %0">;
 def err_expected_semi_after_expr : Error<"expected ';' after expression">;
 def err_expected_semi_after_method_proto : Error<
   "expected ';' after method prototype">;
+def err_expected_semi_after_static_assert : Error<
+  "expected ';' after static_assert">;
 def err_expected_semi_for : Error<"expected ';' in 'for' statement specifier">;
 def err_expected_colon_after : Error<"expected ':' after %0">;
 def err_label_end_of_compound_statement : Error<
@@ -124,6 +130,7 @@ def err_expected_class_name : Error<"expected class name">;
 def err_unspecified_vla_size_with_static : Error<
   "'static' may not be used with an unspecified variable length array size">;
 
+// Declarations.
 def err_typename_requires_specqual : Error<
   "type name requires a specifier or qualifier">;
 def err_typename_invalid_storageclass : Error<
@@ -133,6 +140,7 @@ def err_typename_invalid_functionspec : Error<
 def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
 
+/// Objective-C parser diagnostics
 def err_objc_no_attributes_on_category : Error<
   "attributes may not be specified on a category">;
 def err_objc_missing_end : Error<"missing @end">;
@@ -146,8 +154,7 @@ def err_objc_expected_equal : Error<
   "setter/getter expects '=' followed by name">;
 def err_objc_property_requires_field_name : Error<
   "property requires fields to be named">;
-def err_objc_property_bitfield : Error<
-  "property name cannot be a bitfield">;
+def err_objc_property_bitfield : Error<"property name cannot be a bitfield">;
 def err_objc_expected_property_attr : Error<"unknown property attribute %0">;
 def err_objc_propertoes_require_objc2 : Error<
   "properties are an Objective-C 2 feature">;
@@ -175,6 +182,7 @@ def err_declaration_does_not_declare_param : Error<
   "declaration does not declare a parameter">;
 def err_no_matching_param : Error<"parameter named %0 is missing">;
 
+/// C++ parser diagnostics
 def err_expected_unqualified_id : Error<"expected unqualified-id">;
 def err_func_def_no_params : Error<
   "function definition does not declare parameters">;
@@ -190,20 +198,28 @@ def ext_ellipsis_exception_spec : Extension<
   "exception specification of '...' is a Microsoft extension">;
 def err_expected_catch : Error<"expected catch">;
 
+// C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
 
+// C++ operator overloading
 def err_operator_missing_type_specifier : Error<
   "missing type specifier after 'operator'">;
 
+// Classes.
 def err_anon_type_definition : Error<
   "declaration of anonymous %0 must be a definition">;
 
+
+/// C++ Templates
 def err_expected_template : Error<"expected template">;
-def err_expected_comma_greater : Error<"expected ',' or '>' in template-parameter-list">;
+def err_expected_comma_greater : Error<
+  "expected ',' or '>' in template-parameter-list">;
 def err_expected_type_id_after : Error<"expected type-id after '%0'">;
 def err_expected_class_before : Error<"expected 'class' before '%0'">;
 def err_template_spec_syntax_non_template : Error<
-  "identifier followed by '<' indicates a class template specialization but %0 %select{does not refer to a template|refers to a function template|<unused>|refers to a template template parameter}1">;
+  "identifier followed by '<' indicates a class template specialization but "
+  "%0 %select{does not refer to a template|refers to a function "
+  "template|<unused>|refers to a template template parameter}1">;
 def err_id_after_template_in_nested_name_spec : Error<
   "expected template name after 'template' keyword in nested name specifier">;
 def err_less_after_template_name_in_nested_name_spec : Error<
@@ -211,9 +227,12 @@ def err_less_after_template_name_in_nested_name_spec : Error<
 def err_two_right_angle_brackets_need_space : Error<
   "a space is required between consecutive right angle brackets (use '> >')">;
 def warn_cxx0x_right_shift_in_template_arg : Warning<
-  "use of right-shift operator ('>>') in template argument will require parentheses in C++0x">;
+  "use of right-shift operator ('>>') in template argument will require "
+  "parentheses in C++0x">;
 
 
+// Language specific pragmas
+// #pragma pack
 def warn_pragma_pack_expected_lparen : Warning<
   "missing '(' after '#pragma pack' - ignoring">;
 def warn_pragma_pack_expected_rparen : Warning<

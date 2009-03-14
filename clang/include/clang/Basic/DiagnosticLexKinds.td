@@ -22,6 +22,7 @@ def escaped_newline_block_comment_end : Warning<
 def backslash_newline_space : Warning<
   "backslash and newline separated by space">;
 
+// Trigraphs.
 def trigraph_ignored : Warning<"trigraph ignored">;
 def trigraph_ignored_block_comment : Warning<
   "ignored trigraph would end block comment">;
@@ -46,6 +47,7 @@ def err_unterminated_block_comment : Error<"unterminated /* comment">;
 def err_invalid_character_to_charify : Error<
   "invalid argument to convert to character">;
 
+// Literal
 def ext_nonstandard_escape : Extension<
   "use of non-standard escape character '\\%0'">;
 def ext_unknown_escape : Extension<"unknown escape sequence '\\%0'">;
@@ -67,12 +69,15 @@ def err_hexconstant_requires_exponent : Error<
   "hexadecimal floating constants require an exponent">;
 def ext_hexconstant_invalid : Extension<
   "hexadecimal floating constants are a C99 feature">;
-def ext_binary_literal : Extension<"binary integer literals are an extension">;
+def ext_binary_literal : Extension<
+  "binary integer literals are an extension">;
 def err_pascal_string_too_long : Error<"Pascal string is too long">;
 def warn_octal_escape_too_large : ExtWarn<"octal escape sequence out of range">;
 def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
 
-
+//===----------------------------------------------------------------------===//
+// Preprocessor Diagnostics
+//===----------------------------------------------------------------------===//
 def pp_hash_warning : Warning<"#warning%0">;
 def pp_include_next_in_primary : Warning<
   "#include_next in primary source file">;
@@ -106,7 +111,7 @@ def ext_pp_extra_tokens_at_eol : Extension<
 def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<
   "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro">;
-def ext_pp_macro_redef : Extension<"%0 macro redefined">;
+def ext_pp_macro_redef : ExtWarn<"%0 macro redefined">;
 def ext_variadic_macro : Extension<"variadic macros were introduced in C99">;
 def ext_named_variadic_macro : Extension<
   "named variadic macros are a GNU extension">;
