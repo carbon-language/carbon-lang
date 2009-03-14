@@ -102,3 +102,13 @@ A7<&Z::int_member> *a18_1;
 A7c<&Z::int_member> *a18_2;
 A7<&Z::float_member> *a18_3; // expected-error{{non-type template argument of type 'float struct Z::*' cannot be converted to a value of type 'int struct Z::*'}}
 A7c<(&Z::int_member)> *a18_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
+
+template<unsigned char C> struct Overflow; // expected-note{{template parameter is declared here}}
+
+Overflow<5> *overflow1; // okay
+Overflow<256> *overflow2; // expected-error{{non-type template argument value '256' is too large for template parameter of type 'unsigned char'}}
+
+
+template<unsigned> struct Signedness; // expected-note{{template parameter is declared here}}
+Signedness<10> *signedness1; // okay
+Signedness<-10> *signedness2; // expected-error{{non-type template argument provides negative value '-10' for unsigned template parameter of type 'unsigned int'}}

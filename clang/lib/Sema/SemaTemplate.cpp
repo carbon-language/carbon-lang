@@ -1266,27 +1266,48 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
 
-    // FIXME: Check overflow of template arguments?
+    QualType IntegerType = Context.getCanonicalType(ParamType);
+    if (const EnumType *Enum = IntegerType->getAsEnumType())
+      IntegerType = Enum->getDecl()->getIntegerType();
+
+    if (!Arg->isValueDependent()) {
+      // Check that an unsigned parameter does not receive a negative
+      // value.
+      if (IntegerType->isUnsignedIntegerType()
+          && (Value.isSigned() && Value.isNegative())) {
+        Diag(Arg->getSourceRange().getBegin(), diag::err_template_arg_negative)
+          << Value.toString(10) << Param->getType()
+          << Arg->getSourceRange();
+        Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
+      }
+
+      // Check that we don't overflow the template parameter type.
+      unsigned AllowedBits = Context.getTypeSize(IntegerType);
+      if (Value.getActiveBits() > AllowedBits) {
+        Diag(Arg->getSourceRange().getBegin(), 
+             diag::err_template_arg_too_large)
+          << Value.toString(10) << Param->getType()
+          << Arg->getSourceRange();
+        Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
+      }
+
+      if (Value.getBitWidth() != AllowedBits)
+        Value.extOrTrunc(AllowedBits);
+      Value.setIsSigned(IntegerType->isSignedIntegerType());
+    }
 
     if (Converted) {
       // Add the value of this argument to the list of converted
       // arguments. We use the bitwidth and signedness of the template
       // parameter.
-      QualType IntegerType = Context.getCanonicalType(ParamType);
-      if (const EnumType *Enum = IntegerType->getAsEnumType())
-        IntegerType = Enum->getDecl()->getIntegerType();
-
       if (Arg->isValueDependent()) {
         // The argument is value-dependent. Create a new
         // TemplateArgument with the converted expression.
         Converted->push_back(TemplateArgument(Arg));
         return false;
       } 
-
-      unsigned ExpectedBits = Context.getTypeSize(IntegerType);
-      if (Value.getBitWidth() != ExpectedBits)
-        Value.extOrTrunc(ExpectedBits);
-      Value.setIsSigned(IntegerType->isSignedIntegerType());
 
       Converted->push_back(TemplateArgument(StartLoc, Value,
                                    Context.getCanonicalType(IntegerType)));

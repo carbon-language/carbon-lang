@@ -604,6 +604,12 @@ DIAG(err_template_arg_not_ice, ERROR,
      "non-type template argument of type %0 is not an integral constant expression")
 DIAG(err_template_arg_not_convertible, ERROR,
      "non-type template argument of type %0 cannot be converted to a value of type %1")
+DIAG(err_template_arg_negative, ERROR,
+     "non-type template argument provides negative value '%0' for unsigned "
+     "template parameter of type %1")
+DIAG(err_template_arg_too_large, ERROR,
+     "non-type template argument value '%0' is too large for template "
+     "parameter of type %1")
 DIAG(err_template_arg_no_ref_bind, ERROR,
      "non-type template parameter of reference type %0 cannot bind to template argument of type %1") 
 DIAG(err_template_arg_ref_bind_ignores_quals, ERROR,
