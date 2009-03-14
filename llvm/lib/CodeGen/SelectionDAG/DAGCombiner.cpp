@@ -5654,10 +5654,13 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
   // it replaces two constant pool loads with one.  We only do this if the FP
   // type is known to be legal, because if it isn't, then we are before legalize
   // types an we want the other legalization to happen first (e.g. to avoid
-  // messing with soft float).
+  // messing with soft float) and if the ConstantFP is not legal, because if
+  // it is legal, we may not need to store the FP constant in a constant pool.
   if (ConstantFPSDNode *TV = dyn_cast<ConstantFPSDNode>(N2))
     if (ConstantFPSDNode *FV = dyn_cast<ConstantFPSDNode>(N3)) {
       if (TLI.isTypeLegal(N2.getValueType()) &&
+          (TLI.getOperationAction(ISD::ConstantFP, N2.getValueType()) !=
+           TargetLowering::Legal) &&
           // If both constants have multiple uses, then we won't need to do an
           // extra load, they are likely around in registers for other users.
           (TV->hasOneUse() || FV->hasOneUse())) {
