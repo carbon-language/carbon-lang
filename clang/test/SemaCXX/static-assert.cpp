@@ -13,3 +13,12 @@ void g() {
 class C {
     static_assert(false, "false is false"); // expected-error {{static_assert failed "false is false"}}
 };
+
+template<int N> struct T {
+    static_assert(N == 2, "N is not 2!");
+};
+
+template<typename T> struct S {
+    static_assert(sizeof(T) > sizeof(char), "Type not big enough!");
+};
+

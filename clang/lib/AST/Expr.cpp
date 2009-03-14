@@ -1044,6 +1044,7 @@ static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
 }
 
 static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
+  assert(!E->isValueDependent() && "Should not see value dependent exprs!");
   if (!E->getType()->isIntegralType()) {
     return ICEDiag(2, E->getLocStart());
   }
