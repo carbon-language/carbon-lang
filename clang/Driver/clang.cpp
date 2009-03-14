@@ -1203,7 +1203,7 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
   // FIXME: There are llvm-gcc options to control these selectively.
   Opts.InlineFunctions = (Opts.OptimizationLevel > 1);
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
-  Opts.SimplifyLibCalls = !NoBuiltin;
+  Opts.SimplifyLibCalls = !NoBuiltin && !Freestanding;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
