@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-alloc-split"
+#include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -57,6 +58,7 @@ namespace {
     MachineRegisterInfo   *MRI;
     LiveIntervals         *LIs;
     LiveStacks            *LSs;
+    VirtRegMap            *VRM;
 
     // Barrier - Current barrier being processed.
     MachineInstr          *Barrier;
@@ -100,8 +102,10 @@ namespace {
         AU.addPreservedID(PHIEliminationID);
       AU.addRequired<MachineDominatorTree>();
       AU.addRequired<MachineLoopInfo>();
+      AU.addRequired<VirtRegMap>();
       AU.addPreserved<MachineDominatorTree>();
       AU.addPreserved<MachineLoopInfo>();
+      AU.addPreserved<VirtRegMap>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
@@ -917,6 +921,9 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     MO.setReg(NewVReg);
   }
   
+  // Grow the VirtRegMap, since we've created a new vreg.
+  VRM->grow();
+  
   // The renumbered vreg shares a stack slot with the old register.
   if (IntervalSSMap.count(CurrLI->reg))
     IntervalSSMap[NewVReg] = IntervalSSMap[CurrLI->reg];
@@ -1512,6 +1519,7 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   MRI    = &MF.getRegInfo();
   LIs    = &getAnalysis<LiveIntervals>();
   LSs    = &getAnalysis<LiveStacks>();
+  VRM    = &getAnalysis<VirtRegMap>();
 
   bool MadeChange = false;
 
