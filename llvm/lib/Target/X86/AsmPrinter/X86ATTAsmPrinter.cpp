@@ -471,14 +471,15 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << "@GOT";
         else
           O << "@GOTOFF";
-      } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel &&
-                 TM.getRelocationModel() != Reloc::Static) {
-        if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
-          O << "@GOTPCREL";
+      } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel) {
+        if (TM.getRelocationModel() != Reloc::Static) {
+          if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
+            O << "@GOTPCREL";
 
-        if (needCloseParen) {
-          needCloseParen = false;
-          O << ')';
+          if (needCloseParen) {
+            needCloseParen = false;
+            O << ')';
+          }
         }
 
         // Use rip when possible to reduce code size, except when
@@ -692,7 +693,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
-      printOperand(MI, OpNo, "mem");
+      printOperand(MI, OpNo, "mem", /*NotRIPRel=*/true);
       return false;
     case 'b': // Print QImode register
     case 'h': // Print QImode high register
