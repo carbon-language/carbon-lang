@@ -15,7 +15,7 @@
 #define LLVM_CLANG_AST_DECLTEMPLATE_H
 
 #include "clang/AST/DeclCXX.h"
-#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
@@ -407,7 +407,7 @@ class TemplateArgument {
   union {
     uintptr_t TypeOrValue;
     struct {
-      char Value[sizeof(llvm::APInt)];
+      char Value[sizeof(llvm::APSInt)];
       void *Type;
     } Integer;
   };
@@ -423,7 +423,7 @@ public:
     Type = 0,
     /// The template argument is a declaration
     Declaration = 1,
-    /// The template argument is an integral value stored in an llvm::APInt.
+    /// The template argument is an integral value stored in an llvm::APSInt.
     Integral = 2,
     /// The template argument is a value- or type-dependent expression
     /// stored in an Expr*.
@@ -449,10 +449,10 @@ public:
   }
 
   /// \brief Construct an integral constant template argument.
-  TemplateArgument(SourceLocation Loc, const llvm::APInt &Value,
+  TemplateArgument(SourceLocation Loc, const llvm::APSInt &Value,
                    QualType Type)
     : Kind(Integral) {
-    new (Integer.Value) llvm::APInt(Value);
+    new (Integer.Value) llvm::APSInt(Value);
     Integer.Type = Type.getAsOpaquePtr();
     StartLoc = Loc;
   }
@@ -467,7 +467,7 @@ public:
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
     if (Kind == Integral) {
-      new (Integer.Value) llvm::APInt(*Other.getAsIntegral());
+      new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
       Integer.Type = Other.Integer.Type;
     }
     else
@@ -478,7 +478,7 @@ public:
   TemplateArgument& operator=(const TemplateArgument& Other) {
     // FIXME: Does not provide the strong guarantee for exception
     // safety.
-    using llvm::APInt;
+    using llvm::APSInt;
 
     if (Kind == Other.Kind && Kind == Integral) {
       // Copy integral values.
@@ -487,12 +487,12 @@ public:
     } else {
       // Destroy the current integral value, if that's what we're holding.
       if (Kind == Integral)
-        getAsIntegral()->~APInt();
+        getAsIntegral()->~APSInt();
       
       Kind = Other.Kind;
       
       if (Other.Kind == Integral) {
-        new (Integer.Value) llvm::APInt(*Other.getAsIntegral());
+        new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
         Integer.Type = Other.Integer.Type;
       } else
         TypeOrValue = Other.TypeOrValue;
@@ -503,10 +503,10 @@ public:
   }
 
   ~TemplateArgument() {
-    using llvm::APInt;
+    using llvm::APSInt;
 
     if (Kind == Integral)
-      getAsIntegral()->~APInt();
+      getAsIntegral()->~APSInt();
   }
 
   /// \brief Return the kind of stored template argument.
@@ -529,13 +529,13 @@ public:
   }
 
   /// \brief Retrieve the template argument as an integral value.
-  llvm::APInt *getAsIntegral() {
+  llvm::APSInt *getAsIntegral() {
     if (Kind != Integral)
       return 0;
-    return reinterpret_cast<llvm::APInt*>(&Integer.Value[0]);
+    return reinterpret_cast<llvm::APSInt*>(&Integer.Value[0]);
   }
 
-  const llvm::APInt *getAsIntegral() const {
+  const llvm::APSInt *getAsIntegral() const {
     return const_cast<TemplateArgument*>(this)->getAsIntegral();
   }
 

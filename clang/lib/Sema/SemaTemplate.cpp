@@ -1283,11 +1283,12 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
         return false;
       } 
 
-      llvm::APInt CanonicalArg(Context.getTypeSize(IntegerType), 0, 
-                               IntegerType->isSignedIntegerType());
-      CanonicalArg = Value;
+      unsigned ExpectedBits = Context.getTypeSize(IntegerType);
+      if (Value.getBitWidth() != ExpectedBits)
+        Value.extOrTrunc(ExpectedBits);
+      Value.setIsSigned(IntegerType->isSignedIntegerType());
 
-      Converted->push_back(TemplateArgument(StartLoc, CanonicalArg,
+      Converted->push_back(TemplateArgument(StartLoc, Value,
                                    Context.getCanonicalType(IntegerType)));
     }
 
