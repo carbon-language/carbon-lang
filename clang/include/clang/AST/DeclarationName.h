@@ -132,26 +132,6 @@ private:
     Ptr |= StoredDeclarationNameExtra;
   }
 
-  // Construct a declaration name from a zero- or one-argument
-  // Objective-C selector.
-  DeclarationName(IdentifierInfo *II, unsigned numArgs) 
-    : Ptr(reinterpret_cast<uintptr_t>(II)) {
-    assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
-    assert(numArgs < 2 && "Use MultiKeywordSelector for >= 2 arguments");
-    if (numArgs == 0)
-      Ptr |= StoredObjCZeroArgSelector;
-    else
-      Ptr |= StoredObjCOneArgSelector;
-  }
-
-  // Construct a declaration name from an Objective-C multiple-keyword
-  // selector.
-  DeclarationName(MultiKeywordSelector *SI)
-    : Ptr(reinterpret_cast<uintptr_t>(SI)) {
-    assert((Ptr & PtrMask) == 0 && "Improperly aligned MultiKeywordSelector");
-    Ptr |= StoredDeclarationNameExtra;
-  }
-
   /// Construct a declaration name from a raw pointer.
   DeclarationName(uintptr_t Ptr) : Ptr(Ptr) { }
 

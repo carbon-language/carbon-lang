@@ -63,16 +63,19 @@ DeclarationName::DeclarationName(Selector Sel) {
   switch (Sel.getNumArgs()) {
   case 0:
     Ptr = reinterpret_cast<uintptr_t>(Sel.getAsIdentifierInfo());
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
     Ptr |= StoredObjCZeroArgSelector;
     break;
 
   case 1:
     Ptr = reinterpret_cast<uintptr_t>(Sel.getAsIdentifierInfo());
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
     Ptr |= StoredObjCOneArgSelector;
     break;
 
   default:
     Ptr = Sel.InfoPtr & ~Selector::ArgFlags;
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned MultiKeywordSelector");
     Ptr |= StoredDeclarationNameExtra;
     break;
   }
