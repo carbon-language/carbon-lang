@@ -319,16 +319,9 @@ bool X86DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
       // addl 4(%esp), %eax
       // The former is 2 bytes shorter. In case where the increment is 1, then
       // the saving can be 4 bytes (by using incl %eax).
-      ConstantSDNode *Imm = dyn_cast<ConstantSDNode>(U->getOperand(1));
-      if (Imm) {
-        if (U->getValueType(0) == MVT::i64) {
-          if ((int32_t)Imm->getZExtValue() == (int64_t)Imm->getZExtValue())
-            return false;
-        } else {
-          if ((int8_t)Imm->getZExtValue() == (int64_t)Imm->getZExtValue())
-            return false;
-        }
-      }
+      if (ConstantSDNode *Imm = dyn_cast<ConstantSDNode>(U->getOperand(1)))
+        if (Imm->getAPIntValue().isSignedIntN(8))
+          return false;
     }
     }
 
