@@ -2095,7 +2095,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::LShr:
   case Instruction::AShr:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isInteger() &&
+    assert(C1->getType()->isIntOrIntVector() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
   default:

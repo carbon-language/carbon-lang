@@ -832,6 +832,12 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getOr);
       case Instruction::Xor: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getXor);
+      case Instruction::LShr:
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getLShr);
+      case Instruction::AShr:
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getAShr);
+      case Instruction::Shl:
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getShl);
       }
     }
   }
