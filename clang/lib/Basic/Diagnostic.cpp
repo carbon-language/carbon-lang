@@ -41,35 +41,35 @@ enum {
 /// diagnostic.
 #define DIAG(ENUM,FLAGS,DESC) FLAGS,
 static unsigned char DiagnosticFlagsCommon[] = {
-#include "clang/Basic/DiagnosticCommonKinds.inc"
+#include "clang/Basic/DiagnosticCommonKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsDriver[] = {
-#include "clang/Basic/DiagnosticDriverKinds.inc"
+#include "clang/Basic/DiagnosticDriverKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsFrontend[] = {
-#include "clang/Basic/DiagnosticFrontendKinds.inc"
+#include "clang/Basic/DiagnosticFrontendKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsLex[] = {
-#include "clang/Basic/DiagnosticLexKinds.inc"
+#include "clang/Basic/DiagnosticLexKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsParse[] = {
-#include "clang/Basic/DiagnosticParseKinds.inc"
+#include "clang/Basic/DiagnosticParseKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsAST[] = {
-#include "clang/Basic/DiagnosticASTKinds.inc"
+#include "clang/Basic/DiagnosticASTKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsSema[] = {
-#include "clang/Basic/DiagnosticSemaKinds.inc"
+#include "clang/Basic/DiagnosticSemaKinds.def"
   0
 };
 static unsigned char DiagnosticFlagsAnalysis[] = {
-#include "clang/Basic/DiagnosticAnalysisKinds.inc"
+#include "clang/Basic/DiagnosticAnalysisKinds.def"
   0
 };
 #undef DIAG
@@ -103,35 +103,35 @@ static unsigned getBuiltinDiagClass(unsigned DiagID) {
 /// should be localized.
 #define DIAG(ENUM,FLAGS,DESC) DESC,
 static const char * const DiagnosticTextCommon[] = {
-#include "clang/Basic/DiagnosticCommonKinds.inc"
+#include "clang/Basic/DiagnosticCommonKinds.def"
   0
 };
 static const char * const DiagnosticTextDriver[] = {
-#include "clang/Basic/DiagnosticDriverKinds.inc"
+#include "clang/Basic/DiagnosticDriverKinds.def"
   0
 };
 static const char * const DiagnosticTextFrontend[] = {
-#include "clang/Basic/DiagnosticFrontendKinds.inc"
+#include "clang/Basic/DiagnosticFrontendKinds.def"
   0
 };
 static const char * const DiagnosticTextLex[] = {
-#include "clang/Basic/DiagnosticLexKinds.inc"
+#include "clang/Basic/DiagnosticLexKinds.def"
   0
 };
 static const char * const DiagnosticTextParse[] = {
-#include "clang/Basic/DiagnosticParseKinds.inc"
+#include "clang/Basic/DiagnosticParseKinds.def"
   0
 };
 static const char * const DiagnosticTextAST[] = {
-#include "clang/Basic/DiagnosticASTKinds.inc"
+#include "clang/Basic/DiagnosticASTKinds.def"
   0
 };
 static const char * const DiagnosticTextSema[] = {
-#include "clang/Basic/DiagnosticSemaKinds.inc"
+#include "clang/Basic/DiagnosticSemaKinds.def"
   0
 };
 static const char * const DiagnosticTextAnalysis[] = {
-#include "clang/Basic/DiagnosticAnalysisKinds.inc"
+#include "clang/Basic/DiagnosticAnalysisKinds.def"
   0
 };
 #undef DIAG

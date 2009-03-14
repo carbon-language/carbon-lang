@@ -1,0 +1,20 @@
+//==--- DiagnosticFrontendKinds.def - frontend diagnostics ------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifdef FRONTENDSTART
+__FRONTENDSTART      =  DIAG_START_FRONTEND,
+#undef FRONTENDSTART
+#endif
+
+DIAG(err_fe_unknown_triple, ERROR,
+     "unknown target triple '%0', please use -triple or -arch")
+DIAG(err_fe_error_reading, ERROR,
+     "error reading '%0'")
+DIAG(err_fe_error_reading_stdin, ERROR,
+     "error reading stdin")

@@ -17,7 +17,7 @@ namespace clang {
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
 #define FRONTENDSTART
-#include "clang/Basic/DiagnosticFrontendKinds.inc"
+#include "clang/Basic/DiagnosticFrontendKinds.def"
 #undef DIAG
       NUM_BUILTIN_FRONTEND_DIAGNOSTICS
     };
