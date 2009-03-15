@@ -2258,6 +2258,8 @@ Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
     }
   }
   
+  assertexpr.release();
+  assertmessageexpr.release();
   Decl *Decl = StaticAssertDecl::Create(Context, CurContext, AssertLoc, 
                                         AssertExpr, AssertMessage);
   
