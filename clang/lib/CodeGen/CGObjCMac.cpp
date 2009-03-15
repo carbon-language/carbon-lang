@@ -4255,8 +4255,6 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
     return Builder.CreateLoad(PTGV, false, "tmp");
   PTGV = new llvm::GlobalVariable(
                                 Init->getType(), false,
-                                // FIXME: review, was WeakLinkage,
-                                // also review all other WeakLinkage changes
                                 llvm::GlobalValue::WeakAnyLinkage,
                                 Init,
                                 ProtocolName,
