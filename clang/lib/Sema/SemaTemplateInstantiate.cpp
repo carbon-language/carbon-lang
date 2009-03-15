@@ -1042,8 +1042,7 @@ Sema::InstantiateClassTemplateSpecialization(
       Expr *BitWidth = Field->getBitWidth();
       if (InvalidDecl)
         BitWidth = 0;
-      if (BitWidth && 
-          (BitWidth->isTypeDependent() || BitWidth->isValueDependent())) {
+      else if (BitWidth) {
         OwningExprResult InstantiatedBitWidth
           = InstantiateExpr(BitWidth, 
                             ClassTemplateSpec->getTemplateArgs(),
