@@ -55,13 +55,13 @@ static TryStaticCastResult TryStaticImplicitCast(Sema &Self, Expr *SrcExpr,
                                                  const SourceRange &OpRange);
 
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation LAngleBracketLoc, TypeTy *Ty,
                         SourceLocation RAngleBracketLoc,
-                        SourceLocation LParenLoc, ExprTy *E,
+                        SourceLocation LParenLoc, ExprArg E,
                         SourceLocation RParenLoc) {
-  Expr *Ex = (Expr*)E;
+  Expr *Ex = (Expr*)E.release();
   QualType DestType = QualType::getFromOpaquePtr(Ty);
   SourceRange OpRange(OpLoc, RParenLoc);
   SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);
@@ -76,29 +76,30 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   case tok::kw_const_cast:
     if (!TypeDependent)
       CheckConstCast(*this, Ex, DestType, OpRange, DestRange);
-    return new (Context) CXXConstCastExpr(DestType.getNonReferenceType(), Ex, 
-                                          DestType, OpLoc);
+    return Owned(new (Context) CXXConstCastExpr(DestType.getNonReferenceType(),
+                                                Ex, DestType, OpLoc));
 
   case tok::kw_dynamic_cast:
     if (!TypeDependent)
       CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange);
-    return new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(), Ex, 
-                                           DestType, OpLoc);
+    return Owned(new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(),
+                                                 Ex, DestType, OpLoc));
 
   case tok::kw_reinterpret_cast:
     if (!TypeDependent)
       CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange);
-    return new (Context) CXXReinterpretCastExpr(DestType.getNonReferenceType(),
-                                                Ex, DestType, OpLoc);
+    return Owned(new (Context) CXXReinterpretCastExpr(
+                                  DestType.getNonReferenceType(),
+                                  Ex, DestType, OpLoc));
 
   case tok::kw_static_cast:
     if (!TypeDependent)
       CheckStaticCast(*this, Ex, DestType, OpRange);
-    return new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(), Ex, 
-                                           DestType, OpLoc);
+    return Owned(new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(),
+                                                 Ex, DestType, OpLoc));
   }
 
-  return true;
+  return ExprError();
 }
 
 /// CheckConstCast - Check that a const_cast\<DestType\>(SrcExpr) is valid.

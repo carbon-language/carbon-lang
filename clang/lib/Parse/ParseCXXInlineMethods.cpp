@@ -98,7 +98,7 @@ void Parser::ParseLexedMethodDeclarations() {
           Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
         else
           Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
-                                            DefArgResult.release());
+                                            move(DefArgResult));
         delete Toks;
         LM.DefaultArgs[I].Toks = 0;
       }

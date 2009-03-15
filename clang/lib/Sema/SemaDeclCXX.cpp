@@ -105,9 +105,9 @@ namespace {
 /// to the parameter declaration.
 void
 Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc, 
-                                ExprTy *defarg) {
+                                ExprArg defarg) {
   ParmVarDecl *Param = (ParmVarDecl *)param;
-  ExprOwningPtr<Expr> DefaultArg(this, (Expr *)defarg);
+  ExprOwningPtr<Expr> DefaultArg(this, (Expr *)defarg.release());
   QualType ParamType = Param->getType();
 
   // Default arguments are only permitted in C++
@@ -1448,17 +1448,16 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
 /// ActOnDeclarator, when a C++ direct initializer is present.
 /// e.g: "int x(1);"
 void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
-                                         ExprTy **ExprTys, unsigned NumExprs,
+                                         MultiExprArg Exprs,
                                          SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc) {
-  assert(NumExprs != 0 && ExprTys && "missing expressions");
+  unsigned NumExprs = Exprs.size();
+  assert(NumExprs != 0 && Exprs.get() && "missing expressions");
   Decl *RealDecl = static_cast<Decl *>(Dcl);
 
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
   if (RealDecl == 0) {
-    for (unsigned i = 0; i != NumExprs; ++i)
-      static_cast<Expr *>(ExprTys[i])->Destroy(Context);
     return;
   }
   
@@ -1489,16 +1488,17 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
 
   if (VDecl->getType()->isRecordType()) {
     CXXConstructorDecl *Constructor
-      = PerformInitializationByConstructor(DeclInitType, 
-                                           (Expr **)ExprTys, NumExprs,
+      = PerformInitializationByConstructor(DeclInitType,
+                                           (Expr **)Exprs.get(), NumExprs,
                                            VDecl->getLocation(),
                                            SourceRange(VDecl->getLocation(),
                                                        RParenLoc),
                                            VDecl->getDeclName(),
                                            IK_Direct);
-    if (!Constructor) {
+    if (!Constructor)
       RealDecl->setInvalidDecl();
-    }
+    else
+      Exprs.release();
 
     // Let clients know that initialization was done with a direct
     // initializer.
@@ -1521,7 +1521,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
 
   assert(NumExprs == 1 && "Expected 1 expression");
   // Set the init expression, handles conversions.
-  AddInitializerToDecl(Dcl, ExprArg(*this, ExprTys[0]), /*DirectInit=*/true);
+  AddInitializerToDecl(Dcl, ExprArg(*this, Exprs.release()[0]),
+                       /*DirectInit=*/true);
 }
 
 /// PerformInitializationByConstructor - Perform initialization by

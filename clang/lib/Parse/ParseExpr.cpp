@@ -625,7 +625,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___builtin_types_compatible_p:
     return ParseBuiltinPrimaryExpression();
   case tok::kw___null:
-    return Owned(Actions.ActOnGNUNullExpr(ConsumeToken()));
+    return Actions.ActOnGNUNullExpr(ConsumeToken());
     break;
   case tok::plusplus:      // unary-expression: '++' unary-expression
   case tok::minusminus: {  // unary-expression: '--' unary-expression
@@ -995,8 +995,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
     if (Ty.isInvalid())
       Res = ExprError();
     else
-      Res = Actions.ActOnVAArg(StartLoc, Expr.release(), Ty.get(), 
-                               ConsumeParen());
+      Res = Actions.ActOnVAArg(StartLoc, move(Expr), Ty.get(), ConsumeParen());
     break;
   }
   case tok::kw___builtin_offsetof: {
@@ -1092,8 +1091,8 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprError();
     }
-    Res = Actions.ActOnChooseExpr(StartLoc, Cond.release(), Expr1.release(),
-                                  Expr2.release(), ConsumeParen());
+    Res = Actions.ActOnChooseExpr(StartLoc, move(Cond), move(Expr1),
+                                  move(Expr2), ConsumeParen());
     break;
   }
   case tok::kw___builtin_types_compatible_p:
@@ -1151,8 +1150,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
 
     // If the substmt parsed correctly, build the AST node.
     if (!Stmt.isInvalid() && Tok.is(tok::r_paren))
-      Result = Actions.ActOnStmtExpr(
-        OpenLoc, Stmt.release(), Tok.getLocation());
+      Result = Actions.ActOnStmtExpr(OpenLoc, move(Stmt), Tok.getLocation());
 
   } else if (ExprType >= CompoundLiteral && isTypeIdInParens()) {
     // Otherwise, this is a compound literal expression or cast expression.
@@ -1344,7 +1342,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   if (Tok.is(tok::l_brace)) {
     OwningStmtResult Stmt(ParseCompoundStatementBody());
     if (!Stmt.isInvalid()) {
-      Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.release(), CurScope);
+      Result = Actions.ActOnBlockStmtExpr(CaretLoc, move(Stmt), CurScope);
     } else {
       Actions.ActOnBlockError(CaretLoc, CurScope);
     }

@@ -4152,9 +4152,9 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
-Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
-                                      SourceLocation LabLoc,
-                                      IdentifierInfo *LabelII) {
+Sema::OwningExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
+                                            SourceLocation LabLoc,
+                                            IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = CurBlock ? CurBlock->LabelMap[LabelII] : 
                                      LabelMap[LabelII];
@@ -4165,19 +4165,20 @@ Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
     LabelDecl = new (Context) LabelStmt(LabLoc, LabelII, 0);
 
   // Create the AST node.  The address of a label always has type 'void*'.
-  return new (Context) AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
-                                     Context.getPointerType(Context.VoidTy));
+  return Owned(new (Context) AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
+                                       Context.getPointerType(Context.VoidTy)));
 }
 
-Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
-                                     SourceLocation RPLoc) { // "({..})"
-  Stmt *SubStmt = static_cast<Stmt*>(substmt);
+Sema::OwningExprResult
+Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtArg substmt,
+                    SourceLocation RPLoc) { // "({..})"
+  Stmt *SubStmt = static_cast<Stmt*>(substmt.get());
   assert(SubStmt && isa<CompoundStmt>(SubStmt) && "Invalid action invocation!");
   CompoundStmt *Compound = cast<CompoundStmt>(SubStmt);
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
   if (isFileScope) {
-    return Diag(LPLoc, diag::err_stmtexpr_file_scope);
+    return ExprError(Diag(LPLoc, diag::err_stmtexpr_file_scope));
   }
 
   // FIXME: there are a variety of strange constraints to enforce here, for
@@ -4201,16 +4202,19 @@ Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
       Ty = LastExpr->getType();
   }
 
-  return new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc);
+  substmt.release();
+  return Owned(new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc));
 }
 
-Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
-                                            SourceLocation BuiltinLoc,
-                                            SourceLocation TypeLoc,
-                                            TypeTy *argty,
-                                            OffsetOfComponent *CompPtr,
-                                            unsigned NumComponents,
-                                            SourceLocation RPLoc) {
+Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
+                                                  SourceLocation BuiltinLoc,
+                                                  SourceLocation TypeLoc,
+                                                  TypeTy *argty,
+                                                  OffsetOfComponent *CompPtr,
+                                                  unsigned NumComponents,
+                                                  SourceLocation RPLoc) {
+  // FIXME: This function leaks all expressions in the offset components on
+  // error.
   QualType ArgTy = QualType::getFromOpaquePtr(argty);
   assert(!ArgTy.isNull() && "Missing type argument!");
 
@@ -4220,7 +4224,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   // one is known to be a field designator.  Verify that the ArgTy represents
   // a struct/union/class.
   if (!Dependent && !ArgTy->isRecordType())
-    return Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy;
+    return ExprError(Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy);
 
   // FIXME: Does the type need to be complete?
 
@@ -4228,7 +4232,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   // the offsetof designators.
   QualType ArgTyPtr = Context.getPointerType(ArgTy);
   Expr* Res = new (Context) ImplicitValueInitExpr(ArgTyPtr);
-  Res = new (Context) UnaryOperator(Res, UnaryOperator::Deref, 
+  Res = new (Context) UnaryOperator(Res, UnaryOperator::Deref,
                                     ArgTy, SourceLocation());
 
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
@@ -4249,8 +4253,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         const ArrayType *AT = Context.getAsArrayType(Res->getType());
         if (!AT) {
           Res->Destroy(Context);
-          return Diag(OC.LocEnd, diag::err_offsetof_array_type)
-            << Res->getType();
+          return ExprError(Diag(OC.LocEnd, diag::err_offsetof_array_type)
+            << Res->getType());
         }
 
         // FIXME: C++: Verify that operator[] isn't overloaded.
@@ -4261,9 +4265,11 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 
         // C99 6.5.2.1p1
         Expr *Idx = static_cast<Expr*>(OC.U.E);
+        // FIXME: Leaks Res
         if (!Idx->isTypeDependent() && !Idx->getType()->isIntegerType())
-          return Diag(Idx->getLocStart(), diag::err_typecheck_subscript)
-            << Idx->getSourceRange();
+          return ExprError(Diag(Idx->getLocStart(),
+                                diag::err_typecheck_subscript)
+            << Idx->getSourceRange());
 
         Res = new (Context) ArraySubscriptExpr(Res, Idx, AT->getElementType(),
                                                OC.LocEnd);
@@ -4273,8 +4279,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       const RecordType *RC = Res->getType()->getAsRecordType();
       if (!RC) {
         Res->Destroy(Context);
-        return Diag(OC.LocEnd, diag::err_offsetof_record_type)
-          << Res->getType();
+        return ExprError(Diag(OC.LocEnd, diag::err_offsetof_record_type)
+          << Res->getType());
       }
 
       // Get the decl corresponding to this.
@@ -4283,9 +4289,10 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         = dyn_cast_or_null<FieldDecl>(LookupQualifiedName(RD, OC.U.IdentInfo,
                                                           LookupMemberName)
                                         .getAsDecl());
+      // FIXME: Leaks Res
       if (!MemberDecl)
-        return Diag(BuiltinLoc, diag::err_typecheck_no_member)
-         << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd);
+        return ExprError(Diag(BuiltinLoc, diag::err_typecheck_no_member)
+         << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd));
 
       // FIXME: C++: Verify that MemberDecl isn't a static field.
       // FIXME: Verify that MemberDecl isn't a bitfield.
@@ -4296,29 +4303,30 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
     }
   }
 
-  return new (Context) UnaryOperator(Res, UnaryOperator::OffsetOf,
-                                     Context.getSizeType(), BuiltinLoc);
+  return Owned(new (Context) UnaryOperator(Res, UnaryOperator::OffsetOf,
+                                           Context.getSizeType(), BuiltinLoc));
 }
 
 
-Sema::ExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                                TypeTy *arg1, TypeTy *arg2,
-                                                SourceLocation RPLoc) {
+Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
+                                                      TypeTy *arg1,TypeTy *arg2,
+                                                      SourceLocation RPLoc) {
   QualType argT1 = QualType::getFromOpaquePtr(arg1);
   QualType argT2 = QualType::getFromOpaquePtr(arg2);
 
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
 
-  return new (Context) TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1,
-                                           argT2, RPLoc);
+  return Owned(new (Context) TypesCompatibleExpr(Context.IntTy, BuiltinLoc,
+                                                 argT1, argT2, RPLoc));
 }
 
-Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
-                                       ExprTy *expr1, ExprTy *expr2,
-                                       SourceLocation RPLoc) {
-  Expr *CondExpr = static_cast<Expr*>(cond);
-  Expr *LHSExpr = static_cast<Expr*>(expr1);
-  Expr *RHSExpr = static_cast<Expr*>(expr2);
+Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
+                                             ExprArg cond,
+                                             ExprArg expr1, ExprArg expr2,
+                                             SourceLocation RPLoc) {
+  Expr *CondExpr = static_cast<Expr*>(cond.get());
+  Expr *LHSExpr = static_cast<Expr*>(expr1.get());
+  Expr *RHSExpr = static_cast<Expr*>(expr2.get());
 
   assert((CondExpr && LHSExpr && RHSExpr) && "Missing type argument(s)");
 
@@ -4330,15 +4338,17 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
     llvm::APSInt condEval(32);
     SourceLocation ExpLoc;
     if (!CondExpr->isIntegerConstantExpr(condEval, Context, &ExpLoc))
-      return Diag(ExpLoc, diag::err_typecheck_choose_expr_requires_constant)
-        << CondExpr->getSourceRange();
+      return ExprError(Diag(ExpLoc,
+                       diag::err_typecheck_choose_expr_requires_constant)
+        << CondExpr->getSourceRange());
 
     // If the condition is > zero, then the AST type is the same as the LSHExpr.
     resType = condEval.getZExtValue() ? LHSExpr->getType() : RHSExpr->getType();
   }
 
-  return new (Context) ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr,
-                                  resType, RPLoc);
+  cond.release(); expr1.release(); expr2.release();
+  return Owned(new (Context) ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr,
+                                        resType, RPLoc));
 }
 
 //===----------------------------------------------------------------------===//
@@ -4440,11 +4450,10 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
 
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
 /// literal was successfully completed.  ^(int x){...}
-Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
-                                          Scope *CurScope) {
+Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
+                                                StmtArg body, Scope *CurScope) {
   // Ensure that CurBlock is deleted.
   llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
-  ExprOwningPtr<CompoundStmt> Body(this, static_cast<CompoundStmt*>(body));
 
   PopDeclContext();
 
@@ -4468,14 +4477,14 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
 
   BlockTy = Context.getBlockPointerType(BlockTy);
 
-  BSI->TheDecl->setBody(Body.take());
-  return new (Context) BlockExpr(BSI->TheDecl, BlockTy, BSI->hasBlockDeclRefExprs);
+  BSI->TheDecl->setBody(static_cast<CompoundStmt*>(body.release()));
+  return Owned(new (Context) BlockExpr(BSI->TheDecl, BlockTy,
+                                       BSI->hasBlockDeclRefExprs));
 }
 
-Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
-                                  ExprTy *expr, TypeTy *type,
-                                  SourceLocation RPLoc) {
-  Expr *E = static_cast<Expr*>(expr);
+Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
+                                        ExprArg expr, TypeTy *type,
+                                        SourceLocation RPLoc) {
   QualType T = QualType::getFromOpaquePtr(type);
 
   InitBuiltinVaListType();
@@ -4488,19 +4497,22 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   if (VaListType->isArrayType())
     VaListType = Context.getArrayDecayedType(VaListType);
   // Make sure the input expression also decays appropriately.
+  Expr *E = static_cast<Expr*>(expr.get());
   UsualUnaryConversions(E);
 
   if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible)
-    return Diag(E->getLocStart(),
-                diag::err_first_argument_to_va_arg_not_of_type_va_list)
-      << E->getType() << E->getSourceRange();
+    return ExprError(Diag(E->getLocStart(),
+                         diag::err_first_argument_to_va_arg_not_of_type_va_list)
+      << E->getType() << E->getSourceRange());
 
   // FIXME: Warn if a non-POD type is passed in.
 
-  return new (Context) VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(), RPLoc);
+  expr.release();
+  return Owned(new (Context) VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(),
+                                       RPLoc));
 }
 
-Sema::ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
+Sema::OwningExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   // The type of __null will be int or long, depending on the size of
   // pointers on the target.
   QualType Ty;
@@ -4509,7 +4521,7 @@ Sema::ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   else
     Ty = Context.LongTy;
 
-  return new (Context) GNUNullExpr(Ty, TokenLoc);
+  return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));
 }
 
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,

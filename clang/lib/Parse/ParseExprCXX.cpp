@@ -328,9 +328,9 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
 
   if (!Result.isInvalid() && !CastTy.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
-                                       LAngleBracketLoc, CastTy.get(), 
+                                       LAngleBracketLoc, CastTy.get(),
                                        RAngleBracketLoc,
-                                       LParenLoc, Result.release(), RParenLoc);
+                                       LParenLoc, move(Result), RParenLoc);
 
   return move(Result);
 }
@@ -390,7 +390,7 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
 ///         'false'
 Parser::OwningExprResult Parser::ParseCXXBoolLiteral() {
   tok::TokenKind Kind = Tok.getKind();
-  return Owned(Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind));
+  return Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind);
 }
 
 /// ParseThrowExpression - This handles the C++ throw expression.
@@ -411,12 +411,12 @@ Parser::OwningExprResult Parser::ParseThrowExpression() {
   case tok::r_brace:
   case tok::colon:
   case tok::comma:
-    return Owned(Actions.ActOnCXXThrow(ThrowLoc));
+    return Actions.ActOnCXXThrow(ThrowLoc, ExprArg(Actions));
 
   default:
     OwningExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid()) return move(Expr);
-    return Owned(Actions.ActOnCXXThrow(ThrowLoc, Expr.release()));
+    return Actions.ActOnCXXThrow(ThrowLoc, move(Expr));
   }
 }
 
@@ -428,7 +428,7 @@ Parser::OwningExprResult Parser::ParseThrowExpression() {
 Parser::OwningExprResult Parser::ParseCXXThis() {
   assert(Tok.is(tok::kw_this) && "Not 'this'!");
   SourceLocation ThisLoc = ConsumeToken();
-  return Owned(Actions.ActOnCXXThis(ThisLoc));
+  return Actions.ActOnCXXThis(ThisLoc);
 }
 
 /// ParseCXXTypeConstructExpression - Parse construction of a specified type.
@@ -463,10 +463,9 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 
   assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
          "Unexpected number of commas!");
-  return Owned(Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,
-                                                 LParenLoc,
-                                                 Exprs.take(), Exprs.size(),
-                                                 &CommaLocs[0], RParenLoc));
+  return Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,
+                                           LParenLoc, move_arg(Exprs),
+                                           &CommaLocs[0], RParenLoc);
 }
 
 /// ParseCXXCondition - if/switch/while/for condition expression.
@@ -518,9 +517,9 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
   if (AssignExpr.isInvalid())
     return ExprError();
 
-  return Owned(Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
-                                                        DeclaratorInfo,EqualLoc,
-                                                        AssignExpr.release()));
+  return Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
+                                                  DeclaratorInfo,EqualLoc,
+                                                  move(AssignExpr));
 }
 
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
@@ -883,11 +882,10 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     }
   }
 
-  return Owned(Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
-                                   PlacementArgs.take(), PlacementArgs.size(),
-                                   PlacementRParen, ParenTypeId, DeclaratorInfo,
-                                   ConstructorLParen, ConstructorArgs.take(),
-                                   ConstructorArgs.size(), ConstructorRParen));
+  return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
+                             move_arg(PlacementArgs), PlacementRParen,
+                             ParenTypeId, DeclaratorInfo, ConstructorLParen,
+                             move_arg(ConstructorArgs), ConstructorRParen);
 }
 
 /// ParseDirectNewDeclarator - Parses a direct-new-declarator. Intended to be
@@ -977,8 +975,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
   if (Operand.isInvalid())
     return move(Operand);
 
-  return Owned(Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete,
-                                      Operand.release()));
+  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, move(Operand));
 }
 
 static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind)

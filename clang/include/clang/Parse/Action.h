@@ -730,16 +730,17 @@ public:
 
   //===---------------------- GNU Extension Expressions -------------------===//
 
-  virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
-                                    IdentifierInfo *LabelII) { // "&&foo"
-    return 0;
+  virtual OwningExprResult ActOnAddrLabel(SourceLocation OpLoc,
+                                          SourceLocation LabLoc,
+                                          IdentifierInfo *LabelII) { // "&&foo"
+    return ExprEmpty();
   }
-  
-  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
-                                   SourceLocation RPLoc) { // "({..})"
-    return 0;
+
+  virtual OwningExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtArg SubStmt,
+                                         SourceLocation RPLoc) { // "({..})"
+    return ExprEmpty();
   }
-  
+
   // __builtin_offsetof(type, identifier(.identifier|[expr])*)
   struct OffsetOfComponent {
     SourceLocation LocStart, LocEnd;
@@ -749,39 +750,41 @@ public:
       ExprTy *E;
     } U;
   };
-  
-  virtual ExprResult ActOnBuiltinOffsetOf(Scope *S, SourceLocation BuiltinLoc,
-                                          SourceLocation TypeLoc, TypeTy *Arg1,
-                                          OffsetOfComponent *CompPtr,
-                                          unsigned NumComponents,
-                                          SourceLocation RParenLoc) {
-    return 0;
+
+  virtual OwningExprResult ActOnBuiltinOffsetOf(Scope *S,
+                                                SourceLocation BuiltinLoc,
+                                                SourceLocation TypeLoc,
+                                                TypeTy *Arg1,
+                                                OffsetOfComponent *CompPtr,
+                                                unsigned NumComponents,
+                                                SourceLocation RParenLoc) {
+    return ExprEmpty();
   }
-  
+
   // __builtin_types_compatible_p(type1, type2)
-  virtual ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc, 
-                                              TypeTy *arg1, TypeTy *arg2,
-                                              SourceLocation RPLoc) {
-    return 0;
+  virtual OwningExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc, 
+                                                    TypeTy *arg1, TypeTy *arg2,
+                                                    SourceLocation RPLoc) {
+    return ExprEmpty();
   }
   // __builtin_choose_expr(constExpr, expr1, expr2)
-  virtual ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc, 
-                                     ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
-                                     SourceLocation RPLoc) {
-    return 0;
+  virtual OwningExprResult ActOnChooseExpr(SourceLocation BuiltinLoc, 
+                                           ExprArg cond, ExprArg expr1,
+                                           ExprArg expr2, SourceLocation RPLoc){
+    return ExprEmpty();
   }
 
   // __builtin_va_arg(expr, type)
-  virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
-                                ExprTy *expr, TypeTy *type,
-                                SourceLocation RPLoc) {
-    return 0;
+  virtual OwningExprResult ActOnVAArg(SourceLocation BuiltinLoc,
+                                      ExprArg expr, TypeTy *type,
+                                      SourceLocation RPLoc) {
+    return ExprEmpty();
   }
 
   /// ActOnGNUNullExpr - Parsed the GNU __null expression, the token
   /// for which is at position TokenLoc.
-  virtual ExprResult ActOnGNUNullExpr(SourceLocation TokenLoc) {
-    return 0;
+  virtual OwningExprResult ActOnGNUNullExpr(SourceLocation TokenLoc) {
+    return ExprEmpty();
   }
 
   //===------------------------- "Block" Extension ------------------------===//
@@ -793,15 +796,18 @@ public:
   /// ActOnBlockArguments - This callback allows processing of block arguments.
   /// If there are no arguments, this is still invoked.
   virtual void ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {}
-  
+
   /// ActOnBlockError - If there is an error parsing a block, this callback
   /// is invoked to pop the information about the block from the action impl.
   virtual void ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {}
-  
+
   /// ActOnBlockStmtExpr - This is called when the body of a block statement
   /// literal was successfully completed.  ^(int x){...}
-  virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
-                                        Scope *CurScope) { return 0; }
+  virtual OwningExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
+                                              StmtArg Body,
+                                              Scope *CurScope) {
+    return ExprEmpty();
+  }
 
   //===------------------------- C++ Declarations -------------------------===//
 
@@ -831,7 +837,7 @@ public:
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
   virtual void ActOnParamDefaultArgument(DeclTy *param,
                                          SourceLocation EqualLoc,
-                                         ExprTy *defarg) {
+                                         ExprArg defarg) {
   }
 
   /// ActOnParamUnparsedDefaultArgument - We've seen a default
@@ -850,12 +856,12 @@ public:
   /// e.g: "int x(1);"
   virtual void AddCXXDirectInitializerToDecl(DeclTy *Dcl,
                                              SourceLocation LParenLoc,
-                                             ExprTy **Exprs, unsigned NumExprs,
+                                             MultiExprArg Exprs,
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc) {
     return;
   }
-  
+
   /// ActOnStartDelayedCXXMethodDeclaration - We have completed
   /// parsing a top-level (non-nested) C++ class, and we are now
   /// parsing those parts of the given Method declaration that could
@@ -881,76 +887,78 @@ public:
   /// ActOnStartOfFunctionDef action later (not necessarily
   /// immediately!) for this method, if it was also defined inside the
   /// class body.
-  virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
+  virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method){
   }
 
   /// ActOnStaticAssertDeclaration - Parse a C++0x static_assert declaration.
-  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
+  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                                ExprArg AssertExpr,
                                                ExprArg AssertMessageExpr,
                                                SourceLocation RParenLoc) {
     return 0;
   }
-  
-                                          
+
+
   //===------------------------- C++ Expressions --------------------------===//
-  
+
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
-                                       SourceLocation LAngleBracketLoc, TypeTy *Ty,
-                                       SourceLocation RAngleBracketLoc,
-                                       SourceLocation LParenLoc, ExprTy *Op,
-                                       SourceLocation RParenLoc) {
-    return 0;
+  virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
+                                             tok::TokenKind Kind,
+                                             SourceLocation LAngleBracketLoc,
+                                             TypeTy *Ty,
+                                             SourceLocation RAngleBracketLoc,
+                                             SourceLocation LParenLoc,
+                                             ExprArg Op,
+                                             SourceLocation RParenLoc) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
-  virtual ExprResult ActOnCXXTypeid(SourceLocation OpLoc,
-                                    SourceLocation LParenLoc, bool isType,
-                                    void *TyOrExpr, SourceLocation RParenLoc) {
-    return 0;
+  virtual OwningExprResult ActOnCXXTypeid(SourceLocation OpLoc,
+                                          SourceLocation LParenLoc, bool isType,
+                                          void *TyOrExpr,
+                                          SourceLocation RParenLoc) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXThis - Parse the C++ 'this' pointer.
-  virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc) {
-    return 0;
+  virtual OwningExprResult ActOnCXXThis(SourceLocation ThisLoc) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
-  virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
+  virtual OwningExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind) {
-    return 0;
+    return ExprEmpty();
   }
 
   /// ActOnCXXThrow - Parse throw expressions.
-  virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc,
-                                   ExprTy *Op = 0) {
-    return 0;
+  virtual OwningExprResult ActOnCXXThrow(SourceLocation OpLoc, ExprArg Op) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
   /// Can be interpreted either as function-style casting ("int(x)")
   /// or class type construction ("ClassType(x,y,z)")
   /// or creation of a value-initialized type ("int()").
-  virtual ExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
-                                               TypeTy *TypeRep,
-                                               SourceLocation LParenLoc,
-                                               ExprTy **Exprs,
-                                               unsigned NumExprs,
-                                               SourceLocation *CommaLocs,
-                                               SourceLocation RParenLoc) {
-    return 0;
+  virtual OwningExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
+                                                     TypeTy *TypeRep,
+                                                     SourceLocation LParenLoc,
+                                                     MultiExprArg Exprs,
+                                                     SourceLocation *CommaLocs,
+                                                     SourceLocation RParenLoc) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
   /// C++ if/switch/while/for statement.
   /// e.g: "if (int x = f()) {...}"
-  virtual ExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
+  virtual OwningExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
                                                       SourceLocation StartLoc,
                                                       Declarator &D,
                                                       SourceLocation EqualLoc,
-                                                      ExprTy *AssignExprVal) {
-    return 0;
+                                                      ExprArg AssignExprVal) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXNew - Parsed a C++ 'new' expression. UseGlobal is true if the
@@ -958,23 +966,24 @@ public:
   /// @code new (p1, p2) type(c1, c2) @endcode
   /// the p1 and p2 expressions will be in PlacementArgs and the c1 and c2
   /// expressions in ConstructorArgs. The type is passed as a declarator.
-  virtual ExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
-                                 SourceLocation PlacementLParen,
-                                 ExprTy **PlacementArgs, unsigned NumPlaceArgs,
-                                 SourceLocation PlacementRParen,
-                                 bool ParenTypeId, Declarator &D,
-                                 SourceLocation ConstructorLParen,
-                                 ExprTy **ConstructorArgs, unsigned NumConsArgs,
-                                 SourceLocation ConstructorRParen) {
-    return 0;
+  virtual OwningExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                                       SourceLocation PlacementLParen,
+                                       MultiExprArg PlacementArgs,
+                                       SourceLocation PlacementRParen,
+                                       bool ParenTypeId, Declarator &D,
+                                       SourceLocation ConstructorLParen,
+                                       MultiExprArg ConstructorArgs,
+                                       SourceLocation ConstructorRParen) {
+    return ExprEmpty();
   }
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression. UseGlobal is true if
   /// the delete was qualified (::delete). ArrayForm is true if the array form
   /// was used (delete[]).
-  virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
-                                    bool ArrayForm, ExprTy *Operand) {
-    return 0;
+  virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
+                                          bool UseGlobal, bool ArrayForm,
+                                          ExprArg Operand) {
+    return ExprEmpty();
   }
 
   virtual OwningExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,

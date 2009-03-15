@@ -56,76 +56,81 @@ Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
 }
 
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
   NamespaceDecl *StdNs = GetStdNamespace();
   if (!StdNs)
-    return Diag(OpLoc, diag::err_need_header_before_typeid);
+    return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
   
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
   Decl *TypeInfoDecl = LookupQualifiedName(StdNs, TypeInfoII, LookupTagName);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
   if (!TypeInfoRecordDecl)
-    return Diag(OpLoc, diag::err_need_header_before_typeid);
+    return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
 
   QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
 
-  return new (Context) CXXTypeidExpr(isType, TyOrExpr, TypeInfoType.withConst(),
-                                     SourceRange(OpLoc, RParenLoc));
+  return Owned(new (Context) CXXTypeidExpr(isType, TyOrExpr,
+                                           TypeInfoType.withConst(),
+                                           SourceRange(OpLoc, RParenLoc)));
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind == tok::kw_true || Kind == tok::kw_false) &&
          "Unknown C++ Boolean value!");
-  return new (Context) CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);
+  return Owned(new (Context) CXXBoolLiteralExpr(Kind == tok::kw_true,
+                                                Context.BoolTy, OpLoc));
 }
 
 /// ActOnCXXThrow - Parse throw expressions.
-Action::ExprResult
-Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprTy *E) {
-  return new (Context) CXXThrowExpr((Expr*)E, Context.VoidTy, OpLoc);
+Action::OwningExprResult
+Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprArg E) {
+  return Owned(new (Context) CXXThrowExpr((Expr*)E.release(), Context.VoidTy,
+                                          OpLoc));
 }
 
-Action::ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
+Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
   /// C++ 9.3.2: In the body of a non-static member function, the keyword this
   /// is a non-lvalue expression whose value is the address of the object for
   /// which the function is called.
 
-  if (!isa<FunctionDecl>(CurContext)) {
-    Diag(ThisLoc, diag::err_invalid_this_use);
-    return ExprResult(true);
-  }
+  if (!isa<FunctionDecl>(CurContext))
+    return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
 
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
     if (MD->isInstance())
-      return new (Context) CXXThisExpr(ThisLoc, MD->getThisType(Context));
+      return Owned(new (Context) CXXThisExpr(ThisLoc,
+                                             MD->getThisType(Context)));
 
-  return Diag(ThisLoc, diag::err_invalid_this_use);
+  return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
 }
 
 /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
 /// Can be interpreted either as function-style casting ("int(x)")
 /// or class type construction ("ClassType(x,y,z)")
 /// or creation of a value-initialized type ("int()").
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                 SourceLocation LParenLoc,
-                                ExprTy **ExprTys, unsigned NumExprs,
+                                MultiExprArg exprs,
                                 SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
   assert(TypeRep && "Missing type!");
   QualType Ty = QualType::getFromOpaquePtr(TypeRep);
-  Expr **Exprs = (Expr**)ExprTys;
+  unsigned NumExprs = exprs.size();
+  Expr **Exprs = (Expr**)exprs.get();
   SourceLocation TyBeginLoc = TypeRange.getBegin();
   SourceRange FullRange = SourceRange(TyBeginLoc, RParenLoc);
 
-  if (Ty->isDependentType() || 
+  if (Ty->isDependentType() ||
       CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
-    return new (Context) CXXTemporaryObjectExpr(0, Ty, TyBeginLoc,
-                                                Exprs, NumExprs, RParenLoc);
+    exprs.release();
+    return Owned(new (Context) CXXTemporaryObjectExpr(0, Ty, TyBeginLoc,
+                                                      Exprs, NumExprs,
+                                                      RParenLoc));
   }
 
 
@@ -136,14 +141,16 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     if (CheckCastTypes(TypeRange, Ty, Exprs[0]))
-      return true;
-    return new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(), Ty,
-                                               TyBeginLoc, Exprs[0], RParenLoc);
+      return ExprError();
+    exprs.release();
+    return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
+                                                     Ty, TyBeginLoc, Exprs[0],
+                                                     RParenLoc));
   }
 
   if (const RecordType *RT = Ty->getAsRecordType()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
-    
+
     if (NumExprs > 1 || Record->hasUserDeclaredConstructor()) {
       CXXConstructorDecl *Constructor
         = PerformInitializationByConstructor(Ty, Exprs, NumExprs,
@@ -152,12 +159,14 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                                          RParenLoc),
                                              DeclarationName(),
                                              IK_Direct);
-      
-      if (!Constructor)
-        return true;
 
-      return new (Context) CXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc, 
-                                        Exprs, NumExprs, RParenLoc);
+      if (!Constructor)
+        return ExprError();
+
+      exprs.release();
+      return Owned(new (Context) CXXTemporaryObjectExpr(Constructor, Ty,
+                                                        TyBeginLoc,  Exprs,
+                                                        NumExprs, RParenLoc));
     }
 
     // Fall through to value-initialize an object of class type that
@@ -169,8 +178,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // be a class with a suitably declared constructor.
   //
   if (NumExprs > 1)
-    return Diag(CommaLocs[0], diag::err_builtin_func_cast_more_than_one_arg)
-      << FullRange;
+    return ExprError(Diag(CommaLocs[0],
+                          diag::err_builtin_func_cast_more_than_one_arg)
+      << FullRange);
 
   assert(NumExprs == 0 && "Expected 0 expressions");
 
@@ -180,13 +190,15 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // rvalue of the specified type, which is value-initialized.
   //
   if (Ty->isArrayType())
-    return Diag(TyBeginLoc, diag::err_value_init_for_array_type) << FullRange;
+    return ExprError(Diag(TyBeginLoc,
+                          diag::err_value_init_for_array_type) << FullRange);
   if (!Ty->isDependentType() && !Ty->isVoidType() &&
-      RequireCompleteType(TyBeginLoc, Ty, 
-                             diag::err_invalid_incomplete_type_use, FullRange))
-    return true;
+      RequireCompleteType(TyBeginLoc, Ty,
+                          diag::err_invalid_incomplete_type_use, FullRange))
+    return ExprError();
 
-  return new (Context) CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
+  exprs.release();
+  return Owned(new (Context) CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc));
 }
 
 
@@ -195,13 +207,12 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 /// or
 /// @code ::new Foo(23, "hello") @endcode
 /// For the interpretation of this heap of arguments, consult the base version.
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
-                  SourceLocation PlacementLParen,
-                  ExprTy **PlacementArgs, unsigned NumPlaceArgs,
+                  SourceLocation PlacementLParen, MultiExprArg PlacementArgs,
                   SourceLocation PlacementRParen, bool ParenTypeId,
                   Declarator &D, SourceLocation ConstructorLParen,
-                  ExprTy **ConstructorArgs, unsigned NumConsArgs,
+                  MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen)
 {
   Expr *ArraySize = 0;
@@ -211,21 +222,21 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
     DeclaratorChunk &Chunk = D.getTypeObject(0);
     if (Chunk.Arr.hasStatic)
-      return Diag(Chunk.Loc, diag::err_static_illegal_in_new)
-        << D.getSourceRange();
+      return ExprError(Diag(Chunk.Loc, diag::err_static_illegal_in_new)
+        << D.getSourceRange());
     if (!Chunk.Arr.NumElts)
-      return Diag(Chunk.Loc, diag::err_array_new_needs_size)
-        << D.getSourceRange();
+      return ExprError(Diag(Chunk.Loc, diag::err_array_new_needs_size)
+        << D.getSourceRange());
     ArraySize = static_cast<Expr*>(Chunk.Arr.NumElts);
     Skip = 1;
   }
 
   QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, Skip);
   if (D.getInvalidType())
-    return true;
+    return ExprError();
 
   if (CheckAllocatedType(AllocType, D))
-    return true;
+    return ExprError();
 
   QualType ResultType = AllocType->isDependentType()
                           ? Context.DependentTy
@@ -239,9 +250,9 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (ArraySize && !ArraySize->isTypeDependent()) {
     QualType SizeType = ArraySize->getType();
     if (!SizeType->isIntegralType() && !SizeType->isEnumeralType())
-      return Diag(ArraySize->getSourceRange().getBegin(),
-                  diag::err_array_size_not_integral)
-        << SizeType << ArraySize->getSourceRange();
+      return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
+                            diag::err_array_size_not_integral)
+        << SizeType << ArraySize->getSourceRange());
     // Let's see if this is a constant < 0. If so, we reject it out of hand.
     // We don't care about special rules, so we tell the machinery it's not
     // evaluated - it gives us a result in more cases.
@@ -250,23 +261,24 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       if (ArraySize->isIntegerConstantExpr(Value, Context, 0, false)) {
         if (Value < llvm::APSInt(
                         llvm::APInt::getNullValue(Value.getBitWidth()), false))
-          return Diag(ArraySize->getSourceRange().getBegin(),
-                      diag::err_typecheck_negative_array_size)
-            << ArraySize->getSourceRange();
+          return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
+                           diag::err_typecheck_negative_array_size)
+            << ArraySize->getSourceRange());
       }
     }
   }
 
   FunctionDecl *OperatorNew = 0;
   FunctionDecl *OperatorDelete = 0;
-  Expr **PlaceArgs = (Expr**)PlacementArgs;
+  Expr **PlaceArgs = (Expr**)PlacementArgs.get();
+  unsigned NumPlaceArgs = PlacementArgs.size();
   if (!AllocType->isDependentType() &&
       !Expr::hasAnyTypeDependentArguments(PlaceArgs, NumPlaceArgs) &&
       FindAllocationFunctions(StartLoc,
                               SourceRange(PlacementLParen, PlacementRParen),
                               UseGlobal, AllocType, ArraySize, PlaceArgs,
                               NumPlaceArgs, OperatorNew, OperatorDelete))
-    return true;
+    return ExprError();
 
   bool Init = ConstructorLParen.isValid();
   // --- Choosing a constructor ---
@@ -287,7 +299,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   //    to C++0x rules.
   // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
-  Expr **ConsArgs = (Expr**)ConstructorArgs;
+  Expr **ConsArgs = (Expr**)ConstructorArgs.get();
+  unsigned NumConsArgs = ConstructorArgs.size();
   if (AllocType->isDependentType()) {
     // Skip all the checks.
   }
@@ -303,15 +316,13 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                       RT->getDecl()->getDeclName(),
                       NumConsArgs != 0 ? IK_Direct : IK_Default);
     if (!Constructor)
-      return true;
+      return ExprError();
   } else {
     if (!Init) {
       // FIXME: Check that no subpart is const.
-      if (AllocType.isConstQualified()) {
-        Diag(StartLoc, diag::err_new_uninitialized_const)
-          << D.getSourceRange();
-        return true;
-      }
+      if (AllocType.isConstQualified())
+        return ExprError(Diag(StartLoc, diag::err_new_uninitialized_const)
+          << D.getSourceRange());
     } else if (NumConsArgs == 0) {
       // Object is value-initialized. Do nothing.
     } else if (NumConsArgs == 1) {
@@ -320,19 +331,22 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       if (CheckInitializerTypes(ConsArgs[0], AllocType, StartLoc,
                                 DeclarationName() /*AllocType.getAsString()*/,
                                 /*DirectInit=*/true))
-        return true;
+        return ExprError();
     } else {
-      Diag(StartLoc, diag::err_builtin_direct_init_more_than_one_arg)
-        << SourceRange(ConstructorLParen, ConstructorRParen);
+      return ExprError(Diag(StartLoc,
+                            diag::err_builtin_direct_init_more_than_one_arg)
+        << SourceRange(ConstructorLParen, ConstructorRParen));
     }
   }
 
   // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
 
-  return new (Context) CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs,
+  PlacementArgs.release();
+  ConstructorArgs.release();
+  return Owned(new (Context) CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs,
                         NumPlaceArgs, ParenTypeId, ArraySize, Constructor, Init,
                         ConsArgs, NumConsArgs, OperatorDelete, ResultType,
-                        StartLoc, Init ? ConstructorRParen : SourceLocation());
+                        StartLoc, Init ? ConstructorRParen : SourceLocation()));
 }
 
 /// CheckAllocatedType - Checks that a type is suitable as the allocated type
@@ -576,16 +590,16 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 /// @code ::delete ptr; @endcode
 /// or
 /// @code delete [] ptr; @endcode
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
-                     bool ArrayForm, ExprTy *Operand)
+                     bool ArrayForm, ExprArg Operand)
 {
   // C++ 5.3.5p1: "The operand shall have a pointer type, or a class type
   //   having a single conversion function to a pointer type. The result has
   //   type void."
   // DR599 amends "pointer type" to "pointer to object type" in both cases.
 
-  Expr *Ex = (Expr *)Operand;
+  Expr *Ex = (Expr *)Operand.get();
   if (!Ex->isTypeDependent()) {
     QualType Type = Ex->getType();
 
@@ -593,41 +607,39 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       // FIXME: Find that one conversion function and amend the type.
     }
 
-    if (!Type->isPointerType()) {
-      Diag(StartLoc, diag::err_delete_operand) << Type << Ex->getSourceRange();
-      return true;
-    }
+    if (!Type->isPointerType())
+      return ExprError(Diag(StartLoc, diag::err_delete_operand)
+        << Type << Ex->getSourceRange());
 
     QualType Pointee = Type->getAsPointerType()->getPointeeType();
-    if (!Pointee->isVoidType() && 
+    if (!Pointee->isVoidType() &&
         RequireCompleteType(StartLoc, Pointee, diag::warn_delete_incomplete,
                                Ex->getSourceRange()))
-      return true;
-    else if (!Pointee->isObjectType()) {
-      Diag(StartLoc, diag::err_delete_operand)
-        << Type << Ex->getSourceRange();
-      return true;
-    }
+      return ExprError();
+    else if (!Pointee->isObjectType())
+      return ExprError(Diag(StartLoc, diag::err_delete_operand)
+        << Type << Ex->getSourceRange());
 
     // FIXME: Look up the correct operator delete overload and pass a pointer
     // along.
     // FIXME: Check access and ambiguity of operator delete and destructor.
   }
 
-  return new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm, 0,
-                                     Ex, StartLoc);
+  Operand.release();
+  return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,
+                                           0, Ex, StartLoc));
 }
 
 
 /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
 /// C++ if/switch/while/for statement.
 /// e.g: "if (int x = f()) {...}"
-Action::ExprResult
+Action::OwningExprResult
 Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
                                        Declarator &D,
                                        SourceLocation EqualLoc,
-                                       ExprTy *AssignExprVal) {
-  assert(AssignExprVal && "Null assignment expression");
+                                       ExprArg AssignExprVal) {
+  assert(AssignExprVal.get() && "Null assignment expression");
 
   // C++ 6.4p2:
   // The declarator shall not specify a function or an array.
@@ -642,8 +654,8 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
     // We exit without creating a CXXConditionDeclExpr because a FunctionDecl
     // would be created and CXXConditionDeclExpr wants a VarDecl.
-    return Diag(StartLoc, diag::err_invalid_use_of_function_type)
-      << SourceRange(StartLoc, EqualLoc);
+    return ExprError(Diag(StartLoc, diag::err_invalid_use_of_function_type)
+      << SourceRange(StartLoc, EqualLoc));
   } else if (Ty->isArrayType()) { // ...or an array.
     Diag(StartLoc, diag::err_invalid_use_of_array_type)
       << SourceRange(StartLoc, EqualLoc);
@@ -661,15 +673,15 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
 
   DeclTy *Dcl = ActOnDeclarator(S, D, 0);
   if (!Dcl)
-    return true;
-  AddInitializerToDecl(Dcl, ExprArg(*this, AssignExprVal));
+    return ExprError();
+  AddInitializerToDecl(Dcl, move(AssignExprVal));
 
   // Mark this variable as one that is declared within a conditional.
   if (VarDecl *VD = dyn_cast<VarDecl>((Decl *)Dcl))
     VD->setDeclaredInCondition(true);
 
-  return new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc,
-                                       cast<VarDecl>(static_cast<Decl *>(Dcl)));
+  return Owned(new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc,
+                                      cast<VarDecl>(static_cast<Decl *>(Dcl))));
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.

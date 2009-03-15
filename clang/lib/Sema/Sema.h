@@ -326,9 +326,9 @@ public:
                                      bool IsFunctionDefinition,
                                      bool& InvalidDecl, bool &Redeclaration);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
-  virtual void ActOnParamDefaultArgument(DeclTy *param, 
+  virtual void ActOnParamDefaultArgument(DeclTy *param,
                                          SourceLocation EqualLoc,
-                                         ExprTy *defarg);
+                                         ExprArg defarg);
   virtual void ActOnParamUnparsedDefaultArgument(DeclTy *param, 
                                                  SourceLocation EqualLoc);
   virtual void ActOnParamDefaultArgumentError(DeclTy *param);
@@ -1266,63 +1266,65 @@ public:
                                               ExprArg RHS);
 
   /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
-  virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
-                                    IdentifierInfo *LabelII);
-  
-  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
-                                   SourceLocation RPLoc); // "({..})"
+  virtual OwningExprResult ActOnAddrLabel(SourceLocation OpLoc,
+                                          SourceLocation LabLoc,
+                                          IdentifierInfo *LabelII);
+
+  virtual OwningExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtArg SubStmt,
+                                         SourceLocation RPLoc); // "({..})"
 
   /// __builtin_offsetof(type, a.b[123][456].c)
-  virtual ExprResult ActOnBuiltinOffsetOf(Scope *S,
-                                          SourceLocation BuiltinLoc,
-                                          SourceLocation TypeLoc, TypeTy *Arg1,
-                                          OffsetOfComponent *CompPtr,
-                                          unsigned NumComponents,
-                                          SourceLocation RParenLoc);
-    
+  virtual OwningExprResult ActOnBuiltinOffsetOf(Scope *S,
+                                                SourceLocation BuiltinLoc,
+                                                SourceLocation TypeLoc,
+                                                TypeTy *Arg1,
+                                                OffsetOfComponent *CompPtr,
+                                                unsigned NumComponents,
+                                                SourceLocation RParenLoc);
+
   // __builtin_types_compatible_p(type1, type2)
-  virtual ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc, 
-                                              TypeTy *arg1, TypeTy *arg2,
-                                              SourceLocation RPLoc);
-                                              
+  virtual OwningExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
+                                                    TypeTy *arg1, TypeTy *arg2,
+                                                    SourceLocation RPLoc);
+
   // __builtin_choose_expr(constExpr, expr1, expr2)
-  virtual ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc, 
-                                     ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
-                                     SourceLocation RPLoc);
-  
+  virtual OwningExprResult ActOnChooseExpr(SourceLocation BuiltinLoc,
+                                           ExprArg cond, ExprArg expr1,
+                                           ExprArg expr2, SourceLocation RPLoc);
+
   // __builtin_va_arg(expr, type)
-  virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
-                                ExprTy *expr, TypeTy *type,
-                                SourceLocation RPLoc);
+  virtual OwningExprResult ActOnVAArg(SourceLocation BuiltinLoc,
+                                      ExprArg expr, TypeTy *type,
+                                      SourceLocation RPLoc);
 
   // __null
-  virtual ExprResult ActOnGNUNullExpr(SourceLocation TokenLoc);
+  virtual OwningExprResult ActOnGNUNullExpr(SourceLocation TokenLoc);
 
   //===------------------------- "Block" Extension ------------------------===//
 
   /// ActOnBlockStart - This callback is invoked when a block literal is
   /// started.
   virtual void ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope);
-  
+
   /// ActOnBlockArguments - This callback allows processing of block arguments.
   /// If there are no arguments, this is still invoked.
   virtual void ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope);
-  
+
   /// ActOnBlockError - If there is an error parsing a block, this callback
   /// is invoked to pop the information about the block from the action impl.
   virtual void ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope);
-  
+
   /// ActOnBlockStmtExpr - This is called when the body of a block statement
   /// literal was successfully completed.  ^(int x){...}
-  virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
-                                        Scope *CurScope);
+  virtual OwningExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
+                                              StmtArg Body, Scope *CurScope);
 
   //===---------------------------- C++ Features --------------------------===//
 
   // Act on C++ namespaces
   virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
-                                        IdentifierInfo *Ident,
-                                        SourceLocation LBrace);
+                                         IdentifierInfo *Ident,
+                                         SourceLocation LBrace);
   virtual void ActOnFinishNamespaceDef(DeclTy *Dcl, SourceLocation RBrace);
 
   virtual DeclTy *ActOnUsingDirective(Scope *CurScope,
@@ -1340,7 +1342,7 @@ public:
   /// e.g: "int x(1);"
   virtual void AddCXXDirectInitializerToDecl(DeclTy *Dcl,
                                              SourceLocation LParenLoc,
-                                             ExprTy **Exprs, unsigned NumExprs,
+                                             MultiExprArg Exprs,
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc);
 
@@ -1360,49 +1362,52 @@ public:
                                      InitializationKind Kind);
 
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
-                                       SourceLocation LAngleBracketLoc, TypeTy *Ty,
-                                       SourceLocation RAngleBracketLoc,
-                                       SourceLocation LParenLoc, ExprTy *E,
-                                       SourceLocation RParenLoc);
+  virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
+                                             tok::TokenKind Kind,
+                                             SourceLocation LAngleBracketLoc,
+                                             TypeTy *Ty,
+                                             SourceLocation RAngleBracketLoc,
+                                             SourceLocation LParenLoc,
+                                             ExprArg E,
+                                             SourceLocation RParenLoc);
 
-  /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
-  virtual ExprResult ActOnCXXTypeid(SourceLocation OpLoc,
-                                    SourceLocation LParenLoc, bool isType,
-                                    void *TyOrExpr, SourceLocation RParenLoc);
+  /// ActOnCXXTypeid - Parse typeid( something ).
+  virtual OwningExprResult ActOnCXXTypeid(SourceLocation OpLoc,
+                                          SourceLocation LParenLoc, bool isType,
+                                          void *TyOrExpr,
+                                          SourceLocation RParenLoc);
 
   //// ActOnCXXThis -  Parse 'this' pointer.
-  virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc);
+  virtual OwningExprResult ActOnCXXThis(SourceLocation ThisLoc);
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
-  virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
-                                         tok::TokenKind Kind);
-  
+  virtual OwningExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
+                                               tok::TokenKind Kind);
+
   //// ActOnCXXThrow -  Parse throw expressions.
-  virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc,
-                                   ExprTy *expr);
+  virtual OwningExprResult ActOnCXXThrow(SourceLocation OpLoc,
+                                         ExprArg expr);
 
   /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
   /// Can be interpreted either as function-style casting ("int(x)")
   /// or class type construction ("ClassType(x,y,z)")
   /// or creation of a value-initialized type ("int()").
-  virtual ExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
-                                               TypeTy *TypeRep,
-                                               SourceLocation LParenLoc,
-                                               ExprTy **Exprs,
-                                               unsigned NumExprs,
-                                               SourceLocation *CommaLocs,
-                                               SourceLocation RParenLoc);
+  virtual OwningExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
+                                                     TypeTy *TypeRep,
+                                                     SourceLocation LParenLoc,
+                                                     MultiExprArg Exprs,
+                                                     SourceLocation *CommaLocs,
+                                                     SourceLocation RParenLoc);
 
   /// ActOnCXXNew - Parsed a C++ 'new' expression.
-  virtual ExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
-                                 SourceLocation PlacementLParen,
-                                 ExprTy **PlacementArgs, unsigned NumPlaceArgs,
-                                 SourceLocation PlacementRParen,
-                                 bool ParenTypeId, Declarator &D,
-                                 SourceLocation ConstructorLParen,
-                                 ExprTy **ConstructorArgs, unsigned NumConsArgs,
-                                 SourceLocation ConstructorRParen);
+  virtual OwningExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                                       SourceLocation PlacementLParen,
+                                       MultiExprArg PlacementArgs,
+                                       SourceLocation PlacementRParen,
+                                       bool ParenTypeId, Declarator &D,
+                                       SourceLocation ConstructorLParen,
+                                       MultiExprArg ConstructorArgs,
+                                       SourceLocation ConstructorRParen);
   bool CheckAllocatedType(QualType AllocType, const Declarator &D);
   bool FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
                                bool UseGlobal, QualType AllocType, bool IsArray,
@@ -1418,17 +1423,18 @@ public:
                                        QualType Argument);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
-  virtual ExprResult ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
-                                    bool ArrayForm, ExprTy *Operand);
+  virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
+                                          bool UseGlobal, bool ArrayForm,
+                                          ExprArg Operand);
 
   /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
   /// C++ if/switch/while/for statement.
   /// e.g: "if (int x = f()) {...}"
-  virtual ExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
+  virtual OwningExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
                                                       SourceLocation StartLoc,
                                                       Declarator &D,
                                                       SourceLocation EqualLoc,
-                                                      ExprTy *AssignExprVal);
+                                                      ExprArg AssignExprVal);
 
   /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
   /// pseudo-functions.

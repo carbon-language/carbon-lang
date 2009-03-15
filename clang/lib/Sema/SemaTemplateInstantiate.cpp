@@ -847,16 +847,18 @@ TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
     if (Args.size() > 1)
       CommaLoc 
         = SemaRef.PP.getLocForEndOfToken(Args[0]->getSourceRange().getEnd());
-    Sema::ExprResult Result 
-      = SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc()
-                                                      /*, FIXME*/),
-                                          T.getAsOpaquePtr(),
-                                          /*FIXME*/E->getTypeBeginLoc(),
-                                          (void**)&Args[0], Args.size(),
-                                          /*HACK*/&CommaLoc,
-                                          E->getSourceRange().getEnd());
-    if (!Result.isInvalid())
-      return SemaRef.Owned(Result);
+    Sema::OwningExprResult Result(
+      SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc()
+                                                    /*, FIXME*/),
+                                        T.getAsOpaquePtr(),
+                                        /*FIXME*/E->getTypeBeginLoc(),
+                                        Sema::MultiExprArg(SemaRef,
+                                                           (void**)&Args[0],
+                                                           Args.size()),
+                                        /*HACK*/&CommaLoc,
+                                        E->getSourceRange().getEnd()));
+    // At this point, Args no longer owns the arguments, no matter what.
+    return move(Result);
   }
 
   // Clean up the instantiated arguments.

@@ -346,7 +346,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
                "Unexpected number of commas!");
         Actions.AddCXXDirectInitializerToDecl(LastDeclInGroup, LParenLoc,
-                                              Exprs.take(), Exprs.size(),
+                                              move_arg(Exprs),
                                               &CommaLocs[0], RParenLoc);
       }
     } else {
@@ -2184,7 +2184,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           } else {
             // Inform the actions module about the default argument
             Actions.ActOnParamDefaultArgument(Param, EqualLoc,
-                                              DefArgResult.release());
+                                              move(DefArgResult));
           }
         }
       }

@@ -19,7 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-///  Out-of-line virtual destructor to provide home for Action class.
+///  Out-of-line virtual destructor to provide home for ActionBase class.
 ActionBase::~ActionBase() {}
 
 ///  Out-of-line virtual destructor to provide home for Action class.
