@@ -31,3 +31,5 @@ DIAG(err_drv_use_of_Z_option, ERROR,
 
 DIAG(warn_drv_input_file_unused, WARNING,
      "%0: '%1' input file unused when '%2' is present")
+DIAG(warn_drv_unused_argument, WARNING,
+     "argument unused during compilatin: '%0'")

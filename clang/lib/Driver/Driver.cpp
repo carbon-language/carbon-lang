@@ -171,7 +171,21 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     return 0;
   }
 
-  return BuildJobs(*Args, Actions);
+  Compilation *C = BuildJobs(*Args, Actions);
+
+  // If there were no errors, warn about any unused arguments.
+  for (ArgList::iterator it = Args->begin(), ie = Args->end(); it != ie; ++it) {
+    Arg *A = *it;
+
+    // FIXME: It would be nice to be able to send the argument to the
+    // Diagnostic, so that extra values, position, and so on could be
+    // printed.
+    if (!A->isClaimed())
+      Diag(clang::diag::warn_drv_unused_argument) 
+        << A->getOption().getName();
+  }
+
+  return C;
 }
 
 void Driver::PrintOptions(const ArgList &Args) const {
@@ -563,7 +577,6 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
 
 Compilation *Driver::BuildJobs(const ArgList &Args, 
                                const ActionList &Actions) const {
-  assert(0 && "FIXME: Implement");
   return 0;
 }
 

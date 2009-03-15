@@ -72,17 +72,19 @@ namespace driver {
 
     unsigned getIndex() const { return Index; }
 
-    virtual unsigned getNumValues() const = 0;
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
-    
-    /// render - Append the argument onto the given array as strings.
-    virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
+    bool isClaimed() const { return Claimed; }
 
     /// claim - Set the Arg claimed bit.
     
     // FIXME: We need to deal with derived arguments and set the bit
     // in the original argument; not the derived one.
     void claim() { Claimed = true; }
+
+    virtual unsigned getNumValues() const = 0;
+    virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
+    
+    /// render - Append the argument onto the given array as strings.
+    virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
 
     static bool classof(const Arg *) { return true; }    
 
