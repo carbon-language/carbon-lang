@@ -454,7 +454,9 @@ struct DeclaratorChunk {
 
   struct ReferenceTypeInfo {
     /// The type qualifier: restrict. [GNU] C++ extension
-    bool HasRestrict;
+    bool HasRestrict : 1;
+    /// True if this is an lvalue reference, false if it's an rvalue reference.
+    bool LValueRef : 1;
     AttributeList *AttrList;
     void destroy() {
       delete AttrList;
@@ -633,11 +635,12 @@ struct DeclaratorChunk {
   /// getReference - Return a DeclaratorChunk for a reference.
   ///
   static DeclaratorChunk getReference(unsigned TypeQuals, SourceLocation Loc,
-                                      AttributeList *AL) {
+                                      AttributeList *AL, bool lvalue) {
     DeclaratorChunk I;
     I.Kind            = Reference;
     I.Loc             = Loc;
     I.Ref.HasRestrict = (TypeQuals & DeclSpec::TQ_restrict) != 0;
+    I.Ref.LValueRef   = lvalue;
     I.Ref.AttrList  = AL;
     return I;
   }

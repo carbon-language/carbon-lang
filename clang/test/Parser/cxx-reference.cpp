@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang -fsyntax-only -verify -std=c++0x %s
 
 extern char *bork;
 char *& bar = bork;
@@ -17,3 +17,8 @@ int & const X = val; // expected-error {{'const' qualifier may not be applied to
 int & volatile Y = val; // expected-error {{'volatile' qualifier may not be applied to a reference}}
 int & const volatile Z = val; /* expected-error {{'const' qualifier may not be applied}} \
                            expected-error {{'volatile' qualifier may not be applied}} */
+
+int && r1(int &&a);
+
+typedef int && R;
+void r2(const R a);

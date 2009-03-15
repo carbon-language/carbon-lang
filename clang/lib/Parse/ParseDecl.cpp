@@ -1616,7 +1616,9 @@ void Parser::ParseDeclarator(Declarator &D) {
 ///       ptr-operator:
 ///         '*' cv-qualifier-seq[opt]
 ///         '&'
+/// [C++0x] '&&'
 /// [GNU]   '&' restrict[opt] attributes[opt]
+/// [GNU?]  '&&' restrict[opt] attributes[opt]
 ///         '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt]
 void Parser::ParseDeclaratorInternal(Declarator &D,
                                      DirectDeclParseFunction DirectDeclParser) {
@@ -1657,13 +1659,15 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
   if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
+      (Kind != tok::ampamp || !getLang().CPlusPlus0x) &&
       (Kind != tok::caret || !getLang().Blocks)) {
     if (DirectDeclParser)
       (this->*DirectDeclParser)(D);
     return;
   }
 
-  // Otherwise, '*' -> pointer, '^' -> block, '&' -> reference.
+  // Otherwise, '*' -> pointer, '^' -> block, '&' -> lvalue reference,
+  // '&&' -> rvalue reference
   SourceLocation Loc = ConsumeToken();  // Eat the *, ^ or &.
   D.SetRangeEnd(Loc);
 
@@ -1730,7 +1734,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
     // Remember that we parsed a reference type. It doesn't have type-quals.
     D.AddTypeInfo(DeclaratorChunk::getReference(DS.getTypeQualifiers(), Loc,
-                                                DS.TakeAttributes()),
+                                                DS.TakeAttributes(),
+                                                Kind == tok::amp),
                   SourceLocation());
   }
 }
