@@ -24,5 +24,7 @@ def err_drv_use_of_Z_option : Error<
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input file unused when '%2' is present">;
+def warn_drv_unused_argument : Warning<
+  "argument unused during compilation: '%0'">;
 
 }
