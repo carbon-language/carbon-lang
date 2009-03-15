@@ -72,9 +72,9 @@ typedef uint64_t uint_fast64_t;
  */
 #ifndef __intptr_t_defined
 typedef __INTPTR_TYPE__          intptr_t;
-typedef unsigned __INTPTR_TYPE__ uintptr_t;
 #define __intptr_t_defined
 #endif
+typedef unsigned __INTPTR_TYPE__ uintptr_t;
 
 /* C99 7.18.1.5 Greatest-width integer types.
  */
