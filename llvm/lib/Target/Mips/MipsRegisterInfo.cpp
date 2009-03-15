@@ -267,7 +267,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
 
   if (LastOffsetFI >= 0)
     StackOffset = MFI->getObjectOffset(LastOffsetFI)+ 
-                  MFI->getObjectAlignment(LastOffsetFI);
+                  MFI->getObjectSize(LastOffsetFI);
   StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
 
   for (unsigned i = 0, e = CSI.size(); i != e ; ++i) {
