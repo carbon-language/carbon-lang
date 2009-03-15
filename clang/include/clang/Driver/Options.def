@@ -24,9 +24,9 @@
 // C++ identifier, and results in a clang::driver::options::OPT_XX
 // enum constant for XX.
 // 
-// We want to unamiguously be able to refer to options from the driver
-// source code, for this reason the option name is mangled into an
-// id. This mangling isn't guaranteed to have an inverse, but for
+// We want to unambiguously be able to refer to options from the
+// driver source code, for this reason the option name is mangled into
+// an id. This mangling isn't guaranteed to have an inverse, but for
 // practical purposes it does.
 //
 // The mangling scheme is to ignore the leading '-', and perform the
@@ -70,10 +70,11 @@
 
 // For now (pre-TableGen, that is) Options must be in order. The
 // ordering is *almost* lexicographic, with two exceptions. First,
-// '\0' comes at the end of the alphabet not the beginning (thus
-// options preceed any other options which prefix them). Second, for
-// options with the same name, the less permissive version should come
-// first; a Flag option should preceed a Joined option, for example.
+// '\0' comes at the end of the alphabet instead of the beginning
+// (thus options preceed any other options which prefix them). Second,
+// for options with the same name, the less permissive version should
+// come first; a Flag option should preceed a Joined option, for
+// example.
 
 /////////
 // Groups
