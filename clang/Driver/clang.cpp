@@ -644,7 +644,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (!Options.ObjC1 && LangStd < lang_gnu_START)
     Options.Blocks = 0;
   
-  Options.DollarIdents = 1;  // FIXME: Really a target property.
+  // Never accept '$' in identifiers when preprocessing assembler.
+  if (LK != langkind_asm_cpp)
+    Options.DollarIdents = 1;  // FIXME: Really a target property.
   if (PascalStrings.getPosition())
     Options.PascalStrings = PascalStrings;
   Options.Microsoft = MSExtensions;
