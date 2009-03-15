@@ -15,10 +15,16 @@ class C {
 };
 
 template<int N> struct T {
-    static_assert(N == 2, "N is not 2!");
+    static_assert(N == 2, "N is not 2!"); // expected-error {{static_assert failed "N is not 2!"}}
 };
 
+T<1> t1; // expected-note {{in instantiation of template class 'struct T<1>' requested here}}
+T<2> t2;
+
 template<typename T> struct S {
-    static_assert(sizeof(T) > sizeof(char), "Type not big enough!");
+    static_assert(sizeof(T) > sizeof(char), "Type not big enough!"); // expected-error {{static_assert failed "Type not big enough!"}}
 };
+
+S<char> s1; // expected-note {{in instantiation of template class 'struct S<char>' requested here}}
+S<int> s2;
 

@@ -887,19 +887,23 @@ public:
 };
 
 class StaticAssertDecl : public Decl {
-  SourceLocation AssertLoc;
-
   Expr *AssertExpr;
   StringLiteral *Message;
-  
+
   StaticAssertDecl(DeclContext *DC, SourceLocation L, 
                    Expr *assertexpr, StringLiteral *message)
-    : Decl(StaticAssert, DC, L), AssertExpr(assertexpr), Message(message) { }
+  : Decl(StaticAssert, DC, L), AssertExpr(assertexpr), Message(message) { }
   
 public:
   static StaticAssertDecl *Create(ASTContext &C, DeclContext *DC,
                                   SourceLocation L, Expr *AssertExpr,
                                   StringLiteral *Message);
+  
+  Expr *getAssertExpr() { return AssertExpr; }
+  const Expr *getAssertExpr() const { return AssertExpr; }
+  
+  StringLiteral *getMessage() { return Message; }
+  const StringLiteral *getMessage() const { return Message; }
   
   virtual ~StaticAssertDecl();
   virtual void Destroy(ASTContext& C);

@@ -2238,8 +2238,7 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
 
 Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
                                                  ExprArg assertexpr,
-                                                 ExprArg assertmessageexpr,
-                                                 SourceLocation RParenLoc) {
+                                                 ExprArg assertmessageexpr) {
   Expr *AssertExpr = (Expr *)assertexpr.get();
   StringLiteral *AssertMessage = 
     cast<StringLiteral>((Expr *)assertmessageexpr.get());
@@ -2255,7 +2254,8 @@ Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
     if (Value == 0) {
       std::string str(AssertMessage->getStrData(), 
                       AssertMessage->getByteLength());
-      Diag(AssertLoc, diag::err_static_assert_failed) << str;
+      Diag(AssertLoc, diag::err_static_assert_failed) 
+        << str << AssertExpr->getSourceRange();
     }
   }
   

@@ -1071,6 +1071,25 @@ Sema::InstantiateClassTemplateSpecialization(
         if (New->isInvalidDecl())
           Invalid = true;
       }
+    } else if (StaticAssertDecl *SA = dyn_cast<StaticAssertDecl>(*Member)) {
+      Expr *AssertExpr = SA->getAssertExpr();
+      
+      OwningExprResult InstantiatedAssertExpr
+        = InstantiateExpr(AssertExpr, 
+                          ClassTemplateSpec->getTemplateArgs(),
+                          ClassTemplateSpec->getNumTemplateArgs());
+      if (!InstantiatedAssertExpr.isInvalid()) {
+        OwningExprResult Message = Clone(SA->getMessage());
+
+        Decl *New = 
+          (Decl *)ActOnStaticAssertDeclaration(SA->getLocation(), 
+                                               move(InstantiatedAssertExpr),
+                                               move(Message));
+        if (New->isInvalidDecl())
+          Invalid = true;
+          
+      } else
+        Invalid = true;
     }
   }
 

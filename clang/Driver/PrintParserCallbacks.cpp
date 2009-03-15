@@ -724,8 +724,7 @@ namespace {
 
     virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                                  ExprArg AssertExpr,
-                                                 ExprArg AssertMessageExpr,
-                                                 SourceLocation RParenLoc) {
+                                                 ExprArg AssertMessageExpr) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;
     }

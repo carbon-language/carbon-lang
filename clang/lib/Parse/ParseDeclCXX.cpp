@@ -252,13 +252,12 @@ Parser::DeclTy *Parser::ParseStaticAssertDeclaration() {
   if (AssertMessage.isInvalid()) 
     return 0;
 
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_static_assert);
 
   return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc, move(AssertExpr), 
-                                              move(AssertMessage), 
-                                              RParenLoc);
+                                              move(AssertMessage));
 }
 
 /// ParseClassName - Parse a C++ class-name, which names a class. Note

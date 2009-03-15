@@ -893,8 +893,7 @@ public:
   /// ActOnStaticAssertDeclaration - Parse a C++0x static_assert declaration.
   virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                                ExprArg AssertExpr,
-                                               ExprArg AssertMessageExpr,
-                                               SourceLocation RParenLoc) {
+                                               ExprArg AssertMessageExpr) {
     return 0;
   }
 

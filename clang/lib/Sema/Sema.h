@@ -1562,8 +1562,7 @@ public:
 
   virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
                                                ExprArg AssertExpr,
-                                               ExprArg AssertMessageExpr,
-                                               SourceLocation RParenLoc);
+                                               ExprArg AssertMessageExpr);
   
   bool CheckConstructorDeclarator(Declarator &D, QualType &R,
                                   FunctionDecl::StorageClass& SC);
