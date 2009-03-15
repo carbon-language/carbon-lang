@@ -378,7 +378,7 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
           //
           // Otherwise emit an error but still use a valid type to
           // avoid spurious errors (e.g., no inputs).
-          if (!Args.hasArg(options::OPT_E))
+          if (!Args.hasArg(options::OPT_E, false))
             Diag(clang::diag::err_drv_unknown_stdin_type);
           Ty = types::TY_C;
         } else {
@@ -454,9 +454,10 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
       (FinalPhaseArg = Args.getLastArg(options::OPT_MM))) {
     FinalPhase = phases::Preprocess;
     
-    // -{-analyze,fsyntax-only,S} only run up to the compiler.
-  } else if ((FinalPhaseArg = Args.getLastArg(options::OPT__analyze)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
+    // -{fsyntax-only,-analyze,emit-llvm,S} only run up to the compiler.
+  } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT__analyze)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT_emit_llvm)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Compile;
 
@@ -467,9 +468,6 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
     // Otherwise do everything.
   } else
     FinalPhase = phases::Link;
-
-  if (FinalPhaseArg)
-    FinalPhaseArg->claim();
 
   // Reject -Z* at the top level, these options should never have been
   // exposed by gcc.

@@ -63,10 +63,16 @@ namespace driver {
     const char *getArgString(unsigned Index) const { return ArgStrings[Index]; }
 
     /// hasArg - Does the arg list contain any option matching \arg Id.
-    bool hasArg(options::ID Id) const { return getLastArg(Id) != 0; }
+    ///
+    /// \arg Claim Whether the argument should be claimed, if it exists.
+    bool hasArg(options::ID Id, bool Claim=true) const { 
+      return getLastArg(Id, Claim) != 0;
+    }
 
     /// getLastArg - Return the last argument matching \arg Id, or null.
-    Arg *getLastArg(options::ID Id) const;
+    ///
+    /// \arg Claim Whether the argument should be claimed, if it exists.
+    Arg *getLastArg(options::ID Id, bool Claim=true) const;
 
     /// @name Arg Synthesis
     /// @{
