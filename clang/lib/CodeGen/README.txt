@@ -53,3 +53,13 @@ still generates a call to printf. This doesn't occur much in real
 code, but would still be nice to clean up.
 
 //===---------------------------------------------------------------------===//
+
+Deferred generation of statics incurs some additional
+overhead. Currently it is even possible to construct test cases with
+O(N^2) behavior! For at least simple cases where we can tell a global
+is used, it is probably not worth deferring it. This doesn't solve the
+O(N^2) cases, ,though...
+
+PR3810
+
+//===---------------------------------------------------------------------===//
