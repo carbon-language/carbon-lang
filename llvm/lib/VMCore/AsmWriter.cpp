@@ -66,7 +66,7 @@ static void PrintEscapedString(const char *Str, unsigned Length,
                                raw_ostream &Out) {
   for (unsigned i = 0; i != Length; ++i) {
     unsigned char C = Str[i];
-    if (isprint(C) && C != '\\' && C != '"' && isprint(C))
+    if (isprint(C) && C != '\\' && C != '"')
       Out << C;
     else
       Out << '\\' << hexdigit(C >> 4) << hexdigit(C & 0x0F);
