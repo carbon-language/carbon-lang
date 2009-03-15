@@ -217,7 +217,7 @@ namespace {
         return false;
       case ReturnStatusAction:
         msgs << "compilation terminated.\n";
-        return Broken;
+        return true;
       }
     }
 
