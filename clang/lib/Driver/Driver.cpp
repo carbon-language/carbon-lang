@@ -426,6 +426,7 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
       // doing, since the tool presumably does this anyway, and this
       // just adds an extra stat to the equation, but this is gcc
       // compatible.
+      A->claim();
       if (memcmp(Value, "-", 2) != 0 && !llvm::sys::Path(Value).exists())
         Diag(clang::diag::err_drv_no_such_file) << A->getValue(Args);
       else
@@ -434,6 +435,7 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
     } else if (A->getOption().isLinkerInput()) {
       // Just treat as object type, we could make a special type for
       // this if necessary.
+      A->claim();
       Inputs.push_back(std::make_pair(types::TY_Object, A));
 
     } else if (A->getOption().getId() == options::OPT_x) {
