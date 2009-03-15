@@ -283,9 +283,27 @@ QualType
 TemplateTypeInstantiator::
 InstantiateDependentSizedArrayType(const DependentSizedArrayType *T,
                                    unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate DependentSizedArrayType yet");
-  return QualType();
+  Expr *ArraySize = T->getSizeExpr();
+  assert(ArraySize->isValueDependent() && 
+         "dependent sized array types must have value dependent size expr");
+  
+  // Instantiate the element type if needed
+  QualType ElementType = T->getElementType();
+  if (ElementType->isDependentType()) {
+    ElementType = Instantiate(ElementType);
+    if (ElementType.isNull())
+      return QualType();
+  }
+  
+  // Instantiate the size expression
+  Sema::OwningExprResult InstantiatedArraySize = 
+    SemaRef.InstantiateExpr(ArraySize, TemplateArgs, NumTemplateArgs);
+  if (InstantiatedArraySize.isInvalid())
+    return QualType();
+  
+  return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(),
+                                (Expr *)InstantiatedArraySize.release(),
+                                T->getIndexTypeQualifier(), Loc, Entity);
 }
 
 QualType 

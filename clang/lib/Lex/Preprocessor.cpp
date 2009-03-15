@@ -488,6 +488,9 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   else if (0) // STDC94 ?
     DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
   
+  if (PP.getLangOptions().CPlusPlus0x)
+    DefineBuiltinMacro(Buf, "__GXX_EXPERIMENTAL_CXX0X__");
+
   if (PP.getLangOptions().Freestanding)
     DefineBuiltinMacro(Buf, "__STDC_HOSTED__=0");
   else
