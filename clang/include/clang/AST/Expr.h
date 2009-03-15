@@ -377,6 +377,9 @@ public:
     : Expr(IntegerLiteralClass, type), Value(V), Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
+
+  IntegerLiteral* Clone(ASTContext &C) const;
+  
   const llvm::APInt &getValue() const { return Value; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
@@ -515,7 +518,7 @@ public:
   /// strings formed from multiple concatenated tokens.
   static StringLiteral *Create(ASTContext &C, const char *StrData,
                                unsigned ByteLength, bool Wide, QualType Ty,
-                               SourceLocation *Loc, unsigned NumStrs);
+                               const SourceLocation *Loc, unsigned NumStrs);
 
   /// Simple constructor for string literals made from one token.
   static StringLiteral *Create(ASTContext &C, const char *StrData, 
@@ -523,7 +526,8 @@ public:
                                bool Wide, QualType Ty, SourceLocation Loc) {
     return Create(C, StrData, ByteLength, Wide, Ty, &Loc, 1);
   }
-  
+
+  StringLiteral* Clone(ASTContext &C) const;
   void Destroy(ASTContext &C);
   
   const char *getStrData() const { return StrData; }

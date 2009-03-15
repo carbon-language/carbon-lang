@@ -591,7 +591,8 @@ namespace {
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
 
     // Base case. I'm supposed to ignore this.
-    Sema::OwningExprResult VisitStmt(Stmt *) { 
+    Sema::OwningExprResult VisitStmt(Stmt *S) { 
+      S->dump();
       assert(false && "Cannot instantiate this kind of expression");
       return SemaRef.ExprError(); 
     }
@@ -600,10 +601,7 @@ namespace {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitIntegerLiteral(IntegerLiteral *E) {
-  // FIXME: Can't we just re-use the expression node?
-  return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(E->getValue(), 
-                                                            E->getType(),
-                                                            E->getLocation()));
+  return SemaRef.Clone(E);
 }
 
 Sema::OwningExprResult

@@ -26,6 +26,10 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
+IntegerLiteral* IntegerLiteral::Clone(ASTContext &C) const {
+  return new (C) IntegerLiteral(Value, getType(), Loc);
+}
+
 /// getValueAsApproximateDouble - This returns the value as an inaccurate
 /// double.  Note that this may cause loss of precision, but is useful for
 /// debugging dumps, etc.
@@ -40,7 +44,8 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
 StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
                                      unsigned ByteLength, bool Wide,
                                      QualType Ty,
-                                     SourceLocation *Loc, unsigned NumStrs) {
+                                     const SourceLocation *Loc, 
+                                     unsigned NumStrs) {
   // Allocate enough space for the StringLiteral plus an array of locations for
   // any concatenated string tokens.
   void *Mem = C.Allocate(sizeof(StringLiteral)+
@@ -62,6 +67,10 @@ StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
   return SL;
 }
 
+StringLiteral* StringLiteral::Clone(ASTContext &C) const {
+  return Create(C, StrData, ByteLength, IsWide, getType(),
+                TokLocs, NumConcatenated);
+}
 
 void StringLiteral::Destroy(ASTContext &C) {
   C.Deallocate(const_cast<char*>(StrData));
