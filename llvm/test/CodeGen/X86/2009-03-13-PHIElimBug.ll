@@ -1,37 +1,28 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-pc-linux-gnu -stats |& grep phielim | grep {Number of EH try blocks skipped} | grep 4
+; RUN: llvm-as < %s | llc -march=x86 | grep -A 2 {call	f} | grep movl
+; Check the register copy comes after the call to f and before the call to g
 ; PR3784
 
-	%struct.c38002a__arr___XUB = type { i32, i32 }
-	%struct.c38002a__arr_name = type { [0 x i32]*, %struct.c38002a__arr___XUB* }
-	%struct.c38002a__rec = type { i32, %struct.c38002a__arr_name }
+declare i32 @f()
 
-define void @_ada_c38002a() {
+declare i32 @g()
+
+define i32 @phi() {
 entry:
-	%0 = invoke i8* @__gnat_malloc(i32 12)
-			to label %invcont unwind label %lpad		; <i8*> [#uses=0]
+	%a = call i32 @f()		; <i32> [#uses=1]
+	%b = invoke i32 @g()
+			to label %cont unwind label %lpad		; <i32> [#uses=1]
 
-invcont:		; preds = %entry
-	%1 = invoke i8* @__gnat_malloc(i32 20)
-			to label %invcont1 unwind label %lpad		; <i8*> [#uses=0]
+cont:		; preds = %entry
+	%x = phi i32 [ %b, %entry ]		; <i32> [#uses=0]
+	%aa = call i32 @g()		; <i32> [#uses=1]
+	%bb = invoke i32 @g()
+			to label %cont2 unwind label %lpad		; <i32> [#uses=1]
 
-invcont1:		; preds = %invcont
-	%2 = invoke i32 @report__ident_int(i32 2)
-			to label %.noexc unwind label %lpad		; <i32> [#uses=0]
+cont2:		; preds = %cont
+	%xx = phi i32 [ %bb, %cont ]		; <i32> [#uses=1]
+	ret i32 %xx
 
-.noexc:		; preds = %invcont1
-	%3 = invoke i32 @report__ident_int(i32 3)
-			to label %.noexc88 unwind label %lpad		; <i32> [#uses=0]
-
-.noexc88:		; preds = %.noexc
-	unreachable
-
-lpad:		; preds = %.noexc, %invcont1, %invcont, %entry
-	%r.0 = phi %struct.c38002a__rec* [ null, %entry ], [ null, %invcont ], [ null, %invcont1 ], [ null, %.noexc ]		; <%struct.c38002a__rec*> [#uses=1]
-	%4 = getelementptr %struct.c38002a__rec* %r.0, i32 0, i32 0		; <i32*> [#uses=1]
-	%5 = load i32* %4, align 4		; <i32> [#uses=0]
-	ret void
+lpad:		; preds = %cont, %entry
+	%y = phi i32 [ %a, %entry ], [ %aa, %cont ]		; <i32> [#uses=1]
+	ret i32 %y
 }
-
-declare i32 @report__ident_int(i32)
-
-declare i8* @__gnat_malloc(i32)

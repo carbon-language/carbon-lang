@@ -14,6 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "phielim"
+#include "llvm/BasicBlock.h"
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -31,7 +33,6 @@
 using namespace llvm;
 
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
-STATISTIC(NumEH,     "Number of EH try blocks skipped");
 
 namespace {
   class VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
@@ -66,8 +67,25 @@ namespace {
     ///
     void analyzePHINodes(const MachineFunction& Fn);
 
-    void WalkPassEHTryRange(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator &I, unsigned SrcReg);
+    // FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
+    // SrcReg.  This needs to be after any def or uses of SrcReg, but before
+    // any subsequent point where control flow might jump out of the basic
+    // block.
+    MachineBasicBlock::iterator FindCopyInsertPoint(MachineBasicBlock &MBB,
+                                                    unsigned SrcReg);
+
+    // SkipPHIsAndLabels - Copies need to be inserted after phi nodes and
+    // also after any exception handling labels: in landing pads execution
+    // starts at the label, so any copies placed before it won't be executed!
+    MachineBasicBlock::iterator SkipPHIsAndLabels(MachineBasicBlock &MBB,
+                                                MachineBasicBlock::iterator I) {
+      // Rather than assuming that EH labels come before other kinds of labels,
+      // just skip all labels.
+      while (I != MBB.end() &&
+             (I->getOpcode() == TargetInstrInfo::PHI || I->isLabel()))
+        ++I;
+      return I;
+    }
 
     typedef std::pair<const MachineBasicBlock*, unsigned> BBVRegPair;
     typedef std::map<BBVRegPair, unsigned> VRegPHIUse;
@@ -120,10 +138,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
-  MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
-  while (AfterPHIsIt != MBB.end() &&
-         AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI)
-    ++AfterPHIsIt;    // Skip over all of the PHI nodes...
+  MachineBasicBlock::iterator AfterPHIsIt = SkipPHIsAndLabels(MBB, MBB.begin());
 
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI)
     LowerAtomicPHINode(MBB, AfterPHIsIt);
@@ -144,37 +159,47 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
   return true;
 }
 
-void PNE::WalkPassEHTryRange(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator &I, unsigned SrcReg) {
-  if (I == MBB.begin())
-    return;
-  MachineBasicBlock::iterator PI = prior(I);
-  if (PI->getOpcode() != TargetInstrInfo::EH_LABEL)
-    return;
+// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from SrcReg.
+// This needs to be after any def or uses of SrcReg, but before any subsequent
+// point where control flow might jump out of the basic block.
+MachineBasicBlock::iterator PNE::FindCopyInsertPoint(MachineBasicBlock &MBB,
+                                                     unsigned SrcReg) {
+  // Handle the trivial case trivially.
+  if (MBB.empty())
+    return MBB.begin();
 
-  // Trying to walk pass the EH try range. If we run into a use instruction,
-  // we want to insert the copy there.
-  SmallPtrSet<MachineInstr*, 4> UsesInMBB;
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
-    MachineInstr *UseMI = &*UI;
-    if (UseMI->getParent() == &MBB)
-      UsesInMBB.insert(UseMI);
+  // If this basic block does not contain an invoke, then control flow always
+  // reaches the end of it, so place the copy there.  The logic below works in
+  // this case too, but is more expensive.
+  if (!isa<InvokeInst>(MBB.getBasicBlock()->getTerminator()))
+    return MBB.getFirstTerminator();
+
+  // Discover any definition/uses in this basic block.
+  SmallPtrSet<MachineInstr*, 8> DefUsesInMBB;
+  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
+       RE = MRI->reg_end(); RI != RE; ++RI) {
+    MachineInstr *DefUseMI = &*RI;
+    if (DefUseMI->getParent() == &MBB)
+      DefUsesInMBB.insert(DefUseMI);
   }
 
-  while (PI != MBB.begin()) {
-    --PI;
-    if (PI->getOpcode() == TargetInstrInfo::EH_LABEL) {
-      ++NumEH;
-      I = PI;
-      return;
-    } else if (UsesInMBB.count(&*PI)) {
-      ++NumEH;
-      I = next(PI);
-      return;
-    }
+  MachineBasicBlock::iterator InsertPoint;
+  if (DefUsesInMBB.empty()) {
+    // No def/uses.  Insert the copy at the start of the basic block.
+    InsertPoint = MBB.begin();
+  } else if (DefUsesInMBB.size() == 1) {
+    // Insert the copy immediately after the definition/use.
+    InsertPoint = *DefUsesInMBB.begin();
+    ++InsertPoint;
+  } else {
+    // Insert the copy immediately after the last definition/use.
+    InsertPoint = MBB.end();
+    while (!DefUsesInMBB.count(&*--InsertPoint)) {}
+    ++InsertPoint;
   }
-  return;
+
+  // Make sure the copy goes after any phi nodes however.
+  return SkipPHIsAndLabels(MBB, InsertPoint);
 }
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
@@ -273,10 +298,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
  
     // Find a safe location to insert the copy, this may be the first terminator
     // in the block (or end()).
-    MachineBasicBlock::iterator InsertPos = opBlock.getFirstTerminator();
-
-    // Walk pass EH try range if needed.
-    WalkPassEHTryRange(opBlock, InsertPos, SrcReg);
+    MachineBasicBlock::iterator InsertPos = FindCopyInsertPoint(opBlock, SrcReg);
 
     // Insert the copy.
     TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
