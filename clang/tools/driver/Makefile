@@ -9,7 +9,7 @@
 LEVEL = ../../../..
 
 TOOLNAME = clang-driver
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
 CXXFLAGS = -fno-rtti
 
 # FIXME: It is unfortunate we need to pull in the bitcode reader and

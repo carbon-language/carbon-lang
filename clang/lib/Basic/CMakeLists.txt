@@ -11,3 +11,13 @@ add_clang_library(clangBasic
   Targets.cpp
   TokenKinds.cpp
   )
+
+add_dependencies(clangBasic 
+                 ClangDiagnosticAnalysis
+                 ClangDiagnosticAST
+                 ClangDiagnosticCommon
+                 ClangDiagnosticDriver
+                 ClangDiagnosticFrontend
+                 ClangDiagnosticLex
+                 ClangDiagnosticParse
+                 ClangDiagnosticSema)

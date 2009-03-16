@@ -29,3 +29,5 @@ add_clang_library(clangAST
   Type.cpp
   TypeSerialization.cpp
   )
+
+add_dependencies(clangAST ClangDiagnosticAST)

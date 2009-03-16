@@ -17,3 +17,5 @@ add_clang_library(clangParse
   ParseTentative.cpp
   ParseTemplate.cpp
   )
+
+add_dependencies(clangParse ClangDiagnosticParse)

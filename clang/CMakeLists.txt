@@ -12,6 +12,7 @@ macro(add_clang_library name)
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
+  add_dependencies(${name} ClangDiagnosticCommon)
   if(MSVC)
     get_target_property(cflag ${name} COMPILE_FLAGS)
     if(NOT cflag)
@@ -38,6 +39,7 @@ endmacro(add_clang_executable)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_BINARY_DIR}/include
   )
 
 install(DIRECTORY include
@@ -47,6 +49,7 @@ install(DIRECTORY include
 
 add_definitions( -D_GNU_SOURCE )
 
+add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(Driver)
 

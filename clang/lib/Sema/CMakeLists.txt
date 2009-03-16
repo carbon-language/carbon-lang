@@ -24,3 +24,5 @@ add_clang_library(clangSema
   SemaTemplateInstantiate.cpp
   SemaType.cpp
   )
+
+add_dependencies(clangSema ClangDiagnosticSema)

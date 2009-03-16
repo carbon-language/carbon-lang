@@ -22,3 +22,5 @@ add_clang_library(clangLex
   TokenLexer.cpp
   TokenConcatenation.cpp
   )
+
+add_dependencies(clangLex ClangDiagnosticLex)
