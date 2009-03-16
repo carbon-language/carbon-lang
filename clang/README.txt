@@ -161,12 +161,6 @@ Potential Future Features:
 
 IV. Missing Functionality / Improvements
 
-clang driver:
- * Include search paths are hard-coded into the driver.  Doh.
-
-File Manager:
- * Reduce syscalls for reduced compile time, see NOTES.txt.
-
 Lexer:
  * Source character mapping.  GCC supports ASCII and UTF-8.
    See GCC options: -ftarget-charset and -ftarget-wide-charset.
@@ -175,24 +169,10 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
- * Know about apple header maps.
  * #assert/#unassert
- * #line / #file directives (currently accepted and ignored).
  * MSExtension: "L#param" stringizes to a wide string literal.
- * Charize extension: "#define F(o) #@o  F(a)"  -> 'a'.
- * Consider merging the parser's expression parser into the preprocessor to
-   eliminate duplicate code.
  * Add support for -M*
 
 Traditional Preprocessor:
  * Currently, we have none. :)
 
-Parser:
- * C90/K&R modes are only partially implemented.
- * __extension__ is currently just skipped and ignored.
- 
-Semantic Analysis:
- * Perhaps 85% done.
-
-LLVM Code Gen:
- * Most of the easy stuff is done, probably 65.42% done so far.
