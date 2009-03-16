@@ -27,7 +27,9 @@ namespace driver {
   class ArgList;
   class Compilation;
   class HostInfo;
+  class InputInfo;
   class OptTable;
+  class PipedJob;
   class ToolChain;
 
 /// Driver - Encapsulate logic for constructing compilation processes
@@ -53,6 +55,9 @@ public:
   
   /// Default host triple.
   std::string DefaultHostTriple;
+
+  /// Default name for linked images (e.g., "a.out").
+  std::string DefaultImageName;
 
   /// Host information for the platform the driver is running as. This
   /// will generally be the actual host platform, but not always.
@@ -95,6 +100,7 @@ public:
 public:
   Driver(const char *_Name, const char *_Dir,
          const char *_DefaultHostTriple,
+         const char *_DefaultImageName,
          Diagnostic &_Diags);
   ~Driver();
 
@@ -185,6 +191,17 @@ public:
   /// like -fsyntax-only or --analyze.
   Action *ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
                                Action *Input) const;
+
+
+  /// BuildJobsForAction - Construct the jobs to perform for the
+  /// action \arg A.
+  void BuildJobsForAction(Compilation &C,
+                          const Action *A,
+                          const ToolChain *TC,
+                          bool CanAcceptPipe,
+                          bool AtTopLevel,
+                          const char *LinkingOutput,
+                          InputInfo &Result) const;
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.

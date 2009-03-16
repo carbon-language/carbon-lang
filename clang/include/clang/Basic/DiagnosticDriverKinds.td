@@ -21,10 +21,14 @@ def err_drv_invalid_output_with_multiple_archs : Error<
 def err_drv_no_input_files : Error<"no input files">;
 def err_drv_use_of_Z_option : Error<
   "unsupported use of internal gcc -Z option '%0'">;
+def err_drv_output_argument_with_multiple_files : Error<
+  "cannot specify -o when generating multiple output files">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input file unused when '%2' is present">;
 def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">;
+def warn_drv_pipe_ignored_with_save_temps : Warning<
+  "-pipe ignored because -save-temps specified">;
 
 }

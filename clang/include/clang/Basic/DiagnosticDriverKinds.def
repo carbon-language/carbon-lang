@@ -28,8 +28,12 @@ DIAG(err_drv_no_input_files, ERROR,
      "no input files")
 DIAG(err_drv_use_of_Z_option, ERROR,
      "unsupported use of internal gcc -Z option '%0'")
+DIAG(err_drv_output_argument_with_multiple_files, ERROR,
+     "cannot specify -o when generating multiple output files")
 
 DIAG(warn_drv_input_file_unused, WARNING,
      "%0: '%1' input file unused when '%2' is present")
 DIAG(warn_drv_unused_argument, WARNING,
      "argument unused during compilation: '%0'")
+DIAG(warn_drv_pipe_ignored_with_save_temps, WARNING,
+     "-pipe ignored because -save-temps specified")

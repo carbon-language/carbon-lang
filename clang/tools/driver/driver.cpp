@@ -45,6 +45,7 @@ int main(int argc, const char **argv) {
   llvm::OwningPtr<Driver> TheDriver(new Driver(Path.getBasename().c_str(),
                                                Path.getDirname().c_str(),
                                                LLVM_HOSTTRIPLE,
+                                               "a.out",
                                                Diags));
                                                
   llvm::OwningPtr<Compilation> C(TheDriver->BuildCompilation(argc, argv));

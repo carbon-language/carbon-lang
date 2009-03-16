@@ -15,13 +15,18 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/HostInfo.h"
+#include "clang/Driver/Job.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/Tool.h"
+#include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Types.h"
 
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+
+#include "InputInfo.h"
 
 #include <map>
 
@@ -29,9 +34,11 @@ using namespace clang::driver;
 
 Driver::Driver(const char *_Name, const char *_Dir,
                const char *_DefaultHostTriple,
+               const char *_DefaultImageName,
                Diagnostic &_Diags) 
   : Opts(new OptTable()), Diags(_Diags), 
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
+    DefaultImageName(_DefaultImageName),
     Host(0),
     CCCIsCXX(false), CCCEcho(false), 
     CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false),
@@ -567,8 +574,60 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   return 0;
 }
 
-void Driver::BuildJobs(Compilation &C,
-                       const ActionList &Actions) const {
+void Driver::BuildJobs(Compilation &C, const ActionList &Actions) const {
+  bool SaveTemps = C.getArgs().hasArg(options::OPT_save_temps);
+  bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
+  
+  // -save-temps inhibits pipes.
+  if (SaveTemps && UsePipes) {
+    Diag(clang::diag::warn_drv_pipe_ignored_with_save_temps);
+    UsePipes = true;
+  }
+
+  Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o);
+
+  // It is an error to provide a -o option if we are making multiple
+  // output files.
+  if (FinalOutput) {
+    unsigned NumOutputs = 0;
+    for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
+         it != ie; ++it)
+      if ((*it)->getType() != types::TY_Nothing)
+        ++NumOutputs;
+    
+    if (NumOutputs > 1) {
+      Diag(clang::diag::err_drv_output_argument_with_multiple_files);
+      FinalOutput = 0;
+    }
+  }
+
+  for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
+       it != ie; ++it) {
+    Action *A = *it;
+
+    // If we are linking an image for multiple archs then the linker
+    // wants -arch_multiple and -final_output <final image
+    // name>. Unfortunately, this doesn't fit in cleanly because we
+    // have to pass this information down.
+    //
+    // FIXME: This is a hack; find a cleaner way to integrate this
+    // into the process.
+    const char *LinkingOutput = 0;
+    if (isa<LinkJobAction>(A)) {
+      if (FinalOutput)
+        LinkingOutput = FinalOutput->getValue(C.getArgs());
+      else
+        LinkingOutput = DefaultImageName.c_str();
+    }
+
+    InputInfo II;
+    BuildJobsForAction(C, 
+                       A, DefaultToolChain, 
+                       /*CanAcceptPipe*/ true,
+                       /*AtTopLevel*/ true,
+                       /*LinkingOutput*/ LinkingOutput,
+                       II);
+  }
 
   // If there were no errors, warn about any unused arguments.
   for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
@@ -582,6 +641,91 @@ void Driver::BuildJobs(Compilation &C,
       Diag(clang::diag::warn_drv_unused_argument) 
         << A->getOption().getName();
   }
+}
+
+void Driver::BuildJobsForAction(Compilation &C,
+                                const Action *A,
+                                const ToolChain *TC,
+                                bool CanAcceptPipe,
+                                bool AtTopLevel,
+                                const char *LinkingOutput,
+                                InputInfo &Result) const {
+  if (const InputAction *IA = dyn_cast<InputAction>(A)) {
+    const char *Name = IA->getInputArg().getValue(C.getArgs());
+    Result = InputInfo(Name, A->getType(), Name);
+    return;
+  }
+
+  if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
+    const char *ArchName = BAA->getArchName();
+    BuildJobsForAction(C,
+                       *BAA->begin(), 
+                       Host->getToolChain(C.getArgs(), ArchName),
+                       CanAcceptPipe,
+                       AtTopLevel,
+                       LinkingOutput,
+                       Result);
+    return;
+  }
+
+  const JobAction *JA = cast<JobAction>(A);
+  const Tool &T = TC->SelectTool(C, *JA);
+  
+  // See if we should use an integrated preprocessor. We do so when we
+  // have exactly one input, since this is the only use case we care
+  // about (irrelevant since we don't support combine yet).
+  bool UseIntegratedCPP = false;
+  const ActionList *Inputs = &A->getInputs();
+  if (Inputs->size() == 1 && isa<PreprocessJobAction>(*Inputs->begin())) {
+    if (!C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
+        !C.getArgs().hasArg(options::OPT_traditional_cpp) &&
+        !C.getArgs().hasArg(options::OPT_save_temps) &&
+        T.hasIntegratedCPP()) {
+      UseIntegratedCPP = true;
+      Inputs = &(*Inputs)[0]->getInputs();
+    }
+  }
+
+  // Only use pipes when there is exactly one input.
+  bool TryToUsePipeInput = Inputs->size() == 1 && T.acceptsPipedInput();
+  llvm::SmallVector<InputInfo, 4> InputInfos;
+  for (ActionList::const_iterator it = Inputs->begin(), ie = Inputs->end();
+       it != ie; ++it) {
+    InputInfo II;
+    BuildJobsForAction(C, *it, TC, TryToUsePipeInput, 
+                       /*AtTopLevel*/false,
+                       LinkingOutput,
+                       II);
+    InputInfos.push_back(II);
+  }
+
+  // Determine if we should output to a pipe.
+  bool OutputToPipe = false;
+  if (CanAcceptPipe && T.canPipeOutput()) {
+    // Some actions default to writing to a pipe if they are the top
+    // level phase and there was no user override.
+    //
+    // FIXME: Is there a better way to handle this?
+    if (AtTopLevel) {
+      if (isa<PreprocessJobAction>(A) && !C.getArgs().hasArg(options::OPT_o))
+        OutputToPipe = true;
+    } else if (C.getArgs().hasArg(options::OPT_pipe))
+      OutputToPipe = true;
+  }
+
+  // Figure out where to put the job (pipes).
+  Job *Dest = &C.getJobs();
+  if (InputInfos[0].isPipe()) {
+    assert(InputInfos.size() == 1 && "Unexpected pipe with multiple inputs.");
+    Dest = &InputInfos[0].getPipe();
+  }
+
+  // Always use the first input as the base input.
+  const char *BaseInput = InputInfos[0].getBaseInput();
+  const char *Output = "foo";
+  // FIXME: Make the job.
+
+  Result = InputInfo(Output, A->getType(), BaseInput);
 }
 
 llvm::sys::Path Driver::GetFilePath(const char *Name,
