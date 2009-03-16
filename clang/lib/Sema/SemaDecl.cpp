@@ -3363,7 +3363,7 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   if (Value == 0 && FieldName)
     return Diag(FieldLoc, diag::err_bitfield_has_zero_width) << FieldName;
   
-  if (Value.isNegative())
+  if (Value.isSigned() && Value.isNegative())
     return Diag(FieldLoc, diag::err_bitfield_has_negative_width) 
              << FieldName << Value.toString(10);
 

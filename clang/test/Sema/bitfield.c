@@ -17,5 +17,7 @@ struct a {
 
   // PR3607
   enum e0 f : 1; // expected-error {{field has incomplete type 'enum e0'}}
+  
+  int g : (_Bool)1;
 };
 
