@@ -96,8 +96,24 @@ raw_ostream &raw_ostream::operator<<(long long N) {
 }
 
 raw_ostream &raw_ostream::operator<<(const void *P) {
-  // FIXME: This could be much faster if it matters.
-  return *this << format("%p", P);
+  uintptr_t N = (uintptr_t) P;
+  *this << '0' << 'x';
+  
+  // Zero is a special case.
+  if (N == 0)
+    return *this << '0';
+
+  char NumberBuffer[20];
+  char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
+  char *CurPtr = EndPtr;
+
+  while (N) {
+    unsigned x = N % 16;
+    *--CurPtr = (x < 10 ? '0' + x : 'a' + x - 10);
+    N /= 16;
+  }
+
+  return write(CurPtr, EndPtr-CurPtr);
 }
 
 raw_ostream &raw_ostream::write(unsigned char C) {
@@ -105,6 +121,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
     flush_impl();
 
   *OutBufCur++ = C;
+  return *this;
 }
 
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
