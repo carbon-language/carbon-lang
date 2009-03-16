@@ -155,13 +155,21 @@ public:
   void PrintActions(const ArgList &Args, const ActionList &Actions) const;
 
   /// GetFilePath - Lookup \arg Name in the list of file search paths.
+  ///
+  /// \arg TC - Use the provided tool chain for additional information
+  /// on directories to search, or the DefaultToolChain if not
+  /// provided.
   // FIXME: This should be in CompilationInfo.
-  llvm::sys::Path GetFilePath(const char *Name) const;
+  llvm::sys::Path GetFilePath(const char *Name, const ToolChain *TC=0) const;
 
   /// GetProgramPath - Lookup \arg Name in the list of program search
   /// paths.
+  ///
+  /// \arg TC - Use the provided tool chain for additional information
+  /// on directories to search, or the DefaultToolChain if not
+  /// provided.
   // FIXME: This should be in CompilationInfo.
-  llvm::sys::Path GetProgramPath(const char *Name) const;
+  llvm::sys::Path GetProgramPath(const char *Name, const ToolChain *TC=0) const;
 
   /// HandleImmediateArgs - Handle any arguments which should be
   /// treated before building actions or binding tools.

@@ -582,13 +582,19 @@ Compilation *Driver::BuildJobs(const ArgList &Args,
   return 0;
 }
 
-llvm::sys::Path Driver::GetFilePath(const char *Name) const {
+llvm::sys::Path Driver::GetFilePath(const char *Name,
+                                    const ToolChain *TC) const {
   // FIXME: Implement.
+  if (!TC) TC = DefaultToolChain;
+
   return llvm::sys::Path(Name);
 }
 
-llvm::sys::Path Driver::GetProgramPath(const char *Name) const {
+llvm::sys::Path Driver::GetProgramPath(const char *Name, 
+                                       const ToolChain *TC) const {
   // FIXME: Implement.
+  if (!TC) TC = DefaultToolChain;
+
   return llvm::sys::Path(Name);
 }
 
