@@ -779,7 +779,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     result = DAG.getNode(SPUISD::SHUFB, dl, vecVT,
                          vectorizeOp, alignLoadVec,
-                         DAG.getNode(ISD::BIT_CONVERT, dl, 
+                         DAG.getNode(ISD::BIT_CONVERT, dl,
                                      MVT::v4i32, insertEltOp));
 
     result = DAG.getStore(the_chain, dl, result, basePtr,
@@ -1035,7 +1035,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       ArgOffset += StackSlotSize;
     }
     if (!MemOps.empty())
-      Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
+      Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                          &MemOps[0], MemOps.size());
   }
 
@@ -1156,7 +1156,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
                              RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -1239,7 +1239,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case MVT::Other: break;
   case MVT::i32:
     if (TheCall->getValueType(1) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R4, 
+      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R4,
                                  MVT::i32, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32,
@@ -1247,20 +1247,20 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       ResultVals[1] = Chain.getValue(0);
       NumResults = 2;
     } else {
-      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32, 
+      Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i32,
                                  InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       NumResults = 1;
     }
     break;
   case MVT::i64:
-    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i64, 
+    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i64,
                                InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
     break;
   case MVT::i128:
-    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i128, 
+    Chain = DAG.getCopyFromReg(Chain, dl, SPU::R3, MVT::i128,
                                InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
@@ -1860,7 +1860,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
                   DAG.getTargetConstant(V2Elt, MVT::i32),
                   DAG.getCopyFromReg(InitTempReg, dl, VReg, PtrVT));
     // Use shuffle mask in SHUFB synthetic instruction:
-    return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V2, V1, 
+    return DAG.getNode(SPUISD::SHUFB, dl, V1.getValueType(), V2, V1,
                        ShufMaskOp);
   } else if (rotate) {
     int rotamt = (MaxElts - V0Elt) * EltVT.getSizeInBits()/8;
@@ -2401,7 +2401,7 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
 
     SDValue Comp1 =
       DAG.getNode(ISD::SRL, dl, MVT::i32,
-                  DAG.getCopyFromReg(CNTB_rescopy, dl, CNTB_reg, MVT::i32), 
+                  DAG.getCopyFromReg(CNTB_rescopy, dl, CNTB_reg, MVT::i32),
                   Shift1);
 
     SDValue Sum1 =
@@ -2588,7 +2588,7 @@ static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
   }
 
   SDValue result =
-          DAG.getSetCC(dl, ccResultVT, lhsSelect, rhsSelect, 
+          DAG.getSetCC(dl, ccResultVT, lhsSelect, rhsSelect,
                        (ISD::CondCode) compareOp);
 
   if ((CC->get() & 0x8) == 0) {
@@ -2649,14 +2649,15 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
 //! Custom lower ISD::TRUNCATE
 static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
 {
+  // Type to truncate to
   MVT VT = Op.getValueType();
   MVT::SimpleValueType simpleVT = VT.getSimpleVT();
   MVT VecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
   DebugLoc dl = Op.getDebugLoc();
 
+  // Type to truncate from
   SDValue Op0 = Op.getOperand(0);
   MVT Op0VT = Op0.getValueType();
-  MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
 
   if (Op0VT.getSimpleVT() == MVT::i128 && simpleVT == MVT::i64) {
     // Create shuffle mask, least significant doubleword of quadword
@@ -2669,15 +2670,10 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
                                    DAG.getConstant(maskHigh, MVT::i32),
                                    DAG.getConstant(maskLow, MVT::i32));
 
+    SDValue truncShuffle = DAG.getNode(SPUISD::SHUFB, dl, VecVT,
+                                       Op0, Op0, shufMask);
 
-    SDValue PromoteScalar = DAG.getNode(SPUISD::PREFSLOT2VEC, dl, 
-                                        Op0VecVT, Op0);
-
-    SDValue truncShuffle = DAG.getNode(SPUISD::SHUFB, dl, Op0VecVT,
-                                       PromoteScalar, PromoteScalar, shufMask);
-
-    return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
-                       DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, truncShuffle));
+    return DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT, truncShuffle);
   }
 
   return SDValue();             // Leave the truncate unmolested
