@@ -102,7 +102,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
       continue;
     bool AcceptsConst = true;
     QualType ArgType = FnType->getArgType(0);
-    if (const ReferenceType *Ref = ArgType->getAsReferenceType()) {
+    if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType()) {
       ArgType = Ref->getPointeeType();
       // Is it a non-const reference?
       if (!ArgType.isConstQualified())
@@ -152,7 +152,7 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   assert(FnType && "Overloaded operator has no proto function type.");
   assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
   QualType ArgType = FnType->getArgType(0);
-  if (const ReferenceType *Ref = ArgType->getAsReferenceType())
+  if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType())
     ArgType = Ref->getPointeeType();
 
   ArgType = ArgType.getUnqualifiedType();
@@ -263,8 +263,9 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
 
   const ParmVarDecl *Param = getParamDecl(0);
 
-  // Do we have a reference type?
-  const ReferenceType *ParamRefType = Param->getType()->getAsReferenceType();
+  // Do we have a reference type? Rvalue references don't count.
+  const LValueReferenceType *ParamRefType =
+    Param->getType()->getAsLValueReferenceType();
   if (!ParamRefType)
     return false;
 

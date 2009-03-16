@@ -272,7 +272,7 @@ public:
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType BuildPointerType(QualType T, unsigned Quals, 
                             SourceLocation Loc, DeclarationName Entity);
-  QualType BuildReferenceType(QualType T, unsigned Quals, 
+  QualType BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
                               SourceLocation Loc, DeclarationName Entity);
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                           Expr *ArraySize, unsigned Quals,

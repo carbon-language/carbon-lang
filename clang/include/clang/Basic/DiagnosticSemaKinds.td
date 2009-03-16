@@ -271,9 +271,11 @@ def err_destructor_typedef_name : Error<
   "destructor cannot be declared using a typedef %0 of the class name">;
 
 // C++ initialization
+def err_lvalue_to_rvalue_ref : Error<"rvalue reference cannot bind to lvalue">;
 // FIXME: passing in an English string as %1!
 def err_not_reference_to_const_init : Error<
-  "non-const reference to type %0 cannot be initialized with a %1 of type %2">;
+  "non-const lvalue reference to type %0 cannot be initialized "
+  "with a %1 of type %2">;
 // FIXME: passing in an English string as %1!
 def err_reference_init_drops_quals : Error<
   "initialization of reference to type %0 with a %1 of type %2 drops "

@@ -319,8 +319,16 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
 ///
 /// \returns A suitable reference type, if there are no
 /// errors. Otherwise, returns a NULL type.
-QualType Sema::BuildReferenceType(QualType T, unsigned Quals, 
+QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
                                   SourceLocation Loc, DeclarationName Entity) {
+  if (LValueRef) {
+    if (const RValueReferenceType *R = T->getAsRValueReferenceType()) {
+      // FIXME: Find the C++0x reference for reference collapsing.
+      // In reference collapsing, lvalue refs win over rvalue refs.
+      return Context.getLValueReferenceType(R->getPointeeType()).
+               getQualifiedType(Quals);
+    }
+  }
   if (T->isReferenceType()) {
     // C++ [dcl.ref]p4: There shall be no references to references.
     // 
@@ -367,7 +375,9 @@ QualType Sema::BuildReferenceType(QualType T, unsigned Quals,
   Quals &= ~QualType::Volatile;
 
   // Handle restrict on references.
-  return Context.getReferenceType(T).getQualifiedType(Quals);
+  if (LValueRef)
+    return Context.getLValueReferenceType(T).getQualifiedType(Quals);
+  return Context.getRValueReferenceType(T).getQualifiedType(Quals);
 }
 
 /// \brief Build an array type.
@@ -603,8 +613,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
       break;
     case DeclaratorChunk::Reference:
-      T = BuildReferenceType(T, 
-                             DeclType.Ref.HasRestrict? QualType::Restrict : 0,
+      T = BuildReferenceType(T, DeclType.Ref.LValueRef,
+                             DeclType.Ref.HasRestrict ? QualType::Restrict : 0,
                              DeclType.Loc, Name);
       break;
     case DeclaratorChunk::Array: {

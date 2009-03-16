@@ -49,7 +49,7 @@ void test_explicit_bool(ExplicitConvToBool ecb) {
 }
 
 void test_explicit_conv_to_ref(ExplicitConvToRef ecr) {
-  int& i1 = ecr; // expected-error{{non-const reference to type 'int' cannot be initialized with a value of type 'struct ExplicitConvToRef'}}
+  int& i1 = ecr; // expected-error{{non-const lvalue reference to type 'int' cannot be initialized with a value of type 'struct ExplicitConvToRef'}}
   int& i2(ecr); // okay
 }
 
@@ -61,7 +61,7 @@ struct C {
 };
 
 void test_copy_init_conversions(C c) {
-  A &a = c; // expected-error{{non-const reference to type 'struct A' cannot be initialized with a value of type 'struct C'}}
+  A &a = c; // expected-error{{non-const lvalue reference to type 'struct A' cannot be initialized with a value of type 'struct C'}}
   B &b = b; // okay
 }
 

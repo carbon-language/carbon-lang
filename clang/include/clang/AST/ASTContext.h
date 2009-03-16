@@ -59,7 +59,8 @@ class ASTContext {
   llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<BlockPointerType> BlockPointerTypes;
-  llvm::FoldingSet<ReferenceType> ReferenceTypes;
+  llvm::FoldingSet<LValueReferenceType> LValueReferenceTypes;
+  llvm::FoldingSet<RValueReferenceType> RValueReferenceTypes;
   llvm::FoldingSet<MemberPointerType> MemberPointerTypes;
   llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
   llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
@@ -207,9 +208,13 @@ public:
   /// of the specified type.
   QualType getBlockPointerType(QualType T);
 
-  /// getReferenceType - Return the uniqued reference to the type for a
-  /// reference to the specified type.
-  QualType getReferenceType(QualType T);
+  /// getLValueReferenceType - Return the uniqued reference to the type for an
+  /// lvalue reference to the specified type.
+  QualType getLValueReferenceType(QualType T);
+
+  /// getRValueReferenceType - Return the uniqued reference to the type for an
+  /// rvalue reference to the specified type.
+  QualType getRValueReferenceType(QualType T);
 
   /// getMemberPointerType - Return the uniqued reference to the type for a
   /// member pointer to the specified type in the specified class. The class

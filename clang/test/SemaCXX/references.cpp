@@ -44,9 +44,9 @@ B fB();
 
 // C++ [dcl.init.ref]p5b2
 void test4() {
-  double& rd2 = 2.0; // expected-error{{non-const reference to type 'double' cannot be initialized with a temporary of type 'double'}}
+  double& rd2 = 2.0; // expected-error{{non-const lvalue reference to type 'double' cannot be initialized with a temporary of type 'double'}}
   int i = 2;
-  double& rd3 = i; // expected-error{{non-const reference to type 'double' cannot be initialized with a value of type 'int'}}
+  double& rd3 = i; // expected-error{{non-const lvalue reference to type 'double' cannot be initialized with a value of type 'int'}}
 
   const A& rca = fB();
 }

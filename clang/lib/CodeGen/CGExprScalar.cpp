@@ -571,6 +571,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     return V;
     
   } else if (E->getType()->isReferenceType()) {
+    // FIXME: An expression cannot have reference type.
     return EmitLValue(Op).getAddress();
   }
   

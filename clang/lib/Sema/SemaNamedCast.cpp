@@ -115,9 +115,10 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
-  if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
+  if (const LValueReferenceType *DestTypeTmp =
+        DestType->getAsLValueReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
-      // Cannot cast non-lvalue to reference type.
+      // Cannot cast non-lvalue to lvalue reference type.
       Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
         << "const_cast" << OrigDestType << SrcExpr->getSourceRange();
       return;
@@ -141,6 +142,8 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (!DestType->isPointerType() && !DestType->isMemberPointerType()) {
     // Cannot cast to non-pointer, non-reference type. Note that, if DestType
     // was a reference type, we converted it to a pointer above.
+    // The status of rvalue references isn't entirely clear, but it looks like
+    // conversion to them is simply invalid.
     // C++ 5.2.11p3: For two pointer types [...]
     Self.Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest)
       << OrigDestType << DestRange;
@@ -214,7 +217,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
-  if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
+  if (const LValueReferenceType *DestTypeTmp =
+        DestType->getAsLValueReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type.
       Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
@@ -226,6 +230,14 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     //   same effect as the conversion *reinterpret_cast<T*>(&x) with the
     //   built-in & and * operators.
     // This code does this transformation for the checked types.
+    DestType = Self.Context.getPointerType(DestTypeTmp->getPointeeType());
+    SrcType = Self.Context.getPointerType(SrcType);
+  } else if (const RValueReferenceType *DestTypeTmp =
+               DestType->getAsRValueReferenceType()) {
+    // Both the reference conversion and the rvalue rules apply.
+    Self.DefaultFunctionArrayConversion(SrcExpr);
+    SrcType = SrcExpr->getType();
+
     DestType = Self.Context.getPointerType(DestTypeTmp->getPointeeType());
     SrcType = Self.Context.getPointerType(SrcType);
   } else {
@@ -424,6 +436,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // reference downcast, or an explicit invocation of the user-defined
   // conversion using B's conversion constructor.
   // DR 427 specifies that the downcast is to be applied here.
+
+  // FIXME: With N2812, casts to rvalue refs will change.
 
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (DestType->isVoidType()) {
@@ -787,9 +801,11 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
-  // C++ 5.2.7p2: If T is a pointer type, v shall be an rvalue of a pointer to
-  //   complete class type, [...]. If T is a reference type, v shall be an
-  //   lvalue of a complete class type, [...].
+  // C++0x 5.2.7p2: If T is a pointer type, v shall be an rvalue of a pointer to
+  //   complete class type, [...]. If T is an lvalue reference type, v shall be
+  //   an lvalue of a complete class type, [...]. If T is an rvalue reference
+  //   type, v shall be an expression having a complete effective class type,
+  //   [...]
 
   QualType SrcType = Self.Context.getCanonicalType(OrigSrcType);
   QualType SrcPointee;
@@ -801,11 +817,13 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
         << OrigSrcType << SrcExpr->getSourceRange();
       return;
     }
-  } else {
+  } else if (DestReference->isLValueReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
         << "dynamic_cast" << OrigDestType << OpRange;
     }
+    SrcPointee = SrcType;
+  } else {
     SrcPointee = SrcType;
   }
 

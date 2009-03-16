@@ -266,7 +266,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());
     return llvm::StructType::get(EltTy, EltTy, NULL);
   }
-  case Type::Reference: {
+  case Type::LValueReference:
+  case Type::RValueReference: {
     const ReferenceType &RTy = cast<ReferenceType>(Ty);
     QualType ETy = RTy.getPointeeType();
     llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();

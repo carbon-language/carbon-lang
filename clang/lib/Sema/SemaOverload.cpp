@@ -519,8 +519,10 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // We were able to resolve the address of the overloaded function,
     // so we can convert to the type of that function.
     FromType = Fn->getType();
-    if (ToType->isReferenceType())
-      FromType = Context.getReferenceType(FromType);
+    if (ToType->isLValueReferenceType())
+      FromType = Context.getLValueReferenceType(FromType);
+    else if (ToType->isRValueReferenceType())
+      FromType = Context.getRValueReferenceType(FromType);
     else if (ToType->isMemberPointerType()) {
       // Resolve address only succeeds if both sides are member pointers,
       // but it doesn't have to be the same class. See DR 247.
@@ -2734,7 +2736,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          Arith < NumArithmeticTypes; ++Arith) {
       QualType ArithTy = ArithmeticTypes[Arith];
       QualType ParamTypes[2] 
-        = { Context.getReferenceType(ArithTy), Context.IntTy };
+        = { Context.getLValueReferenceType(ArithTy), Context.IntTy };
 
       // Non-volatile version.
       if (NumArgs == 1)
@@ -2743,7 +2745,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
 
       // Volatile version
-      ParamTypes[0] = Context.getReferenceType(ArithTy.withVolatile());
+      ParamTypes[0] = Context.getLValueReferenceType(ArithTy.withVolatile());
       if (NumArgs == 1)
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
       else
@@ -2767,7 +2769,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         continue;
 
       QualType ParamTypes[2] = { 
-        Context.getReferenceType(*Ptr), Context.IntTy 
+        Context.getLValueReferenceType(*Ptr), Context.IntTy 
       };
       
       // Without volatile
@@ -2778,7 +2780,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
       if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
         // With volatile
-        ParamTypes[0] = Context.getReferenceType((*Ptr).withVolatile());
+        ParamTypes[0] = Context.getLValueReferenceType((*Ptr).withVolatile());
         if (NumArgs == 1)
           AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
         else
@@ -2802,7 +2804,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       QualType ParamTy = *Ptr;
       QualType PointeeTy = ParamTy->getAsPointerType()->getPointeeType();
-      AddBuiltinCandidate(Context.getReferenceType(PointeeTy), 
+      AddBuiltinCandidate(Context.getLValueReferenceType(PointeeTy), 
                           &ParamTy, Args, 1, CandidateSet);
     }
     break;
@@ -3021,14 +3023,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       QualType ParamTypes[2];
 
       // T& operator=(T&, T)
-      ParamTypes[0] = Context.getReferenceType(*Enum);
+      ParamTypes[0] = Context.getLValueReferenceType(*Enum);
       ParamTypes[1] = *Enum;
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                           /*IsAssignmentOperator=*/false);
 
       if (!Context.getCanonicalType(*Enum).isVolatileQualified()) {
         // volatile T& operator=(volatile T&, T)
-        ParamTypes[0] = Context.getReferenceType((*Enum).withVolatile());
+        ParamTypes[0] = Context.getLValueReferenceType((*Enum).withVolatile());
         ParamTypes[1] = *Enum;
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssignmentOperator=*/false);
@@ -3060,13 +3062,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       ParamTypes[1] = (Op == OO_Equal)? *Ptr : Context.getPointerDiffType();
 
       // non-volatile version
-      ParamTypes[0] = Context.getReferenceType(*Ptr);
+      ParamTypes[0] = Context.getLValueReferenceType(*Ptr);
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                           /*IsAssigmentOperator=*/Op == OO_Equal);
 
       if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
         // volatile version
-        ParamTypes[0] = Context.getReferenceType((*Ptr).withVolatile());
+        ParamTypes[0] = Context.getLValueReferenceType((*Ptr).withVolatile());
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
       }
@@ -3094,13 +3096,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         ParamTypes[1] = ArithmeticTypes[Right];
 
         // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] = Context.getReferenceType(ArithmeticTypes[Left]);
+        ParamTypes[0] = Context.getLValueReferenceType(ArithmeticTypes[Left]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
         ParamTypes[0] = ArithmeticTypes[Left].withVolatile();
-        ParamTypes[0] = Context.getReferenceType(ParamTypes[0]);
+        ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
       }
@@ -3132,13 +3134,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         ParamTypes[1] = ArithmeticTypes[Right];
 
         // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] = Context.getReferenceType(ArithmeticTypes[Left]);
+        ParamTypes[0] = Context.getLValueReferenceType(ArithmeticTypes[Left]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
         ParamTypes[0] = ArithmeticTypes[Left];
         ParamTypes[0].addVolatile();
-        ParamTypes[0] = Context.getReferenceType(ParamTypes[0]);
+        ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
       }
     }
@@ -3190,7 +3192,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
       QualType PointeeType = (*Ptr)->getAsPointerType()->getPointeeType();
-      QualType ResultTy = Context.getReferenceType(PointeeType);
+      QualType ResultTy = Context.getLValueReferenceType(PointeeType);
 
       // T& operator[](T*, ptrdiff_t)
       AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
@@ -3407,11 +3409,17 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         // retaining as many typedefs as possible while still showing
         // the function type (and, therefore, its parameter types).
         QualType FnType = Cand->Surrogate->getConversionType();
-        bool isReference = false;
+        bool isLValueReference = false;
+        bool isRValueReference = false;
         bool isPointer = false;
-        if (const ReferenceType *FnTypeRef = FnType->getAsReferenceType()) {
+        if (const LValueReferenceType *FnTypeRef =
+              FnType->getAsLValueReferenceType()) {
           FnType = FnTypeRef->getPointeeType();
-          isReference = true;
+          isLValueReference = true;
+        } else if (const RValueReferenceType *FnTypeRef =
+                     FnType->getAsRValueReferenceType()) {
+          FnType = FnTypeRef->getPointeeType();
+          isRValueReference = true;
         }
         if (const PointerType *FnTypePtr = FnType->getAsPointerType()) {
           FnType = FnTypePtr->getPointeeType();
@@ -3421,7 +3429,8 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         FnType = QualType(FnType->getAsFunctionType(), 0);
         // Reconstruct the pointer/reference as appropriate.
         if (isPointer) FnType = Context.getPointerType(FnType);
-        if (isReference) FnType = Context.getReferenceType(FnType);
+        if (isRValueReference) FnType = Context.getRValueReferenceType(FnType);
+        if (isLValueReference) FnType = Context.getLValueReferenceType(FnType);
 
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
           << FnType;
@@ -4144,7 +4153,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // FIXME: Represent the user-defined conversion in the AST!
     ImpCastExprToType(Object,
                       Conv->getConversionType().getNonReferenceType(),
-                      Conv->getConversionType()->isReferenceType());
+                      Conv->getConversionType()->isLValueReferenceType());
     return ActOnCallExpr(S, ExprArg(*this, Object), LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),
                          CommaLocs, RParenLoc).release();

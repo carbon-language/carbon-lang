@@ -54,7 +54,7 @@ void t_529_2()
   //(void)static_cast<A*>((H*)0); // {{static_cast from 'struct H *' to 'struct A *' is not allowed}}
   (void)static_cast<int>((int*)0); // expected-error {{static_cast from 'int *' to 'int' is not allowed}}
   (void)static_cast<A**>((B**)0); // expected-error {{static_cast from 'struct B **' to 'struct A **' is not allowed}}
-  (void)static_cast<char&>(i); // expected-error {{non-const reference to type 'char' cannot be initialized with a value of type 'int'}}
+  (void)static_cast<char&>(i); // expected-error {{non-const lvalue reference to type 'char' cannot be initialized with a value of type 'int'}}
 }
 
 // Anything to void
@@ -86,7 +86,7 @@ void t_529_5_8()
   (void)static_cast<H*>((A*)0); // expected-error {{ambiguous static_cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
   (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous static_cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
   (void)static_cast<E*>((B*)0); // expected-error {{static_cast from 'struct B *' to 'struct E *' is not allowed}}
-  (void)static_cast<E&>(*((B*)0)); // expected-error {{non-const reference to type 'struct E' cannot be initialized with a value of type 'struct B'}}
+  (void)static_cast<E&>(*((B*)0)); // expected-error {{non-const lvalue reference to type 'struct E' cannot be initialized with a value of type 'struct B'}}
 
   // TODO: Test inaccessible base in context where it's accessible, i.e.
   // member function and friend.

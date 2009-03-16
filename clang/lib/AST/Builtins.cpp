@@ -183,7 +183,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     if (Type->isArrayType()) {
       Type = Context.getArrayDecayedType(Type);
     } else {
-      Type = Context.getReferenceType(Type);
+      Type = Context.getLValueReferenceType(Type);
     }
     break;
   case 'V': {
@@ -224,8 +224,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
         Type = Context.getPointerType(Type);
         break;
       case '&':
-        Type = Context.getReferenceType(Type);
+        Type = Context.getLValueReferenceType(Type);
         break;
+      // FIXME: There's no way to have a built-in with an rvalue ref arg.
       case 'C':
         Type = Type.getQualifiedType(QualType::Const);
         break;

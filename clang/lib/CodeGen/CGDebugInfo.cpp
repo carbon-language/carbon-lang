@@ -502,7 +502,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     assert(false && "Dependent types cannot show up in debug information");
     
   case Type::Complex:
-  case Type::Reference:
+  case Type::LValueReference:
+  case Type::RValueReference:
   case Type::Vector:
   case Type::ExtVector:
   case Type::ExtQual:

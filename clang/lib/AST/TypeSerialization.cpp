@@ -107,8 +107,12 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       D.RegisterPtr(PtrID, BlockPointerType::CreateImpl(Context, D));
       break;
 
-    case Type::Reference:
-      D.RegisterPtr(PtrID, ReferenceType::CreateImpl(Context, D));
+    case Type::LValueReference:
+      D.RegisterPtr(PtrID, LValueReferenceType::CreateImpl(Context, D));
+      break;
+
+    case Type::RValueReference:
+      D.RegisterPtr(PtrID, RValueReferenceType::CreateImpl(Context, D));
       break;
 
     case Type::Record:
@@ -261,8 +265,12 @@ void ReferenceType::EmitImpl(Serializer& S) const {
   S.Emit(getPointeeType());
 }
 
-Type* ReferenceType::CreateImpl(ASTContext& Context, Deserializer& D) {
-  return Context.getReferenceType(QualType::ReadVal(D)).getTypePtr();
+Type* LValueReferenceType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getLValueReferenceType(QualType::ReadVal(D)).getTypePtr();
+}
+
+Type* RValueReferenceType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getRValueReferenceType(QualType::ReadVal(D)).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//

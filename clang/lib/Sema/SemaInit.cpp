@@ -121,7 +121,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
     return false;
   
   // C++ [dcl.init.ref]p1:
-  //   A variable declared to be a T&, that is "reference to type T"
+  //   A variable declared to be a T& or T&&, that is "reference to type T"
   //   (8.3.2), shall be initialized by an object, or function, of
   //   type T or by an object that can be converted into a T.
   if (DeclType->isReferenceType())

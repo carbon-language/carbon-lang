@@ -365,10 +365,15 @@ void CXXNameMangler::mangleType(QualType T) {
     mangleType(PT->getPointeeType());
   }
   //         ::= R <type>   # reference-to
-  //         ::= O <type>   # rvalue reference-to (C++0x)
-  else if (const ReferenceType *RT = dyn_cast<ReferenceType>(T.getTypePtr())) {
-    // FIXME: rvalue references
+  else if (const LValueReferenceType *RT =
+           dyn_cast<LValueReferenceType>(T.getTypePtr())) {
     Out << 'R';
+    mangleType(RT->getPointeeType());
+  }
+  //         ::= O <type>   # rvalue reference-to (C++0x)
+  else if (const RValueReferenceType *RT =
+           dyn_cast<RValueReferenceType>(T.getTypePtr())) {
+    Out << 'O';
     mangleType(RT->getPointeeType());
   }
   //         ::= C <type>   # complex pair (C 2000)

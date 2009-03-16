@@ -218,14 +218,24 @@ TemplateTypeInstantiator::InstantiateBlockPointerType(const BlockPointerType *T,
   return QualType();
 }
 
-QualType 
-TemplateTypeInstantiator::InstantiateReferenceType(const ReferenceType *T, 
-                                                   unsigned Quals) const {
+QualType
+TemplateTypeInstantiator::InstantiateLValueReferenceType(
+    const LValueReferenceType *T, unsigned Quals) const {
   QualType ReferentType = Instantiate(T->getPointeeType());
   if (ReferentType.isNull())
     return QualType();
 
-  return SemaRef.BuildReferenceType(ReferentType, Quals, Loc, Entity);
+  return SemaRef.BuildReferenceType(ReferentType, true, Quals, Loc, Entity);
+}
+
+QualType
+TemplateTypeInstantiator::InstantiateRValueReferenceType(
+    const RValueReferenceType *T, unsigned Quals) const {
+  QualType ReferentType = Instantiate(T->getPointeeType());
+  if (ReferentType.isNull())
+    return QualType();
+
+  return SemaRef.BuildReferenceType(ReferentType, false, Quals, Loc, Entity);
 }
 
 QualType 

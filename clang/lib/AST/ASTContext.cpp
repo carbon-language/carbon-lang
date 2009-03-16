@@ -85,9 +85,9 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "  %d types total.\n", (int)Types.size());
   unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
   unsigned NumVector = 0, NumComplex = 0, NumBlockPointer = 0;
-  unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
-  unsigned NumMemberPointer = 0;
-  
+  unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0;
+  unsigned NumLValueReference = 0, NumRValueReference = 0, NumMemberPointer = 0;
+
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
   unsigned NumObjCInterfaces = 0, NumObjCQualifiedInterfaces = 0;
   unsigned NumObjCQualifiedIds = 0;
@@ -101,8 +101,10 @@ void ASTContext::PrintStats() const {
       ++NumPointer;
     else if (isa<BlockPointerType>(T))
       ++NumBlockPointer;
-    else if (isa<ReferenceType>(T))
-      ++NumReference;
+    else if (isa<LValueReferenceType>(T))
+      ++NumLValueReference;
+    else if (isa<RValueReferenceType>(T))
+      ++NumRValueReference;
     else if (isa<MemberPointerType>(T))
       ++NumMemberPointer;
     else if (isa<ComplexType>(T))
@@ -145,7 +147,8 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "    %d builtin types\n", NumBuiltin);
   fprintf(stderr, "    %d pointer types\n", NumPointer);
   fprintf(stderr, "    %d block pointer types\n", NumBlockPointer);
-  fprintf(stderr, "    %d reference types\n", NumReference);
+  fprintf(stderr, "    %d lvalue reference types\n", NumLValueReference);
+  fprintf(stderr, "    %d rvalue reference types\n", NumRValueReference);
   fprintf(stderr, "    %d member pointer types\n", NumMemberPointer);
   fprintf(stderr, "    %d complex types\n", NumComplex);
   fprintf(stderr, "    %d array types\n", NumArray);
@@ -165,10 +168,12 @@ void ASTContext::PrintStats() const {
           NumObjCQualifiedIds);
   fprintf(stderr, "    %d typeof types\n", NumTypeOfTypes);
   fprintf(stderr, "    %d typeof exprs\n", NumTypeOfExprTypes);
-  
+
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
+    NumLValueReference*sizeof(LValueReferenceType)+
+    NumRValueReference*sizeof(RValueReferenceType)+
     NumMemberPointer*sizeof(MemberPointerType)+
     NumFunctionP*sizeof(FunctionProtoType)+
     NumFunctionNP*sizeof(FunctionNoProtoType)+
@@ -411,7 +416,8 @@ ASTContext::getTypeInfo(const Type *T) {
     Align = Target.getPointerAlign(AS);
     break;
   }
-  case Type::Reference:
+  case Type::LValueReference:
+  case Type::RValueReference:
     // "When applied to a reference or a reference type, the result is the size
     // of the referenced type." C++98 5.3.3p2: expr.sizeof.
     // FIXME: This is wrong for struct layout: a reference in a struct has
@@ -910,32 +916,65 @@ QualType ASTContext::getBlockPointerType(QualType T) {
   return QualType(New, 0);
 }
 
-/// getReferenceType - Return the uniqued reference to the type for a reference
-/// to the specified type.
-QualType ASTContext::getReferenceType(QualType T) {
+/// getLValueReferenceType - Return the uniqued reference to the type for an
+/// lvalue reference to the specified type.
+QualType ASTContext::getLValueReferenceType(QualType T) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
   ReferenceType::Profile(ID, T);
 
   void *InsertPos = 0;
-  if (ReferenceType *RT = ReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
+  if (LValueReferenceType *RT =
+        LValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(RT, 0);
-  
+
   // If the referencee type isn't canonical, this won't be a canonical type
   // either, so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getReferenceType(getCanonicalType(T));
-   
+    Canonical = getLValueReferenceType(getCanonicalType(T));
+
     // Get the new insert position for the node we care about.
-    ReferenceType *NewIP = ReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
+    LValueReferenceType *NewIP =
+      LValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
 
-  ReferenceType *New = new (*this,8) ReferenceType(T, Canonical);
+  LValueReferenceType *New = new (*this,8) LValueReferenceType(T, Canonical);
   Types.push_back(New);
-  ReferenceTypes.InsertNode(New, InsertPos);
+  LValueReferenceTypes.InsertNode(New, InsertPos);
+  return QualType(New, 0);
+}
+
+/// getRValueReferenceType - Return the uniqued reference to the type for an
+/// rvalue reference to the specified type.
+QualType ASTContext::getRValueReferenceType(QualType T) {
+  // Unique pointers, to guarantee there is only one pointer of a particular
+  // structure.
+  llvm::FoldingSetNodeID ID;
+  ReferenceType::Profile(ID, T);
+
+  void *InsertPos = 0;
+  if (RValueReferenceType *RT =
+        RValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(RT, 0);
+
+  // If the referencee type isn't canonical, this won't be a canonical type
+  // either, so fill in the canonical type field.
+  QualType Canonical;
+  if (!T->isCanonical()) {
+    Canonical = getRValueReferenceType(getCanonicalType(T));
+
+    // Get the new insert position for the node we care about.
+    RValueReferenceType *NewIP =
+      RValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+  }
+
+  RValueReferenceType *New = new (*this,8) RValueReferenceType(T, Canonical);
+  Types.push_back(New);
+  RValueReferenceTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
 }
 
@@ -2641,9 +2680,12 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
-  // expression is an lvalue.
+  // expression is an lvalue unless the reference is an rvalue reference and
+  // the expression is a function call (possibly inside parentheses).
   // FIXME: C++ shouldn't be going through here!  The rules are different
   // enough that they should be handled separately.
+  // FIXME: Merging of lvalue and rvalue references is incorrect. C++ *really*
+  // shouldn't be going through here!
   if (const ReferenceType *RT = LHS->getAsReferenceType())
     LHS = RT->getPointeeType();
   if (const ReferenceType *RT = RHS->getAsReferenceType())
@@ -2746,7 +2788,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     assert(false && "Non-canonical and dependent types shouldn't get here");
     return QualType();
 
-  case Type::Reference:
+  case Type::LValueReference:
+  case Type::RValueReference:
   case Type::MemberPointer:
     assert(false && "C++ should never be in mergeTypes");
     return QualType();

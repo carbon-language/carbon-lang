@@ -575,10 +575,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   if (TR->isVoidType() && !Ctx.getCanonicalType(TR).getCVRQualifiers())
     return LV_IncompleteVoidType;
 
-  /// FIXME: Expressions can't have reference type, so the following
-  /// isn't needed.
-  if (TR->isReferenceType()) // C++ [expr]
-    return LV_Valid;
+  assert(!TR->isReferenceType() && "Expressions can't have reference type.");
 
   // the type looks fine, now check the expression
   switch (getStmtClass()) {
@@ -691,16 +688,16 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case CallExprClass: 
   case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass: {
-    // C++ [expr.call]p10:
+    // C++0x [expr.call]p10
     //   A function call is an lvalue if and only if the result type
-    //   is a reference.
+    //   is an lvalue reference.
     QualType CalleeType = cast<CallExpr>(this)->getCallee()->getType();
     if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
       CalleeType = FnTypePtr->getPointeeType();
     if (const FunctionType *FnType = CalleeType->getAsFunctionType())
-      if (FnType->getResultType()->isReferenceType())
+      if (FnType->getResultType()->isLValueReferenceType())
         return LV_Valid;
-    
+
     break;
   }
   case CompoundLiteralExprClass: // C99 6.5.2.5p5
@@ -733,10 +730,11 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case CXXReinterpretCastExprClass:
   case CXXConstCastExprClass:
     // The result of an explicit cast is an lvalue if the type we are
-    // casting to is a reference type. See C++ [expr.cast]p1, 
+    // casting to is an lvalue reference type. See C++ [expr.cast]p1,
     // C++ [expr.static.cast]p2, C++ [expr.dynamic.cast]p2,
     // C++ [expr.reinterpret.cast]p1, C++ [expr.const.cast]p1.
-    if (cast<ExplicitCastExpr>(this)->getTypeAsWritten()->isReferenceType())
+    if (cast<ExplicitCastExpr>(this)->getTypeAsWritten()->
+          isLValueReferenceType())
       return LV_Valid;
     break;
   case CXXTypeidExprClass:

@@ -764,7 +764,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // the constructor or conversion operator, and then cope with the
     // standard conversions.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      ToType->isReferenceType());
+                      ToType->isLValueReferenceType());
     return false;
 
   case ImplicitConversionSequence::EllipsisConversion:
@@ -800,7 +800,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: Create a temporary object by calling the copy
     // constructor.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      ToType->isReferenceType());
+                      ToType->isLValueReferenceType());
     return false;
   }
 
@@ -893,8 +893,10 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Qualification:
+    // FIXME: Not sure about lvalue vs rvalue here in the presence of
+    // rvalue references.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      ToType->isReferenceType());
+                      ToType->isLValueReferenceType());
     break;
 
   default:

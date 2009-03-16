@@ -337,6 +337,8 @@ public:
   bool isPointerType() const;
   bool isBlockPointerType() const;
   bool isReferenceType() const;
+  bool isLValueReferenceType() const;
+  bool isRValueReferenceType() const;
   bool isFunctionPointerType() const;
   bool isMemberPointerType() const;
   bool isMemberFunctionPointerType() const;
@@ -383,6 +385,8 @@ public:
   const PointerType *getAsPointerType() const;
   const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
+  const LValueReferenceType *getAsLValueReferenceType() const;
+  const RValueReferenceType *getAsRValueReferenceType() const;
   const MemberPointerType *getAsMemberPointerType() const;
   const TagType *getAsTagType() const;
   const RecordType *getAsRecordType() const;
@@ -674,19 +678,17 @@ public:
     friend class Type;
 };
 
-/// ReferenceType - C++ 8.3.2 - Reference Declarators.
+/// ReferenceType - Base for LValueReferenceType and RValueReferenceType
 ///
 class ReferenceType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
 
-  ReferenceType(QualType Referencee, QualType CanonicalRef) :
-    Type(Reference, CanonicalRef, Referencee->isDependentType()), 
+protected:
+  ReferenceType(TypeClass tc, QualType Referencee, QualType CanonicalRef) :
+    Type(tc, CanonicalRef, Referencee->isDependentType()),
     PointeeType(Referencee) {
   }
-  friend class ASTContext;  // ASTContext creates these.
 public:
-  virtual void getAsStringInternal(std::string &InnerString) const;
-
   QualType getPointeeType() const { return PointeeType; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -696,11 +698,52 @@ public:
     ID.AddPointer(Referencee.getAsOpaquePtr());
   }
 
-  static bool classof(const Type *T) { return T->getTypeClass() == Reference; }
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == LValueReference ||
+           T->getTypeClass() == RValueReference;
+  }
   static bool classof(const ReferenceType *) { return true; }
 
 protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
+};
+
+/// LValueReferenceType - C++ [dcl.ref] - Lvalue reference
+///
+class LValueReferenceType : public ReferenceType {
+  LValueReferenceType(QualType Referencee, QualType CanonicalRef) :
+    ReferenceType(LValueReference, Referencee, CanonicalRef) {
+  }
+  friend class ASTContext; // ASTContext creates these
+public:
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == LValueReference;
+  }
+  static bool classof(const LValueReferenceType *) { return true; }
+
+protected:
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
+};
+
+/// RValueReferenceType - C++0x [dcl.ref] - Rvalue reference
+///
+class RValueReferenceType : public ReferenceType {
+  RValueReferenceType(QualType Referencee, QualType CanonicalRef) :
+    ReferenceType(RValueReference, Referencee, CanonicalRef) {
+  }
+  friend class ASTContext; // ASTContext creates these
+public:
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == RValueReference;
+  }
+  static bool classof(const RValueReferenceType *) { return true; }
+
+protected:
   static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
   friend class Type;
 };
@@ -1797,6 +1840,12 @@ inline bool Type::isBlockPointerType() const {
 }
 inline bool Type::isReferenceType() const {
   return isa<ReferenceType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isLValueReferenceType() const {
+  return isa<LValueReferenceType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isRValueReferenceType() const {
+  return isa<RValueReferenceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())

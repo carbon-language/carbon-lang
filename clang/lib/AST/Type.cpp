@@ -117,7 +117,8 @@ bool Type::isDerivedType() const {
   case IncompleteArray:
   case FunctionProto:
   case FunctionNoProto:
-  case Reference:
+  case LValueReference:
+  case RValueReference:
   case Record:
     return true;
   default:
@@ -264,9 +265,9 @@ const ReferenceType *Type::getAsReferenceType() const {
   // If this is directly a reference type, return it.
   if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
     return RTy;
-  
+
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ReferenceType>(CanonicalType)) {    
+  if (!isa<ReferenceType>(CanonicalType)) {
     // Look through type qualifiers
     if (isa<ReferenceType>(CanonicalType.getUnqualifiedType()))
       return CanonicalType.getUnqualifiedType()->getAsReferenceType();
@@ -276,6 +277,42 @@ const ReferenceType *Type::getAsReferenceType() const {
   // If this is a typedef for a reference type, strip the typedef off without
   // losing all typedef information.
   return getDesugaredType()->getAsReferenceType();
+}
+
+const LValueReferenceType *Type::getAsLValueReferenceType() const {
+  // If this is directly an lvalue reference type, return it.
+  if (const LValueReferenceType *RTy = dyn_cast<LValueReferenceType>(this))
+    return RTy;
+
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<LValueReferenceType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<LValueReferenceType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsLValueReferenceType();
+    return 0;
+  }
+
+  // If this is a typedef for an lvalue reference type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsLValueReferenceType();
+}
+
+const RValueReferenceType *Type::getAsRValueReferenceType() const {
+  // If this is directly an rvalue reference type, return it.
+  if (const RValueReferenceType *RTy = dyn_cast<RValueReferenceType>(this))
+    return RTy;
+
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<RValueReferenceType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<RValueReferenceType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsRValueReferenceType();
+    return 0;
+  }
+
+  // If this is a typedef for an rvalue reference type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsRValueReferenceType();
 }
 
 const MemberPointerType *Type::getAsMemberPointerType() const {
@@ -1116,14 +1153,25 @@ void BlockPointerType::getAsStringInternal(std::string &S) const {
   PointeeType.getAsStringInternal(S);
 }
 
-void ReferenceType::getAsStringInternal(std::string &S) const {
+void LValueReferenceType::getAsStringInternal(std::string &S) const {
   S = '&' + S;
-  
+
   // Handle things like 'int (&A)[4];' correctly.
   // FIXME: this should include vectors, but vectors use attributes I guess.
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
-  
+
+  getPointeeType().getAsStringInternal(S);
+}
+
+void RValueReferenceType::getAsStringInternal(std::string &S) const {
+  S = "&&" + S;
+
+  // Handle things like 'int (&&A)[4];' correctly.
+  // FIXME: this should include vectors, but vectors use attributes I guess.
+  if (isa<ArrayType>(getPointeeType()))
+    S = '(' + S + ')';
+
   getPointeeType().getAsStringInternal(S);
 }
 
@@ -1133,7 +1181,7 @@ void MemberPointerType::getAsStringInternal(std::string &S) const {
   C += "::*";
   S = C + S;
 
-  // Handle things like 'int (&A)[4];' correctly.
+  // Handle things like 'int (Cls::*A)[4];' correctly.
   // FIXME: this should include vectors, but vectors use attributes I guess.
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';

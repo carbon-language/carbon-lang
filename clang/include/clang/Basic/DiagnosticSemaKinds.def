@@ -304,9 +304,12 @@ DIAG(err_destructor_typedef_name, ERROR,
      "destructor cannot be declared using a typedef %0 of the class name")
 
 // C++ initialization
+DIAG(err_lvalue_to_rvalue_ref, ERROR,
+     "rvalue reference cannot bind to lvalue")
 // FIXME: passing in an English string as %1!
 DIAG(err_not_reference_to_const_init, ERROR,
-     "non-const reference to type %0 cannot be initialized with a %1 of type %2")
+     "non-const lvalue reference to type %0 cannot be initialized "
+     "with a %1 of type %2")
 // FIXME: passing in an English string as %1!
 DIAG(err_reference_init_drops_quals, ERROR,
      "initialization of reference to type %0 with a %1 of type %2 drops qualifiers")

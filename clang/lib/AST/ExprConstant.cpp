@@ -696,6 +696,7 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
 /// as GCC.
 static int EvaluateBuiltinClassifyType(const CallExpr *E) {
   // The following enum mimics the values returned by GCC.
+  // FIXME: Does GCC differ between lvalue and rvalue references here?
   enum gcc_type_class {
     no_type_class = -1,
     void_type_class, integer_type_class, char_type_class,

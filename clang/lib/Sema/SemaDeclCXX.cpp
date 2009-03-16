@@ -802,7 +802,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     QualType ArgType = ClassType;
     if (HasConstCopyConstructor)
       ArgType = ArgType.withConst();
-    ArgType = Context.getReferenceType(ArgType);
+    ArgType = Context.getLValueReferenceType(ArgType);
 
     //   An implicitly-declared copy constructor is an inline public
     //   member of its class.
@@ -880,10 +880,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //
     //       X& X::operator=(X&)
     QualType ArgType = ClassType;
-    QualType RetType = Context.getReferenceType(ArgType);
+    QualType RetType = Context.getLValueReferenceType(ArgType);
     if (HasConstCopyAssignment)
       ArgType = ArgType.withConst();
-    ArgType = Context.getReferenceType(ArgType);
+    ArgType = Context.getLValueReferenceType(ArgType);
 
     //   An implicitly-declared copy assignment operator is an inline public
     //   member of its class.
@@ -1630,7 +1630,8 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
 Sema::ReferenceCompareResult 
 Sema::CompareReferenceRelationship(QualType T1, QualType T2, 
                                    bool& DerivedToBase) {
-  assert(!T1->isReferenceType() && "T1 must be the pointee type of the reference type");
+  assert(!T1->isReferenceType() &&
+    "T1 must be the pointee type of the reference type");
   assert(!T2->isReferenceType() && "T2 cannot be a reference type");
 
   T1 = Context.getCanonicalType(T1);
@@ -1713,6 +1714,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   }
 
   // Compute some basic properties of the types and the initializer.
+  bool isRValRef = DeclType->isRValueReferenceType();
   bool DerivedToBase = false;
   Expr::isLvalueResult InitLvalue = Init->isLvalue(Context);
   ReferenceCompareResult RefRelationship 
@@ -1737,6 +1739,15 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   if (InitLvalue == Expr::LV_Valid && (ICS || !Init->isBitField()) &&
       RefRelationship >= Ref_Compatible_With_Added_Qualification) {
     BindsDirectly = true;
+
+    // Rvalue references cannot bind to lvalues (N2812).
+    // FIXME: This part of rvalue references is still in flux. Revisit later.
+    if (isRValRef) {
+      if (!ICS)
+        Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
+          << Init->getSourceRange();
+      return true;
+    }
 
     if (ICS) {
       // C++ [over.ics.ref]p1:
@@ -1774,7 +1785,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   //          92) (this conversion is selected by enumerating the
   //          applicable conversion functions (13.3.1.6) and choosing
   //          the best one through overload resolution (13.3)),
-  if (!SuppressUserConversions && T2->isRecordType()) {
+  // FIXME: Without standard language for N2812, the rvalue reference treatment
+  // here is pretty much a guess.
+  if (!isRValRef && !SuppressUserConversions && T2->isRecordType()) {
     // FIXME: Look for conversions in base classes!
     CXXRecordDecl *T2RecordDecl 
       = dyn_cast<CXXRecordDecl>(T2->getAsRecordType()->getDecl());
@@ -1790,7 +1803,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.
       // FIXME: This will change when we support rvalue references.
-      if (Conv->getConversionType()->isReferenceType() &&
+      if (Conv->getConversionType()->isLValueReferenceType() &&
           (AllowExplicit || !Conv->isExplicit()))
         AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
     }
@@ -1862,8 +1875,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   }
 
   //     -- Otherwise, the reference shall be to a non-volatile const
-  //        type (i.e., cv1 shall be const).
-  if (T1.getCVRQualifiers() != QualType::Const) {
+  //        type (i.e., cv1 shall be const), or shall be an rvalue reference.
+  if (!isRValRef && T1.getCVRQualifiers() != QualType::Const) {
     if (!ICS)
       Diag(Init->getSourceRange().getBegin(),
            diag::err_not_reference_to_const_init)
@@ -2200,6 +2213,8 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
       RequireCompleteType(Begin, BaseType, DK))
     Invalid = true;
 
+  // FIXME: C++0x [except.handle] names the handler as cv T or cv T&, i.e.
+  // rvalue references aren't there. Oversight or intentional?
   // FIXME: Need to test for ability to copy-construct and destroy the
   // exception variable.
   // FIXME: Need to check for abstract classes.
