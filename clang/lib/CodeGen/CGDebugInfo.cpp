@@ -257,10 +257,22 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     SourceLocation FieldDefLoc = Field->getLocation();
     llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
     unsigned FieldLine = SM.getInstantiationLineNumber(FieldDefLoc);
+
+    QualType FType = Field->getType();
+    uint64_t FieldSize = 0;
+    unsigned FieldAlign = 0;
+    if (!FType->isIncompleteArrayType()) {
     
-    // Bit size, align and offset of the type.
-    uint64_t FieldSize = M->getContext().getTypeSize(Ty);
-    unsigned FieldAlign = M->getContext().getTypeAlign(Ty);
+      // Bit size, align and offset of the type.
+      FieldSize = M->getContext().getTypeSize(FType);
+      Expr *BitWidth = Field->getBitWidth();
+      if (BitWidth)
+        FieldSize = 
+          BitWidth->getIntegerConstantExprValue(M->getContext()).getZExtValue();
+      
+      FieldAlign =  M->getContext().getTypeAlign(FType);
+    }
+
     uint64_t FieldOffset = RL.getFieldOffset(FieldNo);    
     
     // Create a DW_TAG_member node to remember the offset of this field in the
