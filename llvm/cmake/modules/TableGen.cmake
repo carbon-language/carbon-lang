@@ -4,15 +4,18 @@
 
 macro(tablegen ofn)
   file(GLOB all_tds "*.td")
+
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     COMMAND ${LLVM_TABLEGEN} ${ARGN} -I ${CMAKE_CURRENT_SOURCE_DIR}
     -I ${LLVM_MAIN_SRC_DIR}/lib/Target -I ${LLVM_MAIN_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS} -o ${ofn}.tmp
+    ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS} 
+    -o ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     DEPENDS ${LLVM_TABLEGEN} ${all_tds}
     COMMENT "Building ${ofn}.tmp..."
     )
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ofn}.tmp ${ofn}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+    ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     COMMENT "Building ${ofn}..."
     )
