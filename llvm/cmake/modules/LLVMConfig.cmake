@@ -131,7 +131,7 @@ macro(nix_llvm_config executable)
       if(c MATCHES ".*\\.o")
 	get_filename_component(fn ${c} NAME)
 	target_link_libraries(${executable}
-	  ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${fn})
+	  ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/${fn})
       else(c MATCHES ".*\\.o")
 	string(REPLACE "-l" "" fn ${c})
 	target_link_libraries(${executable} ${fn})

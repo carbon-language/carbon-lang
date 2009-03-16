@@ -13,7 +13,7 @@ macro(add_partially_linked_object lib)
   if( MSVC )
     add_llvm_library( ${lib} ${ARGN})
   else( MSVC )
-    set(pll ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${lib}.o)
+    set(pll ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/${lib}.o)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
     llvm_process_sources( ALL_FILES ${ARGN} )
@@ -27,7 +27,7 @@ macro(add_partially_linked_object lib)
     add_custom_command(OUTPUT ${pll}
       COMMENT "Building ${lib}.o..."
       DEPENDS ${lib}
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib/${CMAKE_CFG_INTDIR}
       COMMAND ar x ${CMAKE_STATIC_LIBRARY_PREFIX}${lib}${CMAKE_STATIC_LIBRARY_SUFFIX}
       COMMAND ${CMAKE_LINKER} "${LLVM_PLO_FLAGS}" -r "*${CMAKE_CXX_OUTPUT_EXTENSION}" -o ${pll}
       COMMAND ${CMAKE_COMMAND} -E remove -f *${CMAKE_CXX_OUTPUT_EXTENSION}
