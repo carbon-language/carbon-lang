@@ -116,17 +116,27 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
   return write(CurPtr, EndPtr-CurPtr);
 }
 
+void raw_ostream::flush_nonempty() {
+  assert(OutBufCur > OutBufStart && "Invalid call to flush_nonempty.");
+  flush_impl();
+  OutBufCur = OutBufStart;    
+}
+
 raw_ostream &raw_ostream::write(unsigned char C) {
-  if (OutBufCur >= OutBufEnd)
-    flush_impl();
+  if (!OutBufStart)
+    SetBufferSize(4096);
+  else if (OutBufCur >= OutBufEnd)
+    flush_nonempty();
 
   *OutBufCur++ = C;
   return *this;
 }
 
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
-  if (OutBufCur+Size > OutBufEnd)
-    flush_impl();
+  if (!OutBufStart)
+    SetBufferSize(4096);
+  else if (OutBufCur+Size > OutBufEnd)
+    flush_nonempty();
   
   // Handle short strings specially, memcpy isn't very good at very short
   // strings.
@@ -153,14 +163,14 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
       Ptr += NumToEmit;
       Size -= NumToEmit;
       OutBufCur = OutBufStart + NumToEmit;
-      flush_impl();
+      flush_nonempty();
     }
     break;
   }
   OutBufCur += Size;
 
   if (Unbuffered)
-    flush_impl();
+    flush();
   return *this;
 }
 
@@ -260,11 +270,8 @@ raw_fd_ostream::~raw_fd_ostream() {
 
 void raw_fd_ostream::flush_impl() {
   assert (FD >= 0 && "File already closed.");
-  if (OutBufCur-OutBufStart) {
-    pos += (OutBufCur - OutBufStart);
-    ::write(FD, OutBufStart, OutBufCur-OutBufStart);
-  }
-  HandleFlush();
+  pos += (OutBufCur - OutBufStart);
+  ::write(FD, OutBufStart, OutBufCur-OutBufStart);
 }
 
 void raw_fd_ostream::close() {
@@ -319,9 +326,7 @@ raw_os_ostream::~raw_os_ostream() {
 /// subclasses.  This outputs the currently buffered data and resets the
 /// buffer to empty.
 void raw_os_ostream::flush_impl() {
-  if (OutBufCur-OutBufStart)
-    OS.write(OutBufStart, OutBufCur-OutBufStart);
-  HandleFlush();
+  OS.write(OutBufStart, OutBufCur-OutBufStart);
 }
 
 //===----------------------------------------------------------------------===//
@@ -336,9 +341,7 @@ raw_string_ostream::~raw_string_ostream() {
 /// subclasses.  This outputs the currently buffered data and resets the
 /// buffer to empty.
 void raw_string_ostream::flush_impl() {
-  if (OutBufCur-OutBufStart)
-    OS.append(OutBufStart, OutBufCur-OutBufStart);
-  HandleFlush();
+  OS.append(OutBufStart, OutBufCur-OutBufStart);
 }
 
 //===----------------------------------------------------------------------===//
@@ -353,8 +356,6 @@ raw_svector_ostream::~raw_svector_ostream() {
 /// subclasses.  This outputs the currently buffered data and resets the
 /// buffer to empty.
 void raw_svector_ostream::flush_impl() {
-  if (OutBufCur-OutBufStart)
-    OS.append(OutBufStart, OutBufCur);
-  HandleFlush();
+  OS.append(OutBufStart, OutBufCur);
 }
 

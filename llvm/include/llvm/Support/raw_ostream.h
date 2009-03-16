@@ -31,6 +31,10 @@ namespace llvm {
 /// a chunk at a time.
 class raw_ostream {
 protected:
+  /// \invariant { The buffer is uninitialized (OutBufStart,
+  /// OutBufEnd, and OutBufCur are non-zero), or none of them are zero
+  /// and there are at least 64 total bytes in the buffer. }
+
   char *OutBufStart, *OutBufEnd, *OutBufCur;
   bool Unbuffered;
 
@@ -77,7 +81,7 @@ public:
 
   void flush() {
     if (OutBufCur != OutBufStart)
-      flush_impl();
+      flush_nonempty();
   }
 
   raw_ostream &operator<<(char C) {
@@ -85,7 +89,7 @@ public:
       return write(C);
     *OutBufCur++ = C;
     if (Unbuffered)
-      flush_impl();
+      flush_nonempty();
     return *this;
   }
 
@@ -94,7 +98,7 @@ public:
       return write(C);
     *OutBufCur++ = C;
     if (Unbuffered)
-      flush_impl();
+      flush_nonempty();
     return *this;
   }
 
@@ -103,7 +107,7 @@ public:
       return write(C);
     *OutBufCur++ = C;
     if (Unbuffered)
-      flush_impl();
+      flush_nonempty();
     return *this;
   }
 
@@ -142,23 +146,25 @@ public:
   // Subclass Interface
   //===--------------------------------------------------------------------===//
 
-protected:
-
+private:
   /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This outputs the currently buffered data and resets the
-  /// buffer to empty.
+  /// subclasses.  This only outputs the currently buffered data.
+  ///
+  /// raw_ostream guarantees to only call this routine when there is
+  /// buffered data, i.e. OutBufStart != OutBufCur.
   virtual void flush_impl() = 0;
 
-  /// HandleFlush - A stream's implementation of flush should call this after
-  /// emitting the bytes to the data sink.
-  void HandleFlush() {
-    if (OutBufStart == 0)
-      SetBufferSize(4096);
-    OutBufCur = OutBufStart;
-  }
-private:
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
+
+  //===--------------------------------------------------------------------===//
+  // Private Interface
+  //===--------------------------------------------------------------------===//
+private:
+  /// flush_nonempty - Flush the current buffer, which is known to be
+  /// non-empty. This outputs the currently buffered data and resets
+  /// the buffer to empty.
+  void flush_nonempty();
 };
 
 //===----------------------------------------------------------------------===//
@@ -192,8 +198,10 @@ public:
   ~raw_fd_ostream();
 
   /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This outputs the currently buffered data and resets the
-  /// buffer to empty.
+  /// subclasses.  This only outputs the currently buffered data.
+  ///
+  /// raw_ostream guarantees to only call this routine when there is
+  /// buffered data, i.e. OutBufStart != OutBufCur.
   virtual void flush_impl();
 
   /// close - Manually flush the stream and close the file.
@@ -249,8 +257,10 @@ public:
   ~raw_os_ostream();
 
   /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This outputs the currently buffered data and resets the
-  /// buffer to empty.
+  /// subclasses.  This only outputs the currently buffered data.
+  ///
+  /// raw_ostream guarantees to only call this routine when there is
+  /// buffered data, i.e. OutBufStart != OutBufCur.
   virtual void flush_impl();
 };
 
@@ -270,8 +280,10 @@ public:
   }
 
   /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This outputs the currently buffered data and resets the
-  /// buffer to empty.
+  /// subclasses.  This only outputs the currently buffered data.
+  ///
+  /// raw_ostream guarantees to only call this routine when there is
+  /// buffered data, i.e. OutBufStart != OutBufCur.
   virtual void flush_impl();
 };
 
@@ -284,8 +296,10 @@ public:
   ~raw_svector_ostream();
 
   /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This outputs the currently buffered data and resets the
-  /// buffer to empty.
+  /// subclasses.  This only outputs the currently buffered data.
+  ///
+  /// raw_ostream guarantees to only call this routine when there is
+  /// buffered data, i.e. OutBufStart != OutBufCur.
   virtual void flush_impl();
 };
 
