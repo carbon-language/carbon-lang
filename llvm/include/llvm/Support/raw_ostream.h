@@ -82,7 +82,7 @@ public:
 
   raw_ostream &operator<<(char C) {
     if (OutBufCur >= OutBufEnd)
-      flush_impl();
+      return write(C);
     *OutBufCur++ = C;
     if (Unbuffered)
       flush_impl();
@@ -91,7 +91,7 @@ public:
 
   raw_ostream &operator<<(unsigned char C) {
     if (OutBufCur >= OutBufEnd)
-      flush_impl();
+      return write(C);
     *OutBufCur++ = C;
     if (Unbuffered)
       flush_impl();
@@ -100,7 +100,7 @@ public:
 
   raw_ostream &operator<<(signed char C) {
     if (OutBufCur >= OutBufEnd)
-      flush_impl();
+      return write(C);
     *OutBufCur++ = C;
     if (Unbuffered)
       flush_impl();
@@ -132,6 +132,7 @@ public:
     return this->operator<<(ftostr(N));
   }
 
+  raw_ostream &write(unsigned char C);
   raw_ostream &write(const char *Ptr, unsigned Size);
 
   // Formatted output, see the format() function in Support/Format.h.

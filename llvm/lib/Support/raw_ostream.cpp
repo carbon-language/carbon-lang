@@ -63,10 +63,7 @@ raw_ostream &raw_ostream::operator<<(unsigned long N) {
 
 raw_ostream &raw_ostream::operator<<(long N) {
   if (N <  0) {
-    if (OutBufCur >= OutBufEnd)
-      flush_impl();
-    *OutBufCur++ = '-';
-    
+    *this << '-';
     N = -N;
   }
   
@@ -91,10 +88,7 @@ raw_ostream &raw_ostream::operator<<(unsigned long long N) {
 
 raw_ostream &raw_ostream::operator<<(long long N) {
   if (N <  0) {
-    if (OutBufCur >= OutBufEnd)
-      flush_impl();
-    *OutBufCur++ = '-';
-    
+    *this << '-';
     N = -N;
   }
   
@@ -106,6 +100,12 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
   return *this << format("%p", P);
 }
 
+raw_ostream &raw_ostream::write(unsigned char C) {
+  if (OutBufCur >= OutBufEnd)
+    flush_impl();
+
+  *OutBufCur++ = C;
+}
 
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   if (OutBufCur+Size > OutBufEnd)
