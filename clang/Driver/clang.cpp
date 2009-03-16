@@ -1191,7 +1191,8 @@ static llvm::cl::opt<std::string>
 TargetCPU("mcpu",
          llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
 
-static void InitializeCompileOptions(CompileOptions &Opts) {
+static void InitializeCompileOptions(CompileOptions &Opts,
+                                     const LangOptions &LangOpts) {
   Opts.OptimizeSize = OptSize;
   Opts.DebugInfo = GenerateDebugInfo;
   if (OptSize) {
@@ -1205,7 +1206,7 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
   // FIXME: There are llvm-gcc options to control these selectively.
   Opts.InlineFunctions = (Opts.OptimizationLevel > 1);
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
-  Opts.SimplifyLibCalls = !NoBuiltin && !Freestanding;
+  Opts.SimplifyLibCalls = !LangOpts.NoBuiltin;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
@@ -1272,7 +1273,7 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
       Act = Backend_EmitBC;
     
     CompileOptions Opts;
-    InitializeCompileOptions(Opts);
+    InitializeCompileOptions(Opts, LangOpts);
     return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
                                  InFile, OutputFile);
   }
