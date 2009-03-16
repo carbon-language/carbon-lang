@@ -30,7 +30,7 @@ namespace llvm {
 /// rewinding, line buffered disciplines etc. It is a simple buffer that outputs
 /// a chunk at a time.
 class raw_ostream {
-protected:
+private:
   /// \invariant { The buffer is uninitialized (OutBufStart,
   /// OutBufEnd, and OutBufCur are non-zero), or none of them are zero
   /// and there are at least 64 total bytes in the buffer. }
@@ -73,6 +73,10 @@ public:
     Unbuffered = unbuffered;
     if (Unbuffered)
       flush();
+  }
+
+  unsigned GetNumBytesInBuffer() const {
+    return OutBufCur - OutBufStart;
   }
 
   //===--------------------------------------------------------------------===//
@@ -147,12 +151,12 @@ public:
   //===--------------------------------------------------------------------===//
 
 private:
-  /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This only outputs the currently buffered data.
-  ///
-  /// raw_ostream guarantees to only call this routine when there is
-  /// buffered data, i.e. OutBufStart != OutBufCur.
-  virtual void flush_impl() = 0;
+  /// write_impl - The is the piece of the class that is implemented
+  /// by subclasses.  This writes the \args Size bytes starting at
+  /// \arg Ptr to the underlying stream.
+  /// 
+  /// \invariant { Size > 0 }
+  virtual void write_impl(const char *Ptr, unsigned Size) = 0;
 
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
@@ -177,6 +181,9 @@ class raw_fd_ostream : public raw_ostream {
   int FD;
   bool ShouldClose;
   uint64_t pos;
+
+  /// write_impl - See raw_ostream::write_impl.
+  virtual void write_impl(const char *Ptr, unsigned Size);
 public:
   /// raw_fd_ostream - Open the specified file for writing. If an
   /// error occurs, information about the error is put into ErrorInfo,
@@ -197,20 +204,11 @@ public:
   
   ~raw_fd_ostream();
 
-  /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This only outputs the currently buffered data.
-  ///
-  /// raw_ostream guarantees to only call this routine when there is
-  /// buffered data, i.e. OutBufStart != OutBufCur.
-  virtual void flush_impl();
-
   /// close - Manually flush the stream and close the file.
   void close();
 
   /// tell - Return the current offset with the file.
-  uint64_t tell() {
-    return pos + (OutBufCur - OutBufStart);
-  }
+  uint64_t tell() { return pos + GetNumBytesInBuffer(); }
 
   /// seek - Flushes the stream and repositions the underlying file descriptor
   ///  positition to the offset specified from the beginning of the file.
@@ -252,22 +250,21 @@ raw_ostream &errs();
 /// simple adaptor class.
 class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
+
+  /// write_impl - See raw_ostream::write_impl.
+  virtual void write_impl(const char *Ptr, unsigned Size);
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
   ~raw_os_ostream();
-
-  /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This only outputs the currently buffered data.
-  ///
-  /// raw_ostream guarantees to only call this routine when there is
-  /// buffered data, i.e. OutBufStart != OutBufCur.
-  virtual void flush_impl();
 };
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
 /// simple adaptor class.
 class raw_string_ostream : public raw_ostream {
   std::string &OS;
+
+  /// write_impl - See raw_ostream::write_impl.
+  virtual void write_impl(const char *Ptr, unsigned Size);
 public:
   raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
@@ -278,29 +275,18 @@ public:
     flush();
     return OS;
   }
-
-  /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This only outputs the currently buffered data.
-  ///
-  /// raw_ostream guarantees to only call this routine when there is
-  /// buffered data, i.e. OutBufStart != OutBufCur.
-  virtual void flush_impl();
 };
 
 /// raw_svector_ostream - A raw_ostream that writes to an SmallVector or
 /// SmallString.  This is a simple adaptor class.
 class raw_svector_ostream : public raw_ostream {
   SmallVectorImpl<char> &OS;
+
+  /// write_impl - See raw_ostream::write_impl.
+  virtual void write_impl(const char *Ptr, unsigned Size);
 public:
   raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
   ~raw_svector_ostream();
-
-  /// flush_impl - The is the piece of the class that is implemented by
-  /// subclasses.  This only outputs the currently buffered data.
-  ///
-  /// raw_ostream guarantees to only call this routine when there is
-  /// buffered data, i.e. OutBufStart != OutBufCur.
-  virtual void flush_impl();
 };
 
 } // end llvm namespace

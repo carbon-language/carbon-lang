@@ -118,7 +118,7 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
 
 void raw_ostream::flush_nonempty() {
   assert(OutBufCur > OutBufStart && "Invalid call to flush_nonempty.");
-  flush_impl();
+  write_impl(OutBufStart, OutBufCur - OutBufStart);
   OutBufCur = OutBufStart;    
 }
 
@@ -151,20 +151,12 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
     if (Size <= unsigned(OutBufEnd-OutBufStart)) {
       memcpy(OutBufCur, Ptr, Size);
       break;
-    }
+    } 
 
-    // If emitting a string larger than our buffer, emit in chunks.  In this
-    // case we know that we just flushed the buffer.
-    while (Size) {
-      unsigned NumToEmit = OutBufEnd-OutBufStart;
-      if (Size < NumToEmit) NumToEmit = Size;
-      assert(OutBufCur == OutBufStart);
-      memcpy(OutBufStart, Ptr, NumToEmit);
-      Ptr += NumToEmit;
-      Size -= NumToEmit;
-      OutBufCur = OutBufStart + NumToEmit;
-      flush_nonempty();
-    }
+    // Otherwise we are emitting a string larger than our buffer. We
+    // know we already flushed, so just write it out directly.
+    write_impl(Ptr, Size);
+    Size = 0;
     break;
   }
   OutBufCur += Size;
@@ -268,10 +260,10 @@ raw_fd_ostream::~raw_fd_ostream() {
   }
 }
 
-void raw_fd_ostream::flush_impl() {
+void raw_fd_ostream::write_impl(const char *Ptr, unsigned Size) {
   assert (FD >= 0 && "File already closed.");
-  pos += (OutBufCur - OutBufStart);
-  ::write(FD, OutBufStart, OutBufCur-OutBufStart);
+  pos += Size;
+  ::write(FD, Ptr, Size);
 }
 
 void raw_fd_ostream::close() {
@@ -322,11 +314,8 @@ raw_os_ostream::~raw_os_ostream() {
   flush();
 }
 
-/// flush_impl - The is the piece of the class that is implemented by
-/// subclasses.  This outputs the currently buffered data and resets the
-/// buffer to empty.
-void raw_os_ostream::flush_impl() {
-  OS.write(OutBufStart, OutBufCur-OutBufStart);
+void raw_os_ostream::write_impl(const char *Ptr, unsigned Size) {
+  OS.write(Ptr, Size);
 }
 
 //===----------------------------------------------------------------------===//
@@ -337,11 +326,8 @@ raw_string_ostream::~raw_string_ostream() {
   flush();
 }
 
-/// flush_impl - The is the piece of the class that is implemented by
-/// subclasses.  This outputs the currently buffered data and resets the
-/// buffer to empty.
-void raw_string_ostream::flush_impl() {
-  OS.append(OutBufStart, OutBufCur-OutBufStart);
+void raw_string_ostream::write_impl(const char *Ptr, unsigned Size) {
+  OS.append(Ptr, Size);
 }
 
 //===----------------------------------------------------------------------===//
@@ -352,10 +338,7 @@ raw_svector_ostream::~raw_svector_ostream() {
   flush();
 }
 
-/// flush_impl - The is the piece of the class that is implemented by
-/// subclasses.  This outputs the currently buffered data and resets the
-/// buffer to empty.
-void raw_svector_ostream::flush_impl() {
-  OS.append(OutBufStart, OutBufCur);
+void raw_svector_ostream::write_impl(const char *Ptr, unsigned Size) {
+  OS.append(Ptr, Ptr + Size);
 }
 
