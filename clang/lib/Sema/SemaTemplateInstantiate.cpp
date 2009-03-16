@@ -638,9 +638,22 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
     const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
+    QualType T = Arg.getIntegralType();
+    if (T->isCharType() || T->isWideCharType())
+      return SemaRef.Owned(new (SemaRef.Context) CharacterLiteral(
+                                          Arg.getAsIntegral()->getZExtValue(),
+                                          T->isWideCharType(),
+                                          T, 
+                                       E->getSourceRange().getBegin()));
+    else if (T->isBooleanType())
+      return SemaRef.Owned(new (SemaRef.Context) CXXBoolLiteralExpr(
+                                          Arg.getAsIntegral()->getBoolValue(),
+                                                 T, 
+                                       E->getSourceRange().getBegin()));
+
     return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
                                                  *Arg.getAsIntegral(),
-                                                 Arg.getIntegralType(), 
+                                                 T, 
                                        E->getSourceRange().getBegin()));
   } else
     assert(false && "Can't handle arbitrary declaration references");
