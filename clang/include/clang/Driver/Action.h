@@ -15,6 +15,13 @@
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
 
+#include "llvm/Support/Casting.h"
+using llvm::isa;
+using llvm::cast;
+using llvm::cast_or_null;
+using llvm::dyn_cast;
+using llvm::dyn_cast_or_null;
+
 namespace clang {
 namespace driver {
   class Arg;
@@ -70,6 +77,9 @@ public:
 
   ActionClass getKind() const { return Kind; }
   types::ID getType() const { return Type; }
+
+  ActionList &getInputs() { return Inputs; }
+  const ActionList &getInputs() const { return Inputs; }
 
   size_type size() const { return Inputs.size(); }
 

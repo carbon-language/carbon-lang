@@ -13,6 +13,13 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 
+#include "llvm/Support/Casting.h"
+using llvm::isa;
+using llvm::cast;
+using llvm::cast_or_null;
+using llvm::dyn_cast;
+using llvm::dyn_cast_or_null;
+
 namespace clang {
 namespace driver {
 
