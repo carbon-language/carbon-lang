@@ -139,7 +139,9 @@ public:
 
   /// BuildJobs - Bind actions to concrete tools and translate
   /// arguments to form the list of jobs to run.
-  Compilation *BuildJobs(const ArgList &Args, const ActionList &Actions) const;
+  ///
+  /// \arg C - The compilation that is being built.
+  void BuildJobs(Compilation &C, const ActionList &Actions) const;
 
   /// @}
   /// @name Helper Methods

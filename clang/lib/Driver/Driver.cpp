@@ -171,19 +171,9 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     return 0;
   }
 
-  Compilation *C = BuildJobs(*Args, Actions);
-
-  // If there were no errors, warn about any unused arguments.
-  for (ArgList::iterator it = Args->begin(), ie = Args->end(); it != ie; ++it) {
-    Arg *A = *it;
-
-    // FIXME: It would be nice to be able to send the argument to the
-    // Diagnostic, so that extra values, position, and so on could be
-    // printed.
-    if (!A->isClaimed())
-      Diag(clang::diag::warn_drv_unused_argument) 
-        << A->getOption().getName();
-  }
+  // The compilation takes ownership of Args.
+  Compilation *C = new Compilation(*DefaultToolChain, Args);
+  BuildJobs(*C, Actions);
 
   return C;
 }
@@ -577,9 +567,21 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   return 0;
 }
 
-Compilation *Driver::BuildJobs(const ArgList &Args, 
-                               const ActionList &Actions) const {
-  return 0;
+void Driver::BuildJobs(Compilation &C,
+                       const ActionList &Actions) const {
+
+  // If there were no errors, warn about any unused arguments.
+  for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
+       it != ie; ++it) {
+    Arg *A = *it;
+
+    // FIXME: It would be nice to be able to send the argument to the
+    // Diagnostic, so that extra values, position, and so on could be
+    // printed.
+    if (!A->isClaimed())
+      Diag(clang::diag::warn_drv_unused_argument) 
+        << A->getOption().getName();
+  }
 }
 
 llvm::sys::Path Driver::GetFilePath(const char *Name,
