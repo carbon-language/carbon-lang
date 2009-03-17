@@ -62,9 +62,8 @@
 
 // Precompiler
 // RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c-header %s &> %t &&
-// RUN: grep '0: input, ".*phases.c", c' %t &&
-// RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
+// RUN: grep '0: input, ".*phases.c", c-header' %t &&
+// RUN: grep -F '1: preprocessor, {0}, c-header-cpp-output' %t &&
 // RUN: grep -F '2: precompiler, {1}, precompiled-header' %t &&
 
-// RUN: clang-driver
 // RUN: true
