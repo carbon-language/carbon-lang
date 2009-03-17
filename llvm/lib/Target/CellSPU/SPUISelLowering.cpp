@@ -1,5 +1,5 @@
-//===-- SPUISelLowering.cpp - Cell SPU DAG Lowering Implementation --------===//
 //
+//===-- SPUISelLowering.cpp - Cell SPU DAG Lowering Implementation --------===//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -1353,7 +1353,7 @@ getVecImm(SDNode *N) {
     }
   }
 
-  return 0; // All UNDEF: use implicit def.; not Constant node
+  return 0;
 }
 
 /// get_vec_i18imm - Test if this vector is a vector filled with the same value
@@ -1480,131 +1480,30 @@ SDValue SPU::get_v2i64_imm(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-// If this is a vector of constants or undefs, get the bits.  A bit in
-// UndefBits is set if the corresponding element of the vector is an
-// ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
-// zero.   Return true if this is not an array of constants, false if it is.
-//
-static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
-                                       uint64_t UndefBits[2]) {
-  // Start with zero'd results.
-  VectorBits[0] = VectorBits[1] = UndefBits[0] = UndefBits[1] = 0;
-
-  unsigned EltBitSize = BV->getOperand(0).getValueType().getSizeInBits();
-  for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
-    SDValue OpVal = BV->getOperand(i);
-
-    unsigned PartNo = i >= e/2;     // In the upper 128 bits?
-    unsigned SlotNo = e/2 - (i & (e/2-1))-1;  // Which subpiece of the uint64_t.
-
-    uint64_t EltBits = 0;
-    if (OpVal.getOpcode() == ISD::UNDEF) {
-      uint64_t EltUndefBits = ~0ULL >> (64-EltBitSize);
-      UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
-      continue;
-    } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
-      EltBits = CN->getZExtValue() & (~0ULL >> (64-EltBitSize));
-    } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
-      const APFloat &apf = CN->getValueAPF();
-      EltBits = (CN->getValueType(0) == MVT::f32
-                 ? FloatToBits(apf.convertToFloat())
-                 : DoubleToBits(apf.convertToDouble()));
-    } else {
-      // Nonconstant element.
-      return true;
-    }
-
-    VectorBits[PartNo] |= EltBits << (SlotNo*EltBitSize);
-  }
-
-  //printf("%llx %llx  %llx %llx\n",
-  //       VectorBits[0], VectorBits[1], UndefBits[0], UndefBits[1]);
-  return false;
-}
-
-/// If this is a splat (repetition) of a value across the whole vector, return
-/// the smallest size that splats it.  For example, "0x01010101010101..." is a
-/// splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and
-/// SplatSize = 1 byte.
-static bool isConstantSplat(const uint64_t Bits128[2],
-                            const uint64_t Undef128[2],
-                            int MinSplatBits,
-                            uint64_t &SplatBits, uint64_t &SplatUndef,
-                            int &SplatSize) {
-  // Don't let undefs prevent splats from matching.  See if the top 64-bits are
-  // the same as the lower 64-bits, ignoring undefs.
-  uint64_t Bits64  = Bits128[0] | Bits128[1];
-  uint64_t Undef64 = Undef128[0] & Undef128[1];
-  uint32_t Bits32  = uint32_t(Bits64) | uint32_t(Bits64 >> 32);
-  uint32_t Undef32 = uint32_t(Undef64) & uint32_t(Undef64 >> 32);
-  uint16_t Bits16  = uint16_t(Bits32)  | uint16_t(Bits32 >> 16);
-  uint16_t Undef16 = uint16_t(Undef32) & uint16_t(Undef32 >> 16);
-
-  if ((Bits128[0] & ~Undef128[1]) == (Bits128[1] & ~Undef128[0])) {
-    if (MinSplatBits < 64) {
-
-      // Check that the top 32-bits are the same as the lower 32-bits, ignoring
-      // undefs.
-      if ((Bits64 & (~Undef64 >> 32)) == ((Bits64 >> 32) & ~Undef64)) {
-        if (MinSplatBits < 32) {
-
-          // If the top 16-bits are different than the lower 16-bits, ignoring
-          // undefs, we have an i32 splat.
-          if ((Bits32 & (~Undef32 >> 16)) == ((Bits32 >> 16) & ~Undef32)) {
-            if (MinSplatBits < 16) {
-              // If the top 8-bits are different than the lower 8-bits, ignoring
-              // undefs, we have an i16 splat.
-              if ((Bits16 & (uint16_t(~Undef16) >> 8))
-                  == ((Bits16 >> 8) & ~Undef16)) {
-                // Otherwise, we have an 8-bit splat.
-                SplatBits  = uint8_t(Bits16)  | uint8_t(Bits16 >> 8);
-                SplatUndef = uint8_t(Undef16) & uint8_t(Undef16 >> 8);
-                SplatSize = 1;
-                return true;
-              }
-            } else {
-              SplatBits = Bits16;
-              SplatUndef = Undef16;
-              SplatSize = 2;
-              return true;
-            }
-          }
-        } else {
-          SplatBits = Bits32;
-          SplatUndef = Undef32;
-          SplatSize = 4;
-          return true;
-        }
-      }
-    } else {
-      SplatBits = Bits128[0];
-      SplatUndef = Undef128[0];
-      SplatSize = 8;
-      return true;
-    }
-  }
-
-  return false;  // Can't be a splat if two pieces don't match.
-}
-
 //! Lower a BUILD_VECTOR instruction creatively:
 SDValue
 LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
+  MVT EltVT = VT.getVectorElementType();
   DebugLoc dl = Op.getDebugLoc();
-  // If this is a vector of constants or undefs, get the bits.  A bit in
-  // UndefBits is set if the corresponding element of the vector is an
-  // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
-  // zero.
-  uint64_t VectorBits[2];
-  uint64_t UndefBits[2];
-  uint64_t SplatBits, SplatUndef;
-  int SplatSize;
-  if (GetConstantBuildVectorBits(Op.getNode(), VectorBits, UndefBits)
-      || !isConstantSplat(VectorBits, UndefBits,
-                          VT.getVectorElementType().getSizeInBits(),
-                          SplatBits, SplatUndef, SplatSize))
-    return SDValue();   // Not a constant vector, not a splat.
+  BuildVectorSDNode *BCN = dyn_cast<BuildVectorSDNode>(Op.getNode());
+  assert(BCN != 0 && "Expected BuildVectorSDNode in SPU LowerBUILD_VECTOR");
+  unsigned minSplatBits = EltVT.getSizeInBits();
+
+  if (minSplatBits < 16)
+    minSplatBits = 16;
+
+  APInt APSplatBits, APSplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+
+  if (!BCN->isConstantSplat(APSplatBits, APSplatUndef, SplatBitSize,
+                            HasAnyUndefs, minSplatBits)
+      || minSplatBits < SplatBitSize)
+    return SDValue();   // Wasn't a constant vector or splat exceeded min
+
+  uint64_t SplatBits = APSplatBits.getZExtValue();
+  unsigned SplatSize = SplatBitSize / 8;
 
   switch (VT.getSimpleVT()) {
   default:
@@ -1620,8 +1519,7 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
     SDValue T = DAG.getConstant(Value32, MVT::i32);
     return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4f32,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, 
-                                   MVT::v4i32, T, T, T, T));
+                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, T, T, T, T));
     break;
   }
   case MVT::v2f64: {
@@ -1636,45 +1534,42 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   }
   case MVT::v16i8: {
    // 8-bit constants have to be expanded to 16-bits
-   unsigned short Value16 = SplatBits | (SplatBits << 8);
-   SDValue Ops[8];
-   for (int i = 0; i < 8; ++i)
-     Ops[i] = DAG.getConstant(Value16, MVT::i16);
+   unsigned short Value16 = SplatBits /* | (SplatBits << 8) */;
+   SmallVector<SDValue, 8> Ops;
+
+   Ops.assign(8, DAG.getConstant(Value16, MVT::i16));
    return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                      DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i16, Ops, 8));
+                      DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i16, &Ops[0], Ops.size()));
   }
   case MVT::v8i16: {
-    unsigned short Value16;
-    if (SplatSize == 2)
-      Value16 = (unsigned short) (SplatBits & 0xffff);
-    else
-      Value16 = (unsigned short) (SplatBits | (SplatBits << 8));
-    SDValue T = DAG.getConstant(Value16, VT.getVectorElementType());
-    SDValue Ops[8];
-    for (int i = 0; i < 8; ++i) Ops[i] = T;
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops, 8);
+    unsigned short Value16 = SplatBits;
+    SDValue T = DAG.getConstant(Value16, EltVT);
+    SmallVector<SDValue, 8> Ops;
+
+    Ops.assign(8, T);
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
   }
   case MVT::v4i32: {
-    unsigned int Value = SplatBits;
-    SDValue T = DAG.getConstant(Value, VT.getVectorElementType());
+    SDValue T = DAG.getConstant(unsigned(SplatBits), VT.getVectorElementType());
     return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T, T, T);
   }
   case MVT::v2i32: {
-    unsigned int Value = SplatBits;
-    SDValue T = DAG.getConstant(Value, VT.getVectorElementType());
+    SDValue T = DAG.getConstant(unsigned(SplatBits), VT.getVectorElementType());
     return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, T, T);
   }
   case MVT::v2i64: {
-    return SPU::LowerSplat_v2i64(VT, DAG, SplatBits, dl);
+    return SPU::LowerV2I64Splat(VT, DAG, SplatBits, dl);
   }
   }
 
   return SDValue();
 }
 
+/*!
+ */
 SDValue
-SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
-                      DebugLoc dl) {
+SPU::LowerV2I64Splat(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
+                     DebugLoc dl) {
   uint32_t upper = uint32_t(SplatVal >> 32);
   uint32_t lower = uint32_t(SplatVal);
 
@@ -1685,10 +1580,6 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                    Val, Val, Val, Val));
   } else {
-    SDValue LO32;
-    SDValue HI32;
-    SmallVector<SDValue, 16> ShufBytes;
-    SDValue Result;
     bool upper_special, lower_special;
 
     // NOTE: This code creates common-case shuffle masks that can be easily
@@ -1698,6 +1589,18 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
     // Detect if the upper or lower half is a special shuffle mask pattern:
     upper_special = (upper == 0 || upper == 0xffffffff || upper == 0x80000000);
     lower_special = (lower == 0 || lower == 0xffffffff || lower == 0x80000000);
+
+    // Both upper and lower are special, lower to a constant pool load:
+    if (lower_special && upper_special) {
+      SDValue SplatValCN = DAG.getConstant(SplatVal, MVT::i64);
+      return DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64,
+                         SplatValCN, SplatValCN);
+    }
+
+    SDValue LO32;
+    SDValue HI32;
+    SmallVector<SDValue, 16> ShufBytes;
+    SDValue Result;
 
     // Create lower vector if not a special pattern
     if (!lower_special) {
@@ -1721,13 +1624,6 @@ SPU::LowerSplat_v2i64(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
       LO32 = HI32;
     if (upper_special)
       HI32 = LO32;
-    if (lower_special && upper_special) {
-      // Unhappy situation... both upper and lower are special, so punt with
-      // a target constant:
-      SDValue Zero = DAG.getConstant(0, MVT::i32);
-      HI32 = LO32 = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Zero, Zero,
-                                Zero, Zero);
-    }
 
     for (int i = 0; i < 4; ++i) {
       uint64_t val = 0;
@@ -2022,9 +1918,9 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
       ShufMask[i] = DAG.getConstant(bits, MVT::i32);
     }
 
-    SDValue ShufMaskVec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                                      &ShufMask[0],
-                                      sizeof(ShufMask) / sizeof(ShufMask[0]));
+    SDValue ShufMaskVec =
+      DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                  &ShufMask[0], sizeof(ShufMask)/sizeof(ShufMask[0]));
 
     retval = DAG.getNode(SPUISD::VEC2PREFSLOT, dl, VT,
                          DAG.getNode(SPUISD::SHUFB, dl, N.getValueType(),
@@ -2067,28 +1963,28 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
       /*NOTREACHED*/
     case MVT::i8: {
       SDValue factor = DAG.getConstant(0x00000000, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, factor, factor,
-                              factor, factor);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                              factor, factor, factor, factor);
       break;
     }
     case MVT::i16: {
       SDValue factor = DAG.getConstant(0x00010001, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, factor, factor,
-                              factor, factor);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                              factor, factor, factor, factor);
       break;
     }
     case MVT::i32:
     case MVT::f32: {
       SDValue factor = DAG.getConstant(0x00010203, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, factor, factor,
-                              factor, factor);
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                              factor, factor, factor, factor);
       break;
     }
     case MVT::i64:
     case MVT::f64: {
       SDValue loFactor = DAG.getConstant(0x00010203, MVT::i32);
       SDValue hiFactor = DAG.getConstant(0x04050607, MVT::i32);
-      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, 
+      replicate = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                               loFactor, hiFactor, loFactor, hiFactor);
       break;
     }
@@ -2164,71 +2060,65 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
   case ISD::ROTR:
   case ISD::ROTL: {
     SDValue N1 = Op.getOperand(1);
-    unsigned N1Opc;
-    N0 = (N0.getOpcode() != ISD::Constant
-          ? DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i16, N0)
-          : DAG.getConstant(cast<ConstantSDNode>(N0)->getZExtValue(),
-                            MVT::i16));
-    N1Opc = N1.getValueType().bitsLT(ShiftVT)
-            ? ISD::ZERO_EXTEND
-            : ISD::TRUNCATE;
-    N1 = (N1.getOpcode() != ISD::Constant
-          ? DAG.getNode(N1Opc, dl, ShiftVT, N1)
-          : DAG.getConstant(cast<ConstantSDNode>(N1)->getZExtValue(),
-                            TLI.getShiftAmountTy()));
+    MVT N1VT = N1.getValueType();
+
+    N0 = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i16, N0);
+    if (!N1VT.bitsEq(ShiftVT)) {
+      unsigned N1Opc = N1.getValueType().bitsLT(ShiftVT)
+                       ? ISD::ZERO_EXTEND
+                       : ISD::TRUNCATE;
+      N1 = DAG.getNode(N1Opc, dl, ShiftVT, N1);
+    }
+
+    // Replicate lower 8-bits into upper 8:
     SDValue ExpandArg =
       DAG.getNode(ISD::OR, dl, MVT::i16, N0,
                   DAG.getNode(ISD::SHL, dl, MVT::i16,
                               N0, DAG.getConstant(8, MVT::i32)));
+
+    // Truncate back down to i8
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i8,
                        DAG.getNode(Opc, dl, MVT::i16, ExpandArg, N1));
   }
   case ISD::SRL:
   case ISD::SHL: {
     SDValue N1 = Op.getOperand(1);
-    unsigned N1Opc;
-    N0 = (N0.getOpcode() != ISD::Constant
-          ? DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i16, N0)
-          : DAG.getConstant(cast<ConstantSDNode>(N0)->getZExtValue(),
-                            MVT::i32));
-    N1Opc = N1.getValueType().bitsLT(ShiftVT)
-            ? ISD::ZERO_EXTEND
-            : ISD::TRUNCATE;
-    N1 = (N1.getOpcode() != ISD::Constant
-          ? DAG.getNode(N1Opc, dl, ShiftVT, N1)
-          : DAG.getConstant(cast<ConstantSDNode>(N1)->getZExtValue(), ShiftVT));
+    MVT N1VT = N1.getValueType();
+
+    N0 = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i16, N0);
+    if (!N1VT.bitsEq(ShiftVT)) {
+      unsigned N1Opc = ISD::ZERO_EXTEND;
+
+      if (N1.getValueType().bitsGT(ShiftVT))
+        N1Opc = ISD::TRUNCATE;
+
+      N1 = DAG.getNode(N1Opc, dl, ShiftVT, N1);
+    }
+
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i8,
                        DAG.getNode(Opc, dl, MVT::i16, N0, N1));
   }
   case ISD::SRA: {
     SDValue N1 = Op.getOperand(1);
-    unsigned N1Opc;
-    N0 = (N0.getOpcode() != ISD::Constant
-          ? DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, N0)
-          : DAG.getConstant(cast<ConstantSDNode>(N0)->getSExtValue(),
-                            MVT::i16));
-    N1Opc = N1.getValueType().bitsLT(ShiftVT)
-            ? ISD::SIGN_EXTEND
-            : ISD::TRUNCATE;
-    N1 = (N1.getOpcode() != ISD::Constant
-          ? DAG.getNode(N1Opc, dl, ShiftVT, N1)
-          : DAG.getConstant(cast<ConstantSDNode>(N1)->getZExtValue(),
-                            ShiftVT));
+    MVT N1VT = N1.getValueType();
+
+    N0 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, N0);
+    if (!N1VT.bitsEq(ShiftVT)) {
+      unsigned N1Opc = ISD::SIGN_EXTEND;
+
+      if (N1VT.bitsGT(ShiftVT))
+        N1Opc = ISD::TRUNCATE;
+      N1 = DAG.getNode(N1Opc, dl, ShiftVT, N1);
+    }
+
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i8,
                        DAG.getNode(Opc, dl, MVT::i16, N0, N1));
   }
   case ISD::MUL: {
     SDValue N1 = Op.getOperand(1);
-    unsigned N1Opc;
-    N0 = (N0.getOpcode() != ISD::Constant
-          ? DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, N0)
-          : DAG.getConstant(cast<ConstantSDNode>(N0)->getZExtValue(),
-                            MVT::i16));
-    N1Opc = N1.getValueType().bitsLT(MVT::i16) ? ISD::SIGN_EXTEND : ISD::TRUNCATE;
-    N1 = (N1.getOpcode() != ISD::Constant
-          ? DAG.getNode(N1Opc, dl, MVT::i16, N1)
-          : DAG.getConstant(cast<ConstantSDNode>(N1)->getSExtValue(),
-                            MVT::i16));
+
+    N0 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, N0);
+    N1 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, N1);
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i8,
                        DAG.getNode(Opc, dl, MVT::i16, N0, N1));
     break;
@@ -2236,36 +2126,6 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
   }
 
   return SDValue();
-}
-
-//! Generate the carry-generate shuffle mask.
-SDValue SPU::getCarryGenerateShufMask(SelectionDAG &DAG, DebugLoc dl) {
-  SmallVector<SDValue, 16 > ShufBytes;
-
-  // Create the shuffle mask for "rotating" the borrow up one register slot
-  // once the borrow is generated.
-  ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
-  ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
-  ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
-  ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
-
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                     &ShufBytes[0], ShufBytes.size());
-}
-
-//! Generate the borrow-generate shuffle mask
-SDValue SPU::getBorrowGenerateShufMask(SelectionDAG &DAG, DebugLoc dl) {
-  SmallVector<SDValue, 16 > ShufBytes;
-
-  // Create the shuffle mask for "rotating" the borrow up one register slot
-  // once the borrow is generated.
-  ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
-  ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
-  ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
-  ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
-
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
-                     &ShufBytes[0], ShufBytes.size());
 }
 
 //! Lower byte immediate operations for v16i8 vectors:
@@ -2291,26 +2151,24 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
   }
 
   if (ConstVec.getNode()->getOpcode() == ISD::BUILD_VECTOR) {
-    uint64_t VectorBits[2];
-    uint64_t UndefBits[2];
-    uint64_t SplatBits, SplatUndef;
-    int SplatSize;
+    BuildVectorSDNode *BCN = dyn_cast<BuildVectorSDNode>(ConstVec.getNode());
+    assert(BCN != 0 && "Expected BuildVectorSDNode in SPU LowerByteImmed");
 
-    if (!GetConstantBuildVectorBits(ConstVec.getNode(), VectorBits, UndefBits)
-        && isConstantSplat(VectorBits, UndefBits,
-                           VT.getVectorElementType().getSizeInBits(),
-                           SplatBits, SplatUndef, SplatSize)) {
-      SDValue tcVec[16];
+    APInt APSplatBits, APSplatUndef;
+    unsigned SplatBitSize;
+    bool HasAnyUndefs;
+    unsigned minSplatBits = VT.getVectorElementType().getSizeInBits();
+
+    if (BCN->isConstantSplat(APSplatBits, APSplatUndef, SplatBitSize,
+                              HasAnyUndefs, minSplatBits)
+        && minSplatBits <= SplatBitSize) {
+      uint64_t SplatBits = APSplatBits.getZExtValue();
       SDValue tc = DAG.getTargetConstant(SplatBits & 0xff, MVT::i8);
-      const size_t tcVecSize = sizeof(tcVec) / sizeof(tcVec[0]);
 
-      // Turn the BUILD_VECTOR into a set of target constants:
-      for (size_t i = 0; i < tcVecSize; ++i)
-        tcVec[i] = tc;
-
+      SmallVector<SDValue, 16> tcVec;
+      tcVec.assign(16, tc);
       return DAG.getNode(Op.getNode()->getOpcode(), dl, VT, Arg,
-                         DAG.getNode(ISD::BUILD_VECTOR, dl, VT, 
-                                     tcVec, tcVecSize));
+                         DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &tcVec[0], tcVec.size()));
     }
   }
 
@@ -2452,7 +2310,7 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
     return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
   }
 
-  return Op;                    // return unmolested, legalized op
+  return SDValue();
 }
 
 //! Lower ISD::SINT_TO_FP, ISD::UINT_TO_FP for i32
@@ -2478,7 +2336,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
     return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
   }
 
-  return Op;                    // return unmolested, legalized
+  return SDValue();
 }
 
 //! Lower ISD::SETCC

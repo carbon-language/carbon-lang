@@ -1258,10 +1258,9 @@ multiclass BitwiseAnd
   def fabs32: ANDInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
                       [/* Intentionally does not match a pattern */]>;
 
-  def fabs64: ANDInst<(outs R64FP:$rT), (ins R64FP:$rA, VECREG:$rB),
+  def fabs64: ANDInst<(outs R64FP:$rT), (ins R64FP:$rA, R64C:$rB),
                       [/* Intentionally does not match a pattern */]>;
 
-  // Could use v4i32, but won't for clarity
   def fabsvec: ANDInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
                        [/* Intentionally does not match a pattern */]>;
 
@@ -1288,10 +1287,11 @@ class ANDCInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b10000011010, OOL, IOL, "andc\t$rT, $rA, $rB",
            IntegerOp, pattern>;
 
-class ANDCVecInst<ValueType vectype>:
+class ANDCVecInst<ValueType vectype, PatFrag vnot_frag = vnot>:
     ANDCInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-             [(set (vectype VECREG:$rT), (and (vectype VECREG:$rA),
-                                              (vnot (vectype VECREG:$rB))))]>;
+             [(set (vectype VECREG:$rT),
+                   (and (vectype VECREG:$rA),
+                        (vnot_frag (vectype VECREG:$rB))))]>;
 
 class ANDCRegInst<RegisterClass rclass>:
     ANDCInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
@@ -1309,6 +1309,9 @@ multiclass AndComplement
   def r32:  ANDCRegInst<R32C>;
   def r16:  ANDCRegInst<R16C>;
   def r8:   ANDCRegInst<R8C>;
+
+  // Sometimes, the xor pattern has a bitcast constant:
+  def v16i8_conv: ANDCVecInst<v16i8, vnot_conv>;
 }
 
 defm ANDC : AndComplement;
@@ -1479,6 +1482,17 @@ multiclass BitwiseOr
 
   def f64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
                   [/* no pattern */]>;
+
+  // OR instructions used to negate f32 and f64 quantities.
+
+  def fneg32: ORInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
+                     [/* no pattern */]>;
+
+  def fneg64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64C:$rB),
+                     [/* no pattern */]>;
+
+  def fnegvec: ORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                      [/* no pattern, see fneg{32,64} */]>;
 
   // scalar->vector promotion, prefslot2vec:
   def v16i8_i8:  ORPromoteScalar<R8C>;
@@ -1783,18 +1797,6 @@ multiclass BitwiseExclusiveOr
   def r32:   XORRegInst<R32C>;
   def r16:   XORRegInst<R16C>;
   def r8:    XORRegInst<R8C>;
-
-  // Special forms for floating point instructions.
-  // fneg and fabs require bitwise logical ops to manipulate the sign bit.
-
-  def fneg32: XORInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
-                      [/* no pattern */]>;
-
-  def fneg64: XORInst<(outs R64FP:$rT), (ins R64FP:$rA, VECREG:$rB),
-                      [/* no pattern */]>;
-
-  def fnegvec: XORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-                       [/* no pattern, see fneg{32,64} */]>;
 }
 
 defm XOR : BitwiseExclusiveOr;
@@ -4239,33 +4241,36 @@ def FMSv2f64 :
             (fsub (fmul (v2f64 VECREG:$rA), (v2f64 VECREG:$rB)),
                   (v2f64 VECREG:$rC)))]>;
 
-// FNMS: - (a * b - c)
+// DFNMS: - (a * b - c)
 // - (a * b) + c => c - (a * b)
-def FNMSf64 :
-    RRForm<0b01111010110, (outs R64FP:$rT),
-                          (ins R64FP:$rA, R64FP:$rB, R64FP:$rC),
-      "dfnms\t$rT, $rA, $rB", DPrecFP,
-      [(set R64FP:$rT, (fsub R64FP:$rC, (fmul R64FP:$rA, R64FP:$rB)))]>,
+
+class DFNMSInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b01111010110, OOL, IOL, "dfnms\t$rT, $rA, $rB",
+           DPrecFP, pattern>,
     RegConstraint<"$rC = $rT">,
     NoEncode<"$rC">;
 
-def : Pat<(fneg (fsub (fmul R64FP:$rA, R64FP:$rB), R64FP:$rC)),
-          (FNMSf64 R64FP:$rA, R64FP:$rB, R64FP:$rC)>;
+class DFNMSVecInst<list<dag> pattern>:
+    DFNMSInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+              pattern>;
 
-def FNMSv2f64 :
-    RRForm<0b01111010110, (outs VECREG:$rT),
-                          (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-      "dfnms\t$rT, $rA, $rB", DPrecFP,
-      [(set (v2f64 VECREG:$rT),
-            (fsub (v2f64 VECREG:$rC),
-                  (fmul (v2f64 VECREG:$rA),
-                        (v2f64 VECREG:$rB))))]>,
-    RegConstraint<"$rC = $rT">,
-    NoEncode<"$rC">;
+class DFNMSRegInst<list<dag> pattern>:
+    DFNMSInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB, R64FP:$rC),
+             pattern>;
 
-def : Pat<(fneg (fsub (fmul (v2f64 VECREG:$rA), (v2f64 VECREG:$rB)),
-                (v2f64 VECREG:$rC))),
-          (FNMSv2f64 VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+multiclass DFMultiplySubtract
+{
+  def v2f64 : DFNMSVecInst<[(set (v2f64 VECREG:$rT), 
+                                 (fsub (v2f64 VECREG:$rC),
+                                       (fmul (v2f64 VECREG:$rA),
+                                             (v2f64 VECREG:$rB))))]>;
+
+  def f64 : DFNMSRegInst<[(set R64FP:$rT,
+                               (fsub R64FP:$rC,
+                                     (fmul R64FP:$rA, R64FP:$rB)))]>;
+}
+
+defm DFNMS : DFMultiplySubtract;
 
 // - (a * b + c)
 // - (a * b) - c
@@ -4293,35 +4298,21 @@ def FNMAv2f64 :
 //===----------------------------------------------------------------------==//
 
 def : Pat<(fneg (v4f32 VECREG:$rA)),
-          (XORfnegvec (v4f32 VECREG:$rA),
-                      (v4f32 (ILHUv4i32 0x8000)))>;
+          (ORfnegvec (v4f32 VECREG:$rA),
+                     (v4f32 (ILHUv4i32 0x8000)))>;
 
 def : Pat<(fneg R32FP:$rA),
-          (XORfneg32 R32FP:$rA, (ILHUr32 0x8000))>;
-
-def : Pat<(fneg (v2f64 VECREG:$rA)),
-          (XORfnegvec (v2f64 VECREG:$rA),
-                      (v2f64 (ANDBIv16i8 (FSMBIv16i8 0x8080), 0x80)))>;
-
-def : Pat<(fneg R64FP:$rA),
-          (XORfneg64 R64FP:$rA,
-                     (ANDBIv16i8 (FSMBIv16i8 0x8080), 0x80))>;
+          (ORfneg32 R32FP:$rA, (ILHUr32 0x8000))>;
 
 // Floating point absolute value
+// Note: f64 fabs is custom-selected.
 
 def : Pat<(fabs R32FP:$rA),
           (ANDfabs32 R32FP:$rA, (IOHLr32 (ILHUr32 0x7fff), 0xffff))>;
 
 def : Pat<(fabs (v4f32 VECREG:$rA)),
           (ANDfabsvec (v4f32 VECREG:$rA),
-                      (v4f32 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
-
-def : Pat<(fabs R64FP:$rA),
-          (ANDfabs64 R64FP:$rA, (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f))>;
-
-def : Pat<(fabs (v2f64 VECREG:$rA)),
-          (ANDfabsvec (v2f64 VECREG:$rA),
-                      (v2f64 (ANDBIv16i8 (FSMBIv16i8 0xffff), 0x7f)))>;
+                      (IOHLv4i32 (ILHUv4i32 0x7fff), 0xffff))>;
 
 //===----------------------------------------------------------------------===//
 // Hint for branch instructions:

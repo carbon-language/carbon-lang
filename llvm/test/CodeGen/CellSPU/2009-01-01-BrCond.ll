@@ -8,11 +8,11 @@ target triple = "spu"
 
 define double @__floatunsidf(i32 %arg_a) nounwind {
 entry:
-	%in = alloca %struct.fp_number_type, align 8		; <%struct.fp_number_type*> [#uses=5]
-	%0 = getelementptr %struct.fp_number_type* %in, i32 0, i32 1		; <i32*> [#uses=1]
+	%in = alloca %struct.fp_number_type, align 16
+	%0 = getelementptr %struct.fp_number_type* %in, i32 0, i32 1
 	store i32 0, i32* %0, align 4
-	%1 = icmp eq i32 %arg_a, 0		; <i1> [#uses=1]
-	%2 = getelementptr %struct.fp_number_type* %in, i32 0, i32 0		; <i32*> [#uses=2]
+	%1 = icmp eq i32 %arg_a, 0
+	%2 = getelementptr %struct.fp_number_type* %in, i32 0, i32 0
 	br i1 %1, label %bb, label %bb1
 
 bb:		; preds = %entry
@@ -26,6 +26,6 @@ bb7:		; preds = %bb5, %bb1, %bb
 	ret double 1.0
 }
 
-declare i32 @llvm.ctlz.i32(i32) nounwind readnone
+; declare i32 @llvm.ctlz.i32(i32) nounwind readnone
 
 declare double @__pack_d(%struct.fp_number_type*)
