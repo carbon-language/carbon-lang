@@ -429,6 +429,9 @@ DIAG(warn_attribute_nonnull_no_pointers, WARNING,
 DIAG(warn_transparent_union_nonpointer, WARNING,
      "'transparent_union' attribute support incomplete; only supported for "
      "pointer unions")
+
+DIAG(warn_attribute_sentinel_named_arguments, WARNING,
+     "'sentinel' attribute requires named arguments")
 DIAG(warn_attribute_sentinel_not_variadic, WARNING,
      "'sentinel' attribute only supported for variadic functions")
 DIAG(err_attribute_sentinel_less_than_zero, ERROR,

@@ -11,3 +11,5 @@ void f4(int a, ...) __attribute__ ((sentinel(0, 2))); // expected-error{{paramet
 
 void f5(int a) __attribute__ ((sentinel)); //expected-warning{{'sentinel' attribute only supported for variadic functions}}
 
+
+void f6() __attribute__((__sentinel__));  // expected-warning {{'sentinel' attribute requires named arguments}}

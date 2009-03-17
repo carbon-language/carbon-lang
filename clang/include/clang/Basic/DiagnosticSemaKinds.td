@@ -393,6 +393,8 @@ def warn_transparent_union_nonpointer : Warning<
   "'transparent_union' attribute support incomplete; only supported for "
   "pointer unions">;
 
+def warn_attribute_sentinel_named_arguments : Warning<
+  "'sentinel' attribute requires named arguments">;
 def warn_attribute_sentinel_not_variadic : Warning<
   "'sentinel' attribute only supported for variadic functions">;
 def err_attribute_sentinel_less_than_zero : Error<

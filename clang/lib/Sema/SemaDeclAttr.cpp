@@ -687,8 +687,15 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
-    QualType FT = FD->getType();
-    if (!FT->getAsFunctionProtoType()->isVariadic()) {
+    const FunctionType *FT = FD->getType()->getAsFunctionType();
+    assert(FT && "FunctionDecl has non-function type?");
+    
+    if (isa<FunctionNoProtoType>(FT)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_named_arguments);
+      return;
+    }
+    
+    if (!cast<FunctionProtoType>(FT)->isVariadic()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
       return;
     }    
