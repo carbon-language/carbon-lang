@@ -18,7 +18,7 @@ ArgList::ArgList(const char **ArgBegin, const char **ArgEnd) {
 }
 
 ArgList::~ArgList() {
-  for (iterator it = begin(), ie = end(); it != ie; ++ie)
+  for (iterator it = begin(), ie = end(); it != ie; ++it)
     delete *it;
 }
 
