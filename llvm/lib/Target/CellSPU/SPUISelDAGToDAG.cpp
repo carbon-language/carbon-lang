@@ -865,12 +865,12 @@ SPUDAGToDAGISel::Select(SDValue Op) {
 
     SDValue negConst = CurDAG->getConstant(0x8000000000000000ULL, MVT::i64);
     SDNode *signMask = 0;
-    unsigned Opc = SPU::ORfneg64;
+    unsigned Opc = SPU::XORfneg64;
 
     if (OpVT == MVT::f64) {
       signMask = SelectI64Constant(negConst, MVT::i64, dl);
     } else if (OpVT == MVT::v2f64) {
-      Opc = SPU::ORfnegvec;
+      Opc = SPU::XORfnegvec;
       signMask = emitBuildVector(CurDAG->getNode(ISD::BUILD_VECTOR, dl,
 						 MVT::v2i64,
                                                  negConst, negConst));

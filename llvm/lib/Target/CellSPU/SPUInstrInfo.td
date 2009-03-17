@@ -1483,17 +1483,6 @@ multiclass BitwiseOr
   def f64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
                   [/* no pattern */]>;
 
-  // OR instructions used to negate f32 and f64 quantities.
-
-  def fneg32: ORInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
-                     [/* no pattern */]>;
-
-  def fneg64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64C:$rB),
-                     [/* no pattern */]>;
-
-  def fnegvec: ORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-                      [/* no pattern, see fneg{32,64} */]>;
-
   // scalar->vector promotion, prefslot2vec:
   def v16i8_i8:  ORPromoteScalar<R8C>;
   def v8i16_i16: ORPromoteScalar<R16C>;
@@ -1797,6 +1786,17 @@ multiclass BitwiseExclusiveOr
   def r32:   XORRegInst<R32C>;
   def r16:   XORRegInst<R16C>;
   def r8:    XORRegInst<R8C>;
+
+  // XOR instructions used to negate f32 and f64 quantities.
+
+  def fneg32: XORInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
+                     [/* no pattern */]>;
+
+  def fneg64: XORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64C:$rB),
+                     [/* no pattern */]>;
+
+  def fnegvec: XORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                      [/* no pattern, see fneg{32,64} */]>;
 }
 
 defm XOR : BitwiseExclusiveOr;
@@ -4298,11 +4298,11 @@ def FNMAv2f64 :
 //===----------------------------------------------------------------------==//
 
 def : Pat<(fneg (v4f32 VECREG:$rA)),
-          (ORfnegvec (v4f32 VECREG:$rA),
-                     (v4f32 (ILHUv4i32 0x8000)))>;
+          (XORfnegvec (v4f32 VECREG:$rA),
+                      (v4f32 (ILHUv4i32 0x8000)))>;
 
 def : Pat<(fneg R32FP:$rA),
-          (ORfneg32 R32FP:$rA, (ILHUr32 0x8000))>;
+          (XORfneg32 R32FP:$rA, (ILHUr32 0x8000))>;
 
 // Floating point absolute value
 // Note: f64 fabs is custom-selected.
