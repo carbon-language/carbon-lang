@@ -17,6 +17,8 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 
+#include "ToolChains.h"
+
 #include <cassert>
  
 using namespace clang::driver;
@@ -96,15 +98,14 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
 
   ToolChain *&TC = ToolChains[ArchName];
   if (!TC) {
-    TC = 0;
-#if 0
-    if (ArchName == "i386")
-      TC = new Darwin_X86_ToolChain(ArchName);
-    else if (ArchName == "x86_64")
-      TC = new Darwin_X86_ToolChain(ArchName);
+    if (strcmp(ArchName, "i386") == 0 || strcmp(ArchName, "x86_64") == 0)
+      TC = new toolchains::Generic_GCC(*this, ArchName, 
+                                       getPlatformName().c_str(), 
+                                       getOSName().c_str());
     else
-      TC = new Darwin_GCC_ToolChain(ArchName);
-#endif
+      TC = new toolchains::Generic_GCC(*this, ArchName, 
+                                       getPlatformName().c_str(), 
+                                       getOSName().c_str());
   }
 
   return TC;
@@ -156,7 +157,9 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
   
   ToolChain *&TC = ToolChains[ArchName];
   if (!TC)
-    TC = 0; //new Generic_GCC_ToolChain(ArchName);
+    TC = new toolchains::Generic_GCC(*this, ArchName, 
+                                     getPlatformName().c_str(), 
+                                     getOSName().c_str());
 
   return 0;
 }
