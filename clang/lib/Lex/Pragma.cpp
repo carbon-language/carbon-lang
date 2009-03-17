@@ -313,7 +313,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
 ///   #pragma comment(linker, "foo")
 /// 'linker' is one of five identifiers: compiler, exestr, lib, linker, user.
 /// "foo" is a string, which is fully macro expanded, and permits string
-/// concatenation, embeded escape characters etc.  See MSDN for more details.
+/// concatenation, embedded escape characters etc.  See MSDN for more details.
 void Preprocessor::HandlePragmaComment(Token &Tok) {
   SourceLocation CommentLoc = Tok.getLocation();
   Lex(Tok);
