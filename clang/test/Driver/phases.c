@@ -54,4 +54,17 @@
 // RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s -m64 -m32 &> %t &&
 // RUN: grep -F '2: bind-arch, "i386", {1}, object' %t &&
 
+// Analyzer
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases --analyze %s &> %t &&
+// RUN: grep '0: input, ".*phases.c", c' %t &&
+// RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
+// RUN: grep -F '2: analyzer, {1}, plist' %t &&
+
+// Precompiler
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c-header %s &> %t &&
+// RUN: grep '0: input, ".*phases.c", c' %t &&
+// RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
+// RUN: grep -F '2: precompiler, {1}, precompiled-header' %t &&
+
+// RUN: clang-driver
 // RUN: true
