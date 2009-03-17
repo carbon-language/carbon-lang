@@ -10,4 +10,4 @@ entry:
         %tmp7.i = shufflevector <4 x double> %src, <4 x double> undef, <2 x i32> < i32 0, i32 2 >
         store <2 x double> %tmp7.i, <2 x double>* %dst
         ret void
-}                                             
+}
