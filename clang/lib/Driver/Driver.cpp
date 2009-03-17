@@ -717,16 +717,87 @@ void Driver::BuildJobsForAction(Compilation &C,
   // Figure out where to put the job (pipes).
   Job *Dest = &C.getJobs();
   if (InputInfos[0].isPipe()) {
+    assert(TryToUsePipeInput && "Unrequested pipe!");
     assert(InputInfos.size() == 1 && "Unexpected pipe with multiple inputs.");
     Dest = &InputInfos[0].getPipe();
   }
 
   // Always use the first input as the base input.
   const char *BaseInput = InputInfos[0].getBaseInput();
-  const char *Output = "foo";
+
+  // Determine the place to write output to (nothing, pipe, or
+  // filename) and where to put the new job.
+  PipedJob *OutputJob = 0;
+  const char *Output = 0;
+  if (JA->getType() == types::TY_Nothing) {
+    ;
+  } else if (OutputToPipe) {
+    // Append to current piped job or create a new one as appropriate.
+    if (PipedJob *PJ = dyn_cast<PipedJob>(Dest)) {
+      OutputJob = PJ;
+      Dest = OutputJob;
+    } else {
+      OutputJob = new PipedJob();
+      cast<JobList>(Dest)->addJob(OutputJob);
+      Dest = OutputJob;
+    }
+  } else {
+    Output = GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel);
+  }
+
   // FIXME: Make the job.
 
   Result = InputInfo(Output, A->getType(), BaseInput);
+}
+
+const char *Driver::GetNamedOutputPath(Compilation &C, 
+                                       const JobAction &JA,
+                                       const char *BaseInput,
+                                       bool AtTopLevel) const {
+  // Output to a user requested destination?
+  if (AtTopLevel) {
+    if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
+      return C.addResultFile(FinalOutput->getValue(C.getArgs()));
+  }
+
+  // Output to a temporary file?
+  if (!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) {
+    // FIXME: Get temporary name.
+    std::string Name("/tmp/foo");
+    Name += '.';
+    Name += types::getTypeTempSuffix(JA.getType());
+    return C.addTempFile(C.getArgs().MakeArgString(Name.c_str()));
+  }
+
+  llvm::sys::Path BasePath(BaseInput);
+  std::string BaseName(BasePath.getBasename());
+
+  // Determine what the derived output name should be.
+  const char *NamedOutput;
+  if (JA.getType() == types::TY_Image) {
+    NamedOutput = DefaultImageName.c_str();
+  } else {
+    const char *Suffix = types::getTypeTempSuffix(JA.getType());
+    assert(Suffix && "All types used for output should have a suffix.");
+
+    std::string::size_type End = std::string::npos;
+    if (!types::appendSuffixForType(JA.getType()))
+      End = BaseName.rfind('.');
+    std::string Suffixed(BaseName.substr(0, End));
+    Suffixed += '.';
+    Suffixed += Suffix;
+    NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
+  }
+
+  // As an annoying special case, PCH generation doesn't strip the
+  // pathname.
+  if (JA.getType() == types::TY_PCH) {
+    BasePath.eraseComponent();
+    BasePath.appendComponent(NamedOutput);
+    return C.addResultFile(C.getArgs().MakeArgString(BasePath.c_str()));
+  } else {
+    return C.addResultFile(NamedOutput);
+  }
 }
 
 llvm::sys::Path Driver::GetFilePath(const char *Name,

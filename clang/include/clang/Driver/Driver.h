@@ -28,6 +28,7 @@ namespace driver {
   class Compilation;
   class HostInfo;
   class InputInfo;
+  class JobAction;
   class OptTable;
   class PipedJob;
   class ToolChain;
@@ -202,6 +203,20 @@ public:
                           bool AtTopLevel,
                           const char *LinkingOutput,
                           InputInfo &Result) const;
+
+  /// GetNamedOutputPath - Return the name to use for the output of
+  /// the action \arg JA. The result is appended to the compilation's
+  /// list of temporary or result files, as appropriate.
+  ///
+  /// \param C - The compilation.
+  /// \param JA - The action of interest.
+  /// \param BaseInput - The original input file that this action was
+  /// triggered by.
+  /// \param AtTopLevel - Whether this is a "top-level" action.
+  const char *GetNamedOutputPath(Compilation &C, 
+                                 const JobAction &JA,
+                                 const char *BaseInput,
+                                 bool AtTopLevel) const;
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
