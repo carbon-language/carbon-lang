@@ -592,6 +592,12 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
                                       SmallPtrSet<Instruction*,16> &Processed) {
   if (!I->getType()->isInteger() && !isa<PointerType>(I->getType()))
     return false;   // Void and FP expressions cannot be reduced.
+
+  // LSR is not APInt clean, do not touch integers bigger than 64-bits.
+  if (I->getType()->isInteger() && 
+      I->getType()->getPrimitiveSizeInBits() > 64)
+    return false;
+  
   if (!Processed.insert(I))
     return true;    // Instruction already handled.
   
