@@ -66,7 +66,18 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
   
   // If this is a typedef for an array type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getArrayElementTypeNoTypeQual();
+  return cast<ArrayType>(getDesugaredType())->getElementType().getTypePtr();
+}
+
+/// getDesugaredType - Return the specified type with any "sugar" removed from
+/// the type.  This takes off typedefs, typeof's etc.  If the outer level of
+/// the type is already concrete, it returns it unmodified.  This is similar
+/// to getting the canonical type, but it doesn't remove *all* typedefs.  For
+/// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
+/// concrete.
+QualType QualType::getDesugaredType() const {
+  return getTypePtr()->getDesugaredType()
+     .getWithAdditionalQualifiers(getCVRQualifiers());
 }
 
 /// getDesugaredType - Return the specified type with any "sugar" removed from
@@ -77,14 +88,14 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 /// concrete.
 QualType Type::getDesugaredType() const {
   if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
-    return TDT->LookThroughTypedefs();
+    return TDT->LookThroughTypedefs().getDesugaredType();
   if (const TypeOfExprType *TOE = dyn_cast<TypeOfExprType>(this))
-    return TOE->getUnderlyingExpr()->getType();
+    return TOE->getUnderlyingExpr()->getType().getDesugaredType();
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
-    return TOT->getUnderlyingType();
+    return TOT->getUnderlyingType().getDesugaredType();
   if (const ClassTemplateSpecializationType *Spec 
         = dyn_cast<ClassTemplateSpecializationType>(this))
-    return Spec->getCanonicalTypeInternal();
+    return Spec->getCanonicalTypeInternal().getDesugaredType();
 
   // FIXME: remove this cast.
   return QualType(const_cast<Type*>(this), 0);
@@ -177,7 +188,7 @@ const ComplexType *Type::getAsComplexIntegerType() const {
   
   // If this is a typedef for a complex type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsComplexIntegerType();
+  return cast<ComplexType>(getDesugaredType());
 }
 
 const BuiltinType *Type::getAsBuiltinType() const {
@@ -195,7 +206,7 @@ const BuiltinType *Type::getAsBuiltinType() const {
 
   // If this is a typedef for a builtin type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsBuiltinType();
+  return cast<BuiltinType>(getDesugaredType());
 }
 
 const FunctionType *Type::getAsFunctionType() const {
@@ -213,7 +224,7 @@ const FunctionType *Type::getAsFunctionType() const {
   
   // If this is a typedef for a function type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsFunctionType();
+  return cast<FunctionType>(getDesugaredType());
 }
 
 const FunctionNoProtoType *Type::getAsFunctionNoProtoType() const {
@@ -240,7 +251,7 @@ const PointerType *Type::getAsPointerType() const {
 
   // If this is a typedef for a pointer type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsPointerType();
+  return cast<PointerType>(getDesugaredType());
 }
 
 const BlockPointerType *Type::getAsBlockPointerType() const {
@@ -258,7 +269,7 @@ const BlockPointerType *Type::getAsBlockPointerType() const {
   
   // If this is a typedef for a block pointer type, strip the typedef off 
   // without losing all typedef information.
-  return getDesugaredType()->getAsBlockPointerType();
+  return cast<BlockPointerType>(getDesugaredType());
 }
 
 const ReferenceType *Type::getAsReferenceType() const {
@@ -276,7 +287,7 @@ const ReferenceType *Type::getAsReferenceType() const {
 
   // If this is a typedef for a reference type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsReferenceType();
+  return cast<ReferenceType>(getDesugaredType());
 }
 
 const LValueReferenceType *Type::getAsLValueReferenceType() const {
@@ -294,7 +305,7 @@ const LValueReferenceType *Type::getAsLValueReferenceType() const {
 
   // If this is a typedef for an lvalue reference type, strip the typedef off
   // without losing all typedef information.
-  return getDesugaredType()->getAsLValueReferenceType();
+  return cast<LValueReferenceType>(getDesugaredType());
 }
 
 const RValueReferenceType *Type::getAsRValueReferenceType() const {
@@ -312,7 +323,7 @@ const RValueReferenceType *Type::getAsRValueReferenceType() const {
 
   // If this is a typedef for an rvalue reference type, strip the typedef off
   // without losing all typedef information.
-  return getDesugaredType()->getAsRValueReferenceType();
+  return cast<RValueReferenceType>(getDesugaredType());
 }
 
 const MemberPointerType *Type::getAsMemberPointerType() const {
@@ -330,7 +341,7 @@ const MemberPointerType *Type::getAsMemberPointerType() const {
 
   // If this is a typedef for a member pointer type, strip the typedef off
   // without losing all typedef information.
-  return getDesugaredType()->getAsMemberPointerType();
+  return cast<MemberPointerType>(getDesugaredType());
 }
 
 /// isVariablyModifiedType (C99 6.7.5p3) - Return true for variable length
@@ -381,7 +392,7 @@ const RecordType *Type::getAsRecordType() const {
 
   // If this is a typedef for a record type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsRecordType();
+  return cast<RecordType>(getDesugaredType());
 }
 
 const TagType *Type::getAsTagType() const {
@@ -399,7 +410,7 @@ const TagType *Type::getAsTagType() const {
 
   // If this is a typedef for a tag type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsTagType();
+  return cast<TagType>(getDesugaredType());
 }
 
 const RecordType *Type::getAsStructureType() const {
@@ -416,7 +427,7 @@ const RecordType *Type::getAsStructureType() const {
     
     // If this is a typedef for a structure type, strip the typedef off without
     // losing all typedef information.
-    return getDesugaredType()->getAsStructureType();
+    return cast<RecordType>(getDesugaredType());
   }
   // Look through type qualifiers
   if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
@@ -438,7 +449,7 @@ const RecordType *Type::getAsUnionType() const {
 
     // If this is a typedef for a union type, strip the typedef off without
     // losing all typedef information.
-    return getDesugaredType()->getAsUnionType();
+    return cast<RecordType>(getDesugaredType());
   }
   
   // Look through type qualifiers
@@ -469,7 +480,7 @@ const ComplexType *Type::getAsComplexType() const {
 
   // If this is a typedef for a complex type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsComplexType();
+  return cast<ComplexType>(getDesugaredType());
 }
 
 const VectorType *Type::getAsVectorType() const {
@@ -487,7 +498,7 @@ const VectorType *Type::getAsVectorType() const {
 
   // If this is a typedef for a vector type, strip the typedef off without
   // losing all typedef information.
-  return getDesugaredType()->getAsVectorType();
+  return cast<VectorType>(getDesugaredType());
 }
 
 const ExtVectorType *Type::getAsExtVectorType() const {
@@ -505,7 +516,7 @@ const ExtVectorType *Type::getAsExtVectorType() const {
 
   // If this is a typedef for an extended vector type, strip the typedef off
   // without losing all typedef information.
-  return getDesugaredType()->getAsExtVectorType();
+  return cast<ExtVectorType>(getDesugaredType());
 }
 
 const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {

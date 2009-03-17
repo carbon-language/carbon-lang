@@ -145,6 +145,13 @@ public:
   bool isAtLeastAsQualifiedAs(QualType Other) const;
   QualType getNonReferenceType() const;
   
+  /// getDesugaredType - Return the specified type with any "sugar" removed from
+  /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
+  /// the type is already concrete, it returns it unmodified.  This is similar
+  /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
+  /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
+  /// concrete.
+  QualType getDesugaredType() const;
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
