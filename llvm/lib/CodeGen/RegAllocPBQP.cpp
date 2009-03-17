@@ -83,6 +83,7 @@ namespace {
       au.addPreserved<LiveStacks>();
       au.addRequired<MachineLoopInfo>();
       au.addPreserved<MachineLoopInfo>();
+      au.addRequired<VirtRegMap>();
       MachineFunctionPass::getAnalysisUsage(au);
     }
 
