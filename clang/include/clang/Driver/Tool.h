@@ -12,14 +12,19 @@
 
 namespace clang {
 namespace driver {
-
+  class ToolChain;
+  
 /// Tool - Information on a specific compilation tool.
 class Tool {
-protected:
-  Tool();
+  const ToolChain &TheToolChain;
+
+public:
+  Tool(const ToolChain &TC);
 
 public:
   virtual ~Tool();
+
+  const ToolChain &getToolChain() const { return TheToolChain; }
 
   virtual bool acceptsPipedInput() const = 0;
   virtual bool canPipeOutput() const = 0;

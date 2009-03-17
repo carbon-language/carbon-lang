@@ -11,5 +11,8 @@
 
 using namespace clang::driver;
 
+Tool::Tool(const ToolChain &TC) : TheToolChain(TC) {
+}
+
 Tool::~Tool() {
 }

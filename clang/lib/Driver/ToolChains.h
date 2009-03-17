@@ -10,24 +10,58 @@
 #ifndef CLANG_LIB_DRIVER_TOOLCHAINS_H_
 #define CLANG_LIB_DRIVER_TOOLCHAINS_H_
 
+#include "clang/Driver/Action.h"
 #include "clang/Driver/ToolChain.h"
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Compiler.h"
+
+#include "Tools.h"
 
 namespace clang {
 namespace driver {
 namespace toolchains VISIBILITY_HIDDEN {
 
+  /// Generic_GCC - A tool chain using the 'gcc' command to perform
+  /// all subcommands; this relies on gcc translating the majority of
+  /// command line options.
 class Generic_GCC : public ToolChain {
+  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+
 public:
   Generic_GCC(const HostInfo &Host, const char *Arch, const char *Platform, 
-              const char *OS) : ToolChain(Host, Arch, Platform, OS) {
-  }
+              const char *OS) : ToolChain(Host, Arch, Platform, OS) {}
 
   virtual ArgList *TranslateArgs(ArgList &Args) const { return &Args; }
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const {
-    return *((Tool*) 0);
+    Action::ActionClass Key;
+    if (ShouldUseClangCompiler(C, JA))
+      Key = Action::AnalyzeJobClass;
+    else
+      Key = JA.getKind();
+
+    Tool *&T = Tools[Key];
+    if (!T) {
+      switch (Key) {
+      default:
+        assert(0 && "Invalid tool kind.");
+      case Action::PreprocessJobClass: 
+        T = new tools::GCC_Preprocess(*this); break;
+      case Action::PrecompileJobClass: 
+        T = new tools::GCC_Precompile(*this); break;
+      case Action::AnalyzeJobClass: 
+        T = new tools::Clang(*this); break;
+      case Action::CompileJobClass: 
+        T = new tools::GCC_Compile(*this); break;
+      case Action::AssembleJobClass: 
+        T = new tools::GCC_Assemble(*this); break;
+      case Action::LinkJobClass: 
+        T = new tools::GCC_Assemble(*this); break;
+      }
+    }
+
+    return *T;
   }
 
   virtual bool IsMathErrnoDefault() const { return true; }
