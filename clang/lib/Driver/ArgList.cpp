@@ -44,6 +44,20 @@ Arg *ArgList::getLastArg(options::ID Id, bool Claim) const {
   return 0;
 }
 
+Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1, bool Claim) const {
+  Arg *Res, *A0 = getLastArg(Id0, false), *A1 = getLastArg(Id1, false);
+  
+  if (A0 && A1)
+    Res = A0->getIndex() > A1->getIndex() ? A0 : A1;
+  else
+    Res = A0 ? A0 : A1;
+
+  if (Claim && Res)
+    Res->claim();
+
+  return Res;
+}
+
 unsigned ArgList::MakeIndex(const char *String0) const {
   unsigned Index = ArgStrings.size();
 

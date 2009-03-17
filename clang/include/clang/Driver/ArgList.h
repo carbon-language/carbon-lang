@@ -81,6 +81,7 @@ namespace driver {
     ///
     /// \arg Claim Whether the argument should be claimed, if it exists.
     Arg *getLastArg(options::ID Id, bool Claim=true) const;
+    Arg *getLastArg(options::ID Id0, options::ID Id1, bool Claim=true) const;
 
     /// @name Arg Synthesis
     /// @{
