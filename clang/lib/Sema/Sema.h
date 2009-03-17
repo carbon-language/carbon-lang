@@ -1864,6 +1864,10 @@ public:
                                    const TemplateArgument *TemplateArgs,
                                    unsigned NumTemplateArgs);
 
+  Decl *InstantiateDecl(Decl *D, DeclContext *Owner,
+                        const TemplateArgument *TemplateArgs,
+                        unsigned NumTemplateArgs);
+
   bool 
   InstantiateBaseSpecifiers(ClassTemplateSpecializationDecl *ClassTemplateSpec,
                             ClassTemplateDecl *ClassTemplate);

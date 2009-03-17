@@ -1036,7 +1036,6 @@ Sema::InstantiateClassTemplateSpecialization(
   // Start the definition of this instantiation.
   ClassTemplateSpec->startDefinition();
 
-
   // Instantiate the base class specifiers.
   if (InstantiateBaseSpecifiers(ClassTemplateSpec, Template))
     Invalid = true;
@@ -1049,155 +1048,19 @@ Sema::InstantiateClassTemplateSpecialization(
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
                               MemberEnd = Pattern->decls_end();
        Member != MemberEnd; ++Member) {
-    if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(*Member)) {
-      // FIXME: Simplified instantiation of typedefs needs to be made
-      // "real".
-      QualType T = Typedef->getUnderlyingType();
-      if (T->isDependentType()) {
-        T = InstantiateType(T, ClassTemplateSpec->getTemplateArgs(),
-                            ClassTemplateSpec->getNumTemplateArgs(),
-                            Typedef->getLocation(),
-                            Typedef->getDeclName());
-        if (T.isNull()) {
-          Invalid = true;
-          T = Context.IntTy;
-        }
-      }
-       
-      // Create the new typedef
-      TypedefDecl *New 
-        = TypedefDecl::Create(Context, ClassTemplateSpec,
-                              Typedef->getLocation(),
-                              Typedef->getIdentifier(),
-                              T);
-      ClassTemplateSpec->addDecl(New);
-    } 
-    else if (FieldDecl *Field = dyn_cast<FieldDecl>(*Member)) {
-      // FIXME: Simplified instantiation of fields needs to be made
-      // "real".
-      bool InvalidDecl = false;
-      QualType T = Field->getType();
-      if (T->isDependentType())  {
-        T = InstantiateType(T, ClassTemplateSpec->getTemplateArgs(),
-                            ClassTemplateSpec->getNumTemplateArgs(),
-                            Field->getLocation(),
-                            Field->getDeclName());
-        if (!T.isNull() && T->isFunctionType()) {
-          // C++ [temp.arg.type]p3:
-          //   If a declaration acquires a function type through a type
-          //   dependent on a template-parameter and this causes a
-          //   declaration that does not use the syntactic form of a
-          //   function declarator to have function type, the program is
-          //   ill-formed.
-          Diag(Field->getLocation(), diag::err_field_instantiates_to_function) 
-            << T;
-          T = QualType();
-          InvalidDecl = true;
-        }
-      }
-
-      Expr *BitWidth = Field->getBitWidth();
-      if (InvalidDecl)
-        BitWidth = 0;
-      else if (BitWidth) {
-        OwningExprResult InstantiatedBitWidth
-          = InstantiateExpr(BitWidth, 
-                            ClassTemplateSpec->getTemplateArgs(),
-                            ClassTemplateSpec->getNumTemplateArgs());
-        if (InstantiatedBitWidth.isInvalid()) {
-          Invalid = InvalidDecl = true;
-          BitWidth = 0;
-        } else
-          BitWidth = (Expr *)InstantiatedBitWidth.release();
-      }
-
-      FieldDecl *New = CheckFieldDecl(Field->getDeclName(), T,
-                                      ClassTemplateSpec, 
-                                      Field->getLocation(),
-                                      Field->isMutable(),
-                                      BitWidth,
-                                      Field->getAccess(),
-                                      0);
-      if (New) {
-        ClassTemplateSpec->addDecl(New);
-        Fields.push_back(New);
-
-        if (InvalidDecl)
-          New->setInvalidDecl();
-
-        if (New->isInvalidDecl())
-          Invalid = true;
-      }
-    } else if (StaticAssertDecl *SA = dyn_cast<StaticAssertDecl>(*Member)) {
-      Expr *AssertExpr = SA->getAssertExpr();
-      
-      OwningExprResult InstantiatedAssertExpr
-        = InstantiateExpr(AssertExpr, 
-                          ClassTemplateSpec->getTemplateArgs(),
-                          ClassTemplateSpec->getNumTemplateArgs());
-      if (!InstantiatedAssertExpr.isInvalid()) {
-        OwningExprResult Message = Clone(SA->getMessage());
-
-        Decl *New = 
-          (Decl *)ActOnStaticAssertDeclaration(SA->getLocation(), 
-                                               move(InstantiatedAssertExpr),
-                                               move(Message));
-        if (New->isInvalidDecl())
-          Invalid = true;
-          
-      } else
+    Decl *NewMember = InstantiateDecl(*Member, ClassTemplateSpec,
+                                      ClassTemplateSpec->getTemplateArgs(),
+                                      ClassTemplateSpec->getNumTemplateArgs());
+    if (NewMember) {
+      if (NewMember->isInvalidDecl())
         Invalid = true;
-    } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(*Member)) {
-      // FIXME: Spaghetti, anyone?
-      EnumDecl *New = EnumDecl::Create(Context, ClassTemplateSpec, 
-                                       Enum->getLocation(),
-                                       Enum->getIdentifier(),
-                                       /*PrevDecl=*/0);
-      ClassTemplateSpec->addDecl(New);
-      New->startDefinition();
-
-      llvm::SmallVector<DeclTy *, 16> Enumerators;
-
-      EnumConstantDecl *LastEnumConst = 0;
-      for (EnumDecl::enumerator_iterator EC = Enum->enumerator_begin(),
-                                      ECEnd = Enum->enumerator_end();
-           EC != ECEnd; ++EC) {
-        // The specified value for the enumerator.
-        OwningExprResult Value = Owned((Expr *)0);
-        if (Expr *UninstValue = EC->getInitExpr()) 
-          Value = InstantiateExpr(UninstValue, 
-                                  ClassTemplateSpec->getTemplateArgs(),
-                                  ClassTemplateSpec->getNumTemplateArgs());
-
-        // Drop the initial value and continue.
-        bool isInvalid = false;
-        if (Value.isInvalid()) {
-          Value = Owned((Expr *)0);
-          isInvalid = true;
-        }
-
-        EnumConstantDecl *NewEnumConst 
-          = CheckEnumConstant(New, LastEnumConst,
-                              EC->getLocation(),
-                              EC->getIdentifier(),
-                              move(Value));
-
-        if (isInvalid) {
-          if (NewEnumConst)
-            NewEnumConst->setInvalidDecl();
-          New->setInvalidDecl();
-          Invalid = true;
-        }
-
-        if (NewEnumConst) {
-          New->addDecl(NewEnumConst);
-          Enumerators.push_back(NewEnumConst);
-          LastEnumConst = NewEnumConst;
-        }
-      }
-      
-      ActOnEnumBody(New->getLocation(), New,
-                    &Enumerators[0], Enumerators.size());
+      else if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
+        Fields.push_back(Field);
+    } else {
+      // FIXME: Eventually, a NULL return will mean that one of the
+      // instantiations was a semantic disaster, and we'll want to set
+      // Invalid = true. For now, we expect to skip some members that
+      // we can't yet handle.
     }
   }
 
