@@ -3,8 +3,6 @@
 ; RUN: grep lqa     %t1.s | count 5
 ; RUN: grep lqd     %t1.s | count 11
 ; RUN: grep rotqbyi %t1.s | count 7
-; RUN: grep xshw    %t1.s | count 1
-; RUN: grep andi    %t1.s | count 5
 ; RUN: grep cbd     %t1.s | count 3
 ; RUN: grep chd     %t1.s | count 1
 ; RUN: grep cwd     %t1.s | count 3
@@ -14,8 +12,6 @@
 ; RUN: grep ilhu    %t2.s | count 16
 ; RUN: grep lqd     %t2.s | count 16
 ; RUN: grep rotqbyi %t2.s | count 7
-; RUN: grep xshw    %t2.s | count 1
-; RUN: grep andi    %t2.s | count 5
 ; RUN: grep cbd     %t2.s | count 3
 ; RUN: grep chd     %t2.s | count 1
 ; RUN: grep cwd     %t2.s | count 3

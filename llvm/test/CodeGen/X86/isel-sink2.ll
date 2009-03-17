@@ -1,5 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {movzbl.7(%...)}
-; RUN: llvm-as < %s | llc -march=x86 | not grep leal
+; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: grep {movb.7(%...)} %t
+; RUN: not grep leal %t
 
 define i8 @test(i32 *%P) nounwind {
   %Q = getelementptr i32* %P, i32 1

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {movsbl}
+; RUN: llvm-as < %s | llc -march=x86 | not grep {movsbl}
 
 @X = global i32 0               ; <i32*> [#uses=1]
 

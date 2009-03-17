@@ -979,15 +979,6 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     for (unsigned j = 0, f = NumValues; j != f; ++j) {
       MVT VT = ValueVTs[j];
 
-      // FIXME: C calling convention requires the return type to be promoted to
-      // at least 32-bit. But this is not necessary for non-C calling
-      // conventions.
-      if (VT.isInteger()) {
-        MVT MinVT = TLI.getRegisterType(MVT::i32);
-        if (VT.bitsLT(MinVT))
-          VT = MinVT;
-      }
-
       unsigned NumParts = TLI.getNumRegisters(VT);
       MVT PartVT = TLI.getRegisterType(VT);
       SmallVector<SDValue, 4> Parts(NumParts);

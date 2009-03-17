@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux-gnu > %t
-; RUN: grep {movzbl	%gs:i@NTPOFF, %eax} %t
+; RUN: grep {movb	%gs:i@NTPOFF, %al} %t
 
 @i = thread_local global i8 15
 
