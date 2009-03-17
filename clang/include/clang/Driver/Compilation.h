@@ -13,6 +13,7 @@
 #include "clang/Driver/Job.h"
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 namespace driver {
@@ -32,9 +33,14 @@ class Compilation {
   /// The root list of jobs.
   JobList Jobs;
 
-  /// TCArgs - Cache of translated arguments for a particular tool
-  /// chain.
+  /// Cache of translated arguments for a particular tool chain.
   llvm::DenseMap<const ToolChain*, ArgList*> TCArgs;
+
+  /// Temporary files which should be removed on exit.
+  llvm::SmallVector<const char*, 4> TempFiles;
+
+  /// Result files which should be removed on failure.
+  llvm::SmallVector<const char*, 4> ResultFiles;
 
 public:
   Compilation(ToolChain &DefaultToolChain, ArgList *Args);
@@ -47,6 +53,20 @@ public:
   /// translated by the tool chain \arg TC (or by the default tool
   /// chain, if TC is not specified).
   const ArgList &getArgsForToolChain(const ToolChain *TC = 0);
+
+  /// addTempFile - Add a file to remove on exit, and returns its
+  /// argument.
+  const char *addTempFile(const char *Name) { 
+    TempFiles.push_back(Name); 
+    return Name;
+  }
+
+  /// addResultFile - Add a file to remove on failure, and returns its
+  /// argument.
+  const char *addResultFile(const char *Name) {
+    ResultFiles.push_back(Name);
+    return Name;
+  }
 
   /// Execute - Execute the compilation jobs and return an
   /// appropriate exit code.
