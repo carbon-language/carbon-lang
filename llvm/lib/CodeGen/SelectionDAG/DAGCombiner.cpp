@@ -5164,30 +5164,35 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   }
 
   // If everything is good, we can make a shuffle operation.
+  MVT IndexVT = MVT::i32;
   if (VecIn1.getNode()) {
     SmallVector<SDValue, 8> BuildVecIndices;
     for (unsigned i = 0; i != NumInScalars; ++i) {
       if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
-        BuildVecIndices.push_back(DAG.getUNDEF(TLI.getPointerTy()));
+        BuildVecIndices.push_back(DAG.getUNDEF(IndexVT));
         continue;
       }
 
       SDValue Extract = N->getOperand(i);
 
       // If extracting from the first vector, just use the index directly.
+      SDValue ExtVal = Extract.getOperand(1);
       if (Extract.getOperand(0) == VecIn1) {
-        BuildVecIndices.push_back(Extract.getOperand(1));
+        if (ExtVal.getValueType() == IndexVT)
+          BuildVecIndices.push_back(ExtVal);
+        else {
+          unsigned Idx = cast<ConstantSDNode>(ExtVal)->getZExtValue();
+          BuildVecIndices.push_back(DAG.getConstant(Idx, IndexVT));
+        }
         continue;
       }
 
       // Otherwise, use InIdx + VecSize
-      unsigned Idx =
-        cast<ConstantSDNode>(Extract.getOperand(1))->getZExtValue();
-      BuildVecIndices.push_back(DAG.getIntPtrConstant(Idx+NumInScalars));
+      unsigned Idx = cast<ConstantSDNode>(ExtVal)->getZExtValue();
+      BuildVecIndices.push_back(DAG.getConstant(Idx+NumInScalars, IndexVT));
     }
 
     // Add count and size info.
-    MVT IndexVT = MVT::getIntegerVT(EltType.getSizeInBits());
     MVT BuildVecVT = MVT::getVectorVT(IndexVT, NumElts);
     if (!TLI.isTypeLegal(BuildVecVT) && LegalTypes)
       return SDValue();
