@@ -432,10 +432,13 @@ bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
   
   // If DESTBB *just* contains the switch, then we can forward edges from PREDBB
   // directly to their destination.  This does not introduce *any* code size
-  // growth.
+  // growth.  Skip debug info first.
+  BasicBlock::iterator BBI = DestBB->begin();
+  while (isa<DbgInfoIntrinsic>(BBI))
+    BBI++;
   
   // FIXME: Thread if it just contains a PHI.
-  if (isa<SwitchInst>(DestBB->begin())) {
+  if (isa<SwitchInst>(BBI)) {
     bool MadeChange = false;
     // Ignore the default edge for now.
     for (unsigned i = 1, e = DestSI->getNumSuccessors(); i != e; ++i) {
