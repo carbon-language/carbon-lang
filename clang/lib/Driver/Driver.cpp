@@ -79,6 +79,7 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
     }
 
     assert(Index > Prev && "Parser failed to consume argument.");
+    (void) Prev;
   }
 
   return Args;
