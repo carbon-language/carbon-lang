@@ -16,6 +16,7 @@
 #include "llvm/System/Program.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Compiler.h"
 #include <ostream>
 
 #if defined(HAVE_UNISTD_H)
@@ -142,7 +143,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
 
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   // Group exceptional cases into a single branch.
-  if (OutBufCur+Size > OutBufEnd) {
+  if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
     if (Unbuffered) {
       write_impl(Ptr, Size);
       return *this;
