@@ -44,4 +44,14 @@
 // RUN: grep -F '5: bind-arch, "i386", {3}, object' %t &&
 // RUN: grep -F '6: lipo, {4, 5}, object' %t &&
 
+// Arch defaulting
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s &> %t &&
+// RUN: grep -F '2: bind-arch, "i386", {1}, object' %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s -m32 -m64 &> %t &&
+// RUN: grep -F '2: bind-arch, "x86_64", {1}, object' %t &&
+// RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s &> %t &&
+// RUN: grep -F '2: bind-arch, "x86_64", {1}, object' %t &&
+// RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s -m64 -m32 &> %t &&
+// RUN: grep -F '2: bind-arch, "i386", {1}, object' %t &&
+
 // RUN: true

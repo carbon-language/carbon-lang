@@ -155,6 +155,8 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   ArgList *Args = ParseArgStrings(Start, End);
 
   Host = GetHostInfo(HostTriple);
+  // FIXME: This shouldn't live inside Driver, the default tool chain
+  // is part of the compilation (it is arg dependent).
   DefaultToolChain = Host->getToolChain(*Args);
 
   // FIXME: This behavior shouldn't be here.
@@ -306,7 +308,7 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) const {
   // When there is no explicit arch for this platform, get one from
   // the host so that -Xarch_ is handled correctly.
   if (!Archs.size()) {
-    const char *Arch = Host->getArchName().c_str();
+    const char *Arch = DefaultToolChain->getArchName().c_str();
     Archs.push_back(Arch);
   }
 
