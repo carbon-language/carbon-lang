@@ -123,30 +123,36 @@ void raw_ostream::flush_nonempty() {
 }
 
 raw_ostream &raw_ostream::write(unsigned char C) {
-  if (Unbuffered) {
-    write_impl(reinterpret_cast<char*>(&C), 1);
-    return *this;
+  // Group exceptional cases into a single branch.
+  if (OutBufCur >= OutBufEnd) {
+    if (Unbuffered) {
+      write_impl(reinterpret_cast<char*>(&C), 1);
+      return *this;
+    }
+    
+    if (!OutBufStart)
+      SetBufferSize();
+    else
+      flush_nonempty();
   }
-
-  if (!OutBufStart)
-    SetBufferSize();
-  else if (OutBufCur >= OutBufEnd)
-    flush_nonempty();
 
   *OutBufCur++ = C;
   return *this;
 }
 
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
-  if (Unbuffered) {
-    write_impl(Ptr, Size);
-    return *this;
-  }
+  // Group exceptional cases into a single branch.
+  if (OutBufCur+Size > OutBufEnd) {
+    if (Unbuffered) {
+      write_impl(Ptr, Size);
+      return *this;
+    }
     
-  if (!OutBufStart)
-    SetBufferSize();
-  else if (OutBufCur+Size > OutBufEnd)
-    flush_nonempty();
+    if (!OutBufStart)
+      SetBufferSize();
+    else
+      flush_nonempty();
+  }
   
   // Handle short strings specially, memcpy isn't very good at very short
   // strings.
@@ -176,8 +182,14 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
 
 // Formatted output.
 raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
-  // If we have more than a few bytes left in our output buffer, try formatting
-  // directly onto its end.
+  // If we have more than a few bytes left in our output buffer, try
+  // formatting directly onto its end.
+  //
+  // FIXME: This test is a bit silly, since if we don't have enough
+  // space in the buffer we will have to flush the formatted output
+  // anyway. We should just flush upfront in such cases, and use the
+  // whole buffer as our scratch pad. Note, however, that this case is
+  // also necessary for correctness on unbuffered streams.
   unsigned NextBufferSize = 127;
   if (OutBufEnd-OutBufCur > 3) {
     unsigned BufferBytesLeft = OutBufEnd-OutBufCur;
