@@ -1845,13 +1845,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     isVirtualOkay = (SC != FunctionDecl::Static);
   } else {
+    bool HasPrototype =
+       getLangOptions().CPlusPlus ||
+       (D.getNumTypeObjects() && D.getTypeObject(0).Fun.hasPrototype);
+    
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
-                                 Name, R, SC, isInline, 
-                                 /*hasPrototype=*/
-                                   (getLangOptions().CPlusPlus ||
-                                    (D.getNumTypeObjects() &&
-                                     D.getTypeObject(0).Fun.hasPrototype)),
+                                 Name, R, SC, isInline, HasPrototype,
                                  // FIXME: Move to DeclGroup...
                                  D.getDeclSpec().getSourceRange().getBegin());
   }
