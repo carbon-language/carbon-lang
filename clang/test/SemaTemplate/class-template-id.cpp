@@ -27,3 +27,4 @@ B<17 + 2> *bar(B<(19)> *ptr1, B< (::value + 7) > *ptr2, B<19 - 3> *ptr3) {
     return ptr3; // expected-error{{incompatible type returning 'B<19 - 3> *', expected 'B<17 + 2> *'}}
 }
 
+typedef B<5> B5;
