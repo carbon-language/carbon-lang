@@ -16,13 +16,19 @@ namespace driver {
   
 /// Tool - Information on a specific compilation tool.
 class Tool {
+  /// The tool name (for debugging).
+  const char *Name;
+
+  /// The tool chain this tool is a part of.
   const ToolChain &TheToolChain;
 
 public:
-  Tool(const ToolChain &TC);
+  Tool(const char *Name, const ToolChain &TC);
 
 public:
   virtual ~Tool();
+
+  const char *getName() const { return Name; }
 
   const ToolChain &getToolChain() const { return TheToolChain; }
 

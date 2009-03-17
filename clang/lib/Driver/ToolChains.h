@@ -47,17 +47,17 @@ public:
       default:
         assert(0 && "Invalid tool kind.");
       case Action::PreprocessJobClass: 
-        T = new tools::GCC_Preprocess(*this); break;
+        T = new tools::gcc::Preprocess(*this); break;
       case Action::PrecompileJobClass: 
-        T = new tools::GCC_Precompile(*this); break;
+        T = new tools::gcc::Precompile(*this); break;
       case Action::AnalyzeJobClass: 
         T = new tools::Clang(*this); break;
       case Action::CompileJobClass: 
-        T = new tools::GCC_Compile(*this); break;
+        T = new tools::gcc::Compile(*this); break;
       case Action::AssembleJobClass: 
-        T = new tools::GCC_Assemble(*this); break;
+        T = new tools::gcc::Assemble(*this); break;
       case Action::LinkJobClass: 
-        T = new tools::GCC_Assemble(*this); break;
+        T = new tools::gcc::Link(*this); break;
       }
     }
 

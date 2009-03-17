@@ -20,57 +20,60 @@ namespace tools {
 
   class VISIBILITY_HIDDEN Clang : public Tool {
   public:
-    Clang(const ToolChain &TC) : Tool(TC) {}
+    Clang(const ToolChain &TC) : Tool("clang", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
-  class VISIBILITY_HIDDEN GCC_Preprocess : public Tool {
+  /// gcc - Generic GCC tool implementations.
+namespace gcc {
+  class VISIBILITY_HIDDEN Preprocess : public Tool {
   public:
-    GCC_Preprocess(const ToolChain &TC) : Tool(TC) {}
+    Preprocess(const ToolChain &TC) : Tool("gcc::Preprocess", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
   };
 
-  class VISIBILITY_HIDDEN GCC_Precompile : public Tool  {
+  class VISIBILITY_HIDDEN Precompile : public Tool  {
   public:
-    GCC_Precompile(const ToolChain &TC) : Tool(TC) {}
+    Precompile(const ToolChain &TC) : Tool("gcc::Precompile", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
-  class VISIBILITY_HIDDEN GCC_Compile : public Tool  {
+  class VISIBILITY_HIDDEN Compile : public Tool  {
   public:
-    GCC_Compile(const ToolChain &TC) : Tool(TC) {}
+    Compile(const ToolChain &TC) : Tool("gcc::Compile", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
-  class VISIBILITY_HIDDEN GCC_Assemble : public Tool  {
+  class VISIBILITY_HIDDEN Assemble : public Tool  {
   public:
-    GCC_Assemble(const ToolChain &TC) : Tool(TC) {}
+    Assemble(const ToolChain &TC) : Tool("gcc::Assemble", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
   };
 
-  class VISIBILITY_HIDDEN GCC_Link : public Tool  {
+  class VISIBILITY_HIDDEN Link : public Tool  {
   public:
-    GCC_Link(const ToolChain &TC) : Tool(TC) {}
+    Link(const ToolChain &TC) : Tool("gcc::Link", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
   };
+} // end namespace gcc
 
 } // end namespace toolchains
 } // end namespace driver
