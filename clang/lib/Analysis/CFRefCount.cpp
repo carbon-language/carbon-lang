@@ -220,12 +220,9 @@ static bool isRefType(QualType RetTy, const char* prefix,
 namespace {
 /// ArgEffect is used to summarize a function/method call's effect on a
 /// particular argument.
-enum ArgEffect { IncRefMsg, IncRef,  
-                 DecRefMsg, DecRef,
-                 MakeCollectable,
-                 DoNothing, DoNothingByRef,
-                 StopTracking, MayEscape, SelfOwn, Autorelease,
-                 NewAutoreleasePool };
+enum ArgEffect { Autorelease, Dealloc, DecRef, DecRefMsg, DoNothing,
+                 DoNothingByRef, IncRefMsg, IncRef, MakeCollectable, MayEscape,
+                 NewAutoreleasePool, SelfOwn, StopTracking };
 
 /// ArgEffects summarizes the effects of a function/method call on all of
 /// its arguments.
@@ -1155,6 +1152,10 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   // Create the "drain" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
   addNSObjectMethSummary(GetNullarySelector("drain", Ctx), Summ);
+  
+  // Create the -dealloc summary.
+  Summ = getPersistentSummary(RetEffect::MakeNoRet(), Dealloc);
+  addNSObjectMethSummary(GetNullarySelector("dealloc", Ctx), Summ);
 
   // Create the "autorelease" selector.
   Summ = getPersistentSummary(E, Autorelease);
@@ -1215,8 +1216,12 @@ public:
     Released,  // Object has been released.
     ReturnedOwned, // Returned object passes ownership to caller.
     ReturnedNotOwned, // Return object does not pass ownership to caller.
+    ERROR_START,
+    ErrorDeallocNotOwned, // -dealloc called on non-owned object.
+    ErrorDeallocGC, // Calling -dealloc with GC enabled.
     ErrorUseAfterRelease, // Object used after released.    
     ErrorReleaseNotOwned, // Release of an object that was not owned.
+    ERROR_LEAK_START,
     ErrorLeak,  // A memory leak due to excessive reference counts.
     ErrorLeakReturned // A memory leak due to the returning method not having
                       // the correct naming conventions.            
@@ -1239,14 +1244,16 @@ public:
   
   RetEffect::ObjKind getObjKind() const { return okind; }
 
-  unsigned getCount() const { return Cnt; }  
+  unsigned getCount() const { return Cnt; }    
+  void clearCounts() { Cnt = 0; }
+  
   QualType getType() const { return T; }
   
   // Useful predicates.
   
-  static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
+  static bool isError(Kind k) { return k >= ERROR_START; }
   
-  static bool isLeak(Kind k) { return k >= ErrorLeak; }
+  static bool isLeak(Kind k) { return k >= ERROR_LEAK_START; }
   
   bool isOwned() const {
     return getKind() == Owned;
@@ -1268,8 +1275,6 @@ public:
     Kind k = getKind();
     return isError(k) && !isLeak(k);
   }
-  
-  // State creation: normal state.
   
   static RefVal makeOwned(RetEffect::ObjKind o, QualType t,
                           unsigned Count = 1) {
@@ -1306,7 +1311,7 @@ public:
   RefVal operator^(Kind k) const {
     return RefVal(k, getObjKind(), getCount(), getType());
   }
-  
+    
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) kind);
     ID.AddInteger(Cnt);
@@ -1352,6 +1357,14 @@ void RefVal::print(std::ostream& Out) const {
             
     case Released:
       Out << "Released";
+      break;
+
+    case ErrorDeallocGC:
+      Out << "-dealloc (GC)";
+      break;
+    
+    case ErrorDeallocNotOwned:
+      Out << "-dealloc (not-owned)";
       break;
       
     case ErrorLeak:
@@ -1439,6 +1452,7 @@ private:
   ARCounts::Factory    ARCountFactory;
 
   BugType *useAfterRelease, *releaseNotOwned;
+  BugType *deallocGC, *deallocNotOwned;
   BugType *leakWithinFunction, *leakAtReturn;
   BugReporter *BR;
   
@@ -1459,7 +1473,8 @@ private:
 public:  
   CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
-      LOpts(lopts), useAfterRelease(0), releaseNotOwned(0), 
+      LOpts(lopts), useAfterRelease(0), releaseNotOwned(0),
+      deallocGC(0), deallocNotOwned(0),
       leakWithinFunction(0), leakAtReturn(0), BR(0) {}
   
   virtual ~CFRefCount() {}
@@ -2150,9 +2165,39 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
                                                  NewAutoreleasePool; break;
   }
   
+  // Handle all use-after-releases.
+  if (!isGCEnabled() && V.getKind() == RefVal::Released) {
+    V = V ^ RefVal::ErrorUseAfterRelease;
+    hasErr = V.getKind();
+    return state.set<RefBindings>(sym, V);
+  }      
+  
   switch (E) {
     default:
       assert (false && "Unhandled CFRef transition.");
+      
+    case Dealloc:
+      // Any use of -dealloc in GC is *bad*.
+      if (isGCEnabled()) {
+        V = V ^ RefVal::ErrorDeallocGC;
+        hasErr = V.getKind();
+        break;
+      }
+      
+      switch (V.getKind()) {
+        default:
+          assert(false && "Invalid case.");
+        case RefVal::Owned:
+          // The object immediately transitions to the released state.
+          V = V ^ RefVal::Released;
+          V.clearCounts();
+          return state.set<RefBindings>(sym, V);
+        case RefVal::NotOwned:
+          V = V ^ RefVal::ErrorDeallocNotOwned;
+          hasErr = V.getKind();
+          break;
+      }      
+      break;
 
     case NewAutoreleasePool:
       assert(!isGCEnabled());
@@ -2163,20 +2208,19 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
         V = V ^ RefVal::NotOwned;
         break;
       }
+
       // Fall-through.
       
     case DoNothingByRef:
     case DoNothing:
-      if (!isGCEnabled() && V.getKind() == RefVal::Released) {
-        V = V ^ RefVal::ErrorUseAfterRelease;
-        hasErr = V.getKind();
-        break;
-      }      
       return state;
 
     case Autorelease:
-      if (isGCEnabled()) return state;
-      // Fall-through.      
+      if (isGCEnabled())
+        return state;
+
+      // Fall-through.
+      
     case StopTracking:
       return state.remove<RefBindings>(sym);
 
@@ -2190,12 +2234,9 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
           V = V + 1;
           break;          
         case RefVal::Released:
-          if (isGCEnabled())
-            V = (V ^ RefVal::Owned) + 1;
-          else {          
-            V = V ^ RefVal::ErrorUseAfterRelease;
-            hasErr = V.getKind();
-          }
+          // Non-GC cases are handled above.
+          assert(isGCEnabled());
+          V = (V ^ RefVal::Owned) + 1;
           break;
       }      
       break;
@@ -2206,6 +2247,7 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
     case DecRef:
       switch (V.getKind()) {
         default:
+          // case 'RefVal::Released' handled above.
           assert (false);
 
         case RefVal::Owned:
@@ -2222,11 +2264,13 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
             hasErr = V.getKind();
           }          
           break;
-
+          
         case RefVal::Released:
+          // Non-GC cases are handled above.
+          assert(isGCEnabled());
           V = V ^ RefVal::ErrorUseAfterRelease;
           hasErr = V.getKind();
-          break;          
+          break;  
       }      
       break;
   }
@@ -2280,6 +2324,26 @@ namespace {
       "the object is not owned at this point by the caller)";
     }
   };
+  
+  class VISIBILITY_HIDDEN DeallocGC : public CFRefBug {
+  public:
+    DeallocGC(CFRefCount *tf) : CFRefBug(tf,
+                                         "-dealloc called while using GC") {}
+    
+    const char *getDescription() const {
+      return "-dealloc called while using GC";
+    }
+  };
+  
+  class VISIBILITY_HIDDEN DeallocNotOwned : public CFRefBug {
+  public:
+    DeallocNotOwned(CFRefCount *tf) : CFRefBug(tf,
+                            "-dealloc sent to non-exclusively owned object") {}
+    
+    const char *getDescription() const {
+      return "-dealloc sent to object that may be referenced elsewhere";
+    }
+  };  
   
   class VISIBILITY_HIDDEN Leak : public CFRefBug {
     const bool isReturn;
@@ -2371,6 +2435,12 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
   
   releaseNotOwned = new BadRelease(this);
   BR.Register(releaseNotOwned);
+  
+  deallocGC = new DeallocGC(this);
+  BR.Register(deallocGC);
+  
+  deallocNotOwned = new DeallocNotOwned(this);
+  BR.Register(deallocNotOwned);
   
   // First register "return" leaks.
   const char* name = 0;
@@ -2559,6 +2629,19 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   do {
     // Get the previous type state.
     RefVal PrevV = *PrevT;
+    
+    // Specially handle -dealloc.
+    if (!TF.isGCEnabled() && contains(AEffects, Dealloc)) {
+      // Determine if the object's reference count was pushed to zero.
+      assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
+      // We may not have transitioned to 'release' if we hit an error.
+      // This case is handled elsewhere.
+      if (CurrV.getKind() == RefVal::Released) {
+        assert(CurrV.getCount() == 0);
+        os << "Object released by directly sending the '-dealloc' message";
+        break;
+      }
+    }
 
     // Specially handle CFMakeCollectable and friends.
     if (contains(AEffects, MakeCollectable)) {
@@ -2737,10 +2820,9 @@ GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode<GRState>* N,
 
 PathDiagnosticPiece*
 CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
-
-  GRBugReporter& BR = cast<GRBugReporter>(br);
   // Tell the BugReporter to report cases when the tracked symbol is
   // assigned to different variables, etc.
+  GRBugReporter& BR = cast<GRBugReporter>(br);
   cast<GRBugReporter>(BR).addNotableSymbol(Sym);
   return RangedBugReport::getEndPath(BR, EndN);
 }
@@ -3016,11 +3098,22 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
   
   CFRefBug *BT = 0;
   
-  if (hasErr == RefVal::ErrorUseAfterRelease)
-    BT = static_cast<CFRefBug*>(useAfterRelease);
-  else {
-    assert(hasErr == RefVal::ErrorReleaseNotOwned);
-    BT = static_cast<CFRefBug*>(releaseNotOwned);
+  switch (hasErr) {
+    default:
+      assert(false && "Unhandled error.");
+      return;
+    case RefVal::ErrorUseAfterRelease:
+      BT = static_cast<CFRefBug*>(useAfterRelease);
+      break;      
+    case RefVal::ErrorReleaseNotOwned:
+      BT = static_cast<CFRefBug*>(releaseNotOwned);
+      break;
+    case RefVal::ErrorDeallocGC:
+      BT = static_cast<CFRefBug*>(deallocGC);
+      break;
+    case RefVal::ErrorDeallocNotOwned:
+      BT = static_cast<CFRefBug*>(deallocNotOwned);
+      break;
   }
     
   CFRefReport *report = new CFRefReport(*BT, *this, N, Sym);
