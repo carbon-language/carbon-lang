@@ -33,7 +33,7 @@ HostInfo::HostInfo(const Driver &D, const char *_Arch, const char *_Platform,
 HostInfo::~HostInfo() {
 }
 
-namespace VISIBILITY_HIDDEN {
+namespace {
 
 // Darwin Host Info
 
