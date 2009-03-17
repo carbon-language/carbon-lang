@@ -11,6 +11,7 @@
 #define CLANG_LIB_DRIVER_INPUTINFO_H_
 
 #include <cassert>
+#include <string>
 
 namespace clang {
 namespace driver {
@@ -28,6 +29,10 @@ class InputInfo {
 
 public:
   InputInfo() {}
+  InputInfo(types::ID _Type, const char *_BaseInput)
+    : IsPipe(false), Type(_Type), BaseInput(_BaseInput) {
+    Data.Filename = 0;
+  }
   InputInfo(const char *Filename, types::ID _Type, const char *_BaseInput)
     : IsPipe(false), Type(_Type), BaseInput(_BaseInput) {
     Data.Filename = Filename;
@@ -48,6 +53,17 @@ public:
   PipedJob &getPipe() const {
     assert(isPipe() && "Invalid accessor.");
     return *Data.Pipe;
+  }
+
+  /// getAsString - Return a string name for this input, for
+  /// debugging.
+  std::string getAsString() const {
+    if (isPipe())
+      return "(pipe)";
+    else if (const char *N = getInputFilename())
+      return std::string("\"") + N + '"';
+    else
+      return "(nothing)";
   }
 };
 

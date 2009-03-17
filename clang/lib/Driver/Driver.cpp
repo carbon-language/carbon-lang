@@ -40,7 +40,7 @@ Driver::Driver(const char *_Name, const char *_Dir,
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     DefaultImageName(_DefaultImageName),
     Host(0),
-    CCCIsCXX(false), CCCEcho(false), 
+    CCCIsCXX(false), CCCEcho(false), CCCPrintBindings(false),
     CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false),
     SuppressMissingInputWarning(false)
 {
@@ -114,6 +114,8 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
       CCCPrintOptions = true;
     } else if (!strcmp(Opt, "print-phases")) {
       CCCPrintActions = true;
+    } else if (!strcmp(Opt, "print-bindings")) {
+      CCCPrintBindings = true;
     } else if (!strcmp(Opt, "cxx")) {
       CCCIsCXX = true;
     } else if (!strcmp(Opt, "echo")) {
@@ -729,27 +731,32 @@ void Driver::BuildJobsForAction(Compilation &C,
 
   // Determine the place to write output to (nothing, pipe, or
   // filename) and where to put the new job.
-  PipedJob *OutputJob = 0;
-  const char *Output = 0;
   if (JA->getType() == types::TY_Nothing) {
-    ;
+    Result = InputInfo(A->getType(), BaseInput);
   } else if (OutputToPipe) {
     // Append to current piped job or create a new one as appropriate.
-    if (PipedJob *PJ = dyn_cast<PipedJob>(Dest)) {
-      OutputJob = PJ;
-      Dest = OutputJob;
-    } else {
-      OutputJob = new PipedJob();
-      cast<JobList>(Dest)->addJob(OutputJob);
-      Dest = OutputJob;
+    PipedJob *PJ = dyn_cast<PipedJob>(Dest);
+    if (!PJ) {
+      PJ = new PipedJob();
+      cast<JobList>(Dest)->addJob(PJ);
     }
+    Result = InputInfo(PJ, A->getType(), BaseInput);
   } else {
-    Output = GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel);
+    Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel),
+                       A->getType(), BaseInput);
   }
 
-  // FIXME: Make the job.
-
-  Result = InputInfo(Output, A->getType(), BaseInput);
+  if (CCCPrintBindings) {
+    llvm::errs() << "bind - \"" << T.getName() << "\", inputs: [";
+    for (unsigned i = 0, e = InputInfos.size(); i != e; ++i) {
+      llvm::errs() << InputInfos[i].getAsString();
+      if (i + 1 != e)
+        llvm::errs() << ", ";
+    }
+    llvm::errs() << "], output: " << Result.getAsString() << "\n";
+  } else {
+    assert(0 && "FIXME: Make the job.");
+  }
 }
 
 const char *Driver::GetNamedOutputPath(Compilation &C, 

@@ -78,6 +78,9 @@ public:
   /// Echo commands while executing (in -v style).
   bool CCCEcho : 1;
 
+  /// Only print tool bindings, don't build any jobs.
+  bool CCCPrintBindings : 1;
+
   /// Don't use clang for any tasks.
   bool CCCNoClang : 1;
 
