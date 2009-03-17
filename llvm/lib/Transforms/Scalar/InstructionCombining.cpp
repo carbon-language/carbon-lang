@@ -7533,7 +7533,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     if (isa<ConstantInt>(NumElements))
       Amt = Multiply(cast<ConstantInt>(NumElements), cast<ConstantInt>(Amt));
     // otherwise multiply the amount and the number of elements
-    else if (Scale != 1) {
+    else {
       Instruction *Tmp = BinaryOperator::CreateMul(Amt, NumElements, "tmp");
       Amt = InsertNewInstBefore(Tmp, AI);
     }
@@ -10979,8 +10979,8 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
   if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized()) {
     // If alloca'ing a zero byte object, replace the alloca with a null pointer.
-    // Note that we only do this for alloca's, because malloc should allocate and
-    // return a unique pointer, even for a zero byte allocation.
+    // Note that we only do this for alloca's, because malloc should allocate
+    // and return a unique pointer, even for a zero byte allocation.
     if (TD->getTypePaddedSize(AI.getAllocatedType()) == 0)
       return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
 
