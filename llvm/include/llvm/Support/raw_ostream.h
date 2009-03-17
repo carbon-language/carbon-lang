@@ -119,11 +119,13 @@ public:
   }
 
   raw_ostream &operator<<(const char *Str) {
-    return write(Str, strlen(Str));
+    write(Str, strlen(Str));
+    return *this;
   }
 
   raw_ostream &operator<<(const std::string& Str) {
-    return write(Str.data(), Str.length());
+    write(Str.data(), Str.length());
+    return *this;
   }
 
   raw_ostream &operator<<(unsigned long N);
@@ -132,15 +134,18 @@ public:
   raw_ostream &operator<<(long long N);
   raw_ostream &operator<<(const void *P);
   raw_ostream &operator<<(unsigned int N) {
-    return this->operator<<(static_cast<unsigned long>(N));
+    this->operator<<(static_cast<unsigned long>(N));
+    return *this;
   }
 
   raw_ostream &operator<<(int N) {
-    return this->operator<<(static_cast<long>(N));
+    this->operator<<(static_cast<long>(N));
+    return *this;
   }
 
   raw_ostream &operator<<(double N) {
-    return this->operator<<(ftostr(N));
+    this->operator<<(ftostr(N));
+    return *this;
   }
 
   raw_ostream &write(unsigned char C);
