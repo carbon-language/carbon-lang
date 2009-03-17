@@ -549,7 +549,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
     EndBlock = createBasicBlock("cleanup.end");
     
     llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
-
+    
     Builder.SetInsertPoint(SwitchBlock);
 
     llvm::Value *DestCodePtr = CreateTempAlloca(llvm::Type::Int32Ty, 
@@ -561,9 +561,14 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
                                                 BranchFixups.size());
 
     // Restore the current basic block (if any)
-    if (CurBB)
+    if (CurBB) {
       Builder.SetInsertPoint(CurBB);
-    else
+      
+      // If we had a current basic block, we also need to emit an instruction
+      // to initialize the cleanup destination.
+      Builder.CreateStore(llvm::Constant::getNullValue(llvm::Type::Int32Ty),
+                          DestCodePtr);
+    } else
       Builder.ClearInsertionPoint();
 
     for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
