@@ -35,13 +35,21 @@ namespace driver {
 
   private:
     /// List of argument strings used by the contained Args.
-    ArgStringList ArgStrings;
+    ///
+    /// This is mutable since we treat the ArgList as being the list
+    /// of Args, and allow routines to add new strings (to have a
+    /// convenient place to store the memory) via MakeIndex.
+    mutable ArgStringList ArgStrings;
+
+    /// Strings for synthesized arguments.
+    ///
+    /// This is mutable since we treat the ArgList as being the list
+    /// of Args, and allow routines to add new strings (to have a
+    /// convenient place to store the memory) via MakeIndex.
+    mutable std::list<std::string> SynthesizedStrings;
 
     /// The full list of arguments.
     arglist_type Args;
-
-    /// Strings for synthesized arguments.
-    std::list<std::string> SynthesizedStrings;
 
   public:
     ArgList(const char **ArgBegin, const char **ArgEnd);
@@ -79,25 +87,29 @@ namespace driver {
 
   private:    
     /// MakeIndex - Get an index for the given string(s).
-    unsigned MakeIndex(const char *String0);
-    unsigned MakeIndex(const char *String0, const char *String1);
+    unsigned MakeIndex(const char *String0) const;
+    unsigned MakeIndex(const char *String0, const char *String1) const;
 
   public:
+    /// MakeArgString - Construct a constant string pointer whose
+    /// lifetime will match that of the ArgList.
+    const char *MakeArgString(const char *Str) const;
+
     /// MakeFlagArg - Construct a new FlagArg for the given option
     /// \arg Id.
-    Arg *MakeFlagArg(const Option *Opt);
+    Arg *MakeFlagArg(const Option *Opt) const;
 
     /// MakePositionalArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakePositionalArg(const Option *Opt, const char *Value);
+    Arg *MakePositionalArg(const Option *Opt, const char *Value) const;
 
     /// MakeSeparateArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeSeparateArg(const Option *Opt, const char *Value);
+    Arg *MakeSeparateArg(const Option *Opt, const char *Value) const;
 
     /// MakeJoinedArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeJoinedArg(const Option *Opt, const char *Value);
+    Arg *MakeJoinedArg(const Option *Opt, const char *Value) const;
 
     /// @}
   };

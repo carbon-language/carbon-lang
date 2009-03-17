@@ -44,7 +44,7 @@ Arg *ArgList::getLastArg(options::ID Id, bool Claim) const {
   return 0;
 }
 
-unsigned ArgList::MakeIndex(const char *String0) {
+unsigned ArgList::MakeIndex(const char *String0) const {
   unsigned Index = ArgStrings.size();
 
   // Tuck away so we have a reliable const char *.
@@ -54,7 +54,7 @@ unsigned ArgList::MakeIndex(const char *String0) {
   return Index;
 }
 
-unsigned ArgList::MakeIndex(const char *String0, const char *String1) {
+unsigned ArgList::MakeIndex(const char *String0, const char *String1) const {
   unsigned Index0 = MakeIndex(String0);
   unsigned Index1 = MakeIndex(String1);
   assert(Index0 + 1 == Index1 && "Unexpected non-consecutive indices!");
@@ -62,19 +62,23 @@ unsigned ArgList::MakeIndex(const char *String0, const char *String1) {
   return Index0;
 }
 
-Arg *ArgList::MakeFlagArg(const Option *Opt) {
+const char *ArgList::MakeArgString(const char *Str) const {
+  return getArgString(MakeIndex(Str));
+}
+
+Arg *ArgList::MakeFlagArg(const Option *Opt) const {
   return new FlagArg(Opt, MakeIndex(Opt->getName()));
 }
 
-Arg *ArgList::MakePositionalArg(const Option *Opt, const char *Value) {
+Arg *ArgList::MakePositionalArg(const Option *Opt, const char *Value) const {
   return new PositionalArg(Opt, MakeIndex(Value));
 }
 
-Arg *ArgList::MakeSeparateArg(const Option *Opt, const char *Value) {
+Arg *ArgList::MakeSeparateArg(const Option *Opt, const char *Value) const {
   return new SeparateArg(Opt, MakeIndex(Opt->getName(), Value), 1);
 }
 
-Arg *ArgList::MakeJoinedArg(const Option *Opt, const char *Value) {
+Arg *ArgList::MakeJoinedArg(const Option *Opt, const char *Value) const {
   std::string Joined(Opt->getName());
   Joined += Value;
   return new JoinedArg(Opt, MakeIndex(Joined.c_str()));
