@@ -17,18 +17,17 @@ namespace clang {
 namespace driver {
   class ArgList;
   class Compilation;
-  class Driver;
+  class HostInfo;
   class JobAction;
   class Tool;
 
 /// ToolChain - Access to tools for a single platform.
 class ToolChain {
-  Driver &TheDriver;
-
+  const HostInfo &Host;
   std::string Arch, Platform, OS;
 
 protected:
-  ToolChain(Driver &D, const char *_Arch, const char *_Platform, 
+  ToolChain(const HostInfo &Host, const char *_Arch, const char *_Platform, 
             const char *_OS);
 
 public:
@@ -36,6 +35,7 @@ public:
 
   // Accessors
 
+  const HostInfo &getHost() const { return Host; }
   const std::string &getArchName() const { return Arch; }
   const std::string &getPlatform() const { return Platform; }
   const std::string &getOS() const { return OS; }
@@ -44,7 +44,10 @@ public:
 
   /// TranslateArgs - Create a new derived argument list for any
   /// argument translations this ToolChain may wish to perform.
-  virtual ArgList *TranslateArgs(const ArgList &Args) const = 0;
+  ///
+  /// The client implementation is free to return Args directly if no
+  /// translations need to be performed.
+  virtual ArgList *TranslateArgs(ArgList &Args) const = 0;
 
   /// SelectTool - Choose a tool to use to handle the action \arg JA.
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const = 0;
