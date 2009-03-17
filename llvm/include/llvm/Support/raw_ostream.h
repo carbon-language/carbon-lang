@@ -31,10 +31,16 @@ namespace llvm {
 /// a chunk at a time.
 class raw_ostream {
 private:
-  /// \invariant { The buffer is uninitialized (OutBufStart,
-  /// OutBufEnd, and OutBufCur are non-zero), or none of them are zero
-  /// and there are at least 64 total bytes in the buffer. }
-
+  /// The buffer is handled in such a way that the buffer is
+  /// uninitialized, unbuffered, or out of space when OutBufCur >=
+  /// OutBufEnd. Thus a single comparison suffices to determine if we
+  /// need to take the slow path to write a single character.
+  ///
+  /// The buffer is in one of three states:
+  ///  1. Unbuffered (Unbuffered == true)
+  ///  1. Uninitialized (Unbuffered == false && OutBufStart == 0).
+  ///  2. Buffered (Unbuffered == false && OutBufStart != 0 &&
+  ///               OutBufEnd - OutBufStart >= 64).
   char *OutBufStart, *OutBufEnd, *OutBufCur;
   bool Unbuffered;
 
@@ -54,7 +60,7 @@ public:
 
   /// SetBufferSize - Set the internal buffer size to the specified amount
   /// instead of the default.
-  void SetBufferSize(unsigned Size) {
+  void SetBufferSize(unsigned Size=4096) {
     assert(Size >= 64 &&
            "Buffer size must be somewhat large for invariants to hold");
     flush();
@@ -63,16 +69,19 @@ public:
     OutBufStart = new char[Size];
     OutBufEnd = OutBufStart+Size;
     OutBufCur = OutBufStart;
+    Unbuffered = false;
   }
 
   /// SetUnbuffered - Set the streams buffering status. When
   /// unbuffered the stream will flush after every write. This routine
   /// will also flush the buffer immediately when the stream is being
   /// set to unbuffered.
-  void SetUnbuffered(bool unbuffered) {
-    Unbuffered = unbuffered;
-    if (Unbuffered)
-      flush();
+  void SetUnbuffered() {
+    flush();
+    
+    delete [] OutBufStart;
+    OutBufStart = OutBufEnd = OutBufCur = 0;
+    Unbuffered = true;
   }
 
   unsigned GetNumBytesInBuffer() const {
@@ -92,8 +101,6 @@ public:
     if (OutBufCur >= OutBufEnd)
       return write(C);
     *OutBufCur++ = C;
-    if (Unbuffered)
-      flush_nonempty();
     return *this;
   }
 
@@ -101,8 +108,6 @@ public:
     if (OutBufCur >= OutBufEnd)
       return write(C);
     *OutBufCur++ = C;
-    if (Unbuffered)
-      flush_nonempty();
     return *this;
   }
 
@@ -110,8 +115,6 @@ public:
     if (OutBufCur >= OutBufEnd)
       return write(C);
     *OutBufCur++ = C;
-    if (Unbuffered)
-      flush_nonempty();
     return *this;
   }
 

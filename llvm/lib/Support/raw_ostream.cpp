@@ -123,8 +123,13 @@ void raw_ostream::flush_nonempty() {
 }
 
 raw_ostream &raw_ostream::write(unsigned char C) {
+  if (Unbuffered) {
+    write_impl(reinterpret_cast<char*>(&C), 1);
+    return *this;
+  }
+
   if (!OutBufStart)
-    SetBufferSize(4096);
+    SetBufferSize();
   else if (OutBufCur >= OutBufEnd)
     flush_nonempty();
 
@@ -133,8 +138,13 @@ raw_ostream &raw_ostream::write(unsigned char C) {
 }
 
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
+  if (Unbuffered) {
+    write_impl(Ptr, Size);
+    return *this;
+  }
+    
   if (!OutBufStart)
-    SetBufferSize(4096);
+    SetBufferSize();
   else if (OutBufCur+Size > OutBufEnd)
     flush_nonempty();
   
@@ -161,8 +171,6 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   }
   OutBufCur += Size;
 
-  if (Unbuffered)
-    flush();
   return *this;
 }
 
