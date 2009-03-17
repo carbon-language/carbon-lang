@@ -3755,6 +3755,57 @@ void Sema::ActOnFields(Scope* S,
     ProcessDeclAttributeList(Record, Attr);
 }
 
+EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
+                                          EnumConstantDecl *LastEnumConst,
+                                          SourceLocation IdLoc,
+                                          IdentifierInfo *Id,
+                                          ExprArg val) {
+  Expr *Val = (Expr *)val.get();
+
+  llvm::APSInt EnumVal(32);
+  QualType EltTy;
+  if (Val && !Val->isTypeDependent()) {
+    // Make sure to promote the operand type to int.
+    UsualUnaryConversions(Val);
+    if (Val != val.get()) {
+      val.release();
+      val = Val;
+    }
+
+    // C99 6.7.2.2p2: Make sure we have an integer constant expression.
+    SourceLocation ExpLoc;
+    if (!Val->isValueDependent() &&
+        VerifyIntegerConstantExpression(Val, &EnumVal)) {
+      Val = 0;
+    } else {
+      EltTy = Val->getType();
+    }
+  }
+  
+  if (!Val) {
+    if (LastEnumConst) {
+      // Assign the last value + 1.
+      EnumVal = LastEnumConst->getInitVal();
+      ++EnumVal;
+
+      // Check for overflow on increment.
+      if (EnumVal < LastEnumConst->getInitVal())
+        Diag(IdLoc, diag::warn_enum_value_overflow);
+      
+      EltTy = LastEnumConst->getType();
+    } else {
+      // First value, set to zero.
+      EltTy = Context.IntTy;
+      EnumVal.zextOrTrunc(static_cast<uint32_t>(Context.getTypeSize(EltTy)));
+    }
+  }
+  
+  val.release();
+  return EnumConstantDecl::Create(Context, Enum, IdLoc, Id, EltTy,
+                                  Val, EnumVal);  
+}
+
+
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
                                       DeclTy *lastEnumConst,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
@@ -3794,46 +3845,12 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     }
   }
 
-  llvm::APSInt EnumVal(32);
-  QualType EltTy;
-  if (Val) {
-    // Make sure to promote the operand type to int.
-    UsualUnaryConversions(Val);
-    
-    // C99 6.7.2.2p2: Make sure we have an integer constant expression.
-    SourceLocation ExpLoc;
-    if (VerifyIntegerConstantExpression(Val, &EnumVal)) {
-      Val->Destroy(Context);
-      Val = 0;  // Just forget about it.
-    } else {
-      EltTy = Val->getType();
-    }
-  }
-  
-  if (!Val) {
-    if (LastEnumConst) {
-      // Assign the last value + 1.
-      EnumVal = LastEnumConst->getInitVal();
-      ++EnumVal;
+  EnumConstantDecl *New = CheckEnumConstant(TheEnumDecl, LastEnumConst,
+                                            IdLoc, Id, Owned(Val));
 
-      // Check for overflow on increment.
-      if (EnumVal < LastEnumConst->getInitVal())
-        Diag(IdLoc, diag::warn_enum_value_overflow);
-      
-      EltTy = LastEnumConst->getType();
-    } else {
-      // First value, set to zero.
-      EltTy = Context.IntTy;
-      EnumVal.zextOrTrunc(static_cast<uint32_t>(Context.getTypeSize(EltTy)));
-    }
-  }
-  
-  EnumConstantDecl *New = 
-    EnumConstantDecl::Create(Context, TheEnumDecl, IdLoc, Id, EltTy,
-                             Val, EnumVal);
-  
   // Register this decl in the current scope stack.
-  PushOnScopeChains(New, S);
+  if (New)
+    PushOnScopeChains(New, S);
 
   return New;
 }

@@ -399,6 +399,12 @@ public:
   /// the definition of a tag (enumeration, class, struct, or union).
   virtual void ActOnTagFinishDefinition(Scope *S, DeclTy *TagDecl);
 
+  EnumConstantDecl *CheckEnumConstant(EnumDecl *Enum,
+                                      EnumConstantDecl *LastEnumConst,
+                                      SourceLocation IdLoc,
+                                      IdentifierInfo *Id,
+                                      ExprArg val);
+
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,

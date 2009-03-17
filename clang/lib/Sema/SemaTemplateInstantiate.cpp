@@ -664,8 +664,7 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitParenExpr(ParenExpr *E) {
-  Sema::OwningExprResult SubExpr
-    = SemaRef.InstantiateExpr(E->getSubExpr(), TemplateArgs, NumTemplateArgs);
+  Sema::OwningExprResult SubExpr = Visit(E->getSubExpr());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -733,6 +732,7 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
     // expression.
     First.release();
     Second.release();
+    // FIXME: Don't reuse the callee here. We need to instantiate it.
     return SemaRef.Owned(new (SemaRef.Context) CXXOperatorCallExpr(
                                                        SemaRef.Context, 
                                                        E->getOperator(),
@@ -1147,6 +1147,57 @@ Sema::InstantiateClassTemplateSpecialization(
           
       } else
         Invalid = true;
+    } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(*Member)) {
+      // FIXME: Spaghetti, anyone?
+      EnumDecl *New = EnumDecl::Create(Context, ClassTemplateSpec, 
+                                       Enum->getLocation(),
+                                       Enum->getIdentifier(),
+                                       /*PrevDecl=*/0);
+      ClassTemplateSpec->addDecl(New);
+      New->startDefinition();
+
+      llvm::SmallVector<DeclTy *, 16> Enumerators;
+
+      EnumConstantDecl *LastEnumConst = 0;
+      for (EnumDecl::enumerator_iterator EC = Enum->enumerator_begin(),
+                                      ECEnd = Enum->enumerator_end();
+           EC != ECEnd; ++EC) {
+        // The specified value for the enumerator.
+        OwningExprResult Value = Owned((Expr *)0);
+        if (Expr *UninstValue = EC->getInitExpr()) 
+          Value = InstantiateExpr(UninstValue, 
+                                  ClassTemplateSpec->getTemplateArgs(),
+                                  ClassTemplateSpec->getNumTemplateArgs());
+
+        // Drop the initial value and continue.
+        bool isInvalid = false;
+        if (Value.isInvalid()) {
+          Value = Owned((Expr *)0);
+          isInvalid = true;
+        }
+
+        EnumConstantDecl *NewEnumConst 
+          = CheckEnumConstant(New, LastEnumConst,
+                              EC->getLocation(),
+                              EC->getIdentifier(),
+                              move(Value));
+
+        if (isInvalid) {
+          if (NewEnumConst)
+            NewEnumConst->setInvalidDecl();
+          New->setInvalidDecl();
+          Invalid = true;
+        }
+
+        if (NewEnumConst) {
+          New->addDecl(NewEnumConst);
+          Enumerators.push_back(NewEnumConst);
+          LastEnumConst = NewEnumConst;
+        }
+      }
+      
+      ActOnEnumBody(New->getLocation(), New,
+                    &Enumerators[0], Enumerators.size());
     }
   }
 
