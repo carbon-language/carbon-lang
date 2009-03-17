@@ -15,6 +15,7 @@
 namespace clang {
 namespace driver {
   class ArgList;
+  class Driver;
   class ToolChain;
 
 /// HostInfo - Config information about a particular host which may
@@ -25,14 +26,17 @@ namespace driver {
 /// being run from. For testing purposes, the HostInfo used by the
 /// driver may differ from the actual host.
 class HostInfo {
+  const Driver &TheDriver;
   std::string Arch, Platform, OS;
 
 protected:
-  HostInfo(const char *Arch, const char *Platform, const char *OS);
+  HostInfo(const Driver &D, const char *Arch, 
+           const char *Platform, const char *OS);
 
 public:
   virtual ~HostInfo();
 
+  const Driver &getDriver() const { return TheDriver; }
   const std::string &getArchName() const { return Arch; }
   const std::string &getPlatformName() const { return Platform; }
   const std::string &getOSName() const { return OS; }
@@ -56,10 +60,10 @@ public:
                                   const char *ArchName=0) const = 0;
 };
 
-const HostInfo *createDarwinHostInfo(const char *Arch, const char *Platform, 
-                                     const char *OS);
-const HostInfo *createUnknownHostInfo(const char *Arch, const char *Platform, 
-                                      const char *OS);
+const HostInfo *createDarwinHostInfo(const Driver &D, const char *Arch, 
+                                     const char *Platform, const char *OS);
+const HostInfo *createUnknownHostInfo(const Driver &D, const char *Arch, 
+                                      const char *Platform, const char *OS);
 
 } // end namespace driver
 } // end namespace clang

@@ -220,7 +220,7 @@ public:
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
-  static const HostInfo *GetHostInfo(const char *HostTriple);
+  const HostInfo *GetHostInfo(const char *HostTriple) const;
 
   /// @}
 };

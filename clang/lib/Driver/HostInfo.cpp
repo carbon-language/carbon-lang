@@ -21,9 +21,9 @@
  
 using namespace clang::driver;
 
-HostInfo::HostInfo(const char *_Arch, const char *_Platform,
+HostInfo::HostInfo(const Driver &D, const char *_Arch, const char *_Platform,
                    const char *_OS) 
-  : Arch(_Arch), Platform(_Platform), OS(_OS) 
+  : TheDriver(D), Arch(_Arch), Platform(_Platform), OS(_OS) 
 {
   
 }
@@ -47,7 +47,8 @@ class DarwinHostInfo : public HostInfo {
   mutable llvm::StringMap<ToolChain*> ToolChains;
 
 public:
-  DarwinHostInfo(const char *Arch, const char *Platform, const char *OS);
+  DarwinHostInfo(const Driver &D, const char *Arch, 
+                 const char *Platform, const char *OS);
 
   virtual bool useDriverDriver() const;
 
@@ -55,9 +56,9 @@ public:
                                   const char *ArchName) const;
 };
 
-DarwinHostInfo::DarwinHostInfo(const char *_Arch, const char *_Platform,
-                               const char *_OS) 
-  : HostInfo(_Arch, _Platform, _OS) {
+DarwinHostInfo::DarwinHostInfo(const Driver &D, const char *_Arch, 
+                               const char *_Platform, const char *_OS) 
+  : HostInfo(D, _Arch, _Platform, _OS) {
   
   assert((getArchName() == "i386" || getArchName() == "x86_64" || 
           getArchName() == "ppc" || getArchName() == "ppc64") &&
@@ -118,7 +119,8 @@ class UnknownHostInfo : public HostInfo {
   mutable llvm::StringMap<ToolChain*> ToolChains;
 
 public:
-  UnknownHostInfo(const char *Arch, const char *Platform, const char *OS);
+  UnknownHostInfo(const Driver &D, const char *Arch, 
+                  const char *Platform, const char *OS);
 
   virtual bool useDriverDriver() const;
 
@@ -126,9 +128,9 @@ public:
                                   const char *ArchName) const;
 };
 
-UnknownHostInfo::UnknownHostInfo(const char *Arch, const char *Platform,
-                                 const char *OS) 
-  : HostInfo(Arch, Platform, OS) {
+UnknownHostInfo::UnknownHostInfo(const Driver &D, const char *Arch, 
+                                 const char *Platform, const char *OS) 
+  : HostInfo(D, Arch, Platform, OS) {
 }
 
 bool UnknownHostInfo::useDriverDriver() const { 
@@ -161,14 +163,16 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
 
 }
 
-const HostInfo *clang::driver::createDarwinHostInfo(const char *Arch, 
+const HostInfo *clang::driver::createDarwinHostInfo(const Driver &D,
+                                                    const char *Arch, 
                                                     const char *Platform, 
                                                     const char *OS) {
-  return new DarwinHostInfo(Arch, Platform, OS);
+  return new DarwinHostInfo(D, Arch, Platform, OS);
 }
 
-const HostInfo *clang::driver::createUnknownHostInfo(const char *Arch, 
+const HostInfo *clang::driver::createUnknownHostInfo(const Driver &D,
+                                                     const char *Arch, 
                                                      const char *Platform, 
                                                      const char *OS) {
-  return new UnknownHostInfo(Arch, Platform, OS);
+  return new UnknownHostInfo(D, Arch, Platform, OS);
 }

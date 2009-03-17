@@ -154,7 +154,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   ArgList *Args = ParseArgStrings(Start, End);
 
-  Host = Driver::GetHostInfo(HostTriple);
+  Host = GetHostInfo(HostTriple);
   DefaultToolChain = Host->getToolChain(*Args);
 
   // FIXME: This behavior shouldn't be here.
@@ -816,7 +816,7 @@ llvm::sys::Path Driver::GetProgramPath(const char *Name,
   return llvm::sys::Path(Name);
 }
 
-const HostInfo *Driver::GetHostInfo(const char *Triple) {
+const HostInfo *Driver::GetHostInfo(const char *Triple) const {
   // Dice into arch, platform, and OS. This matches 
   //  arch,platform,os = '(.*?)-(.*?)-(.*?)'
   // and missing fields are left empty.
@@ -842,7 +842,9 @@ const HostInfo *Driver::GetHostInfo(const char *Triple) {
     Arch = "x86_64";
   
   if (memcmp(&OS[0], "darwin", 6) == 0)
-    return createDarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
+    return createDarwinHostInfo(*this, Arch.c_str(), Platform.c_str(), 
+                                OS.c_str());
     
-  return createUnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
+  return createUnknownHostInfo(*this, Arch.c_str(), Platform.c_str(), 
+                               OS.c_str());
 }
