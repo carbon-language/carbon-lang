@@ -28,6 +28,7 @@ STATISTIC(NumReMats  , "Number of re-materialization");
 STATISTIC(NumLoads   , "Number of loads added");
 STATISTIC(NumReused  , "Number of values reused");
 STATISTIC(NumDCE     , "Number of copies elided");
+STATISTIC(NumSUnfold , "Number of stores unfolded");
 
 namespace {
   enum SpillerName { simple, local };
@@ -1172,8 +1173,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value and there isn't an
           // earlier def that has already clobbered the physreg.
-          CanReuse = Spills.canClobberPhysReg(ReuseSlot) &&
-            !ReusedOperands.isClobbered(PhysReg);
+          CanReuse = !ReusedOperands.isClobbered(PhysReg) &&
+            Spills.canClobberPhysReg(PhysReg);
         }
         
         if (CanReuse) {
@@ -1408,6 +1409,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
               DOUT << "Removing now-noop copy: " << MI;
               // Unset last kill since it's being reused.
               InvalidateKill(InReg, RegKills, KillOps);
+              Spills.disallowClobberPhysReg(InReg);
             }
 
             InvalidateKills(MI, RegKills, KillOps);
@@ -1446,6 +1448,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // the value and there isn't an earlier def that has already clobbered
           // the physreg.
           if (PhysReg &&
+              !ReusedOperands.isClobbered(PhysReg) &&
+              Spills.canClobberPhysReg(PhysReg) &&
               !TII->isStoreToStackSlot(&MI, SS)) { // Not profitable!
             MachineOperand *KillOpnd =
               DeadStore->findRegisterUseOperand(PhysReg, true);
@@ -1453,7 +1457,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             // super-register is needed below.
             if (KillOpnd && !KillOpnd->getSubReg() &&
                 TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, true,NewMIs)){
-             MBB.insert(MII, NewMIs[0]);
+              MBB.insert(MII, NewMIs[0]);
               NewStore = NewMIs[1];
               MBB.insert(MII, NewStore);
               VRM.addSpillSlotUse(SS, NewStore);
@@ -1465,6 +1469,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
               --NextMII;  // backtrack to the unfolded instruction.
               BackTracked = true;
               isDead = true;
+              ++NumSUnfold;
             }
           }
         }
@@ -1519,7 +1524,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             // If the stack slot value was previously available in some other
             // register, change it now.  Otherwise, make the register
             // available in PhysReg.
-            Spills.addAvailable(StackSlot, SrcReg, false/*!clobber*/);
+            Spills.addAvailable(StackSlot, SrcReg, MI.killsRegister(SrcReg));
           }
         }
       }

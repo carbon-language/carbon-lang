@@ -127,13 +127,29 @@ namespace llvm {
       DOUT << " in physreg " << TRI->getName(Reg) << "\n";
     }
 
-    /// canClobberPhysReg - Return true if the spiller is allowed to change the 
-    /// value of the specified stackslot register if it desires.  The specified
-    /// stack slot must be available in a physreg for this query to make sense.
-    bool canClobberPhysReg(int SlotOrReMat) const {
+    /// canClobberPhysRegForSS - Return true if the spiller is allowed to change
+    /// the value of the specified stackslot register if it desires. The
+    /// specified stack slot must be available in a physreg for this query to
+    /// make sense.
+    bool canClobberPhysRegForSS(int SlotOrReMat) const {
       assert(SpillSlotsOrReMatsAvailable.count(SlotOrReMat) &&
              "Value not available!");
       return SpillSlotsOrReMatsAvailable.find(SlotOrReMat)->second & 1;
+    }
+
+    /// canClobberPhysReg - Return true if the spiller is allowed to clobber the
+    /// physical register where values for some stack slot(s) might be
+    /// available.
+    bool canClobberPhysReg(unsigned PhysReg) const {
+      std::multimap<unsigned, int>::const_iterator I =
+        PhysRegsAvailable.lower_bound(PhysReg);
+      while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
+        int SlotOrReMat = I->second;
+        I++;
+        if (!canClobberPhysRegForSS(SlotOrReMat))
+          return false;
+      }
+      return true;
     }
 
     /// disallowClobberPhysReg - Unset the CanClobber bit of the specified
