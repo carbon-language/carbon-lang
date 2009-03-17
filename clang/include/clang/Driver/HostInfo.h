@@ -49,38 +49,17 @@ public:
   /// \param ArchName - The architecture to return a toolchain for, or
   /// 0 if unspecified. This will only ever be non-zero for hosts
   /// which support a driver driver.
+
+  // FIXME: Pin down exactly what the HostInfo is allowed to use Args
+  // for here. Currently this is for -m32 / -m64 defaulting.
   virtual ToolChain *getToolChain(const ArgList &Args, 
                                   const char *ArchName=0) const = 0;
 };
 
-/// DarwinHostInfo - Darwin host information implementation.
-class DarwinHostInfo : public HostInfo {
-  /// Darwin version of host.
-  unsigned DarwinVersion[3];
-
-  /// GCC version to use on this host.
-  unsigned GCCVersion[3];
-
-public:
-  DarwinHostInfo(const char *Arch, const char *Platform, const char *OS);
-
-  virtual bool useDriverDriver() const;
-
-  virtual ToolChain *getToolChain(const ArgList &Args, 
-                                  const char *ArchName) const;
-};
-
-/// UnknownHostInfo - Generic host information to use for unknown
-/// hosts.
-class UnknownHostInfo : public HostInfo {
-public:
-  UnknownHostInfo(const char *Arch, const char *Platform, const char *OS);
-
-  virtual bool useDriverDriver() const;
-
-  virtual ToolChain *getToolChain(const ArgList &Args, 
-                                  const char *ArchName) const;
-};
+const HostInfo *createDarwinHostInfo(const char *Arch, const char *Platform, 
+                                     const char *OS);
+const HostInfo *createUnknownHostInfo(const char *Arch, const char *Platform, 
+                                      const char *OS);
 
 } // end namespace driver
 } // end namespace clang

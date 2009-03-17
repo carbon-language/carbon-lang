@@ -62,7 +62,7 @@ public:
 
   /// Host information for the platform the driver is running as. This
   /// will generally be the actual host platform, but not always.
-  HostInfo *Host;
+  const HostInfo *Host;
 
   /// The default tool chain for this host.
   // FIXME: This shouldn't be here; this should be in a
@@ -220,7 +220,7 @@ public:
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
-  static HostInfo *GetHostInfo(const char *HostTriple);
+  static const HostInfo *GetHostInfo(const char *HostTriple);
 
   /// @}
 };

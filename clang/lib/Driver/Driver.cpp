@@ -816,7 +816,7 @@ llvm::sys::Path Driver::GetProgramPath(const char *Name,
   return llvm::sys::Path(Name);
 }
 
-HostInfo *Driver::GetHostInfo(const char *Triple) {
+const HostInfo *Driver::GetHostInfo(const char *Triple) {
   // Dice into arch, platform, and OS. This matches 
   //  arch,platform,os = '(.*?)-(.*?)-(.*?)'
   // and missing fields are left empty.
@@ -833,8 +833,16 @@ HostInfo *Driver::GetHostInfo(const char *Triple) {
   } else
     Arch = Triple;
 
+  // Normalize Arch a bit. 
+  //
+  // FIXME: This is very incomplete.
+  if (Arch == "i686") 
+    Arch = "i386";
+  else if (Arch == "amd64")
+    Arch = "x86_64";
+  
   if (memcmp(&OS[0], "darwin", 6) == 0)
-    return new DarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
+    return createDarwinHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
     
-  return new UnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
+  return createUnknownHostInfo(Arch.c_str(), Platform.c_str(), OS.c_str());
 }
