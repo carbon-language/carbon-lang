@@ -2763,6 +2763,13 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
              I.getAlignment());
 
   SDValue AllocSize = getValue(I.getArraySize());
+  
+  AllocSize = DAG.getNode(ISD::MUL, getCurDebugLoc(), AllocSize.getValueType(),
+                          AllocSize,
+                          DAG.getConstant(TySize, AllocSize.getValueType()));
+  
+  
+  
   MVT IntPtr = TLI.getPointerTy();
   if (IntPtr.bitsLT(AllocSize.getValueType()))
     AllocSize = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
@@ -2770,9 +2777,6 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   else if (IntPtr.bitsGT(AllocSize.getValueType()))
     AllocSize = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
                             IntPtr, AllocSize);
-
-  AllocSize = DAG.getNode(ISD::MUL, getCurDebugLoc(), IntPtr, AllocSize,
-                          DAG.getIntPtrConstant(TySize));
 
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to
@@ -5425,17 +5429,22 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   SDValue Src = getValue(I.getOperand(0));
 
+  // Scale up by the type size in the original i32 type width.  Various
+  // mid-level optimizers may make assumptions about demanded bits etc from the
+  // i32-ness of the optimizer: we do not want to promote to i64 and then
+  // multiply on 64-bit targets.
+  // FIXME: Malloc inst should go away: PR715.
+  uint64_t ElementSize = TD->getTypePaddedSize(I.getType()->getElementType());
+  if (ElementSize != 1)
+    Src = DAG.getNode(ISD::MUL, getCurDebugLoc(), Src.getValueType(),
+                      Src, DAG.getConstant(ElementSize, Src.getValueType()));
+  
   MVT IntPtr = TLI.getPointerTy();
 
   if (IntPtr.bitsLT(Src.getValueType()))
     Src = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), IntPtr, Src);
   else if (IntPtr.bitsGT(Src.getValueType()))
     Src = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(), IntPtr, Src);
-
-  // Scale the source by the type size.
-  uint64_t ElementSize = TD->getTypePaddedSize(I.getType()->getElementType());
-  Src = DAG.getNode(ISD::MUL, getCurDebugLoc(), Src.getValueType(),
-                    Src, DAG.getIntPtrConstant(ElementSize));
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
