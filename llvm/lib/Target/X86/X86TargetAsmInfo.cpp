@@ -411,8 +411,8 @@ bool X86TargetAsmInfo<BaseTAI>::ExpandInlineAsm(CallInst *CI) const {
 
     // bswap $0
     if (AsmPieces.size() == 2 &&
-        AsmPieces[0] == "bswap" && (AsmPieces[1] == "$0" ||
-                                    AsmPieces[1] == "${0:q}")) {
+        (AsmPieces[0] == "bswap" || AsmPieces[0] == "bswapq") &&
+        (AsmPieces[1] == "$0" || AsmPieces[1] == "${0:q}")) {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
       return LowerToBSwap(CI);
