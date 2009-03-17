@@ -867,6 +867,18 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
       break;
     }
+
+    // Enable this code once the semantics of NSDeallocateObject are resolved
+    // for GC.  <rdar://problem/6619988>
+#if 0
+    // Handle: NSDeallocateObject(id anObject);
+    // This method does allow 'nil' (although we don't check it now).
+    if (strcmp(FName, "NSDeallocateObject") == 0) {      
+      return RetTy == Ctx.VoidTy
+        ? getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, Dealloc)
+        : getPersistentStopSummary();
+    }
+#endif
     
     // Handle: id NSMakeCollectable(CFTypeRef)
     if (strcmp(FName, "NSMakeCollectable") == 0) {
