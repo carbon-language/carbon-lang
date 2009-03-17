@@ -1222,7 +1222,7 @@ void Verifier::visitInstruction(Instruction &I) {
             *UI);
     Instruction *Used = cast<Instruction>(*UI);
     Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
-            " embeded in a basic block!", &I, Used);
+            " embedded in a basic block!", &I, Used);
   }
 
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
