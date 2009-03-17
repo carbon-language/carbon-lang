@@ -617,7 +617,8 @@ namespace {
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
-
+    OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
+      
     // Base case. I'm supposed to ignore this.
     Sema::OwningExprResult VisitStmt(Stmt *S) { 
       S->dump();
@@ -906,6 +907,21 @@ TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
     SemaRef.DeleteExpr(Args[Idx]);
 
   return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult TemplateExprInstantiator::VisitImplicitCastExpr(
+                                                         ImplicitCastExpr *E) {
+  assert(!E->isTypeDependent() && "Implicit casts must have known types");
+
+  Sema::OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+
+  ImplicitCastExpr *ICE = 
+    new (SemaRef.Context) ImplicitCastExpr(E->getType(),
+                                           (Expr *)SubExpr.release(),
+                                           E->isLvalueCast());
+  return SemaRef.Owned(ICE);
 }
 
 Sema::OwningExprResult 
