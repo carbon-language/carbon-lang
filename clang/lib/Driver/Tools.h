@@ -16,9 +16,9 @@
 
 namespace clang {
 namespace driver {
-namespace tools VISIBILITY_HIDDEN {
+namespace tools {
 
-  class Clang : public Tool {
+  class VISIBILITY_HIDDEN Clang : public Tool {
   public:
     Clang(const ToolChain &TC) : Tool(TC) {}
 
@@ -27,7 +27,7 @@ namespace tools VISIBILITY_HIDDEN {
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
-  class GCC_Preprocess : public Tool {
+  class VISIBILITY_HIDDEN GCC_Preprocess : public Tool {
   public:
     GCC_Preprocess(const ToolChain &TC) : Tool(TC) {}
 
@@ -36,7 +36,7 @@ namespace tools VISIBILITY_HIDDEN {
     virtual bool hasIntegratedCPP() const { return false; }
   };
 
-  class GCC_Precompile : public Tool  {
+  class VISIBILITY_HIDDEN GCC_Precompile : public Tool  {
   public:
     GCC_Precompile(const ToolChain &TC) : Tool(TC) {}
 
@@ -45,7 +45,7 @@ namespace tools VISIBILITY_HIDDEN {
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
-  class GCC_Compile : public Tool  {
+  class VISIBILITY_HIDDEN GCC_Compile : public Tool  {
   public:
     GCC_Compile(const ToolChain &TC) : Tool(TC) {}
 
@@ -54,7 +54,7 @@ namespace tools VISIBILITY_HIDDEN {
     virtual bool hasIntegratedCPP() const { return true; }
   };
 
-  class GCC_Assemble : public Tool  {
+  class VISIBILITY_HIDDEN GCC_Assemble : public Tool  {
   public:
     GCC_Assemble(const ToolChain &TC) : Tool(TC) {}
 
@@ -63,7 +63,7 @@ namespace tools VISIBILITY_HIDDEN {
     virtual bool hasIntegratedCPP() const { return false; }
   };
 
-  class GCC_Link : public Tool  {
+  class VISIBILITY_HIDDEN GCC_Link : public Tool  {
   public:
     GCC_Link(const ToolChain &TC) : Tool(TC) {}
 

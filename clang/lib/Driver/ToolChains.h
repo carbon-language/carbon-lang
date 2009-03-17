@@ -20,12 +20,12 @@
 
 namespace clang {
 namespace driver {
-namespace toolchains VISIBILITY_HIDDEN {
+namespace toolchains {
 
   /// Generic_GCC - A tool chain using the 'gcc' command to perform
   /// all subcommands; this relies on gcc translating the majority of
   /// command line options.
-class Generic_GCC : public ToolChain {
+class VISIBILITY_HIDDEN Generic_GCC : public ToolChain {
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
 public:
