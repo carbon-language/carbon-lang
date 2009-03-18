@@ -1223,7 +1223,7 @@ void SROA::CleanupAllocaUsers(AllocationInst *AI) {
       CleanupGEP(GEPI);
     else if (Instruction *I = dyn_cast<Instruction>(U)) {
       SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
-      if (OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
+      if (!I->use_empty() && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
         // Safe to remove debug info uses.
         while (!DbgInUses.empty()) {
           DbgInfoIntrinsic *DI = DbgInUses.back(); DbgInUses.pop_back();
