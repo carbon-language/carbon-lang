@@ -798,9 +798,13 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       } else {
-        assert(isa<StructType>(RetTy) && "Return type changed, but not into a"
-                                         "void. The old return type must have"
-                                         "been a struct!");
+        assert(isa<StructType>(RetTy) &&
+               "Return type changed, but not into a void. The old return type"
+               " must have been a struct!");
+        Instruction *InsertPt = Call;
+        if (InvokeInst *II = dyn_cast<InvokeInst>(Call))
+          InsertPt = II->getNormalDest()->begin();
+          
         // We used to return a struct. Instead of doing smart stuff with all the
         // uses of this struct, we will just rebuild it using
         // extract/insertvalue chaining and let instcombine clean that up.
@@ -813,12 +817,13 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
             if (RetTypes.size() > 1)
               // We are still returning a struct, so extract the value from our
               // return value
-              V = ExtractValueInst::Create(New, NewRetIdxs[i], "newret", Call);
+              V = ExtractValueInst::Create(New, NewRetIdxs[i], "newret",
+                                           InsertPt);
             else
               // We are now returning a single element, so just insert that
               V = New;
             // Insert the value at the old position
-            RetVal = InsertValueInst::Create(RetVal, V, i, "oldret", Call);
+            RetVal = InsertValueInst::Create(RetVal, V, i, "oldret", InsertPt);
           }
         // Now, replace all uses of the old call instruction with the return
         // struct we built
