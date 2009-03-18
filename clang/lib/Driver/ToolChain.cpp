@@ -55,8 +55,8 @@ bool ToolChain::ShouldUseClangCompiler(const Compilation &C,
 
   // Finally, don't use clang if this isn't one of the user specified
   // archs to build.
-  if (!Host.getDriver().CCCClangArchs.empty() && 
-      Host.getDriver().CCCClangArchs.count(getArchName()))
+  if (!Host.getDriver().CCCClangArchs.empty() &&
+      !Host.getDriver().CCCClangArchs.count(getArchName()))
     return false;
 
   return true;

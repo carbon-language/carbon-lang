@@ -32,5 +32,9 @@
 // RUN: clang-driver -ccc-print-bindings -ccc-no-clang-cpp -fsyntax-only -no-integrated-cpp -x c++ %s &> %t &&
 // RUN: grep 'bind - "gcc::Preprocess", inputs: \[".*bindings.c"\], output: "/tmp/foo.ii"' %t &&
 // RUN: grep 'bind - "clang", inputs: \["/tmp/foo.ii"\], output: (nothing)' %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-bindings -ccc-clang-archs i386 %s -S -arch ppc &> %t &&
+// RUN: grep 'bind - "gcc::Compile", inputs: \[".*bindings.c"\], output: "bindings.s"' %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-bindings -ccc-clang-archs ppc %s -S -arch ppc &> %t &&
+// RUN: grep 'bind - "clang", inputs: \[".*bindings.c"\], output: "bindings.s"' %t &&
 
 // RUN: true
