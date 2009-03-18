@@ -1039,7 +1039,7 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
       return LookupResult::CreateLookupResult(Context, 0);
 
     if (SS->isSet())
-      return LookupQualifiedName(static_cast<DeclContext *>(SS->getScopeRep()),
+      return LookupQualifiedName(getScopeRepAsDeclContext(*SS),
                                  Name, NameKind, RedeclarationOnly);
   }
 

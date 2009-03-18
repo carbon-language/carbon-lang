@@ -1452,6 +1452,21 @@ public:
 
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
 
+  /// \brief Build a scope representation from a declaration context.
+  CXXScopeTy *createScopeRep(DeclContext *DC) {
+    return static_cast<CXXScopeTy *>(DC);
+  }
+
+  /// \brief Build a scope representation from a type.
+  CXXScopeTy *createScopeRep(QualType T);
+
+  DeclContext *getScopeRepAsDeclContext(const CXXScopeSpec &SS);
+  QualType getScopeRepAsType(const CXXScopeSpec &SS);
+
+  /// \brief Determines whether this scope specifier is represented as
+  /// a type.
+  bool isScopeRepType(const CXXScopeSpec &SS);
+
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,

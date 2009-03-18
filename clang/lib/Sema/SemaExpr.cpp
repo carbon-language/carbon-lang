@@ -727,7 +727,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // implicit member ref, because we want a pointer to the member in general,
   // not any specific instance's member.
   if (isAddressOfOperand && SS && !SS->isEmpty() && !HasTrailingLParen) {
-    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    DeclContext *DC = getScopeRepAsDeclContext(*SS);
     if (D && isa<CXXRecordDecl>(DC)) {
       QualType DType;
       if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
@@ -942,7 +942,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     //     - a nested-name-specifier that contains a class-name that
     //       names a dependent type.
     else if (SS && !SS->isEmpty()) {
-      for (DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep()); 
+      for (DeclContext *DC = getScopeRepAsDeclContext(*SS);
            DC; DC = DC->getParent()) {
         // FIXME: could stop early at namespace scope.
         if (DC->isRecord()) {

@@ -1257,7 +1257,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                             DeclSpec::SCS_static,
                           D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
-    DC = static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep());
+    DC = getScopeRepAsDeclContext(D.getCXXScopeSpec());
     // FIXME: RequireCompleteDeclContext(D.getCXXScopeSpec()); ?
     PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
@@ -3020,7 +3020,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     }
 
     // FIXME: RequireCompleteDeclContext(SS)?
-    DC = static_cast<DeclContext*>(SS.getScopeRep());
+    DC = getScopeRepAsDeclContext(SS);
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(

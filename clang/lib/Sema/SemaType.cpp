@@ -742,8 +742,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     }
     case DeclaratorChunk::MemberPointer:
       // The scope spec must refer to a class, or be dependent.
-      DeclContext *DC = static_cast<DeclContext*>(
-        DeclType.Mem.Scope().getScopeRep());
+      DeclContext *DC = getScopeRepAsDeclContext(DeclType.Mem.Scope());
       QualType ClsType;
       // FIXME: Extend for dependent types when it's actually supported.
       // See ActOnCXXNestedNameSpecifier.

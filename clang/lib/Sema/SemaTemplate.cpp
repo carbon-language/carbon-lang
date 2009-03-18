@@ -399,7 +399,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
 
   DeclContext *SemanticContext = CurContext;
   if (SS.isNotEmpty() && !SS.isInvalid()) {
-    SemanticContext = static_cast<DeclContext*>(SS.getScopeRep());
+    SemanticContext = getScopeRepAsDeclContext(SS);
 
     // FIXME: need to match up several levels of template parameter
     // lists here.

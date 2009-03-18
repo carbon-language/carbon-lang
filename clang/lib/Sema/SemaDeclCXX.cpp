@@ -300,7 +300,7 @@ bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
                               const CXXScopeSpec *SS) {
   CXXRecordDecl *CurDecl;
   if (SS) {
-    DeclContext *DC = static_cast<DeclContext*>(SS->getScopeRep());
+    DeclContext *DC = getScopeRepAsDeclContext(*SS);
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(DC);
   } else
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);
