@@ -145,11 +145,7 @@ public:
   ///
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  /// \param DefaultArchName - The default arch name (required to know
-  /// what architecture to bind if no -arch options are present).
-
-  void BuildUniversalActions(const ArgList &Args, ActionList &Actions,
-                             const char *DefaultArchName) const;
+  void BuildUniversalActions(const ArgList &Args, ActionList &Actions) const;
 
   /// BuildJobs - Bind actions to concrete tools and translate
   /// arguments to form the list of jobs to run.
