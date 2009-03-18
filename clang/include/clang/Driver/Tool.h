@@ -10,10 +10,20 @@
 #ifndef CLANG_DRIVER_TOOL_H_
 #define CLANG_DRIVER_TOOL_H_
 
+namespace llvm {
+  template<typename T, unsigned N> class SmallVector;
+}
+
 namespace clang {
 namespace driver {
+  class ArgList;
+  class Compilation;
+  class InputInfo;
+  class JobAction;
   class ToolChain;
   
+  typedef llvm::SmallVector<InputInfo, 4> InputInfoList;
+
 /// Tool - Information on a specific compilation tool.
 class Tool {
   /// The tool name (for debugging).
@@ -35,6 +45,18 @@ public:
   virtual bool acceptsPipedInput() const = 0;
   virtual bool canPipeOutput() const = 0;
   virtual bool hasIntegratedCPP() const = 0;
+
+  /// ConstructJob - Construct jobs to perform the action \arg JA,
+  /// writing to \arg Output and with \arg Inputs.
+  ///
+  /// \param TCArgs - The argument list for this toolchain, with any
+  /// tool chain specific translations applied.
+  /// \param LinkingOutput - If this output will eventually feed the
+  /// linker, then this is the final output name of the linked image.
+  virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                            InputInfo &Output, InputInfoList &Inputs, 
+                            const ArgList &TCArgs, 
+                            const char *LinkingOutput) const = 0;
 };
 
 } // end namespace driver

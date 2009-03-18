@@ -25,6 +25,11 @@ namespace tools {
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              InputInfo &Output, InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
   };
 
   /// gcc - Generic GCC tool implementations.
@@ -36,6 +41,11 @@ namespace gcc {
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              InputInfo &Output, InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
   };
 
   class VISIBILITY_HIDDEN Precompile : public Tool  {
@@ -45,6 +55,11 @@ namespace gcc {
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return true; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              InputInfo &Output, InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
   };
 
   class VISIBILITY_HIDDEN Compile : public Tool  {
@@ -54,6 +69,11 @@ namespace gcc {
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              InputInfo &Output, InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
   };
 
   class VISIBILITY_HIDDEN Assemble : public Tool  {
@@ -63,6 +83,11 @@ namespace gcc {
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              InputInfo &Output, InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
   };
 
   class VISIBILITY_HIDDEN Link : public Tool  {
@@ -72,6 +97,11 @@ namespace gcc {
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              InputInfo &Output, InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
   };
 } // end namespace gcc
 

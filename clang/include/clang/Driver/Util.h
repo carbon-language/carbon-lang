@@ -23,6 +23,7 @@ namespace driver {
 
   /// ActionList - Type used for lists of actions.
   typedef llvm::SmallVector<Action*, 3> ActionList;
+
 } // end namespace driver
 } // end namespace clang
 

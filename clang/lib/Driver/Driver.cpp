@@ -706,7 +706,7 @@ void Driver::BuildJobsForAction(Compilation &C,
 
   // Only use pipes when there is exactly one input.
   bool TryToUsePipeInput = Inputs->size() == 1 && T.acceptsPipedInput();
-  llvm::SmallVector<InputInfo, 4> InputInfos;
+  InputInfoList InputInfos;
   for (ActionList::const_iterator it = Inputs->begin(), ie = Inputs->end();
        it != ie; ++it) {
     InputInfo II;
@@ -768,7 +768,8 @@ void Driver::BuildJobsForAction(Compilation &C,
     }
     llvm::errs() << "], output: " << Result.getAsString() << "\n";
   } else {
-    assert(0 && "FIXME: Make the job.");
+    const ArgList &TCArgs = C.getArgsForToolChain(TC);
+    T.ConstructJob(C, *JA, Result, InputInfos, TCArgs, LinkingOutput);
   }
 }
 
