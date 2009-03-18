@@ -262,6 +262,9 @@ bool llvm::OnlyUsedByDbgInfoIntrinsics(Instruction *I,
   if (DbgInUses)
     DbgInUses->clear();
 
+  if (I->use_empty())
+    return false;
+
   for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE; 
        ++UI) {
     if (DbgInfoIntrinsic *DI = dyn_cast<DbgInfoIntrinsic>(*UI)) {
