@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=*-*-linux > %t
+; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=x86_64-pc-linux > %t
 ; RUN: grep {movswl	%ax, %edi} %t
 ; RUN: grep {movw	x(%rip), %ax} %t
 
