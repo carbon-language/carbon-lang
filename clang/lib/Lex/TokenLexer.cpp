@@ -444,9 +444,10 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           return true;
         }
       
-        // TODO: If not in assembler language mode.
-        PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
-        << std::string(Buffer.begin(), Buffer.end()-1);
+        // Do not emit the warning when preprocessing assembler code.
+        if (!PP.getLangOptions().AsmPreprocessor)
+          PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
+            << std::string(Buffer.begin(), Buffer.end()-1);
         return false;
       }
     
