@@ -665,6 +665,7 @@ void Driver::BuildJobsForAction(Compilation &C,
                                 InputInfo &Result) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs for action");
   if (const InputAction *IA = dyn_cast<InputAction>(A)) {
+    IA->getInputArg().claim();
     const char *Name = IA->getInputArg().getValue(C.getArgs());
     Result = InputInfo(Name, A->getType(), Name);
     return;
