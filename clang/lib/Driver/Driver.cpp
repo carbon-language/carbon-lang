@@ -162,12 +162,9 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   ArgList *Args = ParseArgStrings(Start, End);
 
   Host = GetHostInfo(HostTriple);
-  // FIXME: This shouldn't live inside Driver, the default tool chain
-  // is part of the compilation (it is arg dependent).
-  DefaultToolChain = Host->getToolChain(*Args);
 
   // The compilation takes ownership of Args.
-  Compilation *C = new Compilation(*DefaultToolChain, Args);
+  Compilation *C = new Compilation(*Host->getToolChain(*Args), Args);
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
@@ -188,7 +185,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     BuildActions(C->getArgs(), C->getActions());
 
   if (CCCPrintActions) {
-    PrintActions(C->getArgs(), C->getActions());
+    PrintActions(*C);
     return C;
   }
 
@@ -255,7 +252,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   return true;
 }
 
-static unsigned PrintActions1(const ArgList &Args,
+static unsigned PrintActions1(const Compilation &C,
                               Action *A, 
                               std::map<Action*, unsigned> &Ids) {
   if (Ids.count(A))
@@ -266,14 +263,15 @@ static unsigned PrintActions1(const ArgList &Args,
   
   os << Action::getClassName(A->getKind()) << ", ";
   if (InputAction *IA = dyn_cast<InputAction>(A)) {    
-    os << "\"" << IA->getInputArg().getValue(Args) << "\"";
+    os << "\"" << IA->getInputArg().getValue(C.getArgs()) << "\"";
   } else if (BindArchAction *BIA = dyn_cast<BindArchAction>(A)) {
-    os << "\"" << BIA->getArchName() << "\", "
-       << "{" << PrintActions1(Args, *BIA->begin(), Ids) << "}";
+    os << '"' << (BIA->getArchName() ? BIA->getArchName() : 
+                  C.getDefaultToolChain().getArchName()) << '"'
+       << ", {" << PrintActions1(C, *BIA->begin(), Ids) << "}";
   } else {
     os << "{";
     for (Action::iterator it = A->begin(), ie = A->end(); it != ie;) {
-      os << PrintActions1(Args, *it, Ids);
+      os << PrintActions1(C, *it, Ids);
       ++it;
       if (it != ie)
         os << ", ";
@@ -289,12 +287,11 @@ static unsigned PrintActions1(const ArgList &Args,
   return Id;
 }
 
-void Driver::PrintActions(const ArgList &Args, 
-                          const ActionList &Actions) const {
+void Driver::PrintActions(const Compilation &C) const {
   std::map<Action*, unsigned> Ids;
-  for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
-       it != ie; ++it)
-    PrintActions1(Args, *it, Ids);
+  for (ActionList::const_iterator it = C.getActions().begin(), 
+         ie = C.getActions().end(); it != ie; ++it)
+    PrintActions1(C, *it, Ids);
 }
 
 void Driver::BuildUniversalActions(const ArgList &Args, 
@@ -319,12 +316,11 @@ void Driver::BuildUniversalActions(const ArgList &Args,
     }
   }
 
-  // When there is no explicit arch for this platform, get one from
-  // the host so that -Xarch_ is handled correctly.
-  if (!Archs.size()) {
-    const char *Arch = DefaultToolChain->getArchName().c_str();
-    Archs.push_back(Arch);
-  }
+  // When there is no explicit arch for this platform, make sure we
+  // still bind the architecture (to the default) so that -Xarch_ is
+  // handled correctly.
+  if (!Archs.size())
+    Archs.push_back(0);
 
   // FIXME: We killed off some others but these aren't yet detected in
   // a functional manner. If we added information to jobs about which
@@ -641,8 +637,7 @@ void Driver::BuildJobs(Compilation &C) const {
     }
 
     InputInfo II;
-    BuildJobsForAction(C, 
-                       A, DefaultToolChain, 
+    BuildJobsForAction(C, A, &C.getDefaultToolChain(), 
                        /*CanAcceptPipe*/ true,
                        /*AtTopLevel*/ true,
                        /*LinkingOutput*/ LinkingOutput,
@@ -679,6 +674,8 @@ void Driver::BuildJobsForAction(Compilation &C,
 
   if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
     const char *ArchName = BAA->getArchName();
+    if (!ArchName)
+      ArchName = C.getDefaultToolChain().getArchName().c_str();
     BuildJobsForAction(C,
                        *BAA->begin(), 
                        Host->getToolChain(C.getArgs(), ArchName),

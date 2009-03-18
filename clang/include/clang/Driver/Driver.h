@@ -64,11 +64,6 @@ public:
   /// will generally be the actual host platform, but not always.
   const HostInfo *Host;
 
-  /// The default tool chain for this host.
-  // FIXME: This shouldn't be here; this should be in a
-  // CompilationInfo structure.
-  ToolChain *DefaultToolChain;
-
   /// Information about the host which can be overriden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
 
@@ -164,7 +159,7 @@ public:
   void PrintVersion() const;
 
   /// PrintActions - Print the list of actions.
-  void PrintActions(const ArgList &Args, const ActionList &Actions) const;
+  void PrintActions(const Compilation &C) const;
 
   /// GetFilePath - Lookup \arg Name in the list of file search paths.
   ///

@@ -105,6 +105,8 @@ public:
 };
 
 class BindArchAction : public Action {
+  /// The architecture to bind, or 0 if the default architecture
+  /// should be bound.
   const char *ArchName;
 
 public:
