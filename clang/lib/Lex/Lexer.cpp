@@ -653,7 +653,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode())
+      if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::err_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
@@ -687,7 +687,7 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode())
+      if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::err_unterminated_angled_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
@@ -716,7 +716,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
   // Handle the common case of 'x' and '\y' efficiently.
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
-    if (!isLexingRawMode())
+    if (!isLexingRawMode() && !Features.AsmPreprocessor)
       Diag(BufferPtr, diag::err_empty_character);
     FormTokenWithChars(Result, CurPtr, tok::unknown);
     return;
@@ -737,7 +737,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
         C = getAndAdvanceChar(CurPtr, Result);
       } else if (C == '\n' || C == '\r' ||               // Newline.
                  (C == 0 && CurPtr-1 == BufferEnd)) {    // End of file.
-        if (!isLexingRawMode())
+        if (!isLexingRawMode() && !Features.AsmPreprocessor)
           Diag(BufferPtr, diag::err_unterminated_char);
         FormTokenWithChars(Result, CurPtr-1, tok::unknown);
         return;
