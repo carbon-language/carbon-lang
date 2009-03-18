@@ -220,10 +220,15 @@ void Driver::PrintVersion() const {
   if (zap)
     *zap = 0;
   const char *vers = buf+6;
-
+  // FIXME: Add cmake support and remove #ifdef
+#ifdef SVN_REVISION
+  const char *revision = SVN_REVISION;
+#else
+  const char *revision = "";
+#endif
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
-  llvm::errs() << "ccc version 1.0 (" << vers << ")" << "\n";
+  llvm::errs() << "ccc version 1.0 (" << vers << " " << revision << ")" << "\n";
   // FIXME: Add cmake support and remove #ifdef
 #ifdef TARGET_TRIPLE
   llvm::errs() << "Target: " << TARGET_TRIPLE << "\n";
