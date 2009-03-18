@@ -47,14 +47,18 @@ public:
   /// Command - An executable path/name and argument vector to
   /// execute.
 class Command : public Job {
+  /// The executable to run.
   const char *Executable;
-  ArgStringList Argv;
+
+  /// The list of program arguments (not including the implicit first
+  /// argument, which will be the executable).
+  ArgStringList Arguments;
 
 public:
-  Command(const char *_Executable, const ArgStringList &_Argv);
+  Command(const char *_Executable, const ArgStringList &_Arguments);
 
   const char *getExecutable() const { return Executable; }
-  const ArgStringList &getArgv() const { return Argv; }
+  const ArgStringList &getArguments() const { return Arguments; }
 
   static bool classof(const Job *J) { 
     return J->getKind() == CommandClass; 
