@@ -820,7 +820,10 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   // pathname.
   if (JA.getType() == types::TY_PCH) {
     BasePath.eraseComponent();
-    BasePath.appendComponent(NamedOutput);
+    if (BasePath.isEmpty())
+      BasePath = NamedOutput;
+    else
+      BasePath.appendComponent(NamedOutput);
     return C.addResultFile(C.getArgs().MakeArgString(BasePath.c_str()));
   } else {
     return C.addResultFile(NamedOutput);
