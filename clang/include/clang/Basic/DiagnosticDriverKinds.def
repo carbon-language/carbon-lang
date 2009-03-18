@@ -30,6 +30,8 @@ DIAG(err_drv_use_of_Z_option, ERROR,
      "unsupported use of internal gcc -Z option '%0'")
 DIAG(err_drv_output_argument_with_multiple_files, ERROR,
      "cannot specify -o when generating multiple output files")
+DIAG(err_drv_unable_to_make_temp, ERROR,
+     "unable to make temporary file: %0")
 
 DIAG(warn_drv_input_file_unused, WARNING,
      "%0: '%1' input file unused when '%2' is present")

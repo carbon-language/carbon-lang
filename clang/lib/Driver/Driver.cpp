@@ -808,11 +808,9 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 
   // Output to a temporary file?
   if (!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) {
-    // FIXME: Get temporary name.
-    std::string Name("/tmp/foo");
-    Name += '.';
-    Name += types::getTypeTempSuffix(JA.getType());
-    return C.addTempFile(C.getArgs().MakeArgString(Name.c_str()));
+    std::string TmpName = 
+      GetTemporaryPath(types::getTypeTempSuffix(JA.getType()));
+    return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
 
   llvm::sys::Path BasePath(BaseInput);
@@ -859,6 +857,20 @@ llvm::sys::Path Driver::GetProgramPath(const char *Name,
                                        const ToolChain &TC) const {
   // FIXME: Implement.
   return llvm::sys::Path(Name);
+}
+
+std::string Driver::GetTemporaryPath(const char *Suffix) const {
+  // FIXME: This is lame; sys::Path should provide this function (in
+  // particular, it should know how to find the temporary files dir).
+  std::string Error;
+  llvm::sys::Path P("/tmp/cc");
+  if (P.makeUnique(false, &Error)) {
+    Diag(clang::diag::err_drv_unable_to_make_temp) << Error;
+    return "";
+  }
+
+  P.appendSuffix(Suffix);
+  return P.toString();
 }
 
 const HostInfo *Driver::GetHostInfo(const char *Triple) const {
