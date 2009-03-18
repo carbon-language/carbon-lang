@@ -61,3 +61,19 @@ void handle_symbolic_cast_in_condition(void) {
 
   [pool drain];
 }
+
+// From PR 3836 (http://llvm.org/bugs/show_bug.cgi?id=3836)
+//
+// In this test case, the double '!' works fine with our symbolic constraints,
+// but we don't support comparing SymConstraint != SymConstraint.  By eagerly
+// assuming the truth of !!a or !!b, we can compare these values directly.
+//
+void pr3836(int *a, int *b) {
+  if (!!a != !!b) /* one of them is NULL */
+    return;
+  if (!a && !b) /* both are NULL */
+    return;
+      
+  *a = 1; // no-warning
+  *b = 1; // no-warning
+}

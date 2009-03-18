@@ -394,9 +394,17 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       VisitLValue(cast<StringLiteral>(S), Pred, Dst);
       break;
       
-    case Stmt::UnaryOperatorClass:
-      VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst, false);
+    case Stmt::UnaryOperatorClass: {
+      UnaryOperator *U = cast<UnaryOperator>(S);
+      if (EagerlyAssume && (U->getOpcode() == UnaryOperator::LNot)) {
+        NodeSet Tmp;
+        VisitUnaryOperator(U, Pred, Tmp, false);
+        EvalEagerlyAssume(Dst, Tmp, U);
+      }
+      else
+        VisitUnaryOperator(U, Pred, Dst, false);
       break;
+    }
   }
 }
 
