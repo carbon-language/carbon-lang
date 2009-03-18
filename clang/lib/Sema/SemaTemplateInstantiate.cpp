@@ -839,8 +839,24 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
   if (False.isInvalid())
     return SemaRef.ExprError();
 
-  return SemaRef.ActOnConditionalOp(E->getCond()->getLocEnd(),
-                                    E->getFalseExpr()->getLocStart(),
+  if (!E->isTypeDependent()) { 
+    // Since our original expression was not type-dependent, we do not
+    // perform lookup again at instantiation time (C++ [temp.dep]p1).
+    // Instead, we just build the new conditional operator call expression.
+    Cond.release();
+    True.release();
+    False.release();
+    // FIXME: Don't reuse the parts here. We need to instantiate them.
+    return SemaRef.Owned(new (SemaRef.Context) ConditionalOperator(
+                                                              E->getCond(),
+                                                              E->getTrueExpr(), 
+                                                              E->getFalseExpr(),
+                                                              E->getType()));
+  }
+
+
+  return SemaRef.ActOnConditionalOp(/*FIXME*/E->getCond()->getLocEnd(),
+                                    /*FIXME*/E->getFalseExpr()->getLocStart(),
                                     move(Cond), move(True), move(False));
 }
 
