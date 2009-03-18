@@ -12,7 +12,11 @@
 #include <cassert>
 using namespace clang::driver;
 
-Action::~Action() {}
+Action::~Action() {
+  // Free the inputs.
+  for (iterator it = begin(), ie = end(); it != ie; ++it)
+    delete *it;  
+}
 
 const char *Action::getClassName(ActionClass AC) {
   switch (AC) {

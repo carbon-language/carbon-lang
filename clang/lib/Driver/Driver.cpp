@@ -166,31 +166,33 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   // is part of the compilation (it is arg dependent).
   DefaultToolChain = Host->getToolChain(*Args);
 
-  // FIXME: This behavior shouldn't be here.
-  if (CCCPrintOptions) {
-    PrintOptions(*Args);
-    return 0;
-  }
-
-  if (!HandleImmediateArgs(*Args))
-    return 0;
-
-  // Construct the list of abstract actions to perform for this
-  // compilation.
-  ActionList Actions;
-  if (Host->useDriverDriver())
-    BuildUniversalActions(*Args, Actions);
-  else
-    BuildActions(*Args, Actions);
-
-  if (CCCPrintActions) {
-    PrintActions(*Args, Actions);
-    return 0;
-  }
-
   // The compilation takes ownership of Args.
   Compilation *C = new Compilation(*DefaultToolChain, Args);
-  BuildJobs(*C, Actions);
+
+  // FIXME: This behavior shouldn't be here.
+  if (CCCPrintOptions) {
+    PrintOptions(C->getArgs());
+    return C;
+  }
+
+  if (!HandleImmediateArgs(*C))
+    return C;
+
+  // Construct the list of abstract actions to perform for this
+  // compilation. We avoid passing a Compilation here simply to
+  // enforce the abstraction that pipelining is not host or toolchain
+  // dependent (other than the driver driver test).
+  if (Host->useDriverDriver())
+    BuildUniversalActions(C->getArgs(), C->getActions());
+  else
+    BuildActions(C->getArgs(), C->getActions());
+
+  if (CCCPrintActions) {
+    PrintActions(C->getArgs(), C->getActions());
+    return C;
+  }
+
+  BuildJobs(*C);
 
   return C;
 }
@@ -220,30 +222,33 @@ void Driver::PrintVersion() const {
   llvm::outs() << "ccc version 1.0" << "\n";
 }
 
-bool Driver::HandleImmediateArgs(const ArgList &Args) {
+bool Driver::HandleImmediateArgs(const Compilation &C) {
   // The order these options are handled in in gcc is all over the
   // place, but we don't expect inconsistencies w.r.t. that to matter
   // in practice.
-  if (Args.hasArg(options::OPT_v) || 
-      Args.hasArg(options::OPT__HASH_HASH_HASH)) {
+  if (C.getArgs().hasArg(options::OPT_v) || 
+      C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     PrintVersion();
     SuppressMissingInputWarning = true;
   }
 
+  const ToolChain &TC = C.getDefaultToolChain();
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
-  if (Arg *A = Args.getLastArg(options::OPT_print_file_name_EQ)) {
-    llvm::outs() << GetFilePath(A->getValue(Args)).toString() << "\n";
+  if (Arg *A = C.getArgs().getLastArg(options::OPT_print_file_name_EQ)) {
+    llvm::outs() << GetFilePath(A->getValue(C.getArgs()), TC).toString() 
+                 << "\n";
     return false;
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_print_prog_name_EQ)) {
-    llvm::outs() << GetProgramPath(A->getValue(Args)).toString() << "\n";
+  if (Arg *A = C.getArgs().getLastArg(options::OPT_print_prog_name_EQ)) {
+    llvm::outs() << GetProgramPath(A->getValue(C.getArgs()), TC).toString() 
+                 << "\n";
     return false;
   }
 
-  if (Args.hasArg(options::OPT_print_libgcc_file_name)) {
-    llvm::outs() << GetProgramPath("libgcc.a").toString() << "\n";
+  if (C.getArgs().hasArg(options::OPT_print_libgcc_file_name)) {
+    llvm::outs() << GetProgramPath("libgcc.a", TC).toString() << "\n";
     return false;
   }
 
@@ -292,7 +297,8 @@ void Driver::PrintActions(const ArgList &Args,
     PrintActions1(Args, *it, Ids);
 }
 
-void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) const {
+void Driver::BuildUniversalActions(const ArgList &Args, 
+                                   ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building actions for universal build");
   // Collect the list of architectures. Duplicates are allowed, but
   // should only be handled once (in the order seen).
@@ -367,7 +373,7 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) const {
   }
 }
 
-void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
+void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
   // Start by constructing the list of inputs and their types.
 
@@ -587,7 +593,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   return 0;
 }
 
-void Driver::BuildJobs(Compilation &C, const ActionList &Actions) const {
+void Driver::BuildJobs(Compilation &C) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
   bool SaveTemps = C.getArgs().hasArg(options::OPT_save_temps);
   bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
@@ -604,8 +610,8 @@ void Driver::BuildJobs(Compilation &C, const ActionList &Actions) const {
   // output files.
   if (FinalOutput) {
     unsigned NumOutputs = 0;
-    for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
-         it != ie; ++it)
+    for (ActionList::const_iterator it = C.getActions().begin(), 
+           ie = C.getActions().end(); it != ie; ++it)
       if ((*it)->getType() != types::TY_Nothing)
         ++NumOutputs;
     
@@ -615,8 +621,8 @@ void Driver::BuildJobs(Compilation &C, const ActionList &Actions) const {
     }
   }
 
-  for (ActionList::const_iterator it = Actions.begin(), ie = Actions.end(); 
-       it != ie; ++it) {
+  for (ActionList::const_iterator it = C.getActions().begin(), 
+         ie = C.getActions().end(); it != ie; ++it) {
     Action *A = *it;
 
     // If we are linking an image for multiple archs then the linker
@@ -821,18 +827,14 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 }
 
 llvm::sys::Path Driver::GetFilePath(const char *Name,
-                                    const ToolChain *TC) const {
+                                    const ToolChain &TC) const {
   // FIXME: Implement.
-  if (!TC) TC = DefaultToolChain;
-
   return llvm::sys::Path(Name);
 }
 
 llvm::sys::Path Driver::GetProgramPath(const char *Name, 
-                                       const ToolChain *TC) const {
+                                       const ToolChain &TC) const {
   // FIXME: Implement.
-  if (!TC) TC = DefaultToolChain;
-
   return llvm::sys::Path(Name);
 }
 

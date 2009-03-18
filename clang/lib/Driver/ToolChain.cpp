@@ -25,13 +25,13 @@ ToolChain::~ToolChain() {
 
 llvm::sys::Path ToolChain::GetFilePath(const Compilation &C, 
                                        const char *Name) const {
-  return Host.getDriver().GetFilePath(Name, this);
+  return Host.getDriver().GetFilePath(Name, *this);
   
 }
 
 llvm::sys::Path ToolChain::GetProgramPath(const Compilation &C, 
                                           const char *Name) const {
-  return Host.getDriver().GetProgramPath(Name, this);
+  return Host.getDriver().GetProgramPath(Name, *this);
 }
 
 bool ToolChain::ShouldUseClangCompiler(const Compilation &C, 

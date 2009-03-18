@@ -138,20 +138,24 @@ public:
   ///
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildActions(ArgList &Args, ActionList &Actions) const;
+  void BuildActions(const ArgList &Args, ActionList &Actions) const;
 
   /// BuildUniversalActions - Construct the list of actions to perform
   /// for the given arguments, which may require a universal build.
   ///
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildUniversalActions(ArgList &Args, ActionList &Actions) const;
+  /// \param DefaultArchName - The default arch name (required to know
+  /// what architecture to bind if no -arch options are present).
+
+  void BuildUniversalActions(const ArgList &Args, ActionList &Actions,
+                             const char *DefaultArchName) const;
 
   /// BuildJobs - Bind actions to concrete tools and translate
   /// arguments to form the list of jobs to run.
   ///
   /// \arg C - The compilation that is being built.
-  void BuildJobs(Compilation &C, const ActionList &Actions) const;
+  void BuildJobs(Compilation &C) const;
 
   /// @}
   /// @name Helper Methods
@@ -168,27 +172,25 @@ public:
 
   /// GetFilePath - Lookup \arg Name in the list of file search paths.
   ///
-  /// \arg TC - Use the provided tool chain for additional information
-  /// on directories to search, or the DefaultToolChain if not
-  /// provided.
+  /// \arg TC - The tool chain for additional information on
+  /// directories to search.
   // FIXME: This should be in CompilationInfo.
-  llvm::sys::Path GetFilePath(const char *Name, const ToolChain *TC=0) const;
+  llvm::sys::Path GetFilePath(const char *Name, const ToolChain &TC) const;
 
   /// GetProgramPath - Lookup \arg Name in the list of program search
   /// paths.
   ///
-  /// \arg TC - Use the provided tool chain for additional information
-  /// on directories to search, or the DefaultToolChain if not
-  /// provided.
+  /// \arg TC - The provided tool chain for additional information on
+  /// directories to search.
   // FIXME: This should be in CompilationInfo.
-  llvm::sys::Path GetProgramPath(const char *Name, const ToolChain *TC=0) const;
+  llvm::sys::Path GetProgramPath(const char *Name, const ToolChain &TC) const;
 
   /// HandleImmediateArgs - Handle any arguments which should be
   /// treated before building actions or binding tools.
   ///
   /// \return Whether any compilation should be built for this
   /// invocation.
-  bool HandleImmediateArgs(const ArgList &Args);
+  bool HandleImmediateArgs(const Compilation &C);
 
   /// ConstructAction - Construct the appropriate action to do for
   /// \arg Phase on the \arg Input, taking in to account arguments

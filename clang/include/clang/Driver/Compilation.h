@@ -30,6 +30,9 @@ class Compilation {
   /// The original (untranslated) input argument list.
   ArgList *Args;
 
+  /// The list of actions.
+  ActionList Actions;
+
   /// The root list of jobs.
   JobList Jobs;
 
@@ -46,7 +49,13 @@ public:
   Compilation(ToolChain &DefaultToolChain, ArgList *Args);
   ~Compilation();
 
+  const ToolChain &getDefaultToolChain() const { return DefaultToolChain; }
+
   const ArgList &getArgs() const { return *Args; }
+
+  ActionList &getActions() { return Actions; }
+  const ActionList &getActions() const { return Actions; }
+
   JobList &getJobs() { return Jobs; }
 
   /// getArgsForToolChain - Return the argument list, possibly

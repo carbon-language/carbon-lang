@@ -9,6 +9,7 @@
 
 #include "clang/Driver/Compilation.h"
 
+#include "clang/Driver/Action.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/ToolChain.h"
 
@@ -29,6 +30,11 @@ Compilation::~Compilation() {
     if (A != Args)
       delete Args;
   }
+
+  // Free the actions, if built.
+  for (ActionList::iterator it = Actions.begin(), ie = Actions.end(); 
+       it != ie; ++it)
+    delete *it;
 }
 
 const ArgList &Compilation::getArgsForToolChain(const ToolChain *TC) {
