@@ -437,7 +437,6 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
       // doing, since the tool presumably does this anyway, and this
       // just adds an extra stat to the equation, but this is gcc
       // compatible.
-      A->claim();
       if (memcmp(Value, "-", 2) != 0 && !llvm::sys::Path(Value).exists())
         Diag(clang::diag::err_drv_no_such_file) << A->getValue(Args);
       else
