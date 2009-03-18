@@ -82,3 +82,9 @@ unsigned f1(void) {
 union f3_x {int x; float y;};
 int f3() {return ((union f3_x)2).x;}
 
+union f4_y {int x; _Complex float y;};
+_Complex float f4() {return ((union f4_y)(_Complex float)2.0).y;}
+
+struct f5_a { int a; } f5_a;
+union f5_z {int x; struct f5_a y;};
+struct f5_a f5() {return ((union f5_z)f5_a).y;}

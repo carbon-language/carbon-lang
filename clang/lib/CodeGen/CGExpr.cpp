@@ -1024,7 +1024,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   
   // Casts are only lvalues when the source and destination types are the same.
   llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
-  EmitAnyExpr(E, Temp, false);
+  EmitAnyExpr(E->getSubExpr(), Temp, false);
   
   return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
                           getContext().getObjCGCAttrKind(E->getType()));
