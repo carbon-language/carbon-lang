@@ -23,6 +23,7 @@
 #include "clang/Driver/Types.h"
 
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
@@ -52,6 +53,7 @@ Driver::~Driver() {
 }
 
 ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
+  llvm::PrettyStackTraceString CrashInfo("Command line argument parsing");
   ArgList *Args = new ArgList(ArgBegin, ArgEnd);
   
   // FIXME: Handle '@' args (or at least error on them).
@@ -87,6 +89,8 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
 }
 
 Compilation *Driver::BuildCompilation(int argc, const char **argv) {
+  llvm::PrettyStackTraceString CrashInfo("Compilation construction");
+
   // FIXME: Handle environment options which effect driver behavior,
   // somewhere (client?). GCC_EXEC_PREFIX, COMPILER_PATH,
   // LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS, QA_OVERRIDE_GCC3_OPTIONS.
@@ -289,6 +293,7 @@ void Driver::PrintActions(const ArgList &Args,
 }
 
 void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) const {
+  llvm::PrettyStackTraceString CrashInfo("Building actions for universal build");
   // Collect the list of architectures. Duplicates are allowed, but
   // should only be handled once (in the order seen).
   llvm::StringSet<> ArchNames;
@@ -363,6 +368,7 @@ void Driver::BuildUniversalActions(ArgList &Args, ActionList &Actions) const {
 }
 
 void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
+  llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
   // Start by constructing the list of inputs and their types.
 
   // Track the current user specified (-x) input. We also explicitly
@@ -548,6 +554,7 @@ void Driver::BuildActions(ArgList &Args, ActionList &Actions) const {
 
 Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
                                      Action *Input) const {
+  llvm::PrettyStackTraceString CrashInfo("Constructing phase actions");
   // Build the appropriate action.
   switch (Phase) {
   case phases::Link: assert(0 && "link action invalid here.");
@@ -581,6 +588,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
 }
 
 void Driver::BuildJobs(Compilation &C, const ActionList &Actions) const {
+  llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
   bool SaveTemps = C.getArgs().hasArg(options::OPT_save_temps);
   bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
   
@@ -656,6 +664,7 @@ void Driver::BuildJobsForAction(Compilation &C,
                                 bool AtTopLevel,
                                 const char *LinkingOutput,
                                 InputInfo &Result) const {
+  llvm::PrettyStackTraceString CrashInfo("Building compilation jobs for action");
   if (const InputAction *IA = dyn_cast<InputAction>(A)) {
     const char *Name = IA->getInputArg().getValue(C.getArgs());
     Result = InputInfo(Name, A->getType(), Name);
@@ -764,6 +773,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
                                        const JobAction &JA,
                                        const char *BaseInput,
                                        bool AtTopLevel) const {
+  llvm::PrettyStackTraceString CrashInfo("Computing output path");
   // Output to a user requested destination?
   if (AtTopLevel) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
@@ -827,6 +837,7 @@ llvm::sys::Path Driver::GetProgramPath(const char *Name,
 }
 
 const HostInfo *Driver::GetHostInfo(const char *Triple) const {
+  llvm::PrettyStackTraceString CrashInfo("Constructing host");
   // Dice into arch, platform, and OS. This matches 
   //  arch,platform,os = '(.*?)-(.*?)-(.*?)'
   // and missing fields are left empty.

@@ -21,6 +21,8 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
@@ -29,6 +31,7 @@ using namespace clang::driver;
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
+  llvm::PrettyStackTraceProgram X(argc, argv);
 
   llvm::OwningPtr<DiagnosticClient> 
     DiagClient(new TextDiagnosticPrinter(llvm::errs()));
@@ -56,5 +59,9 @@ int main(int argc, const char **argv) {
   if (!C.get())
     return 0;
 
-  return C->Execute();
+  int res = C->Execute();
+
+  llvm::llvm_shutdown();
+
+  return res;
 }
