@@ -26,6 +26,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 
 #include "InputInfo.h"
 
@@ -877,6 +878,11 @@ llvm::sys::Path Driver::GetProgramPath(const char *Name,
   llvm::sys::Path P(Dir);
   P.appendComponent(Name);
   if (P.exists())
+    return P;
+
+  // Search path to increase accuracy of logging output.
+  P = llvm::sys::Program::FindProgramByName(Name);
+  if (!P.empty())
     return P;
 
   return llvm::sys::Path(Name);

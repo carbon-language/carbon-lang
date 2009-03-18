@@ -392,7 +392,9 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(II.getInputFilename());
   }
 
-  Dest.addCommand(new Command("gcc", CmdArgs));
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "gcc").c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));
 }
 
 void gcc::Preprocess::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
