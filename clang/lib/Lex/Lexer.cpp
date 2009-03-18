@@ -1595,15 +1595,13 @@ LexNextToken:
         if (!isLexingRawMode())
           Diag(BufferPtr, diag::charize_microsoft_ext);
         Kind = tok::hashat;
-      } else {
-        Kind = tok::hash;       // '%:' -> '#'
-        
+      } else {                                         // '%:' -> '#'
         // We parsed a # character.  If this occurs at the start of the line,
         // it's actually the start of a preprocessing directive.  Callback to
         // the preprocessor to handle it.
         // FIXME: -fpreprocessed mode??
         if (Result.isAtStartOfLine() && !LexingRawMode) {
-          BufferPtr = CurPtr;
+          FormTokenWithChars(Result, CurPtr, tok::hash);
           PP->HandleDirective(Result);
           
           // As an optimization, if the preprocessor didn't switch lexers, tail
@@ -1621,6 +1619,8 @@ LexNextToken:
           
           return PP->Lex(Result);
         }
+        
+        Kind = tok::hash;
       }
     } else {
       Kind = tok::percent;
@@ -1727,13 +1727,12 @@ LexNextToken:
         Diag(BufferPtr, diag::charize_microsoft_ext);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Kind = tok::hash;
       // We parsed a # character.  If this occurs at the start of the line,
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
       // FIXME: -fpreprocessed mode??
       if (Result.isAtStartOfLine() && !LexingRawMode) {
-        BufferPtr = CurPtr;
+        FormTokenWithChars(Result, CurPtr, tok::hash);
         PP->HandleDirective(Result);
         
         // As an optimization, if the preprocessor didn't switch lexers, tail
@@ -1750,6 +1749,8 @@ LexNextToken:
         }
         return PP->Lex(Result);
       }
+      
+      Kind = tok::hash;
     }
     break;
 
