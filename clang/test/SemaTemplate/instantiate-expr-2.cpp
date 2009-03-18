@@ -65,3 +65,37 @@ void test_unary_op_overload(A<8> *a8) {
   typedef N4::UnaryOpOverload<N3::Z>::type UZ;
   UZ *uz = a8;
 }
+
+/*
+namespace N5 {
+  template<int I>
+  struct Lookup {
+    enum { val = I, more = val + 1 };
+  };
+
+  template<bool B>
+  struct Cond {
+    enum Junk { is = B ? Lookup<B>::more : Lookup<Lookup<B+1>::more>::val };
+  };
+
+  enum { resultT = Cond<true>::is,
+         resultF = Cond<false>::is };
+}
+*/
+
+namespace N6 {
+  template<int I>
+  struct Lookup {
+  };
+
+  template<bool B, typename T, typename E>
+  struct Cond {
+    typedef Lookup<B ? sizeof(T) : sizeof(E)> True;
+    typedef Lookup<!B ? sizeof(T) : sizeof(E)> False;
+  };
+
+  typedef Cond<true, int, char>::True True;
+  typedef Cond<false, int, char>::False False;
+}
+
+

@@ -615,6 +615,7 @@ namespace {
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -823,6 +824,34 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   return move(Result);  
 }
 
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
+  Sema::OwningExprResult Cond = Visit(E->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.ExprError();
+
+  // FIXME: use getLHS() and cope with NULLness
+  Sema::OwningExprResult True = Visit(E->getTrueExpr());
+  if (True.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult False = Visit(E->getFalseExpr());
+  if (False.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult Result
+    = SemaRef.ActOnConditionalOp(E->getCond()->getLocEnd(),
+                                 E->getFalseExpr()->getLocStart(),
+                                 move(Cond), move(True), move(False));
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+/*  Cond.release();
+  True.release();
+  False.release();*/
+  return move(Result);
+}
+
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   bool isSizeOf = E->isSizeOf();
@@ -832,7 +861,7 @@ TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     if (T->isDependentType()) {
       T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
                                   /*FIXME*/E->getOperatorLoc(),
-                                  &SemaRef.PP.getIdentifierTable().get("sizeof"));
+                                &SemaRef.PP.getIdentifierTable().get("sizeof"));
       if (T.isNull())
         return SemaRef.ExprError();
     }
