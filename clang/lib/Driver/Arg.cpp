@@ -17,7 +17,8 @@ using namespace clang::driver;
 Arg::Arg(ArgClass _Kind, const Option *_Opt, unsigned _Index) 
   : Kind(_Kind),
     Opt(_Opt),
-    Index(_Index)
+    Index(_Index),
+    Claimed(false)
 {
 }
 
