@@ -27,6 +27,7 @@ namespace tools {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
                               const InputInfo &Output, 
                               const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
@@ -44,6 +45,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
                               const InputInfo &Output, 
                               const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
@@ -59,6 +61,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
                               const InputInfo &Output, 
                               const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
@@ -74,6 +77,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
                               const InputInfo &Output, 
                               const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
@@ -89,6 +93,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
                               const InputInfo &Output, 
                               const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
@@ -104,6 +109,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
                               const InputInfo &Output, 
                               const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 

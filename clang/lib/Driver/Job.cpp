@@ -21,3 +21,11 @@ Command::Command(const char *_Executable, const ArgStringList &_Arguments)
 PipedJob::PipedJob() : Job(PipedJobClass) {}
 
 JobList::JobList() : Job(JobListClass) {}
+
+void Job::addCommand(Command *C) {
+  if (PipedJob *PJ = dyn_cast<PipedJob>(this))
+    PJ->addCommand(C);
+  else
+    cast<JobList>(this)->addJob(C);
+}
+    

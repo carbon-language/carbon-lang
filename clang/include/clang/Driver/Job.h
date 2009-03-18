@@ -22,6 +22,7 @@ using llvm::dyn_cast_or_null;
 
 namespace clang {
 namespace driver {
+  class Command;
 
 class Job {
 public:
@@ -40,6 +41,10 @@ public:
   virtual ~Job();
 
   JobClass getKind() const { return Kind; }
+
+  /// addCommand - Append a command to the current job, which must be
+  /// either a piped job or a job list.
+  void addCommand(Command *C);
 
   static bool classof(const Job *) { return true; }      
 };

@@ -10,6 +10,8 @@
 #ifndef CLANG_LIB_DRIVER_INPUTINFO_H_
 #define CLANG_LIB_DRIVER_INPUTINFO_H_
 
+#include "clang/Driver/Types.h"
+
 #include <cassert>
 #include <string>
 

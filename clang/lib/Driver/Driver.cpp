@@ -751,6 +751,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     if (!PJ) {
       PJ = new PipedJob();
       cast<JobList>(Dest)->addJob(PJ);
+      Dest = PJ;
     }
     Result = InputInfo(PJ, A->getType(), BaseInput);
   } else {
@@ -768,7 +769,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     llvm::errs() << "], output: " << Result.getAsString() << "\n";
   } else {
     const ArgList &TCArgs = C.getArgsForToolChain(TC);
-    T.ConstructJob(C, *JA, Result, InputInfos, TCArgs, LinkingOutput);
+    T.ConstructJob(C, *JA, *Dest, Result, InputInfos, TCArgs, LinkingOutput);
   }
 }
 
