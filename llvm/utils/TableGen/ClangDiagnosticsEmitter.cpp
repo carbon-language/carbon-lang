@@ -14,6 +14,7 @@
 #include "ClangDiagnosticsEmitter.h"
 #include "Record.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/DenseSet.h"
@@ -123,8 +124,24 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
 // Warning Group Tables generation.
 //===----------------------------------------------------------------------===//
 
+static const std::string &getOptName(const Record *R) {
+  const RecordVal *V = findRecordVal(*R, "Name");
+  assert(V && "Options must have a 'Name' value.");
+  const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
+  assert(SV && "'Name' entry must be a string.");
+  return SV->getValue();
+}  
+
+namespace {
+struct VISIBILITY_HIDDEN CompareOptName {  
+  bool operator()(const Record* A, const Record* B) {
+    return getOptName(A) < getOptName(B);    
+  }
+};
+}
+
 typedef std::set<const Record*> DiagnosticSet;
-typedef std::map<const Record*, DiagnosticSet> OptionMap;
+typedef std::map<const Record*, DiagnosticSet, CompareOptName> OptionMap;
 typedef llvm::DenseSet<const ListInit*> VisitedLists;
 
 static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited, const Init* X);
@@ -206,17 +223,12 @@ void ClangOptionsEmitter::run(std::ostream &OS) {
   OS << "\nstatic const WarningOption OptionTable[] = {";
   bool first = true;
   for (OptionMap::iterator I = OM.begin(), E = OM.end(); I!=E; ++I) {
-    const RecordVal *V = findRecordVal(*I->first, "Name");
-    assert(V && "Options must have a 'Name' value.");
-    const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
-    assert(SV && "'Name' entry must be a string.");
-    
     if (first)
       first = false;
     else
       OS << ',';
     
-    OS << "\n  {\"" << SV->getValue()
+    OS << "\n  {\"" << getOptName(I->first)
        << "\", DIAGS(" << I->first->getName() << ")}";
   }
   OS << "\n};\n";
