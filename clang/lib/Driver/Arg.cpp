@@ -142,6 +142,7 @@ void JoinedAndSeparateArg::render(const ArgList &Args,
 const char *JoinedAndSeparateArg::getValue(const ArgList &Args, 
                                            unsigned N) const {
   assert(N < getNumValues() && "Invalid index.");
-  assert(0 && "FIXME: Implement");
-  return 0;
+  if (N == 0)
+    return Args.getArgString(getIndex()) + strlen(getOption().getName());
+  return Args.getArgString(getIndex() + 1);
 }
