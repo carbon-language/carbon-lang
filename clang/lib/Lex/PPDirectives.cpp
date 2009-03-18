@@ -499,6 +499,8 @@ TryAgain:
     goto TryAgain;
 
   case tok::numeric_constant:  // # 7  GNU line marker directive.
+    if (getLangOptions().AsmPreprocessor)
+      break;  // # 4 is not a preprocessor directive in .S files.
     return HandleDigitDirective(Result);
   default:
     IdentifierInfo *II = Result.getIdentifierInfo();
