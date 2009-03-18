@@ -10,6 +10,7 @@
 #ifndef CLANG_DRIVER_TOOLCHAIN_H_
 #define CLANG_DRIVER_TOOLCHAIN_H_
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/System/Path.h"
 #include <string>
 
@@ -23,8 +24,20 @@ namespace driver {
 
 /// ToolChain - Access to tools for a single platform.
 class ToolChain {
+public:
+  typedef llvm::SmallVector<std::string, 4> path_list;
+
+private:
   const HostInfo &Host;
   std::string Arch, Platform, OS;
+
+  /// The list of toolchain specific path prefixes to search for
+  /// files.
+  path_list FilePaths;
+
+  /// The list of toolchain specific path prefixes to search for
+  /// programs.
+  path_list ProgramPaths;
 
 protected:
   ToolChain(const HostInfo &Host, const char *_Arch, const char *_Platform, 
@@ -39,6 +52,12 @@ public:
   const std::string &getArchName() const { return Arch; }
   const std::string &getPlatform() const { return Platform; }
   const std::string &getOS() const { return OS; }
+
+  path_list getFilePaths() { return FilePaths; }
+  const path_list getFilePaths() const { return FilePaths; }
+
+  path_list getProgramPaths() { return ProgramPaths; }
+  const path_list getProgramPaths() const { return ProgramPaths; }
 
   // Tool access.
 

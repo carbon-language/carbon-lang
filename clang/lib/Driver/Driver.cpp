@@ -849,13 +849,36 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 
 llvm::sys::Path Driver::GetFilePath(const char *Name,
                                     const ToolChain &TC) const {
-  // FIXME: Implement.
+  const ToolChain::path_list &List = TC.getFilePaths();
+  for (ToolChain::path_list::const_iterator 
+         it = List.begin(), ie = List.end(); it != ie; ++it) {
+    llvm::sys::Path P(*it);
+    P.appendComponent(Name);
+    if (P.exists())
+      return P;
+  }
+
   return llvm::sys::Path(Name);
 }
 
 llvm::sys::Path Driver::GetProgramPath(const char *Name, 
                                        const ToolChain &TC) const {
-  // FIXME: Implement.
+  const ToolChain::path_list &List = TC.getProgramPaths();
+  for (ToolChain::path_list::const_iterator 
+         it = List.begin(), ie = List.end(); it != ie; ++it) {
+    llvm::sys::Path P(*it);
+    P.appendComponent(Name);
+    if (P.exists())
+      return P;
+  }
+
+  // As a last resort, always search in our directory before pulling
+  // from the path.
+  llvm::sys::Path P(Dir);
+  P.appendComponent(Name);
+  if (P.exists())
+    return P;
+
   return llvm::sys::Path(Name);
 }
 
