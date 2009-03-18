@@ -13,11 +13,12 @@ ifdef VERBOSE
 ifeq ($(VERBOSE),0)
 PROGRESS = :
 REPORTFAIL = echo 'FAIL: clang' $(TARGET_TRIPLE) $(subst $(LLVM_SRC_ROOT)/tools/clang/,,$<)
+DONE = $(LLVMToolDir)/clang-driver -v
 else
 PROGRESS = echo $<
 REPORTFAIL = cat $@
-endif
 DONE = true
+endif
 else
 PROGRESS = printf '.'
 REPORTFAIL = (echo; echo '----' $< 'failed ----')
