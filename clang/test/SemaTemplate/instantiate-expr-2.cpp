@@ -84,9 +84,9 @@ namespace N5 {
 */
 
 namespace N6 {
+  // non-typedependent
   template<int I>
-  struct Lookup {
-  };
+  struct Lookup {};
 
   template<bool B, typename T, typename E>
   struct Cond {
@@ -102,4 +102,21 @@ namespace N6 {
   Lookup<sizeof(int)> const &L2(True());
 }
 
+
+namespace N7 {
+  // type dependent
+  template<int I>
+  struct Lookup {};
+
+  template<bool B, typename T, typename E>
+  struct Cond {
+    T foo() { return B ? T() : E(); }
+    typedef Lookup<sizeof(B ? T() : E())> Type;
+  };
+
+  //Cond<true, int*, double> C; // Errors
+  //int V(C.foo()); // Errors
+  //typedef Cond<true, int*, double>::Type Type; // Errors + CRASHES!
+  typedef Cond<true, int, double>::Type Type;
+}
 
