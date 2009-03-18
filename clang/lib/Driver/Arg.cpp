@@ -55,7 +55,7 @@ FlagArg::FlagArg(const Option *Opt, unsigned Index)
 }
 
 void FlagArg::render(const ArgList &Args, ArgStringList &Output) const {
-  assert(0 && "FIXME: Implement");
+  Output.push_back(Args.getArgString(getIndex()));
 }
 
 const char *FlagArg::getValue(const ArgList &Args, unsigned N) const {
@@ -68,7 +68,7 @@ PositionalArg::PositionalArg(const Option *Opt, unsigned Index)
 }
 
 void PositionalArg::render(const ArgList &Args, ArgStringList &Output) const {
-  assert(0 && "FIXME: Implement");
+  Output.push_back(Args.getArgString(getIndex()));
 }
 
 const char *PositionalArg::getValue(const ArgList &Args, unsigned N) const {
@@ -81,7 +81,12 @@ JoinedArg::JoinedArg(const Option *Opt, unsigned Index)
 }
 
 void JoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
-  assert(0 && "FIXME: Implement");
+  if (getOption().hasForceSeparateRender()) {
+    Output.push_back(getOption().getName());
+    Output.push_back(getValue(Args, 0));
+  } else {
+    Output.push_back(Args.getArgString(getIndex()));
+  }
 }
 
 const char *JoinedArg::getValue(const ArgList &Args, unsigned N) const {
@@ -110,7 +115,7 @@ CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index,
 }
 
 void CommaJoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
-  assert(0 && "FIXME: Implement");
+  Output.push_back(Args.getArgString(getIndex()));
 }
 
 const char *CommaJoinedArg::getValue(const ArgList &Args, unsigned N) const {
@@ -123,7 +128,17 @@ SeparateArg::SeparateArg(const Option *Opt, unsigned Index, unsigned _NumValues)
 }
 
 void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
-  assert(0 && "FIXME: Implement");
+  if (getOption().hasForceJoinedRender()) {
+    assert(getNumValues() == 1 && "Cannot force joined render with > 1 args.");
+    // FIXME: Avoid std::string.
+    std::string Joined(getOption().getName());
+    Joined += Args.getArgString(getIndex());
+    Output.push_back(Args.MakeArgString(Joined.c_str()));
+  } else {
+    Output.push_back(Args.getArgString(getIndex()));
+    for (unsigned i = 0; i < NumValues; ++i)
+      Output.push_back(Args.getArgString(getIndex() + 1 + i));
+  }
 }
 
 const char *SeparateArg::getValue(const ArgList &Args, unsigned N) const { 
@@ -137,7 +152,8 @@ JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index)
 
 void JoinedAndSeparateArg::render(const ArgList &Args, 
                                   ArgStringList &Output) const {
-  assert(0 && "FIXME: Implement");
+  Output.push_back(Args.getArgString(getIndex()));
+  Output.push_back(Args.getArgString(getIndex()) + 1);
 }
 
 const char *JoinedAndSeparateArg::getValue(const ArgList &Args, 
