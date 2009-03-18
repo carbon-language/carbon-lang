@@ -802,8 +802,11 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
                "Return type changed, but not into a void. The old return type"
                " must have been a struct!");
         Instruction *InsertPt = Call;
-        if (InvokeInst *II = dyn_cast<InvokeInst>(Call))
+        if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
           InsertPt = II->getNormalDest()->begin();
+          assert(!isa<PHINode>(InsertPt) &&
+                "Can't have a use of the invoke value if the edge is critical");
+        }
           
         // We used to return a struct. Instead of doing smart stuff with all the
         // uses of this struct, we will just rebuild it using
