@@ -290,7 +290,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (A->getValue(Args)[0] == '\0')
       CmdArgs.push_back("-O1");
     else
-      CmdArgs.push_back(A->getValue(Args));
+      A->render(Args, CmdArgs);
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group, options::OPT_pedantic_Group);
