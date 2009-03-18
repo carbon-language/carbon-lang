@@ -803,9 +803,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
                " must have been a struct!");
         Instruction *InsertPt = Call;
         if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
-          InsertPt = II->getNormalDest()->begin();
-          assert(!isa<PHINode>(InsertPt) &&
-                "Can't have a use of the invoke value if the edge is critical");
+          BasicBlock::iterator IP = II->getNormalDest()->begin();
+          while (isa<PHINode>(IP)) ++IP;
+          InsertPt = IP;
         }
           
         // We used to return a struct. Instead of doing smart stuff with all the
