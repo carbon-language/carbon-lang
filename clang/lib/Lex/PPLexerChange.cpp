@@ -18,7 +18,6 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
-
 using namespace clang;
 
 PPCallbacks::~PPCallbacks() {}

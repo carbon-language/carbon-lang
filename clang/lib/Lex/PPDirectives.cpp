@@ -476,6 +476,9 @@ void Preprocessor::HandleDirective(Token &Result) {
   // pp-directive.
   bool ReadAnyTokensBeforeDirective = CurPPLexer->MIOpt.getHasReadAnyTokensVal();
   
+  // Save the '#' token in case we need to return it later.
+  Token SavedHash = Result;
+  
   // Read the next token, the directive flavor.  This isn't expanded due to
   // C99 6.10.3p8.
   LexUnexpandedToken(Result);
@@ -566,6 +569,22 @@ TryAgain:
       break;
     }
     break;
+  }
+  
+  // If this is a .S file, treat unknown # directives as non-preprocessor
+  // directives.  This is important because # may be a comment or introduce
+  // various pseudo-ops.  Just return the # token and push back the following
+  // token to be lexed next time.
+  if (getLangOptions().AsmPreprocessor) {
+    Token *Toks = new Token[2]();
+    // Return the # and the token after it.
+    Toks[0] = SavedHash; 
+    Toks[1] = Result;
+    // Enter this token stream so that we re-lex the tokens.  Make sure to
+    // enable macro expansion, in case the token after the # is an identifier
+    // that is expanded.
+    EnterTokenStream(Toks, 2, false, true);
+    return;
   }
   
   // If we reached here, the preprocessing token is not valid!
