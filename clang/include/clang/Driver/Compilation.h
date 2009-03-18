@@ -15,6 +15,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
 namespace driver {
   class ArgList;
@@ -80,6 +84,15 @@ public:
   /// Execute - Execute the compilation jobs and return an
   /// appropriate exit code.
   int Execute() const;
+
+private:
+  /// PrintJob - Print one job in -### format.
+  ///
+  /// OS - The stream to print on.
+  /// J - The job to print.
+  /// Terminator - A string to print at the end of the line.
+  void PrintJob(llvm::raw_ostream &OS, const Job *J, 
+                const char *Terminator) const;
 };
 
 } // end namespace driver
