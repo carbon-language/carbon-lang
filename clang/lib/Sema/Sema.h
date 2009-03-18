@@ -1986,7 +1986,8 @@ public:
   
   virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                       DeclTy **allMethods = 0, unsigned allNum = 0,
-                      DeclTy **allProperties = 0, unsigned pNum = 0);
+                      DeclTy **allProperties = 0, unsigned pNum = 0,
+                      DeclTy **allTUVars = 0, unsigned tuvNum = 0);
   
   virtual DeclTy *ActOnProperty(Scope *S, SourceLocation AtLoc,
                                 FieldDeclarator &FD, ObjCDeclSpec &ODS,

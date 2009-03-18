@@ -1366,7 +1366,9 @@ public:
     DeclTy **allMethods = 0, 
     unsigned allNum = 0,
     DeclTy **allProperties = 0, 
-    unsigned pNum = 0) {
+    unsigned pNum = 0,
+    DeclTy **allTUVars = 0,
+    unsigned tuvNum = 0) {
     return;
   }
   // ActOnProperty - called to build one property AST

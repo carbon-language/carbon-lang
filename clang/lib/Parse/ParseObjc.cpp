@@ -215,6 +215,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                                         tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclTy*, 32> allMethods;
   llvm::SmallVector<DeclTy*, 16> allProperties;
+  llvm::SmallVector<DeclTy*, 8> allTUVariables;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
   
   SourceLocation AtEndLoc;
@@ -252,7 +253,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       
       // FIXME: as the name implies, this rule allows function definitions.
       // We could pass a flag or check for functions during semantic analysis.
-      ParseDeclarationOrFunctionDefinition();
+      DeclTy *VFDecl = ParseDeclarationOrFunctionDefinition();
+      allTUVariables.push_back(VFDecl);
       continue;
     }
     
@@ -360,7 +362,10 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                      allMethods.empty() ? 0 : &allMethods[0],
                      allMethods.size(), 
                      allProperties.empty() ? 0 : &allProperties[0],
-                     allProperties.size());
+                     allProperties.size(),
+                     allTUVariables.empty() ? 0 :
+                     &allTUVariables[0],
+                     allTUVariables.size());
 }
 
 ///   Parse property attribute declarations.

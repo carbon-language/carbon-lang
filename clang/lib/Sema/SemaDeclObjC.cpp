@@ -1233,7 +1233,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 // always null.
 void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                       DeclTy **allMethods, unsigned allNum,
-                      DeclTy **allProperties, unsigned pNum) {
+                      DeclTy **allProperties, unsigned pNum,
+                      DeclTy **allTUVars,
+                      unsigned tuvNum) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
 
   // FIXME: If we don't have a ClassDecl, we have an error. We should consider
@@ -1336,6 +1338,15 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
         }
       }
     }
+  }
+  llvm::SmallVector<VarDecl*, 8> allTUVariables;
+  for (unsigned i = 0; i < tuvNum; i++) {
+    if (VarDecl *VD = dyn_cast<VarDecl>((Decl*)allTUVars[i]))
+      allTUVariables.push_back(VD);
+  }
+  if (!allTUVariables.empty() && isInterfaceDeclKind) {
+    ObjCContainerDecl *OCD = dyn_cast<ObjCContainerDecl>(ClassDecl);
+    OCD->setTUVarList(&allTUVariables[0], allTUVariables.size(), Context);
   }
 }
 
