@@ -79,3 +79,6 @@ unsigned f1(void) {
   return (unsigned) fp;
 }  
 
+union f3_x {int x; float y;};
+int f3() {return ((union f3_x)2).x;}
+

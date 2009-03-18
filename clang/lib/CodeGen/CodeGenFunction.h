@@ -605,6 +605,7 @@ public:
   LValue EmitExtVectorElementExpr(const ExtVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
+  LValue EmitCastLValue(const CastExpr *E);
 
   llvm::Value *EmitIvarOffset(ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);

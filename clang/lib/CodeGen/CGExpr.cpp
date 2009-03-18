@@ -186,12 +186,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CXXDynamicCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass:
-    // Casts are only lvalues when the source and destination types are the 
-    // same.
-    assert(getContext().hasSameUnqualifiedType(E->getType(),
-                               cast<CastExpr>(E)->getSubExpr()->getType()) &&
-           "Type changing cast is not an lvalue");
-    return EmitLValue(cast<CastExpr>(E)->getSubExpr());
+    return EmitCastLValue(cast<CastExpr>(E));
   }
 }
 
@@ -994,8 +989,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   return LV;
 }
 
-LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E)
-{
+LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
   const llvm::Type *LTy = ConvertType(E->getType());
   llvm::Value *DeclPtr = CreateTempAlloca(LTy, ".compoundliteral");
 
@@ -1011,6 +1005,29 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E)
   }
 
   return Result;
+}
+
+/// EmitCastLValue - Casts are never lvalues.  If a cast is needed by the code
+/// generator in an lvalue context, then it must mean that we need the address
+/// of an aggregate in order to access one of its fields.  This can happen for
+/// all the reasons that casts are permitted with aggregate result, including
+/// noop aggregate casts, and cast from scalar to union.
+LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
+  // If this is an aggregate-to-aggregate cast, just use the input's address as
+  // the lvalue.
+  if (getContext().hasSameUnqualifiedType(E->getType(),
+                                          E->getSubExpr()->getType()))
+    return EmitLValue(E->getSubExpr());
+
+  // Otherwise, we must have a cast from scalar to union.
+  assert(E->getType()->isUnionType() && "Expected scalar-to-union cast");
+  
+  // Casts are only lvalues when the source and destination types are the same.
+  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
+  EmitAnyExpr(E, Temp, false);
+  
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
 }
 
 //===--------------------------------------------------------------------===//
