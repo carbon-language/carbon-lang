@@ -763,6 +763,7 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     isDef = FD->getBody();
   } else if (isa<ObjCPropertyDecl>(D)) {
     // We ignore weak import on properties
+    return;
   } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
     << "weak_import" << 2 /*variable and function*/;
