@@ -7029,15 +7029,16 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, CSI);
   
   // See if we can turn a signed shr into an unsigned shr.
-  if (!isa<VectorType>(I.getType()) &&
-      MaskedValueIsZero(Op0,
+  if (!isa<VectorType>(I.getType())) {
+    if (MaskedValueIsZero(Op0,
                       APInt::getSignBit(I.getType()->getPrimitiveSizeInBits())))
-    return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
+      return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
 
-  // Arithmetic shifting an all-sign-bit value is a no-op.
-  unsigned NumSignBits = ComputeNumSignBits(Op0);
-  if (NumSignBits == Op0->getType()->getPrimitiveSizeInBits())
-    return ReplaceInstUsesWith(I, Op0);
+    // Arithmetic shifting an all-sign-bit value is a no-op.
+    unsigned NumSignBits = ComputeNumSignBits(Op0);
+    if (NumSignBits == Op0->getType()->getPrimitiveSizeInBits())
+      return ReplaceInstUsesWith(I, Op0);
+  }
 
   return 0;
 }
