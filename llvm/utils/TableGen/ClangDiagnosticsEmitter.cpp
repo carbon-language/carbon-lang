@@ -16,8 +16,16 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/ADT/DenseSet.h"
+#include <set>
+#include <map>
 
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// Generic routines for all Clang TableGen backens.
+//===----------------------------------------------------------------------===//
+
 typedef std::vector<Record*> RecordVector;
 typedef std::vector<Record*> SuperClassVector;
 typedef std::vector<RecordVal> RecordValVector;
@@ -53,6 +61,10 @@ static void EmitAllCaps(std::ostream& OS, const std::string &s) {
   for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I)
     OS << char(toupper(*I));  
 }
+
+//===----------------------------------------------------------------------===//
+// Warning Tables (.inc file) generation.
+//===----------------------------------------------------------------------===//
 
 static void ProcessDiag(std::ostream& OS, const Record* DiagClass,
                         const Record& R) {
@@ -104,5 +116,94 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
     }
     
     ProcessDiag(OS, DiagClass, **I);
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Warning Group Tables generation.
+//===----------------------------------------------------------------------===//
+
+typedef std::set<const Record*> DiagnosticSet;
+typedef std::map<const Record*, DiagnosticSet> OptionMap;
+typedef llvm::DenseSet<const ListInit*> VisitedLists;
+
+static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited, const Init* X);
+
+static void BuildGroup(DiagnosticSet &DS, VisitedLists &Visited,
+                       const ListInit* LV) {
+
+  // Simple hack to prevent including a list multiple times.  This may be useful
+  // if one declares an Option by including a bunch of other Options that
+  // include other Options, etc.
+  if (Visited.count(LV))
+    return;
+  
+  Visited.insert(LV);
+  
+  // Iterate through the list and grab all DiagnosticControlled.
+  for (ListInit::const_iterator I = LV->begin(), E = LV->end(); I!=E; ++I)
+    BuildGroup(DS, Visited, *I);
+}
+
+static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited,
+                       const Record *Def) {
+
+  // If an Option includes another Option, inline the Diagnostics of the
+  // included Option.
+  if (Def->isSubClassOf("Option")) {
+    if (const RecordVal* V = findRecordVal(*Def, "Members"))
+      if (const ListInit* LV = dynamic_cast<const ListInit*>(V->getValue()))
+        BuildGroup(DS, Visited, LV);
+
+    return;
+  }
+  
+  if (Def->isSubClassOf("DiagnosticControlled"))
+    DS.insert(Def);
+}
+
+static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited,
+                       const Init* X) {
+
+  if (const DefInit *D = dynamic_cast<const DefInit*>(X))
+    BuildGroup(DS, Visited, D->getDef());
+  
+  // We may have some other cases here in the future.
+}
+
+
+void ClangOptionsEmitter::run(std::ostream &OS) {
+  // Build up a map from options to controlled diagnostics.
+  OptionMap OM;  
+       
+  const RecordVector &Opts = Records.getAllDerivedDefinitions("Option");
+  for (RecordVector::const_iterator I=Opts.begin(), E=Opts.end(); I!=E; ++I)
+    if (const RecordVal* V = findRecordVal(**I, "Members"))
+      if (const ListInit* LV = dynamic_cast<const ListInit*>(V->getValue())) {        
+        VisitedLists Visited;
+        BuildGroup(OM[*I], Visited, LV);
+      }
+  
+  // Iterate through the OptionMap and emit the declarations.
+  for (OptionMap::iterator I = OM.begin(), E = OM.end(); I!=E; ++I) {    
+//    const RecordVal *V = findRecordVal(*I->first, "Name");
+//    assert(V && "Options must have a 'Name' value.");
+//    const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
+//    assert(SV && "'Name' entry must be a string.");
+    
+    // Output the option.
+    OS << "static const diag::kind " << I->first->getName() << "[] = { ";
+    
+    DiagnosticSet &DS = I->second;
+    bool first = true;
+    for (DiagnosticSet::iterator I2 = DS.begin(), E2 = DS.end(); I2!=E2; ++I2) {
+      if (first)
+        first = false;
+      else
+        OS << ", ";
+        
+      OS << "diag::" << (*I2)->getName();
+    }
+    OS << " };\n";
   }
 }
