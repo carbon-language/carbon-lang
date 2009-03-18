@@ -219,7 +219,7 @@ void Driver::PrintVersion() const {
   zap = strstr(buf, "/clang/tools/clang");
   if (zap)
     *zap = 0;
-  const char *vers = buf+10;
+  const char *vers = buf+6;
 
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
