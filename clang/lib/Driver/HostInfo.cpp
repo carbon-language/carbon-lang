@@ -175,7 +175,7 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
                                      getPlatformName().c_str(), 
                                      getOSName().c_str());
 
-  return 0;
+  return TC;
 }
 
 }
