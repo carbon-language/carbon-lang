@@ -52,14 +52,14 @@ namespace html {
   /// EscapeText - HTMLize a specified file so that special characters are
   /// are translated so that they are not interpreted as HTML tags.
   void EscapeText(Rewriter& R, FileID FID,
-                  bool EscapeSpaces = false, bool ReplacesTabs = true);
+                  bool EscapeSpaces = false, bool ReplaceTabs = false);
 
   /// EscapeText - HTMLized the provided string so that special characters
   ///  in 's' are not interpreted as HTML tags.  Unlike the version of
   ///  EscapeText that rewrites a file, this version by default replaces tabs
   ///  with spaces.
   std::string EscapeText(const std::string& s,
-                         bool EscapeSpaces = false, bool ReplaceTabs = true);
+                         bool EscapeSpaces = false, bool ReplaceTabs = false);
 
   void AddLineNumbers(Rewriter& R, FileID FID);  
   
