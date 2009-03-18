@@ -839,14 +839,9 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
   if (False.isInvalid())
     return SemaRef.ExprError();
 
-  Sema::OwningExprResult Result
-    = SemaRef.ActOnConditionalOp(E->getCond()->getLocEnd(),
-                                 E->getFalseExpr()->getLocStart(),
-                                 move(Cond), move(True), move(False));
-  if (Result.isInvalid())
-    return SemaRef.ExprError();
-
-  return move(Result);
+  return SemaRef.ActOnConditionalOp(E->getCond()->getLocEnd(),
+                                    E->getFalseExpr()->getLocStart(),
+                                    move(Cond), move(True), move(False));
 }
 
 Sema::OwningExprResult 
