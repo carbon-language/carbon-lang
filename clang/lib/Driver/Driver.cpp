@@ -608,6 +608,11 @@ void Driver::BuildJobs(Compilation &C) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs");
   bool SaveTemps = C.getArgs().hasArg(options::OPT_save_temps);
   bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
+
+  // FIXME: Pipes are forcibly disabled until we support executing
+  // them.
+  if (!CCCPrintBindings)
+    UsePipes = false;
   
   // -save-temps inhibits pipes.
   if (SaveTemps && UsePipes) {
@@ -684,6 +689,13 @@ void Driver::BuildJobsForAction(Compilation &C,
                                 const char *LinkingOutput,
                                 InputInfo &Result) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation jobs for action");
+
+  bool UsePipes = C.getArgs().hasArg(options::OPT_pipe);
+  // FIXME: Pipes are forcibly disabled until we support executing
+  // them.
+  if (!CCCPrintBindings)
+    UsePipes = false;
+
   if (const InputAction *IA = dyn_cast<InputAction>(A)) {
     // FIXME: This is broken, linker inputs won't work here.
     assert(isa<PositionalArg>(IA->getInputArg()) && "FIXME: Linker inputs");
@@ -749,7 +761,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     if (AtTopLevel) {
       if (isa<PreprocessJobAction>(A) && !C.getArgs().hasArg(options::OPT_o))
         OutputToPipe = true;
-    } else if (C.getArgs().hasArg(options::OPT_pipe))
+    } else if (UsePipes)
       OutputToPipe = true;
   }
 
