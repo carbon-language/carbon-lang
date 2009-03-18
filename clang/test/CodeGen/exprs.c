@@ -58,4 +58,12 @@ void f0(void (*fp)(void), void (*fp2)(void)) {
   int x = fp - fp2;
 }
 
+// noop casts as lvalues.
+struct X {
+  int Y;
+};
+struct X foo();
+int bar() {
+  return ((struct X)foo()).Y + 1;
+}
 

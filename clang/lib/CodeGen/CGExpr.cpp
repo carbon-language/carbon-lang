@@ -179,6 +179,19 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCompoundLiteralLValue(cast<CompoundLiteralExpr>(E));
   case Expr::ChooseExprClass:
     return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr(getContext()));
+  case Expr::ImplicitCastExprClass:
+  case Expr::CStyleCastExprClass:
+  case Expr::CXXFunctionalCastExprClass:
+  case Expr::CXXStaticCastExprClass:
+  case Expr::CXXDynamicCastExprClass:
+  case Expr::CXXReinterpretCastExprClass:
+  case Expr::CXXConstCastExprClass:
+    // Casts are only lvalues when the source and destination types are the 
+    // same.
+    assert(getContext().hasSameUnqualifiedType(E->getType(),
+                               cast<CastExpr>(E)->getSubExpr()->getType()) &&
+           "Type changing cast is not an lvalue");
+    return EmitLValue(cast<CastExpr>(E)->getSubExpr());
   }
 }
 
