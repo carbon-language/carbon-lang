@@ -72,6 +72,9 @@ public:
     EmitAggLoadOfLValue(E);
   }
   
+  void VisitBlockDeclRefExpr(const BlockDeclRefExpr *E)
+      { EmitAggLoadOfLValue(E); }
+
   // Operators.
   //  case Expr::UnaryOperatorClass:
   //  case Expr::CastExprClass: 
