@@ -57,7 +57,7 @@ namespace driver {
     /// Flag indicating whether this argument was used to effect
     /// compilation; used for generating "argument unused"
     /// diagnostics.
-    bool Claimed;
+    mutable bool Claimed;
 
   protected:
     Arg(ArgClass Kind, const Option *Opt, unsigned Index);
@@ -78,7 +78,7 @@ namespace driver {
     
     // FIXME: We need to deal with derived arguments and set the bit
     // in the original argument; not the derived one.
-    void claim() { Claimed = true; }
+    void claim() const { Claimed = true; }
 
     virtual unsigned getNumValues() const = 0;
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
