@@ -955,8 +955,17 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   // Do a pass over the regions in the store.  For VarRegions we check if
   // the variable is still live and if so add it to the list of live roots.
   // For other regions we populate our region backmap.
+
+  llvm::SmallVector<const MemRegion*, 10> IntermediateRoots;
+
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    const MemRegion* R = I.getKey();
+    IntermediateRoots.push_back(I.getKey());
+  }
+
+  while (!IntermediateRoots.empty()) {
+    const MemRegion* R = IntermediateRoots.back();
+    IntermediateRoots.pop_back();
+
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
       if (SymReaper.isLive(Loc, VR->getDecl()))
         RegionRoots.push_back(VR); // This is a live "root".
@@ -964,19 +973,18 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
     else {
       // Get the super region for R.
       const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
+
       // Get the current set of subregions for SuperR.
       const SubRegionsTy* SRptr = SubRegMap.lookup(SuperR);
       SubRegionsTy SR = SRptr ? *SRptr : SubRegF.GetEmptySet();
+
       // Add R to the subregions of SuperR.
       SubRegMap = SubRegMapF.Add(SubRegMap, SuperR, SubRegF.Add(SR, R));
-      
-      // Finally, check if SuperR is a VarRegion.  We need to do this
-      // to also mark SuperR as a root (as it may not have a value directly
-      // bound to it in the store).
-      if (const VarRegion* VR = dyn_cast<VarRegion>(SuperR)) {
-        if (SymReaper.isLive(Loc, VR->getDecl()))
-          RegionRoots.push_back(VR); // This is a live "root".
-      }
+
+      // Super region may be VarRegion or subregion of another VarRegion. Add it
+      // to the work list.
+      if (isa<SubRegion>(SuperR))
+        IntermediateRoots.push_back(SuperR);
     }
   }
   
