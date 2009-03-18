@@ -860,6 +860,8 @@ const HostInfo *Driver::GetHostInfo(const char *Triple) const {
     Arch = "i386";
   else if (Arch == "amd64")
     Arch = "x86_64";
+  else if (Arch == "powerpc" || Arch == "Power Macintosh")
+    Arch = "ppc";
   
   if (memcmp(&OS[0], "darwin", 6) == 0)
     return createDarwinHostInfo(*this, Arch.c_str(), Platform.c_str(), 
