@@ -62,7 +62,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       ArgStringList CpArgs;
       CpArgs.push_back(InputPath);
       CpArgs.push_back(Args.MakeArgString(OutputPath.c_str()));
-      C.getJobs().addJob(new Command("cp", CpArgs));
+      const char *Exec = 
+        Args.MakeArgString(getToolChain().GetProgramPath(C, "cp").c_str());
+      C.getJobs().addJob(new Command(Exec, CpArgs));
     }
   } else {
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
