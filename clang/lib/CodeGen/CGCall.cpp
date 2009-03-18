@@ -1467,6 +1467,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                                 llvm::Attribute::StructRet |
                                                 llvm::Attribute::NoAlias));
     ++Index;
+    // sret disables readnone and readonly
+    FuncAttrs &= ~(llvm::Attribute::ReadOnly |
+                   llvm::Attribute::ReadNone);
     break;
 
   case ABIArgInfo::Ignore:
@@ -1493,6 +1496,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       Attributes |= llvm::Attribute::ByVal;
       Attributes |= 
         llvm::Attribute::constructAlignmentFromInt(AI.getIndirectAlign());
+      // byval disables readnone and readonly.
+      FuncAttrs &= ~(llvm::Attribute::ReadOnly |
+                     llvm::Attribute::ReadNone);
       break;
       
     case ABIArgInfo::Direct:
