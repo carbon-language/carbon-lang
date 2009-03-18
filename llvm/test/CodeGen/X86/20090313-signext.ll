@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=x86_64-pc-linux > %t
+; RUN: llvm-as < %s | llc -march=x86-64 -relocation-model=pic > %t
 ; RUN: grep {movswl	%ax, %edi} %t
-; RUN: grep {movw	x(%rip), %ax} %t
+; RUN: grep {movw	(%rax), %ax} %t
 
 @x = common global i16 0
 
