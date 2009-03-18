@@ -41,11 +41,11 @@ const ArgList &Compilation::getArgsForToolChain(const ToolChain *TC) {
   if (!TC)
     TC = &DefaultToolChain;
 
-  ArgList *&Args = TCArgs[TC];
-  if (!Args)
-    Args = TC->TranslateArgs(*Args);
+  ArgList *&Entry = TCArgs[TC];
+  if (!Entry)
+    Entry = TC->TranslateArgs(*Args);
 
-  return *Args;
+  return *Entry;
 }
 
 int Compilation::Execute() const {
