@@ -105,8 +105,14 @@ private:
   /// OS - The stream to print on.
   /// J - The job to print.
   /// Terminator - A string to print at the end of the line.
-  void PrintJob(llvm::raw_ostream &OS, const Job *J, 
-                const char *Terminator) const;
+  /// Quote - Should separate arguments be quoted.
+  void PrintJob(llvm::raw_ostream &OS, const Job &J, 
+                const char *Terminator, bool Quote) const;
+
+  /// ExecuteJob - Execute a single job.
+  ///
+  /// \return The accumulated result code of the job.
+  int ExecuteJob(const Job &J) const;
 };
 
 } // end namespace driver

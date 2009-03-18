@@ -27,6 +27,8 @@ def err_drv_unable_to_make_temp : Error<
   "unable to make temporary file: %0">;
 def err_drv_unable_to_remove_file : Error<
   "unable to remove file: %0">;
+def err_drv_command_failure : Error<
+  "unable to execute command: %0">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input file unused when '%2' is present">;

@@ -16,6 +16,7 @@
 #include "clang/Driver/ToolChain.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Program.h"
 #include <sys/stat.h>
 #include <errno.h>
 using namespace clang::driver;
@@ -54,23 +55,27 @@ const ArgList &Compilation::getArgsForToolChain(const ToolChain *TC) {
   return *Entry;
 }
 
-void Compilation::PrintJob(llvm::raw_ostream &OS, const Job *J, 
-                           const char *Terminator) const {
-  if (const Command *C = dyn_cast<Command>(J)) {
+void Compilation::PrintJob(llvm::raw_ostream &OS, const Job &J, 
+                           const char *Terminator, bool Quote) const {
+  if (const Command *C = dyn_cast<Command>(&J)) {
     OS << " \"" << C->getExecutable() << '"';
     for (ArgStringList::const_iterator it = C->getArguments().begin(),
-           ie = C->getArguments().end(); it != ie; ++it)
-      OS << " \"" << *it << '"';
+           ie = C->getArguments().end(); it != ie; ++it) {
+      if (Quote)
+        OS << " \"" << *it << '"';
+      else
+        OS << ' ' << *it;
+    }
     OS << Terminator;
-  } else if (const PipedJob *PJ = dyn_cast<PipedJob>(J)) {
+  } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
     for (PipedJob::const_iterator 
            it = PJ->begin(), ie = PJ->end(); it != ie; ++it)
-      PrintJob(OS, *it, (it + 1 != PJ->end()) ? " |\n" : "\n");
+      PrintJob(OS, **it, (it + 1 != PJ->end()) ? " |\n" : "\n", Quote);
   } else {
-    const JobList *Jobs = cast<JobList>(J);
+    const JobList *Jobs = cast<JobList>(&J);
     for (JobList::const_iterator 
            it = Jobs->begin(), ie = Jobs->end(); it != ie; ++it)
-      PrintJob(OS, *it, Terminator);
+      PrintJob(OS, **it, Terminator, Quote);
   }
 }
 
@@ -90,7 +95,8 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
 
       // FIXME: Grumble, P.exists() is broken. PR3837.
       struct stat buf;
-      if (::stat(P.c_str(), &buf) || errno != ENOENT) {
+      if (::stat(P.c_str(), &buf) == 0 
+          || errno != ENOENT) {
         if (IssueErrors)
           getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
             << Error;
@@ -102,16 +108,52 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
   return Success;
 }
 
+int Compilation::ExecuteJob(const Job &J) const {
+  if (const Command *C = dyn_cast<Command>(&J)) {
+    llvm::sys::Path Prog(C->getExecutable());
+    const char **Argv = new const char*[C->getArguments().size() + 2];
+    Argv[0] = C->getExecutable();
+    std::copy(C->getArguments().begin(), C->getArguments().end(), Argv+1);
+    Argv[C->getArguments().size() + 1] = 0;
+
+    if (getDriver().CCCEcho || getArgs().hasArg(options::OPT_v))
+      PrintJob(llvm::errs(), J, "\n", false);
+    
+    std::string Error;
+    int Res = 
+      llvm::sys::Program::ExecuteAndWait(Prog, Argv,
+                                         /*env*/0, /*redirects*/0,
+                                         /*secondsToWait*/0, /*memoryLimit*/0,
+                                         &Error);
+    if (!Error.empty()) {
+      assert(Res && "Error string set with 0 result code!");
+      getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
+    }
+    
+    delete[] Argv;
+    return Res;
+  } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
+    (void) PJ;
+    getDriver().Diag(clang::diag::err_drv_unsupported_opt) << "-pipe";
+    return 1;
+  } else {
+    const JobList *Jobs = cast<JobList>(&J);
+    for (JobList::const_iterator 
+           it = Jobs->begin(), ie = Jobs->end(); it != ie; ++it)
+      if (int Res = ExecuteJob(**it))
+        return Res;
+    return 0;
+  }
+}
+
 int Compilation::Execute() const {
   // Just print if -### was present.
   if (getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
-    PrintJob(llvm::errs(), &Jobs, "\n");
+    PrintJob(llvm::errs(), Jobs, "\n", true);
     return 0;
   }
 
-  // FIXME: Execute.
-
-  int Res = 0;
+  int Res = ExecuteJob(Jobs);
   
   // Remove temp files.
   CleanupFileList(TempFiles);

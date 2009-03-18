@@ -34,6 +34,8 @@ DIAG(err_drv_unable_to_make_temp, ERROR,
      "unable to make temporary file: %0")
 DIAG(err_drv_unable_to_remove_file, ERROR,
      "unable to remove file: %0")
+DIAG(err_drv_command_failure, ERROR,
+     "unable to execute command: %0")
 
 DIAG(warn_drv_input_file_unused, WARNING,
      "%0: '%1' input file unused when '%2' is present")
