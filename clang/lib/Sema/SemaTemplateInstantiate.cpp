@@ -846,9 +846,6 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
   if (Result.isInvalid())
     return SemaRef.ExprError();
 
-/*  Cond.release();
-  True.release();
-  False.release();*/
   return move(Result);
 }
 

@@ -95,7 +95,11 @@ namespace N6 {
   };
 
   typedef Cond<true, int, char>::True True;
-  typedef Cond<false, int, char>::False False;
+  typedef Cond<true, int, char>::False False;
+
+  // check that we have the right types
+  Lookup<1> const &L1(False());
+  Lookup<sizeof(int)> const &L2(True());
 }
 
 
