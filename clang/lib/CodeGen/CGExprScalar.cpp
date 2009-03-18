@@ -627,10 +627,18 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   int AmountVal = isInc ? 1 : -1;
   
   Value *NextVal;
-  if (isa<llvm::PointerType>(InVal->getType())) {
+  if (const llvm::PointerType *PT = 
+         dyn_cast<llvm::PointerType>(InVal->getType())) {
     // FIXME: This isn't right for VLAs.
-    NextVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
-    NextVal = Builder.CreateGEP(InVal, NextVal, "ptrincdec");
+    llvm::Constant *Inc =llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
+    if (!isa<llvm::FunctionType>(PT->getElementType())) {
+      NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
+    } else {
+      const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      NextVal = Builder.CreateBitCast(InVal, i8Ty, "tmp");
+      NextVal = Builder.CreateGEP(NextVal, Inc, "ptrincdec");
+      NextVal = Builder.CreateBitCast(NextVal, InVal->getType());
+    }
   } else if (InVal->getType() == llvm::Type::Int1Ty && isInc) {
     // Bool++ is an interesting case, due to promotion rules, we get:
     // Bool++ -> Bool = Bool+1 -> Bool = (int)Bool+1 ->

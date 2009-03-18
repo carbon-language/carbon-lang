@@ -67,3 +67,15 @@ int bar() {
   return ((struct X)foo()).Y + 1;
 }
 
+// PR3809: INC/DEC of function pointers.
+void f2(void);
+unsigned f1(void) {
+  void (*fp)(void) = f2;
+  
+  ++fp;
+  fp++;
+  --fp;
+  fp--;
+  return (unsigned) fp;
+}  
+
