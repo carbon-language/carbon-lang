@@ -19,8 +19,8 @@ CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include -DTA
 include $(LEVEL)/Makefile.common
 
 .ver:
-	@if [ '$(SVN_REVISION)' != '$(shell cat .ver-svn 2>/dev/null)' ]; then	\
-		echo '$(SVN_REVISION)' > .ver-svn;			\
+	@if [ '$(SVN_REVISION)' != '$(shell cat $(ObjDir)/.ver-svn 2>/dev/null)' ]; then\
+		echo '$(SVN_REVISION)' > $(ObjDir)/.ver-svn;			\
 	fi
-.ver-svn: .ver
-$(ObjDir)/Driver.o: .ver-svn
+$(ObjDir)/.ver-svn: .ver
+$(ObjDir)/Driver.o: $(ObjDir)/.ver-svn
