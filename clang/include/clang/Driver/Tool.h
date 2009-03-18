@@ -54,7 +54,8 @@ public:
   /// \param LinkingOutput - If this output will eventually feed the
   /// linker, then this is the final output name of the linked image.
   virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                            InputInfo &Output, InputInfoList &Inputs, 
+                            const InputInfo &Output, 
+                            const InputInfoList &Inputs, 
                             const ArgList &TCArgs, 
                             const char *LinkingOutput) const = 0;
 };

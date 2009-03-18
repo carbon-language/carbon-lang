@@ -27,7 +27,8 @@ namespace tools {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              InputInfo &Output, InputInfoList &Inputs, 
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
                               const char *LinkingOutput) const;
   };
@@ -43,7 +44,8 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              InputInfo &Output, InputInfoList &Inputs, 
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
                               const char *LinkingOutput) const;
   };
@@ -57,7 +59,8 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              InputInfo &Output, InputInfoList &Inputs, 
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
                               const char *LinkingOutput) const;
   };
@@ -71,7 +74,8 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              InputInfo &Output, InputInfoList &Inputs, 
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
                               const char *LinkingOutput) const;
   };
@@ -85,7 +89,8 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              InputInfo &Output, InputInfoList &Inputs, 
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
                               const char *LinkingOutput) const;
   };
@@ -99,7 +104,8 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              InputInfo &Output, InputInfoList &Inputs, 
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
                               const ArgList &TCArgs, 
                               const char *LinkingOutput) const;
   };

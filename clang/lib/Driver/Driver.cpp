@@ -446,7 +446,6 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
     } else if (A->getOption().isLinkerInput()) {
       // Just treat as object type, we could make a special type for
       // this if necessary.
-      A->claim();
       Inputs.push_back(std::make_pair(types::TY_Object, A));
 
     } else if (A->getOption().getId() == options::OPT_x) {
