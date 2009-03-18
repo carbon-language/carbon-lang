@@ -272,7 +272,8 @@ class Clang_CompileTool(Tool):
                     model = 'pic'
                 else:
                     model = self.toolChain.getDefaultRelocationModel()
-            cmd_args.append('--relocation-model=%s' % model)
+            cmd_args.append('--relocation-model')
+            cmd_args.append(model)
 
             if arglist.getLastArg(arglist.parser.f_timeReportOption):
                 cmd_args.append('--time-passes')
