@@ -228,7 +228,7 @@ void Driver::PrintVersion() const {
 #endif
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
-  llvm::errs() << "ccc version 1.0 (" << vers << " " << revision << ")" << "\n";
+  llvm::errs() << "clang version 1.0 (" << vers << " " << revision << ")" << "\n";
   // FIXME: Add cmake support and remove #ifdef
 #ifdef TARGET_TRIPLE
   llvm::errs() << "Target: " << TARGET_TRIPLE << "\n";
