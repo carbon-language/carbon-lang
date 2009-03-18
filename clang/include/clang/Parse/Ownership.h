@@ -204,8 +204,8 @@ namespace clang
     /// when recovering from errors. These are in ActionBase because the smart
     /// pointers need access to them.
     virtual void DeleteExpr(ExprTy *E) {}
-    virtual void DeleteStmt(StmtTy *E) {}
-    virtual void DeleteTemplateParams(TemplateParamsTy *E) {}
+    virtual void DeleteStmt(StmtTy *S) {}
+    virtual void DeleteTemplateParams(TemplateParamsTy *P) {}
   };
 
   /// ASTDestroyer - The type of an AST node destruction function pointer.
@@ -383,6 +383,12 @@ namespace clang
       return tmp;
     }
 
+    /// Take outside ownership of the raw pointer and cast it down.
+    template<typename T>
+    T *takeAs() {
+      return static_cast<T*>(take());
+    }
+
     /// Alias for interface familiarity with unique_ptr.
     void * release() { return take(); }
 
@@ -441,6 +447,12 @@ namespace clang
     /// Take outside ownership of the raw pointer.
     void * take() {
       return Result.get();
+    }
+
+    /// Take outside ownership of the raw pointer and cast it down.
+    template<typename T>
+    T *takeAs() {
+      return static_cast<T*>(take());
     }
 
     /// Alias for interface familiarity with unique_ptr.
