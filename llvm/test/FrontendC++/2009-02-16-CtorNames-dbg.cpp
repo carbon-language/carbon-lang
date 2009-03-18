@@ -1,4 +1,5 @@
 // RUN: %llvmgcc -S -g --emit-llvm %s -o - | grep "\~A"
+// XFAIL: darwin
 class A {
   int i;
 public:
