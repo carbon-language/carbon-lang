@@ -17,8 +17,7 @@
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 
-#include "clang/Frontend/TextDiagnosticPrinter.h"
-
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -29,19 +28,51 @@
 using namespace clang;
 using namespace clang::driver;
 
+class DriverDiagnosticPrinter : public DiagnosticClient {
+  std::string ProgName;
+  llvm::raw_ostream &OS;
+
+public:
+  DriverDiagnosticPrinter(const std::string _ProgName, 
+                          llvm::raw_ostream &_OS)
+    : ProgName(_ProgName),
+      OS(_OS) {}
+
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                const DiagnosticInfo &Info);
+};
+
+void DriverDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
+                                               const DiagnosticInfo &Info) {
+  OS << ProgName << ": ";
+
+  switch (Level) {
+  case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
+  case Diagnostic::Note:    OS << "note: "; break;
+  case Diagnostic::Warning: OS << "warning: "; break;
+  case Diagnostic::Error:   OS << "error: "; break;
+  case Diagnostic::Fatal:   OS << "fatal error: "; break;
+  }
+  
+  llvm::SmallString<100> OutStr;
+  Info.FormatDiagnostic(OutStr);
+  OS.write(OutStr.begin(), OutStr.size());
+  OS << '\n';
+}
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
-
-  llvm::OwningPtr<DiagnosticClient> 
-    DiagClient(new TextDiagnosticPrinter(llvm::errs()));
-
-  Diagnostic Diags(DiagClient.get());
 
   // FIXME: We should use GetMainExecutable here, probably, but we may
   // want to handle symbolic links slightly differently. The problem
   // is that the path derived from this will influence search paths.
   llvm::sys::Path Path(argv[0]);
+
+  llvm::OwningPtr<DiagnosticClient> 
+    DiagClient(new DriverDiagnosticPrinter(Path.getBasename(), llvm::errs()));
+
+  Diagnostic Diags(DiagClient.get());
 
   // FIXME: Use the triple of the host, not the triple that we were
   // compiled on.

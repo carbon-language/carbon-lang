@@ -15,10 +15,7 @@ CXXFLAGS = -fno-rtti
 # FIXME: It is unfortunate we need to pull in the bitcode reader and
 # writer just to get the serializer stuff used by clangBasic.
 LINK_COMPONENTS := system support bitreader bitwriter
-
-# FIXME: We shouldn't need clangLex.a here; we do because the
-# TextDiagnosticPrinter is pulling it in. :(
-USEDLIBS = clangDriver.a clangFrontend.a clangLex.a clangBasic.a
+USEDLIBS = clangDriver.a clangBasic.a
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
