@@ -60,15 +60,18 @@ void DriverDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   OS << '\n';
 }
 
+llvm::sys::Path GetExecutablePath(const char *Argv0) {
+  // This just needs to be some symbol in the binary; C++ doesn't
+  // allow taking the address of ::main however.
+  void *P = (void*) (intptr_t) GetExecutablePath;
+  return llvm::sys::Path::GetMainExecutable(Argv0, P);
+}
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
 
-  // FIXME: We should use GetMainExecutable here, probably, but we may
-  // want to handle symbolic links slightly differently. The problem
-  // is that the path derived from this will influence search paths.
-  llvm::sys::Path Path(argv[0]);
-
+  llvm::sys::Path Path = GetExecutablePath(argv[0]);
   llvm::OwningPtr<DiagnosticClient> 
     DiagClient(new DriverDiagnosticPrinter(Path.getBasename(), llvm::errs()));
 
