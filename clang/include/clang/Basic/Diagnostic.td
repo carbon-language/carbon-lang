@@ -37,6 +37,7 @@ class Option<string name, list<OptionControlled> members> : OptionControlled {
   list<OptionControlled> Members = members;
 }
 
+// Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"
 include "DiagnosticAnalysisKinds.td"
 include "DiagnosticCommonKinds.td"
@@ -46,3 +47,5 @@ include "DiagnosticLexKinds.td"
 include "DiagnosticParseKinds.td"
 include "DiagnosticSemaKinds.td"
 
+// Definitions for options ("warning groups").
+include "DiagnosticOptions.td"
