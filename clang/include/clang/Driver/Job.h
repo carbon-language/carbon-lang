@@ -71,6 +71,9 @@ public:
 class PipedJob : public Job {
 public:
   typedef llvm::SmallVector<Command*, 4> list_type;
+  typedef list_type::size_type size_type;
+  typedef list_type::iterator iterator;
+  typedef list_type::const_iterator const_iterator;
 
 private:
   list_type Commands;
@@ -81,6 +84,12 @@ public:
   void addCommand(Command *C) { Commands.push_back(C); }
 
   const list_type &getCommands() const { return Commands; }
+  
+  size_type size() const { return Commands.size(); }
+  iterator begin() { return Commands.begin(); }
+  const_iterator begin() const { return Commands.begin(); }
+  iterator end() { return Commands.end(); }
+  const_iterator end() const { return Commands.end(); }
 
   static bool classof(const Job *J) { 
     return J->getKind() == PipedJobClass; 
@@ -92,6 +101,9 @@ public:
 class JobList : public Job {
 public:
   typedef llvm::SmallVector<Job*, 4> list_type;
+  typedef list_type::size_type size_type;
+  typedef list_type::iterator iterator;
+  typedef list_type::const_iterator const_iterator;
 
 private:
   list_type Jobs;
@@ -103,6 +115,12 @@ public:
 
   const list_type &getJobs() const { return Jobs; }
 
+  size_type size() const { return Jobs.size(); }
+  iterator begin() { return Jobs.begin(); }
+  const_iterator begin() const { return Jobs.begin(); }
+  iterator end() { return Jobs.end(); }
+  const_iterator end() const { return Jobs.end(); }
+  
   static bool classof(const Job *J) { 
     return J->getKind() == JobListClass; 
   }
