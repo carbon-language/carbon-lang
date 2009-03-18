@@ -82,6 +82,9 @@ namespace driver {
     /// Always render this option joined with its value.
     bool ForceJoinedRender : 1;    
 
+    /// Forward to generic GCC tools.
+    bool ForwardToGCC : 1;    
+
   protected:
     Option(OptionClass Kind, options::ID ID, const char *Name, 
            const OptionGroup *Group, const Option *Alias);
@@ -100,14 +103,17 @@ namespace driver {
     bool isLinkerInput() const { return LinkerInput; }
     void setLinkerInput(bool Value) { LinkerInput = Value; }
 
-    bool isNoOptAsInput() const { return NoOptAsInput; }
+    bool hasNoOptAsInput() const { return NoOptAsInput; }
     void setNoOptAsInput(bool Value) { NoOptAsInput = Value; }
-
-    bool isForceSeparateRender() const { return ForceSeparateRender; }
+    
+    bool hasForceSeparateRender() const { return ForceSeparateRender; }
     void setForceSeparateRender(bool Value) { ForceSeparateRender = Value; }
-
-    bool isForceJoinedRender() const { return ForceJoinedRender; }
+    
+    bool hasForceJoinedRender() const { return ForceJoinedRender; }
     void setForceJoinedRender(bool Value) { ForceJoinedRender = Value; }
+    
+    bool hasForwardToGCC() const { return ForwardToGCC; }
+    void setForwardToGCC(bool Value) { ForwardToGCC = Value; }
 
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).

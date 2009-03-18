@@ -29,7 +29,7 @@ struct Info {
 
 static Info OptionInfos[] = {
   // The InputOption info
-  { "<input>", "", Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
+  { "<input>", "d", Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
   // The UnknownOption info
   { "<unknown>", "", Option::UnknownClass, OPT_INVALID, OPT_INVALID, 0 },
   
@@ -107,13 +107,23 @@ Option *OptTable::constructOption(options::ID id) const {
   for (const char *s = info.Flags; *s; ++s) {
     switch (*s) {
     default: assert(0 && "Invalid option flag.");
-    case 'J': Opt->setForceJoinedRender(true); break;
-    case 'S': Opt->setForceSeparateRender(true); break;
+    case 'J': 
+      assert(info.Kind == Option::SeparateClass && "Invalid option.");
+      Opt->setForceJoinedRender(true); break;
+    case 'S': 
+      assert(info.Kind == Option::JoinedClass && "Invalid option.");
+      Opt->setForceSeparateRender(true); break;
+    case 'd': Opt->setForwardToGCC(false); break;
     case 'i': Opt->setNoOptAsInput(true); break;
     case 'l': Opt->setLinkerInput(true); break;
     case 'u': Opt->setUnsupported(true); break;
     }
   }
+
+  // Linker inputs shouldn't be forwarded to GCC as arguments (they
+  // will, however, be forwarded as inputs).
+  if (Opt->isLinkerInput())
+    Opt->setForwardToGCC(false);
 
   return Opt;
 }

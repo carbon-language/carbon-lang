@@ -20,7 +20,8 @@ Option::Option(OptionClass _Kind, options::ID _ID, const char *_Name,
                const OptionGroup *_Group, const Option *_Alias) 
   : Kind(_Kind), ID(_ID), Name(_Name), Group(_Group), Alias(_Alias),
     Unsupported(false), LinkerInput(false), NoOptAsInput(false),
-    ForceSeparateRender(false), ForceJoinedRender(false)
+    ForceSeparateRender(false), ForceJoinedRender(false),
+    ForwardToGCC(true)
 {
 
   // Multi-level aliases are not supported, and alias options cannot
