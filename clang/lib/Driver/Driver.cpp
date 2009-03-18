@@ -212,11 +212,22 @@ void Driver::PrintOptions(const ArgList &Args) const {
 }
 
 void Driver::PrintVersion() const {
-  // FIXME: Get a reasonable version number.
+  static char buf[] = "$URL$";
+  char *zap = strstr(buf, "/lib/Driver");
+  if (zap)
+    *zap = 0;
+  zap = strstr(buf, "/clang/tools/clang");
+  if (zap)
+    *zap = 0;
+  const char *vers = buf+10;
 
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
-  llvm::errs() << "ccc version 1.0" << "\n";
+  llvm::errs() << "ccc version 1.0 (" << vers << ")" << "\n";
+  // FIXME: Add cmake support and remove #ifdef
+#ifdef TARGET_TRIPLE
+  llvm::errs() << "Target: " << TARGET_TRIPLE << "\n";
+#endif
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
