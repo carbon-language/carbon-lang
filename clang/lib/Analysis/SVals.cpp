@@ -324,11 +324,18 @@ NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
 SVal SVal::GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R) {
   SymbolRef sym = SymMgr.getRegionRValueSymbol(R);
                                 
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    if (Loc::IsLocType(TR->getRValueType(SymMgr.getContext())))
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
+    QualType T = TR->getRValueType(SymMgr.getContext());
+    
+    if (Loc::IsLocType(T))
       return Loc::MakeVal(sym);
   
-  return NonLoc::MakeVal(sym);
+    // Only handle integers for now.
+    if (T->isIntegerType())
+      return NonLoc::MakeVal(sym);
+  }
+
+  return UnknownVal();
 }
 
 nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,

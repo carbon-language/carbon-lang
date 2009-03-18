@@ -526,19 +526,15 @@ Store BasicStoreManager::getInitialStore() {
       if (VD->getStorageClass() == VarDecl::Static)
         continue;
 
-      // Only handle pointers and integers for now.
-      QualType T = VD->getType();
-      if (Loc::IsLocType(T) || T->isIntegerType()) {
-        // Initialize globals and parameters to symbolic values.
-        // Initialize local variables to undefined.
-        const MemRegion *R = StateMgr.getRegion(VD);
-        SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
-                  isa<ImplicitParamDecl>(VD))
-              ? SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(), R)
-              : UndefinedVal();
+      // Initialize globals and parameters to symbolic values.
+      // Initialize local variables to undefined.
+      const MemRegion *R = StateMgr.getRegion(VD);
+      SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
+                isa<ImplicitParamDecl>(VD))
+            ? SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(), R)
+            : UndefinedVal();
 
-        St = BindInternal(St, Loc::MakeVal(R), X);
-      }
+      St = BindInternal(St, Loc::MakeVal(R), X);
     }
   }
   return St;

@@ -195,3 +195,9 @@ void pr3772(void)
 // PR 3780 - This tests that StmtIterator isn't broken for VLAs in DeclGroups.
 void pr3780(int sz) { typedef double MAT[sz][sz]; }
 
+// <rdar://problem/6695527> - Test that we don't symbolicate doubles before
+// we are ready to do something with them.
+int rdar6695527(double x) {
+  if (!x) { return 0; }
+  return 1;
+}
