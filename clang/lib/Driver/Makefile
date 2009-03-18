@@ -18,7 +18,7 @@ CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include -DTA
 
 include $(LEVEL)/Makefile.common
 
-.ver:
+$(ObjDir)/.ver-svn .ver:
 	@if [ '$(SVN_REVISION)' != '$(shell cat $(ObjDir)/.ver-svn 2>/dev/null)' ]; then\
 		echo '$(SVN_REVISION)' > $(ObjDir)/.ver-svn;			\
 	fi
