@@ -90,6 +90,29 @@ TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
   TokenInfo[tok::equal       ] |= aci_avoid_equal;           // ==
 }
 
+/// GetFirstChar - Get the first character of the token \arg Tok,
+/// avoiding calls to getSpelling where possible.
+static char GetFirstChar(Preprocessor &PP, const Token &Tok) {
+  if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+    // Avoid spelling identifiers, the most common form of token.
+    return II->getName()[0];
+  } else if (!Tok.needsCleaning()) {
+    if (Tok.isLiteral() && Tok.getLiteralData()) {
+      return *Tok.getLiteralData();
+    } else {
+      SourceManager &SM = PP.getSourceManager();
+      return *SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation()));
+    }
+  } else if (Tok.getLength() < 256) {
+    char Buffer[256];
+    const char *TokPtr = Buffer;
+    PP.getSpelling(Tok, TokPtr);
+    return TokPtr[0];
+  } else {
+    return PP.getSpelling(Tok)[0];
+  }
+}
+
 /// AvoidConcat - If printing PrevTok immediately followed by Tok would cause
 /// the two individual tokens to be lexed as a single token, return true
 /// (which causes a space to be printed between them).  This allows the output
@@ -103,8 +126,6 @@ TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
 /// don't want to track enough to tell "x.." from "...".
 bool TokenConcatenation::AvoidConcat(const Token &PrevTok,
                                      const Token &Tok) const {
-  char Buffer[256];
-  
   tok::TokenKind PrevKind = PrevTok.getKind();
   if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
     PrevKind = tok::identifier;
@@ -130,30 +151,18 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevTok,
   char FirstChar = 0;
   if (ConcatInfo & aci_custom) {
     // If the token does not need to know the first character, don't get it.
-  } else if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
-    // Avoid spelling identifiers, the most common form of token.
-    FirstChar = II->getName()[0];
-  } else if (!Tok.needsCleaning()) {
-    if (Tok.isLiteral() && Tok.getLiteralData()) {
-      FirstChar = *Tok.getLiteralData();
-    } else {
-      SourceManager &SrcMgr = PP.getSourceManager();
-      FirstChar =
-      *SrcMgr.getCharacterData(SrcMgr.getSpellingLoc(Tok.getLocation()));
-    }
-  } else if (Tok.getLength() < 256) {
-    const char *TokPtr = Buffer;
-    PP.getSpelling(Tok, TokPtr);
-    FirstChar = TokPtr[0];
   } else {
-    FirstChar = PP.getSpelling(Tok)[0];
+    FirstChar = GetFirstChar(PP, Tok);
   }
-  
+    
   switch (PrevKind) {
   default: assert(0 && "InitAvoidConcatTokenInfo built wrong");
-  case tok::identifier:   // id+id or id+number or id+L"foo".
-    if (Tok.is(tok::numeric_constant) || Tok.getIdentifierInfo() ||
-        Tok.is(tok::wide_string_literal) /* ||
+  case tok::identifier:   // id+id or id+number or id+L"foo".    
+    // id+'.'... will not append.
+    if (Tok.is(tok::numeric_constant))
+      return GetFirstChar(PP, Tok) != '.';
+
+    if (Tok.getIdentifierInfo() || Tok.is(tok::wide_string_literal) /* ||
      Tok.is(tok::wide_char_literal)*/)
       return true;
     
