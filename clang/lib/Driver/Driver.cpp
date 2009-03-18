@@ -653,11 +653,14 @@ void Driver::BuildJobs(Compilation &C) const {
                        II);
   }
 
-  // If there were no errors, warn about any unused arguments.
+  // If there were errors, don't warn about any unused arguments.
+  if (Diags.getNumErrors())
+    return;
+
   for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
        it != ie; ++it) {
     Arg *A = *it;
-
+      
     // FIXME: It would be nice to be able to send the argument to the
     // Diagnostic, so that extra values, position, and so on could be
     // printed.
