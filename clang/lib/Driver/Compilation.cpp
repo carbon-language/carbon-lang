@@ -11,14 +11,19 @@
 
 #include "clang/Driver/Action.h"
 #include "clang/Driver/ArgList.h"
+#include "clang/Driver/Driver.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/ToolChain.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include <sys/stat.h>
+#include <errno.h>
 using namespace clang::driver;
 
-Compilation::Compilation(ToolChain &_DefaultToolChain,
+Compilation::Compilation(Driver &D,
+                         ToolChain &_DefaultToolChain,
                          ArgList *_Args) 
-  : DefaultToolChain(_DefaultToolChain), Args(_Args) {
+  : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args) {
 }
 
 Compilation::~Compilation() {  
@@ -69,12 +74,51 @@ void Compilation::PrintJob(llvm::raw_ostream &OS, const Job *J,
   }
 }
 
+bool Compilation::CleanupFileList(const ArgStringList &Files, 
+                                  bool IssueErrors) const {
+  bool Success = true;
+
+  for (ArgStringList::const_iterator 
+         it = Files.begin(), ie = Files.end(); it != ie; ++it) {
+    llvm::sys::Path P(*it);
+    std::string Error;
+
+    if (P.eraseFromDisk(false, &Error)) {
+      // Failure is only failure if the file doesn't exist. There is a
+      // race condition here due to the limited interface of
+      // llvm::sys::Path, we want to know if the removal gave E_NOENT.
+
+      // FIXME: Grumble, P.exists() is broken. PR3837.
+      struct stat buf;
+      if (::stat(P.c_str(), &buf) || errno != ENOENT) {
+        if (IssueErrors)
+          getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
+            << Error;
+        Success = false;
+      }
+    }
+  }
+
+  return Success;
+}
+
 int Compilation::Execute() const {
   // Just print if -### was present.
   if (getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     PrintJob(llvm::errs(), &Jobs, "\n");
     return 0;
   }
+
+  // FIXME: Execute.
+
+  int Res = 0;
   
+  // Remove temp files.
+  CleanupFileList(TempFiles);
+
+  // If the compilation failed, remove result files as well.
+  if (Res != 0)
+    CleanupFileList(ResultFiles, true);
+
   return 0;
 }

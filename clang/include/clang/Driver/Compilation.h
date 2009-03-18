@@ -11,6 +11,7 @@
 #define CLANG_DRIVER_COMPILATION_H_
 
 #include "clang/Driver/Job.h"
+#include "clang/Driver/Util.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -22,12 +23,16 @@ namespace llvm {
 namespace clang {
 namespace driver {
   class ArgList;
+  class Driver;
   class JobList;
   class ToolChain;
 
 /// Compilation - A set of tasks to perform for a single driver
 /// invocation.
 class Compilation {
+  /// The driver we were created by.
+  Driver &TheDriver;
+
   /// The default tool chain.
   ToolChain &DefaultToolChain;
 
@@ -44,14 +49,16 @@ class Compilation {
   llvm::DenseMap<const ToolChain*, ArgList*> TCArgs;
 
   /// Temporary files which should be removed on exit.
-  llvm::SmallVector<const char*, 4> TempFiles;
+  ArgStringList TempFiles;
 
   /// Result files which should be removed on failure.
-  llvm::SmallVector<const char*, 4> ResultFiles;
+  ArgStringList ResultFiles;
 
 public:
-  Compilation(ToolChain &DefaultToolChain, ArgList *Args);
+  Compilation(Driver &D, ToolChain &DefaultToolChain, ArgList *Args);
   ~Compilation();
+
+  const Driver &getDriver() const { return TheDriver; }
 
   const ToolChain &getDefaultToolChain() const { return DefaultToolChain; }
 
@@ -86,6 +93,13 @@ public:
   int Execute() const;
 
 private:
+  /// CleanupFileList - Remove the files in the given list.
+  ///
+  /// \param IssueErrors - Report failures as errors.
+  /// \return Whether all files were removed successfully.
+  bool CleanupFileList(const ArgStringList &Files, 
+                       bool IssueErrors=false) const;
+
   /// PrintJob - Print one job in -### format.
   ///
   /// OS - The stream to print on.

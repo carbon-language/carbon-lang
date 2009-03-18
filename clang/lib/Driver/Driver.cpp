@@ -165,7 +165,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   Host = GetHostInfo(HostTriple);
 
   // The compilation takes ownership of Args.
-  Compilation *C = new Compilation(*Host->getToolChain(*Args), Args);
+  Compilation *C = new Compilation(*this, *Host->getToolChain(*Args), Args);
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
