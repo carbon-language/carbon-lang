@@ -58,6 +58,16 @@ Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1, bool Claim) const {
   return Res;
 }
 
+bool ArgList::hasFlag(options::ID Pos, options::ID Neg, bool Default) const {
+  Arg *PosA = getLastArg(Pos);
+  Arg *NegA = getLastArg(Pos);
+  if (PosA && NegA)
+    return NegA->getIndex() < PosA->getIndex();
+  if (PosA) return true;
+  if (NegA) return false;
+  return Default;
+}
+
 unsigned ArgList::MakeIndex(const char *String0) const {
   unsigned Index = ArgStrings.size();
 
@@ -96,4 +106,59 @@ Arg *ArgList::MakeJoinedArg(const Option *Opt, const char *Value) const {
   std::string Joined(Opt->getName());
   Joined += Value;
   return new JoinedArg(Opt, MakeIndex(Joined.c_str()));
+}
+
+void ArgList::AddLastArg(ArgStringList &Output, options::ID Id) const {
+  if (Arg *A = getLastArg(Id)) {
+    A->claim();
+    A->render(*this, Output);
+  }
+}
+
+void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0) const {
+  // FIXME: Make fast.
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(Id0)) {
+      A->claim();
+      A->render(*this, Output);
+    }
+  }
+}
+
+void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0, 
+                         options::ID Id1) const {
+  // FIXME: Make fast.
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(Id0) || A->getOption().matches(Id1)) {
+      A->claim();
+      A->render(*this, Output);
+    }
+  }
+}
+
+void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0, 
+                         options::ID Id1, options::ID Id2) const {
+  // FIXME: Make fast.
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(Id0) || A->getOption().matches(Id1) ||
+        A->getOption().matches(Id2)) {
+      A->claim();
+      A->render(*this, Output);
+    }
+  }
+}
+
+void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0) const {
+  // FIXME: Make fast.
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(Id0)) {
+      A->claim();
+      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
+        Output.push_back(A->getValue(*this, i));
+    }
+  }
 }

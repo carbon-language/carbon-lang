@@ -113,6 +113,31 @@ namespace driver {
     Arg *MakeJoinedArg(const Option *Opt, const char *Value) const;
 
     /// @}
+    /// @name Translation Utilities
+    /// @{
+
+    /// hasFlag - Given an option \arg Pos and its negative form \arg
+    /// Neg, return true if the option is present, false if the
+    /// negation is present, and \arg Default if neither option is
+    /// given. If both the option and its negation are present, the
+    /// last one wins.
+    bool hasFlag(options::ID Pos, options::ID Neg, bool Default) const;
+
+    /// AddLastArg - Render only the last argument match \arg Id0, if
+    /// present.
+    void AddLastArg(ArgStringList &Output, options::ID Id0) const;
+
+    /// AddAllArgs - Render all arguments matching the given ids.
+    void AddAllArgs(ArgStringList &Output, options::ID Id0) const;
+    void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1) const;
+    void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1, 
+                    options::ID Id2) const;
+
+    /// AddAllArgValues - Render the argument values of all arguments
+    /// matching the given ids.
+    void AddAllArgValues(ArgStringList &Output, options::ID Id0) const;
+
+    /// @}
   };
 } // end namespace driver
 } // end namespace clang
