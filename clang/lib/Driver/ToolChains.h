@@ -31,6 +31,12 @@ class VISIBILITY_HIDDEN Generic_GCC : public ToolChain {
 public:
   Generic_GCC(const HostInfo &Host, const char *Arch, const char *Platform, 
               const char *OS) : ToolChain(Host, Arch, Platform, OS) {}
+  ~Generic_GCC() {
+    // Free tool implementations.
+    for (llvm::DenseMap<unsigned, Tool*>::iterator 
+           it = Tools.begin(), ie = Tools.end(); it != ie; ++it) 
+      delete it->second;
+  }
 
   virtual ArgList *TranslateArgs(ArgList &Args) const { return &Args; }
 

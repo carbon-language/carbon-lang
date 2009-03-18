@@ -46,11 +46,12 @@ class DarwinHostInfo : public HostInfo {
   unsigned GCCVersion[3];
 
   /// Cache of tool chains we have created.
-  mutable llvm::StringMap<ToolChain*> ToolChains;
+  mutable llvm::StringMap<ToolChain *> ToolChains;
 
 public:
   DarwinHostInfo(const Driver &D, const char *Arch, 
                  const char *Platform, const char *OS);
+  ~DarwinHostInfo();
 
   virtual bool useDriverDriver() const;
 
@@ -72,6 +73,12 @@ DarwinHostInfo::DarwinHostInfo(const Driver &D, const char *_Arch,
   GCCVersion[0] = 4;
   GCCVersion[1] = 2;
   GCCVersion[2] = 1;
+}
+
+DarwinHostInfo::~DarwinHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
 }
 
 bool DarwinHostInfo::useDriverDriver() const { 
@@ -122,6 +129,7 @@ class UnknownHostInfo : public HostInfo {
 public:
   UnknownHostInfo(const Driver &D, const char *Arch, 
                   const char *Platform, const char *OS);
+  ~UnknownHostInfo();
 
   virtual bool useDriverDriver() const;
 
@@ -132,6 +140,12 @@ public:
 UnknownHostInfo::UnknownHostInfo(const Driver &D, const char *Arch, 
                                  const char *Platform, const char *OS) 
   : HostInfo(D, Arch, Platform, OS) {
+}
+
+UnknownHostInfo::~UnknownHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
 }
 
 bool UnknownHostInfo::useDriverDriver() const { 

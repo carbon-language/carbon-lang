@@ -48,6 +48,7 @@ Driver::Driver(const char *_Name, const char *_Dir,
 
 Driver::~Driver() {
   delete Opts;
+  delete Host;
 }
 
 ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
