@@ -898,6 +898,10 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
     return "";
   }
 
+  // FIXME: Grumble, makeUnique sometimes leaves the file around!?
+  // PR3837.
+  P.eraseFromDisk(false, 0);
+
   P.appendSuffix(Suffix);
   return P.toString();
 }
