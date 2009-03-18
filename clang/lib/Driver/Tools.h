@@ -11,6 +11,7 @@
 #define CLANG_LIB_DRIVER_TOOLS_H_
 
 #include "clang/Driver/Tool.h"
+#include "clang/Driver/Util.h"
 
 #include "llvm/Support/Compiler.h"
 
@@ -36,84 +37,76 @@ namespace tools {
 
   /// gcc - Generic GCC tool implementations.
 namespace gcc {
-  class VISIBILITY_HIDDEN Preprocess : public Tool {
+  class VISIBILITY_HIDDEN Common : public Tool {
   public:
-    Preprocess(const ToolChain &TC) : Tool("gcc::Preprocess", TC) {}
+    Common(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
+
+    /// RenderExtraToolArgs - Render any arguments necessary to force
+    /// the particular tool mode.
+    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const = 0;
+  };
+
+  
+  class VISIBILITY_HIDDEN Preprocess : public Common {
+  public:
+    Preprocess(const ToolChain &TC) : Common("gcc::Preprocess", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
-                              const char *LinkingOutput) const;
+    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
   };
 
-  class VISIBILITY_HIDDEN Precompile : public Tool  {
+  class VISIBILITY_HIDDEN Precompile : public Common  {
   public:
-    Precompile(const ToolChain &TC) : Tool("gcc::Precompile", TC) {}
+    Precompile(const ToolChain &TC) : Common("gcc::Precompile", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
-                              const char *LinkingOutput) const;
+    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
   };
 
-  class VISIBILITY_HIDDEN Compile : public Tool  {
+  class VISIBILITY_HIDDEN Compile : public Common  {
   public:
-    Compile(const ToolChain &TC) : Tool("gcc::Compile", TC) {}
+    Compile(const ToolChain &TC) : Common("gcc::Compile", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
-                              const char *LinkingOutput) const;
+    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
   };
 
-  class VISIBILITY_HIDDEN Assemble : public Tool  {
+  class VISIBILITY_HIDDEN Assemble : public Common  {
   public:
-    Assemble(const ToolChain &TC) : Tool("gcc::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : Common("gcc::Assemble", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
-                              const char *LinkingOutput) const;
+    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
   };
 
-  class VISIBILITY_HIDDEN Link : public Tool  {
+  class VISIBILITY_HIDDEN Link : public Common  {
   public:
-    Link(const ToolChain &TC) : Tool("gcc::Link", TC) {}
+    Link(const ToolChain &TC) : Common("gcc::Link", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
-                              const char *LinkingOutput) const;
+    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
   };
 } // end namespace gcc
 
