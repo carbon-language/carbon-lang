@@ -21,6 +21,9 @@
 // RUN: grep 'bind - "gcc::Assemble", inputs: \[(pipe)\], output: "/tmp/foo.o"' %t &&
 // RUN: grep 'bind - "gcc::Link", inputs: \["/tmp/foo.o"\], output: "a.out"' %t &&
 
+// RUN: clang-driver -ccc-print-bindings -ccc-no-clang -x c-header %s &> %t &&
+// RUN: grep 'bind - "gcc::Precompile", inputs: \[".*bindings.c"\], output: ".*/bindings.c.gch' %t &&
+
 // Clang control options
 
 // RUN: clang-driver -ccc-print-bindings -fsyntax-only %s &> %t &&

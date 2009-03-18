@@ -790,7 +790,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   }
 
   llvm::sys::Path BasePath(BaseInput);
-  std::string BaseName(BasePath.getBasename());
+  std::string BaseName(BasePath.getLast());
 
   // Determine what the derived output name should be.
   const char *NamedOutput;
