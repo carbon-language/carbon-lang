@@ -102,7 +102,7 @@ OPTION("<pedantic group>", pedantic_Group, Group, INVALID, INVALID, "", 0)
 //////////
 // Options
 
-OPTION("-###", _HASH_HASH_HASH, Flag, INVALID, INVALID, "", 0)
+OPTION("-###", _HASH_HASH_HASH, Flag, INVALID, INVALID, "d", 0)
 OPTION("--CLASSPATH=", _CLASSPATH_EQ, Joined, INVALID, fclasspath_EQ, "", 0)
 OPTION("--CLASSPATH", _CLASSPATH, Separate, INVALID, fclasspath_EQ, "J", 0)
 OPTION("--all-warnings", _all_warnings, Flag, INVALID, Wall, "", 0)
