@@ -28,7 +28,9 @@ TGSourceMgr::~TGSourceMgr() {
 int TGSourceMgr::FindBufferContainingLoc(TGLoc Loc) const {
   for (unsigned i = 0, e = Buffers.size(); i != e; ++i)
     if (Loc.getPointer() >= Buffers[i].Buffer->getBufferStart() &&
-        Loc.getPointer() <  Buffers[i].Buffer->getBufferEnd())
+        // Use <= here so that a pointer to the null at the end of the buffer
+        // is included as part of the buffer.
+        Loc.getPointer() <= Buffers[i].Buffer->getBufferEnd())
       return i;
   return -1;
 }
