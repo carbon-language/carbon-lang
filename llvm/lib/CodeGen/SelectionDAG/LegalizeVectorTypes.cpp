@@ -533,16 +533,50 @@ void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
   MVT LoVT, HiVT;
   DebugLoc dl = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-  SDValue VLo, VHi;
-  GetSplitVector(N->getOperand(0), VLo, VHi);
+
   SDValue DTyOpLo =  DAG.getValueType(LoVT);
   SDValue DTyOpHi =  DAG.getValueType(HiVT);
-  SDValue STyOpLo =  DAG.getValueType(VLo.getValueType());
-  SDValue STyOpHi =  DAG.getValueType(VHi.getValueType());
 
   SDValue RndOp = N->getOperand(3);
   SDValue SatOp = N->getOperand(4);
   ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
+
+  // Split the input.
+  SDValue VLo, VHi;
+  MVT InVT = N->getOperand(0).getValueType();
+  switch (getTypeAction(InVT)) {
+  default: assert(0 && "Unexpected type action!");
+  case Legal: {
+    assert(LoVT == HiVT && "Legal non-power-of-two vector type?");
+    MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                                 LoVT.getVectorNumElements());
+    VLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, N->getOperand(0),
+                      DAG.getIntPtrConstant(0));
+    VHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, N->getOperand(0),
+                      DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    break;
+  }
+  case SplitVector:
+    GetSplitVector(N->getOperand(0), VLo, VHi);
+    break;
+  case WidenVector: {
+    // If the result needs to be split and the input needs to be widened,
+    // the two types must have different lengths. Use the widened result
+    // and extract from it to do the split.
+    assert(LoVT == HiVT && "Legal non-power-of-two vector type?");
+    SDValue InOp = GetWidenedVector(N->getOperand(0));
+    MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                                 LoVT.getVectorNumElements());
+    VLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                     DAG.getIntPtrConstant(0));
+    VHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    break;
+  }
+  }
+
+  SDValue STyOpLo =  DAG.getValueType(VLo.getValueType());
+  SDValue STyOpHi =  DAG.getValueType(VHi.getValueType());
 
   Lo = DAG.getConvertRndSat(LoVT, dl, VLo, DTyOpLo, STyOpLo, RndOp, SatOp,
                             CvtCode);
@@ -697,6 +731,20 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   case SplitVector:
     GetSplitVector(N->getOperand(0), Lo, Hi);
     break;
+  case WidenVector: {
+    // If the result needs to be split and the input needs to be widened,
+    // the two types must have different lengths. Use the widened result
+    // and extract from it to do the split.
+    assert(LoVT == HiVT && "Legal non-power-of-two vector type?");
+    SDValue InOp = GetWidenedVector(N->getOperand(0));
+    MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                                 LoVT.getVectorNumElements());
+    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                     DAG.getIntPtrConstant(0));
+    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    break;
+  }
   }
 
   Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo);

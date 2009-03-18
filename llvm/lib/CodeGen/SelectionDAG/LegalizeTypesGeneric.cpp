@@ -75,6 +75,21 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
       Lo = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Lo);
       Hi = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Hi);
       return;
+    case WidenVector: {
+      assert(!(InVT.getVectorNumElements() & 1) && "Unsupported BIT_CONVERT");
+      InOp = GetWidenedVector(InOp);
+      MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                                   InVT.getVectorNumElements()/2);
+      Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                       DAG.getIntPtrConstant(0));
+      Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                       DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Hi);
+      return;
+    }
   }
 
   // Lower the bit-convert to a store/load from the stack.
