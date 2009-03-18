@@ -1,6 +1,10 @@
-; RUN: llvm-as < %s | llc -march=x86    | grep call | not grep {*}
-; RUN: llvm-as < %s | llc -march=x86    | grep call | grep 12345678
-; RUN: llvm-as < %s | llc -march=x86-64 | grep call | grep 12345678
+; RUN: llvm-as < %s | llc -march=x86    | grep {call.*12345678}
+
+; Call to immediate is not safe on x86-64 unless we *know* that the
+; call will be within 32-bits pcrel from the dest immediate.
+
+; RUN: llvm-as < %s | llc -march=x86-64 | grep {call.*\*%rax}
+
 ; PR3666
 ; PR3773
 
