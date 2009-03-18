@@ -216,7 +216,7 @@ void Driver::PrintVersion() const {
 
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
-  llvm::outs() << "ccc version 1.0" << "\n";
+  llvm::errs() << "ccc version 1.0" << "\n";
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
