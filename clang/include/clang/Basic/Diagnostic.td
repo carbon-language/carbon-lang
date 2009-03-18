@@ -24,17 +24,13 @@ class Note<string text> : Diagnostic<text>;
 // Anything that can be controlled by an option subclasses this.
 class OptionControlled;
 
-class Warning<string text> : Diagnostic<text>, OptionControlled {
-  string DefaultMapping = "warning";
+class DiagnosticControlled<string text, string defaultMapping>
+  : Diagnostic<text>, OptionControlled {
+  string DefaultMapping = defaultMapping;
 }
-class Extension<string text> : Diagnostic<text>, OptionControlled {
-  string DefaultMapping = "ignore";
-}
-class ExtWarn<string text> : Diagnostic<text>, OptionControlled {
-  string DefaultMapping = "warning";
-}
-
-
+class Warning<string text> : DiagnosticControlled<text, "warning"> {}
+class Extension<string text> : DiagnosticControlled<text, "ignore"> {}
+class ExtWarn<string text> : DiagnosticControlled<text, "warning"> {}
 
 class Option<string name, list<OptionControlled> members> : OptionControlled {
   string Name = name;
