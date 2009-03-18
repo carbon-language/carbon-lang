@@ -186,11 +186,6 @@ void ClangOptionsEmitter::run(std::ostream &OS) {
   
   // Iterate through the OptionMap and emit the declarations.
   for (OptionMap::iterator I = OM.begin(), E = OM.end(); I!=E; ++I) {    
-//    const RecordVal *V = findRecordVal(*I->first, "Name");
-//    assert(V && "Options must have a 'Name' value.");
-//    const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
-//    assert(SV && "'Name' entry must be a string.");
-    
     // Output the option.
     OS << "static const diag::kind " << I->first->getName() << "[] = { ";
     
@@ -206,4 +201,23 @@ void ClangOptionsEmitter::run(std::ostream &OS) {
     }
     OS << " };\n";
   }
+    
+  // Now emit the OptionTable table.
+  OS << "\nstatic const WarningOption OptionTable[] = {";
+  bool first = true;
+  for (OptionMap::iterator I = OM.begin(), E = OM.end(); I!=E; ++I) {
+    const RecordVal *V = findRecordVal(*I->first, "Name");
+    assert(V && "Options must have a 'Name' value.");
+    const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
+    assert(SV && "'Name' entry must be a string.");
+    
+    if (first)
+      first = false;
+    else
+      OS << ',';
+    
+    OS << "\n  {\"" << SV->getValue()
+       << "\", DIAGS(" << I->first->getName() << ")}";
+  }
+  OS << "\n};\n";
 }
