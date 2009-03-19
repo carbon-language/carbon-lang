@@ -625,6 +625,7 @@ namespace {
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
       
@@ -897,6 +898,26 @@ TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 }
 
 Sema::OwningExprResult 
+TemplateExprInstantiator::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E) {
+  CXXScopeSpec SS = SemaRef.InstantiateScopeSpecifier(E->begin(), E->size(),
+                                                      E->getQualifierRange(),
+                                                      TemplateArgs,
+                                                      NumTemplateArgs);
+  if (SS.isInvalid() || SS.isEmpty())
+    return SemaRef.ExprError();
+
+  // FIXME: We're passing in a NULL scope, because
+  // ActOnDeclarationNameExpr doesn't actually use the scope when we
+  // give it a non-empty scope specifier. Investigate whether it would
+  // be better to refactor ActOnDeclarationNameExpr.
+  return SemaRef.ActOnDeclarationNameExpr(/*Scope=*/0, E->getLocation(), 
+                                          E->getDeclName(), 
+                                          /*HasTrailingLParen=*/false,
+                                          &SS,
+                                          /*FIXME:isAddressOfOperand=*/false);
+}
+
+Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
                                                   CXXTemporaryObjectExpr *E) {
   QualType T = E->getType();
@@ -1047,7 +1068,9 @@ Sema::InstantiateClassTemplateSpecialization(
   // the best template.
   ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
 
-  if (!Template->getTemplatedDecl()->getDefinition(Context)) {
+  RecordDecl *Pattern = cast_or_null<RecordDecl>(
+                          Template->getTemplatedDecl()->getDefinition(Context));
+  if (!Pattern) {
     Diag(ClassTemplateSpec->getLocation(), 
          diag::err_template_implicit_instantiate_undefined)
       << Context.getTypeDeclType(ClassTemplateSpec);
@@ -1084,7 +1107,6 @@ Sema::InstantiateClassTemplateSpecialization(
   // FIXME: Create the injected-class-name for the
   // instantiation. Should this be a typedef or something like it?
 
-  RecordDecl *Pattern = Template->getTemplatedDecl();
   llvm::SmallVector<DeclTy *, 32> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
                               MemberEnd = Pattern->decls_end();
@@ -1117,4 +1139,35 @@ Sema::InstantiateClassTemplateSpecialization(
   CurContext = PreviousContext;
 
   return Invalid;
+}
+
+/// \brief Instantiate a sequence of nested-name-specifiers into a
+/// scope specifier.
+CXXScopeSpec 
+Sema::InstantiateScopeSpecifier(const NestedNameSpecifier *Components,
+                                unsigned NumComponents,
+                                SourceRange Range,
+                                const TemplateArgument *TemplateArgs,
+                                unsigned NumTemplateArgs) {
+  CXXScopeSpec SS;
+  for (unsigned Comp = 0; Comp < NumComponents; ++Comp) {
+    if (Type *T = Components[Comp].getAsType()) {
+      QualType NewT = InstantiateType(QualType(T, 0), TemplateArgs, 
+                                      NumTemplateArgs, Range.getBegin(),
+                                      DeclarationName());
+      if (NewT.isNull())
+        return SS;
+      NestedNameSpecifier NNS(NewT.getTypePtr());
+      SS.addScopeRep(NNS.getAsOpaquePtr());
+    } else {
+      DeclContext *DC = Components[Comp].getAsDeclContext();
+      // FIXME: injected-class-name might be dependent, and therefore
+      // would need instantiation.
+      NestedNameSpecifier NNS(DC);
+      SS.addScopeRep(NNS.getAsOpaquePtr());
+    }
+  }
+
+  SS.setRange(Range);
+  return SS;
 }

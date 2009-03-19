@@ -613,6 +613,21 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // Could be enum-constant, value decl, instance variable, etc.
   if (SS && SS->isInvalid())
     return ExprError();
+
+  // C++ [temp.dep.expr]p3:
+  //   An id-expression is type-dependent if it contains:
+  //     -- a nested-name-specifier that contains a class-name that
+  //        names a dependent type.
+  if (SS && isDependentScopeSpecifier(*SS)) {
+    llvm::SmallVector<NestedNameSpecifier, 16> Specs;
+    for (CXXScopeSpec::iterator Spec = SS->begin(), SpecEnd = SS->end();
+         Spec != SpecEnd; ++Spec)
+      Specs.push_back(NestedNameSpecifier::getFromOpaquePtr(*Spec));
+    return Owned(UnresolvedDeclRefExpr::Create(Context, Name, Loc,
+                                               SS->getRange(), &Specs[0],
+                                               Specs.size()));
+  }
+
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
                                          false, true, Loc);
 

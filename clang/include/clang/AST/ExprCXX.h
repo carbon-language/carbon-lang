@@ -898,6 +898,74 @@ public:
   static QualifiedDeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// \brief A qualified reference to a name whose declaration cannot
+/// yet be resolved.
+///
+/// UnresolvedDeclRefExpr is similar to QualifiedDeclRefExpr in that
+/// it expresses a qualified reference to a declaration such as
+/// X<T>::value. The difference, however, is that an
+/// UnresolvedDeclRefExpr node is used only within C++ templates when
+/// the qualification (e.g., X<T>::) refers to a dependent type. In
+/// this case, X<T>::value cannot resolve to a declaration because the
+/// declaration will differ from on instantiation of X<T> to the
+/// next. Therefore, UnresolvedDeclRefExpr keeps track of the qualifier (X<T>::) and the name of the entity being referenced ("value"). Such expressions will instantiate to QualifiedDeclRefExprs.
+class UnresolvedDeclRefExpr : public Expr {
+  /// The name of the entity we will be referencing.
+  DeclarationName Name;
+
+  /// Location of the name of the declaration we're referencing.
+  SourceLocation Loc;
+
+  /// QualifierRange - The source range that covers the
+  /// nested-name-specifier.
+  SourceRange QualifierRange;
+
+  /// The number of components in the complete nested-name-specifier.
+  unsigned NumComponents;
+
+  UnresolvedDeclRefExpr(DeclarationName N, QualType T, SourceLocation L,
+                        SourceRange R, const NestedNameSpecifier *Components,
+                        unsigned NumComponents);
+
+public:
+  static UnresolvedDeclRefExpr *Create(ASTContext &Context, DeclarationName N,
+                                       SourceLocation L, SourceRange R,
+                                       const NestedNameSpecifier *Components,
+                                       unsigned NumComponents);
+
+  /// \brief Retrieve the name that this expression refers to.
+  DeclarationName getDeclName() const { return Name; }
+
+  /// \brief Retrieve the location of the name within the expression.
+  SourceLocation getLocation() const { return Loc; }
+
+  /// \brief Retrieve the source range of the nested-name-specifier.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+
+  // Iteration over of the parts of the nested-name-specifier.
+  typedef const NestedNameSpecifier * iterator;
+
+  iterator begin() const { 
+    return reinterpret_cast<const NestedNameSpecifier *>(this + 1); 
+  }
+
+  iterator end() const { return begin() + NumComponents; }
+
+  unsigned size() const { return NumComponents; }
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(QualifierRange.getBegin(), getLocation()); 
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == UnresolvedDeclRefExprClass;
+  }
+  static bool classof(const UnresolvedDeclRefExpr *) { return true; }
+
+  virtual StmtIterator child_begin();
+  virtual StmtIterator child_end();
+};
+
 }  // end namespace clang
 
 #endif

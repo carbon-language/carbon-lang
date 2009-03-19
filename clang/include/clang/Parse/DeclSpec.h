@@ -418,7 +418,7 @@ class CXXScopeSpec {
   void reallocate();
 
 public:
-  CXXScopeSpec() : NumScopeReps(0), Capacity(4) { }
+  CXXScopeSpec() : Range(), NumScopeReps(0), Capacity(4) { }
 
   CXXScopeSpec(const CXXScopeSpec &SS);
 

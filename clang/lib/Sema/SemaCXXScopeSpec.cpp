@@ -29,6 +29,21 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
   return NNS.computeDeclContext(Context);
 }
 
+bool Sema::isDependentScopeSpecifier(const CXXScopeSpec &SS) {
+  if (!SS.isSet() || SS.isInvalid())
+    return false;
+
+  NestedNameSpecifier NNS
+    = NestedNameSpecifier::getFromOpaquePtr(SS.getCurrentScopeRep());
+
+  if (Type *T = NNS.getAsType())
+    return T->isDependentType();
+
+  // FIXME: What about the injected-class-name of a class template? It
+  // is dependent, but we represent it as a declaration.
+  return false;
+}
+
 /// \brief Require that the context specified by SS be complete.
 ///
 /// If SS refers to a type, this routine checks whether the type is

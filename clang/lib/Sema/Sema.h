@@ -1455,6 +1455,7 @@ public:
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
   
   DeclContext *computeDeclContext(const CXXScopeSpec &SS);
+  bool isDependentScopeSpecifier(const CXXScopeSpec &SS);
 
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
@@ -1879,6 +1880,12 @@ public:
   InstantiateClassTemplateSpecialization(
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
                            bool ExplicitInstantiation);
+
+  CXXScopeSpec InstantiateScopeSpecifier(const NestedNameSpecifier *Components,
+                                         unsigned NumComponents,
+                                         SourceRange Range,
+                                         const TemplateArgument *TemplateArgs,
+                                         unsigned NumTemplateArgs);
 
   // Simple function for cloning expressions.
   template<typename T> 

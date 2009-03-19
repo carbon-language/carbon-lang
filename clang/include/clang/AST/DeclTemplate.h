@@ -697,13 +697,31 @@ public:
 /// Declaration of a class template.
 class ClassTemplateDecl : public TemplateDecl {
 protected:
-  ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                    TemplateParameterList *Params, NamedDecl *Decl)
-    : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl) { }
+  /// \brief Data that is common to all of the declarations of a given
+  /// class template.
+  struct Common {
+    /// \brief The class template specializations for this class
+    /// template, including explicit specializations and instantiations.
+    llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+  };
 
-  /// \brief The class template specializations for this class
-  /// template, including explicit specializations and instantiations.
-  llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+  /// \brief Previous declaration of 
+  ClassTemplateDecl *PreviousDeclaration;
+
+  /// \brief Pointer to the data that is common to all of the
+  /// declarations of this class template.
+  /// 
+  /// The first declaration of a class template (e.g., the declaration
+  /// with no "previous declaration") owns this pointer.
+  Common *CommonPtr;
+  
+  ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
+                    TemplateParameterList *Params, NamedDecl *Decl,
+                    ClassTemplateDecl *PrevDecl, Common *CommonPtr)
+    : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl),
+      PreviousDeclaration(PrevDecl), CommonPtr(CommonPtr) { }
+
+  ~ClassTemplateDecl();
 
 public:
   /// Get the underlying class declarations of the template.
@@ -711,16 +729,17 @@ public:
     return static_cast<CXXRecordDecl *>(TemplatedDecl);
   }
 
-  /// Create a class teplate node.
+  /// Create a class template node.
   static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L,
                                    DeclarationName Name,
                                    TemplateParameterList *Params,
-                                   NamedDecl *Decl);
+                                   NamedDecl *Decl,
+                                   ClassTemplateDecl *PrevDecl);
 
   /// \brief Retrieve the set of specializations of this class template.
   llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
-    return Specializations;
+    return CommonPtr->Specializations;
   }
 
   // Implement isa/cast/dyncast support
@@ -728,6 +747,8 @@ public:
   { return D->getKind() == ClassTemplate; }
   static bool classof(const ClassTemplateDecl *D)
   { return true; }
+
+  virtual void Destroy(ASTContext& C);
 };
 
 } /* end of namespace clang */

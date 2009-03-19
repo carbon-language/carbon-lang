@@ -477,7 +477,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   ClassTemplateDecl *NewTemplate
     = ClassTemplateDecl::Create(Context, SemanticContext, NameLoc,
                                 DeclarationName(Name), TemplateParams,
-                                NewClass);
+                                NewClass, PrevClassTemplate);
   
   // Set the lexical context of these templates
   NewClass->setLexicalDeclContext(CurContext);

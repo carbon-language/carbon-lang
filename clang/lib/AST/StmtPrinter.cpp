@@ -537,6 +537,11 @@ void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {
   OS << D->getNameAsString();
 }
 
+void StmtPrinter::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *Node) {  
+  NestedNameSpecifier::Print(OS, Node->begin(), Node->end());
+  OS << Node->getDeclName().getAsString();
+}
+
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   if (Node->getBase()) {
     PrintExpr(Node->getBase());

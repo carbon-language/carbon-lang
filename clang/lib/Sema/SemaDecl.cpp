@@ -52,6 +52,20 @@ std::string Sema::getDeclName(DeclTy *d) {
 /// and then return NULL.
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                                 Scope *S, const CXXScopeSpec *SS) {
+  // C++ [temp.res]p3:
+  //   A qualified-id that refers to a type and in which the
+  //   nested-name-specifier depends on a template-parameter (14.6.2)
+  //   shall be prefixed by the keyword typename to indicate that the
+  //   qualified-id denotes a type, forming an
+  //   elaborated-type-specifier (7.1.5.3).
+  //
+  // We therefore do not perform any name lookup up SS is a dependent
+  // scope name. FIXME: we will need to perform a special kind of
+  // lookup if the scope specifier names a member of the current
+  // instantiation.
+  if (SS && isDependentScopeSpecifier(*SS))
+    return 0;
+
   NamedDecl *IIDecl = 0;
   LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, 
                                          false, false);

@@ -93,8 +93,31 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              SourceLocation L,
                                              DeclarationName Name,
                                              TemplateParameterList *Params,
-                                             NamedDecl *Decl) {
-  return new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
+                                             NamedDecl *Decl,
+                                             ClassTemplateDecl *PrevDecl) {
+  Common *CommonPtr;
+  if (PrevDecl)
+    CommonPtr = PrevDecl->CommonPtr;
+  else
+    CommonPtr = new (C) Common;
+
+  return new (C) ClassTemplateDecl(DC, L, Name, Params, Decl, PrevDecl, 
+                                   CommonPtr);
+}
+
+ClassTemplateDecl::~ClassTemplateDecl() {
+  assert(CommonPtr == 0 && "ClassTemplateDecl must be explicitly destroyed");
+}
+
+void ClassTemplateDecl::Destroy(ASTContext& C) {
+  if (!PreviousDeclaration) {
+    CommonPtr->~Common();
+    C.Deallocate((void*)CommonPtr);
+  }
+  CommonPtr = 0;
+
+  this->~ClassTemplateDecl();
+  C.Deallocate((void*)this);
 }
 
 //===----------------------------------------------------------------------===//
