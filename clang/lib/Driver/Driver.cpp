@@ -697,12 +697,15 @@ void Driver::BuildJobsForAction(Compilation &C,
     UsePipes = false;
 
   if (const InputAction *IA = dyn_cast<InputAction>(A)) {
-    // FIXME: This is broken, linker inputs won't work here.
-    assert(isa<PositionalArg>(IA->getInputArg()) && "FIXME: Linker inputs");
-
-    IA->getInputArg().claim();
-    const char *Name = IA->getInputArg().getValue(C.getArgs());
-    Result = InputInfo(Name, A->getType(), Name);
+    // FIXME: It would be nice to not claim this here; maybe the old
+    // scheme of just using Args was better?
+    const Arg &Input = IA->getInputArg();
+    Input.claim();
+    if (isa<PositionalArg>(Input)) {
+      const char *Name = Input.getValue(C.getArgs());
+      Result = InputInfo(Name, A->getType(), Name);
+    } else
+      Result = InputInfo(&Input, A->getType(), "");
     return;
   }
 

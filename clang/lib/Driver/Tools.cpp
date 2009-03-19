@@ -49,10 +49,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // FIXME: This is a total hack. Copy the input header file
     // to the output, so that it can be -include'd by clang.
     assert(Inputs.size() == 1 && "Cannot make PCH with multiple inputs.");
-    assert(!Output.isPipe() && "Unexpected pipe");
+    assert(Output.isFilename() && "Unexpected output");
     assert(!Inputs[0].isPipe() && "Unexpected pipe");
-    const char *InputPath = Inputs[0].getInputFilename();
-    llvm::sys::Path OutputPath(Output.getInputFilename());
+    assert(Inputs[0].isFilename() && "Unexpected input");
+    const char *InputPath = Inputs[0].getFilename();
+    llvm::sys::Path OutputPath(Output.getFilename());
     OutputPath.eraseComponent();
     if (OutputPath.empty())
       OutputPath = llvm::sys::Path(InputPath).getLast();
@@ -317,9 +318,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Output.isPipe()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back("-");
-  } else if (const char *N = Output.getInputFilename()) {
+  } else if (Output.isFilename()) {
     CmdArgs.push_back("-o");
-    CmdArgs.push_back(N);
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
   }
 
   for (InputInfoList::const_iterator
@@ -329,8 +332,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(types::getTypeName(II.getType()));
     if (II.isPipe())
       CmdArgs.push_back("-");
+    else if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
     else
-      CmdArgs.push_back(II.getInputFilename());
+      II.getInputArg().renderAsInput(Args, CmdArgs);
   }
       
   const char *Exec = 
@@ -364,11 +369,13 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   if (Output.isPipe()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back("-");
-  } else if (const char *N = Output.getInputFilename()) {
+  } else if (Output.isFilename()) {
     CmdArgs.push_back("-o");
-    CmdArgs.push_back(N);
-  } else
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Unexpected output");
     CmdArgs.push_back("-fsyntax-only");
+  }
 
 
   // Only pass -x if gcc will understand it; otherwise hope gcc
@@ -389,9 +396,11 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
     if (II.isPipe())
       CmdArgs.push_back("-");
+    else if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
     else
-      // FIXME: Linker inputs
-      CmdArgs.push_back(II.getInputFilename());
+      // Don't render as input, we need gcc to do the translations.
+      II.getInputArg().render(Args, CmdArgs);
   }
 
   const char *Exec = 
