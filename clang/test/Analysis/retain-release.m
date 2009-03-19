@@ -69,6 +69,8 @@ typedef struct _NSZone NSZone;
 - (const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
+- (id)init;
+- (void)dealloc;
 @end   extern NSString * const NSCurrentLocaleDidChangeNotification ;
 @protocol NSLocking  - (void)lock;
 @end  extern NSString * const NSUndoManagerCheckpointNotification;
@@ -334,3 +336,27 @@ static void rdar_6659160(char *inkind, char *inname)
 }
 @end
 
+// PR 3820 - Reason about calls to -dealloc
+void pr3820_DeallocInsteadOfRelease(void)
+{
+  id foo = [[NSString alloc] init]; // no-warning
+  [foo dealloc];
+  // foo is not leaked, since it has been deallocated.
+}
+
+void pr3820_ReleaseAfterDealloc(void)
+{
+  id foo = [[NSString alloc] init];
+  [foo dealloc];
+  [foo release];  // expected-warning{{used after it is release}}
+  // NSInternalInconsistencyException: message sent to deallocated object
+}
+
+void pr3820_DeallocAfterRelease(void)
+{
+  NSLog(@"\n\n[%s]", __FUNCTION__);
+  id foo = [[NSString alloc] init];
+  [foo release];
+  [foo dealloc]; // expected-warning{{used after it is released}}
+  // message sent to released object
+}
