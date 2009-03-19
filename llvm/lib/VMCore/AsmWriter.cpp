@@ -98,7 +98,7 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   case GlobalPrefix: OS << '@'; break;
   case LabelPrefix:  break;
   case LocalPrefix:  OS << '%'; break;
-  }      
+  }
   
   // Scan the name to see if it needs quotes first.
   bool NeedsQuotes = isdigit(NameStr[0]);
@@ -169,7 +169,7 @@ void TypePrinting::CalcTypeName(const Type *Ty,
                                 raw_ostream &OS, bool IgnoreTopLevelName) {
   // Check to see if the type is named.
   if (!IgnoreTopLevelName) {
-    DenseMap<const Type*, std::string> &TM = getTypeNamesMap(TypeNames);
+    DenseMap<const Type *, std::string> &TM = getTypeNamesMap(TypeNames);
     DenseMap<const Type *, std::string>::iterator I = TM.find(Ty);
     if (I != TM.end()) {
       OS << I->second;
