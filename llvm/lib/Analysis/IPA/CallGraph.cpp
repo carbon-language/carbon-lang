@@ -15,6 +15,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
@@ -143,7 +144,7 @@ private:
       for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
            II != IE; ++II) {
         CallSite CS = CallSite::get(II);
-        if (CS.getInstruction()) {
+        if (CS.getInstruction() && !isa<DbgInfoIntrinsic>(II)) {
           const Function *Callee = CS.getCalledFunction();
           if (Callee)
             Node->addCalledFunction(CS, getOrInsertFunction(Callee));

@@ -20,6 +20,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -235,9 +236,10 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
   CallGraphNode *CGN = CG[BB->getParent()];
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; ) {
     --I;
-    if (CallInst *CI = dyn_cast<CallInst>(I))
-      CGN->removeCallEdgeFor(CI);
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+    if (CallInst *CI = dyn_cast<CallInst>(I)) {
+      if (!isa<DbgInfoIntrinsic>(I))
+        CGN->removeCallEdgeFor(CI);
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
       CGN->removeCallEdgeFor(II);
     if (!I->use_empty())
       I->replaceAllUsesWith(UndefValue::get(I->getType()));

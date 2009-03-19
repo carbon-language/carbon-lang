@@ -19,6 +19,9 @@
 
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Transforms/Utils/InlineCost.h"
+#include "llvm/Target/TargetData.h"
+#include <set>
+
 
 namespace llvm {
   class CallSite;
@@ -43,6 +46,10 @@ struct Inliner : public CallGraphSCCPass {
   // processing to avoid breaking the SCC traversal.
   virtual bool doFinalization(CallGraph &CG);
 
+  // InlineCallIfPossible
+  bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
+                            const std::set<Function*> &SCCFunctions,
+                            const TargetData &TD);
 
   /// This method returns the value specified by the -inline-threshold value,
   /// specified on the command line.  This is typically not directly needed.

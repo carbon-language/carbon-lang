@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "inline"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
@@ -50,7 +51,7 @@ void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
 
 // InlineCallIfPossible - If it is possible to inline the specified call site,
 // do so and update the CallGraph for this operation.
-static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
+bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
                                  const std::set<Function*> &SCCFunctions,
                                  const TargetData &TD) {
   Function *Callee = CS.getCalledFunction();
@@ -75,6 +76,8 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
 
     // Remove any call graph edges from the callee to its callees.
     CalleeNode->removeAllCalledFunctions();
+
+    resetCachedCostInfo(CalleeNode->getFunction());
 
     // Removing the node for callee from the call graph and delete it.
     delete CG.removeFunctionFromModule(CalleeNode);
@@ -123,6 +126,7 @@ bool Inliner::shouldInline(CallSite CS) {
 
 bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
+  TargetData &TD = getAnalysis<TargetData>();
 
   std::set<Function*> SCCFunctions;
   DOUT << "Inliner visiting SCC:";
@@ -142,7 +146,8 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
           CallSite CS = CallSite::get(I);
-          if (CS.getInstruction() && (!CS.getCalledFunction() ||
+          if (CS.getInstruction() && !isa<DbgInfoIntrinsic>(I) &&
+                                     (!CS.getCalledFunction() ||
                                       !CS.getCalledFunction()->isDeclaration()))
             CallSites.push_back(CS);
         }
@@ -186,11 +191,10 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         if (shouldInline(CS)) {
           Function *Caller = CS.getCaller();
           // Attempt to inline the function...
-          if (InlineCallIfPossible(CS, CG, SCCFunctions, 
-                                   getAnalysis<TargetData>())) {
-            // Remove any cached cost info for this caller, as inlining the callee
-            // has increased the size of the caller (which may be the same as the
-            // callee).
+          if (InlineCallIfPossible(CS, CG, SCCFunctions, TD)) {
+            // Remove any cached cost info for this caller, as inlining the
+            // callee has increased the size of the caller (which may be the
+            // same as the callee).
             resetCachedCostInfo(Caller);
 
             // Remove this call site from the list.  If possible, use 
@@ -263,6 +267,7 @@ bool Inliner::removeDeadFunctions(CallGraph &CG,
   bool Changed = false;
   for (std::set<CallGraphNode*>::iterator I = FunctionsToRemove.begin(),
          E = FunctionsToRemove.end(); I != E; ++I) {
+    resetCachedCostInfo((*I)->getFunction());
     delete CG.removeFunctionFromModule(*I);
     ++NumDeleted;
     Changed = true;
