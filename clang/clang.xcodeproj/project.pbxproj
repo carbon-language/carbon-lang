@@ -215,6 +215,7 @@
 		DED7D7D80A524302003AD0FB /* README.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7D70A524302003AD0FB /* README.txt */; };
 		DED7D9180A52518C003AD0FB /* ScratchBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D9170A52518C003AD0FB /* ScratchBuffer.h */; };
 		DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */; };
+		DEDFE5CF0F7206E40035BD10 /* NestedNameSpecifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */; };
 		DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBBD430C19C5D200A9FE82 /* TODO.txt */; };
 		DEEBC3BA0C2363B800A9FE82 /* CodeGenTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */; };
 		DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */; };
@@ -595,6 +596,8 @@
 		DED7D9170A52518C003AD0FB /* ScratchBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ScratchBuffer.h; sourceTree = "<group>"; };
 		DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ScratchBuffer.cpp; sourceTree = "<group>"; };
 		DEDFE5270F63A9230035BD10 /* DeclNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = DeclNodes.def; path = clang/AST/DeclNodes.def; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NestedNameSpecifier.h; path = clang/AST/NestedNameSpecifier.h; sourceTree = "<group>"; };
+		DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NestedNameSpecifier.cpp; path = lib/AST/NestedNameSpecifier.cpp; sourceTree = "<group>"; };
 		DEEBBD430C19C5D200A9FE82 /* TODO.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenTypes.h; path = lib/CodeGen/CodeGenTypes.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = lib/CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1046,6 +1049,7 @@
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
 				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
 				35CEA05A0DF9E82700A41296 /* ExprObjC.h */,
+				DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */,
 				35EE48AE0E0C4CB200715C54 /* ParentMap.h */,
 				3547129D0C88881300B3E1D5 /* PrettyPrinter.h */,
 				DE6951C60C4D1F5D00A5826B /* RecordLayout.h */,
@@ -1081,6 +1085,7 @@
 				1A32C17E0E1C87AD00A6B483 /* ExprConstant.cpp */,
 				35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */,
 				3557D1A80EB136B100C59739 /* InheritViz.cpp */,
+				DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */,
 				35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */,
 				DE3452400AEF1A2D00DBC861 /* Stmt.cpp */,
 				DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */,
@@ -1455,6 +1460,7 @@
 				35544B890F5C7FD700D92AA9 /* SimpleConstraintManager.cpp in Sources */,
 				35544B8C0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp in Sources */,
 				DEF1614F0F65B66B0098507F /* Warnings.cpp in Sources */,
+				DEDFE5CF0F7206E40035BD10 /* NestedNameSpecifier.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
