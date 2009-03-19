@@ -258,6 +258,7 @@ public:
   virtual void Destroy(ASTContext& C);
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
+  void setStorageClass(StorageClass SC) { SClass = SC; }
 
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
 

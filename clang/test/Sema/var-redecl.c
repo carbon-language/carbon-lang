@@ -54,3 +54,8 @@ void g18(void) {
   extern int g19;
 }
 int *p=&g19; // expected-error{{use of undeclared identifier 'g19'}}
+
+// PR3645
+static int a;
+extern int a;
+int a;

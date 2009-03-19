@@ -832,9 +832,20 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(Old->getLocation(), diag::note_previous_definition);
     return true;
   }
-  // C99 6.2.2p4: Check if we have a non-static decl followed by a static.
-  if (New->getStorageClass() != VarDecl::Static &&
-      Old->getStorageClass() == VarDecl::Static) {
+  // C99 6.2.2p4: 
+  //   For an identifier declared with the storage-class specifier
+  //   extern in a scope in which a prior declaration of that
+  //   identifier is visible,23) if the prior declaration specifies
+  //   internal or external linkage, the linkage of the identifier at
+  //   the later declaration is the same as the linkage specified at
+  //   the prior declaration. If no prior declaration is visible, or
+  //   if the prior declaration specifies no linkage, then the
+  //   identifier has external linkage.
+  if ((New->hasExternalStorage() || New->getStorageClass() == VarDecl::None) &&
+      Old->hasLinkage())
+    /* Okay */;
+  else if (New->getStorageClass() != VarDecl::Static &&
+           Old->getStorageClass() == VarDecl::Static) {
     Diag(New->getLocation(), diag::err_non_static_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return true;
