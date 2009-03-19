@@ -15,6 +15,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
+#include <cstring>
 using namespace clang;
 
 
@@ -23,6 +24,66 @@ static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
   return D.Report(FullSourceLoc(Loc, SrcMgr), DiagID);
 }
 
+/// \brief Double the capacity of this scope specifier.
+void CXXScopeSpec::reallocate() {
+  Action::CXXScopeTy **Data = new Action::CXXScopeTy *[Capacity * 2];
+
+  Action::CXXScopeTy **From 
+    = Capacity == 4? &InlineScopeReps[0] : ManyScopeReps;
+  std::memcpy(Data, From, Capacity * sizeof(Action::CXXScopeTy *));
+  
+  if (Capacity > 4)
+    delete [] ManyScopeReps;
+  ManyScopeReps = Data;
+  Capacity *= 2;
+}
+
+CXXScopeSpec::CXXScopeSpec(const CXXScopeSpec &SS) 
+  : Range(SS.Range), NumScopeReps(SS.NumScopeReps), Capacity(SS.Capacity) {
+
+  if (Capacity > 4) {
+    ManyScopeReps = new Action::CXXScopeTy *[Capacity];
+    memcpy(ManyScopeReps, SS.ManyScopeReps, 
+           Capacity * sizeof(Action::CXXScopeTy *));
+  } else {
+    memcpy(InlineScopeReps, SS.InlineScopeReps, 
+           Capacity * sizeof(Action::CXXScopeTy *));
+  }
+}
+
+CXXScopeSpec &CXXScopeSpec::operator=(const CXXScopeSpec &SS) {
+  // FIXME: Does not provide the strong exception safety guarantee.
+  this->~CXXScopeSpec();
+  new (this) CXXScopeSpec(SS);
+  return *this;
+}
+
+void *CXXScopeSpec::buildAnnotationData() const {
+  uintptr_t *Data = (uintptr_t *)malloc(sizeof(uintptr_t) * (size() + 1));
+  Data[0] = size();
+  for (unsigned I = 0; I < size(); ++I)
+    Data[I + 1] = reinterpret_cast<uintptr_t>(getScopeRep(I));
+  return Data;
+}
+
+void CXXScopeSpec::setFromAnnotationData(void *DataIn) {
+  uintptr_t *Data = static_cast<uintptr_t *>(DataIn);
+  NumScopeReps = *Data;
+
+  // Allocate enough space for the annotation data.
+  if (NumScopeReps > Capacity) {
+    if (Capacity > 4)
+      delete [] ManyScopeReps;
+    
+    Capacity = NumScopeReps;
+    ManyScopeReps = new Action::CXXScopeTy *[Capacity];
+  }
+
+  if (Capacity > 4)
+    std::memcpy(ManyScopeReps, Data + 1, sizeof(uintptr_t) * NumScopeReps);
+  else
+    std::memcpy(InlineScopeReps, Data + 1, sizeof(uintptr_t) * NumScopeReps);
+}
 
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
 /// "TheDeclarator" is the declarator that this will be added to.

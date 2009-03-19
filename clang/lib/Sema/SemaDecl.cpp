@@ -72,22 +72,32 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   }
 
   if (IIDecl) {
+    QualType T;
+  
     if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
       // Check whether we can use this type
       (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
       
-      return Context.getTypeDeclType(TD).getAsOpaquePtr();
-    }
-    
-    if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
+      T = Context.getTypeDeclType(TD);
+    } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
       // Check whether we can use this interface.
       (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
       
-      return Context.getObjCInterfaceType(IDecl).getAsOpaquePtr();
+      T = Context.getObjCInterfaceType(IDecl);
+    } else
+      return 0;
+
+    if (SS && SS->isNotEmpty() && SS->isSet()) {
+      llvm::SmallVector<NestedNameSpecifier, 4> TNNs;
+      for (CXXScopeSpec::iterator TNN = SS->begin(), TNNEnd = SS->end();
+           TNN != TNNEnd; ++TNN)
+        TNNs.push_back(NestedNameSpecifier::getFromOpaquePtr(*TNN));
+      T = Context.getQualifiedNameType(&TNNs[0], TNNs.size(), T);
     }
 
-    // Otherwise, could be a variable, function etc.
+    return T.getAsOpaquePtr();
   }
+
   return 0;
 }
 
@@ -1257,7 +1267,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl,
                             DeclSpec::SCS_static,
                           D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
-    DC = getScopeRepAsDeclContext(D.getCXXScopeSpec());
+    DC = computeDeclContext(D.getCXXScopeSpec());
     // FIXME: RequireCompleteDeclContext(D.getCXXScopeSpec()); ?
     PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
@@ -3020,7 +3030,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     }
 
     // FIXME: RequireCompleteDeclContext(SS)?
-    DC = getScopeRepAsDeclContext(SS);
+    DC = computeDeclContext(SS);
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     PrevDecl = dyn_cast_or_null<TagDecl>(

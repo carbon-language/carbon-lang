@@ -492,6 +492,14 @@ InstantiateClassTemplateSpecializationType(
 
 QualType 
 TemplateTypeInstantiator::
+InstantiateQualifiedNameType(const QualifiedNameType *T, 
+                             unsigned Quals) const {
+  assert(false && "Cannot have dependent qualified name types (yet)");
+  return QualType();
+}
+
+QualType 
+TemplateTypeInstantiator::
 InstantiateObjCInterfaceType(const ObjCInterfaceType *T,
                              unsigned Quals) const {
   assert(false && "Objective-C types cannot be dependent");

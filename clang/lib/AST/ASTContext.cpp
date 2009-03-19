@@ -1375,6 +1375,29 @@ ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
   return QualType(Spec, 0);  
 }
 
+QualType 
+ASTContext::getQualifiedNameType(const NestedNameSpecifier *Components,
+                                 unsigned NumComponents,
+                                 QualType NamedType) {
+  llvm::FoldingSetNodeID ID;
+  QualifiedNameType::Profile(ID, Components, NumComponents, NamedType);
+
+  void *InsertPos = 0;
+  QualifiedNameType *T 
+    = QualifiedNameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
+  void *Mem = Allocate((sizeof(QualifiedNameType) +
+                        sizeof(NestedNameSpecifier) * NumComponents), 
+                       8);
+  T = new (Mem) QualifiedNameType(Components, NumComponents, NamedType,
+                                  getCanonicalType(NamedType));
+  Types.push_back(T);
+  QualifiedNameTypes.InsertNode(T, InsertPos);
+  return QualType(T, 0);
+}
+
 /// CmpProtocolNames - Comparison predicate for sorting protocols
 /// alphabetically.
 static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,

@@ -96,6 +96,8 @@ QualType Type::getDesugaredType() const {
   if (const ClassTemplateSpecializationType *Spec 
         = dyn_cast<ClassTemplateSpecializationType>(this))
     return Spec->getCanonicalTypeInternal().getDesugaredType();
+  if (const QualifiedNameType *QualName  = dyn_cast<QualifiedNameType>(this))
+    return QualName->getNamedType().getDesugaredType();
 
   // FIXME: remove this cast.
   return QualType(const_cast<Type*>(this), 0);
@@ -1045,6 +1047,28 @@ ClassTemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
     Args[Idx].Profile(ID);
 }
 
+QualifiedNameType::QualifiedNameType(const NestedNameSpecifier *Components,
+                                     unsigned NumComponents, 
+                                     QualType NamedType,
+                                     QualType CanonType)
+  : Type(QualifiedName, CanonType, NamedType->isDependentType()),
+    NumComponents(NumComponents), NamedType(NamedType) {
+  NestedNameSpecifier *InitComponents 
+    = reinterpret_cast<NestedNameSpecifier *>(this + 1);
+  for (unsigned I = 0; I < NumComponents; ++I)
+    new (InitComponents + I) NestedNameSpecifier(Components[I]);
+}
+
+void QualifiedNameType::Profile(llvm::FoldingSetNodeID &ID, 
+                                const NestedNameSpecifier *Components,
+                                unsigned NumComponents, 
+                                QualType NamedType) {
+  ID.AddInteger(NumComponents);
+  for (unsigned I = 0; I < NumComponents; ++I)
+    ID.AddPointer(Components[I].getAsOpaquePtr());
+  NamedType.Profile(ID);
+}
+
 //===----------------------------------------------------------------------===//
 // Type Printing
 //===----------------------------------------------------------------------===//
@@ -1411,6 +1435,38 @@ getAsStringInternal(std::string &InnerString) const {
     InnerString = SpecString + ' ' + InnerString;
 }
 
+void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
+  std::string MyString;
+
+  for (iterator Comp = begin(), CompEnd = end(); Comp != CompEnd; ++Comp) {
+    if (Type *T = Comp->getAsType()) {
+      std::string TypeStr;
+      if (const TagType *TagT = dyn_cast<TagType>(T))
+        TagT->getAsStringInternal(TypeStr, true);
+      else
+        T->getAsStringInternal(TypeStr);
+
+      MyString += TypeStr;
+    } else if (NamedDecl *NamedDC 
+               = dyn_cast_or_null<NamedDecl>(Comp->getAsDeclContext()))
+      MyString += NamedDC->getNameAsString();
+    MyString += "::";
+  }
+  
+  std::string TypeStr;
+  if (const TagType *TagT = dyn_cast<TagType>(NamedType.getTypePtr())) {
+    // Suppress printing of 'enum', 'struct', 'union', or 'class'.
+    TagT->getAsStringInternal(TypeStr, true);
+  } else
+    NamedType.getAsStringInternal(TypeStr);
+
+  MyString += TypeStr;
+  if (InnerString.empty())
+    InnerString.swap(MyString);
+  else
+    InnerString = MyString + ' ' + InnerString;
+}
+
 void ObjCInterfaceType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
@@ -1451,10 +1507,15 @@ void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString) const {
 }
 
 void TagType::getAsStringInternal(std::string &InnerString) const {
+  getAsStringInternal(InnerString, false);
+}
+
+void TagType::getAsStringInternal(std::string &InnerString,
+                                  bool SuppressTagKind) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   
-  const char *Kind = getDecl()->getKindName();
+  const char *Kind = SuppressTagKind? 0 : getDecl()->getKindName();
   const char *ID;
   if (const IdentifierInfo *II = getDecl()->getIdentifier())
     ID = II->getName();

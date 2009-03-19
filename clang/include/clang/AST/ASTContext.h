@@ -72,6 +72,7 @@ class ASTContext {
   llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
   llvm::FoldingSet<ClassTemplateSpecializationType> 
     ClassTemplateSpecializationTypes;
+  llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
@@ -283,6 +284,10 @@ public:
                                               const TemplateArgument *Args,
                                               unsigned NumArgs,
                                               QualType Canon = QualType());
+
+  QualType getQualifiedNameType(const NestedNameSpecifier *Components,
+                                unsigned NumComponents,
+                                QualType NamedType);
 
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and

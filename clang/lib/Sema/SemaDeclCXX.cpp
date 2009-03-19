@@ -299,8 +299,8 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
 bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
                               const CXXScopeSpec *SS) {
   CXXRecordDecl *CurDecl;
-  if (SS) {
-    DeclContext *DC = getScopeRepAsDeclContext(*SS);
+  if (SS && SS->isSet() && !SS->isInvalid()) {
+    DeclContext *DC = computeDeclContext(*SS);
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(DC);
   } else
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);

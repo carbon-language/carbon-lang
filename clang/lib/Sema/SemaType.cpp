@@ -742,7 +742,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     }
     case DeclaratorChunk::MemberPointer:
       // The scope spec must refer to a class, or be dependent.
-      DeclContext *DC = getScopeRepAsDeclContext(DeclType.Mem.Scope());
+      DeclContext *DC = computeDeclContext(DeclType.Mem.Scope());
       QualType ClsType;
       // FIXME: Extend for dependent types when it's actually supported.
       // See ActOnCXXNestedNameSpecifier.
@@ -810,8 +810,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         ((D.getContext() != Declarator::MemberContext &&
           (!D.getCXXScopeSpec().isSet() ||
-           !static_cast<DeclContext*>(D.getCXXScopeSpec().getScopeRep())
-              ->isRecord())) ||
+           !computeDeclContext(D.getCXXScopeSpec())->isRecord())) ||
          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
       if (D.isFunctionDeclarator())
         Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);

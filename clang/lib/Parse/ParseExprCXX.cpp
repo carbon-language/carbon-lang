@@ -36,7 +36,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
          "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope)) {
-    SS.setScopeRep(Tok.getAnnotationValue());
+    SS.setFromAnnotationData(Tok.getAnnotationValue());
+    CXXScopeSpec::freeAnnotationData(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
     return true;
@@ -53,7 +54,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
     // '::' - Global scope qualifier.
     SourceLocation CCLoc = ConsumeToken();
     SS.setBeginLoc(CCLoc);
-    SS.setScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
+    SS.addScopeRep(Actions.ActOnCXXGlobalScopeSpecifier(CurScope, CCLoc));
     SS.setEndLoc(CCLoc);
     HasScopeSpecifier = true;
   }
@@ -79,7 +80,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       if (SS.isInvalid())
         continue;
       
-      SS.setScopeRep(
+      SS.addScopeRep(
         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II));
       SS.setEndLoc(CCLoc);
       continue;
@@ -149,7 +150,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
 
       if (TemplateId->Kind == TNK_Class_template) {
         if (AnnotateTemplateIdTokenAsType(&SS))
-          SS.setScopeRep(0);
+          SS.clear();
 
         assert(Tok.is(tok::annot_typename) && 
                "AnnotateTemplateIdTokenAsType isn't working");
@@ -164,7 +165,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
           HasScopeSpecifier = true;
         }
 
-        SS.setScopeRep(
+        SS.addScopeRep(
           Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, 
                                               TypeToken.getAnnotationValue(),
                                               TypeToken.getAnnotationRange(),

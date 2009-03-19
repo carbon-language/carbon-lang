@@ -18,6 +18,7 @@ add_clang_library(clangAST
   Expr.cpp
   ExprCXX.cpp
   InheritViz.cpp
+  NestedNameSpecifier.cpp
   ParentMap.cpp
   Stmt.cpp
   StmtDumper.cpp

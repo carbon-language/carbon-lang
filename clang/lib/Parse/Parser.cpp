@@ -856,7 +856,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
   else
     PP.EnterToken(Tok);
   Tok.setKind(tok::annot_cxxscope);
-  Tok.setAnnotationValue(SS.getScopeRep());
+  Tok.setAnnotationValue(SS.buildAnnotationData());
   Tok.setAnnotationRange(SS.getRange());
 
   // In case the tokens were cached, have Preprocessor replace them with the
@@ -888,7 +888,7 @@ bool Parser::TryAnnotateCXXScopeToken() {
   else
     PP.EnterToken(Tok);
   Tok.setKind(tok::annot_cxxscope);
-  Tok.setAnnotationValue(SS.getScopeRep());
+  Tok.setAnnotationValue(SS.buildAnnotationData());
   Tok.setAnnotationRange(SS.getRange());
 
   // In case the tokens were cached, have Preprocessor replace them with the

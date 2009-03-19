@@ -13,51 +13,20 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
-/// \brief Retrieve the scope represented by this scope specifier as a
-/// DeclContext.
-DeclContext *Sema::getScopeRepAsDeclContext(const CXXScopeSpec &SS) {
-  if (SS.isInvalid() || !SS.getScopeRep())
+/// \brief Compute the DeclContext that is associated with the given
+/// scope specifier.
+DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
+  if (!SS.isSet() || SS.isInvalid())
     return 0;
-  uintptr_t Rep = reinterpret_cast<uintptr_t>(SS.getScopeRep());
-  if ((Rep & 0x01) == 0)
-    return reinterpret_cast<DeclContext *>(Rep);
 
-  // Retrieve the DeclContext associated with this type.
-  QualType T = QualType(reinterpret_cast<Type *>(Rep & ~0x01), 0);
-  const TagType *TagT = T->getAsTagType();
-  assert(TagT && "No DeclContext from a non-tag type");
-  return TagT->getDecl();
-}
-
-/// \brief Retrieve the scope represented by this scope specifier as a
-/// type.
-QualType Sema::getScopeRepAsType(const CXXScopeSpec &SS) {
-  if (SS.isInvalid() || !SS.getScopeRep())
-    return QualType();
-  
-  uintptr_t Rep = reinterpret_cast<uintptr_t>(SS.getScopeRep());
-  if ((Rep & 0x01) == 0)
-    return QualType();
-  return QualType(reinterpret_cast<Type *>(Rep & ~0x01), 0);
-}
-
-Action::CXXScopeTy *Sema::createScopeRep(QualType T) {
-  assert(((reinterpret_cast<uintptr_t>(T.getAsOpaquePtr()) & 0x01) == 0) && 
-         "Scope type with cv-qualifiers");
-  if (T.isNull())
-    return 0;
-  
-  return reinterpret_cast<CXXScopeTy *>(
-           reinterpret_cast<uintptr_t>(T.getAsOpaquePtr()) | 0x01);
-}
-
-bool Sema::isScopeRepType(const CXXScopeSpec &SS) {
-  uintptr_t Rep = reinterpret_cast<uintptr_t>(SS.getScopeRep());
-  return Rep & 0x01;
+  NestedNameSpecifier NNS
+    = NestedNameSpecifier::getFromOpaquePtr(SS.getCurrentScopeRep());
+  return NNS.computeDeclContext(Context);
 }
 
 /// \brief Require that the context specified by SS be complete.
@@ -73,7 +42,7 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
   if (!SS.isSet() || SS.isInvalid())
     return false;
   
-  DeclContext *DC = getScopeRepAsDeclContext(SS);
+  DeclContext *DC = computeDeclContext(SS);
   if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
     // If we're currently defining this type, then lookup into the
     // type is okay: don't complain that it isn't complete yet.
@@ -95,7 +64,7 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
 /// global scope ('::').
 Sema::CXXScopeTy *Sema::ActOnCXXGlobalScopeSpecifier(Scope *S,
                                                      SourceLocation CCLoc) {
-  return createScopeRep(Context.getTranslationUnitDecl());
+  return NestedNameSpecifier(Context.getTranslationUnitDecl()).getAsOpaquePtr();
 }
 
 /// ActOnCXXNestedNameSpecifier - Called during parsing of a
@@ -114,9 +83,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   if (SD) {
     if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
       if (TD->getUnderlyingType()->isRecordType())
-        return createScopeRep(Context.getTypeDeclType(TD));
+        return NestedNameSpecifier(Context.getTypeDeclType(TD).getTypePtr())
+                .getAsOpaquePtr();
     } else if (isa<NamespaceDecl>(SD) || isa<RecordDecl>(SD)) {
-      return createScopeRep(cast<DeclContext>(SD));
+      return NestedNameSpecifier(cast<DeclContext>(SD)).getAsOpaquePtr();
     }
 
     // FIXME: Template parameters and dependent types.
@@ -152,7 +122,8 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     TypeTy *Ty,
                                                     SourceRange TypeRange,
                                                     SourceLocation CCLoc) {
-  return createScopeRep(QualType::getFromOpaquePtr(Ty));
+  return NestedNameSpecifier(QualType::getFromOpaquePtr(Ty).getTypePtr())
+           .getAsOpaquePtr();
 }
 
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
@@ -165,7 +136,7 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
   assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
   PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
-  CurContext = getScopeRepAsDeclContext(SS);
+  CurContext = computeDeclContext(SS);
   S->setEntity(CurContext);
 }
 
@@ -176,8 +147,7 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// defining scope.
 void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  assert(S->getEntity() == getScopeRepAsDeclContext(SS) && 
-         "Context imbalance!");
+  assert(S->getEntity() == computeDeclContext(SS) && "Context imbalance!");
   S->setEntity(PreDeclaratorDC);
   PreDeclaratorDC = 0;
 
