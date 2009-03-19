@@ -73,6 +73,8 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   // Create new compile unit.
   // FIXME: Handle other language IDs as well.
   // FIXME: Do not know how to get clang version yet.
+  // FIXME: Encode command line options.
+  // FIXME: Encode optimization level.
   return Unit = DebugFactory.CreateCompileUnit(llvm::dwarf::DW_LANG_C89,
                                                FileName, DirName, "clang",
                                                isMain);
@@ -370,14 +372,20 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     uint64_t FieldSize = M->getContext().getTypeSize(Ty);
     unsigned FieldAlign = M->getContext().getTypeAlign(Ty);
     uint64_t FieldOffset = RL.getFieldOffset(FieldNo);    
-    
+
+    unsigned Flags = 0;
+    if (Field->getAccessControl() == ObjCIvarDecl::Protected)
+      Flags = llvm::DIType::FlagProtected;
+    else if (Field->getAccessControl() == ObjCIvarDecl::Private)
+      Flags = llvm::DIType::FlagPrivate;
+      
     // Create a DW_TAG_member node to remember the offset of this field in the
     // struct.  FIXME: This is an absolutely insane way to capture this
     // information.  When we gut debug info, this should be fixed.
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
                                              FieldName, FieldDefUnit,
                                              FieldLine, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
+                                             FieldOffset, Flags, FieldTy);
     EltTys.push_back(FieldTy);
   }
   
