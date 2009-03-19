@@ -354,8 +354,13 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   for (ArgList::const_iterator 
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
-    if (A->getOption().hasForwardToGCC())
+    if (A->getOption().hasForwardToGCC()) {
+      // It is unfortunate that we have to claim here, as this means
+      // we will basically never report anything interesting for
+      // platforms using a generic gcc.
+      A->claim();
       A->render(Args, CmdArgs);
+    }
   }
   
   RenderExtraToolArgs(CmdArgs);

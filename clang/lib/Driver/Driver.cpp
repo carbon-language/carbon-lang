@@ -328,6 +328,7 @@ void Driver::BuildUniversalActions(const ArgList &Args,
       // FIXME: We need to handle canonicalization of the specified
       // arch?
 
+      A->claim();
       if (ArchNames.insert(Name))
         Archs.push_back(Name);
     }
@@ -374,7 +375,7 @@ void Driver::BuildUniversalActions(const ArgList &Args,
         << types::getTypeName(Act->getType());
 
     ActionList Inputs;
-    for (unsigned i = 0, e = Archs.size(); i != e; ++i )
+    for (unsigned i = 0, e = Archs.size(); i != e; ++i)
       Inputs.push_back(new BindArchAction(Act, Archs[i]));
 
     // Lipo if necessary, We do it this way because we need to set the
