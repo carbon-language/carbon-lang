@@ -852,18 +852,41 @@ public:
 /// function, enum, etc., that includes a qualification, e.g.,
 /// "N::foo".
 class QualifiedDeclRefExpr : public DeclRefExpr {
-  /// NestedNameLoc - The location of the beginning of the
-  /// nested-name-specifier that qualifies this declaration.
-  SourceLocation NestedNameLoc;
+  /// QualifierRange - The source range that covers the
+  /// nested-name-specifier.
+  SourceRange QualifierRange;
+
+  /// The number of components in the complete nested-name-specifier.
+  unsigned NumComponents;
+
+  QualifiedDeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, 
+                       bool VD, SourceRange R,
+                       const NestedNameSpecifier *Components,
+                       unsigned NumComponents);
 
 public:
-  QualifiedDeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, 
-                       bool VD, SourceLocation nnl)
-    : DeclRefExpr(QualifiedDeclRefExprClass, d, t, l, TD, VD), 
-      NestedNameLoc(nnl) { }
+  static QualifiedDeclRefExpr *Create(ASTContext &Context, NamedDecl *d, 
+                                      QualType t, SourceLocation l, bool TD, 
+                                      bool VD, SourceRange R,
+                                      const NestedNameSpecifier *Components,
+                                      unsigned NumComponents);
+
+  /// \brief Retrieve the source range of the nested-name-specifier.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+
+  // Iteration over of the parts of the nested-name-specifier.
+  typedef const NestedNameSpecifier * iterator;
+
+  iterator begin() const { 
+    return reinterpret_cast<const NestedNameSpecifier *>(this + 1); 
+  }
+
+  iterator end() const { return begin() + NumComponents; }
+
+  unsigned size() const { return NumComponents; }
 
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(NestedNameLoc, getLocation()); 
+    return SourceRange(QualifierRange.getBegin(), getLocation()); 
   }
 
   static bool classof(const Stmt *T) {

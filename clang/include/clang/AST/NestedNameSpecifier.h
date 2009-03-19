@@ -17,6 +17,10 @@
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
 
 class ASTContext;
@@ -104,6 +108,9 @@ public:
     NS.Data = reinterpret_cast<uintptr_t>(Ptr);
     return NS;
   }
+
+  static void Print(llvm::raw_ostream &OS, const NestedNameSpecifier *First,
+                    const NestedNameSpecifier *Last);
 };
 
 }

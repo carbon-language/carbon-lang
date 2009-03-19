@@ -439,11 +439,15 @@ DeclRefExpr *
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
-  if (SS && !SS->isEmpty())
-    return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
-                                              ValueDependent,
-                                              SS->getRange().getBegin());
-  else
+  if (SS && !SS->isEmpty()) {
+    llvm::SmallVector<NestedNameSpecifier, 16> Specs;
+    for (CXXScopeSpec::iterator Spec = SS->begin(), SpecEnd = SS->end();
+         Spec != SpecEnd; ++Spec)
+      Specs.push_back(NestedNameSpecifier::getFromOpaquePtr(*Spec));
+    return QualifiedDeclRefExpr::Create(Context, D, Ty, Loc, TypeDependent, 
+                                        ValueDependent, SS->getRange(),
+                                        &Specs[0], Specs.size());
+  } else
     return new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
 }
 
@@ -2226,10 +2230,12 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       Expr *NewFn = 0;
       if (QualifiedDeclRefExpr *QDRExpr
             = dyn_cast_or_null<QualifiedDeclRefExpr>(DRExpr))
-        NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(),
-                                                   QDRExpr->getLocation(),
-                                                   false, false,
-                                          QDRExpr->getSourceRange().getBegin());
+        NewFn = QualifiedDeclRefExpr::Create(Context, FDecl, FDecl->getType(),
+                                             QDRExpr->getLocation(),
+                                             false, false,
+                                             QDRExpr->getQualifierRange(),
+                                             QDRExpr->begin(), 
+                                             QDRExpr->size());
       else
         NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(),
                                           Fn->getSourceRange().getBegin());

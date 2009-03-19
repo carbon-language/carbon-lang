@@ -414,7 +414,7 @@ public:
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
   const ClassTemplateSpecializationType *
-    getClassTemplateSpecializationType() const;
+    getAsClassTemplateSpecializationType() const;
   
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.

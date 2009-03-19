@@ -530,28 +530,10 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getNameAsString();
 }
 
-void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {
-  // FIXME: Should we keep enough information in QualifiedDeclRefExpr
-  // to produce the same qualification that the user wrote?
-  llvm::SmallVector<DeclContext *, 4> Contexts;
-  
+void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {  
   NamedDecl *D = Node->getDecl();
 
-  // Build up a stack of contexts.
-  DeclContext *Ctx = D->getDeclContext();
-  for (; Ctx; Ctx = Ctx->getParent())
-    if (!Ctx->isTransparentContext())
-      Contexts.push_back(Ctx);
-
-  while (!Contexts.empty()) {
-    DeclContext *Ctx = Contexts.back();
-    if (isa<TranslationUnitDecl>(Ctx))
-      OS << "::";
-    else if (NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
-      OS << ND->getNameAsString() << "::";
-    Contexts.pop_back();
-  }
-
+  NestedNameSpecifier::Print(OS, Node->begin(), Node->end());
   OS << D->getNameAsString();
 }
 

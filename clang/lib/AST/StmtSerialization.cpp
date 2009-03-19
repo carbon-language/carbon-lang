@@ -1589,7 +1589,8 @@ CXXTryStmt::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
 
 void QualifiedDeclRefExpr::EmitImpl(llvm::Serializer& S) const {
   DeclRefExpr::EmitImpl(S);
-  S.Emit(NestedNameLoc);
+  S.Emit(QualifierRange);
+  // FIXME: Serialize nested-name-specifiers
 }
 
 QualifiedDeclRefExpr* 

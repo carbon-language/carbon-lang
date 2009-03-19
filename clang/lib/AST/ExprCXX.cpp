@@ -24,6 +24,31 @@ void CXXConditionDeclExpr::Destroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
+QualifiedDeclRefExpr::QualifiedDeclRefExpr(NamedDecl *d, QualType t, 
+                                           SourceLocation l, bool TD, 
+                                           bool VD, SourceRange R,
+                                       const NestedNameSpecifier *Components,
+                                           unsigned NumComponents)
+  : DeclRefExpr(QualifiedDeclRefExprClass, d, t, l, TD, VD), 
+    QualifierRange(R), NumComponents(NumComponents) {
+  NestedNameSpecifier *Data 
+    = reinterpret_cast<NestedNameSpecifier *>(this + 1);
+  for (unsigned I = 0; I < NumComponents; ++I)
+    Data[I] = Components[I];
+}
+
+QualifiedDeclRefExpr *
+QualifiedDeclRefExpr::Create(ASTContext &Context, NamedDecl *d, QualType t, 
+                             SourceLocation l, bool TD, 
+                             bool VD, SourceRange R,
+                             const NestedNameSpecifier *Components,
+                             unsigned NumComponents) {
+  void *Mem = Context.Allocate((sizeof(QualifiedDeclRefExpr) +
+                                sizeof(NestedNameSpecifier) * NumComponents));
+  return new (Mem) QualifiedDeclRefExpr(d, t, l, TD, VD, R, Components, 
+                                        NumComponents);
+}
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//

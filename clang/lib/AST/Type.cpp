@@ -18,7 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "llvm/ADT/StringExtras.h"
-
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 bool QualType::isConstant(ASTContext &Ctx) const {
@@ -549,12 +549,11 @@ const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
 }
 
 const ClassTemplateSpecializationType *
-Type::getClassTemplateSpecializationType() const {
+Type::getAsClassTemplateSpecializationType() const {
   // There is no sugar for class template specialization types, so
   // just return the canonical type pointer if it is the right class.
   return dyn_cast<ClassTemplateSpecializationType>(CanonicalType);
 }
-
 
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
@@ -1438,19 +1437,9 @@ getAsStringInternal(std::string &InnerString) const {
 void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
   std::string MyString;
 
-  for (iterator Comp = begin(), CompEnd = end(); Comp != CompEnd; ++Comp) {
-    if (Type *T = Comp->getAsType()) {
-      std::string TypeStr;
-      if (const TagType *TagT = dyn_cast<TagType>(T))
-        TagT->getAsStringInternal(TypeStr, true);
-      else
-        T->getAsStringInternal(TypeStr);
-
-      MyString += TypeStr;
-    } else if (NamedDecl *NamedDC 
-               = dyn_cast_or_null<NamedDecl>(Comp->getAsDeclContext()))
-      MyString += NamedDC->getNameAsString();
-    MyString += "::";
+  {
+    llvm::raw_string_ostream OS(MyString);
+    NestedNameSpecifier::Print(OS, begin(), end());
   }
   
   std::string TypeStr;
