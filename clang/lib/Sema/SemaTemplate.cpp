@@ -765,6 +765,9 @@ Sema::ActOnClassTemplateId(DeclTy *TemplateD, SourceLocation TemplateLoc,
                                          &TemplateArgs[0],
                                          TemplateArgs.size(),
                                          RAngleLoc);
+  
+  if (SS)
+    Result = getQualifiedNameType(*SS, Result);
 
   TemplateArgsIn.release();
   return Result.getAsOpaquePtr();
@@ -1910,11 +1913,12 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // actually wrote the specialization, rather than formatting the
   // name based on the "canonical" representation used to store the
   // template arguments in the specialization.
-  Specialization->setTypeAsWritten(
-    Context.getClassTemplateSpecializationType(ClassTemplate, 
-                                               &TemplateArgs[0],
-                                               TemplateArgs.size(),
-                                  Context.getTypeDeclType(Specialization)));
+  QualType WrittenTy 
+    = Context.getClassTemplateSpecializationType(ClassTemplate, 
+                                                 &TemplateArgs[0],
+                                                 TemplateArgs.size(),
+                                  Context.getTypeDeclType(Specialization));
+  Specialization->setTypeAsWritten(getQualifiedNameType(SS, WrittenTy));
   TemplateArgsIn.release();
 
   // C++ [temp.expl.spec]p9:

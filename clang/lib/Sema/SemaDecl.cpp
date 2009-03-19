@@ -87,13 +87,8 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     } else
       return 0;
 
-    if (SS && SS->isNotEmpty() && SS->isSet()) {
-      llvm::SmallVector<NestedNameSpecifier, 4> TNNs;
-      for (CXXScopeSpec::iterator TNN = SS->begin(), TNNEnd = SS->end();
-           TNN != TNNEnd; ++TNN)
-        TNNs.push_back(NestedNameSpecifier::getFromOpaquePtr(*TNN));
-      T = Context.getQualifiedNameType(&TNNs[0], TNNs.size(), T);
-    }
+    if (SS)
+      T = getQualifiedNameType(*SS, T);
 
     return T.getAsOpaquePtr();
   }

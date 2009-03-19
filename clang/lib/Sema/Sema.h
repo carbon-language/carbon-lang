@@ -295,6 +295,8 @@ public:
                               SourceRange Range2 = SourceRange(),
                               QualType PrintType = QualType());
 
+  QualType getQualifiedNameType(const CXXScopeSpec &SS, QualType T);
+
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //

@@ -15,6 +15,8 @@ namespace foo {
 
 namespace bar {
   typedef int y;
+
+  struct incomplete; // expected-note{{forward declaration of 'struct incomplete'}}
 }
 void test() {
   foo::wibble::x a;
@@ -23,6 +25,9 @@ void test() {
 
   ::foo::wibble::bar::wonka::x::y c;
   c + b; // expected-error{{invalid operands to binary expression ('::foo::wibble::bar::wonka::x::y' (aka 'struct y') and '::bar::y' (aka 'int'))}}
+
+  (void)sizeof(bar::incomplete); // expected-error{{invalid application of 'sizeof' to an incomplete type 'bar::incomplete' (aka 'struct incomplete')}}
 }
 
 int ::foo::wibble::bar::wonka::x::y::* ptrmem;
+
