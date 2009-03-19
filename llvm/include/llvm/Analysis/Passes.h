@@ -110,6 +110,12 @@ namespace llvm {
   // simple context insensitive alias analysis.
   //
   ModulePass *createSteensgaardPass();
+
+  //===--------------------------------------------------------------------===//
+  //
+  // createLiveValuesPass - This creates an instance of the LiveValues pass.
+  //
+  FunctionPass *createLiveValuesPass();
   
   // Minor pass prototypes, allowing us to expose them through bugpoint and
   // analyze.

@@ -76,6 +76,7 @@ namespace {
       (void) llvm::createInternalizePass(false);
       (void) llvm::createLCSSAPass();
       (void) llvm::createLICMPass();
+      (void) llvm::createLiveValuesPass();
       (void) llvm::createLoopExtractorPass();
       (void) llvm::createLoopSimplifyPass();
       (void) llvm::createLoopStrengthReducePass();
