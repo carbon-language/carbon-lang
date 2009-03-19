@@ -1864,6 +1864,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     isVirtualOkay = (SC != FunctionDecl::Static);
   } else {
+    // Determine whether the function was written with a
+    // prototype. This true when:
+    //   - we're in C++ (where every function has a prototype),
+    //   - there is a prototype in the declarator, or
+    //   - the type R of the function is some kind of typedef or other reference
+    //     to a type name (which eventually refers to a function type).
     bool HasPrototype = 
        getLangOptions().CPlusPlus ||
        (D.getNumTypeObjects() && D.getTypeObject(0).Fun.hasPrototype) ||
