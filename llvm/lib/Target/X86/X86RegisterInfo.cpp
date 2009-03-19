@@ -332,7 +332,7 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
 }
 
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();;
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // FIXME: Currently we don't support stack realignment for functions with
   // variable-sized allocas

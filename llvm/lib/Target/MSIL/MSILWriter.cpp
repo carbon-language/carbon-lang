@@ -178,7 +178,7 @@ void MSILWriter::printModuleStartup() {
     Out << "\tldc.i4.0\n\tret\n}\n";
     return;
   }
-  bool BadSig = true;;
+  bool BadSig = true;
   std::string Args("");
   Function::const_arg_iterator Arg1,Arg2;
 

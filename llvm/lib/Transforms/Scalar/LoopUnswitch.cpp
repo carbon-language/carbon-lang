@@ -577,7 +577,7 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
       BasicBlock* EndBlock;
       if (NewExitBlock->getSinglePredecessor() == ExitBlock) {
         EndBlock = NewExitBlock;
-        NewExitBlock = EndBlock->getSinglePredecessor();;
+        NewExitBlock = EndBlock->getSinglePredecessor();
       } else {
         EndBlock = ExitBlock;
       }

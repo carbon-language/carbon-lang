@@ -277,7 +277,7 @@ void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
   // End.
   if (End > I->End) {
     I->End = End;
-    range_iterator NextI = I;;
+    range_iterator NextI = I;
     while (++NextI != E && End >= NextI->Start) {
       // Merge the range in.
       I->TheStores.append(NextI->TheStores.begin(), NextI->TheStores.end());
