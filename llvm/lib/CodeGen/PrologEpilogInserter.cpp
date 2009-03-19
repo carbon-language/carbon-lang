@@ -533,11 +533,15 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
         SPAdj += Size;
 
-        MachineBasicBlock::iterator PrevI = prior(I);
+        MachineBasicBlock::iterator PrevI = BB->end();
+        if (I != BB->begin()) PrevI = prior(I);
         TRI.eliminateCallFramePseudoInstr(Fn, *BB, I);
 
         // Visit the instructions created by eliminateCallFramePseudoInstr().
-        I = next(PrevI);
+        if (PrevI == BB->end())
+          I = BB->begin();     // The replaced instr was the first in the block.
+        else
+          I = next(PrevI);
         continue;
       }
 
