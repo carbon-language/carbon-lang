@@ -43,7 +43,8 @@ static const RecordVal* findRecordVal(const Record& R, const std::string &key) {
 static const Record* getDiagKind(const Record* DiagClass, const Record &R) {  
   const SuperClassVector &SC = R.getSuperClasses();
   for (SuperClassVector::const_iterator I=SC.begin(), E=SC.end(); I!=E; ++I)
-    if ((*I)->isSubClassOf(DiagClass))
+    if ((*I)->isSubClassOf(DiagClass) && 
+        (*I)->getName() != "DiagnosticControlled")
       return *I;
   
   return 0;
