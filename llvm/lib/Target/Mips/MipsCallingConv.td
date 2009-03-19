@@ -16,18 +16,9 @@ class CCIfSubtarget<string F, CCAction A>:
 //===----------------------------------------------------------------------===//
 // Mips O32 Calling Convention
 //===----------------------------------------------------------------------===//
-def CC_MipsO32 : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
-  // The first 4 integer arguments are passed in integer registers.
-  CCIfType<[i32], CCAssignToReg<[A0, A1, A2, A3]>>,
-
-  // Integer values get stored in stack slots that are 4 bytes in
-  // size and 4-byte aligned.
-  CCIfType<[i32], CCAssignToStack<4, 4>>
-]>;
-
+// Only the return rules are defined here for O32. The rules for argument 
+// passing are defined in MipsISelLowering.cpp.
 def RetCC_MipsO32 : CallingConv<[
   // i32 are returned in registers V0, V1
   CCIfType<[i32], CCAssignToReg<[V0, V1]>>,
@@ -42,6 +33,7 @@ def RetCC_MipsO32 : CallingConv<[
 //===----------------------------------------------------------------------===//
 // Mips EABI Calling Convention
 //===----------------------------------------------------------------------===//
+
 def CC_MipsEABI : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
@@ -85,8 +77,7 @@ def RetCC_MipsEABI : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_Mips : CallingConv<[
-  CCIfSubtarget<"isABI_EABI()", CCDelegateTo<CC_MipsEABI>>,
-  CCDelegateTo<CC_MipsO32>
+  CCIfSubtarget<"isABI_EABI()", CCDelegateTo<CC_MipsEABI>>
 ]>;
 
 def RetCC_Mips : CallingConv<[

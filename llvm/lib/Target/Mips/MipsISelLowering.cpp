@@ -582,6 +582,85 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 #include "MipsGenCallingConv.inc"
 
 //===----------------------------------------------------------------------===//
+// TODO: Implement a generic logic using tblgen that can support this. 
+// Mips O32 ABI rules:
+// ---
+// i32 - Passed in A0, A1, A2, A3 and stack
+// f32 - Only passed in f32 registers if no int reg has been used yet to hold 
+//       an argument. Otherwise, passed in A1, A2, A3 and stack.
+// f64 - Only passed in two aliased f32 registers if no int reg has been used 
+//       yet to hold an argument. Otherwise, use A2, A3 and stack. If A1 is 
+//       not used, it must be shadowed. If only A3 is avaiable, shadow it and
+//       go to stack.
+//===----------------------------------------------------------------------===//
+
+static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
+                       MVT LocVT, CCValAssign::LocInfo LocInfo,
+                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
+
+  static const unsigned IntRegsSize=4, FloatRegsSize=2; 
+
+  static const unsigned IntRegs[] = {
+      Mips::A0, Mips::A1, Mips::A2, Mips::A3
+  };
+  static const unsigned F32Regs[] = {
+      Mips::F12, Mips::F14
+  };
+  static const unsigned F64Regs[] = {
+      Mips::D6, Mips::D7
+  };
+
+  unsigned Reg=0;
+  unsigned UnallocIntReg = State.getFirstUnallocated(IntRegs, IntRegsSize);
+  bool IntRegUsed = (IntRegs[UnallocIntReg] != (unsigned (Mips::A0)));
+
+  // Promote i8 and i16
+  if (LocVT == MVT::i8 || LocVT == MVT::i16) {
+    LocVT = MVT::i32;
+    if (ArgFlags.isSExt())
+      LocInfo = CCValAssign::SExt;
+    else if (ArgFlags.isZExt())
+      LocInfo = CCValAssign::ZExt;
+    else
+      LocInfo = CCValAssign::AExt;
+  }
+
+  if (ValVT == MVT::i32 || (ValVT == MVT::f32 && IntRegUsed)) {
+    Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    IntRegUsed = true;
+    LocVT = MVT::i32;
+  }
+
+  if (ValVT.isFloatingPoint() && !IntRegUsed) {
+    if (ValVT == MVT::f32)
+      Reg = State.AllocateReg(F32Regs, FloatRegsSize);
+    else
+      Reg = State.AllocateReg(F64Regs, FloatRegsSize);
+  }
+
+  if (ValVT == MVT::f64 && IntRegUsed) {
+    if (UnallocIntReg != IntRegsSize) {
+      // If we hit register A3 as the first not allocated, we must
+      // mark it as allocated (shadow) and use the stack instead.
+      if (IntRegs[UnallocIntReg] != (unsigned (Mips::A3)))
+        Reg = Mips::A2;
+      for (;UnallocIntReg < IntRegsSize; ++UnallocIntReg)
+        State.AllocateReg(UnallocIntReg);
+    } 
+    LocVT = MVT::i32;
+  }
+
+  if (!Reg) {
+    unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
+    unsigned Offset = State.AllocateStack(SizeInBytes, SizeInBytes);
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+  } else
+    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+
+  return false; // CC must always match
+}
+
+//===----------------------------------------------------------------------===//
 //                  CALL Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
@@ -611,9 +690,9 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
   if (Subtarget->isABI_O32()) {
     int VTsize = MVT(MVT::i32).getSizeInBits()/8;
     MFI->CreateFixedObject(VTsize, (VTsize*3));
-  }
-
-  CCInfo.AnalyzeCallOperands(TheCall, CC_Mips);
+    CCInfo.AnalyzeCallOperands(TheCall, CC_MipsO32);
+  } else
+    CCInfo.AnalyzeCallOperands(TheCall, CC_Mips);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -630,15 +709,28 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    SDValue Arg = TheCall->getArg(i);
     CCValAssign &VA = ArgLocs[i];
 
-    // Arguments start after the 5 first operands of ISD::CALL
-    SDValue Arg = TheCall->getArg(i);
-    
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
     default: assert(0 && "Unknown loc info!");
-    case CCValAssign::Full: break;
+    case CCValAssign::Full: 
+      if (Subtarget->isABI_O32() && VA.isRegLoc()) {
+        if (VA.getValVT() == MVT::f32 && VA.getLocVT() == MVT::i32)
+          Arg = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Arg);
+        if (VA.getValVT() == MVT::f64 && VA.getLocVT() == MVT::i32) {
+          Arg = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, Arg);
+          SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
+                                   DAG.getConstant(0, getPointerTy()));
+          SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
+                                   DAG.getConstant(1, getPointerTy()));
+          RegsToPass.push_back(std::make_pair(VA.getLocReg(), Lo));
+          RegsToPass.push_back(std::make_pair(VA.getLocReg()+1, Hi));
+          continue;
+        }  
+      }
+      break;
     case CCValAssign::SExt:
       Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
       break;
@@ -657,7 +749,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
       continue;
     }
     
-    // Register cant get to this point...
+    // Register can't get to this point...
     assert(VA.isMemLoc());
     
     // Create the frame index object for this incoming parameter
@@ -699,7 +791,6 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
-
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
   //             = Chain, Callee, Reg#1, Reg#2, ...  
@@ -824,21 +915,24 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
 
-  CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_Mips);
+  if (Subtarget->isABI_O32())
+    CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_MipsO32);
+  else
+    CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_Mips);
+
   SmallVector<SDValue, 16> ArgValues;
   SDValue StackPtr;
 
   unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-
     CCValAssign &VA = ArgLocs[i];
 
     // Arguments stored on registers
     if (VA.isRegLoc()) {
       MVT RegVT = VA.getLocVT();
       TargetRegisterClass *RC = 0;
-            
+
       if (RegVT == MVT::i32)
         RC = Mips::CPURegsRegisterClass; 
       else if (RegVT == MVT::f32) {
@@ -857,18 +951,33 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
       SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
       
-      // If this is an 8 or 16-bit value, it is really passed promoted 
+      // If this is an 8 or 16-bit value, it has been passed promoted 
       // to 32 bits.  Insert an assert[sz]ext to capture this, then 
       // truncate to the right size.
-      if (VA.getLocInfo() == CCValAssign::SExt)
-        ArgValue = DAG.getNode(ISD::AssertSext, dl, RegVT, ArgValue,
+      if (VA.getLocInfo() != CCValAssign::Full) {
+        unsigned Opcode;
+        if (VA.getLocInfo() == CCValAssign::SExt)
+          Opcode = ISD::AssertSext;
+        else if (VA.getLocInfo() == CCValAssign::ZExt)
+          Opcode = ISD::AssertZext;
+        ArgValue = DAG.getNode(Opcode, dl, RegVT, ArgValue, 
                                DAG.getValueType(VA.getValVT()));
-      else if (VA.getLocInfo() == CCValAssign::ZExt)
-        ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
-                               DAG.getValueType(VA.getValVT()));
-      
-      if (VA.getLocInfo() != CCValAssign::Full)
         ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+      }
+
+      // Handle O32 ABI cases: i32->f32 and (i32,i32)->f64 
+      if (Subtarget->isABI_O32()) {
+        if (RegVT == MVT::i32 && VA.getValVT() == MVT::f32) 
+          ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue);
+        if (RegVT == MVT::i32 && VA.getValVT() == MVT::f64) {
+          unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(), 
+                                    VA.getLocReg()+1, RC);
+          SDValue ArgValue2 = DAG.getCopyFromReg(Root, dl, Reg2, RegVT);
+          SDValue Hi = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue);
+          SDValue Lo = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue2);
+          ArgValue = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::f64, Lo, Hi);
+        }
+      }
 
       ArgValues.push_back(ArgValue);
 
