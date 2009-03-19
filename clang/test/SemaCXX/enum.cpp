@@ -32,9 +32,7 @@ struct s1 {
 enum e1 { YES, NO };
 
 static enum e1 badfunc(struct s1 *q) {
-  // FIXME: the message below should probably give context information
-  // in those types.
-  return q->bar(); // expected-error{{incompatible type returning 'enum e1', expected 'enum e1'}}
+  return q->bar(); // expected-error{{incompatible type returning 'enum s1::e1', expected 'enum e1'}}
 }
 
 enum e2; // expected-error{{ISO C++ forbids forward references to 'enum' types}}

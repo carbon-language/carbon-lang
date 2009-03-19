@@ -1526,8 +1526,35 @@ void TagType::getAsStringInternal(std::string &InnerString,
     InnerString = TemplateArgs + InnerString;
   }
 
-  if (Kind)
-    InnerString = std::string(Kind) + " " + ID + InnerString;
-  else
+  if (Kind) {
+    // Compute the full nested-name-specifier for this type. In C,
+    // this will always be empty.
+    std::string ContextStr;
+    for (DeclContext *DC = getDecl()->getDeclContext(); 
+         !DC->isTranslationUnit(); DC = DC->getParent()) {
+      std::string MyPart;
+      if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
+        if (NS->getIdentifier())
+          MyPart = NS->getNameAsString();
+      } else if (ClassTemplateSpecializationDecl *Spec 
+                   = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
+        std::string TemplateArgs 
+          = ClassTemplateSpecializationType::PrintTemplateArgumentList(
+                                                  Spec->getTemplateArgs(),
+                                                  Spec->getNumTemplateArgs());
+        MyPart = Spec->getIdentifier()->getName() + TemplateArgs;
+      } else if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
+        if (TypedefDecl *Typedef = Tag->getTypedefForAnonDecl())
+          MyPart = Typedef->getIdentifier()->getName();
+        else if (Tag->getIdentifier())
+          MyPart = Tag->getIdentifier()->getName();
+      }
+
+      if (!MyPart.empty())
+        ContextStr = MyPart + "::" + ContextStr;
+    }
+
+    InnerString = std::string(Kind) + " " + ContextStr + ID + InnerString;
+  } else
     InnerString = ID + InnerString;
 }
