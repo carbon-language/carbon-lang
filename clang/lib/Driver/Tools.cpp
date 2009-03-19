@@ -197,9 +197,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     std::string Attrs;
     for (unsigned i=0; i < NumFeatureOptions; ++i) {
       if (Args.hasArg(FeatureOptions[i].Pos)) {
+        if (!Attrs.empty())
+          Attrs += ',';
         Attrs += '+';
         Attrs += FeatureOptions[i].Name;
       } else if (Args.hasArg(FeatureOptions[i].Neg)) {
+        if (!Attrs.empty())
+          Attrs += ',';
         Attrs += '-';
         Attrs += FeatureOptions[i].Name;
       }
