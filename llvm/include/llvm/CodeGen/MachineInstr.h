@@ -245,6 +245,11 @@ public:
   /// check if the register def is a re-definition due to two addr elimination.
   bool isRegReDefinedByTwoAddr(unsigned DefIdx) const;
 
+  /// isRegTiedToDefOperand - Return true if the use operand of the specified
+  /// index is tied to an def operand. It also returns the def operand index by
+  /// reference if DefOpIdx is not null.
+  bool isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx = 0);
+
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///
   void copyKillDeadInfo(const MachineInstr *MI);

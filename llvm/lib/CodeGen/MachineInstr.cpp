@@ -689,7 +689,7 @@ int MachineInstr::findFirstPredOperandIdx() const {
   return -1;
 }
   
-/// isRegReDefinedByTwoAddr - Given the index of a register def operand,
+/// isRegReDefinedByTwoAddr - Given the index of a register operand,
 /// check if the register def is a re-definition due to two addr elimination.
 bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
   assert(getOperand(DefIdx).isDef() && "DefIdx is not a def!");
@@ -701,6 +701,24 @@ bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
       return true;
   }
   return false;
+}
+
+/// isRegTiedToDefOperand - Return true if the operand of the specified index
+/// is a register use and it is tied to an def operand. It also returns the def
+/// operand index by reference.
+bool MachineInstr::isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx){
+  const TargetInstrDesc &TID = getDesc();
+  if (UseOpIdx >= TID.getNumOperands())
+    return false;
+  const MachineOperand &MO = getOperand(UseOpIdx);
+  if (!MO.isReg() || !MO.isUse())
+    return false;
+  int DefIdx = TID.getOperandConstraint(UseOpIdx, TOI::TIED_TO);
+  if (DefIdx == -1)
+    return false;
+  if (DefOpIdx)
+    *DefOpIdx = (unsigned)DefIdx;
+  return true;
 }
 
 /// copyKillDeadInfo - Copies kill / dead operand properties from MI.

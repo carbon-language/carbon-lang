@@ -1062,8 +1062,6 @@ static bool FilterFoldedOps(MachineInstr *MI,
                             SmallVector<unsigned, 2> &Ops,
                             unsigned &MRInfo,
                             SmallVector<unsigned, 2> &FoldOps) {
-  const TargetInstrDesc &TID = MI->getDesc();
-
   MRInfo = 0;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     unsigned OpIdx = Ops[i];
@@ -1075,8 +1073,7 @@ static bool FilterFoldedOps(MachineInstr *MI,
       MRInfo |= (unsigned)VirtRegMap::isMod;
     else {
       // Filter out two-address use operand(s).
-      if (!MO.isImplicit() &&
-          TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1) {
+      if (MI->isRegTiedToDefOperand(OpIdx)) {
         MRInfo = VirtRegMap::isModRef;
         continue;
       }
@@ -2160,8 +2157,7 @@ addIntervalsForSpills(const LiveInterval &li,
         MachineInstr *LastUse = getInstructionFromIndex(LastUseIdx);
         int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg, false);
         assert(UseIdx != -1);
-        if (LastUse->getOperand(UseIdx).isImplicit() ||
-            LastUse->getDesc().getOperandConstraint(UseIdx,TOI::TIED_TO) == -1){
+        if (!LastUse->isRegTiedToDefOperand(UseIdx)) {
           LastUse->getOperand(UseIdx).setIsKill();
           vrm.addKillPoint(LI->reg, LastUseIdx);
         }

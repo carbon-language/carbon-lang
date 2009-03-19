@@ -233,8 +233,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
       KillOps[Reg]->setIsKill(false);
       KillOps[Reg] = NULL;
       RegKills.reset(Reg);
-      if (i < TID.getNumOperands() &&
-          TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
+      if (!MI.isRegTiedToDefOperand(i))
         // Unless it's a two-address operand, this is the new kill.
         MO.setIsKill();
     }
@@ -748,8 +747,8 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     int UseIdx = DefMI->findRegisterUseOperandIdx(DestReg, false);
     if (UseIdx == -1)
       return false;
-    int DefIdx = TID.getOperandConstraint(UseIdx, TOI::TIED_TO);
-    if (DefIdx == -1)
+    unsigned DefIdx;
+    if (!MI.isRegTiedToDefOperand(UseIdx, &DefIdx))
       return false;
     assert(DefMI->getOperand(DefIdx).isReg() &&
            DefMI->getOperand(DefIdx).getReg() == SrcReg);
@@ -890,7 +889,7 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
         continue;
       if (!LastUD || (LastUD->isUse() && MO.isDef()))
         LastUD = &MO;
-      if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1)
+      if (LastUDMI->isRegTiedToDefOperand(i))
         return;
     }
     if (LastUD->isDef())
@@ -1168,8 +1167,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
-        int ti = TID.getOperandConstraint(i, TOI::TIED_TO);
-        if (ti != -1) {
+        bool isTied = MI.isRegTiedToDefOperand(i);
+        if (isTied) {
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value and there isn't an
           // earlier def that has already clobbered the physreg.
@@ -1206,7 +1205,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // we can get at R0 or its alias.
           ReusedOperands.addReuse(i, ReuseSlot, PhysReg,
                                   VRM.getPhys(VirtReg), VirtReg);
-          if (ti != -1)
+          if (isTied)
             // Only mark it clobbered if this is a use&def operand.
             ReusedOperands.markClobbered(PhysReg);
           ++NumReused;
@@ -1226,7 +1225,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // Mark is isKill if it's there no other uses of the same virtual
           // register and it's not a two-address operand. IsKill will be
           // unset if reg is reused.
-          if (ti == -1 && KilledMIRegs.count(VirtReg) == 0) {
+          if (!isTied && KilledMIRegs.count(VirtReg) == 0) {
             MI.getOperand(i).setIsKill();
             KilledMIRegs.insert(VirtReg);
           }
@@ -1325,7 +1324,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       Spills.addAvailable(SSorRMId, PhysReg);
       // Assumes this is the last use. IsKill will be unset if reg is reused
       // unless it's a two-address operand.
-      if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1 &&
+      if (!MI.isRegTiedToDefOperand(i) &&
           KilledMIRegs.count(VirtReg) == 0) {
         MI.getOperand(i).setIsKill();
         KilledMIRegs.insert(VirtReg);

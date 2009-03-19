@@ -695,7 +695,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
     if (isPhysReg || !usedOutsideBlock) {
       if (MO.isUse()) {
         // Don't mark uses that are tied to defs as kills.
-        if (MI->getDesc().getOperandConstraint(idx, TOI::TIED_TO) == -1)
+        if (!MI->isRegTiedToDefOperand(idx))
           MO.setIsKill(true);
       } else
         MO.setIsDead(true);
