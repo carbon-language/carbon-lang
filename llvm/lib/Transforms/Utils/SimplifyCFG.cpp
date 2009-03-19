@@ -85,7 +85,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 
   DOUT << "Looking to fold " << BB->getNameStart() << " into " 
        << Succ->getNameStart() << "\n";
-  // Shortcut, if there is only a single predecessor is must be BB and merging
+  // Shortcut, if there is only a single predecessor it must be BB and merging
   // is always safe
   if (Succ->getSinglePredecessor()) return true;
 
