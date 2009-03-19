@@ -109,7 +109,7 @@ class CodeGenModule : public BlockModule {
   /// Aliases - List of aliases in module. These cannot be emitted until all the
   /// code has been seen, as they reference things by name instead of directly
   /// and may reference forward.
-  std::vector<const FunctionDecl*> Aliases;
+  std::vector<const ValueDecl*> Aliases;
 
   /// DeferredDecls - List of decls for which code generation has been
   /// deferred. When the translation unit has been fully processed we

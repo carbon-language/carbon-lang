@@ -369,7 +369,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
 
 void CodeGenModule::EmitAliases() {
   for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
-    const FunctionDecl *D = Aliases[i];
+    const ValueDecl *D = Aliases[i];
     const AliasAttr *AA = D->getAttr<AliasAttr>();
 
     // This is something of a hack, if the FunctionDecl got overridden
@@ -380,7 +380,7 @@ void CodeGenModule::EmitAliases() {
       continue;
 
     const std::string& aliaseeName = AA->getAliasee();
-    llvm::Function *aliasee = getModule().getFunction(aliaseeName);
+    llvm::GlobalValue *aliasee = getModule().getNamedValue(aliaseeName);
     if (!aliasee) {
       // FIXME: This isn't unsupported, this is just an error, which
       // sema should catch, but...
@@ -539,16 +539,14 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
 }
 
 void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
-    // Aliases are deferred until code for everything else has been
-    // emitted.
-    if (FD->getAttr<AliasAttr>()) {
-      assert(!FD->isThisDeclarationADefinition() && 
-             "Function alias cannot have a definition!");
-      Aliases.push_back(FD);
-      return;
-    }
+  // Aliases are deferred until code for everything else has been
+  // emitted.
+  if (Global->getAttr<AliasAttr>()) {
+    Aliases.push_back(Global);
+    return;
+  }
 
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.
     if (!FD->isThisDeclarationADefinition())
       return;
