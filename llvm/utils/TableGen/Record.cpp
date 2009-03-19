@@ -426,7 +426,7 @@ Init *BinOpInit::Fold() {
         Args.push_back(RHSs->getArg(i));
         ArgNames.push_back(RHSs->getArgName(i));
       }
-      return new DagInit(LHSs->getOperator(), Args, ArgNames);
+      return new DagInit(LHSs->getOperator(), "", Args, ArgNames);
     }
     break;
   }
@@ -679,7 +679,7 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) {
   Init *Op = Val->resolveReferences(R, RV);
   
   if (Args != NewArgs || Op != Val)
-    return new DagInit(Op, NewArgs, ArgNames);
+    return new DagInit(Op, "", NewArgs, ArgNames);
     
   return this;
 }
@@ -687,6 +687,8 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) {
 
 std::string DagInit::getAsString() const {
   std::string Result = "(" + Val->getAsString();
+  if (!ValName.empty())
+    Result += ":" + ValName;
   if (Args.size()) {
     Result += " " + Args[0]->getAsString();
     if (!ArgNames[0].empty()) Result += ":$" + ArgNames[0];

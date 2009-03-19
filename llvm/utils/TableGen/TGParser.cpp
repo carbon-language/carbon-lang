@@ -636,6 +636,18 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     Init *Operator = ParseIDValue(CurRec);
     if (Operator == 0) return 0;
     
+    // If the operator name is present, parse it.
+    std::string OperatorName;
+    if (Lex.getCode() == tgtok::colon) {
+      if (Lex.Lex() != tgtok::VarName) { // eat the ':'
+        TokError("expected variable name in dag operator");
+        return 0;
+      }
+      OperatorName = Lex.getCurStrVal();
+      Lex.Lex();  // eat the VarName.
+    }
+    
+    
     std::vector<std::pair<llvm::Init*, std::string> > DagArgs;
     if (Lex.getCode() != tgtok::r_paren) {
       DagArgs = ParseDagArgList(CurRec);
@@ -648,7 +660,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     }
     Lex.Lex();  // eat the ')'
     
-    return new DagInit(Operator, DagArgs);
+    return new DagInit(Operator, OperatorName, DagArgs);
   }
   case tgtok::XConcat:
   case tgtok::XSRA: 

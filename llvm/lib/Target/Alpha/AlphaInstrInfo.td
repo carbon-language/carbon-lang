@@ -337,7 +337,7 @@ def SEXTW    : OForm2<0x1C, 0x01, "sextw $RB,$RC",
 def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", [], s_ishf>;
 
 // Define the pattern that produces ZAPNOTi.
-def : Pat<(i64 (zappat GPRC:$RA):$imm),
+def : Pat<(zappat:$imm GPRC:$RA),
           (ZAPNOTi GPRC:$RA, (iZAPX GPRC:$imm))>;
 
 

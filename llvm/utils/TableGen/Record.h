@@ -857,11 +857,13 @@ public:
 ///
 class DagInit : public Init {
   Init *Val;
+  std::string ValName;
   std::vector<Init*> Args;
   std::vector<std::string> ArgNames;
 public:
-  DagInit(Init *V, const std::vector<std::pair<Init*, std::string> > &args)
-    : Val(V) {
+  DagInit(Init *V, std::string VN, 
+          const std::vector<std::pair<Init*, std::string> > &args)
+    : Val(V), ValName(VN) {
     Args.reserve(args.size());
     ArgNames.reserve(args.size());
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
@@ -869,9 +871,9 @@ public:
       ArgNames.push_back(args[i].second);
     }
   }
-  DagInit(Init *V, const std::vector<Init*> &args, 
+  DagInit(Init *V, std::string VN, const std::vector<Init*> &args, 
           const std::vector<std::string> &argNames)
-  : Val(V), Args(args), ArgNames(argNames) {
+  : Val(V), ValName(VN), Args(args), ArgNames(argNames) {
   }
   
   virtual Init *convertInitializerTo(RecTy *Ty) {
@@ -879,6 +881,8 @@ public:
   }
 
   Init *getOperator() const { return Val; }
+
+  const std::string &getName() const { return ValName; }
 
   unsigned getNumArgs() const { return Args.size(); }
   Init *getArg(unsigned Num) const {

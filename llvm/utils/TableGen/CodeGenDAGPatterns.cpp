@@ -1132,7 +1132,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
       Record *R = DI->getDef();
       if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
-        Dag->setArg(0, new DagInit(DI,
+        Dag->setArg(0, new DagInit(DI, "",
                                 std::vector<std::pair<Init*, std::string> >()));
         return ParseTreePattern(Dag);
       }
@@ -1160,12 +1160,14 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     
     // Apply the type cast.
     New->UpdateNodeType(getValueType(Operator), *this);
-    New->setName(Dag->getArgName(0));
+    if (New->getNumChildren() == 0)
+      New->setName(Dag->getArgName(0));
     return New;
   }
   
   // Verify that this is something that makes sense for an operator.
-  if (!Operator->isSubClassOf("PatFrag") && !Operator->isSubClassOf("SDNode") &&
+  if (!Operator->isSubClassOf("PatFrag") && 
+      !Operator->isSubClassOf("SDNode") &&
       !Operator->isSubClassOf("Instruction") && 
       !Operator->isSubClassOf("SDNodeXForm") &&
       !Operator->isSubClassOf("Intrinsic") &&
@@ -1192,7 +1194,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       // Direct reference to a leaf DagNode or PatFrag?  Turn it into a
       // TreePatternNode if its own.
       if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
-        Dag->setArg(i, new DagInit(DefI,
+        Dag->setArg(i, new DagInit(DefI, "",
                               std::vector<std::pair<Init*, std::string> >()));
         --i;  // Revisit this node...
       } else {
@@ -1253,7 +1255,9 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     Children.insert(Children.begin(), IIDNode);
   }
   
-  return new TreePatternNode(Operator, Children);
+  TreePatternNode *Result = new TreePatternNode(Operator, Children);
+  Result->setName(Dag->getName());
+  return Result;
 }
 
 /// InferAllTypes - Infer/propagate as many types throughout the expression
@@ -1482,7 +1486,7 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
       for (unsigned op = 0, e = DefaultInfo->getNumArgs(); op != e; ++op)
         Ops.push_back(std::make_pair(DefaultInfo->getArg(op),
                                      DefaultInfo->getArgName(op)));
-      DagInit *DI = new DagInit(SomeSDNode, Ops);
+      DagInit *DI = new DagInit(SomeSDNode, "", Ops);
     
       // Create a TreePattern to parse this.
       TreePattern P(DefaultOps[iter][i], DI, false, *this);
@@ -1527,7 +1531,6 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
         I->error("Input " + DI->getDef()->getName() + " must be named!");
       else if (DI && DI->getDef()->isSubClassOf("Register")) 
         InstImpInputs.push_back(DI->getDef());
-        ;
     }
     return false;
   }
@@ -1538,7 +1541,6 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
     if (!DI) I->error("Input $" + Pat->getName() + " must be an identifier!");
     Rec = DI->getDef();
   } else {
-    assert(Pat->getNumChildren() == 0 && "can't be a use with children!");
     Rec = Pat->getOperator();
   }
 
@@ -1605,9 +1607,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     
     // If this is a non-leaf node with no children, treat it basically as if
     // it were a leaf.  This handles nodes like (imm).
-    bool isUse = false;
-    if (Pat->getNumChildren() == 0)
-      isUse = HandleUse(I, Pat, InstInputs, InstImpInputs);
+    bool isUse = HandleUse(I, Pat, InstInputs, InstImpInputs);
     
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
