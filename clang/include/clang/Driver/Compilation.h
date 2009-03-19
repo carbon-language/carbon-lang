@@ -109,6 +109,11 @@ private:
   void PrintJob(llvm::raw_ostream &OS, const Job &J, 
                 const char *Terminator, bool Quote) const;
 
+  /// ExecuteCommand - Execute an actual command.
+  ///
+  /// \return The result code of the subprocess.
+  int ExecuteCommand(const Command &C) const;
+
   /// ExecuteJob - Execute a single job.
   ///
   /// \return The accumulated result code of the job.

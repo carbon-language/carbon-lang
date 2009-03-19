@@ -108,32 +108,39 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
   return Success;
 }
 
+int Compilation::ExecuteCommand(const Command &C) const {
+  llvm::sys::Path Prog(C.getExecutable());
+  const char **Argv = new const char*[C.getArguments().size() + 2];
+  Argv[0] = C.getExecutable();
+  std::copy(C.getArguments().begin(), C.getArguments().end(), Argv+1);
+  Argv[C.getArguments().size() + 1] = 0;
+  
+  if (getDriver().CCCEcho || getArgs().hasArg(options::OPT_v))
+    PrintJob(llvm::errs(), C, "\n", false);
+    
+  std::string Error;
+  int Res = 
+    llvm::sys::Program::ExecuteAndWait(Prog, Argv,
+                                       /*env*/0, /*redirects*/0,
+                                       /*secondsToWait*/0, /*memoryLimit*/0,
+                                       &Error);
+  if (!Error.empty()) {
+    assert(Res && "Error string set with 0 result code!");
+    getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
+  }
+  
+  delete[] Argv;
+  return Res;
+}
+
 int Compilation::ExecuteJob(const Job &J) const {
   if (const Command *C = dyn_cast<Command>(&J)) {
-    llvm::sys::Path Prog(C->getExecutable());
-    const char **Argv = new const char*[C->getArguments().size() + 2];
-    Argv[0] = C->getExecutable();
-    std::copy(C->getArguments().begin(), C->getArguments().end(), Argv+1);
-    Argv[C->getArguments().size() + 1] = 0;
-
-    if (getDriver().CCCEcho || getArgs().hasArg(options::OPT_v))
-      PrintJob(llvm::errs(), J, "\n", false);
-    
-    std::string Error;
-    int Res = 
-      llvm::sys::Program::ExecuteAndWait(Prog, Argv,
-                                         /*env*/0, /*redirects*/0,
-                                         /*secondsToWait*/0, /*memoryLimit*/0,
-                                         &Error);
-    if (!Error.empty()) {
-      assert(Res && "Error string set with 0 result code!");
-      getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
-    }
-    
-    delete[] Argv;
-    return Res;
+    return ExecuteCommand(*C);
   } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
-    (void) PJ;
+    // Piped commands with a single job are easy.
+    if (PJ->size() == 1)
+      return ExecuteCommand(**PJ->begin());
+      
     getDriver().Diag(clang::diag::err_drv_unsupported_opt) << "-pipe";
     return 1;
   } else {
