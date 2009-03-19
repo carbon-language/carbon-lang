@@ -24,7 +24,7 @@ namespace llvm {
   struct RecTy;
   struct Init;
   struct MultiClass;
-  class SubClassReference;
+  struct SubClassReference;
   
   struct LetRecord {
     std::string Name;

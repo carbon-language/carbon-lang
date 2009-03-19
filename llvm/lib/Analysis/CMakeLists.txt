@@ -16,6 +16,7 @@ add_llvm_library(LLVMAnalysis
   IntervalPartition.cpp
   LibCallAliasAnalysis.cpp
   LibCallSemantics.cpp
+  LiveValues.cpp
   LoopInfo.cpp
   LoopPass.cpp
   LoopVR.cpp

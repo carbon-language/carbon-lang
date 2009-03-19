@@ -23,7 +23,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
-  struct SUnit;
+  class SUnit;
   class MachineConstantPool;
   class MachineFunction;
   class MachineModuleInfo;

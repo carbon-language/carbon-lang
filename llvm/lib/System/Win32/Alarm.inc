@@ -39,5 +39,5 @@ int sys::AlarmStatus() {
 extern "C"  void __stdcall Sleep(unsigned long);
 
 void sys::Sleep(unsigned n) {
-  Sleep(n*1000);
+  ::Sleep(n*1000);
 }

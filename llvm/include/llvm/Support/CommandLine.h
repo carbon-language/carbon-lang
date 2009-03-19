@@ -833,8 +833,8 @@ class opt : public Option,
        typename ParserClass::parser_data_type();
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;                            // Parse error!
-    setValue(Val);
-    setPosition(pos);
+    this->setValue(Val);
+    this->setPosition(pos);
     return false;
   }
 

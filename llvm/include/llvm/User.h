@@ -84,6 +84,10 @@ public:
   void operator delete(void*, unsigned) {
     assert(0 && "Constructor throws?");
   }
+  /// placement delete - required by std, but never called.
+  void operator delete(void*, unsigned, bool) {
+    assert(0 && "Constructor throws?");
+  }
 protected:
   template <int Idx, typename U> static Use &OpFrom(const U *that) {
     return Idx < 0

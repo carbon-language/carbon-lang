@@ -2042,7 +2042,7 @@ addIntervalsForSpills(const LiveInterval &li,
         if (CanFold && !Ops.empty()) {
           if (tryFoldMemoryOperand(MI, vrm, NULL, index, Ops, true, Slot,VReg)){
             Folded = true;
-            if (FoundUse > 0) {
+            if (FoundUse) {
               // Also folded uses, do not issue a load.
               eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
               nI.removeRange(getLoadIndex(index), getUseIndex(index)+1);
