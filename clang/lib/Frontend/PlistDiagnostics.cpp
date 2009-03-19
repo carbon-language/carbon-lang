@@ -151,6 +151,11 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   
   // Output the text.
   assert(!P.getString().empty());
+  Indent(o, indent) << "<key>extended_message</key>\n";
+  Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
+  
+  // Output the short text.
+  // FIXME: Really use a short string.
   Indent(o, indent) << "<key>message</key>\n";
   Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
 
