@@ -530,6 +530,8 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
     // part of this compilation, warn the user about it.
     phases::ID InitialPhase = types::getCompilationPhase(InputType, 0);
     if (InitialPhase > FinalPhase) {
+      // Claim here to avoid the more general unused warning.
+      InputArg->claim();
       Diag(clang::diag::warn_drv_input_file_unused) 
         << InputArg->getValue(Args)
         << getPhaseName(InitialPhase)
