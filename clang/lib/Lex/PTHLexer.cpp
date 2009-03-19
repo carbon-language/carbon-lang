@@ -569,10 +569,12 @@ PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
                        const unsigned char* idDataTable,
                        IdentifierInfo** perIDCache, 
                        void* stringIdLookup, unsigned numIds,
-                       const unsigned char* spellingBase)
+                       const unsigned char* spellingBase,
+                       const char* originalSourceFile)
 : Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
   IdDataTable(idDataTable), StringIdLookup(stringIdLookup),
-  NumIds(numIds), PP(0), SpellingBase(spellingBase) {}
+  NumIds(numIds), PP(0), SpellingBase(spellingBase),
+  OriginalSourceFile(originalSourceFile) {}
 
 PTHManager::~PTHManager() {
   delete Buf;
@@ -701,10 +703,17 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
     }
   }
 
+  // Compute the address of the original source file.
+  const unsigned char* originalSourceBase = PrologueOffset + sizeof(uint32_t)*4;
+  unsigned len = ReadUnalignedLE16(originalSourceBase);
+  if (!len) originalSourceBase = 0;  
+  
   // Create the new PTHManager.
   return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
-                        SL.take(), NumIds, spellingBase);
+                        SL.take(), NumIds, spellingBase,
+                        (const char*) originalSourceBase);
 }
+
 IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
   // Look in the PTH file for the string data for the IdentifierInfo object.
   const unsigned char* TableEntry = IdDataTable + sizeof(uint32_t)*PersistentID;

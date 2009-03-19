@@ -69,12 +69,16 @@ class PTHManager : public IdentifierInfoLookup {
   ///  contains the cached spellings for literals.
   const unsigned char* const SpellingBase;
   
+  /// OriginalSourceFile - A null-terminated C-string that specifies the name
+  ///  if the file (if any) that was to used to generate the PTH cache.
+  const char* OriginalSourceFile;
+  
   /// This constructor is intended to only be called by the static 'Create'
   /// method.
   PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
              const unsigned char* idDataTable, IdentifierInfo** perIDCache,
              void* stringIdLookup, unsigned numIds,
-             const unsigned char* spellingBase);
+             const unsigned char* spellingBase, const char *originalSourceFile);
 
   // Do not implement.
   PTHManager();
@@ -96,9 +100,15 @@ class PTHManager : public IdentifierInfoLookup {
   
 public:
   // The current PTH version.
-  enum { Version = 8 };
+  enum { Version = 9 };
 
   ~PTHManager();
+  
+  /// getOriginalSourceFile - Return the full path to the original header
+  ///  file name that was used to generate the PTH cache.
+  const char* getOriginalSourceFile() const {
+    return OriginalSourceFile;
+  }
   
   /// get - Return the identifier token info for the specified named identifier.
   ///  Unlike the version in IdentifierTable, this returns a pointer instead
