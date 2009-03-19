@@ -1629,7 +1629,7 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
   // and the the Knuth "classical algorithm" which requires there to be native 
   // operations for +, -, and * on an m bit value with an m*2 bit result. We 
   // can't use 64-bit operands here because we don't have native results of 
-  // 128-bits. Furthremore, casting the 64-bit values to 32-bit values won't 
+  // 128-bits. Furthermore, casting the 64-bit values to 32-bit values won't 
   // work on large-endian machines.
   uint64_t mask = ~0ull >> (sizeof(unsigned)*8);
   unsigned n = rhsWords * 2;
