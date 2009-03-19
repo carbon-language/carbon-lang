@@ -17,7 +17,7 @@ namespace clang {
     enum {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
 #define ANALYSISSTART
-#include "clang/Basic/DiagnosticAnalysisKinds.def"
+#include "clang/Basic/DiagnosticAnalysisKinds.inc"
 #undef DIAG
       NUM_BUILTIN_ANALYSIS_DIAGNOSTICS
     };
