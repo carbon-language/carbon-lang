@@ -169,5 +169,5 @@ int Compilation::Execute() const {
   if (Res != 0)
     CleanupFileList(ResultFiles, true);
 
-  return 0;
+  return Res;
 }
