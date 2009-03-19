@@ -406,7 +406,7 @@ public:
   PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp) 
     : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
     
-  void GeneratePTH();
+  void GeneratePTH(const std::string *MainFile = 0);
 
   StatSysCallCache *createStatListener() {
     return new StatListener(PM);
@@ -632,7 +632,7 @@ Offset PTHWriter::EmitCachedSpellings() {
   return SpellingsOff;
 }
 
-void PTHWriter::GeneratePTH() {
+void PTHWriter::GeneratePTH(const std::string *MainFile) {
   // Generate the prologue.
   Out << "cfe-pth";
   Emit32(PTHManager::Version);
@@ -640,6 +640,17 @@ void PTHWriter::GeneratePTH() {
   // Leave 4 words for the prologue.
   Offset PrologueOffset = Out.tell();
   for (unsigned i = 0; i < 4 * sizeof(uint32_t); ++i) Emit8(0);
+    
+  // Write the name of the MainFile.
+  if (MainFile && MainFile->length() > 0) {
+    Emit16(MainFile->length());
+    EmitBuf(&((*MainFile)[0]), &((*MainFile)[0]) + MainFile->length());
+  }
+  else {
+    // String with 0 bytes.
+    Emit16(0);
+  }
+  Emit8(0);
   
   // Iterate over all the files in SourceManager.  Create a lexer
   // for each file and cache the tokens.
@@ -690,6 +701,21 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
     llvm::errs() << "PTH error: " << ErrMsg << "\n";
     return;
   }
+  
+  // Get the name of the main file.
+  const SourceManager &SrcMgr = PP.getSourceManager();
+  const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());
+  llvm::sys::Path MainFilePath(MainFile->getName());
+  std::string MainFileName;
+  
+  if (!MainFilePath.isAbsolute()) {
+    llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
+    P.appendComponent(MainFilePath.toString());
+    MainFileName = P.toString();
+  }
+  else {
+    MainFileName = MainFilePath.toString();
+  }
 
   // Create the PTHWriter.
   PTHWriter PW(Out, PP);
@@ -703,11 +729,9 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
   PP.EnterMainSourceFile();
   do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
   
-
-  
   // Generate the PTH file.
   PP.getFileManager().setStatCache(0);
-  PW.GeneratePTH();
+  PW.GeneratePTH(&MainFileName);
 }
 
 //===----------------------------------------------------------------------===//
