@@ -52,7 +52,7 @@
 //     gcc.
 //
 //  i: The option should not render the name when rendered as an
-//     input.
+//     input (i.e., the option is rendered as values).
 //
 //  l: The option is a linker input.
 //
@@ -258,7 +258,7 @@ OPTION("-Wa,", Wa_COMMA, CommaJoined, INVALID, INVALID, "", 0)
 OPTION("-Wall", Wall, Flag, W_Group, INVALID, "", 0)
 OPTION("-Wfloat-equal", Wfloat_equal, Flag, clang_W_Group, INVALID, "", 0)
 OPTION("-Wimplicit-function-declaration", Wimplicit_function_declaration, Flag, clang_W_Group, INVALID, "", 0)
-OPTION("-Wl,", Wl_COMMA, CommaJoined, INVALID, INVALID, "l", 0)
+OPTION("-Wl,", Wl_COMMA, CommaJoined, INVALID, INVALID, "li", 0)
 OPTION("-Wno-format-nonliteral", Wno_format_nonliteral, Flag, clang_W_Group, INVALID, "", 0)
 OPTION("-Wno-nonportable-cfstrings", Wno_nonportable_cfstrings, Joined, W_Group, INVALID, "", 0)
 OPTION("-Wno-strict-selector-match", Wno_strict_selector_match, Flag, clang_W_Group, INVALID, "", 0)

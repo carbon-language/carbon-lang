@@ -86,6 +86,12 @@ namespace driver {
     /// render - Append the argument onto the given array as strings.
     virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
 
+    /// renderAsInput - Append the argument, render as an input, onto
+    /// the given array as strings. The distinction is that some
+    /// options only render their values when rendered as a input
+    /// (e.g., Xlinker).
+    void renderAsInput(const ArgList &Args, ArgStringList &Output) const;
+
     static bool classof(const Arg *) { return true; }    
 
     void dump() const;

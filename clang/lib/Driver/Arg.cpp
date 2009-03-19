@@ -50,6 +50,16 @@ void Arg::dump() const {
   llvm::errs() << ">\n";
 }
 
+void Arg::renderAsInput(const ArgList &Args, ArgStringList &Output) const {
+  if (!getOption().hasNoOptAsInput()) {
+    render(Args, Output);
+    return;
+  }
+
+  for (unsigned i = 0, e = getNumValues(); i != e; ++i)
+    Output.push_back(getValue(Args, i));
+}
+
 FlagArg::FlagArg(const Option *Opt, unsigned Index)
   : Arg(FlagClass, Opt, Index) {
 }
