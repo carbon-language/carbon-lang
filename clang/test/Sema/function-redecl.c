@@ -106,3 +106,13 @@ int isroot(x, y)
 {
   return x == 1;
 }
+
+// PR3817
+void *h0(unsigned a0,     ...);
+extern __typeof (h0) h1 __attribute__((__sentinel__));
+extern __typeof (h1) h1 __attribute__((__sentinel__));
+
+// PR3840
+void i0 (unsigned short a0);
+extern __typeof (i0) i1;
+extern __typeof (i1) i1;

@@ -1864,9 +1864,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     isVirtualOkay = (SC != FunctionDecl::Static);
   } else {
-    bool HasPrototype =
+    bool HasPrototype = 
        getLangOptions().CPlusPlus ||
-       (D.getNumTypeObjects() && D.getTypeObject(0).Fun.hasPrototype);
+       (D.getNumTypeObjects() && D.getTypeObject(0).Fun.hasPrototype) ||
+      !isa<FunctionType>(R.getTypePtr());
     
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
