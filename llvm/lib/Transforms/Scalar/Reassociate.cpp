@@ -196,10 +196,12 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 
 /// LowerNegateToMultiply - Replace 0-X with X*-1.
 ///
-static Instruction *LowerNegateToMultiply(Instruction *Neg) {
+static Instruction *LowerNegateToMultiply(Instruction *Neg,
+                                     std::map<Value*, unsigned> &ValueRankMap) {
   Constant *Cst = ConstantInt::getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
+  ValueRankMap.erase(Neg);
   Res->takeName(Neg);
   Neg->replaceAllUsesWith(Res);
   Neg->eraseFromParent();
@@ -260,11 +262,11 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   // transform them into multiplies by -1 so they can be reassociated.
   if (I->getOpcode() == Instruction::Mul) {
     if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(LHS)) {
-      LHS = LowerNegateToMultiply(cast<Instruction>(LHS));
+      LHS = LowerNegateToMultiply(cast<Instruction>(LHS), ValueRankMap);
       LHSBO = isReassociableOp(LHS, Opcode);
     }
     if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(RHS)) {
-      RHS = LowerNegateToMultiply(cast<Instruction>(RHS));
+      RHS = LowerNegateToMultiply(cast<Instruction>(RHS), ValueRankMap);
       RHSBO = isReassociableOp(RHS, Opcode);
     }
   }
@@ -424,7 +426,8 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
 /// BreakUpSubtract - If we have (X-Y), and if either X is an add, or if this is
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
-static Instruction *BreakUpSubtract(Instruction *Sub) {
+static Instruction *BreakUpSubtract(Instruction *Sub,
+                                    std::map<Value*, unsigned> &ValueRankMap) {
   // Convert a subtract into an add and a neg instruction... so that sub
   // instructions can be commuted with other add instructions...
   //
@@ -437,6 +440,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
   New->takeName(Sub);
 
   // Everyone now refers to the add instruction.
+  ValueRankMap.erase(Sub);
   Sub->replaceAllUsesWith(New);
   Sub->eraseFromParent();
 
@@ -447,7 +451,8 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
 /// ConvertShiftToMul - If this is a shift of a reassociable multiply or is used
 /// by one, change this into a multiply by a constant to assist with further
 /// reassociation.
-static Instruction *ConvertShiftToMul(Instruction *Shl) {
+static Instruction *ConvertShiftToMul(Instruction *Shl, 
+                                      std::map<Value*, unsigned> &ValueRankMap){
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||
@@ -459,6 +464,7 @@ static Instruction *ConvertShiftToMul(Instruction *Shl) {
     
     Instruction *Mul = BinaryOperator::CreateMul(Shl->getOperand(0), MulCst,
                                                  "", Shl);
+    ValueRankMap.erase(Shl);
     Mul->takeName(Shl);
     Shl->replaceAllUsesWith(Mul);
     Shl->eraseFromParent();
@@ -772,7 +778,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     Instruction *BI = BBI++;
     if (BI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(BI->getOperand(1)))
-      if (Instruction *NI = ConvertShiftToMul(BI)) {
+      if (Instruction *NI = ConvertShiftToMul(BI, ValueRankMap)) {
         MadeChange = true;
         BI = NI;
       }
@@ -786,7 +792,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub) {
       if (ShouldBreakUpSubtract(BI)) {
-        BI = BreakUpSubtract(BI);
+        BI = BreakUpSubtract(BI, ValueRankMap);
         MadeChange = true;
       } else if (BinaryOperator::isNeg(BI)) {
         // Otherwise, this is a negation.  See if the operand is a multiply tree
@@ -794,7 +800,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
         if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&
             (!BI->hasOneUse() ||
              !isReassociableOp(BI->use_back(), Instruction::Mul))) {
-          BI = LowerNegateToMultiply(BI);
+          BI = LowerNegateToMultiply(BI, ValueRankMap);
           MadeChange = true;
         }
       }
