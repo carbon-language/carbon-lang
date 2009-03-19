@@ -571,7 +571,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
     switch (LK) {
-    default: assert(0 && "Unknown base language");
+    case lang_unspecified: assert(0 && "Unknown base language");
     case langkind_c:
     case langkind_asm_cpp:
     case langkind_c_cpp:
