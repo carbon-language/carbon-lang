@@ -1697,6 +1697,51 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   return VT; // should never get here (a typedef type should always be found).
 }
 
+static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
+                                                IdentifierInfo &Member,
+                                                const Selector &Sel) {
+  
+  if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(&Member))
+    return PD;
+  if (ObjCMethodDecl *OMD = PDecl->getInstanceMethod(Sel))
+    return OMD;
+  
+  for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
+       E = PDecl->protocol_end(); I != E; ++I) {
+    if (Decl *D = FindGetterNameDeclFromProtocolList(*I, Member, Sel))
+      return D;
+  }
+  return 0;
+}
+
+static Decl *FindGetterNameDecl(const ObjCQualifiedIdType *QIdTy,
+                                IdentifierInfo &Member,
+                                const Selector &Sel) {
+  // Check protocols on qualified interfaces.
+  Decl *GDecl = 0;
+  for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
+       E = QIdTy->qual_end(); I != E; ++I) {
+    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+      GDecl = PD;
+      break;
+    }
+    // Also must look for a getter name which uses property syntax.
+    if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
+      GDecl = OMD;
+      break;
+    }
+  }
+  if (!GDecl) {
+    for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
+         E = QIdTy->qual_end(); I != E; ++I) {
+      // Search in the protocol-qualifier list of current protocol.
+      GDecl = FindGetterNameDeclFromProtocolList(*I, Member, Sel);
+      if (GDecl)
+        return GDecl;
+    }
+  }
+  return GDecl;
+}
 
 Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
@@ -1968,25 +2013,25 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   const ObjCQualifiedIdType *QIdTy;
   if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
     // Check protocols on qualified interfaces.
-    for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
-         E = QIdTy->qual_end(); I != E; ++I) {
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel)) {
+      if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
         // Check the use of this declaration
         if (DiagnoseUseOfDecl(PD, MemberLoc))
           return ExprError();
-
+        
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                                        MemberLoc, BaseExpr));
       }
-      // Also must look for a getter name which uses property syntax.
-      Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-      if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
+      if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
         // Check the use of this method.
         if (DiagnoseUseOfDecl(OMD, MemberLoc))
           return ExprError();
-
+        
         return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel,
-                        OMD->getResultType(), OMD, OpLoc, MemberLoc, NULL, 0));
+                                                   OMD->getResultType(), 
+                                                   OMD, OpLoc, MemberLoc, 
+                                                   NULL, 0));
       }
     }
 
