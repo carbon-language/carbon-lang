@@ -770,6 +770,8 @@ public:
     case ISD::AND:
     case ISD::OR:
     case ISD::XOR:
+    case ISD::SADDO:
+    case ISD::UADDO:
     case ISD::ADDC:
     case ISD::ADDE: return true;
     default: return false;
