@@ -583,6 +583,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
       break;
     case langkind_cxx:
     case langkind_cxx_cpp:
+    case langkind_cxx_pch:
     case langkind_objcxx:
     case langkind_objcxx_cpp:
     case langkind_objcxx_pch:
