@@ -217,7 +217,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   NumErrors = 0;
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
-  LastDiagLevel = Fatal;
+  LastDiagLevel = Ignored;
   
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
@@ -336,12 +336,7 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
 /// finally fully formed.
 void Diagnostic::ProcessDiag() {
   DiagnosticInfo Info(this);
-  
-  // If a fatal error has already been emitted, silence all subsequent
-  // diagnostics.
-  if (FatalErrorOccurred)
-    return;
-  
+    
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel;
   unsigned DiagID = Info.getID();
@@ -375,9 +370,22 @@ void Diagnostic::ProcessDiag() {
     }
   }
 
-  if (DiagLevel != Diagnostic::Note)
+  if (DiagLevel != Diagnostic::Note) {
+    // Record that a fatal error occurred only when we see a second
+    // non-note diagnostic. This allows notes to be attached to the
+    // fatal error, but suppresses any diagnostics that follow those
+    // notes.
+    if (LastDiagLevel == Diagnostic::Fatal)
+      FatalErrorOccurred = true;
+
     LastDiagLevel = DiagLevel;
-  
+  }  
+
+  // If a fatal error has already been emitted, silence all subsequent
+  // diagnostics.
+  if (FatalErrorOccurred)
+    return;
+
   // If the client doesn't care about this message, don't issue it.  If this is
   // a note and the last real diagnostic was ignored, ignore it too.
   if (DiagLevel == Diagnostic::Ignored ||
@@ -397,9 +405,6 @@ void Diagnostic::ProcessDiag() {
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
     ++NumErrors;
-    
-    if (DiagLevel == Diagnostic::Fatal)
-      FatalErrorOccurred = true;
   }
   
   // Finally, report it.

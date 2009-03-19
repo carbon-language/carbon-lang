@@ -170,6 +170,8 @@ bool ProcessWarningOptions(Diagnostic &Diags) {
                              diag::MAP_IGNORE);
 
   Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
+  Diags.setDiagnosticMapping(diag::err_template_recursion_depth_exceeded, 
+                             diag::MAP_FATAL);
   Diags.setSuppressSystemWarnings(!OptWarnInSystemHeaders);
 
   for (OptionsList::iterator it = Options.begin(), e = Options.end();
