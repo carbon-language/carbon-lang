@@ -834,6 +834,10 @@ static llvm::cl::list<std::string>
 ImplicitIncludes("include", llvm::cl::value_desc("file"),
                  llvm::cl::desc("Include file before parsing"));
 
+static llvm::cl::opt<std::string>
+ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
+                   llvm::cl::desc("Include file before parsing"));
+
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
@@ -864,6 +868,23 @@ static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
   Buf.push_back('\n');
 }
 
+/// AddImplicitIncludePTH - Add an implicit #include using the original file
+///  used to generate a PTH cache.
+static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor & PP) {
+  PTHManager *P = PP.getPTHManager();
+  assert(P && "No PTHManager.");
+  const char *OriginalFile = P->getOriginalSourceFile();
+  
+  if (!OriginalFile) {
+    assert(!ImplicitIncludePTH.empty());
+    fprintf(stderr, "error: PTH file '%s' does not designate an original "
+            "source header file for -include-pth\n",
+            ImplicitIncludePTH.c_str());
+    exit (1);
+  }
+  
+  AddImplicitInclude(Buf, OriginalFile);
+}
 
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file. This returns true on error.
@@ -910,9 +931,18 @@ static bool InitializePreprocessor(Preprocessor &PP,
 
   // FIXME: Read any files specified by -imacros.
   
-  // Add implicit #includes from -include.
-  for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
+  // Add implicit #includes from -include and -include-pth.
+  bool handledPTH = ImplicitIncludePTH.empty();
+  for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i) {
+    if (!handledPTH) {
+      AddImplicitIncludePTH(PredefineBuffer, PP);
+      handledPTH = true;
+    }    
+    
     AddImplicitInclude(PredefineBuffer, ImplicitIncludes[i]);
+  }
+  if (!handledPTH && !ImplicitIncludePTH.empty())
+    AddImplicitIncludePTH(PredefineBuffer, PP);
   
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
@@ -1110,9 +1140,17 @@ public:
   virtual Preprocessor* CreatePreprocessor() {
     llvm::OwningPtr<PTHManager> PTHMgr;
 
+    if (!TokenCache.empty() && !ImplicitIncludePTH.empty()) {
+      fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
+                      "options\n");
+      exit (1);
+    }
+    
     // Use PTH?
-    if (!TokenCache.empty())
-      PTHMgr.reset(PTHManager::Create(TokenCache, &Diags));
+    if (!TokenCache.empty() || !ImplicitIncludePTH.empty()) {
+      const std::string& x = TokenCache.empty() ? ImplicitIncludePTH:TokenCache;
+      PTHMgr.reset(PTHManager::Create(x, &Diags));
+    }
     
     // Create the Preprocessor.
     llvm::OwningPtr<Preprocessor> PP(new Preprocessor(Diags, LangInfo, Target,
