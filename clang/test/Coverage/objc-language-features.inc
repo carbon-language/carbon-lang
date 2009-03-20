@@ -54,10 +54,8 @@
 
 int f0(id x) {
 #ifndef IRGENABLE_GNU
-#ifndef IRGENABLE
   @synchronized(x) {
   }
-#endif
 #endif
 
 #ifndef IRGENABLE_GNU
