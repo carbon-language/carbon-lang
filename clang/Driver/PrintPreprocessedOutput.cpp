@@ -452,7 +452,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
     do PP.Lex(Tok);
     while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
            !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
-                   "<predefines>"));
+                   "<built-in>"));
 
     // Read all the preprocessed tokens, printing them out to the stream.
     PrintPreprocessedTokens(PP, Tok, Callbacks, OS);

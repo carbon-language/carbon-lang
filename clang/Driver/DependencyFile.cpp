@@ -153,7 +153,7 @@ bool clang::CreateDependencyFileGen(Preprocessor *PP,
 bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
                                           SrcMgr::CharacteristicKind FileType) {
   if (strcmp(InputFile.c_str(), Filename) != 0 &&
-      strcmp("<predefines>", Filename) != 0) {
+      strcmp("<built-in>", Filename) != 0) {
       if (GenerateDependencyFileNoSysHeaders)
         return FileType == SrcMgr::C_User;
       else
