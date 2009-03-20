@@ -207,19 +207,7 @@ class Clang_CompileTool(Tool):
             # No special option needed, driven by -x.
             #
             # FIXME: Don't drive this by -x, that is gross.
-
-            # FIXME: This is a total hack. Copy the input header file
-            # to the output, so that it can be -include'd by clang.
-            assert len(inputs) == 1
-            assert not isinstance(output, Jobs.PipedJob)
-            assert not isinstance(inputs[0].source, Jobs.PipedJob)
-            inputPath = arglist.getValue(inputs[0].source)
-            outputPath = os.path.join(os.path.dirname(arglist.getValue(output)),
-                                      os.path.basename(inputPath))
-            # Only do copy when the output doesn't exist.
-            if not os.path.exists(outputPath):
-                import shutil
-                shutil.copyfile(inputPath, outputPath)
+            pass
         else:
             raise ValueError,"Unexpected output type for clang tool."
 
@@ -394,19 +382,23 @@ class Clang_CompileTool(Tool):
         arglist.addLastArg(cmd_args, arglist.parser.nostdincOption)
 
         # FIXME: Clang isn't going to accept just anything here.
-        arglist.addAllArgs(cmd_args, arglist.parser.iGroup)
 
-        # Automatically load .pth or .gch files which match -include
-        # options. It's wonky, but we include looking for .gch so we
-        # can support seamless replacement into a build system already
-        # set up to be generating .gch files.
-        for arg in arglist.getArgs(arglist.parser.includeOption):
-            for suffix in ('.pth','.gch'):
-                pthPath = arglist.getValue(arg) + suffix
-                if os.path.exists(pthPath):
-                    cmd_args.append('-token-cache')
-                    cmd_args.append(pthPath)
-                    break
+        # Add i* options and automatically translate to -include-pth
+        # for transparent PCH support. It's wonky, but we include
+        # looking for .gch so we can support seamless replacement into
+        # a build system already set up to be generating .gch files.
+        for arg in arglist.getArgs(arglist.parser.iGroup):
+            if arg.opt.matches(arglist.parser.includeOption):
+                for suffix in ('.pth','.gch'):
+                    pthPath = arglist.getValue(arg) + suffix
+                    if os.path.exists(pthPath):
+                        cmd_args.append('-include-pth')
+                        cmd_args.append(pthPath)
+                        break
+                else:
+                    cmd_args.extend(arglist.render(arg))
+            else:
+                cmd_args.extend(arglist.render(arg))
 
         # Manually translate -O to -O1; let clang reject others.
         arg = arglist.getLastArg(arglist.parser.OOption)
