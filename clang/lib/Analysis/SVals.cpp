@@ -338,6 +338,23 @@ SVal SVal::GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R) {
   return UnknownVal();
 }
 
+SVal SVal::GetConjuredSymbolVal(SymbolManager &SymMgr, const Expr* E,
+                                unsigned Count) {
+
+  QualType T = E->getType();
+  
+  if (Loc::IsLocType(T)) {
+    SymbolRef Sym = SymMgr.getConjuredSymbol(E, Count);        
+    return loc::SymbolVal(Sym);
+  }
+  else if (T->isIntegerType() && T->isScalarType()) {
+    SymbolRef Sym = SymMgr.getConjuredSymbol(E, Count);        
+    return nonloc::SymbolVal(Sym);                    
+  }
+
+  return UnknownVal();
+}
+
 nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
                                                 unsigned Bits) {
   return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));

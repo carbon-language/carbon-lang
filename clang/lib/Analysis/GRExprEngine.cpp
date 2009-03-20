@@ -2449,7 +2449,13 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
 
-      SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U));      
+      SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U));    
+      
+      // Conjure a new symbol if necessary to recover precision.
+      if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result))
+        Result = SVal::GetConjuredSymbolVal(SymMgr, Ex,
+                                            Builder->getCurrentBlockCount());
+      
       state = BindExpr(state, U, U->isPostfix() ? V2 : Result);
 
       // Perform the store.      

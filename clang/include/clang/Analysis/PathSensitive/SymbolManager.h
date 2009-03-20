@@ -135,25 +135,25 @@ public:
 };
 
 class SymbolConjured : public SymbolData {
-  Stmt* S;
+  const Stmt* S;
   QualType T;
   unsigned Count;
   const void* SymbolTag;
 
 public:
-  SymbolConjured(SymbolRef Sym, Stmt* s, QualType t, unsigned count,
+  SymbolConjured(SymbolRef Sym, const Stmt* s, QualType t, unsigned count,
                  const void* symbolTag)
     : SymbolData(ConjuredKind, Sym), S(s), T(t), Count(count),
       SymbolTag(symbolTag) {}
   
-  Stmt* getStmt() const { return S; }
+  const Stmt* getStmt() const { return S; }
   unsigned getCount() const { return Count; }
   const void* getTag() const { return SymbolTag; }
   
   QualType getType(ASTContext&) const;
   
-  static void Profile(llvm::FoldingSetNodeID& profile, Stmt* S, QualType T,
-                      unsigned Count, const void* SymbolTag) {    
+  static void Profile(llvm::FoldingSetNodeID& profile, const Stmt* S,
+                      QualType T, unsigned Count, const void* SymbolTag) {    
     profile.AddInteger((unsigned) ConjuredKind);
     profile.AddPointer(S);
     profile.Add(T);
@@ -221,10 +221,10 @@ public:
 
   /// Make a unique symbol for MemRegion R according to its kind.
   SymbolRef getRegionRValueSymbol(const MemRegion* R);
-  SymbolRef getConjuredSymbol(Stmt* E, QualType T, unsigned VisitCount,
+  SymbolRef getConjuredSymbol(const Stmt* E, QualType T, unsigned VisitCount,
                               const void* SymbolTag = 0);
 
-  SymbolRef getConjuredSymbol(Expr* E, unsigned VisitCount,
+  SymbolRef getConjuredSymbol(const Expr* E, unsigned VisitCount,
                               const void* SymbolTag = 0) {    
     return getConjuredSymbol(E, E->getType(), VisitCount, SymbolTag);
   }

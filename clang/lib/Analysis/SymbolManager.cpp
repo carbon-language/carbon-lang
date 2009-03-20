@@ -52,7 +52,8 @@ SymbolRef SymbolManager::getRegionRValueSymbol(const MemRegion* R) {
   return SymbolCounter++;
 }
 
-SymbolRef SymbolManager::getConjuredSymbol(Stmt* E, QualType T, unsigned Count,
+SymbolRef SymbolManager::getConjuredSymbol(const Stmt* E, QualType T,
+                                           unsigned Count,
                                            const void* SymbolTag) {
   
   llvm::FoldingSetNodeID profile;

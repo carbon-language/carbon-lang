@@ -74,6 +74,9 @@ public:
   /// GetRValueSymbolVal - make a unique symbol for value of R.
   static SVal GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R);
 
+  static SVal GetConjuredSymbolVal(SymbolManager& SymMgr, const Expr *E,
+                                   unsigned Count);  
+
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;
   }
