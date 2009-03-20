@@ -1,4 +1,4 @@
-// RUN: clang -E %s &&
+// RUN: clang -x assembler-with-cpp -E %s &&
 // RUN: not clang -x c -E %s
 
 #ifndef __ASSEMBLER__
