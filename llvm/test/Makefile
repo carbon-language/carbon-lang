@@ -87,9 +87,6 @@ DSYMUTIL=dsymutil
 else
 DSYMUTIL=true
 endif
-ifeq ($(OS),Darwin)
-BUGPOINT_TOPTS="-gcc-tool-args $(TargetCommonOpts)"
-endif
 
 FORCE:
 
@@ -111,13 +108,12 @@ site.exp: FORCE
 	@echo 'set objdir "$(LLVM_OBJ_ROOT)/test"' >>site.tmp
 	@echo 'set gccpath "$(CC)"' >>site.tmp
 	@echo 'set gxxpath "$(CXX)"' >>site.tmp
-	@echo 'set compile_c "' $(CC) $(CPP.Flags) $(TargetCommonOpts) $(CompileCommonOpts) -c '"' >>site.tmp
-	@echo 'set compile_cxx "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) $(CompileCommonOpts) -c '"' >> site.tmp
-	@echo 'set link "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) '"' >>site.tmp
-	@echo 'set llvmgcc "$(LLVMGCC) $(TargetCommonOpts) $(EXTRA_OPTIONS)"' >> site.tmp
-	@echo 'set llvmgxx "$(LLVMGCC) $(TargetCommonOpts) $(EXTRA_OPTIONS)"' >> site.tmp
+	@echo 'set compile_c "' $(CC) $(CPP.Flags) $(CompileCommonOpts) -c '"' >>site.tmp
+	@echo 'set compile_cxx "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) -c '"' >> site.tmp
+	@echo 'set link "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) $(LD.Flags) '"' >>site.tmp
+	@echo 'set llvmgcc "$(LLVMGCC) $(EXTRA_OPTIONS)"' >> site.tmp
+	@echo 'set llvmgxx "$(LLVMGCC) $(EXTRA_OPTIONS)"' >> site.tmp
 	@echo 'set llvmgccmajvers "$(LLVMGCC_MAJVERS)"' >> site.tmp
-	@echo 'set bugpoint_topts $(BUGPOINT_TOPTS)' >> site.tmp
 	@echo 'set shlibext "$(SHLIBEXT)"' >> site.tmp
 	@echo 'set ocamlc "$(OCAMLC) -cc $(CXX) -I $(LibDir)/ocaml"' >> site.tmp
 	@echo 'set valgrind "$(VALGRIND)"' >> site.tmp
