@@ -131,6 +131,11 @@ LiveValues::Memo &LiveValues::compute(const Value *V) {
     // Note the block in which this use occurs.
     M.Used.insert(UseBB);
 
+    // If the use block doesn't have successors, the value can be
+    // considered killed.
+    if (succ_begin(UseBB) == succ_end(UseBB))
+      M.Killed.insert(UseBB);
+
     // Observe whether the value is used outside of the loop in which
     // it is defined. Switch to an enclosing loop if necessary.
     for (; L; L = L->getParentLoop())
