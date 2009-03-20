@@ -642,8 +642,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   // Get other target #defines.
   TI.getTargetDefines(PP.getLangOptions(), Buf);
-  
-  // FIXME: Should emit a #line directive here.
 }
 
 
@@ -670,8 +668,17 @@ void Preprocessor::EnterMainSourceFile() {
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   InitializePredefinedMacros(*this, PrologFile);
   
-  // Add on the predefines from the driver.
+  // Add on the predefines from the driver.  Wrap in a #line directive to report
+  // that they come from the command line.
+  const char *LineDirective = "# 1 \"<command line>\" 1\n";
+  PrologFile.insert(PrologFile.end(),
+                    LineDirective, LineDirective+strlen(LineDirective));
+  
   PrologFile.insert(PrologFile.end(), Predefines.begin(), Predefines.end());
+  
+  LineDirective = "# 2 \"<built-in>\" 2\n";
+  PrologFile.insert(PrologFile.end(),
+                    LineDirective, LineDirective+strlen(LineDirective));
   
   // Memory buffer must end with a null byte!
   PrologFile.push_back(0);
@@ -680,7 +687,7 @@ void Preprocessor::EnterMainSourceFile() {
   // PrologFile, preprocess it to populate the initial preprocessor state.
   llvm::MemoryBuffer *SB = 
     llvm::MemoryBuffer::getMemBufferCopy(&PrologFile.front(),&PrologFile.back(),
-                                         "<predefines>");
+                                         "<built-in>");
   assert(SB && "Cannot fail to create predefined source buffer");
   FileID FID = SourceMgr.createFileIDForMemBuffer(SB);
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
