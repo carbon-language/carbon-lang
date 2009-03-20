@@ -1757,6 +1757,9 @@ public:
     InitExprs[Init] = expr;
   }
 
+  /// \brief Reserve space for some number of initializers.
+  void reserveInits(unsigned NumInits);
+  
   /// @brief Specify the number of initializers
   ///
   /// If there are more than @p NumInits initializers, the remaining

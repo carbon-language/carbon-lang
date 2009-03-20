@@ -1450,6 +1450,32 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
 
   Result->setType(CurrentObjectType);
 
+  // Pre-allocate storage for the structured initializer list.
+  unsigned NumElements = 0;
+  if (const ArrayType *AType 
+      = SemaRef.Context.getAsArrayType(CurrentObjectType)) {
+    if (const ConstantArrayType *CAType = dyn_cast<ConstantArrayType>(AType)) {
+      NumElements = CAType->getSize().getZExtValue();
+      // Simple heuristic so that we don't allocate a very large
+      // initializer with many empty entries at the end.
+      if (IList && NumElements > IList->getNumInits())
+        NumElements = 0;
+    }
+  } else if (const VectorType *VType = CurrentObjectType->getAsVectorType())
+    NumElements = VType->getNumElements();
+  else if (const RecordType *RType = CurrentObjectType->getAsRecordType()) {
+    RecordDecl *RDecl = RType->getDecl();
+    if (RDecl->isUnion())
+      NumElements = 1;
+    else
+      NumElements = std::distance(RDecl->field_begin(), RDecl->field_end());
+  }
+
+  if (IList && NumElements < IList->getNumInits())
+    NumElements = IList->getNumInits();
+
+  Result->reserveInits(NumElements);
+
   // Link this new initializer list into the structured initializer
   // lists.
   if (StructuredList)

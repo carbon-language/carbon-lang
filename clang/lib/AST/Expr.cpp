@@ -338,6 +338,11 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
   InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
 }
 
+void InitListExpr::reserveInits(unsigned NumInits) {
+  if (NumInits > InitExprs.size())
+    InitExprs.reserve(NumInits);
+}
+
 void InitListExpr::resizeInits(ASTContext &Context, unsigned NumInits) {
   for (unsigned Idx = NumInits, LastIdx = InitExprs.size();
        Idx < LastIdx; ++Idx)
