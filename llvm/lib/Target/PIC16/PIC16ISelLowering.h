@@ -120,15 +120,6 @@ namespace llvm {
     // function will return true
     bool isRomAddress(const SDValue &Op);
 
-    // To extract chain value from the SDValue Nodes
-    // This function will help to maintain the chain extracting
-    // code at one place. In case of any change in future it will
-    // help maintain the code
-    SDValue getChain(SDValue &Op);
-    
-    SDValue getOutFlag(SDValue &Op);
-
-
     // Extract the Lo and Hi component of Op. 
     void GetExpandedParts(SDValue Op, SelectionDAG &DAG, SDValue &Lo, 
                           SDValue &Hi); 
@@ -173,11 +164,6 @@ namespace llvm {
     // Check if operation has a direct load operand.
     inline bool isDirectLoad(const SDValue Op);
 
-    // Create the symbol and index for function frame
-    void getCurrentFrameIndex(SelectionDAG &DAG, SDValue &ES, 
-                              unsigned SlotSize, int &FI);
-
-    SDValue getCurrentFrame(SelectionDAG &DAG);
   };
 } // namespace llvm
 

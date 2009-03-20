@@ -142,6 +142,41 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   computeRegisterProperties();
 }
 
+// getOutFlag - Extract the flag result if the Op has it.
+static SDValue getOutFlag(SDValue &Op) {
+  // Flag is the last value of the node.
+  SDValue Flag = Op.getValue(Op.getNode()->getNumValues() - 1);
+
+  assert (Flag.getValueType() == MVT::Flag 
+          && "Node does not have an out Flag");
+
+  return Flag;
+}
+
+// To extract chain value from the SDValue Nodes
+// This function will help to maintain the chain extracting
+// code at one place. In case of any change in future it will
+// help maintain the code.
+static SDValue getChain(SDValue &Op) { 
+  SDValue Chain = Op.getValue(Op.getNode()->getNumValues() - 1);
+
+  // If the last value returned in Flag then the chain is
+  // second last value returned.
+  if (Chain.getValueType() == MVT::Flag)
+    Chain = Op.getValue(Op.getNode()->getNumValues() - 2);
+  
+  // All nodes may not produce a chain. Therefore following assert
+  // verifies that the node is returning a chain only.
+  assert (Chain.getValueType() == MVT::Other 
+          && "Node does not have a chain");
+
+  return Chain;
+}
+
+/// PopulateResults - Helper function to LowerOperation.
+/// If a node wants to return multiple results after lowering,
+/// it stuffs them into an array of SDValue called Results.
+
 static void PopulateResults(SDValue N, SmallVectorImpl<SDValue>&Results) {
   if (N.getOpcode() == ISD::MERGE_VALUES) {
     int NumResults = N.getNumOperands();
@@ -156,6 +191,8 @@ MVT PIC16TargetLowering::getSetCCResultType(MVT ValType) const {
   return MVT::i8;
 }
 
+/// FIXME: These three functions below should not be here if we change 
+/// the generic code to allow generting libcalls for I8 types as well.
 
 void 
 PIC16TargetLowering::setPIC16LibcallName(PIC16ISD::PIC16Libcall Call,
@@ -193,47 +230,6 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
                      false, CallingConv::C, false, Callee, Args, DAG, dl);
 
   return CallInfo.first;
-}
-
-SDValue
-PIC16TargetLowering::getCurrentFrame(SelectionDAG &DAG) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  const Function *Func = MF.getFunction();
-  const std::string FuncName = Func->getName();
-
-  // this is causing memory waste
-  // because for every call new memory will be allocated
-  char *tmpName = new char [strlen(FuncName.c_str()) +  6];
-  sprintf(tmpName, "%s.tmp", FuncName.c_str());
-
-  // if the external symbol of the same name already exists then
-  // it will not create the new one.
-  return DAG.getTargetExternalSymbol(tmpName, MVT::i8);
-}
-
-void 
-PIC16TargetLowering::getCurrentFrameIndex(SelectionDAG &DAG, SDValue &ES, 
-                                        unsigned SlotSize, int &FromFI) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  const Function *Func = MF.getFunction();
-  const std::string FuncName = Func->getName();
-
-  // this is causing memory waste
-  // because for every call new memory will be allocated
-  char *tmpName = new char [strlen(FuncName.c_str()) +  6];
-  sprintf(tmpName, "%s.tmp", FuncName.c_str());
-
-  // if the external symbol of the same name already exists then
-  // it will not create the new one.
-  ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
-
-  // Alignment is always 1
-  //FromFI = MF.getFrameInfo()->CreateStackObject(SlotSize, 1);
-  FromFI = MF.getFrameInfo()->CreateStackObject(1, 1);
-  int FI;
-  for(unsigned i=1;i<SlotSize; ++i) {
-    FI = MF.getFrameInfo()->CreateStackObject(1, 1);
-  }
 }
 
 const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -477,51 +473,24 @@ bool PIC16TargetLowering::isRomAddress(const SDValue &Op) {
   return false;
 }
 
-// Extract the out flag 
-SDValue PIC16TargetLowering::getOutFlag(SDValue &Op) {
-  SDValue Flag = Op.getValue(Op.getNode()->getNumValues() - 1);
 
-  assert (Flag.getValueType() == MVT::Flag && "Node does not have an out Flag");
-
-  return Flag;
-}
-
-// To extract chain value from the SDValue Nodes
-// This function will help to maintain the chain extracting
-// code at one place. In case of any change in future it will
-// help maintain the code.
-SDValue PIC16TargetLowering::getChain(SDValue &Op) { 
-  SDValue Chain = Op.getValue(Op.getNode()->getNumValues() - 1);
-
-  // If the last value returned in Flag then the chain is
-  // second last value returned.
-  if (Chain.getValueType() == MVT::Flag)
-    Chain = Op.getValue(Op.getNode()->getNumValues() - 2);
-  
-  // All nodes may not produce a chain. Therefore following assert
-  // verifies that the node is returning a chain only.
-  assert (Chain.getValueType() == MVT::Other && "Node does not have a chain");
-
-  return Chain;
-}
+// GetExpandedParts - This function is on the similiar lines as
+// the GetExpandedInteger in type legalizer is. This returns expanded
+// parts of Op in Lo and Hi. 
 
 void PIC16TargetLowering::GetExpandedParts(SDValue Op, SelectionDAG &DAG,
                                            SDValue &Lo, SDValue &Hi) {  
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
-  MVT NewVT;
-  std::vector<SDValue> Opers;
-  NewVT = getTypeToTransformTo(N->getValueType(0));
+  MVT NewVT = getTypeToTransformTo(N->getValueType(0));
 
-  // extract the lo component
-  Opers.push_back(Op);
-  Opers.push_back(DAG.getConstant(0,MVT::i8));
-  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT,dl,NewVT,&Opers[0],Opers.size());
+  // Extract the lo component.
+  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NewVT, Op,
+                   DAG.getConstant(0, MVT::i8));
+		   
   // extract the hi component
-  Opers.clear();
-  Opers.push_back(Op);
-  Opers.push_back(DAG.getConstant(1,MVT::i8));
-  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT,dl,NewVT,&Opers[0],Opers.size());
+  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NewVT, Op,
+                   DAG.getConstant(1, MVT::i8));
 }
 
 // Legalize FrameIndex into ExternalSymbol and offset.
@@ -620,19 +589,6 @@ void PIC16TargetLowering:: LegalizeAddress(SDValue Ptr, SelectionDAG &DAG,
 
   return;
 }
-
-//SDValue PIC16TargetLowering::ExpandAdd(SDNode *N, SelectionDAG &DAG) {
-  //SDValue OperLeft = N->getOperand(0);
-  //SDValue OperRight = N->getOperand(1);
-
-  //if((OperLeft.getOpcode() == ISD::Constant) ||
-     //(OperRight.getOpcode() == ISD::Constant)) {
-    //return SDValue();
-  //}
-
-  // These case are yet to be handled
-  //return SDValue();
-//}
 
 SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
   LoadSDNode *LD = dyn_cast<LoadSDNode>(SDValue(N, 0));
@@ -1099,12 +1055,19 @@ bool PIC16TargetLowering::isDirectLoad(const SDValue Op) {
   return false;
 }
 
+// NeedToConvertToMemOp - Returns true if one of the operands of the
+// operation 'Op' needs to be put into memory. Also returns the
+// operand no. of the operand to be converted in 'MemOp'. Remember, PIC16 has 
+// no instruction that can operation on two registers. Most insns take
+// one register and one memory operand (addwf) / Constant (addlw).
 bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp) {
-  // Return false if one of the operands is already a direct
-  // load and that operand has only one use.
+  // If one of the operand is a constant, return false.
   if (Op.getOperand(0).getOpcode() == ISD::Constant ||
       Op.getOperand(1).getOpcode() == ISD::Constant)
     return false;    
+
+  // Return false if one of the operands is already a direct
+  // load and that operand has only one use.
   if (isDirectLoad(Op.getOperand(0))) {
     if (Op.getOperand(0).hasOneUse())
       return false;
@@ -1120,10 +1083,14 @@ bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp) {
   return true;
 }  
 
-SDValue PIC16TargetLowering:: LowerBinOp(SDValue Op, SelectionDAG &DAG) {
+// LowerBinOp - Lower a commutative binary operation that does not
+// affect status flag carry.
+SDValue PIC16TargetLowering::LowerBinOp(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
+
   // We should have handled larger operands in type legalizer itself.
   assert (Op.getValueType() == MVT::i8 && "illegal Op to lower");
+
   unsigned MemOp = 1;
   if (NeedToConvertToMemOp(Op, MemOp)) {
     // Put one value on stack.
@@ -1137,7 +1104,9 @@ SDValue PIC16TargetLowering:: LowerBinOp(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
-SDValue PIC16TargetLowering:: LowerADD(SDValue Op, SelectionDAG &DAG) {
+// LowerADD - Lower all types of ADD operations including the ones
+// that affects carry.
+SDValue PIC16TargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) {
   // We should have handled larger operands in type legalizer itself.
   assert (Op.getValueType() == MVT::i8 && "illegal add to lower");
   DebugLoc dl = Op.getDebugLoc();
@@ -1189,7 +1158,7 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
 // equal. Therefore to construct MERGE_VALUE node, UNDEF nodes equal to the
 // number of arguments of function have been created.
 
-SDValue PIC16TargetLowering:: LowerFORMAL_ARGUMENTS(SDValue Op, 
+SDValue PIC16TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, 
                                                     SelectionDAG &DAG) {
   SmallVector<SDValue, 8> ArgValues;
   unsigned NumArgs = Op.getNumOperands() - 3;
@@ -1207,7 +1176,8 @@ SDValue PIC16TargetLowering:: LowerFORMAL_ARGUMENTS(SDValue Op,
                      ArgValues.size()).getValue(Op.getResNo());
 }
 
-// Perform DAGCombine of PIC16Load 
+// Perform DAGCombine of PIC16Load.
+// FIXME - Need a more elaborate comment here.
 SDValue PIC16TargetLowering::
 PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
