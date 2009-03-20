@@ -218,7 +218,6 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
 static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
                         std::vector<MachineOperand*> &KillOps,
                         const TargetRegisterInfo* TRI) {
-  const TargetInstrDesc &TID = MI.getDesc();
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse())
@@ -881,7 +880,6 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
   }
 
   if (LastUDMI) {
-    const TargetInstrDesc &TID = LastUDMI->getDesc();
     MachineOperand *LastUD = NULL;
     for (unsigned i = 0, e = LastUDMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = LastUDMI->getOperand(i);
@@ -944,7 +942,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       NextMII = next(MII);
 
     MachineInstr &MI = *MII;
-    const TargetInstrDesc &TID = MI.getDesc();
 
     if (VRM.hasEmergencySpills(&MI)) {
       // Spill physical register(s) in the rare case the allocator has run out
