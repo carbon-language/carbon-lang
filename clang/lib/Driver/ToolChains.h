@@ -31,60 +31,16 @@ class VISIBILITY_HIDDEN Generic_GCC : public ToolChain {
 public:
   Generic_GCC(const HostInfo &Host, const char *Arch, const char *Platform, 
               const char *OS) : ToolChain(Host, Arch, Platform, OS) {}
-  ~Generic_GCC() {
-    // Free tool implementations.
-    for (llvm::DenseMap<unsigned, Tool*>::iterator 
-           it = Tools.begin(), ie = Tools.end(); it != ie; ++it) 
-      delete it->second;
-  }
+  ~Generic_GCC();
 
   virtual ArgList *TranslateArgs(ArgList &Args) const { return &Args; }
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const {
-    Action::ActionClass Key;
-    if (ShouldUseClangCompiler(C, JA))
-      Key = Action::AnalyzeJobClass;
-    else
-      Key = JA.getKind();
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
-    Tool *&T = Tools[Key];
-    if (!T) {
-      switch (Key) {
-      default:
-        assert(0 && "Invalid tool kind.");
-      case Action::PreprocessJobClass: 
-        T = new tools::gcc::Preprocess(*this); break;
-      case Action::PrecompileJobClass: 
-        T = new tools::gcc::Precompile(*this); break;
-      case Action::AnalyzeJobClass: 
-        T = new tools::Clang(*this); break;
-      case Action::CompileJobClass: 
-        T = new tools::gcc::Compile(*this); break;
-      case Action::AssembleJobClass: 
-        T = new tools::gcc::Assemble(*this); break;
-      case Action::LinkJobClass: 
-        T = new tools::gcc::Link(*this); break;
-      }
-    }
-
-    return *T;
-  }
-
-  virtual bool IsMathErrnoDefault() const { return true; }
-
-  virtual bool IsUnwindTablesDefault() const { 
-    // FIXME: Gross; we should probably have some separate target definition,
-    // possibly even reusing the one in clang.
-    return getArchName() == "x86_64";
-  }
-
-  virtual const char *GetDefaultRelocationModel() const {
-    return "static";
-  }
-
-  virtual const char *GetForcedPicModel() const {
-    return 0;
-  }
+  virtual bool IsMathErrnoDefault() const;
+  virtual bool IsUnwindTablesDefault() const;
+  virtual const char *GetDefaultRelocationModel() const;
+  virtual const char *GetForcedPicModel() const;
 };
 
 } // end namespace toolchains
