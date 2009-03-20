@@ -45,28 +45,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // No special option needed, driven by -x.
     //
     // FIXME: Don't drive this by -x, that is gross.
-
-    // FIXME: This is a total hack. Copy the input header file
-    // to the output, so that it can be -include'd by clang.
-    assert(Inputs.size() == 1 && "Cannot make PCH with multiple inputs.");
-    assert(Output.isFilename() && "Unexpected output");
-    assert(!Inputs[0].isPipe() && "Unexpected pipe");
-    assert(Inputs[0].isFilename() && "Unexpected input");
-    const char *InputPath = Inputs[0].getFilename();
-    llvm::sys::Path OutputPath(Output.getFilename());
-    OutputPath.eraseComponent();
-    if (OutputPath.empty())
-      OutputPath = llvm::sys::Path(InputPath).getLast();
-    else
-      OutputPath.appendComponent(llvm::sys::Path(InputPath).getLast());
-    if (!OutputPath.exists()) {
-      ArgStringList CpArgs;
-      CpArgs.push_back(InputPath);
-      CpArgs.push_back(Args.MakeArgString(OutputPath.c_str()));
-      const char *Exec = 
-        Args.MakeArgString(getToolChain().GetProgramPath(C, "cp").c_str());
-      C.getJobs().addJob(new Command(Exec, CpArgs));
-    }
   } else {
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
   
@@ -262,32 +240,42 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
 
   // FIXME: Clang isn't going to accept just anything here.
-  Args.AddAllArgs(CmdArgs, options::OPT_i_Group);
+  // FIXME: Use iterator.
 
-  // Automatically load .pth or .gch files which match -include
-  // options. It's wonky, but we include looking for .gch so we can
-  // support seamless replacement into a build system already set up
-  // to be generating .gch files.
-
-  // FIXME: Need to use an iterator for this to be efficient.
+  // Add -i* options, and automatically translate to -include-pth for
+  // transparent PCH support. It's wonky, but we include looking for
+  // .gch so we can support seamless replacement into a build system
+  // already set up to be generating .gch files.
   for (ArgList::const_iterator 
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
+    if (!A->getOption().matches(options::OPT_i_Group)) 
+      continue;
+
     if (A->getOption().matches(options::OPT_include)) {
+      bool FoundPTH = false;
       llvm::sys::Path P(A->getValue(Args));
       P.appendSuffix("pth");
       if (P.exists()) {
-        CmdArgs.push_back("-token-cache");
-        CmdArgs.push_back(Args.MakeArgString(P.c_str()));
+        FoundPTH = true;
       } else {
         P.eraseSuffix();
         P.appendSuffix("gch");
-        if (P.exists()) {
-          CmdArgs.push_back("-token-cache");
-          CmdArgs.push_back(Args.MakeArgString(P.c_str()));
-        }
+        if (P.exists())
+          FoundPTH = true;
+      }
+
+      if (FoundPTH) {
+        A->claim();
+        CmdArgs.push_back("-include-pth");
+        CmdArgs.push_back(Args.MakeArgString(P.c_str()));
+        continue;
       }
     }
+
+    // Not translated, render as usual.
+    A->claim();
+    A->render(Args, CmdArgs);
   }
 
   // Manually translate -O to -O1; let clang reject others.
