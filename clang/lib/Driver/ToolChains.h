@@ -43,6 +43,34 @@ public:
   virtual const char *GetForcedPicModel() const;
 };
 
+  /// Darwin_X86 - Darwin tool chain for i386 an x86_64.
+class VISIBILITY_HIDDEN Darwin_X86 : public ToolChain {
+  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+
+public:
+  Darwin_X86(const HostInfo &Host, const char *Arch, const char *Platform, 
+             const char *OS) : ToolChain(Host, Arch, Platform, OS) {}
+  ~Darwin_X86();
+
+  virtual ArgList *TranslateArgs(ArgList &Args) const;
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+
+  virtual bool IsMathErrnoDefault() const;
+  virtual bool IsUnwindTablesDefault() const;
+  virtual const char *GetDefaultRelocationModel() const;
+  virtual const char *GetForcedPicModel() const;
+};
+
+  /// Darwin_GCC - Generic Darwin tool chain using gcc.
+class VISIBILITY_HIDDEN Darwin_GCC : public Generic_GCC {
+public:
+  Darwin_GCC(const HostInfo &Host, const char *Arch, const char *Platform, 
+             const char *OS) : Generic_GCC(Host, Arch, Platform, OS) {}
+
+  virtual const char *GetDefaultRelocationModel() const { return "pic"; }
+};
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

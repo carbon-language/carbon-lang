@@ -106,13 +106,13 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
   ToolChain *&TC = ToolChains[ArchName];
   if (!TC) {
     if (strcmp(ArchName, "i386") == 0 || strcmp(ArchName, "x86_64") == 0)
-      TC = new toolchains::Generic_GCC(*this, ArchName, 
-                                       getPlatformName().c_str(), 
-                                       getOSName().c_str());
+      TC = new toolchains::Darwin_X86(*this, ArchName, 
+                                      getPlatformName().c_str(), 
+                                      getOSName().c_str());
     else
-      TC = new toolchains::Generic_GCC(*this, ArchName, 
-                                       getPlatformName().c_str(), 
-                                       getOSName().c_str());
+      TC = new toolchains::Darwin_GCC(*this, ArchName, 
+                                      getPlatformName().c_str(), 
+                                      getOSName().c_str());
   }
 
   return TC;
