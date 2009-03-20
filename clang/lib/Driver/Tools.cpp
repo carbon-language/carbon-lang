@@ -438,10 +438,56 @@ void gcc::Link::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
   // The types are (hopefully) good enough.
 }
 
+void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                    Job &Dest, const InputInfo &Output, 
+                                    const InputInfoList &Inputs, 
+                                    const ArgList &Args, 
+                                    const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  assert(Inputs.size() == 1 && "Unexpected number of inputs.");
+  const InputInfo &Input = Inputs[0];
+
+  // Bit of a hack, this is only used for original inputs.
+  if (Input.isFilename() &&
+      strcmp(Input.getFilename(), Input.getBaseInput()) == 0 &&
+      Args.hasArg(options::OPT_g_Group))
+    CmdArgs.push_back("--gstabs");
+  
+  // Derived from asm spec.
+  CmdArgs.push_back("-arch");
+  CmdArgs.push_back(getToolChain().getArchName().c_str());
+
+  CmdArgs.push_back("-force_cpusubtype_ALL");
+  if ((Args.hasArg(options::OPT_mkernel) ||
+       Args.hasArg(options::OPT_static) ||
+       Args.hasArg(options::OPT_fapple_kext)) &&
+      !Args.hasArg(options::OPT_dynamic))
+      CmdArgs.push_back("-static");
+  
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  assert(Output.isFilename() && "Unexpected lipo output.");
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  if (Input.isPipe()) {
+    CmdArgs.push_back("-");
+  } else {
+    assert(Input.isFilename() && "Invalid input.");
+    CmdArgs.push_back(Input.getFilename());
+  }
+
+  // asm_final spec is empty.
+
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));
+}
 
 void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
-                                Job &Dest,
-                                const InputInfo &Output, 
+                                Job &Dest, const InputInfo &Output, 
                                 const InputInfoList &Inputs, 
                                 const ArgList &Args, 
                                 const char *LinkingOutput) const {

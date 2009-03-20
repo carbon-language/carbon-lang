@@ -111,9 +111,25 @@ namespace gcc {
 } // end namespace gcc
 
 namespace darwin {
+  class VISIBILITY_HIDDEN Assemble : public Tool  {
+  public:
+    Assemble(const ToolChain &TC) : Tool("darwin::Assemble", TC) {}
+
+    virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return false; }
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
+  };
+
   class VISIBILITY_HIDDEN Lipo : public Tool  {
   public:
-    Lipo(const ToolChain &TC) : Tool("gcc::Link", TC) {}
+    Lipo(const ToolChain &TC) : Tool("darwin::Lipo", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }

@@ -44,7 +44,7 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
     case Action::CompileJobClass:
       T = new tools::gcc::Compile(*this); break;
     case Action::AssembleJobClass:
-      T = new tools::gcc::Assemble(*this); break;
+      T = new tools::darwin::Assemble(*this); break;
     case Action::LinkJobClass:
       T = new tools::gcc::Link(*this); break;
     case Action::LipoJobClass:
