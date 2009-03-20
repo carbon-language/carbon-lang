@@ -332,6 +332,20 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
       const ObjCInterfaceDecl *OID = KE->getClassProp();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
     }
+    else if (isa<ObjCSuperExpr>(KE->getBase())) {
+      Receiver = LoadObjCSelf();
+      const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
+      bool isClassMessage = OMD->isClassMethod();
+      bool isCategoryImpl = isa<ObjCCategoryImplDecl>(OMD->getDeclContext());
+      return CGM.getObjCRuntime().GenerateMessageSendSuper(*this, 
+                                                    KE->getType(),
+                                                    S,
+                                                    OMD->getClassInterface(),
+                                                    isCategoryImpl,
+                                                    Receiver,
+                                                    isClassMessage,
+                                                    CallArgList());
+    }
     else 
       Receiver = EmitScalarExpr(KE->getBase());
     return CGM.getObjCRuntime().
@@ -360,7 +374,22 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
       const ObjCInterfaceDecl *OID = E->getClassProp();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
     }
-    else 
+    else if (isa<ObjCSuperExpr>(E->getBase())) {
+      Receiver = LoadObjCSelf();
+      const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
+      bool isClassMessage = OMD->isClassMethod();
+      bool isCategoryImpl = isa<ObjCCategoryImplDecl>(OMD->getDeclContext());
+      CGM.getObjCRuntime().GenerateMessageSendSuper(*this, 
+                                                    E->getType(),
+                                                    S,
+                                                    OMD->getClassInterface(),
+                                                    isCategoryImpl,
+                                                    Receiver,
+                                                    isClassMessage,
+                                                    Args);
+      return;
+    }
+    else
       Receiver = EmitScalarExpr(E->getBase());
     Args.push_back(std::make_pair(Src, E->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
