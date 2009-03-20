@@ -191,18 +191,21 @@ MVT PIC16TargetLowering::getSetCCResultType(MVT ValType) const {
   return MVT::i8;
 }
 
-/// FIXME: These three functions below should not be here if we change 
-/// the generic code to allow generting libcalls for I8 types as well.
+/// The type legalizer framework of generating legalizer can generate libcalls
+/// only when the operand/result types are illegal.
+/// PIC16 needs to generate libcalls even for the legal types (i8) for some ops.
+/// For example an arithmetic right shift. These functions are used to lower
+/// such operations that generate libcall for legal types.
 
 void 
 PIC16TargetLowering::setPIC16LibcallName(PIC16ISD::PIC16Libcall Call,
                                          const char *Name) {
- PIC16LibcallNames[Call] = Name; 
+  PIC16LibcallNames[Call] = Name; 
 }
 
 const char *
 PIC16TargetLowering::getPIC16LibcallName(PIC16ISD::PIC16Libcall Call) {
- return PIC16LibcallNames[Call];
+  return PIC16LibcallNames[Call];
 }
 
 SDValue
@@ -211,23 +214,23 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
                                       unsigned NumOps, bool isSigned,
                                       SelectionDAG &DAG, DebugLoc dl) {
 
- TargetLowering::ArgListTy Args;
- Args.reserve(NumOps);
+  TargetLowering::ArgListTy Args;
+  Args.reserve(NumOps);
 
- TargetLowering::ArgListEntry Entry;
- for (unsigned i = 0; i != NumOps; ++i) {
-   Entry.Node = Ops[i];
-   Entry.Ty = Entry.Node.getValueType().getTypeForMVT();
-   Entry.isSExt = isSigned;
-   Entry.isZExt = !isSigned;
-   Args.push_back(Entry);
- }
- SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), MVT::i8);
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    Entry.Node = Ops[i];
+    Entry.Ty = Entry.Node.getValueType().getTypeForMVT();
+    Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
+    Args.push_back(Entry);
+  }
+  SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), MVT::i8);
 
-  const Type *RetTy = RetVT.getTypeForMVT();
-  std::pair<SDValue,SDValue> CallInfo = 
+   const Type *RetTy = RetVT.getTypeForMVT();
+   std::pair<SDValue,SDValue> CallInfo = 
      LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                     false, CallingConv::C, false, Callee, Args, DAG, dl);
+                 false, CallingConv::C, false, Callee, Args, DAG, dl);
 
   return CallInfo.first;
 }
