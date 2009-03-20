@@ -622,9 +622,12 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     break;
   }
 
+  // GNUMode - Set if we're in gnu99, gnu89, gnucxx98, etc.
+  Options.GNUMode = LangStd >= lang_gnu_START;
+  
   if (Options.CPlusPlus) {
     Options.C99 = 0;
-    Options.HexFloats = (LangStd == lang_gnucxx98 || LangStd==lang_gnucxx0x);
+    Options.HexFloats = Options.GNUMode;
   }
   
   if (LangStd == lang_c89 || LangStd == lang_c94 || LangStd == lang_gnu89)
@@ -634,15 +637,15 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs or -ansi
   // is specified, or -std is set to a conforming mode.  
-  Options.Trigraphs = LangStd < lang_gnu_START;
+  Options.Trigraphs = !Options.GNUMode;
   if (Trigraphs.getPosition())
-    Options.Trigraphs = Trigraphs;  // Command line option wins.
+    Options.Trigraphs = Trigraphs;  // Command line option wins if specified.
 
   // If in a conformant language mode (e.g. -std=c99) Blocks defaults to off
   // even if they are normally on for the target.  In GNU modes (e.g.
   // -std=gnu99) the default for blocks depends on the target settings.
   // However, blocks are not turned off when compiling Obj-C or Obj-C++ code.
-  if (!Options.ObjC1 && LangStd < lang_gnu_START)
+  if (!Options.ObjC1 && !Options.GNUMode)
     Options.Blocks = 0;
   
   // Never accept '$' in identifiers when preprocessing assembler.
