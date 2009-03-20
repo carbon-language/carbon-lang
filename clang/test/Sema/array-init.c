@@ -201,8 +201,8 @@ int bar (void) {
   return z.z; 
 } 
 struct s3 {void (*a)(void);} t5 = {autoStructTest};
-// Note that clang objc implementation depends on this extension.
-struct {int a; int b[];} t6 = {1, {1, 2, 3}};
+struct {int a; int b[];} t6 = {1, {1, 2, 3}}; // expected-warning{{flexible array initialization is a GNU extension}} \
+// expected-note{{initialized flexible array member 'b' is here}}
 union {char a; int b;} t7[] = {1, 2, 3};
 int t8[sizeof t7 == (3*sizeof(int)) ? 1 : -1];
 

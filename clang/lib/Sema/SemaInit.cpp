@@ -481,7 +481,8 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
                         StructuredSubobjectInitIndex,
                         TopLevelObject);
   unsigned EndIndex = (Index == StartIndex? StartIndex : Index - 1);
-  
+  StructuredSubobjectInitList->setType(T);
+
   // Update the structured sub-object initializer so that it's ending
   // range corresponds with the end of the last initializer it used.
   if (EndIndex < ParentIList->getNumInits()) {
@@ -995,23 +996,35 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   }
 
   if (Field == FieldEnd || !Field->getType()->isIncompleteArrayType() || 
-      Index >= IList->getNumInits() || 
-      !isa<InitListExpr>(IList->getInit(Index)))
+      Index >= IList->getNumInits())
     return;
 
   // Handle GNU flexible array initializers.
   if (!TopLevelObject && 
-      cast<InitListExpr>(IList->getInit(Index))->getNumInits() > 0) {
+      (!isa<InitListExpr>(IList->getInit(Index)) ||
+       cast<InitListExpr>(IList->getInit(Index))->getNumInits() > 0)) {
     SemaRef.Diag(IList->getInit(Index)->getSourceRange().getBegin(), 
                   diag::err_flexible_array_init_nonempty)
       << IList->getInit(Index)->getSourceRange().getBegin();
     SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
       << *Field;
     hadError = true;
+    ++Index;
+    return;
+  } else {
+    SemaRef.Diag(IList->getInit(Index)->getSourceRange().getBegin(), 
+                 diag::ext_flexible_array_init)
+      << IList->getInit(Index)->getSourceRange().getBegin();
+    SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
+      << *Field;
   }
 
-  CheckSubElementType(IList, Field->getType(), Index, StructuredList,
-                      StructuredIndex);
+  if (isa<InitListExpr>(IList->getInit(Index)))
+    CheckSubElementType(IList, Field->getType(), Index, StructuredList,
+                        StructuredIndex);
+  else
+    CheckImplicitInitList(IList, Field->getType(), Index, StructuredList,
+                          StructuredIndex);
 }
 
 /// @brief Check the well-formedness of a C99 designated initializer.

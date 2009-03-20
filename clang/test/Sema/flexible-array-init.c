@@ -1,24 +1,24 @@
 // RUN: clang -fsyntax-only -pedantic -verify %s
 struct one {
   int a;
-  int values[];
-} x = {5, {1, 2, 3}};
+  int values[]; // expected-note 3{{initialized flexible array member 'values' is here}}
+} x = {5, {1, 2, 3}}; // expected-warning{{flexible array initialization is a GNU extension}}
 
-struct one x2 = { 5, 1, 2, 3 }; // expected-warning{{excess elements in struct initializer}}
+struct one x2 = { 5, 1, 2, 3 }; // expected-warning{{flexible array initialization is a GNU extension}}
 
 void test() {
-  struct one x3 = {5, {1, 2, 3}};
+  struct one x3 = {5, {1, 2, 3}}; // expected-warning{{flexible array initialization is a GNU extension}}
 }
 
 struct foo { 
   int x; 
-  int y[]; // expected-note 4 {{initialized flexible array member 'y' is here}}
+  int y[]; // expected-note 6 {{initialized flexible array member 'y' is here}}
 }; 
 struct bar { struct foo z; }; // expected-warning {{'z' may not be nested in a struct due to flexible array member}}
      
-struct foo a = { 1, { 2, 3, 4 } };        // Valid.
+struct foo a = { 1, { 2, 3, 4 } };        // expected-warning{{flexible array initialization is a GNU extension}}
 struct bar b = { { 1, { 2, 3, 4 } } };    // expected-error{{non-empty initialization of flexible array member inside subobject}}
-struct bar c = { { 1, { } } };            // Valid. \
+struct bar c = { { 1, { } } };            // // expected-warning{{flexible array initialization is a GNU extension}} \
               // expected-warning{{use of GNU empty initializer extension}} \
               // expected-warning{{zero size arrays are an extension}}
 struct foo d[1] = { { 1, { 2, 3, 4 } } };  // expected-warning{{'struct foo' may not be used as an array element due to flexible array member}} \

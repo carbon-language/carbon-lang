@@ -66,6 +66,8 @@ def err_designator_into_flexible_array_member : Error<
   "designator into flexible array member subobject">;
 def note_flexible_array_member : Note<
   "initialized flexible array member %0 is here">;
+def ext_flexible_array_init : Extension<
+  "flexible array initialization is a GNU extension">;
 
 // Declarations.
 def ext_vla : Extension<
