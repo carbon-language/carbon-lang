@@ -174,7 +174,8 @@ public:
   
   /// getTargetDefines - Appends the target-specific #define values for this
   /// target set to the specified buffer.
-  virtual void getTargetDefines(std::vector<char> &DefineBuffer) const = 0;
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &DefineBuffer) const = 0;
   
   /// getTargetBuiltins - Return information about target-specific builtins for
   /// the current primary target, and info about which builtins are non-portable

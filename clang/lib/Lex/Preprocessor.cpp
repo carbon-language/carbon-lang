@@ -641,7 +641,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, MacroBuf);
   
   // Get other target #defines.
-  TI.getTargetDefines(Buf);
+  TI.getTargetDefines(PP.getLangOptions(), Buf);
   
   // FIXME: Should emit a #line directive here.
 }

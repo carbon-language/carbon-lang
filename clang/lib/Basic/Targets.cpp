@@ -181,7 +181,8 @@ public:
     NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   
-  virtual void getTargetDefines(std::vector<char> &Defines) const;
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const;
   
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
@@ -227,7 +228,8 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
   
 /// PPCTargetInfo::getTargetDefines - Return a set of the PowerPC-specific
 /// #defines that are not tied to a specific subtarget.
-void PPCTargetInfo::getTargetDefines(std::vector<char> &Defs) const {
+void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
+                                     std::vector<char> &Defs) const {
   // Target identification.
   Define(Defs, "__ppc__");
   Define(Defs, "_ARCH_PPC");
@@ -351,8 +353,9 @@ namespace {
 class DarwinPPCTargetInfo : public PPC32TargetInfo {
 public:
   DarwinPPCTargetInfo(const std::string& triple) : PPC32TargetInfo(triple) {}
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    PPC32TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    PPC32TargetInfo::getTargetDefines(Opts, Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
 
@@ -369,8 +372,9 @@ namespace {
 class DarwinPPC64TargetInfo : public PPC64TargetInfo {
 public:
   DarwinPPC64TargetInfo(const std::string& triple) : PPC64TargetInfo(triple) {}
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    PPC64TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    PPC64TargetInfo::getTargetDefines(Opts, Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
 
@@ -450,7 +454,8 @@ public:
   virtual const char *getClobbers() const {
     return "~{dirflag},~{fpsr},~{flags}";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const;
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const;
   
   virtual int HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
                                    std::string &ErrorReason);
@@ -499,7 +504,8 @@ int X86TargetInfo::HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
 
 /// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines
 /// that are not tied to a specific subtarget.
-void X86TargetInfo::getTargetDefines(std::vector<char> &Defs) const {
+void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
+                                     std::vector<char> &Defs) const {
   // Target identification.
   if (PointerWidth == 64) {
     Define(Defs, "_LP64");
@@ -626,8 +632,9 @@ public:
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:128:128";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -648,8 +655,9 @@ public:
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
     getFreeBSDDefines(Defines, 0, getTargetTriple());
   }
 };
@@ -664,8 +672,9 @@ public:
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
     getDragonFlyDefines(Defines);
   }
 };
@@ -681,8 +690,9 @@ public:
     PtrDiffType = SignedInt;
     IntPtrType = SignedInt;
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
     getLinuxDefines(Defines);
   }
 };
@@ -700,8 +710,9 @@ public:
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
     // This list is based off of the the list of things MingW defines
     Define(Defines, "__WIN32__");
     Define(Defines, "__WIN32");
@@ -720,7 +731,7 @@ namespace {
 // x86-64 generic target
 class X86_64TargetInfo : public X86TargetInfo {
 public:
-  X86_64TargetInfo(const std::string& triple) : X86TargetInfo(triple) {
+  X86_64TargetInfo(const std::string &triple) : X86TargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     DoubleAlign = LongLongAlign = 64;
     LongDoubleWidth = 128;
@@ -747,9 +758,11 @@ namespace {
 // x86-64 FreeBSD target
 class FreeBSDX86_64TargetInfo : public X86_64TargetInfo {
 public:
-  FreeBSDX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {}
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Defines);
+  FreeBSDX86_64TargetInfo(const std::string &triple)
+    : X86_64TargetInfo(triple) {}
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Defines);
     getFreeBSDDefines(Defines, 1, getTargetTriple());
   }
 };
@@ -762,8 +775,9 @@ public:
   LinuxX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
     UserLabelPrefix = "";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Defines);
     getLinuxDefines(Defines);
   }
 };
@@ -776,8 +790,9 @@ public:
   DarwinX86_64TargetInfo(const std::string& triple) :
     X86_64TargetInfo(triple) {}
 
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
 
@@ -798,7 +813,8 @@ public:
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
   }
-  virtual void getTargetDefines(std::vector<char> &Defs) const {
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defs) const {
     // Target identification.
     Define(Defs, "__arm");
     Define(Defs, "__arm__");
@@ -862,8 +878,9 @@ class DarwinARMTargetInfo : public ARMTargetInfo {
 public:
   DarwinARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {}
 
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    ARMTargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    ARMTargetInfo::getTargetDefines(Opts, Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
 };
@@ -879,7 +896,8 @@ public:
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64";
   }
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
     // FIXME: This is missing a lot of important defines; some of the
     // missing stuff is likely to break system headers.
     Define(Defines, "__sparc");
@@ -975,8 +993,9 @@ public:
     PtrDiffType = SignedInt;
   }
 
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    SparcV8TargetInfo::getTargetDefines(Defines);
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    SparcV8TargetInfo::getTargetDefines(Opts, Defines);
     getSolarisDefines(Defines);
   }
 };
@@ -1001,7 +1020,8 @@ namespace {
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
     virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 8; }
-    virtual void getTargetDefines(std::vector<char> &Defines) const {
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  std::vector<char> &Defines) const {
       Define(Defines, "__pic16");
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
