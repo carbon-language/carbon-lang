@@ -104,7 +104,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
     QualType ArgType = FnType->getArgType(0);
     if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType()) {
       ArgType = Ref->getPointeeType();
-      // Is it a non-const reference?
+      // Is it a non-const lvalue reference?
       if (!ArgType.isConstQualified())
         AcceptsConst = false;
     }
