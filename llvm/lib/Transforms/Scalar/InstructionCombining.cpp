@@ -7307,22 +7307,34 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     Value *X = ShiftOp->getOperand(0);
     
     uint32_t AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
-    if (AmtSum > TypeBits)
-      AmtSum = TypeBits;
     
     const IntegerType *Ty = cast<IntegerType>(I.getType());
     
     // Check for (X << c1) << c2  and  (X >> c1) >> c2
     if (I.getOpcode() == ShiftOp->getOpcode()) {
+      // If this is oversized composite shift, then unsigned shifts get 0, ashr
+      // saturates.
+      if (AmtSum >= TypeBits) {
+        if (I.getOpcode() != Instruction::AShr)
+          return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+        AmtSum = TypeBits-1;  // Saturate to 31 for i32 ashr.
+      }
+      
       return BinaryOperator::Create(I.getOpcode(), X,
                                     ConstantInt::get(Ty, AmtSum));
     } else if (ShiftOp->getOpcode() == Instruction::LShr &&
                I.getOpcode() == Instruction::AShr) {
+      if (AmtSum >= TypeBits)
+        return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+      
       // ((X >>u C1) >>s C2) -> (X >>u (C1+C2))  since C1 != 0.
       return BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, AmtSum));
     } else if (ShiftOp->getOpcode() == Instruction::AShr &&
                I.getOpcode() == Instruction::LShr) {
       // ((X >>s C1) >>u C2) -> ((X >>s (C1+C2)) & mask) since C1 != 0.
+      if (AmtSum >= TypeBits)
+        AmtSum = TypeBits-1;
+      
       Instruction *Shift =
         BinaryOperator::CreateAShr(X, ConstantInt::get(Ty, AmtSum));
       InsertNewInstBefore(Shift, I);
