@@ -75,7 +75,7 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
     Arg *A = getOpts().ParseOneArg(*Args, Index, End);
     if (A) {
       if (A->getOption().isUnsupported()) {
-        Diag(clang::diag::err_drv_unsupported_opt) << A->getOption().getName();
+        Diag(clang::diag::err_drv_unsupported_opt) << A->getAsString(*Args);
         continue;
       }
 
@@ -368,10 +368,10 @@ void Driver::BuildUniversalActions(const ArgList &Args,
     // overwriting the same files.
     if (const Arg *A = Args.getLastArg(options::OPT_M_Group))
       Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs) 
-        << A->getOption().getName();
+        << A->getAsString(Args);
     if (const Arg *A = Args.getLastArg(options::OPT_save_temps))
       Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs) 
-        << A->getOption().getName();
+        << A->getAsString(Args);
   }
 
   ActionList SingleActions;
@@ -534,7 +534,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
   // Reject -Z* at the top level, these options should never have been
   // exposed by gcc.
   if (Arg *A = Args.getLastArg(options::OPT_Z))
-    Diag(clang::diag::err_drv_use_of_Z_option) << A->getValue(Args);
+    Diag(clang::diag::err_drv_use_of_Z_option) << A->getAsString(Args);
 
   // Construct the actions to perform.
   ActionList LinkerInputs;
@@ -552,7 +552,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
       // Claim here to avoid the more general unused warning.
       InputArg->claim();
       Diag(clang::diag::warn_drv_input_file_unused) 
-        << InputArg->getValue(Args)
+        << InputArg->getAsString(Args)
         << getPhaseName(InitialPhase)
         << FinalPhaseArg->getOption().getName();
       continue;
@@ -699,7 +699,7 @@ void Driver::BuildJobs(Compilation &C) const {
     // printed.
     if (!A->isClaimed())
       Diag(clang::diag::warn_drv_unused_argument) 
-        << A->getOption().getName();
+        << A->getAsString(C.getArgs());
   }
 }
 

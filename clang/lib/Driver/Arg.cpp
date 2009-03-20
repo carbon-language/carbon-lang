@@ -50,6 +50,22 @@ void Arg::dump() const {
   llvm::errs() << ">\n";
 }
 
+std::string Arg::getAsString(const ArgList &Args) const {
+  std::string Res;
+  llvm::raw_string_ostream OS(Res);
+
+  ArgStringList ASL;
+  render(Args, ASL);
+  for (ArgStringList::iterator 
+         it = ASL.begin(), ie = ASL.end(); it != ie; ++it) {
+    if (it != ASL.begin())
+      OS << ' ';
+    OS << *it;
+  }
+
+  return OS.str();
+}
+
 void Arg::renderAsInput(const ArgList &Args, ArgStringList &Output) const {
   if (!getOption().hasNoOptAsInput()) {
     render(Args, Output);

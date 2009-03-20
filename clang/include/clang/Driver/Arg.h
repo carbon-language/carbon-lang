@@ -95,6 +95,10 @@ namespace driver {
     static bool classof(const Arg *) { return true; }    
 
     void dump() const;
+
+    /// getAsString - Return a formatted version of the argument and
+    /// its values, for debugging and diagnostics.
+    std::string getAsString(const ArgList &Args) const;
   };
 
   /// FlagArg - An argument with no value.
