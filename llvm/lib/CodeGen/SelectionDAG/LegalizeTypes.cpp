@@ -873,11 +873,11 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
 /// CustomLowerResults - Replace the node's results with custom code provided
 /// by the target and return "true", or do nothing and return "false".
 /// The last parameter is FALSE if we are dealing with a node with legal
-/// result types and illegal operand. The second parameter denotes the illegal
-/// OperandNo in that case.
+/// result types and illegal operand. The second parameter denotes the type of
+/// illegal OperandNo in that case.
 /// The last parameter being TRUE means we are dealing with a
-/// node with illegal result types. The second parameter denotes the illegal
-/// ResNo in that case.
+/// node with illegal result types. The second parameter denotes the type of
+/// illegal ResNo in that case.
 bool DAGTypeLegalizer::CustomLowerResults(SDNode *N, MVT VT,
                                           bool LegalizeResult) {
   // See if the target wants to custom lower this node.
