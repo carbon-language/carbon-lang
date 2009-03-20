@@ -1440,6 +1440,28 @@ template<> struct GRStateTrait<AutoreleasePoolContents>
 };
 } // end clang namespace
 
+static SymbolRef GetCurrentAutoreleasePool(const GRState* state) {
+  ARStack stack = state->get<AutoreleaseStack>();
+  return stack.isEmpty() ? SymbolRef() : stack.getHead();
+}
+
+static GRStateRef SendAutorelease(GRStateRef state, ARCounts::Factory &F,
+                                  SymbolRef sym) {
+
+  SymbolRef pool = GetCurrentAutoreleasePool(state);
+  const ARCounts *cnts = state.get<AutoreleasePoolContents>(pool);
+  ARCounts newCnts(0);
+  
+  if (cnts) {
+    const unsigned *cnt = (*cnts).lookup(sym);
+    newCnts = F.Add(*cnts, sym, cnt ? *cnt  + 1 : 1);
+  }
+  else
+    newCnts = F.Add(F.GetEmptyMap(), sym, 1);
+  
+  return state.set<AutoreleasePoolContents>(pool, newCnts);
+}
+
 //===----------------------------------------------------------------------===//
 // Transfer functions.
 //===----------------------------------------------------------------------===//
@@ -1567,9 +1589,26 @@ public:
 
 } // end anonymous namespace
 
+static void PrintPool(std::ostream &Out, SymbolRef Sym, const GRState *state) {
+  Out << ' ';
+  if (Sym.isValid())
+    Out << Sym;
+  else
+    Out << "<pool>";
+  Out << ":{";
+    
+  // Get the contents of the pool.
+  if (const ARCounts *cnts = state->get<AutoreleasePoolContents>(Sym))
+    for (ARCounts::iterator J=cnts->begin(), EJ=cnts->end(); J != EJ; ++J)
+      Out << '(' << J.getKey() << ',' << J.getData() << ')';
+
+  Out << '}';  
+}
 
 void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
                                         const char* nl, const char* sep) {
+  
+  
     
   RefBindings B = state->get<RefBindings>();
   
@@ -1583,15 +1622,14 @@ void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
   }
   
   // Print the autorelease stack.
+  Out << sep << nl << "AR pool stack:";
   ARStack stack = state->get<AutoreleaseStack>();
-  if (!stack.isEmpty()) {
-    Out << sep << nl << "AR pool stack:";
   
-    for (ARStack::iterator I=stack.begin(), E=stack.end(); I!=E; ++I)
-      Out << ' ' << (*I);
-    
-    Out << nl;
-  }
+  PrintPool(Out, SymbolRef(), state);  // Print the caller's pool.
+  for (ARStack::iterator I=stack.begin(), E=stack.end(); I!=E; ++I)
+    PrintPool(Out, *I, state);
+
+  Out << nl;
 }
 
 static inline ArgEffect GetArgE(RetainSummary* Summ, unsigned idx) {
@@ -2230,6 +2268,9 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
     case Autorelease:
       if (isGCEnabled())
         return state;
+      
+      // Update the autorelease counts.
+      state = SendAutorelease(state, ARCountFactory, sym);
 
       // Fall-through.
       
