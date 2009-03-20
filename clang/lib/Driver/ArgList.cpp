@@ -162,3 +162,16 @@ void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0) const {
     }
   }
 }
+
+void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0, 
+                              options::ID Id1) const {
+  // FIXME: Make fast.
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(Id0) || A->getOption().matches(Id1)) {
+      A->claim();
+      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
+        Output.push_back(A->getValue(*this, i));
+    }
+  }
+}

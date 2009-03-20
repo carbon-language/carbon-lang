@@ -129,13 +129,16 @@ namespace driver {
 
     /// AddAllArgs - Render all arguments matching the given ids.
     void AddAllArgs(ArgStringList &Output, options::ID Id0) const;
-    void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1) const;
+    void AddAllArgs(ArgStringList &Output, options::ID Id0, 
+                    options::ID Id1) const;
     void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1, 
                     options::ID Id2) const;
 
     /// AddAllArgValues - Render the argument values of all arguments
     /// matching the given ids.
     void AddAllArgValues(ArgStringList &Output, options::ID Id0) const;
+    void AddAllArgValues(ArgStringList &Output, options::ID Id0, 
+                         options::ID Id1) const;
 
     /// @}
   };
