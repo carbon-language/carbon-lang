@@ -2348,12 +2348,13 @@ private:
   Action::OwningExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
   bool SemaBuiltinPrefetch(CallExpr *TheCall); 
   bool SemaBuiltinObjectSize(CallExpr *TheCall); 
-  bool SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
-                              unsigned format_idx, unsigned firstDataArg);
-  void CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
-                         CallExpr *TheCall, bool HasVAListArg,
+  bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
+                              bool HasVAListArg, unsigned format_idx,
+                              unsigned firstDataArg);
+  void CheckPrintfString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
+                         const CallExpr *TheCall, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg);
-  void CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg, 
+  void CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg, 
                             unsigned format_idx, unsigned firstDataArg);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);

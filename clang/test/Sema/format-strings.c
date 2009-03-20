@@ -99,3 +99,17 @@ void __attribute__((format(printf,1,3))) myprintf(const char*, int blah, ...);
 void test_myprintf() {
   myprintf("%d", 17, 18); // okay
 }
+
+void test_constant_bindings(void) {
+  const char * const s1 = "hello";
+  const char s2[] = "hello";
+  const char *s3 = "hello";
+  char * const s4 = "hello";
+  extern const char s5[];
+  
+  printf(s1); // no-warning
+  printf(s2); // no-warning
+  printf(s3); // expected-warning{{not a string literal}}
+  printf(s4); // expected-warning{{not a string literal}}
+  printf(s5); // expected-warning{{not a string literal}}
+}

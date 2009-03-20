@@ -270,7 +270,7 @@ public:
   /// from a previous declaration. Def will be set to the VarDecl that
   /// contains the initializer, and the result will be that
   /// initializer.
-  const Expr *getDefinition(const VarDecl *&Def);
+  const Expr *getDefinition(const VarDecl *&Def) const;
 
   void setThreadSpecified(bool T) { ThreadSpecified = T; }
   bool isThreadSpecified() const {

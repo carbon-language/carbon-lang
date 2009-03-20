@@ -423,12 +423,13 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
 }
 
 // Handle i > 1 ? "x" : "y", recursivelly
-bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
+bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
+                                  bool HasVAListArg,
                                   unsigned format_idx, unsigned firstDataArg) {
 
   switch (E->getStmtClass()) {
   case Stmt::ConditionalOperatorClass: {
-    ConditionalOperator *C = cast<ConditionalOperator>(E);
+    const ConditionalOperator *C = cast<ConditionalOperator>(E);
     return SemaCheckStringLiteral(C->getLHS(), TheCall,
                                   HasVAListArg, format_idx, firstDataArg)
         && SemaCheckStringLiteral(C->getRHS(), TheCall,
@@ -436,26 +437,54 @@ bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
   }
 
   case Stmt::ImplicitCastExprClass: {
-    ImplicitCastExpr *Expr = dyn_cast<ImplicitCastExpr>(E);
+    const ImplicitCastExpr *Expr = cast<ImplicitCastExpr>(E);
     return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
                                   format_idx, firstDataArg);
   }
 
   case Stmt::ParenExprClass: {
-    ParenExpr *Expr = dyn_cast<ParenExpr>(E);
+    const ParenExpr *Expr = cast<ParenExpr>(E);
     return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
                                   format_idx, firstDataArg);
   }
+      
+  case Stmt::DeclRefExprClass: {
+    const DeclRefExpr *DR = cast<DeclRefExpr>(E);
+    
+    // As an exception, do not flag errors for variables binding to
+    // const string literals.
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+      bool isConstant = false;
+      QualType T = DR->getType();
 
-  default: {
-    ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(E);
-    StringLiteral *StrE = NULL;
+      if (const ArrayType *AT = Context.getAsArrayType(T)) {
+        isConstant = AT->getElementType().isConstant(Context);
+      }
+      else if (const PointerType *PT = T->getAsPointerType()) {
+        isConstant = T.isConstant(Context) && 
+                     PT->getPointeeType().isConstant(Context);
+      }
+        
+      if (isConstant) {
+        const VarDecl *Def = 0;
+        if (const Expr *Init = VD->getDefinition(Def))
+          return SemaCheckStringLiteral(Init, TheCall,
+                                        HasVAListArg, format_idx, firstDataArg);
+      }
+    }
+        
+    return false;
+  }
 
-    if (ObjCFExpr)
+  case Stmt::ObjCStringLiteralClass:
+  case Stmt::StringLiteralClass: {
+    const StringLiteral *StrE = NULL;
+    
+    if (const ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(E))
       StrE = ObjCFExpr->getString();
     else
-      StrE = dyn_cast<StringLiteral>(E);
-
+      StrE = cast<StringLiteral>(E);
+    
     if (StrE) {
       CheckPrintfString(StrE, E, TheCall, HasVAListArg, format_idx, 
                         firstDataArg);
@@ -464,6 +493,9 @@ bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
     
     return false;
   }
+      
+  default:
+    return false;
   }
 }
 
@@ -518,9 +550,9 @@ bool Sema::SemaCheckStringLiteral(Expr *E, CallExpr *TheCall, bool HasVAListArg,
 ///
 /// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
 void
-Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg, 
+Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg, 
                            unsigned format_idx, unsigned firstDataArg) {
-  Expr *Fn = TheCall->getCallee();
+  const Expr *Fn = TheCall->getCallee();
 
   // CHECK: printf-like function is called with no format string.  
   if (format_idx >= TheCall->getNumArgs()) {
@@ -529,7 +561,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     return;
   }
   
-  Expr *OrigFormatExpr = TheCall->getArg(format_idx)->IgnoreParenCasts();
+  const Expr *OrigFormatExpr = TheCall->getArg(format_idx)->IgnoreParenCasts();
   
   // CHECK: format string is not a string literal.
   // 
@@ -567,22 +599,25 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     //    if the argument is a DeclRefExpr that references a parameter.  We'll
     //    add proper support for checking the attribute later.
     if (HasVAListArg)
-      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(OrigFormatExpr))
+      if (const DeclRefExpr* DR = dyn_cast<DeclRefExpr>(OrigFormatExpr))
         if (isa<ParmVarDecl>(DR->getDecl()))
           return;
 
     Diag(TheCall->getArg(format_idx)->getLocStart(), 
          diag::warn_printf_not_string_constant)
-      << OrigFormatExpr->getSourceRange();
+         << OrigFormatExpr->getSourceRange();
     return;
   }
 }
 
-void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
-      CallExpr *TheCall, bool HasVAListArg, unsigned format_idx,
-                             unsigned firstDataArg) {
+void Sema::CheckPrintfString(const StringLiteral *FExpr,
+                             const Expr *OrigFormatExpr,
+                             const CallExpr *TheCall, bool HasVAListArg,
+                             unsigned format_idx, unsigned firstDataArg) {
 
-  ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
+  const ObjCStringLiteral *ObjCFExpr =
+    dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
+
   // CHECK: is the format string a wide literal?
   if (FExpr->isWide()) {
     Diag(FExpr->getLocStart(),
@@ -673,7 +708,7 @@ void Sema::CheckPrintfString(StringLiteral *FExpr, Expr *OrigFormatExpr,
       }
       
       // Perform type checking on width/precision specifier.
-      Expr *E = TheCall->getArg(format_idx+numConversions);
+      const Expr *E = TheCall->getArg(format_idx+numConversions);
       if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
         if (BT->getKind() == BuiltinType::Int)
           break;

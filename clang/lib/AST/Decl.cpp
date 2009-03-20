@@ -281,7 +281,7 @@ bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
           (getStorageClass() == None || getStorageClass() == Static));
 }
 
-const Expr *VarDecl::getDefinition(const VarDecl *&Def) {
+const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
   Def = this;
   while (Def && !Def->getInit())
     Def = Def->getPreviousDeclaration();
