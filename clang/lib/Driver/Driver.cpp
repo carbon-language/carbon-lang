@@ -791,7 +791,10 @@ void Driver::BuildJobsForAction(Compilation &C,
     PipedJob *PJ = dyn_cast<PipedJob>(Dest);
     if (!PJ) {
       PJ = new PipedJob();
-      cast<JobList>(Dest)->addJob(PJ);
+      // FIXME: Temporary hack so that -ccc-print-bindings work until
+      // we have pipe support. Please remove later.
+      if (!CCCPrintBindings)
+        cast<JobList>(Dest)->addJob(PJ);
       Dest = PJ;
     }
     Result = InputInfo(PJ, A->getType(), BaseInput);
