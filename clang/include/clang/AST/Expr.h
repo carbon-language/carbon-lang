@@ -969,6 +969,11 @@ public:
 
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
+
+  /// \brief Retrieve the member declaration to which this expression refers.
+  ///
+  /// The returned declaration will either be a FieldDecl or (in C++)
+  /// a CXXMethodDecl.
   NamedDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
   bool isArrow() const { return IsArrow; }
