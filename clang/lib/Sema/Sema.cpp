@@ -295,3 +295,19 @@ NamedDecl *Sema::getCurFunctionOrMethodDecl() {
   return 0;
 }
 
+Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
+  this->Emit();
+  
+  // If this is not a note, and we're in a template instantiation
+  // that is different from the last template instantiation where
+  // we emitted an error, print a template instantiation
+  // backtrace.
+  if (!SemaRef.Diags.isBuiltinNote(DiagID) &&
+      !SemaRef.ActiveTemplateInstantiations.empty() &&
+      SemaRef.ActiveTemplateInstantiations.back() 
+        != SemaRef.LastTemplateInstantiationErrorContext) {
+    SemaRef.PrintInstantiationStack();
+    SemaRef.LastTemplateInstantiationErrorContext 
+      = SemaRef.ActiveTemplateInstantiations.back();
+  }
+}

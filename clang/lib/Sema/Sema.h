@@ -241,15 +241,30 @@ public:
   Diagnostic &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
 
-  /// The primitive diagnostic helpers.
-  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+  /// \brief Helper class that creates diagnostics with optional
+  /// template instantiation stacks.
+  ///
+  /// This class provides a wrapper around the basic DiagnosticBuilder
+  /// class that emits diagnostics. SemaDiagnosticBuilder is
+  /// responsible for emitting the diagnostic (as DiagnosticBuilder
+  /// does) and, if the diagnostic comes from inside a template
+  /// instantiation, printing the template instantiation stack as
+  /// well.
+  class SemaDiagnosticBuilder : public DiagnosticBuilder {
+    Sema &SemaRef;
+    unsigned DiagID;
+
+  public:
+    SemaDiagnosticBuilder(DiagnosticBuilder &DB, Sema &SemaRef, unsigned DiagID)
+      : DiagnosticBuilder(DB), SemaRef(SemaRef), DiagID(DiagID) { }
+
+    ~SemaDiagnosticBuilder();
+  };
+
+  /// \brief Emit a diagnostic.
+  SemaDiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
     DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
-    if (!Diags.isBuiltinNote(DiagID) && 
-        !ActiveTemplateInstantiations.empty() &&
-        ActiveTemplateInstantiations.back() 
-          != LastTemplateInstantiationErrorContext)
-      DB << PostDiagnosticHook(PrintInstantiationStackHook, this);
-    return DB;
+    return SemaDiagnosticBuilder(DB, *this, DiagID);
   }
 
   virtual void DeleteExpr(ExprTy *E);
@@ -1858,7 +1873,6 @@ public:
     operator=(const InstantiatingTemplate&); // not implemented
   };
 
-  static void PrintInstantiationStackHook(unsigned DiagID, void *Cookie);
   void PrintInstantiationStack();
 
   QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,

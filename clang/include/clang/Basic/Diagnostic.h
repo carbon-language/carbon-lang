@@ -125,33 +125,6 @@ public:
   }
 };
 
-/// \brief A hook function that will be invoked after we have
-/// completed processing of the current diagnostic.
-///
-/// Hook functions are typically used to emit further diagnostics
-/// (typically notes) that give more information about this
-/// diagnostic.
-struct PostDiagnosticHook {
-  /// \brief The type of the hook function itself.
-  ///
-  /// DiagID is the ID of the diagnostic to which the hook was
-  /// attached, and Cookie is a user-specified value that can be used
-  /// to store extra data for the hook.
-  typedef void (*HookTy)(unsigned DiagID, void *Cookie);
-
-  PostDiagnosticHook() {}
-
-  PostDiagnosticHook(HookTy Hook, void *Cookie) : Hook(Hook), Cookie(Cookie) {
-    assert(Hook && "No hook provided!");
-  }
-
-  /// \brief The hook function.
-  HookTy Hook;
-
-  /// \brief The cookie that will be passed along to the hook function.
-  void *Cookie;
-};
-
 /// Diagnostic - This concrete class is used by the front-end to report
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
@@ -363,9 +336,6 @@ private:
   /// \brief The number of code modifications hints in the
   /// CodeModificationHints array.
   unsigned char NumCodeModificationHints;
-  /// \brief The number of post-diagnostic hooks in the
-  /// PostDiagnosticHooks array.
-  unsigned char NumPostDiagnosticHooks;
 
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
@@ -393,15 +363,6 @@ private:
   /// to insert, remove, or modify at a particular position.
   CodeModificationHint CodeModificationHints[MaxCodeModificationHints];
 
-  enum { MaxPostDiagnosticHooks = 10 };
-  
-  /// \brief Functions that will be invoked after the diagnostic has
-  /// been emitted.
-  PostDiagnosticHook PostDiagnosticHooks[MaxPostDiagnosticHooks];
-
-  /// \brief Whether we're already within a post-diagnostic hook.
-  bool InPostDiagnosticHook;
-
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
   void ProcessDiag();
@@ -424,14 +385,13 @@ private:
 /// for example.
 class DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
-  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints, 
-                   NumPostDiagnosticHooks;
+  mutable unsigned NumArgs, NumRanges, NumCodeModificationHints;
   
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class Diagnostic;
   explicit DiagnosticBuilder(Diagnostic *diagObj)
     : DiagObj(diagObj), NumArgs(0), NumRanges(0), 
-      NumCodeModificationHints(0), NumPostDiagnosticHooks(0) {}
+      NumCodeModificationHints(0) {}
 
 public:  
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -439,19 +399,25 @@ public:
   DiagnosticBuilder(const DiagnosticBuilder &D) {
     DiagObj = D.DiagObj;
     D.DiagObj = 0;
+    NumArgs = D.NumArgs;
+    NumRanges = D.NumRanges;
+    NumCodeModificationHints = D.NumCodeModificationHints;
   }
-  
-  /// Destructor - The dtor emits the diagnostic.
-  ~DiagnosticBuilder() {
-    // If DiagObj is null, then its soul was stolen by the copy ctor.
+
+  /// \brief Force the diagnostic builder to emit the diagnostic now.
+  ///
+  /// Once this function has been called, the DiagnosticBuilder object
+  /// should not be used again before it is destroyed.
+  void Emit() {
+    // If DiagObj is null, then its soul was stolen by the copy ctor
+    // or the user called Emit().
     if (DiagObj == 0) return;
 
-    // When destroyed, the ~DiagnosticBuilder sets the final argument count into
+    // When emitting diagnostics, we set the final argument count into
     // the Diagnostic object.
     DiagObj->NumDiagArgs = NumArgs;
     DiagObj->NumDiagRanges = NumRanges;
     DiagObj->NumCodeModificationHints = NumCodeModificationHints;
-    DiagObj->NumPostDiagnosticHooks = NumPostDiagnosticHooks;
 
     // Process the diagnostic, sending the accumulated information to the
     // DiagnosticClient.
@@ -459,7 +425,14 @@ public:
 
     // This diagnostic is no longer in flight.
     DiagObj->CurDiagID = ~0U;
+
+    // This diagnostic is dead.
+    DiagObj = 0;
   }
+
+  /// Destructor - The dtor emits the diagnostic if it hasn't already
+  /// been emitted.
+  ~DiagnosticBuilder() { Emit(); }
   
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns
   /// true.  This allows is to be used in boolean error contexts like:
@@ -491,15 +464,6 @@ public:
     assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
            "Too many code modification hints!");
     DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
-  }
-
-  void AddPostDiagnosticHook(const PostDiagnosticHook &Hook) const {
-    assert(!DiagObj->InPostDiagnosticHook &&
-           "Can't add a post-diagnostic hook to a diagnostic inside "
-           "a post-diagnostic hook");
-    assert(NumPostDiagnosticHooks < Diagnostic::MaxPostDiagnosticHooks &&
-           "Too many post-diagnostic hooks");
-    DiagObj->PostDiagnosticHooks[NumPostDiagnosticHooks++] = Hook;
   }
 };
 
@@ -550,13 +514,6 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   DB.AddCodeModificationHint(Hint);
   return DB;
 }
-
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const PostDiagnosticHook &Hook) {
-  DB.AddPostDiagnosticHook(Hook);
-  return DB;
-}
-  
 
 /// Report - Issue the message to the client.  DiagID is a member of the
 /// diag::kind enum.  This actually returns a new instance of DiagnosticBuilder

@@ -93,14 +93,6 @@ bool Sema::InstantiatingTemplate::CheckInstantiationDepth(
   return true;
 }
 
-/// \brief Post-diagnostic hook for printing the instantiation stack.
-void Sema::PrintInstantiationStackHook(unsigned, void *Cookie) {
-  Sema &SemaRef = *static_cast<Sema*>(Cookie);
-  SemaRef.PrintInstantiationStack();
-  SemaRef.LastTemplateInstantiationErrorContext 
-    = SemaRef.ActiveTemplateInstantiations.back();
-}
-
 /// \brief Prints the current instantiation stack through a series of
 /// notes.
 void Sema::PrintInstantiationStack() {

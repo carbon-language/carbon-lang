@@ -221,8 +221,6 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
-
-  InPostDiagnosticHook = false;
 }
 
 Diagnostic::~Diagnostic() {
@@ -411,15 +409,7 @@ void Diagnostic::ProcessDiag() {
   Client->HandleDiagnostic(DiagLevel, Info);
   if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;
 
-  // Invoke any post-diagnostic hooks.
-  unsigned LastDiag = CurDiagID;
   CurDiagID = ~0U;
-  
-  InPostDiagnosticHook = true;
-  for (unsigned Hook = 0; Hook < NumPostDiagnosticHooks; ++Hook)
-    PostDiagnosticHooks[Hook].Hook(LastDiag, 
-                                   PostDiagnosticHooks[Hook].Cookie);
-  InPostDiagnosticHook = false;
 }
 
 
