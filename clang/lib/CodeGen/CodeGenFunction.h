@@ -673,7 +673,9 @@ public:
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E);
   RValue EmitObjCPropertyGet(const Expr *E);
+  RValue EmitObjCSuperPropertyGet(const Expr *Exp, const Selector &S);
   void EmitObjCPropertySet(const Expr *E, RValue Src);
+  void EmitObjCSuperPropertySet(const Expr *E, const Selector &S, RValue Src);
 
 
   //===--------------------------------------------------------------------===//

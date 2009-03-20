@@ -34,9 +34,7 @@
   const char *s1 = __FUNCTION__;
   const char *s2 = __PRETTY_FUNCTION__;
   [super im0];
-#ifndef IRGENABLE
   int x = super.p0;
-#endif
 }
 -(void) im1: (int) x, ... {
 }

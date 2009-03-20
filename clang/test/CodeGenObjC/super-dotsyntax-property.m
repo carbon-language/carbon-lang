@@ -1,6 +1,10 @@
 // RUN: clang -emit-llvm -o %t %s
 
 @interface B
+{
+  int _parent;
+}
+@property int parent;
   +(int) classGetter;
   +(void) setClassGetter:(int) arg;
 
@@ -24,6 +28,10 @@
 -(void) method {
   super.getter = 200;
   int x = super.getter;
+}
+-(void) setParent : (int) arg {
+  super.parent = arg + super.parent;
+  
 }
 @end
 
