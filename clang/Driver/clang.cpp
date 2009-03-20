@@ -934,7 +934,8 @@ static bool InitializePreprocessor(Preprocessor &PP,
   // Add implicit #includes from -include and -include-pth.
   bool handledPTH = ImplicitIncludePTH.empty();
   for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i) {
-    if (!handledPTH) {
+    if (!handledPTH &&
+        ImplicitIncludePTH.getPosition() < ImplicitIncludes.getPosition(i)) {
       AddImplicitIncludePTH(PredefineBuffer, PP);
       handledPTH = true;
     }    
