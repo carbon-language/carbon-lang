@@ -718,8 +718,7 @@ private:
     return ParseBraceInitializer();
   }
   OwningExprResult ParseBraceInitializer();
-  OwningExprResult ParseInitializerWithPotentialDesignator(
-                       InitListDesignations &D, unsigned InitNum);
+  OwningExprResult ParseInitializerWithPotentialDesignator();
 
   //===--------------------------------------------------------------------===//
   // clang Expressions

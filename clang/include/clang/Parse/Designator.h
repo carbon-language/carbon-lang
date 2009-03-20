@@ -192,8 +192,6 @@ public:
 /// Designation - Represent a full designation, which is a sequence of
 /// designators.  This class is mostly a helper for InitListDesignations.
 class Designation {
-  friend class InitListDesignations;
-  
   /// InitIndex - The index of the initializer expression this is for.  For
   /// example, if the initializer were "{ A, .foo=B, C }" a Designation would
   /// exist with InitIndex=1, because element #1 has a designation.
@@ -204,12 +202,15 @@ class Designation {
   
   Designation(unsigned Idx) : InitIndex(Idx) {}
 public:
-  
+  Designation() : InitIndex(4000) {}
+
   /// AddDesignator - Add a designator to the end of this list.
   void AddDesignator(Designator D) {
     Designators.push_back(D);
   }
-  
+
+  bool empty() const { return Designators.empty(); }
+
   unsigned getNumDesignators() const { return Designators.size(); }
   const Designator &getDesignator(unsigned Idx) const {
     assert(Idx < Designators.size());
@@ -230,67 +231,7 @@ public:
       Designators[i].FreeExprs(Actions);
   }
 };
-  
-  
-/// InitListDesignations - This contains all the designators for an
-/// initializer list.  This is somewhat like a two dimensional array of
-/// Designators, but is optimized for the cases when designators are not
-/// present.
-class InitListDesignations {
-  Action &Actions;
-  
-  /// Designations - All of the designators in this init list.  These are kept
-  /// in order sorted by their InitIndex.
-  llvm::SmallVector<Designation, 3> Designations;
-  
-  InitListDesignations(const InitListDesignations&); // DO NOT IMPLEMENT
-  void operator=(const InitListDesignations&);      // DO NOT IMPLEMENT
-public:
-  InitListDesignations(Action &A) : Actions(A) {}
-  
-  ~InitListDesignations() {
-    // Release any unclaimed memory for the expressions in this init list.
-    for (unsigned i = 0, e = Designations.size(); i != e; ++i)
-      Designations[i].FreeExprs(Actions);
-  }
-  
-  bool hasAnyDesignators() const {
-    return !Designations.empty();
-  }
-  
-  Designation &CreateDesignation(unsigned Idx) {
-    assert((Designations.empty() || Designations.back().InitIndex < Idx) &&
-           "not sorted by InitIndex!");
-    Designations.push_back(Designation(Idx));
-    return Designations.back();
-  }
-  
-  /// getDesignationForInitializer - If there is a designator for the specified
-  /// initializer, return it, otherwise return null.
-  const Designation *getDesignationForInitializer(unsigned Idx) const {
-    // The common case is no designators.
-    if (!hasAnyDesignators()) return 0;
-    
-    // FIXME: This should do a binary search, not a linear one.
-    for (unsigned i = 0, e = Designations.size(); i != e; ++i)
-      if (Designations[i].InitIndex == Idx)
-        return &Designations[i];
-    return 0;
-  }
-
-  /// EraseDesignation - If there is a designator for the specified initializer
-  /// index, remove it.
-  void EraseDesignation(unsigned Idx) {
-    Designation *D =const_cast<Designation*>(getDesignationForInitializer(Idx));
-    if (D == 0) return;  // No designator.
-    
-    D->FreeExprs(Actions);
-    unsigned SlotNo = D-&Designations[0];
-    Designations.erase(Designations.begin()+SlotNo);
-  }
-  
-};
-
+   
 } // end namespace clang
 
 #endif

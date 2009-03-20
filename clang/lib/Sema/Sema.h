@@ -1267,7 +1267,6 @@ public:
 
   virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
                                          MultiExprArg InitList,
-                                         InitListDesignations &Designators,
                                          SourceLocation RParenLoc);
 
   virtual OwningExprResult ActOnDesignatedInitializer(Designation &Desig,

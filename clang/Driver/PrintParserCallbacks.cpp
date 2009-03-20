@@ -554,7 +554,6 @@ namespace {
     }
     virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
                                            MultiExprArg InitList,
-                                           InitListDesignations &Designators,
                                            SourceLocation RParenLoc) {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();

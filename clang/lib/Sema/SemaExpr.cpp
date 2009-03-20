@@ -2395,7 +2395,6 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
 
 Action::OwningExprResult
 Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
-                    InitListDesignations &Designators,
                     SourceLocation RBraceLoc) {
   unsigned NumInit = initlist.size();
   Expr **InitList = reinterpret_cast<Expr**>(initlist.release());
