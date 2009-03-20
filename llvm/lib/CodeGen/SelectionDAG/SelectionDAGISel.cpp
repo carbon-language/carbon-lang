@@ -1168,10 +1168,12 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
     unsigned Flags = cast<ConstantSDNode>(InOps[i])->getZExtValue();
     if ((Flags & 7) != 4 /*MEM*/) {
       // Just skip over this operand, copying the operands verbatim.
-      Ops.insert(Ops.end(), InOps.begin()+i, InOps.begin()+i+(Flags >> 3) + 1);
-      i += (Flags >> 3) + 1;
+      Ops.insert(Ops.end(), InOps.begin()+i,
+                 InOps.begin()+i+InlineAsm::getNumOperandRegisters(Flags) + 1);
+      i += InlineAsm::getNumOperandRegisters(Flags) + 1;
     } else {
-      assert((Flags >> 3) == 1 && "Memory operand with multiple values?");
+      assert(InlineAsm::getNumOperandRegisters(Flags) == 1 &&
+             "Memory operand with multiple values?");
       // Otherwise, this is a memory operand.  Ask the target to select it.
       std::vector<SDValue> SelOps;
       if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps)) {

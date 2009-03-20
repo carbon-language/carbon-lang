@@ -128,6 +128,24 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::InlineAsmVal;
   }
+
+  /// getNumOperandRegisters - Extract the number of registers field from the
+  /// inline asm operand flag.
+  static unsigned getNumOperandRegisters(unsigned Flag) {
+    return (Flag & 0xffff) >> 3;
+  }
+
+  /// isOutputOperandTiedToUse - Return true if the flag of the inline asm
+  /// operand indicates it is an output that's matched to an input operand.
+  static bool isOutputOperandTiedToUse(unsigned Flag, unsigned &UseIdx) {
+    if (Flag & 0x80000000) {
+      UseIdx = Flag >> 16;
+      return true;
+    }
+    return false;
+  }
+
+
 };
 
 } // End llvm namespace

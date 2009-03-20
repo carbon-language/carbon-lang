@@ -1974,7 +1974,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
     bool HasInFlag = Ops.back().getValueType() == MVT::Flag;
     for (unsigned i = 2, e = Ops.size()-HasInFlag; i < e; ) {
-      unsigned NumVals = cast<ConstantSDNode>(Ops[i])->getZExtValue() >> 3;
+      unsigned NumVals = InlineAsm::
+        getNumOperandRegisters(cast<ConstantSDNode>(Ops[i])->getZExtValue());
       for (++i; NumVals; ++i, --NumVals) {
         SDValue Op = LegalizeOp(Ops[i]);
         if (Op != Ops[i]) {

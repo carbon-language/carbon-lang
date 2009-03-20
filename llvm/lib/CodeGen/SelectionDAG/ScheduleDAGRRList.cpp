@@ -632,7 +632,7 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
       for (unsigned i = 2; i != NumOps;) {
         unsigned Flags =
           cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
-        unsigned NumVals = Flags >> 3;
+        unsigned NumVals = (Flags & 0xffff) >> 3;
 
         ++i; // Skip the ID value.
         if ((Flags & 7) == 2 || (Flags & 7) == 6) {

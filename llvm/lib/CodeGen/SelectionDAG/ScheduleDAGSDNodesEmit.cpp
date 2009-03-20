@@ -561,7 +561,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     for (unsigned i = 2; i != NumOps;) {
       unsigned Flags =
         cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
-      unsigned NumVals = Flags >> 3;
+      unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
         
       MI->addOperand(MachineOperand::CreateImm(Flags));
       ++i;  // Skip the ID value.

@@ -1401,7 +1401,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         for (; Val; --Val) {
           if (OpNo >= MI->getNumOperands()) break;
           unsigned OpFlags = MI->getOperand(OpNo).getImm();
-          OpNo += (OpFlags >> 3) + 1;
+          OpNo += InlineAsm::getNumOperandRegisters(OpFlags) + 1;
         }
 
         if (OpNo >= MI->getNumOperands()) {
