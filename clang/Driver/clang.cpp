@@ -231,8 +231,9 @@ Freestanding("ffreestanding",
                             "freestanding environment"));
 
 static llvm::cl::opt<bool>
-NoBuiltin("fno-builtin",
-          llvm::cl::desc("Disable implicit builtin knowledge of functions"));
+AllowBuiltins("fbuiltin",
+              llvm::cl::desc("Disable implicit builtin knowledge of functions"),
+              llvm::cl::init(true), llvm::cl::AllowInverse);
 
 
 static llvm::cl::opt<bool>
@@ -661,7 +662,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
 
-  if (NoBuiltin)
+  if (!AllowBuiltins)
     Options.NoBuiltin = 1;
   if (Freestanding)
     Options.Freestanding = Options.NoBuiltin = 1;
