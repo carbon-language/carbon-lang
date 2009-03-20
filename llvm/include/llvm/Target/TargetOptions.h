@@ -26,6 +26,14 @@ namespace llvm {
   /// elimination optimization, this option should disable it.
   extern bool NoFramePointerElim;
 
+  /// LessPreciseFPMAD - This flag is enabled when the
+  /// -enable-fp-mad is specified on the command line.  When this flag is off
+  /// (the default), the code generator is not allowed to generate mad
+  /// (multiply add) if the result is "less precise" than doing those operations
+  /// individually.
+  extern bool LessPreciseFPMADOption;
+  extern bool LessPreciseFPMAD();
+
   /// NoExcessFPPrecision - This flag is enabled when the
   /// -disable-excess-fp-precision flag is specified on the command line.  When
   /// this flag is off (the default), the code generator is allowed to produce
@@ -39,7 +47,7 @@ namespace llvm {
   /// this flag is off (the default), the code generator is not allowed to
   /// produce results that are "less precise" than IEEE allows.  This includes
   /// use of X86 instructions like FSIN and FCOS instead of libcalls.
-  /// UnsafeFPMath implies FiniteOnlyFPMath.
+  /// UnsafeFPMath implies FiniteOnlyFPMath and LessPreciseFPMAD.
   extern bool UnsafeFPMath;
 
   /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math

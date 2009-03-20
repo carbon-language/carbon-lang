@@ -22,6 +22,7 @@ using namespace llvm;
 //
 
 namespace llvm {
+  bool LessPreciseFPMADOption;
   bool PrintMachineCode;
   bool NoFramePointerElim;
   bool NoExcessFPPrecision;
@@ -57,6 +58,11 @@ static cl::opt<bool, true>
 DisableExcessPrecision("disable-excess-fp-precision",
   cl::desc("Disable optimizations that may increase FP precision"),
   cl::location(NoExcessFPPrecision),
+  cl::init(false));
+static cl::opt<bool, true>
+EnableFPMAD("enable-fp-mad",
+  cl::desc("Enable less precise MAD instructions to be generated"),
+  cl::location(LessPreciseFPMADOption),
   cl::init(false));
 static cl::opt<bool, true>
 EnableUnsafeFPMath("enable-unsafe-fp-math",
@@ -198,6 +204,12 @@ void TargetMachine::setCodeModel(CodeModel::Model Model) {
 }
 
 namespace llvm {
+  /// LessPreciseFPMAD - This flag return true when -enable-fp-mad option
+  /// is specified on the command line.  When this flag is off(default), the
+  /// code generator is not allowed to generate mad (multiply add) if the
+  /// result is "less precise" than doing those operations individually.
+  bool LessPreciseFPMAD() { return UnsafeFPMath || LessPreciseFPMADOption; }
+
   /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math
   /// option is specified on the command line. If this returns false (default),
   /// the code generator is not allowed to assume that FP arithmetic arguments
