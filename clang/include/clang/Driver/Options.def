@@ -472,7 +472,7 @@ OPTION("-print-multi-directory", print_multi_directory, Flag, INVALID, INVALID, 
 OPTION("-print-multi-lib", print_multi_lib, Flag, INVALID, INVALID, "u", 0)
 OPTION("-print-multi-os-directory", print_multi_os_directory, Flag, INVALID, INVALID, "u", 0)
 OPTION("-print-prog-name=", print_prog_name_EQ, Joined, INVALID, INVALID, "", 0)
-OPTION("-print-search-dirs", print_search_dirs, Flag, INVALID, INVALID, "u", 0)
+OPTION("-print-search-dirs", print_search_dirs, Flag, INVALID, INVALID, "", 0)
 OPTION("-private_bundle", private__bundle, Flag, INVALID, INVALID, "", 0)
 OPTION("-pthreads", pthreads, Flag, INVALID, INVALID, "", 0)
 OPTION("-pthread", pthread, Flag, INVALID, INVALID, "", 0)

@@ -247,6 +247,25 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   const ToolChain &TC = C.getDefaultToolChain();
+  if (C.getArgs().hasArg(options::OPT_print_search_dirs)) {
+    llvm::outs() << "programs: =";
+    for (ToolChain::path_list::const_iterator it = TC.getProgramPaths().begin(),
+           ie = TC.getProgramPaths().end(); it != ie; ++it) {
+      if (it != TC.getProgramPaths().begin())
+        llvm::outs() << ':';
+      llvm::outs() << *it;
+    }
+    llvm::outs() << "\n";
+    llvm::outs() << "libraries: =";
+    for (ToolChain::path_list::const_iterator it = TC.getFilePaths().begin(), 
+           ie = TC.getFilePaths().end(); it != ie; ++it) {
+      if (it != TC.getFilePaths().begin())
+        llvm::outs() << ':';
+      llvm::outs() << *it;
+    }
+    llvm::outs() << "\n";
+  }
+
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_file_name_EQ)) {
