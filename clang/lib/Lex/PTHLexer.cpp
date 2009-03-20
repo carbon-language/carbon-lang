@@ -648,10 +648,11 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   }
   
   llvm::OwningPtr<PTHFileLookup> FL(PTHFileLookup::Create(FileTable, BufBeg));
-  if (FL->isEmpty()) {
+  
+  // Warn if the PTH file is empty.  We still want to create a PTHManager
+  // as the PTH could be used with -include-pth.
+  if (FL->isEmpty())
     InvalidPTH(Diags, "PTH file contains no cached source data");
-    return 0;
-  }
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
@@ -674,7 +675,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
 
   llvm::OwningPtr<PTHStringIdLookup> SL(PTHStringIdLookup::Create(StringIdTable,
                                                                   BufBeg));
-  if (SL->isEmpty()) {
+  if (!FL->isEmpty() && SL->isEmpty()) {
     InvalidPTH(Diags, "PTH file contains no identifiers.");
     return 0;
   }
