@@ -105,18 +105,15 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     
     // See if anything is flagged to this node, if so, add them to flagged
     // nodes.  Nodes can have at most one flag input and one flag output.  Flags
-    // are required the be the last operand and result of a node.
+    // are required to be the last operand and result of a node.
     
     // Scan up to find flagged preds.
     SDNode *N = NI;
-    if (N->getNumOperands() &&
-        N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
-      do {
-        N = N->getOperand(N->getNumOperands()-1).getNode();
-        assert(N->getNodeId() == -1 && "Node already inserted!");
-        N->setNodeId(NodeSUnit->NodeNum);
-      } while (N->getNumOperands() &&
-               N->getOperand(N->getNumOperands()-1).getValueType()== MVT::Flag);
+    while (N->getNumOperands() &&
+           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+      N = N->getOperand(N->getNumOperands()-1).getNode();
+      assert(N->getNodeId() == -1 && "Node already inserted!");
+      N->setNodeId(NodeSUnit->NodeNum);
     }
     
     // Scan down to find any flagged succs.
