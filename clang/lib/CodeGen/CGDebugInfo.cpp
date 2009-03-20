@@ -367,12 +367,25 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     SourceLocation FieldDefLoc = Field->getLocation();
     llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
     unsigned FieldLine = SM.getInstantiationLineNumber(FieldDefLoc);
-    
-    // Bit size, align and offset of the type.
-    uint64_t FieldSize = M->getContext().getTypeSize(Ty);
-    unsigned FieldAlign = M->getContext().getTypeAlign(Ty);
-    uint64_t FieldOffset = RL.getFieldOffset(FieldNo);    
+ 
+    QualType FType = Field->getType();
+    uint64_t FieldSize = 0;
+    unsigned FieldAlign = 0;
 
+    if (!FType->isIncompleteArrayType()) {
+    
+      // Bit size, align and offset of the type.
+      FieldSize = M->getContext().getTypeSize(FType);
+      Expr *BitWidth = Field->getBitWidth();
+      if (BitWidth)
+        FieldSize = 
+          BitWidth->getIntegerConstantExprValue(M->getContext()).getZExtValue();
+      
+      FieldAlign =  M->getContext().getTypeAlign(FType);
+    }
+
+    uint64_t FieldOffset = RL.getFieldOffset(FieldNo);    
+    
     unsigned Flags = 0;
     if (Field->getAccessControl() == ObjCIvarDecl::Protected)
       Flags = llvm::DIType::FlagProtected;
