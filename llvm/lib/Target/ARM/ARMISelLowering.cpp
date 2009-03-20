@@ -108,8 +108,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       // Integer to floating-point conversions.
       // i64 conversions are done via library routines even when generating VFP
       // instructions, so use the same ones.
-      // FIXME: There appears to be some naming inconsistency in ARM libgcc: e.g.
-      // __floatunsidf vs. __floatunssidfvfp.
+      // FIXME: There appears to be some naming inconsistency in ARM libgcc:
+      // e.g., __floatunsidf vs. __floatunssidfvfp.
       setLibcallName(RTLIB::SINTTOFP_I32_F64, "__floatsidfvfp");
       setLibcallName(RTLIB::UINTTOFP_I32_F64, "__floatunssidfvfp");
       setLibcallName(RTLIB::SINTTOFP_I32_F32, "__floatsisfvfp");
@@ -403,8 +403,8 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
           TheCall->getCallingConv() == CallingConv::Fast) &&
          "unknown calling convention");
   SDValue Callee   = TheCall->getCallee();
-  unsigned NumOps   = TheCall->getNumArgs();
-  DebugLoc dl       = TheCall->getDebugLoc();
+  unsigned NumOps  = TheCall->getNumArgs();
+  DebugLoc dl      = TheCall->getDebugLoc();
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   unsigned NumGPRs = 0;     // GPRs used for parameter passing.
 
@@ -463,9 +463,9 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
         break;
       case MVT::i64: {
         SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
-                                   DAG.getConstant(0, getPointerTy()));
+                                 DAG.getConstant(0, getPointerTy()));
         SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
-                                   DAG.getConstant(1, getPointerTy()));
+                                 DAG.getConstant(1, getPointerTy()));
         RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs], Lo));
         if (ObjGPRs == 2)
           RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs+1], Hi));
@@ -478,8 +478,8 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       }
       case MVT::f64: {
         SDValue Cvt = DAG.getNode(ARMISD::FMRRD, dl,
-                                    DAG.getVTList(MVT::i32, MVT::i32),
-                                    &Arg, 1);
+                                  DAG.getVTList(MVT::i32, MVT::i32),
+                                  &Arg, 1);
         RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs], Cvt));
         if (ObjGPRs == 2)
           RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs+1],
