@@ -44,8 +44,8 @@ static void getSolarisDefines(std::vector<char> &Defs) {
   Define(Defs, "__SOLARIS__");
 }
 
-static void getFreeBSDDefines(std::vector<char> &Defs, bool is64Bit,
-                              const char *Triple) {
+static void getFreeBSDDefines(const LangOptions &Opts, bool is64Bit,
+                              const char *Triple, std::vector<char> &Defs) {
   // FreeBSD defines; list based off of gcc output
 
   const char *FreeBSD = strstr(Triple, "-freebsd");
@@ -65,7 +65,8 @@ static void getFreeBSDDefines(std::vector<char> &Defs, bool is64Bit,
   }
 }
 
-static void getDragonFlyDefines(std::vector<char> &Defs) {
+static void getDragonFlyDefines(const LangOptions &Opts,
+                                std::vector<char> &Defs) {
   // DragonFly defines; list based off of gcc output
   Define(Defs, "__DragonFly__");
   Define(Defs, "__DragonFly_cc_version", "100001");
@@ -77,7 +78,7 @@ static void getDragonFlyDefines(std::vector<char> &Defs) {
   Define(Defs, "__unix__");
 }
 
-static void getLinuxDefines(std::vector<char> &Defs) {
+static void getLinuxDefines(const LangOptions &Opts, std::vector<char> &Defs) {
   // Linux defines; list based off of gcc output
   Define(Defs, "__unix__");
   Define(Defs, "__unix");
@@ -658,7 +659,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Defines, 0, getTargetTriple());
+    getFreeBSDDefines(Opts, 0, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
@@ -675,7 +676,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getDragonFlyDefines(Defines);
+    getDragonFlyDefines(Opts, Defines);
   }
 };
 } // end anonymous namespace
@@ -693,7 +694,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getLinuxDefines(Defines);
+    getLinuxDefines(Opts, Defines);
   }
 };
 } // end anonymous namespace
@@ -763,7 +764,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Defines, 1, getTargetTriple());
+    getFreeBSDDefines(Opts, 1, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
@@ -778,7 +779,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getLinuxDefines(Defines);
+    getLinuxDefines(Opts, Defines);
   }
 };
 } // end anonymous namespace
