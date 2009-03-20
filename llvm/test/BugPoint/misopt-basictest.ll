@@ -1,4 +1,4 @@
-; RUN: bugpoint %s -dce -bugpoint-deletecalls -simplifycfg -silence-passes %bugpoint_tops
+; RUN: bugpoint %s -dce -bugpoint-deletecalls -simplifycfg -silence-passes %bugpoint_topts
 
 @.LC0 = internal global [13 x i8] c"Hello World\0A\00"          ; <[13 x i8]*> [#uses=1]
 

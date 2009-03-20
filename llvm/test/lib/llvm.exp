@@ -77,8 +77,8 @@ proc substitute { line test tmpFile } {
   regsub -all {%llvmdsymutil} $new_line "$llvmdsymutil" new_line
   #replace %llvmlibsdir with configure library directory
   regsub -all {%llvmlibsdir} $new_line "$llvmlibsdir" new_line
-  #replace %bugpoint_tops with actual bugpoint target options
-  regsub -all {%bugpoint_tops} $new_line "$bugpoint_topts" new_line
+  #replace %bugpoint_topts with actual bugpoint target options
+  regsub -all {%bugpoint_topts} $new_line "$bugpoint_topts" new_line
   #replace %p with path to source,
   regsub -all {%p} $new_line [file join $srcdir $subdir] new_line
   #replace %s with filename
