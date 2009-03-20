@@ -3276,9 +3276,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
-    // NOTE: Per <rdar://problem/6703892>, don't warn about comparisons of enum
-    //  constants.  These can arise from macro expansions, and are usually quite
-    //  deliberate.
+    // NOTE: Don't warn about comparisons of enum constants. These can arise 
+    //  from macro expansions, and are usually quite deliberate.
     Expr *LHSStripped = lex->IgnoreParens();
     Expr *RHSStripped = rex->IgnoreParens();
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped))
