@@ -19,6 +19,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -33,6 +34,29 @@ static void Define(std::vector<char> &Buf, const char *Macro,
   Buf.push_back(' ');
   Buf.insert(Buf.end(), Val, Val+strlen(Val));
   Buf.push_back('\n');
+}
+
+/// DefineStd - Define a macro name and standard variants.  For example if
+/// MacroName is "unix", then this will define "__unix", "__unix__", and "unix"
+/// when in GNU mode.
+static void DefineStd(std::vector<char> &Buf, const char *MacroName, 
+                      const LangOptions &Opts) {
+  assert(MacroName[0] != '_' && "Identifier should be in the user's namespace");
+  
+  // If in GNU mode (e.g. -std=gnu99 but not -std=c99) define the raw identifier
+  // in the user's namespace.
+  if (Opts.GNUMode)
+    Define(Buf, MacroName);
+  
+  // Define __unix.
+  llvm::SmallString<20> TmpStr;
+  TmpStr = "__";
+  TmpStr += MacroName;
+  Define(Buf, TmpStr.c_str());
+  
+  // Define __unix__.
+  TmpStr += "__";
+  Define(Buf, TmpStr.c_str());
 }
 
 //===----------------------------------------------------------------------===//
@@ -58,7 +82,7 @@ static void getFreeBSDDefines(const LangOptions &Opts, bool is64Bit,
   Define(Defs, "__FreeBSD__", release);
   Define(Defs, "__FreeBSD_cc_version", version);
   Define(Defs, "__KPRINTF_ATTRIBUTE__");
-  Define(Defs, "unix");
+  DefineStd(Defs, "unix", Opts);
   Define(Defs, "__ELF__", "1");
   if (is64Bit) {
     Define(Defs, "__LP64__");
@@ -73,19 +97,13 @@ static void getDragonFlyDefines(const LangOptions &Opts,
   Define(Defs, "__ELF__");
   Define(Defs, "__KPRINTF_ATTRIBUTE__");
   Define(Defs, "__tune_i386__");
-  Define(Defs, "unix");
-  Define(Defs, "__unix");
-  Define(Defs, "__unix__");
+  DefineStd(Defs, "unix", Opts);
 }
 
 static void getLinuxDefines(const LangOptions &Opts, std::vector<char> &Defs) {
   // Linux defines; list based off of gcc output
-  Define(Defs, "__unix__");
-  Define(Defs, "__unix");
-  Define(Defs, "unix");
-  Define(Defs, "__linux__");
-  Define(Defs, "__linux");
-  Define(Defs, "linux");
+  DefineStd(Defs, "unix", Opts);
+  DefineStd(Defs, "linux", Opts);
   Define(Defs, "__gnu_linux__");
   Define(Defs, "__ELF__", "1");
 }
@@ -517,9 +535,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Define(Defs, "__x86_64__");
     Define(Defs, "__SSE3__");
   } else {
-    Define(Defs, "__i386__");
-    Define(Defs, "__i386");
-    Define(Defs, "i386");
+    DefineStd(Defs, "i386", Opts);
   }
   
   // Target properties.
@@ -715,13 +731,9 @@ public:
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
     // This list is based off of the the list of things MingW defines
-    Define(Defines, "__WIN32__");
-    Define(Defines, "__WIN32");
     Define(Defines, "_WIN32");
-    Define(Defines, "WIN32");
-    Define(Defines, "__WINNT__");
-    Define(Defines, "__WINNT");
-    Define(Defines, "WINNT");
+    DefineStd(Defines, "WIN32", Opts);
+    DefineStd(Defines, "WINNT", Opts);
     Define(Defines, "_X86_");
     Define(Defines, "__MSVCRT__");
   }
