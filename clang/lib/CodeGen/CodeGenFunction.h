@@ -72,7 +72,8 @@ public:
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   CGBuilderTy Builder;
 
-  // Holds the Decl for the current function or method
+  /// CurFuncDecl - Holds the Decl for the current function or method.  This
+  /// excludes BlockDecls.
   const Decl *CurFuncDecl;
   const CGFunctionInfo *CurFnInfo;
   QualType FnRetTy;
@@ -272,11 +273,13 @@ public:
 
   llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
                                         const BlockInfo& Info,
+                                        const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                         uint64_t &Size, uint64_t &Align,
                       llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                         bool &subBlockHasCopyDispose);
 
+  void BlockForwardSelf();
   llvm::Value *LoadBlockStruct();
 
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);

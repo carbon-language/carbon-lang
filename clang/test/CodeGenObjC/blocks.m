@@ -15,3 +15,13 @@ void foo(T *P) {
  [P foo: 0];
 }
 
+@interface A 
+-(void) im0;
+@end
+
+@interface B : A @end
+@implementation B
+-(void) im1 {
+  ^(void) { [super im0]; }();
+}
+@end

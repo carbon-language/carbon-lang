@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 
@@ -155,7 +156,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     uint64_t subBlockSize, subBlockAlign;
     llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
     llvm::Function *Fn
-      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, LocalDeclMap,
+      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, CurFuncDecl, LocalDeclMap,
                                                    subBlockSize,
                                                    subBlockAlign,
                                                    subBlockDeclRefDecls,
@@ -525,6 +526,19 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   return V;
 }
 
+void CodeGenFunction::BlockForwardSelf() {
+  const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
+  ImplicitParamDecl *SelfDecl = OMD->getSelfDecl();
+  llvm::Value *&DMEntry = LocalDeclMap[SelfDecl];
+  if (DMEntry)
+    return;
+  // FIXME - Eliminate BlockDeclRefExprs, clients don't need/want to care
+  BlockDeclRefExpr *BDRE = new (getContext())
+    BlockDeclRefExpr(SelfDecl,
+                     SelfDecl->getType(), SourceLocation(), false);
+  DMEntry = GetAddrOfBlockDecl(BDRE);
+}
+
 llvm::Constant *
 BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   // Generate the block descriptor.
@@ -561,7 +575,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   bool subBlockHasCopyDispose = false;
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
   llvm::Function *Fn
-    = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, LocalDeclMap,
+    = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, 0, LocalDeclMap,
                                                  subBlockSize,
                                                  subBlockAlign,
                                                  subBlockDeclRefDecls,
@@ -605,6 +619,7 @@ llvm::Value *CodeGenFunction::LoadBlockStruct() {
 llvm::Function *
 CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                        const BlockInfo& Info,
+                                       const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                        uint64_t &Size,
                                        uint64_t &Align,
@@ -657,6 +672,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   StartFunction(BD, FTy->getResultType(), Fn, Args,
                 BExpr->getBody()->getLocEnd());
+  CurFuncDecl = OuterFuncDecl;
   EmitStmt(BExpr->getBody());
   FinishFunction(cast<CompoundStmt>(BExpr->getBody())->getRBracLoc());
 
