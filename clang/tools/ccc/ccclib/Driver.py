@@ -426,7 +426,7 @@ class Driver(object):
                         else:
                             raise Arguments.InvalidArgumentsError("-E or -x required when input is from standard input")
                     elif ext and ext in Types.kTypeSuffixMap:
-                        klass = Types.kTypeSuffixMap[ext]
+                        klass = self.hostInfo.lookupTypeForExtension(ext)
                     else:
                         # FIXME: Its not clear why we shouldn't just
                         # revert to unknown. I think this is more likely a

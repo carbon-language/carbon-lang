@@ -66,4 +66,14 @@
 // RUN: grep -F '1: preprocessor, {0}, c-header-cpp-output' %t &&
 // RUN: grep -F '2: precompiler, {1}, precompiled-header' %t &&
 
+// Darwin overrides the handling for .s
+// RUN: touch %t.s &&
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.s &> %t &&
+// RUN: grep '0: input, ".*\.s", assembler' %t &&
+// RUN: grep -F '1: assembler, {0}, object' %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c %t.s &> %t &&
+// RUN: grep '0: input, ".*\.s", assembler-with-cpp' %t &&
+// RUN: grep -F '1: preprocessor, {0}, assembler' %t &&
+// RUN: grep -F '2: assembler, {1}, object' %t &&
+
 // RUN: true

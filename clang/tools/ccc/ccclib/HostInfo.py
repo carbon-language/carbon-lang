@@ -1,4 +1,5 @@
 import ToolChain
+import Types
 
 class HostInfo(object):
     """HostInfo - Config information about a particular host which may
@@ -12,6 +13,9 @@ class HostInfo(object):
         abstract
 
     def useDriverDriver(self):
+        abstract
+
+    def lookupTypeForExtension(self, ext):
         abstract
 
     def getToolChain(self):
@@ -36,6 +40,12 @@ class DarwinHostInfo(HostInfo):
 
     def useDriverDriver(self):
         return True
+
+    def lookupTypeForExtension(self, ext):
+        ty = Types.kTypeSuffixMap.get(ext)
+        if ty is Types.AsmTypeNoPP:
+            return Types.AsmType
+        return ty
 
     def getToolChain(self):
         return self.getToolChainForArch(self.getArchName(None))
@@ -97,6 +107,9 @@ class UnknownHostInfo(HostInfo):
 
     def useDriverDriver(self):
         return False
+
+    def lookupTypeForExtension(self, ext):
+        return Types.kTypeSuffixMap.get(ext)
 
     def getToolChain(self):
         return ToolChain.Generic_GCC_ToolChain(self.driver, '')

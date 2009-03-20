@@ -445,9 +445,11 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
           Ty = types::TY_C;
         } else {
           // Otherwise lookup by extension, and fallback to ObjectType
-          // if not found.
+          // if not found. We use a host hook here because Darwin at
+          // least has its own idea of what .s is.
           if (const char *Ext = strrchr(Value, '.'))
-            Ty = types::lookupTypeForExtension(Ext + 1);
+            Ty = Host->lookupTypeForExtension(Ext + 1);
+
           if (Ty == types::TY_INVALID)
             Ty = types::TY_Object;
         }
