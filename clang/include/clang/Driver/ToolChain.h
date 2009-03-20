@@ -53,11 +53,11 @@ public:
   const std::string &getPlatform() const { return Platform; }
   const std::string &getOS() const { return OS; }
 
-  path_list getFilePaths() { return FilePaths; }
-  const path_list getFilePaths() const { return FilePaths; }
+  path_list &getFilePaths() { return FilePaths; }
+  const path_list &getFilePaths() const { return FilePaths; }
 
-  path_list getProgramPaths() { return ProgramPaths; }
-  const path_list getProgramPaths() const { return ProgramPaths; }
+  path_list &getProgramPaths() { return ProgramPaths; }
+  const path_list &getProgramPaths() const { return ProgramPaths; }
 
   // Tool access.
 
