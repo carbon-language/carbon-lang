@@ -298,7 +298,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
-  Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group, options::OPT_pedantic_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group, 
+                  options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
   Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi, 
                   options::OPT_trigraphs);
@@ -437,3 +438,25 @@ void gcc::Link::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
   // The types are (hopefully) good enough.
 }
 
+
+void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
+                                Job &Dest,
+                                const InputInfo &Output, 
+                                const InputInfoList &Inputs, 
+                                const ArgList &Args, 
+                                const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  CmdArgs.push_back("-create");
+  assert(Output.isFilename() && "Unexpected lipo output.");
+  CmdArgs.push_back(Output.getFilename());
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    assert(II.isFilename() && "Unexpected lipo input.");
+    CmdArgs.push_back(II.getFilename());
+  }
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "lipo").c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));
+}
