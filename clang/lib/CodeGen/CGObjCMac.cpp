@@ -4193,7 +4193,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = GetClassGlobal(ObjCClassName + RootClassName);
   }
-  
+  // FIXME: Gross
+  ObjCInterfaceDecl *Interface =
+    const_cast<ObjCInterfaceDecl*>(ID->getClassInterface()); 
+  CGM.getTypes().ConvertType(CGM.getContext().buildObjCInterfaceType(Interface));
   InstanceStart = InstanceSize = 0;
   if (ObjCInterfaceDecl *OID = 
       const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
