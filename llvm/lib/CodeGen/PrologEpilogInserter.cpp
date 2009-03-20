@@ -574,7 +574,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           break;
         }
 
-      if (DoIncr) ++I;
+      if (DoIncr && I != BB->end()) ++I;
 
       // Update register states.
       if (RS && MI) RS->forward(MI);
