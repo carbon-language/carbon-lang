@@ -49,7 +49,6 @@ public:
   bool operator!=(const SymbolRef& X) const { return Data != X.Data; }
       
   void Profile(llvm::FoldingSetNodeID& ID) const { 
-    assert (isValid());
     ID.AddInteger(Data);
   }
 };
