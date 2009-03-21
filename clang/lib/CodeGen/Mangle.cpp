@@ -62,40 +62,41 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   //            ::= <special-name>
 
   // FIXME: Actually use a visitor to decode these?
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    bool RequiresMangling = false;
-    // Clang's "overloadable" attribute extension to C/C++ implies
-    // name mangling (always).
-    if (FD->getAttr<OverloadableAttr>())
-      RequiresMangling = true;
-    // No mangled in an "implicit extern C" header.
-    else if (Context.getSourceManager().getFileCharacteristic(FD->getLocation())
-          == SrcMgr::C_ExternCSystem)
-      RequiresMangling = false;
-    else if (Context.getLangOptions().CPlusPlus && !FD->isMain()) {
-      // C++ requires name mangling, unless we're in a C linkage
-      // specification.
-      RequiresMangling = true;
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD)  // Can only mangle functions so far.
+    return false;
+  
+  // Clang's "overloadable" attribute extension to C/C++ implies
+  // name mangling (always).
+  if (FD->getAttr<OverloadableAttr>())
+    ; // fall into mangling code unconditionally.
+  else if (// C functions are not mangled
+           !Context.getLangOptions().CPlusPlus ||
+           // "main" is not mangled in C++
+           FD->isMain() ||
+           // No mangling in an "implicit extern C" header.
+           Context.getSourceManager().getFileCharacteristic(FD->getLocation())
+                == SrcMgr::C_ExternCSystem)
+    return false;
+  else {
+    // No name mangling in a C linkage specification.
 
-      for (const DeclContext *DC = FD->getDeclContext(); 
-           !DC->isTranslationUnit(); DC = DC->getParent()) {
-        if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC)) {
-          // extern "C" functions don't use name mangling
-          if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-            RequiresMangling = false;
-          break;
-        }
+    for (const DeclContext *DC = FD->getDeclContext(); 
+         !DC->isTranslationUnit(); DC = DC->getParent()) {
+      if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC)) {
+        // extern "C" functions don't use name mangling.
+        if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
+          return false;
+        // Others do.
+        break;
       }
     }
+  }
 
-    if (RequiresMangling) {
-      Out << "_Z";
-      mangleFunctionEncoding(FD);
-      return true;
-    }
-  } 
-
-  return false;
+  // If we get here, mangle the decl name!
+  Out << "_Z";
+  mangleFunctionEncoding(FD);
+  return true;
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
