@@ -178,9 +178,11 @@ public:
   /// given global variable.
   llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D);
 
-  /// GetAddrOfFunction - Return the llvm::Constant for the address of the given
-  /// function.
-  llvm::Constant *GetAddrOfFunction(const FunctionDecl *D);
+  /// GetAddrOfFunction - Return the address of the given function.  If Ty is
+  /// non-null, then this function will use the specified type if it has to
+  /// create it.
+  llvm::Function *GetAddrOfFunction(const FunctionDecl *D,
+                                    const llvm::Type *Ty = 0);
 
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
@@ -314,15 +316,6 @@ private:
   void EmitGlobal(const ValueDecl *D);
 
   void EmitGlobalDefinition(const ValueDecl *D);
-
-  /// CreateFunctionPrototypeIR - Create a new LLVM IR Function for the given
-  /// decl and set attributes as appropriate.
-  ///
-  /// \arg Ty - If non-null the LLVM function type to use for the
-  /// decl; it is the callers responsibility to make sure this is
-  /// compatible with the correct type.
-  llvm::GlobalValue *CreateFunctionPrototypeIR(const FunctionDecl *D,
-                                               const llvm::Type *Ty);
 
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);

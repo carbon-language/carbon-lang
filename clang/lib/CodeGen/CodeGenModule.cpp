@@ -782,48 +782,37 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
 }
 
-/// CreateFunctionPrototypeIR - Create a new LLVM IR Function for the given
-/// decl and set attributes as appropriate.
-///
-/// \arg Ty - If non-null the LLVM function type to use for the
-/// decl; it is the callers responsibility to make sure this is
-/// compatible with the correct type.
-llvm::GlobalValue *
-CodeGenModule::CreateFunctionPrototypeIR(const FunctionDecl *D,
-                                         const llvm::Type *Ty) {
-  bool ShouldSetAttributes = true;
-  if (!Ty) {
+/// GetAddrOfFunction - Return the address of the given function.  If Ty is
+/// non-null, then this function will use the specified type if it has to
+/// create it (this occurs when we see a definition of the function).
+llvm::Function *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
+                                                 const llvm::Type *Ty) {
+  // Lookup the entry, lazily creating it if necessary.
+  const char *MangledName = getMangledName(D);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  if (Entry)
+    return cast<llvm::Function>(Entry);
+
+  // If there was no specific requested type, just convert it now.
+  if (!Ty)
     Ty = getTypes().ConvertType(D->getType());
-    if (!isa<llvm::FunctionType>(Ty)) {
-      // This function doesn't have a complete type (for example, the return
-      // type is an incomplete struct). Use a fake type instead, and make
-      // sure not to try to set attributes.
-      Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
-                                   std::vector<const llvm::Type*>(), false);
-      ShouldSetAttributes = false;
-    }
+  
+  // This function doesn't have a complete type (for example, the return
+  // type is an incomplete struct). Use a fake type instead, and make
+  // sure not to try to set attributes.
+  bool ShouldSetAttributes = true;
+  if (!isa<llvm::FunctionType>(Ty)) {
+    Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
+                                 std::vector<const llvm::Type*>(), false);
+    ShouldSetAttributes = false;
   }
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
-                                             getMangledName(D),
-                                             &getModule());
+                                             MangledName, &getModule());
   if (ShouldSetAttributes)
     SetFunctionAttributes(D, F);
+  Entry = F;
   return F;
-}
-
-llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
-  // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
-  if (!Entry)
-    return Entry = CreateFunctionPrototypeIR(D, 0);
-
-  const llvm::Type *Ty = getTypes().ConvertTypeForMem(D->getType());
-  if (Entry->getType()->getElementType() == Ty)
-    return Entry;
-  
-  const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
-  return llvm::ConstantExpr::getBitCast(Entry, PTy);
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
@@ -833,16 +822,18 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   // As a special case, make sure that definitions of K&R function
   // "type foo()" aren't declared as varargs (which forces the backend
   // to do unnecessary work).
-  if (Ty->isVarArg() && Ty->getNumParams() == 0 && Ty->isVarArg())
+  // FIXME: what about stret() functions, this doesn't handle them!?
+  if (Ty->isVarArg() && Ty->getNumParams() == 0)
     Ty = llvm::FunctionType::get(Ty->getReturnType(),
                                  std::vector<const llvm::Type*>(), false);
 
-  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
-  if (!Entry) {
-    Entry = CreateFunctionPrototypeIR(D, Ty);
-  } else if (Entry->getType()->getElementType() != Ty) {
+  // Get or create the prototype for teh function.
+  llvm::Function *Fn = GetAddrOfFunction(D, Ty);
+  
+  if (Fn->getType()->getElementType() != Ty) {
     // If the types mismatch then we have to rewrite the definition.
-    
+    assert(Fn->isDeclaration() && "Shouldn't replace non-declaration");
+
     // F is the Function* for the one with the wrong type, we must make a new
     // Function* and update everything that used F (a declaration) with the new
     // Function* (which will be a definition).
@@ -851,31 +842,31 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     // (e.g. "int f()") and then a definition of a different type
     // (e.g. "int f(int x)").  Start by making a new function of the
     // correct type, RAUW, then steal the name.
-    llvm::GlobalValue *NewFn = CreateFunctionPrototypeIR(D, Ty);
-    NewFn->takeName(Entry);
+    GlobalDeclMap.erase(getMangledName(D));
+    llvm::Function *NewFn = GetAddrOfFunction(D, Ty);
+    NewFn->takeName(Fn);
     
     // Replace uses of F with the Function we will endow with a body.
     llvm::Constant *NewPtrForOldDecl = 
-      llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
-    Entry->replaceAllUsesWith(NewPtrForOldDecl);
+      llvm::ConstantExpr::getBitCast(NewFn, Fn->getType());
+    Fn->replaceAllUsesWith(NewPtrForOldDecl);
     
     // Ok, delete the old function now, which is dead.
-    assert(Entry->isDeclaration() && "Shouldn't replace non-declaration");
-    Entry->eraseFromParent();
+    // FIXME: If it was attribute(used) the pointer will dangle from the
+    // LLVMUsed array!
+    Fn->eraseFromParent();
     
-    Entry = NewFn;
+    Fn = NewFn;
   }
 
-  llvm::Function *Fn = cast<llvm::Function>(Entry);    
   CodeGenFunction(*this).GenerateCode(D, Fn);
 
   SetFunctionAttributesForDefinition(D, Fn);
   
-  if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>()) {
+  if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>())
     AddGlobalCtor(Fn, CA->getPriority());
-  } else if (const DestructorAttr *DA = D->getAttr<DestructorAttr>()) {
+  if (const DestructorAttr *DA = D->getAttr<DestructorAttr>())
     AddGlobalDtor(Fn, DA->getPriority());
-  }
 }
 
 llvm::Function *
