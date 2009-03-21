@@ -94,7 +94,7 @@ class CodeGenModule : public BlockModule {
   /// emitted. Note that the entries in this map are the actual
   /// globals and therefore may not be of the same type as the decl,
   /// they should be bitcasted on retrieval. Also note that the
-  /// globals are keyed on their source name, not the global name
+  /// globals are keyed on their source mangled name, not the global name
   /// (which may change with attributes such as asm-labels).  This key
   /// to this map should be generated using getMangledName().
   llvm::DenseMap<const char*, llvm::GlobalValue*> GlobalDeclMap;
@@ -141,6 +141,9 @@ class CodeGenModule : public BlockModule {
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
 
+  /// BuiltinFunctions - This is the cached set of Function*'s that have been
+  /// created for each builtin, indexed by the Builtin ID.  This is null if the
+  /// Function* has not yet been created.
   std::vector<llvm::Value *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M,

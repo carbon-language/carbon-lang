@@ -81,32 +81,37 @@ void CodeGenModule::BindRuntimeGlobals() {
       continue;
     }
       
-    // See if there is a conflict against a function.
+    // See if there is a conflict against a function by setting the name and
+    // seeing if we got the desired name.
+    GV->setName(Name);
+    if (GV->isName(Name.c_str()))
+      continue;  // Yep, it worked!
+    
+    GV->setName(""); // Zap the bogus name until we work out the conflict.
     llvm::GlobalValue *Conflict = TheModule.getNamedValue(Name);
-    if (Conflict) {
-      // Decide which version to take. If the conflict is a definition
-      // we are forced to take that, otherwise assume the runtime
-      // knows best.
+    assert(Conflict && "Must have conflicted!");
+    
+    // Decide which version to take. If the conflict is a definition
+    // we are forced to take that, otherwise assume the runtime
+    // knows best.
 
-      // FIXME: This will fail phenomenally when the conflict is the
-      // wrong type of value. Just bail on it for now. This should
-      // really reuse something inside the LLVM Linker code.
-      assert(GV->getValueID() == Conflict->getValueID() &&
-             "Unable to resolve conflict between globals of different types.");
-      if (!Conflict->isDeclaration()) {
-        llvm::Value *Casted = 
-          llvm::ConstantExpr::getBitCast(Conflict, GV->getType());
-        GV->replaceAllUsesWith(Casted);
-        GV->eraseFromParent();
-      } else {
-        GV->takeName(Conflict);
-        llvm::Value *Casted = 
-          llvm::ConstantExpr::getBitCast(GV, Conflict->getType());
-        Conflict->replaceAllUsesWith(Casted);
-        Conflict->eraseFromParent();
-      }
-    } else
-      GV->setName(Name);
+    // FIXME: This will fail phenomenally when the conflict is the
+    // wrong type of value. Just bail on it for now. This should
+    // really reuse something inside the LLVM Linker code.
+    assert(GV->getValueID() == Conflict->getValueID() &&
+           "Unable to resolve conflict between globals of different types.");
+    if (!Conflict->isDeclaration()) {
+      llvm::Value *Casted = 
+        llvm::ConstantExpr::getBitCast(Conflict, GV->getType());
+      GV->replaceAllUsesWith(Casted);
+      GV->eraseFromParent();
+    } else {
+      GV->takeName(Conflict);
+      llvm::Value *Casted = 
+        llvm::ConstantExpr::getBitCast(GV, Conflict->getType());
+      Conflict->replaceAllUsesWith(Casted);
+      Conflict->eraseFromParent();
+    }
   }
 }
 
