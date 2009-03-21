@@ -585,6 +585,45 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   }
 }
 
+/// GetAddrOfFunction - Return the address of the given function.  If Ty is
+/// non-null, then this function will use the specified type if it has to
+/// create it (this occurs when we see a definition of the function).
+llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
+                                                 const llvm::Type *Ty) {
+  // If there was no specific requested type, just convert it now.
+  if (!Ty)
+    Ty = getTypes().ConvertType(D->getType());
+  
+  // Lookup the entry, lazily creating it if necessary.
+  const char *MangledName = getMangledName(D);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  if (Entry) {
+    if (Entry->getType()->getElementType() == Ty)
+      return Entry;
+    
+    // Make sure the result is of the correct type.
+    const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
+    return llvm::ConstantExpr::getBitCast(Entry, PTy);
+  }
+  
+  // This function doesn't have a complete type (for example, the return
+  // type is an incomplete struct). Use a fake type instead, and make
+  // sure not to try to set attributes.
+  bool ShouldSetAttributes = true;
+  if (!isa<llvm::FunctionType>(Ty)) {
+    Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
+                                 std::vector<const llvm::Type*>(), false);
+    ShouldSetAttributes = false;
+  }
+  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
+                                             llvm::Function::ExternalLinkage,
+                                             MangledName, &getModule());
+  if (ShouldSetAttributes)
+    SetFunctionAttributes(D, F);
+  Entry = F;
+  return F;
+}
+
 /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
 /// given global variable.  If Ty is non-null and if the global doesn't exist,
 /// then it will be greated with the specified type instead of whatever the
@@ -712,7 +751,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
     // Make a new global with the correct type, this is now guaranteed to work.
     GV = cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, InitType));
-    
+    GV->takeName(cast<llvm::GlobalValue>(Entry));
+
     // Replace all uses of the old global with the new global
     llvm::Constant *NewPtrForOldDecl = 
         llvm::ConstantExpr::getBitCast(GV, Entry->getType());
@@ -784,38 +824,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
 }
 
-/// GetAddrOfFunction - Return the address of the given function.  If Ty is
-/// non-null, then this function will use the specified type if it has to
-/// create it (this occurs when we see a definition of the function).
-llvm::Function *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
-                                                 const llvm::Type *Ty) {
-  // Lookup the entry, lazily creating it if necessary.
-  const char *MangledName = getMangledName(D);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-  if (Entry)
-    return cast<llvm::Function>(Entry);
-
-  // If there was no specific requested type, just convert it now.
-  if (!Ty)
-    Ty = getTypes().ConvertType(D->getType());
-  
-  // This function doesn't have a complete type (for example, the return
-  // type is an incomplete struct). Use a fake type instead, and make
-  // sure not to try to set attributes.
-  bool ShouldSetAttributes = true;
-  if (!isa<llvm::FunctionType>(Ty)) {
-    Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
-                                 std::vector<const llvm::Type*>(), false);
-    ShouldSetAttributes = false;
-  }
-  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
-                                             llvm::Function::ExternalLinkage,
-                                             MangledName, &getModule());
-  if (ShouldSetAttributes)
-    SetFunctionAttributes(D, F);
-  Entry = F;
-  return F;
-}
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   const llvm::FunctionType *Ty = 
@@ -830,11 +838,19 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
                                  std::vector<const llvm::Type*>(), false);
 
   // Get or create the prototype for teh function.
-  llvm::Function *Fn = GetAddrOfFunction(D, Ty);
+  llvm::Constant *Entry = GetAddrOfFunction(D, Ty);
   
-  if (Fn->getType()->getElementType() != Ty) {
+  // Strip off a bitcast if we got one back.
+  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
+    assert(CE->getOpcode() == llvm::Instruction::BitCast);
+    Entry = CE->getOperand(0);
+  }
+  
+  
+  if (cast<llvm::GlobalValue>(Entry)->getType()->getElementType() != Ty) {
     // If the types mismatch then we have to rewrite the definition.
-    assert(Fn->isDeclaration() && "Shouldn't replace non-declaration");
+    assert(cast<llvm::GlobalValue>(Entry)->isDeclaration() &&
+           "Shouldn't replace non-declaration");
 
     // F is the Function* for the one with the wrong type, we must make a new
     // Function* and update everything that used F (a declaration) with the new
@@ -845,21 +861,23 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     // (e.g. "int f(int x)").  Start by making a new function of the
     // correct type, RAUW, then steal the name.
     GlobalDeclMap.erase(getMangledName(D));
-    llvm::Function *NewFn = GetAddrOfFunction(D, Ty);
-    NewFn->takeName(Fn);
+    llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(D, Ty));
+    NewFn->takeName(cast<llvm::GlobalValue>(Entry));
     
     // Replace uses of F with the Function we will endow with a body.
     llvm::Constant *NewPtrForOldDecl = 
-      llvm::ConstantExpr::getBitCast(NewFn, Fn->getType());
-    Fn->replaceAllUsesWith(NewPtrForOldDecl);
+      llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
+    Entry->replaceAllUsesWith(NewPtrForOldDecl);
     
     // Ok, delete the old function now, which is dead.
     // FIXME: If it was attribute(used) the pointer will dangle from the
     // LLVMUsed array!
-    Fn->eraseFromParent();
+    cast<llvm::GlobalValue>(Entry)->eraseFromParent();
     
-    Fn = NewFn;
+    Entry = NewFn;
   }
+  
+  llvm::Function *Fn = cast<llvm::Function>(Entry);
 
   CodeGenFunction(*this).GenerateCode(D, Fn);
 

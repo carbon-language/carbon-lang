@@ -36,3 +36,14 @@ void test2() {
 }
 int foo4 __asm__("var") = 4;
 
+
+// Variable becomes a function
+extern int foo5 __asm__("var2");
+
+void test3() {
+  foo5 = 1;
+}
+
+void foo6() __asm__("var2");
+void foo6() {
+}

@@ -184,7 +184,7 @@ public:
   /// GetAddrOfFunction - Return the address of the given function.  If Ty is
   /// non-null, then this function will use the specified type if it has to
   /// create it.
-  llvm::Function *GetAddrOfFunction(const FunctionDecl *D,
+  llvm::Constant *GetAddrOfFunction(const FunctionDecl *D,
                                     const llvm::Type *Ty = 0);
 
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
