@@ -161,6 +161,8 @@ def err_accessor_property_type_mismatch : Error<
 def note_declared_at : Note<"declared at">;
 def err_setter_type_void : Error<"type of setter must be void">;
 def err_duplicate_method_decl : Error<"duplicate declaration of method %0">;
+def err_objc_var_decl_inclass : 
+    Error<"cannot declare variable inside a class, protocol or category %0">;
 def error_missing_method_context : Error<
   "missing context for method declaration">;
 def err_objc_property_attr_mutually_exclusive : Error<

@@ -246,11 +246,6 @@ public:
 ///
 class ObjCContainerDecl : public NamedDecl, public DeclContext {
   SourceLocation AtEndLoc; // marks the end of the method container.
-  // FIXME. In the long term, all TU variables declared in class scope belong
-  // to class's decl context. This waits till we can establish class's
-  // context before processing all decls in the class.
-  /// Instance variables in the interface.
-  ObjCList<VarDecl> TUVars;
 public:
 
   ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L, 
@@ -303,15 +298,7 @@ public:
   ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
     return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
   }
-  
-  typedef ObjCList<VarDecl>::iterator tuvar_iterator;
-  tuvar_iterator tuvar_begin() const { return TUVars.begin(); }
-  tuvar_iterator tuvar_end() const { return TUVars.end(); }
-  unsigned tuvar_size() const { return TUVars.size(); }
-  void setTUVarList(VarDecl * const *List, unsigned Num, ASTContext &C) {
-    TUVars.set(List, Num, C);
-  }
-  
+    
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
   // Marks the end of the container.

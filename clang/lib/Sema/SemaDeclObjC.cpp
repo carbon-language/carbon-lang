@@ -1339,14 +1339,16 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       }
     }
   }
-  llvm::SmallVector<VarDecl*, 8> allTUVariables;
-  for (unsigned i = 0; i < tuvNum; i++) {
-    if (VarDecl *VD = dyn_cast<VarDecl>((Decl*)allTUVars[i]))
-      allTUVariables.push_back(VD);
-  }
-  if (!allTUVariables.empty() && isInterfaceDeclKind) {
-    ObjCContainerDecl *OCD = dyn_cast<ObjCContainerDecl>(ClassDecl);
-    OCD->setTUVarList(&allTUVariables[0], allTUVariables.size(), Context);
+  if (isInterfaceDeclKind)
+    for (unsigned i = 0; i < tuvNum; i++) {
+      if (VarDecl *VDecl = dyn_cast<VarDecl>((Decl*)allTUVars[i])) {
+        if (VDecl->getStorageClass() != VarDecl::Extern &&
+            VDecl->getStorageClass() != VarDecl::PrivateExtern) {
+          NamedDecl  *ClassNameDecl = dyn_cast<NamedDecl>(ClassDecl);
+          Diag(VDecl->getLocation(), diag::err_objc_var_decl_inclass) 
+            << ClassNameDecl->getIdentifier();
+        }
+     }
   }
 }
 

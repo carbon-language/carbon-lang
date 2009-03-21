@@ -1270,21 +1270,13 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // Forward declarations, no (immediate) code generation.
   case Decl::ObjCClass:
   case Decl::ObjCForwardProtocol:
+  case Decl::ObjCCategory:
+  case Decl::ObjCInterface:
     break;
       
   case Decl::ObjCProtocol:
-  case Decl::ObjCCategory:
-  case Decl::ObjCInterface: {
-    ObjCContainerDecl *OCD = cast<ObjCContainerDecl>(D);
-    for (ObjCContainerDecl::tuvar_iterator i = OCD->tuvar_begin(),
-         e = OCD->tuvar_end(); i != e; ++i) {
-        VarDecl *VD = *i;
-        EmitGlobal(VD);
-    }
-    if (D->getKind() == Decl::ObjCProtocol) 
-      Runtime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
+    Runtime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
     break;
-  }
 
   case Decl::ObjCCategoryImpl:
     // Categories have properties but don't support synthesize so we

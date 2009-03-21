@@ -1025,6 +1025,8 @@ DIAG(err_illegal_qualifiers_on_catch_parm, ERROR,
      "illegal qualifiers on @catch parameter")
 DIAG(err_illegal_super_cast, ERROR,
      "cannot cast 'super' (it isn't an expression)")
+DIAG(err_objc_var_decl_inclass, ERROR,
+     "cannot declare variable inside a class, protocol or category %0")
 
 
 // C++ casts
