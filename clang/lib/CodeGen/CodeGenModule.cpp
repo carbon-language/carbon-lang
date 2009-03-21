@@ -824,7 +824,9 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   if (!Entry)
     Entry = EmitForwardFunctionDefinition(D, 0);
 
-  return llvm::ConstantExpr::getBitCast(Entry, PTy);
+  if (Entry->getType() != PTy)
+    return llvm::ConstantExpr::getBitCast(Entry, PTy);
+  return Entry;
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
@@ -954,8 +956,11 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
 
   llvm::GlobalValue *&ExistingFn =
     GlobalDeclMap[getContext().Idents.get(Name).getName()];
-  if (ExistingFn)
+  if (ExistingFn) {
+    if (ExistingFn->getType() == Ty)
+      return FunctionSlot = ExistingFn;
     return FunctionSlot = llvm::ConstantExpr::getBitCast(ExistingFn, Ty);
+  }
 
   // FIXME: param attributes for sext/zext etc.
   return FunctionSlot = ExistingFn =
