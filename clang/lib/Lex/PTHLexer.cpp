@@ -675,6 +675,12 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
 
   llvm::OwningPtr<PTHStringIdLookup> SL(PTHStringIdLookup::Create(StringIdTable,
                                                                   BufBeg));
+  
+  // Issue a warning about the PTH file containing no identifiers.                                                                
+  if (!FL->isEmpty() && SL->isEmpty()) {
+    InvalidPTH(Diags, "PTH file contains no identifiers.");
+  }
+
   // Get the location of the spelling cache.
   const unsigned char* spellingBaseOffset = PrologueOffset + sizeof(uint32_t)*3;
   const unsigned char* spellingBase = BufBeg + ReadLE32(spellingBaseOffset);
