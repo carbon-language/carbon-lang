@@ -585,22 +585,29 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   }
 }
 
- llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D) {
+/// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
+/// given global variable.  If Ty is non-null and if the global doesn't exist,
+/// then it will be greated with the specified type instead of whatever the
+/// normal requested type would be.
+llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
+                                                  const llvm::Type *Ty) {
   assert(D->hasGlobalStorage() && "Not a global variable");
 
   QualType ASTTy = D->getType();
-  const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
+  if (Ty == 0)
+    Ty = getTypes().ConvertTypeForMem(ASTTy);
 
   // Lookup the entry, lazily creating it if necessary.
   const char *MangledName = getMangledName(D);
   llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   if (Entry) {
-    const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
-    
+    if (Entry->getType()->getElementType() == Ty &&
+        Entry->getType()->getAddressSpace() == ASTTy.getAddressSpace())
+      return Entry;
+        
     // Make sure the result is of the correct type.
-    if (Entry->getType() != PTy)
-      return llvm::ConstantExpr::getBitCast(Entry, PTy);
-    return Entry;
+    const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+    return llvm::ConstantExpr::getBitCast(Entry, PTy);
   }
    
   llvm::GlobalVariable *GV = 
@@ -630,16 +637,15 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
-  const llvm::Type *VarTy = getTypes().ConvertTypeForMem(ASTTy);
 
   if (D->getInit() == 0) {
     // This is a tentative definition; tentative definitions are
     // implicitly initialized with { 0 }
-    const llvm::Type *InitTy = VarTy;
+    const llvm::Type *InitTy = getTypes().ConvertTypeForMem(ASTTy);
     if (ASTTy->isIncompleteArrayType()) {
       // An incomplete array is normally [ TYPE x 0 ], but we need
       // to fix it to [ TYPE x 1 ].
-      const llvm::ArrayType* ATy = cast<llvm::ArrayType>(VarTy);
+      const llvm::ArrayType* ATy = cast<llvm::ArrayType>(InitTy);
       InitTy = llvm::ArrayType::get(ATy->getElementType(), 1);
     }
     Init = llvm::Constant::getNullValue(InitTy);
@@ -653,73 +659,69 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
 
   const llvm::Type* InitType = Init->getType();
-  const char *MangledName = getMangledName(D);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-  llvm::GlobalVariable *GV = cast_or_null<llvm::GlobalVariable>(Entry);
+  llvm::Constant *Entry = GetAddrOfGlobalVar(D, InitType);
   
-  if (!GV) {
-    GV = new llvm::GlobalVariable(InitType, false, 
-                                  llvm::GlobalValue::ExternalLinkage,
-                                  0, MangledName, 
-                                  &getModule(), 0, ASTTy.getAddressSpace());
-
-  } else if (GV->hasInitializer() && !GV->getInitializer()->isNullValue()) {
-    // If we already have this global and it has an initializer, then
-    // we are in the rare situation where we emitted the defining
-    // declaration of the global and are now being asked to emit a
-    // definition which would be common. This occurs, for example, in
-    // the following situation because statics can be emitted out of
-    // order:
-    //
-    //  static int x;
-    //  static int *y = &x;
-    //  static int x = 10;
-    //  int **z = &y;
-    //
-    // Bail here so we don't blow away the definition. Note that if we
-    // can't distinguish here if we emitted a definition with a null
-    // initializer, but this case is safe.
+  // Strip off a bitcast if we got one back.
+  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
+    assert(CE->getOpcode() == llvm::Instruction::BitCast);
+    Entry = CE->getOperand(0);
+  }
+  
+  // Entry is now either a Function or GlobalVariable.
+  llvm::GlobalVariable *GV = dyn_cast<llvm::GlobalVariable>(Entry);
+  
+  // If we already have this global and it has an initializer, then
+  // we are in the rare situation where we emitted the defining
+  // declaration of the global and are now being asked to emit a
+  // definition which would be common. This occurs, for example, in
+  // the following situation because statics can be emitted out of
+  // order:
+  //
+  //  static int x;
+  //  static int *y = &x;
+  //  static int x = 10;
+  //  int **z = &y;
+  //
+  // Bail here so we don't blow away the definition. Note that if we
+  // can't distinguish here if we emitted a definition with a null
+  // initializer, but this case is safe.
+  if (GV && GV->hasInitializer() && !GV->getInitializer()->isNullValue()) {
     assert(!D->getInit() && "Emitting multiple definitions of a decl!");
     return;
+  }
+  
+  // We have a definition after a declaration with the wrong type.
+  // We must make a new GlobalVariable* and update everything that used OldGV
+  // (a declaration or tentative definition) with the new GlobalVariable*
+  // (which will be a definition).
+  //
+  // This happens if there is a prototype for a global (e.g.
+  // "extern int x[];") and then a definition of a different type (e.g.
+  // "int x[10];"). This also happens when an initializer has a different type
+  // from the type of the global (this happens with unions).
+  //
+  // FIXME: This also ends up happening if there's a definition followed by
+  // a tentative definition!  (Although Sema rejects that construct
+  // at the moment.)
+  if (GV == 0 ||
+      GV->getType()->getElementType() != InitType ||
+      GV->getType()->getAddressSpace() != ASTTy.getAddressSpace()) {
+    
+    // Remove the old entry from GlobalDeclMap so that we'll create a new one.
+    GlobalDeclMap.erase(getMangledName(D));
 
-  } else if (GV->getType() != 
-             llvm::PointerType::get(InitType, ASTTy.getAddressSpace())) {
-    // We have a definition after a prototype with the wrong type.
-    // We must make a new GlobalVariable* and update everything that used OldGV
-    // (a declaration or tentative definition) with the new GlobalVariable*
-    // (which will be a definition).
-    //
-    // This happens if there is a prototype for a global (e.g.
-    // "extern int x[];") and then a definition of a different type (e.g.
-    // "int x[10];"). This also happens when an initializer has a different type
-    // from the type of the global (this happens with unions).
-    //
-    // FIXME: This also ends up happening if there's a definition followed by
-    // a tentative definition!  (Although Sema rejects that construct
-    // at the moment.)
-
-    // Save the old global
-    llvm::GlobalVariable *OldGV = GV;
-
-    // Make a new global with the correct type
-    GV = new llvm::GlobalVariable(InitType, false, 
-                                  llvm::GlobalValue::ExternalLinkage,
-                                  0, MangledName,
-                                  &getModule(), 0, ASTTy.getAddressSpace());
-    // Steal the name of the old global
-    GV->takeName(OldGV);
-
+    // Make a new global with the correct type, this is now guaranteed to work.
+    GV = cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, InitType));
+    
     // Replace all uses of the old global with the new global
     llvm::Constant *NewPtrForOldDecl = 
-        llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
-    OldGV->replaceAllUsesWith(NewPtrForOldDecl);
+        llvm::ConstantExpr::getBitCast(GV, Entry->getType());
+    Entry->replaceAllUsesWith(NewPtrForOldDecl);
 
     // Erase the old global, since it is no longer used.
     // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
-    OldGV->eraseFromParent();
+    cast<llvm::GlobalValue>(Entry)->eraseFromParent();
   }
-
-  Entry = GV;
 
   if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>()) {
     SourceManager &SM = Context.getSourceManager();

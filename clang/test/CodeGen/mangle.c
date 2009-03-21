@@ -26,3 +26,13 @@ int test() {
   
   return nux + nux2;
 }
+
+
+// Function becomes a variable.
+void foo3() __asm__("var");
+
+void test2() {
+  foo3();
+}
+int foo4 __asm__("var") = 4;
+

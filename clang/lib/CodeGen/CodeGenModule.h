@@ -175,8 +175,11 @@ public:
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
 
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
-  /// given global variable.
-  llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D);
+  /// given global variable.  If Ty is non-null and if the global doesn't exist,
+  /// then it will be greated with the specified type instead of whatever the
+  /// normal requested type would be.
+  llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D,
+                                     const llvm::Type *Ty = 0);
 
   /// GetAddrOfFunction - Return the address of the given function.  If Ty is
   /// non-null, then this function will use the specified type if it has to
