@@ -334,8 +334,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     int flag = 0;
     int flags = 0;
 
-    // The block literal will need a copy/destroy helper.
-    BlockHasCopyDispose = true;
     needsDispose = true;
 
     if (Ty->isBlockPointerType()) {

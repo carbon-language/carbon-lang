@@ -254,7 +254,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
         if (LocalDeclMap[VD]) {
           if (BDRE->isByRef()) {
-            // FIXME: For only local, or all byrefs?
             NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
               // FIXME: Someone double check this.
               (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
@@ -272,6 +271,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
                                                 false, false);
         }
         if (BDRE->isByRef()) {
+          NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
+            // FIXME: Someone double check this.
+            (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
           E = new (getContext())
             UnaryOperator(E, UnaryOperator::AddrOf,
                           getContext().getPointerType(E->getType()),
@@ -511,6 +513,8 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
     uint64_t Align = getContext().getDeclAlignInBytes(E->getDecl());
     const llvm::Type *PtrStructTy
       = llvm::PointerType::get(BuildByRefType(E->getType(), Align), 0);
+    // The block literal will need a copy/destroy helper.
+    BlockHasCopyDispose = true;
     Ty = PtrStructTy;
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);

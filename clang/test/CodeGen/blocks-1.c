@@ -1,11 +1,11 @@
 // RUN: clang %s -emit-llvm -o %t -fblocks -f__block &&
-// RUN: grep "_Block_object_dispose" %t | count 12 &&
-// RUN: grep "__copy_helper_block_" %t | count 8 &&
-// RUN: grep "__destroy_helper_block_" %t | count 8 &&
+// RUN: grep "_Block_object_dispose" %t | count 15 &&
+// RUN: grep "__copy_helper_block_" %t | count 12 &&
+// RUN: grep "__destroy_helper_block_" %t | count 12 &&
 // RUN: grep "__Block_byref_id_object_copy_" %t | count 2 &&
 // RUN: grep "__Block_byref_id_object_dispose_" %t | count 2 &&
 // RUN: grep "i32 135)" %t | count 2 &&
-// RUN: grep "_Block_object_assign" %t | count 7
+// RUN: grep "_Block_object_assign" %t | count 9
 
 #include <stdio.h>
 
@@ -19,7 +19,6 @@ void test1() {
   a = 1;
   printf("a is %d, b is %d\n", a, b);
 }
-
 
 void test2() {
   __block int a;
@@ -53,6 +52,11 @@ int g;
 void test5() {
   __block struct { int i; } i;
   ^{ (void)i; }();
+}
+
+void test6() {
+  __block int i;
+  ^{ i=1; }();
 }
 
 int main() {
