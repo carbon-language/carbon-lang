@@ -956,11 +956,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
 
   llvm::GlobalValue *&ExistingFn =
     GlobalDeclMap[getContext().Idents.get(Name).getName()];
-  if (ExistingFn) {
-    if (ExistingFn->getType() == Ty)
-      return FunctionSlot = ExistingFn;
-    return FunctionSlot = llvm::ConstantExpr::getBitCast(ExistingFn, Ty);
-  }
+  assert(!ExistingFn && "Asking for the same builtin multiple times?");
 
   // FIXME: param attributes for sext/zext etc.
   return FunctionSlot = ExistingFn =
