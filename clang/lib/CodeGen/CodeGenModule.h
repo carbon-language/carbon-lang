@@ -86,7 +86,7 @@ class CodeGenModule : public BlockModule {
   /// protected from introducing conflicts. These globals should be
   /// created unnamed, we will name them and patch up conflicts when
   /// we release the module.
-  std::vector< std::pair<llvm::GlobalValue*, std::string> > RuntimeGlobals;
+  std::vector<std::pair<llvm::GlobalValue*, std::string> > RuntimeGlobals;
 
   /// GlobalDeclMap - Mapping of decl names (represented as unique
   /// character pointers from either the identifier table or the set

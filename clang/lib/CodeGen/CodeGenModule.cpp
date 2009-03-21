@@ -535,11 +535,12 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     if (FD->getAttr<ConstructorAttr>() || FD->getAttr<DestructorAttr>())
       return false;
 
+    // FIXME: What about inline, and/or extern inline?
     if (FD->getStorageClass() != FunctionDecl::Static)
       return false;
   } else {
     const VarDecl *VD = cast<VarDecl>(Global);
-    assert(VD->isFileVarDecl() && "Invalid decl.");
+    assert(VD->isFileVarDecl() && "Invalid decl");
 
     if (VD->getStorageClass() != VarDecl::Static)
       return false;
@@ -594,42 +595,46 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
 
   QualType ASTTy = D->getType();
   const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
-  const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
 
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
-  if (!Entry) {
-    llvm::GlobalVariable *GV = 
-      new llvm::GlobalVariable(Ty, false, 
-                               llvm::GlobalValue::ExternalLinkage,
-                               0, getMangledName(D), &getModule(), 
-                               0, ASTTy.getAddressSpace());
-    Entry = GV;
-
-    // Handle things which are present even on external declarations.
-
-    // FIXME: This code is overly simple and should be merged with
-    // other global handling.
-
-    GV->setConstant(D->getType().isConstant(Context));
-
-    // FIXME: Merge with other attribute handling code.
-
-    if (D->getStorageClass() == VarDecl::PrivateExtern)
-      setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
-
-    if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
-      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
-
-    if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
-      // Prefaced with special LLVM marker to indicate that the name
-      // should not be munged.
-      GV->setName("\01" + ALA->getLabel());
-    }  
+  if (Entry) {
+    const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+    
+    // Make sure the result is of the correct type.
+    if (Entry->getType() != PTy)
+      return llvm::ConstantExpr::getBitCast(Entry, PTy);
+    return Entry;
   }
-  
-  // Make sure the result is of the correct type.
-  return llvm::ConstantExpr::getBitCast(Entry, PTy);
+   
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(Ty, false, 
+                             llvm::GlobalValue::ExternalLinkage,
+                             0, getMangledName(D), &getModule(), 
+                             0, ASTTy.getAddressSpace());
+
+  // Handle things which are present even on external declarations.
+
+  // FIXME: This code is overly simple and should be merged with
+  // other global handling.
+
+  GV->setConstant(D->getType().isConstant(Context));
+
+  // FIXME: Merge with other attribute handling code.
+
+  if (D->getStorageClass() == VarDecl::PrivateExtern)
+    setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
+
+  if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
+    GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+
+  // FIXME: This should be handled by the mangler!
+  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
+    // Prefaced with special LLVM marker to indicate that the name
+    // should not be munged.
+    GV->setName("\01" + ALA->getLabel());
+  }
+  return Entry = GV;
 }
 
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
@@ -826,7 +831,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
   if (!Entry)
-    Entry = EmitForwardFunctionDefinition(D, 0);
+    return Entry = EmitForwardFunctionDefinition(D, 0);
 
   if (Entry->getType() != PTy)
     return llvm::ConstantExpr::getBitCast(Entry, PTy);
