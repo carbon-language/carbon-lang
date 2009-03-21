@@ -460,6 +460,11 @@ public:
     CurrElementIter = Elements.begin ();
   }
 
+  // Clear.
+  void clear() {
+    Elements.clear();
+  }
+
   // Assignment
   SparseBitVector& operator=(const SparseBitVector& RHS) {
     Elements.clear();
@@ -836,7 +841,36 @@ inline bool operator &=(SparseBitVector<ElementSize> *LHS,
 template <unsigned ElementSize>
 inline bool operator &=(SparseBitVector<ElementSize> &LHS,
                         const SparseBitVector<ElementSize> *RHS) {
-  return LHS &= (*RHS);
+  return LHS &= *RHS;
+}
+
+// Convenience functions for infix union, intersection, difference operators.
+
+template <unsigned ElementSize>
+inline SparseBitVector<ElementSize>
+operator|(const SparseBitVector<ElementSize> &LHS,
+          const SparseBitVector<ElementSize> &RHS) {
+  SparseBitVector<ElementSize> Result(LHS);
+  Result |= RHS;
+  return Result;
+}
+
+template <unsigned ElementSize>
+inline SparseBitVector<ElementSize>
+operator&(const SparseBitVector<ElementSize> &LHS,
+          const SparseBitVector<ElementSize> &RHS) {
+  SparseBitVector<ElementSize> Result(LHS);
+  Result &= RHS;
+  return Result;
+}
+
+template <unsigned ElementSize>
+inline SparseBitVector<ElementSize>
+operator-(const SparseBitVector<ElementSize> &LHS,
+          const SparseBitVector<ElementSize> &RHS) {
+  SparseBitVector<ElementSize> Result;
+  Result.intersectWithComplement(LHS, RHS);
+  return Result;
 }
 
 
@@ -849,10 +883,8 @@ void dump(const SparseBitVector<ElementSize> &LHS, llvm::OStream &out) {
   for (bi = LHS.begin(); bi != LHS.end(); ++bi) {
     out << *bi << " ";
   }
-    out << " ]\n";
+  out << " ]\n";
 }
-}
-
-
+} // end namespace llvm
 
 #endif

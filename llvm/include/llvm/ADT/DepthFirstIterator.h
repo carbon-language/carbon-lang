@@ -200,14 +200,12 @@ struct idf_iterator : public df_iterator<Inverse<T>, SetTy, External> {
 
 template <class T>
 idf_iterator<T> idf_begin(const T& G) {
-  Inverse<T> DummyG;
-  return idf_iterator<T>::begin(DummyG);
+  return idf_iterator<T>::begin(Inverse<T>(G));
 }
 
 template <class T>
 idf_iterator<T> idf_end(const T& G){
-  Inverse<T> DummyG;
-  return idf_iterator<T>::end(DummyG);
+  return idf_iterator<T>::end(Inverse<T>(G));
 }
 
 // Provide global definitions of external inverse depth first iterators...
@@ -221,14 +219,12 @@ struct idf_ext_iterator : public idf_iterator<T, SetTy, true> {
 
 template <class T, class SetTy>
 idf_ext_iterator<T, SetTy> idf_ext_begin(const T& G, SetTy &S) {
-  Inverse<T> DummyG(G);
-  return idf_ext_iterator<T, SetTy>::begin(DummyG, S);
+  return idf_ext_iterator<T, SetTy>::begin(Inverse<T>(G), S);
 }
 
 template <class T, class SetTy>
 idf_ext_iterator<T, SetTy> idf_ext_end(const T& G, SetTy &S) {
-  Inverse<T> DummyG(G);
-  return idf_ext_iterator<T, SetTy>::end(DummyG, S);
+  return idf_ext_iterator<T, SetTy>::end(Inverse<T>(G), S);
 }
 
 } // End llvm namespace
