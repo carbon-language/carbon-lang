@@ -646,14 +646,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (D->getInit() == 0) {
     // This is a tentative definition; tentative definitions are
     // implicitly initialized with { 0 }
-    const llvm::Type* InitTy;
+    const llvm::Type *InitTy = VarTy;
     if (ASTTy->isIncompleteArrayType()) {
       // An incomplete array is normally [ TYPE x 0 ], but we need
       // to fix it to [ TYPE x 1 ].
       const llvm::ArrayType* ATy = cast<llvm::ArrayType>(VarTy);
       InitTy = llvm::ArrayType::get(ATy->getElementType(), 1);
-    } else {
-      InitTy = VarTy;
     }
     Init = llvm::Constant::getNullValue(InitTy);
   } else {
@@ -664,8 +662,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       Init = llvm::UndefValue::get(getTypes().ConvertType(T));
     }
   }
-  const llvm::Type* InitType = Init->getType();
 
+  const llvm::Type* InitType = Init->getType();
   const char *MangledName = getMangledName(D);
   llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   llvm::GlobalVariable *GV = cast_or_null<llvm::GlobalVariable>(Entry);
@@ -702,10 +700,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // (a declaration or tentative definition) with the new GlobalVariable*
     // (which will be a definition).
     //
-    // This happens if there is a prototype for a global (e.g. "extern int x[];")
-    // and then a definition of a different type (e.g. "int x[10];"). This also
-    // happens when an initializer has a different type from the type of the
-    // global (this happens with unions).
+    // This happens if there is a prototype for a global (e.g.
+    // "extern int x[];") and then a definition of a different type (e.g.
+    // "int x[10];"). This also happens when an initializer has a different type
+    // from the type of the global (this happens with unions).
     //
     // FIXME: This also ends up happening if there's a definition followed by
     // a tentative definition!  (Although Sema rejects that construct
@@ -728,6 +726,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     OldGV->replaceAllUsesWith(NewPtrForOldDecl);
 
     // Erase the old global, since it is no longer used.
+    // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
     OldGV->eraseFromParent();
   }
 
@@ -747,6 +746,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
+  // FIXME: This should be a mangling issue.
   if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
     // Prefaced with special LLVM marker to indicate that the name
     // should not be munged.
@@ -794,8 +794,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     AddUsedGlobal(GV);
 
   // Emit global variable debug information.
-  CGDebugInfo *DI = getDebugInfo();
-  if(DI) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(D->getLocation());
     DI->EmitGlobalVariable(GV, D);
   }
