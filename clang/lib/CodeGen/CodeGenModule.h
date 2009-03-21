@@ -95,8 +95,12 @@ class CodeGenModule : public BlockModule {
   /// globals and therefore may not be of the same type as the decl,
   /// they should be bitcasted on retrieval. Also note that the
   /// globals are keyed on their source mangled name, not the global name
-  /// (which may change with attributes such as asm-labels).  This key
+  /// (which may change with attributes such as asm-labels).  The key
   /// to this map should be generated using getMangledName().
+  ///
+  /// Note that this map always lines up exactly with the contents of the LLVM
+  /// IR symbol table, but this is quicker to query since it is doing uniqued
+  /// pointer lookups instead of full string lookups.
   llvm::DenseMap<const char*, llvm::GlobalValue*> GlobalDeclMap;
 
   /// \brief Contains the strings used for mangled names.
@@ -111,13 +115,17 @@ class CodeGenModule : public BlockModule {
   /// and may reference forward.
   std::vector<const ValueDecl*> Aliases;
 
-  /// DeferredDecls - List of decls for which code generation has been
-  /// deferred. When the translation unit has been fully processed we
-  /// will lazily emit definitions for only the decls that were
-  /// actually used.  This should contain only Function and Var decls,
-  /// and only those which actually define something.
-  std::list<const ValueDecl*> DeferredDecls;
+  /// DeferredDecls - This contains all the decls which have definitions but
+  /// which are deferred for emission and therefore should only be output if
+  /// they are actually used.  If a decl is in this, then it is known to have
+  /// not been referenced yet.  The key to this map is a uniqued mangled name.
+  llvm::DenseMap<const char*, const ValueDecl*> DeferredDecls;
 
+  /// DeferredDeclsToEmit - This is a list of deferred decls which we have seen
+  /// that *are* actually referenced.  These get code generated when the module
+  /// is done.
+  std::vector<const ValueDecl*> DeferredDeclsToEmit;
+  
   /// LLVMUsed - List of global values which are required to be
   /// present in the object file; bitcast to i8*. This is used for
   /// forcing visibility of symbols which may otherwise be optimized

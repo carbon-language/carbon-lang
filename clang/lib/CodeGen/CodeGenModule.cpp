@@ -441,38 +441,26 @@ void CodeGenModule::EmitLLVMUsed() {
 }
 
 void CodeGenModule::EmitDeferred() {
-  // Emit code for any deferred decl which was used.  Since a
-  // previously unused static decl may become used during the
-  // generation of code for a static function, iterate until no
-  // changes are made.
-  bool Changed;
-  do {
-    Changed = false;
+  // Emit code for any potentially referenced deferred decls.  Since a
+  // previously unused static decl may become used during the generation of code
+  // for a static function, iterate until no  changes are made.
+  while (!DeferredDeclsToEmit.empty()) {
+    const ValueDecl *D = DeferredDeclsToEmit.back();
+    DeferredDeclsToEmit.pop_back();
+
+    // The mangled name for the decl must have been emitted in GlobalDeclMap.
+    // Look it up to see if it was defined with a stronger definition (e.g. an
+    // extern inline function with a strong function redefinition).  If so,
+    // just ignore the deferred decl.
+    llvm::GlobalValue *CGRef = GlobalDeclMap[getMangledName(D)];
+    assert(CGRef && "Deferred decl wasn't referenced?");
     
-    for (std::list<const ValueDecl*>::iterator i = DeferredDecls.begin(),
-         e = DeferredDecls.end(); i != e; ) {
-      const ValueDecl *D = *i;
-      
-      // Check if we have used a decl with the same name
-      // FIXME: The AST should have some sort of aggregate decls or
-      // global symbol map.
-      // FIXME: This is missing some important cases. For example, we
-      // need to check for uses in an alias.
-      if (!GlobalDeclMap.count(getMangledName(D))) {
-        ++i;
-        continue;
-      }
-      
-      // Emit the definition.
-      EmitGlobalDefinition(D);
-
-      // Erase the used decl from the list.
-      i = DeferredDecls.erase(i);
-
-      // Remember that we made a change.
-      Changed = true;
-    }
-  } while (Changed);
+    if (!CGRef->isDeclaration())
+      continue;
+    
+    // Otherwise, emit the definition and move on to the next one.
+    EmitGlobalDefinition(D);
+  }
 }
 
 /// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the 
@@ -552,6 +540,7 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
     return;
   }
 
+  // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.
     if (!FD->isThisDeclarationADefinition())
@@ -565,9 +554,20 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
       return;
   }
 
-  // Defer code generation when possible.
+  // Defer code generation when possible if this is a static definition, inline
+  // function etc.  These we only want to emit if they are used.
   if (MayDeferGeneration(Global)) {
-    DeferredDecls.push_back(Global);
+    // If the value has already been used, add it directly to the
+    // DeferredDeclsToEmit list.
+    const char *MangledName = getMangledName(Global);
+    if (GlobalDeclMap.count(MangledName))
+      DeferredDeclsToEmit.push_back(Global);
+    else {
+      // Otherwise, remember that we saw a deferred decl with this name.  The
+      // first use of the mangled name will cause it to move into
+      // DeferredDeclsToEmit.
+      DeferredDecls[MangledName] = Global;
+    }
     return;
   }
 
@@ -605,6 +605,19 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
     const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
     return llvm::ConstantExpr::getBitCast(Entry, PTy);
   }
+  
+  // This is the first use or definition of a mangled name.  If there is a
+  // deferred decl with this name, remember that we need to emit it at the end
+  // of the file.
+  llvm::DenseMap<const char*, const ValueDecl*>::iterator DDI = 
+    DeferredDecls.find(MangledName);
+  if (DDI != DeferredDecls.end()) {
+    // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
+    // list, and remove it from DeferredDecls (since we don't need it anymore).
+    DeferredDeclsToEmit.push_back(DDI->second);
+    DeferredDecls.erase(DDI);
+  }
+  
   
   // This function doesn't have a complete type (for example, the return
   // type is an incomplete struct). Use a fake type instead, and make
@@ -648,7 +661,19 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
     const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
     return llvm::ConstantExpr::getBitCast(Entry, PTy);
   }
-   
+  
+  // This is the first use or definition of a mangled name.  If there is a
+  // deferred decl with this name, remember that we need to emit it at the end
+  // of the file.
+  llvm::DenseMap<const char*, const ValueDecl*>::iterator DDI = 
+    DeferredDecls.find(MangledName);
+  if (DDI != DeferredDecls.end()) {
+    // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
+    // list, and remove it from DeferredDecls (since we don't need it anymore).
+    DeferredDeclsToEmit.push_back(DDI->second);
+    DeferredDecls.erase(DDI);
+  }
+  
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(Ty, false, 
                              llvm::GlobalValue::ExternalLinkage,
