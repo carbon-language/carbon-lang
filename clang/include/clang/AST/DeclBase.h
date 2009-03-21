@@ -180,7 +180,10 @@ public:
 
   bool hasAttrs() const { return HasAttrs; }
   void addAttr(Attr *attr);
-  const Attr *getAttrs() const;
+  const Attr *getAttrs() const {
+    if (!HasAttrs) return 0;  // common case, no attributes.
+    return getAttrsImpl();    // Uncommon case, out of line hash lookup.
+  }
   void swapAttrs(Decl *D);
   void invalidateAttrs();
 
@@ -188,7 +191,6 @@ public:
     for (const Attr *attr = getAttrs(); attr; attr = attr->getNext())
       if (const T *V = dyn_cast<T>(attr))
         return V;
-
     return 0;
   }
     
@@ -326,6 +328,9 @@ protected:
     // FIXME: This will eventually be a pure virtual function.
     assert (false && "Not implemented.");
   }
+private:
+  const Attr *getAttrsImpl() const;
+
 };
 
 /// PrettyStackTraceDecl - If a crash occurs, indicate that it happened when

@@ -171,10 +171,8 @@ void Decl::invalidateAttrs() {
   }
 }
 
-const Attr *Decl::getAttrs() const {
-  if (!HasAttrs)
-    return 0;
-  
+const Attr *Decl::getAttrsImpl() const {
+  assert(HasAttrs && "getAttrs() should verify this!"); 
   return (*DeclAttrs)[this];
 }
 
