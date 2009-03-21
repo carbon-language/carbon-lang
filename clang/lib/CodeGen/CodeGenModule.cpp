@@ -156,8 +156,8 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 /// \brief Retrieves the mangled name for the given declaration.
 ///
 /// If the given declaration requires a mangled name, returns an
-/// IdentifierInfo* containing the mangled name. Otherwise, returns
-/// the name of the declaration as an identifier.
+/// const char* containing the mangled name.  Otherwise, returns
+/// the unmangled name.
 ///
 /// FIXME: Returning an IdentifierInfo* here is a total hack. We
 /// really need some kind of string abstraction that either stores a
@@ -171,6 +171,12 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 /// caching mangled names. However, we should fix the problem above
 /// first.
 const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
+  // In C, functions with no attributes never need to be mangled. Fastpath them.
+  if (!getLangOptions().CPlusPlus && !ND->hasAttrs()) {
+    assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
+    return ND->getIdentifier()->getName();
+  }
+    
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   if (!mangleName(ND, Context, Out)) {
