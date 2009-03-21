@@ -163,8 +163,18 @@ public:
            (reinterpret_cast<IdentifierInfo *>(Ptr & ~PtrMask));
   }
 
+  /// Predicate functions for querying what type of name this is.
+  bool isIdentifier() const { return getStoredNameKind() == StoredIdentifier; }
+  bool isObjCZeroArgSelector() const {
+    return getStoredNameKind() == StoredObjCZeroArgSelector;
+  }
+  bool isObjCOneArgSelector() const {
+    return getStoredNameKind() == StoredObjCOneArgSelector;
+  }
+  
   /// getNameKind - Determine what kind of name this is.
   NameKind getNameKind() const;
+  
 
   /// getName - Retrieve the human-readable string for this name.
   std::string getAsString() const;
@@ -173,7 +183,7 @@ public:
   /// this declaration name, or NULL if this declaration name isn't a
   /// simple identifier.
   IdentifierInfo *getAsIdentifierInfo() const { 
-    if (getNameKind() == Identifier)
+    if (isIdentifier())
       return reinterpret_cast<IdentifierInfo *>(Ptr);
     return 0;
   }
