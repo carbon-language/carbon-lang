@@ -160,6 +160,10 @@ int Compilation::Execute() const {
     return 0;
   }
 
+  // If there were errors building the compilation, quit now.
+  if (getDriver().getDiags().getNumErrors())
+    return 1;
+
   int Res = ExecuteJob(Jobs);
   
   // Remove temp files.

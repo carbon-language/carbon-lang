@@ -109,6 +109,8 @@ public:
 
   const OptTable &getOpts() const { return *Opts; }
 
+  const Diagnostic &getDiags() const { return Diags; }
+
   /// @}
   /// @name Primary Functionality
   /// @{

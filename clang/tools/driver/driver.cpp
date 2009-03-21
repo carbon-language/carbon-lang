@@ -87,15 +87,11 @@ int main(int argc, const char **argv) {
                                                
   llvm::OwningPtr<Compilation> C(TheDriver->BuildCompilation(argc, argv));
 
-  // If there were errors building the compilation, quit now.
-  if (Diags.getNumErrors())
-    return 1;
-  if (!C.get())
-    return 0;
-
-  int res = C->Execute();
+  int Res = 0;
+  if (C.get())
+    Res = C->Execute();
 
   llvm::llvm_shutdown();
 
-  return res;
+  return Res;
 }
