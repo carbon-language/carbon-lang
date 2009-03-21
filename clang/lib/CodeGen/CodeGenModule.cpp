@@ -398,13 +398,13 @@ void CodeGenModule::EmitAliases() {
       continue;
     }
 
+    const char *MangledName = getMangledName(D);
     llvm::GlobalValue *GA = 
       new llvm::GlobalAlias(aliasee->getType(),
                             llvm::Function::ExternalLinkage,
-                            getMangledName(D), aliasee, 
-                            &getModule());
+                            MangledName, aliasee, &getModule());
     
-    llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
+    llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
     if (Entry) {
       // If we created a dummy function for this then replace it.
       GA->takeName(Entry);
@@ -597,7 +597,8 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
 
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
+  const char *MangledName = getMangledName(D);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   if (Entry) {
     const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
     
@@ -610,7 +611,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(Ty, false, 
                              llvm::GlobalValue::ExternalLinkage,
-                             0, getMangledName(D), &getModule(), 
+                             0, MangledName, &getModule(), 
                              0, ASTTy.getAddressSpace());
 
   // Handle things which are present even on external declarations.
@@ -665,13 +666,14 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
   const llvm::Type* InitType = Init->getType();
 
-  llvm::GlobalValue *&Entry = GlobalDeclMap[getMangledName(D)];
+  const char *MangledName = getMangledName(D);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   llvm::GlobalVariable *GV = cast_or_null<llvm::GlobalVariable>(Entry);
   
   if (!GV) {
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, getMangledName(D), 
+                                  0, MangledName, 
                                   &getModule(), 0, ASTTy.getAddressSpace());
 
   } else if (GV->hasInitializer() && !GV->getInitializer()->isNullValue()) {
@@ -715,7 +717,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // Make a new global with the correct type
     GV = new llvm::GlobalVariable(InitType, false, 
                                   llvm::GlobalValue::ExternalLinkage,
-                                  0, getMangledName(D), 
+                                  0, MangledName,
                                   &getModule(), 0, ASTTy.getAddressSpace());
     // Steal the name of the old global
     GV->takeName(OldGV);
