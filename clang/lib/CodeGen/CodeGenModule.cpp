@@ -38,14 +38,14 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
     TheTargetData(TD), Diags(diags), Types(C, M, TD), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
 
-  if (Features.ObjC1) {
-    if (Features.NeXTRuntime) {
-      Runtime = Features.ObjCNonFragileABI ? CreateMacNonFragileABIObjCRuntime(*this) 
-                                       : CreateMacObjCRuntime(*this);
-    } else {
-      Runtime = CreateGNUObjCRuntime(*this);
-    }
-  }
+  if (!Features.ObjC1)
+    Runtime = 0;
+  else if (!Features.NeXTRuntime)
+    Runtime = CreateGNUObjCRuntime(*this);
+  else if (Features.ObjCNonFragileABI)
+    Runtime = CreateMacNonFragileABIObjCRuntime(*this);
+  else
+    Runtime = CreateMacObjCRuntime(*this);
 
   // If debug info generation is enabled, create the CGDebugInfo object.
   DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;
@@ -174,19 +174,18 @@ const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
   // In C, functions with no attributes never need to be mangled. Fastpath them.
   if (!getLangOptions().CPlusPlus && !ND->hasAttrs()) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
-    return ND->getIdentifier()->getName();
+    return ND->getNameAsCString();
   }
     
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   if (!mangleName(ND, Context, Out)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
-    return ND->getIdentifier()->getName();
+    return ND->getNameAsCString();
   }
 
   Name += '\0';
-  return MangledNames.GetOrCreateValue(Name.begin(), Name.end())
-           .getKeyData();
+  return MangledNames.GetOrCreateValue(Name.begin(), Name.end()).getKeyData();
 }
 
 /// AddGlobalCtor - Add a function to the list that will be called before
@@ -992,8 +991,7 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
                                   std::vector<llvm::Constant*>& Fields,
                                   FieldDecl *FieldD, FieldDecl *NextFieldD,
                                   llvm::Constant* Field,
-                                  RecordDecl* RD, const llvm::StructType *STy)
-{
+                                  RecordDecl* RD, const llvm::StructType *STy) {
   // Append the field.
   Fields.push_back(Field);
   
