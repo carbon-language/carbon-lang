@@ -113,6 +113,7 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
   }
 
   // Can't actually get here.
+  assert(0 && "This should be unreachable!");
   return Identifier;
 }
 

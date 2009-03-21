@@ -104,16 +104,14 @@ private:
     if (getNameKind() >= CXXConstructorName && 
         getNameKind() <= CXXConversionFunctionName)
       return reinterpret_cast<CXXSpecialName *>(Ptr & ~PtrMask);
-    else
-      return 0;
+    return 0;
   }
 
   /// getAsCXXOperatorIdName
   CXXOperatorIdName *getAsCXXOperatorIdName() const {
     if (getNameKind() == CXXOperatorName)
       return reinterpret_cast<CXXOperatorIdName *>(Ptr & ~PtrMask);
-    else
-      return 0;
+    return 0;
   }
 
   // Construct a declaration name from the name of a C++ constructor,
@@ -177,8 +175,7 @@ public:
   IdentifierInfo *getAsIdentifierInfo() const { 
     if (getNameKind() == Identifier)
       return reinterpret_cast<IdentifierInfo *>(Ptr);
-    else
-      return 0;
+    return 0;
   }
 
   /// getAsOpaqueInteger - Get the representation of this declaration
