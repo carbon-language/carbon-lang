@@ -1996,6 +1996,11 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   unsigned DstBitSize = DstTy->getPrimitiveSizeInBits();
 #endif
   assert(SrcBitSize == DstBitSize && "BitCast requires types of same width");
+  
+  // It is common to ask for a bitcast of a value to its own type, handle this
+  // speedily.
+  if (C->getType() == DstTy) return C;
+  
   return getFoldedCast(Instruction::BitCast, C, DstTy);
 }
 
