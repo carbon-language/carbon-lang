@@ -1131,7 +1131,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     // Transform load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
       if (GV->isConstant()) {
-        if (!GV->isDeclaration() && !GV->mayBeOverridden()) {
+        if (GV->hasDefinitiveInitializer()) {
           markConstant(IV, &I, GV->getInitializer());
           return;
         }
@@ -1150,7 +1150,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
       if (CE->getOpcode() == Instruction::GetElementPtr)
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-      if (GV->isConstant() && !GV->isDeclaration() && !GV->mayBeOverridden())
+      if (GV->isConstant() && GV->hasDefinitiveInitializer())
         if (Constant *V =
              ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE)) {
           markConstant(IV, &I, V);

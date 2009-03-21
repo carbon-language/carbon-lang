@@ -335,8 +335,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
       if (!LI->isVolatile() && CE->getOpcode() == Instruction::GetElementPtr)
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-          if (GV->isConstant() && !GV->isDeclaration() &&
-              !GV->mayBeOverridden())
+          if (GV->isConstant() && GV->hasDefinitiveInitializer())
             return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(),
                                                           CE);
 

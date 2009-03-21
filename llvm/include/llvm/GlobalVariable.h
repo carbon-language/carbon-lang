@@ -78,6 +78,15 @@ public:
   ///
   inline bool hasInitializer() const { return !isDeclaration(); }
 
+  /// hasDefinitiveInitializer - Whether the global variable has an initializer,
+  /// and this is the initializer that will be used in the final executable.
+  inline bool hasDefinitiveInitializer() const {
+    return hasInitializer() &&
+      // The initializer of a global variable with weak linkage may change at
+      // link time.
+      !mayBeOverridden();
+  }
+
   /// getInitializer - Return the initializer for this global variable.  It is
   /// illegal to call this method if the global is external, because we cannot
   /// tell what the value is initialized to!

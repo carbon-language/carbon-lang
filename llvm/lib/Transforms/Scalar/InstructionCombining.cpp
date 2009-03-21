@@ -11227,15 +11227,14 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
     // Instcombine load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
-      if (GV->isConstant() && !GV->isDeclaration() && !GV->mayBeOverridden())
+      if (GV->isConstant() && GV->hasDefinitiveInitializer())
         return ReplaceInstUsesWith(LI, GV->getInitializer());
 
     // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-          if (GV->isConstant() && !GV->isDeclaration() &&
-              !GV->mayBeOverridden())
+          if (GV->isConstant() && GV->hasDefinitiveInitializer())
             if (Constant *V = 
                ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
@@ -11259,7 +11258,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // If this load comes from anywhere in a constant global, and if the global
   // is all undef or zero, we know what it loads.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op->getUnderlyingObject())){
-    if (GV->isConstant() && GV->hasInitializer() && !GV->mayBeOverridden()) {
+    if (GV->isConstant() && GV->hasDefinitiveInitializer()) {
       if (GV->getInitializer()->isNullValue())
         return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
       else if (isa<UndefValue>(GV->getInitializer()))
