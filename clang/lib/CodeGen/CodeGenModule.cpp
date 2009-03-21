@@ -305,11 +305,6 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
-  // Prefaced with special LLVM marker to indicate that the name
-  // should not be munged.
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>())
-    GV->setName("\01" + ALA->getLabel());
-
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
 
@@ -629,12 +624,6 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
     GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
-  // FIXME: This should be handled by the mangler!
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
-    // Prefaced with special LLVM marker to indicate that the name
-    // should not be munged.
-    GV->setName("\01" + ALA->getLabel());
-  }
   return Entry = GV;
 }
 
@@ -746,13 +735,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
-  // FIXME: This should be a mangling issue.
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
-    // Prefaced with special LLVM marker to indicate that the name
-    // should not be munged.
-    GV->setName("\01" + ALA->getLabel());
-  }
-  
   // Set the llvm linkage type as appropriate.
   if (D->getStorageClass() == VarDecl::Static)
     GV->setLinkage(llvm::Function::InternalLinkage);

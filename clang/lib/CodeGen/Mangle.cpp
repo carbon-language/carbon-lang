@@ -57,6 +57,15 @@ namespace {
 
 
 bool CXXNameMangler::mangle(const NamedDecl *D) {
+  // Any decl can be declared with __asm("foo") on it, and this takes
+  // precedence over all other naming in the .o file.
+  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
+    // If we have an asm name, then we use it as the mangling.
+    Out << '\01';  // LLVM IR Marker for __asm("foo")
+    Out << ALA->getLabel();
+    return true;
+  }
+  
   // <mangled-name> ::= _Z <encoding>
   //            ::= <data name>
   //            ::= <special-name>
@@ -68,15 +77,15 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   
   // Clang's "overloadable" attribute extension to C/C++ implies
   // name mangling (always).
-  if (FD->getAttr<OverloadableAttr>())
+  if (FD->getAttr<OverloadableAttr>()) {
     ; // fall into mangling code unconditionally.
-  else if (// C functions are not mangled
-           !Context.getLangOptions().CPlusPlus ||
-           // "main" is not mangled in C++
-           FD->isMain() ||
-           // No mangling in an "implicit extern C" header.
-           Context.getSourceManager().getFileCharacteristic(FD->getLocation())
-                == SrcMgr::C_ExternCSystem)
+  } else if (// C functions are not mangled
+             !Context.getLangOptions().CPlusPlus ||
+             // "main" is not mangled in C++
+             FD->isMain() ||
+             // No mangling in an "implicit extern C" header.
+             Context.getSourceManager().getFileCharacteristic(FD->getLocation())
+               == SrcMgr::C_ExternCSystem)
     return false;
   else {
     // No name mangling in a C linkage specification.
