@@ -133,8 +133,8 @@ MipsRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const
     &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, 
     &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
     &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
-    &Mips::AFGR32RegClass, &Mips::AFGR32RegClass, &Mips::AFGR32RegClass, 
-    &Mips::AFGR32RegClass, &Mips::AFGR32RegClass, &Mips::AFGR32RegClass,
+    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 
+    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass,
     &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, 
     &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, 0
   };
@@ -157,6 +157,12 @@ getReservedRegs(const MachineFunction &MF) const
   Reserved.set(Mips::SP);
   Reserved.set(Mips::FP);
   Reserved.set(Mips::RA);
+
+  // SRV4 requires that odd register can't be used.
+  if (!Subtarget.isSingleFloat())
+    for (unsigned FReg=(Mips::F0)+1; FReg < Mips::F30; FReg+=2)
+      Reserved.set(FReg);
+  
   return Reserved;
 }
 

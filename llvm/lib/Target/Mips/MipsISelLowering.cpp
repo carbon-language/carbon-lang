@@ -66,14 +66,12 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 
   // Set up the register classes
   addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
+  addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
   // When dealing with single precision only, use libcalls
-  if (!Subtarget->isSingleFloat()) {
-    addRegisterClass(MVT::f32, Mips::AFGR32RegisterClass);
+  if (!Subtarget->isSingleFloat())
     if (!Subtarget->isFP64bit())
       addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
-  } else 
-    addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
   // Legal fp constants
   addLegalFPImmediate(APFloat(+0.0f));
@@ -284,13 +282,11 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case Mips::Select_FCC:
-  case Mips::Select_FCC_SO32:
-  case Mips::Select_FCC_AS32:
+  case Mips::Select_FCC_S32:
   case Mips::Select_FCC_D32:
     isFPCmp = true; // FALL THROUGH
   case Mips::Select_CC:
-  case Mips::Select_CC_SO32:
-  case Mips::Select_CC_AS32:
+  case Mips::Select_CC_S32:
   case Mips::Select_CC_D32: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the
     // diamond control-flow pattern.  The incoming instruction knows the
@@ -935,12 +931,9 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
 
       if (RegVT == MVT::i32)
         RC = Mips::CPURegsRegisterClass; 
-      else if (RegVT == MVT::f32) {
-        if (Subtarget->isSingleFloat())
-          RC = Mips::FGR32RegisterClass;
-        else
-          RC = Mips::AFGR32RegisterClass;
-      } else if (RegVT == MVT::f64) {
+      else if (RegVT == MVT::f32) 
+        RC = Mips::FGR32RegisterClass;
+      else if (RegVT == MVT::f64) {
         if (!Subtarget->isSingleFloat()) 
           RC = Mips::AFGR64RegisterClass;
       } else  
@@ -1162,12 +1155,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
     case 'r':
       return std::make_pair(0U, Mips::CPURegsRegisterClass);
     case 'f':
-      if (VT == MVT::f32) {
-        if (Subtarget->isSingleFloat())
-          return std::make_pair(0U, Mips::FGR32RegisterClass);
-        else
-          return std::make_pair(0U, Mips::AFGR32RegisterClass);
-      }
+      if (VT == MVT::f32)
+        return std::make_pair(0U, Mips::FGR32RegisterClass);
       if (VT == MVT::f64)    
         if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
           return std::make_pair(0U, Mips::AFGR64RegisterClass);

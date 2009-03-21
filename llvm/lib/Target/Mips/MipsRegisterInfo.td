@@ -160,13 +160,13 @@ def CPURegs : RegisterClass<"Mips", [i32], 32,
   }];
 }
 
-// * 64bit fp:
-//    - FGR64 = 32 64-bit registers (default mode)
-//    - AFGR32/AFGR64 = 16 even 32-bit registers (32-bit compatible mode) for
-//      single and double access.
-// * 32bit fp:
-//    - AFGR32/AFGR64 = 16 even 32-bit registers - single and double
-//    - FGR32 = 32 32-bit registers (within single-only mode)
+// 64bit fp:
+// * FGR64  - 32 64-bit registers
+// * AFGR64 - 16 32-bit even registers (32-bit FP Mode) 
+//
+// 32bit fp:
+// * FGR32 - 16 32-bit even registers
+// * FGR32 - 32 32-bit registers (single float only mode)
 def FGR32 : RegisterClass<"Mips", [f32], 32, 
   // Return Values and Arguments
   [F0, F1, F2, F3, F12, F13, F14, F15,
@@ -178,35 +178,46 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
   F31]>
 {
   let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
+
+    static const unsigned MIPS_FGR32[] = {
+      Mips::F0,  Mips::F1,  Mips::F2,  Mips::F3,  Mips::F12,  Mips::F13, 
+      Mips::F14, Mips::F15, Mips::F4,  Mips::F5,  Mips::F6,   Mips::F7, 
+      Mips::F8,  Mips::F9,  Mips::F10, Mips::F11, Mips::F16,  Mips::F17, 
+      Mips::F18, Mips::F19, Mips::F20, Mips::F21, Mips::F22,  Mips::F23, 
+      Mips::F24, Mips::F25, Mips::F26, Mips::F27, Mips::F28,  Mips::F29, 
+      Mips::F30
+    };
+
+    static const unsigned MIPS_SVR4_FGR32[] = {
+      Mips::F0,  Mips::F2,  Mips::F12, Mips::F14, Mips::F4, 
+      Mips::F6,  Mips::F8,  Mips::F10, Mips::F16, Mips::F18, 
+      Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30,
+    };
+
+    FGR32Class::iterator
+    FGR32Class::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
+
+      if (Subtarget.isSingleFloat())
+        return MIPS_FGR32;
+      else
+        return MIPS_SVR4_FGR32; 
+    }
+
     FGR32Class::iterator
     FGR32Class::allocation_order_end(const MachineFunction &MF) const {
-      // The last register on the list above is reserved
-      return end()-1;
-    }
-  }];
-}
+      const TargetMachine &TM = MF.getTarget();
+      const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
 
-def AFGR32 : RegisterClass<"Mips", [f32], 32, 
-  // Return Values and Arguments
-  [F0, F2, F12, F14, 
-  // Not preserved across procedure calls
-  F4, F6, F8, F10, F16, F18, 
-  // Callee save
-  F20, F22, F24, F26, F28, F30,
-  // Reserved
-  F31]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    AFGR32Class::iterator
-    AFGR32Class::allocation_order_end(const MachineFunction &MF) const {
-      // The last register on the list above is reserved
-      return end()-1;
+      if (Subtarget.isSingleFloat())
+        return MIPS_FGR32 + (sizeof(MIPS_FGR32) / sizeof(unsigned));
+      else
+        return MIPS_SVR4_FGR32 + (sizeof(MIPS_SVR4_FGR32) / sizeof(unsigned));
     }
   }];
 }

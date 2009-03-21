@@ -35,8 +35,8 @@ isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg,
 {
   SrcSubIdx = DstSubIdx = 0; // No sub-registers.
 
-  //  addu  $dst, $src, $zero || addu  $dst, $zero, $src
-  //  or    $dst, $src, $zero || or    $dst, $zero, $src
+  // addu $dst, $src, $zero || addu $dst, $zero, $src
+  // or   $dst, $src, $zero || or   $dst, $zero, $src
   if ((MI.getOpcode() == Mips::ADDu) || (MI.getOpcode() == Mips::OR)) {
     if (MI.getOperand(1).getReg() == Mips::ZERO) {
       DstReg = MI.getOperand(0).getReg();
@@ -52,16 +52,16 @@ isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg,
   // mov $fpDst, $fpSrc
   // mfc $gpDst, $fpSrc
   // mtc $fpDst, $gpSrc
-  if (MI.getOpcode() == Mips::FMOV_SO32 || MI.getOpcode() == Mips::FMOV_AS32 ||
-      MI.getOpcode() == Mips::FMOV_D32 || MI.getOpcode() == Mips::MFC1A ||
-      MI.getOpcode() == Mips::MFC1 || MI.getOpcode() == Mips::MTC1A ||
+  if (MI.getOpcode() == Mips::FMOV_S32 || 
+      MI.getOpcode() == Mips::FMOV_D32 || 
+      MI.getOpcode() == Mips::MFC1 || 
       MI.getOpcode() == Mips::MTC1 ) {
     DstReg = MI.getOperand(0).getReg();
     SrcReg = MI.getOperand(1).getReg();
     return true;
   }
 
-  //  addiu $dst, $src, 0
+  // addiu $dst, $src, 0
   if (MI.getOpcode() == Mips::ADDiu) {
     if ((MI.getOperand(1).isReg()) && (isZeroImm(MI.getOperand(2)))) {
       DstReg = MI.getOperand(0).getReg();
@@ -81,7 +81,7 @@ unsigned MipsInstrInfo::
 isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const 
 {
   if ((MI->getOpcode() == Mips::LW) || (MI->getOpcode() == Mips::LWC1) ||
-      (MI->getOpcode() == Mips::LWC1A) || (MI->getOpcode() == Mips::LDC1)) {
+      (MI->getOpcode() == Mips::LDC1)) {
     if ((MI->getOperand(2).isFI()) && // is a stack slot
         (MI->getOperand(1).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
@@ -102,7 +102,7 @@ unsigned MipsInstrInfo::
 isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const 
 {
   if ((MI->getOpcode() == Mips::SW) || (MI->getOpcode() == Mips::SWC1) ||
-      (MI->getOpcode() == Mips::SWC1A) || (MI->getOpcode() == Mips::SDC1)) {
+      (MI->getOpcode() == Mips::SDC1)) {
     if ((MI->getOperand(2).isFI()) && // is a stack slot
         (MI->getOperand(1).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
@@ -132,27 +132,23 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC != SrcRC) {
+    // Moves between coprocessors and cpu
     if ((DestRC == Mips::CPURegsRegisterClass) && 
         (SrcRC == Mips::FGR32RegisterClass))
       BuildMI(MBB, I, DL, get(Mips::MFC1), DestReg).addReg(SrcReg);
-    else if ((DestRC == Mips::CPURegsRegisterClass) && 
-             (SrcRC == Mips::AFGR32RegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::MFC1A), DestReg).addReg(SrcReg);
     else if ((DestRC == Mips::FGR32RegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass))
       BuildMI(MBB, I, DL, get(Mips::MTC1), DestReg).addReg(SrcReg);
-    else if ((DestRC == Mips::AFGR32RegisterClass) &&
-             (SrcRC == Mips::CPURegsRegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::MTC1A), DestReg).addReg(SrcReg);
-    else if ((DestRC == Mips::AFGR32RegisterClass) &&
-             (SrcRC == Mips::CPURegsRegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::MTC1A), DestReg).addReg(SrcReg);
+
+    // Condition registers
     else if ((SrcRC == Mips::CCRRegisterClass) && 
              (SrcReg == Mips::FCR31))
       return true; // This register is used implicitly, no copy needed.
     else if ((DestRC == Mips::CCRRegisterClass) && 
              (DestReg == Mips::FCR31))
       return true; // This register is used implicitly, no copy needed.
+
+    // Move from/to Hi/Lo registers
     else if ((DestRC == Mips::HILORegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass)) {
       unsigned Opc = (DestReg == Mips::HI) ? Mips::MTHI : Mips::MTLO;
@@ -161,9 +157,10 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                (DestRC == Mips::CPURegsRegisterClass)) {
       unsigned Opc = (SrcReg == Mips::HI) ? Mips::MFHI : Mips::MFLO;
       BuildMI(MBB, I, DL, get(Opc), DestReg);
+
+    // Can't copy this register
     } else
-      // DestRC != SrcRC, Can't copy this register
-      return false;
+      return false; 
 
     return true;
   }
@@ -172,9 +169,7 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
       .addReg(SrcReg);
   else if (DestRC == Mips::FGR32RegisterClass) 
-    BuildMI(MBB, I, DL, get(Mips::FMOV_SO32), DestReg).addReg(SrcReg);
-  else if (DestRC == Mips::AFGR32RegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::FMOV_AS32), DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, DL, get(Mips::FMOV_S32), DestReg).addReg(SrcReg);
   else if (DestRC == Mips::AFGR64RegisterClass)
     BuildMI(MBB, I, DL, get(Mips::FMOV_D32), DestReg).addReg(SrcReg);
   else
@@ -198,8 +193,6 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::SW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::SWC1;
-  else if (RC == Mips::AFGR32RegisterClass)
-    Opc = Mips::SWC1A;
   else if (RC == Mips::AFGR64RegisterClass)
     Opc = Mips::SDC1;
   else 
@@ -218,8 +211,6 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     Opc = Mips::SW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::SWC1;
-  else if (RC == Mips::AFGR32RegisterClass)
-    Opc = Mips::SWC1A;
   else if (RC == Mips::AFGR64RegisterClass)
     Opc = Mips::SDC1;
   else 
@@ -244,8 +235,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::LW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::LWC1;
-  else if (RC == Mips::AFGR32RegisterClass)
-    Opc = Mips::LWC1A;
   else if (RC == Mips::AFGR64RegisterClass)
     Opc = Mips::LDC1;
   else 
@@ -265,8 +254,6 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = Mips::LW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::LWC1;
-  else if (RC == Mips::AFGR32RegisterClass)
-    Opc = Mips::LWC1A;
   else if (RC == Mips::AFGR64RegisterClass)
     Opc = Mips::LDC1;
   else 
@@ -310,8 +297,7 @@ foldMemoryOperandImpl(MachineFunction &MF,
       }
     }
     break;
-  case Mips::FMOV_SO32:
-  case Mips::FMOV_AS32:
+  case Mips::FMOV_S32:
   case Mips::FMOV_D32:
     if ((MI->getOperand(0).isReg()) &&
         (MI->getOperand(1).isReg())) {
@@ -321,8 +307,6 @@ foldMemoryOperandImpl(MachineFunction &MF,
 
       if (RC == Mips::FGR32RegisterClass) {
         LoadOpc = Mips::LWC1; StoreOpc = Mips::SWC1;
-      } else if (RC == Mips::AFGR32RegisterClass) {
-        LoadOpc = Mips::LWC1A; StoreOpc = Mips::SWC1A;
       } else if (RC == Mips::AFGR64RegisterClass) {
         LoadOpc = Mips::LDC1; StoreOpc = Mips::SDC1;
       } else

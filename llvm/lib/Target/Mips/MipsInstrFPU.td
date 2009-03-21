@@ -44,36 +44,27 @@ let PrintMethod = "printFCCOperand" in
 //===----------------------------------------------------------------------===//
 
 def In32BitMode      : Predicate<"!Subtarget.isFP64bit()">;
-def In64BitMode      : Predicate<"Subtarget.isFP64bit()">;
 def IsSingleFloat    : Predicate<"Subtarget.isSingleFloat()">;
 def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //
-// A set of multiclasses is used to address this in one shot. 
-// SO32 - single precision only, uses all 32 32-bit fp registers
-//        require FGR32 Register Class and IsSingleFloat
-// AS32 - 16 even fp registers are used for single precision
-//        require AFGR32 Register Class and In32BitMode
-// S64  - 32 64 bit registers are used to hold 32-bit single precision values.
-//        require FGR64 Register Class and In64BitMode
-// D32  - 16 even fp registers are used for double precision
-//        require AFGR64 Register Class and In32BitMode
-// D64  - 32 64 bit registers are used to hold 64-bit double precision values.
-//        require FGR64 Register Class and In64BitMode
+// A set of multiclasses is used to address the register usage. 
 //
-// Only SO32, AS32 and D32 are supported right now.
+// S32 - single precision in 16 32bit even fp registers
+//       single precision in 32 32bit fp registers in SingleOnly mode
+// S64 - single precision in 32 64bit fp registers (In64BitMode)
+// D32 - double precision in 16 32bit even fp registers
+// D64 - double precision in 32 64bit fp registers (In64BitMode)
 //
+// Only S32 and D32 are supported right now.
 //===----------------------------------------------------------------------===//
 
 multiclass FFR1_1<bits<6> funct, string asmstr> 
 {
-  def _SO32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-      !strconcat(asmstr, ".s $fd, $fs"), []>, Requires<[IsSingleFloat]>;
-
-  def _AS32 : FFR<0x11, funct, 0x0, (outs AFGR32:$fd), (ins AFGR32:$fs),
-      !strconcat(asmstr, ".s $fd, $fs"), []>, Requires<[In32BitMode]>;
+  def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
+      !strconcat(asmstr, ".s $fd, $fs"), []>;
 
   def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
       !strconcat(asmstr, ".d $fd, $fs"), []>, Requires<[In32BitMode]>;
@@ -81,13 +72,9 @@ multiclass FFR1_1<bits<6> funct, string asmstr>
 
 multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp> 
 {
-  def _SO32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
+  def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
                  !strconcat(asmstr, ".s $fd, $fs"), 
-                 [(set FGR32:$fd, (FOp FGR32:$fs))]>, Requires<[IsSingleFloat]>;
-
-  def _AS32 : FFR<0x11, funct, 0x0, (outs AFGR32:$fd), (ins AFGR32:$fs),
-                 !strconcat(asmstr, ".s $fd, $fs"), 
-                 [(set AFGR32:$fd, (FOp AFGR32:$fs))]>, Requires<[In32BitMode]>;
+                 [(set FGR32:$fd, (FOp FGR32:$fs))]>;
 
   def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
                  !strconcat(asmstr, ".d $fd, $fs"), 
@@ -101,19 +88,12 @@ class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
 
 
 multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp> {
-  def _SO32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), 
+  def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), 
                  (ins FGR32:$fs, FGR32:$ft), 
                  !strconcat(asmstr, ".s $fd, $fs, $ft"),
-                 [(set FGR32:$fd, (FOp FGR32:$fs, FGR32:$ft))]>,
-                 Requires<[IsSingleFloat]>;
+                 [(set FGR32:$fd, (FOp FGR32:$fs, FGR32:$ft))]>;
 
-  def _AS32 : FFR<0x11, funct, 0x0, (outs AFGR32:$fd), 
-                 (ins AFGR32:$fs, AFGR32:$ft), 
-                 !strconcat(asmstr, ".s $fd, $fs, $ft"),
-                 [(set AFGR32:$fd, (FOp AFGR32:$fs, AFGR32:$ft))]>,
-                 Requires<[In32BitMode]>;
-
-  def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), 
+  def _D32 : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), 
                  (ins AFGR64:$fs, AFGR64:$ft), 
                  !strconcat(asmstr, ".d $fd, $fs, $ft"),
                  [(set AFGR64:$fd, (FOp AFGR64:$fs, AFGR64:$ft))]>,
@@ -136,25 +116,28 @@ let ft = 0 in {
   defm FNEG    : FFR1_2<0b000111, "neg",  fneg>; 
   defm FSQRT   : FFR1_2<0b000100, "sqrt", fsqrt>;
 
+  /// Convert to Single Precison
+  def CVTS_W32 : FFR1_3<0b100000, 0x2, FGR32,  FGR32,  "cvt.s.w">;
+
   let Predicates = [IsNotSingleFloat] in {
     /// Ceil to long signed integer
-    def CEIL_LS   : FFR1_3<0b001010, 0x0, AFGR32, AFGR32, "ceil.l">;
+    def CEIL_LS   : FFR1_3<0b001010, 0x0, FGR32, FGR32, "ceil.l">;
     def CEIL_LD   : FFR1_3<0b001010, 0x1, AFGR64, AFGR64, "ceil.l">;
 
     /// Round to long signed integer
-    def ROUND_LS  : FFR1_3<0b001000, 0x0, AFGR32, AFGR32, "round.l">;
+    def ROUND_LS  : FFR1_3<0b001000, 0x0, FGR32, FGR32, "round.l">;
     def ROUND_LD  : FFR1_3<0b001000, 0x1, AFGR64, AFGR64, "round.l">;
 
     /// Floor to long signed integer
-    def FLOOR_LS  : FFR1_3<0b001011, 0x0, AFGR32, AFGR32, "floor.l">;
+    def FLOOR_LS  : FFR1_3<0b001011, 0x0, FGR32, FGR32, "floor.l">;
     def FLOOR_LD  : FFR1_3<0b001011, 0x1, AFGR64, AFGR64, "floor.l">;
 
     /// Trunc to long signed integer
-    def TRUNC_LS  : FFR1_3<0b001001, 0x0, AFGR32, AFGR32, "trunc.l">;
+    def TRUNC_LS  : FFR1_3<0b001001, 0x0, FGR32, FGR32, "trunc.l">;
     def TRUNC_LD  : FFR1_3<0b001001, 0x1, AFGR64, AFGR64, "trunc.l">;
 
     /// Convert to long signed integer
-    def CVTL_S    : FFR1_3<0b100101, 0x0, AFGR32, AFGR32, "cvt.l">; 
+    def CVTL_S    : FFR1_3<0b100101, 0x0, FGR32, FGR32, "cvt.l">; 
     def CVTL_D    : FFR1_3<0b100101, 0x1, AFGR64, AFGR64, "cvt.l">; 
 
     /// Convert to Double Precison 
@@ -166,10 +149,6 @@ let ft = 0 in {
     def CVTS_D32 : FFR1_3<0b100000, 0x1, FGR32, AFGR64, "cvt.s.d">;
     def CVTS_L32 : FFR1_3<0b100000, 0x3, FGR32, AFGR64, "cvt.s.l">; 
   }
-
-  /// Convert to Single Precison
-  def CVTS_W32 : FFR1_3<0b100000, 0x2, FGR32,  FGR32,  "cvt.s.w">, 
-                 Requires<[IsSingleFloat]>;
 }
 
 // The odd-numbered registers are only referenced when doing loads,
@@ -184,22 +163,10 @@ let fd = 0 in {
   ///def CTC1  : FFR<0x11, 0x0, 0x6, (outs CPURegs:$rt), (ins FGR32:$fs),
   ///                "ctc1 $rt, $fs", []>;
   ///                
-  ///def CFC1A : FFR<0x11, 0x0, 0x2, (outs CPURegs:$rt), (ins AFGR32:$fs),
-  ///                "cfc1 $rt, $fs", []>;
-
-  ///def CTC1A : FFR<0x11, 0x0, 0x6, (outs CPURegs:$rt), (ins AFGR32:$fs),
-  ///                "ctc1 $rt, $fs", []>;
-
   def MFC1  : FFR<0x11, 0x00, 0x00, (outs CPURegs:$rt), (ins FGR32:$fs),
                   "mfc1 $rt, $fs", []>;
 
   def MTC1  : FFR<0x11, 0x00, 0x04, (outs FGR32:$fs), (ins CPURegs:$rt),
-                  "mtc1 $rt, $fs", []>;
-
-  def MFC1A : FFR<0x11, 0x00, 0x00, (outs CPURegs:$rt), (ins AFGR32:$fs),
-                  "mfc1 $rt, $fs", []>;
-
-  def MTC1A : FFR<0x11, 0x00, 0x04, (outs AFGR32:$fs), (ins CPURegs:$rt),
                   "mtc1 $rt, $fs", []>;
 }
 
@@ -217,11 +184,6 @@ def LWC1  : FFI<0b110001, (outs FGR32:$ft), (ins mem:$addr), "lwc1 $ft, $addr",
                [(set FGR32:$ft, (load addr:$addr))]>; 
 def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr), "swc1 $ft, $addr",
                [(store FGR32:$ft, addr:$addr)]>; 
-
-def LWC1A : FFI<0b110001, (outs AFGR32:$ft), (ins mem:$addr), "lwc1 $ft, $addr",
-               [(set AFGR32:$ft, (load addr:$addr))]>; 
-def SWC1A : FFI<0b111001, (outs), (ins AFGR32:$ft, mem:$addr), 
-                "swc1 $ft, $addr", [(store AFGR32:$ft, addr:$addr)]>; 
 
 /// Floating-point Aritmetic
 defm FADD : FFR1_4<0x10, "add", fadd>;
@@ -274,14 +236,10 @@ def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 
 /// Floating Point Compare
 let hasDelaySlot = 1, Defs=[FCR31] in {
-  def FCMP_SO32 : FCC<0x0, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
+  def FCMP_S32 : FCC<0x0, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
       "c.$cc.s $fs, $ft", [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc), 
-      (implicit FCR31)]>, Requires<[IsSingleFloat]>;
+      (implicit FCR31)]>;
   
-  def FCMP_AS32 : FCC<0x0, (outs), (ins AFGR32:$fs, AFGR32:$ft, condcode:$cc),
-      "c.$cc.s $fs, $ft", [(MipsFPCmp AFGR32:$fs, AFGR32:$ft, imm:$cc), 
-      (implicit FCR31)]>, Requires<[In32BitMode]>;
-
   def FCMP_D32 : FCC<0x1, (outs), (ins AFGR64:$fs, AFGR64:$ft, condcode:$cc),
       "c.$cc.d $fs, $ft", [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc),
       (implicit FCR31)]>, Requires<[In32BitMode]>;
@@ -302,24 +260,17 @@ let usesCustomDAGSchedInserter = 1, Uses=[FCR31] in {
 }
 
 // The values to be selected are fp but the condition test is with integers.
-def Select_CC_SO32  : PseudoSelCC<FGR32, "# MipsSelect_CC_SO32_f32">,
-                      Requires<[IsSingleFloat]>;
-def Select_CC_AS32  : PseudoSelCC<AFGR32, "# MipsSelect_CC_AS32_f32">,
-                      Requires<[In32BitMode]>;
-def Select_CC_D32   : PseudoSelCC<AFGR64, "# MipsSelect_CC_D32_f32">,
-                      Requires<[In32BitMode]>;
+def Select_CC_S32 : PseudoSelCC<FGR32, "# MipsSelect_CC_S32_f32">;
+def Select_CC_D32 : PseudoSelCC<AFGR64, "# MipsSelect_CC_D32_f32">,
+                    Requires<[In32BitMode]>;
 
 // The values to be selected are int but the condition test is done with fp.
-def Select_FCC      : PseudoFPSelCC<CPURegs, "# MipsSelect_FCC">;
+def Select_FCC     : PseudoFPSelCC<CPURegs, "# MipsSelect_FCC">;
 
 // The values to be selected and the condition test is done with fp.
-def Select_FCC_SO32 : PseudoFPSelCC<FGR32, "# MipsSelect_FCC_SO32_f32">, 
-                      Requires<[IsSingleFloat]>;
-def Select_FCC_AS32 : PseudoFPSelCC<AFGR32, "# MipsSelect_FCC_AS32_f32">, 
-                      Requires<[In32BitMode]>;
-def Select_FCC_D32  : PseudoFPSelCC<AFGR64, "# MipsSelect_FCC_D32_f32">, 
-                      Requires<[In32BitMode]>;
-
+def Select_FCC_S32 : PseudoFPSelCC<FGR32, "# MipsSelect_FCC_S32_f32">;
+def Select_FCC_D32 : PseudoFPSelCC<AFGR64, "# MipsSelect_FCC_D32_f32">, 
+                     Requires<[In32BitMode]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns
@@ -328,19 +279,12 @@ def fpimm0 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
 
-def : Pat<(f32 fpimm0), (MTC1 ZERO)>, Requires<[IsSingleFloat]>;
-def : Pat<(f32 fpimm0), (MTC1A ZERO)>, Requires<[In32BitMode]>;
+def : Pat<(f32 fpimm0), (MTC1 ZERO)>;
 
 def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVTS_W32 (MTC1 CPURegs:$src))>;
 def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
 
-def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_SO32 FGR32:$src))>;
-def : Pat<(i32 (fp_to_sint AFGR32:$src)), (MFC1A (TRUNC_W_AS32 AFGR32:$src))>;
+def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S32 FGR32:$src))>;
 
 def : Pat<(i32 (bitconvert FGR32:$src)),  (MFC1 FGR32:$src)>;
-def : Pat<(i32 (bitconvert AFGR32:$src)), (MFC1A AFGR32:$src)>;
-
-def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1 CPURegs:$src)>,
-      Requires<[IsSingleFloat]>;
-def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1A CPURegs:$src)>,
-      Requires<[In32BitMode]>;
+def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1 CPURegs:$src)>;
