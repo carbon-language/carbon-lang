@@ -859,10 +859,13 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   // As a special case, make sure that definitions of K&R function
   // "type foo()" aren't declared as varargs (which forces the backend
   // to do unnecessary work).
-  // FIXME: what about stret() functions, this doesn't handle them!?
-  if (Ty->isVarArg() && Ty->getNumParams() == 0)
-    Ty = llvm::FunctionType::get(Ty->getReturnType(),
-                                 std::vector<const llvm::Type*>(), false);
+  if (D->getType()->isFunctionNoProtoType()) {
+    assert(Ty->isVarArg() && "Didn't lower type as expected");
+    // Due to stret, the lowered function could have arguments.  Just create the
+    // same type as was lowered by ConvertType but strip off the varargs bit.
+    std::vector<const llvm::Type*> Args(Ty->param_begin(), Ty->param_end());
+    Ty = llvm::FunctionType::get(Ty->getReturnType(), Args, false);
+  }
 
   // Get or create the prototype for teh function.
   llvm::Constant *Entry = GetAddrOfFunction(D, Ty);

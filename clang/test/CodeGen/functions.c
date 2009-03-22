@@ -27,5 +27,9 @@ void f1();
 void f2(void) {
   f1(1, 2, 3);
 }
-// RUN: grep 'define void @f1()' %t
+// RUN: grep 'define void @f1()' %t &&
 void f1() {}
+
+// RUN: grep 'define .* @f3' %t | not grep -F '...'
+struct foo { int X, Y, Z; } f3() {
+}
