@@ -103,15 +103,15 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 UnaryOperator::Opcode 
 UnaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO, bool Postfix) {
   switch (OO) {
-  case OO_PlusPlus: return Postfix? PostInc : PreInc;
-  case OO_MinusMinus: return Postfix? PostDec : PreDec;
-  case OO_Amp: return AddrOf;
-  case OO_Star: return Deref;
-  case OO_Plus: return Plus;
-  case OO_Minus: return Minus;
-  case OO_Tilde: return Not;
-  case OO_Exclaim: return LNot;
   default: assert(false && "No unary operator for overloaded function");
+  case OO_PlusPlus:   return Postfix ? PostInc : PreInc;
+  case OO_MinusMinus: return Postfix ? PostDec : PreDec;
+  case OO_Amp:        return AddrOf;
+  case OO_Star:       return Deref;
+  case OO_Plus:       return Plus;
+  case OO_Minus:      return Minus;
+  case OO_Tilde:      return Not;
+  case OO_Exclaim:    return LNot;
   }
 }
 
@@ -269,6 +269,7 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 BinaryOperator::Opcode 
 BinaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO) {
   switch (OO) {
+  default: assert(false && "Not an overloadable binary operator");
   case OO_Plus: return Add;
   case OO_Minus: return Sub;
   case OO_Star: return Mul;
@@ -300,7 +301,6 @@ BinaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO) {
   case OO_PipePipe: return LOr;
   case OO_Comma: return Comma;
   case OO_ArrowStar: return PtrMemI;
-  default: assert(false && "Not an overloadable binary operator");
   }
 }
 
