@@ -1010,6 +1010,9 @@ def err_ambiguous_base_to_derived_cast : Error<
   "ambiguous static_cast from base %0 to derived %1:%2">;
 def err_static_downcast_via_virtual : Error<
   "cannot cast %0 to %1 via virtual base %2">;
+def err_bad_lvalue_to_rvalue_cast : Error<
+  "cannot cast from lvalue of type %0 to rvalue reference to %1; types are "
+  "not compatible">;
 
 // Other C++ expressions
 def err_need_header_before_typeid : Error<

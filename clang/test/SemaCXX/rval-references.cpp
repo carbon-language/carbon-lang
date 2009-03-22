@@ -28,6 +28,8 @@ void f() {
   int i1 = 0;
   int &&virr4 = i1; // expected-error {{rvalue reference cannot bind to lvalue}}
   int &&virr5 = ret_irr();
+  int &&virr6 = static_cast<int&&>(i1);
+  (void)static_cast<not_int&&>(i1); // expected-error {{types are not compatible}}
 
   int i2 = over(i1);
   not_int ni1 = over(0);

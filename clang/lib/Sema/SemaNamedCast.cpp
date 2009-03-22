@@ -39,6 +39,8 @@ static void CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                              const SourceRange &DestRange);
 
 static bool CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType);
+static TryStaticCastResult TryLValueToRValueCast(
+  Sema &Self, Expr *SrcExpr, QualType DestType, const SourceRange &OpRange);
 static TryStaticCastResult TryStaticReferenceDowncast(
   Sema &Self, Expr *SrcExpr, QualType DestType, const SourceRange &OpRange);
 static TryStaticCastResult TryStaticPointerDowncast(
@@ -452,6 +454,13 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
+  // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
+  //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
+  if (TryLValueToRValueCast(Self, SrcExpr, DestType, OpRange) >
+      TSC_NotApplicable) {
+    return;
+  }
+
   // C++ 5.2.9p2: An expression e can be explicitly converted to a type T
   //   [...] if the declaration "T t(e);" is well-formed, [...].
   if (TryStaticImplicitCast(Self, SrcExpr, DestType, OpRange) >
@@ -531,6 +540,36 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
     << "static_cast" << DestType << OrigSrcType
     << OpRange;
+}
+
+/// Tests whether a conversion according to N2844 is valid.
+TryStaticCastResult
+TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
+                      const SourceRange &OpRange)
+{
+  // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
+  //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
+  const RValueReferenceType *R = DestType->getAsRValueReferenceType();
+  if (!R)
+    return TSC_NotApplicable;
+
+  if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid)
+    return TSC_NotApplicable;
+
+  // Because we try the reference downcast before this function, from now on
+  // this is the only cast possibility, so we issue an error if we fail now.
+  bool DerivedToBase;
+  if (Self.CompareReferenceRelationship(SrcExpr->getType(), R->getPointeeType(),
+                                        DerivedToBase) <
+        Sema::Ref_Compatible_With_Added_Qualification) {
+    Self.Diag(OpRange.getBegin(), diag::err_bad_lvalue_to_rvalue_cast)
+      << SrcExpr->getType() << R->getPointeeType() << OpRange;
+    return TSC_Failed;
+  }
+
+  // FIXME: Similar to CheckReferenceInit, we actually need more AST annotation
+  // than nothing.
+  return TSC_Success;
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p5 is valid.
