@@ -343,6 +343,8 @@ public:
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.
   bool isFunctionType() const;
+  bool isFunctionNoProtoType() const { return getAsFunctionNoProtoType() != 0; }
+  bool isFunctionProtoType() const { return getAsFunctionProtoType() != 0; }
   bool isPointerType() const;
   bool isBlockPointerType() const;
   bool isReferenceType() const;
