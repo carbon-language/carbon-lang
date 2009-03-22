@@ -1174,6 +1174,10 @@ DIAG(err_block_decl_ref_not_modifiable_lvalue, ERROR,
      "variable is not assignable (missing __block type specifier)")
 DIAG(err_typecheck_call_not_function, ERROR,
      "called object type %0 is not a function or function pointer")
+DIAG(err_call_incomplete_return, ERROR,
+     "return type of called function (%0) is incomplete")
+DIAG(err_call_incomplete_argument, ERROR,
+     "argument type %0 is incomplete")
 DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to %select{function|block|method}0 call")
 DIAG(err_typecheck_call_too_many_args, ERROR,

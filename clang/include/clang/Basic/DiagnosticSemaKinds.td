@@ -1118,6 +1118,10 @@ def err_block_decl_ref_not_modifiable_lvalue : Error<
   "variable is not assignable (missing __block type specifier)">;
 def err_typecheck_call_not_function : Error<
   "called object type %0 is not a function or function pointer">;
+def err_call_incomplete_return : Error<
+  "return type of called function (%0) is incomplete">;
+def err_call_incomplete_argument : Error<
+  "argument type %0 is incomplete">;
 def err_typecheck_call_too_few_args : Error<
   "too few arguments to %select{function|block|method}0 call">;
 def err_typecheck_call_too_many_args : Error<

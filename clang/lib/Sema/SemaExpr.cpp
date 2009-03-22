@@ -2161,6 +2161,12 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     if (i < NumArgs) {
       Arg = Args[i];
 
+      if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+                              ProtoArgType,
+                              diag::err_call_incomplete_argument,
+                              Arg->getSourceRange()))
+        return true;
+
       // Pass the argument.
       if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
         return true;
@@ -2331,6 +2337,14 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
       << Fn->getType() << Fn->getSourceRange());
 
+  // Check for a valid return type
+  if (!FuncT->getResultType()->isVoidType() &&
+      RequireCompleteType(Fn->getSourceRange().getBegin(),
+                          FuncT->getResultType(),
+                          diag::err_call_incomplete_return,
+                          TheCall->getSourceRange()))
+    return ExprError();
+
   // We know the result type of the call, set it.
   TheCall->setType(FuncT->getResultType().getNonReferenceType());
 
@@ -2345,6 +2359,11 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     for (unsigned i = 0; i != NumArgs; i++) {
       Expr *Arg = Args[i];
       DefaultArgumentPromotion(Arg);
+      if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+                              Arg->getType(),
+                              diag::err_call_incomplete_argument,
+                              Arg->getSourceRange()))
+        return ExprError();
       TheCall->setArg(i, Arg);
     }
   }
