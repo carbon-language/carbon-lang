@@ -781,7 +781,17 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
     return MLV_InvalidExpression;
   case LV_MemberFunction: return MLV_MemberFunction;
   }
-  
+
+  // The following is illegal:
+  //   void takeclosure(void (^C)(void));
+  //   void func() { int x = 1; takeclosure(^{ x = 7; }); }
+  //
+  if (getStmtClass() == BlockDeclRefExprClass) {
+    const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
+    if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
+      return MLV_NotBlockQualified;
+  }
+
   QualType CT = Ctx.getCanonicalType(getType());
   
   if (CT.isConstQualified())
@@ -794,15 +804,6 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   if (const RecordType *r = CT->getAsRecordType()) {
     if (r->hasConstFields()) 
       return MLV_ConstQualified;
-  }
-  // The following is illegal:
-  //   void takeclosure(void (^C)(void));
-  //   void func() { int x = 1; takeclosure(^{ x = 7 }); }
-  //
-  if (getStmtClass() == BlockDeclRefExprClass) {
-    const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
-    if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
-      return MLV_NotBlockQualified;
   }
   
   // Assigning to an 'implicit' property?
