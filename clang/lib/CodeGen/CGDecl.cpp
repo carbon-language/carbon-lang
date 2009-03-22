@@ -237,7 +237,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       
       if (isByRef)
         Alloc->setAlignment(std::max(getContext().getDeclAlignInBytes(&D),
-                                     getContext().getTypeAlign(getContext().VoidPtrTy) / 8));
+                                     unsigned(Target.getPointerAlign(0) / 8)));
       else
         Alloc->setAlignment(getContext().getDeclAlignInBytes(&D));
       DeclPtr = Alloc;

@@ -1815,29 +1815,29 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }    
 
   llvm::Instruction *CI = CS.getInstruction();
-  if (CI->getType() != llvm::Type::VoidTy)
+  if (Builder.isNamePreserving() && CI->getType() != llvm::Type::VoidTy)
     CI->setName("call");
 
   switch (RetAI.getKind()) {
   case ABIArgInfo::Indirect:
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
-    else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
+    if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(Args[0]);
-    else 
-      return RValue::get(EmitLoadOfScalar(Args[0], false, RetTy));
+    return RValue::get(EmitLoadOfScalar(Args[0], false, RetTy));
 
   case ABIArgInfo::Direct:
     if (RetTy->isAnyComplexType()) {
       llvm::Value *Real = Builder.CreateExtractValue(CI, 0);
       llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
       return RValue::getComplex(std::make_pair(Real, Imag));
-    } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    }
+    if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
       llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(RetTy), "agg.tmp");
       Builder.CreateStore(CI, V);
       return RValue::getAggregate(V);
-    } else
-      return RValue::get(CI);
+    }
+    return RValue::get(CI);
 
   case ABIArgInfo::Ignore:
     // If we are ignoring an argument that had a result, make sure to
@@ -1850,10 +1850,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     CreateCoercedStore(CI, V, *this);
     if (RetTy->isAnyComplexType())
       return RValue::getComplex(LoadComplexFromAddr(V, false));
-    else if (CodeGenFunction::hasAggregateLLVMType(RetTy))
+    if (CodeGenFunction::hasAggregateLLVMType(RetTy))
       return RValue::getAggregate(V);
-    else
-      return RValue::get(EmitLoadOfScalar(V, false, RetTy));
+    return RValue::get(EmitLoadOfScalar(V, false, RetTy));
   }
 
   case ABIArgInfo::Expand:
