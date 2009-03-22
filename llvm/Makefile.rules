@@ -435,7 +435,7 @@ ifeq ($(OS),Darwin)
   # Get "4" out of 10.4 for later pieces in the makefile.
   DARWIN_MAJVERS := $(shell echo $(DARWIN_VERSION)| sed -E 's/10.([0-9]).*/\1/')
 
-  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -dylib \
+  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -Wl,-dylib \
                     -mmacosx-version-min=$(DARWIN_VERSION)
   CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 else
