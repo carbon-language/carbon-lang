@@ -583,21 +583,23 @@ PTHManager::~PTHManager() {
   free(PerIDCache);
 }
 
-static void InvalidPTH(Diagnostic *Diags, const char* Msg = 0) {
+static void InvalidPTH(Diagnostic *Diags, Diagnostic::Level level,
+                       const char* Msg = 0) {
   if (!Diags) return;  
   if (!Msg) Msg = "Invalid or corrupted PTH file";
-  unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Warning, Msg);
+  unsigned DiagID = Diags->getCustomDiagID(level, Msg);
   Diags->Report(FullSourceLoc(), DiagID);
 }
 
-PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
+PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags,
+                               Diagnostic::Level level) {
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer>
   File(llvm::MemoryBuffer::getFile(file.c_str()));
   
   if (!File) {
     if (Diags) {
-      unsigned DiagID = Diags->getCustomDiagID(Diagnostic::Warning,
+      unsigned DiagID = Diags->getCustomDiagID(level,
                                                "PTH file %0 could not be read");
       Diags->Report(FullSourceLoc(), DiagID) << file;
     }
@@ -613,7 +615,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   // Check the prologue of the file.
   if ((BufEnd - BufBeg) < (signed) (sizeof("cfe-pth") + 3 + 4) ||
       memcmp(BufBeg, "cfe-pth", sizeof("cfe-pth") - 1) != 0) {
-    InvalidPTH(Diags);
+    InvalidPTH(Diags, level);
     return 0;
   }
   
@@ -622,7 +624,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   unsigned Version = ReadLE32(p);
   
   if (Version != PTHManager::Version) {
-    InvalidPTH(Diags,
+    InvalidPTH(Diags, level,
         Version < PTHManager::Version 
         ? "PTH file uses an older PTH format that is no longer supported"
         : "PTH file uses a newer PTH format that cannot be read");
@@ -633,7 +635,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   const unsigned char *PrologueOffset = p;
   
   if (PrologueOffset >= BufEnd) {
-    InvalidPTH(Diags);
+    InvalidPTH(Diags, level);
     return 0;
   }
   
@@ -643,7 +645,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   const unsigned char* FileTable = BufBeg + ReadLE32(FileTableOffset);
   
   if (!(FileTable > BufBeg && FileTable < BufEnd)) {
-    InvalidPTH(Diags);
+    InvalidPTH(Diags, level);
     return 0; // FIXME: Proper error diagnostic?
   }
   
@@ -652,7 +654,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   // Warn if the PTH file is empty.  We still want to create a PTHManager
   // as the PTH could be used with -include-pth.
   if (FL->isEmpty())
-    InvalidPTH(Diags, "PTH file contains no cached source data");
+    InvalidPTH(Diags, level, "PTH file contains no cached source data");
   
   // Get the location of the table mapping from persistent ids to the
   // data needed to reconstruct identifiers.
@@ -660,7 +662,7 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   const unsigned char* IData = BufBeg + ReadLE32(IDTableOffset);
   
   if (!(IData >= BufBeg && IData < BufEnd)) {
-    InvalidPTH(Diags);
+    InvalidPTH(Diags, level);
     return 0;
   }
   
@@ -669,23 +671,18 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   const unsigned char* StringIdTableOffset = PrologueOffset + sizeof(uint32_t)*1;
   const unsigned char* StringIdTable = BufBeg + ReadLE32(StringIdTableOffset);
   if (!(StringIdTable >= BufBeg && StringIdTable < BufEnd)) {
-    InvalidPTH(Diags);
+    InvalidPTH(Diags, level);
     return 0;
   }
 
   llvm::OwningPtr<PTHStringIdLookup> SL(PTHStringIdLookup::Create(StringIdTable,
                                                                   BufBeg));
   
-  // Issue a warning about the PTH file containing no identifiers.                                                                
-  if (!FL->isEmpty() && SL->isEmpty()) {
-    InvalidPTH(Diags, "PTH file contains no identifiers.");
-  }
-
   // Get the location of the spelling cache.
   const unsigned char* spellingBaseOffset = PrologueOffset + sizeof(uint32_t)*3;
   const unsigned char* spellingBase = BufBeg + ReadLE32(spellingBaseOffset);
   if (!(spellingBase >= BufBeg && spellingBase < BufEnd)) {
-    InvalidPTH(Diags);
+    InvalidPTH(Diags, level);
     return 0;
   }
   
@@ -700,7 +697,8 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags) {
   if (NumIds) {
     PerIDCache = (IdentifierInfo**)calloc(NumIds, sizeof(*PerIDCache));  
     if (!PerIDCache) {
-      InvalidPTH(Diags, "Could not allocate memory for processing PTH file");
+      InvalidPTH(Diags, level, 
+                 "Could not allocate memory for processing PTH file");
       return 0;
     }
   }

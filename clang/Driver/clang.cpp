@@ -1156,14 +1156,19 @@ public:
     if (!TokenCache.empty() && !ImplicitIncludePTH.empty()) {
       fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
                       "options\n");
-      exit (1);
+      exit(1);
     }
     
     // Use PTH?
     if (!TokenCache.empty() || !ImplicitIncludePTH.empty()) {
       const std::string& x = TokenCache.empty() ? ImplicitIncludePTH:TokenCache;
-      PTHMgr.reset(PTHManager::Create(x, &Diags));
+      PTHMgr.reset(PTHManager::Create(x, &Diags, 
+                                      TokenCache.empty() ? Diagnostic::Error
+                                                        : Diagnostic::Warning));
     }
+    
+    if (Diags.hasErrorOccurred())
+      exit(1);
     
     // Create the Preprocessor.
     llvm::OwningPtr<Preprocessor> PP(new Preprocessor(Diags, LangInfo, Target,

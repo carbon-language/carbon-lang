@@ -17,6 +17,7 @@
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
 #include <string>
@@ -118,7 +119,8 @@ public:
   
   /// Create - This method creates PTHManager objects.  The 'file' argument
   ///  is the name of the PTH file.  This method returns NULL upon failure.
-  static PTHManager *Create(const std::string& file, Diagnostic* Diags = 0);
+  static PTHManager *Create(const std::string& file, Diagnostic* Diags = 0,
+                            Diagnostic::Level failureLevel=Diagnostic::Warning);
 
   void setPreprocessor(Preprocessor *pp) { PP = pp; }    
   
