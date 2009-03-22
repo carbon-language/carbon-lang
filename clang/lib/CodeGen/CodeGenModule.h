@@ -104,11 +104,6 @@ class CodeGenModule : public BlockModule {
   /// has one).
   llvm::StringSet<> MangledNames;
 
-  /// Aliases - List of aliases in module. These cannot be emitted until all the
-  /// code has been seen, as they reference things by name instead of directly
-  /// and may reference forward.
-  std::vector<const ValueDecl*> Aliases;
-
   /// DeferredDecls - This contains all the decls which have definitions but
   /// which are deferred for emission and therefore should only be output if
   /// they are actually used.  If a decl is in this, then it is known to have
@@ -331,6 +326,7 @@ private:
 
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);
+  void EmitAliasDefinition(const ValueDecl *D);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
 
   // FIXME: Hardcoding priority here is gross.
@@ -342,7 +338,6 @@ private:
   /// suitable for use as a LLVM constructor or destructor array.
   void EmitCtorList(const CtorList &Fns, const char *GlobalName);
 
-  void EmitAliases(void);
   void EmitAnnotations(void);
 
   /// EmitDeferred - Emit any needed decls for which code generation

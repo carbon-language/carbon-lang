@@ -57,7 +57,6 @@ CodeGenModule::~CodeGenModule() {
 }
 
 void CodeGenModule::Release() {
-  EmitAliases();
   EmitDeferred();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
@@ -324,75 +323,6 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                            FD->isInline(), F, false);
 }
 
-
-void CodeGenModule::EmitAliases() {
-  for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
-    const ValueDecl *D = Aliases[i];
-    const AliasAttr *AA = D->getAttr<AliasAttr>();
-
-    // This is something of a hack, if the FunctionDecl got overridden
-    // then its attributes will be moved to the new declaration. In
-    // this case the current decl has no alias attribute, but we will
-    // eventually see it.
-    if (!AA)
-      continue;
-
-    const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
-    
-    // Unique the name through the identifier table.
-    const char *AliaseeName = AA->getAliasee().c_str();
-    AliaseeName = getContext().Idents.get(AliaseeName).getName();
-
-    // Create a reference to the named value.  This ensures that it is emitted
-    // if a deferred decl.
-    llvm::Constant *Aliasee;
-    if (isa<llvm::FunctionType>(DeclTy))
-      Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, 0);
-    else
-      Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
-                                      llvm::PointerType::getUnqual(DeclTy), 0);
-
-    // Create the new alias itself, but don't set a name yet.
-    llvm::GlobalValue *GA = 
-      new llvm::GlobalAlias(Aliasee->getType(),
-                            llvm::Function::ExternalLinkage,
-                            "", Aliasee, &getModule());
-    
-    // See if there is already something with the alias' name in the module.
-    const char *MangledName = getMangledName(D);
-    llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-    
-    if (Entry && !Entry->isDeclaration()) {
-      // If there is a definition in the module, then it wins over the alias.
-      // This is dubious, but allow it to be safe.  Just ignore the alias.
-      delete GA;
-      continue;
-    }
-    
-    if (Entry) {
-      // If there is a declaration in the module, then we had an extern followed
-      // by the alias, as in:
-      //   extern int test6();
-      //   ...
-      //   int test6() __attribute__((alias("test7")));
-      //
-      // Remove it and replace uses of it with the alias.
-      
-      Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
-                                                            Entry->getType()));
-      // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
-      Entry->eraseFromParent();
-    }
-    
-    // Now we know that there is no conflict, set the name.
-    Entry = GA;
-    GA->setName(MangledName);
-
-    // Alias should never be internal or inline.
-    SetGlobalValueAttributes(D, false, false, GA, true);
-  }
-}
-
 void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
   assert(!GV->isDeclaration() && 
          "Only globals with definition can force usage.");
@@ -509,12 +439,10 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
 }
 
 void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
-  // Aliases are deferred until code for everything else has been
-  // emitted.
-  if (Global->getAttr<AliasAttr>()) {
-    Aliases.push_back(Global);
-    return;
-  }
+  // If this is an alias definition (which otherwise looks like a declaration)
+  // emit it now.
+  if (Global->getAttr<AliasAttr>())
+    return EmitAliasDefinition(Global);
 
   // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
@@ -934,6 +862,65 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     AddGlobalCtor(Fn, CA->getPriority());
   if (const DestructorAttr *DA = D->getAttr<DestructorAttr>())
     AddGlobalDtor(Fn, DA->getPriority());
+}
+
+void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
+  const AliasAttr *AA = D->getAttr<AliasAttr>();
+  assert(AA && "Not an alias?");
+
+  const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
+  
+  // Unique the name through the identifier table.
+  const char *AliaseeName = AA->getAliasee().c_str();
+  AliaseeName = getContext().Idents.get(AliaseeName).getName();
+
+  // Create a reference to the named value.  This ensures that it is emitted
+  // if a deferred decl.
+  llvm::Constant *Aliasee;
+  if (isa<llvm::FunctionType>(DeclTy))
+    Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, 0);
+  else
+    Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
+                                    llvm::PointerType::getUnqual(DeclTy), 0);
+
+  // Create the new alias itself, but don't set a name yet.
+  llvm::GlobalValue *GA = 
+    new llvm::GlobalAlias(Aliasee->getType(),
+                          llvm::Function::ExternalLinkage,
+                          "", Aliasee, &getModule());
+  
+  // See if there is already something with the alias' name in the module.
+  const char *MangledName = getMangledName(D);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  
+  if (Entry && !Entry->isDeclaration()) {
+    // If there is a definition in the module, then it wins over the alias.
+    // This is dubious, but allow it to be safe.  Just ignore the alias.
+    GA->eraseFromParent();
+    return;
+  }
+  
+  if (Entry) {
+    // If there is a declaration in the module, then we had an extern followed
+    // by the alias, as in:
+    //   extern int test6();
+    //   ...
+    //   int test6() __attribute__((alias("test7")));
+    //
+    // Remove it and replace uses of it with the alias.
+    
+    Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
+                                                          Entry->getType()));
+    // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
+    Entry->eraseFromParent();
+  }
+  
+  // Now we know that there is no conflict, set the name.
+  Entry = GA;
+  GA->setName(MangledName);
+
+  // Alias should never be internal or inline.
+  SetGlobalValueAttributes(D, false, false, GA, true);
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
