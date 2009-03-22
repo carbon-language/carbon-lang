@@ -162,9 +162,8 @@ void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
     Output.push_back(Args.MakeArgString(Joined.c_str()));
   } else {
     Output.push_back(Args.getArgString(getIndex()));
-    unsigned limit = std::min(Args.size(), getIndex() + 1 + NumValues);
-    for (unsigned i = getIndex() + 1; i < limit; ++i)
-      Output.push_back(Args.getArgString(i));
+    for (unsigned i = 0; i < NumValues; ++i)
+      Output.push_back(Args.getArgString(getIndex() + 1 + i));
   }
 }
 
