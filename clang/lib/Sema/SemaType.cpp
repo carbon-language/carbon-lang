@@ -323,10 +323,13 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
                                   SourceLocation Loc, DeclarationName Entity) {
   if (LValueRef) {
     if (const RValueReferenceType *R = T->getAsRValueReferenceType()) {
-      // FIXME: Find the C++0x reference for reference collapsing.
-      // In reference collapsing, lvalue refs win over rvalue refs.
+      // C++0x [dcl.typedef]p9: If a typedef TD names a type that is a
+      //   reference to a type T, and attempt to create the type "lvalue
+      //   reference to cv TD" creates the type "lvalue reference to T".
+      // We use the qualifiers (restrict or none) of the original reference,
+      // not the new ones. This is consistent with GCC.
       return Context.getLValueReferenceType(R->getPointeeType()).
-               getQualifiedType(Quals);
+               getQualifiedType(T.getCVRQualifiers());
     }
   }
   if (T->isReferenceType()) {

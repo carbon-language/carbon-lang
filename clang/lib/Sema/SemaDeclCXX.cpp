@@ -711,7 +711,10 @@ namespace {
   class VISIBILITY_HIDDEN PureVirtualMethodCollector {
     ASTContext &Context;
 
+  public:
     typedef llvm::SmallVector<const CXXMethodDecl*, 8> MethodList;
+
+  private:
     MethodList Methods;
     
     void Collect(const CXXRecordDecl* RD, MethodList& Methods);
@@ -1865,7 +1868,6 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
     BindsDirectly = true;
 
     // Rvalue references cannot bind to lvalues (N2812).
-    // FIXME: This part of rvalue references is still in flux. Revisit later.
     if (isRValRef) {
       if (!ICS)
         Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
@@ -1909,8 +1911,6 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   //          92) (this conversion is selected by enumerating the
   //          applicable conversion functions (13.3.1.6) and choosing
   //          the best one through overload resolution (13.3)),
-  // FIXME: Without standard language for N2812, the rvalue reference treatment
-  // here is pretty much a guess.
   if (!isRValRef && !SuppressUserConversions && T2->isRecordType()) {
     // FIXME: Look for conversions in base classes!
     CXXRecordDecl *T2RecordDecl 
@@ -1923,10 +1923,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
            = Conversions->function_begin();
          Func != Conversions->function_end(); ++Func) {
       CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
-      
+
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.
-      // FIXME: This will change when we support rvalue references.
       if (Conv->getConversionType()->isLValueReferenceType() &&
           (AllowExplicit || !Conv->isExplicit()))
         AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
