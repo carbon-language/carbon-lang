@@ -2224,9 +2224,12 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
     Expr *Init = static_cast<Expr *>(init.get());
     if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
         Context.getCanonicalType(IL->getType()) == Context.IntTy) {
-      if (Method->isVirtual())
+      if (Method->isVirtual()) {
         Method->setPure();
-      else {
+
+        // A class is abstract if at least one function is pure virtual.
+        cast<CXXRecordDecl>(CurContext)->setAbstract(true);
+      } else {
         Diag(Method->getLocation(), diag::err_non_virtual_pure)
           << Method->getDeclName() << Init->getSourceRange();
         Method->setInvalidDecl();

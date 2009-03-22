@@ -219,6 +219,10 @@ class CXXRecordDecl : public RecordDecl {
   /// virtual member or derives from a polymorphic class.
   bool Polymorphic : 1;
 
+  /// Abstract - True when this class is abstract, i.e. has at least one
+  /// pure virtual function, (that can come from a base class).
+  bool Abstract : 1;
+  
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -352,6 +356,13 @@ public:
   /// [class.virtual]).
   void setPolymorphic(bool Poly) { Polymorphic = Poly; }
 
+  /// isAbstract - Whether this class is abstract (C++ [class.abstract]),
+  /// which means that the class contains or inherits a pure virtual function.
+  bool isAbstract() const { return Abstract; }
+  
+  /// setAbstract - Set whether this class is abstract (C++ [class.abstract])
+  void setAbstract(bool Abs) { Abstract = Abs; }
+  
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.

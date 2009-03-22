@@ -629,7 +629,7 @@ public:
 
   /// Whether this virtual function is pure, i.e. makes the containing class
   /// abstract.
-  bool isPure() { return IsPure; }
+  bool isPure() const { return IsPure; }
   void setPure() { IsPure = true; }
 
   /// \brief Whether this function has a prototype, either because one

@@ -214,6 +214,10 @@ bool UnaryTypeTraitExpr::EvaluateTrait() const {
       return cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic();
     }
     return false;
+  case UTT_IsAbstract:
+    if (const RecordType *RT = QueriedType->getAsRecordType())
+      return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
+    return false;
   }
 }
 

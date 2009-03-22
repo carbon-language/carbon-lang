@@ -705,6 +705,77 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs);
 }
 
+namespace {
+  /// PureVirtualMethodCollector - traverses a class and its superclasses
+  /// and determines if it has any pure virtual methods.
+  class VISIBILITY_HIDDEN PureVirtualMethodCollector {
+    ASTContext &Context;
+
+    typedef llvm::SmallVector<const CXXMethodDecl*, 8> MethodList;
+    MethodList Methods;
+    
+    void Collect(const CXXRecordDecl* RD, MethodList& Methods);
+    
+  public:
+    PureVirtualMethodCollector(ASTContext &Ctx, const CXXRecordDecl* RD) 
+      : Context(Ctx) {
+        
+      MethodList List;
+      Collect(RD, List);
+        
+      // Copy the temporary list to methods, and make sure to ignore any
+      // null entries.
+      for (size_t i = 0, e = List.size(); i != e; ++i) {
+        if (List[i])
+          Methods.push_back(List[i]);
+      }          
+    }
+    
+    bool empty() const { return Methods.empty(); }    
+  };
+  
+  void PureVirtualMethodCollector::Collect(const CXXRecordDecl* RD, 
+                                           MethodList& Methods) {
+    // First, collect the pure virtual methods for the base classes.
+    for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
+         BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base) {
+      if (const RecordType *RT = Base->getType()->getAsRecordType()) {
+        const CXXRecordDecl *BaseDecl
+          = cast<CXXRecordDecl>(RT->getDecl());
+        if (BaseDecl && BaseDecl->isAbstract())
+          Collect(BaseDecl, Methods);
+      }
+    }
+    
+    // Next, zero out any pure virtual methods that this class overrides.
+    for (size_t i = 0, e = Methods.size(); i != e; ++i) {
+      const CXXMethodDecl *VMD = dyn_cast_or_null<CXXMethodDecl>(Methods[i]);
+      if (!VMD)
+        continue;
+      
+      DeclContext::lookup_const_iterator I, E;
+      for (llvm::tie(I, E) = RD->lookup(VMD->getDeclName()); I != E; ++I) {
+        if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*I)) {
+          if (Context.getCanonicalType(MD->getType()) == 
+              Context.getCanonicalType(VMD->getType())) {
+            // We did find a matching method, which means that this is not a
+            // pure virtual method in the current class. Zero it out.
+            Methods[i] = 0;
+          }
+        }
+      }
+    }
+    
+    // Finally, add pure virtual methods from this class.
+    for (RecordDecl::decl_iterator i = RD->decls_begin(), e = RD->decls_end(); 
+         i != e; ++i) {
+      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
+        if (MD->isPure())
+          Methods.push_back(MD);
+      }
+    }
+  }
+}
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclTy *TagDecl,
@@ -715,8 +786,17 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
               (DeclTy**)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
 
+  CXXRecordDecl *RD = cast<CXXRecordDecl>((Decl*)TagDecl);
+  if (!RD->isAbstract()) {
+    // Collect all the pure virtual methods and see if this is an abstract
+    // class after all.
+    PureVirtualMethodCollector Collector(Context, RD);
+    if (!Collector.empty()) 
+      RD->setAbstract(true);
+  }
+  
   if (!Template)
-    AddImplicitlyDeclaredMembersToClass(cast<CXXRecordDecl>((Decl*)TagDecl));
+    AddImplicitlyDeclaredMembersToClass(RD);
 }
 
 /// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared

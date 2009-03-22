@@ -27,8 +27,8 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
   : RecordDecl(K, TK, DC, L, Id),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
-    Aggregate(true), PlainOldData(true), Polymorphic(false), Bases(0),
-    NumBases(0), Conversions(DC, DeclarationName()) { }
+    Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
+    Bases(0), NumBases(0), Conversions(DC, DeclarationName()) { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,

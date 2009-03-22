@@ -768,6 +768,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_enum:
   case tok::kw___is_union:
   case tok::kw___is_polymorphic:
+  case tok::kw___is_abstract:
     return ParseUnaryTypeTrait();
 
   case tok::at: {
