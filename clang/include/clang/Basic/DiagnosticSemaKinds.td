@@ -219,6 +219,12 @@ def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;
 def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
 
+def err_abstract_type_in_decl : Error<
+  "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
+  
+def note_pure_virtual_function : Note<
+  "pure virtual function %0">;
+  
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
   "incomplete type %0 named in nested name specifier">;

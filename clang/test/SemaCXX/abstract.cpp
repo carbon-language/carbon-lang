@@ -9,7 +9,7 @@
 #endif
 
 class C {
-    virtual void f() = 0;
+    virtual void f() = 0; // expected-note {{pure virtual function 'f'}}
 };
 
 static_assert(__is_abstract(C), "C has a pure virtual function");
@@ -24,3 +24,11 @@ class E : D {
 };
 
 static_assert(!__is_abstract(E), "E inherits from an abstract class but implements f");
+
+C c; // expected-error {{variable type 'C' is an abstract class}}
+void t1(C c); // expected-error {{parameter type 'C' is an abstract class}}
+void t2(C); // expected-error {{parameter type 'C' is an abstract class}}
+
+struct S {
+  C c; // expected-error {{field type 'C' is an abstract class}}
+};

@@ -731,7 +731,10 @@ namespace {
       }          
     }
     
-    bool empty() const { return Methods.empty(); }    
+    bool empty() const { return Methods.empty(); }
+    
+    MethodList::const_iterator methods_begin() { return Methods.begin(); }
+    MethodList::const_iterator methods_end() { return Methods.end(); }
   };
   
   void PureVirtualMethodCollector::Collect(const CXXRecordDecl* RD, 
@@ -775,6 +778,47 @@ namespace {
       }
     }
   }
+}
+
+bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T, 
+                                  unsigned SelID) {
+  
+  if (!getLangOptions().CPlusPlus)
+    return false;
+    
+  const RecordType *RT = T->getAsRecordType();
+  if (!RT)
+    return false;
+  
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+  if (!RD)
+    return false;
+
+  if (!RD->isAbstract())
+    return false;
+  
+  Diag(Loc, diag::err_abstract_type_in_decl) << SelID << RD->getDeclName();
+  
+  // Check if we've already emitted the list of pure virtual functions for this
+  // class.
+  if (PureVirtualClassDiagSet && PureVirtualClassDiagSet->count(RD))
+    return true;
+  
+  PureVirtualMethodCollector Collector(Context, RD);
+  
+  for (PureVirtualMethodCollector::MethodList::const_iterator I = 
+       Collector.methods_begin(), E = Collector.methods_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+    
+    Diag(MD->getLocation(), diag::note_pure_virtual_function) << 
+      MD->getDeclName();
+  }
+
+  if (!PureVirtualClassDiagSet)
+    PureVirtualClassDiagSet.reset(new RecordDeclSetTy);
+  PureVirtualClassDiagSet->insert(RD);
+  
+  return true;
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

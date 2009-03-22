@@ -1637,6 +1637,12 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else if (SC == VarDecl::None)
       SC = VarDecl::Static;
   }
+
+  // The variable can not have an abstract class type.
+  if (RequireNonAbstractType(D.getIdentifierLoc(), R, 2 /* variable type */))
+    InvalidDecl = true;
+    
+  // The variable can not 
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
                           II, R, SC, 
                           // FIXME: Move to DeclGroup...
@@ -1804,6 +1810,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isVirtual = D.getDeclSpec().isVirtualSpecified();
   bool isExplicit = D.getDeclSpec().isExplicitSpecified();
 
+  // Check that the return type is not an abstract class type.
+  if (RequireNonAbstractType(D.getIdentifierLoc(), 
+                             R->getAsFunctionType()->getResultType(),
+                             0 /* return type */))
+    InvalidDecl = true;
+  
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;
   if (D.getKind() == Declarator::DK_Constructor) {
@@ -1977,8 +1989,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
       }
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
-      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-        Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
+      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+        ParmVarDecl *PVD = (ParmVarDecl *)FTI.ArgInfo[i].Param;
+        
+        // Function parameters cannot have abstract class types.
+        if (RequireNonAbstractType(PVD->getLocation(), PVD->getType(),
+                                   1 /* parameter type */))
+            InvalidDecl = true;
+        Params.push_back(PVD);
+      }
     }
   
     NewFD->setParams(Context, &Params[0], Params.size());
@@ -3511,6 +3530,10 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
       InvalidDecl = true;
     }
   }
+  
+  // Fields can not have abstract class types
+  if (RequireNonAbstractType(Loc, T, 3 /* field type */))
+    InvalidDecl = true;
   
   // If this is declared as a bit-field, check the bit-field.
   if (BitWidth && VerifyBitField(Loc, II, T, BitWidth)) {

@@ -151,6 +151,13 @@ public:
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;
 
+  typedef llvm::SmallPtrSet<const CXXRecordDecl*, 8> RecordDeclSetTy;
+  
+  /// PureVirtualClassDiagSet - a set of class declarations which we have 
+  /// emitted a list of pure virtual functions. Used to prevent emitting the
+  /// same list more than once.
+  llvm::OwningPtr<RecordDeclSetTy> PureVirtualClassDiagSet;
+  
   /// \brief A mapping from external names to the most recent
   /// locally-scoped external declaration with that name.
   ///
@@ -1626,6 +1633,8 @@ public:
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range);
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
+
+  bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned SelID);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]
