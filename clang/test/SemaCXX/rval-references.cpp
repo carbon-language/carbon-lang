@@ -45,4 +45,9 @@ void f() {
   conv_to_not_int_rvalue cnir;
   not_int &&ni4 = cnir;
   not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'struct not_int' cannot be initialized with a value of type 'struct conv_to_not_int_rvalue'}}
+
+
+  try {
+  } catch(int&&) { // expected-error {{cannot catch exceptions by rvalue reference}}
+  }
 }

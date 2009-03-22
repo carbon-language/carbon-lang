@@ -2320,6 +2320,11 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   // C++ 15.3p1: The exception-declaration shall not denote an incomplete type.
   // The exception-declaration shall not denote a pointer or reference to an
   // incomplete type, other than [cv] void*.
+  // N2844 forbids rvalue references.
+  if(ExDeclType->isRValueReferenceType()) {
+    Diag(Begin, diag::err_catch_rvalue_ref) << D.getSourceRange();
+    Invalid = true;
+  }
   QualType BaseType = ExDeclType;
   int Mode = 0; // 0 for direct type, 1 for pointer, 2 for reference
   unsigned DK = diag::err_catch_incomplete;
@@ -2328,16 +2333,15 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
     Mode = 1;
     DK = diag::err_catch_incomplete_ptr;
   } else if(const ReferenceType *Ref = BaseType->getAsReferenceType()) {
+    // For the purpose of error recovery, we treat rvalue refs like lvalue refs.
     BaseType = Ref->getPointeeType();
     Mode = 2;
     DK = diag::err_catch_incomplete_ref;
   }
-  if ((Mode == 0 || !BaseType->isVoidType()) && 
+  if (!Invalid && (Mode == 0 || !BaseType->isVoidType()) &&
       RequireCompleteType(Begin, BaseType, DK))
     Invalid = true;
 
-  // FIXME: C++0x [except.handle] names the handler as cv T or cv T&, i.e.
-  // rvalue references aren't there. Oversight or intentional?
   // FIXME: Need to test for ability to copy-construct and destroy the
   // exception variable.
   // FIXME: Need to check for abstract classes.
