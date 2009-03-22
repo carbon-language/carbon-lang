@@ -57,8 +57,8 @@ CodeGenModule::~CodeGenModule() {
 }
 
 void CodeGenModule::Release() {
-  EmitDeferred();
   EmitAliases();
+  EmitDeferred();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
@@ -337,20 +337,26 @@ void CodeGenModule::EmitAliases() {
     if (!AA)
       continue;
 
-    const std::string& aliaseeName = AA->getAliasee();
-    llvm::GlobalValue *aliasee = getModule().getNamedValue(aliaseeName);
-    if (!aliasee) {
-      // FIXME: This isn't unsupported, this is just an error, which
-      // sema should catch, but...
-      ErrorUnsupported(D, "alias referencing a missing function");
-      continue;
-    }
+    const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
+    
+    // Unique the name through the identifier table.
+    const char *AliaseeName = AA->getAliasee().c_str();
+    AliaseeName = getContext().Idents.get(AliaseeName).getName();
+
+    
+    
+    llvm::Constant *Aliasee;
+    if (isa<llvm::FunctionType>(DeclTy))
+      Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, 0);
+    else
+      Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
+                                      llvm::PointerType::getUnqual(DeclTy), 0);
 
     const char *MangledName = getMangledName(D);
     llvm::GlobalValue *GA = 
-      new llvm::GlobalAlias(aliasee->getType(),
+      new llvm::GlobalAlias(Aliasee->getType(),
                             llvm::Function::ExternalLinkage,
-                            MangledName, aliasee, &getModule());
+                            MangledName, Aliasee, &getModule());
     
     llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
     if (Entry) {
