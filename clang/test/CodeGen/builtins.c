@@ -112,3 +112,11 @@ int main() {
   return 0;
 }
 
+
+
+void strcat() {}
+
+void foo() {
+ __builtin_strcat(0, 0);
+}
+

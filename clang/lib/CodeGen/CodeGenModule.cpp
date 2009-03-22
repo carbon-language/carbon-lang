@@ -929,18 +929,9 @@ void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
 }
 
 
-/// getBuiltinLibFunction
+/// getBuiltinLibFunction - Given a builtin id for a function like
+/// "__builtin_fabsf", return a Function* for "fabsf".
 llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
-  if (BuiltinID > BuiltinFunctions.size())
-    BuiltinFunctions.resize(BuiltinID);
-  
-  // Cache looked up functions.  Since builtin id #0 is invalid we don't reserve
-  // a slot for it.
-  assert(BuiltinID && "Invalid Builtin ID");
-  llvm::Value *&FunctionSlot = BuiltinFunctions[BuiltinID-1];
-  if (FunctionSlot)
-    return FunctionSlot;
-  
   assert((Context.BuiltinInfo.isLibFunction(BuiltinID) ||
           Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) && 
          "isn't a lib fn");
@@ -958,27 +949,10 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   const llvm::FunctionType *Ty = 
     cast<llvm::FunctionType>(getTypes().ConvertType(Type));
 
-  // FIXME: This has a serious problem with code like this:
-  //  void abs() {}
-  //    ... __builtin_abs(x);
-  // The two versions of abs will collide.  The fix is for the builtin to win,
-  // and for the existing one to be turned into a constantexpr cast of the
-  // builtin.  In the case where the existing one is a static function, it
-  // should just be renamed.
-  if (llvm::Function *Existing = getModule().getFunction(Name)) {
-    if (Existing->getFunctionType() == Ty && Existing->hasExternalLinkage())
-      return FunctionSlot = Existing;
-    assert(Existing == 0 && "FIXME: Name collision");
-  }
-
-  llvm::GlobalValue *&ExistingFn =
-    GlobalDeclMap[getContext().Idents.get(Name).getName()];
-  assert(!ExistingFn && "Asking for the same builtin multiple times?");
-
+  // Unique the name through the identifier table.
+  Name = getContext().Idents.get(Name).getName();
   // FIXME: param attributes for sext/zext etc.
-  return FunctionSlot = ExistingFn =
-    llvm::Function::Create(Ty, llvm::Function::ExternalLinkage, Name,
-                           &getModule());
+  return GetOrCreateLLVMFunction(Name, Ty, 0);
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,

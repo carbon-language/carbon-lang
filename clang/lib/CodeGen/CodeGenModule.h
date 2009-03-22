@@ -137,11 +137,6 @@ class CodeGenModule : public BlockModule {
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
-
-  /// BuiltinFunctions - This is the cached set of Function*'s that have been
-  /// created for each builtin, indexed by the Builtin ID.  This is null if the
-  /// Function* has not yet been created.
-  std::vector<llvm::Value *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M,
                 const llvm::TargetData &TD, Diagnostic &Diags,
