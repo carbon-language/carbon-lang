@@ -293,10 +293,11 @@ public:
     // Uninvalidate the iterator.
     I = begin()+InsertElt;
 
-    // If we already have this many elements in the collection, append the
-    // dest elements at the end, then copy over the appropriate elements.  Since
-    // we already reserved space, we know that this won't reallocate the vector.
-    if (size() >= NumToInsert) {
+    // If there are more elements between the insertion point and the end of the
+    // range than there are being inserted, we can use a simple approach to
+    // insertion.  Since we already reserved space, we know that this won't
+    // reallocate the vector.
+    if (size_t(end()-I) >= NumToInsert) {
       T *OldEnd = End;
       append(End-NumToInsert, End);
 
@@ -341,10 +342,11 @@ public:
     // Uninvalidate the iterator.
     I = begin()+InsertElt;
 
-    // If we already have this many elements in the collection, append the
-    // dest elements at the end, then copy over the appropriate elements.  Since
-    // we already reserved space, we know that this won't reallocate the vector.
-    if (size() >= NumToInsert) {
+    // If there are more elements between the insertion point and the end of the
+    // range than there are being inserted, we can use a simple approach to
+    // insertion.  Since we already reserved space, we know that this won't
+    // reallocate the vector.
+    if (size_t(end()-I) >= NumToInsert) {
       T *OldEnd = End;
       append(End-NumToInsert, End);
 
