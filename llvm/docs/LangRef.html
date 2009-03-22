@@ -3486,7 +3486,13 @@ alignment may produce less efficient code. An alignment of 1 is always
 safe.
 </p>
 <h5>Semantics:</h5>
-<p>The location of memory pointed to is loaded.</p>
+<p>The location of memory pointed to is loaded.  If the value being loaded
+is of scalar type then the number of bytes read does not exceed the minimum
+number of bytes needed to hold all bits of the type.  For example, loading an
+<tt>i24</tt> reads at most three bytes.  When loading a value of a type like
+<tt>i20</tt> with a size that is not an integral number of bytes, the result
+is undefined if the value was not originally written using a store of the
+same type.</p>
 <h5>Examples:</h5>
 <pre>  %ptr = <a href="#i_alloca">alloca</a> i32                               <i>; yields {i32*}:ptr</i>
   <a
@@ -3525,7 +3531,14 @@ safe.
 </p>
 <h5>Semantics:</h5>
 <p>The contents of memory are updated to contain '<tt>&lt;value&gt;</tt>'
-at the location specified by the '<tt>&lt;pointer&gt;</tt>' operand.</p>
+at the location specified by the '<tt>&lt;pointer&gt;</tt>' operand.
+If '<tt>&lt;value&gt;</tt>' is of scalar type then the number of bytes
+written does not exceed the minimum number of bytes needed to hold all
+bits of the type.  For example, storing an <tt>i24</tt> writes at most
+three bytes.  When writing a value of a type like <tt>i20</tt> with a
+size that is not an integral number of bytes, it is unspecified what
+happens to the extra bits that do not belong to the type, but they will
+typically be overwritten.</p>
 <h5>Example:</h5>
 <pre>  %ptr = <a href="#i_alloca">alloca</a> i32                               <i>; yields {i32*}:ptr</i>
   store i32 3, i32* %ptr                          <i>; yields {void}</i>
