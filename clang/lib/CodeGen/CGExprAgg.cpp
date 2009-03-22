@@ -47,8 +47,6 @@ public:
   /// represents a value lvalue, this method emits the address of the lvalue,
   /// then loads the result into DestPtr.
   void EmitAggLoadOfLValue(const Expr *E);
-  
-  void EmitNonConstInit(InitListExpr *E);
 
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -288,45 +286,6 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   if (DestPtr)
     // FIXME: volatility
     CGF.EmitAggregateCopy(DestPtr, ArgPtr, VE->getType());
-}
-
-void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
-  const llvm::PointerType *APType =
-    cast<llvm::PointerType>(DestPtr->getType());
-  const llvm::Type *DestType = APType->getElementType();
-
-  if (E->hadArrayRangeDesignator()) {
-    CGF.ErrorUnsupported(E, "GNU array range designator extension");
-  }
-
-  if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(DestType)) {
-    unsigned NumInitElements = E->getNumInits();
-
-    unsigned i;
-    for (i = 0; i != NumInitElements; ++i) {
-      llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
-      Expr *Init = E->getInit(i);
-      if (isa<InitListExpr>(Init))
-        CGF.EmitAggExpr(Init, NextVal, VolatileDest);
-      else
-        // FIXME: volatility
-        Builder.CreateStore(CGF.EmitScalarExpr(Init), NextVal);
-    }
-
-    // Emit remaining default initializers
-    unsigned NumArrayElements = AType->getNumElements();
-    QualType QType = E->getInit(0)->getType();
-    const llvm::Type *EType = AType->getElementType();
-    for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
-      llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
-      if (EType->isSingleValueType())
-        // FIXME: volatility
-        Builder.CreateStore(llvm::Constant::getNullValue(EType), NextVal);
-      else
-        CGF.EmitAggregateClear(NextVal, QType);
-    }
-  } else
-    assert(false && "Invalid initializer");
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
