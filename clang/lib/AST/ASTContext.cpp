@@ -2469,7 +2469,8 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
   // Check to see if this is 'id' or 'Class', both of which are typedefs for
   // pointer types.  This looks for the typedef specifically, not for the
   // underlying type.
-  if (Ty == getObjCIdType() || Ty == getObjCClassType())
+  if (Ty.getUnqualifiedType() == getObjCIdType() ||
+      Ty.getUnqualifiedType() == getObjCClassType())
     return true;
   
   // If this a pointer to an interface (e.g. NSString*), it is ok.

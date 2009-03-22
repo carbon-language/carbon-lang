@@ -932,15 +932,14 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // Blocks that have these can't be constant.
     CurBlock->hasBlockDeclRefExprs = true;
 
+    QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>())
-      return Owned(new (Context) BlockDeclRefExpr(VD, 
-                               VD->getType().getNonReferenceType(), Loc, true));
+      return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, true));
 
     // Variable will be bound by-copy, make it const within the closure.
-    VD->getType().addConst();
-    return Owned(new (Context) BlockDeclRefExpr(VD, 
-                             VD->getType().getNonReferenceType(), Loc, false));
+    ExprTy.addConst();
+    return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, false));
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.

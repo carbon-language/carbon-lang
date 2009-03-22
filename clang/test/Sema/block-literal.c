@@ -39,7 +39,7 @@ void test2() {
 	}
 
 foo:
-	takeclosure(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
+	takeclosure(^{ x = 4; });  // expected-error {{read-only variable is not assignable}}
   __block y = 7; // expected-warning {{type specifier missing, defaults to 'int'}}
   takeclosure(^{ y = 8; });
 }
@@ -56,7 +56,7 @@ void test4() {
 
 void myfunc(int (^block)(int)) {}
 
-void myfunc3(int *x);
+void myfunc3(const int *x);
 
 void test5() {
     int a;
