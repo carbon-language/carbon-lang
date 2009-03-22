@@ -2792,9 +2792,33 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   }
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or
   // unqualified versions of compatible types, ...
-  if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),
-                                  rhptee.getUnqualifiedType()))
-    return IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
+  lhptee = lhptee.getUnqualifiedType();
+  rhptee = rhptee.getUnqualifiedType();
+  if (!Context.typesAreCompatible(lhptee, rhptee)) {
+    // Check if the pointee types are compatible ignoring the sign.
+    // We explicitly check for char so that we catch "char" vs
+    // "unsigned char" on systems where "char" is unsigned.
+    if (lhptee->isCharType()) {
+      lhptee = Context.UnsignedCharTy;
+    } else if (lhptee->isSignedIntegerType()) {
+      lhptee = Context.getCorrespondingUnsignedType(lhptee);
+    }
+    if (rhptee->isCharType()) {
+      rhptee = Context.UnsignedCharTy;
+    } else if (rhptee->isSignedIntegerType()) {
+      rhptee = Context.getCorrespondingUnsignedType(rhptee);
+    }
+    if (lhptee == rhptee) {
+      // Types are compatible ignoring the sign. Qualifier incompatibility
+      // takes priority over sign incompatibility because the sign
+      // warning can be disabled.
+      if (ConvTy != Compatible)
+        return ConvTy;
+      return IncompatiblePointerSign;
+    }
+    // General pointer incompatibility takes priority over qualifiers.
+    return IncompatiblePointer; 
+  }
   return ConvTy;
 }
 
@@ -4628,6 +4652,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case IncompatiblePointer:
     DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
+    break;
+  case IncompatiblePointerSign:
+    DiagKind = diag::ext_typecheck_convert_incompatible_pointer_sign;
     break;
   case FunctionVoidPointer:
     DiagKind = diag::ext_typecheck_convert_pointer_void_func;

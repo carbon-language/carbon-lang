@@ -1092,6 +1092,8 @@ def ext_typecheck_convert_int_pointer : ExtWarn<
   "incompatible integer to pointer conversion %2 %1, expected %0">;
 def ext_typecheck_convert_pointer_void_func : Extension<
   "%2 %1 converts between void* and function pointer, expected %0">;
+def ext_typecheck_convert_incompatible_pointer_sign : ExtWarn<
+  "pointer types point to integer types with different sign %2 %1, expected %0">;
 def ext_typecheck_convert_incompatible_pointer : ExtWarn<
   "incompatible pointer types %2 %1, expected %0">;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
