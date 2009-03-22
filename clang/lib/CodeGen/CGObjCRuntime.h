@@ -123,10 +123,10 @@ public:
                                          const ObjCContainerDecl *CD) = 0;
 
   /// Return the runtime function for getting properties.
-  virtual llvm::Function *GetPropertyGetFunction() = 0;
+  virtual llvm::Constant *GetPropertyGetFunction() = 0;
   
   /// Return the runtime function for setting properties.
-  virtual llvm::Function *GetPropertySetFunction() = 0;
+  virtual llvm::Constant *GetPropertySetFunction() = 0;
 
   /// GetClass - Return a reference to the class for the given
   /// interface decl.
@@ -135,7 +135,7 @@ public:
 
   /// EnumerationMutationFunction - Return the function that's called by the
   /// compiler when a mutation is detected during foreach iteration.
-  virtual llvm::Function *EnumerationMutationFunction() = 0;
+  virtual llvm::Constant *EnumerationMutationFunction() = 0;
     
   /// If instance variable addresses are determined at runtime then this should
   /// return true, otherwise instance variables will be accessed directly from

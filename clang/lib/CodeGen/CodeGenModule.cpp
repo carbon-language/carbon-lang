@@ -66,53 +66,6 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   EmitLLVMUsed();
-  BindRuntimeGlobals();
-}
-
-void CodeGenModule::BindRuntimeGlobals() {
-  // Deal with protecting runtime function names.
-  for (unsigned i = 0, e = RuntimeGlobals.size(); i < e; ++i) {
-    llvm::GlobalValue *GV = RuntimeGlobals[i].first;
-    const std::string &Name = RuntimeGlobals[i].second;
-    
-    // Discard unused runtime declarations.
-    if (GV->isDeclaration() && GV->use_empty()) {
-      GV->eraseFromParent();
-      continue;
-    }
-      
-    // See if there is a conflict against a function by setting the name and
-    // seeing if we got the desired name.
-    GV->setName(Name);
-    if (GV->isName(Name.c_str()))
-      continue;  // Yep, it worked!
-    
-    GV->setName(""); // Zap the bogus name until we work out the conflict.
-    llvm::GlobalValue *Conflict = TheModule.getNamedValue(Name);
-    assert(Conflict && "Must have conflicted!");
-    
-    // Decide which version to take. If the conflict is a definition
-    // we are forced to take that, otherwise assume the runtime
-    // knows best.
-
-    // FIXME: This will fail phenomenally when the conflict is the
-    // wrong type of value. Just bail on it for now. This should
-    // really reuse something inside the LLVM Linker code.
-    assert(GV->getValueID() == Conflict->getValueID() &&
-           "Unable to resolve conflict between globals of different types.");
-    if (!Conflict->isDeclaration()) {
-      llvm::Value *Casted = 
-        llvm::ConstantExpr::getBitCast(Conflict, GV->getType());
-      GV->replaceAllUsesWith(Casted);
-      GV->eraseFromParent();
-    } else {
-      GV->takeName(Conflict);
-      llvm::Value *Casted = 
-        llvm::ConstantExpr::getBitCast(GV, Conflict->getType());
-      Conflict->replaceAllUsesWith(Casted);
-      Conflict->eraseFromParent();
-    }
-  }
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
@@ -585,17 +538,17 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   }
 }
 
-/// GetAddrOfFunction - Return the address of the given function.  If Ty is
-/// non-null, then this function will use the specified type if it has to
-/// create it (this occurs when we see a definition of the function).
-llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
-                                                 const llvm::Type *Ty) {
-  // If there was no specific requested type, just convert it now.
-  if (!Ty)
-    Ty = getTypes().ConvertType(D->getType());
-  
+/// GetOrCreateLLVMFunction - If the specified mangled name is not in the
+/// module, create and return an llvm Function with the specified type. If there
+/// is something in the module with the specified name, return it potentially
+/// bitcasted to the right type.
+///
+/// If D is non-null, it specifies a decl that correspond to this.  This is used
+/// to set the attributes on the function when it is first created.
+llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
+                                                       const llvm::Type *Ty,
+                                                       const FunctionDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
-  const char *MangledName = getMangledName(D);
   llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   if (Entry) {
     if (Entry->getType()->getElementType() == Ty)
@@ -610,14 +563,13 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
   llvm::DenseMap<const char*, const ValueDecl*>::iterator DDI = 
-    DeferredDecls.find(MangledName);
+  DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
     DeferredDeclsToEmit.push_back(DDI->second);
     DeferredDecls.erase(DDI);
   }
-  
   
   // This function doesn't have a complete type (for example, the return
   // type is an incomplete struct). Use a fake type instead, and make
@@ -632,35 +584,51 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
                                              llvm::Function::ExternalLinkage,
                                              "", &getModule());
   F->setName(MangledName);
-  if (ShouldSetAttributes)
+  if (D && ShouldSetAttributes)
     SetFunctionAttributes(D, F);
   Entry = F;
   return F;
 }
 
-/// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
-/// given global variable.  If Ty is non-null and if the global doesn't exist,
-/// then it will be greated with the specified type instead of whatever the
-/// normal requested type would be.
-llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
-                                                  const llvm::Type *Ty) {
-  assert(D->hasGlobalStorage() && "Not a global variable");
+/// GetAddrOfFunction - Return the address of the given function.  If Ty is
+/// non-null, then this function will use the specified type if it has to
+/// create it (this occurs when we see a definition of the function).
+llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
+                                                 const llvm::Type *Ty) {
+  // If there was no specific requested type, just convert it now.
+  if (!Ty)
+    Ty = getTypes().ConvertType(D->getType());
+  return GetOrCreateLLVMFunction(getMangledName(D), Ty, D);
+}
 
-  QualType ASTTy = D->getType();
-  if (Ty == 0)
-    Ty = getTypes().ConvertTypeForMem(ASTTy);
+/// CreateRuntimeFunction - Create a new runtime function with the specified
+/// type and name.
+llvm::Constant *
+CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
+                                     const char *Name) {
+  // Convert Name to be a uniqued string from the IdentifierInfo table.
+  Name = getContext().Idents.get(Name).getName();
+  return GetOrCreateLLVMFunction(Name, FTy, 0);
+}
 
+/// GetOrCreateLLVMGlobal - If the specified mangled name is not in the module,
+/// create and return an llvm GlobalVariable with the specified type.  If there
+/// is something in the module with the specified name, return it potentially
+/// bitcasted to the right type.
+///
+/// If D is non-null, it specifies a decl that correspond to this.  This is used
+/// to set the attributes on the global when it is first created.
+llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
+                                                     const llvm::PointerType*Ty,
+                                                     const VarDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
-  const char *MangledName = getMangledName(D);
   llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   if (Entry) {
-    if (Entry->getType()->getElementType() == Ty &&
-        Entry->getType()->getAddressSpace() == ASTTy.getAddressSpace())
+    if (Entry->getType() == Ty)
       return Entry;
         
     // Make sure the result is of the correct type.
-    const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
-    return llvm::ConstantExpr::getBitCast(Entry, PTy);
+    return llvm::ConstantExpr::getBitCast(Entry, Ty);
   }
   
   // This is the first use or definition of a mangled name.  If there is a
@@ -676,28 +644,54 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   }
   
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Ty, false, 
+    new llvm::GlobalVariable(Ty->getElementType(), false, 
                              llvm::GlobalValue::ExternalLinkage,
                              0, "", &getModule(), 
-                             0, ASTTy.getAddressSpace());
+                             0, Ty->getAddressSpace());
   GV->setName(MangledName);
 
   // Handle things which are present even on external declarations.
+  if (D) {
+    // FIXME: This code is overly simple and should be merged with
+    // other global handling.
+    GV->setConstant(D->getType().isConstant(Context));
 
-  // FIXME: This code is overly simple and should be merged with
-  // other global handling.
+    // FIXME: Merge with other attribute handling code.
+    if (D->getStorageClass() == VarDecl::PrivateExtern)
+      setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
 
-  GV->setConstant(D->getType().isConstant(Context));
-
-  // FIXME: Merge with other attribute handling code.
-
-  if (D->getStorageClass() == VarDecl::PrivateExtern)
-    setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
-
-  if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
-    GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
-
+    if (D->getAttr<WeakAttr>() || D->getAttr<WeakImportAttr>())
+      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+  }
+  
   return Entry = GV;
+}
+
+
+/// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
+/// given global variable.  If Ty is non-null and if the global doesn't exist,
+/// then it will be greated with the specified type instead of whatever the
+/// normal requested type would be.
+llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
+                                                  const llvm::Type *Ty) {
+  assert(D->hasGlobalStorage() && "Not a global variable");
+  QualType ASTTy = D->getType();
+  if (Ty == 0)
+    Ty = getTypes().ConvertTypeForMem(ASTTy);
+  
+  const llvm::PointerType *PTy = 
+    llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+  return GetOrCreateLLVMGlobal(getMangledName(D), PTy, D);
+}
+
+/// CreateRuntimeVariable - Create a new runtime global variable with the
+/// specified type and name.
+llvm::Constant *
+CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
+                                     const char *Name) {
+  // Convert Name to be a uniqued string from the IdentifierInfo table.
+  Name = getContext().Idents.get(Name).getName();
+  return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0);
 }
 
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
@@ -917,27 +911,6 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     AddGlobalCtor(Fn, CA->getPriority());
   if (const DestructorAttr *DA = D->getAttr<DestructorAttr>())
     AddGlobalDtor(Fn, DA->getPriority());
-}
-
-llvm::Function *
-CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
-                                     const std::string &Name) {
-  llvm::Function *Fn = llvm::Function::Create(FTy, 
-                                              llvm::Function::ExternalLinkage,
-                                              "", &TheModule);
-  RuntimeGlobals.push_back(std::make_pair(Fn, Name));
-  return Fn;
-}
-
-llvm::GlobalVariable *
-CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
-                                     const std::string &Name) {
-  llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Ty, /*Constant=*/false,
-                             llvm::GlobalValue::ExternalLinkage,
-                             0, "", &TheModule);
-  RuntimeGlobals.push_back(std::make_pair(GV, Name));
-  return GV;
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {

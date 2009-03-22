@@ -422,9 +422,8 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     assert (0 && "bad expression node in EmitObjCPropertySet");
 }
 
-void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
-{
-  llvm::Function *EnumerationMutationFn = 
+void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
+  llvm::Constant *EnumerationMutationFn = 
     CGM.getObjCRuntime().EnumerationMutationFunction();
   llvm::Value *DeclAddress;
   QualType ElementTy;

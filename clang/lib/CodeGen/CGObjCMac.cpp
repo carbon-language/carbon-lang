@@ -84,33 +84,33 @@ public:
   /// CachePtrTy - LLVM type for struct objc_cache *.
   const llvm::Type *CachePtrTy;
   
-  llvm::Function *GetPropertyFn, *SetPropertyFn;
+  llvm::Constant *GetPropertyFn, *SetPropertyFn;
   
-  llvm::Function *EnumerationMutationFn;
+  llvm::Constant *EnumerationMutationFn;
   
   /// GcReadWeakFn -- LLVM objc_read_weak (id *src) function.
-  llvm::Function *GcReadWeakFn;
+  llvm::Constant *GcReadWeakFn;
   
   /// GcAssignWeakFn -- LLVM objc_assign_weak function.
-  llvm::Function *GcAssignWeakFn;
+  llvm::Constant *GcAssignWeakFn;
   
   /// GcAssignGlobalFn -- LLVM objc_assign_global function.
-  llvm::Function *GcAssignGlobalFn;
+  llvm::Constant *GcAssignGlobalFn;
   
   /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
-  llvm::Function *GcAssignIvarFn;
+  llvm::Constant *GcAssignIvarFn;
   
   /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
-  llvm::Function *GcAssignStrongCastFn;
+  llvm::Constant *GcAssignStrongCastFn;
 
   /// ExceptionThrowFn - LLVM objc_exception_throw function.
-  llvm::Function *ExceptionThrowFn;
+  llvm::Constant *ExceptionThrowFn;
   
   /// SyncEnterFn - LLVM object_sync_enter function.
-  llvm::Function *SyncEnterFn;
+  llvm::Constant *SyncEnterFn;
   
   /// SyncExitFn - LLVM object_sync_exit function.
-  llvm::Function *SyncExitFn;
+  llvm::Constant *SyncExitFn;
   
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCCommonTypesHelper(){}
@@ -121,8 +121,8 @@ public:
 class ObjCTypesHelper : public ObjCCommonTypesHelper {
 private:
   
-  llvm::Function *MessageSendFn, *MessageSendStretFn, *MessageSendFpretFn;
-  llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn, 
+  llvm::Constant *MessageSendFn, *MessageSendStretFn, *MessageSendFpretFn;
+  llvm::Constant *MessageSendSuperFn, *MessageSendSuperStretFn, 
     *MessageSendSuperFpretFn;
 
 public:
@@ -181,34 +181,34 @@ public:
   const llvm::Type *ExceptionDataTy;
   
   /// ExceptionTryEnterFn - LLVM objc_exception_try_enter function.
-  llvm::Function *ExceptionTryEnterFn;
+  llvm::Constant *ExceptionTryEnterFn;
 
   /// ExceptionTryExitFn - LLVM objc_exception_try_exit function.
-  llvm::Function *ExceptionTryExitFn;
+  llvm::Constant *ExceptionTryExitFn;
 
   /// ExceptionExtractFn - LLVM objc_exception_extract function.
-  llvm::Function *ExceptionExtractFn;
+  llvm::Constant *ExceptionExtractFn;
   
   /// ExceptionMatchFn - LLVM objc_exception_match function.
-  llvm::Function *ExceptionMatchFn;
+  llvm::Constant *ExceptionMatchFn;
   
   /// SetJmpFn - LLVM _setjmp function.
-  llvm::Function *SetJmpFn;
+  llvm::Constant *SetJmpFn;
   
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper() {}
 
 
-  llvm::Function *getSendFn(bool IsSuper) {
+  llvm::Constant *getSendFn(bool IsSuper) {
     return IsSuper ? MessageSendSuperFn : MessageSendFn;
   }
 
-  llvm::Function *getSendStretFn(bool IsSuper) {
+  llvm::Constant *getSendStretFn(bool IsSuper) {
     return IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
   }
 
-  llvm::Function *getSendFpretFn(bool IsSuper) {
+  llvm::Constant *getSendFpretFn(bool IsSuper) {
     return IsSuper ? MessageSendSuperFpretFn : MessageSendFpretFn;
   }
 };
@@ -217,7 +217,7 @@ public:
 /// modern abi
 class ObjCNonFragileABITypesHelper : public ObjCCommonTypesHelper {
 public:
-  llvm::Function *MessageSendFixupFn, *MessageSendFpretFixupFn,
+  llvm::Constant *MessageSendFixupFn, *MessageSendFpretFixupFn,
                  *MessageSendStretFixupFn, *MessageSendIdFixupFn,
                  *MessageSendIdStretFixupFn, *MessageSendSuper2FixupFn,
                  *MessageSendSuper2StretFixupFn;
@@ -297,7 +297,7 @@ public:
   /// exception personality function.
   llvm::Value *EHPersonalityPtr;
 
-  llvm::Function *UnwindResumeOrRethrowFn, *ObjCBeginCatchFn, *ObjCEndCatchFn;
+  llvm::Constant *UnwindResumeOrRethrowFn, *ObjCBeginCatchFn, *ObjCEndCatchFn;
 
   const llvm::StructType *EHTypeTy;
   const llvm::Type *EHTypePtrTy;
@@ -652,9 +652,9 @@ private:
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
     
-  virtual llvm::Function *GetPropertyGetFunction();
-  virtual llvm::Function *GetPropertySetFunction();
-  virtual llvm::Function *EnumerationMutationFunction();
+  virtual llvm::Constant *GetPropertyGetFunction();
+  virtual llvm::Constant *GetPropertySetFunction();
+  virtual llvm::Constant *EnumerationMutationFunction();
   
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                          const Stmt &S);
@@ -817,13 +817,13 @@ public:
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
   
-  virtual llvm::Function *GetPropertyGetFunction(){ 
+  virtual llvm::Constant *GetPropertyGetFunction() { 
     return ObjCTypes.GetPropertyFn;
   }
-  virtual llvm::Function *GetPropertySetFunction(){ 
+  virtual llvm::Constant *GetPropertySetFunction() { 
     return ObjCTypes.SetPropertyFn; 
   }
-  virtual llvm::Function *EnumerationMutationFunction() {
+  virtual llvm::Constant *EnumerationMutationFunction() {
     return ObjCTypes.EnumerationMutationFn;
   }
   
@@ -1879,16 +1879,15 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
   return NULL;
 }
 
-llvm::Function *CGObjCMac::GetPropertyGetFunction() {
+llvm::Constant *CGObjCMac::GetPropertyGetFunction() {
   return ObjCTypes.GetPropertyFn;
 }
 
-llvm::Function *CGObjCMac::GetPropertySetFunction() {
+llvm::Constant *CGObjCMac::GetPropertySetFunction() {
   return ObjCTypes.SetPropertyFn;
 }
 
-llvm::Function *CGObjCMac::EnumerationMutationFunction()
-{
+llvm::Constant *CGObjCMac::EnumerationMutationFunction() {
   return ObjCTypes.EnumerationMutationFn;
 }
 

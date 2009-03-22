@@ -82,12 +82,6 @@ class CodeGenModule : public BlockModule {
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
 
-  /// RuntimeGlobal - List of runtime globals whose names must be
-  /// protected from introducing conflicts. These globals should be
-  /// created unnamed, we will name them and patch up conflicts when
-  /// we release the module.
-  std::vector<std::pair<llvm::GlobalValue*, std::string> > RuntimeGlobals;
-
   /// GlobalDeclMap - Mapping of decl names (represented as unique
   /// character pointers from either the identifier table or the set
   /// of mangled names) to global variables we have already
@@ -254,14 +248,14 @@ public:
 
   void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
 
-  /// CreateRuntimeFunction - Create a new runtime function whose name must be
-  /// protected from collisions.
-  llvm::Function *CreateRuntimeFunction(const llvm::FunctionType *Ty,
-                                        const std::string &Name);
-  /// CreateRuntimeVariable - Create a new runtime global variable
-  /// whose name must be protected from collisions.
-  llvm::GlobalVariable *CreateRuntimeVariable(const llvm::Type *Ty,
-                                              const std::string &Name);
+  /// CreateRuntimeFunction - Create a new runtime function with the specified
+  /// type and name.
+  llvm::Constant *CreateRuntimeFunction(const llvm::FunctionType *Ty,
+                                        const char *Name);
+  /// CreateRuntimeVariable - Create a new runtime global variable with the
+  /// specified type and name.
+  llvm::Constant *CreateRuntimeVariable(const llvm::Type *Ty,
+                                        const char *Name);
 
   void UpdateCompletedType(const TagDecl *D);
 
@@ -306,6 +300,13 @@ public:
 
 
 private:
+  llvm::Constant *GetOrCreateLLVMFunction(const char *MangledName,
+                                          const llvm::Type *Ty,
+                                          const FunctionDecl *D);
+  llvm::Constant *GetOrCreateLLVMGlobal(const char *MangledName,
+                                        const llvm::PointerType *PTy,
+                                        const VarDecl *D);
+    
   /// SetGlobalValueAttributes - Set attributes for a global decl.
   void SetGlobalValueAttributes(const Decl *D, 
                                 bool IsInternal,
@@ -351,8 +352,6 @@ private:
   /// EmitLLVMUsed - Emit the llvm.used metadata used to force
   /// references to global which may otherwise be optimized out.
   void EmitLLVMUsed(void);
-
-  void BindRuntimeGlobals();
 
   /// MayDeferGeneration - Determine if the given decl can be emitted
   /// lazily; this is only relevant for definitions. The given decl
