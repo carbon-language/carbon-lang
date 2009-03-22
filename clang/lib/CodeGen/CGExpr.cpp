@@ -29,7 +29,8 @@ using namespace CodeGen;
 /// block.
 llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
                                                     const char *Name) {
-  // FIXME: Should not pass name if names are disabled in IRBuilder.
+  if (!Builder.isNamePreserving())
+    Name = "";
   return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
 }
 

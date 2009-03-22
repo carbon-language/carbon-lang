@@ -232,8 +232,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       const llvm::Type *LTy = ConvertTypeForMem(Ty);
       if (isByRef)
         LTy = BuildByRefType(Ty, getContext().getDeclAlignInBytes(&D));
-      llvm::AllocaInst *Alloc = 
-        CreateTempAlloca(LTy, D.getNameAsString().c_str());
+      llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
+      Alloc->setName(D.getNameAsString().c_str());
+      
       if (isByRef)
         Alloc->setAlignment(std::max(getContext().getDeclAlignInBytes(&D),
                                      getContext().getTypeAlign(getContext().VoidPtrTy) / 8));
@@ -429,7 +430,8 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
       // TODO: Alignment
       std::string Name = D.getNameAsString();
       Name += ".addr";
-      DeclPtr = CreateTempAlloca(LTy, Name.c_str());
+      DeclPtr = CreateTempAlloca(LTy);
+      DeclPtr->setName(Name.c_str());
       
       // Store the initial value into the alloca.
       EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified());

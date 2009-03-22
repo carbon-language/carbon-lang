@@ -163,9 +163,11 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   // later.  Don't create this with the builder, because we don't want it
   // folded.
   llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
-  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
+  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "",
                                          EntryBB);
-
+  if (Builder.isNamePreserving())
+    AllocaInsertPt->setName("allocapt");
+  
   ReturnBlock = createBasicBlock("return");
   ReturnValue = 0;
   if (!RetTy->isVoidType())
