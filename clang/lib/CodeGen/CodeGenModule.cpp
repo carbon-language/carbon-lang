@@ -630,7 +630,8 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
   }
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
-                                             MangledName, &getModule());
+                                             "", &getModule());
+  F->setName(MangledName);
   if (ShouldSetAttributes)
     SetFunctionAttributes(D, F);
   Entry = F;
@@ -677,8 +678,9 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(Ty, false, 
                              llvm::GlobalValue::ExternalLinkage,
-                             0, MangledName, &getModule(), 
+                             0, "", &getModule(), 
                              0, ASTTy.getAddressSpace());
+  GV->setName(MangledName);
 
   // Handle things which are present even on external declarations.
 
