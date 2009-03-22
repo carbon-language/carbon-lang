@@ -51,6 +51,10 @@ public:
   /// getFolder - Get the constant folder being used.
   const T& getFolder() { return Folder; }
 
+  /// isNamePreserving - Return true if this builder is configured to actually
+  /// add the requested names to IR created through it.
+  bool isNamePreserving() const { return preserveNames; }
+  
   //===--------------------------------------------------------------------===//
   // Builder configuration methods
   //===--------------------------------------------------------------------===//
