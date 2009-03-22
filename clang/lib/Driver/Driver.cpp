@@ -72,18 +72,23 @@ ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
     }
 
     unsigned Prev = Index;
-    Arg *A = getOpts().ParseOneArg(*Args, Index, End);
-    if (A) {
-      if (A->getOption().isUnsupported()) {
-        Diag(clang::diag::err_drv_unsupported_opt) << A->getAsString(*Args);
-        continue;
-      }
+    Arg *A = getOpts().ParseOneArg(*Args, Index);
+    assert(Index > Prev && "Parser failed to consume argument.");
 
-      Args->append(A);
+    // Check for missing argument error.
+    if (!A) {
+      assert(Index >= End && "Unexpected parser error.");
+      Diag(clang::diag::err_drv_missing_argument)
+        << Args->getArgString(Prev)
+        << (Index - Prev - 1);
+      break;
     }
 
-    assert(Index > Prev && "Parser failed to consume argument.");
-    (void) Prev;
+    if (A->getOption().isUnsupported()) {
+      Diag(clang::diag::err_drv_unsupported_opt) << A->getAsString(*Args);
+      continue;
+    }
+    Args->append(A);
   }
 
   return Args;

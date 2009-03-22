@@ -128,21 +128,28 @@ Option *OptTable::constructOption(options::ID id) const {
   return Opt;
 }
 
-Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index, 
-                           unsigned IndexEnd) const {
+Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
+  unsigned Prev = Index;
   const char *Str = Args.getArgString(Index);
 
   // Anything that doesn't start with '-' is an input, as is '-' itself.
   if (Str[0] != '-' || Str[1] == '\0')
     return new PositionalArg(getOption(OPT_INPUT), Index++);
 
+  // FIXME: Make this fast, and avoid looking through option
+  // groups. Maybe we should declare them separately?
   for (unsigned j = OPT_UNKNOWN + 1; j < LastOption; ++j) {
     const char *OptName = getOptionName((options::ID) j);
     
     // Arguments are only accepted by options which prefix them.
-    if (memcmp(Str, OptName, strlen(OptName)) == 0)
+    if (memcmp(Str, OptName, strlen(OptName)) == 0) {
       if (Arg *A = getOption((options::ID) j)->accept(Args, Index))
         return A;
+
+      // Otherwise, see if this argument was missing values.
+      if (Prev != Index)
+        return 0;
+    }
   }
 
   return new PositionalArg(getOption(OPT_UNKNOWN), Index++);

@@ -58,12 +58,12 @@ namespace options {
     ///
     /// \param [in] [out] Index - The current parsing position in the
     /// argument string list; on return this will be the index of the
-    /// next option to parse.
+    /// next argument string to parse.
     ///
-    /// \param IndexEnd - The last argument string index to consider
-    /// when parsing.
-    Arg *ParseOneArg(const ArgList &Args, unsigned &Index, 
-                     unsigned IndexEnd) const;
+    /// \return - The parsed argument, or 0 if the argument is missing
+    /// values (in which case Index still points at the conceptual
+    /// next argument string to parse).
+    Arg *ParseOneArg(const ArgList &Args, unsigned &Index) const;
   };
 }
 }

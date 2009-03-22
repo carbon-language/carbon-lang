@@ -13,7 +13,9 @@
 
 using namespace clang::driver;
 
-ArgList::ArgList(const char **ArgBegin, const char **ArgEnd) {
+ArgList::ArgList(const char **ArgBegin, const char **ArgEnd) 
+  : NumInputArgStrings(ArgEnd - ArgBegin) 
+{
   ArgStrings.append(ArgBegin, ArgEnd);
 }
 

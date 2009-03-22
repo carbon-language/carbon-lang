@@ -10,6 +10,11 @@
 // RUN: grep 'Option 8 - Name: "-Xarch_", Values: {"joined", "AndSeparate"}' %t &&
 // RUN: grep 'Option 9 - Name: "-sectalign", Values: {"1", "2", "3"}' %t &&
 
+// RUN: ! clang-driver -V &> %t &&
+// RUN: grep "error: argument to '-V' is missing (expected 1 value)" %t &&
+// RUN: ! clang-driver -sectalign 1 2 &> %t &&
+// RUN: grep "error: argument to '-sectalign' is missing (expected 3 values)" %t &&
+
 // RUN: true
 
 

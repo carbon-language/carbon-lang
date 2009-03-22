@@ -135,9 +135,11 @@ namespace driver {
 
     /// accept - Potentially accept the current argument, returning a
     /// new Arg instance, or 0 if the option does not accept this
-    /// argument.
+    /// argument (or the argument is missing values).
     ///
-    /// May issue a missing argument error.
+    /// If the option accepts the current argument, accept() sets
+    /// Index to the position where argument parsing should resume
+    /// (even if the argument is missing values).
     virtual Arg *accept(const ArgList &Args, unsigned &Index) const = 0;
     
     void dump() const;

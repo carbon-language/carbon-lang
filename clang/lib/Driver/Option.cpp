@@ -108,7 +108,7 @@ OptionGroup::OptionGroup(options::ID ID, const char *Name,
 }
 
 Arg *OptionGroup::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
+  assert(0 && "accept() should never be called on an OptionGroup");
   return 0;
 }
 
@@ -117,7 +117,7 @@ InputOption::InputOption()
 }
 
 Arg *InputOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
+  assert(0 && "accept() should never be called on an InputOption");
   return 0;
 }
 
@@ -126,7 +126,7 @@ UnknownOption::UnknownOption()
 }
 
 Arg *UnknownOption::accept(const ArgList &Args, unsigned &Index) const {
-  assert(0 && "FIXME");
+  assert(0 && "accept() should never be called on an UnknownOption");
   return 0;
 }
 
@@ -181,8 +181,10 @@ Arg *SeparateOption::accept(const ArgList &Args, unsigned &Index) const {
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
 
-  // FIXME: Missing argument error.
   Index += 2;
+  if (Index > Args.getNumInputArgStrings())
+    return 0;
+
   return new SeparateArg(this, Index - 2, 1);
 }
 
@@ -199,8 +201,10 @@ Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
 
-  // FIXME: Missing argument error.
   Index += 1 + NumArgs;
+  if (Index > Args.getNumInputArgStrings())
+    return 0;
+
   return new SeparateArg(this, Index - 1 - NumArgs, NumArgs);
 }
 
@@ -210,15 +214,18 @@ JoinedOrSeparateOption::JoinedOrSeparateOption(options::ID ID, const char *Name,
   : Option(Option::JoinedOrSeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedOrSeparateOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *JoinedOrSeparateOption::accept(const ArgList &Args, 
+                                    unsigned &Index) const {
   // If this is not an exact match, it is a joined arg.
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return new JoinedArg(this, Index++);
 
   // Otherwise it must be separate.
-  // FIXME: Missing argument error.
   Index += 2;
+  if (Index > Args.getNumInputArgStrings())
+    return 0;
+
   return new SeparateArg(this, Index - 2, 1);  
 }
 
@@ -229,11 +236,14 @@ JoinedAndSeparateOption::JoinedAndSeparateOption(options::ID ID,
   : Option(Option::JoinedAndSeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedAndSeparateOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *JoinedAndSeparateOption::accept(const ArgList &Args, 
+                                     unsigned &Index) const {
   // Always matches.
 
-  // FIXME: Missing argument error.
   Index += 2;
+  if (Index > Args.getNumInputArgStrings())
+    return 0;
+
   return new JoinedAndSeparateArg(this, Index - 2);
 }
 

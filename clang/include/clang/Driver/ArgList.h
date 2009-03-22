@@ -51,6 +51,9 @@ namespace driver {
     /// The full list of arguments.
     arglist_type Args;
 
+    /// The number of original input argument strings.
+    unsigned NumInputArgStrings;
+
   public:
     ArgList(const char **ArgBegin, const char **ArgEnd);
     ArgList(const ArgList &);
@@ -69,6 +72,10 @@ namespace driver {
 
     /// getArgString - Return the input argument string at \arg Index.
     const char *getArgString(unsigned Index) const { return ArgStrings[Index]; }
+
+    /// getNumInputArgStrings - Return the number of original input
+    /// argument strings.
+    unsigned getNumInputArgStrings() const { return NumInputArgStrings; }
 
     /// hasArg - Does the arg list contain any option matching \arg Id.
     ///

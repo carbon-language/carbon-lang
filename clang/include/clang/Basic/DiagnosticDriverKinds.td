@@ -31,6 +31,8 @@ def err_drv_command_failure : Error<
   "unable to execute command: %0">;
 def err_drv_invalid_darwin_version : Error<
   "invalid Darwin version number: %0">;
+def err_drv_missing_argument : Error<
+  "argument to '%0' is missing (expected %1 %plural{1:value|:values}1)">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input file unused when '%2' is present">;
