@@ -23,3 +23,10 @@ int foo() __attribute__((alias("foo1")));
 static inline int bar1 = 42;
 int bar() __attribute__((alias("bar1")));
 
+
+extern int test6();
+void test7() { test6(); }  // test6 is emitted as extern.
+
+// test6 changes to alias.
+int test6() __attribute__((alias("test7")));
+

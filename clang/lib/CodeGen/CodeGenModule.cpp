@@ -343,8 +343,8 @@ void CodeGenModule::EmitAliases() {
     const char *AliaseeName = AA->getAliasee().c_str();
     AliaseeName = getContext().Idents.get(AliaseeName).getName();
 
-    
-    
+    // Create a reference to the named value.  This ensures that it is emitted
+    // if a deferred decl.
     llvm::Constant *Aliasee;
     if (isa<llvm::FunctionType>(DeclTy))
       Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, 0);
@@ -352,24 +352,41 @@ void CodeGenModule::EmitAliases() {
       Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
                                       llvm::PointerType::getUnqual(DeclTy), 0);
 
-    const char *MangledName = getMangledName(D);
+    // Create the new alias itself, but don't set a name yet.
     llvm::GlobalValue *GA = 
       new llvm::GlobalAlias(Aliasee->getType(),
                             llvm::Function::ExternalLinkage,
-                            MangledName, Aliasee, &getModule());
+                            "", Aliasee, &getModule());
     
+    // See if there is already something with the alias' name in the module.
+    const char *MangledName = getMangledName(D);
     llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-    if (Entry) {
-      // If we created a dummy function for this then replace it.
-      GA->takeName(Entry);
-            
-      llvm::Value *Casted = 
-        llvm::ConstantExpr::getBitCast(GA, Entry->getType());
-      Entry->replaceAllUsesWith(Casted);
-      Entry->eraseFromParent();
-
-      Entry = GA;
+    
+    if (Entry && !Entry->isDeclaration()) {
+      // If there is a definition in the module, then it wins over the alias.
+      // This is dubious, but allow it to be safe.  Just ignore the alias.
+      delete GA;
+      continue;
     }
+    
+    if (Entry) {
+      // If there is a declaration in the module, then we had an extern followed
+      // by the alias, as in:
+      //   extern int test6();
+      //   ...
+      //   int test6() __attribute__((alias("test7")));
+      //
+      // Remove it and replace uses of it with the alias.
+      
+      Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
+                                                            Entry->getType()));
+      // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
+      Entry->eraseFromParent();
+    }
+    
+    // Now we know that there is no conflict, set the name.
+    Entry = GA;
+    GA->setName(MangledName);
 
     // Alias should never be internal or inline.
     SetGlobalValueAttributes(D, false, false, GA, true);
