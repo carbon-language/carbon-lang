@@ -1,5 +1,5 @@
 // Basic compilation for various types of files.
-// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c %s -x objective-c %s -x c++ %s -x objective-c++ -x assembler %s -x assembler-with-cpp %s -x none %s &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c %s -x objective-c %s -x c++ %s -x objective-c++ -x assembler %s -x assembler-with-cpp %s -x none %s 2> %t &&
 // RUN: grep '0: input, ".*phases.c", c' %t &&
 // RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
 // RUN: grep -F '2: compiler, {1}, assembler' %t &&
@@ -24,7 +24,7 @@
 // RUN: grep -F '21: linker, {3, 7, 11, 13, 16, 20}, image' %t &&
 
 // Universal linked image.
-// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -x c %s -arch ppc -arch i386 &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -x c %s -arch ppc -arch i386 2> %t &&
 // RUN: grep '0: input, ".*phases.c", c' %t &&
 // RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
 // RUN: grep -F '2: compiler, {1}, assembler' %t &&
@@ -35,7 +35,7 @@
 // RUN: grep -F '7: lipo, {5, 6}, image' %t &&
 
 // Universal object file.
-// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x c %s -arch ppc -arch i386 &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x c %s -arch ppc -arch i386 2> %t &&
 // RUN: grep '0: input, ".*phases.c", c' %t &&
 // RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
 // RUN: grep -F '2: compiler, {1}, assembler' %t &&
@@ -45,33 +45,33 @@
 // RUN: grep -F '6: lipo, {4, 5}, object' %t &&
 
 // Arch defaulting
-// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s 2> %t &&
 // RUN: grep -F '2: bind-arch, "i386", {1}, object' %t &&
-// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s -m32 -m64 &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s -m32 -m64 2> %t &&
 // RUN: grep -F '2: bind-arch, "x86_64", {1}, object' %t &&
-// RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s &> %t &&
+// RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s 2> %t &&
 // RUN: grep -F '2: bind-arch, "x86_64", {1}, object' %t &&
-// RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s -m64 -m32 &> %t &&
+// RUN: clang-driver -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s -m64 -m32 2> %t &&
 // RUN: grep -F '2: bind-arch, "i386", {1}, object' %t &&
 
 // Analyzer
-// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases --analyze %s &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases --analyze %s 2> %t &&
 // RUN: grep '0: input, ".*phases.c", c' %t &&
 // RUN: grep -F '1: preprocessor, {0}, cpp-output' %t &&
 // RUN: grep -F '2: analyzer, {1}, plist' %t &&
 
 // Precompiler
-// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c-header %s &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c-header %s 2> %t &&
 // RUN: grep '0: input, ".*phases.c", c-header' %t &&
 // RUN: grep -F '1: preprocessor, {0}, c-header-cpp-output' %t &&
 // RUN: grep -F '2: precompiler, {1}, precompiled-header' %t &&
 
 // Darwin overrides the handling for .s
 // RUN: touch %t.s &&
-// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.s &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.s 2> %t &&
 // RUN: grep '0: input, ".*\.s", assembler' %t &&
 // RUN: grep -F '1: assembler, {0}, object' %t &&
-// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c %t.s &> %t &&
+// RUN: clang-driver -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c %t.s 2> %t &&
 // RUN: grep '0: input, ".*\.s", assembler-with-cpp' %t &&
 // RUN: grep -F '1: preprocessor, {0}, assembler' %t &&
 // RUN: grep -F '2: assembler, {1}, object' %t &&

@@ -1,4 +1,4 @@
-// RUN: clang-driver -ccc-print-options input -Yunknown -m32 -arch ppc -djoined -A separate -Ajoined -Wp,one,two -Xarch_joined AndSeparate -sectalign 1 2 3 &> %t &&
+// RUN: clang-driver -ccc-print-options input -Yunknown -m32 -arch ppc -djoined -A separate -Ajoined -Wp,one,two -Xarch_joined AndSeparate -sectalign 1 2 3 2> %t &&
 // RUN: grep 'Option 0 - Name: "<input>", Values: {"input"}' %t &&
 // RUN: grep 'Option 1 - Name: "<unknown>", Values: {"-Yunknown"}' %t &&
 // RUN: grep 'Option 2 - Name: "-m32", Values: {}' %t &&

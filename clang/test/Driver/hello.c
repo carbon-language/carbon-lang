@@ -1,4 +1,4 @@
-// RUN: clang-driver -ccc-echo -o %t %s &> %t.log &&
+// RUN: clang-driver -ccc-echo -o %t %s 2> %t.log &&
 
 // Make sure we used clang.
 // RUN: grep 'clang" .*hello.c' %t.log &&
