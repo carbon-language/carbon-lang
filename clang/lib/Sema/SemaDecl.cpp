@@ -1895,7 +1895,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     bool HasPrototype = 
        getLangOptions().CPlusPlus ||
        (D.getNumTypeObjects() && D.getTypeObject(0).Fun.hasPrototype) ||
-      !isa<FunctionType>(R.getTypePtr());
+       (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
     
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),

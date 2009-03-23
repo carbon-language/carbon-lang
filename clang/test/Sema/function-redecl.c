@@ -116,3 +116,12 @@ extern __typeof (h1) h1 __attribute__((__sentinel__));
 void i0 (unsigned short a0);
 extern __typeof (i0) i1;
 extern __typeof (i1) i1;
+
+typedef int a();
+typedef int a2(int*);
+a x;
+a2 x2;
+void test_x() {
+  x(5);
+  x2(5); // expected-warning{{incompatible integer to pointer conversion passing 'int', expected 'int *'}}
+}
