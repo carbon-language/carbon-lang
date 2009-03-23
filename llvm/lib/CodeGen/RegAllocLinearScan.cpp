@@ -869,8 +869,12 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     if (cur->weight == HUGE_VALF ||
         li_->getApproximateInstructionCount(*cur) == 0) {
       // Spill a physical register around defs and uses.
-      li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
-      assignRegOrStackSlotAtInterval(cur);
+      if (li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_))
+        assignRegOrStackSlotAtInterval(cur);
+      else {
+        cerr << "Ran out of registers during register allocation!\n";
+        exit(1);
+      }
       return;
     }
   }

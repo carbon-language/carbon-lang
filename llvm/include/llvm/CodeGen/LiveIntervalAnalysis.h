@@ -367,8 +367,9 @@ namespace llvm {
                               VirtRegMap &vrm, float& SSWeight);
 
     /// spillPhysRegAroundRegDefsUses - Spill the specified physical register
-    /// around all defs and uses of the specified interval.
-    void spillPhysRegAroundRegDefsUses(const LiveInterval &li,
+    /// around all defs and uses of the specified interval. Return true if it
+    /// was able to cut its interval.
+    bool spillPhysRegAroundRegDefsUses(const LiveInterval &li,
                                        unsigned PhysReg, VirtRegMap &vrm);
 
     /// isReMaterializable - Returns true if every definition of MI of every

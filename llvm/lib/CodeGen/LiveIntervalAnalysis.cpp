@@ -2214,8 +2214,9 @@ unsigned LiveIntervals::getNumConflictsWithPhysReg(const LiveInterval &li,
 }
 
 /// spillPhysRegAroundRegDefsUses - Spill the specified physical register
-/// around all defs and uses of the specified interval.
-void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
+/// around all defs and uses of the specified interval. Return true if it
+/// was able to cut its interval.
+bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
                                             unsigned PhysReg, VirtRegMap &vrm) {
   unsigned SpillReg = getRepresentativeReg(PhysReg);
 
@@ -2226,6 +2227,7 @@ void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
     assert(*AS == SpillReg || !allocatableRegs_[*AS] ||
            tri_->isSuperRegister(*AS, SpillReg));
 
+  bool Cut = false;
   LiveInterval &pli = getInterval(SpillReg);
   SmallPtrSet<MachineInstr*, 8> SeenMIs;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li.reg),
@@ -2240,9 +2242,10 @@ void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
       vrm.addEmergencySpill(SpillReg, MI);
       unsigned StartIdx = getLoadIndex(Index);
       unsigned EndIdx = getStoreIndex(Index)+1;
-      if (pli.isInOneLiveRange(StartIdx, EndIdx))
+      if (pli.isInOneLiveRange(StartIdx, EndIdx)) {
         pli.removeRange(StartIdx, EndIdx);
-      else {
+        Cut = true;
+      } else {
         cerr << "Ran out of registers during register allocation!\n";
         if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
           cerr << "Please check your inline asm statement for invalid "
@@ -2260,6 +2263,7 @@ void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
       }
     }
   }
+  return Cut;
 }
 
 LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
