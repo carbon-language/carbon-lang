@@ -33,4 +33,15 @@
 // RUN: grep "4: ''" %t &&
 4: ''
 
+
+// Portions of invalid pasting should still expand as macros.
+// rdar://6709206
+// RUN: grep "5: expanded (" %t &&
+#define M4 expanded
+#define	M5() M4 ## (
+
+5: M5()
+
+
+
 // RUN: true

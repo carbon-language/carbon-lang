@@ -448,7 +448,9 @@ bool TokenLexer::PasteTokens(Token &Tok) {
         if (!PP.getLangOptions().AsmPreprocessor)
           PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
             << std::string(Buffer.begin(), Buffer.end()-1);
-        return false;
+        
+        // Do not consume the RHS.
+        --CurToken;
       }
     
       // Turn ## into 'unknown' to avoid # ## # from looking like a paste
