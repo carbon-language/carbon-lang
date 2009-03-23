@@ -900,6 +900,19 @@ public:
 } // end anonymous namespace.
 
 namespace {
+// arm FreeBSD target
+class FreeBSDARMTargetInfo : public ARMTargetInfo {
+public:
+  FreeBSDARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {}
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    ARMTargetInfo::getTargetDefines(Opts, Defines);
+    getFreeBSDDefines(Opts, 0, getTargetTriple(), Defines);
+  }
+};
+} // end anonymous namespace
+
+namespace {
 class SparcV8TargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   static const char * const GCCRegNames[];
@@ -1092,6 +1105,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("armv6-") == 0 || T.find("arm-") == 0) {
     if (isDarwin)
       return new DarwinARMTargetInfo(T);
+    if (isFreeBSD)
+      return new FreeBSDARMTargetInfo(T);
     return new ARMTargetInfo(T);
   }
 
