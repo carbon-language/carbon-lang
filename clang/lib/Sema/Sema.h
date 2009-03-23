@@ -1634,7 +1634,8 @@ public:
                                     SourceLocation Loc, SourceRange Range);
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
 
-  bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned SelID);
+  bool RequireNonAbstractType(SourceLocation Loc, QualType T, 
+                              unsigned DiagID, unsigned SelID);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]

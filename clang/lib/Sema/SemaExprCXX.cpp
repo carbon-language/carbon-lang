@@ -238,6 +238,10 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (CheckAllocatedType(AllocType, D))
     return ExprError();
 
+  if (RequireNonAbstractType(D.getSourceRange().getBegin(), AllocType,
+                             diag::err_allocation_of_abstract_type, 0))
+    return ExprError();
+  
   QualType ResultType = AllocType->isDependentType()
                           ? Context.DependentTy
                           : Context.getPointerType(AllocType);

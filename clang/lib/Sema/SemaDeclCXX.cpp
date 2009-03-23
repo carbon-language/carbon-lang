@@ -784,7 +784,7 @@ namespace {
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T, 
-                                  unsigned SelID) {
+                                  unsigned DiagID, unsigned SelID) {
   
   if (!getLangOptions().CPlusPlus)
     return false;
@@ -800,7 +800,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   if (!RD->isAbstract())
     return false;
   
-  Diag(Loc, diag::err_abstract_type_in_decl) << SelID << RD->getDeclName();
+  Diag(Loc, DiagID) << RD->getDeclName() << SelID;
   
   // Check if we've already emitted the list of pure virtual functions for this
   // class.

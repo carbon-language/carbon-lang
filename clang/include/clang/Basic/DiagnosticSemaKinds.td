@@ -220,7 +220,9 @@ def err_static_assert_expression_is_not_constant : Error<
 def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
 
 def err_abstract_type_in_decl : Error<
-  "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
+  "%select{return|parameter|variable|field}1 type %0 is an abstract class">;
+def err_allocation_of_abstract_type : Error<
+  "allocation of an object of abstract type %0">;
   
 def note_pure_virtual_function : Note<
   "pure virtual function %0">;

@@ -1641,7 +1641,9 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   // The variable can not have an abstract class type.
-  if (RequireNonAbstractType(D.getIdentifierLoc(), R, 2 /* variable type */))
+  if (RequireNonAbstractType(D.getIdentifierLoc(), R, 
+                             diag::err_abstract_type_in_decl, 
+                             2 /* variable type */))
     InvalidDecl = true;
     
   // The variable can not 
@@ -1815,6 +1817,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Check that the return type is not an abstract class type.
   if (RequireNonAbstractType(D.getIdentifierLoc(), 
                              R->getAsFunctionType()->getResultType(),
+                             diag::err_abstract_type_in_decl, 
                              0 /* return type */))
     InvalidDecl = true;
   
@@ -1996,6 +1999,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         
         // Function parameters cannot have abstract class types.
         if (RequireNonAbstractType(PVD->getLocation(), PVD->getType(),
+                                   diag::err_abstract_type_in_decl, 
                                    1 /* parameter type */))
             InvalidDecl = true;
         Params.push_back(PVD);
@@ -3534,7 +3538,8 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
   
   // Fields can not have abstract class types
-  if (RequireNonAbstractType(Loc, T, 3 /* field type */))
+  if (RequireNonAbstractType(Loc, T, diag::err_abstract_type_in_decl, 
+                             3 /* field type */))
     InvalidDecl = true;
   
   // If this is declared as a bit-field, check the bit-field.
