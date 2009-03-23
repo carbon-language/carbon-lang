@@ -251,6 +251,8 @@ class DefaultABIInfo : public ABIInfo {
 
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
+  bool IsDarwin;
+
 public:
   ABIArgInfo classifyReturnType(QualType RetTy, 
                                 ASTContext &Context) const;
@@ -267,6 +269,8 @@ public:
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
+
+  X86_32ABIInfo(bool d) : ABIInfo(), IsDarwin(d) {}
 };
 }
 
@@ -275,6 +279,9 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
   if (RetTy->isVoidType()) {
     return ABIArgInfo::getIgnore();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    // Outside of Darwin, structs and unions are always indirect.
+    if (!IsDarwin && !RetTy->isAnyComplexType())
+      return ABIArgInfo::getIndirect(0);
     // Classify "single element" structs as their element type.
     const FieldDecl *SeltFD = isSingleElementStruct(RetTy);
     if (SeltFD) {
@@ -1183,9 +1190,10 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   // to free it.
   const char *TargetPrefix = getContext().Target.getTargetPrefix();
   if (strcmp(TargetPrefix, "x86") == 0) {
+    bool IsDarwin = strstr(getContext().Target.getTargetTriple(), "darwin");
     switch (getContext().Target.getPointerWidth(0)) {
     case 32:
-      return *(TheABIInfo = new X86_32ABIInfo());
+      return *(TheABIInfo = new X86_32ABIInfo(IsDarwin));
     case 64:
       return *(TheABIInfo = new X86_64ABIInfo());
     }
