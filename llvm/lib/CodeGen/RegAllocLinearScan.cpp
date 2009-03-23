@@ -155,6 +155,10 @@ namespace {
     /// is available, or spill.
     void assignRegOrStackSlotAtInterval(LiveInterval* cur);
 
+    void updateSpillWeights(std::vector<float> &Weights,
+                            unsigned reg, float weight,
+                            const TargetRegisterClass *RC);
+
     /// findIntervalsToSpill - Determine the intervals to spill for the
     /// specified interval. It's passed the physical registers whose spill
     /// weight is the lowest among all the registers whose live intervals
@@ -515,12 +519,35 @@ void RALinScan::processInactiveIntervals(unsigned CurPoint)
 
 /// updateSpillWeights - updates the spill weights of the specifed physical
 /// register and its weight.
-static void updateSpillWeights(std::vector<float> &Weights,
-                               unsigned reg, float weight,
-                               const TargetRegisterInfo *TRI) {
+void RALinScan::updateSpillWeights(std::vector<float> &Weights,
+                                   unsigned reg, float weight,
+                                   const TargetRegisterClass *RC) {
+  SmallSet<unsigned, 4> Processed;
+  SmallSet<unsigned, 4> SuperAdded;
+  SmallVector<unsigned, 4> Supers;
   Weights[reg] += weight;
-  for (const unsigned* as = TRI->getAliasSet(reg); *as; ++as)
+  Processed.insert(reg);
+  for (const unsigned* as = tri_->getAliasSet(reg); *as; ++as) {
     Weights[*as] += weight;
+    Processed.insert(*as);
+    if (tri_->isSubRegister(*as, reg) &&
+        SuperAdded.insert(*as) &&
+        RC->contains(*as)) {
+      Supers.push_back(*as);
+    }
+  }
+
+  // If the alias is a super-register, and the super-register is in the
+  // register class we are trying to allocate. Then add the weight to all
+  // sub-registers of the super-register even if they are not aliases.
+  // e.g. allocating for GR32, bh is not used, updating bl spill weight.
+  //      bl should get the same spill weight otherwise it will be choosen
+  //      as a spill candidate since spilling bh doesn't make ebx available.
+  for (unsigned i = 0, e = Supers.size(); i != e; ++i) {
+      for (const unsigned *sr = tri_->getSubRegisters(Supers[i]); *sr; ++sr)
+        if (!Processed.count(*sr))
+          Weights[*sr] += weight;
+  }
 }
 
 static
@@ -817,7 +844,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   std::vector<float> SpillWeights(tri_->getNumRegs(), 0.0f);
   for (std::vector<std::pair<unsigned, float> >::iterator
        I = SpillWeightsToAdd.begin(), E = SpillWeightsToAdd.end(); I != E; ++I)
-    updateSpillWeights(SpillWeights, I->first, I->second, tri_);
+    updateSpillWeights(SpillWeights, I->first, I->second, RC);
   
   // for each interval in active, update spill weights.
   for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
@@ -826,14 +853,14 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     assert(TargetRegisterInfo::isVirtualRegister(reg) &&
            "Can only allocate virtual registers!");
     reg = vrm_->getPhys(reg);
-    updateSpillWeights(SpillWeights, reg, i->first->weight, tri_);
+    updateSpillWeights(SpillWeights, reg, i->first->weight, RC);
   }
  
   DOUT << "\tassigning stack slot at interval "<< *cur << ":\n";
 
   // Find a register to spill.
   float minWeight = HUGE_VALF;
-  unsigned minReg = 0; /*cur->preference*/;  // Try the preferred register first.
+  unsigned minReg = 0; /*cur->preference*/;  // Try the pref register first.
 
   bool Found = false;
   std::vector<std::pair<unsigned,float> > RegsWeights;
