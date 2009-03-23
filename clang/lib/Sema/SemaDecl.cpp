@@ -841,8 +841,7 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   //   the prior declaration. If no prior declaration is visible, or
   //   if the prior declaration specifies no linkage, then the
   //   identifier has external linkage.
-  if ((New->hasExternalStorage() || New->getStorageClass() == VarDecl::None) &&
-      Old->hasLinkage())
+  if (New->hasExternalStorage() && Old->hasLinkage())
     /* Okay */;
   else if (New->getStorageClass() != VarDecl::Static &&
            Old->getStorageClass() == VarDecl::Static) {

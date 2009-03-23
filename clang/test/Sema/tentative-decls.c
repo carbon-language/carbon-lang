@@ -27,7 +27,10 @@ extern int i1; // expected-note {{previous definition is here}}
 static int i1; // expected-error{{static declaration of 'i1' follows non-static declaration}}
 
 static int i2 = 5; // expected-note 1 {{previous definition is here}}
-int i2 = 3; // expected-error{{redefinition of 'i2'}}
+int i2 = 3; // expected-error{{non-static declaration of 'i2' follows static declaration}}
+
+static int i3 = 5;
+extern int i3;
 
 __private_extern__ int pExtern;
 int pExtern = 0;
