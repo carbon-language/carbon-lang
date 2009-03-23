@@ -37,7 +37,14 @@ namespace options {
   /// instantiating Options, while letting other parts of the driver
   /// still use Option instances where convient.  
   class OptTable {
+    /// The table of options which have been constructed, indexed by
+    /// option::ID - 1.
     mutable Option **Options;
+
+    /// The index of the first option which can be parsed (i.e., is
+    /// not a special option like 'input' or 'unknown', and is not an
+    /// option group).
+    unsigned FirstSearchableOption;
 
     Option *constructOption(options::ID id) const;
 

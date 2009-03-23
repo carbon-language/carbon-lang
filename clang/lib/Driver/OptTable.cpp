@@ -27,6 +27,48 @@ struct Info {
   unsigned Param;
 };
 
+// Ordering on Info. The ordering is *almost* lexicographic, with two
+// exceptions. First, '\0' comes at the end of the alphabet instead of
+// the beginning (thus options preceed any other options which prefix
+// them). Second, for options with the same name, the less permissive
+// version should come first; a Flag option should preceed a Joined
+// option, for example.
+
+static int StrCmpOptionName(const char *A, const char *B) {
+  char a = *A, b = *B;
+  while (a == b) {
+    if (a == '\0')
+      return 0;
+
+    a = *++A;
+    b = *++B;
+  }
+
+  if (a == '\0') // A is a prefix of B.
+    return 1;
+  if (b == '\0') // B is a prefix of A.
+    return -1;
+
+  // Otherwise lexicographic.
+  return (a < b) ? -1 : 1;
+}
+
+static inline bool operator<(const Info &A, const Info &B) {
+  if (&A == &B)
+    return false;
+
+  if (int N = StrCmpOptionName(A.Name, B.Name))
+    return N == -1;
+
+  // Names are the same, check that classes are in order; exactly one
+  // should be joined, and it should succeed the other.
+  assert((A.Kind == Option::JoinedClass ^ B.Kind == Option::JoinedClass) &&
+         "Unexpected classes for options with same name.");
+  return B.Kind == Option::JoinedClass;
+}
+
+//
+
 static Info OptionInfos[] = {
   // The InputOption info
   { "<input>", "d", Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
@@ -44,11 +86,40 @@ static Info &getInfo(unsigned id) {
   return OptionInfos[id - 1];
 }
 
-OptTable::OptTable() : Options(new Option*[numOptions]()) { 
+OptTable::OptTable() : Options(new Option*[numOptions]()) {
+  // Find start of normal options.
+  FirstSearchableOption = 0;
+  for (unsigned i = OPT_UNKNOWN + 1; i < LastOption; ++i) {
+    if (getInfo(i).Kind != Option::GroupClass) {
+      FirstSearchableOption = i + 1;
+      break;
+    }
+  }
+  assert(FirstSearchableOption != 0 && "No searchable options?");
+
+#ifndef NDEBUG
+  // Check that everything after the first searchable option is a
+  // regular option class.
+  for (unsigned i = FirstSearchableOption; i < LastOption; ++i) {
+    Option::OptionClass Kind = getInfo(i).Kind;
+    assert((Kind != Option::InputClass && Kind != Option::UnknownClass &&
+            Kind != Option::GroupClass) &&
+           "Special options should be defined first!");
+  }
+
+  // Check that options are in order.
+  for (unsigned i = FirstSearchableOption + 1; i < LastOption; ++i) {
+    if (!(getInfo(i - 1) < getInfo(i))) {
+      getOption((options::ID) (i - 1))->dump();
+      getOption((options::ID) i)->dump();
+      assert(0 && "Options are not in order!");
+    }
+  }
+#endif  
 }
 
 OptTable::~OptTable() { 
-  for (unsigned i=0; i<numOptions; ++i)
+  for (unsigned i = 0; i < numOptions; ++i)
     delete Options[i];
   delete[] Options;
 }
@@ -136,9 +207,8 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   if (Str[0] != '-' || Str[1] == '\0')
     return new PositionalArg(getOption(OPT_INPUT), Index++);
 
-  // FIXME: Make this fast, and avoid looking through option
-  // groups. Maybe we should declare them separately?
-  for (unsigned j = OPT_UNKNOWN + 1; j < LastOption; ++j) {
+  // FIXME: Make this fast.
+  for (unsigned j = FirstSearchableOption; j < LastOption; ++j) {
     const char *OptName = getOptionName((options::ID) j);
     
     // Arguments are only accepted by options which prefix them.
