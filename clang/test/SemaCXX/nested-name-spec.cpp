@@ -101,8 +101,7 @@ void f6(int A2::RC::x); // expected-error{{parameter declarator cannot be qualif
 
 int A2::RC::x; // expected-error{{non-static data member defined out-of-line}}
 
-void A2::CC::NC::m(); // expected-error{{out-of-line declaration of a member must be a definition}} \
-     //  expected-error{{out-of-line declaration of a member must be a definition}}
+void A2::CC::NC::m(); // expected-error{{out-of-line declaration of a member must be a definition}}
 
 
 namespace E {

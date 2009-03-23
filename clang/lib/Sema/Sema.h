@@ -290,6 +290,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
+  QualType adjustParameterType(QualType T);
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType BuildPointerType(QualType T, unsigned Quals, 
@@ -349,6 +350,9 @@ public:
                                      NamedDecl* PrevDecl, 
                                      bool IsFunctionDefinition,
                                      bool& InvalidDecl, bool &Redeclaration);
+  bool CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
+                                bool &Redeclaration, 
+                                bool &OverloadableAttrRequired);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param,
                                          SourceLocation EqualLoc,

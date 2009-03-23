@@ -1437,7 +1437,7 @@ Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
   // If there was a previous declaration of this variable, it may be
   // in our identifier chain. Update the identifier chain with the new
   // declaration.
-  if (IdResolver.ReplaceDecl(PrevDecl, ND)) {
+  if (S && IdResolver.ReplaceDecl(PrevDecl, ND)) {
     // The previous declaration was found on the identifer resolver
     // chain, so remove it from its scope.
     while (S && !S->isDeclScope(PrevDecl))
@@ -2034,23 +2034,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD->setParams(Context, &Params[0], Params.size());
     }
   }
-
-  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
-    InvalidDecl = InvalidDecl || CheckConstructor(Constructor);
-  else if (isa<CXXDestructorDecl>(NewFD)) {
-    CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
-    Record->setUserDeclaredDestructor(true);
-    // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
-    // user-defined destructor.
-    Record->setPOD(false);
-  } else if (CXXConversionDecl *Conversion =
-             dyn_cast<CXXConversionDecl>(NewFD))
-    ActOnConversionDeclarator(Conversion);
-
-  // Extra checking for C++ overloaded operators (C++ [over.oper]).
-  if (NewFD->isOverloadedOperator() &&
-      CheckOverloadedOperatorDeclaration(NewFD))
-    NewFD->setInvalidDecl();
     
   // If name lookup finds a previous declaration that is not in the
   // same scope as the new declaration, this may still be an
@@ -2060,19 +2043,130 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
+  // Perform semantic checking on the function declaration.
+  bool OverloadableAttrRequired = false; // FIXME: HACK!
+  if (CheckFunctionDeclaration(NewFD, PrevDecl, Redeclaration,
+                               /*FIXME:*/OverloadableAttrRequired))
+    InvalidDecl = true;
+
+  if (D.getCXXScopeSpec().isSet() && !InvalidDecl) {
+    // An out-of-line member function declaration must also be a
+    // definition (C++ [dcl.meaning]p1).
+    if (!IsFunctionDefinition) {
+      Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+        << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
+    } else if (!Redeclaration) {
+      // The user tried to provide an out-of-line definition for a
+      // function that is a member of a class or namespace, but there
+      // was no such member function declared (C++ [class.mfct]p2, 
+      // C++ [namespace.memdef]p2). For example:
+      // 
+      // class X {
+      //   void f() const;
+      // }; 
+      //
+      // void X::f() { } // ill-formed
+      //
+      // Complain about this problem, and attempt to suggest close
+      // matches (e.g., those that differ only in cv-qualifiers and
+      // whether the parameter types are references).
+      Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
+        << cast<NamedDecl>(DC) << D.getCXXScopeSpec().getRange();
+      InvalidDecl = true;
+      
+      LookupResult Prev = LookupQualifiedName(DC, Name, LookupOrdinaryName, 
+                                              true);
+      assert(!Prev.isAmbiguous() && 
+             "Cannot have an ambiguity in previous-declaration lookup");
+      for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
+           Func != FuncEnd; ++Func) {
+        if (isa<FunctionDecl>(*Func) &&
+            isNearlyMatchingFunction(Context, cast<FunctionDecl>(*Func), NewFD))
+          Diag((*Func)->getLocation(), diag::note_member_def_close_match);
+      }
+      
+      PrevDecl = 0;
+    }
+  }
+
+  // Handle attributes. We need to have merged decls when handling attributes
+  // (for example to check for conflicts, etc).
+  // FIXME: This needs to happen before we merge declarations. Then,
+  // let attribute merging cope with attribute conflicts.
+  ProcessDeclAttributes(NewFD, D);
+  AddKnownFunctionAttributes(NewFD);
+
+  if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
+    // If a function name is overloadable in C, then every function
+    // with that name must be marked "overloadable".
+    Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
+      << Redeclaration << NewFD;
+    if (PrevDecl)
+      Diag(PrevDecl->getLocation(), 
+           diag::note_attribute_overloadable_prev_overload);
+    NewFD->addAttr(::new (Context) OverloadableAttr());
+  }
+
+  // If this is a locally-scoped extern C function, update the
+  // map of such names.
+  if (CurContext->isFunctionOrMethod() && NewFD->isExternC(Context)
+      && !InvalidDecl)
+    RegisterLocallyScopedExternCDecl(NewFD, PrevDecl, S);
+
+  return NewFD;
+}
+
+/// \brief Perform semantic checking of a new function declaration.
+///
+/// Performs semantic analysis of the new function declaration
+/// NewFD. This routine performs all semantic checking that does not
+/// require the actual declarator involved in the declaration, and is
+/// used both for the declaration of functions as they are parsed
+/// (called via ActOnDeclarator) and for the declaration of functions
+/// that have been instantiated via C++ template instantiation (called
+/// via InstantiateDecl).
+///
+/// \returns true if there was an error, false otherwise.
+bool Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
+                                    bool &Redeclaration,
+                                    bool &OverloadableAttrRequired) {
+  bool InvalidDecl = false;
+
+  // Semantic checking for this function declaration (in isolation).
+  if (getLangOptions().CPlusPlus) {
+    // C++-specific checks.
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD))
+      InvalidDecl = InvalidDecl || CheckConstructor(Constructor);
+    else if (isa<CXXDestructorDecl>(NewFD)) {
+      CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
+      Record->setUserDeclaredDestructor(true);
+      // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
+      // user-defined destructor.
+      Record->setPOD(false);
+    } else if (CXXConversionDecl *Conversion 
+               = dyn_cast<CXXConversionDecl>(NewFD))
+      ActOnConversionDeclarator(Conversion);
+    
+    // Extra checking for C++ overloaded operators (C++ [over.oper]).
+    if (NewFD->isOverloadedOperator() &&
+        CheckOverloadedOperatorDeclaration(NewFD))
+      InvalidDecl = true;
+  }
+
+  // Check for a previous declaration of this name.
   if (!PrevDecl && NewFD->isExternC(Context)) {
     // Since we did not find anything by this name and we're declaring
     // an extern "C" function, look for a non-visible extern "C"
     // declaration with the same name.
     llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
-      = LocallyScopedExternalDecls.find(Name);
+      = LocallyScopedExternalDecls.find(NewFD->getDeclName());
     if (Pos != LocallyScopedExternalDecls.end())
       PrevDecl = Pos->second;
   }
 
   // Merge or overload the declaration with an existing declaration of
   // the same name, if appropriate.
-  bool OverloadableAttrRequired = false;
   if (PrevDecl) {
     // Determine whether NewFD is an overload of PrevDecl or
     // a declaration that requires merging. If it's an overload,
@@ -2086,15 +2180,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       // Functions marked "overloadable" must have a prototype (that
       // we can't get through declaration merging).
-      if (!R->getAsFunctionProtoType()) {
+      if (!NewFD->getType()->getAsFunctionProtoType()) {
         Diag(NewFD->getLocation(), diag::err_attribute_overloadable_no_prototype)
           << NewFD;
         InvalidDecl = true;
         Redeclaration = true;
 
         // Turn this into a variadic function with no parameters.
-        R = Context.getFunctionType(R->getAsFunctionType()->getResultType(),
-                                    0, 0, true, 0);
+        QualType R = Context.getFunctionType(
+                       NewFD->getType()->getAsFunctionType()->getResultType(),
+                       0, 0, true, 0);
         NewFD->setType(R);
       }
     }
@@ -2110,99 +2205,24 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       if (isa<OverloadedFunctionDecl>(PrevDecl))
         OldDecl = *MatchedDecl;
 
-      // NewFD and PrevDecl represent declarations that need to be
+      // NewFD and OldDecl represent declarations that need to be
       // merged. 
       if (MergeFunctionDecl(NewFD, OldDecl))
         InvalidDecl = true;
 
-      if (!InvalidDecl) {
+      if (!InvalidDecl)
         NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
-
-        // An out-of-line member function declaration must also be a
-        // definition (C++ [dcl.meaning]p1).
-        if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
-            !InvalidDecl) {
-          Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
-            << D.getCXXScopeSpec().getRange();
-          NewFD->setInvalidDecl();
-        }
-      }
     }
   }
 
-  if (D.getCXXScopeSpec().isSet() &&
-      (!PrevDecl || !Redeclaration)) {
-    // The user tried to provide an out-of-line definition for a
-    // function that is a member of a class or namespace, but there
-    // was no such member function declared (C++ [class.mfct]p2, 
-    // C++ [namespace.memdef]p2). For example:
-    // 
-    // class X {
-    //   void f() const;
-    // }; 
-    //
-    // void X::f() { } // ill-formed
-    //
-    // Complain about this problem, and attempt to suggest close
-    // matches (e.g., those that differ only in cv-qualifiers and
-    // whether the parameter types are references).
-    Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
-      << cast<NamedDecl>(DC) << D.getCXXScopeSpec().getRange();
-    InvalidDecl = true;
-    
-    LookupResult Prev = LookupQualifiedName(DC, Name, LookupOrdinaryName, 
-                                            true);
-    assert(!Prev.isAmbiguous() && 
-           "Cannot have an ambiguity in previous-declaration lookup");
-    for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
-         Func != FuncEnd; ++Func) {
-      if (isa<FunctionDecl>(*Func) &&
-          isNearlyMatchingFunction(Context, cast<FunctionDecl>(*Func), NewFD))
-        Diag((*Func)->getLocation(), diag::note_member_def_close_match);
-    }
-    
-    PrevDecl = 0;
-  }
-
-  // Handle attributes. We need to have merged decls when handling attributes
-  // (for example to check for conflicts, etc).
-  ProcessDeclAttributes(NewFD, D);
-  AddKnownFunctionAttributes(NewFD);
-
-  if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
-    // If a function name is overloadable in C, then every function
-    // with that name must be marked "overloadable".
-    Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
-      << Redeclaration << NewFD;
-    if (PrevDecl)
-      Diag(PrevDecl->getLocation(), 
-           diag::note_attribute_overloadable_prev_overload);
-    NewFD->addAttr(::new (Context) OverloadableAttr());
-  }
-
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOptions().CPlusPlus && !CurContext->isRecord()) {
     // In C++, check default arguments now that we have merged decls. Unless
     // the lexical context is the class, because in this case this is done
     // during delayed parsing anyway.
-    if (!CurContext->isRecord())
-      CheckCXXDefaultArguments(NewFD);
-
-    // An out-of-line member function declaration must also be a
-    // definition (C++ [dcl.meaning]p1).
-    if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() && !InvalidDecl) {
-      Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
-        << D.getCXXScopeSpec().getRange();
-      InvalidDecl = true;
-    }
+    CheckCXXDefaultArguments(NewFD);
   }
 
-  // If this is a locally-scoped extern C function, update the
-  // map of such names.
-  if (CurContext->isFunctionOrMethod() && NewFD->isExternC(Context)
-      && !InvalidDecl)
-    RegisterLocallyScopedExternCDecl(NewFD, PrevDecl, S);
-
-  return NewFD;
+  return InvalidDecl || NewFD->isInvalidDecl();
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
@@ -2588,40 +2608,24 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     }
   }
 
-  // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
-  // Doing the promotion here has a win and a loss. The win is the type for
-  // both Decl's and DeclRefExpr's will match (a convenient invariant for the
-  // code generator). The loss is the orginal type isn't preserved. For example:
-  //
-  // void func(int parmvardecl[5]) { // convert "int [5]" to "int *"
-  //    int blockvardecl[5];
-  //    sizeof(parmvardecl);  // size == 4
-  //    sizeof(blockvardecl); // size == 20
-  // }
-  //
-  // For expressions, all implicit conversions are captured using the
-  // ImplicitCastExpr AST node (we have no such mechanism for Decl's).
-  //
-  // FIXME: If a source translation tool needs to see the original type, then
-  // we need to consider storing both types (in ParmVarDecl)...
-  // 
-  
   // Parameters can not be abstract class types.
   if (RequireNonAbstractType(D.getIdentifierLoc(), parmDeclType, 
                              diag::err_abstract_type_in_decl,
                              1 /* parameter type */)) 
     D.setInvalidType(true);
-  
-  if (parmDeclType->isArrayType()) {
-    // int x[restrict 4] ->  int *restrict
-    parmDeclType = Context.getArrayDecayedType(parmDeclType);
-  } else if (parmDeclType->isFunctionType())
-    parmDeclType = Context.getPointerType(parmDeclType);
 
-  ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, 
-                                         D.getIdentifierLoc(), II,
-                                         parmDeclType, StorageClass, 
-                                         0);
+  QualType T = adjustParameterType(parmDeclType);
+  
+  ParmVarDecl *New;
+  if (T == parmDeclType) // parameter type did not need adjustment
+    New = ParmVarDecl::Create(Context, CurContext, 
+                              D.getIdentifierLoc(), II,
+                              parmDeclType, StorageClass, 
+                              0);
+  else // keep track of both the adjusted and unadjusted types
+    New = OriginalParmVarDecl::Create(Context, CurContext, 
+                                      D.getIdentifierLoc(), II, T,
+                                      parmDeclType, StorageClass, 0);
   
   if (D.getInvalidType())
     New->setInvalidDecl();
@@ -2634,7 +2638,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   }
   // Parameter declarators cannot be interface types. All ObjC objects are
   // passed by reference.
-  if (parmDeclType->isObjCInterfaceType()) {
+  if (T->isObjCInterfaceType()) {
     Diag(D.getIdentifierLoc(), diag::err_object_cannot_be_by_value) 
          << "passed";
     New->setInvalidDecl();

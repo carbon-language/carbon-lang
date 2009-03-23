@@ -19,6 +19,30 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
+/// \brief Perform adjustment on the parameter type of a function.
+///
+/// This routine adjusts the given parameter type @p T to the actual
+/// parameter type used by semantic analysis (C99 6.7.5.3p[7,8], 
+/// C++ [dcl.fct]p3). The adjusted parameter type is returned. 
+QualType Sema::adjustParameterType(QualType T) {
+  // C99 6.7.5.3p7:
+  if (T->isArrayType()) {
+    // C99 6.7.5.3p7:
+    //   A declaration of a parameter as "array of type" shall be
+    //   adjusted to "qualified pointer to type", where the type
+    //   qualifiers (if any) are those specified within the [ and ] of
+    //   the array type derivation.
+    return Context.getArrayDecayedType(T);
+  } else if (T->isFunctionType())
+    // C99 6.7.5.3p8:
+    //   A declaration of a parameter as "function returning type"
+    //   shall be adjusted to "pointer to function returning type", as
+    //   in 6.3.2.1.
+    return Context.getPointerType(T);
+
+  return T;
+}
+
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
 /// \param DS  the declaration specifiers
@@ -523,12 +547,8 @@ QualType Sema::BuildFunctionType(QualType T,
   
   bool Invalid = false;
   for (unsigned Idx = 0; Idx < NumParamTypes; ++Idx) {
-    QualType ParamType = ParamTypes[Idx];
-    if (ParamType->isArrayType())
-      ParamType = Context.getArrayDecayedType(ParamType);
-    else if (ParamType->isFunctionType())
-      ParamType = Context.getPointerType(ParamType);
-    else if (ParamType->isVoidType()) {
+    QualType ParamType = adjustParameterType(ParamTypes[Idx]);
+    if (ParamType->isVoidType()) {
       Diag(Loc, diag::err_param_with_void_type);
       Invalid = true;
     }
@@ -683,29 +703,14 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           ParmVarDecl *Param = (ParmVarDecl *)FTI.ArgInfo[i].Param;
           QualType ArgTy = Param->getType();
           assert(!ArgTy.isNull() && "Couldn't parse type?");
-          //
-          // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
-          // This matches the conversion that is done in 
-          // Sema::ActOnParamDeclarator(). Without this conversion, the
-          // argument type in the function prototype *will not* match the
-          // type in ParmVarDecl (which makes the code generator unhappy).
-          //
-          // FIXME: We still apparently need the conversion in 
-          // Sema::ActOnParamDeclarator(). This doesn't make any sense, since
-          // it should be driving off the type being created here.
-          // 
-          // FIXME: If a source translation tool needs to see the original type,
-          // then we need to consider storing both types somewhere...
-          // 
-          if (ArgTy->isArrayType()) {
-            ArgTy = Context.getArrayDecayedType(ArgTy);
-          } else if (ArgTy->isFunctionType())
-            ArgTy = Context.getPointerType(ArgTy);
-          
+
+          // Adjust the parameter type.
+          ArgTy = adjustParameterType(ArgTy);
+
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
           // int(void) as a FunctionProtoType with an empty argument list.
-          else if (ArgTy->isVoidType()) {
+          if (ArgTy->isVoidType()) {
             // If this is something like 'float(int, void)', reject it.  'void'
             // is an incomplete type (C99 6.2.5p19) and function decls cannot
             // have arguments of incomplete type.

@@ -43,6 +43,9 @@ namespace {
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
+    Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
+    Decl *VisitParmVarDecl(ParmVarDecl *D);
+    Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *) { 
@@ -190,6 +193,121 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
                         &Enumerators[0], Enumerators.size());
 
   return Enum;
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
+  // Only handle actual methods; we'll deal with constructors,
+  // destructors, etc. separately.
+  if (D->getKind() != Decl::CXXMethod)
+    return 0;
+
+  QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
+                                       NumTemplateArgs, D->getLocation(),
+                                       D->getDeclName());
+  if (T.isNull())
+    return 0;
+
+  // Build the instantiated method declaration.
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
+  CXXMethodDecl *Method
+    = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
+                            D->getDeclName(), T, D->isStatic(), 
+                            D->isInline());
+  Method->setAccess(D->getAccess());
+  // FIXME: Duplicates some logic in ActOnFunctionDeclarator.
+  if (D->isVirtual()) {
+    Method->setVirtual();
+    Record->setAggregate(false);
+    Record->setPOD(false);
+    Record->setPolymorphic(true);
+  }
+  if (D->isDeleted())
+    Method->setDeleted();
+  if (D->isPure()) {
+    Method->setPure();
+    Record->setAbstract(true);
+  }
+  // FIXME: attributes
+  // FIXME: Method needs a pointer referencing where it came from.
+
+  // Instantiate the function parameters
+  {
+    TemplateDeclInstantiator ParamInstantiator(SemaRef, Method,
+                                               TemplateArgs, NumTemplateArgs);
+    llvm::SmallVector<ParmVarDecl *, 16> Params;
+    for (FunctionDecl::param_iterator P = Method->param_begin(), 
+                                   PEnd = Method->param_end();
+         P != PEnd; ++P) {
+      if (ParmVarDecl *PInst = (ParmVarDecl *)ParamInstantiator.Visit(*P))
+        Params.push_back(PInst);
+      else 
+        Method->setInvalidDecl();
+    }
+  }
+
+  NamedDecl *PrevDecl 
+    = SemaRef.LookupQualifiedName(Owner, Method->getDeclName(), 
+                                  Sema::LookupOrdinaryName, true);
+  // In C++, the previous declaration we find might be a tag type
+  // (class or enum). In this case, the new declaration will hide the
+  // tag type. Note that this does does not apply if we're declaring a
+  // typedef (C++ [dcl.typedef]p4).
+  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
+    PrevDecl = 0;
+  bool Redeclaration = false;
+  bool OverloadableAttrRequired = false;
+  if (SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
+                                       /*FIXME:*/OverloadableAttrRequired))
+    Method->setInvalidDecl();
+
+  if (!Method->isInvalidDecl() || !PrevDecl)
+    Owner->addDecl(Method);
+  return Method;
+}
+
+Decl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
+  QualType OrigT = SemaRef.InstantiateType(D->getOriginalType(), TemplateArgs,
+                                           NumTemplateArgs, D->getLocation(),
+                                           D->getDeclName());
+  if (OrigT.isNull())
+    return 0;
+
+  QualType T = SemaRef.adjustParameterType(OrigT);
+
+  if (D->getDefaultArg()) {
+    // FIXME: Leave a marker for "uninstantiated" default
+    // arguments. They only get instantiated on demand at the call
+    // site.
+    unsigned DiagID = SemaRef.Diags.getCustomDiagID(Diagnostic::Warning,
+        "sorry, dropping default argument during template instantiation");
+    SemaRef.Diag(D->getDefaultArg()->getSourceRange().getBegin(), DiagID)
+      << D->getDefaultArg()->getSourceRange();
+  }
+
+  // Allocate the parameter
+  ParmVarDecl *Param = 0;
+  if (T == OrigT)
+    Param = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                D->getIdentifier(), T, D->getStorageClass(), 
+                                0);
+  else
+    Param = OriginalParmVarDecl::Create(SemaRef.Context, Owner, 
+                                        D->getLocation(), D->getIdentifier(),
+                                        T, OrigT, D->getStorageClass(), 0);
+
+  // Note: we don't try to instantiate function parameters until after
+  // we've instantiated the function's type. Therefore, we don't have
+  // to check for 'void' parameter types here.
+  return Param;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
+  // Since parameter types can decay either before or after
+  // instantiation, we simply treat OriginalParmVarDecls as
+  // ParmVarDecls the same way, and create one or the other depending
+  // on what happens after template instantiation.
+  return VisitParmVarDecl(D);
 }
 
 Decl *Sema::InstantiateDecl(Decl *D, DeclContext *Owner,
