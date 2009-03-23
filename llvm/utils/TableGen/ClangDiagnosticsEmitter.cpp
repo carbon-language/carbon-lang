@@ -113,7 +113,7 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
         continue;
 
       const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
-      if (SV->getValue() != Component)
+      if (!SV || SV->getValue() != Component)
         continue;
     }
     
