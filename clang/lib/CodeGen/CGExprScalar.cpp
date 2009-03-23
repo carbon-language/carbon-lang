@@ -620,9 +620,8 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
 Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
                                              bool isInc, bool isPre) {
   LValue LV = EmitLValue(E->getSubExpr());
-  // FIXME: Handle volatile!
-  Value *InVal = CGF.EmitLoadOfLValue(LV, // false
-                                     E->getSubExpr()->getType()).getScalarVal();
+  QualType ValTy = E->getSubExpr()->getType();
+  Value *InVal = CGF.EmitLoadOfLValue(LV, ValTy).getScalarVal();
   
   int AmountVal = isInc ? 1 : -1;
   
@@ -667,8 +666,11 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   }
   
   // Store the updated result through the lvalue.
-  CGF.EmitStoreThroughLValue(RValue::get(NextVal), LV, 
-                             E->getSubExpr()->getType());
+  if (LV.isBitfield())
+    CGF.EmitStoreThroughBitfieldLValue(RValue::get(NextVal), LV, ValTy,
+                                       &NextVal);
+  else
+    CGF.EmitStoreThroughLValue(RValue::get(NextVal), LV, ValTy);
 
   // If this is a postinc, return the value read from memory, otherwise use the
   // updated value.
