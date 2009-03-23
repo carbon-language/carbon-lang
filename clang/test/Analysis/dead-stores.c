@@ -167,3 +167,9 @@ int f19b(void) { // FIXME: Should this case be considered the same as f19?
   x = 1;
   return x;  
 }
+
+void f20(void) {
+  int x = 1; // no-warning
+#pragma unused(x)
+}
+
