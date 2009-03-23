@@ -29,6 +29,17 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
       case BinaryOperator::Or:
       case BinaryOperator::Xor:
         return false;
+        // We don't reason yet about arithmetic constraints on symbolic values.
+      case BinaryOperator::Mul:
+      case BinaryOperator::Div:
+      case BinaryOperator::Rem:
+      case BinaryOperator::Add:
+      case BinaryOperator::Sub:
+      case BinaryOperator::Shl:
+      case BinaryOperator::Shr:
+        return false;
+
+        // All other cases.
       default:
         return true;
     }

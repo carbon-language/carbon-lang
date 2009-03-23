@@ -299,8 +299,8 @@ static void rdar_6659160(char *inkind, char *inname)
   NSString *kind = [[NSString alloc] initWithUTF8String:inkind];  // expected-warning{{leak}}
   
   // We do allow stringWithUTF8String to fail.  This isn't really correct, as
-  // far as returning nil.  In most error conditions it will throw an exception.
-  // If allocation fails it could return nil, but again this
+  // far as returning 0.  In most error conditions it will throw an exception.
+  // If allocation fails it could return 0, but again this
   // isn't expected.
   NSString *name = [NSString stringWithUTF8String:inname];
   if(!name)
@@ -360,3 +360,37 @@ void pr3820_DeallocAfterRelease(void)
   [foo dealloc]; // expected-warning{{used after it is released}}
   // message sent to released object
 }
+
+// From <rdar://problem/6704930>.  The problem here is that 'length' binds to
+// '($0 - 1)' after '--length', but SimpleConstraintManager doesn't know how to
+// reason about '($0 - 1) > constant'.  As a temporary hack, we drop the value
+// of '($0 - 1)' and conjure a new symbol.
+void rdar6704930(unsigned char *s, unsigned int length) {
+  NSString* name = 0;
+  if (s != 0) {
+    if (length > 0) {
+      while (length > 0) {
+        if (*s == ':') {
+          ++s;
+          --length;
+          name = [[NSString alloc] init]; // no-warning
+          break;
+        }
+        ++s;
+        --length;
+      }
+      if ((length == 0) && (name != 0)) {
+        [name release];
+        name = 0;
+      }
+      if (length == 0) { // no ':' found -> use it all as name
+        name = [[NSString alloc] init]; // no-warning
+      }
+    }
+  }
+
+  if (name != 0) {
+    [name release];
+  }
+}
+
