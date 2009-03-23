@@ -334,6 +334,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec = 
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
+
+  // Claim some arguments which clang doesn't support, but we don't
+  // care to warn the user about.
+  
+  // FIXME: Use iterator.
+  for (ArgList::const_iterator 
+         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(options::OPT_clang_ignored_W_Group) ||
+        A->getOption().matches(options::OPT_clang_ignored_f_Group))
+      A->claim();
+  }
 }
 
 void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
