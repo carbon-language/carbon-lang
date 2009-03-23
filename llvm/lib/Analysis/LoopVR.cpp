@@ -23,7 +23,7 @@
 using namespace llvm;
 
 char LoopVR::ID = 0;
-static RegisterPass<LoopVR> X("loopvr", "Loop Value Ranges", true, true);
+static RegisterPass<LoopVR> X("loopvr", "Loop Value Ranges", false, true);
 
 /// getRange - determine the range for a particular SCEV within a given Loop
 ConstantRange LoopVR::getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE) {
