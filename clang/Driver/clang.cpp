@@ -322,7 +322,9 @@ static LangKind GetLanguage(const std::string &Filename) {
   // assembler: .S
   if (Ext == "c")
     return langkind_c;
-  else if (Ext == "S")
+  else if (Ext == "S" ||
+           // If the compiler is run on a .s file, preprocess it as .S
+           Ext == "s")
     return langkind_asm_cpp;
   else if (Ext == "i")
     return langkind_c_cpp;
