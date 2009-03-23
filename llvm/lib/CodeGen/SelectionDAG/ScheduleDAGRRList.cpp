@@ -410,6 +410,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       NewSU->isCommutable = true;
     ComputeLatency(NewSU);
 
+    // Record all the edges to and from the old SU, by category.
     SmallVector<SDep, 4> ChainPreds;
     SmallVector<SDep, 4> ChainSuccs;
     SmallVector<SDep, 4> LoadPreds;
@@ -433,6 +434,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
         NodeSuccs.push_back(*I);
     }
 
+    // Now assign edges to the newly-created nodes.
     for (unsigned i = 0, e = ChainPreds.size(); i != e; ++i) {
       const SDep &Pred = ChainPreds[i];
       RemovePred(SU, Pred);
@@ -468,9 +470,10 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
         AddPred(SuccDep, D);
       }
     } 
-    if (isNewLoad) {
-      AddPred(NewSU, SDep(LoadSU, SDep::Order, LoadSU->Latency));
-    }
+
+    // Add a data dependency to reflect that NewSU reads the value defined
+    // by LoadSU.
+    AddPred(NewSU, SDep(LoadSU, SDep::Data, LoadSU->Latency));
 
     if (isNewLoad)
       AvailableQueue->addNode(LoadSU);
