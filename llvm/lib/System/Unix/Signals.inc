@@ -93,8 +93,8 @@ static void RegisterHandlers() {
 static void UnregisterHandlers() {
   // Restore all of the signal handlers to how they were before we showed up.
   for (unsigned i = 0, e = NumRegisteredSignals; i != e; ++i)
-    sigaction(RegisteredSignalInfo[NumRegisteredSignals].SigNo,
-              &RegisteredSignalInfo[NumRegisteredSignals].SA, 0);
+    sigaction(RegisteredSignalInfo[i].SigNo,
+              &RegisteredSignalInfo[i].SA, 0);
   NumRegisteredSignals = 0;
 }
 
