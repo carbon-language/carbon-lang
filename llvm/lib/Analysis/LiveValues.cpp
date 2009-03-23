@@ -142,21 +142,32 @@ LiveValues::Memo &LiveValues::compute(const Value *V) {
       if (L->contains(UseBB))
         break;
 
-    if (isa<PHINode>(U)) {
-      // The value is used by a PHI, so it is live-out of the defining block.
-      LiveOutOfDefBB = true;
-    } else if (UseBB != DefBB) {
-      // A use outside the defining block has been found.
-      LiveOutOfDefBB = true;
+    // Search for live-through blocks.
+    const BasicBlock *BB;
+    if (const PHINode *PHI = dyn_cast<PHINode>(U)) {
+      // For PHI nodes, start the search at the incoming block paired with the
+      // incoming value, which must be dominated by the definition.
+      unsigned Num = PHI->getIncomingValueNumForOperand(I.getOperandNo());
+      BB = PHI->getIncomingBlock(Num);
 
-      // Climb the immediate dominator tree from the use to the definition
-      // and mark all intermediate blocks as live-through. Don't do this if
-      // the user is a PHI because such users may not be dominated by the
-      // definition.
-      for (const BasicBlock *BB = getImmediateDominator(UseBB, DT);
-           BB != DefBB; BB = getImmediateDominator(BB, DT))
-        if (!M.LiveThrough.insert(BB))
-          break;
+      // A PHI-node use means the value is live-out of it's defining block
+      // even if that block also contains the only use.
+      LiveOutOfDefBB = true;
+    } else {
+      // Otherwise just start the search at the use.
+      BB = UseBB;
+
+      // Note if the use is outside the defining block.
+      LiveOutOfDefBB |= UseBB != DefBB;
+    }
+
+    // Climb the immediate dominator tree from the use to the definition
+    // and mark all intermediate blocks as live-through. Don't do this if
+    // the user is a PHI because such users may not be dominated by the
+    // definition.
+    for (; BB != DefBB; BB = getImmediateDominator(BB, DT)) {
+      if (BB != UseBB && !M.LiveThrough.insert(BB))
+        break;
     }
   }
 
