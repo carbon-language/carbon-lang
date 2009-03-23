@@ -2441,6 +2441,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
         Context.getCanonicalType(castExpr->getType().getUnqualifiedType()) &&
         (castType->isStructureType() || castType->isUnionType())) {
       // GCC struct/union extension: allow cast to self.
+      // FIXME: Check that the cast destination type is complete.
       Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar)
         << castType << castExpr->getSourceRange();
     } else if (castType->isUnionType()) {
@@ -2554,6 +2555,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
         // "If both the operands have structure or union type, the result has
         // that type."  This implies that CV qualifiers are dropped.
         return LHSTy.getUnqualifiedType();
+    // FIXME: Type of conditional expression must be complete in C mode.
   }
 
   // C99 6.5.15p5: "If both operands have void type, the result has void type."
@@ -3688,10 +3690,12 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 
 // C99 6.5.17
 QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
-  // FIXME: what is required for LHS?
-
   // Comma performs lvalue conversion (C99 6.3.2.1), but not unary conversions.
   DefaultFunctionArrayConversion(RHS);
+
+  // FIXME: Check that RHS type is complete in C mode (it's legal for it to be
+  // incomplete in C++).
+
   return RHS->getType();
 }
 
@@ -4312,6 +4316,9 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtArg substmt,
       Ty = LastExpr->getType();
   }
 
+  // FIXME: Check that expression type is complete/non-abstract; statement
+  // expressions are not lvalues.
+
   substmt.release();
   return Owned(new (Context) StmtExpr(Compound, Ty, LPLoc, RPLoc));
 }
@@ -4336,7 +4343,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   if (!Dependent && !ArgTy->isRecordType())
     return ExprError(Diag(TypeLoc, diag::err_offsetof_record_type) << ArgTy);
 
-  // FIXME: Does the type need to be complete?
+  // FIXME: Type must be complete per C99 7.17p3 because a declaring a variable
+  // with an incomplete type would be illegal.
 
   // Otherwise, create a null pointer as the base, and iteratively process
   // the offsetof designators.
@@ -4585,6 +4593,8 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
                                       BSI->isVariadic, 0);
 
+  // FIXME: Check that return/parameter types are complete/non-abstract
+
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   BSI->TheDecl->setBody(static_cast<CompoundStmt*>(body.release()));
@@ -4615,6 +4625,7 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << E->getType() << E->getSourceRange());
 
+  // FIXME: Check that type is complete/non-abstract
   // FIXME: Warn if a non-POD type is passed in.
 
   expr.release();
