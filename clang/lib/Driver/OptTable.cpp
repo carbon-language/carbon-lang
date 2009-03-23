@@ -12,6 +12,7 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
+#include <algorithm>
 #include <cassert>
 
 using namespace clang::driver;
@@ -199,6 +200,14 @@ Option *OptTable::constructOption(options::ID id) const {
   return Opt;
 }
 
+// Support lower_bound between info and an option name.
+static inline bool operator<(struct Info &I, const char *Name) {
+  return StrCmpOptionName(I.Name, Name) == -1;
+}
+static inline bool operator<(const char *Name, struct Info &I) {
+  return StrCmpOptionName(Name, I.Name) == -1;
+}
+
 Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   unsigned Prev = Index;
   const char *Str = Args.getArgString(Index);
@@ -207,19 +216,29 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   if (Str[0] != '-' || Str[1] == '\0')
     return new PositionalArg(getOption(OPT_INPUT), Index++);
 
-  // FIXME: Make this fast.
-  for (unsigned j = FirstSearchableOption; j < LastOption; ++j) {
-    const char *OptName = getOptionName((options::ID) j);
-    
-    // Arguments are only accepted by options which prefix them.
-    if (memcmp(Str, OptName, strlen(OptName)) == 0) {
-      if (Arg *A = getOption((options::ID) j)->accept(Args, Index))
-        return A;
+  struct Info *Start = OptionInfos + FirstSearchableOption - 1;
+  struct Info *End = OptionInfos + LastOption - 1;
 
-      // Otherwise, see if this argument was missing values.
-      if (Prev != Index)
-        return 0;
-    }
+  // Find the first option which could be a prefix.
+  Start = std::lower_bound(Start, End, Str);
+
+  // Scan for first option which is a proper prefix.
+  for (; Start != End; ++Start)
+    if (memcmp(Str, Start->Name, strlen(Start->Name)) == 0)
+      break;
+
+  // Look for a match until we don't have a prefix.
+  for (; Start != End; ++Start) {
+    if (memcmp(Start->Name, Str, strlen(Start->Name)) != 0)
+      break;
+
+    options::ID id = (options::ID) (Start - OptionInfos + 1);
+    if (Arg *A = getOption(id)->accept(Args, Index))
+      return A;
+
+    // Otherwise, see if this argument was missing values.
+    if (Prev != Index)
+      return 0;
   }
 
   return new PositionalArg(getOption(OPT_UNKNOWN), Index++);
