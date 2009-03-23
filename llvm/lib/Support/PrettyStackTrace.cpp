@@ -68,7 +68,6 @@ static void CrashHandler(void *Cookie) {
   if (!TmpStr.empty()) {
     __crashreporter_info__ = strdup(TmpStr.c_str());
     errs() << __crashreporter_info__;
-    errs().flush();
   }
   
 #endif

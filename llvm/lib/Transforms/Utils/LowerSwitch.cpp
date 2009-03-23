@@ -147,8 +147,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   CaseRange& Pivot = *(Begin + Mid);
   DEBUG(errs() << "Pivot ==> " 
                << cast<ConstantInt>(Pivot.Low)->getValue() << " -"
-               << cast<ConstantInt>(Pivot.High)->getValue() << "\n";
-        errs().flush());
+               << cast<ConstantInt>(Pivot.High)->getValue() << "\n");
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,
                                       OrigBlock, Default);

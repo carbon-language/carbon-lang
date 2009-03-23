@@ -5308,7 +5308,6 @@ std::string ISD::ArgFlagsTy::getArgFlagsString() {
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
   print(errs(), G);
-  errs().flush();
 }
 
 void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
@@ -5544,7 +5543,6 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
 void SDNode::dumpr() const {
   VisitedSDNodeSet once;
   DumpNodesr(errs(), this, 0, 0, once);
-  errs().flush();
 }
 
 const Type *ConstantPoolSDNode::getType() const {

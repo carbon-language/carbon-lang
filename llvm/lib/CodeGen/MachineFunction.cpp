@@ -558,4 +558,4 @@ void MachineConstantPool::print(raw_ostream &OS) const {
   }
 }
 
-void MachineConstantPool::dump() const { print(errs()); errs().flush(); }
+void MachineConstantPool::dump() const { print(errs()); }
