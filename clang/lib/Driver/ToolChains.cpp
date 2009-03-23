@@ -9,10 +9,73 @@
 
 #include "ToolChains.h"
 
+#include "clang/Driver/Driver.h"
+#include "clang/Driver/HostInfo.h"
+
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/System/Path.h"
+
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
 
 /// Darwin_X86 - Darwin tool chain for i386 and x86_64.
+
+Darwin_X86::Darwin_X86(const HostInfo &Host, const char *Arch, 
+                       const char *Platform, const char *OS, 
+                       const unsigned (&_DarwinVersion)[3],
+                       const unsigned (&_GCCVersion)[3])
+  : ToolChain(Host, Arch, Platform, OS) 
+{
+  DarwinVersion[0] = _DarwinVersion[0];
+  DarwinVersion[1] = _DarwinVersion[1];
+  DarwinVersion[2] = _DarwinVersion[2];
+  GCCVersion[0] = _GCCVersion[0];
+  GCCVersion[1] = _GCCVersion[1];
+  GCCVersion[2] = _GCCVersion[2];
+
+  ToolChainDir = "i686-apple-darwin";
+  ToolChainDir += llvm::utostr(DarwinVersion[0]);
+  ToolChainDir += "/";
+  ToolChainDir += llvm::utostr(GCCVersion[0]);
+  ToolChainDir += '.';
+  ToolChainDir += llvm::utostr(GCCVersion[1]);
+  ToolChainDir += '.';
+  ToolChainDir += llvm::utostr(GCCVersion[2]);
+
+  std::string Path;
+  if (getArchName() == "x86_64") {
+    Path = getHost().getDriver().Dir;
+    Path += "/../lib/gcc/";
+    Path += getToolChainDir();
+    Path += "/x86_64";
+    getFilePaths().push_back(Path);
+
+    Path = "/usr/lib/gcc/";
+    Path += getToolChainDir();
+    Path += "/x86_64";
+    getFilePaths().push_back(Path);
+  }
+  
+  Path = getHost().getDriver().Dir;
+  Path += "/../lib/gcc/";
+  Path += getToolChainDir();
+  getFilePaths().push_back(Path);
+
+  Path = "/usr/lib/gcc/";
+  Path += getToolChainDir();
+  getFilePaths().push_back(Path);
+
+  Path = getHost().getDriver().Dir;
+  Path += "/../libexec/gcc/";
+  Path += getToolChainDir();
+  getProgramPaths().push_back(Path);
+
+  Path = "/usr/libexec/gcc/";
+  Path += getToolChainDir();
+  getProgramPaths().push_back(Path);
+
+  getProgramPaths().push_back(getHost().getDriver().Dir);
+}
 
 Darwin_X86::~Darwin_X86() {
   // Free tool implementations.
@@ -83,6 +146,13 @@ const char *Darwin_X86::GetForcedPicModel() const {
 /// Generic_GCC - A tool chain using the 'gcc' command to perform
 /// all subcommands; this relies on gcc translating the majority of
 /// command line options.
+
+Generic_GCC::Generic_GCC(const HostInfo &Host, const char *Arch, 
+                         const char *Platform, const char *OS)
+  : ToolChain(Host, Arch, Platform, OS) 
+{
+  getProgramPaths().push_back(getHost().getDriver().Dir);  
+}
 
 Generic_GCC::~Generic_GCC() {
   // Free tool implementations.

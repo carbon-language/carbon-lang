@@ -920,15 +920,8 @@ llvm::sys::Path Driver::GetProgramPath(const char *Name,
       return P;
   }
 
-  // As a last resort, always search in our directory before pulling
-  // from the path.
-  llvm::sys::Path P(Dir);
-  P.appendComponent(Name);
-  if (P.exists())
-    return P;
-
-  // Search path to increase accuracy of logging output.
-  P = llvm::sys::Program::FindProgramByName(Name);
+  // If all else failed, search the path.
+  llvm::sys::Path P(llvm::sys::Program::FindProgramByName(Name));
   if (!P.empty())
     return P;
 
