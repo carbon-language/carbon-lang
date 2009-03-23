@@ -24,7 +24,7 @@ class CCIfSubtarget<string F, CCAction A>
 def RetCC_X86Common : CallingConv<[
   // Scalar values are returned in AX first, then DX, except for i8 where
   // the convention is to return values in AL and AH. However, using AL and
-  // is AH problematic -- a return of {i16,i8} would end up using AX and AH,
+  // AH is problematic -- a return of {i16,i8} would end up using AX and AH,
   // and one value would clobber the other. C front-ends are currently expected
   // to pack two i8 values into an i16 in the rare situations where this
   // is necessary.
