@@ -163,7 +163,11 @@ public:
   APValue VisitObjCEncodeExpr(ObjCEncodeExpr *E) { return APValue(E, 0); }
   APValue VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   APValue VisitUnaryDeref(UnaryOperator *E);
-  // FIXME: Missing: __extension__, __real__, __imag__, __builtin_choose_expr
+  APValue VisitUnaryExtension(const UnaryOperator *E)
+    { return Visit(E->getSubExpr()); }
+  APValue VisitChooseExpr(const ChooseExpr *E)
+    { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+  // FIXME: Missing: __real__, __imag__
 };
 } // end anonymous namespace
 
@@ -285,8 +289,9 @@ public:
   APValue VisitImplicitValueInitExpr(ImplicitValueInitExpr *E)
       { return APValue((Expr*)0, 0); }
   APValue VisitConditionalOperator(ConditionalOperator *E);
-  APValue VisitChooseExpr(ChooseExpr *E);
-  // FIXME: Missing: @encode, @protocol, @selector
+  APValue VisitChooseExpr(ChooseExpr *E)
+    { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+  // FIXME: Missing: @protocol, @selector
 };
 } // end anonymous namespace
 
@@ -375,7 +380,6 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     return APValue();
   }
 
-  //assert(0 && "Unhandled cast");
   return APValue();
 }  
 
@@ -395,13 +399,6 @@ APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
 
   APValue Result;
   if (EvaluatePointer(EvalExpr, Result, Info))
-    return Result;
-  return APValue();
-}
-
-APValue PointerExprEvaluator::VisitChooseExpr(ChooseExpr *E) {
-  APValue Result;
-  if (EvaluatePointer(E->getChosenSubExpr(Info.Ctx), Result, Info))
     return Result;
   return APValue();
 }
@@ -437,7 +434,8 @@ namespace {
     APValue VisitCompoundLiteralExpr(const CompoundLiteralExpr *E);
     APValue VisitInitListExpr(const InitListExpr *E);
     APValue VisitConditionalOperator(const ConditionalOperator *E);
-    APValue VisitChooseExpr(const ChooseExpr *E);
+    APValue VisitChooseExpr(const ChooseExpr *E)
+      { return Visit(E->getChosenSubExpr(Info.Ctx)); }
     APValue VisitUnaryImag(const UnaryOperator *E);
     // FIXME: Missing: unary -, unary ~, binary add/sub/mul/div,
     //                 binary comparisons, binary and/or/xor,
@@ -526,13 +524,6 @@ APValue VectorExprEvaluator::VisitConditionalOperator(const ConditionalOperator 
 
   APValue Result;
   if (EvaluateVector(EvalExpr, Result, Info))
-    return Result;
-  return APValue();
-}
-
-APValue VectorExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
-  APValue Result;
-  if (EvaluateVector(E->getChosenSubExpr(Info.Ctx), Result, Info))
     return Result;
   return APValue();
 }
@@ -651,7 +642,10 @@ public:
     return Success(E->EvaluateTrait(), E);
   }
 
-  bool VisitChooseExpr(const ChooseExpr *E);
+  bool VisitChooseExpr(const ChooseExpr *E) {
+    return Visit(E->getChosenSubExpr(Info.Ctx));
+  }
+
   bool VisitUnaryReal(const UnaryOperator *E);
   bool VisitUnaryImag(const UnaryOperator *E);
 
@@ -1193,10 +1187,6 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   return Success(HandleFloatToIntCast(DestType, SrcType, F, Info.Ctx), E);
 }
 
-bool IntExprEvaluator::VisitChooseExpr(const ChooseExpr *E) {
-  return Visit(E->getChosenSubExpr(Info.Ctx));
-}
-
 bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
   if (E->getSubExpr()->getType()->isAnyComplexType()) {
     APValue LV;
@@ -1247,9 +1237,13 @@ public:
   bool VisitCastExpr(CastExpr *E);
   bool VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
 
-  // FIXME: Missing: __real__/__imag__, __extension__, 
-  //                 array subscript of vector, member of vector, 
-  //                 __builtin_choose_expr, ImplicitValueInitExpr,
+  bool VisitChooseExpr(const ChooseExpr *E)
+    { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+  bool VisitUnaryExtension(const UnaryOperator *E)
+    { return Visit(E->getSubExpr()); }
+
+  // FIXME: Missing: __real__/__imag__, array subscript of vector,
+  //                 member of vector, ImplicitValueInitExpr,
   //                 conditional ?:, comma
 };
 } // end anonymous namespace
@@ -1510,8 +1504,11 @@ public:
   }
   
   APValue VisitBinaryOperator(const BinaryOperator *E);
-  // FIXME Missing: unary +/-/~, __extension__, binary div,
-  //                __builtin_choose_expr, ImplicitValueInitExpr,
+  APValue VisitChooseExpr(const ChooseExpr *E)
+    { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+  APValue VisitUnaryExtension(const UnaryOperator *E)
+    { return Visit(E->getSubExpr()); }
+  // FIXME Missing: unary +/-/~, binary div, ImplicitValueInitExpr,
   //                conditional ?:, comma
 };
 } // end anonymous namespace
