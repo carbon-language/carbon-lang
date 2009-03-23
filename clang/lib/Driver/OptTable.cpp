@@ -91,7 +91,7 @@ OptTable::OptTable() : Options(new Option*[numOptions]()) {
   FirstSearchableOption = 0;
   for (unsigned i = OPT_UNKNOWN + 1; i < LastOption; ++i) {
     if (getInfo(i).Kind != Option::GroupClass) {
-      FirstSearchableOption = i + 1;
+      FirstSearchableOption = i;
       break;
     }
   }
