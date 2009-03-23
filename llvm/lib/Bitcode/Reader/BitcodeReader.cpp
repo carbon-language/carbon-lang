@@ -801,9 +801,13 @@ bool BitcodeReader::ParseConstants() {
         V = ConstantFP::get(APFloat(APInt(32, (uint32_t)Record[0])));
       else if (CurTy == Type::DoubleTy)
         V = ConstantFP::get(APFloat(APInt(64, Record[0])));
-      else if (CurTy == Type::X86_FP80Ty)
-        V = ConstantFP::get(APFloat(APInt(80, 2, &Record[0])));
-      else if (CurTy == Type::FP128Ty)
+      else if (CurTy == Type::X86_FP80Ty) {
+        // Bits are not stored the same way as a normal i80 APInt, compensate.
+        uint64_t Rearrange[2];
+        Rearrange[0] = (Record[1] & 0xffffLL) | (Record[0] << 16);
+        Rearrange[1] = Record[0] >> 48;
+        V = ConstantFP::get(APFloat(APInt(80, 2, Rearrange)));
+      } else if (CurTy == Type::FP128Ty)
         V = ConstantFP::get(APFloat(APInt(128, 2, &Record[0]), true));
       else if (CurTy == Type::PPC_FP128Ty)
         V = ConstantFP::get(APFloat(APInt(128, 2, &Record[0])));

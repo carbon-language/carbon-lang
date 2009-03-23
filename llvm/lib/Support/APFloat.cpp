@@ -2603,10 +2603,9 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const
   }
 
   uint64_t words[2];
-  words[0] =  ((uint64_t)(sign & 1) << 63) |
-              ((myexponent & 0x7fffLL) <<  48) |
-              ((mysignificand >>16) & 0xffffffffffffLL);
-  words[1] = mysignificand & 0xffff;
+  words[0] = mysignificand;
+  words[1] =  ((uint64_t)(sign & 1) << 15) |
+              (myexponent & 0x7fffLL);
   return APInt(80, 2, words);
 }
 
@@ -2764,14 +2763,13 @@ APFloat::initFromF80LongDoubleAPInt(const APInt &api)
   assert(api.getBitWidth()==80);
   uint64_t i1 = api.getRawData()[0];
   uint64_t i2 = api.getRawData()[1];
-  uint64_t myexponent = (i1 >> 48) & 0x7fff;
-  uint64_t mysignificand = ((i1 << 16) &  0xffffffffffff0000ULL) |
-                          (i2 & 0xffff);
+  uint64_t myexponent = (i2 & 0x7fff);
+  uint64_t mysignificand = i1;
 
   initialize(&APFloat::x87DoubleExtended);
   assert(partCount()==2);
 
-  sign = static_cast<unsigned int>(i1>>63);
+  sign = static_cast<unsigned int>(i2>>15);
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
     category = fcZero;

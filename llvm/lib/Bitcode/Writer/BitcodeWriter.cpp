@@ -559,10 +559,11 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       } else if (Ty == Type::X86_FP80Ty) {
         // api needed to prevent premature destruction
+        // bits are not in the same order as a normal i80 APInt, compensate.
         APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
-        Record.push_back(p[0]);
-        Record.push_back((uint16_t)p[1]);
+        Record.push_back((p[1] << 48) | (p[0] >> 16));
+        Record.push_back(p[0] & 0xffffLL);
       } else if (Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {
         APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();

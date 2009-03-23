@@ -797,9 +797,29 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     // Some form of long double.  These appear as a magic letter identifying
     // the type, then a fixed number of hex digits.
     Out << "0x";
-    if (&CFP->getValueAPF().getSemantics() == &APFloat::x87DoubleExtended)
+    if (&CFP->getValueAPF().getSemantics() == &APFloat::x87DoubleExtended) {
       Out << 'K';
-    else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
+      // api needed to prevent premature destruction
+      APInt api = CFP->getValueAPF().bitcastToAPInt();
+      const uint64_t* p = api.getRawData();
+      uint64_t word = p[1];
+      int shiftcount=12;
+      int width = api.getBitWidth();
+      for (int j=0; j<width; j+=4, shiftcount-=4) {
+        unsigned int nibble = (word>>shiftcount) & 15;
+        if (nibble < 10)
+          Out << (unsigned char)(nibble + '0');
+        else
+          Out << (unsigned char)(nibble - 10 + 'A');
+        if (shiftcount == 0 && j+4 < width) {
+          word = *p;
+          shiftcount = 64;
+          if (width-j-4 < 64)
+            shiftcount = width-j-4;
+        }
+      }
+      return;
+    } else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
       Out << 'L';
     else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
       Out << 'M';

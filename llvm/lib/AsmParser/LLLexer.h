@@ -77,6 +77,7 @@ namespace llvm {
     uint64_t atoull(const char *Buffer, const char *End);
     uint64_t HexIntToVal(const char *Buffer, const char *End);
     void HexToIntPair(const char *Buffer, const char *End, uint64_t Pair[2]);
+    void FP80HexToIntPair(const char *Buff, const char *End, uint64_t Pair[2]);
   };
 } // end namespace llvm
 

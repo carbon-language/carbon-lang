@@ -1046,10 +1046,13 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                       &ignored);
     if (TD->isBigEndian()) {
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1])
         << '\t' << TAI->getCommentString()
         << " long double most significant halfword of ~"
         << DoubleVal.convertToDouble() << '\n';
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
@@ -1058,18 +1061,12 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
         << " long double next halfword\n";
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])
         << '\t' << TAI->getCommentString()
-        << " long double next halfword\n";
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1])
-        << '\t' << TAI->getCommentString()
         << " long double least significant halfword\n";
      } else {
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1])
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])
         << '\t' << TAI->getCommentString()
         << " long double least significant halfword of ~"
         << DoubleVal.convertToDouble() << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])
-        << '\t' << TAI->getCommentString()
-        << " long double next halfword\n";
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
@@ -1077,6 +1074,9 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
         << '\t' << TAI->getCommentString()
         << " long double next halfword\n";
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)
+        << '\t' << TAI->getCommentString()
+        << " long double next halfword\n";
+      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1])
         << '\t' << TAI->getCommentString()
         << " long double most significant halfword\n";
     }

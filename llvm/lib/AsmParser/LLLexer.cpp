@@ -115,6 +115,37 @@ void LLLexer::HexToIntPair(const char *Buffer, const char *End,
     Error("constant bigger than 128 bits detected!");
 }
 
+/// FP80HexToIntPair - translate an 80 bit FP80 number (20 hexits) into
+/// { low64, high16 } as usual for an APInt.
+void LLLexer::FP80HexToIntPair(const char *Buffer, const char *End,
+                           uint64_t Pair[2]) {
+  Pair[1] = 0;
+  for (int i=0; i<4 && Buffer != End; i++, Buffer++) {
+    assert(Buffer != End);
+    Pair[1] *= 16;
+    char C = *Buffer;
+    if (C >= '0' && C <= '9')
+      Pair[1] += C-'0';
+    else if (C >= 'A' && C <= 'F')
+      Pair[1] += C-'A'+10;
+    else if (C >= 'a' && C <= 'f')
+      Pair[1] += C-'a'+10;
+  }
+  Pair[0] = 0;
+  for (int i=0; i<16; i++, Buffer++) {
+    Pair[0] *= 16;
+    char C = *Buffer;
+    if (C >= '0' && C <= '9')
+      Pair[0] += C-'0';
+    else if (C >= 'A' && C <= 'F')
+      Pair[0] += C-'A'+10;
+    else if (C >= 'a' && C <= 'f')
+      Pair[0] += C-'a'+10;
+  }
+  if (Buffer != End)
+    Error("constant bigger than 128 bits detected!");
+}
+
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
 // appropriate character.
 static void UnEscapeLexed(std::string &Str) {
@@ -670,19 +701,21 @@ lltok::Kind LLLexer::Lex0x() {
   }
 
   uint64_t Pair[2];
-  HexToIntPair(TokStart+3, CurPtr, Pair);
   switch (Kind) {
   default: assert(0 && "Unknown kind!");
   case 'K':
     // F80HexFPConstant - x87 long double in hexadecimal format (10 bytes)
+    FP80HexToIntPair(TokStart+3, CurPtr, Pair);
     APFloatVal = APFloat(APInt(80, 2, Pair));
     return lltok::APFloat;
   case 'L':
     // F128HexFPConstant - IEEE 128-bit in hexadecimal format (16 bytes)
+    HexToIntPair(TokStart+3, CurPtr, Pair);
     APFloatVal = APFloat(APInt(128, 2, Pair), true);
     return lltok::APFloat;
   case 'M':
     // PPC128HexFPConstant - PowerPC 128-bit in hexadecimal format (16 bytes)
+    HexToIntPair(TokStart+3, CurPtr, Pair);
     APFloatVal = APFloat(APInt(128, 2, Pair));
     return lltok::APFloat;
   }
