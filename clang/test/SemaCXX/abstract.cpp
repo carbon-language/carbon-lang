@@ -35,3 +35,20 @@ struct S {
   C c; // expected-error {{field type 'C' is an abstract class}}
 };
 
+void t3(const C&);
+
+void f() {
+    C(); // expected-error {{allocation of an object of abstract type 'C'}}
+    t3(C()); // expected-error {{allocation of an object of abstract type 'C'}}
+}
+
+C e[2]; // expected-error {{variable type 'C' is an abstract class}}
+
+void t4(C c[2]); // expected-error {{parameter type 'C' is an abstract class}}
+
+void t5(void (*)(C)); // expected-error {{parameter type 'C' is an abstract class}}
+
+typedef void (*Func)(C); // expected-error {{parameter type 'C' is an abstract class}}
+void t6(Func);
+
+

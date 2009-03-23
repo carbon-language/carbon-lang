@@ -788,6 +788,9 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   
   if (!getLangOptions().CPlusPlus)
     return false;
+  
+  if (const ArrayType *AT = Context.getAsArrayType(T))
+    return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID);
     
   const RecordType *RT = T->getAsRecordType();
   if (!RT)

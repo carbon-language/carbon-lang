@@ -1996,12 +1996,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
         ParmVarDecl *PVD = (ParmVarDecl *)FTI.ArgInfo[i].Param;
-        
-        // Function parameters cannot have abstract class types.
-        if (RequireNonAbstractType(PVD->getLocation(), PVD->getType(),
-                                   diag::err_abstract_type_in_decl, 
-                                   1 /* parameter type */))
-            InvalidDecl = true;
         Params.push_back(PVD);
       }
     }
@@ -2611,6 +2605,13 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // FIXME: If a source translation tool needs to see the original type, then
   // we need to consider storing both types (in ParmVarDecl)...
   // 
+  
+  // Parameters can not be abstract class types.
+  if (RequireNonAbstractType(D.getIdentifierLoc(), parmDeclType, 
+                             diag::err_abstract_type_in_decl,
+                             1 /* parameter type */)) 
+    D.setInvalidType(true);
+  
   if (parmDeclType->isArrayType()) {
     // int x[restrict 4] ->  int *restrict
     parmDeclType = Context.getArrayDecayedType(parmDeclType);
