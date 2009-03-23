@@ -175,7 +175,10 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
       if (N->isMachineOpcode() &&
           TII->get(N->getMachineOpcode()).getImplicitDefs()) {
         SU->hasPhysRegClobbers = true;
-        if (CountResults(N) > TII->get(N->getMachineOpcode()).getNumDefs())
+        unsigned NumUsed = CountResults(N);
+        while (NumUsed != 0 && !N->hasAnyUseOfValue(NumUsed - 1))
+          --NumUsed;    // Skip over unused values at the end.
+        if (NumUsed > TII->get(N->getMachineOpcode()).getNumDefs())
           SU->hasPhysRegDefs = true;
       }
       
