@@ -1,6 +1,8 @@
 ; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -disable-fp-elim
+; RUN: llvm-as < %s | llc -mtriple=i386-linux        -disable-fp-elim
 ; XFAIL: *
 ; Expected to run out of registers during allocation.
+; PR3864
 ; rdar://6251720
 
 	%struct.CABACContext = type { i32, i32, i8* }
