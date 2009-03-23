@@ -1199,21 +1199,26 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
   unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
   const unsigned *ImpDefs = TII->get(N->getMachineOpcode()).getImplicitDefs();
   assert(ImpDefs && "Caller should check hasPhysRegDefs");
-  const unsigned *SUImpDefs =
-    TII->get(SU->getNode()->getMachineOpcode()).getImplicitDefs();
-  if (!SUImpDefs)
-    return false;
-  for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
-    MVT VT = N->getValueType(i);
-    if (VT == MVT::Flag || VT == MVT::Other)
+  for (const SDNode *SUNode = SU->getNode(); SUNode;
+       SUNode = SUNode->getFlaggedNode()) {
+    if (!SUNode->isMachineOpcode())
       continue;
-    if (!N->hasAnyUseOfValue(i))
-      continue;
-    unsigned Reg = ImpDefs[i - NumDefs];
-    for (;*SUImpDefs; ++SUImpDefs) {
-      unsigned SUReg = *SUImpDefs;
-      if (TRI->regsOverlap(Reg, SUReg))
-        return true;
+    const unsigned *SUImpDefs =
+      TII->get(SUNode->getMachineOpcode()).getImplicitDefs();
+    if (!SUImpDefs)
+      return false;
+    for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
+      MVT VT = N->getValueType(i);
+      if (VT == MVT::Flag || VT == MVT::Other)
+        continue;
+      if (!N->hasAnyUseOfValue(i))
+        continue;
+      unsigned Reg = ImpDefs[i - NumDefs];
+      for (;*SUImpDefs; ++SUImpDefs) {
+        unsigned SUReg = *SUImpDefs;
+        if (TRI->regsOverlap(Reg, SUReg))
+          return true;
+      }
     }
   }
   return false;
