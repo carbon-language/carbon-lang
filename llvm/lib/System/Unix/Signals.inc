@@ -57,23 +57,45 @@ static const int KillSigs[] = {
 static const int *const KillSigsEnd =
   KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
 
-// Just call signal
+static unsigned NumRegisteredSignals = 0;
+static struct {
+  struct sigaction SA;
+  int SigNo;
+} RegisteredSignalInfo[(sizeof(IntSigs)+sizeof(KillSigs))/sizeof(KillSigs[0])];
+
+
 static void RegisterHandler(int Signal) {
-   signal(Signal, SignalHandler); 
+  assert(NumRegisteredSignals <
+         sizeof(RegisteredSignalInfo)/sizeof(RegisteredSignalInfo[0]) &&
+         "Out of space for signal handlers!");
+
+  struct sigaction NewHandler;
+  
+  NewHandler.sa_handler = SignalHandler;
+  NewHandler.sa_flags = SA_NODEFER|SA_RESETHAND;
+  sigemptyset(&NewHandler.sa_mask); 
+  
+  // Install the new handler, save the old one in RegisteredSignalInfo.
+  sigaction(Signal, &NewHandler,
+            &RegisteredSignalInfo[NumRegisteredSignals].SA);
+  RegisteredSignalInfo[NumRegisteredSignals].SigNo = Signal;
+  ++NumRegisteredSignals;
 }
 
 static void RegisterHandlers() {
+  // If the handlers are already registered, we're done.
+  if (NumRegisteredSignals != 0) return;
+
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
 
-static void UnregisterHandler(int Signal) {
- signal(Signal, SIG_DFL); 
-}
-
 static void UnregisterHandlers() {
-  std::for_each(KillSigs, KillSigsEnd, UnregisterHandler);
-  std::for_each(IntSigs, IntSigsEnd, UnregisterHandler);
+  // Restore all of the signal handlers to how they were before we showed up.
+  for (unsigned i = 0, e = NumRegisteredSignals; i != e; ++i)
+    sigaction(RegisteredSignalInfo[NumRegisteredSignals].SigNo,
+              &RegisteredSignalInfo[NumRegisteredSignals].SA, 0);
+  NumRegisteredSignals = 0;
 }
 
 
