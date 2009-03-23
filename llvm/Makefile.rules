@@ -437,7 +437,7 @@ ifeq ($(OS),Darwin)
 
   SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -Wl,-dylib \
                     -mmacosx-version-min=$(DARWIN_VERSION)
-  CompileCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
+  TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 else
   ifeq ($(OS),Cygwin)
     SharedLinkOptions=-shared -nostdlib -Wl,--export-all-symbols \
@@ -536,10 +536,10 @@ ifdef UNIVERSAL
 else
   ifeq ($(OS),Darwin)
     ifeq ($(ARCH),x86_64)
-      CompileCommonOpts += -m64
+      TargetCommonOpts = -m64
     else
       ifeq ($(ARCH),x86)
-        CompileCommonOpts += -m32
+        TargetCommonOpts = -m32
       endif
     endif
   endif
@@ -560,33 +560,35 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 
 ifeq ($(BUILD_COMPONENT), 1)
   Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(C.Flags.NoRelink) \
-                  $(CompileCommonOpts) -c
+                  $(TargetCommonOpts) $(CompileCommonOpts) -c
   Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
-                  $(CompileCommonOpts) -c
-  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) \
-                  $(CXX.Flags.NoRelink) -E
+                  $(TargetCommonOpts) $(CompileCommonOpts) -c
+  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(TargetCommonOpts) \
+                  $(CompileCommonOpts) $(CXX.Flags) $(CXX.Flags.NoRelink) -E
   Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
-                  $(CompileCommonOpts) $(LD.Flags) $(Strip)
-  Relink        = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
-		  $(Relink.Flags)
+                  $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) $(Strip)
+  Relink        = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) \
+                  $(CompileCommonOpts) $(Relink.Flags)
 else
   Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(C.Flags.NoRelink) \
-                  $(CompileCommonOpts) -c
+                  $(TargetCommonOpts) $(CompileCommonOpts) -c
   Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
-                  $(CompileCommonOpts) -c
-  Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) \
-                  $(CXX.Flags.NoRelink) -E
+                  $(TargetCommonOpts) $(CompileCommonOpts) -c
+  Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) \
+                  $(CompileCommonOpts) $(CXX.Flags) $(CXX.Flags.NoRelink) -E
   Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
-                  $(CompileCommonOpts) $(LD.Flags) $(Strip)
-  Relink        = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
-		  $(Relink.Flags)
+                  $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
+  Relink        = $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) \
+                  $(CompileCommonOpts) $(Relink.Flags)
 endif
 
-BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts)
-Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -E
+BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) \
+                $(TargetCommonOpts) $(CompileCommonOpts)
+Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) \
+                $(TargetCommonOpts) $(CompileCommonOpts) -E
 
 BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) \
-                $(CompileCommonOpts)
+                $(TargetCommonOpts) $(CompileCommonOpts)
 
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755
 ScriptInstall = $(INSTALL) -m 0755
