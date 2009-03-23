@@ -52,7 +52,7 @@ void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
 // InlineCallIfPossible - If it is possible to inline the specified call site,
 // do so and update the CallGraph for this operation.
 bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                                 const std::set<Function*> &SCCFunctions,
+                                 const SmallPtrSet<Function*, 8> &SCCFunctions,
                                  const TargetData &TD) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
@@ -128,7 +128,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
   TargetData &TD = getAnalysis<TargetData>();
 
-  std::set<Function*> SCCFunctions;
+  SmallPtrSet<Function*, 8> SCCFunctions;
   DOUT << "Inliner visiting SCC:";
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();

@@ -20,7 +20,6 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Transforms/Utils/InlineCost.h"
 #include "llvm/Target/TargetData.h"
-#include <set>
 
 
 namespace llvm {
@@ -48,7 +47,7 @@ struct Inliner : public CallGraphSCCPass {
 
   // InlineCallIfPossible
   bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                            const std::set<Function*> &SCCFunctions,
+                            const SmallPtrSet<Function*, 8> &SCCFunctions,
                             const TargetData &TD);
 
   /// This method returns the value specified by the -inline-threshold value,
