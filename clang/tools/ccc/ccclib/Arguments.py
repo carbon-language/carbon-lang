@@ -801,6 +801,8 @@ class OptionParser:
         self.f_blocksOption = self.addOption(FlagOption('-fblocks', self.Clang_fGroup))
         self.f_noBlocksOption = self.addOption(FlagOption('-fno-blocks', self.Clang_fGroup))
         self.f_bootclasspathOption = self.addOption(JoinedOption('-fbootclasspath=', self.fGroup))        
+        self.f_builtinOption = self.addOption(FlagOption('-fbuiltin', self.Clang_fGroup))
+        self.f_noBuiltinOption = self.addOption(FlagOption('-fno-builtin', self.Clang_fGroup))
         self.f_classpathOption = self.addOption(JoinedOption('-fclasspath=', self.fGroup))        
         self.f_compileResourceOption = self.addOption(JoinedOption('-fcompile-resource=', self.fGroup))
         self.f_constantCfstringsOption = self.addOption(FlagOption('-fconstant-cfstrings', self.fGroup))
