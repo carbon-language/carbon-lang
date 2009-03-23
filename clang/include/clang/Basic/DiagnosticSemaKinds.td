@@ -117,6 +117,8 @@ def warn_pragma_pack_pop_identifer_and_alignment : Warning<
   "specifying both a name and alignment to 'pop' is undefined">;
 def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">;
 
+def warn_pragma_unused_expected_localvar : Warning<
+  "only local variables can be arguments to '#pragma unused'">;
 
 /// Objective-C parser diagnostics
 def err_duplicate_class_def : Error<

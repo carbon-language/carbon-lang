@@ -31,9 +31,14 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 
   // Add #pragma handlers. These are removed and destroyed in the
   // destructor.
-  PackHandler =
-    new PragmaPackHandler(&PP.getIdentifierTable().get("pack"), actions);
-  PP.AddPragmaHandler(0, PackHandler);
+  PackHandler.reset(new
+          PragmaPackHandler(&PP.getIdentifierTable().get("pack"), actions));
+  PP.AddPragmaHandler(0, PackHandler.get());
+      
+  UnusedHandler.reset(new
+          PragmaUnusedHandler(&PP.getIdentifierTable().get("unused"), actions,
+                              *this));
+  PP.AddPragmaHandler(0, UnusedHandler.get());
 
   // Instantiate a LexedMethodsForTopClass for all the non-nested classes.
   PushTopClassStack();
@@ -282,8 +287,10 @@ Parser::~Parser() {
     delete ScopeCache[i];
 
   // Remove the pragma handlers we installed.
-  PP.RemovePragmaHandler(0, PackHandler);
-  delete PackHandler;
+  PP.RemovePragmaHandler(0, PackHandler.get());
+  PackHandler.reset();
+  PP.RemovePragmaHandler(0, UnusedHandler.get());
+  UnusedHandler.reset();
 }
 
 /// Initialize - Warm up the parser.

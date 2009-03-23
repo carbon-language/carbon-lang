@@ -2073,6 +2073,12 @@ public:
                                SourceLocation LParenLoc,
                                SourceLocation RParenLoc);
   
+  /// ActOnPragmaUnused - Called on well-formed '#pragma unused'.
+  virtual void ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
+                                 SourceLocation PragmaLoc, 
+                                 SourceLocation LParenLoc,
+                                 SourceLocation RParenLoc);
+  
   /// getPragmaPackAlignment() - Return the current alignment as specified by
   /// the current #pragma pack directive, or 0 if none is currently active.
   unsigned getPragmaPackAlignment() const;

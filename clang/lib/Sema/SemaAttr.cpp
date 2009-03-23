@@ -170,3 +170,41 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   }
 }
 
+void Sema::ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
+                             SourceLocation PragmaLoc,
+                             SourceLocation LParenLoc,
+                             SourceLocation RParenLoc) {
+  
+  // Verify that all of the expressions are valid before
+  // modifying the attributes of any referenced decl.
+  Expr *ErrorExpr = 0;
+  
+  for (unsigned i = 0; i < NumExprs; ++i) {  
+    Expr *Ex = (Expr*) Exprs[i];
+    if (!isa<DeclRefExpr>(Ex)) {
+      ErrorExpr = Ex;
+      break;
+    }
+
+    Decl *d = cast<DeclRefExpr>(Ex)->getDecl();;
+
+    if (!isa<VarDecl>(d) || !cast<VarDecl>(d)->hasLocalStorage()) {
+      ErrorExpr = Ex;
+      break;
+    }
+  }
+  
+  // Delete the expressions if we encountered any error.
+  if (ErrorExpr) {
+    Diag(ErrorExpr->getLocStart(), diag::warn_pragma_unused_expected_localvar);
+    for (unsigned i = 0; i < NumExprs; ++i)
+      ((Expr*) Exprs[i])->Destroy(Context);    
+    return;
+  }
+      
+  // Otherwise, add the 'unused' attribute to each referenced declaration.
+  for (unsigned i = 0; i < NumExprs; ++i) {
+    DeclRefExpr *DR = (DeclRefExpr*) Exprs[i];
+    DR->getDecl()->addAttr(::new (Context) UnusedAttr());
+  }
+}

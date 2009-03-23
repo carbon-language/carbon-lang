@@ -15,6 +15,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
+#include "clang/Parse/Parser.h"
 using namespace clang;
 
 // #pragma pack(...) comes in the following delicious flavors:
@@ -28,7 +29,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
   Token Tok;
   PP.Lex(Tok);
   if (Tok.isNot(tok::l_paren)) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_expected_lparen);
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_lparen) << "pack";
     return;
   }
 
@@ -95,7 +96,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
   }
 
   if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_expected_rparen);
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_rparen) << "pack";
     return;
   }
 
@@ -104,3 +105,78 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
                           LParenLoc, RParenLoc);
 }
 
+// #pragma unused(identifier)
+void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
+  // FIXME: Should we be expanding macros here? My guess is no.
+  SourceLocation UnusedLoc = UnusedTok.getLocation();
+  
+  // Lex the left '('.
+  Token Tok;
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_lparen) << "unused";
+    return;
+  }
+  SourceLocation LParenLoc = Tok.getLocation();
+  
+  // Lex the declaration reference(s).
+  llvm::SmallVector<Action::ExprTy*, 5> Ex;
+  SourceLocation RParenLoc;
+  bool LexID = true;
+  
+  while (true) {
+    PP.Lex(Tok);
+    
+    if (LexID) {
+      if (Tok.is(tok::identifier)) {            
+        Action::OwningExprResult Name = 
+          Actions.ActOnIdentifierExpr(parser.CurScope, Tok.getLocation(),
+                                      *Tok.getIdentifierInfo(), false);
+      
+        if (Name.isInvalid()) {
+          if (!Ex.empty())
+            Action::MultiExprArg Release(Actions, &Ex[0], Ex.size());
+          return;
+        }
+        
+        Ex.push_back(Name.release());        
+        LexID = false;
+        continue;
+      }
+
+      // Illegal token! Release the parsed expressions (if any) and emit
+      // a warning.
+      if (!Ex.empty())
+        Action::MultiExprArg Release(Actions, &Ex[0], Ex.size());
+      
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_var);
+      return;
+    }
+    
+    // We are execting a ')' or a ','.
+    if (Tok.is(tok::comma)) {
+      LexID = true;
+      continue;
+    }
+    
+    if (Tok.is(tok::r_paren)) {
+      RParenLoc = Tok.getLocation();
+      break;
+    }
+    
+    // Illegal token! Release the parsed expressions (if any) and emit
+    // a warning.
+    if (!Ex.empty())
+      Action::MultiExprArg Release(Actions, &Ex[0], Ex.size());
+    
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_punc);
+    return;
+  }
+  
+  // Verify that we have a location for the right parenthesis.
+  assert(RParenLoc.isValid() && "Valid '#pragma unused' must have ')'");
+  assert(!Ex.empty() && "Valid '#pragma unused' must have arguments");
+
+  // Perform the action to handle the pragma.    
+  Actions.ActOnPragmaUnused(&Ex[0], Ex.size(), UnusedLoc, LParenLoc, RParenLoc);
+}

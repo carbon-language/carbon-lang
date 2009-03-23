@@ -17,6 +17,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <stack>
 #include <list>
 
@@ -26,6 +27,7 @@ namespace clang {
   class Scope;
   class DiagnosticBuilder;
   class Parser;
+  class PragmaUnusedHandler;
 
 /// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
 /// an entry is printed for it.
@@ -42,6 +44,7 @@ public:
 /// been read.
 ///
 class Parser {
+  friend class PragmaUnusedHandler;
   PrettyStackTraceParserEntry CrashInfo;
   
   Preprocessor &PP;
@@ -75,7 +78,8 @@ class Parser {
   /// comparison.
   IdentifierInfo *Ident_super;
 
-  PragmaHandler *PackHandler;
+  llvm::OwningPtr<PragmaHandler> PackHandler;
+  llvm::OwningPtr<PragmaHandler> UnusedHandler;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++

@@ -234,16 +234,24 @@ def warn_cxx0x_right_shift_in_template_arg : Warning<
 
 
 // Language specific pragmas
-// #pragma pack
-def warn_pragma_pack_expected_lparen : Warning<
-  "missing '(' after '#pragma pack' - ignoring">;
-def warn_pragma_pack_expected_rparen : Warning<
-  "missing ')' after '#pragma pack' - ignoring">;
+// - Generic warnings
+def warn_pragma_expected_lparen : Warning<
+  "missing '(' after '#pragma %0' - ignoring">;
+def warn_pragma_expected_rparen : Warning<
+  "missing ')' after '#pragma %0' - ignoring">;
+def warn_pragma_expected_identifier : Warning<
+  "expected identifier in '#pragma %0' - ignored">;  
+// - #pragma pack
 def warn_pragma_pack_invalid_action : Warning<
   "unknown action for '#pragma pack' - ignored">;
 def warn_pragma_pack_invalid_constant : Warning<
   "invalid constant for '#pragma pack', expected %0 - ignored">;
 def warn_pragma_pack_malformed : Warning<
   "expected integer or identifier in '#pragma pack' - ignored">;
-
-}
+// - #pragma unused
+def warn_pragma_unused_expected_var : Warning<
+  "expected '#pragma unused' argument to be a variable name">;
+def warn_pragma_unused_expected_punc : Warning<
+  "expected ')' or ',' in '#pragma unused'">;
+  
+} // end of Parser diagnostics

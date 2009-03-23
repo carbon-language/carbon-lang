@@ -1483,6 +1483,14 @@ public:
                                SourceLocation RParenLoc) {
     return;
   }
+  
+  /// ActOnPragmaPack - Called on well formed #pragma pack(...).
+  virtual void ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
+                                 SourceLocation PragmaLoc, 
+                                 SourceLocation LParenLoc,
+                                 SourceLocation RParenLoc) {
+    return;
+  }  
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the
