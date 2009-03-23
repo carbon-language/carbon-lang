@@ -75,7 +75,7 @@ namespace ISD {
   /// and getMachineOpcode() member functions of SDNode.
   ///
   enum NodeType {
-    // DELETED_NODE - This is an illegal flag value that is used to catch
+    // DELETED_NODE - This is an illegal value that is used to catch
     // errors.  This opcode is not a legal opcode for any node.
     DELETED_NODE,
 
