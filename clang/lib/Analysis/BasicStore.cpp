@@ -525,6 +525,10 @@ Store BasicStoreManager::getInitialStore() {
       // Punt on static variables for now.
       if (VD->getStorageClass() == VarDecl::Static)
         continue;
+      
+      // Only handle simple types that we can symbolicate.
+      if (!SymbolManager::canSymbolicate(VD->getType()))
+        continue;
 
       // Initialize globals and parameters to symbolic values.
       // Initialize local variables to undefined.

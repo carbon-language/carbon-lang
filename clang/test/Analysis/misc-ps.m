@@ -24,6 +24,19 @@ extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
 - (void)handleFailureInMethod:(SEL)selector object:(id)object file:(NSString *)fileName lineNumber:(NSInteger)line description:(NSString *)format,...;
 @end
 extern NSString * const NSConnectionReplyMode;
+typedef float CGFloat;
+typedef struct _NSPoint {
+    CGFloat x;
+    CGFloat y;
+} NSPoint;
+typedef struct _NSSize {
+    CGFloat width;
+    CGFloat height;
+} NSSize;
+typedef struct _NSRect {
+    NSPoint origin;
+    NSSize size;
+} NSRect;
 
 // Reduced test case from crash in <rdar://problem/6253157>
 @interface A @end
@@ -201,3 +214,14 @@ int rdar6695527(double x) {
   if (!x) { return 0; }
   return 1;
 }
+
+// <rdar://problem/6708148> - Test that we properly invalidate structs
+//  passed-by-reference to a function.
+void pr6708148_invalidate(NSRect *x);
+void pr6708148_use(NSRect x);
+void pr6708148_test(void) {
+  NSRect x;
+  pr6708148_invalidate(&x);
+  pr6708148_use(x); // no-warning
+}
+

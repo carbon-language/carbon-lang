@@ -218,6 +218,8 @@ public:
     : SymbolCounter(0), BPAlloc(bpalloc), Ctx(ctx) {}
   
   ~SymbolManager();
+  
+  static bool canSymbolicate(QualType T);
 
   /// Make a unique symbol for MemRegion R according to its kind.
   SymbolRef getRegionRValueSymbol(const MemRegion* R);

@@ -94,6 +94,10 @@ QualType SymbolRegionRValue::getType(ASTContext& C) const {
 
 SymbolManager::~SymbolManager() {}
 
+bool SymbolManager::canSymbolicate(QualType T) {
+  return Loc::IsLocType(T) || T->isIntegerType();  
+}
+
 void SymbolReaper::markLive(SymbolRef sym) {
   TheLiving = F.Add(TheLiving, sym);
   TheDead = F.Remove(TheDead, sym);
