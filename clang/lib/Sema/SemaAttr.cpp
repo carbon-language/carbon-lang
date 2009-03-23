@@ -206,5 +206,6 @@ void Sema::ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
   for (unsigned i = 0; i < NumExprs; ++i) {
     DeclRefExpr *DR = (DeclRefExpr*) Exprs[i];
     DR->getDecl()->addAttr(::new (Context) UnusedAttr());
+    DR->Destroy(Context);
   }
 }
