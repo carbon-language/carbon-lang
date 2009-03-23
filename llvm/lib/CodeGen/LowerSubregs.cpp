@@ -165,11 +165,12 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
           
   unsigned DstReg  = MI->getOperand(0).getReg();
   unsigned InsReg  = MI->getOperand(2).getReg();
-  unsigned SubIdx  = MI->getOperand(3).getImm();     
+  unsigned InsSIdx = MI->getOperand(2).getSubReg();
+  unsigned SubIdx  = MI->getOperand(3).getImm();
 
   assert(SubIdx != 0 && "Invalid index for insert_subreg");
   unsigned DstSubReg = TRI.getSubReg(DstReg, SubIdx);
-  
+
   assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
          "Insert destination must be in a physical register");
   assert(TargetRegisterInfo::isPhysicalRegister(InsReg) &&
@@ -177,8 +178,13 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
 
   DOUT << "subreg: CONVERTING: " << *MI;
 
-  if (DstSubReg == InsReg) {
+  if (DstSubReg == InsReg && InsSIdx == 0) {
     // No need to insert an identify copy instruction.
+    // Watch out for case like this:
+    // %RAX<def> = ...
+    // %RAX<def> = SUBREG_TO_REG 0, %EAX:3<kill>, 3
+    // The first def is defining RAX, not EAX so the top bits were not
+    // zero extended.
     DOUT << "subreg: eliminated!";
   } else {
     // Insert sub-register copy
