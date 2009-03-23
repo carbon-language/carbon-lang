@@ -31,6 +31,8 @@
 #endif
 using namespace llvm;
 
+static RETSIGTYPE SignalHandler(int Sig);  // defined below.
+
 /// InterruptFunction - The function to call if ctrl-c is pressed.
 static void (*InterruptFunction)() = 0;
 
@@ -55,9 +57,25 @@ static const int KillSigs[] = {
 static const int *const KillSigsEnd =
   KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
 
-static void UnregisterHandler(int Signal) {
-   signal(Signal, SIG_DFL); 
+// Just call signal
+static void RegisterHandler(int Signal) {
+   signal(Signal, SignalHandler); 
 }
+
+static void RegisterHandlers() {
+  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
+  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+}
+
+static void UnregisterHandler(int Signal) {
+ signal(Signal, SIG_DFL); 
+}
+
+static void UnregisterHandlers() {
+  std::for_each(KillSigs, KillSigsEnd, UnregisterHandler);
+  std::for_each(IntSigs, IntSigsEnd, UnregisterHandler);
+}
+
 
 
 // SignalHandler - The signal handler that runs.
@@ -66,7 +84,7 @@ static RETSIGTYPE SignalHandler(int Sig) {
   // crashes when we return and the signal reissues.  This also ensures that if
   // we crash in our signal handler that the program will terminate immediately
   // instead of recursing in the signal handler.
-  std::for_each(KillSigs, KillSigsEnd, UnregisterHandler);
+  UnregisterHandlers();
 
   // Unmask all potentially blocked kill signals.
   sigset_t SigMask;
@@ -95,15 +113,11 @@ static RETSIGTYPE SignalHandler(int Sig) {
       (*CallBacksToRun)[i].first((*CallBacksToRun)[i].second);
 }
 
-// Just call signal
-static void RegisterHandler(int Signal) {
-   signal(Signal, SignalHandler); 
-}
 
 
 void llvm::sys::SetInterruptFunction(void (*IF)()) {
   InterruptFunction = IF;
-  RegisterHandler(SIGINT);
+  RegisterHandlers();
 }
 
 // RemoveFileOnSignal - The public API
@@ -114,8 +128,7 @@ bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
 
   FilesToRemove->push_back(Filename);
 
-  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
-  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  RegisterHandlers();
   return false;
 }
 
@@ -126,7 +139,7 @@ void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
   if (CallBacksToRun == 0)
     CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
   CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
-  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  RegisterHandlers();
 }
 
 
