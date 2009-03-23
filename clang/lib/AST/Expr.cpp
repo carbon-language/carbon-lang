@@ -786,7 +786,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   //   void takeclosure(void (^C)(void));
   //   void func() { int x = 1; takeclosure(^{ x = 7; }); }
   //
-  if (getStmtClass() == BlockDeclRefExprClass) {
+  if (isa<BlockDeclRefExpr>(this)) {
     const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
     if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
       return MLV_NotBlockQualified;
@@ -807,7 +807,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   }
   
   // Assigning to an 'implicit' property?
-  else if (getStmtClass() == ObjCKVCRefExprClass) {
+  else if (isa<ObjCKVCRefExpr>(this)) {
     const ObjCKVCRefExpr* KVCExpr = cast<ObjCKVCRefExpr>(this);
     if (KVCExpr->getSetterMethod() == 0)
       return MLV_NoSetterProperty;
