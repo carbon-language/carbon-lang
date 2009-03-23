@@ -1017,9 +1017,37 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   case X86::MOV_Fp8032:
   case X86::MOV_Fp8064: 
   case X86::MOV_Fp8080: {
-    unsigned SrcReg = getFPReg(MI->getOperand(1));
-    unsigned DestReg = getFPReg(MI->getOperand(0));
+    const MachineOperand &MO1 = MI->getOperand(1);
+    unsigned SrcReg = getFPReg(MO1);
 
+    const MachineOperand &MO0 = MI->getOperand(0);
+    // These can be created due to inline asm. Two address pass can introduce
+    // copies from RFP registers to virtual registers.
+    if (MO0.getReg() == X86::ST0 && SrcReg == 0) {
+      assert(MO1.isKill());
+      // Treat %ST0<def> = MOV_Fp8080 %FP0<kill>
+      // like  FpSET_ST0_80 %FP0<kill>, %ST0<imp-def>
+      assert((StackTop == 1 || StackTop == 2)
+             && "Stack should have one or two element on it to return!");
+      --StackTop;   // "Forget" we have something on the top of stack!
+      break;
+    } else if (MO0.getReg() == X86::ST1 && SrcReg == 1) {
+      assert(MO1.isKill());
+      // Treat %ST1<def> = MOV_Fp8080 %FP1<kill>
+      // like  FpSET_ST1_80 %FP0<kill>, %ST1<imp-def>
+      // StackTop can be 1 if a FpSET_ST0_* was before this. Exchange them.
+      if (StackTop == 1) {
+        BuildMI(*MBB, I, dl, TII->get(X86::XCH_F)).addReg(X86::ST1);
+        NumFXCH++;
+        StackTop = 0;
+        break;
+      }
+      assert(StackTop == 2 && "Stack should have two element on it to return!");
+      --StackTop;   // "Forget" we have something on the top of stack!
+      break;
+    }
+
+    unsigned DestReg = getFPReg(MO0);
     if (MI->killsRegister(X86::FP0+SrcReg)) {
       // If the input operand is killed, we can just change the owner of the
       // incoming stack slot into the result.

@@ -135,14 +135,13 @@ public:
     return (Flag & 0xffff) >> 3;
   }
 
-  /// isOutputOperandTiedToUse - Return true if the flag of the inline asm
-  /// operand indicates it is an output that's matched to an input operand.
-  static bool isOutputOperandTiedToUse(unsigned Flag, unsigned &UseIdx) {
-    if (Flag & 0x80000000) {
-      UseIdx = Flag >> 16;
-      return true;
-    }
-    return false;
+  /// isUseOperandTiedToDef - Return true if the flag of the inline asm
+  /// operand indicates it is an use operand that's matched to a def operand.
+  static bool isUseOperandTiedToDef(unsigned Flag, unsigned &Idx) {
+    if ((Flag & 0x80000000) == 0)
+      return false;
+    Idx = (Flag & ~0x80000000) >> 16;
+    return true;
   }
 
 

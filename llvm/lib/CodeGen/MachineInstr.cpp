@@ -11,8 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Constants.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Value.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -692,6 +693,35 @@ int MachineInstr::findFirstPredOperandIdx() const {
 /// isRegReDefinedByTwoAddr - Given the index of a register operand,
 /// check if the register def is a re-definition due to two addr elimination.
 bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
+  if (getOpcode() == TargetInstrInfo::INLINEASM) {
+    assert(DefIdx >= 2);
+    const MachineOperand &MO = getOperand(DefIdx);
+    if (!MO.isReg() || !MO.isDef())
+      return false;
+    // Determine the actual operand no corresponding to this index.
+    unsigned DefNo = 0;
+    for (unsigned i = 1, e = getNumOperands(); i < e; ) {
+      const MachineOperand &FMO = getOperand(i);
+      assert(FMO.isImm());
+      // Skip over this def.
+      i += InlineAsm::getNumOperandRegisters(FMO.getImm()) + 1;
+      if (i > DefIdx)
+        break;
+      ++DefNo;
+    }
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      const MachineOperand &FMO = getOperand(i);
+      if (!FMO.isImm())
+        continue;
+      if (i+1 >= e || !getOperand(i+1).isReg() || !getOperand(i+1).isUse())
+        continue;
+      unsigned Idx;
+      if (InlineAsm::isUseOperandTiedToDef(FMO.getImm(), Idx) && 
+          Idx == DefNo)
+        return true;
+    }
+  }
+
   assert(getOperand(DefIdx).isDef() && "DefIdx is not a def!");
   const TargetInstrDesc &TID = getDesc();
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
@@ -707,6 +737,35 @@ bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
 /// is a register use and it is tied to an def operand. It also returns the def
 /// operand index by reference.
 bool MachineInstr::isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx){
+  if (getOpcode() == TargetInstrInfo::INLINEASM) {
+    const MachineOperand &MO = getOperand(UseOpIdx);
+    if (!MO.isReg() || !MO.isUse())
+      return false;
+    assert(UseOpIdx > 0);
+    const MachineOperand &UFMO = getOperand(UseOpIdx-1);
+    if (!UFMO.isImm())
+      return false;  // Must be physreg uses.
+    unsigned DefNo;
+    if (InlineAsm::isUseOperandTiedToDef(UFMO.getImm(), DefNo)) {
+      if (!DefOpIdx)
+        return true;
+
+      unsigned DefIdx = 1;
+      // Remember to adjust the index. First operand is asm string, then there
+      // is a flag for each.
+      while (DefNo) {
+        const MachineOperand &FMO = getOperand(DefIdx);
+        assert(FMO.isImm());
+        // Skip over this def.
+        DefIdx += InlineAsm::getNumOperandRegisters(FMO.getImm()) + 1;
+        --DefNo;
+      }
+      *DefOpIdx = DefIdx+1;
+      return true;
+    }
+    return false;
+  }
+
   const TargetInstrDesc &TID = getDesc();
   if (UseOpIdx >= TID.getNumOperands())
     return false;

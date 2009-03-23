@@ -634,7 +634,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
       ProcessCopy(&*mi, &*mbbi, Processed);
 
-      for (unsigned si = 1, e = TID.getNumOperands(); si < e; ++si) {
+      unsigned NumOps = (mi->getOpcode() == TargetInstrInfo::INLINEASM)
+        ? mi->getNumOperands() : TID.getNumOperands();
+      for (unsigned si = 0; si < NumOps; ++si) {
         unsigned ti = 0;
         if (!mi->isRegTiedToDefOperand(si, &ti))
           continue;
@@ -660,8 +662,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           unsigned regA = mi->getOperand(ti).getReg();
           unsigned regB = mi->getOperand(si).getReg();
 
-          assert(TargetRegisterInfo::isVirtualRegister(regA) &&
-                 TargetRegisterInfo::isVirtualRegister(regB) &&
+          assert(TargetRegisterInfo::isVirtualRegister(regB) &&
                  "cannot update physical register live information");
 
 #ifndef NDEBUG
@@ -753,7 +754,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
 
         InstructionRearranged:
-          const TargetRegisterClass* rc = MRI->getRegClass(regA);
+          const TargetRegisterClass* rc = MRI->getRegClass(regB);
           MachineInstr *DefMI = MRI->getVRegDef(regB);
           // If it's safe and profitable, remat the definition instead of
           // copying it.

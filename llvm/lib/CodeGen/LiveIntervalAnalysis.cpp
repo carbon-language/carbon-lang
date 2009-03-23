@@ -477,8 +477,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       assert(interval.containsOneValue());
       unsigned DefIndex = getDefIndex(interval.getValNumInfo(0)->def);
       unsigned RedefIndex = getDefIndex(MIIdx);
-      // It cannot be an early clobber MO.
-      assert(!MO.isEarlyClobber() && "Unexpected early clobber!");
+      if (MO.isEarlyClobber())
+        RedefIndex = getUseIndex(MIIdx);
 
       const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
       VNInfo *OldValNo = OldLR->valno;
@@ -499,6 +499,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // Value#0 is now defined by the 2-addr instruction.
       OldValNo->def  = RedefIndex;
       OldValNo->copy = 0;
+      if (MO.isEarlyClobber())
+        OldValNo->redefByEC = true;
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
@@ -546,8 +548,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
       unsigned defIndex = getDefIndex(MIIdx);
-      // It cannot be an early clobber MO.
-      assert(!MO.isEarlyClobber() && "Unexpected early clobber!");
+      if (MO.isEarlyClobber())
+        defIndex = getUseIndex(MIIdx);
       
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
