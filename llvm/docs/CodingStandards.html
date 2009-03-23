@@ -379,9 +379,8 @@ code, isolate it behind a well defined (and well documented) interface.</p>
 
 <p>In practice, this means that you shouldn't assume much about the host
 compiler, including its support for "high tech" features like partial
-specialization of templates.  In fact, Visual C++ 6 could be an important target
-for our work in the future, and we don't want to have to rewrite all of our code
-to support it.</p>
+specialization of templates.  If these features are used, they should only be
+an implementation detail of a library which has a simple exposed API.</p>
 
 </div>
 
@@ -526,67 +525,9 @@ library. There are two problems with this:</p>
 example) is allowed normally, it is just <tt>&lt;iostream&gt;</tt> that is
 causing problems.</p>
 
-<table>
-  <tbody>
-    <tr>
-      <th>Old Way</th>
-      <th>New Way</th>
-    </tr>
-    <tr>
-      <td align="left"><pre>#include &lt;iostream&gt;</pre></td>
-      <td align="left"><pre>#include "llvm/Support/Streams.h"</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>DEBUG(std::cerr &lt;&lt; ...);
-DEBUG(dump(std::cerr));</pre></td>
-      <td align="left"><pre>DOUT &lt;&lt; ...;
-DEBUG(dump(DOUT));</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>std::cerr &lt;&lt; "Hello world\n";</pre></td>
-      <td align="left"><pre>llvm::cerr &lt;&lt; "Hello world\n";</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>std::cout &lt;&lt; "Hello world\n";</pre></td>
-      <td align="left"><pre>llvm::cout &lt;&lt; "Hello world\n";</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>std::cin &gt;&gt; Var;</pre></td>
-      <td align="left"><pre>llvm::cin &gt;&gt; Var;</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>std::ostream</pre></td>
-      <td align="left"><pre>llvm::OStream</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>std::istream</pre></td>
-      <td align="left"><pre>llvm::IStream</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>std::stringstream</pre></td>
-      <td align="left"><pre>llvm::StringStream</pre></td>
-    </tr>
-    <tr>
-      <td align="left"><pre>void print(std::ostream &amp;Out);
-// ...
-print(std::cerr);</pre></td>
-      <td align="left"><tt>void print(llvm::OStream Out);<sup><a href="#sn_1">1</a></sup><br>
-// ...<br>
-print(llvm::cerr);</tt>
-      </td> 
-    </tr>
-  </tbody>
-</table>
-
-<p><b>Notes:</b></p>
-
-<div class="doc_notes">
-<ol>
-<li><a name="sn_1"><tt>llvm::OStream</tt></a> is a light-weight class so it
-    should never be passed by reference. This is important because in some
-    configurations, <tt>DOUT</tt> is an rvalue.</li>
-</ol>
-</div>
+<p>The preferred replacement for stream functionality is the
+<tt>raw_ostream</tt> class (for writing to output streams of various sorts) and
+the MemoryBuffer API (for reading in files).</p>
 
 </div>
 
