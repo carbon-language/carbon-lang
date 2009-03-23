@@ -245,6 +245,7 @@ namespace llvm {
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
     bool hasPhysRegDefs   : 1;          // Has physreg defs that are being used.
+    bool hasPhysRegClobbers : 1;        // Has any physreg defs, used or not.
     bool isPending        : 1;          // True once pending.
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
@@ -265,6 +266,7 @@ namespace llvm {
       : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum), NodeQueueId(0),
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
+        hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
@@ -276,6 +278,7 @@ namespace llvm {
       : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum), NodeQueueId(0),
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
+        hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
@@ -286,6 +289,7 @@ namespace llvm {
       : Node(0), Instr(0), OrigNode(0), NodeNum(~0u), NodeQueueId(0),
         Latency(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
+        hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
