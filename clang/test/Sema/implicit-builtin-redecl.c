@@ -10,5 +10,5 @@ void *calloc(int, int, int); // expected-warning{{incompatible redeclaration of 
 // expected-note{{'calloc' is a builtin with type 'void *}}
 
 void f1(void) { 
-  return calloc(0, 0, 0);  // expected-error{{too many arguments to function call}}
+  calloc(0, 0, 0);
 }

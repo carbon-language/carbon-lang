@@ -747,11 +747,14 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     if (Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
       // The function the user is redeclaring is a library-defined
       // function like 'malloc' or 'printf'. Warn about the
-      // redeclaration, then ignore it.
+      // redeclaration, then pretend that we don't know about this
+      // library built-in.
       Diag(New->getLocation(), diag::warn_redecl_library_builtin) << New;
       Diag(Old->getLocation(), diag::note_previous_builtin_declaration)
         << Old << Old->getType();
-      return true;
+      New->getIdentifier()->setBuiltinID(Builtin::NotBuiltin);
+      Old->setInvalidDecl();
+      return false;
     }
 
     PrevDiag = diag::note_previous_builtin_declaration;

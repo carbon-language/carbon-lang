@@ -7,7 +7,7 @@ void f() {
 
 void *alloca(__SIZE_TYPE__); // redeclaration okay
 
-int *calloc(__SIZE_TYPE__, __SIZE_TYPE__); // expected-warning{{incompatible redeclaration of library function 'calloc' will be ignored}} \
+int *calloc(__SIZE_TYPE__, __SIZE_TYPE__); // expected-warning{{incompatible redeclaration of library function 'calloc'}} \
                     // expected-note{{'calloc' is a builtin with type 'void *}}
 
 
@@ -16,8 +16,8 @@ void g(int malloc) { // okay: these aren't functions
 }
 
 void h() {
-  int malloc(int); // expected-warning{{incompatible redeclaration of library function 'malloc' will be ignored}}
-  int strcpy(int); // expected-warning{{incompatible redeclaration of library function 'strcpy' will be ignored}} \
+  int malloc(int); // expected-warning{{incompatible redeclaration of library function 'malloc'}}
+  int strcpy(int); // expected-warning{{incompatible redeclaration of library function 'strcpy'}} \
   // expected-note{{'strcpy' is a builtin with type 'char *(char *, char const *)'}}
 }
 
@@ -35,7 +35,19 @@ int f0() {
   return __builtin_object_size(&a); // expected-error {{too few arguments to function}}
 }
 
-void * realloc(void *p, int size) { // expected-warning{{incompatible redeclaration of library function 'realloc' will be ignored}} \
+void * realloc(void *p, int size) { // expected-warning{{incompatible redeclaration of library function 'realloc'}} \
 // expected-note{{'realloc' is a builtin with type 'void *(void *,}}
   return p;
 }
+
+// PR3855
+void snprintf(); // expected-warning{{incompatible redeclaration of library function 'snprintf'}} \
+    // expected-note{{'snprintf' is a builtin with type 'int (char *, unsigned long, char const *, ...)'}}
+
+int
+main(int argc, char *argv[])
+{
+  snprintf();
+}
+
+void snprintf() { }

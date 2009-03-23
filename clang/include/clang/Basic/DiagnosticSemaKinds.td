@@ -98,7 +98,7 @@ def note_previous_builtin_declaration : Note<"%0 is a builtin with type %1">;
 def err_implicit_decl_requires_stdio : Error<
   "implicit declaration of '%0' requires inclusion of the header <stdio.h>">;
 def warn_redecl_library_builtin : Warning<
-  "incompatible redeclaration of library function %0 will be ignored">;
+  "incompatible redeclaration of library function %0">;
 def err_builtin_definition : Error<"definition of builtin function %0">;
 
 /// parser diagnostics
