@@ -121,6 +121,8 @@ def err_invalid_reference_qualifier_application : Error<
   "'%0' qualifier may not be applied to a reference">;
 def err_illegal_decl_reference_to_reference : Error<
   "%0 declared as a reference to a reference">;
+def err_rvalue_reference : Error<
+  "rvalue references are only allowed in C++0x">;
 def err_argument_required_after_attribute : Error<
   "argument required after attribute">;
 def err_missing_param : Error<"expected parameter declarator">;

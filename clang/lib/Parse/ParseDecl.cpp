@@ -1660,7 +1660,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
   if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
-      (Kind != tok::ampamp || !getLang().CPlusPlus0x) &&
+      // We parse rvalue refs in C++03, because otherwise the errors are scary.
+      (Kind != tok::ampamp || !getLang().CPlusPlus) &&
       (Kind != tok::caret || !getLang().Blocks)) {
     if (DirectDeclParser)
       (this->*DirectDeclParser)(D);
@@ -1669,7 +1670,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
   // Otherwise, '*' -> pointer, '^' -> block, '&' -> lvalue reference,
   // '&&' -> rvalue reference
-  SourceLocation Loc = ConsumeToken();  // Eat the *, ^ or &.
+  SourceLocation Loc = ConsumeToken();  // Eat the *, ^, & or &&.
   D.SetRangeEnd(Loc);
 
   if (Kind == tok::star || (Kind == tok::caret && getLang().Blocks)) {
@@ -1694,6 +1695,11 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   } else {
     // Is a reference
     DeclSpec DS;
+
+    // Complain about rvalue references in C++03, but then go on and build
+    // the declarator.
+    if (Kind == tok::ampamp && !getLang().CPlusPlus0x)
+      Diag(Loc, diag::err_rvalue_reference);
 
     // C++ 8.3.2p1: cv-qualified references are ill-formed except when the
     // cv-qualifiers are introduced through the use of a typedef or of a
