@@ -41,7 +41,7 @@ protected:
   CodeGen::CodeGenModule &CGM;
   
 public:
-  const llvm::Type *ShortTy, *IntTy, *LongTy;
+  const llvm::Type *ShortTy, *IntTy, *LongTy, *LongLongTy;
   const llvm::Type *Int8PtrTy;
   
   /// ObjectPtrTy - LLVM type for object handles (typeof(id))
@@ -2238,8 +2238,12 @@ llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+    : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -2255,8 +2259,12 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+    : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -2272,8 +2280,12 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+    : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -2289,8 +2301,12 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+                      : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -3087,6 +3103,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   ShortTy = Types.ConvertType(Ctx.ShortTy);
   IntTy = Types.ConvertType(Ctx.IntTy);
   LongTy = Types.ConvertType(Ctx.LongTy);
+  LongLongTy = Types.ConvertType(Ctx.LongLongTy);
   Int8PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   
   ObjectPtrTy = Types.ConvertType(Ctx.getObjCIdType());
@@ -5112,8 +5129,12 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
 void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+           : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -5130,8 +5151,12 @@ void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
                                          CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+                     : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -5163,8 +5188,12 @@ llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
 void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+           : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
@@ -5180,8 +5209,12 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst)
 {
-  if (!isa<llvm::PointerType>(src->getType())) {
-    src = CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy);
+  const llvm::Type * SrcTy = src->getType();
+  if (!isa<llvm::PointerType>(SrcTy)) {
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    assert(Size <= 8 && "does not support size > 8");
+    src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
+           : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
     src = CGF.Builder.CreateIntToPtr(src, ObjCTypes.Int8PtrTy);
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
