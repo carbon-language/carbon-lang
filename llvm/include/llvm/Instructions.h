@@ -1942,8 +1942,12 @@ public:
     assert(i*2 < getNumOperands() && "Invalid value number!");
     setOperand(i*2, V);
   }
-  unsigned getOperandNumForIncomingValue(unsigned i) {
+  static unsigned getOperandNumForIncomingValue(unsigned i) {
     return i*2;
+  }
+  static unsigned getIncomingValueNumForOperand(unsigned i) {
+    assert(i % 2 == 0 && "Invalid incoming-value operand index!");
+    return i/2;
   }
 
   /// getIncomingBlock - Return incoming basic block corresponding
@@ -1962,8 +1966,12 @@ public:
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
     setOperand(i*2+1, BB);
   }
-  unsigned getOperandNumForIncomingBlock(unsigned i) {
+  static unsigned getOperandNumForIncomingBlock(unsigned i) {
     return i*2+1;
+  }
+  static unsigned getIncomingBlockNumForOperand(unsigned i) {
+    assert(i % 2 == 1 && "Invalid incoming-block operand index!");
+    return i/2;
   }
 
   /// addIncoming - Add an incoming value to the end of the PHI list
