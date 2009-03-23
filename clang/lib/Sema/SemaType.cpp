@@ -705,7 +705,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           assert(!ArgTy.isNull() && "Couldn't parse type?");
 
           // Adjust the parameter type.
-          ArgTy = adjustParameterType(ArgTy);
+          assert((ArgTy == adjustParameterType(ArgTy)) && "Unadjusted type?");
 
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
@@ -860,13 +860,7 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
        E = MDecl->param_end(); PI != E; ++PI) {
     QualType ArgTy = (*PI)->getType();
     assert(!ArgTy.isNull() && "Couldn't parse type?");
-    // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
-    // This matches the conversion that is done in 
-    // Sema::ActOnParamDeclarator(). 
-    if (ArgTy->isArrayType())
-      ArgTy = Context.getArrayDecayedType(ArgTy);
-    else if (ArgTy->isFunctionType())
-      ArgTy = Context.getPointerType(ArgTy);
+    ArgTy = adjustParameterType(ArgTy);
     ArgTys.push_back(ArgTy);
   }
   T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
