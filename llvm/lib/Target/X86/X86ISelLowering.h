@@ -118,7 +118,7 @@ namespace llvm {
       /// X86 bit-test instructions.
       BT,
 
-      /// X86 SetCC. Operand 1 is condition code, and operand 2 is the flag
+      /// X86 SetCC. Operand 0 is condition code, and operand 1 is the flag
       /// operand produced by a CMP instruction.
       SETCC,
 
@@ -128,14 +128,14 @@ namespace llvm {
       /// flag result.
       CMOV,
 
-      /// X86 conditional branches. Operand 1 is the chain operand, operand 2
-      /// is the block to branch if condition is true, operand 3 is the
-      /// condition code, and operand 4 is the flag operand produced by a CMP
+      /// X86 conditional branches. Operand 0 is the chain operand, operand 1
+      /// is the block to branch if condition is true, operand 2 is the
+      /// condition code, and operand 3 is the flag operand produced by a CMP
       /// or TEST instruction.
       BRCOND,
 
-      /// Return with a flag operand. Operand 1 is the chain operand, operand
-      /// 2 is the number of bytes of stack to pop.
+      /// Return with a flag operand. Operand 0 is the chain operand, operand
+      /// 1 is the number of bytes of stack to pop.
       RET_FLAG,
 
       /// REP_STOS - Repeat fill, corresponds to X86::REP_STOSx.
