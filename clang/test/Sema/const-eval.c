@@ -50,3 +50,8 @@ EVAL_EXPR(22, (__real__ (2i+3)) == 3 ? 1 : -1);
 int g23[(int)(1.0 / 1.0)] = { 1 };
 int g24[(int)(1.0 / 1.0)] = { 1 , 2 }; // expected-warning {{excess elements in array initializer}}
 int g25[(int)(1.0 + 1.0)], g26 = sizeof(g25);
+
+EVAL_EXPR(26, (_Complex double)0 ? -1 : 1)
+EVAL_EXPR(27, (_Complex int)0 ? -1 : 1)
+EVAL_EXPR(28, (_Complex double)1 ? 1 : -1)
+EVAL_EXPR(29, (_Complex int)1 ? 1 : -1)

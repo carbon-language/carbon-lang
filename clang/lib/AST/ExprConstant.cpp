@@ -71,7 +71,7 @@ static bool HandleConversionToBool(Expr* E, bool& Result, EvalInfo &Info) {
       return false;
     Result = !FloatResult.isZero();
     return true;
-  } else if (E->getType()->isPointerType()) {
+  } else if (E->getType()->hasPointerRepresentation()) {
     APValue PointerResult;
     if (!EvaluatePointer(E, PointerResult, Info))
       return false;
@@ -79,8 +79,19 @@ static bool HandleConversionToBool(Expr* E, bool& Result, EvalInfo &Info) {
     // the check look like?
     Result = PointerResult.getLValueBase() || PointerResult.getLValueOffset();
     return true;
+  } else if (E->getType()->isAnyComplexType()) {
+    APValue ComplexResult;
+    if (!EvaluateComplex(E, ComplexResult, Info))
+      return false;
+    if (ComplexResult.isComplexFloat()) {
+      Result = !ComplexResult.getComplexFloatReal().isZero() ||
+               !ComplexResult.getComplexFloatImag().isZero();
+    } else {
+      Result = ComplexResult.getComplexIntReal().getBoolValue() ||
+               ComplexResult.getComplexIntImag().getBoolValue();
+    }
+    return true;
   }
-  // FIXME: Handle pointer-like types, complex types
 
   return false;
 }
@@ -890,21 +901,22 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       APValue LHSValue;
       if (!EvaluatePointer(E->getLHS(), LHSValue, Info))
         return false;
-      
+
       APValue RHSValue;
       if (!EvaluatePointer(E->getRHS(), RHSValue, Info))
         return false;
-      
-      // FIXME: Is this correct? What if only one of the operands has a base?
+
+      // Reject any bases; this is conservative, but good enough for
+      // common uses
       if (LHSValue.getLValueBase() || RHSValue.getLValueBase())
         return false;
-      
+
       const QualType Type = E->getLHS()->getType();
       const QualType ElementType = Type->getAsPointerType()->getPointeeType();
 
       uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
       D /= Info.Ctx.getTypeSize(ElementType) / 8;
-      
+
       return Success(D, E);
     }
   }
@@ -980,20 +992,20 @@ unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
   // __alignof__(void) = 1 as a gcc extension.
   if (Ty->isVoidType())
     return 1;
-  
+
   // GCC extension: alignof(function) = 4.
   // FIXME: AlignOf shouldn't be unconditionally 4!  It should listen to the
   // attribute(align) directive.
   if (Ty->isFunctionType())
     return 4;
-  
+
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(Ty))
     return GetAlignOfType(QualType(EXTQT->getBaseType(), 0));
 
   // alignof VLA/incomplete array.
   if (const ArrayType *VAT = dyn_cast<ArrayType>(Ty))
     return GetAlignOfType(VAT->getElementType());
-  
+
   // sizeof (objc class)?
   if (isa<ObjCInterfaceType>(Ty))
     return 1;  // FIXME: This probably isn't right.
@@ -1010,7 +1022,7 @@ unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
   // to 1 in those cases. 
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
     return Info.Ctx.getDeclAlignInBytes(DRE->getDecl());
-    
+
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
     return Info.Ctx.getDeclAlignInBytes(ME->getMemberDecl());
 
@@ -1030,14 +1042,14 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     else
       return Success(GetAlignOfExpr(E->getArgumentExpr()), E);
   }
-  
+
   QualType SrcTy = E->getTypeOfArgument();
 
   // sizeof(void), __alignof__(void), sizeof(function) = 1 as a gcc
   // extension.
   if (SrcTy->isVoidType() || SrcTy->isFunctionType())
     return Success(1, E);
-  
+
   // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
   if (!SrcTy->isConstantSizeType())
     return false;
