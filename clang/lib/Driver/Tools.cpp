@@ -207,7 +207,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // -fstack-protect.
 
     Args.AddLastArg(CmdArgs, options::OPT_MD);
-    Args.AddLastArg(CmdArgs, options::OPT_MM);
+    Args.AddLastArg(CmdArgs, options::OPT_MMD);
     Args.AddAllArgs(CmdArgs, options::OPT_MF);
     Args.AddLastArg(CmdArgs, options::OPT_MP);
     Args.AddAllArgs(CmdArgs, options::OPT_MT);
