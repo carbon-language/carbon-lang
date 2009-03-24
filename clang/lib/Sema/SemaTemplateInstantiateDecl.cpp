@@ -44,9 +44,9 @@ namespace {
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
+    Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
-
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *) { 
       return 0;
@@ -263,6 +263,48 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   if (!Method->isInvalidDecl() || !PrevDecl)
     Owner->addDecl(Method);
   return Method;
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
+  QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
+                                       NumTemplateArgs, D->getLocation(),
+                                       D->getDeclName());
+  if (T.isNull())
+    return 0;
+  
+  // Build the instantiated destructor declaration.
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
+  QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
+  CXXDestructorDecl *Destructor
+    = CXXDestructorDecl::Create(SemaRef.Context, Record,
+                                D->getLocation(),
+             SemaRef.Context.DeclarationNames.getCXXDestructorName(ClassTy),
+                                T, D->isInline(), false);
+
+  Destructor->setAccess(D->getAccess());
+  // FIXME: Duplicates some logic in ActOnFunctionDeclarator,
+  // VisitCXXDestructorDecl.
+  if (D->isVirtual()) {
+    Destructor->setVirtual();
+    Record->setAggregate(false);
+    Record->setPOD(false);
+    Record->setPolymorphic(true);
+  }
+  if (D->isDeleted())
+    Destructor->setDeleted();
+  if (D->isPure()) {
+    Destructor->setPure();
+    Record->setAbstract(true);
+  }
+
+  bool Redeclaration = false;
+  bool OverloadableAttrRequired = false;
+  NamedDecl *PrevDecl = 0;
+  if (SemaRef.CheckFunctionDeclaration(Destructor, PrevDecl, Redeclaration,
+                                       /*FIXME:*/OverloadableAttrRequired))
+    Destructor->setInvalidDecl();
+  Owner->addDecl(Destructor);
+  return Destructor;
 }
 
 Decl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {

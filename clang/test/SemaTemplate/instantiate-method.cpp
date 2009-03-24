@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify %s
-
 template<typename T>
 class X {
 public:
@@ -41,3 +40,12 @@ void test_ovl(Overloading<int, long> *oil, int i, long l) {
 void test_ovl_bad() {
   Overloading<float, float> off; // expected-note{{in instantiation of template class 'class Overloading<float, float>' requested here}}
 }
+
+template<typename T>
+class HasDestructor {
+  virtual ~HasDestructor() = 0;
+};
+
+int i = sizeof(HasDestructor<int>); // FIXME: forces instantiation, but 
+                // the code below should probably instantiate by itself.
+int abstract_destructor[__is_abstract(HasDestructor<int>)? 1 : -1];
