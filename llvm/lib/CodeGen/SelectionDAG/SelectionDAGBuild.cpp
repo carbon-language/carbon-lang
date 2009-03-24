@@ -4896,28 +4896,29 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
 
   // If this is a constraint for a specific physical register, like {r17},
   // assign it now.
-  if (PhysReg.first) {
+  if (unsigned AssignedReg = PhysReg.first) {
+    const TargetRegisterClass *RC = PhysReg.second;
     if (OpInfo.ConstraintVT == MVT::Other)
-      ValueVT = *PhysReg.second->vt_begin();
+      ValueVT = *RC->vt_begin();
 
     // Get the actual register value type.  This is important, because the user
     // may have asked for (e.g.) the AX register in i32 type.  We need to
     // remember that AX is actually i16 to get the right extension.
-    RegVT = *PhysReg.second->vt_begin();
+    RegVT = *RC->vt_begin();
 
     // This is a explicit reference to a physical register.
-    Regs.push_back(PhysReg.first);
+    Regs.push_back(AssignedReg);
 
     // If this is an expanded reference, add the rest of the regs to Regs.
     if (NumRegs != 1) {
-      TargetRegisterClass::iterator I = PhysReg.second->begin();
-      for (; *I != PhysReg.first; ++I)
-        assert(I != PhysReg.second->end() && "Didn't find reg!");
+      TargetRegisterClass::iterator I = RC->begin();
+      for (; *I != AssignedReg; ++I)
+        assert(I != RC->end() && "Didn't find reg!");
 
       // Already added the first reg.
       --NumRegs; ++I;
       for (; NumRegs; --NumRegs, ++I) {
-        assert(I != PhysReg.second->end() && "Ran out of registers to allocate!");
+        assert(I != RC->end() && "Ran out of registers to allocate!");
         Regs.push_back(*I);
       }
     }
