@@ -32,6 +32,8 @@ namespace driver {
     typedef llvm::SmallVector<Arg*, 16> arglist_type;
     typedef arglist_type::iterator iterator;
     typedef arglist_type::const_iterator const_iterator;
+    typedef arglist_type::reverse_iterator reverse_iterator;
+    typedef arglist_type::const_reverse_iterator const_reverse_iterator;
 
   private:
     /// List of argument strings used by the contained Args.
@@ -64,8 +66,14 @@ namespace driver {
     iterator begin() { return Args.begin(); }
     iterator end() { return Args.end(); }
 
+    reverse_iterator rbegin() { return Args.rbegin(); }
+    reverse_iterator rend() { return Args.rend(); }
+
     const_iterator begin() const { return Args.begin(); }
     const_iterator end() const { return Args.end(); }
+    
+    const_reverse_iterator rbegin() const { return Args.rbegin(); }
+    const_reverse_iterator rend() const { return Args.rend(); }
     
     /// append - Append \arg A to the arg list, taking ownership.
     void append(Arg *A);
