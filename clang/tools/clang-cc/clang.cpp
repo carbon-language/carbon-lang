@@ -807,6 +807,12 @@ static std::string CreateTargetTriple() {
               Triple.c_str());
       exit(1);
     }
+    
+    // Canonicalize -arch ppc to add "powerpc" to the triple, not ppc.
+    if (Arch == "ppc")
+      Arch = "powerpc";
+    else if (Arch == "ppc64")
+      Arch = "powerpc64";
   
     Triple = Arch + std::string(Triple.begin()+FirstDashIdx, Triple.end());
   }
