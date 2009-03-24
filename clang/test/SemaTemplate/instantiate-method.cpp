@@ -2,9 +2,7 @@
 template<typename T>
 class X {
 public:
-  void f(T); // expected-error{{argument may not have 'void' type}}
-             // FIXME: source location isn't very good, because we're
-             // instantiating the type. Could we do better?
+  void f(T x); // expected-error{{argument may not have 'void' type}}
   void g(T*);
 
   static int h(T, T); // expected-error 2{{argument may not have 'void' type}}

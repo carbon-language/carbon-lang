@@ -47,10 +47,16 @@ namespace {
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
+
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *) { 
       return 0;
     }
+
+    // Helper functions for instantiating methods.
+    QualType InstantiateFunctionType(FunctionDecl *D,
+                             llvm::SmallVectorImpl<ParmVarDecl *> &Params);
+    bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
   };
 }
 
@@ -201,9 +207,8 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   if (D->getKind() != Decl::CXXMethod)
     return 0;
 
-  QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
-                                       NumTemplateArgs, D->getLocation(),
-                                       D->getDeclName());
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
 
@@ -213,37 +218,14 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                             D->getDeclName(), T, D->isStatic(), 
                             D->isInline());
-  Method->setAccess(D->getAccess());
-  // FIXME: Duplicates some logic in ActOnFunctionDeclarator.
-  if (D->isVirtual()) {
-    Method->setVirtual();
-    Record->setAggregate(false);
-    Record->setPOD(false);
-    Record->setPolymorphic(true);
-  }
-  if (D->isDeleted())
-    Method->setDeleted();
-  if (D->isPure()) {
-    Method->setPure();
-    Record->setAbstract(true);
-  }
-  // FIXME: attributes
-  // FIXME: Method needs a pointer referencing where it came from.
 
-  // Instantiate the function parameters
-  {
-    TemplateDeclInstantiator ParamInstantiator(SemaRef, Method,
-                                               TemplateArgs, NumTemplateArgs);
-    llvm::SmallVector<ParmVarDecl *, 16> Params;
-    for (FunctionDecl::param_iterator P = Method->param_begin(), 
-                                   PEnd = Method->param_end();
-         P != PEnd; ++P) {
-      if (ParmVarDecl *PInst = (ParmVarDecl *)ParamInstantiator.Visit(*P))
-        Params.push_back(PInst);
-      else 
-        Method->setInvalidDecl();
-    }
-  }
+  // Attach the parameters
+  for (unsigned P = 0; P < Params.size(); ++P)
+    Params[P]->setOwningFunction(Method);
+  Method->setParams(SemaRef.Context, &Params[0], Params.size());
+
+  if (InitMethodInstantiation(Method, D))
+    Method->setInvalidDecl();
 
   NamedDecl *PrevDecl 
     = SemaRef.LookupQualifiedName(Owner, Method->getDeclName(), 
@@ -266,12 +248,12 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
-  QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
-                                       NumTemplateArgs, D->getLocation(),
-                                       D->getDeclName());
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
-  
+  assert(Params.size() == 0 && "Destructor with parameters?");
+
   // Build the instantiated destructor declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
@@ -280,22 +262,8 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
                                 D->getLocation(),
              SemaRef.Context.DeclarationNames.getCXXDestructorName(ClassTy),
                                 T, D->isInline(), false);
-
-  Destructor->setAccess(D->getAccess());
-  // FIXME: Duplicates some logic in ActOnFunctionDeclarator,
-  // VisitCXXDestructorDecl.
-  if (D->isVirtual()) {
-    Destructor->setVirtual();
-    Record->setAggregate(false);
-    Record->setPOD(false);
-    Record->setPolymorphic(true);
-  }
-  if (D->isDeleted())
-    Destructor->setDeleted();
-  if (D->isPure()) {
-    Destructor->setPure();
-    Record->setAbstract(true);
-  }
+  if (InitMethodInstantiation(Destructor, D))
+    Destructor->setInvalidDecl();
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
@@ -360,3 +328,89 @@ Decl *Sema::InstantiateDecl(Decl *D, DeclContext *Owner,
   return Instantiator.Visit(D);
 }
 
+/// \brief Instantiates the type of the given function, including
+/// instantiating all of the function parameters.
+///
+/// \param D The function that we will be instantiated
+///
+/// \param Params the instantiated parameter declarations
+
+/// \returns the instantiated function's type if successfull, a NULL
+/// type if there was an error.
+QualType 
+TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
+                              llvm::SmallVectorImpl<ParmVarDecl *> &Params) {
+  bool InvalidDecl = false;
+
+  // Instantiate the function parameters
+  TemplateDeclInstantiator ParamInstantiator(SemaRef, 0,
+                                             TemplateArgs, NumTemplateArgs);
+  llvm::SmallVector<QualType, 16> ParamTys;
+  for (FunctionDecl::param_iterator P = D->param_begin(), 
+                                 PEnd = D->param_end();
+       P != PEnd; ++P) {
+    if (ParmVarDecl *PInst = (ParmVarDecl *)ParamInstantiator.Visit(*P)) {
+      if (PInst->getType()->isVoidType()) {
+        SemaRef.Diag(PInst->getLocation(), diag::err_param_with_void_type);
+        PInst->setInvalidDecl();
+      }
+      else if (SemaRef.RequireNonAbstractType(PInst->getLocation(), 
+                                              PInst->getType(),
+                                              diag::err_abstract_type_in_decl,
+                                              1 /* parameter type */))
+        PInst->setInvalidDecl();
+
+      Params.push_back(PInst);
+      ParamTys.push_back(PInst->getType());
+
+      if (PInst->isInvalidDecl())
+        InvalidDecl = true;
+    } else 
+      InvalidDecl = true;
+  }
+
+  // FIXME: Deallocate dead declarations.
+  if (InvalidDecl)
+    return QualType();
+
+  const FunctionProtoType *Proto = D->getType()->getAsFunctionProtoType();
+  assert(Proto && "Missing prototype?");
+  QualType ResultType 
+    = SemaRef.InstantiateType(Proto->getResultType(),
+                              TemplateArgs, NumTemplateArgs,
+                              D->getLocation(), D->getDeclName());
+  if (ResultType.isNull())
+    return QualType();
+
+  return SemaRef.BuildFunctionType(ResultType, &ParamTys[0], ParamTys.size(),
+                                   Proto->isVariadic(), Proto->getTypeQuals(),
+                                   D->getLocation(), D->getDeclName());
+}
+
+/// \brief Initializes common fields of an instantiated method
+/// declaration (New) from the corresponding fields of its template
+/// (Tmpl).
+///
+/// \returns true if there was an error
+bool 
+TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New, 
+                                                  CXXMethodDecl *Tmpl) {
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
+  New->setAccess(Tmpl->getAccess());
+  if (Tmpl->isVirtual()) {
+    New->setVirtual();
+    Record->setAggregate(false);
+    Record->setPOD(false);
+    Record->setPolymorphic(true);
+  }
+  if (Tmpl->isDeleted())
+    New->setDeleted();
+  if (Tmpl->isPure()) {
+    New->setPure();
+    Record->setAbstract(true);
+  }
+
+  // FIXME: attributes
+  // FIXME: New needs a pointer to Tmpl
+  return false;
+}
