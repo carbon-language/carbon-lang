@@ -42,7 +42,7 @@ void * realloc(void *p, int size) { // expected-warning{{incompatible redeclarat
 
 // PR3855
 void snprintf(); // expected-warning{{incompatible redeclaration of library function 'snprintf'}} \
-    // expected-note{{'snprintf' is a builtin with type 'int (char *, unsigned long, char const *, ...)'}}
+    // expected-note{{'snprintf' is a builtin}}
 
 int
 main(int argc, char *argv[])
