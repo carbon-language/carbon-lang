@@ -139,6 +139,8 @@ class Darwin_X86_ToolChain(ToolChain):
                                                   self.getToolChainDir()))
         self.programPathPrefixes.append(os.path.join('/usr/libexec/gcc',
                                                      self.getToolChainDir()))
+        self.programPathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                     '../libexec'))
         self.programPathPrefixes.append(self.driver.driverDir)
 
     def getToolChainDir(self):
@@ -262,6 +264,8 @@ class Generic_GCC_ToolChain(ToolChain):
             Phases.AssemblePhase : Tools.GCC_AssembleTool(self),
             Phases.LinkPhase : Tools.GCC_LinkTool(self),
             }
+        self.programPathPrefixes.append(os.path.join(self.driver.driverDir,
+                                                     '../libexec'))
         self.programPathPrefixes.append(self.driver.driverDir)
 
     def selectTool(self, action):

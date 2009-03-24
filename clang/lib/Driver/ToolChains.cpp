@@ -74,6 +74,10 @@ Darwin_X86::Darwin_X86(const HostInfo &Host, const char *Arch,
   Path += getToolChainDir();
   getProgramPaths().push_back(Path);
 
+  Path = getHost().getDriver().Dir;
+  Path += "/../libexec";
+  getProgramPaths().push_back(Path);
+
   getProgramPaths().push_back(getHost().getDriver().Dir);
 }
 
@@ -151,6 +155,10 @@ Generic_GCC::Generic_GCC(const HostInfo &Host, const char *Arch,
                          const char *Platform, const char *OS)
   : ToolChain(Host, Arch, Platform, OS) 
 {
+  std::string Path(getHost().getDriver().Dir);
+  Path += "/../libexec";
+  getProgramPaths().push_back(Path);
+
   getProgramPaths().push_back(getHost().getDriver().Dir);  
 }
 

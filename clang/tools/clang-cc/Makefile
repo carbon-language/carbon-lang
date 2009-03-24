@@ -25,4 +25,8 @@ USEDLIBS = clangCodeGen.a clangAnalysis.a clangRewrite.a clangSema.a	\
            clangFrontend.a clangAST.a clangParse.a clangLex.a		\
            clangBasic.a 
 
+# clang-cc lives in a special location; we can get away with this
+# because nothing else gets installed from here.
+PROJ_bindir := $(DESTDIR)$(PROJ_prefix)/libexec
+
 include $(LLVM_SRC_ROOT)/Makefile.rules
