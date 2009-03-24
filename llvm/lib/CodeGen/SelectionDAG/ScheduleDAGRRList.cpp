@@ -1392,7 +1392,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           continue;
         // Don't constrain nodes with physical register defs if the
         // predecessor can clobber them.
-        if (SuccSU->hasPhysRegDefs) {
+        if (SuccSU->hasPhysRegDefs && SU->hasPhysRegClobbers) {
           if (canClobberPhysRegDefs(SuccSU, SU, TII, TRI))
             continue;
         }
