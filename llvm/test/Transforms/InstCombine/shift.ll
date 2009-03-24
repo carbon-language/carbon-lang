@@ -206,4 +206,11 @@ define i32 @test26(i32 %A) {
         %D = shl i32 %C, 1              ; <i32> [#uses=1]
         ret i32 %D
 }
+
+
+define i1 @test27(i32 %x) nounwind {
+  %y = lshr i32 %x, 3
+  %z = trunc i32 %y to i1
+  ret i1 %z
+}
  

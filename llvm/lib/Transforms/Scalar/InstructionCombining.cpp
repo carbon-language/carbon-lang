@@ -6575,8 +6575,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       // preferable because it allows the C<<Y expression to be hoisted out
       // of a loop if Y is invariant and X is not.
       if (Shift && Shift->hasOneUse() && RHSV == 0 &&
-          ICI.isEquality() && !Shift->isArithmeticShift() &&
-          isa<Instruction>(Shift->getOperand(0))) {
+          ICI.isEquality() && !Shift->isArithmeticShift()/* &&
+          isa<Instruction>(Shift->getOperand(0))*/) {
         // Compute C << Y.
         Value *NS;
         if (Shift->getOpcode() == Instruction::LShr) {
@@ -8147,49 +8147,33 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   const Type *Ty = CI.getType();
   uint32_t DestBitWidth = Ty->getPrimitiveSizeInBits();
   uint32_t SrcBitWidth = cast<IntegerType>(Src->getType())->getBitWidth();
+
+  // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0)
+  if (DestBitWidth == 1) {
+    Constant *One = ConstantInt::get(Src->getType(), 1);
+    Src = InsertNewInstBefore(BinaryOperator::CreateAnd(Src, One, "tmp"), CI);
+    Value *Zero = Constant::getNullValue(Src->getType());
+    return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
+  }
   
-  if (Instruction *SrcI = dyn_cast<Instruction>(Src)) {
-    switch (SrcI->getOpcode()) {
-    default: break;
-    case Instruction::LShr:
-      // We can shrink lshr to something smaller if we know the bits shifted in
-      // are already zeros.
-      if (ConstantInt *ShAmtV = dyn_cast<ConstantInt>(SrcI->getOperand(1))) {
-        uint32_t ShAmt = ShAmtV->getLimitedValue(SrcBitWidth);
-        
-        // Get a mask for the bits shifting in.
-        APInt Mask(APInt::getLowBitsSet(SrcBitWidth, ShAmt).shl(DestBitWidth));
-        Value* SrcIOp0 = SrcI->getOperand(0);
-        if (SrcI->hasOneUse() && MaskedValueIsZero(SrcIOp0, Mask)) {
-          if (ShAmt >= DestBitWidth)        // All zeros.
-            return ReplaceInstUsesWith(CI, Constant::getNullValue(Ty));
-
-          // Okay, we can shrink this.  Truncate the input, then return a new
-          // shift.
-          Value *V1 = InsertCastBefore(Instruction::Trunc, SrcIOp0, Ty, CI);
-          Value *V2 = InsertCastBefore(Instruction::Trunc, SrcI->getOperand(1),
-                                       Ty, CI);
-          return BinaryOperator::CreateLShr(V1, V2);
-        }
-      } else {     // This is a variable shr.
-        
-        // Turn 'trunc (lshr X, Y) to bool' into '(X & (1 << Y)) != 0'.  This is
-        // more LLVM instructions, but allows '1 << Y' to be hoisted if
-        // loop-invariant and CSE'd.
-        if (CI.getType() == Type::Int1Ty && SrcI->hasOneUse()) {
-          Value *One = ConstantInt::get(SrcI->getType(), 1);
-
-          Value *V = InsertNewInstBefore(
-              BinaryOperator::CreateShl(One, SrcI->getOperand(1),
-                                     "tmp"), CI);
-          V = InsertNewInstBefore(BinaryOperator::CreateAnd(V,
-                                                            SrcI->getOperand(0),
-                                                            "tmp"), CI);
-          Value *Zero = Constant::getNullValue(V->getType());
-          return new ICmpInst(ICmpInst::ICMP_NE, V, Zero);
-        }
-      }
-      break;
+  // Optimize trunc(lshr(), c) to pull the shift through the truncate.
+  ConstantInt *ShAmtV = 0;
+  Value *ShiftOp = 0;
+  if (Src->hasOneUse() &&
+      match(Src, m_LShr(m_Value(ShiftOp), m_ConstantInt(ShAmtV)))) {
+    uint32_t ShAmt = ShAmtV->getLimitedValue(SrcBitWidth);
+    
+    // Get a mask for the bits shifting in.
+    APInt Mask(APInt::getLowBitsSet(SrcBitWidth, ShAmt).shl(DestBitWidth));
+    if (MaskedValueIsZero(ShiftOp, Mask)) {
+      if (ShAmt >= DestBitWidth)        // All zeros.
+        return ReplaceInstUsesWith(CI, Constant::getNullValue(Ty));
+      
+      // Okay, we can shrink this.  Truncate the input, then return a new
+      // shift.
+      Value *V1 = InsertCastBefore(Instruction::Trunc, ShiftOp, Ty, CI);
+      Value *V2 = ConstantExpr::getTrunc(ShAmtV, Ty);
+      return BinaryOperator::CreateLShr(V1, V2);
     }
   }
   
