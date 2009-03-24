@@ -278,9 +278,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     A->render(Args, CmdArgs);
   }
 
-  // Manually translate -O to -O1; let clang reject others.
-  if (Arg *A = Args.getLastArg(options::OPT_O)) {
-    if (A->getValue(Args)[0] == '\0')
+  // Manually translate -O to -O1 and -O4 to -O3; let clang reject
+  // others.
+  if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
+    if (A->getOption().getId() == options::OPT_O4) 
+      CmdArgs.push_back("-O3");
+    else if (A->getValue(Args)[0] == '\0')
       CmdArgs.push_back("-O1");
     else
       A->render(Args, CmdArgs);

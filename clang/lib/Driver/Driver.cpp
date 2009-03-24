@@ -532,7 +532,6 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
     // -{fsyntax-only,-analyze,emit-llvm,S} only run up to the compiler.
   } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT__analyze)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT_emit_llvm)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Compile;
 
@@ -588,6 +587,12 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
         break;
       }
 
+      // Some types skip the assembler phase (e.g., llvm-bc), but we
+      // can't encode this in the steps because the intermediate type
+      // depends on arguments. Just special case here.
+      if (Phase == phases::Assemble && Current->getType() != types::TY_PP_Asm)
+        continue;
+
       // Otherwise construct the appropriate action.
       Current = ConstructPhaseAction(Args, Phase, Current);
       if (Current->getType() == types::TY_Nothing)
@@ -623,7 +628,9 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
       return new CompileJobAction(Input, types::TY_Nothing);
     } else if (Args.hasArg(options::OPT__analyze)) {
       return new AnalyzeJobAction(Input, types::TY_Plist);
-    } else if (Args.hasArg(options::OPT_emit_llvm)) {
+    } else if (Args.hasArg(options::OPT_emit_llvm) ||
+               Args.hasArg(options::OPT_flto) ||
+               Args.hasArg(options::OPT_O4)) {
       types::ID Output = 
         Args.hasArg(options::OPT_S) ? types::TY_LLVMAsm : types::TY_LLVMBC;
       return new CompileJobAction(Input, Output);
