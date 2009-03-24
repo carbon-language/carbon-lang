@@ -239,7 +239,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (!I->pred_empty()) {
-      printBasicBlockLabel(I, true, true);
+      printBasicBlockLabel(I, true, true, VerboseAsm);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
@@ -315,7 +315,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
     return;
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
@@ -829,8 +829,11 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
           O << "\t.globl " << name << '\n'
             << TAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);
-          O << name << ":\t\t\t\t" << TAI->getCommentString() << ' ';
-          PrintUnmangledNameSafely(GVar, O);
+          O << name << ":";
+          if (VerboseAsm) {
+            O << name << "\t\t\t\t" << TAI->getCommentString() << ' ';
+            PrintUnmangledNameSafely(GVar, O);
+          }
           O << '\n';
           EmitGlobalConstant(C);
           return;
@@ -848,8 +851,10 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         if (TAI->getCOMMDirectiveTakesAlignment())
           O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
-      O << "\t\t" << TAI->getCommentString() << ' ';
-      PrintUnmangledNameSafely(GVar, O);
+      if (VerboseAsm) {
+        O << "\t\t" << TAI->getCommentString() << ' ';
+        PrintUnmangledNameSafely(GVar, O);
+      }
       O << '\n';
       return;
     }
@@ -887,8 +892,11 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":\t\t\t\t" << TAI->getCommentString() << ' ';
-  PrintUnmangledNameSafely(GVar, O);
+  O << name << ":";
+  if (VerboseAsm){
+    O << name << "\t\t\t\t" << TAI->getCommentString() << ' ';
+    PrintUnmangledNameSafely(GVar, O);
+  }
   O << '\n';
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << name << ", " << Size << '\n';

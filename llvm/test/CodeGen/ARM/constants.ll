@@ -2,11 +2,11 @@
 ; RUN:   grep {mov r0, #0} | count 1
 ; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep {mov r0, #255$} | count 1
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm -asm-verbose | \
 ; RUN:   grep {mov r0.*256} | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep {orr.*256} | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep {mov r0, .*-1073741761} | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep {mov r0, .*1008} | count 1
+; RUN: llvm-as < %s | llc -march=arm -asm-verbose | grep {orr.*256} | count 1
+; RUN: llvm-as < %s | llc -march=arm -asm-verbose | grep {mov r0, .*-1073741761} | count 1
+; RUN: llvm-as < %s | llc -march=arm -asm-verbose | grep {mov r0, .*1008} | count 1
 ; RUN: llvm-as < %s | llc -march=arm | grep {cmp r0, #1, 16} | count 1
 
 define i32 @f1() {

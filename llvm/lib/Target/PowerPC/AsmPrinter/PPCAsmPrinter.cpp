@@ -704,9 +704,12 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       } else {
         O << ".comm " << name << ',' << Size;
       }
-      O << "\t\t" << TAI->getCommentString() << " '";
-      PrintUnmangledNameSafely(GVar, O);
-      O << "'\n";
+      if (VerboseAsm) {
+        O << "\t\t" << TAI->getCommentString() << " '";
+        PrintUnmangledNameSafely(GVar, O);
+        O << "'";
+      }
+      O << '\n';
       return;
   }
 
@@ -737,9 +740,13 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
-  PrintUnmangledNameSafely(GVar, O);
-  O << "'\n";
+  O << name << ":";
+  if (VerboseAsm) {
+    O << "\t\t\t\t" << TAI->getCommentString() << " '";
+    PrintUnmangledNameSafely(GVar, O);
+    O << "'";
+  }
+  O << '\n';
 
   // If the initializer is a extern weak symbol, remember to emit the weak
   // reference!
@@ -819,7 +826,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true, true);
+      printBasicBlockLabel(I, true, true, VerboseAsm);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
@@ -938,8 +945,11 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       O << "\t.globl " << name << '\n'
         << TAI->getWeakDefDirective() << name << '\n';
       EmitAlignment(Align, GVar);
-      O << name << ":\t\t\t\t" << TAI->getCommentString() << " ";
-      PrintUnmangledNameSafely(GVar, O);
+      O << name << ":";
+      if (VerboseAsm) {
+        O << "\t\t\t\t" << TAI->getCommentString() << " ";
+        PrintUnmangledNameSafely(GVar, O);
+      }
       O << '\n';
       EmitGlobalConstant(C);
       return;
@@ -949,9 +959,12 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       if (Subtarget.isDarwin9())
         O << ',' << Align;
     }
-    O << "\t\t" << TAI->getCommentString() << " '";
-    PrintUnmangledNameSafely(GVar, O);
-    O << "'\n";
+    if (VerboseAsm) {
+      O << "\t\t" << TAI->getCommentString() << " '";
+      PrintUnmangledNameSafely(GVar, O);
+      O << "'";
+    }
+    O << '\n';
     return;
   }
 
@@ -980,9 +993,13 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
-  PrintUnmangledNameSafely(GVar, O);
-  O << "'\n";
+  O << name << ":";
+  if (VerboseAsm) {
+    O << "\t\t\t\t" << TAI->getCommentString() << " '";
+    PrintUnmangledNameSafely(GVar, O);
+    O << "'";
+  }
+  O << '\n';
 
   // If the initializer is a extern weak symbol, remember to emit the weak
   // reference!

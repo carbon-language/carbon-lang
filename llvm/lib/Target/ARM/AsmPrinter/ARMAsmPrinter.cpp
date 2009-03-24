@@ -255,7 +255,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true, true);
+      printBasicBlockLabel(I, true, true, VerboseAsm);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
@@ -356,7 +356,9 @@ static void printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) {
   if (Rot) {
     O << "#" << Imm << ", " << Rot;
     // Pretty printed version.
-    O << ' ' << TAI->getCommentString() << ' ' << (int)ARM_AM::rotr32(Imm, Rot);
+    if (VerboseAsm)
+      O << ' ' << TAI->getCommentString()
+        << ' ' << (int)ARM_AM::rotr32(Imm, Rot);
   } else {
     O << "#" << Imm;
   }
@@ -870,8 +872,11 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
           O << "\t.globl " << name << '\n'
             << TAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);
-          O << name << ":\t\t\t\t" << TAI->getCommentString() << ' ';
-          PrintUnmangledNameSafely(GVar, O);
+          O << name << ":";
+          if (VerboseAsm) {
+            O << "\t\t\t\t" << TAI->getCommentString() << ' ';
+            PrintUnmangledNameSafely(GVar, O);
+          }
           O << '\n';
           EmitGlobalConstant(C);
           return;
@@ -892,8 +897,10 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         if (TAI->getCOMMDirectiveTakesAlignment())
           O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
-      O << "\t\t" << TAI->getCommentString() << " ";
-      PrintUnmangledNameSafely(GVar, O);
+      if (VerboseAsm) {
+        O << "\t\t" << TAI->getCommentString() << " ";
+        PrintUnmangledNameSafely(GVar, O);
+      }
       O << "\n";
       return;
     }
@@ -928,8 +935,11 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":\t\t\t\t" << TAI->getCommentString() << " ";
-  PrintUnmangledNameSafely(GVar, O);
+  O << name << ":";
+  if (VerboseAsm) {
+    O << "\t\t\t\t" << TAI->getCommentString() << " ";
+    PrintUnmangledNameSafely(GVar, O);
+  }
   O << "\n";
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << name << ", " << Size << "\n";

@@ -489,8 +489,11 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     if (!bCustomSegment)
       EmitAlignment(Align, I);
 
-    O << name << ":\t\t\t\t" << TAI->getCommentString()
-      << " " << I->getName() << '\n';
+    O << name << ":";
+    if (VerboseAsm)
+      O << name << "\t\t\t\t" << TAI->getCommentString()
+        << " " << I->getName();
+    O << '\n';
 
     EmitGlobalConstant(C);
 

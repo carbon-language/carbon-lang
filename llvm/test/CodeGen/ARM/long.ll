@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm -asm-verbose | \
 ; RUN:   grep -- {-2147483648} | count 3
 ; RUN: llvm-as < %s | llc -march=arm | grep mvn | count 3
 ; RUN: llvm-as < %s | llc -march=arm | grep adds | count 1
