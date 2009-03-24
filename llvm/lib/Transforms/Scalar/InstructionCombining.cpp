@@ -218,7 +218,7 @@ namespace {
     Instruction *visitFPToSI(FPToSIInst &FI);
     Instruction *visitUIToFP(CastInst &CI);
     Instruction *visitSIToFP(CastInst &CI);
-    Instruction *visitPtrToInt(CastInst &CI);
+    Instruction *visitPtrToInt(PtrToIntInst &CI);
     Instruction *visitIntToPtr(IntToPtrInst &CI);
     Instruction *visitBitCast(BitCastInst &CI);
     Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
@@ -474,9 +474,16 @@ isEliminableCastPair(
   Instruction::CastOps firstOp = Instruction::CastOps(CI->getOpcode());
   Instruction::CastOps secondOp = Instruction::CastOps(opcode);
 
-  return Instruction::CastOps(
-      CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
-                                     DstTy, TD->getIntPtrType()));
+  unsigned Res = CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
+                                                DstTy, TD->getIntPtrType());
+  
+  // We don't want to form an inttoptr or ptrtoint that converts to an integer
+  // type that differs from the pointer size.
+  if ((Res == Instruction::IntToPtr && SrcTy != TD->getIntPtrType()) ||
+      (Res == Instruction::PtrToInt && DstTy != TD->getIntPtrType()))
+    Res = 0;
+  
+  return Instruction::CastOps(Res);
 }
 
 /// ValueRequiresCast - Return true if the cast from "V to Ty" actually results
@@ -8536,11 +8543,36 @@ Instruction *InstCombiner::visitSIToFP(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
-Instruction *InstCombiner::visitPtrToInt(CastInst &CI) {
+Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
+  // If the destination integer type is smaller than the intptr_t type for
+  // this target, do a ptrtoint to intptr_t then do a trunc.  This allows the
+  // trunc to be exposed to other transforms.  Don't do this for extending
+  // ptrtoint's, because we don't know if the target sign or zero extends its
+  // pointers.
+  if (CI.getType()->getPrimitiveSizeInBits() < TD->getPointerSizeInBits()) {
+    Value *P = InsertNewInstBefore(new PtrToIntInst(CI.getOperand(0),
+                                                    TD->getIntPtrType(),
+                                                    "tmp"), CI);
+    return new TruncInst(P, CI.getType());
+  }
+  
   return commonPointerCastTransforms(CI);
 }
 
 Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
+  // If the source integer type is larger than the intptr_t type for
+  // this target, do a trunc to the intptr_t type, then inttoptr of it.  This
+  // allows the trunc to be exposed to other transforms.  Don't do this for
+  // extending inttoptr's, because we don't know if the target sign or zero
+  // extends to pointers.
+  if (CI.getOperand(0)->getType()->getPrimitiveSizeInBits() >
+      TD->getPointerSizeInBits()) {
+    Value *P = InsertNewInstBefore(new TruncInst(CI.getOperand(0),
+                                                 TD->getIntPtrType(),
+                                                 "tmp"), CI);
+    return new IntToPtrInst(P, CI.getType());
+  }
+  
   if (Instruction *I = commonCastTransforms(CI))
     return I;
   
