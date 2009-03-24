@@ -43,9 +43,12 @@ Driver::Driver(const char *_Name, const char *_Dir,
     DefaultImageName(_DefaultImageName),
     Host(0),
     CCCIsCXX(false), CCCEcho(false), CCCPrintBindings(false),
-    CCCNoClang(false), CCCNoClangCXX(false), CCCNoClangCPP(false),
+    CCCUseClang(true), CCCUseClangCXX(false), CCCUseClangCPP(true),
     SuppressMissingInputWarning(false)
 {
+  // Only use clang on i386 and x86_64 by default.
+  CCCClangArchs.insert("i386");
+  CCCClangArchs.insert("x86_64");
 }
 
 Driver::~Driver() {
@@ -132,24 +135,27 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     } else if (!strcmp(Opt, "echo")) {
       CCCEcho = true;
       
+    } else if (!strcmp(Opt, "clang-cxx")) {
+      CCCUseClangCXX = true;
     } else if (!strcmp(Opt, "no-clang")) {
-      CCCNoClang = true;
-    } else if (!strcmp(Opt, "no-clang-cxx")) {
-      CCCNoClangCXX = true;
+      CCCUseClang = false;
     } else if (!strcmp(Opt, "no-clang-cpp")) {
-      CCCNoClangCPP = true;
+      CCCUseClangCPP = false;
     } else if (!strcmp(Opt, "clang-archs")) {
       assert(Start+1 < End && "FIXME: -ccc- argument handling.");
       const char *Cur = *++Start;
     
+      CCCClangArchs.clear();
       for (;;) {
         const char *Next = strchr(Cur, ',');
 
         if (Next) {
-          CCCClangArchs.insert(std::string(Cur, Next));
+          if (Cur != Next)
+            CCCClangArchs.insert(std::string(Cur, Next));
           Cur = Next + 1;
         } else {
-          CCCClangArchs.insert(std::string(Cur));
+          if (*Cur != '\0')
+            CCCClangArchs.insert(std::string(Cur));
           break;
         }
       }
@@ -986,19 +992,19 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
                                     const std::string &ArchName) const {
   // Check if user requested no clang, or clang doesn't understand
   // this type (we only handle single inputs for now).
-  if (CCCNoClang || JA.size() != 1 || 
+  if (!CCCUseClang || JA.size() != 1 || 
       !types::isAcceptedByClang((*JA.begin())->getType()))
     return false;
 
-  // Otherwise make sure this is an action clang undertands.
+  // Otherwise make sure this is an action clang understands.
   if (isa<PreprocessJobAction>(JA)) {
-    if (CCCNoClangCPP)
+    if (!CCCUseClangCPP)
       return false;
   } else if (!isa<PrecompileJobAction>(JA) && !isa<CompileJobAction>(JA))
     return false;
 
-  // Avoid CXX if the user requested.
-  if (CCCNoClangCXX && types::isCXX((*JA.begin())->getType()))
+  // Use clang for C++?
+  if (!CCCUseClangCXX && types::isCXX((*JA.begin())->getType()))
     return false;
 
   // Finally, don't use clang if this isn't one of the user specified

@@ -78,18 +78,18 @@ public:
   bool CCCPrintBindings : 1;
 
 private:
-  /// Don't use clang for any tasks.
-  bool CCCNoClang : 1;
+  /// Use the clang compiler where possible.
+  bool CCCUseClang : 1;
 
-  /// Don't use clang for handling C++ and Objective-C++ inputs.
-  bool CCCNoClangCXX : 1;
+  /// Use clang for handling C++ and Objective-C++ inputs.
+  bool CCCUseClangCXX : 1;
 
-  /// Don't use clang as a preprocessor (clang's preprocessor will
-  /// still be used where an integrated CPP would).
-  bool CCCNoClangCPP : 1;
+  /// Use clang as a preprocessor (clang's preprocessor will still be
+  /// used where an integrated CPP would).
+  bool CCCUseClangCPP : 1;
 
-  /// Only use clang for the given architectures. Only used when
-  /// non-empty.
+  /// Only use clang for the given architectures (only used when
+  /// non-empty).
   std::set<std::string> CCCClangArchs;
 
   /// Certain options suppress the 'no input files' warning.
