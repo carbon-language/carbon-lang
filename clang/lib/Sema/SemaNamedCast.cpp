@@ -520,7 +520,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     if (SrcPointee->isVoidType()) {
       if (const PointerType *DestPointer = DestType->getAsPointerType()) {
         QualType DestPointee = DestPointer->getPointeeType();
-        if (DestPointee->isObjectType()) {
+        if (DestPointee->isIncompleteOrObjectType()) {
           // This is definitely the intended conversion, but it might fail due
           // to a const violation.
           if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {

@@ -613,13 +613,14 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         << Type << Ex->getSourceRange());
 
     QualType Pointee = Type->getAsPointerType()->getPointeeType();
-    if (!Pointee->isVoidType() &&
-        RequireCompleteType(StartLoc, Pointee, diag::warn_delete_incomplete,
-                               Ex->getSourceRange()))
-      return ExprError();
-    else if (!Pointee->isObjectType())
+    if (Pointee->isFunctionType() || Pointee->isVoidType())
       return ExprError(Diag(StartLoc, diag::err_delete_operand)
         << Type << Ex->getSourceRange());
+    else if (!Pointee->isDependentType() &&
+             RequireCompleteType(StartLoc, Pointee, 
+                                 diag::warn_delete_incomplete,
+                                 Ex->getSourceRange()))
+      return ExprError();
 
     // FIXME: Look up the correct operator delete overload and pass a pointer
     // along.

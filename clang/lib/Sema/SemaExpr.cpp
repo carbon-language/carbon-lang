@@ -3752,9 +3752,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
     // OK!
   } else if (const PointerType *PT = ResType->getAsPointerType()) {
     // C99 6.5.2.4p2, 6.5.6p2
-    if (PT->getPointeeType()->isObjectType()) {
-      // Pointer to object is ok!
-    } else if (PT->getPointeeType()->isVoidType()) {
+    if (PT->getPointeeType()->isVoidType()) {
       if (getLangOptions().CPlusPlus) {
         Diag(OpLoc, diag::err_typecheck_pointer_arith_void_type)
           << Op->getSourceRange();
@@ -3772,13 +3770,11 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
 
       Diag(OpLoc, diag::ext_gnu_ptr_func_arith)
         << ResType << Op->getSourceRange();
-    } else {
-      RequireCompleteType(OpLoc, PT->getPointeeType(),
-                             diag::err_typecheck_arithmetic_incomplete_type,
-                             Op->getSourceRange(), SourceRange(),
-                             ResType);
+    } else if (RequireCompleteType(OpLoc, PT->getPointeeType(),
+                               diag::err_typecheck_arithmetic_incomplete_type,
+                                   Op->getSourceRange(), SourceRange(),
+                                   ResType))
       return QualType();
-    }
   } else if (ResType->isComplexType()) {
     // C99 does not support ++/-- on complex types, we allow as an extension.
     Diag(OpLoc, diag::ext_integer_increment_complex)
