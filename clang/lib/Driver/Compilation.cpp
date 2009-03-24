@@ -170,7 +170,7 @@ int Compilation::Execute() const {
   CleanupFileList(TempFiles);
 
   // If the compilation failed, remove result files as well.
-  if (Res != 0)
+  if (Res != 0 && !getArgs().hasArg(options::OPT_save_temps))
     CleanupFileList(ResultFiles, true);
 
   return Res;
