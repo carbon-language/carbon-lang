@@ -25,11 +25,11 @@ elif test -d ../../llvm/autoconf/m4 ; then
 else
   while true ; do
     echo "LLVM source root not found." 
-    read -p "Enter full path to LLVM source:"
+    read -p "Enter full path to LLVM source:" REPLY
     if test -d "$REPLY/autoconf/m4" ; then
       llvm_src_root="$REPLY"
       llvm_m4="$REPLY/autoconf/m4"
-      read -p "Enter full path to LLVM objects (empty for same as source):"
+      read -p "Enter full path to LLVM objects (empty for same as source):" REPLY
       if test -d "$REPLY" ; then
         llvm_obj_root="$REPLY"
       else
