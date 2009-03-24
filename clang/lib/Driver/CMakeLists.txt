@@ -7,8 +7,13 @@ add_clang_library(clangDriver
   Compilation.cpp
   Driver.cpp
   HostInfo.cpp
+  Job.cpp
   OptTable.cpp
   Option.cpp
   Phases.cpp
+  Tool.cpp
+  ToolChain.cpp
+  ToolChains.cpp
+  Tools.cpp
   Types.cpp
   )

@@ -1,6 +1,6 @@
 set(LLVM_NO_RTTI 1)
 
-add_clang_library(clangDriver
+add_clang_library(clangFrontend
   HTMLDiagnostics.cpp
   InitHeaderSearch.cpp
   TextDiagnosticBuffer.cpp

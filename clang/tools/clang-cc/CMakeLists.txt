@@ -5,7 +5,7 @@ set( LLVM_USED_LIBS
   clangAnalysis
   clangRewrite
   clangSema
-  clangDriver
+  clangFrontend
   clangAST
   clangParse
   clangLex
