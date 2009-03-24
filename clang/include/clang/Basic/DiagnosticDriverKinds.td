@@ -40,5 +40,11 @@ def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">;
 def warn_drv_pipe_ignored_with_save_temps : Warning<
   "-pipe ignored because -save-temps specified">;
+def warn_drv_not_using_clang_cpp : Warning<
+  "not using the clang prepreprocessor due to user override">;
+def warn_drv_not_using_clang_cxx : Warning<
+  "not using the clang compiler for C++ inputs">;
+def warn_drv_not_using_clang_arch : Warning<
+  "not using the clang compiler the '%0' architecture">;
 
 }

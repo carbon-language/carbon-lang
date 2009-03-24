@@ -998,19 +998,25 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
 
   // Otherwise make sure this is an action clang understands.
   if (isa<PreprocessJobAction>(JA)) {
-    if (!CCCUseClangCPP)
+    if (!CCCUseClangCPP) {
+      Diag(clang::diag::warn_drv_not_using_clang_cpp);
       return false;
+    }
   } else if (!isa<PrecompileJobAction>(JA) && !isa<CompileJobAction>(JA))
     return false;
 
   // Use clang for C++?
-  if (!CCCUseClangCXX && types::isCXX((*JA.begin())->getType()))
+  if (!CCCUseClangCXX && types::isCXX((*JA.begin())->getType())) {
+    Diag(clang::diag::warn_drv_not_using_clang_cxx);
     return false;
+  }
 
   // Finally, don't use clang if this isn't one of the user specified
   // archs to build.
-  if (!CCCClangArchs.empty() && !CCCClangArchs.count(ArchName))
+  if (!CCCClangArchs.empty() && !CCCClangArchs.count(ArchName)) {
+    Diag(clang::diag::warn_drv_not_using_clang_arch) << ArchName;
     return false;
+  }
 
   return true;
 }
