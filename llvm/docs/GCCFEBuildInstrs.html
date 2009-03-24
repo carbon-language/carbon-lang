@@ -100,6 +100,11 @@ top-level <tt>README.LLVM</tt> file, adding ",ada" to EXTRALANGS, for example:
       compiler with checking enabled.  This causes it to run much slower, but
       helps catch mistakes in the compiler (please report any problems using
       <a href="http://llvm.org/bugs">LLVM bugzilla</a>).</p></li>
+  <li><p>The Ada front-end <a href="http://llvm.org/PR2007">fails to
+      bootstrap</a>, due to lack of LLVM support for
+      <tt>setjmp</tt>/<tt>longjmp</tt> style exception handling (used
+      internally by the compiler), so you must specify
+      <tt>--disable-bootstrap</tt>.</p></li>
 </ol>
 
 <p>Supposing appropriate compilers are available, llvm-gcc with Ada support can
