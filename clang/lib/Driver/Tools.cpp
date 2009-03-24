@@ -495,7 +495,10 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
 
   CmdArgs.push_back("-create");
   assert(Output.isFilename() && "Unexpected lipo output.");
+
+  CmdArgs.push_back("-output");
   CmdArgs.push_back(Output.getFilename());
+
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
