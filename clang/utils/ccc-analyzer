@@ -332,7 +332,7 @@ if (defined $ENV{CCC_ANALYZER_LOG}) { $Verbose = 2; }
 
 # Determine what clang executable to use.
 my $Clang = $ENV{'CLANG'};
-if (!defined $Clang) { $Clang = 'clang'; }
+if (!defined $Clang) { $Clang = 'clang-cc'; }
 
 # Get the HTML output directory.
 my $HtmlDir = $ENV{'CCC_ANALYZER_HTML'};
