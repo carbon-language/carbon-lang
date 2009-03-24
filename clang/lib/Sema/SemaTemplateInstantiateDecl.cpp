@@ -44,6 +44,7 @@ namespace {
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
+    Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
@@ -245,6 +246,50 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   if (!Method->isInvalidDecl() || !PrevDecl)
     Owner->addDecl(Method);
   return Method;
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  QualType T = InstantiateFunctionType(D, Params);
+  if (T.isNull())
+    return 0;
+
+  // Build the instantiated method declaration.
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
+  QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
+  DeclarationName Name
+    = SemaRef.Context.DeclarationNames.getCXXConstructorName(ClassTy);
+  CXXConstructorDecl *Constructor
+    = CXXConstructorDecl::Create(SemaRef.Context, Record, D->getLocation(), 
+                                 Name, T, D->isExplicit(), D->isInline(), 
+                                 false);
+
+  // Attach the parameters
+  for (unsigned P = 0; P < Params.size(); ++P)
+    Params[P]->setOwningFunction(Constructor);
+  Constructor->setParams(SemaRef.Context, &Params[0], Params.size());
+
+  if (InitMethodInstantiation(Constructor, D))
+    Constructor->setInvalidDecl();
+
+  NamedDecl *PrevDecl 
+    = SemaRef.LookupQualifiedName(Owner, Name, Sema::LookupOrdinaryName, true);
+
+  // In C++, the previous declaration we find might be a tag type
+  // (class or enum). In this case, the new declaration will hide the
+  // tag type. Note that this does does not apply if we're declaring a
+  // typedef (C++ [dcl.typedef]p4).
+  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
+    PrevDecl = 0;
+  bool Redeclaration = false;
+  bool OverloadableAttrRequired = false;
+  if (SemaRef.CheckFunctionDeclaration(Constructor, PrevDecl, Redeclaration,
+                                       /*FIXME:*/OverloadableAttrRequired))
+    Constructor->setInvalidDecl();
+
+  if (!Constructor->isInvalidDecl())
+    Owner->addDecl(Constructor);
+  return Constructor;
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {

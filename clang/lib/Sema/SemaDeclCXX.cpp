@@ -1654,6 +1654,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
     return;
   }
 
+  // FIXME: Need to handle dependent types and expressions here.
+
   // We will treat direct-initialization as a copy-initialization:
   //    int x(1);  -as-> int x = 1;
   //    ClassType x(a,b,c); -as-> ClassType x = ClassType(a,b,c);
@@ -1671,6 +1673,13 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   QualType DeclInitType = VDecl->getType();
   if (const ArrayType *Array = Context.getAsArrayType(DeclInitType))
     DeclInitType = Array->getElementType();
+
+  // FIXME: This isn't the right place to complete the type.
+  if (RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
+                          diag::err_typecheck_decl_incomplete_type)) {
+    VDecl->setInvalidDecl();
+    return;
+  }
 
   if (VDecl->getType()->isRecordType()) {
     CXXConstructorDecl *Constructor

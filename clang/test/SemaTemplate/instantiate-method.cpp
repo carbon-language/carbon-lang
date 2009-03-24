@@ -41,9 +41,23 @@ void test_ovl_bad() {
 
 template<typename T>
 class HasDestructor {
+public:
   virtual ~HasDestructor() = 0;
 };
 
 int i = sizeof(HasDestructor<int>); // FIXME: forces instantiation, but 
                 // the code below should probably instantiate by itself.
 int abstract_destructor[__is_abstract(HasDestructor<int>)? 1 : -1];
+
+
+template<typename T>
+class Constructors {
+public:
+  Constructors(const T&);
+  Constructors(const Constructors &other);
+};
+
+void test_constructors() {
+  Constructors<int> ci1(17);
+  Constructors<int> ci2 = ci1;
+}
