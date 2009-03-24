@@ -471,8 +471,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
   DefineBuiltinMacro(Buf, "__GNUC__=4");
   DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
-  DefineBuiltinMacro(Buf, "__VERSION__=\"4.2.1 (Apple Computer, Inc. "
-                     "build 5621) (dot 3)\"");
+  DefineBuiltinMacro(Buf, "__VERSION__=\"4.2.1 Compatible Clang Compiler\"");
   
   
   // Initialize language-specific preprocessor defines.
