@@ -714,7 +714,7 @@ class OptionParser:
 
         self.emitLLVMOption = self.addOption(FlagOption('-emit-llvm'))
         self.eOption = self.addOption(JoinedOrSeparateOption('-e'))
-        self.rOption = self.addOption(JoinedOrSeparateOption('-r'))
+        self.rOption = self.addOption(FlagOption('-r'))
 
         self.pgOption = self.addOption(FlagOption('-pg'))
         self.pOption = self.addOption(FlagOption('-p'))
