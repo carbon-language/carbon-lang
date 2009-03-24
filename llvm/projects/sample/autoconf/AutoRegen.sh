@@ -13,14 +13,14 @@ cwd=`pwd`
 if test -d ../../../autoconf/m4 ; then
   cd ../../../autoconf/m4
   llvm_m4=`pwd`
-  llvm_src_root=../../..
-  llvm_obj_root=../../..
+  llvm_src_root=../..
+  llvm_obj_root=../..
   cd $cwd
 elif test -d ../../llvm/autoconf/m4 ; then
   cd ../../llvm/autoconf/m4
   llvm_m4=`pwd`
-  llvm_src_root=../..
-  llvm_obj_root=../..
+  llvm_src_root=..
+  llvm_obj_root=..
   cd $cwd
 else
   while true ; do

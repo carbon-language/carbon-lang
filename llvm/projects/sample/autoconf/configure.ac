@@ -4,8 +4,8 @@ dnl **************************************************************************
 AC_INIT([[[SAMPLE]]],[[[x.xx]]],[bugs@yourdomain])
 
 dnl Identify where LLVM source tree is
-LLVM_SRC_ROOT="../../"
-LLVM_OBJ_ROOT="../../"
+LLVM_SRC_ROOT="../.."
+LLVM_OBJ_ROOT="../.."
 dnl Tell autoconf that the auxilliary files are actually located in
 dnl the LLVM autoconf directory, not here.
 AC_CONFIG_AUX_DIR($LLVM_SRC_ROOT/autoconf)
