@@ -21,7 +21,7 @@ set( LLVM_LINK_COMPONENTS
   selectiondag
   )
 
-add_clang_executable(clang
+add_clang_executable(clang-cc
   AnalysisConsumer.cpp
   ASTConsumers.cpp
   Backend.cpp
