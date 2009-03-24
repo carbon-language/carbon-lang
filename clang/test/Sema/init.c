@@ -120,3 +120,6 @@ ivector4 vtest2 = __builtin_choose_expr(1, (ivector4){1}, (ivector4){1});
 ivector4 vtest3 = __real__ (ivector4){1};
 ivector4 vtest4 = __imag__ (ivector4){1};
 
+uintptr_t ptrasintadd1 = (uintptr_t)&a - 4;
+uintptr_t ptrasintadd2 = (uintptr_t)&a + 4;
+uintptr_t ptrasintadd3 = 4 + (uintptr_t)&a;

@@ -918,7 +918,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       !RHSTy->isIntegralType()) {
     // We can't continue from here for non-integral types, and they
     // could potentially confuse the following operations.
-    // FIXME: Deal with EQ and friends.
     return false;
   }
 
@@ -926,13 +925,35 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (!Visit(E->getLHS()))
     return false; // error in subexpression.
 
-  // Only support arithmetic on integers for now.
-  if (!Result.isInt())
+  APValue RHSVal;
+  if (!EvaluateIntegerOrLValue(E->getRHS(), RHSVal, Info))
     return false;
-  
-  llvm::APSInt RHS;
-  if (!EvaluateInteger(E->getRHS(), RHS, Info))
+
+  // Handle cases like (unsigned long)&a + 4.
+  if (E->isAdditiveOp() && Result.isLValue() && RHSVal.isInt()) {
+    uint64_t offset = Result.getLValueOffset();
+    if (E->getOpcode() == BinaryOperator::Add)
+      offset += RHSVal.getInt().getZExtValue();
+    else
+      offset -= RHSVal.getInt().getZExtValue();
+    Result = APValue(Result.getLValueBase(), offset);
+    return true;
+  }
+
+  // Handle cases like 4 + (unsigned long)&a
+  if (E->getOpcode() == BinaryOperator::Add &&
+        RHSVal.isLValue() && Result.isInt()) {
+    uint64_t offset = RHSVal.getLValueOffset();
+    offset += Result.getInt().getZExtValue();
+    Result = APValue(RHSVal.getLValueBase(), offset);
+    return true;
+  }
+
+  // All the following cases expect both operands to be an integer
+  if (!Result.isInt() || !RHSVal.isInt())
     return false;
+
+  APSInt& RHS = RHSVal.getInt();
 
   switch (E->getOpcode()) {
   default:
