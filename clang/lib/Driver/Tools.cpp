@@ -120,7 +120,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                       options::OPT_fno_zero_initialized_in_bss,
                       true))
       CmdArgs.push_back("--nozero-initialized-in-bss");
-    if (Args.hasArg(options::OPT_dA))
+    if (Args.hasArg(options::OPT_dA) || Args.hasArg(options::OPT_fverbose_asm))
       CmdArgs.push_back("--asm-verbose");
     if (Args.hasArg(options::OPT_fdebug_pass_structure))
       CmdArgs.push_back("--debug-pass=Structure");
