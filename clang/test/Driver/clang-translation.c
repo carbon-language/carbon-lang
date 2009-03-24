@@ -1,4 +1,4 @@
-// RUN: clang-driver -ccc-host-triple i386-unknown-unknown -### -S -Os %s -o %t.s 2> %t.log
+// RUN: clang -ccc-host-triple i386-unknown-unknown -### -S -Os %s -o %t.s 2> %t.log
 // RUN: grep '"-S"' %t.log &&
 // RUN: grep '"-disable-free"' %t.log &&
 // RUN: grep '"--relocation-model" "static"' %t.log &&

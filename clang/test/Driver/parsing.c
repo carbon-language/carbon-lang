@@ -1,4 +1,4 @@
-// RUN: clang-driver -ccc-print-options input -Yunknown -m32 -arch ppc -djoined -A separate -Ajoined -Wp,one,two -Xarch_joined AndSeparate -sectalign 1 2 3 2> %t &&
+// RUN: clang -ccc-print-options input -Yunknown -m32 -arch ppc -djoined -A separate -Ajoined -Wp,one,two -Xarch_joined AndSeparate -sectalign 1 2 3 2> %t &&
 // RUN: grep 'Option 0 - Name: "<input>", Values: {"input"}' %t &&
 // RUN: grep 'Option 1 - Name: "<unknown>", Values: {"-Yunknown"}' %t &&
 // RUN: grep 'Option 2 - Name: "-m32", Values: {}' %t &&
@@ -10,9 +10,9 @@
 // RUN: grep 'Option 8 - Name: "-Xarch_", Values: {"joined", "AndSeparate"}' %t &&
 // RUN: grep 'Option 9 - Name: "-sectalign", Values: {"1", "2", "3"}' %t &&
 
-// RUN: not clang-driver -V 2> %t &&
+// RUN: not clang -V 2> %t &&
 // RUN: grep "error: argument to '-V' is missing (expected 1 value)" %t &&
-// RUN: not clang-driver -sectalign 1 2 2> %t &&
+// RUN: not clang -sectalign 1 2 2> %t &&
 // RUN: grep "error: argument to '-sectalign' is missing (expected 3 values)" %t &&
 
 // RUN: true

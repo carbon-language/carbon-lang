@@ -5,6 +5,6 @@ set( LLVM_USED_LIBS
 
 set(LLVM_LINK_COMPONENTS system support bitreader bitwriter)
 
-add_clang_tool(clang-driver
+add_clang_tool(clang
   driver.cpp
   )
