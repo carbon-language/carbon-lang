@@ -51,4 +51,16 @@ void t5(void (*)(C)); // expected-error {{parameter type 'C' is an abstract clas
 typedef void (*Func)(C); // expected-error {{parameter type 'C' is an abstract class}}
 void t6(Func);
 
+class F {
+    F a() { } // expected-error {{return type 'F' is an abstract class}}
+    
+    class D {
+        void f(F c); // expected-error {{parameter type 'F' is an abstract class}}
+    };
 
+    union U {
+        void u(F c); // expected-error {{parameter type 'F' is an abstract class}}
+    };
+    
+    virtual void f() = 0; // expected-note {{pure virtual function 'f'}}
+};

@@ -1638,8 +1638,16 @@ public:
                                     SourceLocation Loc, SourceRange Range);
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
 
-  bool RequireNonAbstractType(SourceLocation Loc, QualType T, 
-                              unsigned DiagID, unsigned SelID);
+  enum AbstractDiagSelID {
+    AbstractNone = -1,
+    AbstractReturnType,
+    AbstractParamType,
+    AbstractVariableType,
+    AbstractFieldType
+  };
+  
+  bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned DiagID, 
+                              AbstractDiagSelID SelID = AbstractNone);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]

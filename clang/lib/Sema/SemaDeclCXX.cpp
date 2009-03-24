@@ -15,6 +15,7 @@
 #include "SemaInherit.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Preprocessor.h"
@@ -784,7 +785,7 @@ namespace {
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T, 
-                                  unsigned DiagID, unsigned SelID) {
+                                  unsigned DiagID, AbstractDiagSelID SelID) {
   
   if (!getLangOptions().CPlusPlus)
     return false;
@@ -827,6 +828,49 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   return true;
 }
 
+namespace {
+  class VISIBILITY_HIDDEN AbstractClassUsageDiagnoser 
+    : public DeclVisitor<AbstractClassUsageDiagnoser, bool> {
+    Sema &SemaRef;
+    CXXRecordDecl *AbstractClass;
+  
+  public:
+    AbstractClassUsageDiagnoser(Sema& SemaRef, CXXRecordDecl *ac)
+      : SemaRef(SemaRef), AbstractClass(ac) {}
+      
+    bool VisitCXXRecordDecl(const CXXRecordDecl *RD) {
+      bool Invalid = false;
+
+      for (CXXRecordDecl::decl_iterator I = RD->decls_begin(),
+           E = RD->decls_end(); I != E; ++I)
+        Invalid |= Visit(*I);
+              
+      return Invalid;
+    }
+    
+    bool VisitCXXMethodDecl(const CXXMethodDecl *MD) {
+      // Check the return type.
+      QualType RTy = MD->getType()->getAsFunctionType()->getResultType();
+      bool Invalid = 
+        SemaRef.RequireNonAbstractType(MD->getLocation(), RTy,
+                                       diag::err_abstract_type_in_decl,
+                                       Sema::AbstractReturnType);
+
+      for (CXXMethodDecl::param_const_iterator I = MD->param_begin(), 
+           E = MD->param_end(); I != E; ++I) {
+        const ParmVarDecl *VD = *I;
+        Invalid |= 
+          SemaRef.RequireNonAbstractType(VD->getLocation(),
+                                         VD->getOriginalType(), 
+                                         diag::err_abstract_type_in_decl, 
+                                         Sema::AbstractParamType);
+      }
+
+      return Invalid;
+    }
+  };
+}
+
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclTy *TagDecl,
                                              SourceLocation LBrac,
@@ -845,6 +889,9 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
       RD->setAbstract(true);
   }
   
+  if (RD->isAbstract())
+    AbstractClassUsageDiagnoser(*this, RD).Visit(RD);
+    
   if (!Template)
     AddImplicitlyDeclaredMembersToClass(RD);
 }

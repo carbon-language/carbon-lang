@@ -357,7 +357,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
       else if (SemaRef.RequireNonAbstractType(PInst->getLocation(), 
                                               PInst->getType(),
                                               diag::err_abstract_type_in_decl,
-                                              1 /* parameter type */))
+                                              Sema::AbstractParamType))
         PInst->setInvalidDecl();
 
       Params.push_back(PInst);

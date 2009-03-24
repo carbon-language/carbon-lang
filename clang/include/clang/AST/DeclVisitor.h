@@ -13,6 +13,8 @@
 #ifndef LLVM_CLANG_AST_DECLVISITOR_H
 #define LLVM_CLANG_AST_DECLVISITOR_H
 
+#include "clang/AST/DeclTemplate.h"
+
 namespace clang {
 
 #define DISPATCH(NAME, CLASS) \

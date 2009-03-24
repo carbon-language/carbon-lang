@@ -197,8 +197,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                           diag::err_invalid_incomplete_type_use, FullRange))
     return ExprError();
 
-  if (RequireNonAbstractType(TyBeginLoc, Ty, 
-                             diag::err_allocation_of_abstract_type, 0))
+  if (RequireNonAbstractType(TyBeginLoc, Ty,
+                             diag::err_allocation_of_abstract_type))
     return ExprError();
   
   exprs.release();
@@ -243,7 +243,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     return ExprError();
 
   if (RequireNonAbstractType(D.getSourceRange().getBegin(), AllocType,
-                             diag::err_allocation_of_abstract_type, 0))
+                             diag::err_allocation_of_abstract_type))
     return ExprError();
   
   QualType ResultType = AllocType->isDependentType()

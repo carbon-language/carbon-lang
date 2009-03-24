@@ -1643,7 +1643,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // The variable can not have an abstract class type.
   if (RequireNonAbstractType(D.getIdentifierLoc(), R, 
                              diag::err_abstract_type_in_decl, 
-                             2 /* variable type */))
+                             AbstractVariableType))
     InvalidDecl = true;
     
   // The variable can not 
@@ -1815,11 +1815,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isExplicit = D.getDeclSpec().isExplicitSpecified();
 
   // Check that the return type is not an abstract class type.
-  if (RequireNonAbstractType(D.getIdentifierLoc(), 
+  // For record types, this is done by the AbstractClassUsageDiagnoser once
+  // the class has been completely parsed. 
+  if (!DC->isRecord() &&
+      RequireNonAbstractType(D.getIdentifierLoc(), 
                              R->getAsFunctionType()->getResultType(),
                              diag::err_abstract_type_in_decl, 
-                             0 /* return type */))
-    InvalidDecl = true;
+                             AbstractReturnType))
+        InvalidDecl = true;
   
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;
@@ -2609,9 +2612,12 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   }
 
   // Parameters can not be abstract class types.
-  if (RequireNonAbstractType(D.getIdentifierLoc(), parmDeclType, 
+  // For record types, this is done by the AbstractClassUsageDiagnoser once
+  // the class has been completely parsed. 
+  if (!CurContext->isRecord() && 
+      RequireNonAbstractType(D.getIdentifierLoc(), parmDeclType, 
                              diag::err_abstract_type_in_decl,
-                             1 /* parameter type */)) 
+                             AbstractParamType))
     D.setInvalidType(true);
 
   QualType T = adjustParameterType(parmDeclType);
@@ -3544,7 +3550,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   
   // Fields can not have abstract class types
   if (RequireNonAbstractType(Loc, T, diag::err_abstract_type_in_decl, 
-                             3 /* field type */))
+                             AbstractFieldType))
     InvalidDecl = true;
   
   // If this is declared as a bit-field, check the bit-field.
