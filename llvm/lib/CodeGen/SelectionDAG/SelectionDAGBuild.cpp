@@ -4929,9 +4929,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
 
   // Otherwise, if this was a reference to an LLVM register class, create vregs
   // for this reference.
-  std::vector<unsigned> RegClassRegs;
-  const TargetRegisterClass *RC = PhysReg.second;
-  if (RC) {
+  if (PhysReg.second != 0) {
     RegVT = *PhysReg.second->vt_begin();
     if (OpInfo.ConstraintVT == MVT::Other)
       ValueVT = RegVT;
@@ -4943,13 +4941,14 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
 
     OpInfo.AssignedRegs = RegsForValue(TLI, Regs, RegVT, ValueVT);
     return;
-  } else {
-    // This is a reference to a register class that doesn't directly correspond
-    // to an LLVM register class.  Allocate NumRegs consecutive, available,
-    // registers from the class.
-    RegClassRegs = TLI.getRegClassForInlineAsmConstraint(OpInfo.ConstraintCode,
-                                                         OpInfo.ConstraintVT);
   }
+  
+  // This is a reference to a register class that doesn't directly correspond
+  // to an LLVM register class.  Allocate NumRegs consecutive, available,
+  // registers from the class.
+  std::vector<unsigned> RegClassRegs
+    = TLI.getRegClassForInlineAsmConstraint(OpInfo.ConstraintCode,
+                                            OpInfo.ConstraintVT);
 
   const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
   unsigned NumAllocated = 0;
@@ -4965,13 +4964,11 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
 
     // Check to see if this register is allocatable (i.e. don't give out the
     // stack pointer).
-    if (RC == 0) {
-      RC = isAllocatableRegister(Reg, MF, TLI, TRI);
-      if (!RC) {        // Couldn't allocate this register.
-        // Reset NumAllocated to make sure we return consecutive registers.
-        NumAllocated = 0;
-        continue;
-      }
+    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, TLI, TRI);
+    if (!RC) {        // Couldn't allocate this register.
+      // Reset NumAllocated to make sure we return consecutive registers.
+      NumAllocated = 0;
+      continue;
     }
 
     // Okay, this register is good, we can use it.
