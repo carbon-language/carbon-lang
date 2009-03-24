@@ -748,17 +748,9 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
   case Type::DoubleTyID:
     *((double*)Ptr) = Val.DoubleVal;
     break;
-  case Type::X86_FP80TyID: {
-      uint16_t *Dest = (uint16_t*)Ptr;
-      const uint16_t *Src = (uint16_t*)Val.IntVal.getRawData();
-      // This is endian dependent, but it will only work on x86 anyway.
-      Dest[0] = Src[0];
-      Dest[1] = Src[1];
-      Dest[2] = Src[2];
-      Dest[3] = Src[3];
-      Dest[4] = Src[4];
-      break;
-    }
+  case Type::X86_FP80TyID:
+    memcpy(Ptr, Val.IntVal.getRawData(), 10);
+    break;
   case Type::PointerTyID:
     // Ensure 64 bit target pointers are fully initialized on 32 bit hosts.
     if (StoreBytes != sizeof(PointerTy))
@@ -835,16 +827,8 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
   case Type::X86_FP80TyID: {
     // This is endian dependent, but it will only work on x86 anyway.
     // FIXME: Will not trap if loading a signaling NaN.
-    uint16_t *p = (uint16_t*)Ptr;
-    union {
-      uint16_t x[8];
-      uint64_t y[2];
-    };
-    x[0] = p[1];
-    x[1] = p[2];
-    x[2] = p[3];
-    x[3] = p[4];
-    x[4] = p[0];
+    uint64_t y[2];
+    memcpy(y, Ptr, 10);
     Result.IntVal = APInt(80, 2, y);
     break;
   }
