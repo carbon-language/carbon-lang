@@ -916,8 +916,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // An rvalue of type "pointer to cv T," where T is an object type,
   // can be converted to an rvalue of type "pointer to cv void" (C++
   // 4.10p2).
-  if (FromPointeeType->isIncompleteOrObjectType() && 
-      ToPointeeType->isVoidType()) {
+  if (FromPointeeType->isObjectType() && ToPointeeType->isVoidType()) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
                                                        ToPointeeType,
                                                        ToType, Context);
@@ -2776,7 +2775,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       // Skip pointer types that aren't pointers to object types.
-      if (!(*Ptr)->getAsPointerType()->getPointeeType()->isIncompleteOrObjectType())
+      if (!(*Ptr)->getAsPointerType()->getPointeeType()->isObjectType())
         continue;
 
       QualType ParamTypes[2] = { 

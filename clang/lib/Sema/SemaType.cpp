@@ -235,7 +235,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
           Result->getAsPointerType()->getPointeeType() :
           Result->getAsReferenceType()->getPointeeType();
       
-        // If we have a pointer or reference, the pointee must have an object or
+        // If we have a pointer or reference, the pointee must have an object
         // incomplete type.
         if (!EltTy->isIncompleteOrObjectType()) {
           Diag(DS.getRestrictSpecLoc(),

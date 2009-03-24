@@ -1395,8 +1395,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //   -- for a non-type template-parameter of type pointer to
     //      object, qualification conversions (4.4) and the
     //      array-to-pointer conversion (4.2) are applied.
-    assert(ParamType->getAsPointerType()->getPointeeType()
-             ->isIncompleteOrObjectType() &&
+    assert(ParamType->getAsPointerType()->getPointeeType()->isObjectType() &&
            "Only object pointers allowed here");
 
     if (ArgType->isArrayType()) {
@@ -1435,7 +1434,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //      identical) type of the template-argument. The
     //      template-parameter is bound directly to the
     //      template-argument, which must be an lvalue.
-    assert(ParamRefType->getPointeeType()->isIncompleteOrObjectType() &&
+    assert(ParamRefType->getPointeeType()->isObjectType() &&
            "Only object references allowed here");
 
     if (!Context.hasSameUnqualifiedType(ParamRefType->getPointeeType(), ArgType)) {

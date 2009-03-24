@@ -113,11 +113,12 @@ bool Type::isVoidType() const {
 }
 
 bool Type::isObjectType() const {
-  if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType))
+  if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType) ||
+      isa<IncompleteArrayType>(CanonicalType) || isVoidType())
     return false;
   if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
     return AS->getBaseType()->isObjectType();
-  return !CanonicalType->isIncompleteType();
+  return true;
 }
 
 bool Type::isDerivedType() const {

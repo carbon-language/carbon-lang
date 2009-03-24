@@ -288,8 +288,12 @@ public:
   /// Types are partitioned into 3 broad categories (C99 6.2.5p1): 
   /// object types, function types, and incomplete types.
   
-  /// isObjectType - types that fully describe objects. An object is a region
-  /// of memory that can be examined and stored into (H&S).
+  /// \brief Determines whether the type describes an object in memory.
+  ///
+  /// Note that this definition of object type corresponds to the C++
+  /// definition of object type, which includes incomplete types, as
+  /// opposed to the C definition (which does not include incomplete
+  /// types).
   bool isObjectType() const;
 
   /// isIncompleteType - Return true if this is an incomplete type.
