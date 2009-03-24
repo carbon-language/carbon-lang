@@ -792,7 +792,16 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   
   if (const ArrayType *AT = Context.getAsArrayType(T))
     return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID);
+  
+  if (const PointerType *PT = T->getAsPointerType()) {
+    // Find the innermost pointer type.
+    while (const PointerType *T = PT->getPointeeType()->getAsPointerType())
+      PT = T;
     
+    if (const ArrayType *AT = Context.getAsArrayType(PT->getPointeeType()))
+      return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID);
+  }
+  
   const RecordType *RT = T->getAsRecordType();
   if (!RT)
     return false;
