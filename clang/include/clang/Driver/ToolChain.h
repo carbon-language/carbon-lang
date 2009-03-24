@@ -76,10 +76,6 @@ public:
   llvm::sys::Path GetFilePath(const Compilation &C, const char *Name) const;
   llvm::sys::Path GetProgramPath(const Compilation &C, const char *Name) const;
 
-  /// ShouldUseClangCompilar - Should the clang compiler be used to
-  /// handle this action.
-  bool ShouldUseClangCompiler(const Compilation &C, const JobAction &JA) const;
-
   // Platform defaults information
 
   /// IsMathErrnoDefault - Does this tool chain set -fmath-errno by

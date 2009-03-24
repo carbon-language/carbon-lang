@@ -91,7 +91,7 @@ Darwin_X86::~Darwin_X86() {
 Tool &Darwin_X86::SelectTool(const Compilation &C, 
                               const JobAction &JA) const {
   Action::ActionClass Key;
-  if (ShouldUseClangCompiler(C, JA))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -172,7 +172,7 @@ Generic_GCC::~Generic_GCC() {
 Tool &Generic_GCC::SelectTool(const Compilation &C, 
                               const JobAction &JA) const {
   Action::ActionClass Key;
-  if (ShouldUseClangCompiler(C, JA))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();

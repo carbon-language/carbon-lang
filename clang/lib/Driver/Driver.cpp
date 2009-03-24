@@ -981,3 +981,30 @@ const HostInfo *Driver::GetHostInfo(const char *Triple) const {
   return createUnknownHostInfo(*this, Arch.c_str(), Platform.c_str(), 
                                OS.c_str());
 }
+
+bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
+                                    const std::string &ArchName) const {
+  // Check if user requested no clang, or clang doesn't understand
+  // this type (we only handle single inputs for now).
+  if (CCCNoClang || JA.size() != 1 || 
+      !types::isAcceptedByClang((*JA.begin())->getType()))
+    return false;
+
+  // Otherwise make sure this is an action clang undertands.
+  if (isa<PreprocessJobAction>(JA)) {
+    if (CCCNoClangCPP)
+      return false;
+  } else if (!isa<PrecompileJobAction>(JA) && !isa<CompileJobAction>(JA))
+    return false;
+
+  // Avoid CXX if the user requested.
+  if (CCCNoClangCXX && types::isCXX((*JA.begin())->getType()))
+    return false;
+
+  // Finally, don't use clang if this isn't one of the user specified
+  // archs to build.
+  if (!CCCClangArchs.empty() && !CCCClangArchs.count(ArchName))
+    return false;
+
+  return true;
+}

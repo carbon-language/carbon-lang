@@ -77,6 +77,7 @@ public:
   /// Only print tool bindings, don't build any jobs.
   bool CCCPrintBindings : 1;
 
+private:
   /// Don't use clang for any tasks.
   bool CCCNoClang : 1;
 
@@ -226,6 +227,11 @@ public:
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
   const HostInfo *GetHostInfo(const char *HostTriple) const;
+
+  /// ShouldUseClangCompilar - Should the clang compiler be used to
+  /// handle this action.
+  bool ShouldUseClangCompiler(const Compilation &C, const JobAction &JA, 
+                              const std::string &ArchName) const;
 
   /// @}
 };
