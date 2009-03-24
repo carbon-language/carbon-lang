@@ -4929,15 +4929,15 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
 
   // Otherwise, if this was a reference to an LLVM register class, create vregs
   // for this reference.
-  if (PhysReg.second != 0) {
-    RegVT = *PhysReg.second->vt_begin();
+  if (const TargetRegisterClass *RC = PhysReg.second) {
+    RegVT = *RC->vt_begin();
     if (OpInfo.ConstraintVT == MVT::Other)
       ValueVT = RegVT;
 
     // Create the appropriate number of virtual registers.
     MachineRegisterInfo &RegInfo = MF.getRegInfo();
     for (; NumRegs; --NumRegs)
-      Regs.push_back(RegInfo.createVirtualRegister(PhysReg.second));
+      Regs.push_back(RegInfo.createVirtualRegister(RC));
 
     OpInfo.AssignedRegs = RegsForValue(TLI, Regs, RegVT, ValueVT);
     return;
