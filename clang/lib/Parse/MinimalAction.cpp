@@ -74,7 +74,7 @@ namespace {
     
     void AddEntry(bool isTypename, IdentifierInfo *II) {
       TypeNameInfo *TI = Allocator.Allocate<TypeNameInfo>();
-      new (TI) TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
+      new (TI) TypeNameInfo(isTypename, II->getFETokenInfo<TypeNameInfo>());
       II->setFETokenInfo(TI);
     }
     

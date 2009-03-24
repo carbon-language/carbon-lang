@@ -1,6 +1,14 @@
-// RUN: clang-cc %s -fsyntax-only
+// RUN: clang-cc %s -parse-noop
 
 // Test the X can be overloaded inside the struct.
 typedef int X; 
 struct Y { short X; };
+
+// Variable shadows type, PR3872
+
+typedef struct foo { int x; } foo;
+void test() {
+   foo *foo;
+   foo->x = 0;
+}
 
