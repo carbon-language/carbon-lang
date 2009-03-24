@@ -95,6 +95,7 @@ job, but there are lots of little pieces that can be picked off and implemented.
   <li>Implicit definitions of special member functions: Clang implicitly declares the various special member functions (default constructor, copy constructor, copy assignment operator, destructor) when necessary, but is not yet able to provide definitions for these functions.</li>
   <li>Parsing and AST representations of friend classes and functions</li>
   <li>AST representation for implicit C++ conversions: implicit conversions that involve non-trivial operations (e.g., invoking a user-defined conversion function, performing a base-to-derived or derived-to-base conversion) need explicit representation in Clang's AST.</li>
+  <li>Improved diagnostics for overload resolution failures: after an overload resolution failure, we currently print out the overload resolution candidates. We should also print out the reason that each candidate failed, e.g., "too few arguments", "too many arguments", "cannot initialize parameter with an lvalue of type 'foo'", etc.</li>
 </ul>
   
 Also, see the <a href="cxx_status.html">C++ status report page</a> to
