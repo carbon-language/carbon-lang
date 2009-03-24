@@ -752,11 +752,11 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
       uint16_t *Dest = (uint16_t*)Ptr;
       const uint16_t *Src = (uint16_t*)Val.IntVal.getRawData();
       // This is endian dependent, but it will only work on x86 anyway.
-      Dest[0] = Src[4];
-      Dest[1] = Src[0];
-      Dest[2] = Src[1];
-      Dest[3] = Src[2];
-      Dest[4] = Src[3];
+      Dest[0] = Src[0];
+      Dest[1] = Src[1];
+      Dest[2] = Src[2];
+      Dest[3] = Src[3];
+      Dest[4] = Src[4];
       break;
     }
   case Type::PointerTyID:
