@@ -2501,3 +2501,19 @@ Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   CurContext->addDecl(Decl);
   return Decl;
 }
+
+void Sema::SetDeclDeleted(DeclTy *dcl, SourceLocation DelLoc) {
+  Decl *Dcl = static_cast<Decl*>(dcl);
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(Dcl);
+  if (!Fn) {
+    Diag(DelLoc, diag::err_deleted_non_function);
+    return;
+  }
+  if (const FunctionDecl *Prev = Fn->getPreviousDeclaration()) {
+    Diag(DelLoc, diag::err_deleted_decl_not_first);
+    Diag(Prev->getLocation(), diag::note_previous_declaration);
+    // If the declaration wasn't the first, we delete the function anyway for
+    // recovery.
+  }
+  Fn->setDeleted();
+}

@@ -228,7 +228,12 @@ def err_allocation_of_abstract_type : Error<
   
 def note_pure_virtual_function : Note<
   "pure virtual function %0">;
-  
+
+def err_deleted_non_function : Error<
+  "only functions can have deleted definitions">;
+def err_deleted_decl_not_first : Error<
+  "deleted definition must be first declaration">;
+
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
   "incomplete type %0 named in nested name specifier">;

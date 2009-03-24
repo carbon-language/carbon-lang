@@ -234,6 +234,14 @@ public:
     return;
   }
 
+  /// SetDeclDeleted - This action is called immediately after ActOnDeclarator
+  /// if =delete is parsed. C++0x [dcl.fct.def]p10
+  /// Note that this can be called even for variable declarations. It's the
+  /// action's job to reject it.
+  virtual void SetDeclDeleted(DeclTy *Dcl, SourceLocation DelLoc) {
+    return;
+  }
+
   /// ActOnUninitializedDecl - This action is called immediately after
   /// ActOnDeclarator (when an initializer is *not* present).
   virtual void ActOnUninitializedDecl(DeclTy *Dcl) {

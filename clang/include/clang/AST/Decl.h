@@ -618,6 +618,8 @@ public:
   /// declaration of the function is also a definition. This does not
   /// determine whether the function has been defined (e.g., in a
   /// previous definition); for that information, use getBody.
+  /// FIXME: Should return true if function is deleted or defaulted. However,
+  /// CodeGenModule.cpp uses it, and I don't know if this would break it.
   bool isThisDeclarationADefinition() const { return Body != 0; }
 
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }

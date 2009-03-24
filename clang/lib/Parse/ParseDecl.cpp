@@ -225,7 +225,7 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 /// [C++]   namespace-definition
 /// [C++]   using-directive
 /// [C++]   using-declaration [TODO]
-//  [C++0x] static_assert-declaration
+/// [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///
 Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
@@ -285,6 +285,11 @@ Parser::DeclTy *Parser::ParseSimpleDeclaration(unsigned Context) {
 /// [C++] initializer:
 /// [C++]   '=' initializer-clause
 /// [C++]   '(' expression-list ')'
+/// [C++0x] '=' 'default'                                                [TODO]
+/// [C++0x] '=' 'delete'
+///
+/// According to the standard grammar, =default and =delete are function
+/// definitions, but that definitely doesn't fit with the parser here.
 ///
 Parser::DeclTy *Parser::
 ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
@@ -322,12 +327,17 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     // Parse declarator '=' initializer.
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      OwningExprResult Init(ParseInitializer());
-      if (Init.isInvalid()) {
-        SkipUntil(tok::semi);
-        return 0;
+      if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
+        SourceLocation DelLoc = ConsumeToken();
+        Actions.SetDeclDeleted(LastDeclInGroup, DelLoc);
+      } else {
+        OwningExprResult Init(ParseInitializer());
+        if (Init.isInvalid()) {
+          SkipUntil(tok::semi);
+          return 0;
+        }
+        Actions.AddInitializerToDecl(LastDeclInGroup, move(Init));
       }
-      Actions.AddInitializerToDecl(LastDeclInGroup, move(Init));
     } else if (Tok.is(tok::l_paren)) {
       // Parse C++ direct initializer: '(' expression-list ')'
       SourceLocation LParenLoc = ConsumeParen();
@@ -2037,13 +2047,13 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///         declaration-specifiers declarator
 /// [C++]   declaration-specifiers declarator '=' assignment-expression
 /// [GNU]   declaration-specifiers declarator attributes
-///         declaration-specifiers abstract-declarator[opt] 
-/// [C++]   declaration-specifiers abstract-declarator[opt] 
+///         declaration-specifiers abstract-declarator[opt]
+/// [C++]   declaration-specifiers abstract-declarator[opt]
 ///           '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
 /// For C++, after the parameter-list, it also parses "cv-qualifier-seq[opt]"
-/// and "exception-specification[opt]"(TODO).
+/// and "exception-specification[opt]".
 ///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                      AttributeList *AttrList,

@@ -363,6 +363,7 @@ public:
   virtual void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
   void AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit);
   void ActOnUninitializedDecl(DeclTy *dcl);
+  virtual void SetDeclDeleted(DeclTy *dcl, SourceLocation DelLoc);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D);
