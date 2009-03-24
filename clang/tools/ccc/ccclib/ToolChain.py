@@ -262,6 +262,7 @@ class Generic_GCC_ToolChain(ToolChain):
             Phases.AssemblePhase : Tools.GCC_AssembleTool(self),
             Phases.LinkPhase : Tools.GCC_LinkTool(self),
             }
+        self.programPathPrefixes.append(self.driver.driverDir)
 
     def selectTool(self, action):
         assert isinstance(action, Phases.JobAction)
