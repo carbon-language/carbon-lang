@@ -70,14 +70,25 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   const char *DirName = FE ? FE->getDir()->getName() : "<unknown>";
   
   bool isMain = (FE == SM.getFileEntryForID(SM.getMainFileID()));
+  unsigned LangTag = llvm::dwarf::DW_LANG_C89;
+  
+  LangOptions LO =  M->getLangOptions();
+  if (LO.CPlusPlus
+      && (LO.ObjC1 || LO.ObjC2 || LO.ObjCNonFragileABI || LO.NeXTRuntime))
+    LangTag = llvm::dwarf::DW_LANG_ObjC_plus_plus;
+  else if (LO.CPlusPlus)
+    LangTag = llvm::dwarf::DW_LANG_C_plus_plus;
+  else if (LO.ObjC1 || LO.ObjC2 || LO.ObjCNonFragileABI || LO.NeXTRuntime)
+    LangTag = llvm::dwarf::DW_LANG_ObjC;
+  else if (LO.C99)
+    LangTag = llvm::dwarf::DW_LANG_C99;
+    
   // Create new compile unit.
-  // FIXME: Handle other language IDs as well.
   // FIXME: Do not know how to get clang version yet.
   // FIXME: Encode command line options.
   // FIXME: Encode optimization level.
-  return Unit = DebugFactory.CreateCompileUnit(llvm::dwarf::DW_LANG_C89,
-                                               FileName, DirName, "clang",
-                                               isMain);
+  return Unit = DebugFactory.CreateCompileUnit(LangTag, FileName, DirName, 
+                                               "clang", isMain);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
