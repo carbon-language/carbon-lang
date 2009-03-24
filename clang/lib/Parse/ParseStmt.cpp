@@ -98,29 +98,32 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
     // PASS THROUGH.
 
-  default:
+  default: {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation();
       DeclTy *Decl = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart);
-    } else if (Tok.is(tok::r_brace)) {
+    }
+
+    if (Tok.is(tok::r_brace)) {
       Diag(Tok, diag::err_expected_statement);
       return StmtError();
-    } else {
-      // expression[opt] ';'
-      OwningExprResult Expr(ParseExpression());
-      if (Expr.isInvalid()) {
-        // If the expression is invalid, skip ahead to the next semicolon.  Not
-        // doing this opens us up to the possibility of infinite loops if
-        // ParseExpression does not consume any tokens.
-        SkipUntil(tok::semi);
-        return StmtError();
-      }
-      // Otherwise, eat the semicolon.
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Actions.ActOnExprStmt(move(Expr));
     }
+    
+    // expression[opt] ';'
+    OwningExprResult Expr(ParseExpression());
+    if (Expr.isInvalid()) {
+      // If the expression is invalid, skip ahead to the next semicolon.  Not
+      // doing this opens us up to the possibility of infinite loops if
+      // ParseExpression does not consume any tokens.
+      SkipUntil(tok::semi);
+      return StmtError();
+    }
+    // Otherwise, eat the semicolon.
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+    return Actions.ActOnExprStmt(move(Expr));
+  }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
     return ParseCaseStatement();

@@ -1627,8 +1627,9 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   // C++ member pointers start with a '::' or a nested-name.
   // Member pointers get special handling, since there's no place for the
   // scope spec in the generic path below.
-  if ((Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
-       Tok.is(tok::annot_cxxscope)) && getLang().CPlusPlus) {
+  if (getLang().CPlusPlus &&
+      (Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
+       Tok.is(tok::annot_cxxscope))) {
     CXXScopeSpec SS;
     if (ParseOptionalCXXScopeSpecifier(SS)) {
       if(Tok.isNot(tok::star)) {
@@ -1659,7 +1660,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
-  if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
+  if (Kind != tok::star &&
+      (Kind != tok::amp || !getLang().CPlusPlus) &&
       // We parse rvalue refs in C++03, because otherwise the errors are scary.
       (Kind != tok::ampamp || !getLang().CPlusPlus) &&
       (Kind != tok::caret || !getLang().Blocks)) {
