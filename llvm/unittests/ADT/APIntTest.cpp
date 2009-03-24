@@ -7,12 +7,28 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <ostream>
+#include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace llvm;
 
 namespace {
+
+// Make the Google Test failure output equivalent to APInt::dump()
+std::ostream& operator<<(std::ostream &OS, const llvm::APInt& I) {
+  llvm::raw_os_ostream raw_os(OS);
+
+  SmallString<40> S, U;
+  I.toStringUnsigned(U);
+  I.toStringSigned(S);
+  raw_os << "APInt(" << I.getBitWidth()<< "b, "
+         << U.c_str() << "u " << S.c_str() << "s)";
+  raw_os.flush();
+  return OS;
+}
 
 // Test that APInt shift left works when bitwidth > 64 and shiftamt == 0
 TEST(APIntTest, ShiftLeftByZero) {
@@ -22,7 +38,7 @@ TEST(APIntTest, ShiftLeftByZero) {
   EXPECT_EQ(false, Shl[1]);
 }
 
-TEST(APIntTest, I128NegativeCount) {
+TEST(APIntTest, i128_NegativeCount) {
   APInt Minus3(128, (uint64_t)-3, true);
   EXPECT_EQ(126u, Minus3.countLeadingOnes());
   EXPECT_EQ(-3, Minus3.getSExtValue());
@@ -37,7 +53,7 @@ TEST(APIntTest, I128NegativeCount) {
   EXPECT_EQ(-1, Minus1.getSExtValue());
 }
 
-TEST(APIntTest, I33Count) {
+TEST(APIntTest, i33_Count) {
   APInt i33minus2(33, -2, true);
   EXPECT_EQ(0u, i33minus2.countLeadingZeros());
   EXPECT_EQ(32u, i33minus2.countLeadingOnes());
@@ -48,7 +64,7 @@ TEST(APIntTest, I33Count) {
   EXPECT_EQ(((uint64_t)-2)&((1ull<<33) -1), i33minus2.getZExtValue());
 }
 
-TEST(APIntTest, I65Count) {
+TEST(APIntTest, i65_Count) {
   APInt i65minus(65, 0, true);
   i65minus.set(64);
   EXPECT_EQ(0u, i65minus.countLeadingZeros());
@@ -58,7 +74,7 @@ TEST(APIntTest, I65Count) {
   EXPECT_EQ(1u, i65minus.countPopulation());
 }
 
-TEST(APIntTest, I128PositiveCount) {
+TEST(APIntTest, i128_PositiveCount) {
   APInt u128max = APInt::getAllOnesValue(128);
   EXPECT_EQ(128u, u128max.countLeadingOnes());
   EXPECT_EQ(0u, u128max.countLeadingZeros());
@@ -95,6 +111,69 @@ TEST(APIntTest, I128PositiveCount) {
   EXPECT_EQ(1u, one.countPopulation());
   EXPECT_EQ(1, one.getSExtValue());
   EXPECT_EQ(1u, one.getZExtValue());
+}
+
+TEST(APIntTest, i1) {
+  const APInt neg_two(1, -2, true);
+  const APInt neg_one(1, -1, true);
+  const APInt zero(1, 0);
+  const APInt one(1, 1);
+  const APInt two(1, 2);
+
+  EXPECT_EQ(0, neg_two.getSExtValue());
+  EXPECT_EQ(-1, neg_one.getSExtValue());
+  EXPECT_EQ(1u, neg_one.getZExtValue());
+  EXPECT_EQ(0u, zero.getZExtValue());
+  EXPECT_EQ(-1, one.getSExtValue());
+  EXPECT_EQ(1u, one.getZExtValue());
+  EXPECT_EQ(0u, two.getZExtValue());
+  EXPECT_EQ(0, two.getSExtValue());
+
+  // Basic equalities for 1-bit values.
+  EXPECT_EQ(zero, two);
+  EXPECT_EQ(zero, neg_two);
+  EXPECT_EQ(one, neg_one);
+  EXPECT_EQ(two, neg_two);
+
+  // Additions.
+  EXPECT_EQ(two, one + one);
+  EXPECT_EQ(zero, neg_one + one);
+  EXPECT_EQ(neg_two, neg_one + neg_one);
+
+  // Subtractions.
+  EXPECT_EQ(neg_two, neg_one - one);
+  EXPECT_EQ(two, one - neg_one);
+  EXPECT_EQ(zero, one - one);
+
+  // Shifts.
+  EXPECT_EQ(zero, one << one);
+  EXPECT_EQ(one, one << zero);
+  EXPECT_EQ(zero, one.shl(1));
+  EXPECT_EQ(one, one.shl(0));
+  EXPECT_EQ(zero, one.lshr(1));
+  EXPECT_EQ(zero, one.ashr(1));
+
+  // Multiplies.
+  EXPECT_EQ(neg_one, neg_one * one);
+  EXPECT_EQ(neg_one, one * neg_one);
+  EXPECT_EQ(one, neg_one * neg_one);
+  EXPECT_EQ(one, one * one);
+
+  // Divides.
+  EXPECT_EQ(neg_one, one.sdiv(neg_one));
+  EXPECT_EQ(neg_one, neg_one.sdiv(one));
+  EXPECT_EQ(one, neg_one.sdiv(neg_one));
+  EXPECT_EQ(one, one.sdiv(one));
+
+  EXPECT_EQ(neg_one, one.udiv(neg_one));
+  EXPECT_EQ(neg_one, neg_one.udiv(one));
+  EXPECT_EQ(one, neg_one.udiv(neg_one));
+  EXPECT_EQ(one, one.udiv(one));
+
+  // Remainders.
+  EXPECT_EQ(zero, neg_one.srem(one));
+  EXPECT_EQ(zero, neg_one.urem(one));
+  EXPECT_EQ(zero, one.srem(neg_one));
 }
 
 }

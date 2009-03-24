@@ -16,7 +16,7 @@ BUILD_ARCHIVE = 1
 CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/
 CPP.Flags += -Wno-variadic-macros
 
-PARALLEL_DIRS = ADT Support
+PARALLEL_DIRS = ADT Support VMCore
 
 include $(LEVEL)/Makefile.common
 
