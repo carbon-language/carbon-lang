@@ -123,14 +123,14 @@ bool AAEval::runOnFunction(Function &F) {
       Pointers.insert(&*I);
     Instruction &Inst = *I;
     User::op_iterator OI = Inst.op_begin();
-    if ((isa<InvokeInst>(Inst) || isa<CallInst>(Inst)) &&
-        isa<Function>(Inst.getOperand(0)))
+    CallSite CS = CallSite::get(&Inst);
+    if (CS.getInstruction() &&
+        isa<Function>(CS.getCalledValue()))
       ++OI;  // Skip actual functions for direct function calls.
     for (; OI != Inst.op_end(); ++OI)
       if (isa<PointerType>((*OI)->getType()) && !isa<ConstantPointerNull>(*OI))
         Pointers.insert(*OI);
 
-    CallSite CS = CallSite::get(&*I);
     if (CS.getInstruction()) CallSites.insert(CS);
   }
 
