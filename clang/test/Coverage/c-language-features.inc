@@ -128,16 +128,32 @@ void f4(int a0, int a1, int a2, va_list ap) {
   struct { char f0[10]; } *t28;
   int t29 = t28 - t28;
   char *t30 = &t28->f0[1];
+
+  struct s1 { int f0; };
+  struct s1 t31_a, t31_b;
+  int t31_cond;
+  int t31 = (t31_cond ? t31_a : t31_b).f0;
+
+  _Complex float t32_a, t32_b;
+  int t32_cond;
+  int t32 = __real (t32_cond ? t32_a : t32_b);
 }
 
 // Extended vectors
 
+typedef __attribute__((ext_vector_type(2))) float float2;
 typedef __attribute__((ext_vector_type(4))) float float4;
 
 void f5() {
   float4 t0 = (float4) { 0, 1, 2, 3 };
   float4 t1 = t0;
   t0.lo.even = t1.hi.x;
+
+  // irgen doesn't support this yet.
+#if 0
+  int t2_cond;
+  float2 t2 = (t2_cond ? t0 : t1).lo;
+#endif
 }
 
 void f6() {

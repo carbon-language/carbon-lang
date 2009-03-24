@@ -179,6 +179,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::MemberExprClass: return EmitMemberExpr(cast<MemberExpr>(E));
   case Expr::CompoundLiteralExprClass:
     return EmitCompoundLiteralLValue(cast<CompoundLiteralExpr>(E));
+  case Expr::ConditionalOperatorClass:
+    return EmitConditionalOperator(cast<ConditionalOperator>(E));
   case Expr::ChooseExprClass:
     return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr(getContext()));
   case Expr::ImplicitCastExprClass:
@@ -1007,6 +1009,24 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
   }
 
   return Result;
+}
+
+LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
+  // We don't handle vectors yet.
+  if (E->getType()->isVectorType())
+    return EmitUnsupportedLValue(E, "conditional operator");
+
+  // ?: here should be an aggregate.
+  assert((hasAggregateLLVMType(E->getType()) && 
+          !E->getType()->isAnyComplexType()) &&
+         "Unexpected conditional operator!");
+
+  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
+  EmitAggExpr(E, Temp, false);
+
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
+ 
 }
 
 /// EmitCastLValue - Casts are never lvalues.  If a cast is needed by the code

@@ -88,3 +88,9 @@ _Complex float f4() {return ((union f4_y)(_Complex float)2.0).y;}
 struct f5_a { int a; } f5_a;
 union f5_z {int x; struct f5_a y;};
 struct f5_a f5() {return ((union f5_z)f5_a).y;}
+
+// ?: in "lvalue"
+struct s6 { int f0; };
+int f6(int a0, struct s6 a1, struct s6 a2) {
+  return (a0 ? a1 : a2).f0;
+}
