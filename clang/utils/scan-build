@@ -81,9 +81,9 @@ sub DieDiag {
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
-my $ClangSB = Cwd::realpath("$RealBin/bin/clang-cc");
+my $ClangSB = Cwd::realpath("$RealBin/libexec/clang-cc");
 
-# Also look for 'clang' in the same directory as scan-build.
+# Also look for 'clang-cc' in the same directory as scan-build.
 if (!defined $ClangSB || ! -x $ClangSB) {
   $ClangSB = Cwd::realpath("$RealBin/clang-cc");
 }
@@ -1158,14 +1158,14 @@ $HtmlDir = GetHTMLRunDir($HtmlDir);
 # Set the appropriate environment variables.
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
-my $Cmd = Cwd::realpath("$RealBin/bin/ccc-analyzer");
+my $Cmd = Cwd::realpath("$RealBin/libexec/ccc-analyzer");
 if (!defined $Cmd || ! -x $Cmd) {
   $Cmd = Cwd::realpath("$RealBin/ccc-analyzer");
   DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n") if(! -x $Cmd);
 }
 
 if (!defined $ClangSB || ! -x $ClangSB) {
-  Diag("'clang-cc' executable not found in '$RealBin/bin'.\n");
+  Diag("'clang-cc' executable not found in '$RealBin/libexec'.\n");
   Diag("Using 'clang-cc' from path.\n");
 }
 
