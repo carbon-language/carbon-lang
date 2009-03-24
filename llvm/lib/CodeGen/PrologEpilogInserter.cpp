@@ -513,8 +513,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
     int SPAdj = 0;  // SP offset due to call frame setup / destroy.
     if (RS) RS->enterBasicBlock(BB);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
-      MachineInstr *MI = I;
-
       if (I->getOpcode() == TargetInstrInfo::DECLARE) {
         // Ignore it.
         ++I;
@@ -545,8 +543,8 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
         continue;
       }
 
+      MachineInstr *MI = I;
       bool DoIncr = true;
-
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
         if (MI->getOperand(i).isFI()) {
           // Some instructions (e.g. inline asm instructions) can have
