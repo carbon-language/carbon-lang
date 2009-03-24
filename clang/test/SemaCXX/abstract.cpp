@@ -66,3 +66,19 @@ class F {
     
     virtual void f() = 0; // expected-note {{pure virtual function 'f'}}
 };
+
+class Abstract;
+
+void t7(Abstract a); // expected-error {{parameter type 'Abstract' is an abstract class}}
+
+void t8() {
+    void h(Abstract a); // expected-error {{parameter type 'Abstract' is an abstract class}}
+}
+
+namespace N {
+    void h(Abstract a); // expected-error {{parameter type 'Abstract' is an abstract class}}
+}
+
+class Abstract {
+ virtual void f() = 0; // expected-note {{pure virtual function 'f'}}
+};

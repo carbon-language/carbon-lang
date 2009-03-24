@@ -785,13 +785,15 @@ namespace {
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T, 
-                                  unsigned DiagID, AbstractDiagSelID SelID) {
+                                  unsigned DiagID, AbstractDiagSelID SelID,
+                                  const CXXRecordDecl *CurrentRD) {
   
   if (!getLangOptions().CPlusPlus)
     return false;
   
   if (const ArrayType *AT = Context.getAsArrayType(T))
-    return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID);
+    return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID,
+                                  CurrentRD);
   
   if (const PointerType *PT = T->getAsPointerType()) {
     // Find the innermost pointer type.
@@ -799,7 +801,8 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
       PT = T;
     
     if (const ArrayType *AT = Context.getAsArrayType(PT->getPointeeType()))
-      return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID);
+      return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID,
+                                    CurrentRD);
   }
   
   const RecordType *RT = T->getAsRecordType();
@@ -810,6 +813,9 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   if (!RD)
     return false;
 
+  if (CurrentRD && CurrentRD != RD)
+    return false;
+  
   if (!RD->isAbstract())
     return false;
   
@@ -843,39 +849,57 @@ namespace {
     Sema &SemaRef;
     CXXRecordDecl *AbstractClass;
   
-  public:
-    AbstractClassUsageDiagnoser(Sema& SemaRef, CXXRecordDecl *ac)
-      : SemaRef(SemaRef), AbstractClass(ac) {}
-      
-    bool VisitCXXRecordDecl(const CXXRecordDecl *RD) {
+    bool VisitDeclContext(const DeclContext *DC) {
       bool Invalid = false;
 
-      for (CXXRecordDecl::decl_iterator I = RD->decls_begin(),
-           E = RD->decls_end(); I != E; ++I)
+      for (CXXRecordDecl::decl_iterator I = DC->decls_begin(),
+           E = DC->decls_end(); I != E; ++I)
         Invalid |= Visit(*I);
-              
+
       return Invalid;
     }
-    
-    bool VisitCXXMethodDecl(const CXXMethodDecl *MD) {
-      // Check the return type.
-      QualType RTy = MD->getType()->getAsFunctionType()->getResultType();
-      bool Invalid = 
-        SemaRef.RequireNonAbstractType(MD->getLocation(), RTy,
-                                       diag::err_abstract_type_in_decl,
-                                       Sema::AbstractReturnType);
+      
+  public:
+    AbstractClassUsageDiagnoser(Sema& SemaRef, CXXRecordDecl *ac)
+      : SemaRef(SemaRef), AbstractClass(ac) {
+        Visit(SemaRef.Context.getTranslationUnitDecl());
+    }
 
-      for (CXXMethodDecl::param_const_iterator I = MD->param_begin(), 
-           E = MD->param_end(); I != E; ++I) {
+    bool VisitFunctionDecl(const FunctionDecl *FD) {
+      if (FD->isThisDeclarationADefinition()) {
+        // No need to do the check if we're in a definition, because it requires
+        // that the return/param types are complete.
+        // because that requires 
+        return VisitDeclContext(FD);
+      }
+      
+      // Check the return type.
+      QualType RTy = FD->getType()->getAsFunctionType()->getResultType();
+      bool Invalid = 
+        SemaRef.RequireNonAbstractType(FD->getLocation(), RTy,
+                                       diag::err_abstract_type_in_decl,
+                                       Sema::AbstractReturnType,
+                                       AbstractClass);
+
+      for (FunctionDecl::param_const_iterator I = FD->param_begin(), 
+           E = FD->param_end(); I != E; ++I) {
         const ParmVarDecl *VD = *I;
         Invalid |= 
           SemaRef.RequireNonAbstractType(VD->getLocation(),
                                          VD->getOriginalType(), 
                                          diag::err_abstract_type_in_decl, 
-                                         Sema::AbstractParamType);
+                                         Sema::AbstractParamType,
+                                         AbstractClass);
       }
 
       return Invalid;
+    }
+    
+    bool VisitDecl(const Decl* D) {
+      if (const DeclContext *DC = dyn_cast<DeclContext>(D))
+        return VisitDeclContext(DC);
+      
+      return false;
     }
   };
 }
@@ -898,8 +922,8 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
       RD->setAbstract(true);
   }
   
-  if (RD->isAbstract())
-    AbstractClassUsageDiagnoser(*this, RD).Visit(RD);
+  if (RD->isAbstract()) 
+    AbstractClassUsageDiagnoser(*this, RD);
     
   if (!Template)
     AddImplicitlyDeclaredMembersToClass(RD);

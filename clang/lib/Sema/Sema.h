@@ -1647,7 +1647,8 @@ public:
   };
   
   bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned DiagID, 
-                              AbstractDiagSelID SelID = AbstractNone);
+                              AbstractDiagSelID SelID = AbstractNone,
+                              const CXXRecordDecl *CurrentRD = 0);
 
   //===--------------------------------------------------------------------===//
   // C++ Overloaded Operators [C++ 13.5]
