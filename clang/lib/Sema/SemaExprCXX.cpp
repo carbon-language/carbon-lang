@@ -242,10 +242,6 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (CheckAllocatedType(AllocType, D))
     return ExprError();
 
-  if (RequireNonAbstractType(D.getSourceRange().getBegin(), AllocType,
-                             diag::err_allocation_of_abstract_type))
-    return ExprError();
-  
   QualType ResultType = AllocType->isDependentType()
                           ? Context.DependentTy
                           : Context.getPointerType(AllocType);
@@ -364,23 +360,20 @@ bool Sema::CheckAllocatedType(QualType AllocType, const Declarator &D)
 {
   // C++ 5.3.4p1: "[The] type shall be a complete object type, but not an
   //   abstract class type or array thereof.
-  // FIXME: We don't have abstract types yet.
-  // FIXME: Under C++ semantics, an incomplete object type is still an object
-  // type. This code assumes the C semantics, where it's not.
-  if (!AllocType->isObjectType()) {
-    unsigned type; // For the select in the message.
-    if (AllocType->isFunctionType()) {
-      type = 0;
-    } else if(AllocType->isIncompleteType()) {
-      type = 1;
-    } else {
-      assert(AllocType->isReferenceType() && "Unhandled non-object type.");
-      type = 2;
-    }
-    Diag(D.getSourceRange().getBegin(), diag::err_bad_new_type)
-      << AllocType << type << D.getSourceRange();
+  if (AllocType->isFunctionType())
+    return Diag(D.getSourceRange().getBegin(), diag::err_bad_new_type)
+      << AllocType << 0 << D.getSourceRange();
+  else if (AllocType->isReferenceType())
+    return Diag(D.getSourceRange().getBegin(), diag::err_bad_new_type)
+      << AllocType << 1 << D.getSourceRange();
+  else if (!AllocType->isDependentType() &&
+           RequireCompleteType(D.getSourceRange().getBegin(), AllocType,
+                               diag::err_new_incomplete_type,
+                               D.getSourceRange()))
     return true;
-  }
+  else if (RequireNonAbstractType(D.getSourceRange().getBegin(), AllocType,
+                                  diag::err_allocation_of_abstract_type))
+    return true;
 
   // Every dimension shall be of constant size.
   unsigned i = 1;
@@ -943,11 +936,15 @@ QualType Sema::CheckPointerToMemberOperands(
   //   class type) [...]
   QualType RType = rex->getType();
   const MemberPointerType *MemPtr = RType->getAsMemberPointerType();
-  if (!MemPtr || MemPtr->getClass()->isIncompleteType()) {
+  if (!MemPtr) {
     Diag(Loc, diag::err_bad_memptr_rhs)
       << OpSpelling << RType << rex->getSourceRange();
     return QualType();
-  }
+  } else if (RequireCompleteType(Loc, QualType(MemPtr->getClass(), 0),
+                                 diag::err_memptr_rhs_incomplete,
+                                 rex->getSourceRange()))
+    return QualType();
+
   QualType Class(MemPtr->getClass(), 0);
 
   // C++ 5.5p2

@@ -59,4 +59,5 @@ void f1static() {
   register void f2register(int); // expected-error{{illegal storage class on function}}
 }
 
-struct incomplete_test a(void) {} // expected-error{{result type for function definition cannot be incomplete}}
+struct incomplete_test a(void) {} // expected-error{{incomplete result type 'struct incomplete_test' in function definition}} \
+    // expected-note{{forward declaration of 'struct incomplete_test'}}

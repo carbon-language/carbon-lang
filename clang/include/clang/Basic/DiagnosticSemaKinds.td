@@ -817,7 +817,7 @@ def err_block_return_missing_expr : Error<
 def err_block_with_return_type_requires_args : Error<
   "block with explicit return type requires argument list">;
 def err_func_def_incomplete_result : Error<
-  "result type for function definition cannot be incomplete">;
+  "incomplete result type %0 in function definition">;
 
 // Expressions.
 def ext_sizeof_function_type : Extension<
@@ -842,8 +842,10 @@ def warn_floatingpoint_eq : Warning<
 def err_typecheck_subscript_value : Error<
   "subscripted value is neither array nor pointer">;
 def err_typecheck_subscript : Error<"array subscript is not an integer">;
-def err_typecheck_subscript_not_object : Error<
-  "illegal subscript of non-object type %0">;
+def err_subscript_function_type : Error<
+  "subscript of pointer to function type %0">;
+def err_subscript_incomplete_type : Error<
+  "subscript of pointer to incomplete type %0">;
 def err_typecheck_member_reference_struct_union : Error<
   "member reference base type %0 is not a structure or union">;
 def err_typecheck_member_reference_ivar : Error<
@@ -1026,7 +1028,9 @@ def err_static_illegal_in_new : Error<
 def err_array_new_needs_size : Error<
   "array size must be specified in new expressions">;
 def err_bad_new_type : Error<
-  "cannot allocate %select{function|incomplete|reference}1 type %0 with new">;
+  "cannot allocate %select{function|reference}1 type %0 with new">;
+def err_new_incomplete_type : Error<
+  "allocation of incomplete type %0">;
 def err_new_array_nonconst : Error<
   "only the first dimension of an allocated array may be non-const">;
 def err_array_size_not_integral : Error<
@@ -1049,8 +1053,9 @@ def err_qualified_catch_declarator : Error<
   "exception declarator cannot be qualified">;
 def err_early_catch_all : Error<"catch-all handler must come last">;
 def err_bad_memptr_rhs : Error<
-  "right hand operand to %0 must be a pointer to member of a complete class "
-  "but is %1">;
+  "right hand operand to %0 has non pointer-to-member type %1">;
+def err_memptr_rhs_incomplete : Error<
+  "right hand operand is a pointer to member of incomplete type %0">;
 
 def err_bad_memptr_lhs : Error<
   "left hand operand to %0 must be a %select{|pointer to }1class "

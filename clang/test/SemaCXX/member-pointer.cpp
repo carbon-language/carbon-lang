@@ -80,7 +80,7 @@ void g() {
   void (HasMembers::*pmd)() = &HasMembers::d;
 }
 
-struct Incomplete;
+struct Incomplete; // expected-note{{forward declaration}}
 
 void h() {
   HasMembers hm, *phm = &hm;
@@ -110,12 +110,12 @@ void h() {
   (void)(f.*pai); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'struct F'}}
   (void)(ptrf->*pai); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct F *'}}
 
-  (void)(hm.*i); // expected-error {{right hand operand to .* must be a pointer to member of a complete class but is 'int'}}
-  (void)(phm->*i); // expected-error {{right hand operand to ->* must be a pointer to member of a complete class but is 'int'}}
+  (void)(hm.*i); // expected-error {{pointer-to-member}}
+  (void)(phm->*i); // expected-error {{pointer-to-member}}
 
   Incomplete *inc;
   int Incomplete::*pii = 0;
-  (void)inc->*pii; // expected-error {{right hand operand to ->* must be a pointer to member of a complete class but is 'int struct Incomplete::*'}}
+  (void)inc->*pii; // expected-error {{right hand operand is a pointer to member of incomplete type 'struct Incomplete'}}
 }
 
 struct OverloadsPtrMem

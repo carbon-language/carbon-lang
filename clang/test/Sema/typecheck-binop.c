@@ -1,6 +1,6 @@
 /* RUN: clang-cc %s -fsyntax-only -pedantic -verify
  */
-struct incomplete;
+struct incomplete; // expected-note{{forward declaration of 'struct incomplete'}}
 
 int sub1(int *a, double *b) { 
   return a - b;    /* expected-error{{not pointers to compatible types}} */
@@ -16,6 +16,10 @@ void *sub3(void *P) {
 
 int sub4(void *P, void *Q) {
   return P-Q;      /* expected-warning{{GNU void* extension}} */
+}
+
+int sub5(void *P, int *Q) {
+  return P-Q;      /* expected-error{{not pointers to compatible types}} */
 }
 
 int logicaland1(int a) {

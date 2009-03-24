@@ -881,6 +881,8 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
     // C99 6.7.5.3p4: the parameters in a parameter type list in a
     // function declarator that is part of a function definition of
     // that function shall not have incomplete type.
+    //
+    // This is also C++ [dcl.fct]p6.
     if (!Param->isInvalidDecl() &&
         RequireCompleteType(Param->getLocation(), Param->getType(),
                                diag::err_typecheck_decl_incomplete_type)) {
@@ -2723,12 +2725,12 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   }
 
   // The return type of a function definition must be complete
-  // (C99 6.9.1p3)
-  if (FD->getResultType()->isIncompleteType() &&
-      !FD->getResultType()->isVoidType()) {
-    Diag(FD->getLocation(), diag::err_func_def_incomplete_result) << FD;
+  // (C99 6.9.1p3, C++ [dcl.fct]p6).
+  QualType ResultType = FD->getResultType();
+  if (!ResultType->isDependentType() && !ResultType->isVoidType() &&
+      RequireCompleteType(FD->getLocation(), ResultType,
+                          diag::err_func_def_incomplete_result))
     FD->setInvalidDecl();
-  }
 
   PushDeclContext(FnBodyScope, FD);
 
@@ -3726,33 +3728,27 @@ void Sema::ActOnFields(Scope* S,
     if (FD->isInvalidDecl())
       continue;
       
-    // C99 6.7.2.1p2 - A field may not be a function type.
+    // C99 6.7.2.1p2:
+    //   A structure or union shall not contain a member with
+    //   incomplete or function type (hence, a structure shall not
+    //   contain an instance of itself, but may contain a pointer to
+    //   an instance of itself), except that the last member of a
+    //   structure with more than one named member may have incomplete
+    //   array type; such a structure (and any union containing,
+    //   possibly recursively, a member that is such a structure)
+    //   shall not be a member of a structure or an element of an
+    //   array.
     if (FDTy->isFunctionType()) {
+      // Field declared as a function.
       Diag(FD->getLocation(), diag::err_field_declared_as_function)
         << FD->getDeclName();
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
-    }
-    // C99 6.7.2.1p2 - A field may not be an incomplete type except...
-    if (FDTy->isIncompleteType()) {
-      if (!Record) {  // Incomplete ivar type is always an error.
-        RequireCompleteType(FD->getLocation(), FD->getType(), 
-                               diag::err_field_incomplete);
-        FD->setInvalidDecl();
-        EnclosingDecl->setInvalidDecl();
-        continue;
-      }
-      if (i != NumFields-1 ||                   // ... that the last member ...
-          !Record->isStruct() ||  // ... of a structure ...
-          !FDTy->isArrayType()) {         //... may have incomplete array type.
-        RequireCompleteType(FD->getLocation(), FD->getType(), 
-                               diag::err_field_incomplete);
-        FD->setInvalidDecl();
-        EnclosingDecl->setInvalidDecl();
-        continue;
-      }
-      if (NumNamedMembers < 1) {  //... must have more than named member ...
+    } else if (FDTy->isIncompleteArrayType() && i == NumFields - 1 &&
+               Record && Record->isStruct()) {
+      // Flexible array member.
+      if (NumNamedMembers < 1) {
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
           << FD->getDeclName();
         FD->setInvalidDecl();
@@ -3762,10 +3758,14 @@ void Sema::ActOnFields(Scope* S,
       // Okay, we have a legal flexible array member at the end of the struct.
       if (Record)
         Record->setHasFlexibleArrayMember(true);
-    }
-    /// C99 6.7.2.1p2 - a struct ending in a flexible array member cannot be the
-    /// field of another structure or the element of an array.
-    if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
+    } else if (!FDTy->isDependentType() &&
+               RequireCompleteType(FD->getLocation(), FD->getType(), 
+                                   diag::err_field_incomplete)) {
+      // Incomplete type
+      FD->setInvalidDecl();
+      EnclosingDecl->setInvalidDecl();
+      continue;
+    } else if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
         if (Record && Record->isUnion()) {
@@ -3787,9 +3787,8 @@ void Sema::ActOnFields(Scope* S,
           }
         }
       }
-    }
-    /// A field cannot be an Objective-c object
-    if (FDTy->isObjCInterfaceType()) {
+    } else if (FDTy->isObjCInterfaceType()) {
+      /// A field cannot be an Objective-c object
       Diag(FD->getLocation(), diag::err_statically_allocated_object);
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
