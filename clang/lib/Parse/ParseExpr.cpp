@@ -1002,7 +1002,11 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_offsetof: {
     SourceLocation TypeLoc = Tok.getLocation();
     TypeResult Ty = ParseTypeName();
-
+    if (Ty.isInvalid()) {
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+    
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprError();
 
