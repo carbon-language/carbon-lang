@@ -1,4 +1,4 @@
-// RUN: clang -arch i386 -emit-llvm -o %t %s &&
+// RUN: clang-cc -arch i386 -emit-llvm -o %t %s &&
 // RUN: grep "g.b = internal global i8. getelementptr" %t &&
 
 struct AStruct { 

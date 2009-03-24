@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 @interface Super @end
 Super s1; // expected-error{{Objective-C type cannot be statically allocated}}

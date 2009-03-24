@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -parse-noop -fblocks %s
+// RUN: clang-cc -fsyntax-only -verify -parse-noop -fblocks %s
 
 struct blockStruct {
   int (^a)(float, int);

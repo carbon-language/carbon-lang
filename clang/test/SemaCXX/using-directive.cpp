@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 // XFAIL
 // fails due to exact diagnostic matching
 

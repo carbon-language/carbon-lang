@@ -1,4 +1,4 @@
-// RUN: clang %s -E | grep " #"
+// RUN: clang-cc %s -E | grep " #"
 
 // Should put a space before the # so that -fpreprocessed mode doesn't
 // macro expand this again.

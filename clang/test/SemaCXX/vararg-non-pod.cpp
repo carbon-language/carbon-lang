@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -fblocks %s
+// RUN: clang-cc -fsyntax-only -verify -fblocks %s
 
 extern char version[];
 

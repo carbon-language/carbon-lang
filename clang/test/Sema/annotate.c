@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify
+// RUN: clang-cc %s -fsyntax-only -verify
 
 void __attribute__((annotate("foo"))) foo(float *a) { 
   __attribute__((annotate("bar"))) int x;

@@ -1,4 +1,4 @@
-// RUN: clang --emit-llvm -o %t %s &&
+// RUN: clang-cc --emit-llvm -o %t %s &&
 // RUN: grep "i8 52" %t | count 1
 
 struct et7 {

@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm < %s | grep volatile | count 25
+// RUN: clang-cc -emit-llvm < %s | grep volatile | count 25
 
 // The number 26 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but

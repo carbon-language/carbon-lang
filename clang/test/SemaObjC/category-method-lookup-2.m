@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 typedef struct objc_class *Class;
 @interface NSObject

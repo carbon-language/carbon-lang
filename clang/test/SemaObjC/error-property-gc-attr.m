@@ -1,4 +1,4 @@
-// RUN: clang -fobjc-gc -fsyntax-only -verify %s
+// RUN: clang-cc -fobjc-gc -fsyntax-only -verify %s
 
 @interface INTF
 {

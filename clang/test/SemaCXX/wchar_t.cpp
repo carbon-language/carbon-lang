@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -pedantic -verify %s 
+// RUN: clang-cc -fsyntax-only -pedantic -verify %s 
 wchar_t x;
 
 void f(wchar_t p) {

@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only
+// RUN: clang-cc %s -fsyntax-only
 
 // C99 6.7.2.3p11
 

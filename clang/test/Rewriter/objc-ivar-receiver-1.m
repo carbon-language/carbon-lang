@@ -1,5 +1,5 @@
-// RUN: clang -rewrite-objc %s -o - &&
-// RUN: clang -rewrite-objc %s -o - | grep 'newInv->_container'
+// RUN: clang-cc -rewrite-objc %s -o - &&
+// RUN: clang-cc -rewrite-objc %s -o - | grep 'newInv->_container'
 
 @interface NSMutableArray 
 - (void)addObject:(id)addObject;

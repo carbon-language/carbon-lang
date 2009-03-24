@@ -1,9 +1,9 @@
 /*
-  RUN: clang -E -trigraphs %s | grep bar &&
-  RUN: clang -E -trigraphs %s | grep foo &&
-  RUN: clang -E -trigraphs %s | not grep abc &&
-  RUN: clang -E -trigraphs %s | not grep xyz &&
-  RUN: clang -fsyntax-only -trigraphs -verify %s  
+  RUN: clang-cc -E -trigraphs %s | grep bar &&
+  RUN: clang-cc -E -trigraphs %s | grep foo &&
+  RUN: clang-cc -E -trigraphs %s | not grep abc &&
+  RUN: clang-cc -E -trigraphs %s | not grep xyz &&
+  RUN: clang-cc -fsyntax-only -trigraphs -verify %s  
 */
 
 // This is a simple comment, /*/ does not end a comment, the trailing */ does.

@@ -1,4 +1,4 @@
-// RUN: clang -triple i386-apple-darwin9 -fsyntax-only -verify %s
+// RUN: clang-cc -triple i386-apple-darwin9 -fsyntax-only -verify %s
 
 int x __attribute__((aligned(3))); // expected-error {{requested alignment is not a power of 2}}
 

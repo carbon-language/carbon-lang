@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -triple=i686-apple-darwin8 -o %t %s &&
+// RUN: clang-cc -emit-llvm -triple=i686-apple-darwin8 -o %t %s &&
 // RUNX: llvm-gcc -S -emit-llvm -o %t %s &&
 
 // No object generated

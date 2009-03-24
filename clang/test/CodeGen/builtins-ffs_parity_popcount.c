@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o - %s > %t
+// RUN: clang-cc -emit-llvm -o - %s > %t
 // RUN: ! grep "__builtin" %t
 
 #include <stdio.h>

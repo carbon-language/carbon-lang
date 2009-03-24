@@ -1,4 +1,4 @@
-// RUN: clang < %s -emit-llvm
+// RUN: clang-cc < %s -emit-llvm
 int A;
 long long B;
 int C;

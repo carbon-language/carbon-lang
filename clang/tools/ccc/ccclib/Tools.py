@@ -442,7 +442,7 @@ class Clang_CompileTool(Tool):
             else:
                 cmd_args.extend(arglist.renderAsInput(input.source))
             
-        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('clang'), 
+        jobs.addJob(Jobs.Command(self.toolChain.getProgramPath('clang-cc'), 
                                  cmd_args))
         
 class Darwin_X86_CC1Tool(Tool):

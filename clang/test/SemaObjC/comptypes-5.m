@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -pedantic -verify %s
+// RUN: clang-cc -fsyntax-only -pedantic -verify %s
 
 #define nil (void *)0;
 

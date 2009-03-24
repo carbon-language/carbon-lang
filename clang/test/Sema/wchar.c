@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify 
+// RUN: clang-cc %s -fsyntax-only -verify 
 #include <wchar.h>
 
 int check_wchar_size[sizeof(*L"") == sizeof(wchar_t) ? 1 : -1];

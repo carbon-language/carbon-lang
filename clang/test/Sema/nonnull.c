@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 int f1(int x) __attribute__((nonnull)); // expected-warning{{'nonnull' attribute applied to function with no pointer arguments}}
 int f2(int *x) __attribute__ ((nonnull (1)));

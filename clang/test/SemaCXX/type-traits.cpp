@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang-cc -fsyntax-only -verify %s 
 #define T(b) (b) ? 1 : -1
 #define F(b) (b) ? -1 : 1
 

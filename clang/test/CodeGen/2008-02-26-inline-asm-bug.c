@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm < %s | grep "\$0,\$1"
+// RUN: clang-cc -emit-llvm < %s | grep "\$0,\$1"
 
 void f() {
   int d1, d2;

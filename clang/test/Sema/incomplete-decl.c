@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 struct foo; // expected-note 4 {{forward declaration of 'struct foo'}}
 

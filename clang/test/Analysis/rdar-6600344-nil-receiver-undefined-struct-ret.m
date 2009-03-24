@@ -1,4 +1,4 @@
-// RUN: clang -analyze -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s -verify
+// RUN: clang-cc -analyze -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s -verify
 
 typedef struct Foo { int x; } Bar;
 

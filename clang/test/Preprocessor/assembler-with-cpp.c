@@ -1,4 +1,4 @@
-// RUN: clang -x assembler-with-cpp -E %s > %t &&
+// RUN: clang-cc -x assembler-with-cpp -E %s > %t &&
 
 #ifndef __ASSEMBLER__
 #error "__ASSEMBLER__ not defined"

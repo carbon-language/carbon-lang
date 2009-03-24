@@ -1,8 +1,8 @@
-// RUN: clang %s -E | grep 'V);' &&
-// RUN: clang %s -E | grep 'W, 1, 2);' &&
-// RUN: clang %s -E | grep 'X, 1, 2);' &&
-// RUN: clang %s -E | grep 'Y, );' &&
-// RUN: clang %s -E | grep 'Z, );'
+// RUN: clang-cc %s -E | grep 'V);' &&
+// RUN: clang-cc %s -E | grep 'W, 1, 2);' &&
+// RUN: clang-cc %s -E | grep 'X, 1, 2);' &&
+// RUN: clang-cc %s -E | grep 'Y, );' &&
+// RUN: clang-cc %s -E | grep 'Z, );'
 
 #define debug(format, ...) format, ## __VA_ARGS__)
 debug(V);

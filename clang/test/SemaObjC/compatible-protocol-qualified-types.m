@@ -1,4 +1,4 @@
-// RUN: clang -pedantic -fsyntax-only -verify %s
+// RUN: clang-cc -pedantic -fsyntax-only -verify %s
 typedef signed char BOOL;
 
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;

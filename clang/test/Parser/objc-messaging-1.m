@@ -1,4 +1,4 @@
-// RUN: clang %s -parse-noop
+// RUN: clang-cc %s -parse-noop
 int main ()
 {
 	int i,j;

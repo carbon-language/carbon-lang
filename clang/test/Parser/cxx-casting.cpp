@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only %s
 
 char *const_cast_test(const char *var)
 {

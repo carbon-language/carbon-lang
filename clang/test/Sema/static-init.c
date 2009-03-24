@@ -1,4 +1,4 @@
-// RUN: clang -arch i386 -fsyntax-only -verify %s
+// RUN: clang-cc -arch i386 -fsyntax-only -verify %s
 
 #include <stdint.h>
 

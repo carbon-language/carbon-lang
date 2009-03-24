@@ -1,4 +1,4 @@
-// RUN: clang %s -arch=i386 -verify -fsyntax-only
+// RUN: clang-cc %s -arch=i386 -verify -fsyntax-only
 
 void f() {
   int i;

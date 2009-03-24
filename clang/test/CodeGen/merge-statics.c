@@ -1,4 +1,4 @@
-// RUN: clang < %s -emit-llvm | grep internal | count 1
+// RUN: clang-cc < %s -emit-llvm | grep internal | count 1
 
 // The two decls for 'a' should merge into one llvm GlobalVariable.
 

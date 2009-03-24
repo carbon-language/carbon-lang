@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o -
+// RUN: clang-cc %s -emit-llvm -o -
 
 union u_tag {
   int a;

@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm-bc -o - | opt -std-compile-opts -disable-output
+// RUN: clang-cc %s -emit-llvm-bc -o - | opt -std-compile-opts -disable-output
 
 int foo(int i) {
   int j = 0;

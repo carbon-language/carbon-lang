@@ -1,4 +1,4 @@
-// RUN: clang -E %s | grep bark
+// RUN: clang-cc -E %s | grep bark
 
 #if 0
 blah

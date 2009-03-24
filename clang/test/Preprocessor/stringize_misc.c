@@ -1,9 +1,9 @@
-// RUN: clang -E %s | grep -F '"f(1, 2)" "g((x=y++, y))"' &&
-// RUN: clang -E %s | grep -F '"{a=1" "b=2;}"' &&
-// RUN: clang -E %s | grep -F '"<" "["' &&
-// RUN: clang -E %s | grep -F '"(,)" "(...)"' &&
-// RUN: clang -E %s | grep -F '{a=1 c=3; b=2;}' &&
-// RUN: clang -E %s | grep -F '"a COMMA b" "(a, b)"'
+// RUN: clang-cc -E %s | grep -F '"f(1, 2)" "g((x=y++, y))"' &&
+// RUN: clang-cc -E %s | grep -F '"{a=1" "b=2;}"' &&
+// RUN: clang-cc -E %s | grep -F '"<" "["' &&
+// RUN: clang-cc -E %s | grep -F '"(,)" "(...)"' &&
+// RUN: clang-cc -E %s | grep -F '{a=1 c=3; b=2;}' &&
+// RUN: clang-cc -E %s | grep -F '"a COMMA b" "(a, b)"'
 
 #define M(x, y) #x #y
 

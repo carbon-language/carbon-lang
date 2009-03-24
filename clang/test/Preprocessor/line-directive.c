@@ -1,6 +1,6 @@
-// RUN: clang -fsyntax-only -verify -pedantic %s &&
-// RUN: clang -E %s 2>&1 | grep 'blonk.c:92:2: error: #error ABC' &&
-// RUN: clang -E %s 2>&1 | grep 'blonk.c:93:2: error: #error DEF'
+// RUN: clang-cc -fsyntax-only -verify -pedantic %s &&
+// RUN: clang-cc -E %s 2>&1 | grep 'blonk.c:92:2: error: #error ABC' &&
+// RUN: clang-cc -E %s 2>&1 | grep 'blonk.c:93:2: error: #error DEF'
 
 #line 'a'            // expected-error {{#line directive requires a positive integer argument}}
 #line 0              // expected-error {{#line directive requires a positive integer argument}}

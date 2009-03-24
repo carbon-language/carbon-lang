@@ -1,4 +1,4 @@
-// RUN: clang -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
+// RUN: clang-cc -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;

@@ -1,4 +1,4 @@
-/* RUN: clang -fsyntax-only %s -verify
+/* RUN: clang-cc -fsyntax-only %s -verify
  */
 
 typedef void Void;

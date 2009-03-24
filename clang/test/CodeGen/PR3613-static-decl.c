@@ -1,4 +1,4 @@
-// RUN: clang -triple i386-unknown-unknown -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o %t %s &&
 // RUN: grep '@g0 = internal global .struct.s0 <{ i32 3 }>' %t | count 1
 
 struct s0 {

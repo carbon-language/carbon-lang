@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o -
+// RUN: clang-cc %s -emit-llvm -o -
 
 typedef struct _zend_ini_entry zend_ini_entry;
 struct _zend_ini_entry {

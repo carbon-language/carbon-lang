@@ -1,4 +1,4 @@
-// RUN: clang -triple i386-unknown-unknown %s -emit-llvm -o -
+// RUN: clang-cc -triple i386-unknown-unknown %s -emit-llvm -o -
 
 struct  {
   int x;

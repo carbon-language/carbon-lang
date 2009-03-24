@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fsyntax-only
+// RUN: clang-cc %s -verify -fsyntax-only
 
 @class NSString;
 

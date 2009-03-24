@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 // C DR #316, PR 3626.
 void f0(a, b, c, d) int a,b,c,d; {}

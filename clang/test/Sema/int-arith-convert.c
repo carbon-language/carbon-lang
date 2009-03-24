@@ -1,4 +1,4 @@
-// RUN: clang -triple=i686-linux-gnu -fsyntax-only -verify %s
+// RUN: clang-cc -triple=i686-linux-gnu -fsyntax-only -verify %s
 
 // Check types are the same through redeclaration
 unsigned long x;

@@ -1,4 +1,4 @@
-// RUN: clang -analyze -checker-cfref -analyzer-constraints=basic -analyzer-store=basic -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-constraints=basic -analyzer-store=basic -verify %s
 //
 // This test case mainly checks that the retain/release checker doesn't crash
 // on this file.

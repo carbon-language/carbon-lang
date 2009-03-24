@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s 
+// RUN: clang-cc -fsyntax-only %s 
 class X { };
 
 int& copycon(X x);

@@ -1,4 +1,4 @@
-// RUN: clang -triple i386-unknown-unknown -emit-llvm %s -o %t &&
+// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm %s -o %t &&
 
 void f1() {
   // Scalars in braces.

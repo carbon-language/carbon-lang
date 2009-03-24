@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s -verify
+// RUN: clang-cc -fsyntax-only %s -verify
 
 int x(a) int a; {return a;}
 int y(b) int b; {return a;} // expected-error {{use of undeclared identifier}}

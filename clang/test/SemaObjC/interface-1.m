@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify
+// RUN: clang-cc %s -fsyntax-only -verify
 // rdar://5957506
 
 @interface NSWhatever :

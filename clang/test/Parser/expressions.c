@@ -1,4 +1,4 @@
-// RUN: clang -parse-noop %s
+// RUN: clang-cc -parse-noop %s
 
 void test1() {
   if (sizeof (int){ 1});   // sizeof compound literal

@@ -1,5 +1,5 @@
 
 // rdar://6533411
-// RUN: clang -MD -MF %t.d -x c /dev/null
+// RUN: clang-cc -MD -MF %t.d -x c /dev/null
 
 

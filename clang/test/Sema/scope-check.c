@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 int test1(int x) {
   goto L; // expected-error{{illegal jump}}

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 ce MyList // expected-error {{invalid token after top level declarator}}
 @end

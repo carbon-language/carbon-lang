@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 @interface XX
 int x;  // expected-error {{cannot declare variable inside a class, protocol or category}}

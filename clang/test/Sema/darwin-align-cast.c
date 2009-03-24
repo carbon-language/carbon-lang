@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 typedef long unsigned int __darwin_size_t;
 typedef long __darwin_ssize_t;
 typedef __darwin_size_t size_t;

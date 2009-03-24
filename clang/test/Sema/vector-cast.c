@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s -verify
+// RUN: clang-cc -fsyntax-only %s -verify
 
 typedef long long t1 __attribute__ ((vector_size (8)));
 typedef char t2 __attribute__ ((vector_size (16)));

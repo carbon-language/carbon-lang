@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fms-extensions
+// RUN: clang-cc %s -verify -fms-extensions
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 typedef struct _NSRange { } NSRange;
 

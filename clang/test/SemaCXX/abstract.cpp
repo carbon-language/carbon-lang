@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s -std=c++0x
+// RUN: clang-cc -fsyntax-only -verify %s -std=c++0x
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 #define __CONCAT(__X, __Y) __CONCAT1(__X, __Y)

@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s -o -
+// RUN: clang-cc -emit-llvm %s -o -
 void f()
 {
         void *addr;

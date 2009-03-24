@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 template<template<typename T> class X> struct A; // expected-note 2{{previous template template parameter is here}}
 

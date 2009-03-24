@@ -1,5 +1,5 @@
-/* RUN: clang -E %s -DNO_ERRORS -Werror -Wundef &&
-   RUN: not clang -E %s
+/* RUN: clang-cc -E %s -DNO_ERRORS -Werror -Wundef &&
+   RUN: not clang-cc -E %s
  */
 
 #ifdef NO_ERRORS

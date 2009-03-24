@@ -1,4 +1,4 @@
-// RUN: clang %s -E 2>&1 | not grep error
+// RUN: clang-cc %s -E 2>&1 | not grep error
 
 #define strrchr rindex
 #pragma GCC poison rindex

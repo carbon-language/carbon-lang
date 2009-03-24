@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify
+// RUN: clang-cc %s -fsyntax-only -verify
 // rdar://6587766
 
 int fn1() __attribute__ ((warn_unused_result));

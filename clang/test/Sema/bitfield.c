@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify 
+// RUN: clang-cc %s -fsyntax-only -verify 
 enum e0; // expected-note{{forward declaration of 'enum e0'}}
 
 struct a {

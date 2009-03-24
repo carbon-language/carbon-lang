@@ -1,4 +1,4 @@
-// RUN: clang --parse-noop %s &&
-// RUN: clang --parse-print-callbacks %s
+// RUN: clang-cc --parse-noop %s &&
+// RUN: clang-cc --parse-print-callbacks %s
 
 #include "c-language-features.inc"

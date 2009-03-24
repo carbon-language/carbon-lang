@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify
+// RUN: clang-cc %s -fsyntax-only -verify
 
 // Packed structs.
 struct s {

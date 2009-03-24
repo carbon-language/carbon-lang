@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 int var __attribute__((overloadable)); // expected-error{{'overloadable' attribute can only be applied to a function}}
 

@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -pedantic -fsyntax-only
+// RUN: clang-cc %s -verify -pedantic -fsyntax-only
 
 // PR1966
 _Complex double test1() {

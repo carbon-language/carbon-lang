@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify -fms-extensions
+// RUN: clang-cc %s -fsyntax-only -verify -fms-extensions
 
 // rdar://6495941
 

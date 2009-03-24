@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fms-extensions
+// RUN: clang-cc %s -verify -fms-extensions
 
 #define M __asm int 0x2c
 #define M2 int

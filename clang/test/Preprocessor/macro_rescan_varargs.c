@@ -1,5 +1,5 @@
-// RUN: clang -E %s | grep -F "1: F, (, 'a', 'b', );" &&
-// RUN: clang -E %s | grep -F "2: 'a' + 'b';"
+// RUN: clang-cc -E %s | grep -F "1: F, (, 'a', 'b', );" &&
+// RUN: clang-cc -E %s | grep -F "2: 'a' + 'b';"
 #define LPAREN ( 
 #define RPAREN ) 
 #define F(x, y) x + y 

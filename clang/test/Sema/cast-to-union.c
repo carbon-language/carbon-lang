@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -pedantic %s
+// RUN: clang-cc -fsyntax-only -verify -pedantic %s
 
 union u { int i; };
 void f(union u);

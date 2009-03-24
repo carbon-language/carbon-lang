@@ -1,6 +1,6 @@
-// RUN: clang -E %s | grep '+ + - - + + = = =' &&
-// RUN: clang -E %s | not grep -F '...' &&
-// RUN: clang -E %s | not grep -F 'L"str"'
+// RUN: clang-cc -E %s | grep '+ + - - + + = = =' &&
+// RUN: clang-cc -E %s | not grep -F '...' &&
+// RUN: clang-cc -E %s | not grep -F 'L"str"'
 
 // This should print as ".. ." to avoid turning into ...
 #define y(a) ..a

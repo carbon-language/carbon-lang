@@ -1,4 +1,4 @@
-// RUN: clang -triple x86_64-unknown-unknown -emit-llvm -o %t %s
+// RUN: clang-cc -triple x86_64-unknown-unknown -emit-llvm -o %t %s
 
 // PR3442
 

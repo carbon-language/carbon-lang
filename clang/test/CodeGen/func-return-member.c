@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm < %s 2>&1 | not grep 'cannot codegen this l-value expression yet'
+// RUN: clang-cc -emit-llvm < %s 2>&1 | not grep 'cannot codegen this l-value expression yet'
 
 struct frk { float _Complex c; int x; };
 struct faz { struct frk f; };

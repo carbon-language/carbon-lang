@@ -1,6 +1,6 @@
 // GCC PR 20077
-// RUN: not clang -E %s &&
-// RUN: not clang -E %s 2>&1 | grep error: | wc -l | grep 10
+// RUN: not clang-cc -E %s &&
+// RUN: not clang-cc -E %s 2>&1 | grep error: | wc -l | grep 10
 
 #define a   a ## ## /* { dg-error "end of a macro expansion" } */
 #define b() b ## ## /* { dg-error "end of a macro expansion" } */

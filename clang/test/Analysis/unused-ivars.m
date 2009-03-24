@@ -1,4 +1,4 @@
-// RUN: clang -analyze -warn-objc-unused-ivars %s -verify
+// RUN: clang-cc -analyze -warn-objc-unused-ivars %s -verify
 
 @interface A
 {

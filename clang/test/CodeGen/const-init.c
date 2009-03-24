@@ -1,4 +1,4 @@
-// RUN: clang -arch i386 -verify -emit-llvm -o %t %s &&
+// RUN: clang-cc -arch i386 -verify -emit-llvm -o %t %s &&
 
 #include <stdint.h>
 

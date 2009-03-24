@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 template<typename T, typename U = int> struct A; // expected-note 2{{template is declared here}}
 
 template<> struct A<double, double>; // expected-note{{forward declaration}}

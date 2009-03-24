@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s -o %t &&
+// RUN: clang-cc -emit-llvm %s -o %t &&
 
 // FIXME: This test is intentionally trivial, because we can't yet
 // CodeGen anything real in C++.

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 @protocol B;
 @protocol C < B > // expected-warning{{cannot find protocol definition for 'B'}} // expected-note{{previous definition is here}}

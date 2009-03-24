@@ -1,4 +1,4 @@
-// RUN: clang %s -E | grep "^xy$"
+// RUN: clang-cc %s -E | grep "^xy$"
 
 #define A  x ## y
 blah

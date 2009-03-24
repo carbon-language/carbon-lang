@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s -fblocks
+// RUN: clang-cc -fsyntax-only -verify %s -fblocks
 
 int (*FP)();
 int (^IFP) ();

@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o - > %t1 &&
+// RUN: clang-cc %s -emit-llvm -o - > %t1 &&
 // RUN: grep @llvm.atomic.load.add.i32 %t1 &&
 // RUN: grep @llvm.atomic.load.sub.i32 %t1 &&
 // RUN: grep @llvm.atomic.load.min.i32 %t1 &&

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -std=c90 %s
+// RUN: clang-cc -fsyntax-only -verify -std=c90 %s
 void
 foo (void)
 {

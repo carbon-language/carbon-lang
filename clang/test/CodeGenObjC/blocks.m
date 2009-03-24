@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -fblocks -S -o - %s
+// RUN: clang-cc -emit-llvm -fblocks -S -o - %s
 // rdar://6676764
 
 struct S {

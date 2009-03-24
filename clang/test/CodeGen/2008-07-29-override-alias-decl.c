@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o - %s | grep -e "^@f" | count 1
+// RUN: clang-cc -emit-llvm -o - %s | grep -e "^@f" | count 1
 
 int x() {}
 

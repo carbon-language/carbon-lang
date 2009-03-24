@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang-cc -fsyntax-only -verify %s 
 class C {
 public:
   auto int errx; // expected-error {{error: storage class specified for a member declaration}}

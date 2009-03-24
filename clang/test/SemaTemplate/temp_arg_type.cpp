@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 template<typename T> class A; // expected-note 2 {{template parameter is declared here}}
 
 // [temp.arg.type]p1

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -std=c99 -verify -pedantic %s
+// RUN: clang-cc -fsyntax-only -std=c99 -verify -pedantic %s
 
 int x[10];
 int x[] = {1,2,3};

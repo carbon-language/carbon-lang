@@ -1,4 +1,4 @@
-// RUN: clang %s -verify
+// RUN: clang-cc %s -verify
 
 int foo() {
         int a;

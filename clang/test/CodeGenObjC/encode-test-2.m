@@ -1,4 +1,4 @@
-// RUN: clang -triple=i686-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple=i686-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
 // RUN: grep -e "@\\\22<X>\\\22" %t  &&
 // RUN: grep -e "@\\\22<X><Y>\\\22" %t  &&
 // RUN: grep -e "@\\\22<X><Y><Z>\\\22" %t  &&

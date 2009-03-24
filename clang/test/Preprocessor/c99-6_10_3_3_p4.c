@@ -1,4 +1,4 @@
-// RUN: clang -E %s | grep -F 'char p[] = "x ## y";'
+// RUN: clang-cc -E %s | grep -F 'char p[] = "x ## y";'
 #define hash_hash # ## # 
 #define mkstr(a) # a 
 #define in_between(a) mkstr(a) 

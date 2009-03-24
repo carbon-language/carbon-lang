@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang-cc -fsyntax-only -verify %s 
 void f();
 void f(int);
 void f(int, float); 

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 // Test that a property can be synthesize in a category
 // implementation with no error.
 

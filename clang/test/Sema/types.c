@@ -1,4 +1,4 @@
-// RUN: clang %s -pedantic -verify
+// RUN: clang-cc %s -pedantic -verify
 
 // rdar://6097662
 typedef int (*T)[2];

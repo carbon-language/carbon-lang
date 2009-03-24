@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -std=c++0x %s
+// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
 
 int && r1(int &&a);
 

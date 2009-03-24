@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 // Test the use of elaborated-type-specifiers to inject the names of
 // structs (or classes or unions) into an outer scope as described in

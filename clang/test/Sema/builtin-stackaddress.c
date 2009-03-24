@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 void* a(unsigned x) {
 return __builtin_return_address(0);
 }

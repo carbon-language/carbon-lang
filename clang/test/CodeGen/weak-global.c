@@ -1,3 +1,3 @@
-// RUN: clang -emit-llvm < %s | grep common
+// RUN: clang-cc -emit-llvm < %s | grep common
 
 int i;

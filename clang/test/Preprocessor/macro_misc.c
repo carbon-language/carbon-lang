@@ -1,4 +1,4 @@
-// RUN: clang %s -Eonly -verify
+// RUN: clang-cc %s -Eonly -verify
 
 // This should not be rejected.
 #ifdef defined

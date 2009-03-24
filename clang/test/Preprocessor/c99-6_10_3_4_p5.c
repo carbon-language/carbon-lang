@@ -1,9 +1,9 @@
 // Example from C99 6.10.3.4p5
 
-// RUN: clang -E %s | grep -F 'f(2 * (y+1)) + f(2 * (f(2 * (z[0])))) % f(2 * (0)) + t(1);' &&
-// RUN: clang -E %s | grep -F 'f(2 * (2 +(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);' &&
-// RUN: clang -E %s | grep -F 'int i[] = { 1, 23, 4, 5, };' &&
-// RUN: clang -E %s | grep -F 'char c[2][6] = { "hello", "" };'
+// RUN: clang-cc -E %s | grep -F 'f(2 * (y+1)) + f(2 * (f(2 * (z[0])))) % f(2 * (0)) + t(1);' &&
+// RUN: clang-cc -E %s | grep -F 'f(2 * (2 +(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);' &&
+// RUN: clang-cc -E %s | grep -F 'int i[] = { 1, 23, 4, 5, };' &&
+// RUN: clang-cc -E %s | grep -F 'char c[2][6] = { "hello", "" };'
 
 
 #define x 3 

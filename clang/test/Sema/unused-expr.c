@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -fno-math-errno %s
+// RUN: clang-cc -fsyntax-only -verify -fno-math-errno %s
 
 int foo(int X, int Y);
 

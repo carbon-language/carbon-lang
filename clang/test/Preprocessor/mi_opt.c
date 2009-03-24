@@ -1,4 +1,4 @@
-// RUN: not clang -fsyntax-only %s
+// RUN: not clang-cc -fsyntax-only %s
 // PR1900
 // This test should get a redefinition error from m_iopt.h: the MI opt 
 // shouldn't apply.

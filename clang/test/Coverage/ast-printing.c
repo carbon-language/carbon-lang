@@ -1,5 +1,5 @@
-// RUN: clang --fsyntax-only %s &&
-// RUN: clang --ast-print %s &&
-// RUN: clang --ast-dump %s
+// RUN: clang-cc --fsyntax-only %s &&
+// RUN: clang-cc --ast-print %s &&
+// RUN: clang-cc --ast-dump %s
 
 #include "c-language-features.inc"

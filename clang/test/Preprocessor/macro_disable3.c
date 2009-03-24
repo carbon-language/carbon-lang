@@ -1,4 +1,4 @@
-// RUN: clang %s -E | grep -F 'f(2 * (f(2 * (z[0]))));'
+// RUN: clang-cc %s -E | grep -F 'f(2 * (f(2 * (z[0]))));'
 // Check for C99 6.10.3.4p2.
 
 #define f(a) f(x * (a)) 

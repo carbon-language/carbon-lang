@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang-cc -fsyntax-only -verify %s 
 class X {
 public:
   explicit X(const X&);

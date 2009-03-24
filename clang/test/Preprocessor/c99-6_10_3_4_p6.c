@@ -1,10 +1,10 @@
 // Example from C99 6.10.3.4p6
 
-// RUN: clang -E %s | grep -F 'printf("x" "1" "= %d, x" "2" "= s" x1, x2);' &&
-// RUN: clang -E %s | grep 'fputs("strncmp(\\"abc\\\\0d\\" \\"abc\\", .\\\\4.) == 0" ": @\\n", s);' &&
-// RUN: clang -E %s | grep -F 'include "vers2.h"' &&
-// RUN: clang -E %s | grep -F '"hello";' &&
-// RUN: clang -E %s | grep -F '"hello" ", world"'
+// RUN: clang-cc -E %s | grep -F 'printf("x" "1" "= %d, x" "2" "= s" x1, x2);' &&
+// RUN: clang-cc -E %s | grep 'fputs("strncmp(\\"abc\\\\0d\\" \\"abc\\", .\\\\4.) == 0" ": @\\n", s);' &&
+// RUN: clang-cc -E %s | grep -F 'include "vers2.h"' &&
+// RUN: clang-cc -E %s | grep -F '"hello";' &&
+// RUN: clang-cc -E %s | grep -F '"hello" ", world"'
 
 #define str(s) # s 
 #define xstr(s) str(s) 

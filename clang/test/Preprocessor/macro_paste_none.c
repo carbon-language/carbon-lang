@@ -1,4 +1,4 @@
-// RUN: clang -E %s | grep '!!'
+// RUN: clang-cc -E %s | grep '!!'
 
 #define A(B,C) B ## C
 

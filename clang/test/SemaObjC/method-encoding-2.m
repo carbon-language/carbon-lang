@@ -1,4 +1,4 @@
-// RUN: clang %s
+// RUN: clang-cc %s
 // TODO: We don't support rewrite of method definitions
 
 @interface Intf 

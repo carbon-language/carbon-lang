@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify
+// RUN: clang-cc %s -fsyntax-only -verify
 
 // PR3310
 struct a x1; // expected-note 2{{forward declaration of 'struct a'}}

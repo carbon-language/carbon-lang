@@ -1,4 +1,4 @@
-// RUN: clang %s -E | grep '! ,'
+// RUN: clang-cc %s -E | grep '! ,'
 
 #define XX
 ! XX,

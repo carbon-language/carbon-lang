@@ -332,7 +332,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
       
   const char *Exec = 
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang").c_str());
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 
   // Claim some arguments which clang doesn't support, but we don't

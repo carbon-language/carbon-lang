@@ -1,4 +1,4 @@
-// RUN: clang -triple i686-apple-darwin9 %s -fsyntax-only -verify
+// RUN: clang-cc -triple i686-apple-darwin9 %s -fsyntax-only -verify
 
 #include <stddef.h>
 

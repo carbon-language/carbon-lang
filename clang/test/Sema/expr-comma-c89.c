@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify -std=c99
+// RUN: clang-cc %s -fsyntax-only -verify -std=c99
 // rdar://6095180
 
 #include <assert.h>

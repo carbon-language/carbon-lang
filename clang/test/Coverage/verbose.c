@@ -1,1 +1,1 @@
-// RUN: clang -fsyntax-only -v %s
+// RUN: clang-cc -fsyntax-only -v %s

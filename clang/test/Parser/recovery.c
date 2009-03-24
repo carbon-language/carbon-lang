@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -pedantic -fblocks %s
+// RUN: clang-cc -fsyntax-only -verify -pedantic -fblocks %s
 
 // PR2241
 float test2241[] = { 

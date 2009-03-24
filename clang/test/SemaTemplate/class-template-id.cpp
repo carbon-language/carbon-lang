@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 template<typename T, typename U = float> struct A { };
 
 typedef A<int> A_int;

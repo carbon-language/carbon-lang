@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only
+// RUN: clang-cc %s -fsyntax-only
 
 typedef float CGFloat;
 

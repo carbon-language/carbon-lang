@@ -1,7 +1,7 @@
-// RUN: clang -DA -DB -E %s | grep 'int a = 37 == 37' &&
-// RUN: clang -DA -E %s | grep 'int a = 927 == 927' &&
-// RUN: clang -DB -E %s | grep 'int a = 927 == 927' &&
-// RUN: clang -E %s | grep 'int a = 927 == 927'
+// RUN: clang-cc -DA -DB -E %s | grep 'int a = 37 == 37' &&
+// RUN: clang-cc -DA -E %s | grep 'int a = 927 == 927' &&
+// RUN: clang-cc -DB -E %s | grep 'int a = 927 == 927' &&
+// RUN: clang-cc -E %s | grep 'int a = 927 == 927'
 #if defined(A) and defined(B)
 #define X 37
 #else

@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o %t %s
+// RUN: clang-cc -emit-llvm -o %t %s
 
 @protocol P0
 @end

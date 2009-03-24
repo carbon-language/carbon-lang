@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o - %s | not grep "zeroinitializer"
+// RUN: clang-cc -emit-llvm -o - %s | not grep "zeroinitializer"
 
 struct s {
     int a;

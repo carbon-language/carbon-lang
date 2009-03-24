@@ -1,4 +1,4 @@
-// RUN: clang -fnext-runtime -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang-cc -fnext-runtime -fobjc-gc -emit-llvm -o %t %s
 
 @interface PBXTarget 
 {

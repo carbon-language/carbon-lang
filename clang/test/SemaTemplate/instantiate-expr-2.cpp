@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only %s
 typedef char one_byte;
 typedef char (&two_bytes)[2];
 typedef char (&four_bytes)[4];

@@ -1,4 +1,4 @@
-// RUN: clang -o %t --emit-llvm -g %s
+// RUN: clang-cc -o %t --emit-llvm -g %s
 
 // PR3023
 void convert(void) {

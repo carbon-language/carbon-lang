@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only %s
 // XFAIL
 // <rdar://problem/6212771>
 

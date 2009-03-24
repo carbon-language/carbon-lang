@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only %s
 
 // FIXME: The Fibonacci/FibonacciEval dance is here to work around our
 // inability to parse injected-class-name<template-argument-list>.

@@ -1,7 +1,7 @@
-// RUN: clang -fmath-errno=1 -emit-llvm -o %t %s &&
+// RUN: clang-cc -fmath-errno=1 -emit-llvm -o %t %s &&
 // RUN: grep "declare " %t | count 6 &&
 // RUN: grep "declare " %t | grep "@llvm." | count 1 &&
-// RUN: clang -fmath-errno=0 -emit-llvm -o %t %s &&
+// RUN: clang-cc -fmath-errno=0 -emit-llvm -o %t %s &&
 // RUN: grep "declare " %t | count 6 &&
 // RUN: grep "declare " %t | grep -v "@llvm." | count 0
 

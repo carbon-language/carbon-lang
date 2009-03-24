@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-objc -verify %s -o -
+// RUN: clang-cc -rewrite-objc -verify %s -o -
 
 int main() {
   @try {

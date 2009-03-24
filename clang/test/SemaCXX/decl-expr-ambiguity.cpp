@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify -pedantic-errors %s 
+// RUN: clang-cc -fsyntax-only -verify -pedantic-errors %s 
 
 void f() {
   int a;

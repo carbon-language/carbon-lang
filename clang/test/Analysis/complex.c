@@ -1,8 +1,8 @@
-// RUN: clang -analyze -checker-simple -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: clang-cc -analyze -checker-simple -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 #include <stdint.h>
 

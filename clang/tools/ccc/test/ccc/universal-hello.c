@@ -8,7 +8,7 @@
 // RUN: xcc -ccc-print-phases -### -arch ppc -arch ppc %s | grep 'linker,' | count 1 &&
 
 // Check that -ccc-clang-archs is honored.
-// RUN: xcc -ccc-clang-archs i386 -### -arch ppc -arch i386 %s 2>&1 | grep 'clang"' | count 1
+// RUN: xcc -ccc-clang-archs i386 -### -arch ppc -arch i386 %s 2>&1 | grep 'clang-cc"' | count 1
 
 int main() {
   printf("Hello, World!\n");

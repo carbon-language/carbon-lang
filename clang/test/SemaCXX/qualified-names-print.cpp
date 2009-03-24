@@ -1,4 +1,4 @@
-// RUN: clang -ast-print %s 2>&1 | grep "N::M::X<INT>::value"
+// RUN: clang-cc -ast-print %s 2>&1 | grep "N::M::X<INT>::value"
 namespace N {
   namespace M {
     template<typename T>

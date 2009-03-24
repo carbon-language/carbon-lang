@@ -1,5 +1,5 @@
-// RUN: clang -fsyntax-only -verify %s &&
-// RUN: clang -fsyntax-only -triple x86_64-apple-darwin9 -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s &&
+// RUN: clang-cc -fsyntax-only -triple x86_64-apple-darwin9 -verify %s
 
 int a[10];
 

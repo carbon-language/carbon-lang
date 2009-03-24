@@ -5,13 +5,13 @@
 // We also check _Bool and empty structures, as these can have annoying
 // corner cases.
 
-// RUN: clang %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t &&
+// RUN: clang-cc %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
 
-// RUN: clang %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t &&
+// RUN: clang-cc %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
 
-// RUN: clang %s -triple ppc-unknown-unknown -O3 -emit-llvm -o %t &&
+// RUN: clang-cc %s -triple ppc-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
 // RUN: true
 

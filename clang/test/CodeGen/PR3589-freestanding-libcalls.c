@@ -1,6 +1,6 @@
-// RUN: clang -emit-llvm %s -o - | grep 'declare i32 @printf' | count 1 &&
-// RUN: clang -O2 -emit-llvm %s -o - | grep 'declare i32 @puts' | count 1 &&
-// RUN: clang -ffreestanding -O2 -emit-llvm %s -o - | grep 'declare i32 @puts' | count 0
+// RUN: clang-cc -emit-llvm %s -o - | grep 'declare i32 @printf' | count 1 &&
+// RUN: clang-cc -O2 -emit-llvm %s -o - | grep 'declare i32 @puts' | count 1 &&
+// RUN: clang-cc -ffreestanding -O2 -emit-llvm %s -o - | grep 'declare i32 @puts' | count 0
 
 #include <stdio.h>
 

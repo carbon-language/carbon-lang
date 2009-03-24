@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -std=c++98 -verify %s
+// RUN: clang-cc -fsyntax-only -std=c++98 -verify %s
 template<int N> struct A; // expected-note 5{{template parameter is declared here}}
 
 A<0> *a0;

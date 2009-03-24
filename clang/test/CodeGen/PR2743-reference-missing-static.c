@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -o %t %s
+// RUN: clang-cc -emit-llvm -o %t %s
 // PR2743
 // <rdr://6094512>
 

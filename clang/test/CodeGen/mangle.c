@@ -1,4 +1,4 @@
-// RUN: clang -arch i386 -emit-llvm -o %t %s &&
+// RUN: clang-cc -arch i386 -emit-llvm -o %t %s &&
 // RUN: grep '@_Z2f0i' %t &&
 // RUN: grep '@_Z2f0l' %t &&
 

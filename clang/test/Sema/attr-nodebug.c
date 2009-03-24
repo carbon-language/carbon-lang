@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fsyntax-only
+// RUN: clang-cc %s -verify -fsyntax-only
 
 int a __attribute__((nodebug)); // expected-warning {{'nodebug' attribute only applies to function types}}
 

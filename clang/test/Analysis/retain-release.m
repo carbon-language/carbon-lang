@@ -1,5 +1,5 @@
-// RUN: clang -analyze -checker-cfref -verify %s &&
-// RUN: clang -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -checker-cfref -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
 
 //===----------------------------------------------------------------------===//

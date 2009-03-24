@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -pedantic -verify %s
+// RUN: clang-cc -fsyntax-only -pedantic -verify %s
 int* f(int) { return 0; }
 float* f(float) { return 0; }
 void f();

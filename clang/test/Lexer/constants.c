@@ -1,4 +1,4 @@
-/* RUN: clang -fsyntax-only -verify %s
+/* RUN: clang-cc -fsyntax-only -verify %s
  */
 
 int x = 000000080;  /* expected-error {{invalid digit}} */

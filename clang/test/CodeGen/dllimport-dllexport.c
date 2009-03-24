@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm < %s -o %t &&
+// RUN: clang-cc -emit-llvm < %s -o %t &&
 // RUN: grep 'dllexport' %t | count 1 &&
 // RUN: not grep 'dllimport' %t
 

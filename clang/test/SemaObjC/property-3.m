@@ -1,4 +1,4 @@
-// RUN: clang -verify %s
+// RUN: clang-cc -verify %s
 
 @interface I 
 {

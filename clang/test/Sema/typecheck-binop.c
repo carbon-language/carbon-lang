@@ -1,4 +1,4 @@
-/* RUN: clang %s -fsyntax-only -pedantic -verify
+/* RUN: clang-cc %s -fsyntax-only -pedantic -verify
  */
 struct incomplete;
 

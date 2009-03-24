@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o %t
+// RUN: clang-cc %s -emit-llvm -o %t
 
 static int staticfun(void);
 int (*staticuse1)(void) = staticfun;

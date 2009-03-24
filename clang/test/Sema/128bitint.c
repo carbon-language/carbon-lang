@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 typedef int i128 __attribute__((__mode__(TI)));
 typedef unsigned u128 __attribute__((__mode__(TI)));
 

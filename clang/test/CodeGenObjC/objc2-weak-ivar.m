@@ -1,4 +1,4 @@
-// RUN: clang -triple x86_64-unknown-unknown -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang-cc -triple x86_64-unknown-unknown -fobjc-gc -emit-llvm -o %t %s
 @class NSObject;
 
 @interface Foo  {

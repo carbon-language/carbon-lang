@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fsyntax-only
+// RUN: clang-cc %s -verify -fsyntax-only
 typedef unsigned int v2u __attribute__ ((vector_size (8)));
 typedef signed int v2s __attribute__ ((vector_size (8)));
 typedef signed int v1s __attribute__ ((vector_size (4)));

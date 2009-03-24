@@ -1,4 +1,4 @@
-// RUN: clang -triple i386-apple-darwin9 -fsyntax-only -verify %s
+// RUN: clang-cc -triple i386-apple-darwin9 -fsyntax-only -verify %s
 
 @interface I 
 {

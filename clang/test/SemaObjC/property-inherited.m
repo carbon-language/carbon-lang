@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify 
+// RUN: clang-cc %s -fsyntax-only -verify 
 
 // <rdar://problem/6497242> Inherited overridden protocol declared objects don't work
 
