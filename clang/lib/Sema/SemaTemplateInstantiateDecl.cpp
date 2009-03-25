@@ -39,6 +39,8 @@ namespace {
     // FIXME: Once we get closer to completion, replace these
     // manually-written declarations with automatically-generated ones
     // from clang/AST/DeclNodes.def.
+    Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
+    Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
@@ -61,6 +63,18 @@ namespace {
                              llvm::SmallVectorImpl<ParmVarDecl *> &Params);
     bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
   };
+}
+
+Decl *
+TemplateDeclInstantiator::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
+  assert(false && "Translation units cannot be instantiated");
+  return D;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
+  assert(false && "Namespaces cannot be instantiated");
+  return D;
 }
 
 Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
