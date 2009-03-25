@@ -3895,10 +3895,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
     if (DW && DW->ValidDebugInfo(SPI.getContext())) {
       MachineFunction &MF = DAG.getMachineFunction();
-      DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
-                                      SPI.getLine(),
-                                      SPI.getColumn(),
-                                      SPI.getContext()));
+      if (Fast)
+        DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
+                                        SPI.getLine(),
+                                        SPI.getColumn(),
+                                        SPI.getContext()));
       DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
       std::string Dir, FN;
       unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
