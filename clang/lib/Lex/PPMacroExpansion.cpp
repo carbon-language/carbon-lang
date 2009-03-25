@@ -390,15 +390,6 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       //   #define A(x, foo...) blah(a, ## foo) 
       //   #define A(x, ...) blah(a, ## __VA_ARGS__) 
       isVarargsElided = MI->getNumArgs() > 1;
-    } else if (MI->getNumArgs() == 1) {
-      // #define A(x)
-      //   A()
-      // is ok because it is an empty argument.
-      
-      // Empty arguments are standard in C99 and supported as an extension in
-      // other modes.
-      if (ArgTokens.empty() && !Features.C99)
-        Diag(Tok, diag::ext_empty_fnmacro_arg);
     } else {
       // Otherwise, emit the error.
       Diag(Tok, diag::err_too_few_args_in_macro_invoc);
