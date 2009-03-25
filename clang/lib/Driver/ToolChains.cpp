@@ -12,7 +12,9 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Driver.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/HostInfo.h"
+#include "clang/Driver/Option.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/System/Path.h"
@@ -125,8 +127,45 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
 }
 
 DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const { 
-  // FIXME: Implement!
-  return new DerivedArgList(Args, true);
+  DerivedArgList *DAL = new DerivedArgList(Args, false);
+  
+  for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    Arg *A = *it;
+
+    if (A->getOption().matches(options::OPT_Xarch__)) {
+      // FIXME: Canonicalize name.
+      if (getArchName() != A->getValue(Args, 0))
+        continue;
+
+      // FIXME: The arg is leaked here, and we should have a nicer
+      // interface for this.
+      const Driver &D = getHost().getDriver();
+      unsigned Prev, Index = Prev = A->getIndex() + 1;
+      Arg *XarchArg = D.getOpts().ParseOneArg(Args, Index);
+      
+      // If the argument parsing failed or more than one argument was
+      // consumed, the -Xarch_ argument's parameter tried to consume
+      // extra arguments. Emit an error and ignore.
+      //
+      // We also want to disallow any options which would alter the
+      // driver behavior; that isn't going to work in our model. We
+      // use isDriverOption() as an approximation, although things
+      // like -O4 are going to slip through.
+      if (!XarchArg || Index > Prev + 1 || 
+          XarchArg->getOption().isDriverOption()) {
+        D.Diag(clang::diag::err_drv_invalid_Xarch_argument)
+          << A->getAsString(Args);
+        continue;
+      }
+
+      A = XarchArg;
+    } 
+
+    // FIXME: Translate.
+    DAL->append(A);
+  }
+
+  return DAL;
 } 
 
 bool Darwin_X86::IsMathErrnoDefault() const { 
