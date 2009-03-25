@@ -1713,6 +1713,7 @@ private:
       break;
     case DW_TAG_structure_type:
     case DW_TAG_union_type: 
+    case DW_TAG_class_type:
       {
         // Add elements to structure type.
         DIArray Elements = CTy.getTypeArray();
