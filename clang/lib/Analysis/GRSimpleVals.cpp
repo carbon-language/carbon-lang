@@ -230,11 +230,16 @@ SVal GRSimpleVals::DetermEvalBinOpNN(GRExprEngine& Eng,
         
       case nonloc::SymbolValKind:
         if (isa<nonloc::ConcreteInt>(R)) {
-          const SymIntConstraint& C =
-            BasicVals.getConstraint(cast<nonloc::SymbolVal>(L).getSymbol(), Op,
-                                    cast<nonloc::ConcreteInt>(R).getValue());
-          
-          return nonloc::SymIntConstraintVal(C);
+          if (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE) {
+            const SymIntConstraint& C =
+              BasicVals.getConstraint(cast<nonloc::SymbolVal>(L).getSymbol(), 
+                                   Op, cast<nonloc::ConcreteInt>(R).getValue());
+            return nonloc::SymIntConstraintVal(C);
+          } else {
+            return NonLoc::MakeVal(Eng.getSymbolManager(),
+                                   cast<nonloc::SymbolVal>(L).getSymbol(),
+                                   Op, cast<nonloc::ConcreteInt>(R).getValue());
+          }
         }
         else
           return UnknownVal();

@@ -74,6 +74,47 @@ SymbolRef SymbolManager::getConjuredSymbol(const Stmt* E, QualType T,
   return SymbolCounter++;
 }
 
+SymbolRef SymbolManager::getSymIntExpr(SymbolRef lhs,BinaryOperator::Opcode op, 
+                                       const llvm::APSInt& v, QualType t) {
+  llvm::FoldingSetNodeID ID;
+  SymIntExpr::Profile(ID, lhs, op, v, t);
+  void* InsertPos;
+
+  SymbolData* data = DataSet.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (data)
+    return data->getSymbol();
+
+  data = (SymIntExpr*) BPAlloc.Allocate<SymIntExpr>();
+  new (data) SymIntExpr(SymbolCounter, lhs, op, v, t);
+
+  DataSet.InsertNode(data, InsertPos);
+  DataMap[SymbolCounter] = data;
+
+  return SymbolCounter++;
+}
+
+SymbolRef SymbolManager::getSymSymExpr(SymbolRef lhs, BinaryOperator::Opcode op,
+                                       SymbolRef rhs, QualType t) {
+  llvm::FoldingSetNodeID ID;
+  SymSymExpr::Profile(ID, lhs, op, rhs, t);
+  void* InsertPos;
+
+  SymbolData* data = DataSet.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (data)
+    return data->getSymbol();
+
+  data = (SymSymExpr*) BPAlloc.Allocate<SymSymExpr>();
+  new (data) SymSymExpr(SymbolCounter, lhs, op, rhs, t);
+
+  DataSet.InsertNode(data, InsertPos);
+  DataMap[SymbolCounter] = data;
+
+  return SymbolCounter++;
+}
+
+
 const SymbolData& SymbolManager::getSymbolData(SymbolRef Sym) const {  
   DataMapTy::const_iterator I = DataMap.find(Sym);
   assert (I != DataMap.end());  

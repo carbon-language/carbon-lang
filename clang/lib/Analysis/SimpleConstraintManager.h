@@ -76,6 +76,7 @@ public:
 
 private:
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
+  SymbolManager& getSymbolManager() const { return StateMgr.getSymbolManager(); }
 };
 
 }  // end clang namespace

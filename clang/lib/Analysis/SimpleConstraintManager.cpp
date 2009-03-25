@@ -21,28 +21,11 @@ namespace clang {
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
-  if (nonloc::SymIntConstraintVal *Y = dyn_cast<nonloc::SymIntConstraintVal>(&X)) {
-    const SymIntConstraint& C = Y->getConstraint();
-    switch (C.getOpcode()) {
-        // We don't reason yet about bitwise-constraints on symbolic values.
-      case BinaryOperator::And:
-      case BinaryOperator::Or:
-      case BinaryOperator::Xor:
-        return false;
-        // We don't reason yet about arithmetic constraints on symbolic values.
-      case BinaryOperator::Mul:
-      case BinaryOperator::Div:
-      case BinaryOperator::Rem:
-      case BinaryOperator::Add:
-      case BinaryOperator::Sub:
-      case BinaryOperator::Shl:
-      case BinaryOperator::Shr:
-        return false;
-
-        // All other cases.
-      default:
-        return true;
-    }
+  if (nonloc::SymbolVal* SymVal = dyn_cast<nonloc::SymbolVal>(&X)) {
+    const SymbolData& data 
+      = getSymbolManager().getSymbolData(SymVal->getSymbol());
+    return !(data.getKind() == SymbolData::SymIntKind || 
+             data.getKind() == SymbolData::SymSymKind );
   }
 
   return true;
@@ -143,6 +126,12 @@ SimpleConstraintManager::Assume(const GRState* St, NonLoc Cond, bool Assumption,
 const GRState*
 SimpleConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
                                    bool Assumption, bool& isFeasible) {
+  // We cannot reason about SymIntExpr and SymSymExpr.
+  if (!canReasonAbout(Cond)) {
+    isFeasible = true;
+    return St;
+  }  
+
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   SymbolManager& SymMgr = StateMgr.getSymbolManager();
 

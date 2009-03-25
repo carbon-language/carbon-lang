@@ -85,7 +85,7 @@ namespace clang {
   
 class SymbolData : public llvm::FoldingSetNode {
 public:
-  enum Kind { RegionRValue, ConjuredKind };
+  enum Kind { RegionRValue, ConjuredKind, SymIntKind, SymSymKind };
   
 private:
   Kind K;
@@ -171,6 +171,65 @@ public:
   }  
 };
 
+// SymIntExpr - Represents symbolic expression like 'x' + 3.
+class SymIntExpr : public SymbolData {
+  SymbolRef LHS;
+  BinaryOperator::Opcode Op;
+  const llvm::APSInt& Val;
+  QualType T;
+
+public:
+  SymIntExpr(SymbolRef sym, SymbolRef lhs, BinaryOperator::Opcode op,
+             const llvm::APSInt& V, QualType t)
+    : SymbolData(SymIntKind, sym), LHS(lhs), Op(op), Val(V), T(t) {}
+
+  QualType getType(ASTContext& C) const {
+    return T;
+  }
+
+  static void Profile(llvm::FoldingSetNodeID& ID, SymbolRef lhs, 
+                      BinaryOperator::Opcode op, const llvm::APSInt& V,
+                      QualType t) {
+    lhs.Profile(ID);
+    ID.AddInteger(op);
+    ID.AddPointer(&V);
+    ID.Add(t);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, LHS, Op, Val, T);
+  }
+};
+
+// SymSymExpr - Represents symbolic expression like 'x' + 'y'.
+class SymSymExpr : public SymbolData {
+  SymbolRef LHS;
+  BinaryOperator::Opcode Op;
+  SymbolRef RHS;
+  QualType T;
+
+public:
+  SymSymExpr(SymbolRef sym, SymbolRef lhs, BinaryOperator::Opcode op,
+             SymbolRef rhs, QualType t)
+    : SymbolData(SymSymKind, sym), LHS(lhs), Op(op), RHS(rhs), T(t) {}
+
+  QualType getType(ASTContext& C) const {
+    return T;
+  }
+
+  static void Profile(llvm::FoldingSetNodeID& ID, SymbolRef lhs,
+                      BinaryOperator::Opcode op, SymbolRef rhs, QualType t) {
+    lhs.Profile(ID);
+    ID.AddInteger(op);
+    rhs.Profile(ID);
+    ID.Add(t);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, LHS, Op, RHS, T);
+  }
+};
+
 // Constraints on symbols.  Usually wrapped by SValues.
 
 class SymIntConstraint : public llvm::FoldingSetNode {
@@ -230,6 +289,12 @@ public:
                               const void* SymbolTag = 0) {    
     return getConjuredSymbol(E, E->getType(), VisitCount, SymbolTag);
   }
+
+  SymbolRef getSymIntExpr(SymbolRef lhs, BinaryOperator::Opcode op, 
+                          const llvm::APSInt& v, QualType t);
+
+  SymbolRef getSymSymExpr(SymbolRef lhs, BinaryOperator::Opcode op,
+                          SymbolRef rhs, QualType t);
   
   const SymbolData& getSymbolData(SymbolRef ID) const;
   

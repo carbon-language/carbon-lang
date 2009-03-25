@@ -283,6 +283,23 @@ NonLoc NonLoc::MakeVal(SymbolRef sym) {
   return nonloc::SymbolVal(sym);
 }
 
+NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, SymbolRef lhs, 
+                       BinaryOperator::Opcode op, const APSInt& v) {
+  // The Environment ensures we always get a persistent APSInt in
+  // BasicValueFactory, so we don't need to get the APSInt from
+  // BasicValueFactory again.
+
+  SymbolRef sym = SymMgr.getSymIntExpr(lhs, op, v, SymMgr.getType(lhs));
+  return nonloc::SymbolVal(sym);
+}
+
+NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, SymbolRef lhs, 
+                       BinaryOperator::Opcode op, SymbolRef rhs) {
+  assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
+  SymbolRef sym = SymMgr.getSymSymExpr(lhs, op, rhs, SymMgr.getType(lhs));
+  return nonloc::SymbolVal(sym);
+}
+
 NonLoc NonLoc::MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
                           bool isUnsigned) {
   return nonloc::ConcreteInt(BasicVals.getIntValue(X, isUnsigned));
