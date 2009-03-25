@@ -53,12 +53,15 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   const FileEntry *FE = 0;
 
   SourceManager &SM = M->getContext().getSourceManager();
+  bool isMain;
   if (Loc.isValid()) {
     Loc = SM.getInstantiationLoc(Loc);
     FE = SM.getFileEntryForID(SM.getFileID(Loc));
+    isMain = SM.getFileID(Loc) == SM.getMainFileID();
   } else {
     // If Loc is not valid then use main file id.
     FE = SM.getFileEntryForID(SM.getMainFileID());
+    isMain = true;
   }
    
   // See if this compile unit has been used before.
@@ -69,19 +72,20 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   const char *FileName = FE ? FE->getName() : "<unknown>";
   const char *DirName = FE ? FE->getDir()->getName() : "<unknown>";
   
-  bool isMain = (FE == SM.getFileEntryForID(SM.getMainFileID()));
-  unsigned LangTag = llvm::dwarf::DW_LANG_C89;
-  
-  LangOptions LO =  M->getLangOptions();
-  if (LO.CPlusPlus
-      && (LO.ObjC1 || LO.ObjC2 || LO.ObjCNonFragileABI || LO.NeXTRuntime))
-    LangTag = llvm::dwarf::DW_LANG_ObjC_plus_plus;
-  else if (LO.CPlusPlus)
-    LangTag = llvm::dwarf::DW_LANG_C_plus_plus;
-  else if (LO.ObjC1 || LO.ObjC2 || LO.ObjCNonFragileABI || LO.NeXTRuntime)
+  const LangOptions &LO = M->getLangOptions();
+  unsigned LangTag;
+  if (LO.CPlusPlus) {
+    if (LO.ObjC1)
+      LangTag = llvm::dwarf::DW_LANG_ObjC_plus_plus;
+    else
+      LangTag = llvm::dwarf::DW_LANG_C_plus_plus;
+  } else if (LO.ObjC1) {
     LangTag = llvm::dwarf::DW_LANG_ObjC;
-  else if (LO.C99)
+  } else if (LO.C99) {
     LangTag = llvm::dwarf::DW_LANG_C99;
+  } else {
+    LangTag = llvm::dwarf::DW_LANG_C89;
+  }
     
   // Create new compile unit.
   // FIXME: Do not know how to get clang version yet.
