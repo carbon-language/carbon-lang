@@ -15,6 +15,7 @@
 #define LLVM_CLANG_PARSE_PARSER_H
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/AccessSpecifier.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -809,7 +810,8 @@ private:
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclTy *ParseFunctionStatementBody(DeclTy *Decl);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
-                                  TemplateParameterLists *TemplateParams = 0);
+                                  TemplateParameterLists *TemplateParams = 0,
+                                  AccessSpecifier AS = AS_none);
   bool ParseOptionalTypeSpecifier(DeclSpec &DS, int &isInvalid, 
                                   const char *&PrevSpec,
                                   TemplateParameterLists *TemplateParams = 0);
@@ -817,7 +819,7 @@ private:
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
 
-  void ParseEnumSpecifier(DeclSpec &DS);
+  void ParseEnumSpecifier(DeclSpec &DS, AccessSpecifier AS = AS_none);
   void ParseEnumBody(SourceLocation StartLoc, DeclTy *TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclTy *TagDecl);
@@ -999,7 +1001,8 @@ private:
   TypeTy *ParseClassName(SourceLocation &EndLocation, 
                          const CXXScopeSpec *SS = 0);
   void ParseClassSpecifier(DeclSpec &DS, 
-                           TemplateParameterLists *TemplateParams = 0);
+                           TemplateParameterLists *TemplateParams = 0,
+                           AccessSpecifier AS = AS_none);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclTy *TagDecl);
   DeclTy *ParseCXXClassMemberDeclaration(AccessSpecifier AS);

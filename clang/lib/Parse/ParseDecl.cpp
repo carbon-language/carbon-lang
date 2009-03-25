@@ -471,7 +471,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C++]   'explicit'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
-                                        TemplateParameterLists *TemplateParams){
+                                        TemplateParameterLists *TemplateParams,
+                                        AccessSpecifier AS){
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     int isInvalid = false;
@@ -767,12 +768,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_class:
     case tok::kw_struct:
     case tok::kw_union:
-      ParseClassSpecifier(DS, TemplateParams);
+      ParseClassSpecifier(DS, TemplateParams, AS);
       continue;
 
     // enum-specifier:
     case tok::kw_enum:
-      ParseEnumSpecifier(DS);
+      ParseEnumSpecifier(DS, AS);
       continue;
 
     // cv-qualifier:
@@ -1228,7 +1229,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 /// [C++] elaborated-type-specifier:
 /// [C++]   'enum' '::'[opt] nested-name-specifier[opt] identifier
 ///
-void Parser::ParseEnumSpecifier(DeclSpec &DS) {
+void Parser::ParseEnumSpecifier(DeclSpec &DS, AccessSpecifier AS) {
   assert(Tok.is(tok::kw_enum) && "Not an enum specifier");
   SourceLocation StartLoc = ConsumeToken();
   
@@ -1285,7 +1286,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   else
     TK = Action::TK_Reference;
   DeclTy *TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK, StartLoc,
-                                     SS, Name, NameLoc, Attr);
+                                     SS, Name, NameLoc, Attr, AS);
   
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);

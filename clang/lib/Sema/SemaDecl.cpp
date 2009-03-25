@@ -3068,7 +3068,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
-                             AttributeList *Attr) {
+                             AttributeList *Attr, AccessSpecifier AS) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");
@@ -3361,6 +3361,9 @@ CreateNewDecl:
   // Set the lexical context. If the tag has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
   New->setLexicalDeclContext(CurContext);
+
+  if (AS != AS_none)
+    New->setAccess(AS);
 
   if (TK == TK_Definition)
     New->startDefinition();

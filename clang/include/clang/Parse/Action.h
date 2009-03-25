@@ -353,7 +353,7 @@ public:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr) {
+                           AttributeList *Attr, AccessSpecifier AS) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
     // is (struct/union/enum/class).
     return 0;

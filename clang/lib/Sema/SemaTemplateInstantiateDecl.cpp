@@ -173,6 +173,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner, 
                                     D->getLocation(), D->getIdentifier(),
                                     /*PrevDecl=*/0);
+  Enum->setAccess(D->getAccess());
   Owner->addDecl(Enum);
   Enum->startDefinition();
 

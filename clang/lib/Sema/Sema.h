@@ -390,7 +390,7 @@ public:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                            SourceLocation KWLoc, const CXXScopeSpec &SS,
                            IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr);
+                           AttributeList *Attr, AccessSpecifier AS);
   
   virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,

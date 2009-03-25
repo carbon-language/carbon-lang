@@ -349,7 +349,8 @@ Parser::TypeTy *Parser::ParseClassName(SourceLocation &EndLocation,
 ///         'struct'
 ///         'union'
 void Parser::ParseClassSpecifier(DeclSpec &DS,
-                                 TemplateParameterLists *TemplateParams) {
+                                 TemplateParameterLists *TemplateParams,
+                                 AccessSpecifier AS) {
   assert((Tok.is(tok::kw_class) || 
           Tok.is(tok::kw_struct) || 
           Tok.is(tok::kw_union)) &&
@@ -462,7 +463,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
                                                       TemplateParams->size()));
   else
     TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
-                                     NameLoc, Attr);
+                                       NameLoc, Attr, AS);
 
   // Parse the optional base clause (C++ only).
   if (getLang().CPlusPlus && Tok.is(tok::colon))
@@ -649,7 +650,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS);
+  ParseDeclarationSpecifiers(DS, 0, AS);
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
