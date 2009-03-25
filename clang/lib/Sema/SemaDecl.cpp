@@ -1587,11 +1587,6 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
-  if (R.getTypePtr()->isObjCInterfaceType()) {
-    Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object);
-    InvalidDecl = true;
-  }
-
   VarDecl *NewVD;
   VarDecl::StorageClass SC;
   switch (D.getDeclSpec().getStorageClassSpec()) {
@@ -1641,12 +1636,6 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else if (SC == VarDecl::None)
       SC = VarDecl::Static;
   }
-
-  // The variable can not have an abstract class type.
-  if (RequireNonAbstractType(D.getIdentifierLoc(), R, 
-                             diag::err_abstract_type_in_decl, 
-                             AbstractVariableType))
-    InvalidDecl = true;
     
   // The variable can not 
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
@@ -1671,32 +1660,94 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                                         SE->getByteLength())));
   }
 
+  // If name lookup finds a previous declaration that is not in the
+  // same scope as the new declaration, this may still be an
+  // acceptable redeclaration.
+  if (PrevDecl && !isDeclInScope(PrevDecl, DC, S) &&
+      !(NewVD->hasLinkage() &&
+        isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
+    PrevDecl = 0;     
+
+  // Merge the decl with the existing one if appropriate.
+  if (PrevDecl) {
+    if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
+      // The user tried to define a non-static data member
+      // out-of-line (C++ [dcl.meaning]p1).
+      Diag(NewVD->getLocation(), diag::err_nonstatic_member_out_of_line)
+        << D.getCXXScopeSpec().getRange();
+      PrevDecl = 0;
+      InvalidDecl = true;
+    }
+  } else if (D.getCXXScopeSpec().isSet()) {
+    // No previous declaration in the qualifying scope.
+    Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
+      << Name << D.getCXXScopeSpec().getRange();
+    InvalidDecl = true;
+  }
+
+  if (CheckVariableDeclaration(NewVD, PrevDecl, Redeclaration))
+    InvalidDecl = true;
+
+  // If this is a locally-scoped extern C variable, update the map of
+  // such variables.
+  if (CurContext->isFunctionOrMethod() && NewVD->isExternC(Context) &&
+      !InvalidDecl)
+    RegisterLocallyScopedExternCDecl(NewVD, PrevDecl, S);
+
+  return NewVD;
+}
+
+/// \brief Perform semantic checking on a newly-created variable
+/// declaration.
+///
+/// This routine performs all of the type-checking required for a
+/// variable declaration once it has been build. It is used both to
+/// check variables after they have been parsed and their declarators
+/// have been translated into a declaration, and to check 
+///
+/// \returns true if an error was encountered, false otherwise.
+bool Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
+                                    bool &Redeclaration) {
+  bool Invalid = false;
+
+  QualType T = NewVD->getType();
+
+  if (T->isObjCInterfaceType()) {
+    Diag(NewVD->getLocation(), diag::err_statically_allocated_object);
+    Invalid = true;
+  }
+  
+  // The variable can not have an abstract class type.
+  if (RequireNonAbstractType(NewVD->getLocation(), T,
+                             diag::err_abstract_type_in_decl, 
+                             AbstractVariableType))
+    Invalid = true;
+
   // Emit an error if an address space was applied to decl with local storage.
   // This includes arrays of objects with address space qualifiers, but not
   // automatic variables that point to other address spaces.
   // ISO/IEC TR 18037 S5.1.2
-  if (NewVD->hasLocalStorage() && (NewVD->getType().getAddressSpace() != 0)) {
-    Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
-    InvalidDecl = true;
+  if (NewVD->hasLocalStorage() && (T.getAddressSpace() != 0)) {
+    Diag(NewVD->getLocation(), diag::err_as_qualified_auto_decl);
+    Invalid = true;
   }
 
-  if (NewVD->hasLocalStorage() && NewVD->getType().isObjCGCWeak()) {
-    Diag(D.getIdentifierLoc(), diag::warn_attribute_weak_on_local);
-  }
+  if (NewVD->hasLocalStorage() && T.isObjCGCWeak())
+    Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
 
-  bool isIllegalVLA = R->isVariableArrayType() && NewVD->hasGlobalStorage();
-  bool isIllegalVM = R->isVariablyModifiedType() && NewVD->hasLinkage();
+  bool isIllegalVLA = T->isVariableArrayType() && NewVD->hasGlobalStorage();
+  bool isIllegalVM = T->isVariablyModifiedType() && NewVD->hasLinkage();
   if (isIllegalVLA || isIllegalVM) {
     bool SizeIsNegative;
     QualType FixedTy =
-        TryToFixInvalidVariablyModifiedType(R, Context, SizeIsNegative);
+        TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
     if (!FixedTy.isNull()) {
       Diag(NewVD->getLocation(), diag::warn_illegal_constant_array_size);
       NewVD->setType(FixedTy);
-    } else if (R->isVariableArrayType()) {
-      NewVD->setInvalidDecl();
+    } else if (T->isVariableArrayType()) {
+      Invalid = true;
 
-      const VariableArrayType *VAT = Context.getAsVariableArrayType(R);
+      const VariableArrayType *VAT = Context.getAsVariableArrayType(T);
       // FIXME: This won't give the correct result for 
       // int a[10][n];      
       SourceRange SizeRange = VAT->getSizeExpr()->getSourceRange();
@@ -1711,7 +1762,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         Diag(NewVD->getLocation(), diag::err_vla_decl_has_extern_linkage)
             << SizeRange;
     } else {
-      InvalidDecl = true;
+      Invalid = true;
       
       if (NewVD->isFileVarDecl())
         Diag(NewVD->getLocation(), diag::err_vm_decl_in_file_scope);
@@ -1720,59 +1771,29 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
-  // If name lookup finds a previous declaration that is not in the
-  // same scope as the new declaration, this may still be an
-  // acceptable redeclaration.
-  if (PrevDecl && !isDeclInScope(PrevDecl, DC, S) &&
-      !(NewVD->hasLinkage() &&
-        isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
-    PrevDecl = 0;     
-
   if (!PrevDecl && NewVD->isExternC(Context)) {
     // Since we did not find anything by this name and we're declaring
     // an extern "C" variable, look for a non-visible extern "C"
     // declaration with the same name.
     llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
-      = LocallyScopedExternalDecls.find(Name);
+      = LocallyScopedExternalDecls.find(NewVD->getDeclName());
     if (Pos != LocallyScopedExternalDecls.end())
       PrevDecl = Pos->second;
   }
 
-  // Merge the decl with the existing one if appropriate.
-  if (PrevDecl) {
-    if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
-      // The user tried to define a non-static data member
-      // out-of-line (C++ [dcl.meaning]p1).
-      Diag(NewVD->getLocation(), diag::err_nonstatic_member_out_of_line)
-        << D.getCXXScopeSpec().getRange();
-      NewVD->Destroy(Context);
-      return 0;
-    }
+  if (!Invalid && T->isVoidType() && !NewVD->hasExternalStorage()) {
+    Diag(NewVD->getLocation(), diag::err_typecheck_decl_incomplete_type)
+      << T;
+    Invalid = true;
+  }
 
+  if (PrevDecl) {
     Redeclaration = true;
     if (MergeVarDecl(NewVD, PrevDecl))
-      InvalidDecl = true;
-  } else if (D.getCXXScopeSpec().isSet()) {
-    // No previous declaration in the qualifying scope.
-    Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
-      << Name << D.getCXXScopeSpec().getRange();
-    InvalidDecl = true;
+      Invalid = true;
   }
 
-  if (!InvalidDecl && R->isVoidType() && !NewVD->hasExternalStorage()) {
-    Diag(NewVD->getLocation(), diag::err_typecheck_decl_incomplete_type)
-      << R;
-    InvalidDecl = true;
-  }
-
-
-  // If this is a locally-scoped extern C variable, update the map of
-  // such variables.
-  if (CurContext->isFunctionOrMethod() && NewVD->isExternC(Context) &&
-      !InvalidDecl)
-    RegisterLocallyScopedExternCDecl(NewVD, PrevDecl, S);
-
-  return NewVD;
+  return NewVD->isInvalidDecl() || Invalid;
 }
 
 NamedDecl* 
@@ -2376,7 +2397,8 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit) {
           Diag(Loc, diag::err_in_class_initializer_non_constant)
             << Init->getSourceRange();
           VDecl->setInvalidDecl();
-        }
+        } else if (!VDecl->getType()->isDependentType())
+          ImpCastExprToType(Init, VDecl->getType());
       }
     }
   } else if (VDecl->isFileVarDecl()) {

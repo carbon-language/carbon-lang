@@ -42,6 +42,7 @@ namespace {
     Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
+    Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
@@ -56,6 +57,7 @@ namespace {
 
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *) { 
+      assert(false && "Template instantiation of unknown declaration kind!");
       return 0;
     }
 
@@ -100,6 +102,45 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
 
   Owner->addDecl(Typedef);
   return Typedef;
+}
+
+Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
+  // Instantiate the type of the declaration
+  QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
+                                       NumTemplateArgs, 
+                                       D->getTypeSpecStartLoc(),
+                                       D->getDeclName());
+  if (T.isNull())
+    return 0;
+
+  // Build the instantiataed declaration
+  VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
+                                 D->getLocation(), D->getIdentifier(),
+                                 T, D->getStorageClass(),
+                                 D->getTypeSpecStartLoc());
+  Var->setThreadSpecified(D->isThreadSpecified());
+  Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
+  Var->setDeclaredInCondition(D->isDeclaredInCondition());
+ 
+  // FIXME: In theory, we could have a previous declaration for
+  // variables that are not static data members.
+  bool Redeclaration = false;
+  if (SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration))
+    Var->setInvalidDecl();
+
+  Owner->addDecl(Var);
+
+  if (D->getInit()) {
+    OwningExprResult Init 
+      = SemaRef.InstantiateExpr(D->getInit(), TemplateArgs, NumTemplateArgs);
+    if (Init.isInvalid())
+      Var->setInvalidDecl();
+    else
+      SemaRef.AddInitializerToDecl(Var, move(Init),
+                                   D->hasCXXDirectInitializer());
+  }
+
+  return Var;
 }
 
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {

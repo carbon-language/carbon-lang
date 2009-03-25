@@ -345,6 +345,8 @@ public:
                                      QualType R, Decl* LastDeclarator,
                                      NamedDecl* PrevDecl, bool& InvalidDecl,
                                      bool &Redeclaration);
+  bool CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
+                                bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, Decl *LastDeclarator,
                                      NamedDecl* PrevDecl, 
