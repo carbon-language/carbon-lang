@@ -175,7 +175,10 @@ public:
                          const_cast<const Decl*>(this)->getDeclContext());
   }
 
-  void setAccess(AccessSpecifier AS) { Access = AS; }
+  void setAccess(AccessSpecifier AS) { 
+    assert(AS != AS_none && "Can't set access to none");
+    Access = AS; 
+  }
   AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
 
   bool hasAttrs() const { return HasAttrs; }
