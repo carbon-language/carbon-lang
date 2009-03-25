@@ -6582,7 +6582,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       // preferable because it allows the C<<Y expression to be hoisted out
       // of a loop if Y is invariant and X is not.
       if (Shift && Shift->hasOneUse() && RHSV == 0 &&
-          ICI.isEquality() && !Shift->isArithmeticShift()) {
+          ICI.isEquality() && !Shift->isArithmeticShift() &&
+          !isa<Constant>(Shift->getOperand(0))) {
         // Compute C << Y.
         Value *NS;
         if (Shift->getOpcode() == Instruction::LShr) {
