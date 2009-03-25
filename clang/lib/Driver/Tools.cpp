@@ -68,6 +68,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // FIXME: Move into clang?
     CmdArgs.push_back("-warn-dead-stores");
     CmdArgs.push_back("-checker-cfref");
+    CmdArgs.push_back("-analyzer-eagerly-assume");
     CmdArgs.push_back("-warn-objc-methodsigs");
     // Do not enable the missing -dealloc check.
     // '-warn-objc-missing-dealloc',
