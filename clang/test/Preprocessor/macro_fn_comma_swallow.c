@@ -14,3 +14,8 @@ X2()
 X3(foo)
 
 
+
+// RUN: clang-cc %s -E | grep 'AA BB'
+// PR3880
+#define X4(...)  AA , ## __VA_ARGS__ BB
+X4()

@@ -403,6 +403,12 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     Tok.setLocation(EndLoc);
     Tok.setLength(0);
     ArgTokens.push_back(Tok);
+  } else if (NumActuals == 1 && ArgTokens.size() == 1) {
+    // If there is exactly one argument, and that argument is just an EOF token,
+    // then we have an empty "()" argument empty list.  This is fine, even if
+    // the macro expects one argument (the argument is just empty).  However, if
+    // the macro expects "...", then we need to know that it was elided.
+    isVarargsElided = MinArgsExpected == 1 && MI->isVariadic();
   }
   
   return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size(),isVarargsElided);
