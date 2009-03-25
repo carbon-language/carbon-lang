@@ -280,6 +280,9 @@ int main(int argc, char **argv) {
     // Ask the target to add backend passes as necessary.
     MachineCodeEmitter *MCE = 0;
 
+    // Override default to generate verbose assembly.
+    Target.setAsmVerbosityDefault(true);
+
     switch (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
     default:
       assert(0 && "Invalid file model!");
