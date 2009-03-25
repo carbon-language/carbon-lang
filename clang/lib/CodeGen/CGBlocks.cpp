@@ -25,14 +25,6 @@ using namespace CodeGen;
 // Temporary code to enable testing of __block variables
 // #include "clang/Frontend/CompileOptions.h"
 #include "llvm/Support/CommandLine.h"
-static llvm::cl::opt<bool>
-Enable__block("f__block",
-              // See all the FIXMEs for the various work that needs to be done
-              llvm::cl::desc("temporary option to turn on __block precessing "
-                             "even though the code isn't done yet"),
-              llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
-              llvm::cl::ZeroOrMore,
-              llvm::cl::init(true));
 
 llvm::Constant *CodeGenFunction::
 BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
@@ -165,9 +157,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
                                                    subBlockHasCopyDispose);
     BlockHasCopyDispose |= subBlockHasCopyDispose;
     Elts[3] = Fn;
-
-    if (!Enable__block && BlockHasCopyDispose)
-      ErrorUnsupported(BE, "block literal that requires copy/dispose");
 
     if (subBlockHasCopyDispose)
       flags |= BLOCK_HAS_COPY_DISPOSE;
@@ -487,17 +476,6 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
 
   const llvm::Type *Ty;
   Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
-
-  if (!Enable__block && E->isByRef())
-    ErrorUnsupported(E, "__block variable in block literal");
-  else if (!Enable__block && E->getType()->isBlockPointerType())
-    ErrorUnsupported(E, "block pointer in block literal");
-  else if (!Enable__block && (E->getDecl()->getAttr<ObjCNSObjectAttr>() ||
-                              getContext().isObjCNSObjectType(E->getType())))
-    ErrorUnsupported(E, "__attribute__((NSObject)) variable in block "
-                     "literal");
-  else if (!Enable__block && getContext().isObjCObjectPointerType(E->getType()))
-    ErrorUnsupported(E, "Objective-C variable in block literal");
 
   // See if we have already allocated an offset for this variable.
   if (offset == 0) {
