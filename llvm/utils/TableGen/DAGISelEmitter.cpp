@@ -175,12 +175,33 @@ struct PatternSortingPredicate {
   }
 };
 
-/// getRegisterValueType - Look up and return the first ValueType of specified 
-/// RegisterClass record
+/// getRegisterValueType - Look up and return the ValueType of the specified
+/// register. If the register is a member of multiple register classes which
+/// have different associated types, return MVT::Other.
 static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
-  if (const CodeGenRegisterClass *RC = T.getRegisterClassForRegister(R))
-    return RC->getValueTypeNum(0);
-  return MVT::Other;
+  int FoundRC = 0;
+  MVT::SimpleValueType VT = MVT::Other;
+  const std::vector<CodeGenRegisterClass> &RCs = T.getRegisterClasses();
+  std::vector<CodeGenRegisterClass>::const_iterator RC;
+  std::vector<Record*>::const_iterator Element;
+
+  for (RC = RCs.begin() ; RC != RCs.end() ; RC++) {
+    Element = find((*RC).Elements.begin(), (*RC).Elements.end(), R);
+    if (Element != (*RC).Elements.end()) {
+      if (!FoundRC) {
+        FoundRC = 1;
+        VT = (*RC).getValueTypeNum(0);
+      } else {
+        // In multiple RC's
+        if (VT != (*RC).getValueTypeNum(0)) {
+          // Types of the RC's do not agree. Return MVT::Other. The
+          // target is responsible for handling this.
+          return MVT::Other;
+        }
+      }
+    }
+  }
+  return VT;
 }
 
 
