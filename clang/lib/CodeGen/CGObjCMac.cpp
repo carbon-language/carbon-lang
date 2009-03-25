@@ -1516,7 +1516,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
   // FIXME: Set ivar_layout
-  Values[10] = GetIvarLayoutName(0, ObjCTypes); 
+  // Values[10] = BuildIvarLayout(ID, true); 
+  Values[10] = GetIvarLayoutName(0, ObjCTypes);
   Values[11] = EmitClassExtension(ID);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
@@ -1640,6 +1641,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   // FIXME: Output weak_ivar_layout string.
+  // Values[1] = BuildIvarLayout(ID, false);
   Values[1] = GetIvarLayoutName(0, ObjCTypes);
   Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
@@ -2553,7 +2555,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     if (!Field->getIdentifier() || Field->isBitField())
       continue;
     QualType FQT = Field->getType();
-    if (FQT->isAggregateType()) {
+    if (FQT->isRecordType() || FQT->isUnionType()) {
       std::vector<FieldDecl*> NestedRecFields;
       if (FQT->isUnionType())
         HasUnion = true;
@@ -2580,6 +2582,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                                  dyn_cast_or_null<ConstantArrayType>(Array);
       assert(CArray && "only array with know element size is supported");
       FQT = CArray->getElementType();
+      while (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
+        const ConstantArrayType *CArray =
+                                 dyn_cast_or_null<ConstantArrayType>(Array);
+        FQT = CArray->getElementType();
+      }
+        
       assert(!FQT->isUnionType() && 
              "layout for array of unions not supported");
       if (FQT->isRecordType()) {
@@ -2893,7 +2901,8 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     }
   }
   // null terminate string.
-  // BitMap += (unsigned char)0;
+  unsigned char zero = 0;
+  BitMap += zero;
   // if ivar_layout bitmap is all 1 bits (nothing skipped) then use NULL as
   // final layout.
   if (ForStrongLayout && !BytesSkipped)
@@ -2902,6 +2911,16 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
                                       llvm::ConstantArray::get(BitMap.c_str()),
                                       "__TEXT,__cstring,cstring_literals",
                                       0, true);
+  // FIXME. Need a commomand-line option for this eventually.
+  if (ForStrongLayout)
+    printf("\nstrong ivar layout: ");
+  else
+    printf("\nweak ivar layout: ");
+  const unsigned char *s = (unsigned char*)BitMap.c_str();
+  for (unsigned i = 0; i < BitMap.size(); i++)
+    printf("0x%x ", s[i]);
+  printf("\n");
+  
   return getConstantGEP(Entry, 0, 0);
 }
 
