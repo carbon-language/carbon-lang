@@ -267,7 +267,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
-  llvm::Constant *BuildDescriptorBlockDecl(uint64_t Size,
+  llvm::Constant *BuildDescriptorBlockDecl(bool BlockHasCopyDispose,
+                                           uint64_t Size,
                                            const llvm::StructType *,
                                            std::vector<HelperInfo> *);
 

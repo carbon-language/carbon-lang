@@ -57,6 +57,7 @@ void test5() {
 void test6() {
   __block int i;
   ^{ i=1; }();
+ ^{};
 }
 
 int main() {

@@ -35,7 +35,8 @@ Enable__block("f__block",
               llvm::cl::init(true));
 
 llvm::Constant *CodeGenFunction::
-BuildDescriptorBlockDecl(uint64_t Size, const llvm::StructType* Ty,
+BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
+                         const llvm::StructType* Ty,
                          std::vector<HelperInfo> *NoteForHelper) {
   const llvm::Type *UnsignedLongTy
     = CGM.getTypes().ConvertType(getContext().UnsignedLongTy);
@@ -155,18 +156,20 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // __invoke
     uint64_t subBlockSize, subBlockAlign;
     llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
+    bool subBlockHasCopyDispose = false;
     llvm::Function *Fn
       = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, CurFuncDecl, LocalDeclMap,
                                                    subBlockSize,
                                                    subBlockAlign,
                                                    subBlockDeclRefDecls,
-                                                   BlockHasCopyDispose);
+                                                   subBlockHasCopyDispose);
+    BlockHasCopyDispose |= subBlockHasCopyDispose;
     Elts[3] = Fn;
 
     if (!Enable__block && BlockHasCopyDispose)
       ErrorUnsupported(BE, "block literal that requires copy/dispose");
 
-    if (BlockHasCopyDispose)
+    if (subBlockHasCopyDispose)
       flags |= BLOCK_HAS_COPY_DISPOSE;
 
     // __isa
@@ -186,7 +189,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     if (subBlockDeclRefDecls.size() == 0) {
       // __descriptor
-      Elts[4] = BuildDescriptorBlockDecl(subBlockSize, 0, 0);
+      assert(subBlockHasCopyDispose == false);
+      Elts[4] = BuildDescriptorBlockDecl(subBlockHasCopyDispose, subBlockSize, 0, 0);
 
       // Optimize to being a global block.
       Elts[0] = CGM.getNSConcreteGlobalBlock();
@@ -318,7 +322,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     NoteForHelper.resize(helpersize);
 
     // __descriptor
-    llvm::Value *Descriptor = BuildDescriptorBlockDecl(subBlockSize, Ty,
+    llvm::Value *Descriptor = BuildDescriptorBlockDecl(subBlockHasCopyDispose,
+                                                       subBlockSize, Ty,
                                                        &NoteForHelper);
     Descriptor = Builder.CreateBitCast(Descriptor, PtrToInt8Ty);
     Builder.CreateStore(Descriptor, Builder.CreateStructGEP(V, 4, "block.tmp"));
