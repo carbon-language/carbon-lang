@@ -28,3 +28,11 @@ B<17 + 2> *bar(B<(19)> *ptr1, B< (::value + 7) > *ptr2, B<19 - 3> *ptr3) {
 }
 
 typedef B<5> B5;
+
+
+namespace N {
+  template<typename T> struct C {};
+}
+
+N::C<int> c1;
+typedef N::C<float> c2;

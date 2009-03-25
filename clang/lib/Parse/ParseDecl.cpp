@@ -497,7 +497,20 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
 
       // We are looking for a qualified typename.
-      if (NextToken().isNot(tok::identifier))
+      Token Next = NextToken();
+      if (Next.is(tok::annot_template_id) && 
+          static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue())
+          ->Kind == TNK_Class_template) {
+        // We have a qualified template-id, e.g., N::A<int>
+        CXXScopeSpec SS;
+        ParseOptionalCXXScopeSpecifier(SS);
+        assert(Tok.is(tok::annot_template_id) && 
+               "ParseOptionalCXXScopeSpecifier not working");
+        AnnotateTemplateIdTokenAsType(&SS);
+        continue;
+      }
+
+      if (Next.isNot(tok::identifier))
         goto DoneWithDeclSpec;
 
       CXXScopeSpec SS;
@@ -512,7 +525,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           GetLookAheadToken(2).is(tok::l_paren))
         goto DoneWithDeclSpec;
 
-      Token Next = NextToken();
       TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
                                             Next.getLocation(), CurScope, &SS);
 
