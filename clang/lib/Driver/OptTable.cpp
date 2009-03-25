@@ -185,17 +185,12 @@ Option *OptTable::constructOption(options::ID id) const {
     case 'S': 
       assert(info.Kind == Option::JoinedClass && "Invalid option.");
       Opt->setForceSeparateRender(true); break;
-    case 'd': Opt->setForwardToGCC(false); break;
+    case 'd': Opt->setDriverOption(true); break;
     case 'i': Opt->setNoOptAsInput(true); break;
     case 'l': Opt->setLinkerInput(true); break;
     case 'u': Opt->setUnsupported(true); break;
     }
   }
-
-  // Linker inputs shouldn't be forwarded to GCC as arguments (they
-  // will, however, be forwarded as inputs).
-  if (Opt->isLinkerInput())
-    Opt->setForwardToGCC(false);
 
   return Opt;
 }

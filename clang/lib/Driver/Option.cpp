@@ -21,7 +21,7 @@ Option::Option(OptionClass _Kind, options::ID _ID, const char *_Name,
   : Kind(_Kind), ID(_ID), Name(_Name), Group(_Group), Alias(_Alias),
     Unsupported(false), LinkerInput(false), NoOptAsInput(false),
     ForceSeparateRender(false), ForceJoinedRender(false),
-    ForwardToGCC(true)
+    DriverOption(false)
 {
 
   // Multi-level aliases are not supported, and alias options cannot

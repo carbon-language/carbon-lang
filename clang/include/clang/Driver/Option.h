@@ -82,8 +82,8 @@ namespace driver {
     /// Always render this option joined with its value.
     bool ForceJoinedRender : 1;    
 
-    /// Forward to generic GCC tools.
-    bool ForwardToGCC : 1;    
+    /// This option is only for consumed by the driver.
+    bool DriverOption : 1;    
 
   protected:
     Option(OptionClass Kind, options::ID ID, const char *Name, 
@@ -112,8 +112,10 @@ namespace driver {
     bool hasForceJoinedRender() const { return ForceJoinedRender; }
     void setForceJoinedRender(bool Value) { ForceJoinedRender = Value; }
     
-    bool hasForwardToGCC() const { return ForwardToGCC; }
-    void setForwardToGCC(bool Value) { ForwardToGCC = Value; }
+    bool isDriverOption() const { return DriverOption; }
+    void setDriverOption(bool Value) { DriverOption = Value; }
+
+    bool hasForwardToGCC() const { return !DriverOption && !LinkerInput; }
 
     /// getUnaliasedOption - Return the final option this option
     /// aliases (itself, if the option has no alias).
