@@ -3392,11 +3392,12 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclTy *TagD) {
       //   class itself; this is known as the injected-class-name. For
       //   purposes of access checking, the injected-class-name is treated
       //   as if it were a public member name.
-      RecordDecl *InjectedClassName
+      CXXRecordDecl *InjectedClassName
         = CXXRecordDecl::Create(Context, Record->getTagKind(),
                                 CurContext, Record->getLocation(),
                                 Record->getIdentifier(), Record);
       InjectedClassName->setImplicit();
+      InjectedClassName->setAccess(AS_public);
       PushOnScopeChains(InjectedClassName, S);
       assert(InjectedClassName->isInjectedClassName() && 
              "Broken injected-class-name");

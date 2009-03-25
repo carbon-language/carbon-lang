@@ -18,6 +18,8 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
+
+class ClassTemplateDecl;
 class CXXRecordDecl;
 class CXXConstructorDecl;
 class CXXDestructorDecl;
@@ -236,6 +238,17 @@ class CXXRecordDecl : public RecordDecl {
   /// CXXConversionDecl.
   OverloadedFunctionDecl Conversions;
 
+  /// \brief The template or declaration that is declaration is
+  /// instantiated from.
+  /// 
+  /// For non-templates, this value will be NULL. For record
+  /// declarations that describe a class template, this will be a
+  /// pointer to a ClassTemplateDecl (the bit is 0). For member
+  /// classes of class template specializations, this will be the
+  /// RecordDecl from which the member class was instantiated (the bit
+  /// is 1).
+  llvm::PointerIntPair<Decl*, 1> TemplateOrInstantiation;
+
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id);
@@ -294,7 +307,7 @@ public:
 
   /// addedAssignmentOperator - Notify the class that another assignment
   /// operator has been added. This routine helps maintain information about the
-  /// class based on which operators have been added.
+   /// class based on which operators have been added.
   void addedAssignmentOperator(ASTContext &Context, CXXMethodDecl *OpDecl);
 
   /// hasUserDeclaredCopyAssignment - Whether this class has a
@@ -363,6 +376,49 @@ public:
   /// setAbstract - Set whether this class is abstract (C++ [class.abstract])
   void setAbstract(bool Abs) { Abstract = Abs; }
   
+  /// \brief If this record is an instantiation of a member class,
+  /// retrieves the member class from which it was instantiated.
+  ///
+  /// This routine will return non-NULL for (non-templated) member
+  /// classes of class templates. For example, given:
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   struct A { };
+  /// };
+  /// \endcode
+  ///
+  /// The declaration for X<int>::A is a (non-templated) CXXRecordDecl
+  /// whose parent is the class template specialization X<int>. For
+  /// this declaration, getInstantiatedFromMemberClass() will return
+  /// the CXXRecordDecl X<T>::A. When a complete definition of
+  /// X<int>::A is required, it will be instantiated from the
+  /// declaration returned by getInstantiatedFromMemberClass().
+  CXXRecordDecl *getInstantiatedFromMemberClass();
+
+  /// \brief Specify that this record is an instantiation of the
+  /// member class RD.
+  void setInstantiationOfMemberClass(CXXRecordDecl *RD) { 
+    TemplateOrInstantiation.setInt(1);
+    TemplateOrInstantiation.setPointer(RD);
+  }
+
+  /// \brief Retrieves the class template that is described by this
+  /// class declaration.
+  ///
+  /// Every class template is represented as a ClassTemplateDecl and a
+  /// CXXRecordDecl. The former contains template properties (such as
+  /// the template parameter lists) while the latter contains the
+  /// actual description of the template's
+  /// contents. ClassTemplateDecl::getTemplatedDecl() retrieves the
+  /// CXXRecordDecl that from a ClassTemplateDecl, while
+  /// getDescribedClassTemplate() retrieves the ClassTemplateDecl from
+  /// a CXXRecordDecl.
+  ClassTemplateDecl *getDescribedClassTemplate();
+
+  void setDescribedClassTemplate(ClassTemplateDecl *Template);
+
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.

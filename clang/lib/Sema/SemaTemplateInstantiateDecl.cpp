@@ -46,6 +46,7 @@ namespace {
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
+    Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
     Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
@@ -221,6 +222,24 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
   assert(false && "EnumConstantDecls can only occur within EnumDecls.");
   return 0;
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  CXXRecordDecl *PrevDecl = 0;
+  if (D->isInjectedClassName())
+    PrevDecl = cast<CXXRecordDecl>(Owner);
+
+  CXXRecordDecl *Record
+    = CXXRecordDecl::Create(SemaRef.Context, D->getTagKind(), Owner, 
+                            D->getLocation(), D->getIdentifier(), PrevDecl);
+  Record->setImplicit(D->isImplicit());
+  Record->setAccess(D->getAccess());
+
+  if (!D->isInjectedClassName())
+    Record->setInstantiationOfMemberClass(D);
+
+  Owner->addDecl(Record);
+  return Record;
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {

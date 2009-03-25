@@ -1784,8 +1784,7 @@ public:
     /// \brief The kind of template instantiation we are performing
     enum {
       /// We are instantiating a template declaration. The entity is
-      /// the declaration we're instantiation (e.g., a
-      /// ClassTemplateSpecializationDecl).
+      /// the declaration we're instantiation (e.g., a CXXRecordDecl).
       TemplateInstantiation,
 
       /// We are instantiating a default argument for a template
@@ -1870,7 +1869,7 @@ public:
   struct InstantiatingTemplate {
     /// \brief Note that we are instantiating a class template.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                          ClassTemplateSpecializationDecl *Entity,
+                          CXXRecordDecl *Entity,
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are instantiating a default argument in a
@@ -1915,8 +1914,17 @@ public:
                         unsigned NumTemplateArgs);
 
   bool 
-  InstantiateBaseSpecifiers(ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                            ClassTemplateDecl *ClassTemplate);
+  InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
+                            CXXRecordDecl *Pattern,
+                            const TemplateArgument *TemplateArgs,
+                            unsigned NumTemplateArgs);
+
+  bool
+  InstantiateClass(SourceLocation PointOfInstantiation,
+                   CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
+                   const TemplateArgument *TemplateArgs,
+                   unsigned NumTemplateArgs);
+
   bool 
   InstantiateClassTemplateSpecialization(
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,

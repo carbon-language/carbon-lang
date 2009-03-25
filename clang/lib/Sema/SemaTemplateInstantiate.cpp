@@ -26,7 +26,7 @@ using namespace clang;
 
 Sema::InstantiatingTemplate::
 InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                      ClassTemplateSpecializationDecl *Entity,
+                      CXXRecordDecl *Entity,
                       SourceRange InstantiationRange)
   :  SemaRef(SemaRef) {
 
@@ -100,11 +100,13 @@ void Sema::PrintInstantiationStack() {
        ++Active) {
     switch (Active->Kind) {
     case ActiveTemplateInstantiation::TemplateInstantiation: {
-      ClassTemplateSpecializationDecl *Spec
-        = cast<ClassTemplateSpecializationDecl>((Decl*)Active->Entity);
+      unsigned DiagID = diag::note_template_member_class_here;
+      CXXRecordDecl *Record = (CXXRecordDecl *)Active->Entity;
+      if (isa<ClassTemplateSpecializationDecl>(Record))
+        DiagID = diag::note_template_class_instantiation_here;
       Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
-                   diag::note_template_class_instantiation_here)
-        << Context.getTypeDeclType(Spec)
+                   DiagID)
+        << Context.getTypeDeclType(Record)
         << Active->InstantiationRange;
       break;
     }
@@ -591,14 +593,14 @@ QualType Sema::InstantiateType(QualType T,
 /// attaches the instantiated base classes to the class template
 /// specialization if successful.
 bool 
-Sema::InstantiateBaseSpecifiers(
-                           ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                           ClassTemplateDecl *ClassTemplate) {
+Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
+                                CXXRecordDecl *Pattern,
+                                const TemplateArgument *TemplateArgs,
+                                unsigned NumTemplateArgs) {
   bool Invalid = false;
   llvm::SmallVector<CXXBaseSpecifier*, 8> InstantiatedBases;
-  for (ClassTemplateSpecializationDecl::base_class_iterator
-         Base = ClassTemplate->getTemplatedDecl()->bases_begin(),
-         BaseEnd = ClassTemplate->getTemplatedDecl()->bases_end();
+  for (ClassTemplateSpecializationDecl::base_class_iterator 
+         Base = Pattern->bases_begin(), BaseEnd = Pattern->bases_end();
        Base != BaseEnd; ++Base) {
     if (!Base->getType()->isDependentType()) {
       // FIXME: Allocate via ASTContext
@@ -607,8 +609,7 @@ Sema::InstantiateBaseSpecifiers(
     }
 
     QualType BaseType = InstantiateType(Base->getType(), 
-                                        ClassTemplateSpec->getTemplateArgs(),
-                                        ClassTemplateSpec->getNumTemplateArgs(),
+                                        TemplateArgs, NumTemplateArgs,
                                         Base->getSourceRange().getBegin(),
                                         DeclarationName());
     if (BaseType.isNull()) {
@@ -617,7 +618,7 @@ Sema::InstantiateBaseSpecifiers(
     }
 
     if (CXXBaseSpecifier *InstantiatedBase
-          = CheckBaseSpecifier(ClassTemplateSpec,
+          = CheckBaseSpecifier(Instantiation,
                                Base->getSourceRange(),
                                Base->isVirtual(),
                                Base->getAccessSpecifierAsWritten(),
@@ -630,9 +631,105 @@ Sema::InstantiateBaseSpecifiers(
   }
 
   if (!Invalid &&
-      AttachBaseSpecifiers(ClassTemplateSpec, &InstantiatedBases[0],
+      AttachBaseSpecifiers(Instantiation, &InstantiatedBases[0],
                            InstantiatedBases.size()))
     Invalid = true;
+
+  return Invalid;
+}
+
+/// \brief Instantiate the definition of a class from a given pattern.
+///
+/// \param PointOfInstantiation The point of instantiation within the
+/// source code.
+///
+/// \param Instantiation is the declaration whose definition is being
+/// instantiated. This will be either a class template specialization
+/// or a member class of a class template specialization.
+///
+/// \param Pattern is the pattern from which the instantiation
+/// occurs. This will be either the declaration of a class template or
+/// the declaration of a member class of a class template.
+///
+/// \param TemplateArgs The template arguments to be substituted into
+/// the pattern.
+///
+/// \param NumTemplateArgs The number of templates arguments in
+/// TemplateArgs.
+///
+/// \returns true if an error occurred, false otherwise.
+bool
+Sema::InstantiateClass(SourceLocation PointOfInstantiation,
+                       CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
+                       const TemplateArgument *TemplateArgs,
+                       unsigned NumTemplateArgs) {
+  bool Invalid = false;
+  
+  CXXRecordDecl *PatternDef 
+    = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
+  if (!PatternDef) {
+    if (Pattern == Instantiation->getInstantiatedFromMemberClass()) {
+      Diag(PointOfInstantiation,
+           diag::err_implicit_instantiate_member_undefined)
+        << Context.getTypeDeclType(Instantiation);
+      Diag(Pattern->getLocation(), diag::note_member_of_template_here);
+    } else {
+      Diag(PointOfInstantiation, 
+           diag::err_template_implicit_instantiate_undefined)
+        << Context.getTypeDeclType(Instantiation);
+      Diag(Pattern->getLocation(), diag::note_template_decl_here);
+    }
+    return true;
+  }
+  Pattern = PatternDef;
+
+  InstantiatingTemplate Inst(*this, Instantiation->getLocation(),
+                             Instantiation);
+  if (Inst)
+    return true;
+
+  // Enter the scope of this instantiation. We don't use
+  // PushDeclContext because we don't have a scope.
+  DeclContext *PreviousContext = CurContext;
+  CurContext = Instantiation;
+
+  // Start the definition of this instantiation.
+  Instantiation->startDefinition();
+
+  // Instantiate the base class specifiers.
+  if (InstantiateBaseSpecifiers(Instantiation, Pattern, TemplateArgs,
+                                NumTemplateArgs))
+    Invalid = true;
+
+  llvm::SmallVector<DeclTy *, 32> Fields;
+  for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
+                              MemberEnd = Pattern->decls_end();
+       Member != MemberEnd; ++Member) {
+    Decl *NewMember = InstantiateDecl(*Member, Instantiation,
+                                      TemplateArgs, NumTemplateArgs);
+    if (NewMember) {
+      if (NewMember->isInvalidDecl())
+        Invalid = true;
+      else if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
+        Fields.push_back(Field);
+    } else {
+      // FIXME: Eventually, a NULL return will mean that one of the
+      // instantiations was a semantic disaster, and we'll want to set
+      // Invalid = true. For now, we expect to skip some members that
+      // we can't yet handle.
+    }
+  }
+
+  // Finish checking fields.
+  ActOnFields(0, Instantiation->getLocation(), Instantiation,
+              &Fields[0], Fields.size(), SourceLocation(), SourceLocation(),
+              0);
+
+  // Add any implicitly-declared members that we might need.
+  AddImplicitlyDeclaredMembersToClass(Instantiation);
+
+  // Exit the scope of this instantiation.
+  CurContext = PreviousContext;
 
   return Invalid;
 }
@@ -659,77 +756,17 @@ Sema::InstantiateClassTemplateSpecialization(
   // the best template.
   ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
 
-  RecordDecl *Pattern = cast_or_null<RecordDecl>(
-                          Template->getTemplatedDecl()->getDefinition(Context));
-  if (!Pattern) {
-    Diag(ClassTemplateSpec->getLocation(), 
-         diag::err_template_implicit_instantiate_undefined)
-      << Context.getTypeDeclType(ClassTemplateSpec);
-    Diag(Template->getTemplatedDecl()->getLocation(), 
-         diag::note_template_decl_here);
-    return true;
-  }
+  CXXRecordDecl *Pattern = Template->getTemplatedDecl();
 
   // Note that this is an instantiation.  
   ClassTemplateSpec->setSpecializationKind(
                         ExplicitInstantiation? TSK_ExplicitInstantiation 
                                              : TSK_ImplicitInstantiation);
 
-
-  bool Invalid = false;
-  
-  InstantiatingTemplate Inst(*this, ClassTemplateSpec->getLocation(),
-                             ClassTemplateSpec);
-  if (Inst)
-    return true;
-
-  // Enter the scope of this instantiation. We don't use
-  // PushDeclContext because we don't have a scope.
-  DeclContext *PreviousContext = CurContext;
-  CurContext = ClassTemplateSpec;
-
-  // Start the definition of this instantiation.
-  ClassTemplateSpec->startDefinition();
-
-  // Instantiate the base class specifiers.
-  if (InstantiateBaseSpecifiers(ClassTemplateSpec, Template))
-    Invalid = true;
-
-  // FIXME: Create the injected-class-name for the
-  // instantiation. Should this be a typedef or something like it?
-
-  llvm::SmallVector<DeclTy *, 32> Fields;
-  for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
-                              MemberEnd = Pattern->decls_end();
-       Member != MemberEnd; ++Member) {
-    Decl *NewMember = InstantiateDecl(*Member, ClassTemplateSpec,
-                                      ClassTemplateSpec->getTemplateArgs(),
-                                      ClassTemplateSpec->getNumTemplateArgs());
-    if (NewMember) {
-      if (NewMember->isInvalidDecl())
-        Invalid = true;
-      else if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
-        Fields.push_back(Field);
-    } else {
-      // FIXME: Eventually, a NULL return will mean that one of the
-      // instantiations was a semantic disaster, and we'll want to set
-      // Invalid = true. For now, we expect to skip some members that
-      // we can't yet handle.
-    }
-  }
-
-  // Finish checking fields.
-  ActOnFields(0, ClassTemplateSpec->getLocation(), ClassTemplateSpec,
-              &Fields[0], Fields.size(), SourceLocation(), SourceLocation(),
-              0);
-
-  // Add any implicitly-declared members that we might need.
-  AddImplicitlyDeclaredMembersToClass(ClassTemplateSpec);
-
-  // Exit the scope of this instantiation.
-  CurContext = PreviousContext;
-
-  return Invalid;
+  return InstantiateClass(ClassTemplateSpec->getLocation(),
+                          ClassTemplateSpec, Pattern,
+                          ClassTemplateSpec->getTemplateArgs(),
+                          ClassTemplateSpec->getNumTemplateArgs());
 }
 
 /// \brief Instantiate a sequence of nested-name-specifiers into a

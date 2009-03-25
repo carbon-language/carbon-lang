@@ -1042,11 +1042,11 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
   if (!T->isIncompleteType())
     return false;
 
-  // If we have a class template specialization, try to instantiate
-  // it.
-  if (const RecordType *Record = T->getAsRecordType())
+  // If we have a class template specialization or a class member of a
+  // class template specialization, try to instantiate it.
+  if (const RecordType *Record = T->getAsRecordType()) {
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec
-          = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) 
+          = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
         // Update the class template specialization's location to
         // refer to the point of instantiation.
@@ -1055,7 +1055,22 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
         return InstantiateClassTemplateSpecialization(ClassTemplateSpec,
                                              /*ExplicitInstantiation=*/false);
       }
-        
+    } else if (CXXRecordDecl *Rec 
+                 = dyn_cast<CXXRecordDecl>(Record->getDecl())) {
+      if (CXXRecordDecl *Pattern = Rec->getInstantiatedFromMemberClass()) {
+        // Find the class template specialization that surrounds this
+        // member class.
+        ClassTemplateSpecializationDecl *Spec = 0;
+        for (DeclContext *Parent = Rec->getDeclContext(); 
+             Parent && !Spec; Parent = Parent->getParent())
+          Spec = dyn_cast<ClassTemplateSpecializationDecl>(Parent);
+        assert(Spec && "Not a member of a class template specialization?");
+        return InstantiateClass(Loc, Rec, Pattern,
+                                Spec->getTemplateArgs(), 
+                                Spec->getNumTemplateArgs());
+      }
+    }
+  }
 
   if (PrintType.isNull())
     PrintType = T;

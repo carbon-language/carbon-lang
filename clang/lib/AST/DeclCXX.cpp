@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -28,7 +29,8 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
-    Bases(0), NumBases(0), Conversions(DC, DeclarationName()) { }
+    Bases(0), NumBases(0), Conversions(DC, DeclarationName()),
+    TemplateOrInstantiation() { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
@@ -175,6 +177,24 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 void CXXRecordDecl::addConversionFunction(ASTContext &Context, 
                                           CXXConversionDecl *ConvDecl) {
   Conversions.addOverload(ConvDecl);
+}
+
+CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() {
+  if (TemplateOrInstantiation.getInt() == 1)
+    return cast_or_null<CXXRecordDecl>(TemplateOrInstantiation.getPointer());
+  return 0;
+}
+
+void CXXRecordDecl::setDescribedClassTemplate(ClassTemplateDecl *Template) {
+  TemplateOrInstantiation.setInt(0);
+  TemplateOrInstantiation.setPointer(Template);
+}
+
+ClassTemplateDecl *CXXRecordDecl::getDescribedClassTemplate() {
+  if (TemplateOrInstantiation.getInt() == 0)
+    return cast_or_null<ClassTemplateDecl>(
+                                     TemplateOrInstantiation.getPointer());
+  return 0;
 }
 
 CXXMethodDecl *
