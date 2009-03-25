@@ -309,6 +309,14 @@
 		1A68BC110D0CADDD001A28C8 /* PPCBuiltins.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = PPCBuiltins.def; path = clang/AST/PPCBuiltins.def; sourceTree = "<group>"; tabWidth = 2; };
 		1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TargetBuiltins.h; path = clang/AST/TargetBuiltins.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A68BC130D0CADDD001A28C8 /* X86Builtins.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = X86Builtins.def; path = clang/AST/X86Builtins.def; sourceTree = "<group>"; tabWidth = 2; };
+		1A7019E90F79BC1100FEC4D1 /* DiagnosticAnalysisKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticAnalysisKinds.td; sourceTree = "<group>"; };
+		1A7019EA0F79BC1100FEC4D1 /* DiagnosticASTKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticASTKinds.td; sourceTree = "<group>"; };
+		1A7019EB0F79BC1100FEC4D1 /* DiagnosticCommonKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticCommonKinds.td; sourceTree = "<group>"; };
+		1A7019EC0F79BC1100FEC4D1 /* DiagnosticDriverKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticDriverKinds.td; sourceTree = "<group>"; };
+		1A7019ED0F79BC1100FEC4D1 /* DiagnosticFrontendKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticFrontendKinds.td; sourceTree = "<group>"; };
+		1A7019EE0F79BC1100FEC4D1 /* DiagnosticLexKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticLexKinds.td; sourceTree = "<group>"; };
+		1A7019EF0F79BC1100FEC4D1 /* DiagnosticParseKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticParseKinds.td; sourceTree = "<group>"; };
+		1A701A250F79CE1C00FEC4D1 /* DiagnosticSemaKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.td; sourceTree = "<group>"; };
 		1A72BEAC0D641E9400B085E9 /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = clang/AST/Attr.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A7342470C7B57D500122F56 /* CGObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjC.cpp; path = lib/CodeGen/CGObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
@@ -545,12 +553,6 @@
 		DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenModule.cpp; path = lib/CodeGen/CodeGenModule.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE928B800C0A615B00231DA4 /* CodeGenFunction.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenFunction.h; path = lib/CodeGen/CodeGenFunction.h; sourceTree = "<group>"; tabWidth = 2; usesTabs = 0; };
 		DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenFunction.cpp; path = lib/CodeGen/CodeGenFunction.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DEA099FE0F302C65000C2258 /* DiagnosticAnalysisKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticAnalysisKinds.def; sourceTree = "<group>"; };
-		DEA09A000F302C65000C2258 /* DiagnosticASTKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticASTKinds.def; sourceTree = "<group>"; };
-		DEA09A010F302C65000C2258 /* DiagnosticCommonKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticCommonKinds.def; sourceTree = "<group>"; };
-		DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticLexKinds.def; sourceTree = "<group>"; };
-		DEA09A060F302C65000C2258 /* DiagnosticParseKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticParseKinds.def; sourceTree = "<group>"; };
-		DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.def; sourceTree = "<group>"; };
 		DEA09A6E0F31756F000C2258 /* ASTDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ASTDiagnostic.h; path = clang/AST/ASTDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEA09A830F3175BF000C2258 /* LexDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LexDiagnostic.h; sourceTree = "<group>"; };
 		DEA09A860F3175CA000C2258 /* ParseDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ParseDiagnostic.h; path = clang/Parse/ParseDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1123,12 +1125,14 @@
 			isa = PBXGroup;
 			children = (
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
-				DEA099FE0F302C65000C2258 /* DiagnosticAnalysisKinds.def */,
-				DEA09A000F302C65000C2258 /* DiagnosticASTKinds.def */,
-				DEA09A010F302C65000C2258 /* DiagnosticCommonKinds.def */,
-				DEA09A040F302C65000C2258 /* DiagnosticLexKinds.def */,
-				DEA09A060F302C65000C2258 /* DiagnosticParseKinds.def */,
-				DEA09A080F302C65000C2258 /* DiagnosticSemaKinds.def */,
+				1A7019E90F79BC1100FEC4D1 /* DiagnosticAnalysisKinds.td */,
+				1A7019EA0F79BC1100FEC4D1 /* DiagnosticASTKinds.td */,
+				1A7019EB0F79BC1100FEC4D1 /* DiagnosticCommonKinds.td */,
+				1A7019EC0F79BC1100FEC4D1 /* DiagnosticDriverKinds.td */,
+				1A7019ED0F79BC1100FEC4D1 /* DiagnosticFrontendKinds.td */,
+				1A7019EE0F79BC1100FEC4D1 /* DiagnosticLexKinds.td */,
+				1A7019EF0F79BC1100FEC4D1 /* DiagnosticParseKinds.td */,
+				1A701A250F79CE1C00FEC4D1 /* DiagnosticSemaKinds.td */,
 				DED7D7330A524295003AD0FB /* FileManager.h */,
 				DE3986EF0CB8D4B300223765 /* IdentifierTable.h */,
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
