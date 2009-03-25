@@ -23,7 +23,7 @@ using namespace clang::driver;
 
 Compilation::Compilation(Driver &D,
                          ToolChain &_DefaultToolChain,
-                         ArgList *_Args) 
+                         InputArgList *_Args) 
   : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args) {
 }
 
@@ -31,12 +31,9 @@ Compilation::~Compilation() {
   delete Args;
   
   // Free any derived arg lists.
-  for (llvm::DenseMap<const ToolChain*, ArgList*>::iterator 
-         it = TCArgs.begin(), ie = TCArgs.end(); it != ie; ++it) {
-    ArgList *A = it->second;
-    if (A != Args)
-      delete Args;
-  }
+  for (llvm::DenseMap<const ToolChain*, DerivedArgList*>::iterator 
+         it = TCArgs.begin(), ie = TCArgs.end(); it != ie; ++it)
+    delete it->second;
 
   // Free the actions, if built.
   for (ActionList::iterator it = Actions.begin(), ie = Actions.end(); 
@@ -44,11 +41,11 @@ Compilation::~Compilation() {
     delete *it;
 }
 
-const ArgList &Compilation::getArgsForToolChain(const ToolChain *TC) {
+const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC) {
   if (!TC)
     TC = &DefaultToolChain;
 
-  ArgList *&Entry = TCArgs[TC];
+  DerivedArgList *&Entry = TCArgs[TC];
   if (!Entry)
     Entry = TC->TranslateArgs(*Args);
 

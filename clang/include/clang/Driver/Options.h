@@ -15,8 +15,8 @@ namespace driver {
 namespace options {
   enum ID {
     OPT_INVALID = 0, // This is not an option ID.
-    OPT_INPUT,      // Reserved ID for input option.
-    OPT_UNKNOWN,    // Reserved ID for unknown option.
+    OPT_INPUT,       // Reserved ID for input option.
+    OPT_UNKNOWN,     // Reserved ID for unknown option.
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM) OPT_##ID,
 #include "clang/Driver/Options.def"
     LastOption
@@ -25,7 +25,7 @@ namespace options {
 }
   
   class Arg;
-  class ArgList;
+  class InputArgList;
   class Option;
 
   /// OptTable - Provide access to the Option info table.
@@ -70,7 +70,7 @@ namespace options {
     /// \return - The parsed argument, or 0 if the argument is missing
     /// values (in which case Index still points at the conceptual
     /// next argument string to parse).
-    Arg *ParseOneArg(const ArgList &Args, unsigned &Index) const;
+    Arg *ParseOneArg(const InputArgList &Args, unsigned &Index) const;
   };
 }
 }

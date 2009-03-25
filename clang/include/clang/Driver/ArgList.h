@@ -36,30 +36,23 @@ namespace driver {
     typedef arglist_type::const_reverse_iterator const_reverse_iterator;
 
   private:
-    /// List of argument strings used by the contained Args.
-    ///
-    /// This is mutable since we treat the ArgList as being the list
-    /// of Args, and allow routines to add new strings (to have a
-    /// convenient place to store the memory) via MakeIndex.
-    mutable ArgStringList ArgStrings;
-
-    /// Strings for synthesized arguments.
-    ///
-    /// This is mutable since we treat the ArgList as being the list
-    /// of Args, and allow routines to add new strings (to have a
-    /// convenient place to store the memory) via MakeIndex.
-    mutable std::list<std::string> SynthesizedStrings;
-
     /// The full list of arguments.
-    arglist_type Args;
+    arglist_type &Args;
 
-    /// The number of original input argument strings.
-    unsigned NumInputArgStrings;
+  protected:
+    ArgList(arglist_type &Args);
 
   public:
-    ArgList(const char **ArgBegin, const char **ArgEnd);
-    ArgList(const ArgList &);
-    ~ArgList();
+    virtual ~ArgList();
+
+    /// @name Arg Access
+    /// @{
+
+    /// append - Append \arg A to the arg list.
+    void append(Arg *A);
+
+    arglist_type &getArgs() { return Args; }
+    const arglist_type &getArgs() const { return Args; }
 
     unsigned size() const { return Args.size(); }
 
@@ -74,16 +67,6 @@ namespace driver {
     
     const_reverse_iterator rbegin() const { return Args.rbegin(); }
     const_reverse_iterator rend() const { return Args.rend(); }
-    
-    /// append - Append \arg A to the arg list, taking ownership.
-    void append(Arg *A);
-
-    /// getArgString - Return the input argument string at \arg Index.
-    const char *getArgString(unsigned Index) const { return ArgStrings[Index]; }
-
-    /// getNumInputArgStrings - Return the number of original input
-    /// argument strings.
-    unsigned getNumInputArgStrings() const { return NumInputArgStrings; }
 
     /// hasArg - Does the arg list contain any option matching \arg Id.
     ///
@@ -98,36 +81,8 @@ namespace driver {
     Arg *getLastArg(options::ID Id, bool Claim=true) const;
     Arg *getLastArg(options::ID Id0, options::ID Id1, bool Claim=true) const;
 
-    /// @name Arg Synthesis
-    /// @{
-
-  private:    
-    /// MakeIndex - Get an index for the given string(s).
-    unsigned MakeIndex(const char *String0) const;
-    unsigned MakeIndex(const char *String0, const char *String1) const;
-
-  public:
-    /// MakeArgString - Construct a constant string pointer whose
-    /// lifetime will match that of the ArgList.
-    const char *MakeArgString(const char *Str) const;
-
-    /// MakeFlagArg - Construct a new FlagArg for the given option
-    /// \arg Id.
-    Arg *MakeFlagArg(const Option *Opt) const;
-
-    /// MakePositionalArg - Construct a new Positional arg for the
-    /// given option \arg Id, with the provided \arg Value.
-    Arg *MakePositionalArg(const Option *Opt, const char *Value) const;
-
-    /// MakeSeparateArg - Construct a new Positional arg for the
-    /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeSeparateArg(const Option *Opt, const char *Value) const;
-
-    /// MakeJoinedArg - Construct a new Positional arg for the
-    /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeJoinedArg(const Option *Opt, const char *Value) const;
-
-    /// @}
+    /// getArgString - Return the input argument string at \arg Index.
+    virtual const char *getArgString(unsigned Index) const = 0;
     /// @name Translation Utilities
     /// @{
 
@@ -156,7 +111,114 @@ namespace driver {
                          options::ID Id1) const;
 
     /// @}
+    /// @name Arg Synthesis
+    /// @{
+
+    /// MakeArgString - Construct a constant string pointer whose
+    /// lifetime will match that of the ArgList.
+    virtual const char *MakeArgString(const char *Str) const = 0;
+
+    /// @}
   };
+
+  class InputArgList : public ArgList  {
+  private:
+    /// The internal list of arguments.
+    arglist_type ActualArgs;
+
+    /// List of argument strings used by the contained Args.
+    ///
+    /// This is mutable since we treat the ArgList as being the list
+    /// of Args, and allow routines to add new strings (to have a
+    /// convenient place to store the memory) via MakeIndex.
+    mutable ArgStringList ArgStrings;
+
+    /// Strings for synthesized arguments.
+    ///
+    /// This is mutable since we treat the ArgList as being the list
+    /// of Args, and allow routines to add new strings (to have a
+    /// convenient place to store the memory) via MakeIndex.
+    mutable std::list<std::string> SynthesizedStrings;
+
+    /// The number of original input argument strings.
+    unsigned NumInputArgStrings;
+
+  public:
+    InputArgList(const char **ArgBegin, const char **ArgEnd);
+    InputArgList(const ArgList &);
+    ~InputArgList();
+
+    virtual const char *getArgString(unsigned Index) const { 
+      return ArgStrings[Index]; 
+    }
+
+    /// getNumInputArgStrings - Return the number of original input
+    /// argument strings.
+    unsigned getNumInputArgStrings() const { return NumInputArgStrings; }
+
+    /// @name Arg Synthesis
+    /// @{
+
+  public:
+    /// MakeIndex - Get an index for the given string(s).
+    unsigned MakeIndex(const char *String0) const;
+    unsigned MakeIndex(const char *String0, const char *String1) const;
+
+    virtual const char *MakeArgString(const char *Str) const;
+
+    /// @}
+  };
+
+  /// DerivedArgList - An ordered collection of driver arguments,
+  /// whose storage may be in another argument list.
+  class DerivedArgList : public ArgList {
+    InputArgList &BaseArgs;
+
+    /// The internal list of arguments.
+    arglist_type ActualArgs;
+
+    /// The list of arguments we synthesized.
+    arglist_type SynthesizedArgs;
+
+    /// Is this only a proxy for the base ArgList?
+    bool OnlyProxy;
+
+  public:
+    /// Construct a new derived arg list from \arg BaseArgs.
+    ///
+    /// \param OnlyProxy - If true, this is only a proxy for the base
+    /// list (to adapt the type), and it's Args list is unused.
+    DerivedArgList(InputArgList &BaseArgs, bool OnlyProxy);
+    ~DerivedArgList();
+
+    virtual const char *getArgString(unsigned Index) const {
+      return BaseArgs.getArgString(Index); 
+    }
+
+    /// @name Arg Synthesis
+    /// @{
+
+    virtual const char *MakeArgString(const char *Str) const;
+
+    /// MakeFlagArg - Construct a new FlagArg for the given option
+    /// \arg Id.
+    Arg *MakeFlagArg(const Option *Opt) const;
+
+    /// MakePositionalArg - Construct a new Positional arg for the
+    /// given option \arg Id, with the provided \arg Value.
+    Arg *MakePositionalArg(const Option *Opt, const char *Value) const;
+
+    /// MakeSeparateArg - Construct a new Positional arg for the
+    /// given option \arg Id, with the provided \arg Value.
+    Arg *MakeSeparateArg(const Option *Opt, const char *Value) const;
+
+    /// MakeJoinedArg - Construct a new Positional arg for the
+    /// given option \arg Id, with the provided \arg Value.
+    Arg *MakeJoinedArg(const Option *Opt, const char *Value) const;
+
+    /// @}
+  };
+
 } // end namespace driver
 } // end namespace clang
 

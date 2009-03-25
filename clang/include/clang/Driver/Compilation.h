@@ -22,8 +22,9 @@ namespace llvm {
 
 namespace clang {
 namespace driver {
-  class ArgList;
+  class DerivedArgList;
   class Driver;
+  class InputArgList;
   class JobList;
   class ToolChain;
 
@@ -37,7 +38,7 @@ class Compilation {
   ToolChain &DefaultToolChain;
 
   /// The original (untranslated) input argument list.
-  ArgList *Args;
+  InputArgList *Args;
 
   /// The list of actions.
   ActionList Actions;
@@ -46,7 +47,7 @@ class Compilation {
   JobList Jobs;
 
   /// Cache of translated arguments for a particular tool chain.
-  llvm::DenseMap<const ToolChain*, ArgList*> TCArgs;
+  llvm::DenseMap<const ToolChain*, DerivedArgList*> TCArgs;
 
   /// Temporary files which should be removed on exit.
   ArgStringList TempFiles;
@@ -55,24 +56,24 @@ class Compilation {
   ArgStringList ResultFiles;
 
 public:
-  Compilation(Driver &D, ToolChain &DefaultToolChain, ArgList *Args);
+  Compilation(Driver &D, ToolChain &DefaultToolChain, InputArgList *Args);
   ~Compilation();
 
   const Driver &getDriver() const { return TheDriver; }
 
   const ToolChain &getDefaultToolChain() const { return DefaultToolChain; }
 
-  const ArgList &getArgs() const { return *Args; }
+  const InputArgList &getArgs() const { return *Args; }
 
   ActionList &getActions() { return Actions; }
   const ActionList &getActions() const { return Actions; }
 
   JobList &getJobs() { return Jobs; }
 
-  /// getArgsForToolChain - Return the argument list, possibly
-  /// translated by the tool chain \arg TC (or by the default tool
-  /// chain, if TC is not specified).
-  const ArgList &getArgsForToolChain(const ToolChain *TC = 0);
+  /// getArgsForToolChain - Return the derived argument list for the
+  /// tool chain \arg TC (or the default tool chain, if TC is not
+  /// specified).
+  const DerivedArgList &getArgsForToolChain(const ToolChain *TC = 0);
 
   /// addTempFile - Add a file to remove on exit, and returns its
   /// argument.

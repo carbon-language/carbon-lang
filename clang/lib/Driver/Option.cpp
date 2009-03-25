@@ -107,7 +107,7 @@ OptionGroup::OptionGroup(options::ID ID, const char *Name,
   : Option(Option::GroupClass, ID, Name, Group, 0) {
 }
 
-Arg *OptionGroup::accept(const ArgList &Args, unsigned &Index) const {
+Arg *OptionGroup::accept(const InputArgList &Args, unsigned &Index) const {
   assert(0 && "accept() should never be called on an OptionGroup");
   return 0;
 }
@@ -116,7 +116,7 @@ InputOption::InputOption()
   : Option(Option::InputClass, options::OPT_INPUT, "<input>", 0, 0) {
 }
 
-Arg *InputOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *InputOption::accept(const InputArgList &Args, unsigned &Index) const {
   assert(0 && "accept() should never be called on an InputOption");
   return 0;
 }
@@ -125,7 +125,7 @@ UnknownOption::UnknownOption()
   : Option(Option::UnknownClass, options::OPT_UNKNOWN, "<unknown>", 0, 0) {
 }
 
-Arg *UnknownOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *UnknownOption::accept(const InputArgList &Args, unsigned &Index) const {
   assert(0 && "accept() should never be called on an UnknownOption");
   return 0;
 }
@@ -135,7 +135,7 @@ FlagOption::FlagOption(options::ID ID, const char *Name,
   : Option(Option::FlagClass, ID, Name, Group, Alias) {
 }
 
-Arg *FlagOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *FlagOption::accept(const InputArgList &Args, unsigned &Index) const {
   // Matches iff this is an exact match.  
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
@@ -149,7 +149,7 @@ JoinedOption::JoinedOption(options::ID ID, const char *Name,
   : Option(Option::JoinedClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *JoinedOption::accept(const InputArgList &Args, unsigned &Index) const {
   // Always matches.
   return new JoinedArg(this, Index++);
 }
@@ -160,7 +160,8 @@ CommaJoinedOption::CommaJoinedOption(options::ID ID, const char *Name,
   : Option(Option::CommaJoinedClass, ID, Name, Group, Alias) {
 }
 
-Arg *CommaJoinedOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *CommaJoinedOption::accept(const InputArgList &Args, 
+                               unsigned &Index) const {
   // Always matches. We count the commas now so we can answer
   // getNumValues easily.
   
@@ -175,7 +176,7 @@ SeparateOption::SeparateOption(options::ID ID, const char *Name,
   : Option(Option::SeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *SeparateOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *SeparateOption::accept(const InputArgList &Args, unsigned &Index) const {
   // Matches iff this is an exact match.  
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
@@ -195,7 +196,7 @@ MultiArgOption::MultiArgOption(options::ID ID, const char *Name,
   assert(NumArgs > 1  && "Invalid MultiArgOption!");
 }
 
-Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
+Arg *MultiArgOption::accept(const InputArgList &Args, unsigned &Index) const {
   // Matches iff this is an exact match.  
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
@@ -214,7 +215,7 @@ JoinedOrSeparateOption::JoinedOrSeparateOption(options::ID ID, const char *Name,
   : Option(Option::JoinedOrSeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedOrSeparateOption::accept(const ArgList &Args, 
+Arg *JoinedOrSeparateOption::accept(const InputArgList &Args, 
                                     unsigned &Index) const {
   // If this is not an exact match, it is a joined arg.
   // FIXME: Avoid strlen.
@@ -236,7 +237,7 @@ JoinedAndSeparateOption::JoinedAndSeparateOption(options::ID ID,
   : Option(Option::JoinedAndSeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedAndSeparateOption::accept(const ArgList &Args, 
+Arg *JoinedAndSeparateOption::accept(const InputArgList &Args, 
                                      unsigned &Index) const {
   // Always matches.
 

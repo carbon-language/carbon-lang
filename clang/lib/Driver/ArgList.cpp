@@ -13,22 +13,13 @@
 
 using namespace clang::driver;
 
-ArgList::ArgList(const char **ArgBegin, const char **ArgEnd) 
-  : NumInputArgStrings(ArgEnd - ArgBegin) 
-{
-  ArgStrings.append(ArgBegin, ArgEnd);
+ArgList::ArgList(arglist_type &_Args) : Args(_Args) {
 }
 
 ArgList::~ArgList() {
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    delete *it;
 }
 
 void ArgList::append(Arg *A) {
-  if (A->getOption().isUnsupported()) {
-    assert(0 && "FIXME: unsupported unsupported.");
-  }
-
   Args.push_back(A);
 }
 
@@ -66,46 +57,6 @@ bool ArgList::hasFlag(options::ID Pos, options::ID Neg, bool Default) const {
   if (PosA) return true;
   if (NegA) return false;
   return Default;
-}
-
-unsigned ArgList::MakeIndex(const char *String0) const {
-  unsigned Index = ArgStrings.size();
-
-  // Tuck away so we have a reliable const char *.
-  SynthesizedStrings.push_back(String0);
-  ArgStrings.push_back(SynthesizedStrings.back().c_str());
-
-  return Index;
-}
-
-unsigned ArgList::MakeIndex(const char *String0, const char *String1) const {
-  unsigned Index0 = MakeIndex(String0);
-  unsigned Index1 = MakeIndex(String1);
-  assert(Index0 + 1 == Index1 && "Unexpected non-consecutive indices!");
-  (void) Index1;
-  return Index0;
-}
-
-const char *ArgList::MakeArgString(const char *Str) const {
-  return getArgString(MakeIndex(Str));
-}
-
-Arg *ArgList::MakeFlagArg(const Option *Opt) const {
-  return new FlagArg(Opt, MakeIndex(Opt->getName()));
-}
-
-Arg *ArgList::MakePositionalArg(const Option *Opt, const char *Value) const {
-  return new PositionalArg(Opt, MakeIndex(Value));
-}
-
-Arg *ArgList::MakeSeparateArg(const Option *Opt, const char *Value) const {
-  return new SeparateArg(Opt, MakeIndex(Opt->getName(), Value), 1);
-}
-
-Arg *ArgList::MakeJoinedArg(const Option *Opt, const char *Value) const {
-  std::string Joined(Opt->getName());
-  Joined += Value;
-  return new JoinedArg(Opt, MakeIndex(Joined.c_str()));
 }
 
 void ArgList::AddLastArg(ArgStringList &Output, options::ID Id) const {
@@ -174,4 +125,81 @@ void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0,
         Output.push_back(A->getValue(*this, i));
     }
   }
+}
+
+//
+
+InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd) 
+  : ArgList(ActualArgs), NumInputArgStrings(ArgEnd - ArgBegin) 
+{
+  ArgStrings.append(ArgBegin, ArgEnd);
+}
+
+InputArgList::~InputArgList() {
+  // An InputArgList always owns its arguments.
+  for (iterator it = begin(), ie = end(); it != ie; ++it)
+    delete *it;
+}
+
+unsigned InputArgList::MakeIndex(const char *String0) const {
+  unsigned Index = ArgStrings.size();
+
+  // Tuck away so we have a reliable const char *.
+  SynthesizedStrings.push_back(String0);
+  ArgStrings.push_back(SynthesizedStrings.back().c_str());
+
+  return Index;
+}
+
+unsigned InputArgList::MakeIndex(const char *String0, 
+                                 const char *String1) const {
+  unsigned Index0 = MakeIndex(String0);
+  unsigned Index1 = MakeIndex(String1);
+  assert(Index0 + 1 == Index1 && "Unexpected non-consecutive indices!");
+  (void) Index1;
+  return Index0;
+}
+
+const char *InputArgList::MakeArgString(const char *Str) const {
+  return getArgString(MakeIndex(Str));
+}
+
+//
+
+DerivedArgList::DerivedArgList(InputArgList &_BaseArgs, bool _OnlyProxy)
+  : ArgList(_OnlyProxy ? _BaseArgs.getArgs() : ActualArgs),
+    BaseArgs(_BaseArgs), OnlyProxy(_OnlyProxy)
+{
+}
+
+DerivedArgList::~DerivedArgList() {
+  // We only own the arguments we explicitly synthesized.
+  for (iterator it = SynthesizedArgs.begin(), ie = SynthesizedArgs.end(); 
+       it != ie; ++it)
+    delete *it;
+}
+
+const char *DerivedArgList::MakeArgString(const char *Str) const {
+  return BaseArgs.MakeArgString(Str);
+}
+
+Arg *DerivedArgList::MakeFlagArg(const Option *Opt) const {
+  return new FlagArg(Opt, BaseArgs.MakeIndex(Opt->getName()));
+}
+
+Arg *DerivedArgList::MakePositionalArg(const Option *Opt, 
+                                       const char *Value) const {
+  return new PositionalArg(Opt, BaseArgs.MakeIndex(Value));
+}
+
+Arg *DerivedArgList::MakeSeparateArg(const Option *Opt, 
+                                     const char *Value) const {
+  return new SeparateArg(Opt, BaseArgs.MakeIndex(Opt->getName(), Value), 1);
+}
+
+Arg *DerivedArgList::MakeJoinedArg(const Option *Opt, 
+                                   const char *Value) const {
+  std::string Joined(Opt->getName());
+  Joined += Value;
+  return new JoinedArg(Opt, BaseArgs.MakeIndex(Joined.c_str()));
 }

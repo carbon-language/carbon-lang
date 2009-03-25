@@ -33,7 +33,7 @@ public:
               const char *OS);
   ~Generic_GCC();
 
-  virtual ArgList *TranslateArgs(ArgList &Args) const { return &Args; }
+  virtual DerivedArgList *TranslateArgs(InputArgList &Args) const;
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
@@ -62,7 +62,7 @@ public:
              const unsigned (&GCCVersion)[3]);
   ~Darwin_X86();
 
-  virtual ArgList *TranslateArgs(ArgList &Args) const;
+  virtual DerivedArgList *TranslateArgs(InputArgList &Args) const;
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 

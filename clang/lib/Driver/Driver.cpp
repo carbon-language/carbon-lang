@@ -56,9 +56,10 @@ Driver::~Driver() {
   delete Host;
 }
 
-ArgList *Driver::ParseArgStrings(const char **ArgBegin, const char **ArgEnd) {
+InputArgList *Driver::ParseArgStrings(const char **ArgBegin, 
+                                      const char **ArgEnd) {
   llvm::PrettyStackTraceString CrashInfo("Command line argument parsing");
-  ArgList *Args = new ArgList(ArgBegin, ArgEnd);
+  InputArgList *Args = new InputArgList(ArgBegin, ArgEnd);
   
   // FIXME: Handle '@' args (or at least error on them).
 
@@ -171,7 +172,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     }
   }
 
-  ArgList *Args = ParseArgStrings(Start, End);
+  InputArgList *Args = ParseArgStrings(Start, End);
 
   Host = GetHostInfo(HostTriple);
 
@@ -851,8 +852,8 @@ void Driver::BuildJobsForAction(Compilation &C,
     }
     llvm::errs() << "], output: " << Result.getAsString() << "\n";
   } else {
-    const ArgList &TCArgs = C.getArgsForToolChain(TC);
-    T.ConstructJob(C, *JA, *Dest, Result, InputInfos, TCArgs, LinkingOutput);
+    T.ConstructJob(C, *JA, *Dest, Result, InputInfos, 
+                   C.getArgsForToolChain(TC), LinkingOutput);
   }
 }
 

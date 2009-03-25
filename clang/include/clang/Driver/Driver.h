@@ -27,6 +27,7 @@ namespace driver {
   class ArgList;
   class Compilation;
   class HostInfo;
+  class InputArgList;
   class InputInfo;
   class JobAction;
   class OptTable;
@@ -130,7 +131,7 @@ public:
 
   /// ParseArgStrings - Parse the given list of strings into an
   /// ArgList.
-  ArgList *ParseArgStrings(const char **ArgBegin, const char **ArgEnd);
+  InputArgList *ParseArgStrings(const char **ArgBegin, const char **ArgEnd);
 
   /// BuildActions - Construct the list of actions to perform for the
   /// given arguments, which are only done for a single architecture.

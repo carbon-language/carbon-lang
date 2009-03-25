@@ -9,6 +9,8 @@
 
 #include "ToolChains.h"
 
+#include "clang/Driver/Arg.h"
+#include "clang/Driver/ArgList.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/HostInfo.h"
 
@@ -122,9 +124,9 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
   return *T;
 }
 
-ArgList *Darwin_X86::TranslateArgs(ArgList &Args) const { 
+DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const { 
   // FIXME: Implement!
-  return &Args;
+  return new DerivedArgList(Args, true);
 } 
 
 bool Darwin_X86::IsMathErrnoDefault() const { 
@@ -222,4 +224,8 @@ const char *Generic_GCC::GetDefaultRelocationModel() const {
 
 const char *Generic_GCC::GetForcedPicModel() const {
   return 0;
+}
+
+DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args) const {
+  return new DerivedArgList(Args, true);
 }

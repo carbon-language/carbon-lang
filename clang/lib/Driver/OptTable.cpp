@@ -208,7 +208,7 @@ static inline bool operator<(const char *Name, struct Info &I) {
   return StrCmpOptionName(Name, I.Name) == -1;
 }
 
-Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
+Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
   unsigned Prev = Index;
   const char *Str = Args.getArgString(Index);
 

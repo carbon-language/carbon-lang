@@ -16,9 +16,10 @@
 
 namespace clang {
 namespace driver {
-  class ArgList;
   class Compilation;
+  class DerivedArgList;
   class HostInfo;
+  class InputArgList;
   class JobAction;
   class Tool;
 
@@ -63,10 +64,7 @@ public:
 
   /// TranslateArgs - Create a new derived argument list for any
   /// argument translations this ToolChain may wish to perform.
-  ///
-  /// The client implementation is free to return Args directly if no
-  /// translations need to be performed.
-  virtual ArgList *TranslateArgs(ArgList &Args) const = 0;
+  virtual DerivedArgList *TranslateArgs(InputArgList &Args) const = 0;
 
   /// SelectTool - Choose a tool to use to handle the action \arg JA.
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const = 0;
