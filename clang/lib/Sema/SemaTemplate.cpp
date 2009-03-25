@@ -361,7 +361,7 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
                                        (Decl**)Params, NumParams, RAngleLoc);
 }
 
-Sema::DeclTy *
+Sema::DeclResult
 Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
@@ -373,7 +373,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
 
   // Check that we can declare a template here.
   if (CheckTemplateDeclScope(S, TemplateParameterLists))
-    return 0;
+    return true;
 
   TagDecl::TagKind Kind;
   switch (TagSpec) {
@@ -386,7 +386,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   // There is no such thing as an unnamed class template.
   if (!Name) {
     Diag(KWLoc, diag::err_template_unnamed_class);
-    return 0;
+    return true;
   }
 
   // Find any previous declaration with this name.
@@ -418,7 +418,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     if (!TemplateParameterListsAreEqual(TemplateParams,
                                    PrevClassTemplate->getTemplateParameters(),
                                         /*Complain=*/true))
-      return 0;
+      return true;
 
     // C++ [temp.class]p4:
     //   In a redeclaration, partial specialization, explicit
@@ -429,7 +429,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     if (PrevRecordDecl->getTagKind() != Kind) {
       Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
       Diag(PrevRecordDecl->getLocation(), diag::note_previous_use);
-      return 0;
+      return true;
     }
 
 
@@ -440,7 +440,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
         Diag(Def->getLocation(), diag::note_previous_definition);
         // FIXME: Would it make sense to try to "forget" the previous
         // definition, as part of error recovery?
-        return 0;
+        return true;
       }
     }
   } else if (PrevDecl && PrevDecl->isTemplateParameter()) {
@@ -456,7 +456,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     //   in (14.5.4).
     Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-    return 0;
+    return true;
   }
 
   // Check the template parameter list of this declaration, possibly
@@ -1767,7 +1767,7 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
   return false;
 }
 
-Sema::DeclTy *
+Sema::DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                        SourceLocation KWLoc, 
                                        const CXXScopeSpec &SS,
@@ -1783,7 +1783,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   ClassTemplateDecl *ClassTemplate 
     = dyn_cast_or_null<ClassTemplateDecl>(static_cast<Decl *>(TemplateD));
   if (!ClassTemplate)
-    return 0;
+    return true;
 
   // Check the validity of the template headers that introduce this
   // template.
@@ -1796,18 +1796,14 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   else {
     TemplateParameterList *TemplateParams 
       = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
-    if (TemplateParameterLists.size() > 1) {
-      Diag(TemplateParams->getTemplateLoc(),
-           diag::err_template_spec_extra_headers);
-      return 0;
-    }
+    if (TemplateParameterLists.size() > 1)
+      return Diag(TemplateParams->getTemplateLoc(),
+                  diag::err_template_spec_extra_headers);
 
-    if (TemplateParams->size() > 0) {
+    if (TemplateParams->size() > 0)
       // FIXME: No support for class template partial specialization.
-      Diag(TemplateParams->getTemplateLoc(), 
-           diag::unsup_template_partial_spec);
-      return 0;
-    }
+      return Diag(TemplateParams->getTemplateLoc(), 
+                  diag::unsup_template_partial_spec);
   }
 
   // Check that the specialization uses the same tag kind as the
@@ -1836,7 +1832,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 &TemplateArgs[0], TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
-    return 0;
+    return true;
 
   assert((ConvertedTemplateArgs.size() == 
             ClassTemplate->getTemplateParameters()->size()) &&
@@ -1858,7 +1854,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   if (CheckClassTemplateSpecializationScope(ClassTemplate, PrevDecl,
                                             TemplateNameLoc, 
                                             SS.getRange()))
-    return 0;
+    return true;
 
   if (PrevDecl && PrevDecl->getSpecializationKind() == TSK_Undeclared) {
     // Since the only prior class template specialization with these
@@ -1902,7 +1898,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
         << Specialization << Range;
       Diag(Def->getLocation(), diag::note_previous_definition);
       Specialization->setInvalidDecl();
-      return 0;
+      return true;
     }
   }
 

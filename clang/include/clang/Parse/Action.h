@@ -85,6 +85,7 @@ public:
   typedef ActionResult<2> TypeResult;
   typedef ActionResult<3> BaseResult;
   typedef ActionResult<4> MemInitResult;
+  typedef ActionResult<5> DeclResult;
 
   /// Same, but with ownership.
   typedef ASTOwningResult<&ActionBase::DeleteExpr> OwningExprResult;
@@ -1169,7 +1170,7 @@ public:
 
   /// \brief Process the declaration or definition of a class template
   /// with the given template parameter lists.
-  virtual DeclTy *
+  virtual DeclResult
   ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                      SourceLocation KWLoc, const CXXScopeSpec &SS,
                      IdentifierInfo *Name, SourceLocation NameLoc,
@@ -1247,7 +1248,7 @@ public:
   /// common for users to provide the wrong number of template
   /// parameter lists (such as a missing \c template<> prior to a
   /// specialization); the parser does not check this condition.
-  virtual DeclTy *
+  virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,

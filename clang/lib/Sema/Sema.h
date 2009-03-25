@@ -1704,7 +1704,7 @@ public:
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,
                                   TemplateParameterList *OldParams);
 
-  virtual DeclTy *
+  virtual DeclResult
   ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                      SourceLocation KWLoc, const CXXScopeSpec &SS,
                      IdentifierInfo *Name, SourceLocation NameLoc,
@@ -1731,7 +1731,7 @@ public:
                                              SourceLocation TemplateNameLoc,
                                              SourceRange ScopeSpecifierRange);
 
-  virtual DeclTy *
+  virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,

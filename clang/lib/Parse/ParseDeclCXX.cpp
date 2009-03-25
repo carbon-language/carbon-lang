@@ -431,7 +431,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   }
 
   // Create the tag portion of the class or class template.
-  DeclTy *TagOrTempDecl;
+  Action::DeclResult TagOrTempResult;
   if (TemplateId && TK != Action::TK_Reference) {
     // Explicit specialization or class template partial
     // specialization. Let semantic analysis decide.
@@ -439,7 +439,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
                                        TemplateId->getTemplateArgs(),
                                        TemplateId->getTemplateArgIsType(),
                                        TemplateId->NumArgs);
-    TagOrTempDecl 
+    TagOrTempResult
       = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
                        StartLoc, SS,
                        TemplateId->Template, 
@@ -454,25 +454,26 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
                                  TemplateParams? TemplateParams->size() : 0));
     TemplateId->Destroy();
   } else if (TemplateParams && TK != Action::TK_Reference)
-    TagOrTempDecl = Actions.ActOnClassTemplate(CurScope, TagType, TK, StartLoc,
-                                               SS, Name, NameLoc, Attr,
+    TagOrTempResult = Actions.ActOnClassTemplate(CurScope, TagType, TK, 
+                                                 StartLoc, SS, Name, NameLoc, 
+                                                 Attr,
                        Action::MultiTemplateParamsArg(Actions, 
                                                       &(*TemplateParams)[0],
                                                       TemplateParams->size()));
   else
-    TagOrTempDecl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
+    TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
                                      NameLoc, Attr);
 
   // Parse the optional base clause (C++ only).
   if (getLang().CPlusPlus && Tok.is(tok::colon))
-    ParseBaseClause(TagOrTempDecl);
+    ParseBaseClause(TagOrTempResult.get());
 
   // If there is a body, parse it and inform the actions module.
   if (Tok.is(tok::l_brace))
     if (getLang().CPlusPlus)
-      ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempDecl);
+      ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempResult.get());
     else
-      ParseStructUnionBody(StartLoc, TagType, TagOrTempDecl);
+      ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
   else if (TK == Action::TK_Definition) {
     // FIXME: Complain that we have a base-specifier list but no
     // definition.
@@ -480,9 +481,10 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   }
 
   const char *PrevSpec = 0;
-  if (!TagOrTempDecl)
+  if (TagOrTempResult.isInvalid())
     DS.SetTypeSpecError();
-  else if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagOrTempDecl))
+  else if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
+                              TagOrTempResult.get()))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 
