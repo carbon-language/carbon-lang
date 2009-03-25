@@ -831,7 +831,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
           EmitAlignment(Align, GVar);
           O << name << ":";
           if (VerboseAsm) {
-            O << name << "\t\t\t\t" << TAI->getCommentString() << ' ';
+            O << "\t\t\t\t" << TAI->getCommentString() << ' ';
             PrintUnmangledNameSafely(GVar, O);
           }
           O << '\n';
@@ -894,7 +894,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm){
-    O << name << "\t\t\t\t" << TAI->getCommentString() << ' ';
+    O << "\t\t\t\t" << TAI->getCommentString() << ' ';
     PrintUnmangledNameSafely(GVar, O);
   }
   O << '\n';

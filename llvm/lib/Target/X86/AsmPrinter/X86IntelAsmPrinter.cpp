@@ -491,7 +491,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
 
     O << name << ":";
     if (VerboseAsm)
-      O << name << "\t\t\t\t" << TAI->getCommentString()
+      O << "\t\t\t\t" << TAI->getCommentString()
         << " " << I->getName();
     O << '\n';
 
