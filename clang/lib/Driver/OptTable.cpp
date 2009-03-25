@@ -63,7 +63,7 @@ static inline bool operator<(const Info &A, const Info &B) {
 
   // Names are the same, check that classes are in order; exactly one
   // should be joined, and it should succeed the other.
-  assert((A.Kind == Option::JoinedClass ^ B.Kind == Option::JoinedClass) &&
+  assert(((A.Kind == Option::JoinedClass) ^ (B.Kind == Option::JoinedClass)) &&
          "Unexpected classes for options with same name.");
   return B.Kind == Option::JoinedClass;
 }
