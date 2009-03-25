@@ -81,8 +81,8 @@ namespace {
     bool InCPMode;
   public:
     ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                  const TargetAsmInfo *T, bool F)
-      : AsmPrinter(O, TM, T, F), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
+                  const TargetAsmInfo *T, bool F, bool V)
+      : AsmPrinter(O, TM, T, F, V), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
@@ -346,7 +346,8 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   }
 }
 
-static void printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) {
+static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
+                       const TargetAsmInfo *TAI) {
   assert(V < (1 << 12) && "Not a valid so_imm value!");
   unsigned Imm = ARM_AM::getSOImmValImm(V);
   unsigned Rot = ARM_AM::getSOImmValRot(V);
@@ -369,7 +370,7 @@ static void printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) {
 void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImm() && "Not a valid so_imm value!");
-  printSOImm(O, MO.getImm(), TAI);
+  printSOImm(O, MO.getImm(), VerboseAsm, TAI);
 }
 
 /// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
@@ -379,7 +380,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   assert(MO.isImm() && "Not a valid so_imm value!");
   unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImm());
   unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImm());
-  printSOImm(O, ARM_AM::getSOImmVal(V1), TAI);
+  printSOImm(O, ARM_AM::getSOImmVal(V1), VerboseAsm, TAI);
   O << "\n\torr";
   printPredicateOperand(MI, 2);
   O << " ";
@@ -387,7 +388,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   O << ", ";
   printOperand(MI, 0); 
   O << ", ";
-  printSOImm(O, ARM_AM::getSOImmVal(V2), TAI);
+  printSOImm(O, ARM_AM::getSOImmVal(V2), VerboseAsm, TAI);
 }
 
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
@@ -1057,8 +1058,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
                                              ARMTargetMachine &tm,
-                                             bool fast) {
-  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
+                                             bool fast, bool verbose) {
+  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }
 
 namespace {

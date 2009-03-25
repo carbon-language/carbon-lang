@@ -156,11 +156,11 @@ bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
 }
 
 bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast,
-                                          raw_ostream &Out) {
+                                          bool Verbose, raw_ostream &Out) {
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Fast));
+    PM.add(AsmPrinterCtor(Out, *this, Fast, Verbose));
 
   return false;
 }
@@ -177,7 +177,7 @@ bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, Fast));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;
@@ -190,7 +190,7 @@ bool ARMTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, Fast));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;

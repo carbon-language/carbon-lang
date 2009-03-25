@@ -89,7 +89,7 @@ SPUTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast)
 }
 
 bool SPUTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                          raw_ostream &Out) {
-  PM.add(createSPUAsmPrinterPass(Out, *this, Fast));
+                                          bool Verbose, raw_ostream &Out) {
+  PM.add(createSPUAsmPrinterPass(Out, *this, Fast, Verbose));
   return false;
 }

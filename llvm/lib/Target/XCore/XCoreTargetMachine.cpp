@@ -61,8 +61,8 @@ bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
 }
 
 bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                            raw_ostream &Out) {
+                                            bool Verbose, raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createXCoreCodePrinterPass(Out, *this, Fast));
+  PM.add(createXCoreCodePrinterPass(Out, *this, Fast, Verbose));
   return false;
 }

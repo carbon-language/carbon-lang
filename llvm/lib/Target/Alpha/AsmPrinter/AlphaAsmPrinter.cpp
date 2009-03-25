@@ -37,8 +37,8 @@ namespace {
     ///
 
     AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm,
-                    const TargetAsmInfo *T, bool F)
-      : AsmPrinter(o, tm, T, F) {}
+                    const TargetAsmInfo *T, bool F, bool V)
+      : AsmPrinter(o, tm, T, F, V) {}
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
@@ -68,8 +68,8 @@ namespace {
 ///
 FunctionPass *llvm::createAlphaCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm,
-                                               bool fast) {
-  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
+                                               bool fast, bool verbose) {
+  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }
 
 #include "AlphaGenAsmWriter.inc"

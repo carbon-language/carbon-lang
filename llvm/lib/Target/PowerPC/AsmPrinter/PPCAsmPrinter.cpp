@@ -55,8 +55,8 @@ namespace {
     const PPCSubtarget &Subtarget;
   public:
     PPCAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                  const TargetAsmInfo *T, bool F)
-      : AsmPrinter(O, TM, T, F),
+                  const TargetAsmInfo *T, bool F, bool V)
+      : AsmPrinter(O, TM, T, F, V),
         Subtarget(TM.getSubtarget<PPCSubtarget>()) {}
 
     virtual const char *getPassName() const {
@@ -298,8 +298,8 @@ namespace {
     MachineModuleInfo *MMI;
   public:
     PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                       const TargetAsmInfo *T, bool F)
-      : PPCAsmPrinter(O, TM, T, F), DW(0), MMI(0) {}
+                       const TargetAsmInfo *T, bool F, bool V)
+      : PPCAsmPrinter(O, TM, T, F, V), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
@@ -327,8 +327,8 @@ namespace {
     raw_ostream &OS;
   public:
     PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                        const TargetAsmInfo *T, bool F)
-      : PPCAsmPrinter(O, TM, T, F), DW(0), MMI(0), OS(O) {}
+                        const TargetAsmInfo *T, bool F, bool V)
+      : PPCAsmPrinter(O, TM, T, F, V), DW(0), MMI(0), OS(O) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -1175,13 +1175,13 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(raw_ostream &o,
                                             PPCTargetMachine &tm,
-                                            bool fast) {
+                                            bool fast, bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin()) {
-    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
+    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
   } else {
-    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
+    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
   }
 }
 

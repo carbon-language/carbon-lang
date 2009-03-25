@@ -1072,7 +1072,7 @@ public:
           Asm->EOL("Offset");
         } else if (Reg < 64) {
           Asm->EmitInt8(DW_CFA_offset + Reg);
-          if (VerboseAsm)
+          if (Asm->isVerbose())
             Asm->EOL("DW_CFA_offset + Reg (" + utostr(Reg) + ")");
           else
             Asm->EOL();
@@ -2197,7 +2197,7 @@ private:
     // Emit the code (index) for the abbreviation.
     Asm->EmitULEB128Bytes(AbbrevNumber);
 
-    if (VerboseAsm)
+    if (Asm->isVerbose())
       Asm->EOL(std::string("Abbrev [" +
                            utostr(AbbrevNumber) +
                            "] 0x" + utohexstr(Die->getOffset()) +
@@ -2487,7 +2487,7 @@ private:
       // Isolate current sections line info.
       const std::vector<SrcLineInfo> &LineInfos = SectionSourceLines[j];
 
-      if (VerboseAsm) {
+      if (Asm->isVerbose()) {
         const Section* S = SectionMap[j + 1];
         O << '\t' << TAI->getCommentString() << " Section"
           << S->getName() << '\n';
@@ -2504,7 +2504,7 @@ private:
         unsigned LabelID = MMI->MappedLabel(LineInfo.getLabelID());
         if (!LabelID) continue;
 
-        if (!VerboseAsm)
+        if (!Asm->isVerbose())
           Asm->EOL();
         else {
           std::pair<unsigned, unsigned> SourceID =

@@ -207,10 +207,10 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, bool Fast) {
 }
 
 bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                          raw_ostream &Out) {
+                                          bool Verbose, raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Fast));
+    PM.add(AsmPrinterCtor(Out, *this, Fast, Verbose));
   return false;
 }
 
@@ -236,7 +236,7 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, Fast));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;
@@ -248,7 +248,7 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, Fast));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;

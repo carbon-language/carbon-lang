@@ -174,6 +174,7 @@ public:
   static Reloc::Model getRelocationModel();
 
   /// setRelocationModel - Sets the code generation relocation model.
+  ///
   static void setRelocationModel(Reloc::Model Model);
 
   /// getCodeModel - Returns the code model. The choices are small, kernel,
@@ -181,7 +182,16 @@ public:
   static CodeModel::Model getCodeModel();
 
   /// setCodeModel - Sets the code model.
+  ///
   static void setCodeModel(CodeModel::Model Model);
+
+  /// getAsmVerbosityDefault - Returns the default value of asm verbosity.
+  ///
+  static bool getAsmVerbosityDefault();
+
+  /// setAsmVerbosityDefault - Set the default value of asm verbosity. Default
+  /// is false.
+  static void setAsmVerbosityDefault(bool);
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit.
@@ -319,8 +329,8 @@ public:
   /// addAssemblyEmitter - This pass should be overridden by the target to add
   /// the asmprinter, if asm emission is supported.  If this is not supported,
   /// 'true' should be returned.
-  virtual bool addAssemblyEmitter(PassManagerBase &, bool /*Fast*/, 
-                                  raw_ostream &) {
+  virtual bool addAssemblyEmitter(PassManagerBase &, bool /*Fast*/,
+                                  bool /* VerboseAsmDefault */, raw_ostream &) {
     return true;
   }
   

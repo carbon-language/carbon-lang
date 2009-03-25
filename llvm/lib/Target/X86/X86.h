@@ -44,7 +44,7 @@ FunctionPass *createX87FPRegKillInserterPass();
 ///
 FunctionPass *createX86CodePrinterPass(raw_ostream &o,
                                        X86TargetMachine &tm,
-                                       bool fast);
+                                       bool fast, bool Verbose);
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.

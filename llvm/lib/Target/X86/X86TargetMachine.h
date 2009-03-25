@@ -45,7 +45,7 @@ protected:
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                             X86TargetMachine &tm,
-                                            bool fast);
+                                            bool fast, bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
@@ -78,7 +78,7 @@ public:
   virtual bool addPreRegAlloc(PassManagerBase &PM, bool Fast);
   virtual bool addPostRegAlloc(PassManagerBase &PM, bool Fast);
   virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                  raw_ostream &Out);
+                                  bool Verbose, raw_ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
                               bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,

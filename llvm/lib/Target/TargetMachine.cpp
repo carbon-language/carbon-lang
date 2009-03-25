@@ -39,10 +39,10 @@ namespace llvm {
   bool PerformTailCallOpt;
   unsigned StackAlignment;
   bool RealignStack;
-  bool VerboseAsm;
   bool DisableJumpTables;
   bool StrongPHIElim;
   bool DisableRedZone;
+  bool AsmVerbosityDefault(false);
 }
 
 static cl::opt<bool, true>
@@ -154,10 +154,6 @@ EnableRealignStack("realign-stack",
   cl::location(RealignStack),
   cl::init(true));
 static cl::opt<bool, true>
-AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
-  cl::location(VerboseAsm),
-  cl::init(false));
-static cl::opt<bool, true>
 DisableSwitchTables(cl::Hidden, "disable-jump-tables", 
   cl::desc("Do not generate jump tables."),
   cl::location(DisableJumpTables),
@@ -201,6 +197,14 @@ CodeModel::Model TargetMachine::getCodeModel() {
 /// setCodeModel - Sets the code model.
 void TargetMachine::setCodeModel(CodeModel::Model Model) {
   CMModel = Model;
+}
+
+bool TargetMachine::getAsmVerbosityDefault() {
+  return AsmVerbosityDefault;
+}
+
+void TargetMachine::setAsmVerbosityDefault(bool V) {
+  AsmVerbosityDefault = V;
 }
 
 namespace llvm {

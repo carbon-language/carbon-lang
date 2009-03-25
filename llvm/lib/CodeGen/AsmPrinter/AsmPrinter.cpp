@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -35,13 +36,23 @@
 #include <cerrno>
 using namespace llvm;
 
+static cl::opt<cl::boolOrDefault>
+AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
+           cl::init(cl::BOU_UNSET));
+
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
-                       const TargetAsmInfo *T, bool F)
+                       const TargetAsmInfo *T, bool F, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), Fast(F), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
     IsInTextSection(false)
-{}
+{
+  switch (AsmVerbose) {
+  case cl::BOU_UNSET: VerboseAsm = VDef;  break;
+  case cl::BOU_TRUE:  VerboseAsm = true;  break;
+  case cl::BOU_FALSE: VerboseAsm = false; break;
+  }
+}
 
 AsmPrinter::~AsmPrinter() {
   for (gcp_iterator I = GCMetadataPrinters.begin(),

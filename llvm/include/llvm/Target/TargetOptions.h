@@ -104,10 +104,6 @@ namespace llvm {
   /// realigned, if needed.
   extern bool RealignStack;
 
-  /// VerboseAsm - When this flag is set, the asm printer prints additional
-  /// comments to asm directives.
-  extern bool VerboseAsm;
-
   /// DisableJumpTables - This flag indicates jump tables should not be 
   /// generated.
   extern bool DisableJumpTables;

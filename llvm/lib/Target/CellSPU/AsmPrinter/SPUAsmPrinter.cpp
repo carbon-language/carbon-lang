@@ -49,8 +49,8 @@ namespace {
     std::set<std::string> FnStubs, GVStubs;
   public:
     SPUAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                  const TargetAsmInfo *T, bool F) :
-      AsmPrinter(O, TM, T, F) {}
+                  const TargetAsmInfo *T, bool F, bool V) :
+      AsmPrinter(O, TM, T, F, V) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
@@ -289,8 +289,8 @@ namespace {
     MachineModuleInfo *MMI;
   public:
     LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
-                    const TargetAsmInfo *T, bool F)
-      : SPUAsmPrinter(O, TM, T, F), DW(0), MMI(0) {}
+                    const TargetAsmInfo *T, bool F, bool V)
+      : SPUAsmPrinter(O, TM, T, F, V), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
@@ -615,6 +615,6 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
                                             SPUTargetMachine &tm,
-                                            bool fast) {
-  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
+                                            bool fast, bool verbose) {
+  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }

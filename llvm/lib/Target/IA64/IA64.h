@@ -37,7 +37,7 @@ FunctionPass *createIA64BundlingPass(IA64TargetMachine &TM);
 ///
 FunctionPass *createIA64CodePrinterPass(raw_ostream &o,
                                         IA64TargetMachine &tm,
-                                        bool fast);
+                                        bool fast, bool verbose);
 
 } // End llvm namespace
 

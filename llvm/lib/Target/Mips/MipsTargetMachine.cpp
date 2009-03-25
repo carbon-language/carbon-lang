@@ -125,9 +125,9 @@ addPreEmitPass(PassManagerBase &PM, bool Fast)
 // true if AssemblyEmitter is supported
 bool MipsTargetMachine::
 addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                   raw_ostream &Out) 
+                   bool Verbose, raw_ostream &Out) 
 {
   // Output assembly language.
-  PM.add(createMipsCodePrinterPass(Out, *this, Fast));
+  PM.add(createMipsCodePrinterPass(Out, *this, Fast, Verbose));
   return false;
 }

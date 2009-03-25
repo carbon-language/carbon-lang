@@ -59,7 +59,7 @@ public:
 
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast,
-                                  raw_ostream &Out);
+                                  bool Verbose, raw_ostream &Out);
 }; // PIC16TargetMachine.
 
 /// CooperTargetMachine

@@ -49,8 +49,8 @@ namespace {
     ValueMapTy NumberForBB;
   public:
     SparcAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                    const TargetAsmInfo *T, bool F)
-      : AsmPrinter(O, TM, T, F) {}
+                    const TargetAsmInfo *T, bool F, bool V)
+      : AsmPrinter(O, TM, T, F, V) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";
@@ -82,8 +82,8 @@ namespace {
 ///
 FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm,
-                                               bool fast) {
-  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast);
+                                               bool fast, bool verbose) {
+  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }
 
 /// runOnMachineFunction - This uses the printInstruction()

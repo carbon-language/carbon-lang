@@ -76,7 +76,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   default:
     break;
   case TargetMachine::AssemblyFile:
-    if (addAssemblyEmitter(PM, Fast, Out))
+    if (addAssemblyEmitter(PM, Fast, getAsmVerbosityDefault(), Out))
       return FileModel::Error;
     return FileModel::AsmFile;
   case TargetMachine::ObjectFile:

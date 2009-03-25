@@ -104,14 +104,22 @@ namespace llvm {
     /// IsInTextSection - True if the current section we are emitting to is a
     /// text section.
     bool IsInTextSection;
-  
+
+    /// VerboseAsm - Emit comments in assembly output if this is true.
+    ///
+    bool VerboseAsm;
+
   protected:
     AsmPrinter(raw_ostream &o, TargetMachine &TM,
-               const TargetAsmInfo *T, bool F);
+               const TargetAsmInfo *T, bool F, bool V);
     
   public:
     virtual ~AsmPrinter();
-    
+
+    /// isVerbose - Return true if assembly output should contain comments.
+    ///
+    bool isVerbose() const { return VerboseAsm; }
+
     /// SwitchToTextSection - Switch to the specified section of the executable
     /// if we are not already in it!  If GV is non-null and if the global has an
     /// explicitly requested section, we switch to the section indicated for the
