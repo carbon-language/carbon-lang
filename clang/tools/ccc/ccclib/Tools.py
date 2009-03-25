@@ -219,7 +219,7 @@ class Clang_CompileTool(Tool):
             #
             # FIXME: Move into clang?
             cmd_args.extend(['-warn-dead-stores',
-                             '-checker-cfref',
+                             '-checker-cfref', '-analyzer-eagerly-assume',
                              '-warn-objc-methodsigs',
                              # Do not enable the missing -dealloc check.
                              # '-warn-objc-missing-dealloc',
