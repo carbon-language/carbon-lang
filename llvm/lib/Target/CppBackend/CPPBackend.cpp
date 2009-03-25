@@ -1366,7 +1366,7 @@ namespace {
     }
     case Instruction::Call:{
       const CallInst* call = cast<CallInst>(I);
-      if (InlineAsm* ila = dyn_cast<InlineAsm>(call->getOperand(0))) {
+      if (const InlineAsm* ila = dyn_cast<InlineAsm>(call->getCalledValue())) {
         Out << "InlineAsm* " << getCppName(ila) << " = InlineAsm::get("
             << getCppName(ila->getFunctionType()) << ", \""
             << ila->getAsmString() << "\", \""
