@@ -505,7 +505,9 @@ Parser::ParseDeclarationOrFunctionDefinition(
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.is(tok::l_brace) ||             // int X() {}
               (!getLang().CPlusPlus &&
-               isDeclarationSpecifier()))) {    // int X(f) int f; {}
+               isDeclarationSpecifier()) ||   // int X(f) int f; {}
+              (getLang().CPlusPlus &&
+               Tok.is(tok::colon)))) { // X() : Base() {} (used for ctors)
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       Diag(Tok, diag::err_function_declared_typedef);
 

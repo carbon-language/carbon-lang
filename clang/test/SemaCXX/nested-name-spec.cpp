@@ -168,5 +168,6 @@ Y::foo y; // expected-error{{incomplete type 'struct Y' named in nested name spe
          // FIXME: ugly: expected-error{{invalid token after top level declarator}}
 
 X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}} \
-      // expected-error{{expected function body after function declarator}}
+      // expected-error{{C++ requires a type specifier for all declarations}} \
+      // expected-error{{only constructors take base initializers}}
 

@@ -1588,6 +1588,10 @@ public:
 
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
+  virtual void ActOnMemInitializers(DeclTy *ConstructorDecl, 
+                                    SourceLocation ColonLoc,
+                                    MemInitTy **MemInits, unsigned NumMemInits);
+  
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                                  DeclTy *TagDecl,
                                                  SourceLocation LBrac,

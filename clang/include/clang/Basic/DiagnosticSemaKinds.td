@@ -1219,6 +1219,9 @@ def err_overload_multiple_match : Error<
   "more than one matching function found in __builtin_overload">;
 
 // C++ member initializers.
+def err_only_constructors_take_base_inits : Error<
+  "only constructors take base initializers">;
+
 def err_mem_init_not_member_or_class : Error<
   "member initializer %0 does not name a non-static data member or base "
   "class">;

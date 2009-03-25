@@ -45,3 +45,12 @@ public:
 class G : A {
   G() : A(10); // expected-error{{expected '{'}}
 };
+
+void f() : a(242) { } // expected-error{{only constructors take base initializers}}
+
+class H : A {
+  H();
+};
+
+H::H() : A(10) { }
+

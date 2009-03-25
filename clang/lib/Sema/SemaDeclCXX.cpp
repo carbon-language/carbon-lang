@@ -706,6 +706,18 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs);
 }
 
+void Sema::ActOnMemInitializers(DeclTy *ConstructorDecl, 
+                                SourceLocation ColonLoc,
+                                MemInitTy **MemInits, unsigned NumMemInits) {
+  CXXConstructorDecl *Constructor = 
+  dyn_cast<CXXConstructorDecl>((Decl *)ConstructorDecl);
+  
+  if (!Constructor) {
+    Diag(ColonLoc, diag::err_only_constructors_take_base_inits);
+    return;
+  }
+}
+
 namespace {
   /// PureVirtualMethodCollector - traverses a class and its superclasses
   /// and determines if it has any pure virtual methods.
