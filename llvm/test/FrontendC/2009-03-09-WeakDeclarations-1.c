@@ -1,7 +1,7 @@
 // RUN: $llvmgcc $test -c -o /dev/null |& \
 // RUN: egrep {(14|15|22): warning:} |	\
 // RUN: wc -l | grep --quiet 3
-// XTARGET: darwin
+// XTARGET: darwin,linux
 // XFAIL: *
 // END.
 // Insist upon warnings for inappropriate weak attributes.

@@ -1,5 +1,5 @@
 // RUN: %llvmgxx -c -emit-llvm %s -o /dev/null -g
-// XTARGET: darwin
+// XTARGET: darwin,linux
 // XFAIL: *
 template <typename T1,typename T2>
 inline void f(const T1&,const T2&) { }
