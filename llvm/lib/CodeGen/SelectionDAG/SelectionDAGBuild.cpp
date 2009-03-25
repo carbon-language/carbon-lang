@@ -980,9 +980,6 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     for (unsigned j = 0, f = NumValues; j != f; ++j) {
       MVT VT = ValueVTs[j];
 
-      unsigned NumParts = TLI.getNumRegisters(VT);
-      MVT PartVT = TLI.getRegisterType(VT);
-      SmallVector<SDValue, 4> Parts(NumParts);
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
       const Function *F = I.getParent()->getParent();
@@ -991,6 +988,19 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else if (F->paramHasAttr(0, Attribute::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
 
+      // FIXME: C calling convention requires the return type to be promoted to
+      // at least 32-bit. But this is not necessary for non-C calling
+      // conventions. The frontend should mark functions whose return values
+      // require promoting with signext or zeroext attributes.
+      if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
+        MVT MinVT = TLI.getRegisterType(MVT::i32);
+        if (VT.bitsLT(MinVT))
+          VT = MinVT;
+      }
+
+      unsigned NumParts = TLI.getNumRegisters(VT);
+      MVT PartVT = TLI.getRegisterType(VT);
+      SmallVector<SDValue, 4> Parts(NumParts);
       getCopyToParts(DAG, getCurDebugLoc(),
                      SDValue(RetOp.getNode(), RetOp.getResNo() + j),
                      &Parts[0], NumParts, PartVT, ExtendKind);

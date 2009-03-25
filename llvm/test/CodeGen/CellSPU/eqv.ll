@@ -1,5 +1,8 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep eqv  %t1.s | count 18
+; RUN: grep xshw %t1.s | count 6
+; RUN: grep xsbh %t1.s | count 3
+; RUN: grep andi %t1.s | count 3
 
 ; Test the 'eqv' instruction, whose boolean expression is:
 ; (a & b) | (~a & ~b), which simplifies to

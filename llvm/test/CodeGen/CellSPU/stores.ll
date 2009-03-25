@@ -6,13 +6,13 @@
 ; RUN: grep 771                 %t1.s | count 4
 ; RUN: grep 515                 %t1.s | count 2
 ; RUN: grep 1799                %t1.s | count 2
-; RUN: grep 1543                %t1.s | count 3
-; RUN: grep 1029                %t1.s | count 1
+; RUN: grep 1543                %t1.s | count 5
+; RUN: grep 1029                %t1.s | count 3
 ; RUN: grep {shli.*, 4}         %t1.s | count 4
 ; RUN: grep stqx                %t1.s | count 4
-; RUN: grep ilhu                %t1.s | count 9
-; RUN: grep iohl                %t1.s | count 6
-; RUN: grep shufb               %t1.s | count 13
+; RUN: grep ilhu                %t1.s | count 11
+; RUN: grep iohl                %t1.s | count 8
+; RUN: grep shufb               %t1.s | count 15
 ; RUN: grep frds                %t1.s | count 1
 
 ; ModuleID = 'stores.bc'

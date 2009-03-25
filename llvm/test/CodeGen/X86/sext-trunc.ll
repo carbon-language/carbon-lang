@@ -1,6 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 > %t
-; RUN: grep movb %t
-; RUN: not grep movsbl %t
+; RUN: grep movsbl %t
 ; RUN: not grep movz %t
 ; RUN: not grep and %t
 

@@ -10,7 +10,7 @@ entry:
 	ret float %iftmp.0.0
 }
 
-; RUN: llvm-as < %s | llc | grep {movb.*(%e.x,%e.x,4), %al}
+; RUN: llvm-as < %s | llc | grep {movsbl.*(%e.x,%e.x,4), %eax}
 define signext i8 @test(i8* nocapture %P, double %F) nounwind readonly {
 entry:
 	%0 = fcmp olt double %F, 4.200000e+01		; <i1> [#uses=1]

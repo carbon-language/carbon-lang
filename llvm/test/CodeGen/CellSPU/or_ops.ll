@@ -1,4 +1,5 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: grep and    %t1.s | count 2
 ; RUN: grep orc    %t1.s | count 85
 ; RUN: grep ori    %t1.s | count 30
 ; RUN: grep orhi   %t1.s | count 30
