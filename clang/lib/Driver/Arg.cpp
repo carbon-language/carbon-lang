@@ -179,7 +179,7 @@ JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index)
 void JoinedAndSeparateArg::render(const ArgList &Args, 
                                   ArgStringList &Output) const {
   Output.push_back(Args.getArgString(getIndex()));
-  Output.push_back(Args.getArgString(getIndex()) + 1);
+  Output.push_back(Args.getArgString(getIndex() + 1));
 }
 
 const char *JoinedAndSeparateArg::getValue(const ArgList &Args, 
