@@ -678,6 +678,7 @@ bool LLParser::ParseOptionalAddrSpace(unsigned &AddrSpace) {
 /// ParseOptionalAttrs - Parse a potentially empty attribute list.  AttrKind
 /// indicates what kind of attribute list this is: 0: function arg, 1: result,
 /// 2: function attr.
+/// 3: function arg after value: FIXME: REMOVE IN LLVM 3.0
 bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
   Attrs = Attribute::None;
   LocTy AttrLoc = Lex.getLoc();
@@ -686,9 +687,12 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     switch (Lex.getKind()) {
     case lltok::kw_sext:
     case lltok::kw_zext:
-      // Treat these as signext/zeroext unless they are function attrs.
+      // Treat these as signext/zeroext if they occur in the argument list after
+      // the value, as in "call i8 @foo(i8 10 sext)".  If they occur before the
+      // value, as in "call i8 @foo(i8 sext (" then it is part of a constant
+      // expr.
       // FIXME: REMOVE THIS IN LLVM 3.0
-      if (AttrKind != 2) {
+      if (AttrKind == 3) {
         if (Lex.getKind() == lltok::kw_sext)
           Attrs |= Attribute::SExt;
         else
@@ -700,7 +704,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
       if (AttrKind != 2 && (Attrs & Attribute::FunctionOnly))
         return Error(AttrLoc, "invalid use of function-only attribute");
         
-      if (AttrKind != 0 && (Attrs & Attribute::ParameterOnly))
+      if (AttrKind != 0 && AttrKind != 3 && (Attrs & Attribute::ParameterOnly))
         return Error(AttrLoc, "invalid use of parameter-only attribute");
         
       return false;
@@ -1085,7 +1089,7 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
         ParseValue(ArgTy, V, PFS) ||
         // FIXME: Should not allow attributes after the argument, remove this in
         // LLVM 3.0.
-        ParseOptionalAttrs(ArgAttrs2, 0))
+        ParseOptionalAttrs(ArgAttrs2, 3))
       return true;
     ArgList.push_back(ParamInfo(ArgLoc, V, ArgAttrs1|ArgAttrs2));
   }
