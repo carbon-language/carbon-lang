@@ -61,3 +61,14 @@ void test_constructors() {
   Constructors<int> ci1(17);
   Constructors<int> ci2 = ci1;
 }
+
+
+template<typename T>
+struct ConvertsTo {
+  operator T();
+};
+
+void test_converts_to(ConvertsTo<int> ci, ConvertsTo<int *> cip) {
+  int i = ci;
+  int *ip = cip;
+}

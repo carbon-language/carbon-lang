@@ -46,6 +46,7 @@ namespace {
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
     Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
+    Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
 
@@ -318,6 +319,36 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
     Destructor->setInvalidDecl();
   Owner->addDecl(Destructor);
   return Destructor;
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  QualType T = InstantiateFunctionType(D, Params);
+  if (T.isNull())
+    return 0;
+  assert(Params.size() == 0 && "Destructor with parameters?");
+
+  // Build the instantiated conversion declaration.
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
+  QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
+  QualType ConvTy 
+    = SemaRef.Context.getCanonicalType(T->getAsFunctionType()->getResultType());
+  CXXConversionDecl *Conversion
+    = CXXConversionDecl::Create(SemaRef.Context, Record,
+                                D->getLocation(),
+         SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(ConvTy),
+                                T, D->isInline(), D->isExplicit());
+  if (InitMethodInstantiation(Conversion, D))
+    Conversion->setInvalidDecl();
+
+  bool Redeclaration = false;
+  bool OverloadableAttrRequired = false;
+  NamedDecl *PrevDecl = 0;
+  if (SemaRef.CheckFunctionDeclaration(Conversion, PrevDecl, Redeclaration,
+                                       /*FIXME:*/OverloadableAttrRequired))
+    Conversion->setInvalidDecl();
+  Owner->addDecl(Conversion);
+  return Conversion;  
 }
 
 Decl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
