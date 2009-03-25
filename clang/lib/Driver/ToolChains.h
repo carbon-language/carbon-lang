@@ -56,6 +56,8 @@ class VISIBILITY_HIDDEN Darwin_X86 : public ToolChain {
   /// The directory suffix for this tool chain.
   std::string ToolChainDir;
 
+  std::string getMacosxVersionMin() const;
+
 public:
   Darwin_X86(const HostInfo &Host, const char *Arch, const char *Platform, 
              const char *OS, const unsigned (&DarwinVersion)[3],

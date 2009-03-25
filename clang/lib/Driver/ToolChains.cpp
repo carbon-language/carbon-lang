@@ -17,6 +17,7 @@
 #include "clang/Driver/Option.h"
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
 using namespace clang::driver;
@@ -92,6 +93,13 @@ Darwin_X86::~Darwin_X86() {
     delete it->second;
 }
 
+std::string Darwin_X86::getMacosxVersionMin() const {
+  std::string Res;
+  llvm::raw_string_ostream OS(Res);
+  OS << "10." << DarwinVersion[0] - 4 << '.' << DarwinVersion[1];
+  return OS.str();
+}
+
 Tool &Darwin_X86::SelectTool(const Compilation &C, 
                               const JobAction &JA) const {
   Action::ActionClass Key;
@@ -128,6 +136,19 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
 
 DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const { 
   DerivedArgList *DAL = new DerivedArgList(Args, false);
+  const OptTable &Opts = getHost().getDriver().getOpts();
+
+  // FIXME: We really want to get out of the tool chain level argument
+  // translation business, as it makes the driver functionality much
+  // more opaque. For now, we follow gcc closely solely for the
+  // purpose of easily achieving feature parity & testability. Once we
+  // have something that works, we should reevaluate each translation
+  // and try to push it down into tool specific logic.  
+
+  if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ, false)) {
+    const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+    DAL->append(DAL->MakeJoinedArg(O, getMacosxVersionMin().c_str()));
+  }
   
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
@@ -139,9 +160,8 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
 
       // FIXME: The arg is leaked here, and we should have a nicer
       // interface for this.
-      const Driver &D = getHost().getDriver();
       unsigned Prev, Index = Prev = A->getIndex() + 1;
-      Arg *XarchArg = D.getOpts().ParseOneArg(Args, Index);
+      Arg *XarchArg = Opts.ParseOneArg(Args, Index);
       
       // If the argument parsing failed or more than one argument was
       // consumed, the -Xarch_ argument's parameter tried to consume
@@ -153,7 +173,7 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
       // like -O4 are going to slip through.
       if (!XarchArg || Index > Prev + 1 || 
           XarchArg->getOption().isDriverOption()) {
-        D.Diag(clang::diag::err_drv_invalid_Xarch_argument)
+       getHost().getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument)
           << A->getAsString(Args);
         continue;
       }
@@ -161,9 +181,91 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
       A = XarchArg;
     } 
 
-    // FIXME: Translate.
-    DAL->append(A);
+    // Sob. These is strictly gcc compatible for the time being. Apple
+    // gcc translates options twice, which means that self-expanding
+    // options add duplicates.
+    options::ID id = A->getOption().getId();
+    switch (id) {
+    default:
+      DAL->append(A);
+      break;
+
+    case options::OPT_mkernel:
+    case options::OPT_fapple_kext:
+      DAL->append(A);
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_static)));
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_static)));
+      break;
+      
+    case options::OPT_dependency_file:
+      DAL->append(DAL->MakeSeparateArg(Opts.getOption(options::OPT_MF),
+                                       A->getValue(Args)));
+      break;
+
+    case options::OPT_gfull:
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_g_Flag)));
+      DAL->append(DAL->MakeFlagArg(
+             Opts.getOption(options::OPT_fno_eliminate_unused_debug_symbols)));
+      break;
+
+    case options::OPT_gused:
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_g_Flag)));
+      DAL->append(DAL->MakeFlagArg(
+             Opts.getOption(options::OPT_feliminate_unused_debug_symbols)));
+      break;
+
+    case options::OPT_fterminated_vtables:
+    case options::OPT_findirect_virtual_calls:
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_fapple_kext)));
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_static)));
+      break;
+
+    case options::OPT_shared:
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_dynamiclib)));
+      break;
+
+    case options::OPT_fconstant_cfstrings:
+      DAL->append(DAL->MakeFlagArg(
+                             Opts.getOption(options::OPT_mconstant_cfstrings)));
+      break;
+
+    case options::OPT_fno_constant_cfstrings:
+      DAL->append(DAL->MakeFlagArg(
+                          Opts.getOption(options::OPT_mno_constant_cfstrings)));
+      break;
+
+    case options::OPT_Wnonportable_cfstrings:
+      DAL->append(DAL->MakeFlagArg(
+                     Opts.getOption(options::OPT_mwarn_nonportable_cfstrings)));
+      break;
+
+    case options::OPT_Wno_nonportable_cfstrings:
+      DAL->append(DAL->MakeFlagArg(
+                  Opts.getOption(options::OPT_mno_warn_nonportable_cfstrings)));
+      break;
+
+    case options::OPT_fpascal_strings:
+      DAL->append(DAL->MakeFlagArg(
+                                 Opts.getOption(options::OPT_mpascal_strings)));
+      break;
+
+    case options::OPT_fno_pascal_strings:
+      DAL->append(DAL->MakeFlagArg(
+                              Opts.getOption(options::OPT_mno_pascal_strings)));
+      break;
+    }
   }
+
+  // FIXME: Actually, gcc always adds this, but it is filtered for
+  // duplicates somewhere. This also changes the order of things, so
+  // look it up.
+  if (getArchName() == "x86_64")
+    if (!Args.hasArg(options::OPT_m64, false))
+      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_m64)));
+
+  if (!Args.hasArg(options::OPT_mtune_EQ, false))
+    DAL->append(DAL->MakeJoinedArg(Opts.getOption(options::OPT_mtune_EQ),
+                                    "core2"));
 
   return DAL;
 } 
