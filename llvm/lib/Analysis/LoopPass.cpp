@@ -152,6 +152,13 @@ void LPPassManager::cloneBasicBlockSimpleAnalysis(BasicBlock *From,
 
 /// deleteSimpleAnalysisValue - Invoke deleteAnalysisValue hook for all passes.
 void LPPassManager::deleteSimpleAnalysisValue(Value *V, Loop *L) {
+  if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; 
+         ++BI) {
+      Instruction &I = *BI;
+      deleteSimpleAnalysisValue(&I, L);
+    }
+  }
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
     Pass *P = getContainedPass(Index);
     LoopPass *LP = dynamic_cast<LoopPass *>(P);

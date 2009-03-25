@@ -673,6 +673,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 
   while (!WorkList.empty()) {
     BasicBlock *BB = WorkList.back(); WorkList.pop_back();
+    LPM->deleteSimpleAnalysisValue(BB, LP);
     for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
         BBI != BBE; ) {
       Instruction *I = BBI;
@@ -680,7 +681,6 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
       I->eraseFromParent();
     }
-    LPM->deleteSimpleAnalysisValue(BB, LP);
     DT->eraseNode(BB);
     DF->removeBlock(BB);
     LI->removeBlock(BB);
