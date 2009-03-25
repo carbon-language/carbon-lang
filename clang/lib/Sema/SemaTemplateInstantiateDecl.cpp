@@ -43,11 +43,12 @@ namespace {
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
+    Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
     Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
-    Decl *VisitParmVarDecl(ParmVarDecl *D);
+    ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
@@ -203,6 +204,11 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   return Enum;
 }
 
+Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
+  assert(false && "EnumConstantDecls can only occur within EnumDecls.");
+  return 0;
+}
+
 Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   // Only handle actual methods; we'll deal with constructors,
   // destructors, etc. separately.
@@ -351,7 +357,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   return Conversion;  
 }
 
-Decl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
+ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   QualType OrigT = SemaRef.InstantiateType(D->getOriginalType(), TemplateArgs,
                                            NumTemplateArgs, D->getLocation(),
                                            D->getDeclName());
@@ -425,7 +431,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
   for (FunctionDecl::param_iterator P = D->param_begin(), 
                                  PEnd = D->param_end();
        P != PEnd; ++P) {
-    if (ParmVarDecl *PInst = (ParmVarDecl *)ParamInstantiator.Visit(*P)) {
+    if (ParmVarDecl *PInst = ParamInstantiator.VisitParmVarDecl(*P)) {
       if (PInst->getType()->isVoidType()) {
         SemaRef.Diag(PInst->getLocation(), diag::err_param_with_void_type);
         PInst->setInvalidDecl();
