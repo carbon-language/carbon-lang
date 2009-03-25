@@ -1113,6 +1113,21 @@ public:
     AnonymousStructOrUnion = Anon;
   }
 
+  /// \brief Determines whether this declaration represents the
+  /// injected class name.
+  ///
+  /// The injected class name in C++ is the name of the class that
+  /// appears inside the class itself. For example:
+  ///
+  /// \code
+  /// struct C {
+  ///   // C is implicitly declared here as a synonym for the class name.
+  /// };
+  ///
+  /// C::C c; // same as "C c;"
+  /// \endcode
+  bool isInjectedClassName() const;
+
   /// getDefinition - Returns the RecordDecl that actually defines this 
   ///  struct/union/class.  When determining whether or not a struct/union/class
   ///  is completely defined, one should use this method as opposed to

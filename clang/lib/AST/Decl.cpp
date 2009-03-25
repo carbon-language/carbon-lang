@@ -491,6 +491,11 @@ void RecordDecl::Destroy(ASTContext& C) {
   TagDecl::Destroy(C);
 }
 
+bool RecordDecl::isInjectedClassName() const {
+  return isImplicit() && getDeclName() && getDeclContext()->isRecord() && 
+    cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
+}
+
 /// completeDefinition - Notes that the definition of this type is now
 /// complete.
 void RecordDecl::completeDefinition(ASTContext& C) {

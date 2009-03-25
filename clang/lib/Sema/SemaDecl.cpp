@@ -3398,6 +3398,8 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclTy *TagD) {
                                 Record->getIdentifier(), Record);
       InjectedClassName->setImplicit();
       PushOnScopeChains(InjectedClassName, S);
+      assert(InjectedClassName->isInjectedClassName() && 
+             "Broken injected-class-name");
     }
   }
 }
