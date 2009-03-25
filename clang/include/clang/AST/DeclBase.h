@@ -138,6 +138,12 @@ private:
   /// the implementation rather than explicitly written by the user.
   bool Implicit : 1;
 
+#ifndef NDEBUG
+  void CheckAccessDeclContext() const;
+#else
+  void CheckAccessDeclContext() const { }
+#endif
+  
 protected:
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
@@ -148,7 +154,7 @@ protected:
     : NextDeclarator(0), NextDeclInScope(0), 
       DeclCtx(reinterpret_cast<uintptr_t>(DC)), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
-      HasAttrs(false), Implicit(false) {
+      HasAttrs(false), Implicit(false), Access(AS_none) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
 
@@ -175,11 +181,15 @@ public:
                          const_cast<const Decl*>(this)->getDeclContext());
   }
 
-  void setAccess(AccessSpecifier AS) { 
-    assert(AS != AS_none && "Can't set access to none");
+  void setAccess(AccessSpecifier AS) {
     Access = AS; 
+    CheckAccessDeclContext();
   }
-  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
+  
+  AccessSpecifier getAccess() const { 
+    CheckAccessDeclContext();
+    return AccessSpecifier(Access); 
+  }
 
   bool hasAttrs() const { return HasAttrs; }
   void addAttr(Attr *attr);

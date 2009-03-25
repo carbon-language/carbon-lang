@@ -272,6 +272,14 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
   }
 }
 
+#ifndef NDEBUG
+void Decl::CheckAccessDeclContext() const {
+  assert((Access != AS_none || !isa<CXXRecordDecl>(getDeclContext())) &&
+         "Access specifier is AS_none inside a record decl");
+}
+
+#endif
+
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation
 //===----------------------------------------------------------------------===//

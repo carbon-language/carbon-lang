@@ -3384,7 +3384,9 @@ CreateNewDecl:
   // lexical context will be different from the semantic context.
   New->setLexicalDeclContext(CurContext);
 
-  if (AS != AS_none)
+  if (PrevDecl)
+    New->setAccess(PrevDecl->getAccess());
+  else
     New->setAccess(AS);
 
   if (TK == TK_Definition)
