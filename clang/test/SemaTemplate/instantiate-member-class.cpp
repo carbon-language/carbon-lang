@@ -6,7 +6,7 @@ public:
   struct C { T &foo(); };
 
   struct D {
-    struct E { T &bar(); };
+    struct E { T &bar(); }; // expected-error{{cannot form a reference to 'void'}}
     struct F; // expected-note{{member is declared here}}
   };
 };
@@ -31,3 +31,8 @@ void test_instantiation(X<double>::C *x,
   f->foo(); // expected-error{{implicit instantiation of undefined member 'struct X<float>::D::F'}}
   
 }
+
+
+X<void>::C *c3; // okay
+X<void>::D::E *e1; // okay
+X<void>::D::E e2; // expected-note{{in instantiation of member class 'struct X<void>::D::E' requested here}}

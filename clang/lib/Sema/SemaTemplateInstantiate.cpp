@@ -683,8 +683,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
   Pattern = PatternDef;
 
-  InstantiatingTemplate Inst(*this, Instantiation->getLocation(),
-                             Instantiation);
+  InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst)
     return true;
 
