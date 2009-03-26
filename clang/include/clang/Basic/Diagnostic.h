@@ -145,7 +145,6 @@ public:
     ak_qualtype,        // QualType
     ak_declarationname, // DeclarationName
     ak_nameddecl,       // NamedDecl *
-    ak_accessspecifier  // AccessSpecifier
   };
 
 private:  
