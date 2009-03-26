@@ -2918,7 +2918,10 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     printf("\nweak ivar layout: ");
   const unsigned char *s = (unsigned char*)BitMap.c_str();
   for (unsigned i = 0; i < BitMap.size(); i++)
-    printf("0x%x ", s[i]);
+    if (!(s[i] & 0xf0))
+      printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
+    else
+      printf("0x%x%s",  s[i], s[i] != 0 ? ", " : "");
   printf("\n");
   
   return getConstantGEP(Entry, 0, 0);

@@ -497,8 +497,12 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   if (PP.getLangOptions().ObjC1) {
     DefineBuiltinMacro(Buf, "__OBJC__=1");
+#if 0
+// FIXME. This flag controls declaration of ivars which is
+// needed since we do not support synthesize ivars yet.
     if (PP.getLangOptions().ObjCNonFragileABI)
       DefineBuiltinMacro(Buf, "__OBJC2__=1");
+#endif
 
     if (PP.getLangOptions().getGCMode() == LangOptions::NonGC) {
       DefineBuiltinMacro(Buf, "__weak=");
