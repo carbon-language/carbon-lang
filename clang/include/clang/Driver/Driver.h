@@ -235,6 +235,17 @@ public:
                               const std::string &ArchName) const;
 
   /// @}
+
+  /// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and
+  /// return the grouped values as integers. Numbers which are not
+  /// provided are set to 0.
+  ///
+  /// \return True if the entire string was parsed (9.2), or all
+  /// groups were parsed (10.3.5extrastuff). HadExtra is true if all
+  /// groups were parsed but extra characters remain at the end.
+  static bool GetReleaseVersion(const char *Str, unsigned &Major, 
+                                unsigned &Minor, unsigned &Micro,
+                                bool &HadExtra);
 };
 
 } // end namespace driver

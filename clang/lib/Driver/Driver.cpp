@@ -1029,3 +1029,42 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
 
   return true;
 }
+
+/// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and
+/// return the grouped values as integers. Numbers which are not
+/// provided are set to 0.
+///
+/// \return True if the entire string was parsed (9.2), or all groups
+/// were parsed (10.3.5extrastuff).
+bool Driver::GetReleaseVersion(const char *Str, unsigned &Major, 
+                               unsigned &Minor, unsigned &Micro,
+                               bool &HadExtra) {
+  HadExtra = false;
+
+  Major = Minor = Micro = 0;
+  if (*Str == '\0') 
+    return true;
+
+  char *End;
+  Major = (unsigned) strtol(Str, &End, 10);
+  if (*Str != '\0' && *End == '\0')
+    return true;
+  if (*End != '.')
+    return false;
+  
+  Str = End+1;
+  Minor = (unsigned) strtol(Str, &End, 10);
+  if (*Str != '\0' && *End == '\0')
+    return true;
+  if (*End != '.')
+    return false;
+
+  Str = End+1;
+  Micro = (unsigned) strtol(Str, &End, 10);
+  if (*Str != '\0' && *End == '\0')
+    return true;
+  if (Str == End)
+    return false;
+  HadExtra = true;
+  return true;
+}

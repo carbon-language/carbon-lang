@@ -72,37 +72,6 @@ public:
                                   const char *ArchName) const;
 };
 
-/// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and
-/// return the grouped values as integers. Numbers which are not
-/// provided are set to 0.
-///
-/// \return True if the entire string was parsed (9.2), or all groups
-/// were parsed (10.3.5extrastuff).
-static bool GetReleaseVersion(const char *Str, unsigned &Major, 
-                              unsigned &Minor, unsigned &Micro) {
-  Major = Minor = Micro = 0;
-  if (*Str == '\0') 
-    return true;
-
-  char *End;
-  Major = (unsigned) strtol(Str, &End, 10);
-  if (*Str != '\0' && *End == '\0')
-    return true;
-  if (*End != '.')
-    return false;
-  
-  Str = End+1;
-  Minor = (unsigned) strtol(Str, &End, 10);
-  if (*Str != '\0' && *End == '\0')
-    return true;
-  if (*End != '.')
-    return false;
-
-  Str = End+1;
-  Micro = (unsigned) strtol(Str, &End, 10);
-  return true;
-}
-
 DarwinHostInfo::DarwinHostInfo(const Driver &D, const char *_Arch, 
                                const char *_Platform, const char *_OS) 
   : HostInfo(D, _Arch, _Platform, _OS) {
@@ -114,8 +83,9 @@ DarwinHostInfo::DarwinHostInfo(const Driver &D, const char *_Arch,
   assert(memcmp(&getOSName()[0], "darwin", 6) == 0 &&
          "Unknown Darwin platform.");
   const char *Release = &getOSName()[6];
-  if (!GetReleaseVersion(Release, DarwinVersion[0], DarwinVersion[1], 
-                         DarwinVersion[2])) {
+  bool HadExtra;
+  if (!Driver::GetReleaseVersion(Release, DarwinVersion[0], DarwinVersion[1], 
+                                 DarwinVersion[2], HadExtra)) {
     D.Diag(clang::diag::err_drv_invalid_darwin_version)
       << Release;
   }
