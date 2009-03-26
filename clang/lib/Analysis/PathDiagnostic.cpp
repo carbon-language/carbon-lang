@@ -147,10 +147,10 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
     case Range:
       break;
     case Statement:
-      return FullSourceLoc(S->getLocStart(), const_cast<SourceManager&>(SM));
+      return FullSourceLoc(S->getLocStart(), const_cast<SourceManager&>(*SM));
   }
   
-  return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(SM));
+  return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
 }
 
 SourceRange PathDiagnosticLocation::asRange() const {

@@ -85,31 +85,31 @@ static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 // Diagnostics for 'execution continues on line XXX'.
 //===----------------------------------------------------------------------===//
 
-static SourceLocation ExecutionContinues(SourceManager& SMgr,
-                                         const ExplodedNode<GRState>* N,
-                                         const Decl& D,
-                                         bool* OutHasStmt = 0) {
+static FullSourceLoc ExecutionContinues(SourceManager& SMgr,
+                                        const ExplodedNode<GRState>* N,
+                                        const Decl& D,
+                                        bool* OutHasStmt = 0) {
   if (Stmt *S = GetNextStmt(N)) {
     if (OutHasStmt) *OutHasStmt = true;
-    return S->getLocStart();
+    return FullSourceLoc(S->getLocStart(), SMgr);
   }
   else {
     if (OutHasStmt) *OutHasStmt = false;
-    return D.getBody()->getRBracLoc();
+    return FullSourceLoc(D.getBody()->getRBracLoc(), SMgr);
   }
 }
   
-static SourceLocation ExecutionContinues(llvm::raw_string_ostream& os,
-                                         SourceManager& SMgr,
-                                         const ExplodedNode<GRState>* N,
-                                         const Decl& D) {
+static FullSourceLoc ExecutionContinues(llvm::raw_string_ostream& os,
+                                        SourceManager& SMgr,
+                                        const ExplodedNode<GRState>* N,
+                                        const Decl& D) {
   
   // Slow, but probably doesn't matter.
   if (os.str().empty())
     os << ' ';
   
   bool hasStmt;
-  SourceLocation Loc = ExecutionContinues(SMgr, N, D, &hasStmt);
+  FullSourceLoc Loc = ExecutionContinues(SMgr, N, D, &hasStmt);
   
   if (hasStmt)
     os << "Execution continues on line "
@@ -749,7 +749,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);          
-          SourceLocation End = S->getLocStart();
+          FullSourceLoc End(S->getLocStart(), SMgr);
           
           os << "Control jumps to line " << SMgr.getInstantiationLineNumber(End);
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
@@ -761,10 +761,10 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           // Figure out what case arm we took.
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          SourceLocation End;
+          FullSourceLoc End;
           
           if (Stmt* S = Dst->getLabel()) {
-            End = S->getLocStart();
+            End = FullSourceLoc(S->getLocStart(), SMgr);
           
             switch (S->getStmtClass()) {
               default:
@@ -832,8 +832,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ContinueStmtClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          SourceLocation End = ExecutionContinues(os, SMgr, N,
-                                                  getStateManager().getCodeDecl());
+          FullSourceLoc End =
+            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
           break;
@@ -849,7 +849,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           else
             os << "true";
           
-          SourceLocation End =
+          FullSourceLoc End =
             ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
           
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
@@ -863,13 +863,13 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
-            SourceLocation End =
+            FullSourceLoc End =
               ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());            
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
-            SourceLocation End =
+            FullSourceLoc End =
               ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());            
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                     "Loop condition is false.  Exiting loop"));
@@ -885,14 +885,14 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
-            SourceLocation End = 
+            FullSourceLoc End = 
               ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
 
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
-            SourceLocation End =
+            FullSourceLoc End =
               ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
             
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
@@ -903,7 +903,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         }
           
         case Stmt::IfStmtClass: {
-          SourceLocation End =
+          FullSourceLoc End =
             ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
           
           if (*(Src->succ_begin()+1) == Dst)

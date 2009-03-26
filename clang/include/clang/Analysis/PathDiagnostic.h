@@ -54,20 +54,32 @@ private:
   enum Kind { Range, SingleLoc, Statement } K;
   SourceRange R;
   const Stmt *S;
-  const SourceManager &SM;
+  const SourceManager *SM;
 public:
   PathDiagnosticLocation(FullSourceLoc L)
-    : K(SingleLoc), R(L, L), S(0), SM(L.getManager()) {}
+    : K(SingleLoc), R(L, L), S(0), SM(&L.getManager()) {}
   
   PathDiagnosticLocation(const Stmt *s, const SourceManager &sm)
-    : K(Statement), S(s), SM(sm) {}
+    : K(Statement), S(s), SM(&sm) {}
   
   PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
-    : K(Range), R(r), S(0), SM(sm) {}
+    : K(Range), R(r), S(0), SM(&sm) {}
     
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;
   const Stmt *asStmt() const { return S ? S : 0; }
+};
+
+class PathDiagnosticLocationPair {
+private:
+  PathDiagnosticLocation Start, End;
+public:
+  PathDiagnosticLocationPair(const PathDiagnosticLocation &start,
+                             const PathDiagnosticLocation &end)
+    : Start(start), End(end) {}
+  
+  const PathDiagnosticLocation &getStart() const { return Start; }
+  const PathDiagnosticLocation &getEnd() const { return End; }
 };
 
 class PathDiagnostic {
@@ -302,29 +314,42 @@ public:
 };
   
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
-  FullSourceLoc StartPos;
-  SourceLocation EndPos;
+  std::vector<PathDiagnosticLocationPair> LPairs;
 public:
-  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos,
+  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, FullSourceLoc endPos,
                                  const std::string& s)
-    : PathDiagnosticPiece(s, ControlFlow), StartPos(startPos), EndPos(endPos) {}
+    : PathDiagnosticPiece(s, ControlFlow) {
+      LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
+    }
   
-  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos,
+  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, FullSourceLoc endPos,
                                  const char* s)
-    : PathDiagnosticPiece(s, ControlFlow), StartPos(startPos), EndPos(endPos) {}
+    : PathDiagnosticPiece(s, ControlFlow) {
+      LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
+    }
   
-  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos)
-    : PathDiagnosticPiece(ControlFlow), StartPos(startPos), EndPos(endPos) {}  
+  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, FullSourceLoc endPos)
+    : PathDiagnosticPiece(ControlFlow) {
+      LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
+    }
   
   ~PathDiagnosticControlFlowPiece();
   
-  FullSourceLoc getStartLocation() const { return StartPos; }
+  FullSourceLoc getStartLocation() const {
+    assert(!LPairs.empty() &&
+           "PathDiagnosticControlFlowPiece needs at least one location.");
+    return LPairs[0].getStart().asLocation();
+  }
+    
   FullSourceLoc getEndLocation() const {
-      return FullSourceLoc(EndPos,
-                           const_cast<SourceManager&>(StartPos.getManager()));
+    assert(!LPairs.empty() &&
+           "PathDiagnosticControlFlowPiece needs at least one location.");
+    return LPairs[0].getEnd().asLocation();
   }
   
-  virtual FullSourceLoc getLocation() const { return StartPos; }
+  void push_back(const PathDiagnosticLocationPair &X) { LPairs.push_back(X); }
+  
+  virtual FullSourceLoc getLocation() const { return getStartLocation(); }
   
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == ControlFlow;
