@@ -1503,7 +1503,6 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return SDValue();   // Wasn't a constant vector or splat exceeded min
 
   uint64_t SplatBits = APSplatBits.getZExtValue();
-  unsigned SplatSize = SplatBitSize / 8;
 
   switch (VT.getSimpleVT()) {
   default:
@@ -1514,17 +1513,17 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     /*NOTREACHED*/
   case MVT::v4f32: {
     uint32_t Value32 = uint32_t(SplatBits);
-    assert(SplatSize == 4
+    assert(SplatBitSize == 32
            && "LowerBUILD_VECTOR: Unexpected floating point vector element.");
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
     SDValue T = DAG.getConstant(Value32, MVT::i32);
     return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4f32,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, T, T, T, T));
+                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, T,T,T,T));
     break;
   }
   case MVT::v2f64: {
     uint64_t f64val = uint64_t(SplatBits);
-    assert(SplatSize == 8
+    assert(SplatBitSize == 64
            && "LowerBUILD_VECTOR: 64-bit float vector size > 8 bytes.");
     // NOTE: pretend the constant is an integer. LLVM won't load FP constants
     SDValue T = DAG.getConstant(f64val, MVT::i64);
