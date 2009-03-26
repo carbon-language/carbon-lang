@@ -1973,8 +1973,15 @@ addIntervalsForSpills(const LiveInterval &li,
   }
 
   // One stack slot per live interval.
-  if (NeedStackSlot && vrm.getPreSplitReg(li.reg) == 0)
-    Slot = vrm.assignVirt2StackSlot(li.reg);
+  if (NeedStackSlot && vrm.getPreSplitReg(li.reg) == 0) {
+    if (vrm.getStackSlot(li.reg) == VirtRegMap::NO_STACK_SLOT)
+      Slot = vrm.assignVirt2StackSlot(li.reg);
+    
+    // This case only occurs when the prealloc splitter has already assigned
+    // a stack slot to this vreg.
+    else
+      Slot = vrm.getStackSlot(li.reg);
+  }
 
   // Create new intervals and rewrite defs and uses.
   for (LiveInterval::Ranges::const_iterator
