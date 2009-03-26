@@ -4355,6 +4355,55 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
                        N1.getOperand(0), N1.getOperand(1), N2);
   }
 
+  if (N1.hasOneUse() && N1.getOpcode() == ISD::SRL) {
+    // Match this pattern so that we can generate simpler code:
+    //
+    //   %a = ...
+    //   %b = and i32 %a, 2
+    //   %c = srl i32 %b, 1
+    //   brcond i32 %c ...
+    //
+    // into
+    // 
+    //   %a = ...
+    //   %b = and %a, 2
+    //   %c = setcc eq %b, 0
+    //   brcond %c ...
+    //
+    // This applies only when the AND constant value has one bit set and the
+    // SRL constant is equal to the log2 of the AND constant. The back-end is
+    // smart enough to convert the result into a TEST/JMP sequence.
+    SDValue Op0 = N1.getOperand(0);
+    SDValue Op1 = N1.getOperand(1);
+
+    if (Op0.getOpcode() == ISD::AND &&
+        Op0.hasOneUse() &&
+        Op1.getOpcode() == ISD::Constant) {
+      SDValue AndOp0 = Op0.getOperand(0);
+      SDValue AndOp1 = Op0.getOperand(1);
+
+      if (AndOp1.getOpcode() == ISD::Constant) {
+        const APInt &AndConst = cast<ConstantSDNode>(AndOp1)->getAPIntValue();
+
+        if (AndConst.isPowerOf2() &&
+            cast<ConstantSDNode>(Op1)->getAPIntValue()==AndConst.logBase2()) {
+          SDValue SetCC =
+            DAG.getSetCC(N->getDebugLoc(),
+                         TLI.getSetCCResultType(Op0.getValueType()),
+                         Op0, DAG.getConstant(0, Op0.getValueType()),
+                         ISD::SETNE);
+
+          // Replace the uses of SRL with SETCC
+          DAG.ReplaceAllUsesOfValueWith(N1, SetCC);
+          removeFromWorkList(N1.getNode());
+          DAG.DeleteNode(N1.getNode());
+          return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
+                             MVT::Other, Chain, SetCC, N2);
+        }
+      }
+    }
+  }
+
   return SDValue();
 }
 
