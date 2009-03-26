@@ -85,7 +85,7 @@ namespace {
       OutputFile(outfile), 
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, langopts, InputFile, compopts.DebugInfo)),
+      Gen(CreateLLVMCodeGen(Diags, InputFile, compopts)),
       TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
       

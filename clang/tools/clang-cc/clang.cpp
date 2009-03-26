@@ -1235,6 +1235,10 @@ GenerateDebugInfo("g",
 static llvm::cl::opt<bool>
 OptSize("Os", llvm::cl::desc("Optimize for size"));
 
+static llvm::cl::opt<bool>
+NoCommon("fno-common",
+         llvm::cl::desc("Compile common globals like normal definitions"));
+
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
   bool parse(llvm::cl::Option &O, const char *ArgName,
@@ -1280,6 +1284,8 @@ static void InitializeCompileOptions(CompileOptions &Opts,
   Opts.CPU = TargetCPU;
   Opts.Features.insert(Opts.Features.end(),
                        TargetFeatures.begin(), TargetFeatures.end());
+  
+  Opts.NoCommon = NoCommon | LangOpts.CPlusPlus;
   
   // Handle -ftime-report.
   Opts.TimePasses = TimeReport;

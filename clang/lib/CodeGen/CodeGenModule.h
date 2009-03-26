@@ -14,15 +14,13 @@
 #ifndef CLANG_CODEGEN_CODEGENMODULE_H
 #define CLANG_CODEGEN_CODEGENMODULE_H
 
-#include "CodeGenTypes.h"
 #include "clang/AST/Attr.h"
+#include "CGBlocks.h"
+#include "CGCall.h"
+#include "CodeGenTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
-
-#include "CGBlocks.h"
-#include "CGCall.h"
-
 #include <list>
 
 namespace llvm {
@@ -52,6 +50,7 @@ namespace clang {
   class ValueDecl;
   class VarDecl;
   class LangOptions;
+  class CompileOptions;
   class Diagnostic;
   class AnnotateAttr;
 
@@ -71,6 +70,7 @@ class CodeGenModule : public BlockModule {
 
   ASTContext &Context;
   const LangOptions &Features;
+  const CompileOptions &CompileOpts;
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
   Diagnostic &Diags;
@@ -138,9 +138,8 @@ class CodeGenModule : public BlockModule {
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
 public:
-  CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M,
-                const llvm::TargetData &TD, Diagnostic &Diags,
-                bool GenerateDebugInfo);
+  CodeGenModule(ASTContext &C, const CompileOptions &CompileOpts,
+                llvm::Module &M, const llvm::TargetData &TD, Diagnostic &Diags);
 
   ~CodeGenModule();
 

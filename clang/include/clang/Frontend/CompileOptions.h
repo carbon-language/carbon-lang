@@ -35,6 +35,7 @@ public:
   unsigned VerifyModule      : 1; /// Control whether the module
                                   /// should be run through the LLVM Verifier.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
+  unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
 
   /// CPU - An optional CPU to target.
   std::string CPU;
@@ -52,6 +53,7 @@ public:
     InlineFunctions = SimplifyLibCalls = UnrollLoops = 0;
     VerifyModule = 1;
     TimePasses = 0;
+    NoCommon = 0;
   }  
 };
 

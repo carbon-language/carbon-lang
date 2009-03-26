@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CGDebugInfo.h"
 #include "CodeGenModule.h"
+#include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CGCall.h"
 #include "CGObjCRuntime.h"
 #include "Mangle.h"
+#include "clang/Frontend/CompileOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
@@ -31,10 +32,11 @@ using namespace clang;
 using namespace CodeGen;
 
 
-CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
+CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
                              llvm::Module &M, const llvm::TargetData &TD,
-                             Diagnostic &diags, bool GenerateDebugInfo)
-  : BlockModule(C, M, TD, Types, *this), Context(C), Features(LO), TheModule(M),
+                             Diagnostic &diags)
+  : BlockModule(C, M, TD, Types, *this), Context(C),
+    Features(C.getLangOptions()), CompileOpts(compileOpts), TheModule(M),
     TheTargetData(TD), Diags(diags), Types(C, M, TD), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
 
@@ -48,7 +50,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
     Runtime = CreateMacObjCRuntime(*this);
 
   // If debug info generation is enabled, create the CGDebugInfo object.
-  DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;
+  DebugInfo = CompileOpts.DebugInfo ? new CGDebugInfo(this) : 0;
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -767,7 +769,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     case VarDecl::Register:
       assert(0 && "Can't have auto or register globals");
     case VarDecl::None:
-      if (!D->getInit())
+      if (!D->getInit() && !CompileOpts.NoCommon)
         GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
       else
         GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);

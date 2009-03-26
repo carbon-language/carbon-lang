@@ -13,20 +13,17 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
+#include "clang/Frontend/CompileOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
-using namespace clang;
-
-//===----------------------------------------------------------------------===//
-// LLVM Emitter
-
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/OwningPtr.h"
+using namespace clang;
 
 
 namespace {
@@ -34,17 +31,14 @@ namespace {
     Diagnostic &Diags;
     llvm::OwningPtr<const llvm::TargetData> TD;
     ASTContext *Ctx;
-    const LangOptions &Features;
-    bool GenerateDebugInfo;
+    const CompileOptions CompileOpts;  // Intentionally copied in.
   protected:
     llvm::OwningPtr<llvm::Module> M;
     llvm::OwningPtr<CodeGen::CodeGenModule> Builder;
   public:
-    CodeGeneratorImpl(Diagnostic &diags, const LangOptions &LO,
-                      const std::string& ModuleName,
-                      bool DebugInfoFlag)
-    : Diags(diags), Features(LO), GenerateDebugInfo(DebugInfoFlag),
-      M(new llvm::Module(ModuleName)) {}
+    CodeGeneratorImpl(Diagnostic &diags, const std::string& ModuleName,
+                      const CompileOptions &CO)
+      : Diags(diags), CompileOpts(CO), M(new llvm::Module(ModuleName)) {}
     
     virtual ~CodeGeneratorImpl() {}
     
@@ -62,8 +56,8 @@ namespace {
       M->setTargetTriple(Ctx->Target.getTargetTriple());
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
-      Builder.reset(new CodeGen::CodeGenModule(Context, Features, *M, *TD,
-                                               Diags, GenerateDebugInfo));
+      Builder.reset(new CodeGen::CodeGenModule(Context, CompileOpts,
+                                               *M, *TD, Diags));
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -93,8 +87,7 @@ namespace {
 }
 
 CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
-                                        const LangOptions &Features,
                                         const std::string& ModuleName,
-                                        bool GenerateDebugInfo) {
-  return new CodeGeneratorImpl(Diags, Features, ModuleName, GenerateDebugInfo);
+                                        const CompileOptions &CO) {
+  return new CodeGeneratorImpl(Diags, ModuleName, CO);
 }
