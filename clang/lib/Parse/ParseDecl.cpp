@@ -515,7 +515,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
 
       CXXScopeSpec SS;
-      SS.setFromAnnotationData(Tok.getAnnotationValue());
+      SS.setScopeRep(Tok.getAnnotationValue());
       SS.setRange(Tok.getAnnotationRange());
 
       // If the next token is the name of the class type that the C++ scope
@@ -532,7 +532,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
       
-      CXXScopeSpec::freeAnnotationData(Tok.getAnnotationValue());
       ConsumeToken(); // The C++ scope.
 
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,

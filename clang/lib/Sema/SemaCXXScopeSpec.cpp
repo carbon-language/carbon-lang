@@ -25,7 +25,7 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
     return 0;
 
   NestedNameSpecifier *NNS 
-    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   if (NNS->isDependent())
     return 0;
 
@@ -57,7 +57,7 @@ bool Sema::isDependentScopeSpecifier(const CXXScopeSpec &SS) {
     return false;
 
   NestedNameSpecifier *NNS 
-    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   return NNS->isDependent();
 }
 
@@ -111,7 +111,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II) {
   NestedNameSpecifier *Prefix 
-    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
   // If the prefix is already dependent, there is no name lookup to
   // perform. Just build the resulting nested-name-specifier.
@@ -173,7 +173,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceRange TypeRange,
                                                     SourceLocation CCLoc) {
   NestedNameSpecifier *Prefix 
-    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
                                 QualType::getFromOpaquePtr(Ty).getTypePtr());
 }

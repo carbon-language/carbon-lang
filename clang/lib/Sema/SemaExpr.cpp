@@ -442,7 +442,7 @@ Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
   if (SS && !SS->isEmpty()) {
     return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
                                               ValueDependent, SS->getRange(),
-                  static_cast<NestedNameSpecifier *>(SS->getCurrentScopeRep()));
+                  static_cast<NestedNameSpecifier *>(SS->getScopeRep()));
   } else
     return new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
 }
@@ -617,7 +617,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (SS && isDependentScopeSpecifier(*SS)) {
     return Owned(new (Context) UnresolvedDeclRefExpr(Name, Context.DependentTy,
                                                      Loc, SS->getRange(), 
-                static_cast<NestedNameSpecifier *>(SS->getCurrentScopeRep())));
+                static_cast<NestedNameSpecifier *>(SS->getScopeRep())));
   }
 
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,

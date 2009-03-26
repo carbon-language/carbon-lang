@@ -1102,6 +1102,6 @@ QualType Sema::getQualifiedNameType(const CXXScopeSpec &SS, QualType T) {
     return T;
   
   NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   return Context.getQualifiedNameType(NNS, T);
 }

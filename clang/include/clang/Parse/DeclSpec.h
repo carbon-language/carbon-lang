@@ -397,36 +397,10 @@ private:
 /// specifier.
 class CXXScopeSpec {
   SourceRange Range;
-
-  /// Storage containing the scope representations for up to four
-  /// levels of nested-name-specifier. NumScopeReps specifiers how
-  /// many levels there are. If there are more than four, we use
-  /// ManyScopeReps.
-  Action::CXXScopeTy *InlineScopeReps[4];
-
-  /// The number of scope representations we've stored.
-  unsigned NumScopeReps;
-
-  /// The number of scope representations we can store without
-  /// allocating new memory.
-  unsigned Capacity;
-
-  // If there are > 4 scope representations, a pointer to those scope
-  // representations.
-  Action::CXXScopeTy **ManyScopeReps;
-
-  void reallocate();
+  void *ScopeRep;
 
 public:
-  CXXScopeSpec() : Range(), NumScopeReps(0), Capacity(4) { }
-
-  CXXScopeSpec(const CXXScopeSpec &SS);
-
-  CXXScopeSpec &operator=(const CXXScopeSpec &SS);
-
-  ~CXXScopeSpec() {
-    clear();
-  }
+  CXXScopeSpec() : Range(), ScopeRep() { }
 
   const SourceRange &getRange() const { return Range; }
   void setRange(const SourceRange &R) { Range = R; }
@@ -435,82 +409,21 @@ public:
   SourceLocation getBeginLoc() const { return Range.getBegin(); }
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
-  typedef Action::CXXScopeTy * const * iterator;
-
-  iterator begin() const { 
-    if (NumScopeReps > 4)
-      return ManyScopeReps;
-    else
-      return &InlineScopeReps[0];
-  }
-
-  iterator end() const { 
-    return begin() + NumScopeReps;
-  }
-
-  Action::CXXScopeTy *getScopeRep(unsigned I) const {
-    assert(I < size() && "Out-of-range scope index");
-    return begin()[I];
-  }
-  unsigned size() const { return NumScopeReps; }
-
-  void addScopeRep(Action::CXXScopeTy *S) {
-    if (!S)
-      return;
-
-    if (NumScopeReps >= Capacity)
-      reallocate();
-
-    if (Capacity == 4)
-      InlineScopeReps[NumScopeReps++] = S;
-    else
-      ManyScopeReps[NumScopeReps++] = S;
-  }
-
-  Action::CXXScopeTy *getCurrentScopeRep() const { 
-    if (size() == 0)
-      return 0;
-    return begin()[size() - 1];
-  }
-
-  void setScopeRep(Action::CXXScopeTy *S) { 
-    if (Capacity > 4)
-      delete [] ManyScopeReps;
-    Capacity = 4;
-    NumScopeReps = 0;
-    addScopeRep(S);
-  }
+  Action::CXXScopeTy *getScopeRep() const { return ScopeRep; }
+  void setScopeRep(Action::CXXScopeTy *S) { ScopeRep = S; }
 
   bool isEmpty() const { return !Range.isValid(); }
   bool isNotEmpty() const { return !isEmpty(); }
 
   /// isInvalid - An error occured during parsing of the scope specifier.
-  bool isInvalid() const { return isNotEmpty() && NumScopeReps == 0; }
+  bool isInvalid() const { return isNotEmpty() && ScopeRep == 0; }
 
   /// isSet - A scope specifier was resolved to a valid C++ scope.
-  bool isSet() const { return getCurrentScopeRep() != 0; }
+  bool isSet() const { return ScopeRep != 0; }
 
   void clear() {
     Range = SourceRange();
-    if (NumScopeReps > 4) 
-      delete [] ManyScopeReps;
-    NumScopeReps = 0;
-    Capacity = 4;
-  }
-
-  /// \brief Allocate and build the information that will be attached
-  /// to a scope-annotation token.
-  void *buildAnnotationData() const;
-
-  /// \brief Reconstruct a scope specifier from the annotation data. 
-  ///
-  /// This routine does not free the annotation data; call
-  /// freeAnnotationData for that.
-  void setFromAnnotationData(void *Data);
-
-  /// Frees the annotation data.
-  static void freeAnnotationData(void *Data) { 
-    delete [] (uintptr_t *) Data; 
+    ScopeRep = 0;
   }
 };
   
