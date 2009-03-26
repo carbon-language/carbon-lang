@@ -234,6 +234,12 @@ def err_deleted_non_function : Error<
 def err_deleted_decl_not_first : Error<
   "deleted definition must be first declaration">;
 
+// C++ access checking
+def err_class_redeclared_with_different_access : Error<
+  "%0 redeclared with '%1' access">;
+def note_previous_access_declaration : Note<
+  "previously declared '%1' here">;
+  
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
   "incomplete type %0 named in nested name specifier">;
