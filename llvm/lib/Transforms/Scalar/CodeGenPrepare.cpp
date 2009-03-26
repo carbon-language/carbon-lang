@@ -20,6 +20,7 @@
 #include "llvm/Function.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -350,15 +351,20 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
       BasicBlock *Pred = *PI;
       // To be usable, the pred has to end with an uncond branch to the dest.
       BranchInst *PredBr = dyn_cast<BranchInst>(Pred->getTerminator());
-      if (!PredBr || !PredBr->isUnconditional() ||
-          // Must be empty other than the branch.
-          &Pred->front() != PredBr ||
-          // Cannot be the entry block; its label does not get emitted.
-          Pred == &(Dest->getParent()->getEntryBlock()))
+      if (!PredBr || !PredBr->isUnconditional())
+        continue;
+      // Must be empty other than the branch and debug info.
+      BasicBlock::iterator I = Pred->begin();
+      while (isa<DbgInfoIntrinsic>(I))
+        I++;
+      if (dyn_cast<Instruction>(I) != PredBr)
+        continue;
+      // Cannot be the entry block; its label does not get emitted.
+      if (Pred == &(Dest->getParent()->getEntryBlock()))
         continue;
 
       // Finally, since we know that Dest has phi nodes in it, we have to make
-      // sure that jumping to Pred will have the same affect as going to Dest in
+      // sure that jumping to Pred will have the same effect as going to Dest in
       // terms of PHI values.
       PHINode *PN;
       unsigned PHINo = 0;
