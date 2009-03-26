@@ -18,7 +18,7 @@ include $(LEVEL)/Makefile.common
 SVN_REVISION := $(shell cd $(PROJ_SRC_DIR)/../.. && svnversion)
 
 CPP.Defines += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include \
-         -DTARGET_TRIPLE='"$(TARGET_TRIPLE)"' -DSVN_REVISION='"$(SVN_REVISION)"'
+         -DSVN_REVISION='"$(SVN_REVISION)"'
 
 $(ObjDir)/.ver-svn .ver:
 	@if [ '$(SVN_REVISION)' != '$(shell cat $(ObjDir)/.ver-svn 2>/dev/null)' ]; then\
