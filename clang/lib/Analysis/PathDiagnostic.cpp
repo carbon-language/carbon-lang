@@ -49,28 +49,16 @@ static inline size_t GetNumCharsToLastNonPeriod(const std::string &s) {
   return s.empty () ? 0 : GetNumCharsToLastNonPeriod(&s[0]);
 }
 
-PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
-                                         const std::string& s,
+PathDiagnosticPiece::PathDiagnosticPiece(const std::string& s,
                                          Kind k, DisplayHint hint)
-  : Pos(pos), str(s, 0, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {
-    assert(Pos.isValid() &&
-           "PathDiagnosticPiece's must have a valid location.");
-}
+  : str(s, 0, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
 
-PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos,
-                                         const char* s, Kind k,
+PathDiagnosticPiece::PathDiagnosticPiece(const char* s, Kind k,
                                          DisplayHint hint)
-  : Pos(pos), str(s, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {
-  assert(Pos.isValid() &&
-         "PathDiagnosticPiece's must have a valid location.");
-}
+  : str(s, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
 
-PathDiagnosticPiece::PathDiagnosticPiece(FullSourceLoc pos, Kind k,
-                                         DisplayHint hint)
-  : Pos(pos), kind(k), Hint(hint) {
-  assert(Pos.isValid() &&
-         "PathDiagnosticPiece's must have a valid location.");
-}  
+PathDiagnosticPiece::PathDiagnosticPiece(Kind k, DisplayHint hint)
+  : kind(k), Hint(hint) {}
 
 PathDiagnosticPiece::~PathDiagnosticPiece() {}
 PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}

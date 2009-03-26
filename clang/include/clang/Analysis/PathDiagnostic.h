@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_PATH_DIAGNOSTIC_H
 #define LLVM_CLANG_PATH_DIAGNOSTIC_H
 
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/OwningPtr.h"
 
@@ -28,8 +29,8 @@ namespace clang {
 // High-level interface for handlers of path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
 
-  
 class PathDiagnostic;
+class Stmt;
   
 class PathDiagnosticClient : public DiagnosticClient  {
 public:
@@ -47,6 +48,27 @@ public:
 //===----------------------------------------------------------------------===//
   
 class PathDiagnosticPiece;
+  
+class PathDiagnosticLocation {
+private:
+  enum Kind { Range, SingleLoc, Statement } K;
+  SourceRange R;
+  const Stmt *S;
+  const SourceManager &SM;
+public:
+  PathDiagnosticLocation(FullSourceLoc L)
+    : K(SingleLoc), R(L, L), S(0), SM(L.getManager()) {}
+  
+  PathDiagnosticLocation(const Stmt *s, const SourceManager &sm)
+    : K(Statement), S(s), SM(sm) {}
+  
+  PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
+    : K(Range), R(r), S(0), SM(sm) {}
+    
+  FullSourceLoc asLocation() const;
+  SourceRange asRange() const;
+  const Stmt *asStmt() const;
+};
 
 class PathDiagnostic {
   std::list<PathDiagnosticPiece*> path;
@@ -68,7 +90,7 @@ public:
   
   const std::string& getDescription() const { return Desc; }
   const std::string& getBugType() const { return BugType; }
-  const std::string& getCategory() const { return Category; }
+  const std::string& getCategory() const { return Category; }  
   
   typedef std::list<std::string>::const_iterator meta_iterator;
   meta_iterator meta_begin() const { return OtherDesc.begin(); }
@@ -180,7 +202,6 @@ public:
   enum DisplayHint { Above, Below };
 
 private:
-  const FullSourceLoc Pos;
   const std::string str;
   std::vector<CodeModificationHint> CodeModificationHints;
   const Kind kind;
@@ -193,13 +214,11 @@ private:
   PathDiagnosticPiece& operator=(const PathDiagnosticPiece &P);
 
 protected:
-  PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
-                      Kind k, DisplayHint hint = Below);
+  PathDiagnosticPiece(const std::string& s, Kind k, DisplayHint hint = Below);
   
-  PathDiagnosticPiece(FullSourceLoc pos, const char* s,
-                      Kind k, DisplayHint hint = Below);
+  PathDiagnosticPiece(const char* s, Kind k, DisplayHint hint = Below);
 
-  PathDiagnosticPiece(FullSourceLoc pos, Kind k, DisplayHint hint = Below);
+  PathDiagnosticPiece(Kind k, DisplayHint hint = Below);
   
 public:
   virtual ~PathDiagnosticPiece();
@@ -209,6 +228,8 @@ public:
   /// getDisplayHint - Return a hint indicating where the diagnostic should
   ///  be displayed by the PathDiagnosticClient.
   DisplayHint getDisplayHint() const { return Hint; }
+  
+  virtual FullSourceLoc getLocation() const = 0;
   
   Kind getKind() const { return kind; }
   
@@ -243,24 +264,33 @@ public:
                    : &CodeModificationHints[0] + CodeModificationHints.size();
   }
 
-  const SourceManager& getSourceManager() const {
-    return Pos.getManager();
-  }
-    
-  FullSourceLoc getLocation() const { return Pos; }
-  
   static inline bool classof(const PathDiagnosticPiece* P) {
     return true;
   }
 };
   
-class PathDiagnosticEventPiece : public PathDiagnosticPiece {
+class PathDiagnosticSpotPiece : public PathDiagnosticPiece {
+private:
+  FullSourceLoc Pos;
+public:
+  PathDiagnosticSpotPiece(FullSourceLoc pos, const std::string& s,
+                          PathDiagnosticPiece::Kind k)
+  : PathDiagnosticPiece(s, k), Pos(pos) {
+    assert(Pos.isValid() &&
+           "PathDiagnosticSpotPiece's must have a valid location.");
+  }  
+
+  FullSourceLoc getLocation() const { return Pos; }
+};
+  
+class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
+
 public:
   PathDiagnosticEventPiece(FullSourceLoc pos, const std::string& s)
-  : PathDiagnosticPiece(pos, s, Event) {}
+    : PathDiagnosticSpotPiece(pos, s, Event) {}
   
   PathDiagnosticEventPiece(FullSourceLoc pos, const char* s)
-  : PathDiagnosticPiece(pos, s, Event) {}
+    : PathDiagnosticSpotPiece(pos, s, Event) {}
   
   ~PathDiagnosticEventPiece();
 
@@ -270,34 +300,40 @@ public:
 };
   
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
-  const SourceLocation EndPos;
+  FullSourceLoc StartPos;
+  SourceLocation EndPos;
 public:
   PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos,
                                  const std::string& s)
-    : PathDiagnosticPiece(startPos, s, ControlFlow), EndPos(endPos) {}
+    : PathDiagnosticPiece(s, ControlFlow), StartPos(startPos), EndPos(endPos) {}
   
   PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos,
                                  const char* s)
-    : PathDiagnosticPiece(startPos, s, ControlFlow), EndPos(endPos) {}
+    : PathDiagnosticPiece(s, ControlFlow), StartPos(startPos), EndPos(endPos) {}
   
   PathDiagnosticControlFlowPiece(FullSourceLoc startPos, SourceLocation endPos)
-    : PathDiagnosticPiece(startPos, ControlFlow), EndPos(endPos) {}  
+    : PathDiagnosticPiece(ControlFlow), StartPos(startPos), EndPos(endPos) {}  
   
   ~PathDiagnosticControlFlowPiece();
   
-  SourceLocation getStartLocation() const { return getLocation(); }
-  SourceLocation getEndLocation() const { return EndPos; }  
+  FullSourceLoc getStartLocation() const { return StartPos; }
+  FullSourceLoc getEndLocation() const {
+      return FullSourceLoc(EndPos,
+                           const_cast<SourceManager&>(StartPos.getManager()));
+  }
+  
+  virtual FullSourceLoc getLocation() const { return StartPos; }
   
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == ControlFlow;
   }
 };
   
-class PathDiagnosticMacroPiece : public PathDiagnosticPiece {
-  std::vector<PathDiagnosticPiece*> SubPieces;  
+class PathDiagnosticMacroPiece : public PathDiagnosticSpotPiece {
+  std::vector<PathDiagnosticPiece*> SubPieces;
 public:
   PathDiagnosticMacroPiece(FullSourceLoc pos)
-    : PathDiagnosticPiece(pos, "", Macro) {}
+    : PathDiagnosticSpotPiece(pos, "", Macro) {}
   
   ~PathDiagnosticMacroPiece();
   
