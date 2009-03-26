@@ -500,7 +500,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   // Long double always uses X87.
-  if (!UseSoftFloat && !NoImplicitFloat) {
+  if (!UseSoftFloat) {
     addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
     setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
@@ -589,7 +589,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
   // with -msoft-float, disable use of MMX as well.
-  if (!UseSoftFloat && !NoImplicitFloat && !DisableMMX && Subtarget->hasMMX()) {
+  if (!UseSoftFloat && !DisableMMX && Subtarget->hasMMX()) {
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
@@ -669,7 +669,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v1i64, Custom);
   }
 
-  if (!UseSoftFloat && !NoImplicitFloat && Subtarget->hasSSE1()) {
+  if (!UseSoftFloat && Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
@@ -686,7 +686,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSETCC,             MVT::v4f32, Custom);
   }
 
-  if (!UseSoftFloat && !NoImplicitFloat && Subtarget->hasSSE2()) {
+  if (!UseSoftFloat && Subtarget->hasSSE2()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
 
     // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
