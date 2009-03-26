@@ -35,6 +35,12 @@ def err_drv_missing_argument : Error<
   "argument to '%0' is missing (expected %1 %plural{1:value|:values}1)">;
 def err_drv_invalid_Xarch_argument : Error<
   "invalid Xarch argument: '%0'">;
+def err_drv_argument_only_allowed_with : Error<
+  "invalid argument '%0' only allowed with '%1'">;
+def err_drv_argument_not_allowed_with : Error<
+  "invalid argument '%0' not allowed with '%1'">;
+def err_drv_invalid_version_number : Error<
+  "invalid version number in '%0'">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input file unused when '%2' is present">;

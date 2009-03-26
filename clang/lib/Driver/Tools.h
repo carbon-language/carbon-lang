@@ -17,6 +17,10 @@
 
 namespace clang {
 namespace driver {
+namespace toolchains {
+  class Darwin_X86;
+}
+
 namespace tools {
 
   class VISIBILITY_HIDDEN Clang : public Tool {
@@ -116,6 +120,34 @@ namespace darwin {
     Assemble(const ToolChain &TC) : Tool("darwin::Assemble", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return false; }
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
+  };
+
+  class VISIBILITY_HIDDEN Link : public Tool  {
+    void AddDarwinArch(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddDarwinSubArch(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddLinkArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+
+    /// The default macosx-version-min.
+    const char *MacosxVersionMin;
+
+    const toolchains::Darwin_X86 &getDarwinToolChain() const;
+
+  public:
+    Link(const ToolChain &TC,
+         const char *_MacosxVersionMin) 
+      : Tool("darwin::Link", TC), MacosxVersionMin(_MacosxVersionMin) {
+    }
+
+    virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 

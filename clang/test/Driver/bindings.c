@@ -51,6 +51,6 @@
 // RUN: clang -ccc-host-triple i386-apple-darwin9 -ccc-print-bindings %s 2> %t &&
 // RUN: grep 'bind - "clang", inputs: \[".*bindings.c"\], output: ".*\.s"' %t &&
 // RUN: grep 'bind - "darwin::Assemble", inputs: \[".*\.s"\], output: ".*\.o"' %t &&
-// RUN: grep 'bind - "gcc::Link", inputs: \[".*\.o"\], output: "a.out"' %t &&
+// RUN: grep 'bind - "darwin::Link", inputs: \[".*\.o"\], output: "a.out"' %t &&
 
 // RUN: true

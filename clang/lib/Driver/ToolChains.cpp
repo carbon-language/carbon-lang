@@ -38,6 +38,9 @@ Darwin_X86::Darwin_X86(const HostInfo &Host, const char *Arch,
   GCCVersion[1] = _GCCVersion[1];
   GCCVersion[2] = _GCCVersion[2];
 
+  llvm::raw_string_ostream(MacosxVersionMin)
+    << "10." << DarwinVersion[0] - 4 << '.' << DarwinVersion[1];
+
   ToolChainDir = "i686-apple-darwin";
   ToolChainDir += llvm::utostr(DarwinVersion[0]);
   ToolChainDir += "/";
@@ -93,13 +96,6 @@ Darwin_X86::~Darwin_X86() {
     delete it->second;
 }
 
-std::string Darwin_X86::getMacosxVersionMin() const {
-  std::string Res;
-  llvm::raw_string_ostream OS(Res);
-  OS << "10." << DarwinVersion[0] - 4 << '.' << DarwinVersion[1];
-  return OS.str();
-}
-
 Tool &Darwin_X86::SelectTool(const Compilation &C, 
                               const JobAction &JA) const {
   Action::ActionClass Key;
@@ -125,7 +121,7 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
     case Action::AssembleJobClass:
       T = new tools::darwin::Assemble(*this); break;
     case Action::LinkJobClass:
-      T = new tools::gcc::Link(*this); break;
+      T = new tools::darwin::Link(*this, MacosxVersionMin.c_str()); break;
     case Action::LipoJobClass:
       T = new tools::darwin::Lipo(*this); break;
     }
@@ -147,7 +143,7 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
 
   if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ, false)) {
     const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-    DAL->append(DAL->MakeJoinedArg(O, getMacosxVersionMin().c_str()));
+    DAL->append(DAL->MakeJoinedArg(O, MacosxVersionMin.c_str()));
   }
   
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {

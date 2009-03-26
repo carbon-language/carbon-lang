@@ -22,8 +22,11 @@
 #include "clang/Driver/Util.h"
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "InputInfo.h"
+#include "ToolChains.h"
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
@@ -488,6 +491,447 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec = 
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
+}
+
+static const char *MakeFormattedString(const ArgList &Args,
+                                       const llvm::format_object_base &Fmt) {
+  std::string Str;
+  llvm::raw_string_ostream(Str) << Fmt;
+  return Args.MakeArgString(Str.c_str());
+}
+
+/// Helper routine for seeing if we should use dsymutil; this is a
+/// gcc compatible hack, we should remove it and use the input
+/// type information.
+static bool isSourceSuffix(const char *Str) {
+  // match: 'C', 'CPP', 'c', 'cc', 'cp', 'c++', 'cpp', 'cxx', 'm',
+  // 'mm'.
+  switch (strlen(Str)) {
+  default:
+    return false;
+  case 1:
+    return (memcmp(Str, "C", 1) == 0 ||
+            memcmp(Str, "c", 1) == 0 ||
+            memcmp(Str, "m", 1) == 0);
+  case 2:
+    return (memcmp(Str, "cc", 2) == 0 ||
+            memcmp(Str, "cp", 2) == 0 ||
+            memcmp(Str, "mm", 2) == 0);
+  case 3:
+    return (memcmp(Str, "CPP", 3) == 0 ||
+            memcmp(Str, "c++", 3) == 0 ||
+            memcmp(Str, "cpp", 3) == 0 ||
+            memcmp(Str, "cxx", 3) == 0);
+  }
+}
+
+static bool isMacosxVersionLT(unsigned (&A)[3], unsigned (&B)[3]) {
+  for (unsigned i=0; i < 3; ++i) {
+    if (A[i] > B[i]) return false;
+    if (A[i] < B[i]) return true;
+  }
+  return false;
+}
+
+static bool isMacosxVersionLT(unsigned (&A)[3], 
+                              unsigned V0, unsigned V1=0, unsigned V2=0) {
+  unsigned B[3] = { V0, V1, V2 };
+  return isMacosxVersionLT(A, B);
+}
+
+static bool isMacosxVersionGTE(unsigned(&A)[3], 
+                              unsigned V0, unsigned V1=0, unsigned V2=0) {
+  return !isMacosxVersionLT(A, V0, V1, V2);
+}
+
+const toolchains::Darwin_X86 &darwin::Link::getDarwinToolChain() const {
+  return reinterpret_cast<const toolchains::Darwin_X86&>(getToolChain());
+}
+
+void darwin::Link::AddDarwinArch(const ArgList &Args, 
+                                 ArgStringList &CmdArgs) const {
+  // Derived from darwin_arch spec.
+  CmdArgs.push_back("-arch");
+  CmdArgs.push_back(getToolChain().getArchName().c_str());
+}
+
+void darwin::Link::AddDarwinSubArch(const ArgList &Args, 
+                                    ArgStringList &CmdArgs) const {
+  // Derived from darwin_subarch spec, not sure what the distinction
+  // exists for but at least for this chain it is the same.
+  AddDarwinArch(Args, CmdArgs);
+}
+
+void darwin::Link::AddLinkArgs(const ArgList &Args, 
+                               ArgStringList &CmdArgs) const {
+  const Driver &D = getToolChain().getHost().getDriver();
+
+  // Derived from the "link" spec.
+  Args.AddAllArgs(CmdArgs, options::OPT_static);
+  if (!Args.hasArg(options::OPT_static))
+    CmdArgs.push_back("-dynamic");
+  if (Args.hasArg(options::OPT_fgnu_runtime)) {
+    // FIXME: gcc replaces -lobjc in forward args with -lobjc-gnu
+    // here. How do we wish to handle such things?
+  }
+    
+  if (!Args.hasArg(options::OPT_dynamiclib)) {
+    if (Args.hasArg(options::OPT_force__cpusubtype__ALL)) {
+      AddDarwinArch(Args, CmdArgs);
+      CmdArgs.push_back("-force_cpusubtype_ALL");
+    } else
+      AddDarwinSubArch(Args, CmdArgs);
+
+    Args.AddLastArg(CmdArgs, options::OPT_bundle);
+    Args.AddAllArgs(CmdArgs, options::OPT_bundle__loader);
+    Args.AddAllArgs(CmdArgs, options::OPT_client__name);
+
+    Arg *A;
+    if ((A = Args.getLastArg(options::OPT_compatibility__version)) ||
+        (A = Args.getLastArg(options::OPT_current__version)) ||
+        (A = Args.getLastArg(options::OPT_install__name)))
+      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << A->getAsString(Args) << "-dynamiclib";
+
+    Args.AddLastArg(CmdArgs, options::OPT_force__flat__namespace);
+    Args.AddLastArg(CmdArgs, options::OPT_keep__private__externs);
+    Args.AddLastArg(CmdArgs, options::OPT_private__bundle);
+  } else {
+    CmdArgs.push_back("-dylib");
+
+    Arg *A;
+    if ((A = Args.getLastArg(options::OPT_bundle)) ||
+        (A = Args.getLastArg(options::OPT_bundle__loader)) ||
+        (A = Args.getLastArg(options::OPT_client__name)) ||
+        (A = Args.getLastArg(options::OPT_force__flat__namespace)) ||
+        (A = Args.getLastArg(options::OPT_keep__private__externs)) ||
+        (A = Args.getLastArg(options::OPT_private__bundle)))
+      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << A->getAsString(Args) << "-dynamiclib";
+    
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_compatibility__version,
+                              "-dylib_compatibility_version");
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_current__version,
+                              "-dylib_current_version");
+
+    if (Args.hasArg(options::OPT_force__cpusubtype__ALL)) {
+      AddDarwinArch(Args, CmdArgs);
+          // NOTE: We don't add -force_cpusubtype_ALL on this path. Ok.
+    } else
+      AddDarwinSubArch(Args, CmdArgs);
+
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_install__name,
+                              "-dylib_install_name");
+  }
+
+  Args.AddLastArg(CmdArgs, options::OPT_all__load);
+  Args.AddAllArgs(CmdArgs, options::OPT_allowable__client);
+  Args.AddLastArg(CmdArgs, options::OPT_bind__at__load);
+  Args.AddLastArg(CmdArgs, options::OPT_dead__strip);
+  Args.AddLastArg(CmdArgs, options::OPT_no__dead__strip__inits__and__terms);
+  Args.AddAllArgs(CmdArgs, options::OPT_dylib__file);
+  Args.AddLastArg(CmdArgs, options::OPT_dynamic);
+  Args.AddAllArgs(CmdArgs, options::OPT_exported__symbols__list);
+  Args.AddLastArg(CmdArgs, options::OPT_flat__namespace);
+  Args.AddAllArgs(CmdArgs, options::OPT_headerpad__max__install__names);
+  Args.AddAllArgs(CmdArgs, options::OPT_image__base);
+  Args.AddAllArgs(CmdArgs, options::OPT_init);
+
+  if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ)) {
+    if (!Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
+        // FIXME: I don't understand what is going on here. This is
+        // supposed to come from darwin_ld_minversion, but gcc doesn't
+        // seem to be following that; it must be getting overridden
+        // somewhere.
+        CmdArgs.push_back("-macosx_version_min");
+        CmdArgs.push_back(getDarwinToolChain().getMacosxVersionStr());
+      }
+  } else {
+    // Adding all arguments doesn't make sense here but this is what
+    // gcc does.
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_mmacosx_version_min_EQ,
+                              "-macosx_version_min");
+  }
+
+  Args.AddAllArgsTranslated(CmdArgs, options::OPT_miphoneos_version_min_EQ,
+                            "-iphoneos_version_min");
+  Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
+  Args.AddLastArg(CmdArgs, options::OPT_multi__module);
+  Args.AddLastArg(CmdArgs, options::OPT_single__module);
+  Args.AddAllArgs(CmdArgs, options::OPT_multiply__defined);
+  Args.AddAllArgs(CmdArgs, options::OPT_multiply__defined__unused);
+  
+  if (Args.hasArg(options::OPT_fpie))
+    CmdArgs.push_back("-pie");
+
+  Args.AddLastArg(CmdArgs, options::OPT_prebind);
+  Args.AddLastArg(CmdArgs, options::OPT_noprebind);
+  Args.AddLastArg(CmdArgs, options::OPT_nofixprebinding);
+  Args.AddLastArg(CmdArgs, options::OPT_prebind__all__twolevel__modules);
+  Args.AddLastArg(CmdArgs, options::OPT_read__only__relocs);
+  Args.AddAllArgs(CmdArgs, options::OPT_sectcreate);
+  Args.AddAllArgs(CmdArgs, options::OPT_sectorder);
+  Args.AddAllArgs(CmdArgs, options::OPT_seg1addr);
+  Args.AddAllArgs(CmdArgs, options::OPT_segprot);
+  Args.AddAllArgs(CmdArgs, options::OPT_segaddr);
+  Args.AddAllArgs(CmdArgs, options::OPT_segs__read__only__addr);
+  Args.AddAllArgs(CmdArgs, options::OPT_segs__read__write__addr);
+  Args.AddAllArgs(CmdArgs, options::OPT_seg__addr__table);
+  Args.AddAllArgs(CmdArgs, options::OPT_seg__addr__table__filename);
+  Args.AddAllArgs(CmdArgs, options::OPT_sub__library);
+  Args.AddAllArgs(CmdArgs, options::OPT_sub__umbrella);
+  Args.AddAllArgsTranslated(CmdArgs, options::OPT_isysroot, "-syslibroot");
+  Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace);
+  Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace__hints);
+  Args.AddAllArgs(CmdArgs, options::OPT_umbrella);
+  Args.AddAllArgs(CmdArgs, options::OPT_undefined);
+  Args.AddAllArgs(CmdArgs, options::OPT_unexported__symbols__list);
+  Args.AddAllArgs(CmdArgs, options::OPT_weak__reference__mismatches);
+
+  if (!Args.hasArg(options::OPT_weak__reference__mismatches)) {
+    CmdArgs.push_back("-weak_reference_mismatches");
+    CmdArgs.push_back("non-weak");
+  }
+
+  Args.AddLastArg(CmdArgs, options::OPT_X_Flag);
+  Args.AddAllArgs(CmdArgs, options::OPT_y);
+  Args.AddLastArg(CmdArgs, options::OPT_w);
+  Args.AddAllArgs(CmdArgs, options::OPT_pagezero__size);
+  Args.AddAllArgs(CmdArgs, options::OPT_segs__read__);
+  Args.AddLastArg(CmdArgs, options::OPT_seglinkedit);
+  Args.AddLastArg(CmdArgs, options::OPT_noseglinkedit);
+  Args.AddAllArgs(CmdArgs, options::OPT_sectalign);
+  Args.AddAllArgs(CmdArgs, options::OPT_sectobjectsymbols);
+  Args.AddAllArgs(CmdArgs, options::OPT_segcreate);
+  Args.AddLastArg(CmdArgs, options::OPT_whyload);
+  Args.AddLastArg(CmdArgs, options::OPT_whatsloaded);
+  Args.AddAllArgs(CmdArgs, options::OPT_dylinker__install__name);
+  Args.AddLastArg(CmdArgs, options::OPT_dylinker);
+  Args.AddLastArg(CmdArgs, options::OPT_Mach);
+}
+
+void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                Job &Dest, const InputInfo &Output, 
+                                const InputInfoList &Inputs, 
+                                const ArgList &Args, 
+                                const char *LinkingOutput) const {
+  assert(Output.getType() == types::TY_Image && "Invalid linker output type.");
+  // The logic here is derived from gcc's behavior; most of which
+  // comes from specs (starting with link_command). Consult gcc for
+  // more information.
+
+  // FIXME: The spec references -fdump= which seems to have
+  // disappeared?
+
+  ArgStringList CmdArgs;
+
+  // I'm not sure why this particular decomposition exists in gcc, but
+  // we follow suite for ease of comparison.
+  AddLinkArgs(Args, CmdArgs);
+
+  // FIXME: gcc has %{x} in here. How could this ever happen?  Cruft?
+  Args.AddAllArgs(CmdArgs, options::OPT_d_Flag);
+  Args.AddAllArgs(CmdArgs, options::OPT_s);
+  Args.AddAllArgs(CmdArgs, options::OPT_t);
+  Args.AddAllArgs(CmdArgs, options::OPT_Z_Flag);
+  Args.AddAllArgs(CmdArgs, options::OPT_u_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_A);
+  Args.AddLastArg(CmdArgs, options::OPT_e);
+  Args.AddAllArgs(CmdArgs, options::OPT_m_Separate);
+  Args.AddAllArgs(CmdArgs, options::OPT_r);
+
+  // FIXME: This is just being pedantically bug compatible, gcc
+  // doesn't *mean* to forward this, it just does (yay for pattern
+  // matching). It doesn't work, of course.
+  Args.AddAllArgs(CmdArgs, options::OPT_object);
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  unsigned MacosxVersion[3];
+  if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
+    bool HadExtra;
+    if (!Driver::GetReleaseVersion(A->getValue(Args), MacosxVersion[0], 
+                                   MacosxVersion[1], MacosxVersion[2],
+                                   HadExtra) ||
+        HadExtra) {
+      const Driver &D = getToolChain().getHost().getDriver();
+      D.Diag(clang::diag::err_drv_invalid_version_number)
+        << A->getAsString(Args);
+    }
+  } else {
+    getDarwinToolChain().getMacosxVersion(MacosxVersion);
+  }
+    
+  if (!Args.hasArg(options::OPT_A) &&
+      !Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    // Derived from startfile spec.
+    if (Args.hasArg(options::OPT_dynamiclib)) {
+        // Derived from darwin_dylib1 spec.
+      if (Args.hasArg(options::OPT_miphoneos_version_min_EQ) ||
+          isMacosxVersionLT(MacosxVersion, 10, 5))
+        CmdArgs.push_back("-ldylib1.o");
+      else
+        CmdArgs.push_back("-ldylib1.10.5.o");
+    } else {
+      if (Args.hasArg(options::OPT_bundle)) {
+        if (!Args.hasArg(options::OPT_static))
+          CmdArgs.push_back("-lbundle1.o");
+      } else {
+        if (Args.hasArg(options::OPT_pg)) {
+          if (Args.hasArg(options::OPT_static) ||
+              Args.hasArg(options::OPT_object) ||
+              Args.hasArg(options::OPT_preload)) {
+            CmdArgs.push_back("-lgcrt0.o");
+          } else {
+            CmdArgs.push_back("-lgcrt1.o");
+                
+            // darwin_crt2 spec is empty.
+          } 
+        } else {
+          if (Args.hasArg(options::OPT_static) ||
+              Args.hasArg(options::OPT_object) ||
+              Args.hasArg(options::OPT_preload)) {
+            CmdArgs.push_back("-lcrt0.o");
+          } else {
+            // Derived from darwin_crt1 spec.
+            if (Args.hasArg(options::OPT_miphoneos_version_min_EQ) ||
+                isMacosxVersionLT(MacosxVersion, 10, 5)) {
+              CmdArgs.push_back("-lcrt1.o");
+            } else {
+              CmdArgs.push_back("-lcrt1.10.5.o");
+              
+              // darwin_crt2 spec is empty.
+            }
+          }
+        }
+      }
+    }
+
+    if (Args.hasArg(options::OPT_shared_libgcc) &&
+        !Args.hasArg(options::OPT_miphoneos_version_min_EQ) &&
+        isMacosxVersionLT(MacosxVersion, 10, 5)) {
+      const char *Str = getToolChain().GetFilePath(C, "crt3.o").c_str();
+      CmdArgs.push_back(Args.MakeArgString(Str));
+    }
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+  
+  if (Args.hasArg(options::OPT_fopenmp))
+    // This is more complicated in gcc...
+    CmdArgs.push_back("-lgomp");
+
+  // FIXME: Derive these correctly.
+  const char *TCDir = getDarwinToolChain().getToolChainDir().c_str();
+  if (getToolChain().getArchName() == "x86_64") {
+    CmdArgs.push_back(MakeFormattedString(Args,
+                              llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
+    // Intentionally duplicated for (temporary) gcc bug compatibility.
+    CmdArgs.push_back(MakeFormattedString(Args,
+                              llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
+  }
+  CmdArgs.push_back(MakeFormattedString(Args, 
+                                        llvm::format("-L/usr/lib/%s", TCDir)));
+  CmdArgs.push_back(MakeFormattedString(Args, 
+                                     llvm::format("-L/usr/lib/gcc/%s", TCDir)));
+  // Intentionally duplicated for (temporary) gcc bug compatibility.
+  CmdArgs.push_back(MakeFormattedString(Args, 
+                                     llvm::format("-L/usr/lib/gcc/%s", TCDir)));
+  CmdArgs.push_back(MakeFormattedString(Args, 
+                  llvm::format("-L/usr/lib/gcc/%s/../../../%s", TCDir, TCDir)));
+  CmdArgs.push_back(MakeFormattedString(Args,
+                            llvm::format("-L/usr/lib/gcc/%s/../../..", TCDir)));
+  
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else 
+      II.getInputArg().renderAsInput(Args, CmdArgs);
+  }
+
+  if (LinkingOutput) {
+    CmdArgs.push_back("-arch_multiple");
+    CmdArgs.push_back("-final_output");
+    CmdArgs.push_back(LinkingOutput);
+  }
+
+  if (Args.hasArg(options::OPT_fprofile_arcs) ||
+      Args.hasArg(options::OPT_fprofile_generate) ||
+      Args.hasArg(options::OPT_fcreate_profile) ||
+      Args.hasArg(options::OPT_coverage))
+    CmdArgs.push_back("-lgcov");
+  
+  if (Args.hasArg(options::OPT_fnested_functions))
+    CmdArgs.push_back("-allow_stack_execute");
+  
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    // link_ssp spec is empty.
+
+    // Derived from libgcc spec.
+    if (Args.hasArg(options::OPT_static)) {
+      CmdArgs.push_back("-lgcc_static");
+    } else if (Args.hasArg(options::OPT_static_libgcc)) {
+      CmdArgs.push_back("-lgcc_eh");
+      CmdArgs.push_back("-lgcc");
+    } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
+      // Derived from darwin_iphoneos_libgcc spec.
+      CmdArgs.push_back("-lgcc_s.10.5");
+      CmdArgs.push_back("-lgcc");
+    } else if (Args.hasArg(options::OPT_shared_libgcc) ||
+               Args.hasArg(options::OPT_fexceptions) ||
+               Args.hasArg(options::OPT_fgnu_runtime)) {
+      if (isMacosxVersionLT(MacosxVersion, 10, 5))
+        CmdArgs.push_back("-lgcc_s.10.4");
+      else
+        CmdArgs.push_back("-lgcc_s.10.5");
+      CmdArgs.push_back("-lgcc");
+    } else {
+      if (isMacosxVersionLT(MacosxVersion, 10, 5) &&
+          isMacosxVersionGTE(MacosxVersion, 10, 3, 9))
+        CmdArgs.push_back("-lgcc_s.10.4");
+      if (isMacosxVersionGTE(MacosxVersion, 10, 5))
+        CmdArgs.push_back("-lgcc_s.10.5");
+      CmdArgs.push_back("-lgcc");
+    }
+
+    // Derived from lib spec.
+    if (!Args.hasArg(options::OPT_static))
+      CmdArgs.push_back("-lSystem");
+  }
+
+  if (!Args.hasArg(options::OPT_A) &&
+      !Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    // endfile_spec is empty.
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_F);
+
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "collect2").c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));  
+
+  if (Args.getLastArg(options::OPT_g_Group) &&
+      !Args.getLastArg(options::OPT_gstabs) &&
+      !Args.getLastArg(options::OPT_g0)) {
+    // FIXME: This is gross, but matches gcc. The test only considers
+    // the suffix (not the -x type), and then only of the first
+    // input. Awesome.
+    const char *Suffix = strchr(Inputs[0].getBaseInput(), '.');
+    if (Suffix && isSourceSuffix(Suffix + 1)) {
+      const char *Exec = 
+       Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil").c_str());
+      ArgStringList CmdArgs;
+      CmdArgs.push_back(Output.getFilename());
+      C.getJobs().addCommand(new Command(Exec, CmdArgs));
+    }
+  }
 }
 
 void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
