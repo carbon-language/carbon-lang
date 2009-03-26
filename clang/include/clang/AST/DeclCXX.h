@@ -980,6 +980,11 @@ public:
   }
   static bool classof(StaticAssertDecl *D) { return true; }
 };
+
+/// Insertion operator for diagnostics.  This allows sending AccessSpecifier's
+/// into a diagnostic with <<.
+const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                    AccessSpecifier AS);
   
 } // end namespace clang
 

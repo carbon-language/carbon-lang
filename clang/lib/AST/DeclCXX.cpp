@@ -377,3 +377,24 @@ void StaticAssertDecl::Destroy(ASTContext& C) {
 StaticAssertDecl::~StaticAssertDecl() {
 }
 
+static const char *getAccessName(AccessSpecifier AS) {
+  switch (AS) {
+    default:
+    case AS_none:
+      assert("Invalid access specifier!");
+      return 0;
+    case AS_public:
+      return "public";
+    case AS_private:
+      return "private";
+    case AS_protected:
+      return "protected";
+  }
+}
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           AccessSpecifier AS) {
+  return DB << getAccessName(AS);
+}
+
+
