@@ -140,6 +140,8 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
 //===----------------------------------------------------------------------===//
 
 FullSourceLoc PathDiagnosticLocation::asLocation() const {
+  // Note that we want a 'switch' here so that the compiler can warn us in
+  // case we add more cases.
   switch (K) {
     case SingleLoc:
     case Range:
