@@ -465,6 +465,9 @@ int CompilationGraph::Check () {
   // Check for cycles.
   ret += this->CheckCycles();
 
+  if (!ret)
+    std::cerr << "check-graph: no errors found.\n";
+
   return ret;
 }
 
@@ -520,7 +523,9 @@ void CompilationGraph::writeGraph() {
   std::ofstream O("compilation-graph.dot");
 
   if (O.good()) {
-    llvm::WriteGraph(this, "compilation-graph");
+    std::cerr << "Writing 'compilation-graph.dot' file...";
+    llvm::WriteGraph(O, this);
+    std::cerr << "done.\n";
     O.close();
   }
   else {
