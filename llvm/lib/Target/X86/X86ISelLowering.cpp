@@ -5870,6 +5870,45 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
       CC = DAG.getConstant(CCode, MVT::i8);
       Cond = Cond.getOperand(0).getOperand(1);
       addTest = false;
+    } else if (Cond.hasOneUse() && Cond.getOpcode() == ISD::SRL) {
+      // Match this pattern so that we can generate simpler code:
+      //
+      //   %a = ...
+      //   %b = and i32 %a, 2
+      //   %c = srl i32 %b, 1
+      //   %d = br i32 %c, 
+      //
+      // into
+      // 
+      //   %a = ...
+      //   %b = and %a, 2
+      //   %c = X86ISD::CMP %b, 0
+      //   %d = X86ISD::BRCOND %c ...
+      //
+      // This applies only when the AND constant value has one bit set and the
+      // SRL constant is equal to the log2 of the AND constant. The back-end is
+      // smart enough to convert the result into a TEST/JMP sequence.
+      SDValue Op0 = Cond.getOperand(0);
+      SDValue Op1 = Cond.getOperand(1);
+
+      if (Op0.getOpcode() == ISD::AND &&
+          Op0.hasOneUse() &&
+          Op1.getOpcode() == ISD::Constant) {
+        SDValue AndOp0 = Op0.getOperand(0);
+        SDValue AndOp1 = Op0.getOperand(1);
+
+        if (AndOp1.getOpcode() == ISD::Constant) {
+          const APInt &AndConst = cast<ConstantSDNode>(AndOp1)->getAPIntValue();
+
+          if (AndConst.isPowerOf2() &&
+              cast<ConstantSDNode>(Op1)->getAPIntValue()==AndConst.logBase2()) {
+            CC = DAG.getConstant(X86::COND_NE, MVT::i8);
+            Cond = EmitTest(Op0, X86::COND_NE, DAG);
+            return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
+                               Chain, Dest, CC, Cond);
+          }
+        }
+      }
     }
   }
 
