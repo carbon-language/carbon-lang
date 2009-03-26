@@ -2529,3 +2529,43 @@ void Sema::SetDeclDeleted(DeclTy *dcl, SourceLocation DelLoc) {
   }
   Fn->setDeleted();
 }
+
+static const char *getAccessName(AccessSpecifier AS) {
+  switch (AS) {
+    default:
+    case AS_none:
+      assert("Invalid access specifier!");
+      return 0;
+    case AS_public:
+      return "public";
+    case AS_private:
+      return "private";
+    case AS_protected:
+      return "protected";
+  }
+}
+
+bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
+                                    NamedDecl *PrevMemberDecl,
+                                    AccessSpecifier LexicalAS) {
+  if (!PrevMemberDecl) {
+    // Use the lexical access specifier.
+    MemberDecl->setAccess(LexicalAS);
+    return false;
+  }
+  
+  // C++ [class.access.spec]p3: When a member is redeclared its access
+  // specifier must be same as its initial declaration.
+  if (LexicalAS != AS_none && LexicalAS != PrevMemberDecl->getAccess()) {
+    Diag(MemberDecl->getLocation(), 
+         diag::err_class_redeclared_with_different_access) 
+      << MemberDecl << getAccessName(LexicalAS);
+    Diag(PrevMemberDecl->getLocation(), diag::note_previous_access_declaration)
+      << PrevMemberDecl << getAccessName(PrevMemberDecl->getAccess());
+    return true;
+  }
+  
+  MemberDecl->setAccess(PrevMemberDecl->getAccess());
+  return false;
+}
+

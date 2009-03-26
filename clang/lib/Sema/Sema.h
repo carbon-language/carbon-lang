@@ -1616,6 +1616,13 @@ public:
                                  FunctionDecl::StorageClass& SC);
   DeclTy *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
+  /// SetMemberAccessSpecifier - Set the access specifier of a member.
+  /// Returns true on error (when the previous member decl access specifier
+  /// is different from the new member decl access specifier).
+  bool SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
+                                NamedDecl *PrevMemberDecl,
+                                AccessSpecifier LexicalAS);
+  
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
   //

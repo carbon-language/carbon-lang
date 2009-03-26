@@ -3083,21 +3083,6 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   return NewTD;
 }
 
-static const char *getAccessName(AccessSpecifier AS) {
-  switch (AS) {
-    default:
-    case AS_none:
-      assert("Invalid access specifier!");
-      return 0;
-    case AS_public:
-      return "public";
-    case AS_private:
-      return "private";
-    case AS_protected:
-      return "protected";
-  }
-}
-
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TK indicates whether this is a
@@ -3399,18 +3384,8 @@ CreateNewDecl:
   // lexical context will be different from the semantic context.
   New->setLexicalDeclContext(CurContext);
 
-  if (PrevDecl) {
-    // C++ [class.access.spec]p3: When a member is redeclared its access
-    // specifier must be same as its initial declaration.
-    if (AS != AS_none && AS != PrevDecl->getAccess()) {
-      Diag(Loc, diag::err_class_redeclared_with_different_access) 
-        << New << getAccessName(AS);
-      Diag(PrevDecl->getLocation(), diag::note_previous_access_declaration)
-        << PrevDecl << getAccessName(PrevDecl->getAccess());
-    } else 
-      New->setAccess(PrevDecl->getAccess());
-  } else
-    New->setAccess(AS);
+  // Set the access specifier.
+  SetMemberAccessSpecifier(New, PrevDecl, AS);
 
   if (TK == TK_Definition)
     New->startDefinition();
