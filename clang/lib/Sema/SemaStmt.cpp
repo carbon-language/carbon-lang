@@ -688,8 +688,10 @@ Action::OwningStmtResult
 Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
                             ExprArg DestExp) {
   // FIXME: Verify that the operand is convertible to void*.
-
-  return Owned(new (Context) IndirectGotoStmt((Expr*)DestExp.release()));
+  // Convert operand to void*
+  Expr* E = (Expr*)DestExp.release();
+  ImpCastExprToType(E, Context.VoidPtrTy);
+  return Owned(new (Context) IndirectGotoStmt(E));
 }
 
 Action::OwningStmtResult
