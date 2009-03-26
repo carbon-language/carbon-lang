@@ -654,8 +654,8 @@ namespace llvm {
                                                     bool invSrc = false) const;
     
     /// Utility function to emit atomic min and max.  It takes the min/max
-    // instruction to expand, the associated basic block, and the associated
-    // cmov opcode for moving the min or max value.
+    /// instruction to expand, the associated basic block, and the associated
+    /// cmov opcode for moving the min or max value.
     MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
                                                           MachineBasicBlock *BB,
                                                         unsigned cmovOpc) const;
