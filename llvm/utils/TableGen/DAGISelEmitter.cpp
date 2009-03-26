@@ -179,7 +179,7 @@ struct PatternSortingPredicate {
 /// register. If the register is a member of multiple register classes which
 /// have different associated types, return MVT::Other.
 static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
-  int FoundRC = 0;
+  bool FoundRC = false;
   MVT::SimpleValueType VT = MVT::Other;
   const std::vector<CodeGenRegisterClass> &RCs = T.getRegisterClasses();
   std::vector<CodeGenRegisterClass>::const_iterator RC;
@@ -189,7 +189,7 @@ static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget 
     Element = find((*RC).Elements.begin(), (*RC).Elements.end(), R);
     if (Element != (*RC).Elements.end()) {
       if (!FoundRC) {
-        FoundRC = 1;
+        FoundRC = true;
         VT = (*RC).getValueTypeNum(0);
       } else {
         // In multiple RC's
