@@ -460,7 +460,8 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
                                                  Attr,
                        Action::MultiTemplateParamsArg(Actions, 
                                                       &(*TemplateParams)[0],
-                                                      TemplateParams->size()));
+                                                      TemplateParams->size()),
+                                                 AS);
   else
     TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
                                        NameLoc, Attr, AS);
@@ -615,7 +616,7 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///         ::[opt] nested-name-specifier template[opt] unqualified-id ';'[TODO]
 ///         using-declaration                                            [TODO]
 /// [C++0x] static_assert-declaration
-///         template-declaration                                         [TODO]
+///         template-declaration
 /// [GNU]   '__extension__' member-declaration
 ///
 ///       member-declarator-list:
@@ -638,6 +639,10 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   if (Tok.is(tok::kw_static_assert))
     return ParseStaticAssertDeclaration();
       
+  if (Tok.is(tok::kw_template))
+    return ParseTemplateDeclarationOrSpecialization(Declarator::MemberContext,
+                                                    AS);
+
   // Handle:  member-declaration ::= '__extension__' member-declaration
   if (Tok.is(tok::kw___extension__)) {
     // __extension__ silences extension warnings in the subexpression.

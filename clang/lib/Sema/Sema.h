@@ -1715,7 +1715,8 @@ public:
                      SourceLocation KWLoc, const CXXScopeSpec &SS,
                      IdentifierInfo *Name, SourceLocation NameLoc,
                      AttributeList *Attr,
-                     MultiTemplateParamsArg TemplateParameterLists);
+                     MultiTemplateParamsArg TemplateParameterLists,
+                     AccessSpecifier AS);
 
   QualType CheckClassTemplateId(ClassTemplateDecl *ClassTemplate,
                                 SourceLocation TemplateLoc,

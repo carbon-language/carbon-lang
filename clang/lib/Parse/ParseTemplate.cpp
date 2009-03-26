@@ -35,7 +35,8 @@ using namespace clang;
 ///       explicit-specialization: [ C++ temp.expl.spec]
 ///         'template' '<' '>' declaration
 Parser::DeclTy *
-Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context) {
+Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
+                                                 AccessSpecifier AS) {
   assert((Tok.is(tok::kw_export) || Tok.is(tok::kw_template)) && 
 	 "Token does not start a template declaration.");
   
@@ -94,7 +95,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context) {
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
   // Parse the actual template declaration.
-  return ParseDeclarationOrFunctionDefinition(&ParamLists);
+  return ParseDeclarationOrFunctionDefinition(&ParamLists, AS);
 }
 
 /// ParseTemplateParameters - Parses a template-parameter-list enclosed in

@@ -388,7 +388,8 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
-                         MultiTemplateParamsArg TemplateParameterLists) {
+                         MultiTemplateParamsArg TemplateParameterLists,
+                         AccessSpecifier AS) {
   assert(TemplateParameterLists.size() > 0 && "No template parameter lists?");
   assert(TK != TK_Reference && "Can only declare or define class templates");
   bool Invalid = false;

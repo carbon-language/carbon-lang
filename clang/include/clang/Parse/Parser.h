@@ -549,7 +549,9 @@ private:
   // C99 6.9: External Definitions.
   DeclTy *ParseExternalDeclaration();
   DeclTy *ParseDeclarationOrFunctionDefinition(
-            TemplateParameterLists *TemplateParams = 0);
+            TemplateParameterLists *TemplateParams = 0,
+            AccessSpecifier AS = AS_none);
+                                               
   DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseKNRParamDeclarations(Declarator &D);
   // EndLoc, if non-NULL, is filled with the location of the last token of
@@ -1027,7 +1029,8 @@ private:
   typedef llvm::SmallVector<DeclTy *, 4> TemplateParameterList;
 
   // C++ 14.1: Template Parameters [temp.param]
-  DeclTy *ParseTemplateDeclarationOrSpecialization(unsigned Context);
+  DeclTy *ParseTemplateDeclarationOrSpecialization(unsigned Context,
+                                                   AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth, 
                                TemplateParameterList &TemplateParams,
                                SourceLocation &LAngleLoc, 
