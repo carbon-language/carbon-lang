@@ -687,10 +687,14 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
 Action::OwningStmtResult
 Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
                             ExprArg DestExp) {
-  // FIXME: Verify that the operand is convertible to void*.
   // Convert operand to void*
-  Expr* E = (Expr*)DestExp.release();
-  ImpCastExprToType(E, Context.VoidPtrTy);
+  Expr* E = DestExp.takeAs<Expr>();
+  QualType ETy = E->getType();
+  AssignConvertType ConvTy =
+        CheckSingleAssignmentConstraints(Context.VoidPtrTy, E);
+  if (DiagnoseAssignmentResult(ConvTy, StarLoc, Context.VoidPtrTy, ETy,
+                               E, "passing"))
+    return StmtError();
   return Owned(new (Context) IndirectGotoStmt(E));
 }
 
