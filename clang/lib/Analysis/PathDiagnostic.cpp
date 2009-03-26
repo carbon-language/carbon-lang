@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathDiagnostic.h"
+#include "clang/AST/Expr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include <sstream>
@@ -132,4 +133,18 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   D->push_front(P);
 
   HandlePathDiagnostic(D);  
+}
+
+//===----------------------------------------------------------------------===//
+// PathDiagnosticLocation methods.
+//===----------------------------------------------------------------------===//
+
+FullSourceLoc PathDiagnosticLocation::asLocation() const {
+  switch (K) {
+    case SingleLoc:
+    case Range:
+      return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(SM));
+    case Statement:
+      return FullSourceLoc(S->getLocStart(), const_cast<SourceManager&>(SM));
+  }
 }

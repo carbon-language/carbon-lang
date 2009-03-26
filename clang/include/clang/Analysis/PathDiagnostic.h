@@ -271,25 +271,27 @@ public:
   
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {
 private:
-  FullSourceLoc Pos;
+  PathDiagnosticLocation Pos;
 public:
-  PathDiagnosticSpotPiece(FullSourceLoc pos, const std::string& s,
+  PathDiagnosticSpotPiece(const PathDiagnosticLocation &pos,
+                          const std::string& s,
                           PathDiagnosticPiece::Kind k)
   : PathDiagnosticPiece(s, k), Pos(pos) {
-    assert(Pos.isValid() &&
+    assert(Pos.asLocation().isValid() &&
            "PathDiagnosticSpotPiece's must have a valid location.");
   }  
 
-  FullSourceLoc getLocation() const { return Pos; }
+  FullSourceLoc getLocation() const { return Pos.asLocation(); }
 };
   
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
 
 public:
-  PathDiagnosticEventPiece(FullSourceLoc pos, const std::string& s)
+  PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
+                           const std::string& s)
     : PathDiagnosticSpotPiece(pos, s, Event) {}
   
-  PathDiagnosticEventPiece(FullSourceLoc pos, const char* s)
+  PathDiagnosticEventPiece(const PathDiagnosticLocation &pos, const char* s)
     : PathDiagnosticSpotPiece(pos, s, Event) {}
   
   ~PathDiagnosticEventPiece();
@@ -332,7 +334,7 @@ public:
 class PathDiagnosticMacroPiece : public PathDiagnosticSpotPiece {
   std::vector<PathDiagnosticPiece*> SubPieces;
 public:
-  PathDiagnosticMacroPiece(FullSourceLoc pos)
+  PathDiagnosticMacroPiece(const PathDiagnosticLocation &pos)
     : PathDiagnosticSpotPiece(pos, "", Macro) {}
   
   ~PathDiagnosticMacroPiece();
