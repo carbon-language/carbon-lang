@@ -152,3 +152,18 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
   
   return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(SM));
 }
+
+SourceRange PathDiagnosticLocation::asRange() const {
+  // Note that we want a 'switch' here so that the compiler can warn us in
+  // case we add more cases.
+  switch (K) {
+    case SingleLoc:
+    case Range:
+      break;
+    case Statement:
+      return S->getSourceRange();
+  }
+  
+  return R;
+}
+

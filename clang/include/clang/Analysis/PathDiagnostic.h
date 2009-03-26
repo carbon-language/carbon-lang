@@ -67,7 +67,7 @@ public:
     
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;
-  const Stmt *asStmt() const;
+  const Stmt *asStmt() const { return S ? S : 0; }
 };
 
 class PathDiagnostic {
