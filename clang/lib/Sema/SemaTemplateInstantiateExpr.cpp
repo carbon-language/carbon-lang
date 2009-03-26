@@ -321,12 +321,16 @@ TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E) {
-  CXXScopeSpec SS = SemaRef.InstantiateScopeSpecifier(E->begin(), E->size(),
-                                                      E->getQualifierRange(),
-                                                      TemplateArgs,
-                                                      NumTemplateArgs);
-  if (SS.isInvalid() || SS.isEmpty())
+  NestedNameSpecifier *NNS 
+    = SemaRef.InstantiateNestedNameSpecifier(E->getQualifier(), 
+                                             E->getQualifierRange(),
+                                             TemplateArgs, NumTemplateArgs);
+  if (!NNS)
     return SemaRef.ExprError();
+
+  CXXScopeSpec SS;
+  SS.setRange(E->getQualifierRange());
+  SS.setScopeRep(NNS);
 
   // FIXME: We're passing in a NULL scope, because
   // ActOnDeclarationNameExpr doesn't actually use the scope when we

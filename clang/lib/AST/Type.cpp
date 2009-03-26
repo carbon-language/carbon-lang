@@ -1047,28 +1047,6 @@ ClassTemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
     Args[Idx].Profile(ID);
 }
 
-QualifiedNameType::QualifiedNameType(const NestedNameSpecifier *Components,
-                                     unsigned NumComponents, 
-                                     QualType NamedType,
-                                     QualType CanonType)
-  : Type(QualifiedName, CanonType, NamedType->isDependentType()),
-    NumComponents(NumComponents), NamedType(NamedType) {
-  NestedNameSpecifier *InitComponents 
-    = reinterpret_cast<NestedNameSpecifier *>(this + 1);
-  for (unsigned I = 0; I < NumComponents; ++I)
-    new (InitComponents + I) NestedNameSpecifier(Components[I]);
-}
-
-void QualifiedNameType::Profile(llvm::FoldingSetNodeID &ID, 
-                                const NestedNameSpecifier *Components,
-                                unsigned NumComponents, 
-                                QualType NamedType) {
-  ID.AddInteger(NumComponents);
-  for (unsigned I = 0; I < NumComponents; ++I)
-    ID.AddPointer(Components[I].getAsOpaquePtr());
-  NamedType.Profile(ID);
-}
-
 //===----------------------------------------------------------------------===//
 // Type Printing
 //===----------------------------------------------------------------------===//
@@ -1440,7 +1418,7 @@ void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
 
   {
     llvm::raw_string_ostream OS(MyString);
-    NestedNameSpecifier::Print(OS, begin(), end());
+    NNS->Print(OS);
   }
   
   std::string TypeStr;

@@ -1159,9 +1159,13 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 /// Method declaration as if we had just parsed the qualified method
 /// name. However, it should not bring the parameters into scope;
 /// that will be performed by ActOnDelayedCXXMethodParameter.
-void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method) {
+void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *MethodD) {
   CXXScopeSpec SS;
-  SS.setScopeRep(((FunctionDecl*)Method)->getDeclContext());
+  FunctionDecl *Method = (FunctionDecl*)MethodD;
+  QualType ClassTy 
+    = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
+  SS.setScopeRep(
+    NestedNameSpecifier::Create(Context, 0, false, ClassTy.getTypePtr()));
   ActOnCXXEnterDeclaratorScope(S, SS);
 }
 
@@ -1192,7 +1196,10 @@ void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *ParamD) {
 void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *MethodD) {
   FunctionDecl *Method = (FunctionDecl*)MethodD;
   CXXScopeSpec SS;
-  SS.setScopeRep(Method->getDeclContext());
+  QualType ClassTy 
+    = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
+  SS.setScopeRep(
+    NestedNameSpecifier::Create(Context, 0, false, ClassTy.getTypePtr()));
   ActOnCXXExitDeclaratorScope(S, SS);
 
   // Now that we have our default arguments, check the constructor

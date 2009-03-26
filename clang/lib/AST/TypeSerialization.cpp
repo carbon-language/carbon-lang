@@ -421,9 +421,7 @@ CreateImpl(ASTContext& Context, Deserializer& D) {
 // QualifiedNameType
 //===----------------------------------------------------------------------===//
 void QualifiedNameType::EmitImpl(llvm::Serializer& S) const {
-  S.EmitInt(NumComponents);
   // FIXME: Serialize the actual components
-  S.Emit(NamedType);
 }
 
 Type* 

@@ -16,46 +16,137 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cassert>
 
 using namespace clang;
 
-DeclContext *
-NestedNameSpecifier::computeDeclContext(ASTContext &Context) const {
-  // The simple case: we're storing a DeclContext
-  if ((Data & 0x01) == 0)
-    return reinterpret_cast<DeclContext *>(Data);
+NestedNameSpecifier *
+NestedNameSpecifier::FindOrInsert(ASTContext &Context, 
+                                  const NestedNameSpecifier &Mockup) {
+  llvm::FoldingSetNodeID ID;
+  Mockup.Profile(ID);
 
-  Type *T = getAsType();
-  if (!T)
-    return 0;
+  void *InsertPos = 0;
+  NestedNameSpecifier *NNS 
+    = Context.NestedNameSpecifiers.FindNodeOrInsertPos(ID, InsertPos);
+  if (!NNS) {
+    NNS = new (Context) NestedNameSpecifier(Mockup);
+    Context.NestedNameSpecifiers.InsertNode(NNS, InsertPos);
+  }
 
-  // Retrieve the DeclContext associated with this type.
-  const TagType *TagT = T->getAsTagType();
-  assert(TagT && "No DeclContext from a non-tag type");
-  return TagT->getDecl();
+  return NNS;
 }
 
-void NestedNameSpecifier::Print(llvm::raw_ostream &OS, 
-                                const NestedNameSpecifier *First,
-                                const NestedNameSpecifier *Last) {
-  for (; First != Last; ++First) {
-    if (Type *T = First->getAsType()) {
-      std::string TypeStr;
+NestedNameSpecifier *
+NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix, 
+                            IdentifierInfo *II) {
+  assert(II && "Identifier cannot be NULL");
+  assert(Prefix && Prefix->isDependent() && "Prefix must be dependent");
 
-      // If this is a qualified name type, suppress the qualification:
-      // it's part of our nested-name-specifier sequence anyway.
-      if (const QualifiedNameType *QualT = dyn_cast<QualifiedNameType>(T))
-        T = QualT->getNamedType().getTypePtr();
+  NestedNameSpecifier Mockup;
+  Mockup.Prefix = Prefix;
+  Mockup.Specifier.setPointer(II);
+  Mockup.Specifier.setInt(Identifier);
+  return FindOrInsert(Context, Mockup);
+}
 
-      if (const TagType *TagT = dyn_cast<TagType>(T))
-        TagT->getAsStringInternal(TypeStr, true);
-      else
-        T->getAsStringInternal(TypeStr);
-      OS << TypeStr;
-    } else if (NamedDecl *NamedDC 
-                 = dyn_cast_or_null<NamedDecl>(First->getAsDeclContext()))
-      OS << NamedDC->getNameAsString();
+NestedNameSpecifier *
+NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix, 
+                            NamespaceDecl *NS) {
+  assert(NS && "Namespace cannot be NULL");
+  assert((!Prefix || 
+          (Prefix->getAsType() == 0 && Prefix->getAsIdentifier() == 0)) &&
+         "Broken nested name specifier");
+  NestedNameSpecifier Mockup;
+  Mockup.Prefix = Prefix;
+  Mockup.Specifier.setPointer(NS);
+  Mockup.Specifier.setInt(Namespace);
+  return FindOrInsert(Context, Mockup);
+}
+
+NestedNameSpecifier *
+NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
+                            bool Template, Type *T) {
+  assert(T && "Type cannot be NULL");
+  NestedNameSpecifier Mockup;
+  Mockup.Prefix = Prefix;
+  Mockup.Specifier.setPointer(T);
+  Mockup.Specifier.setInt(Template? TypeSpecWithTemplate : TypeSpec);
+  return FindOrInsert(Context, Mockup);
+}
   
-    OS <<  "::";
+NestedNameSpecifier *NestedNameSpecifier::GlobalSpecifier(ASTContext &Context) {
+  if (!Context.GlobalNestedNameSpecifier)
+    Context.GlobalNestedNameSpecifier = new (Context) NestedNameSpecifier();
+  return Context.GlobalNestedNameSpecifier;
+}
+
+/// \brief Whether this nested name specifier refers to a dependent
+/// type or not.
+bool NestedNameSpecifier::isDependent() const {
+  switch (getKind()) {
+  case Identifier:
+    // Identifier specifiers always represent dependent types
+    return true;
+
+  case Namespace:
+  case Global:
+    return false;
+
+  case TypeSpec:
+  case TypeSpecWithTemplate:
+    return getAsType()->isDependentType();
   }
+
+  // Necessary to suppress a GCC warning.
+  return false;
+}
+
+/// \brief Print this nested name specifier to the given output
+/// stream.
+void NestedNameSpecifier::Print(llvm::raw_ostream &OS) const {
+  if (Prefix)
+    Prefix->Print(OS);
+
+  switch (getKind()) {
+  case Identifier:
+    OS << getAsIdentifier()->getName();
+    break;
+
+  case Namespace:
+    OS << getAsNamespace()->getIdentifier()->getName();
+    break;
+
+  case Global:
+    break;
+
+  case TypeSpecWithTemplate:
+    OS << "template ";
+    // Fall through to print the type.
+
+  case TypeSpec: {
+    std::string TypeStr;
+    Type *T = getAsType();
+
+    // If this is a qualified name type, suppress the qualification:
+    // it's part of our nested-name-specifier sequence anyway.  FIXME:
+    // We should be able to assert that this doesn't happen.
+    if (const QualifiedNameType *QualT = dyn_cast<QualifiedNameType>(T))
+      T = QualT->getNamedType().getTypePtr();
+    
+    if (const TagType *TagT = dyn_cast<TagType>(T))
+      TagT->getAsStringInternal(TypeStr, true);
+    else
+      T->getAsStringInternal(TypeStr);
+    OS << TypeStr;
+    break;
+  }
+  }
+
+  OS << "::";
+}
+
+void NestedNameSpecifier::Destroy(ASTContext &Context) {
+  this->~NestedNameSpecifier();
+  Context.Deallocate((void *)this);
 }

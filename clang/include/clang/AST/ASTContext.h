@@ -18,6 +18,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
@@ -74,6 +75,14 @@ class ASTContext {
   llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
+
+  /// \brief The set of nested name specifiers.
+  ///
+  /// This set is managed by the NestedNameSpecifier class.
+  llvm::FoldingSet<NestedNameSpecifier> NestedNameSpecifiers;
+  NestedNameSpecifier *GlobalNestedNameSpecifier;
+  friend class NestedNameSpecifier;
+
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
@@ -284,8 +293,7 @@ public:
                                               unsigned NumArgs,
                                               QualType Canon = QualType());
 
-  QualType getQualifiedNameType(const NestedNameSpecifier *Components,
-                                unsigned NumComponents,
+  QualType getQualifiedNameType(NestedNameSpecifier *NNS,
                                 QualType NamedType);
 
   /// getObjCQualifiedInterfaceType - Return a 

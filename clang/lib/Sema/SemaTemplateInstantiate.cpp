@@ -768,33 +768,52 @@ Sema::InstantiateClassTemplateSpecialization(
                           ClassTemplateSpec->getNumTemplateArgs());
 }
 
-/// \brief Instantiate a sequence of nested-name-specifiers into a
-/// scope specifier.
-CXXScopeSpec 
-Sema::InstantiateScopeSpecifier(const NestedNameSpecifier *Components,
-                                unsigned NumComponents,
-                                SourceRange Range,
-                                const TemplateArgument *TemplateArgs,
-                                unsigned NumTemplateArgs) {
-  CXXScopeSpec SS;
-  for (unsigned Comp = 0; Comp < NumComponents; ++Comp) {
-    if (Type *T = Components[Comp].getAsType()) {
-      QualType NewT = InstantiateType(QualType(T, 0), TemplateArgs, 
-                                      NumTemplateArgs, Range.getBegin(),
-                                      DeclarationName());
-      if (NewT.isNull())
-        return SS;
-      NestedNameSpecifier NNS(NewT.getTypePtr());
-      SS.addScopeRep(NNS.getAsOpaquePtr());
-    } else {
-      DeclContext *DC = Components[Comp].getAsDeclContext();
-      // FIXME: injected-class-name might be dependent, and therefore
-      // would need instantiation.
-      NestedNameSpecifier NNS(DC);
-      SS.addScopeRep(NNS.getAsOpaquePtr());
-    }
+/// \brief Instantiate a nested-name-specifier.
+NestedNameSpecifier *
+Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
+                                     SourceRange Range,
+                                     const TemplateArgument *TemplateArgs,
+                                     unsigned NumTemplateArgs) {
+  // Instantiate the prefix of this nested name specifier.
+  NestedNameSpecifier *Prefix = NNS->getPrefix();
+  if (Prefix) {
+    Prefix = InstantiateNestedNameSpecifier(Prefix, Range, TemplateArgs,
+                                            NumTemplateArgs);
+    if (!Prefix)
+      return 0;
   }
 
-  SS.setRange(Range);
-  return SS;
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+    // FIXME: Implement this lookup!
+    assert(false && "Cannot instantiate this nested-name-specifier");
+    break;
+
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::Global:
+    return NNS;
+    
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+  case NestedNameSpecifier::TypeSpec: {
+    QualType T = QualType(NNS->getAsType(), 0);
+    if (!T->isDependentType())
+      return NNS;
+
+    T = InstantiateType(T, TemplateArgs, NumTemplateArgs, Range.getBegin(),
+                        DeclarationName());
+    if (T.isNull())
+      return 0;
+
+    // Note that T.getTypePtr(), below, strips cv-qualifiers. This is
+    // perfectly reasonable, since cv-qualified types in
+    // nested-name-specifiers don't matter.
+    // FIXME: we need to perform more checking on this type.
+    return NestedNameSpecifier::Create(Context, Prefix, 
+                 NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
+                                       T.getTypePtr());
+  }
+  }
+
+  // Required to silence GCC warning.
+  return 0;
 }

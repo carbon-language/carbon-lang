@@ -24,54 +24,6 @@ void CXXConditionDeclExpr::Destroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
-QualifiedDeclRefExpr::QualifiedDeclRefExpr(NamedDecl *d, QualType t, 
-                                           SourceLocation l, bool TD, 
-                                           bool VD, SourceRange R,
-                                       const NestedNameSpecifier *Components,
-                                           unsigned NumComponents)
-  : DeclRefExpr(QualifiedDeclRefExprClass, d, t, l, TD, VD), 
-    QualifierRange(R), NumComponents(NumComponents) {
-  NestedNameSpecifier *Data 
-    = reinterpret_cast<NestedNameSpecifier *>(this + 1);
-  for (unsigned I = 0; I < NumComponents; ++I)
-    Data[I] = Components[I];
-}
-
-QualifiedDeclRefExpr *
-QualifiedDeclRefExpr::Create(ASTContext &Context, NamedDecl *d, QualType t, 
-                             SourceLocation l, bool TD, 
-                             bool VD, SourceRange R,
-                             const NestedNameSpecifier *Components,
-                             unsigned NumComponents) {
-  void *Mem = Context.Allocate((sizeof(QualifiedDeclRefExpr) +
-                                sizeof(NestedNameSpecifier) * NumComponents));
-  return new (Mem) QualifiedDeclRefExpr(d, t, l, TD, VD, R, Components, 
-                                        NumComponents);
-}
-
-UnresolvedDeclRefExpr::UnresolvedDeclRefExpr(DeclarationName N, QualType T,
-                                             SourceLocation L, SourceRange R,
-                                       const NestedNameSpecifier *Components,
-                                             unsigned NumComponents)
-  : Expr(UnresolvedDeclRefExprClass, T, true, true), 
-    Name(N), Loc(L), QualifierRange(R), NumComponents(NumComponents) {
-  NestedNameSpecifier *Data 
-    = reinterpret_cast<NestedNameSpecifier *>(this + 1);
-  for (unsigned I = 0; I < NumComponents; ++I)
-    Data[I] = Components[I];
-}
-
-UnresolvedDeclRefExpr *
-UnresolvedDeclRefExpr::Create(ASTContext &Context, DeclarationName N,
-                              SourceLocation L, SourceRange R,
-                              const NestedNameSpecifier *Components,
-                              unsigned NumComponents) {
-  void *Mem = Context.Allocate((sizeof(UnresolvedDeclRefExpr) +
-                                sizeof(NestedNameSpecifier) * NumComponents));
-  return new (Mem) UnresolvedDeclRefExpr(N, Context.DependentTy, L, R, 
-                                         Components, NumComponents);
-}
-
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//

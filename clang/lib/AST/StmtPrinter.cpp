@@ -533,12 +533,12 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
 void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {  
   NamedDecl *D = Node->getDecl();
 
-  NestedNameSpecifier::Print(OS, Node->begin(), Node->end());
+  Node->getQualifier()->Print(OS);
   OS << D->getNameAsString();
 }
 
 void StmtPrinter::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *Node) {  
-  NestedNameSpecifier::Print(OS, Node->begin(), Node->end());
+  Node->getQualifier()->Print(OS);
   OS << Node->getDeclName().getAsString();
 }
 

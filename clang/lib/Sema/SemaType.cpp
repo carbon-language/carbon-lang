@@ -1101,9 +1101,7 @@ QualType Sema::getQualifiedNameType(const CXXScopeSpec &SS, QualType T) {
   if (!SS.isSet() || SS.isInvalid() || T.isNull())
     return T;
   
-  llvm::SmallVector<NestedNameSpecifier, 4> Specs;
-  for (CXXScopeSpec::iterator Spec = SS.begin(), SpecEnd = SS.end();
-       Spec != SpecEnd; ++Spec)
-    Specs.push_back(NestedNameSpecifier::getFromOpaquePtr(*Spec));
-  return Context.getQualifiedNameType(&Specs[0], Specs.size(), T);
+  NestedNameSpecifier *NNS
+    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+  return Context.getQualifiedNameType(NNS, T);
 }

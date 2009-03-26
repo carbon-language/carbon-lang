@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_AST_NESTEDNAMESPECIFIER_H
 #define LLVM_CLANG_AST_NESTEDNAMESPECIFIER_H
 
-#include "llvm/Support/DataTypes.h"
-#include <cassert>
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
   class raw_ostream;
@@ -24,93 +24,151 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
-class DeclContext;
+class DeclContext; // FIXME: die die die
+class NamespaceDecl;
+class IdentifierInfo;
 class Type;
 
-/// \brief Represents a single component in a C++ nested-name-specifier.
+/// \brief Represents a C++ nested name specifier, such as
+/// "::std::vector<int>::".
 ///
-/// C++ nested-name-specifiers are the prefixes to qualified
-/// namespaces. For example, "foo::" in "foo::x" is a
-/// nested-name-specifier. Multiple nested-name-specifiers can be
-/// strung together to build qualified names, e.g., "foo::bar::" in
-/// "foo::bar::x". Each NestedNameSpecifier class contains one of the
-/// terms, e.g., "foo::" or "bar::", which may be represented either
-/// as a type or as a DeclContext.
-class NestedNameSpecifier {
-  /// \brief A DeclContext or Type pointer, depending on whether the
-  /// low bit is set.
-  uintptr_t Data;
+/// C++ nested name specifiers are the prefixes to qualified
+/// namespaces. For example, "foo::" in "foo::x" is a nested name
+/// specifier. Nested name specifiers are made up of a sequence of
+/// specifiers, each of which can be a namespace, type, identifier
+/// (for dependent names), or the global specifier ('::', must be the
+/// first specifier).
+class NestedNameSpecifier : public llvm::FoldingSetNode {
+  /// \brief The nested name specifier that precedes this nested name
+  /// specifier.
+  NestedNameSpecifier *Prefix;
+
+  /// \brief The last component in the nested name specifier, which
+  /// can be an identifier, a declaration, or a type.
+  ///
+  /// When the pointer is NULL, this specifier represents the global
+  /// specifier '::'. Otherwise, the pointer is one of
+  /// IdentifierInfo*, Namespace*, or Type*, depending on the kind of
+  /// specifier. The integer stores one ofthe first four values of
+  /// type SpecifierKind.
+  llvm::PointerIntPair<void*, 2> Specifier;
 
 public:
-  NestedNameSpecifier() : Data(0) { }
+  /// \brief The kind of specifier that completes this nested name
+  /// specifier.
+  enum SpecifierKind {
+    /// \brief An identifier, stored as an IdentifierInfo*.
+    Identifier = 0,
+    /// \brief A namespace, stored as a Namespace*.
+    Namespace = 1,
+    /// \brief A type, stored as a Type*.
+    TypeSpec = 2,
+    /// \brief A type that was preceded by the 'template' keyword,
+    /// stored as a Type*.
+    TypeSpecWithTemplate = 3,
+    /// \brief The global specifier '::'. There is no stored value.
+    Global = 4
+  };
 
-  /// \brief Construct a nested name specifier that refers to a type.
-  NestedNameSpecifier(const Type *T) { 
-    Data = reinterpret_cast<uintptr_t>(T);
-    assert((Data & 0x01) == 0 && "cv-qualified type in nested-name-specifier");
-    Data |= 0x01;
+private:
+  /// \brief Builds the global specifier.
+  NestedNameSpecifier() : Prefix(0), Specifier(0, 0) { }
+
+  /// \brief Copy constructor used internally to clone nested name
+  /// specifiers.
+  NestedNameSpecifier(const NestedNameSpecifier &Other) 
+    : llvm::FoldingSetNode(Other), Prefix(Other.Prefix), 
+      Specifier(Other.Specifier) {
   }
 
-  /// \brief Construct nested name specifier that refers to a
-  /// DeclContext.
-  NestedNameSpecifier(const DeclContext *DC) {
-    Data = reinterpret_cast<uintptr_t>(DC);
-    assert((Data & 0x01) == 0 && "Badly aligned DeclContext pointer");
+  NestedNameSpecifier &operator=(const NestedNameSpecifier &); // do not implement
+
+  /// \brief Either find or insert the given nested name specifier
+  /// mockup in the given context.
+  static NestedNameSpecifier *FindOrInsert(ASTContext &Context, const NestedNameSpecifier &Mockup);
+
+public:
+  /// \brief Builds a specifier combining a prefix and an identifier.
+  ///
+  /// The prefix must be dependent, since nested name specifiers
+  /// referencing an identifier are only permitted when the identifier
+  /// cannot be resolved.
+  static NestedNameSpecifier *Create(ASTContext &Context, 
+                                     NestedNameSpecifier *Prefix, 
+                                     IdentifierInfo *II);
+
+  /// \brief Builds a nested name specifier that names a namespace.
+  static NestedNameSpecifier *Create(ASTContext &Context, 
+                                     NestedNameSpecifier *Prefix, 
+                                     NamespaceDecl *NS);
+
+  /// \brief Builds a nested name specifier that names a type.
+  static NestedNameSpecifier *Create(ASTContext &Context, 
+                                     NestedNameSpecifier *Prefix, 
+                                     bool Template, Type *T);
+
+  /// \brief Returns the nested name specifier representing the global
+  /// scope.
+  static NestedNameSpecifier *GlobalSpecifier(ASTContext &Context);
+
+  /// \brief Return the prefix of this nested name specifier.
+  ///
+  /// The prefix contains all of the parts of the nested name
+  /// specifier that preced this current specifier. For example, for a
+  /// nested name specifier that represents "foo::bar::", the current
+  /// specifier will contain "bar::" and the prefix will contain
+  /// "foo::".
+  NestedNameSpecifier *getPrefix() const { return Prefix; }
+
+  /// \brief Determine what kind of nested name specifier is stored.
+  SpecifierKind getKind() const { 
+    if (Specifier.getPointer() == 0)
+      return Global;
+    return (SpecifierKind)Specifier.getInt(); 
   }
 
-  /// \brief Determines whether this nested-name-specifier refers to a
-  /// type. Otherwise, it refers to a DeclContext.
-  bool isType() const { return Data & 0x01; }
+  /// \brief Retrieve the identifier stored in this nested name
+  /// specifier.
+  IdentifierInfo *getAsIdentifier() const {
+    if (Specifier.getInt() == Identifier)
+      return (IdentifierInfo *)Specifier.getPointer();
 
-  /// \brief Compute the declaration context to which this
-  /// nested-name-specifier refers.
-  ///
-  /// This routine computes the declaration context referenced by this
-  /// nested-name-specifier. The nested-name-specifier may store
-  /// either a DeclContext (the trivial case) or a non-dependent type
-  /// (which will have an associated DeclContext). It is an error to
-  /// invoke this routine when the nested-name-specifier refers to a
-  /// dependent type.
-  ///
-  /// \returns The stored DeclContext, if the nested-name-specifier
-  /// stores a DeclContext. If the nested-name-specifier stores a
-  /// non-dependent type, returns the DeclContext associated with that
-  /// type.
-  DeclContext *computeDeclContext(ASTContext &Context) const;
-
-  /// \brief Retrieve the nested-name-specifier as a type. 
-  ///
-  /// \returns The stored type. If the nested-name-specifier does not
-  /// store a type, returns NULL.
-  Type *getAsType() const {
-    if (Data & 0x01)
-      return reinterpret_cast<Type *>(Data & ~0x01);
+    return 0;
+  }
+  
+  /// \brief Retrieve the namespace stored in this nested name
+  /// specifier.
+  NamespaceDecl *getAsNamespace() const {
+    if (Specifier.getInt() == Namespace)
+      return (NamespaceDecl *)Specifier.getPointer();
 
     return 0;
   }
 
-  /// \brief Retrieves the nested-name-specifier as a DeclContext.
-  ///
-  /// \returns The stored DeclContext. If the nested-name-specifier
-  /// does not store a DeclContext, returns NULL.
-  DeclContext *getAsDeclContext() const {
-    if (Data & 0x01)
-      return 0;
-    return reinterpret_cast<DeclContext *>(Data);
+  /// \brief Retrieve the type stored in this nested name specifier.
+  Type *getAsType() const {
+    if (Specifier.getInt() == TypeSpec || 
+        Specifier.getInt() == TypeSpecWithTemplate)
+      return (Type *)Specifier.getPointer();
+
+    return 0;
   }
 
-  /// \brief Retrieve nested name specifier as an opaque pointer.
-  void *getAsOpaquePtr() const { return reinterpret_cast<void *>(Data); }
+  /// \brief Whether this nested name specifier refers to a dependent
+  /// type or not.
+  bool isDependent() const;
 
-  /// \brief Reconstruct a nested name specifier from an opaque pointer.
-  static NestedNameSpecifier getFromOpaquePtr(void *Ptr) {
-    NestedNameSpecifier NS;
-    NS.Data = reinterpret_cast<uintptr_t>(Ptr);
-    return NS;
+  /// \brief Print this nested name specifier to the given output
+  /// stream.
+  void Print(llvm::raw_ostream &OS) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddPointer(Prefix);
+    ID.AddPointer(Specifier.getPointer());
+    ID.AddInteger(Specifier.getInt());
   }
 
-  static void Print(llvm::raw_ostream &OS, const NestedNameSpecifier *First,
-                    const NestedNameSpecifier *Last);
+  void Destroy(ASTContext &Context);
 };
 
 }

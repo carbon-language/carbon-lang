@@ -1564,32 +1564,22 @@ protected:
 /// This type is used to keep track of a type name as written in the
 /// source code, including any nested-name-specifiers.
 class QualifiedNameType : public Type, public llvm::FoldingSetNode {
-  /// \brief The number of components in the qualified name, not
-  /// counting the final type.
-  unsigned NumComponents;
+  /// \brief The nested name specifier containing the qualifier.
+  NestedNameSpecifier *NNS;
 
   /// \brief The type that this qualified name refers to.
   QualType NamedType;
 
-  QualifiedNameType(const NestedNameSpecifier *Components,
-                    unsigned NumComponents, QualType NamedType,
-                    QualType CanonType);
+  QualifiedNameType(NestedNameSpecifier *NNS, QualType NamedType,
+                    QualType CanonType)
+    : Type(QualifiedName, CanonType, NamedType->isDependentType()),
+      NNS(NNS), NamedType(NamedType) { }
 
   friend class ASTContext;  // ASTContext creates these
 
 public:
-  typedef const NestedNameSpecifier * iterator;
-
-  iterator begin() const { return getComponents(); }
-  iterator end() const { return getComponents() + getNumComponents(); }
-
-  /// \brief Retrieve the array of nested-name-specifier components.
-  const NestedNameSpecifier *getComponents() const { 
-    return reinterpret_cast<const NestedNameSpecifier *>(this + 1);
-  }
-
-  /// \brief Retrieve the number of nested-name-specifier components.
-  unsigned getNumComponents() const { return NumComponents; }
+  /// \brief Retrieve the qualification on this type.
+  NestedNameSpecifier *getQualifier() const { return NNS; }
 
   /// \brief Retrieve the type named by the qualified-id.
   QualType getNamedType() const { return NamedType; }
@@ -1597,13 +1587,14 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getComponents(), NumComponents, NamedType);
+    Profile(ID, NNS, NamedType);
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, 
-                      const NestedNameSpecifier *Components,
-                      unsigned NumComponents, 
-                      QualType NamedType);
+  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
+                      QualType NamedType) {
+    ID.AddPointer(NNS);
+    NamedType.Profile(ID);
+  }
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == QualifiedName; 

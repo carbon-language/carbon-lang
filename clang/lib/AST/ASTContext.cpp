@@ -33,9 +33,9 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
                        bool FreeMem, unsigned size_reserve) : 
-  CFConstantStringTypeDecl(0), ObjCFastEnumerationStateTypeDecl(0),
-  SourceMgr(SM), LangOpts(LOpts), FreeMemory(FreeMem), Target(t), 
-  Idents(idents), Selectors(sels)
+  GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
+  ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
+  FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels)
 {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
@@ -77,7 +77,18 @@ ASTContext::~ASTContext() {
     }
   }
 
+  // Destroy nested-name-specifiers.
+  for (llvm::FoldingSet<NestedNameSpecifier>::iterator 
+         NNS = NestedNameSpecifiers.begin(),
+         NNSEnd = NestedNameSpecifiers.end(); 
+       NNS != NNSEnd; ++NNS)
+    NNS->Destroy(*this);
+
+  if (GlobalNestedNameSpecifier)
+    GlobalNestedNameSpecifier->Destroy(*this);
+
   TUDecl->Destroy(*this);
+
 }
 
 void ASTContext::PrintStats() const {
@@ -1376,11 +1387,10 @@ ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
 }
 
 QualType 
-ASTContext::getQualifiedNameType(const NestedNameSpecifier *Components,
-                                 unsigned NumComponents,
+ASTContext::getQualifiedNameType(NestedNameSpecifier *NNS,
                                  QualType NamedType) {
   llvm::FoldingSetNodeID ID;
-  QualifiedNameType::Profile(ID, Components, NumComponents, NamedType);
+  QualifiedNameType::Profile(ID, NNS, NamedType);
 
   void *InsertPos = 0;
   QualifiedNameType *T 
@@ -1388,11 +1398,8 @@ ASTContext::getQualifiedNameType(const NestedNameSpecifier *Components,
   if (T)
     return QualType(T, 0);
 
-  void *Mem = Allocate((sizeof(QualifiedNameType) +
-                        sizeof(NestedNameSpecifier) * NumComponents), 
-                       8);
-  T = new (Mem) QualifiedNameType(Components, NumComponents, NamedType,
-                                  getCanonicalType(NamedType));
+  T = new (*this) QualifiedNameType(NNS, NamedType, 
+                                    getCanonicalType(NamedType));
   Types.push_back(T);
   QualifiedNameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);

@@ -440,13 +440,9 @@ Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
   if (SS && !SS->isEmpty()) {
-    llvm::SmallVector<NestedNameSpecifier, 16> Specs;
-    for (CXXScopeSpec::iterator Spec = SS->begin(), SpecEnd = SS->end();
-         Spec != SpecEnd; ++Spec)
-      Specs.push_back(NestedNameSpecifier::getFromOpaquePtr(*Spec));
-    return QualifiedDeclRefExpr::Create(Context, D, Ty, Loc, TypeDependent, 
-                                        ValueDependent, SS->getRange(),
-                                        &Specs[0], Specs.size());
+    return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
+                                              ValueDependent, SS->getRange(),
+                  static_cast<NestedNameSpecifier *>(SS->getCurrentScopeRep()));
   } else
     return new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
 }
@@ -619,13 +615,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   //     -- a nested-name-specifier that contains a class-name that
   //        names a dependent type.
   if (SS && isDependentScopeSpecifier(*SS)) {
-    llvm::SmallVector<NestedNameSpecifier, 16> Specs;
-    for (CXXScopeSpec::iterator Spec = SS->begin(), SpecEnd = SS->end();
-         Spec != SpecEnd; ++Spec)
-      Specs.push_back(NestedNameSpecifier::getFromOpaquePtr(*Spec));
-    return Owned(UnresolvedDeclRefExpr::Create(Context, Name, Loc,
-                                               SS->getRange(), &Specs[0],
-                                               Specs.size()));
+    return Owned(new (Context) UnresolvedDeclRefExpr(Name, Context.DependentTy,
+                                                     Loc, SS->getRange(), 
+                static_cast<NestedNameSpecifier *>(SS->getCurrentScopeRep())));
   }
 
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
@@ -2302,12 +2294,11 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       Expr *NewFn = 0;
       if (QualifiedDeclRefExpr *QDRExpr
             = dyn_cast_or_null<QualifiedDeclRefExpr>(DRExpr))
-        NewFn = QualifiedDeclRefExpr::Create(Context, FDecl, FDecl->getType(),
-                                             QDRExpr->getLocation(),
-                                             false, false,
-                                             QDRExpr->getQualifierRange(),
-                                             QDRExpr->begin(), 
-                                             QDRExpr->size());
+        NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(),
+                                                   QDRExpr->getLocation(),
+                                                   false, false,
+                                                 QDRExpr->getQualifierRange(),
+                                                   QDRExpr->getQualifier());
       else
         NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(),
                                           Fn->getSourceRange().getBegin());

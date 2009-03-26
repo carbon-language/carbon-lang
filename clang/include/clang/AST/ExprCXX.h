@@ -856,34 +856,22 @@ class QualifiedDeclRefExpr : public DeclRefExpr {
   /// nested-name-specifier.
   SourceRange QualifierRange;
 
-  /// The number of components in the complete nested-name-specifier.
-  unsigned NumComponents;
-
-  QualifiedDeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, 
-                       bool VD, SourceRange R,
-                       const NestedNameSpecifier *Components,
-                       unsigned NumComponents);
+  /// \brief The nested-name-specifier that qualifies this declaration
+  /// name.
+  NestedNameSpecifier *NNS;
 
 public:
-  static QualifiedDeclRefExpr *Create(ASTContext &Context, NamedDecl *d, 
-                                      QualType t, SourceLocation l, bool TD, 
-                                      bool VD, SourceRange R,
-                                      const NestedNameSpecifier *Components,
-                                      unsigned NumComponents);
+  QualifiedDeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, 
+                       bool VD, SourceRange R, NestedNameSpecifier *NNS)
+    : DeclRefExpr(QualifiedDeclRefExprClass, d, t, l, TD, VD), 
+      QualifierRange(R), NNS(NNS) { }
 
   /// \brief Retrieve the source range of the nested-name-specifier.
   SourceRange getQualifierRange() const { return QualifierRange; }
 
-  // Iteration over of the parts of the nested-name-specifier.
-  typedef const NestedNameSpecifier * iterator;
-
-  iterator begin() const { 
-    return reinterpret_cast<const NestedNameSpecifier *>(this + 1); 
-  }
-
-  iterator end() const { return begin() + NumComponents; }
-
-  unsigned size() const { return NumComponents; }
+  /// \brief Retrieve the nested-name-specifier that qualifies this
+  /// declaration.
+  NestedNameSpecifier *getQualifier() const { return NNS; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(QualifierRange.getBegin(), getLocation()); 
@@ -908,7 +896,10 @@ public:
 /// the qualification (e.g., X<T>::) refers to a dependent type. In
 /// this case, X<T>::value cannot resolve to a declaration because the
 /// declaration will differ from on instantiation of X<T> to the
-/// next. Therefore, UnresolvedDeclRefExpr keeps track of the qualifier (X<T>::) and the name of the entity being referenced ("value"). Such expressions will instantiate to QualifiedDeclRefExprs.
+/// next. Therefore, UnresolvedDeclRefExpr keeps track of the
+/// qualifier (X<T>::) and the name of the entity being referenced
+/// ("value"). Such expressions will instantiate to
+/// QualifiedDeclRefExprs.
 class UnresolvedDeclRefExpr : public Expr {
   /// The name of the entity we will be referencing.
   DeclarationName Name;
@@ -920,18 +911,15 @@ class UnresolvedDeclRefExpr : public Expr {
   /// nested-name-specifier.
   SourceRange QualifierRange;
 
-  /// The number of components in the complete nested-name-specifier.
-  unsigned NumComponents;
-
-  UnresolvedDeclRefExpr(DeclarationName N, QualType T, SourceLocation L,
-                        SourceRange R, const NestedNameSpecifier *Components,
-                        unsigned NumComponents);
+  /// \brief The nested-name-specifier that qualifies this unresolved
+  /// declaration name.
+  NestedNameSpecifier *NNS;
 
 public:
-  static UnresolvedDeclRefExpr *Create(ASTContext &Context, DeclarationName N,
-                                       SourceLocation L, SourceRange R,
-                                       const NestedNameSpecifier *Components,
-                                       unsigned NumComponents);
+  UnresolvedDeclRefExpr(DeclarationName N, QualType T, SourceLocation L,
+                        SourceRange R, NestedNameSpecifier *NNS)
+    : Expr(UnresolvedDeclRefExprClass, T, true, true), 
+      Name(N), Loc(L), QualifierRange(R), NNS(NNS) { }
 
   /// \brief Retrieve the name that this expression refers to.
   DeclarationName getDeclName() const { return Name; }
@@ -942,16 +930,9 @@ public:
   /// \brief Retrieve the source range of the nested-name-specifier.
   SourceRange getQualifierRange() const { return QualifierRange; }
 
-  // Iteration over of the parts of the nested-name-specifier.
-  typedef const NestedNameSpecifier * iterator;
-
-  iterator begin() const { 
-    return reinterpret_cast<const NestedNameSpecifier *>(this + 1); 
-  }
-
-  iterator end() const { return begin() + NumComponents; }
-
-  unsigned size() const { return NumComponents; }
+  /// \brief Retrieve the nested-name-specifier that qualifies this
+  /// declaration.
+  NestedNameSpecifier *getQualifier() const { return NNS; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(QualifierRange.getBegin(), getLocation()); 

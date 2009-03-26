@@ -24,24 +24,41 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
   if (!SS.isSet() || SS.isInvalid())
     return 0;
 
-  NestedNameSpecifier NNS
-    = NestedNameSpecifier::getFromOpaquePtr(SS.getCurrentScopeRep());
-  return NNS.computeDeclContext(Context);
+  NestedNameSpecifier *NNS 
+    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+  if (NNS->isDependent())
+    return 0;
+
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+    assert(false && "Dependent nested-name-specifier has no DeclContext");
+    break;
+
+  case NestedNameSpecifier::Namespace:
+    return NNS->getAsNamespace();
+
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate: {
+    const TagType *Tag = NNS->getAsType()->getAsTagType();
+    assert(Tag && "Non-tag type in nested-name-specifier");
+    return Tag->getDecl();
+  } break;
+
+  case NestedNameSpecifier::Global:
+    return Context.getTranslationUnitDecl();
+  }
+
+  // Required to silence a GCC warning.
+  return 0;
 }
 
 bool Sema::isDependentScopeSpecifier(const CXXScopeSpec &SS) {
   if (!SS.isSet() || SS.isInvalid())
     return false;
 
-  NestedNameSpecifier NNS
-    = NestedNameSpecifier::getFromOpaquePtr(SS.getCurrentScopeRep());
-
-  if (Type *T = NNS.getAsType())
-    return T->isDependentType();
-
-  // FIXME: What about the injected-class-name of a class template? It
-  // is dependent, but we represent it as a declaration.
-  return false;
+  NestedNameSpecifier *NNS 
+    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+  return NNS->isDependent();
 }
 
 /// \brief Require that the context specified by SS be complete.
@@ -79,7 +96,7 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
 /// global scope ('::').
 Sema::CXXScopeTy *Sema::ActOnCXXGlobalScopeSpecifier(Scope *S,
                                                      SourceLocation CCLoc) {
-  return NestedNameSpecifier(Context.getTranslationUnitDecl()).getAsOpaquePtr();
+  return NestedNameSpecifier::GlobalSpecifier(Context);
 }
 
 /// ActOnCXXNestedNameSpecifier - Called during parsing of a
@@ -93,19 +110,37 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II) {
+  NestedNameSpecifier *Prefix 
+    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+
+  // If the prefix is already dependent, there is no name lookup to
+  // perform. Just build the resulting nested-name-specifier.
+  if (Prefix && Prefix->isDependent())
+    return NestedNameSpecifier::Create(Context, Prefix, &II);
+
   NamedDecl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName);
 
   if (SD) {
-    if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
-      if (TD->getUnderlyingType()->isRecordType())
-        return NestedNameSpecifier(Context.getTypeDeclType(TD).getTypePtr())
-                .getAsOpaquePtr();
-    } else if (isa<NamespaceDecl>(SD) || isa<RecordDecl>(SD)) {
-      return NestedNameSpecifier(cast<DeclContext>(SD)).getAsOpaquePtr();
-    }
+    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(SD))
+      return NestedNameSpecifier::Create(Context, Prefix, Namespace);
 
-    // FIXME: Template parameters and dependent types.
-    // FIXME: C++0x scoped enums
+    if (TypeDecl *Type = dyn_cast<TypeDecl>(SD)) {
+      // Determine whether we have a class (or, in C++0x, an enum) or
+      // a typedef thereof. If so, build the nested-name-specifier.
+      QualType T;
+      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+        if (TD->getUnderlyingType()->isRecordType() ||
+            (getLangOptions().CPlusPlus0x && 
+             TD->getUnderlyingType()->isEnumeralType()))
+          T = Context.getTypeDeclType(TD);
+      } else if (isa<RecordDecl>(Type) || 
+                 (getLangOptions().CPlusPlus0x && isa<EnumDecl>(Type)))
+        T = Context.getTypeDeclType(Type);
+
+      if (!T.isNull())
+        return NestedNameSpecifier::Create(Context, Prefix, false, 
+                                           T.getTypePtr());
+    }
 
     // Fall through to produce an error: we found something that isn't
     // a class or a namespace.
@@ -137,8 +172,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     TypeTy *Ty,
                                                     SourceRange TypeRange,
                                                     SourceLocation CCLoc) {
-  return NestedNameSpecifier(QualType::getFromOpaquePtr(Ty).getTypePtr())
-           .getAsOpaquePtr();
+  NestedNameSpecifier *Prefix 
+    = static_cast<NestedNameSpecifier *>(SS.getCurrentScopeRep());
+  return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
+                                QualType::getFromOpaquePtr(Ty).getTypePtr());
 }
 
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
@@ -152,6 +189,7 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
   PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
   CurContext = computeDeclContext(SS);
+  assert(CurContext && "No context?");
   S->setEntity(CurContext);
 }
 
@@ -170,4 +208,5 @@ void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   while (!S->getEntity() && S->getParent())
     S = S->getParent();
   CurContext = static_cast<DeclContext*>(S->getEntity());
+  assert(CurContext && "No context?");
 }
