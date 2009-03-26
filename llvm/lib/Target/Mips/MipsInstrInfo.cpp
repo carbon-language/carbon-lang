@@ -182,8 +182,7 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void MipsInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI, 
-                    const TargetRegisterClass *RC) const 
-{
+                    const TargetRegisterClass *RC) const {
   unsigned Opc;
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
@@ -193,11 +192,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::SW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::SWC1;
-  else if (RC == Mips::AFGR64RegisterClass)
+  else {
+    assert(RC == Mips::AFGR64RegisterClass);
     Opc = Mips::SDC1;
-  else 
-    assert(0 && "Can't store this register to stack slot");
-
+  }
+  
   BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, false, false, isKill)
           .addImm(0).addFrameIndex(FI);
 }
@@ -211,11 +210,11 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     Opc = Mips::SW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::SWC1;
-  else if (RC == Mips::AFGR64RegisterClass)
+  else {
+    assert(RC == Mips::AFGR64RegisterClass);
     Opc = Mips::SDC1;
-  else 
-    assert(0 && "Can't store this register");
-
+  }
+  
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
     .addReg(SrcReg, false, false, isKill);
@@ -235,11 +234,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::LW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::LWC1;
-  else if (RC == Mips::AFGR64RegisterClass)
+  else {
+    assert(RC == Mips::AFGR64RegisterClass);
     Opc = Mips::LDC1;
-  else 
-    assert(0 && "Can't load this register from stack slot");
-    
+  }
+  
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
   BuildMI(MBB, I, DL, get(Opc), DestReg).addImm(0).addFrameIndex(FI);
@@ -254,10 +253,10 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = Mips::LW;
   else if (RC == Mips::FGR32RegisterClass)
     Opc = Mips::LWC1;
-  else if (RC == Mips::AFGR64RegisterClass)
+  else {
+    assert(RC == Mips::AFGR64RegisterClass);
     Opc = Mips::LDC1;
-  else 
-    assert(0 && "Can't load this register");
+  }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
@@ -307,10 +306,10 @@ foldMemoryOperandImpl(MachineFunction &MF,
 
       if (RC == Mips::FGR32RegisterClass) {
         LoadOpc = Mips::LWC1; StoreOpc = Mips::SWC1;
-      } else if (RC == Mips::AFGR64RegisterClass) {
+      } else {
+        assert(RC == Mips::AFGR64RegisterClass);
         LoadOpc = Mips::LDC1; StoreOpc = Mips::SDC1;
-      } else
-        assert(0 && "foldMemoryOperandImpl register unknown");
+      }
 
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(1).getReg();
