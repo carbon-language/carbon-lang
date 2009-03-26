@@ -225,7 +225,7 @@ void Driver::PrintOptions(const ArgList &Args) const {
   }
 }
 
-void Driver::PrintVersion() const {
+void Driver::PrintVersion(const Compilation &C) const {
   static char buf[] = "$URL$";
   char *zap = strstr(buf, "/lib/Driver");
   if (zap)
@@ -243,10 +243,10 @@ void Driver::PrintVersion() const {
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
   llvm::errs() << "clang version 1.0 (" << vers << " " << revision << ")" << "\n";
-  // FIXME: Add cmake support and remove #ifdef
-#ifdef TARGET_TRIPLE
-  llvm::errs() << "Target: " << TARGET_TRIPLE << "\n";
-#endif
+
+  const ToolChain &TC = C.getDefaultToolChain();
+  llvm::errs() << "Target: " << TC.getArchName() << '-' 
+               << TC.getPlatform() << '-' << TC.getOS() << '\n';
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
@@ -255,7 +255,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // in practice.
   if (C.getArgs().hasArg(options::OPT_v) || 
       C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
-    PrintVersion();
+    PrintVersion(C);
     SuppressMissingInputWarning = true;
   }
 

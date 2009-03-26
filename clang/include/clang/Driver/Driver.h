@@ -161,7 +161,7 @@ public:
   void PrintOptions(const ArgList &Args) const;
 
   /// PrintVersion - Print the driver version.
-  void PrintVersion() const;
+  void PrintVersion(const Compilation &C) const;
 
   /// PrintActions - Print the list of actions.
   void PrintActions(const Compilation &C) const;
