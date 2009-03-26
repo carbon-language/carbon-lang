@@ -1610,7 +1610,7 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<const PatternToMatch*,
     // in this group share the same next line, emit it inline now.  Do this
     // until we run out of common predicates.
     while (!ErasedPatterns && Patterns.back().second.back().first == 1) {
-      // Check that all of fhe patterns in Patterns end with the same predicate.
+      // Check that all of the patterns in Patterns end with the same predicate.
       bool AllEndWithSamePredicate = true;
       for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
         if (Patterns[i].second.back() != Patterns.back().second.back()) {

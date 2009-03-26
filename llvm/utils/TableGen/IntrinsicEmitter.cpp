@@ -236,7 +236,7 @@ static void EmitTypeGenerate(std::ostream &OS, const Record *ArgType,
   }
 }
 
-/// RecordListComparator - Provide a determinstic comparator for lists of
+/// RecordListComparator - Provide a deterministic comparator for lists of
 /// records.
 namespace {
   typedef std::pair<std::vector<Record*>, std::vector<Record*> > RecPair;

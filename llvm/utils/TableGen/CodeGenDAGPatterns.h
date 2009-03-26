@@ -365,7 +365,7 @@ public:
   }
   
   /// InferAllTypes - Infer/propagate as many types throughout the expression
-  /// patterns as possible.  Return true if all types are infered, false
+  /// patterns as possible.  Return true if all types are inferred, false
   /// otherwise.  Throw an exception if a type contradiction is found.
   bool InferAllTypes();
   

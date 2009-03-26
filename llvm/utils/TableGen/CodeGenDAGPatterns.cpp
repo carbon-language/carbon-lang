@@ -352,7 +352,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     default:         // Too many VT's to pick from.
     case 0: break;   // No info yet.
     case 1: 
-      // Only one VT of this flavor.  Cannot ever satisify the constraints.
+      // Only one VT of this flavor.  Cannot ever satisfy the constraints.
       return NodeToApply->UpdateNodeType(MVT::Other, TP);  // throw
     case 2:
       // If we have exactly two possible types, the little operand must be the
@@ -1048,7 +1048,7 @@ static bool OnlyOnRHSOfCommutative(TreePatternNode *N) {
 
 /// canPatternMatch - If it is impossible for this pattern to match on this
 /// target, fill in Reason and return false.  Otherwise, return true.  This is
-/// used as a santity check for .td files (to prevent people from writing stuff
+/// used as a sanity check for .td files (to prevent people from writing stuff
 /// that can never possibly work), and to prevent the pattern permuter from
 /// generating stuff that is useless.
 bool TreePatternNode::canPatternMatch(std::string &Reason, 
@@ -1261,7 +1261,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
 }
 
 /// InferAllTypes - Infer/propagate as many types throughout the expression
-/// patterns as possible.  Return true if all types are infered, false
+/// patterns as possible.  Return true if all types are inferred, false
 /// otherwise.  Throw an exception if a type contradiction is found.
 bool TreePattern::InferAllTypes() {
   bool MadeChange = true;
@@ -1351,7 +1351,7 @@ void CodeGenDAGPatterns::ParseNodeInfo() {
     Nodes.pop_back();
   }
 
-  // Get the buildin intrinsic nodes.
+  // Get the builtin intrinsic nodes.
   intrinsic_void_sdnode     = getSDNodeNamed("intrinsic_void");
   intrinsic_w_chain_sdnode  = getSDNodeNamed("intrinsic_w_chain");
   intrinsic_wo_chain_sdnode = getSDNodeNamed("intrinsic_wo_chain");
@@ -1405,7 +1405,7 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
     DagInit *OpsList = Fragments[i]->getValueAsDag("Operands");
     DefInit *OpsOp = dynamic_cast<DefInit*>(OpsList->getOperator());
     // Special cases: ops == outs == ins. Different names are used to
-    // improve readibility.
+    // improve readability.
     if (!OpsOp ||
         (OpsOp->getDef()->getName() != "ops" &&
          OpsOp->getDef()->getName() != "outs" &&
@@ -2260,9 +2260,9 @@ static void GenerateVariantsOf(TreePatternNode *N,
   // Look up interesting info about the node.
   const SDNodeInfo &NodeInfo = CDP.getSDNodeInfo(N->getOperator());
 
-  // If this node is associative, reassociate.
+  // If this node is associative, re-associate.
   if (NodeInfo.hasProperty(SDNPAssociative)) {
-    // Reassociate by pulling together all of the linked operators 
+    // Re-associate by pulling together all of the linked operators 
     std::vector<TreePatternNode*> MaximalChildren;
     GatherChildrenOfAssociativeOpcode(N, MaximalChildren);
 
@@ -2366,7 +2366,7 @@ void CodeGenDAGPatterns::GenerateVariants() {
   
   // Loop over all of the patterns we've collected, checking to see if we can
   // generate variants of the instruction, through the exploitation of
-  // identities.  This permits the target to provide agressive matching without
+  // identities.  This permits the target to provide aggressive matching without
   // the .td file having to contain tons of variants of instructions.
   //
   // Note that this loop adds new patterns to the PatternsToMatch list, but we

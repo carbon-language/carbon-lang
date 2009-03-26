@@ -98,7 +98,7 @@ void TGSourceMgr::PrintError(TGLoc ErrorLoc, const std::string &Msg) const {
     ++LineEnd;
   // Print out the line.
   OS << std::string(LineStart, LineEnd) << "\n";
-  // Print out spaces before the carat.
+  // Print out spaces before the caret.
   for (const char *Pos = LineStart; Pos != ErrorLoc.getPointer(); ++Pos)
     OS << (*Pos == '\t' ? '\t' : ' ');
   OS << "^\n";

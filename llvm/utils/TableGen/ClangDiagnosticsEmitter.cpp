@@ -24,7 +24,7 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// Generic routines for all Clang TableGen backens.
+// Generic routines for all Clang TableGen backends.
 //===----------------------------------------------------------------------===//
 
 typedef std::vector<Record*> RecordVector;

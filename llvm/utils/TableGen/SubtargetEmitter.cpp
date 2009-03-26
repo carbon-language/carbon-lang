@@ -78,7 +78,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
     
     if (CommandLineName.empty()) continue;
     
-    // Emit as { "feature", "decription", feactureEnum, i1 | i2 | ... | in }
+    // Emit as { "feature", "description", featureEnum, i1 | i2 | ... | in }
     OS << "  { "
        << "\"" << CommandLineName << "\", "
        << "\"" << Desc << "\", "

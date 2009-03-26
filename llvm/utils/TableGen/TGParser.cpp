@@ -527,7 +527,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     std::string Val = Lex.getCurStrVal();
     Lex.Lex();
     
-    // Handle multiple consequtive concatenated strings.
+    // Handle multiple consecutive concatenated strings.
     while (Lex.getCode() == tgtok::StrVal) {
       Val += Lex.getCurStrVal();
       Lex.Lex();
