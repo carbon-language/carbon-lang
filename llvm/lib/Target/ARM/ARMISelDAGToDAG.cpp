@@ -595,6 +595,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
   }
   case ISD::ADD: {
+    if (!Subtarget->isThumb())
+      break;
     // Select add sp, c to tADDhirr.
     SDValue N0 = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
