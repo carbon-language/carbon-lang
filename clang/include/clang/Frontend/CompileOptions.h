@@ -14,11 +14,15 @@
 #ifndef LLVM_CLANG_FRONTEND_COMPILEOPTIONS_H
 #define LLVM_CLANG_FRONTEND_COMPILEOPTIONS_H
 
+#include <string>
+#include <vector>
+
 namespace clang {
 
 /// CompileOptions - Track various options which control how the code
 /// is optimized and passed to the backend.
-struct CompileOptions {
+class CompileOptions {
+public:
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
