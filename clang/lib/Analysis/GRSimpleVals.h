@@ -29,7 +29,7 @@ protected:
   
   virtual SVal DetermEvalBinOpNN(GRExprEngine& Eng,
                                  BinaryOperator::Opcode Op,
-                                 NonLoc L, NonLoc R);
+                                 NonLoc L, NonLoc R, QualType T);
   
 public:
   GRSimpleVals() {}

@@ -32,7 +32,7 @@ class GRTransferFuncs {
 protected:
   virtual SVal DetermEvalBinOpNN(GRExprEngine& Eng,
                                  BinaryOperator::Opcode Op,
-                                 NonLoc L, NonLoc R) {
+                                 NonLoc L, NonLoc R, QualType T) {
     return UnknownVal();
   }
   
@@ -59,7 +59,8 @@ public:
   // for OStates
   virtual void EvalBinOpNN(GRStateSet& OStates, GRExprEngine& Eng,
                            const GRState* St, Expr* Ex,
-                           BinaryOperator::Opcode Op, NonLoc L, NonLoc R);
+                           BinaryOperator::Opcode Op, NonLoc L, NonLoc R,
+                           QualType T);
   
   virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
                          Loc L, Loc R) = 0;

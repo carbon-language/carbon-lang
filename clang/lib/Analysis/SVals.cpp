@@ -22,37 +22,13 @@ using llvm::cast;
 using llvm::APSInt;
 
 //===----------------------------------------------------------------------===//
-// Symbol Iteration.
+// Symbol iteration within an SVal.
 //===----------------------------------------------------------------------===//
 
-SVal::symbol_iterator SVal::symbol_begin() const {
-  // FIXME: This is a rat's nest.  Cleanup.
 
-  if (isa<loc::SymbolVal>(this))
-    return symbol_iterator(SymbolRef((uintptr_t)Data));
-  else if (isa<nonloc::SymbolVal>(this))
-    return symbol_iterator(SymbolRef((uintptr_t)Data));
-  else if (isa<nonloc::SymIntConstraintVal>(this)) {
-    const SymIntConstraint& C =
-      cast<nonloc::SymIntConstraintVal>(this)->getConstraint();    
-    return symbol_iterator(C.getSymbol());
-  }
-  else if (isa<nonloc::LocAsInteger>(this)) {
-    const nonloc::LocAsInteger& V = cast<nonloc::LocAsInteger>(*this);
-    return V.getPersistentLoc().symbol_begin();
-  }
-  else if (isa<loc::MemRegionVal>(this)) {
-    const MemRegion* R = cast<loc::MemRegionVal>(this)->getRegion();
-    if (const SymbolicRegion* S = dyn_cast<SymbolicRegion>(R))
-      return symbol_iterator(S->getSymbol());
-  }
-  
-  return symbol_iterator();
-}
-
-SVal::symbol_iterator SVal::symbol_end() const {
-  return symbol_iterator();
-}
+//===----------------------------------------------------------------------===//
+// Utility methods.
+//===----------------------------------------------------------------------===//
 
 /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
 ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolRef
@@ -78,7 +54,7 @@ SymbolRef SVal::getAsLocSymbol() const {
     }
   }
   
-  return SymbolRef();
+  return 0;
 }
 
 /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
@@ -87,7 +63,64 @@ SymbolRef SVal::getAsSymbol() const {
   if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
     return X->getSymbol();
   
+  if (const nonloc::SymExprVal *X = dyn_cast<nonloc::SymExprVal>(this))
+    if (SymbolRef Y = dyn_cast<SymbolData>(X->getSymbolicExpression()))
+      return Y;
+  
   return getAsLocSymbol();
+}
+
+/// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
+///  return that expression.  Otherwise return NULL.
+const SymExpr *SVal::getAsSymbolicExpression() const {
+  if (const nonloc::SymExprVal *X = dyn_cast<nonloc::SymExprVal>(this))
+    return X->getSymbolicExpression();
+  
+  return getAsSymbol();
+}
+
+bool SVal::symbol_iterator::operator==(const symbol_iterator &X) const {
+  return itr == X.itr;
+}
+
+bool SVal::symbol_iterator::operator!=(const symbol_iterator &X) const {
+  return itr != X.itr;
+}
+
+SVal::symbol_iterator::symbol_iterator(const SymExpr *SE) {
+  itr.push_back(SE);
+  while (!isa<SymbolData>(itr.back())) expand();  
+}
+
+SVal::symbol_iterator& SVal::symbol_iterator::operator++() {
+  assert(!itr.empty() && "attempting to iterate on an 'end' iterator");
+  assert(isa<SymbolData>(itr.back()));
+  itr.pop_back();         
+  if (!itr.empty())
+    while (!isa<SymbolData>(itr.back())) expand();
+  return *this;
+}
+
+SymbolRef SVal::symbol_iterator::operator*() {
+  assert(!itr.empty() && "attempting to dereference an 'end' iterator");
+  return cast<SymbolData>(itr.back());
+}
+
+void SVal::symbol_iterator::expand() {
+  const SymExpr *SE = itr.back();
+  itr.pop_back();
+    
+  if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
+    itr.push_back(SIE->getLHS());
+    return;
+  }  
+  else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
+    itr.push_back(SSE->getLHS());
+    itr.push_back(SSE->getRHS());
+    return;
+  }
+  
+  assert(false && "unhandled expansion case");
 }
 
 //===----------------------------------------------------------------------===//
@@ -168,7 +201,7 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
     return UndefinedVal();
 }
 
-NonLoc Loc::EQ(BasicValueFactory& BasicVals, const Loc& R) const {
+NonLoc Loc::EQ(SymbolManager& SymMgr, const Loc& R) const {
   
   switch (getSubKind()) {
     default:
@@ -180,49 +213,48 @@ NonLoc Loc::EQ(BasicValueFactory& BasicVals, const Loc& R) const {
         bool b = cast<loc::ConcreteInt>(this)->getValue() ==
                  cast<loc::ConcreteInt>(R).getValue();
         
-        return NonLoc::MakeIntTruthVal(BasicVals, b);
+        return NonLoc::MakeIntTruthVal(SymMgr.getBasicVals(), b);
       }
       else if (isa<loc::SymbolVal>(R)) {
-        
-        const SymIntConstraint& C =
-          BasicVals.getConstraint(cast<loc::SymbolVal>(R).getSymbol(),
+        const SymIntExpr *SE =
+          SymMgr.getSymIntExpr(cast<loc::SymbolVal>(R).getSymbol(),
                                BinaryOperator::EQ,
-                               cast<loc::ConcreteInt>(this)->getValue());
+                               cast<loc::ConcreteInt>(this)->getValue(),
+                               SymMgr.getContext().IntTy);
         
-        return nonloc::SymIntConstraintVal(C);        
+        return nonloc::SymExprVal(SE);        
       }
       
       break;
       
       case loc::SymbolValKind: {
         if (isa<loc::ConcreteInt>(R)) {
-          
-          const SymIntConstraint& C =
-            BasicVals.getConstraint(cast<loc::SymbolVal>(this)->getSymbol(),
+          const SymIntExpr *SE =
+            SymMgr.getSymIntExpr(cast<loc::SymbolVal>(this)->getSymbol(),
                                  BinaryOperator::EQ,
-                                 cast<loc::ConcreteInt>(R).getValue());
+                                 cast<loc::ConcreteInt>(R).getValue(),
+                                 SymMgr.getContext().IntTy);
           
-          return nonloc::SymIntConstraintVal(C);
+          return nonloc::SymExprVal(SE);
         }
-        
-        assert (!isa<loc::SymbolVal>(R) && "FIXME: Implement unification.");
-        
+                                 
+        assert (!isa<loc::SymbolVal>(R) && "FIXME: Implement unification.");        
         break;
       }
       
       case loc::MemRegionKind:
       if (isa<loc::MemRegionVal>(R)) {        
         bool b = cast<loc::MemRegionVal>(*this) == cast<loc::MemRegionVal>(R);
-        return NonLoc::MakeIntTruthVal(BasicVals, b);
+        return NonLoc::MakeIntTruthVal(SymMgr.getBasicVals(), b);
       }
       
       break;
   }
   
-  return NonLoc::MakeIntTruthVal(BasicVals, false);
+  return NonLoc::MakeIntTruthVal(SymMgr.getBasicVals(), false);
 }
 
-NonLoc Loc::NE(BasicValueFactory& BasicVals, const Loc& R) const {
+NonLoc Loc::NE(SymbolManager& SymMgr, const Loc& R) const {
   switch (getSubKind()) {
     default:
       assert(false && "NE not implemented for this Loc.");
@@ -233,46 +265,43 @@ NonLoc Loc::NE(BasicValueFactory& BasicVals, const Loc& R) const {
         bool b = cast<loc::ConcreteInt>(this)->getValue() !=
                  cast<loc::ConcreteInt>(R).getValue();
         
-        return NonLoc::MakeIntTruthVal(BasicVals, b);
+        return NonLoc::MakeIntTruthVal(SymMgr.getBasicVals(), b);
       }
       else if (isa<loc::SymbolVal>(R)) {
-        
-        const SymIntConstraint& C =
-        BasicVals.getConstraint(cast<loc::SymbolVal>(R).getSymbol(),
-                             BinaryOperator::NE,
-                             cast<loc::ConcreteInt>(this)->getValue());
-        
-        return nonloc::SymIntConstraintVal(C);        
+        const SymIntExpr *SE =
+          SymMgr.getSymIntExpr(cast<loc::SymbolVal>(R).getSymbol(),
+                               BinaryOperator::NE,
+                               cast<loc::ConcreteInt>(this)->getValue(),
+                               SymMgr.getContext().IntTy);
+        return nonloc::SymExprVal(SE);
       }
-      
       break;
       
       case loc::SymbolValKind: {
         if (isa<loc::ConcreteInt>(R)) {
+          const SymIntExpr *SE =
+            SymMgr.getSymIntExpr(cast<loc::SymbolVal>(this)->getSymbol(),
+                                 BinaryOperator::NE,
+                                 cast<loc::ConcreteInt>(R).getValue(),
+                                 SymMgr.getContext().IntTy);
           
-          const SymIntConstraint& C =
-          BasicVals.getConstraint(cast<loc::SymbolVal>(this)->getSymbol(),
-                               BinaryOperator::NE,
-                               cast<loc::ConcreteInt>(R).getValue());
-          
-          return nonloc::SymIntConstraintVal(C);
+          return nonloc::SymExprVal(SE);
         }
         
         assert (!isa<loc::SymbolVal>(R) && "FIXME: Implement sym !=.");
-        
         break;
       }
       
       case loc::MemRegionKind:
         if (isa<loc::MemRegionVal>(R)) {        
           bool b = cast<loc::MemRegionVal>(*this)==cast<loc::MemRegionVal>(R);
-          return NonLoc::MakeIntTruthVal(BasicVals, b);
+          return NonLoc::MakeIntTruthVal(SymMgr.getBasicVals(), b);
         }
       
         break;
   }
   
-  return NonLoc::MakeIntTruthVal(BasicVals, true);
+  return NonLoc::MakeIntTruthVal(SymMgr.getBasicVals(), true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -283,21 +312,21 @@ NonLoc NonLoc::MakeVal(SymbolRef sym) {
   return nonloc::SymbolVal(sym);
 }
 
-NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, SymbolRef lhs, 
-                       BinaryOperator::Opcode op, const APSInt& v) {
+NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, const SymExpr *lhs, 
+                       BinaryOperator::Opcode op, const APSInt& v, QualType T) {
   // The Environment ensures we always get a persistent APSInt in
   // BasicValueFactory, so we don't need to get the APSInt from
   // BasicValueFactory again.
-
-  SymbolRef sym = SymMgr.getSymIntExpr(lhs, op, v, SymMgr.getType(lhs));
-  return nonloc::SymbolVal(sym);
+  assert(!Loc::IsLocType(T));
+  return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, v, T));
 }
 
-NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, SymbolRef lhs, 
-                       BinaryOperator::Opcode op, SymbolRef rhs) {
+NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, const SymExpr *lhs, 
+                       BinaryOperator::Opcode op, const SymExpr *rhs,
+QualType T) {
   assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
-  SymbolRef sym = SymMgr.getSymSymExpr(lhs, op, rhs, SymMgr.getType(lhs));
-  return nonloc::SymbolVal(sym);
+  assert(!Loc::IsLocType(T));
+  return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, T));
 }
 
 NonLoc NonLoc::MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
@@ -419,30 +448,6 @@ void SVal::print(llvm::raw_ostream& Out) const {
   }
 }
 
-static void printOpcode(llvm::raw_ostream& Out, BinaryOperator::Opcode Op) {
-  
-  switch (Op) {      
-    case BinaryOperator::Mul: Out << '*'  ; break;
-    case BinaryOperator::Div: Out << '/'  ; break;
-    case BinaryOperator::Rem: Out << '%'  ; break;
-    case BinaryOperator::Add: Out << '+'  ; break;
-    case BinaryOperator::Sub: Out << '-'  ; break;
-    case BinaryOperator::Shl: Out << "<<" ; break;
-    case BinaryOperator::Shr: Out << ">>" ; break;
-    case BinaryOperator::LT:  Out << "<"  ; break;
-    case BinaryOperator::GT:  Out << '>'  ; break;
-    case BinaryOperator::LE:  Out << "<=" ; break;
-    case BinaryOperator::GE:  Out << ">=" ; break;    
-    case BinaryOperator::EQ:  Out << "==" ; break;
-    case BinaryOperator::NE:  Out << "!=" ; break;
-    case BinaryOperator::And: Out << '&'  ; break;
-    case BinaryOperator::Xor: Out << '^'  ; break;
-    case BinaryOperator::Or:  Out << '|'  ; break;
-      
-    default: assert(false && "Not yet implemented.");
-  }        
-}
-
 void NonLoc::print(llvm::raw_ostream& Out) const {
 
   switch (getSubKind()) {  
@@ -459,17 +464,10 @@ void NonLoc::print(llvm::raw_ostream& Out) const {
       Out << '$' << cast<nonloc::SymbolVal>(this)->getSymbol();
       break;
      
-    case nonloc::SymIntConstraintValKind: {
-      const nonloc::SymIntConstraintVal& C = 
-        *cast<nonloc::SymIntConstraintVal>(this);
-      
-      Out << '$' << C.getConstraint().getSymbol() << ' ';
-      printOpcode(Out, C.getConstraint().getOpcode());
-      Out << ' ' << C.getConstraint().getInt().getZExtValue();
-      
-      if (C.getConstraint().getInt().isUnsigned())
-        Out << 'U';
-      
+    case nonloc::SymExprValKind: {
+      const nonloc::SymExprVal& C = *cast<nonloc::SymExprVal>(this);
+      const SymExpr *SE = C.getSymbolicExpression();
+      Out << SE;
       break;
     }
     

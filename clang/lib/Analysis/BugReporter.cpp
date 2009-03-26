@@ -443,7 +443,7 @@ public:
   bool HandleBinding(StoreManager& SMgr, Store store,
                      const MemRegion* R, SVal V) {
 
-    SymbolRef ScanSym;
+    SymbolRef ScanSym = 0;
     
     if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
@@ -545,7 +545,7 @@ public:
   
   bool HandleBinding(StoreManager& SMgr, Store store,
                      const MemRegion* R, SVal V) {
-    SymbolRef ScanSym;
+    SymbolRef ScanSym = 0;
   
     if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
@@ -554,7 +554,7 @@ public:
     else
       return true;
   
-    assert (ScanSym.isValid());
+    assert (ScanSym);
   
     if (!BR.isNotable(ScanSym))
       return true;

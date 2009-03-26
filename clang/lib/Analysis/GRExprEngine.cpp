@@ -782,7 +782,8 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
         
     do {
       nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1.Val.getInt()));      
-      SVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
+      SVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal,
+                           getContext().IntTy);
       
       // Now "assume" that the case matches.      
       bool isFeasible = false;      
@@ -1449,7 +1450,7 @@ void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src, Expr *Ex) {
 
     const GRState* state = Pred->getState();    
     SVal V = GetSVal(state, Ex);    
-    if (isa<nonloc::SymIntConstraintVal>(V)) {
+    if (isa<nonloc::SymExprVal>(V)) {
       // First assume that the condition is true.
       bool isFeasible = false;
       const GRState *stateTrue = Assume(state, V, true, isFeasible);
@@ -1940,8 +1941,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       }
 
       StoreManager& StoreMgr = getStoreManager();
-      const MemRegion* R =
-        StoreMgr.getRegionManager().getSymbolicRegion(Sym, getSymbolManager());
+      const MemRegion* R = StoreMgr.getRegionManager().getSymbolicRegion(Sym);
       
       // Delegate to store manager to get the result of casting a region
       // to a different type.
@@ -2394,7 +2394,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             
             if (isa<Loc>(V)) {
               loc::ConcreteInt X(getBasicVals().getZeroWithPtrWidth());
-              SVal Result = EvalBinOp(BinaryOperator::EQ, cast<Loc>(V), X);
+              SVal Result = EvalBinOp(BinaryOperator::EQ, cast<Loc>(V), X,
+                                      U->getType());
               state = BindExpr(state, U, Result);
             }
             else {
@@ -2403,7 +2404,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
               SVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLoc>(V), X);
               state = SetSVal(state, U, Result);
 #else
-              EvalBinOp(Dst, U, BinaryOperator::EQ, cast<NonLoc>(V), X, *I);
+              EvalBinOp(Dst, U, BinaryOperator::EQ, cast<NonLoc>(V), X, *I,
+                        U->getType());
               continue;
 #endif
             }
@@ -2449,7 +2451,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
 
-      SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U));    
+      SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U), U->getType());    
       
       // Conjure a new symbol if necessary to recover precision.
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result))
@@ -2643,7 +2645,6 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
     return;
   }
   
-  
   if (B->isAssignmentOp())
     VisitLValue(LHS, Pred, Tmp1);
   else
@@ -2716,7 +2717,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Process non-assignements except commas or short-circuited
           // logical expressions (LAnd and LOr).
           
-          SVal Result = EvalBinOp(Op, LeftV, RightV);
+          SVal Result = EvalBinOp(Op, LeftV, RightV, B->getType());
           
           if (Result.isUnknown()) {
             if (OldSt != state) {
@@ -2828,7 +2829,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         }
       
         // Compute the result of the operation.      
-        SVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
+        SVal Result = EvalCast(EvalBinOp(Op, V, RightV, CTy), B->getType());
           
         if (Result.isUndef()) {
           // The operands were not undefined, but the result is undefined.
@@ -2882,10 +2883,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 void GRExprEngine::EvalBinOp(ExplodedNodeSet<GRState>& Dst, Expr* Ex,
                              BinaryOperator::Opcode Op,
                              NonLoc L, NonLoc R,
-                             ExplodedNode<GRState>* Pred) {
+                             ExplodedNode<GRState>* Pred, QualType T) {
 
   GRStateSet OStates;
-  EvalBinOp(OStates, GetState(Pred), Ex, Op, L, R);
+  EvalBinOp(OStates, GetState(Pred), Ex, Op, L, R, T);
 
   for (GRStateSet::iterator I=OStates.begin(), E=OStates.end(); I!=E; ++I)
     MakeNode(Dst, Ex, Pred, *I);
@@ -2893,13 +2894,14 @@ void GRExprEngine::EvalBinOp(ExplodedNodeSet<GRState>& Dst, Expr* Ex,
 
 void GRExprEngine::EvalBinOp(GRStateSet& OStates, const GRState* state,
                              Expr* Ex, BinaryOperator::Opcode Op,
-                             NonLoc L, NonLoc R) {
+                             NonLoc L, NonLoc R, QualType T) {
   
   GRStateSet::AutoPopulate AP(OStates, state);
-  if (R.isValid()) getTF().EvalBinOpNN(OStates, *this, state, Ex, Op, L, R);
+  if (R.isValid()) getTF().EvalBinOpNN(OStates, *this, state, Ex, Op, L, R, T);
 }
 
-SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R) {
+SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R,
+                             QualType T) {
   
   if (L.isUndef() || R.isUndef())
     return UndefinedVal();
@@ -2926,7 +2928,7 @@ SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R) {
   }
   else
     return getTF().DetermEvalBinOpNN(*this, Op, cast<NonLoc>(L),
-                                     cast<NonLoc>(R));
+                                     cast<NonLoc>(R), T);
 }
 
 //===----------------------------------------------------------------------===//

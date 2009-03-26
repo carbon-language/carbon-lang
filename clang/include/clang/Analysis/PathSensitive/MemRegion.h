@@ -182,11 +182,10 @@ public:
 class SymbolicRegion : public TypedRegion {
 protected:
   const SymbolRef sym;
-  const SymbolManager& SymMgr;
 
 public:
-  SymbolicRegion(const SymbolRef s, const SymbolManager& mgr, MemRegion* sreg) 
-    : TypedRegion(sreg, SymbolicRegionKind), sym(s), SymMgr(mgr) {}
+  SymbolicRegion(const SymbolRef s, const MemRegion* sreg) 
+    : TypedRegion(sreg, SymbolicRegionKind), sym(s) {}
     
   SymbolRef getSymbol() const {
     return sym;
@@ -539,7 +538,7 @@ public:
   getCompoundLiteralRegion(const CompoundLiteralExpr* CL);  
   
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-  SymbolicRegion* getSymbolicRegion(const SymbolRef sym, const SymbolManager&);
+  SymbolicRegion* getSymbolicRegion(SymbolRef sym);
 
   StringRegion* getStringRegion(const StringLiteral* Str);
 

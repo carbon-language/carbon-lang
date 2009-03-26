@@ -642,24 +642,24 @@ protected:
     return X.isValid() ? getTF().EvalComplement(*this, cast<NonLoc>(X)) : X;
   }
   
-  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, NonLoc R) {
-    return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L, R)
+  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, NonLoc R, QualType T) {
+    return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L, R, T)
                        : R;
   }
 
-  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, SVal R) {
+  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, SVal R, QualType T) {
     return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L,
-                                                   cast<NonLoc>(R)) : R;
+                                                   cast<NonLoc>(R), T) : R;
   }
   
   void EvalBinOp(ExplodedNodeSet<GRState>& Dst, Expr* Ex,
                  BinaryOperator::Opcode Op, NonLoc L, NonLoc R,
-                 ExplodedNode<GRState>* Pred);
+                 ExplodedNode<GRState>* Pred, QualType T);
   
   void EvalBinOp(GRStateSet& OStates, const GRState* St, Expr* Ex,
-                 BinaryOperator::Opcode Op, NonLoc L, NonLoc R);  
+                 BinaryOperator::Opcode Op, NonLoc L, NonLoc R, QualType T);  
   
-  SVal EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R);
+  SVal EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R, QualType T);
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, SVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");

@@ -26,7 +26,6 @@ namespace clang {
 class GRState;
 class GRStateManager;
 class SVal;
-class SymbolRef;
 
 class ConstraintManager {
 public:

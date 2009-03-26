@@ -21,11 +21,35 @@ namespace clang {
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
-  if (nonloc::SymbolVal* SymVal = dyn_cast<nonloc::SymbolVal>(&X)) {
-    const SymbolData& data 
-      = getSymbolManager().getSymbolData(SymVal->getSymbol());
-    return !(data.getKind() == SymbolData::SymIntKind || 
-             data.getKind() == SymbolData::SymSymKind );
+  if (nonloc::SymExprVal *SymVal = dyn_cast<nonloc::SymExprVal>(&X)) {
+    const SymExpr *SE = SymVal->getSymbolicExpression();
+    
+    if (isa<SymbolData>(SE))
+      return true;
+    
+    if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
+      switch (SIE->getOpcode()) {
+          // We don't reason yet about bitwise-constraints on symbolic values.
+        case BinaryOperator::And:
+        case BinaryOperator::Or:
+        case BinaryOperator::Xor:
+          return false;
+        // We don't reason yet about arithmetic constraints on symbolic values.
+        case BinaryOperator::Mul:
+        case BinaryOperator::Div:
+        case BinaryOperator::Rem:
+        case BinaryOperator::Add:
+        case BinaryOperator::Sub:
+        case BinaryOperator::Shl:
+        case BinaryOperator::Shr:
+          return false;
+        // All other cases.
+        default:
+          return true;
+      }      
+    }
+
+    return false;
   }
 
   return true;
@@ -150,11 +174,14 @@ SimpleConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
       return AssumeSymEQ(St, sym, BasicVals.getValue(0, T), isFeasible);
   }
 
-  case nonloc::SymIntConstraintValKind:
-    return
-      AssumeSymInt(St, Assumption,
-                   cast<nonloc::SymIntConstraintVal>(Cond).getConstraint(),
-                   isFeasible);
+  case nonloc::SymExprValKind: {
+    nonloc::SymExprVal V = cast<nonloc::SymExprVal>(Cond);
+    if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression()))
+      return AssumeSymInt(St, Assumption, SE, isFeasible);
+    
+    isFeasible = true;
+    return St;
+  }
 
   case nonloc::ConcreteIntKind: {
     bool b = cast<nonloc::ConcreteInt>(Cond).getValue() != 0;
@@ -170,50 +197,43 @@ SimpleConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
 
 const GRState*
 SimpleConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
-                                      const SymIntConstraint& C,
-                                      bool& isFeasible) {
+                                      const SymIntExpr *SE, bool& isFeasible) {
 
-  switch (C.getOpcode()) {
+
+  // Here we assume that LHS is a symbol.  This is consistent with the
+  // rest of the constraint manager logic.
+  SymbolRef Sym = cast<SymbolData>(SE->getLHS());
+  const llvm::APSInt &Int = SE->getRHS();
+  
+  switch (SE->getOpcode()) {
   default:
     // No logic yet for other operators.
     isFeasible = true;
     return St;
 
   case BinaryOperator::EQ:
-    if (Assumption)
-      return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
-    else
-      return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
+    return Assumption ? AssumeSymEQ(St, Sym, Int, isFeasible)
+                      : AssumeSymNE(St, Sym, Int, isFeasible);
 
   case BinaryOperator::NE:
-    if (Assumption)
-      return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
-    else
-      return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
+    return Assumption ? AssumeSymNE(St, Sym, Int, isFeasible)
+                      : AssumeSymEQ(St, Sym, Int, isFeasible);
 
   case BinaryOperator::GT:
-    if (Assumption)
-      return AssumeSymGT(St, C.getSymbol(), C.getInt(), isFeasible);
-    else
-      return AssumeSymLE(St, C.getSymbol(), C.getInt(), isFeasible);
+    return Assumption ? AssumeSymGT(St, Sym, Int, isFeasible)
+                      : AssumeSymLE(St, Sym, Int, isFeasible);
 
   case BinaryOperator::GE:
-    if (Assumption)
-      return AssumeSymGE(St, C.getSymbol(), C.getInt(), isFeasible);
-    else
-      return AssumeSymLT(St, C.getSymbol(), C.getInt(), isFeasible);
+    return Assumption ? AssumeSymGE(St, Sym, Int, isFeasible)
+                      : AssumeSymLT(St, Sym, Int, isFeasible);
 
   case BinaryOperator::LT:
-    if (Assumption)
-      return AssumeSymLT(St, C.getSymbol(), C.getInt(), isFeasible);
-    else
-      return AssumeSymGE(St, C.getSymbol(), C.getInt(), isFeasible);
+    return Assumption ? AssumeSymLT(St, Sym, Int, isFeasible)
+                      : AssumeSymGE(St, Sym, Int, isFeasible);
       
   case BinaryOperator::LE:
-    if (Assumption)
-      return AssumeSymLE(St, C.getSymbol(), C.getInt(), isFeasible);
-    else
-      return AssumeSymGT(St, C.getSymbol(), C.getInt(), isFeasible);
+      return Assumption ? AssumeSymLE(St, Sym, Int, isFeasible)
+                        : AssumeSymGT(St, Sym, Int, isFeasible);
   } // end switch
 }
 

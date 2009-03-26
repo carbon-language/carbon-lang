@@ -45,7 +45,7 @@ public:
                            bool& isFeasible);
 
   const GRState* AssumeSymInt(const GRState* St, bool Assumption,
-                              const SymIntConstraint& C, bool& isFeasible);
+                              const SymIntExpr *SE, bool& isFeasible);
 
   virtual const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
                                      const llvm::APSInt& V,

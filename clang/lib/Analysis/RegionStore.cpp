@@ -367,8 +367,7 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
     break;
 
   case loc::SymbolValKind:
-    BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol(),
-                                    StateMgr.getSymbolManager());
+    BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
     break;
   
   case loc::GotoLabelKind:
@@ -412,11 +411,9 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 
   const TypedRegion* BaseRegion = 0;
 
-  if (isa<loc::SymbolVal>(Base))
-    BaseRegion = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(Base).getSymbol(),
-                                         StateMgr.getSymbolManager());
-  else
-    BaseRegion = cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
+  BaseRegion = isa<loc::SymbolVal>(Base)
+               ? MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(Base).getSymbol())
+               : cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
 
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
@@ -862,8 +859,7 @@ Store RegionStoreManager::Remove(Store store, Loc L) {
   if (isa<loc::MemRegionVal>(L))
     R = cast<loc::MemRegionVal>(L).getRegion();
   else if (isa<loc::SymbolVal>(L))
-    R = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(L).getSymbol(),
-                                StateMgr.getSymbolManager());
+    R = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(L).getSymbol());
   
   if (R) {
     RegionBindingsTy B = GetRegionBindings(store);  

@@ -96,54 +96,45 @@ public:
   bool isZeroConstant() const;
   
   /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
-  ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolRef
-  ///  where 'isValid()' returns false.
+  ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolData*
   SymbolRef getAsLocSymbol() const;
   
   /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
   ///  Otherwise return a SymbolRef where 'isValid()' returns false.
   SymbolRef getAsSymbol() const;
+
+  /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
+  ///  return that expression.  Otherwise return NULL.
+  const SymExpr *getAsSymbolicExpression() const;
   
   void print(std::ostream& OS) const;
   void print(llvm::raw_ostream& OS) const;
   void printStdErr() const;
-  
+
+  // Iterators.
   class symbol_iterator {
-    SymbolRef SingleRef;
-    const SymbolRef* sptr;
+    llvm::SmallVector<const SymExpr*, 5> itr;
+    void expand();
   public:
+    symbol_iterator() {}
+    symbol_iterator(const SymExpr* SE);
     
-    bool operator==(const symbol_iterator& X) {
-      return SingleRef == X.SingleRef && sptr == X.sptr;
-    }
-    
-    bool operator!=(const symbol_iterator& X) {
-      return SingleRef != X.SingleRef || sptr != X.sptr;
-    }
-    
-    symbol_iterator& operator++() {
-      if (sptr)
-        ++sptr;
-      else
-        SingleRef = SymbolRef();
+    symbol_iterator& operator++();
+    SymbolRef operator*();
       
-      return *this;
-    }
-    
-    SymbolRef operator*() const {
-      if (sptr)
-        return *sptr;
-      
-      return SingleRef;
-    }
-    
-    symbol_iterator(SymbolRef x) : SingleRef(x), sptr(0) {}
-    symbol_iterator() : sptr(0) {}
-    symbol_iterator(const SymbolRef* x) : sptr(x) {}
+    bool operator==(const symbol_iterator& X) const;
+    bool operator!=(const symbol_iterator& X) const;
   };
   
-  symbol_iterator symbol_begin() const;
-  symbol_iterator symbol_end() const;
+  symbol_iterator symbol_begin() const {
+    const SymExpr *SE = getAsSymbolicExpression();
+    if (SE)
+      return symbol_iterator(SE);
+    else
+      return symbol_iterator();
+  }
+  
+  symbol_iterator symbol_end() const { return symbol_iterator(); }
   
   // Implement isa<T> support.
   static inline bool classof(const SVal*) { return true; }
@@ -178,14 +169,15 @@ public:
   void print(llvm::raw_ostream& Out) const;
   
   // Utility methods to create NonLocs.
-
   static NonLoc MakeVal(SymbolRef sym);
 
-  static NonLoc MakeVal(SymbolManager& SymMgr, SymbolRef lhs, 
-                        BinaryOperator::Opcode op, const llvm::APSInt& v);
+  static NonLoc MakeVal(SymbolManager& SymMgr, const SymExpr *lhs, 
+                        BinaryOperator::Opcode op, const llvm::APSInt& rhs,
+                        QualType T);
   
-  static NonLoc MakeVal(SymbolManager& SymMgr, SymbolRef lhs, 
-                        BinaryOperator::Opcode op, SymbolRef rhs);
+  static NonLoc MakeVal(SymbolManager& SymMgr, const SymExpr *lhs,
+                        BinaryOperator::Opcode op, const SymExpr *rhs,
+                        QualType T);
 
   static NonLoc MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
                            bool isUnsigned);
@@ -219,8 +211,8 @@ protected:
     : SVal(const_cast<void*>(D), true, SubKind) {}
   
   // Equality operators.
-  NonLoc EQ(BasicValueFactory& BasicVals, const Loc& R) const;
-  NonLoc NE(BasicValueFactory& BasicVals, const Loc& R) const;
+  NonLoc EQ(SymbolManager& SM, const Loc& R) const;
+  NonLoc NE(SymbolManager& SM, const Loc& R) const;
   
 public:
   void print(llvm::raw_ostream& Out) const;
@@ -248,17 +240,15 @@ public:
 
 namespace nonloc {
   
-enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind,
+enum Kind { ConcreteIntKind, SymbolValKind, SymExprValKind,
             LocAsIntegerKind, CompoundValKind };
 
 class SymbolVal : public NonLoc {
 public:
-  SymbolVal(SymbolRef SymID)
-    : NonLoc(SymbolValKind,
-             reinterpret_cast<void*>((uintptr_t) SymID.getNumber())) {}
+  SymbolVal(SymbolRef sym) : NonLoc(SymbolValKind, sym) {}
   
   SymbolRef getSymbol() const {
-    return (SymbolRef) reinterpret_cast<uintptr_t>(Data);
+    return (const SymbolData*) Data;
   }
   
   static inline bool classof(const SVal* V) {
@@ -271,22 +261,22 @@ public:
   }
 };
 
-class SymIntConstraintVal : public NonLoc {    
+class SymExprVal : public NonLoc {    
 public:
-  SymIntConstraintVal(const SymIntConstraint& C)
-    : NonLoc(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
+  SymExprVal(const SymExpr *SE)
+    : NonLoc(SymExprValKind, reinterpret_cast<const void*>(SE)) {}
 
-  const SymIntConstraint& getConstraint() const {
-    return *reinterpret_cast<SymIntConstraint*>(Data);
+  const SymExpr *getSymbolicExpression() const {
+    return reinterpret_cast<SymExpr*>(Data);
   }
   
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind &&
-           V->getSubKind() == SymIntConstraintValKind;
+           V->getSubKind() == SymExprValKind;
   }
   
   static inline bool classof(const NonLoc* V) {
-    return V->getSubKind() == SymIntConstraintValKind;
+    return V->getSubKind() == SymExprValKind;
   }
 };
 
@@ -387,12 +377,9 @@ enum Kind { SymbolValKind, GotoLabelKind, MemRegionKind, FuncValKind,
 
 class SymbolVal : public Loc {
 public:
-  SymbolVal(SymbolRef SymID)
-  : Loc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID.getNumber())){}
+  SymbolVal(SymbolRef sym) : Loc(SymbolValKind, sym) {}
   
-  SymbolRef getSymbol() const {
-    return (SymbolRef) reinterpret_cast<uintptr_t>(Data);
-  }
+  SymbolRef getSymbol() const { return (SymbolRef) Data; }
   
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind &&

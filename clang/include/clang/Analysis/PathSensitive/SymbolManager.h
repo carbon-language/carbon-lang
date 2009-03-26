@@ -28,92 +28,64 @@ namespace llvm {
   class raw_ostream;
 }
 
-namespace clang {
-  
-class MemRegion;
-class SymbolManager;
-class ASTContext;
-
-class SymbolRef {
-  unsigned Data;
-public:
-  SymbolRef() : Data(~0U - 2) {}
-  SymbolRef(unsigned x) : Data(x) {}
-
-  bool isValid() const { return Data != (unsigned) (~0U - 2);  }
-  unsigned getNumber() const { assert (isValid()); return Data; }
-  
-  bool operator<(const SymbolRef& X) const { return Data < X.Data; }
-  bool operator>(const SymbolRef& X) const { return Data > X.Data; }
-  bool operator==(const SymbolRef& X) const { return Data == X.Data; }
-  bool operator!=(const SymbolRef& X) const { return Data != X.Data; }
-      
-  void Profile(llvm::FoldingSetNodeID& ID) const { 
-    ID.AddInteger(Data);
-  }
-};
-} // end clang namespace
-
-namespace llvm {
-  llvm::raw_ostream& operator<<(llvm::raw_ostream& Out, clang::SymbolRef Sym);
+namespace clang {  
+  class MemRegion;
+  class ASTContext;
+  class BasicValueFactory;
 }
-namespace std {
-  std::ostream& operator<<(std::ostream& Out, clang::SymbolRef Sym);
-}
-
-namespace llvm {
-template <> struct DenseMapInfo<clang::SymbolRef> {
-  static inline clang::SymbolRef getEmptyKey() {
-    return clang::SymbolRef(~0U);
-  }
-  static inline clang::SymbolRef getTombstoneKey() {
-    return clang::SymbolRef(~0U - 1);
-  }
-  static unsigned getHashValue(clang::SymbolRef X) {
-    return X.getNumber();
-  }
-  static bool isEqual(clang::SymbolRef X, clang::SymbolRef Y) {
-    return X == Y;
-  }
-  static bool isPod() { return true; }
-};
-}
-
-// SymbolData: Used to record meta data about symbols.
 
 namespace clang {
   
-class SymbolData : public llvm::FoldingSetNode {
+class SymExpr : public llvm::FoldingSetNode {
 public:
-  enum Kind { RegionRValue, ConjuredKind, SymIntKind, SymSymKind };
-  
+  enum Kind { BEGIN_SYMBOLS, RegionRValue, ConjuredKind, END_SYMBOLS,
+              SymIntKind, SymSymKind };
 private:
   Kind K;
-  SymbolRef Sym;
+
+protected:
+  SymExpr(Kind k) : K(k) {}  
+  
+public:
+  virtual ~SymExpr() {}
+  
+  Kind getKind() const { return K; }  
+  
+  virtual QualType getType(ASTContext&) const = 0;  
+  virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymExpr*) { return true; }
+};
+  
+typedef unsigned SymbolID;
+  
+class SymbolData : public SymExpr {
+private:
+  const SymbolID Sym;
   
 protected:
-  SymbolData(Kind k, SymbolRef sym) : K(k), Sym(sym) {}  
+  SymbolData(Kind k, SymbolID sym) : SymExpr(k), Sym(sym) {}  
 
 public:
   virtual ~SymbolData() {}
   
-  Kind getKind() const { return K; }  
-  
-  SymbolRef getSymbol() const { return Sym; }
+  SymbolID getSymbolID() const { return Sym; }
     
-  virtual QualType getType(ASTContext&) const = 0;
-  
-  virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
-  
   // Implement isa<T> support.
-  static inline bool classof(const SymbolData*) { return true; }
+  static inline bool classof(const SymExpr* SE) { 
+    Kind k = SE->getKind();
+    return k > BEGIN_SYMBOLS && k < END_SYMBOLS;
+  }
 };
+
+typedef const SymbolData* SymbolRef;
   
 class SymbolRegionRValue : public SymbolData {
   const MemRegion *R;
 public:
-  SymbolRegionRValue(SymbolRef MySym, const MemRegion *r)
-    : SymbolData(RegionRValue, MySym), R(r) {}
+  SymbolRegionRValue(SymbolID sym, const MemRegion *r)
+    : SymbolData(RegionRValue, sym), R(r) {}
   
   const MemRegion* getRegion() const { return R; }
 
@@ -129,8 +101,8 @@ public:
   QualType getType(ASTContext&) const;
 
   // Implement isa<T> support.
-  static inline bool classof(const SymbolData* D) {
-    return D->getKind() == RegionRValue;
+  static inline bool classof(const SymExpr* SE) {
+    return SE->getKind() == RegionRValue;
   }
 };
 
@@ -141,9 +113,9 @@ class SymbolConjured : public SymbolData {
   const void* SymbolTag;
 
 public:
-  SymbolConjured(SymbolRef Sym, const Stmt* s, QualType t, unsigned count,
+  SymbolConjured(SymbolID sym, const Stmt* s, QualType t, unsigned count,
                  const void* symbolTag)
-    : SymbolData(ConjuredKind, Sym), S(s), T(t), Count(count),
+    : SymbolData(ConjuredKind, sym), S(s), T(t), Count(count),
       SymbolTag(symbolTag) {}
   
   const Stmt* getStmt() const { return S; }
@@ -166,143 +138,135 @@ public:
   }
 
   // Implement isa<T> support.
-  static inline bool classof(const SymbolData* D) {
-    return D->getKind() == ConjuredKind;
+  static inline bool classof(const SymExpr* SE) {
+    return SE->getKind() == ConjuredKind;
   }  
 };
 
 // SymIntExpr - Represents symbolic expression like 'x' + 3.
-class SymIntExpr : public SymbolData {
-  SymbolRef LHS;
+class SymIntExpr : public SymExpr {
+  const SymExpr *LHS;
   BinaryOperator::Opcode Op;
-  const llvm::APSInt& Val;
+  const llvm::APSInt& RHS;
   QualType T;
 
 public:
-  SymIntExpr(SymbolRef sym, SymbolRef lhs, BinaryOperator::Opcode op,
-             const llvm::APSInt& V, QualType t)
-    : SymbolData(SymIntKind, sym), LHS(lhs), Op(op), Val(V), T(t) {}
+  SymIntExpr(const SymExpr *lhs, BinaryOperator::Opcode op,
+             const llvm::APSInt& rhs, QualType t)
+    : SymExpr(SymIntKind), LHS(lhs), Op(op), RHS(rhs), T(t) {}
 
-  QualType getType(ASTContext& C) const {
-    return T;
-  }
+  // FIXME: We probably need to make this out-of-line to avoid redundant
+  // generation of virtual functions.
+  QualType getType(ASTContext& C) const { return T; }  
+  
+  BinaryOperator::Opcode getOpcode() const { return Op; }
+  
+  const SymExpr *getLHS() const { return LHS; }
+  const llvm::APSInt &getRHS() const { return RHS; }
 
-  static void Profile(llvm::FoldingSetNodeID& ID, SymbolRef lhs, 
-                      BinaryOperator::Opcode op, const llvm::APSInt& V,
+  static void Profile(llvm::FoldingSetNodeID& ID, const SymExpr *lhs, 
+                      BinaryOperator::Opcode op, const llvm::APSInt& rhs,
                       QualType t) {
-    lhs.Profile(ID);
+    ID.AddInteger((unsigned) SymIntKind);
+    ID.AddPointer(lhs);
     ID.AddInteger(op);
-    ID.AddPointer(&V);
-    ID.Add(t);
-  }
-
-  void Profile(llvm::FoldingSetNodeID& ID) {
-    Profile(ID, LHS, Op, Val, T);
-  }
-};
-
-// SymSymExpr - Represents symbolic expression like 'x' + 'y'.
-class SymSymExpr : public SymbolData {
-  SymbolRef LHS;
-  BinaryOperator::Opcode Op;
-  SymbolRef RHS;
-  QualType T;
-
-public:
-  SymSymExpr(SymbolRef sym, SymbolRef lhs, BinaryOperator::Opcode op,
-             SymbolRef rhs, QualType t)
-    : SymbolData(SymSymKind, sym), LHS(lhs), Op(op), RHS(rhs), T(t) {}
-
-  QualType getType(ASTContext& C) const {
-    return T;
-  }
-
-  static void Profile(llvm::FoldingSetNodeID& ID, SymbolRef lhs,
-                      BinaryOperator::Opcode op, SymbolRef rhs, QualType t) {
-    lhs.Profile(ID);
-    ID.AddInteger(op);
-    rhs.Profile(ID);
+    ID.AddPointer(&rhs);
     ID.Add(t);
   }
 
   void Profile(llvm::FoldingSetNodeID& ID) {
     Profile(ID, LHS, Op, RHS, T);
   }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymExpr* SE) {
+    return SE->getKind() == SymIntKind;
+  }  
 };
 
-// Constraints on symbols.  Usually wrapped by SValues.
-
-class SymIntConstraint : public llvm::FoldingSetNode {
-  SymbolRef Symbol;
+// SymSymExpr - Represents symbolic expression like 'x' + 'y'.
+class SymSymExpr : public SymExpr {
+  const SymExpr *LHS;
   BinaryOperator::Opcode Op;
-  const llvm::APSInt& Val;
-public:  
-  SymIntConstraint(SymbolRef sym, BinaryOperator::Opcode op, 
-                   const llvm::APSInt& V)
-  : Symbol(sym),
-  Op(op), Val(V) {}
-  
-  BinaryOperator::Opcode getOpcode() const { return Op; }
-  const SymbolRef& getSymbol() const { return Symbol; }
-  const llvm::APSInt& getInt() const { return Val; }
-  
-  static inline void Profile(llvm::FoldingSetNodeID& ID,
-                             SymbolRef Symbol,
-                             BinaryOperator::Opcode Op,
-                             const llvm::APSInt& Val) {
-    Symbol.Profile(ID);
-    ID.AddInteger(Op);
-    ID.AddPointer(&Val);
-  }
-  
-  void Profile(llvm::FoldingSetNodeID& ID) {
-    Profile(ID, Symbol, Op, Val);
-  }
-};
+  const SymExpr *RHS;
+  QualType T;
 
+public:
+  SymSymExpr(const SymExpr *lhs, BinaryOperator::Opcode op, const SymExpr *rhs,
+             QualType t)
+    : SymExpr(SymSymKind), LHS(lhs), Op(op), RHS(rhs), T(t) {}
+
+  const SymExpr *getLHS() const { return LHS; }
+  const SymExpr *getRHS() const { return RHS; }
+  
+  // FIXME: We probably need to make this out-of-line to avoid redundant
+  // generation of virtual functions.
+  QualType getType(ASTContext& C) const { return T; }
+
+  static void Profile(llvm::FoldingSetNodeID& ID, const SymExpr *lhs,
+                      BinaryOperator::Opcode op, const SymExpr *rhs, QualType t) {
+    ID.AddInteger((unsigned) SymSymKind);
+    ID.AddPointer(lhs);
+    ID.AddInteger(op);
+    ID.AddPointer(rhs);
+    ID.Add(t);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, LHS, Op, RHS, T);
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymExpr* SE) {
+    return SE->getKind() == SymSymKind;
+  }  
+};
 
 class SymbolManager {
-  typedef llvm::FoldingSet<SymbolData> DataSetTy;
-  typedef llvm::DenseMap<SymbolRef, SymbolData*> DataMapTy;
-  
-  DataSetTy DataSet;
-  DataMapTy DataMap;
-  
+  typedef llvm::FoldingSet<SymExpr> DataSetTy;
+  DataSetTy DataSet;  
   unsigned SymbolCounter;
   llvm::BumpPtrAllocator& BPAlloc;
+  BasicValueFactory &BV;
   ASTContext& Ctx;
   
 public:
-  SymbolManager(ASTContext& ctx, llvm::BumpPtrAllocator& bpalloc)
-    : SymbolCounter(0), BPAlloc(bpalloc), Ctx(ctx) {}
+  SymbolManager(ASTContext& ctx, BasicValueFactory &bv, 
+                llvm::BumpPtrAllocator& bpalloc)
+    : SymbolCounter(0), BPAlloc(bpalloc), BV(bv), Ctx(ctx) {}
   
   ~SymbolManager();
   
   static bool canSymbolicate(QualType T);
 
   /// Make a unique symbol for MemRegion R according to its kind.
-  SymbolRef getRegionRValueSymbol(const MemRegion* R);
-  SymbolRef getConjuredSymbol(const Stmt* E, QualType T, unsigned VisitCount,
-                              const void* SymbolTag = 0);
+  const SymbolRegionRValue* getRegionRValueSymbol(const MemRegion* R);
+  const SymbolConjured* getConjuredSymbol(const Stmt* E, QualType T,
+                                          unsigned VisitCount,
+                                          const void* SymbolTag = 0);
 
-  SymbolRef getConjuredSymbol(const Expr* E, unsigned VisitCount,
-                              const void* SymbolTag = 0) {    
+  const SymbolConjured* getConjuredSymbol(const Expr* E, unsigned VisitCount,
+                                          const void* SymbolTag = 0) {    
     return getConjuredSymbol(E, E->getType(), VisitCount, SymbolTag);
   }
 
-  SymbolRef getSymIntExpr(SymbolRef lhs, BinaryOperator::Opcode op, 
-                          const llvm::APSInt& v, QualType t);
+  const SymIntExpr *getSymIntExpr(const SymExpr *lhs, BinaryOperator::Opcode op, 
+                                  const llvm::APSInt& rhs, QualType t);
+  
+  const SymIntExpr *getSymIntExpr(const SymExpr &lhs, BinaryOperator::Opcode op,
+                                  const llvm::APSInt& rhs, QualType t) {
+    return getSymIntExpr(&lhs, op, rhs, t);
+  }
 
-  SymbolRef getSymSymExpr(SymbolRef lhs, BinaryOperator::Opcode op,
-                          SymbolRef rhs, QualType t);
+  const SymSymExpr *getSymSymExpr(const SymExpr *lhs, BinaryOperator::Opcode op,
+                                  const SymExpr *rhs, QualType t);
   
-  const SymbolData& getSymbolData(SymbolRef ID) const;
-  
-  QualType getType(SymbolRef ID) const {
-    return getSymbolData(ID).getType(Ctx);
+  QualType getType(const SymExpr *SE) const {
+    return SE->getType(Ctx);
   }
   
-  ASTContext& getContext() { return Ctx; }
+  ASTContext &getContext() { return Ctx; }
+  BasicValueFactory &getBasicVals() { return BV; }
 };
   
 class SymbolReaper {
@@ -352,5 +316,14 @@ public:
 };
   
 } // end clang namespace
+
+namespace llvm {
+  llvm::raw_ostream& operator<<(llvm::raw_ostream& Out,
+                                const clang::SymExpr *SE);
+}
+namespace std {
+  std::ostream& operator<<(std::ostream& Out,
+                           const clang::SymExpr *SE);
+}
 
 #endif

@@ -1591,8 +1591,8 @@ public:
 
 static void PrintPool(std::ostream &Out, SymbolRef Sym, const GRState *state) {
   Out << ' ';
-  if (Sym.isValid())
-    Out << Sym;
+  if (Sym)
+    Out << Sym->getSymbolID();
   else
     Out << "<pool>";
   Out << ":{";
@@ -1705,7 +1705,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     SVal V = state.GetSValAsScalarOrLoc(*I);    
     SymbolRef Sym = V.getAsLocSymbol();
 
-    if (Sym.isValid())
+    if (Sym)
       if (RefBindings::data_type* T = state.get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, GetArgE(Summ, idx), hasErr);
         if (hasErr) {
@@ -1746,7 +1746,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           SymbolRef Sym = state.GetSValAsScalarOrLoc(R).getAsLocSymbol();
           
           // Remove any existing reference-count binding.
-          if (Sym.isValid()) state = state.remove<RefBindings>(Sym);
+          if (Sym) state = state.remove<RefBindings>(Sym);
           
           if (R->isBoundable(Ctx)) {
             // Set the value of the variable to be a conjured symbol.
@@ -1833,7 +1833,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   // Evaluate the effect on the message receiver.  
   if (!ErrorExpr && Receiver) {
     SymbolRef Sym = state.GetSValAsScalarOrLoc(Receiver).getAsLocSymbol();
-    if (Sym.isValid()) {
+    if (Sym) {
       if (const RefVal* T = state.get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, GetReceiverE(Summ), hasErr);
         if (hasErr) {
@@ -1977,7 +1977,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     SVal V = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
 
     SymbolRef Sym = V.getAsLocSymbol();
-    if (Sym.isValid()) {
+    if (Sym) {
       if (const RefVal* T  = St->get<RefBindings>(Sym)) {
         QualType Ty = T->getType();
         
@@ -2127,7 +2127,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
   SymbolRef Sym = state.GetSValAsScalarOrLoc(RetE).getAsLocSymbol();
   
-  if (!Sym.isValid())
+  if (!Sym)
     return;
 
   // Get the reference count binding (if any).
@@ -2824,9 +2824,9 @@ class VISIBILITY_HIDDEN FindUniqueBinding :
     
   bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
                      SVal val) {
-    SymbolRef SymV = val.getAsSymbol();
-    
-    if (!SymV.isValid() || SymV != Sym)
+
+    SymbolRef SymV = val.getAsSymbol();    
+    if (!SymV || SymV != Sym)
       return true;
     
     if (Binding) {

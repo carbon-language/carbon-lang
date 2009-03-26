@@ -97,25 +97,6 @@ const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, QualType T) {
   return getValue(V);
 }
 
-const SymIntConstraint&
-BasicValueFactory::getConstraint(SymbolRef sym, BinaryOperator::Opcode Op,
-                            const llvm::APSInt& V) {
-  
-  llvm::FoldingSetNodeID ID;
-  SymIntConstraint::Profile(ID, sym, Op, V);
-  void* InsertPos;
-  
-  SymIntConstraint* C = SymIntCSet.FindNodeOrInsertPos(ID, InsertPos);
-  
-  if (!C) {
-    C = (SymIntConstraint*) BPAlloc.Allocate<SymIntConstraint>();
-    new (C) SymIntConstraint(sym, Op, V);
-    SymIntCSet.InsertNode(C, InsertPos);
-  }
-  
-  return *C;
-}
-
 const CompoundValData* 
 BasicValueFactory::getCompoundValData(QualType T,
                                       llvm::ImmutableList<SVal> Vals) {

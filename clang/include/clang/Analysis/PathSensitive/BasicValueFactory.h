@@ -47,15 +47,10 @@ class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
 
-  typedef llvm::FoldingSet<SymIntConstraint>
-          SymIntCSetTy;
-  
-
   ASTContext& Ctx;
   llvm::BumpPtrAllocator& BPAlloc;
 
   APSIntSetTy   APSIntSet;
-  SymIntCSetTy  SymIntCSet;
   void*         PersistentSVals;
   void*         PersistentSValPairs;
 
@@ -135,9 +130,6 @@ public:
     return getValue(b ? 1 : 0, Ctx.getTypeSize(Ctx.IntTy), false);
   }
   
-  const SymIntConstraint& getConstraint(SymbolRef sym, BinaryOperator::Opcode Op,
-                                        const llvm::APSInt& V);
-
   const CompoundValData* getCompoundValData(QualType T, 
                                             llvm::ImmutableList<SVal> Vals);
   
