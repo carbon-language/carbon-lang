@@ -110,6 +110,12 @@ namespace driver {
     void AddAllArgValues(ArgStringList &Output, options::ID Id0, 
                          options::ID Id1) const;
 
+    // AddAllArgsTranslated - Render all the arguments matching the
+    // given ids, but forced to separate args and using the provided
+    // name instead of the first option value.
+    void AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
+                              const char *Translation) const;
+
     /// @}
     /// @name Arg Synthesis
     /// @{
