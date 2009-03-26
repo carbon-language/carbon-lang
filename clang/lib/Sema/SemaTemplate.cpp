@@ -503,6 +503,9 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                                 NewClass, PrevClassTemplate);
   NewClass->setDescribedClassTemplate(NewTemplate);
 
+  // Set the access specifier.
+  SetMemberAccessSpecifier(NewTemplate, PrevClassTemplate, AS);
+  
   // Set the lexical context of these templates
   NewClass->setLexicalDeclContext(CurContext);
   NewTemplate->setLexicalDeclContext(CurContext);
