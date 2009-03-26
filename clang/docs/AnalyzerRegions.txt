@@ -1,20 +1,74 @@
-Symbolic Region
+Static Analyzer: 'Regions'
+--------------------------
 
-A symbolic region is a map of the concept of symbolic values into the domain of
-regions. It is the way that we represent symbolic pointers. Whenever a symbolic
-pointer value is needed, a symbolic region is created to represent it.
+INTRODUCTION
 
-A symbolic region has no type. It wraps a SymbolData. But sometimes we have type
-information associated with a symbolic region. For this case, a TypedViewRegion
-is created to layer the type information on top of the symbolic region. The
-reason we do not carry type information with the symbolic region is that
-the symbolic regions can have no type. To be consistent, we don't let them to
-carry type information.
+  The path-sensitive analysis engine in libAnalysis employs an extensible API
+  for abstractly modeling the memory of an analyzed program. This API employs
+  the concept of "memory regions" to abstractly model chunks of program memory
+  such as program variables and dynamically allocated memory such as those
+  returned from 'malloc' and 'alloca'. Regions are hierarchical, with subregions
+  modeling subtyping relationships, field and array offsets into larger chunks
+  of memory, and so on.
 
-Like a symbolic pointer, a symbolic region may be NULL, has unknown extent, and
-represents a generic chunk of memory.
+  The region API consists of two components. The first is the taxonomy and
+  representation of regions themselves within the analyzer engine. The primary
+  definitions and interfaces are described in
+  'include/clang/Analysis/PathSensitive/MemRegion.h'. At the root of the region
+  hierarchy is the class 'MemRegion' with specific subclasses refining the
+  region concept for variables, heap allocated memory, and so forth.
 
-We plan not to use loc::SymbolVal in RegionStore and remove it gradually.
+  The second component in the region API is the modeling of the binding of
+  values to regions. For example, modeling the value stored to a local variable
+  'x' consists of recording the binding between the region for 'x' (which
+  represents the raw memory associated with 'x') and the value stored to 'x'.
+  This binding relationship is captured with the notion of "symbolic stores."
+
+  Symbolic stores, which can be thought of as representing the relation 'regions
+  -> values', are implemented by subclasses of the StoreManager class (Store.h).
+  A particular StoreManager implementation has complete flexibility concerning
+  (a) *how* to model the binding between regions and values and (b) *what*
+  bindings are recorded. Together, both points allow different StoreManagers to
+  tradeoff between different levels of analysis precision and scalability
+  concerning the reasoning of program memory. Meanwhile, the core path-sensitive
+  engine makes no assumptions about (a) or (b), and queries a StoreManager about
+  the bindings to a memory region through a generic interface that all
+  StoreManagers share. If a particular StoreManager cannot reason about the
+  potential bindings of a given memory region (e.g., 'BasicStoreManager' does
+  not reason about fields of structures) then the StoreManager can simply return
+  'unknown' (represented by 'UnknownVal') for a particular region-binding. This
+  separation of concerns not only isolates the core analysis engine from the
+  details of reasoning about program memory but also facilities the option of a
+  client of the path-sensitive engine to easily swap in different StoreManager
+  implementations that internally reason about program memory in very different
+  ways.
+
+  The rest of this document is divided into two parts. We first discuss region
+  taxonomy and the semantics of regions. We then discuss the StoreManager
+  interface, and details of how the currently available StoreManager classes
+  implement region bindings.
+
+MEMORY REGIONS and REGION TAXONOMY
+
+  SYMBOLIC REGIONS
+
+  A symbolic region is a map of the concept of symbolic values into the domain
+  of regions. It is the way that we represent symbolic pointers. Whenever a
+  symbolic pointer value is needed, a symbolic region is created to represent
+  it.
+
+  A symbolic region has no type. It wraps a SymbolData. But sometimes we have
+  type information associated with a symbolic region. For this case, a
+  TypedViewRegion is created to layer the type information on top of the
+  symbolic region. The reason we do not carry type information with the symbolic
+  region is that the symbolic regions can have no type. To be consistent, we
+  don't let them to carry type information.
+
+  Like a symbolic pointer, a symbolic region may be NULL, has unknown extent,
+  and represents a generic chunk of memory.
+
+  NOTE: We plan not to use loc::SymbolVal in RegionStore and remove it
+  gradually.
 
 Pointer Casts
 
