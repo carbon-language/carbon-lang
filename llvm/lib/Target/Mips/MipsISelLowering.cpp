@@ -948,13 +948,14 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       // to 32 bits.  Insert an assert[sz]ext to capture this, then 
       // truncate to the right size.
       if (VA.getLocInfo() != CCValAssign::Full) {
-        unsigned Opcode;
+        unsigned Opcode = 0;
         if (VA.getLocInfo() == CCValAssign::SExt)
           Opcode = ISD::AssertSext;
         else if (VA.getLocInfo() == CCValAssign::ZExt)
           Opcode = ISD::AssertZext;
-        ArgValue = DAG.getNode(Opcode, dl, RegVT, ArgValue, 
-                               DAG.getValueType(VA.getValVT()));
+        if (Opcode)
+          ArgValue = DAG.getNode(Opcode, dl, RegVT, ArgValue, 
+                                 DAG.getValueType(VA.getValVT()));
         ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
       }
 
