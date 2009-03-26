@@ -144,7 +144,7 @@ public:
     ak_identifierinfo,  // IdentifierInfo
     ak_qualtype,        // QualType
     ak_declarationname, // DeclarationName
-    ak_nameddecl,       // NamedDecl *
+    ak_nameddecl        // NamedDecl *
   };
 
 private:  
