@@ -33,6 +33,7 @@
 #include <map>
 
 using namespace clang::driver;
+using namespace clang;
 
 Driver::Driver(const char *_Name, const char *_Dir,
                const char *_DefaultHostTriple,
