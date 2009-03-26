@@ -1,7 +1,5 @@
 // RUN: clang-cc -fsyntax-only %s
 
-// FIXME: The Fibonacci/FibonacciEval dance is here to work around our
-// inability to parse injected-class-name<template-argument-list>.
 template<unsigned I>
 struct FibonacciEval;
 
@@ -50,3 +48,19 @@ template<> struct Fibonacci2<1> {
 
 int array5_2[Fibonacci2<5>::value == 5? 1 : -1];
 int array10_2[Fibonacci2<10>::value == 55? 1 : -1];
+
+template<unsigned I>
+struct Fibonacci3 {
+  static const unsigned value = Fibonacci3<I-1>::value + Fibonacci3<I-2>::value;
+};
+
+template<> struct Fibonacci3<0> {
+  static const unsigned value = 0;
+};
+
+template<> struct Fibonacci3<1> {
+  static const unsigned value = 1;
+};
+
+int array5_3[Fibonacci3<5>::value == 5? 1 : -1];
+int array10_3[Fibonacci3<10>::value == 55? 1 : -1];

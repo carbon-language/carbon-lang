@@ -279,6 +279,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   if (!D->isInjectedClassName())
     Record->setInstantiationOfMemberClass(D);
+  else
+    Record->setDescribedClassTemplate(D->getDescribedClassTemplate());
 
   Owner->addDecl(Record);
   return Record;

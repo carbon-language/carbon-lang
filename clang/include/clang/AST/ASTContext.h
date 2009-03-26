@@ -515,7 +515,8 @@ public:
   /// the first declaration of that tag.
   TagDecl *getCanonicalDecl(TagDecl *Tag) {
     QualType T = getTagDeclType(Tag);
-    return cast<TagDecl>(cast<TagType>(T)->getDecl());
+    return cast<TagDecl>(cast<TagType>(T.getTypePtr()->CanonicalType)
+                           ->getDecl());
   }
 
   /// Type Query functions.  If the type is an instance of the specified class,

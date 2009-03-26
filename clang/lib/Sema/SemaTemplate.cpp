@@ -42,6 +42,28 @@ TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
         return TNK_Template_template_parm;
       else
         assert(false && "Unknown TemplateDecl");
+    } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(IIDecl)) {
+      // C++ [temp.local]p1:
+      //   Like normal (non-template) classes, class templates have an
+      //   injected-class-name (Clause 9). The injected-class-name
+      //   can be used with or without a template-argument-list. When
+      //   it is used without a template-argument-list, it is
+      //   equivalent to the injected-class-name followed by the
+      //   template-parameters of the class template enclosed in
+      //   <>. When it is used with a template-argument-list, it
+      //   refers to the specified class template specialization,
+      //   which could be the current specialization or another
+      //   specialization.
+      if (Record->isInjectedClassName()) {
+        Record = cast<CXXRecordDecl>(Context.getCanonicalDecl(Record));
+        if ((Template = Record->getDescribedClassTemplate()))
+          return TNK_Class_template;
+        else if (ClassTemplateSpecializationDecl *Spec
+                   = dyn_cast<ClassTemplateSpecializationDecl>(Record)) {
+          Template = Spec->getSpecializedTemplate();
+          return TNK_Class_template;
+        }
+      }
     }
 
     // FIXME: What follows is a gross hack.
@@ -469,7 +491,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   // If we had a scope specifier, we better have a previous template
   // declaration!
 
-  TagDecl *NewClass = 
+  CXXRecordDecl *NewClass = 
     CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name,
                           PrevClassTemplate? 
                             PrevClassTemplate->getTemplatedDecl() : 0);
@@ -478,7 +500,8 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     = ClassTemplateDecl::Create(Context, SemanticContext, NameLoc,
                                 DeclarationName(Name), TemplateParams,
                                 NewClass, PrevClassTemplate);
-  
+  NewClass->setDescribedClassTemplate(NewTemplate);
+
   // Set the lexical context of these templates
   NewClass->setLexicalDeclContext(CurContext);
   NewTemplate->setLexicalDeclContext(CurContext);

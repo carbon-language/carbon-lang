@@ -3425,6 +3425,8 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclTy *TagD) {
                                 Record->getIdentifier(), Record);
       InjectedClassName->setImplicit();
       InjectedClassName->setAccess(AS_public);
+      if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate())
+        InjectedClassName->setDescribedClassTemplate(Template);
       PushOnScopeChains(InjectedClassName, S);
       assert(InjectedClassName->isInjectedClassName() && 
              "Broken injected-class-name");
