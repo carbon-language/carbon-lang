@@ -547,7 +547,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
 
   // Reject -Z* at the top level, these options should never have been
   // exposed by gcc.
-  if (Arg *A = Args.getLastArg(options::OPT_Z))
+  if (Arg *A = Args.getLastArg(options::OPT_Z_Joined))
     Diag(clang::diag::err_drv_use_of_Z_option) << A->getAsString(Args);
 
   // Construct the actions to perform.
@@ -693,7 +693,7 @@ void Driver::BuildJobs(Compilation &C) const {
     // FIXME: This is a hack; find a cleaner way to integrate this
     // into the process.
     const char *LinkingOutput = 0;
-    if (isa<LinkJobAction>(A)) {
+    if (isa<LipoJobAction>(A)) {
       if (FinalOutput)
         LinkingOutput = FinalOutput->getValue(C.getArgs());
       else
