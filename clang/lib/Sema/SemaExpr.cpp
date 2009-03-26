@@ -1876,7 +1876,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // Check whether we can reference this field.
       if (DiagnoseUseOfDecl(IV, MemberLoc))
         return ExprError();
-      if (IV->getAccessControl() != ObjCIvarDecl::Public) {
+      if (IV->getAccessControl() != ObjCIvarDecl::Public &&
+          IV->getAccessControl() != ObjCIvarDecl::Package) {
         ObjCInterfaceDecl *ClassOfMethodDecl = 0;
         if (ObjCMethodDecl *MD = getCurMethodDecl())
           ClassOfMethodDecl =  MD->getClassInterface();
