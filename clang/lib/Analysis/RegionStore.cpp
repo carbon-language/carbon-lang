@@ -270,10 +270,6 @@ public:
   }
 
 private:
-  Loc getVarLoc(const VarDecl* VD) {
-    return loc::MemRegionVal(MRMgr.getVarRegion(VD));
-  }
-
   const GRState* BindArray(const GRState* St, const TypedRegion* R, SVal V);
 
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
