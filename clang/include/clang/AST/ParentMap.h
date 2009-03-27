@@ -23,7 +23,11 @@ public:
   ParentMap(Stmt* ASTRoot);
   ~ParentMap();
 
-  Stmt* getParent(Stmt*) const;  
+  Stmt* getParent(Stmt*) const;
+
+  const Stmt* getParent(const Stmt* S) const {
+    return getParent(const_cast<Stmt*>(S));
+  }
 
   bool hasParent(Stmt* S) const {
     return getParent(S) != 0;
