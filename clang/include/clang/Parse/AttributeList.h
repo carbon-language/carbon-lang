@@ -73,6 +73,7 @@ public:
     AT_overloadable,      // Clang-specific
     AT_packed,
     AT_pure,
+    AT_regparm,
     AT_section,
     AT_sentinel,
     AT_stdcall,

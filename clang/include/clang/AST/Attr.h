@@ -52,6 +52,7 @@ public:
     Overloadable, // Clang-specific
     Packed,
     Pure,
+    Regparm,
     Section,
     StdCall,
     TransparentUnion,
@@ -545,6 +546,15 @@ public:
   static bool classof(const NoinlineAttr *A) { return true; }
 };
 
+class RegparmAttr : public Attr {
+public:
+  RegparmAttr() : Attr(Regparm) {}
+    
+  // Implement isa/cast/dyncast/etc.
+    
+  static bool classof(const Attr *A) { return A->getKind() == Regparm; }
+  static bool classof(const RegparmAttr *A) { return true; }
+};
 }  // end namespace clang
 
 #endif

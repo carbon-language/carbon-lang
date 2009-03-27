@@ -286,6 +286,9 @@ void CodeGenModule::SetFunctionAttributes(const Decl *D,
 
   if (D->getAttr<StdCallAttr>())
     F->setCallingConv(llvm::CallingConv::X86_StdCall);
+
+  if (D->getAttr<RegparmAttr>())
+    ErrorUnsupported(D, "regparm attribute");
 }
 
 /// SetFunctionAttributesForDefinition - Set function attributes
@@ -308,6 +311,9 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
   
   if (D->getAttr<NoinlineAttr>())
     F->addFnAttr(llvm::Attribute::NoInline);
+  
+  if (D->getAttr<RegparmAttr>())
+    ErrorUnsupported(D, "regparm attribute");
 }
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
