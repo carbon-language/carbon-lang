@@ -19,7 +19,7 @@
 #include "llvm/ADT/OwningPtr.h"
 
 #include <vector>
-#include <list>
+#include <deque>
 #include <string>
 #include <algorithm>
 
@@ -42,7 +42,7 @@ public:
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
   
-  virtual bool supportsLogicalOpControlFlow() const { return false; }  
+  virtual bool supportsLogicalOpControlFlow() const { return false; }
 };  
   
 //===----------------------------------------------------------------------===//
@@ -85,12 +85,12 @@ public:
 };
 
 class PathDiagnostic {
-  std::list<PathDiagnosticPiece*> path;
+  std::deque<PathDiagnosticPiece*> path;
   unsigned Size;
   std::string BugType;
   std::string Desc;
   std::string Category;
-  std::list<std::string> OtherDesc;
+  std::deque<std::string> OtherDesc;
   
 public:  
   PathDiagnostic();
@@ -106,7 +106,7 @@ public:
   const std::string& getBugType() const { return BugType; }
   const std::string& getCategory() const { return Category; }  
   
-  typedef std::list<std::string>::const_iterator meta_iterator;
+  typedef std::deque<std::string>::const_iterator meta_iterator;
   meta_iterator meta_begin() const { return OtherDesc.begin(); }
   meta_iterator meta_end() const { return OtherDesc.end(); }
   void addMeta(const std::string& s) { OtherDesc.push_back(s); }
@@ -137,7 +137,7 @@ public:
   
   class iterator {
   public:  
-    typedef std::list<PathDiagnosticPiece*>::iterator ImplTy;
+    typedef std::deque<PathDiagnosticPiece*>::iterator ImplTy;
     
     typedef PathDiagnosticPiece              value_type;
     typedef value_type&                      reference;
@@ -163,7 +163,7 @@ public:
   
   class const_iterator {
   public:  
-    typedef std::list<PathDiagnosticPiece*>::const_iterator ImplTy;
+    typedef std::deque<PathDiagnosticPiece*>::const_iterator ImplTy;
     
     typedef const PathDiagnosticPiece        value_type;
     typedef value_type&                      reference;
