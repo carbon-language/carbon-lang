@@ -1447,17 +1447,39 @@ static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  
+
   if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
     << "regparm" << 0 /*function*/;
     return;
   }
-  
-  d->addAttr(::new (S.Context) RegparmAttr());
+
+  Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt NumParams(32);
+  if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "regparm" << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  if (NumParams.getLimitedValue(4) > 3) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
+      << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  const char *TargetPrefix = S.Context.Target.getTargetPrefix();
+  unsigned PointerWidth = S.Context.Target.getPointerWidth(0);
+  if (strcmp(TargetPrefix, "x86") || PointerWidth != 32) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
+      << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  d->addAttr(::new (S.Context) RegparmAttr(NumParams.getZExtValue()));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1520,10 +1542,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
   case AttributeList::AT_nodebug:     HandleNodebugAttr   (D, Attr, S); break;
   case AttributeList::AT_noinline:    HandleNoinlineAttr  (D, Attr, S); break;
-  case AttributeList::AT_regparm:
-    HandleRegparmAttr  (D, Attr, S);
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-    break;
+  case AttributeList::AT_regparm:     HandleRegparmAttr   (D, Attr, S); break;
   case AttributeList::IgnoredAttribute: 
     // Just ignore
     break;

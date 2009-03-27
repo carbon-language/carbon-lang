@@ -547,9 +547,13 @@ public:
 };
 
 class RegparmAttr : public Attr {
+  unsigned NumParams;
+
 public:
-  RegparmAttr() : Attr(Regparm) {}
-    
+  RegparmAttr(unsigned np) : Attr(Regparm), NumParams(np) {}
+
+  unsigned getNumParams() { return NumParams; }
+
   // Implement isa/cast/dyncast/etc.
     
   static bool classof(const Attr *A) { return A->getKind() == Regparm; }

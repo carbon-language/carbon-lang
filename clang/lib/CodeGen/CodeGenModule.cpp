@@ -311,9 +311,6 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
   
   if (D->getAttr<NoinlineAttr>())
     F->addFnAttr(llvm::Attribute::NoInline);
-  
-  if (D->getAttr<RegparmAttr>())
-    ErrorUnsupported(D, "regparm attribute");
 }
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
