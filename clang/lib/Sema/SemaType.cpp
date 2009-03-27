@@ -114,9 +114,12 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
       unsigned DK = getLangOptions().CPlusPlus && !getLangOptions().Microsoft?
           diag::err_missing_type_specifier
         : diag::warn_missing_type_specifier;
-      Diag(DS.getSourceRange().getBegin(), DK)
-        << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
-                                                 "int");
+      Diag(DS.getSourceRange().getBegin(), DK);
+
+      // FIXME: If we could guarantee that the result would be
+      // well-formed, it would be useful to have a code insertion hint
+      // here. However, after emitting this warning/error, we often
+      // emit other errors.
     }
       
     // FALL THROUGH.  
