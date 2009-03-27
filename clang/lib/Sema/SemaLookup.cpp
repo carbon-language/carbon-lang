@@ -600,10 +600,11 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
       // base classes, we never need to perform qualified lookup
       // because all of the members are on top of the identifier
       // chain.
-      if (isa<RecordDecl>(Ctx) &&
-          (R = LookupQualifiedName(Ctx, Name, NameKind, RedeclarationOnly)))
-        return std::make_pair(true, R);
-
+      if (isa<RecordDecl>(Ctx)) {
+        R = LookupQualifiedName(Ctx, Name, NameKind, RedeclarationOnly);
+        if (R || RedeclarationOnly)
+          return std::make_pair(true, R);
+      }
       if (Ctx->getParent() != Ctx->getLexicalParent()) {
         // It is out of line defined C++ method or struct, we continue
         // doing name lookup in parent context. Once we will find namespace
@@ -611,8 +612,8 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         // using-directives later.
         for (OutOfLineCtx = Ctx; OutOfLineCtx && !OutOfLineCtx->isFileContext();
              OutOfLineCtx = OutOfLineCtx->getParent()) {
-          if ((R = LookupQualifiedName(OutOfLineCtx, Name, NameKind,
-                                      RedeclarationOnly)))
+          R = LookupQualifiedName(OutOfLineCtx, Name, NameKind, RedeclarationOnly);
+          if (R || RedeclarationOnly)
             return std::make_pair(true, R);
         }
       }
