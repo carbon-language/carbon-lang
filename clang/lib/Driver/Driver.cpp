@@ -294,7 +294,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT_print_libgcc_file_name)) {
-    llvm::outs() << GetProgramPath("libgcc.a", TC, true).toString() << "\n";
+    llvm::outs() << GetFilePath("libgcc.a", TC).toString() << "\n";
     return false;
   }
 
