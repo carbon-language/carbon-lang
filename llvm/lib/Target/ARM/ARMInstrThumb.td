@@ -121,7 +121,7 @@ PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2),
            "@ tADJCALLSTACKUP $amt1",
            [(ARMcallseq_end imm:$amt1, imm:$amt2)]>, Requires<[IsThumb]>;
 
-def tADJCALLSTACKDOWN : 
+def tADJCALLSTACKDOWN :
 PseudoInst<(outs), (ins i32imm:$amt),
            "@ tADJCALLSTACKDOWN $amt",
            [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb]>;
@@ -147,7 +147,7 @@ let isReturn = 1, isTerminator = 1 in
 def tPOP_RET : TI<(outs reglist:$dst1, variable_ops), (ins),
                    "pop $dst1", []>;
 
-let isCall = 1, 
+let isCall = 1,
   Defs = [R0, R1, R2, R3, LR,
           D0, D1, D2, D3, D4, D5, D6, D7] in {
   def tBL  : TIx2<(outs), (ins i32imm:$func, variable_ops),
@@ -183,7 +183,7 @@ let isBranch = 1, isTerminator = 1 in {
 }
 
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use
-// a two-value operand where a dag node expects two operands. :( 
+// a two-value operand where a dag node expects two operands. :(
 let isBranch = 1, isTerminator = 1 in
   def tBcc : TI<(outs), (ins brtarget:$target, pred:$cc), "b$cc $target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
@@ -407,7 +407,7 @@ def tORR : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
 
 def tREV : TI<(outs GPR:$dst), (ins GPR:$src),
               "rev $dst, $src",
-              [(set GPR:$dst, (bswap GPR:$src))]>, 
+              [(set GPR:$dst, (bswap GPR:$src))]>,
               Requires<[IsThumb, HasV6]>;
 
 def tREV16 : TI<(outs GPR:$dst), (ins GPR:$src),
@@ -447,11 +447,11 @@ def tSUBS : TI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
 def tSUBi3 : TI<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
                 "sub $dst, $lhs, $rhs",
                 [(set GPR:$dst, (add GPR:$lhs, imm0_7_neg:$rhs))]>;
-                
+
 def tSUBi8 : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
                   "sub $dst, $rhs",
                   [(set GPR:$dst, (add GPR:$lhs, imm8_255_neg:$rhs))]>;
-                
+
 def tSUBrr : TI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
                 "sub $dst, $lhs, $rhs",
                 [(set GPR:$dst, (sub GPR:$lhs, GPR:$rhs))]>;
@@ -475,7 +475,7 @@ def tUXTB  : TI<(outs GPR:$dst), (ins GPR:$src),
                 Requires<[IsThumb, HasV6]>;
 def tUXTH  : TI<(outs GPR:$dst), (ins GPR:$src),
                 "uxth $dst, $src",
-                [(set GPR:$dst, (and GPR:$src, 0xFFFF))]>, 
+                [(set GPR:$dst, (and GPR:$src, 0xFFFF))]>,
                 Requires<[IsThumb, HasV6]>;
 
 
@@ -537,7 +537,7 @@ def : ThumbV5Pat<(ARMcall GPR:$dst), (tBLXr GPR:$dst)>;
 // zextload i1 -> zextload i8
 def : ThumbPat<(zextloadi1 t_addrmode_s1:$addr),
                (tLDRB t_addrmode_s1:$addr)>;
-                  
+
 // extload -> zextload
 def : ThumbPat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
 def : ThumbPat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
