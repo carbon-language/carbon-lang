@@ -306,6 +306,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_clang_f_Group);
 
+  // If tool chain translates fpascal-strings, we want to back
+  // translate here.
+  // FIXME: This is gross; that translation should be pulled from the
+  // tool chain.
+  if (Arg *A = Args.getLastArg(options::OPT_mpascal_strings,
+                               options::OPT_mno_pascal_strings)) {
+    if (A->getOption().matches(options::OPT_mpascal_strings))
+      CmdArgs.push_back("-fpascal-strings");
+    else
+      CmdArgs.push_back("-fno-pascal-strings");
+  }
+
   Args.AddLastArg(CmdArgs, options::OPT_dM);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
