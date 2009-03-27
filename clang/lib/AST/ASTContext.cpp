@@ -78,22 +78,12 @@ ASTContext::~ASTContext() {
   }
 
   // Destroy nested-name-specifiers.
-  llvm::SmallVector<NestedNameSpecifier *, 16> NestedNameSpecs; 
-  {
-    for (llvm::FoldingSet<NestedNameSpecifier>::iterator
-           NNS = NestedNameSpecifiers.begin(),
-           NNSEnd = NestedNameSpecifiers.end(); 
-         NNS != NNSEnd; 
-         ++NNS)
-      NestedNameSpecs.push_back(&*NNS);
-  }
-  NestedNameSpecifiers.clear();
-  for (llvm::SmallVector<NestedNameSpecifier *, 16>::iterator
-         NNS = NestedNameSpecs.begin(),
-         NNSEnd = NestedNameSpecs.end(); 
+  for (llvm::FoldingSet<NestedNameSpecifier>::iterator
+         NNS = NestedNameSpecifiers.begin(),
+         NNSEnd = NestedNameSpecifiers.end(); 
        NNS != NNSEnd; 
-       ++NNS)
-    (*NNS)->Destroy(*this);
+       /* Increment in loop */)
+    (*NNS++).Destroy(*this);
 
   if (GlobalNestedNameSpecifier)
     GlobalNestedNameSpecifier->Destroy(*this);
