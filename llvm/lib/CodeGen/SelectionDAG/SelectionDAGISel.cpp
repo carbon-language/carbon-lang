@@ -548,8 +548,8 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
         FLI.LiveOutRegInfo.resize(DestReg+1);
       FunctionLoweringInfo::LiveOutInfo &LOI = FLI.LiveOutRegInfo[DestReg];
       LOI.NumSignBits = NumSignBits;
-      LOI.KnownOne = NumSignBits;
-      LOI.KnownZero = NumSignBits;
+      LOI.KnownOne = KnownOne;
+      LOI.KnownZero = KnownZero;
     }
   }
 }
