@@ -108,6 +108,8 @@ public:
     return *PM.get();
   }
   
+  PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
+  
   bool supportsLogicalOpControlFlow() const {
     return PDC ? PDC->supportsLogicalOpControlFlow() : true;
   }  
@@ -140,6 +142,23 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
        << (isa<ObjCMethodDecl>(CodeDecl) ? "method" : "function") << '.';
   
   return Loc;
+}
+
+PathDiagnosticLocation
+PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
+  assert(S && "Null Stmt* passed to getEnclosingStmtLocation");
+  ParentMap &P = getParentMap();
+  while (isa<Expr>(S)) {
+    const Stmt *Parent = P.getParent(S);
+    
+    if (!Parent || isa<CompoundStmt>(Parent) || isa<StmtExpr>(Parent))
+      return PathDiagnosticLocation(S, SMgr);
+    
+    S = Parent;
+  }
+  
+  assert(S && "Cannot have null Stmt for PathDiagnosticLocation");
+  return PathDiagnosticLocation(S, SMgr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -772,7 +791,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);          
-          PathDiagnosticLocation End(S->getLocStart(), SMgr);
+          const PathDiagnosticLocation &End = PDB.getEnclosingStmtLocation(S);
           
           os << "Control jumps to line "
              << End.asLocation().getInstantiationLineNumber();
@@ -921,12 +940,20 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
-            PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);            
+            PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
+
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+            
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
             PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+            
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                     "Loop condition is false.  Exiting loop"));
           }
@@ -935,18 +962,23 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         }
           
         case Stmt::WhileStmtClass:
-        case Stmt::ForStmtClass: {                    
+        case Stmt::ForStmtClass: {          
           if (*(Src->succ_begin()+1) == Dst) {
             std::string sbuf;
             llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
             PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
             PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
             
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                "Loop condition is true.  Entering loop body"));
@@ -956,7 +988,11 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         }
           
         case Stmt::IfStmtClass: {
-          PathDiagnosticLocation End = PDB.ExecutionContinues(N);          
+          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+
+          if (const Stmt *S = End.asStmt())
+            End = PDB.getEnclosingStmtLocation(S);
+          
           if (*(Src->succ_begin()+1) == Dst)
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                        "Taking false branch"));
