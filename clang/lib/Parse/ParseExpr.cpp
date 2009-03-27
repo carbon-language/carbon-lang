@@ -776,10 +776,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParseObjCAtExpression(AtLoc);
   }
   case tok::caret:
-    if (getLang().Blocks)
-      return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
-    Diag(Tok, diag::err_expected_expression);
-    return ExprError();
+    return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
   case tok::l_square:
     // These can be followed by postfix-expr pieces.
     if (getLang().ObjC1)
@@ -1344,18 +1341,17 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
 
 
   OwningExprResult Result(Actions, true);
-  if (Tok.is(tok::l_brace)) {
-    OwningStmtResult Stmt(ParseCompoundStatementBody());
-    if (!Stmt.isInvalid()) {
-      Result = Actions.ActOnBlockStmtExpr(CaretLoc, move(Stmt), CurScope);
-    } else {
-      Actions.ActOnBlockError(CaretLoc, CurScope);
-    }
-  } else {
+  if (!Tok.is(tok::l_brace)) {
     // Saw something like: ^expr
     Diag(Tok, diag::err_expected_expression);
     return ExprError();
   }
+  
+  OwningStmtResult Stmt(ParseCompoundStatementBody());
+  if (!Stmt.isInvalid())
+    Result = Actions.ActOnBlockStmtExpr(CaretLoc, move(Stmt), CurScope);
+  else
+    Actions.ActOnBlockError(CaretLoc, CurScope);
   return move(Result);
 }
 

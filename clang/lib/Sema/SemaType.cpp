@@ -625,6 +625,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::BlockPointer:
+      // If blocks are disabled, emit an error.
+      if (!LangOpts.Blocks)
+        Diag(DeclType.Loc, diag::err_blocks_disable);
+        
       if (DeclType.Cls.TypeQuals)
         Diag(D.getIdentifierLoc(), diag::err_qualified_block_pointer_type);
       if (!T.getTypePtr()->isFunctionType())

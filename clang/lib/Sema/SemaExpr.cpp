@@ -4589,6 +4589,10 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
 /// literal was successfully completed.  ^(int x){...}
 Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
                                                 StmtArg body, Scope *CurScope) {
+  // If blocks are disabled, emit an error.
+  if (!LangOpts.Blocks)
+    Diag(CaretLoc, diag::err_blocks_disable);
+  
   // Ensure that CurBlock is deleted.
   llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
 

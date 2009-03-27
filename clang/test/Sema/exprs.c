@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -pedantic -fsyntax-only
+// RUN: clang-cc %s -verify -pedantic -fsyntax-only -fno-blocks
 
 // PR1966
 _Complex double test1() {
@@ -85,3 +85,9 @@ int test12(const char *X) {
   return X == "foo";  // expected-warning {{comparison against a string literal is unspecified}}
 }
 
+// rdar://6719156
+void test13(
+            void (^P)()) { // expected-error {{blocks support disabled - compile with -fblocks}}
+  P();
+  P = ^(){}; // expected-error {{blocks support disabled - compile with -fblocks}}
+}

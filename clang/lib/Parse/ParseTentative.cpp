@@ -405,14 +405,13 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
     if (Tok.is(tok::coloncolon) || Tok.is(tok::identifier))
       TryAnnotateCXXScopeToken();
 
-    if (Tok.is(tok::star) || Tok.is(tok::amp) ||
-        (Tok.is(tok::caret) && getLang().Blocks) ||
+    if (Tok.is(tok::star) || Tok.is(tok::amp) || Tok.is(tok::caret) ||
         (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::star))) {
       // ptr-operator
       ConsumeToken();
       while (Tok.is(tok::kw_const)    ||
              Tok.is(tok::kw_volatile) ||
-             Tok.is(tok::kw_restrict)   )
+             Tok.is(tok::kw_restrict))
         ConsumeToken();
     } else {
       break;

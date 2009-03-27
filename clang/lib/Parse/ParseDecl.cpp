@@ -1682,11 +1682,10 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
-  if (Kind != tok::star &&
+  if (Kind != tok::star && Kind != tok::caret &&
       (Kind != tok::amp || !getLang().CPlusPlus) &&
       // We parse rvalue refs in C++03, because otherwise the errors are scary.
-      (Kind != tok::ampamp || !getLang().CPlusPlus) &&
-      (Kind != tok::caret || !getLang().Blocks)) {
+      (Kind != tok::ampamp || !getLang().CPlusPlus)) {
     if (DirectDeclParser)
       (this->*DirectDeclParser)(D);
     return;
@@ -1697,7 +1696,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   SourceLocation Loc = ConsumeToken();  // Eat the *, ^, & or &&.
   D.SetRangeEnd(Loc);
 
-  if (Kind == tok::star || (Kind == tok::caret && getLang().Blocks)) {
+  if (Kind == tok::star || Kind == tok::caret) {
     // Is a pointer.
     DeclSpec DS;
 

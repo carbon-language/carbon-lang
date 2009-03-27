@@ -1394,6 +1394,8 @@ def warn_stringcompare : Warning<
 
 
 // Blocks
+def err_blocks_disable : Error<"blocks support disabled - compile with -fblocks"
+  " or pick a deployment target that supports them">;
 def err_expected_block_lbrace : Error<"expected '{' in block literal">;
 def err_goto_in_block : Error<
   "goto not allowed in block literal">;
