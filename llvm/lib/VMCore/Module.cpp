@@ -29,14 +29,6 @@ using namespace llvm;
 // Methods to implement the globals and functions lists.
 //
 
-Function *ilist_traits<Function>::createSentinel() {
-  FunctionType *FTy =
-    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
-  Function *Ret = Function::Create(FTy, GlobalValue::ExternalLinkage);
-  // This should not be garbage monitored.
-  LeakDetector::removeGarbageObject(Ret);
-  return Ret;
-}
 GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
   GlobalVariable *Ret = new GlobalVariable(Type::Int32Ty, false,
                                            GlobalValue::ExternalLinkage);

@@ -28,9 +28,20 @@ class FunctionType;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module> {
-  // createSentinel is used to create a node that marks the end of the list.
-  static Function *createSentinel();
-  static void destroySentinel(Function *F) { delete F; }
+
+  // createSentinel is used to get hold of the node that marks the end of the
+  // list... (same trick used here as in ilist_traits<Instruction>)
+  Function *createSentinel() const {
+    return static_cast<Function*>(&Sentinel);
+  }
+  static void destroySentinel(Function*) {}
+
+  Function *provideInitialHead() const { return createSentinel(); }
+  Function *ensureHead(Function*) const { return createSentinel(); }
+  static void noteHead(Function*, Function*) {}
+
+private:
+  mutable ilist_node<Function> Sentinel;
 };
 template<> struct ilist_traits<GlobalVariable>
   : public SymbolTableListTraits<GlobalVariable, Module> {
