@@ -49,3 +49,34 @@ void f(D *d) {
 }
 
 }
+
+namespace T5 {
+  class A {};
+    
+  class B : private A {
+    void f(B *b) {
+      A *a = b;
+    }
+  };    
+}
+
+namespace T6 {
+  class C;
+  
+  class A {};
+  
+  class B : private A { // expected-note {{'private' inheritance specifier here}}
+    void f(C* c);
+  };
+  
+  class C : public B { 
+    void f(C *c) {
+      A* a = c; // expected-error {{conversion from 'class T6::C' to inaccessible base class 'class T6::A'}} \
+                   expected-error {{incompatible type initializing 'class T6::C *', expected 'class T6::A *'}}
+    }
+  };
+  
+  void B::f(C *c) {
+    A *a = c;
+  }
+}

@@ -55,6 +55,10 @@ bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
   
   const CXXBaseSpecifier *InacessibleBase = 0;
 
+  const CXXRecordDecl* CurrentClassDecl = 0;
+  if (CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(getCurFunctionDecl()))
+    CurrentClassDecl = MD->getParent();
+
   for (BasePaths::paths_iterator Path = Paths.begin(), PathsEnd = Paths.end(); 
       Path != PathsEnd; ++Path) {
     
@@ -71,8 +75,9 @@ bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
         // Nothing to do.
         break;
       case AS_private:
-        // FIXME: Check if the current function is a member or friend.
-        FoundInaccessibleBase = true;
+        // FIXME: Check if the current function/class is a friend.
+        if (CurrentClassDecl != Element->Class)
+          FoundInaccessibleBase = true;
         break;
       case AS_protected:  
         // FIXME: Implement
