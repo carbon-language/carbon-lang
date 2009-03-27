@@ -81,8 +81,14 @@ ASTContext::~ASTContext() {
   for (llvm::FoldingSet<NestedNameSpecifier>::iterator 
          NNS = NestedNameSpecifiers.begin(),
          NNSEnd = NestedNameSpecifiers.end(); 
-       NNS != NNSEnd; ++NNS)
-    NNS->Destroy(*this);
+       NNS != NNSEnd; ) {
+    // This loop iterates, then destroys so that it doesn't cause invalid
+    // reads.
+    // FIXME: Find a less fragile way to do this!
+    NestedNameSpecifier* N = &*NNS;
+    ++NNS;
+    N->Destroy(*this);
+  }
 
   if (GlobalNestedNameSpecifier)
     GlobalNestedNameSpecifier->Destroy(*this);
