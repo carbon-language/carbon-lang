@@ -11,7 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SemaInherit.h"
 #include "Sema.h"
+#include "clang/AST/ASTContext.h"
 using namespace clang;
 
 /// SetMemberAccessSpecifier - Set the access specifier of a member.
@@ -45,5 +47,68 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 /// and report an error if it can't. [class.access.base]
 bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base, 
                                 BasePaths& Paths, SourceLocation AccessLoc) {
+  Base = Context.getCanonicalType(Base).getUnqualifiedType();
+  assert(!Paths.isAmbiguous(Base) && 
+         "Can't check base class access if set of paths is ambiguous");
+  assert(Paths.isRecordingPaths() &&
+         "Can't check base class access without recorded paths");
+  
+  const CXXBaseSpecifier *InacessibleBase = 0;
+
+  for (BasePaths::paths_iterator Path = Paths.begin(), PathsEnd = Paths.end(); 
+      Path != PathsEnd; ++Path) {
+    
+    bool FoundInaccessibleBase = false;
+    
+    for (BasePath::const_iterator Element = Path->begin(), 
+         ElementEnd = Path->end(); Element != ElementEnd; ++Element) {
+      const CXXBaseSpecifier *Base = Element->Base;
+      
+      switch (Base->getAccessSpecifier()) {
+      default:
+        assert(0 && "invalid access specifier");
+      case AS_public:
+        // Nothing to do.
+        break;
+      case AS_private:
+        // FIXME: Check if the current function is a member or friend.
+        FoundInaccessibleBase = true;
+        break;
+      case AS_protected:  
+        // FIXME: Implement
+        break;
+      }
+      
+      if (FoundInaccessibleBase) {
+        InacessibleBase = Base;
+        break;
+      }
+    }
+    
+    if (!FoundInaccessibleBase) {
+      // We found a path to the base, our work here is done.
+      InacessibleBase = 0;
+      break;
+    }
+  }
+
+  if (InacessibleBase) {
+    Diag(AccessLoc, diag::err_conv_to_inaccessible_base) 
+      << Derived << Base;
+
+    AccessSpecifier AS = InacessibleBase->getAccessSpecifierAsWritten();
+    
+    // If there's no written access specifier, then the inheritance specifier
+    // is implicitly private.
+    if (AS == AS_none)
+      Diag(InacessibleBase->getSourceRange().getBegin(),
+           diag::note_inheritance_implicitly_private_here);
+    else
+      Diag(InacessibleBase->getSourceRange().getBegin(),
+           diag::note_inheritance_specifier_here) << AS;
+
+    return true;
+  }
+  
   return false;
 }

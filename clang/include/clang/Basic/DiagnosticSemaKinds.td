@@ -1297,6 +1297,13 @@ def err_memptr_conv_via_virtual : Error<
   "conversion from pointer to member of class %0 to pointer to member "
   "of class %1 via virtual base %2 is not allowed">;
 
+// C++ access control
+def err_conv_to_inaccessible_base : Error<
+  "conversion from %0 to inaccessible base class %1">;
+def note_inheritance_specifier_here : Note<
+  "'%0' inheritance specifier here">;
+def note_inheritance_implicitly_private_here : Note<
+  "inheritance is implicitly 'private'">;
 
 // C++ member name lookup
 def err_ambiguous_member_multiple_subobjects : Error<
