@@ -298,8 +298,13 @@ PlistDiagnostics::~PlistDiagnostics() {
       << "   <key>category</key><string>" << D->getCategory()
       << "</string>\n"
       << "   <key>type</key><string>" << D->getBugType()
-      << "</string>\n"
-      << "  </dict>\n";
+      << "</string>\n";
+    
+    // Output the location of the bug.
+    o << "  <key>location</key>\n";
+    EmitLocation(o, SM, D->getLocation(), FM, 2);
+    
+    o << "  </dict>\n";
 
   }
 
