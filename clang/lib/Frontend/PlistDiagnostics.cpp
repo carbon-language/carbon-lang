@@ -108,11 +108,32 @@ static void ReportControlFlow(llvm::raw_ostream& o,
   
   Indent(o, indent) << "<key>kind</key><string>control</string>\n";
   
+  // FIXME: Eventually remove (DEPRECATED)
   // Output the start and end locations.
   Indent(o, indent) << "<key>start</key>\n";
   EmitLocation(o, SM, P.getStartLocation(), FM, indent);
   Indent(o, indent) << "<key>end</key>\n";
   EmitLocation(o, SM, P.getEndLocation(), FM, indent);
+  
+  // Emit edges.
+  Indent(o, indent) << "<key>edges</key>\n";
+  ++indent;
+  Indent(o, indent) << "<array>\n";
+  ++indent;
+  for (PathDiagnosticControlFlowPiece::const_iterator I=P.begin(), E=P.end();
+       I!=E; ++I) {
+    Indent(o, indent) << "<dict>\n";
+    ++indent;
+    Indent(o, indent) << "<key>start</key>\n";
+    EmitRange(o, SM, I->getStart().asRange(), FM, indent+1);
+    Indent(o, indent) << "<key>end</key>\n";
+    EmitRange(o, SM, I->getEnd().asRange(), FM, indent+1);
+    --indent;
+    Indent(o, indent) << "</dict>\n";
+  }
+  --indent;
+  Indent(o, indent) << "</array>\n";
+  --indent;
   
   // Output any helper text.
   const std::string& s = P.getString();
