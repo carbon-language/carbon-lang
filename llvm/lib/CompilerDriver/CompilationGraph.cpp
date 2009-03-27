@@ -465,9 +465,6 @@ int CompilationGraph::Check () {
   // Check for cycles.
   ret += this->CheckCycles();
 
-  if (!ret)
-    std::cerr << "check-graph: no errors found.\n";
-
   return ret;
 }
 
@@ -519,18 +516,18 @@ namespace llvm {
 
 }
 
-void CompilationGraph::writeGraph() {
-  std::ofstream O("compilation-graph.dot");
+void CompilationGraph::writeGraph(const std::string& OutputFilename) {
+  std::ofstream O(OutputFilename.c_str());
 
   if (O.good()) {
-    std::cerr << "Writing 'compilation-graph.dot' file...";
+    std::cerr << "Writing '"<< OutputFilename << "' file...";
     llvm::WriteGraph(O, this);
     std::cerr << "done.\n";
     O.close();
   }
   else {
-    throw std::runtime_error("Error opening file 'compilation-graph.dot'"
-                             " for writing!");
+    throw std::runtime_error("Error opening file '" + OutputFilename
+                             + "' for writing!");
   }
 }
 

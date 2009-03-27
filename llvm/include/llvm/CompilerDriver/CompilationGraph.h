@@ -157,8 +157,8 @@ namespace llvmc {
     /// in your path.
     void viewGraph();
 
-    /// writeGraph - Write a compilation-graph.dot file.
-    void writeGraph();
+    /// writeGraph - Write Graphviz .dot source file to the current direcotry.
+    void writeGraph(const std::string& OutputFilename);
 
     // GraphTraits support.
     friend NodesIterator GraphBegin(CompilationGraph*);

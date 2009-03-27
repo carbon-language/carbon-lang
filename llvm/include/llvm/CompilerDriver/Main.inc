@@ -98,7 +98,11 @@ int main(int argc, char** argv) {
     Plugins.PopulateCompilationGraph(graph);
 
     if (CheckGraph) {
-      return graph.Check();
+      int ret = graph.Check();
+      if (!ret)
+        std::cerr << "check-graph: no errors found.\n";
+
+      return ret;
     }
 
     if (ViewGraph) {
@@ -108,7 +112,9 @@ int main(int argc, char** argv) {
     }
 
     if (WriteGraph) {
-      graph.writeGraph();
+      graph.writeGraph(OutputFilename.empty()
+                       ? std::string("compilation-graph.dot")
+                       : OutputFilename);
       return 0;
     }
 
