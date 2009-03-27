@@ -159,6 +159,7 @@ public:
 
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
   ASTContext &getContext() const { return Context; }
+  const CompileOptions &getCompileOpts() const { return CompileOpts; }
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }

@@ -19,6 +19,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Frontend/CompileOptions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -665,6 +666,13 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
                               llvm::Value *Storage, CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
+  // Do not emit variable debug information while generating optimized code.
+  // The llvm optimizer and code generator are not yet ready to support
+  // optimized code debugging.
+  const CompileOptions &CO = M->getCompileOpts();
+  if (CO.OptimizationLevel)
+    return;
+
   // Get location information.
   SourceManager &SM = M->getContext().getSourceManager();
   unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
@@ -697,6 +705,14 @@ void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
 /// EmitGlobalVariable - Emit information about a global variable.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var, 
                                      const VarDecl *Decl) {
+
+  // Do not emit variable debug information while generating optimized code.
+  // The llvm optimizer and code generator are not yet ready to support
+  // optimized code debugging.
+  const CompileOptions &CO = M->getCompileOpts();
+  if (CO.OptimizationLevel)
+    return;
+
   // Create global variable debug descriptor.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
