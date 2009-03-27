@@ -41,6 +41,8 @@ public:
                                 const DiagnosticInfo &Info);
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
+  
+  virtual bool supportsLogicalOpControlFlow() const { return false; }  
 };  
   
 //===----------------------------------------------------------------------===//

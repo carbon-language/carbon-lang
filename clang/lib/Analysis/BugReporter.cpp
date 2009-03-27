@@ -85,38 +85,58 @@ static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 // Diagnostics for 'execution continues on line XXX'.
 //===----------------------------------------------------------------------===//
 
-static FullSourceLoc ExecutionContinues(SourceManager& SMgr,
-                                        const ExplodedNode<GRState>* N,
-                                        const Decl& D,
-                                        bool* OutHasStmt = 0) {
+namespace {
+class VISIBILITY_HIDDEN PathDiagnosticBuilder {
+  SourceManager &SMgr;
+  const Decl& CodeDecl;
+  PathDiagnosticClient *PDC;
+public:  
+  PathDiagnosticBuilder(SourceManager &smgr, const Decl& codedecl,
+                        PathDiagnosticClient *pdc)
+    : SMgr(smgr), CodeDecl(codedecl), PDC(pdc) {}
+  
+  FullSourceLoc ExecutionContinues(const ExplodedNode<GRState>* N,
+                                  bool* OutHasStmt = 0);
+  
+  FullSourceLoc ExecutionContinues(llvm::raw_string_ostream& os,
+                                   const ExplodedNode<GRState>* N);
+  
+  bool supportsLogicalOpControlFlow() const {
+    return PDC ? PDC->supportsLogicalOpControlFlow() : true;
+  }  
+};
+} // end anonymous namespace
+
+FullSourceLoc
+PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N,
+                                          bool* OutHasStmt) {
   if (Stmt *S = GetNextStmt(N)) {
     if (OutHasStmt) *OutHasStmt = true;
     return FullSourceLoc(S->getLocStart(), SMgr);
   }
   else {
     if (OutHasStmt) *OutHasStmt = false;
-    return FullSourceLoc(D.getBody()->getRBracLoc(), SMgr);
+    return FullSourceLoc(CodeDecl.getBody()->getRBracLoc(), SMgr);
   }
 }
   
-static FullSourceLoc ExecutionContinues(llvm::raw_string_ostream& os,
-                                        SourceManager& SMgr,
-                                        const ExplodedNode<GRState>* N,
-                                        const Decl& D) {
-  
+FullSourceLoc
+PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
+                                          const ExplodedNode<GRState>* N) {
+
   // Slow, but probably doesn't matter.
   if (os.str().empty())
     os << ' ';
   
   bool hasStmt;
-  FullSourceLoc Loc = ExecutionContinues(SMgr, N, D, &hasStmt);
+  FullSourceLoc Loc = ExecutionContinues(N, &hasStmt);
   
   if (hasStmt)
     os << "Execution continues on line "
-    << SMgr.getInstantiationLineNumber(Loc) << '.';
+       << SMgr.getInstantiationLineNumber(Loc) << '.';
   else
     os << "Execution jumps to the end of the "
-       << (isa<ObjCMethodDecl>(D) ? "method" : "function") << '.';
+       << (isa<ObjCMethodDecl>(CodeDecl) ? "method" : "function") << '.';
   
   return Loc;
 }
@@ -719,6 +739,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   ASTContext& Ctx = getContext();
   SourceManager& SMgr = Ctx.getSourceManager();
   NodeMapClosure NMC(BackMap.get());
+  PathDiagnosticBuilder PDB(SMgr, getStateManager().getCodeDecl(),
+                            getPathDiagnosticClient());
   
   while (NextNode) {
     N = NextNode;    
@@ -819,8 +841,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           }
           else {
             os << "'Default' branch taken. ";
-            End = ExecutionContinues(os, SMgr, N,
-                                     getStateManager().getCodeDecl());
+            End = PDB.ExecutionContinues(os, N);
           }
           
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
@@ -832,13 +853,13 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ContinueStmtClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          FullSourceLoc End =
-            ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
+          FullSourceLoc End = PDB.ExecutionContinues(os, N);
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
           break;
         }
 
+        // Determine control-flow for ternary '?'.
         case Stmt::ConditionalOperatorClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
@@ -849,9 +870,42 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           else
             os << "true";
           
-          FullSourceLoc End =
-            ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
+          FullSourceLoc End = PDB.ExecutionContinues(N);
           
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
+          break;
+        }
+          
+        // Determine control-flow for short-circuited '&&' and '||'.
+        case Stmt::BinaryOperatorClass: {
+          if (!PDB.supportsLogicalOpControlFlow())
+            break;
+          
+          BinaryOperator *B = cast<BinaryOperator>(T);
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
+          os << "Left side of '";
+          
+          if (B->getOpcode() == BinaryOperator::LAnd) {
+            os << "&&";
+          }
+          else {
+            assert(B->getOpcode() == BinaryOperator::LOr);
+            os << "||";
+          }
+
+          os << "' is ";
+          if (*(Src->succ_begin()+1) == Dst)
+            os << (B->getOpcode() == BinaryOperator::LAnd
+                   ? "false" : "true");
+          else
+            os << (B->getOpcode() == BinaryOperator::LAnd
+                   ? "true" : "false");
+          
+          PathDiagnosticLocation Start(B->getLHS(), SMgr);
+          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
           break;
@@ -863,14 +917,12 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
             
             os << "Loop condition is true. ";
-            FullSourceLoc End =
-              ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());            
+            FullSourceLoc End = PDB.ExecutionContinues(os, N);            
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
-            FullSourceLoc End =
-              ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());            
+            FullSourceLoc End = PDB.ExecutionContinues(N);
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                     "Loop condition is false.  Exiting loop"));
           }
@@ -885,15 +937,12 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             llvm::raw_string_ostream os(sbuf);
 
             os << "Loop condition is false. ";
-            FullSourceLoc End = 
-              ExecutionContinues(os, SMgr, N, getStateManager().getCodeDecl());
-
+            FullSourceLoc End = PDB.ExecutionContinues(os, N);
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
-            FullSourceLoc End =
-              ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
+            FullSourceLoc End = PDB.ExecutionContinues(N);
             
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                "Loop condition is true.  Entering loop body"));
@@ -903,9 +952,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         }
           
         case Stmt::IfStmtClass: {
-          FullSourceLoc End =
-            ExecutionContinues(SMgr, N, getStateManager().getCodeDecl());
-          
+          FullSourceLoc End = PDB.ExecutionContinues(N);          
           if (*(Src->succ_begin()+1) == Dst)
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                        "Taking false branch"));

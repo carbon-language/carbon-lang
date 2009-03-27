@@ -38,7 +38,9 @@ namespace {
   public:
     PlistDiagnostics(const std::string& prefix);
     ~PlistDiagnostics();
-    void HandlePathDiagnostic(const PathDiagnostic* D);  
+    void HandlePathDiagnostic(const PathDiagnostic* D);
+    
+    bool supportsLogicalOpControlFlow() const { return true; }
   };  
 } // end anonymous namespace
 
