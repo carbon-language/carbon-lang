@@ -39,6 +39,9 @@ namespace clang {
     /// path element.
     const CXXBaseSpecifier *Base;
 
+    /// Class - The record decl of the class that the base is a base of.
+    const CXXRecordDecl *Class;
+    
     /// SubobjectNumber - Identifies which base class subobject (of type
     /// @c Base->getType()) this base path element refers to. This 
     /// value is only valid if @c !Base->isVirtual(), because there

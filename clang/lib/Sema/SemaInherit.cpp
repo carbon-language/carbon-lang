@@ -132,6 +132,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
       // Add this base specifier to the current path.
       BasePathElement Element;
       Element.Base = &*BaseSpec;
+      Element.Class = Class;
       if (BaseSpec->isVirtual())
         Element.SubobjectNumber = 0;
       else
