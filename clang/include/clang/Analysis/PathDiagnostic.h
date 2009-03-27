@@ -49,8 +49,6 @@ public:
 // Path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
   
-class PathDiagnosticPiece;
-  
 class PathDiagnosticLocation {
 private:
   enum Kind { Range, SingleLoc, Statement } K;
@@ -82,128 +80,6 @@ public:
   
   const PathDiagnosticLocation &getStart() const { return Start; }
   const PathDiagnosticLocation &getEnd() const { return End; }
-};
-
-class PathDiagnostic {
-  std::deque<PathDiagnosticPiece*> path;
-  unsigned Size;
-  std::string BugType;
-  std::string Desc;
-  std::string Category;
-  std::deque<std::string> OtherDesc;
-  
-public:  
-  PathDiagnostic();
-  
-  PathDiagnostic(const char* bugtype, const char* desc, const char* category);
-  
-  PathDiagnostic(const std::string& bugtype, const std::string& desc, 
-                 const std::string& category);
-  
-  ~PathDiagnostic();
-  
-  const std::string& getDescription() const { return Desc; }
-  const std::string& getBugType() const { return BugType; }
-  const std::string& getCategory() const { return Category; }  
-  
-  typedef std::deque<std::string>::const_iterator meta_iterator;
-  meta_iterator meta_begin() const { return OtherDesc.begin(); }
-  meta_iterator meta_end() const { return OtherDesc.end(); }
-  void addMeta(const std::string& s) { OtherDesc.push_back(s); }
-  void addMeta(const char* s) { OtherDesc.push_back(s); }
-
-  void push_front(PathDiagnosticPiece* piece) {
-    path.push_front(piece);
-    ++Size;
-  }
-  
-  void push_back(PathDiagnosticPiece* piece) {
-    path.push_back(piece);
-    ++Size;
-  }
-  
-  PathDiagnosticPiece* back() {
-    return path.back();
-  }
-  
-  const PathDiagnosticPiece* back() const {
-    return path.back();
-  }
-  
-  unsigned size() const { return Size; }
-  bool empty() const { return Size == 0; }
-  
-  void resetPath(bool deletePieces = true);
-  
-  class iterator {
-  public:  
-    typedef std::deque<PathDiagnosticPiece*>::iterator ImplTy;
-    
-    typedef PathDiagnosticPiece              value_type;
-    typedef value_type&                      reference;
-    typedef value_type*                      pointer;
-    typedef ptrdiff_t                        difference_type;
-    typedef std::bidirectional_iterator_tag  iterator_category;
-    
-  private:
-    ImplTy I;
-    
-  public:
-    iterator(const ImplTy& i) : I(i) {}
-    
-    bool operator==(const iterator& X) const { return I == X.I; }
-    bool operator!=(const iterator& X) const { return I != X.I; }
-    
-    PathDiagnosticPiece& operator*() const { return **I; }
-    PathDiagnosticPiece* operator->() const { return *I; }
-    
-    iterator& operator++() { ++I; return *this; }
-    iterator& operator--() { --I; return *this; }
-  };
-  
-  class const_iterator {
-  public:  
-    typedef std::deque<PathDiagnosticPiece*>::const_iterator ImplTy;
-    
-    typedef const PathDiagnosticPiece        value_type;
-    typedef value_type&                      reference;
-    typedef value_type*                      pointer;
-    typedef ptrdiff_t                        difference_type;
-    typedef std::bidirectional_iterator_tag  iterator_category;
-    
-  private:
-    ImplTy I;
-    
-  public:
-    const_iterator(const ImplTy& i) : I(i) {}
-    
-    bool operator==(const const_iterator& X) const { return I == X.I; }
-    bool operator!=(const const_iterator& X) const { return I != X.I; }
-    
-    reference operator*() const { return **I; }
-    pointer operator->() const { return *I; }
-    
-    const_iterator& operator++() { ++I; return *this; }
-    const_iterator& operator--() { --I; return *this; }
-  };
-  
-  typedef std::reverse_iterator<iterator>       reverse_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;  
-  
-  
-  // forward iterator creation methods.
-  
-  iterator begin() { return path.begin(); }
-  iterator end() { return path.end(); }
-  
-  const_iterator begin() const { return path.begin(); }
-  const_iterator end() const { return path.end(); }
-  
-  // reverse iterator creation methods.
-  reverse_iterator rbegin()            { return reverse_iterator(end()); }
-  const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
-  reverse_iterator rend()              { return reverse_iterator(begin()); }
-  const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
 };
 
 //===----------------------------------------------------------------------===//
@@ -395,5 +271,135 @@ public:
   }
 };
 
+/// PathDiagnostic - PathDiagnostic objects represent a single path-sensitive
+///  diagnostic.  It represents an ordered-collection of PathDiagnosticPieces,
+///  each which represent the pieces of the path.
+class PathDiagnostic {
+  std::deque<PathDiagnosticPiece*> path;
+  unsigned Size;
+  std::string BugType;
+  std::string Desc;
+  std::string Category;
+  std::deque<std::string> OtherDesc;
+  
+public:  
+  PathDiagnostic();
+  
+  PathDiagnostic(const char* bugtype, const char* desc, const char* category);
+  
+  PathDiagnostic(const std::string& bugtype, const std::string& desc, 
+                 const std::string& category);
+  
+  ~PathDiagnostic();
+  
+  const std::string& getDescription() const { return Desc; }
+  const std::string& getBugType() const { return BugType; }
+  const std::string& getCategory() const { return Category; }  
+  
+  typedef std::deque<std::string>::const_iterator meta_iterator;
+  meta_iterator meta_begin() const { return OtherDesc.begin(); }
+  meta_iterator meta_end() const { return OtherDesc.end(); }
+  void addMeta(const std::string& s) { OtherDesc.push_back(s); }
+  void addMeta(const char* s) { OtherDesc.push_back(s); }
+  
+  FullSourceLoc getLocation() const {
+    assert(Size > 0 && "getLocation() requires a non-empty PathDiagnostic.");
+    return rbegin()->getLocation();
+  }
+  
+  void push_front(PathDiagnosticPiece* piece) {
+    path.push_front(piece);
+    ++Size;
+  }
+  
+  void push_back(PathDiagnosticPiece* piece) {
+    path.push_back(piece);
+    ++Size;
+  }
+  
+  PathDiagnosticPiece* back() {
+    return path.back();
+  }
+  
+  const PathDiagnosticPiece* back() const {
+    return path.back();
+  }
+  
+  unsigned size() const { return Size; }
+  bool empty() const { return Size == 0; }
+  
+  void resetPath(bool deletePieces = true);
+  
+  class iterator {
+  public:  
+    typedef std::deque<PathDiagnosticPiece*>::iterator ImplTy;
+    
+    typedef PathDiagnosticPiece              value_type;
+    typedef value_type&                      reference;
+    typedef value_type*                      pointer;
+    typedef ptrdiff_t                        difference_type;
+    typedef std::bidirectional_iterator_tag  iterator_category;
+    
+  private:
+    ImplTy I;
+    
+  public:
+    iterator(const ImplTy& i) : I(i) {}
+    
+    bool operator==(const iterator& X) const { return I == X.I; }
+    bool operator!=(const iterator& X) const { return I != X.I; }
+    
+    PathDiagnosticPiece& operator*() const { return **I; }
+    PathDiagnosticPiece* operator->() const { return *I; }
+    
+    iterator& operator++() { ++I; return *this; }
+    iterator& operator--() { --I; return *this; }
+  };
+  
+  class const_iterator {
+  public:  
+    typedef std::deque<PathDiagnosticPiece*>::const_iterator ImplTy;
+    
+    typedef const PathDiagnosticPiece        value_type;
+    typedef value_type&                      reference;
+    typedef value_type*                      pointer;
+    typedef ptrdiff_t                        difference_type;
+    typedef std::bidirectional_iterator_tag  iterator_category;
+    
+  private:
+    ImplTy I;
+    
+  public:
+    const_iterator(const ImplTy& i) : I(i) {}
+    
+    bool operator==(const const_iterator& X) const { return I == X.I; }
+    bool operator!=(const const_iterator& X) const { return I != X.I; }
+    
+    reference operator*() const { return **I; }
+    pointer operator->() const { return *I; }
+    
+    const_iterator& operator++() { ++I; return *this; }
+    const_iterator& operator--() { --I; return *this; }
+  };
+  
+  typedef std::reverse_iterator<iterator>       reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  
+  // forward iterator creation methods.
+  
+  iterator begin() { return path.begin(); }
+  iterator end() { return path.end(); }
+  
+  const_iterator begin() const { return path.begin(); }
+  const_iterator end() const { return path.end(); }
+  
+  // reverse iterator creation methods.
+  reverse_iterator rbegin()            { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
+  reverse_iterator rend()              { return reverse_iterator(begin()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
+};
+  
+  
 } //end clang namespace
 #endif
