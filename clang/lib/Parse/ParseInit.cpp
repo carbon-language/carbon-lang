@@ -210,7 +210,8 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       (Desig.getDesignator(0).isArrayDesignator() ||
        Desig.getDesignator(0).isArrayRangeDesignator())) {
     Diag(Tok, diag::ext_gnu_missing_equal_designator);
-    return ParseInitializer();
+    return Actions.ActOnDesignatedInitializer(Desig, SourceLocation(),
+                                              true, ParseInitializer());
   }
 
   Diag(Tok, diag::err_expected_equal_designator);
