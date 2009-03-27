@@ -145,10 +145,11 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   return EverMadeChange;
 }
 
-/// EliminateMostlyEmptyBlocks - eliminate blocks that contain only PHI nodes
-/// and an unconditional branch.  Passes before isel (e.g. LSR/loopsimplify)
-/// often split edges in ways that are non-optimal for isel.  Start by
-/// eliminating these blocks so we can split them the way we want them.
+/// EliminateMostlyEmptyBlocks - eliminate blocks that contain only PHI nodes,
+/// debug info directives, and an unconditional branch.  Passes before isel
+/// (e.g. LSR/loopsimplify) often split edges in ways that are non-optimal for
+/// isel.  Start by eliminating these blocks so we can split them the way we
+/// want them.
 bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
   bool MadeChange = false;
   // Note that this intentionally skips the entry block.
@@ -160,12 +161,18 @@ bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
     if (!BI || !BI->isUnconditional())
       continue;
 
-    // If the instruction before the branch isn't a phi node, then other stuff
-    // is happening here.
+    // If the instruction before the branch (skipping debug info) isn't a phi
+    // node, then other stuff is happening here.
     BasicBlock::iterator BBI = BI;
     if (BBI != BB->begin()) {
       --BBI;
-      if (!isa<PHINode>(BBI)) continue;
+      while (isa<DbgInfoIntrinsic>(BBI)) {
+        if (BBI == BB->begin())
+          break;
+        --BBI;
+      }
+      if (!isa<DbgInfoIntrinsic>(BBI) && !isa<PHINode>(BBI))
+        continue;
     }
 
     // Do not break infinite loops.
