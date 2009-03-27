@@ -8,8 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file provides Sema routines for C++ inheritance semantics,
-// including searching the inheritance hierarchy and (eventually)
-// access checking.
+// including searching the inheritance hierarchy.
 //
 //===----------------------------------------------------------------------===//
 

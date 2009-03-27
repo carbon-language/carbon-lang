@@ -14,6 +14,7 @@
 		1A376A2D0D4AED9B002A1C52 /* CGExprConstant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */; };
 		1A471AB50F437BC500753CE8 /* CGBlocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A471AB40F437BC500753CE8 /* CGBlocks.cpp */; };
 		1A5D5E580E5E81010023C059 /* CGCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D5E570E5E81010023C059 /* CGCXX.cpp */; };
+		1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */; };
 		1A7342480C7B57D500122F56 /* CGObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A7342470C7B57D500122F56 /* CGObjC.cpp */; };
 		1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A869A6E0BA2164C008DA07A /* LiteralSupport.h */; };
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
@@ -328,6 +329,7 @@
 		1A7019EE0F79BC1100FEC4D1 /* DiagnosticLexKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticLexKinds.td; sourceTree = "<group>"; };
 		1A7019EF0F79BC1100FEC4D1 /* DiagnosticParseKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticParseKinds.td; sourceTree = "<group>"; };
 		1A701A250F79CE1C00FEC4D1 /* DiagnosticSemaKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.td; sourceTree = "<group>"; };
+		1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaAccess.cpp; path = lib/Sema/SemaAccess.cpp; sourceTree = "<group>"; };
 		1A72BEAC0D641E9400B085E9 /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = clang/AST/Attr.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A7342470C7B57D500122F56 /* CGObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjC.cpp; path = lib/CodeGen/CGObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
@@ -955,6 +957,7 @@
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
+				1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */,
 				DEB07AC70F4A427E00F5A2BE /* SemaAttr.cpp */,
 				DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */,
 				35E194670ECB82FB00F21733 /* SemaCXXScopeSpec.cpp */,
@@ -1559,6 +1562,7 @@
 				DEDFE6660F7B3B830035BD10 /* Tool.cpp in Sources */,
 				DEDFE6670F7B3B830035BD10 /* HostInfo.cpp in Sources */,
 				DEDFE6680F7B3B830035BD10 /* Driver.cpp in Sources */,
+				1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
