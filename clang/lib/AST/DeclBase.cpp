@@ -580,8 +580,8 @@ DeclContext::lookup(DeclarationName Name) const {
   return const_cast<DeclContext*>(this)->lookup(Name);
 }
 
-const DeclContext *DeclContext::getLookupContext() const {
-  const DeclContext *Ctx = this;
+DeclContext *DeclContext::getLookupContext() {
+  DeclContext *Ctx = this;
   // Skip through transparent contexts.
   while (Ctx->isTransparentContext())
     Ctx = Ctx->getParent();

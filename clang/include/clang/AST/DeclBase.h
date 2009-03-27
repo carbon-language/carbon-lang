@@ -177,15 +177,15 @@ public:
   Kind getKind() const { return DeclKind; }
   const char *getDeclKindName() const;
   
-  const DeclContext *getDeclContext() const {
-    return const_cast<Decl*>(this)->getDeclContext();
-  }
   DeclContext *getDeclContext() {
     if (isInSemaDC())
       return getSemanticDC();
     return getMultipleDC()->SemanticDC;
   }
-
+  const DeclContext *getDeclContext() const {
+    return const_cast<Decl*>(this)->getDeclContext();
+  }
+  
   void setAccess(AccessSpecifier AS) {
     Access = AS; 
     CheckAccessDeclContext();
@@ -433,14 +433,13 @@ public:
   const char *getDeclKindName() const;
 
   /// getParent - Returns the containing DeclContext.
-  const DeclContext *getParent() const {
+  DeclContext *getParent() {
     return cast<Decl>(this)->getDeclContext();
   }
-  DeclContext *getParent() {
-    return const_cast<DeclContext*>(
-                             const_cast<const DeclContext*>(this)->getParent());
+  const DeclContext *getParent() const {
+    return const_cast<DeclContext*>(this)->getParent();
   }
-
+  
   /// getLexicalParent - Returns the containing lexical DeclContext. May be
   /// different from getParent, e.g.:
   ///
@@ -450,24 +449,20 @@ public:
   ///   struct A::S {}; // getParent() == namespace 'A'
   ///                   // getLexicalParent() == translation unit
   ///
-  const DeclContext *getLexicalParent() const {
-    return cast<Decl>(this)->getLexicalDeclContext();
-  }    
   DeclContext *getLexicalParent() {
-    return const_cast<DeclContext*>(
-                      const_cast<const DeclContext*>(this)->getLexicalParent());
+    return cast<Decl>(this)->getLexicalDeclContext();
   }
-
+  const DeclContext *getLexicalParent() const {
+    return const_cast<DeclContext*>(this)->getLexicalParent();
+  }    
+  
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
-      case Decl::Block:
-      case Decl::ObjCMethod:
-        return true;
-
-      default:
-       if (DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast)
-         return true;
-        return false;
+    case Decl::Block:
+    case Decl::ObjCMethod:
+      return true;
+    default:
+      return DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast;
     }
   }
 
@@ -524,12 +519,11 @@ public:
   /// context of this context, which corresponds to the innermost
   /// location from which name lookup can find the entities in this
   /// context.
-  DeclContext *getLookupContext() {
-    return const_cast<DeclContext *>(
-             const_cast<const DeclContext *>(this)->getLookupContext());
+  DeclContext *getLookupContext();
+  const DeclContext *getLookupContext() const {
+    return const_cast<DeclContext *>(this)->getLookupContext();
   }
-  const DeclContext *getLookupContext() const;
-
+  
   /// \brief Retrieve the nearest enclosing namespace context.
   DeclContext *getEnclosingNamespaceContext();
   const DeclContext *getEnclosingNamespaceContext() const {
