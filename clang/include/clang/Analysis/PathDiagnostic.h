@@ -67,7 +67,7 @@ public:
     
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;
-  const Stmt *asStmt() const { return S ? S : 0; }
+  const Stmt *asStmt() const { return S; }
 };
 
 class PathDiagnosticLocationPair {
@@ -316,19 +316,22 @@ public:
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
   std::vector<PathDiagnosticLocationPair> LPairs;
 public:
-  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, FullSourceLoc endPos,
+  PathDiagnosticControlFlowPiece(const PathDiagnosticLocation &startPos,
+                                 const PathDiagnosticLocation &endPos,
                                  const std::string& s)
     : PathDiagnosticPiece(s, ControlFlow) {
       LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
     }
   
-  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, FullSourceLoc endPos,
+  PathDiagnosticControlFlowPiece(const PathDiagnosticLocation &startPos,
+                                 const PathDiagnosticLocation &endPos,
                                  const char* s)
     : PathDiagnosticPiece(s, ControlFlow) {
       LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
     }
   
-  PathDiagnosticControlFlowPiece(FullSourceLoc startPos, FullSourceLoc endPos)
+  PathDiagnosticControlFlowPiece(const PathDiagnosticLocation &startPos,
+                                 const PathDiagnosticLocation &endPos)
     : PathDiagnosticPiece(ControlFlow) {
       LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
     }
