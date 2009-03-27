@@ -329,7 +329,7 @@
 		1A7019EE0F79BC1100FEC4D1 /* DiagnosticLexKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticLexKinds.td; sourceTree = "<group>"; };
 		1A7019EF0F79BC1100FEC4D1 /* DiagnosticParseKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticParseKinds.td; sourceTree = "<group>"; };
 		1A701A250F79CE1C00FEC4D1 /* DiagnosticSemaKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticSemaKinds.td; sourceTree = "<group>"; };
-		1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaAccess.cpp; path = lib/Sema/SemaAccess.cpp; sourceTree = "<group>"; };
+		1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaAccess.cpp; path = lib/Sema/SemaAccess.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A72BEAC0D641E9400B085E9 /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = clang/AST/Attr.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A7342470C7B57D500122F56 /* CGObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjC.cpp; path = lib/CodeGen/CGObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
