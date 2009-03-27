@@ -872,6 +872,9 @@ def err_typecheck_member_reference_type : Error<
   "cannot refer to type member %0 with '%select{.|->}1'">;
 def err_typecheck_member_reference_unknown : Error<
   "cannot refer to member %0 with '%select{.|->}1'">;
+def note_member_reference_needs_call : Note<
+  "perhaps you meant to call this function with '()'?">;
+
 def err_typecheck_incomplete_tag : Error<"incomplete definition of type %0">;
 def err_typecheck_no_member : Error<"no member named %0">;
 def err_member_redeclared : Error<"class member cannot be redeclared">;

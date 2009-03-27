@@ -2101,9 +2101,22 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                     MemberLoc));
   }
 
-  return ExprError(Diag(MemberLoc,
-                        diag::err_typecheck_member_reference_struct_union)
-                     << BaseType << BaseExpr->getSourceRange());
+  Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
+    << BaseType << BaseExpr->getSourceRange();
+
+  // If the user is trying to apply -> or . to a function or function
+  // pointer, it's probably because they forgot parentheses to call
+  // the function. Suggest the addition of those parentheses.
+  if (BaseType == Context.OverloadTy || 
+      BaseType->isFunctionType() ||
+      (BaseType->isPointerType() && 
+       BaseType->getAsPointerType()->isFunctionType())) {
+    SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
+    Diag(Loc, diag::note_member_reference_needs_call)
+      << CodeModificationHint::CreateInsertion(Loc, "()");
+  }
+
+  return ExprError();
 }
 
 /// ConvertArgumentsForCall - Converts the arguments specified in
