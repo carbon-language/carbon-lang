@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64 -debug |& not grep store
+; RUN: llvm-as < %s | llc -march=ppc64 -debug |& not grep {= store}
 ; RUN: llvm-as < %s | llc -march=ppc64 > %t
 ; RUN: grep  __floattitf %t
 ; RUN: grep  __fixunstfti %t
