@@ -605,7 +605,6 @@ void LICM::hoist(Instruction &I) {
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
-  CurAST->deleteValue(&I);
   I.removeFromParent();
 
   // Insert the new node in Preheader, before the terminator.
