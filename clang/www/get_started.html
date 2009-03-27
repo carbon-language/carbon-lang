@@ -15,14 +15,12 @@
 
 <h1>Getting Started: Building and Running Clang</h1>
 
-
-<p>This page gives you the shortest path to checking out clang and demos a few
+<p>This page gives you the shortest path to checking out Clang and demos a few
 options.  This should get you up and running with the minimum of muss and fuss.
 If you like what you see, please consider <a href="get_involved.html">getting
-involved</a> with the clang community.</p>
+involved</a> with the Clang community.</p>
 
-
-<h2>A word of warning</h2>
+<h2>A Word of Warning</h2>
 
 <p>While this work aims to provide a fully functional C/C++/ObjC front-end, it
 is <em>still early work</em> and is under heavy development. In particular,
@@ -43,10 +41,10 @@ href="http://llvm.org/bugs/">LLVM Bugzilla</a> or bring up the issue on the
 <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang development 
 mailing list</a>.</p>
 
-<h2 id="build">Building clang / working with the code</h2>
+<h2 id="build">Building Clang and Working with the Code</h2>
 
-<p>If you would like to check out and build the project, the current scheme
-is:</p>
+<p>If you would like to check out and build Clang, the current procedure is as
+follows:</p>
 
 <ol>
   <li><a href="http://www.llvm.org/docs/GettingStarted.html#checkout">Checkout
@@ -57,7 +55,7 @@ is:</p>
     <li><tt>cd llvm</tt></li>
     <li><tt>./configure; make</tt></li>
   </ul>
-  <li>Checkout clang:</li>
+  <li>Checkout Clang:</li>
   <ul>
      <li>From within the <tt>llvm</tt> directory (where you
      built llvm):</li>
@@ -65,8 +63,8 @@ is:</p>
      <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
 
   </ul>
-  <li>If you intend to work on clang C++ support, you may need to tell it how
-      to find your C++ standard library headers.  If clang can't find your 
+  <li>If you intend to work on Clang C++ support, you may need to tell it how
+      to find your C++ standard library headers.  If Clang cannot find your 
       system libstdc++ headers, please follow these instructions:</li>
 
   <ul>
@@ -77,7 +75,7 @@ is:</p>
     change the lines below to include that path.</li>
   </ul>
 
-  <li>Build clang:</li>
+  <li>Build Clang:</li>
   <ul>
     <li><tt>cd clang</tt> (assuming that you are in <tt>llvm/tools</tt>)</li>
     <li><tt>make</tt> (this will give you a debug build)</li>
@@ -85,45 +83,69 @@ is:</p>
 
   <li>Try it out (assuming you add llvm/Debug/bin to your path):</li>
   <ul>
-    <li><tt>clang --help</tt></li>
-    <li><tt>clang file.c -fsyntax-only</tt> (check for correctness)</li>
-    <li><tt>clang file.c -ast-dump</tt> (internal debug dump of ast)</li>
-    <li><tt>clang file.c -ast-view</tt> (<a
+    <li><tt>clang-cc --help</tt></li>
+    <li><tt>clang-cc file.c -fsyntax-only</tt> (check for correctness)</li>
+    <li><tt>clang-cc file.c -ast-dump</tt> (internal debug dump of ast)</li>
+    <li><tt>clang-cc file.c -ast-view</tt> (<a
     href="http://llvm.org/docs/ProgrammersManual.html#ViewGraph">set up graphviz
      and rebuild llvm first</a>)</li>
-    <li><tt>clang file.c -emit-llvm</tt> (print out unoptimized llvm code)</li>
-    <li><tt>clang file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts |
+    <li><tt>clang-cc file.c -emit-llvm</tt> (print out unoptimized llvm code)</li>
+    <li><tt>clang-cc file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts |
          llvm-dis</tt> (print out optimized llvm code)</li>
-    <li><tt>clang file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc
+    <li><tt>clang-cc file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc
          &gt; file.s</tt> (output native machine code)</li>
   </ul>
+  
+  <p><em>Note</em>: Here <tt>clang-cc</tt> is the "low-level" frontend
+  executable that is similar in purpose to <tt>cc1</tt>. Clang also has a <a
+  href="#driver">high-level compiler driver</a> that acts as a drop-in
+  replacement for <tt>gcc</tt>.
 </ol>
 
-<p>Note that the C front-end uses LLVM, but does not depend on
-  llvm-gcc.  If you encounter problems with building clang, make
-  sure you have the latest SVN version of LLVM.  LLVM contains
-  support libraries for clang that will be updated as well as
-  development on clang progresses.</p>
+<p>Note that the C front-end uses LLVM, but does not depend on llvm-gcc. If you
+encounter problems with building Clang, make sure you have the latest SVN
+version of LLVM. LLVM contains support libraries for Clang that will be updated
+as well as development on Clang progresses.</p>
   
-<h3>Building clang while building llvm:</h3>
-   <p>Since you've checked out clang into the llvm source tree you can
-   build them all at once with a simple Makefile change. This moves
-   Step 1 above to Step 4.</p>
-  <ul>
-    <li><tt>cd llvm/tools</tt></li>
-    <li>then edit <tt>Makefile</tt> to have a clang target in <tt>PARALLEL_DIRS</tt>
-        just like <tt>llvm-config</tt></li>
-    <li>then just build llvm normally as above and clang will build at
-        the same time</li>
-    <li><em>Note:</em> you can update your toplevel project and all (possibly unrelated)
-        projects inside it with <tt><b>make update</b></tt>. This will run
-	<tt>svn update</tt> on all subdirectories related to subversion.</li>
-  </ul>
+<h3>Simultaneously Building Clang and LLVM:</h3>
 
-<h2>Examples of using clang</h2>
+<p>Once you have checked out Clang into the llvm source tree it will build along
+with the rest of <tt>llvm</tt>. To build all of LLVM and Clang together all at
+once simply run <tt>make</tt> from the root LLVM directory.</p>
+    
+<p><em>Note:</em> Observe that Clang is technically part of a separate
+Subversion repository. As mentioned above, the latest Clang sources are tied to
+the latest sources in the LLVM tree. You can update your toplevel LLVM project
+and all (possibly unrelated) projects inside it with <tt><b>make
+update</b></tt>. This will run <tt>svn update</tt> on all subdirectories related
+to subversion. </p>
 
-<p>The clang driver takes a lot of GCC compatible options, which you can see
-with 'clang --help'. Here are a few examples:</p>
+<a name="driver"><h2>High-Level Compiler Driver (Drop-in Substitute for GCC)</h2></a>
+
+<p>While the <tt>clang-cc</tt> executable is a low-level frontend executable
+that can perform code generation, program analysis, and other actions, it is not
+designed to be a drop-in replacement for GCC's <tt>cc</tt>. For this purpose,
+use the high-level driver, aptly named <tt>clang</tt>.  Here are some
+examples of how to use the high-level driver:
+</p>
+
+<pre class="code">
+$ <b>cat t.c</b>
+#include &lt;stdio.h&gt;
+int main(int argc, char **argv) { printf("hello world\n"); }
+$ <b>clang t.c</b>
+$ <b>./a.out</b>
+hello world
+</pre>
+
+<h2>Examples of using Clang</h2>
+
+<p>The high-level driver <tt>clang</tt> is designed to understand most of GCC's
+options, and the lower-level <tt>clang-cc</tt> executable also directly takes
+many of GCC's options. You can see which options <tt>clang-cc</tt> accepts with
+'<tt>clang-cc --help</tt>'. Here are a few examples of using <tt>clang</tt> and
+<tt>clang-cc</tt>:</p>
+
 <!-- Thanks to
  http://shiflett.org/blog/2006/oct/formatting-and-highlighting-php-code-listings
 Site suggested using pre in CSS, but doesn't work in IE, so went for the <pre>
@@ -169,7 +191,7 @@ typedef float V __attribute__((vector_size(16)));
 <h3>Pretty printing from the AST:</h3>
 
 <pre class="code">
-$ <b>clang ~/t.c -ast-print</b>
+$ <b>clang-cc ~/t.c -ast-print</b>
 typedef float V __attribute__(( vector_size(16) ));
 V foo(V a, V b) {
    return a + b * a;
@@ -180,19 +202,19 @@ V foo(V a, V b) {
 <h3>Code generation with LLVM:</h3>
 
 <pre class="code">
-$ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llvm-dis</b>
+$ <b>clang-cc ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llvm-dis</b>
 define &lt;4 x float&gt; @foo(&lt;4 x float&gt; %a, &lt;4 x float&gt; %b) {
 entry:
          %mul = mul &lt;4 x float&gt; %b, %a
          %add = add &lt;4 x float&gt; %mul, %a
          ret &lt;4 x float&gt; %add
 }
-$ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=ppc32 -mcpu=g5</b>
+$ <b>clang-cc ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=ppc32 -mcpu=g5</b>
 ..
 _foo:
          vmaddfp v2, v3, v2, v2
          blr
-$ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=x86 -mcpu=yonah</b>
+$ <b>clang-cc ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=x86 -mcpu=yonah</b>
 ..
 _foo:
          mulps %xmm0, %xmm1
@@ -200,30 +222,6 @@ _foo:
          movaps %xmm1, %xmm0
          ret
 </pre>
-
-<a name="ccc"><h3>GCC "Emulation" Driver</h3></a>
-
-<p>While the <tt>clang</tt> executable is a compiler driver that can perform
-code generation, program analysis, and other actions, it is not designed to be a
-drop-in replacement for GCC's <tt>cc</tt>. There is interest in developing such
-a driver for clang, but in the interim the clang source tree includes a Python
-script <tt>ccc</tt> in the <tt>utils</tt> subdirectory that provides some of
-this functionality (the script is intended to be used where GCC's <tt>cc</tt>
-could be used). It is currently a work in progress, and eventually will likely
-be replaced by a more complete driver.</p>
-
-<p>Example use:</p>
-
-<pre class="code">
-$ <b>ccc t.c</b>
-clang -emit-llvm-bc -o t.o -U__GNUC__ t.c
-llvm-ld -native -o a.out t.o
-$ <b>ls</b>
-a.out a.out.bc t.c t.o
-</pre>
-
-
-
 
 </div>
 </body>
