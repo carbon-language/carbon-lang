@@ -41,6 +41,8 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
+const int X86AddrNumOperands = 4;
+
 static cl::opt<bool>
 DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 
@@ -7337,17 +7339,18 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   newMBB->addSuccessor(newMBB);
 
   // Insert instructions into newMBB based on incoming instruction
-  assert(bInstr->getNumOperands() < 8 && "unexpected number of operands");
+  assert(bInstr->getNumOperands() < X86AddrNumOperands + 4 &&
+	 "unexpected number of operands");
   DebugLoc dl = bInstr->getDebugLoc();
   MachineOperand& destOper = bInstr->getOperand(0);
-  MachineOperand* argOpers[6];
+  MachineOperand* argOpers[2 + X86AddrNumOperands];
   int numArgs = bInstr->getNumOperands() - 1;
   for (int i=0; i < numArgs; ++i)
     argOpers[i] = &bInstr->getOperand(i+1);
 
   // x86 address has 4 operands: base, index, scale, and displacement
-  int lastAddrIndx = 3; // [0,3]
-  int valArgIndx = 4;
+  int lastAddrIndx = X86AddrNumOperands - 1; // [0,3]
+  int valArgIndx = lastAddrIndx + 1;
 
   unsigned t1 = F->getRegInfo().createVirtualRegister(RC);
   MachineInstrBuilder MIB = BuildMI(newMBB, dl, TII->get(LoadOpc), t1);
@@ -7446,15 +7449,16 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   DebugLoc dl = bInstr->getDebugLoc();
   // Insert instructions into newMBB based on incoming instruction
   // There are 8 "real" operands plus 9 implicit def/uses, ignored here.
-  assert(bInstr->getNumOperands() < 18 && "unexpected number of operands");
+  assert(bInstr->getNumOperands() < X86AddrNumOperands + 14 &&
+	 "unexpected number of operands");
   MachineOperand& dest1Oper = bInstr->getOperand(0);
   MachineOperand& dest2Oper = bInstr->getOperand(1);
-  MachineOperand* argOpers[6];
-  for (int i=0; i < 6; ++i)
+  MachineOperand* argOpers[2 + X86AddrNumOperands];
+  for (int i=0; i < 2 + X86AddrNumOperands; ++i)
     argOpers[i] = &bInstr->getOperand(i+2);
 
   // x86 address has 4 operands: base, index, scale, and displacement
-  int lastAddrIndx = 3; // [0,3]
+  int lastAddrIndx = X86AddrNumOperands - 1; // [0,3]
 
   unsigned t1 = F->getRegInfo().createVirtualRegister(RC);
   MachineInstrBuilder MIB = BuildMI(thisMBB, dl, TII->get(LoadOpc), t1);
@@ -7490,26 +7494,30 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     tt2 = t2;
   }
 
-  assert((argOpers[4]->isReg() || argOpers[4]->isImm()) &&
+  int valArgIndx = lastAddrIndx + 1;
+  assert((argOpers[valArgIndx]->isReg() ||
+	  argOpers[valArgIndx]->isImm()) &&
          "invalid operand");
   unsigned t5 = F->getRegInfo().createVirtualRegister(RC);
   unsigned t6 = F->getRegInfo().createVirtualRegister(RC);
-  if (argOpers[4]->isReg())
+  if (argOpers[valArgIndx]->isReg())
     MIB = BuildMI(newMBB, dl, TII->get(regOpcL), t5);
   else
     MIB = BuildMI(newMBB, dl, TII->get(immOpcL), t5);
   if (regOpcL != X86::MOV32rr)
     MIB.addReg(tt1);
-  (*MIB).addOperand(*argOpers[4]);
-  assert(argOpers[5]->isReg() == argOpers[4]->isReg());
-  assert(argOpers[5]->isImm() == argOpers[4]->isImm());
-  if (argOpers[5]->isReg())
+  (*MIB).addOperand(*argOpers[valArgIndx]);
+  assert(argOpers[valArgIndx + 1]->isReg() ==
+	 argOpers[valArgIndx]->isReg());
+  assert(argOpers[valArgIndx + 1]->isImm() ==
+	 argOpers[valArgIndx]->isImm());
+  if (argOpers[valArgIndx + 1]->isReg())
     MIB = BuildMI(newMBB, dl, TII->get(regOpcH), t6);
   else
     MIB = BuildMI(newMBB, dl, TII->get(immOpcH), t6);
   if (regOpcH != X86::MOV32rr)
     MIB.addReg(tt2);
-  (*MIB).addOperand(*argOpers[5]);
+  (*MIB).addOperand(*argOpers[valArgIndx + 1]);
 
   MIB = BuildMI(newMBB, dl, TII->get(copyOpc), X86::EAX);
   MIB.addReg(t1);
@@ -7582,16 +7590,17 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
 
   DebugLoc dl = mInstr->getDebugLoc();
   // Insert instructions into newMBB based on incoming instruction
-  assert(mInstr->getNumOperands() < 8 && "unexpected number of operands");
+  assert(mInstr->getNumOperands() < X86AddrNumOperands + 4 &&
+	 "unexpected number of operands");
   MachineOperand& destOper = mInstr->getOperand(0);
-  MachineOperand* argOpers[6];
+  MachineOperand* argOpers[2 + X86AddrNumOperands];
   int numArgs = mInstr->getNumOperands() - 1;
   for (int i=0; i < numArgs; ++i)
     argOpers[i] = &mInstr->getOperand(i+1);
 
   // x86 address has 4 operands: base, index, scale, and displacement
-  int lastAddrIndx = 3; // [0,3]
-  int valArgIndx = 4;
+  int lastAddrIndx = X86AddrNumOperands - 1; // [0,3]
+  int valArgIndx = lastAddrIndx + 1;
 
   unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
   MachineInstrBuilder MIB = BuildMI(newMBB, dl, TII->get(X86::MOV32rm), t1);
