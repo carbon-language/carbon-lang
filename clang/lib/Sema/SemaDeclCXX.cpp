@@ -1289,20 +1289,22 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
 /// well-formedness, issuing any diagnostics required. Returns true if
 /// the constructor declarator is invalid.
 bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
-  if (Constructor->isInvalidDecl())
+  CXXRecordDecl *ClassDecl 
+    = dyn_cast<CXXRecordDecl>(Constructor->getDeclContext());
+  if (!ClassDecl)
     return true;
 
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Constructor->getDeclContext());
-  bool Invalid = false;
+  bool Invalid = Constructor->isInvalidDecl();
 
   // C++ [class.copy]p3:
   //   A declaration of a constructor for a class X is ill-formed if
   //   its first parameter is of type (optionally cv-qualified) X and
   //   either there are no other parameters or else all other
   //   parameters have default arguments.
-  if ((Constructor->getNumParams() == 1) || 
-      (Constructor->getNumParams() > 1 && 
-       Constructor->getParamDecl(1)->getDefaultArg() != 0)) {
+  if (!Constructor->isInvalidDecl() &&
+      ((Constructor->getNumParams() == 1) || 
+       (Constructor->getNumParams() > 1 && 
+        Constructor->getParamDecl(1)->getDefaultArg() != 0))) {
     QualType ParamType = Constructor->getParamDecl(0)->getType();
     QualType ClassTy = Context.getTagDeclType(ClassDecl);
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
