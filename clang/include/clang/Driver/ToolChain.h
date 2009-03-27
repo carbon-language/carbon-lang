@@ -72,7 +72,8 @@ public:
   // Helper methods
 
   llvm::sys::Path GetFilePath(const Compilation &C, const char *Name) const;
-  llvm::sys::Path GetProgramPath(const Compilation &C, const char *Name) const;
+  llvm::sys::Path GetProgramPath(const Compilation &C, const char *Name,
+                                 bool WantFile = false) const;
 
   // Platform defaults information
 

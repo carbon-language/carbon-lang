@@ -294,7 +294,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT_print_libgcc_file_name)) {
-    llvm::outs() << GetProgramPath("libgcc.a", TC).toString() << "\n";
+    llvm::outs() << GetProgramPath("libgcc.a", TC, true).toString() << "\n";
     return false;
   }
 
@@ -925,13 +925,14 @@ llvm::sys::Path Driver::GetFilePath(const char *Name,
 }
 
 llvm::sys::Path Driver::GetProgramPath(const char *Name, 
-                                       const ToolChain &TC) const {
+                                       const ToolChain &TC,
+                                       bool WantFile) const {
   const ToolChain::path_list &List = TC.getProgramPaths();
   for (ToolChain::path_list::const_iterator 
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(Name);
-    if (P.exists())
+    if (WantFile ? P.exists() : P.canExecute())
       return P;
   }
 

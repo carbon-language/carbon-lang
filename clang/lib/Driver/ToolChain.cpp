@@ -30,6 +30,7 @@ llvm::sys::Path ToolChain::GetFilePath(const Compilation &C,
 }
 
 llvm::sys::Path ToolChain::GetProgramPath(const Compilation &C, 
-                                          const char *Name) const {
-  return Host.getDriver().GetProgramPath(Name, *this);
+                                          const char *Name,
+                                          bool WantFile) const {
+  return Host.getDriver().GetProgramPath(Name, *this, WantFile);
 }
