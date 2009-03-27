@@ -37,7 +37,7 @@ class TargetMachine;
 template <>
 struct ilist_traits<MachineBasicBlock>
     : public ilist_default_traits<MachineBasicBlock> {
-  mutable ILIST_NODE<MachineBasicBlock> Sentinel;
+  mutable ilist_node<MachineBasicBlock> Sentinel;
 public:
   MachineBasicBlock *createSentinel() const {
     return static_cast<MachineBasicBlock*>(&Sentinel);
