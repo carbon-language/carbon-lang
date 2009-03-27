@@ -117,6 +117,14 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 // Decl Implementation
 //===----------------------------------------------------------------------===//
 
+// Out-of-line virtual method providing a home for Decl.
+Decl::~Decl() {
+  if (isOutOfSemaDC())
+    delete getMultipleDC();
+  
+  assert(!HasAttrs && "attributes should have been freed by Destroy");
+}
+
 void Decl::setDeclContext(DeclContext *DC) {
   if (isOutOfSemaDC())
     delete getMultipleDC();
@@ -140,12 +148,66 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
   }
 }
 
-// Out-of-line virtual method providing a home for Decl.
-Decl::~Decl() {
-  if (isOutOfSemaDC())
-    delete getMultipleDC();
+unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
+  switch (DeclKind) {
+    default: 
+      if (DeclKind >= FunctionFirst && DeclKind <= FunctionLast)
+        return IDNS_Ordinary;
+      assert(0 && "Unknown decl kind!");
+    case OverloadedFunction:
+    case Typedef:
+    case EnumConstant:
+    case Var:
+    case ImplicitParam:
+    case ParmVar:
+    case OriginalParmVar:
+    case NonTypeTemplateParm:
+    case ObjCMethod:
+    case ObjCContainer:
+    case ObjCCategory:
+    case ObjCInterface:
+    case ObjCCategoryImpl:
+    case ObjCProperty:
+    case ObjCCompatibleAlias:
+      return IDNS_Ordinary;
+      
+    case ObjCProtocol:
+      return IDNS_Protocol;
+      
+    case Field:
+    case ObjCAtDefsField:
+    case ObjCIvar:
+      return IDNS_Member;
+      
+    case Record:
+    case CXXRecord:
+    case Enum:
+    case TemplateTypeParm:
+      return IDNS_Tag;
+      
+    case Namespace:
+    case Template:
+    case FunctionTemplate:
+    case ClassTemplate:
+    case TemplateTemplateParm:
+      return IDNS_Tag | IDNS_Ordinary;
+    
+    // Never have names.
+    case LinkageSpec:
+    case FileScopeAsm:
+    case StaticAssert:
+    case ObjCClass:
+    case ObjCImplementation:
+    case ObjCPropertyImpl:
+    case ObjCForwardProtocol:
+    case Block:
+    case TranslationUnit:
 
-  assert(!HasAttrs && "attributes should have been freed by Destroy");
+    // Aren't looked up?
+    case UsingDirective:
+    case ClassTemplateSpecialization:
+      return 0;
+  }
 }
 
 void Decl::addAttr(Attr *NewAttr) {
@@ -426,8 +488,7 @@ private:
 typedef llvm::DenseMap<DeclarationName, StoredDeclsList> StoredDeclsMap;
 
 DeclContext::~DeclContext() {
-  unsigned Size = LookupPtr.getInt();
-  if (Size == LookupIsMap)
+  if (isLookupMap())
     delete static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
   else
     delete [] static_cast<NamedDecl**>(LookupPtr.getPointer());

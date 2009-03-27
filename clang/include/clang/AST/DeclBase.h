@@ -144,6 +144,9 @@ private:
   /// the implementation rather than explicitly written by the user.
   bool Implicit : 1;
 
+  /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
+  unsigned IdentifierNamespace : 5;
+  
 #ifndef NDEBUG
   void CheckAccessDeclContext() const;
 #else
@@ -160,7 +163,8 @@ protected:
     : NextDeclarator(0), NextDeclInScope(0), 
       DeclCtx(DC, 0), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
-      HasAttrs(false), Implicit(false), Access(AS_none) {
+      HasAttrs(false), Implicit(false), 
+      IdentifierNamespace(getIdentifierNamespaceForKind(DK)), Access(AS_none) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
 
@@ -224,57 +228,13 @@ public:
   void setImplicit(bool I = true) { Implicit = I; }
   
   unsigned getIdentifierNamespace() const {
-    switch (DeclKind) {
-    default: 
-      if (DeclKind >= FunctionFirst && DeclKind <= FunctionLast)
-        return IDNS_Ordinary;
-      assert(0 && "Unknown decl kind!");
-    case OverloadedFunction:
-    case Typedef:
-    case EnumConstant:
-    case Var:
-    case ImplicitParam:
-    case ParmVar:
-    case OriginalParmVar:
-    case NonTypeTemplateParm:
-    case ObjCMethod:
-    case ObjCContainer:
-    case ObjCCategory:
-    case ObjCInterface:
-    case ObjCCategoryImpl:
-    case ObjCProperty:
-    case ObjCCompatibleAlias:
-      return IDNS_Ordinary;
-
-    case ObjCProtocol:
-      return IDNS_Protocol;
-
-    case Field:
-    case ObjCAtDefsField:
-    case ObjCIvar:
-      return IDNS_Member;
-
-    case Record:
-    case CXXRecord:
-    case Enum:
-    case TemplateTypeParm:
-      return IDNS_Tag;
-
-    case Namespace:
-    case Template:
-    case FunctionTemplate:
-    case ClassTemplate:
-    case TemplateTemplateParm:
-      return IDNS_Tag | IDNS_Ordinary;
-
-    case ClassTemplateSpecialization:
-      return 0;
-    }
+    return IdentifierNamespace;
   }
-  
   bool isInIdentifierNamespace(unsigned NS) const {
     return getIdentifierNamespace() & NS;
   }
+  static unsigned getIdentifierNamespaceForKind(Kind DK);
+
   
   /// getLexicalDeclContext - The declaration context where this Decl was
   /// lexically declared (LexicalDC). May be different from
@@ -398,8 +358,7 @@ class DeclContext {
   /// in the 3 lowest-order bits and the upper bits are treated as a
   /// pointer to an array of NamedDecl pointers. If the context
   /// contains seven or more declarations, the upper bits are treated
-  /// as a pointer to a DenseMap<DeclarationName, std::vector<NamedDecl*>>.
-  /// FIXME: We need a better data structure for this.
+  /// as a pointer to a DenseMap<DeclarationName, StoredDeclsList>.
   llvm::PointerIntPair<void*, 3> LookupPtr;
 
   /// FirstDecl - The first declaration stored within this declaration
