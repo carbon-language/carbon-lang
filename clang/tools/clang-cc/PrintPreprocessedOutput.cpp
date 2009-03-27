@@ -172,6 +172,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   }
   
   Loc = SourceMgr.getInstantiationLoc(Loc);
+  // FIXME: Should use presumed line #!
   CurLine = SourceMgr.getInstantiationLineNumber(Loc);
 
   if (DisableLineMarkers) return;

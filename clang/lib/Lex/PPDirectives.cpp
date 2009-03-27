@@ -692,6 +692,10 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   }
   
   SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);
+  
+  if (Callbacks)
+    Callbacks->FileChanged(DigitTok.getLocation(), PPCallbacks::RenameFile,
+                           SrcMgr::C_User);
 }
 
 /// ReadLineMarkerFlags - Parse and validate any flags at the end of a GNU line
@@ -823,6 +827,24 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
   SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID,
                         IsFileEntry, IsFileExit, 
                         IsSystemHeader, IsExternCHeader);
+  
+  // If the preprocessor has callbacks installed, notify them of the #line
+  // change.  This is used so that the line marker comes out in -E mode for
+  // example.
+  if (Callbacks) {
+    PPCallbacks::FileChangeReason Reason = PPCallbacks::RenameFile;
+    if (IsFileEntry)
+      Reason = PPCallbacks::EnterFile;
+    else if (IsFileExit)
+      Reason = PPCallbacks::ExitFile;
+    SrcMgr::CharacteristicKind FileKind = SrcMgr::C_User;
+    if (IsExternCHeader)
+      FileKind = SrcMgr::C_ExternCSystem;
+    else if (IsSystemHeader)
+      FileKind = SrcMgr::C_System;
+    
+    Callbacks->FileChanged(DigitTok.getLocation(), Reason, FileKind);
+  }
 }
 
 
