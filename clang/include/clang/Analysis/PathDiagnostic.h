@@ -356,6 +356,15 @@ public:
   
   virtual FullSourceLoc getLocation() const { return getStartLocation(); }
   
+  typedef std::vector<PathDiagnosticLocationPair>::iterator iterator;
+  iterator begin() { return LPairs.begin(); }
+  iterator end()   { return LPairs.end(); }
+
+  typedef std::vector<PathDiagnosticLocationPair>::const_iterator
+          const_iterator;
+  const_iterator begin() const { return LPairs.begin(); }
+  const_iterator end() const   { return LPairs.end(); }
+
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == ControlFlow;
   }
