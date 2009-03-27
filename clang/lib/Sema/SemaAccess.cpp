@@ -1,4 +1,4 @@
-//===---- SemaInherit.cpp - C++ Access Control ------------------*- C++ -*-===//
+//===---- SemaAccess.cpp - C++ Access Control -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,6 +14,9 @@
 #include "Sema.h"
 using namespace clang;
 
+/// SetMemberAccessSpecifier - Set the access specifier of a member.
+/// Returns true on error (when the previous member decl access specifier
+/// is different from the new member decl access specifier).
 bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
                                     NamedDecl *PrevMemberDecl,
                                     AccessSpecifier LexicalAS) {
@@ -35,5 +38,12 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
   }
   
   MemberDecl->setAccess(PrevMemberDecl->getAccess());
+  return false;
+}
+
+/// CheckBaseClassAccess - Check that a derived class can access its base class
+/// and report an error if it can't. [class.access.base]
+bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base, 
+                                BasePaths& Paths, SourceLocation AccessLoc) {
   return false;
 }

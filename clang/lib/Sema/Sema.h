@@ -1616,13 +1616,6 @@ public:
                                  FunctionDecl::StorageClass& SC);
   DeclTy *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
-  /// SetMemberAccessSpecifier - Set the access specifier of a member.
-  /// Returns true on error (when the previous member decl access specifier
-  /// is different from the new member decl access specifier).
-  bool SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
-                                NamedDecl *PrevMemberDecl,
-                                AccessSpecifier LexicalAS);
-  
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
   //
@@ -1652,6 +1645,18 @@ public:
                                     SourceLocation Loc, SourceRange Range);
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
 
+  //===--------------------------------------------------------------------===//
+  // C++ Access Control
+  //
+  
+  bool SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
+                                NamedDecl *PrevMemberDecl,
+                                AccessSpecifier LexicalAS);
+  
+  bool CheckBaseClassAccess(QualType Derived, QualType Base, 
+                            BasePaths& Paths, SourceLocation AccessLoc);
+  
+  
   enum AbstractDiagSelID {
     AbstractNone = -1,
     AbstractReturnType,

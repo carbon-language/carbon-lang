@@ -202,7 +202,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
 /// CheckDerivedToBaseConversion - Check whether the Derived-to-Base
 /// conversion (where Derived and Base are class types) is
 /// well-formed, meaning that the conversion is unambiguous (and
-/// FIXME: that all of the base classes are accessible). Returns true
+/// that all of the base classes are accessible). Returns true
 /// and emits a diagnostic if the code is ill-formed, returns false
 /// otherwise. Loc is the location where this routine should point to
 /// if there is an error, and Range is the source range to highlight
@@ -214,15 +214,17 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
   // explore multiple paths to determine if there is an ambiguity.
-  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                   /*DetectVirtual=*/false);
   bool DerivationOkay = IsDerivedFrom(Derived, Base, Paths);
   assert(DerivationOkay &&
          "Can only be used with a derived-to-base conversion");
   (void)DerivationOkay;
 
-  if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType()))
-    return false;
+  if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
+    // Check that the base class can be accessed.
+    return CheckBaseClassAccess(Derived, Base, Paths, Loc);
+  }
 
   // We know that the derived-to-base conversion is ambiguous, and
   // we're going to produce a diagnostic. Perform the derived-to-base
