@@ -135,7 +135,7 @@ public:
   struct LiveOutInfo {
     unsigned NumSignBits;
     APInt KnownOne, KnownZero;
-    LiveOutInfo() : NumSignBits(0) {}
+    LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
   };
   
   /// LiveOutRegInfo - Information about live out vregs, indexed by their
