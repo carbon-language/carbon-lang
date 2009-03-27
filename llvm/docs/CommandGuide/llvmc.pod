@@ -44,21 +44,24 @@ Enable verbose mode, i.e. print out all executed commands.
 
 =item B<--check-graph>
 
-Check the compilation for common errors like mismatched output/input
-language names, multiple default edges and cycles. Hidden option,
-useful for debugging.
+Check the compilation for common errors like mismatched output/input language
+names, multiple default edges and cycles. Because of plugins, these checks can't
+be performed at compile-time. Exit with code zero if no errors were found, and
+return the number of found errors otherwise. Hidden option, useful for debugging
+LLVMC plugins.
 
 =item B<--view-graph>
 
-Show a graphical representation of the compilation graph. Requires
-that you have I<dot> and I<gv> programs installed. Hidden option,
-useful for debugging.
+Show a graphical representation of the compilation graph and exit. Requires that
+you have I<dot> and I<gv> programs installed. Hidden option, useful for
+debugging LLVMC plugins.
 
 =item B<--write-graph>
 
-Write a I<compilation-graph.dot> file in the current directory with
-the compilation graph description in the Graphviz format. Hidden
-option, useful for debugging.
+Write a I<compilation-graph.dot> file in the current directory with the
+compilation graph description in Graphviz format (identical to the file used by
+the B<--view-graph> option). The B<-o> option can be used to set the output file
+name. Hidden option, useful for debugging LLVMC plugins.
 
 =item B<--save-temps>
 
@@ -109,7 +112,8 @@ Use Clang instead of llvm-gcc.
 
 =item B<-opt>
 
-Enable optimization with B<opt>.
+Enable optimization passes with B<opt>. To pass options to the B<opt> program
+use the B<-Wo,> option.
 
 =item B<-I> I<directory>
 

@@ -107,15 +107,18 @@ until the next -x option.</li>
 <li><tt class="docutils literal"><span class="pre">-load</span> <span class="pre">PLUGIN_NAME</span></tt> - Load the specified plugin DLL. Example:
 <tt class="docutils literal"><span class="pre">-load</span> <span class="pre">$LLVM_DIR/Release/lib/LLVMCSimple.so</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">-v</span></tt> - Enable verbose mode, i.e. print out all executed commands.</li>
-<li><tt class="docutils literal"><span class="pre">--check-graph</span></tt> - Check the compilation for common errors like
-mismatched output/input language names, multiple default edges and
-cycles. Hidden option, useful for debugging.</li>
-<li><tt class="docutils literal"><span class="pre">--view-graph</span></tt> - Show a graphical representation of the compilation
-graph. Requires that you have <tt class="docutils literal"><span class="pre">dot</span></tt> and <tt class="docutils literal"><span class="pre">gv</span></tt> programs
-installed. Hidden option, useful for debugging.</li>
-<li><tt class="docutils literal"><span class="pre">--write-graph</span></tt> - Write a <tt class="docutils literal"><span class="pre">compilation-graph.dot</span></tt> file in the
-current directory with the compilation graph description in the
-Graphviz format. Hidden option, useful for debugging.</li>
+<li><tt class="docutils literal"><span class="pre">--check-graph</span></tt> - Check the compilation for common errors like mismatched
+output/input language names, multiple default edges and cycles. Because of
+plugins, these checks can't be performed at compile-time. Exit with code zero if
+no errors were found, and return the number of found errors otherwise. Hidden
+option, useful for debugging LLVMC plugins.</li>
+<li><tt class="docutils literal"><span class="pre">--view-graph</span></tt> - Show a graphical representation of the compilation graph
+and exit. Requires that you have <tt class="docutils literal"><span class="pre">dot</span></tt> and <tt class="docutils literal"><span class="pre">gv</span></tt> programs installed. Hidden
+option, useful for debugging LLVMC plugins.</li>
+<li><tt class="docutils literal"><span class="pre">--write-graph</span></tt> - Write a <tt class="docutils literal"><span class="pre">compilation-graph.dot</span></tt> file in the current
+directory with the compilation graph description in Graphviz format (identical
+to the file used by the <tt class="docutils literal"><span class="pre">--view-graph</span></tt> option). The <tt class="docutils literal"><span class="pre">-o</span></tt> option can be used
+to set the output file name. Hidden option, useful for debugging LLVMC plugins.</li>
 <li><tt class="docutils literal"><span class="pre">--save-temps</span></tt> - Write temporary files to the current directory
 and do not delete them on exit. Hidden option, useful for debugging.</li>
 <li><tt class="docutils literal"><span class="pre">--help</span></tt>, <tt class="docutils literal"><span class="pre">--help-hidden</span></tt>, <tt class="docutils literal"><span class="pre">--version</span></tt> - These options have
@@ -589,7 +592,7 @@ loaded last.</p>
 <p>When writing LLVMC plugins, it can be useful to get a visual view of
 the resulting compilation graph. This can be achieved via the command
 line option <tt class="docutils literal"><span class="pre">--view-graph</span></tt>. This command assumes that <a class="reference" href="http://www.graphviz.org/">Graphviz</a> and
-<a class="reference" href="http://pages.cs.wisc.edu/~ghost/">Ghostview</a> are installed. There is also a <tt class="docutils literal"><span class="pre">--dump-graph</span></tt> option that
+<a class="reference" href="http://pages.cs.wisc.edu/~ghost/">Ghostview</a> are installed. There is also a <tt class="docutils literal"><span class="pre">--write-graph</span></tt> option that
 creates a Graphviz source file (<tt class="docutils literal"><span class="pre">compilation-graph.dot</span></tt>) in the
 current directory.</p>
 <p>Another useful <tt class="docutils literal"><span class="pre">llvmc</span></tt> option is <tt class="docutils literal"><span class="pre">--check-graph</span></tt>. It checks the
@@ -611,7 +614,7 @@ errors as its status code.</p>
 <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
 <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
 
-Last modified: $Date$
+Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
 </address></div>
 </div>
 </div>

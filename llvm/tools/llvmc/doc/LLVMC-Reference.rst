@@ -92,17 +92,20 @@ configuration libraries:
 
 * ``-v`` - Enable verbose mode, i.e. print out all executed commands.
 
-* ``--check-graph`` - Check the compilation for common errors like
-  mismatched output/input language names, multiple default edges and
-  cycles. Hidden option, useful for debugging.
+* ``--check-graph`` - Check the compilation for common errors like mismatched
+  output/input language names, multiple default edges and cycles. Because of
+  plugins, these checks can't be performed at compile-time. Exit with code zero if
+  no errors were found, and return the number of found errors otherwise. Hidden
+  option, useful for debugging LLVMC plugins.
 
-* ``--view-graph`` - Show a graphical representation of the compilation
-  graph. Requires that you have ``dot`` and ``gv`` programs
-  installed. Hidden option, useful for debugging.
+* ``--view-graph`` - Show a graphical representation of the compilation graph
+  and exit. Requires that you have ``dot`` and ``gv`` programs installed. Hidden
+  option, useful for debugging LLVMC plugins.
 
-* ``--write-graph`` - Write a ``compilation-graph.dot`` file in the
-  current directory with the compilation graph description in the
-  Graphviz format. Hidden option, useful for debugging.
+* ``--write-graph`` - Write a ``compilation-graph.dot`` file in the current
+  directory with the compilation graph description in Graphviz format (identical
+  to the file used by the ``--view-graph`` option). The ``-o`` option can be used
+  to set the output file name. Hidden option, useful for debugging LLVMC plugins.
 
 * ``--save-temps`` - Write temporary files to the current directory
   and do not delete them on exit. Hidden option, useful for debugging.
@@ -631,7 +634,7 @@ Debugging
 When writing LLVMC plugins, it can be useful to get a visual view of
 the resulting compilation graph. This can be achieved via the command
 line option ``--view-graph``. This command assumes that Graphviz_ and
-Ghostview_ are installed. There is also a ``--dump-graph`` option that
+Ghostview_ are installed. There is also a ``--write-graph`` option that
 creates a Graphviz source file (``compilation-graph.dot``) in the
 current directory.
 
