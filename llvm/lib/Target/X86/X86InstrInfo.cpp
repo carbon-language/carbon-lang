@@ -31,6 +31,9 @@
 
 using namespace llvm;
 
+// FIXME: This should be some header
+static const int X86AddrNumOperands = 4;
+
 namespace {
   cl::opt<bool>
   NoFusing("disable-spill-fusing",
@@ -2196,7 +2199,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   } else {
     // Folding a normal load. Just copy the load's address operands.
     unsigned NumOps = LoadMI->getDesc().getNumOperands();
-    for (unsigned i = NumOps - 4; i != NumOps; ++i)
+    for (unsigned i = NumOps - X86AddrNumOperands; i != NumOps; ++i)
       MOs.push_back(LoadMI->getOperand(i));
   }
   return foldMemoryOperandImpl(MF, MI, Ops[0], MOs);
@@ -2283,13 +2286,13 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
     ? RI.getPointerRegClass() : RI.getRegClass(TOI.RegClass);
-  SmallVector<MachineOperand,4> AddrOps;
+  SmallVector<MachineOperand, X86AddrNumOperands> AddrOps;
   SmallVector<MachineOperand,2> BeforeOps;
   SmallVector<MachineOperand,2> AfterOps;
   SmallVector<MachineOperand,4> ImpOps;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &Op = MI->getOperand(i);
-    if (i >= Index && i < Index+4)
+    if (i >= Index && i < Index + X86AddrNumOperands)
       AddrOps.push_back(Op);
     else if (Op.isReg() && Op.isImplicit())
       ImpOps.push_back(Op);
@@ -2304,7 +2307,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     loadRegFromAddr(MF, Reg, AddrOps, RC, NewMIs);
     if (UnfoldStore) {
       // Address operands cannot be marked isKill.
-      for (unsigned i = 1; i != 5; ++i) {
+      for (unsigned i = 1; i != 1 + X86AddrNumOperands; ++i) {
         MachineOperand &MO = NewMIs[0]->getOperand(i);
         if (MO.isReg())
           MO.setIsKill(false);
@@ -2390,7 +2393,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   unsigned NumOps = N->getNumOperands();
   for (unsigned i = 0; i != NumOps-1; ++i) {
     SDValue Op = N->getOperand(i);
-    if (i >= Index-NumDefs && i < Index-NumDefs+4)
+    if (i >= Index-NumDefs && i < Index-NumDefs + X86AddrNumOperands)
       AddrOps.push_back(Op);
     else if (i < Index-NumDefs)
       BeforeOps.push_back(Op);
