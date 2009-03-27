@@ -795,10 +795,42 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
 bool Parser::TryAnnotateTypeOrScopeToken() {
-  assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
+  assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon) 
+          || Tok.is(tok::kw_typename)) &&
          "Cannot be a type or scope token!");
   
-  // FIXME: Implement template-ids
+  if (Tok.is(tok::kw_typename)) {
+    // Parse a C++ typename-specifier, e.g., "typename T::type".
+    //
+    //   typename-specifier:
+    //     'typename' '::' [opt] nested-name-specifier identifier
+    //     'typename' '::' [opt] nested-name-specifier template [opt] 
+    //            simple-template-id  [TODO]
+    SourceLocation TypenameLoc = ConsumeToken();
+    CXXScopeSpec SS;
+    bool HadNestedNameSpecifier = ParseOptionalCXXScopeSpecifier(SS);
+    if (!HadNestedNameSpecifier) {
+      Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
+      return false;
+    }
+
+    TypeResult Ty;
+    if (Tok.is(tok::identifier)) {
+      // FIXME: check whether the next token is '<', first!
+      Ty = Actions.ActOnTypenameType(TypenameLoc, SS, *Tok.getIdentifierInfo(), 
+                                     Tok.getLocation());
+      // FIXME: better error recovery!
+      Tok.setKind(tok::annot_typename);
+      Tok.setAnnotationValue(Ty.get());
+      Tok.setAnnotationEndLoc(Tok.getLocation());
+      Tok.setLocation(TypenameLoc);
+      PP.AnnotateCachedTokens(Tok);
+      return true;
+    } 
+
+    return false;
+  }
+
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
     ParseOptionalCXXScopeSpecifier(SS);
@@ -841,7 +873,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
     // template-id, is not part of the annotation. Fall through to
     // push that token back into the stream and complete the C++ scope
     // specifier annotation.
-  }
+  } 
 
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId 

@@ -687,6 +687,17 @@ def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
 def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;
+def err_nested_name_spec_non_tag : Error<
+  "type %0 cannot be used prior to '::' because it has no members">;
+
+// C++ typename-specifiers
+def err_typename_nested_not_found : Error<"no type named %0 in %1">;
+def err_typename_nested_not_found_global : Error<
+    "no type named %0 in the global namespace">;
+def err_typename_nested_not_type : Error<
+    "typename specifier refers to non-type member %0">;
+def note_typename_refers_here : Note<
+    "referenced member %0 is declared here">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;

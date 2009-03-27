@@ -485,8 +485,23 @@ QualType
 TemplateTypeInstantiator::
 InstantiateQualifiedNameType(const QualifiedNameType *T, 
                              unsigned Quals) const {
-  assert(false && "Cannot have dependent qualified name types (yet)");
-  return QualType();
+  // When we instantiated a qualified name type, there's no point in
+  // keeping the qualification around in the instantiated result. So,
+  // just instantiate the named type.
+  return (*this)(T->getNamedType());
+}
+
+QualType 
+TemplateTypeInstantiator::
+InstantiateTypenameType(const TypenameType *T, unsigned Quals) const {
+  NestedNameSpecifier *NNS 
+    = SemaRef.InstantiateNestedNameSpecifier(T->getQualifier(), 
+                                             SourceRange(Loc),
+                                             TemplateArgs, NumTemplateArgs);
+  if (!NNS)
+    return QualType();
+
+  return SemaRef.CheckTypenameType(NNS, *T->getName(), SourceRange(Loc));
 }
 
 QualType 
@@ -799,21 +814,29 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
     if (!T->isDependentType())
       return NNS;
 
+    // FIXME: We won't be able to perform the instantiation here when
+    // the template-name is dependent, e.g., we have something like
+    // "T::template apply<U>::type".
     T = InstantiateType(T, TemplateArgs, NumTemplateArgs, Range.getBegin(),
                         DeclarationName());
     if (T.isNull())
       return 0;
 
-    // Note that T.getTypePtr(), below, strips cv-qualifiers. This is
-    // perfectly reasonable, since cv-qualified types in
-    // nested-name-specifiers don't matter.
-    // FIXME: we need to perform more checking on this type.
-    return NestedNameSpecifier::Create(Context, Prefix, 
+    if (T->isRecordType() ||
+        (getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
+      // Note that T.getTypePtr(), below, strips cv-qualifiers. This is
+      // perfectly reasonable, since cv-qualified types in
+      // nested-name-specifiers don't matter.
+      return NestedNameSpecifier::Create(Context, Prefix, 
                  NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
-                                       T.getTypePtr());
+                                         T.getTypePtr());
+    }
+
+    Diag(Range.getBegin(), diag::err_nested_name_spec_non_tag) << T;
+    return 0;
   }
   }
 
-  // Required to silence GCC warning.
+  // Required to silence a GCC warning
   return 0;
 }

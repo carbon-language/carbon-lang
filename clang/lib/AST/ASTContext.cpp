@@ -1411,6 +1411,32 @@ ASTContext::getQualifiedNameType(NestedNameSpecifier *NNS,
   return QualType(T, 0);
 }
 
+QualType ASTContext::getTypenameType(NestedNameSpecifier *NNS, 
+                                     const IdentifierInfo *Name,
+                                     QualType Canon) {
+  assert(NNS->isDependent() && "nested-name-specifier must be dependent");
+
+  if (Canon.isNull()) {
+    NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
+    if (CanonNNS != NNS)
+      Canon = getTypenameType(CanonNNS, Name);
+  }
+
+  llvm::FoldingSetNodeID ID;
+  TypenameType::Profile(ID, NNS, Name);
+
+  void *InsertPos = 0;
+  TypenameType *T 
+    = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
+  T = new (*this) TypenameType(NNS, Name, Canon);
+  Types.push_back(T);
+  TypenameTypes.InsertNode(T, InsertPos);
+  return QualType(T, 0);  
+}
+
 /// CmpProtocolNames - Comparison predicate for sorting protocols
 /// alphabetically.
 static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,
@@ -1580,6 +1606,46 @@ QualType ASTContext::getCanonicalType(QualType T) {
   return getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
                               VAT->getSizeModifier(),
                               VAT->getIndexTypeQualifier());
+}
+
+NestedNameSpecifier *
+ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
+  if (!NNS) 
+    return 0;
+
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+    // Canonicalize the prefix but keep the identifier the same.
+    return NestedNameSpecifier::Create(*this, 
+                         getCanonicalNestedNameSpecifier(NNS->getPrefix()),
+                                       NNS->getAsIdentifier());
+
+  case NestedNameSpecifier::Namespace:
+    // A namespace is canonical; build a nested-name-specifier with
+    // this namespace and no prefix.
+    return NestedNameSpecifier::Create(*this, 0, NNS->getAsNamespace());
+
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate: {
+    QualType T = getCanonicalType(QualType(NNS->getAsType(), 0));
+    NestedNameSpecifier *Prefix = 0;
+
+    // FIXME: This isn't the right check!
+    if (T->isDependentType())
+      Prefix = getCanonicalNestedNameSpecifier(NNS->getPrefix());
+
+    return NestedNameSpecifier::Create(*this, Prefix, 
+                 NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate, 
+                                       T.getTypePtr());
+  }
+
+  case NestedNameSpecifier::Global:
+    // The global specifier is canonical and unique.
+    return NNS;
+  }
+
+  // Required to silence a GCC warning
+  return 0;
 }
 
 

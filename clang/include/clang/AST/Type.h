@@ -1609,6 +1609,65 @@ protected:
   friend class Type;
 };
 
+/// \brief Represents a 'typename' specifier that names a type within
+/// a dependent type, e.g., "typename T::type".
+///
+/// TypenameType has a very similar structure to QualifiedNameType,
+/// which also involves a nested-name-specifier following by a type,
+/// and (FIXME!) both can even be prefixed by the 'typename'
+/// keyword. However, the two types serve very different roles:
+/// QualifiedNameType is a non-semantic type that serves only as sugar
+/// to show how a particular type was written in the source
+/// code. TypenameType, on the other hand, only occurs when the
+/// nested-name-specifier is dependent, such that we cannot resolve
+/// the actual type until after instantiation.
+class TypenameType : public Type, public llvm::FoldingSetNode {
+  /// \brief The nested name specifier containing the qualifier.
+  NestedNameSpecifier *NNS;
+
+  /// \brief The type that this typename specifier refers to.
+  /// FIXME: Also need to represent the "template simple-template-id" case.
+  const IdentifierInfo *Name;
+
+  TypenameType(NestedNameSpecifier *NNS, const IdentifierInfo *Name,
+               QualType CanonType)
+    : Type(Typename, CanonType, true), NNS(NNS), Name(Name) { 
+    assert(NNS->isDependent() && 
+           "TypenameType requires a dependent nested-name-specifier");
+  }
+
+  friend class ASTContext;  // ASTContext creates these
+
+public:
+  /// \brief Retrieve the qualification on this type.
+  NestedNameSpecifier *getQualifier() const { return NNS; }
+
+  /// \brief Retrieve the type named by the typename specifier.
+  const IdentifierInfo *getName() const { return Name; }
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, NNS, Name);
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
+                      const IdentifierInfo *Name) {
+    ID.AddPointer(NNS);
+    ID.AddPointer(Name);
+  }
+
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == Typename; 
+  }
+  static bool classof(const TypenameType *T) { return true; }
+
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
+};
+
 /// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
 /// object oriented design.  They basically correspond to C++ classes.  There
 /// are two kinds of interface types, normal interfaces like "NSString" and

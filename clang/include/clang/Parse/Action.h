@@ -1264,6 +1264,19 @@ public:
     return 0;
   }
 
+  /// \brief Called when the parser has parsed a C++ typename
+  /// specifier, e.g., "typename T::type".
+  ///
+  /// \param TypenameLoc the location of the 'typename' keyword
+  /// \param SS the nested-name-specifier following the typename (e.g., 'T::').
+  /// \param II the identifier we're retrieving (e.g., 'type' in the example).
+  /// \param IdLoc the location of the identifier.
+  virtual TypeResult
+  ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
+                    const IdentifierInfo &II, SourceLocation IdLoc) {
+    return 0;
+  }
+
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immediately after parsing

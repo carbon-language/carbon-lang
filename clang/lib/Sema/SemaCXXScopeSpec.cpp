@@ -127,17 +127,20 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     if (TypeDecl *Type = dyn_cast<TypeDecl>(SD)) {
       // Determine whether we have a class (or, in C++0x, an enum) or
       // a typedef thereof. If so, build the nested-name-specifier.
-      QualType T;
-      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+      QualType T = Context.getTypeDeclType(Type);
+      bool AcceptableType = false;
+      if (T->isDependentType())
+        AcceptableType = true;
+      else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
         if (TD->getUnderlyingType()->isRecordType() ||
             (getLangOptions().CPlusPlus0x && 
              TD->getUnderlyingType()->isEnumeralType()))
-          T = Context.getTypeDeclType(TD);
+          AcceptableType = true;
       } else if (isa<RecordDecl>(Type) || 
                  (getLangOptions().CPlusPlus0x && isa<EnumDecl>(Type)))
-        T = Context.getTypeDeclType(Type);
+        AcceptableType = true;
 
-      if (!T.isNull())
+      if (AcceptableType)
         return NestedNameSpecifier::Create(Context, Prefix, false, 
                                            T.getTypePtr());
     }

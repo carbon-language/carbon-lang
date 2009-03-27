@@ -788,6 +788,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                  getLang())*2;
       break;
 
+    // C++ typename-specifier:
+    case tok::kw_typename:
+      if (TryAnnotateTypeOrScopeToken())
+        continue;
+      break;
+
     // GNU typeof support.
     case tok::kw_typeof:
       ParseTypeofSpecifier(DS);
@@ -876,6 +882,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
 
   switch (Tok.getKind()) {
   case tok::identifier:   // foo::bar
+  case tok::kw_typename:  // typename foo::bar
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
@@ -1387,12 +1394,14 @@ bool Parser::isTypeSpecifierQualifier() {
   default: return false;
       
   case tok::identifier:   // foo::bar
+  case tok::kw_typename:  // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return isTypeSpecifierQualifier();
     // Otherwise, not a type specifier.
     return false;
+
   case tok::coloncolon:   // ::foo::bar
     if (NextToken().is(tok::kw_new) ||    // ::new
         NextToken().is(tok::kw_delete))   // ::delete
@@ -1466,7 +1475,9 @@ bool Parser::isDeclarationSpecifier() {
     // Unfortunate hack to support "Class.factoryMethod" notation.
     if (getLang().ObjC1 && NextToken().is(tok::period))
       return false;
+    // Fall through
 
+  case tok::kw_typename: // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())

@@ -516,11 +516,11 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 ///           class-specifier
 ///           enum-specifier
 ///           elaborated-type-specifier
-///           typename-specifier                                    [TODO]
+///           typename-specifier
 ///           cv-qualifier
 ///
 ///         simple-type-specifier:
-///           '::'[opt] nested-name-specifier[opt] type-name        [TODO]
+///           '::'[opt] nested-name-specifier[opt] type-name
 ///           '::'[opt] nested-name-specifier 'template'
 ///                 simple-template-id                              [TODO]
 ///           'char'
@@ -578,6 +578,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   switch (Tok.getKind()) {
   case tok::identifier:   // foo::bar
+  case tok::kw_typename:  // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())

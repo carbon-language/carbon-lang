@@ -73,6 +73,7 @@ class ASTContext {
   llvm::FoldingSet<ClassTemplateSpecializationType> 
     ClassTemplateSpecializationTypes;
   llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
+  llvm::FoldingSet<TypenameType> TypenameTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
 
@@ -295,6 +296,9 @@ public:
 
   QualType getQualifiedNameType(NestedNameSpecifier *NNS,
                                 QualType NamedType);
+  QualType getTypenameType(NestedNameSpecifier *NNS, 
+                           const IdentifierInfo *Name,
+                           QualType Canon = QualType());
 
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and
@@ -525,6 +529,32 @@ public:
     return cast<TagDecl>(cast<TagType>(T.getTypePtr()->CanonicalType)
                            ->getDecl());
   }
+
+  /// \brief Retrieves the "canonical" nested name specifier for a
+  /// given nested name specifier.
+  ///
+  /// The canonical nested name specifier is a nested name specifier
+  /// that uniquely identifies a type or namespace within the type
+  /// system. For example, given:
+  ///
+  /// \code
+  /// namespace N {
+  ///   struct S {
+  ///     template<typename T> struct X { typename T* type; };
+  ///   };
+  /// }
+  ///
+  /// template<typename T> struct Y {
+  ///   typename N::S::X<T>::type member;
+  /// };
+  /// \endcode
+  ///
+  /// Here, the nested-name-specifier for N::S::X<T>:: will be
+  /// S::X<template-param-0-0>, since 'S' and 'X' are uniquely defined
+  /// by declarations in the type system and the canonical type for
+  /// the template type parameter 'T' is template-param-0-0.
+  NestedNameSpecifier *
+  getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS);
 
   /// Type Query functions.  If the type is an instance of the specified class,
   /// return the Type pointer for the underlying maximally pretty type.  This

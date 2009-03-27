@@ -1435,6 +1435,22 @@ void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
     InnerString = MyString + ' ' + InnerString;
 }
 
+void TypenameType::getAsStringInternal(std::string &InnerString) const {
+  std::string MyString;
+
+  {
+    llvm::raw_string_ostream OS(MyString);
+    OS << "typename ";
+    NNS->Print(OS);
+    OS << Name->getName();
+  }
+  
+  if (InnerString.empty())
+    InnerString.swap(MyString);
+  else
+    InnerString = MyString + ' ' + InnerString;
+}
+
 void ObjCInterfaceType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;

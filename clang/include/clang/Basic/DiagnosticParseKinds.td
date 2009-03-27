@@ -232,6 +232,8 @@ def warn_cxx0x_right_shift_in_template_arg : Warning<
   "use of right-shift operator ('>>') in template argument will require "
   "parentheses in C++0x">;
 
+def err_expected_qualified_after_typename : Error<
+  "expected a qualified name after 'typename'">;
 
 // Language specific pragmas
 // - Generic warnings

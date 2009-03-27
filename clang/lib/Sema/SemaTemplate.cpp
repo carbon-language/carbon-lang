@@ -1964,3 +1964,84 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   CurContext->addDecl(Specialization);
   return Specialization;
 }
+
+Sema::TypeResult
+Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
+                        const IdentifierInfo &II, SourceLocation IdLoc) {
+  NestedNameSpecifier *NNS 
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  if (!NNS)
+    return true;
+
+  QualType T = CheckTypenameType(NNS, II, SourceRange(TypenameLoc, IdLoc));
+  if (T.isNull())
+    return 0;
+
+  return T.getAsOpaquePtr();
+}
+
+/// \brief Build the type that describes a C++ typename specifier,
+/// e.g., "typename T::type".
+QualType
+Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
+                        SourceRange Range) {
+  if (NNS->isDependent()) // FIXME: member of the current instantiation!
+    return Context.getTypenameType(NNS, &II);
+
+  CXXScopeSpec SS;
+  SS.setScopeRep(NNS);
+  SS.setRange(Range);
+  if (RequireCompleteDeclContext(SS))
+    return QualType();
+
+  DeclContext *Ctx = computeDeclContext(SS);
+  assert(Ctx && "No declaration context?");
+
+  DeclarationName Name(&II);
+  LookupResult Result = LookupQualifiedName(Ctx, Name, LookupOrdinaryName, 
+                                            false);
+  unsigned DiagID = 0;
+  Decl *Referenced = 0;
+  switch (Result.getKind()) {
+  case LookupResult::NotFound:
+    if (Ctx->isTranslationUnit())
+      DiagID = diag::err_typename_nested_not_found_global;
+    else
+      DiagID = diag::err_typename_nested_not_found;
+    break;
+
+  case LookupResult::Found:
+    if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getAsDecl())) {
+      // We found a type. Build a QualifiedNameType, since the
+      // typename-specifier was just sugar. FIXME: Tell
+      // QualifiedNameType that it has a "typename" prefix.
+      return Context.getQualifiedNameType(NNS, Context.getTypeDeclType(Type));
+    }
+
+    DiagID = diag::err_typename_nested_not_type;
+    Referenced = Result.getAsDecl();
+    break;
+
+  case LookupResult::FoundOverloaded:
+    DiagID = diag::err_typename_nested_not_type;
+    Referenced = *Result.begin();
+    break;
+
+  case LookupResult::AmbiguousBaseSubobjectTypes:
+  case LookupResult::AmbiguousBaseSubobjects:
+  case LookupResult::AmbiguousReference:
+    DiagnoseAmbiguousLookup(Result, Name, Range.getEnd(), Range);
+    return QualType();
+  }
+
+  // If we get here, it's because name lookup did not find a
+  // type. Emit an appropriate diagnostic and return an error.
+  if (NamedDecl *NamedCtx = dyn_cast<NamedDecl>(Ctx))
+    Diag(Range.getEnd(), DiagID) << Range << Name << NamedCtx;
+  else
+    Diag(Range.getEnd(), DiagID) << Range << Name;
+  if (Referenced)
+    Diag(Referenced->getLocation(), diag::note_typename_refers_here)
+      << Name;
+  return QualType();
+}

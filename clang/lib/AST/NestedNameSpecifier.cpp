@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <stdio.h>
 
 using namespace clang;
 
@@ -149,4 +150,13 @@ void NestedNameSpecifier::Print(llvm::raw_ostream &OS) const {
 void NestedNameSpecifier::Destroy(ASTContext &Context) {
   this->~NestedNameSpecifier();
   Context.Deallocate((void *)this);
+}
+
+void NestedNameSpecifier::Dump() {
+  std::string Result;
+  {
+    llvm::raw_string_ostream OS(Result);
+    Print(OS);
+  }
+  fprintf(stderr, "%s", Result.c_str());
 }

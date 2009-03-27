@@ -431,6 +431,19 @@ QualifiedNameType::CreateImpl(ASTContext& Context, llvm::Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
+// TypenameType
+//===----------------------------------------------------------------------===//
+void TypenameType::EmitImpl(llvm::Serializer& S) const {
+  // FIXME: Serialize the actual components
+}
+
+Type* 
+TypenameType::CreateImpl(ASTContext& Context, llvm::Deserializer& D) {
+  // FIXME: Implement de-serialization
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 // VariableArrayType
 //===----------------------------------------------------------------------===//
 

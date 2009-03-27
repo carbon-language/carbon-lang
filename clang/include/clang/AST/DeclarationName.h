@@ -149,7 +149,8 @@ public:
   DeclarationName() : Ptr(0) { }
 
   // Construct a declaration name from an IdentifierInfo *.
-  DeclarationName(IdentifierInfo *II) : Ptr(reinterpret_cast<uintptr_t>(II)) { 
+  DeclarationName(const IdentifierInfo *II) 
+    : Ptr(reinterpret_cast<uintptr_t>(II)) { 
     assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
   }
 
