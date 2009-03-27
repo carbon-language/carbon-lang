@@ -1562,7 +1562,9 @@ protected:
 /// name, e.g., N::M::type.
 ///
 /// This type is used to keep track of a type name as written in the
-/// source code, including any nested-name-specifiers.
+/// source code, including any nested-name-specifiers. The type itself
+/// is always "sugar", used to express what was written in the source
+/// code but containing no additional semantic information.
 class QualifiedNameType : public Type, public llvm::FoldingSetNode {
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
