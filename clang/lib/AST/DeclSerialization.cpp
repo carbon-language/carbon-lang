@@ -125,7 +125,7 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
   Dcl->Implicit = D.ReadBool();
   Dcl->Access = D.ReadInt();
 
-  assert(Dcl->DeclCtx == 0);
+  assert(Dcl->DeclCtx.getOpaqueValue() == 0);
 
   const SerializedPtrID &SemaDCPtrID = D.ReadPtrID();
   const SerializedPtrID &LexicalDCPtrID = D.ReadPtrID();
@@ -133,11 +133,14 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
   if (SemaDCPtrID == LexicalDCPtrID) {
     // Allow back-patching.  Observe that we register the variable of the
     // *object* for back-patching. Its actual value will get filled in later.
-    D.ReadUIntPtr(Dcl->DeclCtx, SemaDCPtrID); 
+    uintptr_t X;
+    D.ReadUIntPtr(X, SemaDCPtrID); 
+    Dcl->DeclCtx.setFromOpaqueValue(reinterpret_cast<void*>(X));
   }
   else {
     MultipleDC *MDC = new MultipleDC();
-    Dcl->DeclCtx = reinterpret_cast<uintptr_t>(MDC) | 0x1;
+    Dcl->DeclCtx.setPointer(MDC);
+    Dcl->DeclCtx.setInt(true);
     // Allow back-patching.  Observe that we register the variable of the
     // *object* for back-patching. Its actual value will get filled in later.
     D.ReadPtr(MDC->SemanticDC, SemaDCPtrID);

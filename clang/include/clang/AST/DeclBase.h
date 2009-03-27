@@ -109,19 +109,25 @@ private:
   ///   }
   ///   void A::f(); // SemanticDC == namespace 'A'
   ///                // LexicalDC == global namespace
-  uintptr_t DeclCtx;
+  llvm::PointerIntPair<void*, 1, bool> DeclCtx;
 
   struct MultipleDC {
     DeclContext *SemanticDC;
     DeclContext *LexicalDC;
   };
 
-  inline bool isInSemaDC() const { return (DeclCtx & 0x1) == 0; }
-  inline bool isOutOfSemaDC() const { return (DeclCtx & 0x1) != 0; }
+  inline bool isInSemaDC() const { return DeclCtx.getInt() == 0; }
+  inline bool isOutOfSemaDC() const { return DeclCtx.getInt() != 0; }
   inline MultipleDC *getMultipleDC() const {
-    return reinterpret_cast<MultipleDC*>(DeclCtx & ~0x1);
+    assert(isOutOfSemaDC() && "Invalid accessor");
+    return static_cast<MultipleDC*>(DeclCtx.getPointer());
   }
 
+  inline DeclContext *getSemanticDC() const {
+    assert(isInSemaDC() && "Invalid accessor");
+    return static_cast<DeclContext*>(DeclCtx.getPointer());
+  }
+  
   /// Loc - The location that this decl.
   SourceLocation Loc;
   
@@ -152,7 +158,7 @@ protected:
 
   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
     : NextDeclarator(0), NextDeclInScope(0), 
-      DeclCtx(reinterpret_cast<uintptr_t>(DC)), 
+      DeclCtx(DC, 0), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Access(AS_none) {
     if (Decl::CollectingStats()) addDeclKind(DK);
@@ -172,13 +178,12 @@ public:
   const char *getDeclKindName() const;
   
   const DeclContext *getDeclContext() const {
-    if (isInSemaDC())
-      return reinterpret_cast<DeclContext*>(DeclCtx);
-    return getMultipleDC()->SemanticDC;
+    return const_cast<Decl*>(this)->getDeclContext();
   }
   DeclContext *getDeclContext() {
-    return const_cast<DeclContext*>(
-                         const_cast<const Decl*>(this)->getDeclContext());
+    if (isInSemaDC())
+      return getSemanticDC();
+    return getMultipleDC()->SemanticDC;
   }
 
   void setAccess(AccessSpecifier AS) {
@@ -281,16 +286,15 @@ public:
   ///   }
   ///   void A::f(); // SemanticDC == namespace 'A'
   ///                // LexicalDC == global namespace
-  const DeclContext *getLexicalDeclContext() const {
+  DeclContext *getLexicalDeclContext() {
     if (isInSemaDC())
-      return reinterpret_cast<DeclContext*>(DeclCtx);
+      return getSemanticDC();
     return getMultipleDC()->LexicalDC;
   }
-  DeclContext *getLexicalDeclContext() {
-    return const_cast<DeclContext*>(
-                  const_cast<const Decl*>(this)->getLexicalDeclContext());
+  const DeclContext *getLexicalDeclContext() const {
+    return const_cast<Decl*>(this)->getLexicalDeclContext();
   }
-
+  
   void setLexicalDeclContext(DeclContext *DC);
 
   /// getNextDeclarator - If this decl was part of a multi-declarator
