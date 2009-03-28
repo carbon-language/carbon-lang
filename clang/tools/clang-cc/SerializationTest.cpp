@@ -15,14 +15,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/CFG.h"
 #include "clang/AST/Decl.h"
 #include "clang.h"
 #include "ASTConsumers.h"
-#include "clang/AST/TranslationUnit.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/System/Path.h"
 #include <fstream>
 #include <cstring>
 using namespace clang;

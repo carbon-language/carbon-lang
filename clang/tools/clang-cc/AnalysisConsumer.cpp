@@ -25,7 +25,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ParentMap.h"
-#include "clang/AST/TranslationUnit.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -36,7 +35,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
-#include <vector>
 
 using namespace clang;
 

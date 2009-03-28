@@ -69,7 +69,6 @@
 		35A3E7020DD3874400757F74 /* CGDebugInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */; };
 		35A8FCF90D9B4B2A001C2F97 /* PathDiagnostic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */; };
 		35BAC1E80E82C5B7003FB76F /* CheckNSError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BAC1E70E82C5B7003FB76F /* CheckNSError.cpp */; };
-		35BB2D7D0D19951A00944DB5 /* TranslationUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */; };
 		35BB2D7F0D19954000944DB5 /* ASTConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */; };
 		35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */; };
 		35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */; };
@@ -417,8 +416,6 @@
 		35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathDiagnostic.cpp; path = lib/Analysis/PathDiagnostic.cpp; sourceTree = "<group>"; };
 		35B820740ECB811A0020BEC0 /* PreprocessorLexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreprocessorLexer.h; sourceTree = "<group>"; };
 		35BAC1E70E82C5B7003FB76F /* CheckNSError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckNSError.cpp; path = lib/Analysis/CheckNSError.cpp; sourceTree = "<group>"; };
-		35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = clang/AST/TranslationUnit.h; sourceTree = "<group>"; tabWidth = 2; };
-		35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = lib/AST/TranslationUnit.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumer.cpp; path = lib/AST/ASTConsumer.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; tabWidth = 2; };
 		35CEA05A0DF9E82700A41296 /* ExprObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ExprObjC.h; path = clang/AST/ExprObjC.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1073,7 +1070,6 @@
 				35847BE30CC7DB9000C40FFF /* StmtIterator.h */,
 				35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */,
 				1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */,
-				35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */,
 				DE3464210B03040900DBC861 /* Type.h */,
 			);
 			name = AST;
@@ -1107,7 +1103,6 @@
 				35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */,
 				35839B090CDF845F006ED061 /* StmtSerialization.cpp */,
 				35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */,
-				35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */,
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
 				35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */,
 			);
@@ -1443,7 +1438,6 @@
 				3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */,
 				DE704B260D0FBEBE009C7762 /* SemaDeclObjC.cpp in Sources */,
 				DE704DD20D1668A4009C7762 /* HeaderMap.cpp in Sources */,
-				35BB2D7D0D19951A00944DB5 /* TranslationUnit.cpp in Sources */,
 				35BB2D7F0D19954000944DB5 /* ASTConsumer.cpp in Sources */,
 				DE47999C0D2EBE1A00706D2D /* SemaExprObjC.cpp in Sources */,
 				03F50AC60D416EAA00B9CF60 /* Targets.cpp in Sources */,
