@@ -457,7 +457,7 @@
 		DE06E8130A8FF9330050E87E /* Action.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Action.h; path = clang/Parse/Action.h; sourceTree = "<group>"; tabWidth = 2; usesTabs = 0; };
 		DE0FCA620A95859D00248FD5 /* Expr.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Expr.h; path = clang/AST/Expr.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE0FCB330A9C21F100248FD5 /* Expr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Expr.cpp; path = lib/AST/Expr.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		DE1263C20EF2341900F56D2B /* Ownership.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Ownership.h; path = include/clang/Parse/Ownership.h; sourceTree = "<group>"; tabWidth = 2; };
+		DE1263C20EF2341900F56D2B /* Ownership.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Ownership.h; path = clang/Parse/Ownership.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE1732FF0B068B700080B521 /* ASTContext.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ASTContext.cpp; path = lib/AST/ASTContext.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE17336D0B068DC20080B521 /* DeclSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSpec.cpp; path = lib/Parse/DeclSpec.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE17336F0B068DC60080B521 /* DeclSpec.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclSpec.h; path = clang/Parse/DeclSpec.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -887,6 +887,7 @@
 				DE06E8130A8FF9330050E87E /* Action.h */,
 				DE17336F0B068DC60080B521 /* DeclSpec.h */,
 				DE3B92230EB5152000D01046 /* Designator.h */,
+				DE1263C20EF2341900F56D2B /* Ownership.h */,
 				DEA09A860F3175CA000C2258 /* ParseDiagnostic.h */,
 				DE1F22020A7D852A00FBF588 /* Parser.h */,
 				DE06BECA0A854E4B0050E87E /* Scope.h */,
@@ -902,7 +903,6 @@
 				DE17336D0B068DC20080B521 /* DeclSpec.cpp */,
 				DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */,
 				DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */,
-				DE1263C20EF2341900F56D2B /* Ownership.h */,
 				DE06D42F0A8BB52D0050E87E /* Parser.cpp */,
 				DE34600E0AFDCCCE00DBC861 /* ParseDecl.cpp */,
 				DE2255FB0C8004E600D370A5 /* ParseDeclCXX.cpp */,
