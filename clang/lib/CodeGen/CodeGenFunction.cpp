@@ -29,16 +29,6 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     DebugInfo(0), SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
-
-  // FIXME: We need to rearrange the code for copy/dispose so we have this
-  // sooner, so we can calculate offsets correctly.
-  if (!BlockHasCopyDispose)
-    BlockOffset = CGM.getTargetData()
-      .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
-  else
-    BlockOffset = CGM.getTargetData()
-      .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
-  BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
 }
 
 ASTContext &CodeGenFunction::getContext() const {

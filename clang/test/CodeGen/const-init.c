@@ -28,13 +28,13 @@ _Complex double g1x = 1.0f;
 _Complex double g1y = 1.0fi;
 // RUN: grep '@g1 = global %. { i8 1, i8 10 }' %t &&
 _Complex char g1 = (char) 1 + (char) 10 * 1i;
-// RUN: grep '@g2 = global .struct.__block_descriptor { i32 1, i32 10 }' %t &&
+// RUN: grep '@g2 = global %2 { i32 1, i32 10 }' %t &&
 _Complex int g2 = 1 + 10i;
 // RUN: grep '@g3 = global %. { float 1.000000e+00, float 1.000000e+01 }' %t &&
 _Complex float g3 = 1.0 + 10.0i;
 // RUN: grep '@g4 = global %. { double 1.000000e+00, double 1.000000e+01 }' %t &&
 _Complex double g4 = 1.0 + 10.0i;
-// RUN: grep '@g5 = global .struct.__block_descriptor zeroinitializer' %t &&
+// RUN: grep '@g5 = global %2 zeroinitializer' %t &&
 _Complex int g5 = (2 + 3i) == (5 + 7i);
 // RUN: grep '@g6 = global %. { double -1.100000e+01, double 2.900000e+01 }' %t &&
 _Complex double g6 = (2.0 + 3.0i) * (5.0 + 7.0i);
