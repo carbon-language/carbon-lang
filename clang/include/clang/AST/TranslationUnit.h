@@ -61,25 +61,8 @@ public:
   iterator end() const { return Context->getTranslationUnitDecl()->decls_end(); }
 };
   
-/// EmitASTBitcodeFile - Emit a translation unit to a bitcode file.
-bool EmitASTBitcodeFile(const TranslationUnit& TU, 
-                        const llvm::sys::Path& Filename);
-  
-bool EmitASTBitcodeFile(const TranslationUnit* TU, 
-                        const llvm::sys::Path& Filename);
-                     
-/// EmitASTBitcodeStream - Emit a translation unit to a std::ostream.
-bool EmitASTBitcodeStream(const TranslationUnit& TU, 
-                          std::ostream& Stream);
-  
-bool EmitASTBitcodeStream(const TranslationUnit* TU, 
-                          std::ostream& Stream);
-                     
 /// EmitASTBitcodeBuffer - Emit a translation unit to a buffer.
 bool EmitASTBitcodeBuffer(const TranslationUnit& TU, 
-                          std::vector<unsigned char>& Buffer);
-
-bool EmitASTBitcodeBuffer(const TranslationUnit* TU, 
                           std::vector<unsigned char>& Buffer);
 
 /// ReadASTBitcodeBuffer - Reconsitute a translation unit from a buffer.

@@ -74,7 +74,21 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
   }
   
   // Serialize the translation unit.
-  return EmitASTBitcodeFile(TU,Filename);
+  
+  // Reserve 256K for bitstream buffer.
+  std::vector<unsigned char> Buffer;
+  Buffer.reserve(256*1024);
+  
+  EmitASTBitcodeBuffer(TU,Buffer);
+  
+  // Write the bits to disk. 
+  if (FILE* fp = fopen(Filename.c_str(),"wb")) {
+    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+    fclose(fp);
+    return true;
+  }
+  
+  return false;
 }
 
 bool SerializationTest::Deserialize(llvm::sys::Path& Filename,

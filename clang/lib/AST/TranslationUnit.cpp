@@ -39,24 +39,6 @@ TranslationUnit::~TranslationUnit() {
   }  
 }
 
-bool clang::EmitASTBitcodeFile(const TranslationUnit* TU,                   
-                               const llvm::sys::Path& Filename) {
-
-  return TU ? EmitASTBitcodeFile(*TU, Filename) : false;
-}
-  
-bool clang::EmitASTBitcodeBuffer(const TranslationUnit* TU, 
-                                 std::vector<unsigned char>& Buffer) {
-
-  return TU ? EmitASTBitcodeBuffer(*TU, Buffer) : false;
-}
-
-bool clang::EmitASTBitcodeStream(const TranslationUnit* TU, 
-                                 std::ostream& Stream) {
-
-  return TU ? EmitASTBitcodeStream(*TU, Stream) : false;
-}
-
 bool clang::EmitASTBitcodeBuffer(const TranslationUnit& TU, 
                                  std::vector<unsigned char>& Buffer) {
   // Create bitstream.
@@ -80,39 +62,6 @@ bool clang::EmitASTBitcodeBuffer(const TranslationUnit& TU,
   }
   
   return true;
-}
-
-bool clang::EmitASTBitcodeStream(const TranslationUnit& TU, 
-                                 std::ostream& Stream) {  
-  
-  // Reserve 256K for bitstream buffer.
-  std::vector<unsigned char> Buffer;
-  Buffer.reserve(256*1024);
-  
-  EmitASTBitcodeBuffer(TU,Buffer);
-  
-  // Write the bits to disk.
-  Stream.write((char*)&Buffer.front(), Buffer.size());
-  return true;
-}
-
-bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
-                               const llvm::sys::Path& Filename) {  
-  
-  // Reserve 256K for bitstream buffer.
-  std::vector<unsigned char> Buffer;
-  Buffer.reserve(256*1024);
-  
-  EmitASTBitcodeBuffer(TU,Buffer);
-  
-  // Write the bits to disk. 
-  if (FILE* fp = fopen(Filename.c_str(),"wb")) {
-    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
-    fclose(fp);
-    return true;
-  }
-
-  return false;  
 }
 
 TranslationUnit*

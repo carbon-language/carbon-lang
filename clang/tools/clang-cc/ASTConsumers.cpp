@@ -977,7 +977,18 @@ public:
   virtual void HandleTranslationUnit(TranslationUnit& TU) {
     if (Diags.hasErrorOccurred())
       return;
-    EmitASTBitcodeFile(&TU, FName);
+    
+    // Reserve 256K for bitstream buffer.
+    std::vector<unsigned char> Buffer;
+    Buffer.reserve(256*1024);
+    
+    EmitASTBitcodeBuffer(TU,Buffer);
+    
+    // Write the bits to disk. 
+    if (FILE* fp = fopen(FName.c_str(),"wb")) {
+      fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+      fclose(fp);
+    }
   }
 };
 
@@ -1016,7 +1027,19 @@ public:
     sprintf(&buf[0], "%s-%llX.ast", FE->getName(),
             (unsigned long long) FE->getInode());
     FName.appendComponent(&buf[0]);    
-    EmitASTBitcodeFile(&TU, FName);
+    
+    
+    // Reserve 256K for bitstream buffer.
+    std::vector<unsigned char> Buffer;
+    Buffer.reserve(256*1024);
+    
+    EmitASTBitcodeBuffer(TU,Buffer);
+    
+    // Write the bits to disk. 
+    if (FILE* fp = fopen(FName.c_str(),"wb")) {
+      fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+      fclose(fp);
+    }
     
     // Now emit the sources.
     
