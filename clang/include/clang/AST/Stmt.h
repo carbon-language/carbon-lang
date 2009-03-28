@@ -235,23 +235,14 @@ public:
   
   virtual void Destroy(ASTContext& Ctx);
 
-  // hasSolitaryDecl - This method returns true if this DeclStmt refers
-  // to a single Decl.
+  /// hasSolitaryDecl - This method returns true if this DeclStmt refers
+  /// to a single Decl.
   bool hasSolitaryDecl() const {
-    return DG.hasSolitaryDecl();
+    return DG.isSingleDecl();
   }
  
-  const Decl* getSolitaryDecl() const {
-    assert (hasSolitaryDecl() &&
-            "Caller assumes this DeclStmt points to one Decl*");
-    return *DG.begin();
-  }
-  
-  Decl* getSolitaryDecl() {
-    assert (hasSolitaryDecl() &&
-            "Caller assumes this DeclStmt points to one Decl*");
-    return *DG.begin();
-  }  
+  const Decl* getSolitaryDecl() const { return DG.getSingleDecl(); }
+  Decl *getSolitaryDecl() { return DG.getSingleDecl(); }  
 
   SourceLocation getStartLoc() const { return StartLoc; }
   SourceLocation getEndLoc() const { return EndLoc; }

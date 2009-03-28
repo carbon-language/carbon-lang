@@ -17,7 +17,6 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
-
 using namespace clang;
 
 DeclGroup* DeclGroup::Create(ASTContext& C, unsigned numdecls, Decl** decls) {
@@ -48,8 +47,8 @@ DeclGroup* DeclGroup::Read(llvm::Deserializer& D, ASTContext& C) {
 }
   
 DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) : NumDecls(numdecls) {
-  assert (numdecls > 0);
-  assert (decls);
+  assert(numdecls > 0);
+  assert(decls);
   memcpy(this+1, decls, numdecls * sizeof(*decls));
 }
 
@@ -59,14 +58,12 @@ void DeclGroup::Destroy(ASTContext& C) {
 }
 
 void DeclGroupRef::Emit(llvm::Serializer& S) const {
-  if (getKind() == DeclKind) {
+  if (isSingleDecl()) {
     S.EmitBool(false);
     S.EmitPtr(D);
-  }
-  else {
+  } else {
     S.EmitBool(true);
-    S.EmitPtr(reinterpret_cast<DeclGroup*>(reinterpret_cast<uintptr_t>(D) 
-                                           & ~Mask));        
+    S.EmitPtr(&getDeclGroup());        
   }
 }
 

@@ -58,7 +58,7 @@ public:
     
 class DeclGroupRef {
 protected:
-  enum Kind { DeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };  
+  enum Kind { SingleDeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };  
   Decl* D;
 
   Kind getKind() const {
@@ -75,31 +75,49 @@ public:
   typedef Decl** iterator;
   typedef Decl* const * const_iterator;
   
-  bool hasSolitaryDecl() const {
-    return getKind() == DeclKind;
+  bool isSingleDecl() const { return getKind() == SingleDeclKind; }
+  bool isDeclGroup() const { return getKind() == DeclGroupKind; }
+
+  Decl *getSingleDecl() {
+    assert(isSingleDecl() && "Isn't a declgroup");
+    return D;
   }
+  const Decl *getSingleDecl() const {
+    return const_cast<DeclGroupRef*>(this)->getSingleDecl();
+  }
+  
+  DeclGroup &getDeclGroup() {
+    assert(isDeclGroup() && "Isn't a declgroup");
+    return *((DeclGroup*)(reinterpret_cast<uintptr_t>(D) & ~Mask));
+  }
+  const DeclGroup &getDeclGroup() const {
+    return const_cast<DeclGroupRef*>(this)->getDeclGroup();
+  }
+  
 
   iterator begin() {
-    if (getKind() == DeclKind) return D ? &D : 0;
-    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
-    return &G[0];
+    if (isSingleDecl())
+      return D ? &D : 0;
+    return &getDeclGroup()[0];
   }
 
   iterator end() {
-    if (getKind() == DeclKind) return D ? &D + 1 : 0;
-    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
+    if (isSingleDecl())
+      return D ? &D+1 : 0;
+    DeclGroup &G = getDeclGroup();
     return &G[0] + G.size();
   }
   
   const_iterator begin() const {
-    if (getKind() == DeclKind) return D ? &D : 0;
-    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
-    return &G[0];
+    if (isSingleDecl())
+      return D ? &D : 0;
+    return &getDeclGroup()[0];
   }
   
   const_iterator end() const {
-    if (getKind() == DeclKind) return D ? &D + 1 : 0;
-    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
+    if (isSingleDecl())
+      return D ? &D+1 : 0;
+    const DeclGroup &G = getDeclGroup();
     return &G[0] + G.size();
   }
 
