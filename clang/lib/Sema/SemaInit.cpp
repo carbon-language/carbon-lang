@@ -1548,7 +1548,7 @@ CheckArrayDesignatorExpr(Sema &Self, Expr *Index, llvm::APSInt &Value) {
 
 Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
                                                         SourceLocation Loc,
-                                                        bool UsedColonSyntax,
+                                                        bool GNUSyntax,
                                                         OwningExprResult Init) {
   typedef DesignatedInitExpr::Designator ASTDesignator;
 
@@ -1622,7 +1622,7 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   DesignatedInitExpr *DIE
     = DesignatedInitExpr::Create(Context, &Designators[0], Designators.size(),
                                  &InitExpressions[0], InitExpressions.size(),
-                                 Loc, UsedColonSyntax, 
+                                 Loc, GNUSyntax, 
                                  static_cast<Expr *>(Init.release()));
   return Owned(DIE);
 }

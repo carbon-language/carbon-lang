@@ -57,10 +57,10 @@ def ext_gnu_conditional_expr : Extension<
 def ext_gnu_empty_initializer : Extension<
   "use of GNU empty initializer extension">;
 def ext_gnu_array_range : Extension<"use of GNU array range extension">;
-def ext_gnu_missing_equal_designator : Extension<
+def ext_gnu_missing_equal_designator : ExtWarn<
   "use of GNU 'missing =' extension in designator">;
 def err_expected_equal_designator : Error<"expected '=' or another designator">;
-def ext_gnu_old_style_field_designator : Extension<
+def ext_gnu_old_style_field_designator : ExtWarn<
   "use of GNU old-style field designator extension">;
 def ext_gnu_case_range : Extension<"use of GNU case range extension">;
 

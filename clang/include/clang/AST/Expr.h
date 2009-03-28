@@ -1860,9 +1860,9 @@ class DesignatedInitExpr : public Expr {
   /// expression.
   SourceLocation EqualOrColonLoc;
 
-  /// Whether this designated initializer used the GNU deprecated ':'
+  /// Whether this designated initializer used the GNU deprecated
   /// syntax rather than the C99 '=' syntax.
-  bool UsesColonSyntax : 1;
+  bool GNUSyntax : 1;
 
   /// The number of designators in this initializer expression.
   unsigned NumDesignators : 15;
@@ -1873,10 +1873,10 @@ class DesignatedInitExpr : public Expr {
   unsigned NumSubExprs : 16;
 
   DesignatedInitExpr(QualType Ty, unsigned NumDesignators, 
-                     SourceLocation EqualOrColonLoc, bool UsesColonSyntax,
+                     SourceLocation EqualOrColonLoc, bool GNUSyntax,
                      unsigned NumSubExprs)
     : Expr(DesignatedInitExprClass, Ty), 
-      EqualOrColonLoc(EqualOrColonLoc), UsesColonSyntax(UsesColonSyntax), 
+      EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax), 
       NumDesignators(NumDesignators), NumSubExprs(NumSubExprs) { }
 
 public:
@@ -2022,7 +2022,7 @@ public:
                                     unsigned NumDesignators,
                                     Expr **IndexExprs, unsigned NumIndexExprs,
                                     SourceLocation EqualOrColonLoc,
-                                    bool UsesColonSyntax, Expr *Init);
+                                    bool GNUSyntax, Expr *Init);
 
   /// @brief Returns the number of designators in this initializer.
   unsigned size() const { return NumDesignators; }
@@ -2041,8 +2041,8 @@ public:
   SourceLocation getEqualOrColonLoc() const { return EqualOrColonLoc; }
 
   /// @brief Determines whether this designated initializer used the
-  /// GNU 'fieldname:' syntax or the C99 '=' syntax.
-  bool usesColonSyntax() const { return UsesColonSyntax; }
+  /// deprecated GNU syntax for designated initializers.
+  bool usesGNUSyntax() const { return GNUSyntax; }
 
   /// @brief Retrieve the initializer value.
   Expr *getInit() const { 

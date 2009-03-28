@@ -1285,7 +1285,7 @@ public:
 
   virtual OwningExprResult ActOnDesignatedInitializer(Designation &Desig,
                                                       SourceLocation Loc,
-                                                      bool UsedColonSyntax,
+                                                      bool GNUSyntax,
                                                       OwningExprResult Init);
 
   virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,

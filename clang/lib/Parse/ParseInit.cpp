@@ -64,13 +64,21 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
   // Handle it as a field designator.  Otherwise, this must be the start of a
   // normal expression.
   if (Tok.is(tok::identifier)) {
-    Diag(Tok, diag::ext_gnu_old_style_field_designator);
-    
     const IdentifierInfo *FieldName = Tok.getIdentifierInfo();
+
+    std::string NewSyntax(".");
+    NewSyntax += FieldName->getName();
+    NewSyntax += " = ";
+
     SourceLocation NameLoc = ConsumeToken(); // Eat the identifier.
     
     assert(Tok.is(tok::colon) && "MayBeDesignationStart not working properly!");
     SourceLocation ColonLoc = ConsumeToken();
+
+    Diag(Tok, diag::ext_gnu_old_style_field_designator)
+      << CodeModificationHint::CreateReplacement(SourceRange(NameLoc, 
+                                                             ColonLoc),
+                                                 NewSyntax);
 
     Designation D;
     D.AddDesignator(Designator::getField(FieldName, SourceLocation(), NameLoc));
@@ -209,8 +217,9 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
   if (Desig.getNumDesignators() == 1 && 
       (Desig.getDesignator(0).isArrayDesignator() ||
        Desig.getDesignator(0).isArrayRangeDesignator())) {
-    Diag(Tok, diag::ext_gnu_missing_equal_designator);
-    return Actions.ActOnDesignatedInitializer(Desig, SourceLocation(),
+    Diag(Tok, diag::ext_gnu_missing_equal_designator)
+      << CodeModificationHint::CreateInsertion(Tok.getLocation(), "=");
+    return Actions.ActOnDesignatedInitializer(Desig, Tok.getLocation(),
                                               true, ParseInitializer());
   }
 

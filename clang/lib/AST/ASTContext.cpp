@@ -89,7 +89,6 @@ ASTContext::~ASTContext() {
     GlobalNestedNameSpecifier->Destroy(*this);
 
   TUDecl->Destroy(*this);
-
 }
 
 void ASTContext::PrintStats() const {

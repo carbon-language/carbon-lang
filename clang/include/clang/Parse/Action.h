@@ -703,15 +703,15 @@ public:
   /// @param Loc The location of the '=' or ':' prior to the
   /// initialization expression.
   ///
-  /// @param UsedColonSyntax If true, then this designated initializer
-  /// used the deprecated GNU syntax @c fieldname:foo rather than the
-  /// C99 syntax @c .fieldname=foo.
+  /// @param GNUSyntax If true, then this designated initializer used
+  /// the deprecated GNU syntax @c fieldname:foo or @c [expr]foo rather
+  /// than the C99 syntax @c .fieldname=foo or @c [expr]=foo.
   ///
   /// @param Init The value that the entity (or entities) described by
   /// the designation will be initialized with.
   virtual OwningExprResult ActOnDesignatedInitializer(Designation &Desig,
                                                       SourceLocation Loc,
-                                                      bool UsedColonSyntax,
+                                                      bool GNUSyntax,
                                                       OwningExprResult Init) {
     return ExprEmpty();
   }

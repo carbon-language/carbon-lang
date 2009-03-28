@@ -18,6 +18,7 @@ int iarray2[10] = {
 };
 
 int iarray3[10] = {
+  [3] 2, // expected-warning{{use of GNU 'missing =' extension in designator}}
   [5 ... 12] = 2 // expected-error{{array designator index (12) exceeds array bounds (10)}}
 };
 
@@ -28,7 +29,7 @@ struct point {
 
 struct point p1 = { 
   .y = 1.0, 
-  x: 2.0,
+  x: 2.0, // expected-warning{{}}
   .a = 4.0, // expected-error{{field designator 'a' does not refer to any field in type 'struct point'}}
 };
 

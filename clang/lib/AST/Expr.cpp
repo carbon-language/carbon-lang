@@ -1534,7 +1534,7 @@ SourceRange DesignatedInitExpr::getSourceRange() const {
   Designator &First =
     *const_cast<DesignatedInitExpr*>(this)->designators_begin();
   if (First.isFieldDesignator()) {
-    if (UsesColonSyntax)
+    if (GNUSyntax)
       StartLoc = SourceLocation::getFromRawEncoding(First.Field.FieldLoc);
     else
       StartLoc = SourceLocation::getFromRawEncoding(First.Field.DotLoc);
