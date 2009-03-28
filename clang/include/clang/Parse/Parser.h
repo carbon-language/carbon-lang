@@ -997,7 +997,8 @@ private:
   DeclPtrTy ParseUsingDirective(unsigned Context, SourceLocation UsingLoc);
   DeclPtrTy ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc);
   DeclPtrTy ParseStaticAssertDeclaration();
-  DeclPtrTy ParseNamespaceAlias(SourceLocation AliasLoc, IdentifierInfo *Alias);
+  DeclPtrTy ParseNamespaceAlias(SourceLocation NamespaceLoc,
+                                SourceLocation AliasLoc, IdentifierInfo *Alias);
   
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.

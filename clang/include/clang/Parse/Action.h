@@ -848,11 +848,12 @@ public:
   /// ActOnNamespaceAliasDef - This is called when a namespace alias definition
   /// is parsed.
   virtual DeclPtrTy ActOnNamespaceAliasDef(Scope *CurScope,
+                                           SourceLocation NamespaceLoc,
                                            SourceLocation AliasLoc,
                                            IdentifierInfo *Alias,
                                            const CXXScopeSpec &SS,
-                                           SourceLocation NamespaceLoc,
-                                           IdentifierInfo *NamespaceName) {
+                                           SourceLocation IdentLoc,
+                                           IdentifierInfo *Ident) {
     return DeclPtrTy();
   }
                                          

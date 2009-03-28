@@ -1377,11 +1377,12 @@ public:
   void PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir);
 
   virtual DeclPtrTy ActOnNamespaceAliasDef(Scope *CurScope,
+                                           SourceLocation NamespaceLoc,
                                            SourceLocation AliasLoc,
                                            IdentifierInfo *Alias,
                                            const CXXScopeSpec &SS,
-                                           SourceLocation NamespaceLoc,
-                                           IdentifierInfo *NamespaceName);
+                                           SourceLocation IdentLoc,
+                                           IdentifierInfo *Ident);
   
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.

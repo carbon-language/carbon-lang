@@ -62,7 +62,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
   
   if (Tok.is(tok::equal))
     // FIXME: Verify no attributes were present.
-    return ParseNamespaceAlias(IdentLoc, Ident);
+    return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident);
   
   if (Tok.is(tok::l_brace)) {
     SourceLocation LBrace = ConsumeBrace();
@@ -99,7 +99,8 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
 /// ParseNamespaceAlias - Parse the part after the '=' in a namespace
 /// alias definition.
 ///
-Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation AliasLoc, 
+Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
+                                              SourceLocation AliasLoc, 
                                               IdentifierInfo *Alias) {
   assert(Tok.is(tok::equal) && "Not equal token");
   
@@ -117,15 +118,15 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation AliasLoc,
   }
 
   // Parse identifier.
-  IdentifierInfo *NamespaceName = Tok.getIdentifierInfo();
-  SourceLocation NamespaceLoc = ConsumeToken();
+  IdentifierInfo *Ident = Tok.getIdentifierInfo();
+  SourceLocation IdentLoc = ConsumeToken();
   
   // Eat the ';'.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                    "namespace name", tok::semi);
   
-  return Actions.ActOnNamespaceAliasDef(CurScope, AliasLoc, Alias, SS,
-                                        NamespaceLoc, NamespaceName);
+  return Actions.ActOnNamespaceAliasDef(CurScope, NamespaceLoc, AliasLoc, Alias, 
+                                        SS, IdentLoc, Ident);
 }
 
 /// ParseLinkage - We know that the current token is a string_literal

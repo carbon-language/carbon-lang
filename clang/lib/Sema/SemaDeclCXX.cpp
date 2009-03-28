@@ -1677,11 +1677,12 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
 }
 
 Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S, 
+                                             SourceLocation NamespaceLoc,
                                              SourceLocation AliasLoc,
                                              IdentifierInfo *Alias,
                                              const CXXScopeSpec &SS,
-                                             SourceLocation NamespaceLoc,
-                                             IdentifierInfo *NamespaceName) {
+                                             SourceLocation IdentLoc,
+                                             IdentifierInfo *Ident) {
   
   // Check if we have a previous declaration with the same name.
   if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName)) {
@@ -1695,10 +1696,9 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
   }
 
   // Lookup the namespace name.
-  LookupResult R = LookupParsedName(S, &SS, NamespaceName,
-                                    LookupNamespaceName, false);
+  LookupResult R = LookupParsedName(S, &SS, Ident, LookupNamespaceName, false);
   if (R.isAmbiguous()) {
-    DiagnoseAmbiguousLookup(R, NamespaceName, NamespaceLoc);
+    DiagnoseAmbiguousLookup(R, Ident, IdentLoc);
     return DeclPtrTy();
   }
   
