@@ -903,7 +903,6 @@
 				DE17336D0B068DC20080B521 /* DeclSpec.cpp */,
 				DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */,
 				DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */,
-				DE06D42F0A8BB52D0050E87E /* Parser.cpp */,
 				DE34600E0AFDCCCE00DBC861 /* ParseDecl.cpp */,
 				DE2255FB0C8004E600D370A5 /* ParseDeclCXX.cpp */,
 				DE3460120AFDCCDA00DBC861 /* ParseExpr.cpp */,
@@ -916,6 +915,7 @@
 				DE34600A0AFDCCBF00DBC861 /* ParseStmt.cpp */,
 				353959D40EE5F88A00E82461 /* ParseTemplate.cpp */,
 				3551068B0E9A8546006A4E44 /* ParseTentative.cpp */,
+				DE06D42F0A8BB52D0050E87E /* Parser.cpp */,
 			);
 			name = Parse;
 			sourceTree = "<group>";
