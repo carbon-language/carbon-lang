@@ -169,6 +169,14 @@ public:
   
   bool isValid() const { return B.isValid() && E.isValid(); }
   
+  bool operator==(const SourceRange &X) const {
+    return B == X.B && E == X.E;
+  }
+  
+  bool operator!=(const SourceRange &X) const {
+    return B != X.B || E != X.E;
+  }
+  
   /// Emit - Emit this SourceRange object to Bitcode.
   void Emit(llvm::Serializer& S) const;    
 
