@@ -676,12 +676,12 @@ public:
   //                    Serialization
   //===--------------------------------------------------------------------===//
 
-  void EmitAll(llvm::Serializer& S) const;
-  static ASTContext* CreateAll(llvm::Deserializer &D,
-                               FileManager &FMgr);  
+  void EmitASTBitcodeBuffer(std::vector<unsigned char> &Buffer) const;
+  static ASTContext *ReadASTBitcodeBuffer(llvm::MemoryBuffer &MBuffer,
+                                          FileManager &FMgr);  
 
   void Emit(llvm::Serializer& S) const;
-  static ASTContext* Create(llvm::Deserializer& D);  
+  static ASTContext *Create(llvm::Deserializer& D);  
   
   //===--------------------------------------------------------------------===//
   //                    Integer Values

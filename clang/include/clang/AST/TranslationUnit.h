@@ -45,7 +45,7 @@ public:
   const std::string& getSourceFile() const;
  
   /// Create - Reconsititute a translation unit from a bitcode stream.
-  static TranslationUnit* Create(llvm::Deserializer& D, FileManager& FMgr);
+  //static TranslationUnit* Create(llvm::Deserializer& D, FileManager& FMgr);
   
   // Accessors
   const LangOptions& getLangOptions() const { return Context->getLangOptions();}
@@ -60,15 +60,6 @@ public:
   iterator end() const { return Context->getTranslationUnitDecl()->decls_end(); }
 };
   
-/// EmitASTBitcodeBuffer - Emit a translation unit to a buffer.
-bool EmitASTBitcodeBuffer(const ASTContext &Ctx, 
-                          std::vector<unsigned char>& Buffer);
-
-/// ReadASTBitcodeBuffer - Reconsitute a translation unit from a buffer.
-TranslationUnit* ReadASTBitcodeBuffer(llvm::MemoryBuffer& MBuffer,
-                                      FileManager& FMgr); 
-                
-
 } // end namespace clang
 
 #endif

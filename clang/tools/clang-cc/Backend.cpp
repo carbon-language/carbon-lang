@@ -10,7 +10,6 @@
 #include "ASTConsumers.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
-#include "clang/AST/TranslationUnit.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompileOptions.h"

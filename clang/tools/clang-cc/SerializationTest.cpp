@@ -81,7 +81,7 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
   std::vector<unsigned char> Buffer;
   Buffer.reserve(256*1024);
   
-  EmitASTBitcodeBuffer(Ctx, Buffer);
+  Ctx.EmitASTBitcodeBuffer(Buffer);
   
   // Write the bits to disk. 
   if (FILE* fp = fopen(Filename.c_str(),"wb")) {
@@ -97,7 +97,7 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
                                     llvm::sys::Path& FNameDeclPrint) {
   
   // Deserialize the translation unit.
-  TranslationUnit* NewTU;
+  ASTContext *NewCtx;
   
   {
     // Create the memory buffer that contains the contents of the file.  
@@ -107,10 +107,10 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
     if (!MBuffer)
       return false;
     
-    NewTU = ReadASTBitcodeBuffer(*MBuffer, FMgr);
+    NewCtx = ASTContext::ReadASTBitcodeBuffer(*MBuffer, FMgr);
   }
 
-  if (!NewTU)
+  if (!NewCtx)
     return false;
   
   {
@@ -120,11 +120,13 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
     assert (Err.empty() && "Could not open file for printing out decls.");
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
-    for (TranslationUnit::iterator I=NewTU->begin(), E=NewTU->end(); I!=E; ++I)
+    TranslationUnitDecl *TUD = NewCtx->getTranslationUnitDecl();
+    for (DeclContext::decl_iterator I = TUD->decls_begin(), E = TUD->decls_end();
+         I != E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
   }
 
-  delete NewTU;
+  delete NewCtx;
   
   return true;
 }

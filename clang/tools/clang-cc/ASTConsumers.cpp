@@ -13,18 +13,18 @@
 
 #include "ASTConsumers.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
-#include "clang/AST/TranslationUnit.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "llvm/System/Path.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -981,7 +981,7 @@ public:
     std::vector<unsigned char> Buffer;
     Buffer.reserve(256*1024);
     
-    EmitASTBitcodeBuffer(Ctx, Buffer);
+    Ctx.EmitASTBitcodeBuffer(Buffer);
     
     // Write the bits to disk. 
     if (FILE* fp = fopen(FName.c_str(),"wb")) {
@@ -1032,7 +1032,7 @@ public:
     std::vector<unsigned char> Buffer;
     Buffer.reserve(256*1024);
     
-    EmitASTBitcodeBuffer(Ctx, Buffer);
+    Ctx.EmitASTBitcodeBuffer(Buffer);
     
     // Write the bits to disk. 
     if (FILE* fp = fopen(FName.c_str(),"wb")) {

@@ -1531,16 +1531,16 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  llvm::OwningPtr<TranslationUnit> TU;
+  llvm::OwningPtr<ASTContext> Ctx;
   
   // Create the memory buffer that contains the contents of the file.  
   llvm::OwningPtr<llvm::MemoryBuffer> 
     MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
   
   if (MBuffer)
-    TU.reset(ReadASTBitcodeBuffer(*MBuffer, FileMgr));
+    Ctx.reset(ASTContext::ReadASTBitcodeBuffer(*MBuffer, FileMgr));
   
-  if (!TU) {
+  if (!Ctx) {
     fprintf(stderr, "error: file '%s' could not be deserialized\n", 
             InFile.c_str());
     exit (1);
@@ -1549,7 +1549,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   // Observe that we use the source file name stored in the deserialized
   // translation unit, rather than InFile.
   llvm::OwningPtr<ASTConsumer>
-    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOptions(),
+    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, Ctx->getLangOptions(),
                                0, 0));
 
   if (!Consumer) {      
@@ -1557,10 +1557,12 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
 
-  Consumer->Initialize(TU->getContext());
+  Consumer->Initialize(*Ctx);
 
   // FIXME: We need to inform Consumer about completed TagDecls as well.
-  for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
+  TranslationUnitDecl *TUD = Ctx->getTranslationUnitDecl();
+  for (DeclContext::decl_iterator I = TUD->decls_begin(), E = TUD->decls_end();
+       I != E; ++I)
     Consumer->HandleTopLevelDecl(*I);
 }
 

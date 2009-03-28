@@ -23,6 +23,7 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
 using namespace clang;
 
 enum FloatingRank {
@@ -3086,7 +3087,21 @@ enum {
   DeclsBlock = 3
 };
 
-void ASTContext::EmitAll(llvm::Serializer &S) const {
+void ASTContext::EmitASTBitcodeBuffer(std::vector<unsigned char> &Buffer) const{
+  // Create bitstream.
+  llvm::BitstreamWriter Stream(Buffer);
+  
+  // Emit the preamble.
+  Stream.Emit((unsigned)'B', 8);
+  Stream.Emit((unsigned)'C', 8);
+  Stream.Emit(0xC, 4);
+  Stream.Emit(0xF, 4);
+  Stream.Emit(0xE, 4);
+  Stream.Emit(0x0, 4);
+  
+  // Create serializer.  
+  llvm::Serializer S(Stream);  
+  
   // ===---------------------------------------------------===/
   //      Serialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
@@ -3142,8 +3157,32 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   // FIXME: S.EmitOwnedPtr(CFConstantStringTypeDecl);
 }
 
-ASTContext* ASTContext::CreateAll(llvm::Deserializer &Dezr,
-                                  FileManager &FMgr) {
+
+ASTContext *ASTContext::ReadASTBitcodeBuffer(llvm::MemoryBuffer &Buffer,
+                                             FileManager &FMgr) {
+  // Check if the file is of the proper length.
+  if (Buffer.getBufferSize() & 0x3) {
+    // FIXME: Provide diagnostic: "Length should be a multiple of 4 bytes."
+    return 0;
+  }
+  
+  // Create the bitstream reader.
+  unsigned char *BufPtr = (unsigned char *)Buffer.getBufferStart();
+  llvm::BitstreamReader Stream(BufPtr, BufPtr+Buffer.getBufferSize());
+  
+  if (Stream.Read(8) != 'B' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(4) != 0xC ||
+      Stream.Read(4) != 0xF ||
+      Stream.Read(4) != 0xE ||
+      Stream.Read(4) != 0x0) {
+    // FIXME: Provide diagnostic.
+    return NULL;
+  }
+  
+  // Create the deserializer.
+  llvm::Deserializer Dezr(Stream);
+  
   // ===---------------------------------------------------===/
   //      Deserialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
