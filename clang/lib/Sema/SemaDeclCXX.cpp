@@ -1675,6 +1675,15 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
     S->PushUsingDirective(UDir);
 }
 
+Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *CurScope, 
+                                           SourceLocation AliasLoc,
+                                           IdentifierInfo *Alias,
+                                           const CXXScopeSpec &SS,
+                                           SourceLocation NamespaceLoc,
+                                           IdentifierInfo *NamespaceName) {
+  return 0;
+}
+
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
 /// ActOnDeclarator, when a C++ direct initializer is present.
 /// e.g: "int x(1);"

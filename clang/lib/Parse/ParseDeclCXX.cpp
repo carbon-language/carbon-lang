@@ -124,7 +124,8 @@ Parser::DeclTy *Parser::ParseNamespaceAlias(SourceLocation AliasLoc,
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                    "namespace name", tok::semi);
   
-  return 0;
+  return Actions.ActOnNamespaceAliasDef(CurScope, AliasLoc, Alias, SS,
+                                        NamespaceLoc, NamespaceName);
 }
 
 /// ParseLinkage - We know that the current token is a string_literal

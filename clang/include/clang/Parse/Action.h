@@ -842,6 +842,17 @@ public:
                                       IdentifierInfo *NamespcName,
                                       AttributeList *AttrList);
 
+  /// ActOnNamespaceAliasDef - This is called when a namespace alias definition
+  /// is parsed.
+  virtual DeclTy *ActOnNamespaceAliasDef(Scope *CurScope,
+                                         SourceLocation AliasLoc,
+                                         IdentifierInfo *Alias,
+                                         const CXXScopeSpec &SS,
+                                         SourceLocation NamespaceLoc,
+                                         IdentifierInfo *NamespaceName) {
+    return 0;
+  }
+                                         
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
   virtual void ActOnParamDefaultArgument(DeclTy *param,
                                          SourceLocation EqualLoc,

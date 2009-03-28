@@ -1370,9 +1370,16 @@ public:
                                       SourceLocation IdentLoc,
                                       IdentifierInfo *NamespcName,
                                       AttributeList *AttrList);
-
+  
   void PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir);
 
+  virtual DeclTy *ActOnNamespaceAliasDef(Scope *CurScope,
+                                         SourceLocation AliasLoc,
+                                         IdentifierInfo *Alias,
+                                         const CXXScopeSpec &SS,
+                                         SourceLocation NamespaceLoc,
+                                         IdentifierInfo *NamespaceName);
+  
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.
   /// e.g: "int x(1);"
