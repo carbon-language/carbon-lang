@@ -25,24 +25,25 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-/// the file is parsed.  This inserts the parsed decls into TU.
+/// the file is parsed.  This inserts the parsed decls into the translation unit
+/// held by Ctx.
 ///
 void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
-                     TranslationUnit &TU, bool PrintStats) {
+                     ASTContext &Ctx, bool PrintStats) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
     Stmt::CollectingStats(true);
   }
 
-  Sema S(PP, TU.getContext(), *Consumer);
+  Sema S(PP, Ctx, *Consumer);
   Parser P(PP, S);
   PP.EnterMainSourceFile();
     
   // Initialize the parser.
   P.Initialize();
   
-  Consumer->Initialize(TU.getContext());
+  Consumer->Initialize(Ctx);
   
   Parser::DeclTy *ADecl;
   
@@ -56,12 +57,12 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
     }
   };
   
-  Consumer->HandleTranslationUnit(TU.getContext());
+  Consumer->HandleTranslationUnit(Ctx);
 
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     P.getActions().PrintStats();
-    TU.getContext().PrintStats();
+    Ctx.PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
     Consumer->PrintStats();

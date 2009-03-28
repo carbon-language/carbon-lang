@@ -1476,7 +1476,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
   if (Consumer) {
     llvm::OwningPtr<ASTContext> ContextOwner;
-    llvm::OwningPtr<TranslationUnit> TranslationUnitOwner;
 
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
                                       PP.getSourceManager(),
@@ -1484,17 +1483,14 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       PP.getIdentifierTable(),
                                       PP.getSelectorTable(),
                                       /* FreeMemory = */ !DisableFree));
-    TranslationUnitOwner.reset(new TranslationUnit(*ContextOwner.get()));
     
     
-    ParseAST(PP, Consumer.get(), *TranslationUnitOwner.get(), Stats);
+    ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats);
     
     // If in -disable-free mode, don't deallocate these when they go out of
     // scope.
-    if (DisableFree) {
+    if (DisableFree)
       ContextOwner.take();
-      TranslationUnitOwner.take();
-    }
   }
 
   if (VerifyDiagnostics)

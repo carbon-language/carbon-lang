@@ -17,13 +17,14 @@
 namespace clang {
   class Preprocessor;
   class ASTConsumer;
-  class TranslationUnit;
+  class ASTContext;
 
   /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-  /// the file is parsed.  This inserts the parsed decls into TU.
+  /// the file is parsed.    This inserts the parsed decls into the translation unit
+  /// held by Ctx.
   ///
   void ParseAST(Preprocessor &pp, ASTConsumer *C, 
-                TranslationUnit &TU, bool PrintStats = false);
+                ASTContext &Ctx, bool PrintStats = false);
 
 }  // end namespace clang
 
