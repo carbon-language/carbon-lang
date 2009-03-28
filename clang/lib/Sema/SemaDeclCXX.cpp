@@ -1675,12 +1675,24 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
     S->PushUsingDirective(UDir);
 }
 
-Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *CurScope, 
+Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *S, 
                                            SourceLocation AliasLoc,
                                            IdentifierInfo *Alias,
                                            const CXXScopeSpec &SS,
                                            SourceLocation NamespaceLoc,
                                            IdentifierInfo *NamespaceName) {
+  
+  // Check if we have a previous declaration with the same name.
+  if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName)) {
+    // FIXME: If this is a namespace alias decl, and it points to the same 
+    // namespace, we shouldn't warn.
+    unsigned DiagID = isa<NamespaceDecl>(PrevDecl) ? diag::err_redefinition :
+      diag::err_redefinition_different_kind;
+    Diag(AliasLoc, DiagID) << Alias;
+    Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+    return 0;
+  }
+
   return 0;
 }
 
