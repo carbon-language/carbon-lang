@@ -1721,3 +1721,7 @@ is a null (making it a C string). There's no need for these restrictions.
 
 //===---------------------------------------------------------------------===//
 
+The arg promotion pass should make use of nocapture to make its alias analysis
+stuff much more precise.
+
+//===---------------------------------------------------------------------===//
