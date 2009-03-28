@@ -60,11 +60,11 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     // FIXME: save these somewhere.
     AttrList = ParseAttributes();
   
-  if (Tok.is(tok::equal)) {
+  if (Tok.is(tok::equal))
     // FIXME: Verify no attributes were present.
-    // FIXME: parse this.
-  } else if (Tok.is(tok::l_brace)) {
-
+    return ParseNamespaceAlias(IdentLoc, Ident);
+  
+  if (Tok.is(tok::l_brace)) {
     SourceLocation LBrace = ConsumeBrace();
 
     // Enter a scope for the namespace.
@@ -92,6 +92,37 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     Diag(Tok, Ident ? diag::err_expected_lbrace : 
                       diag::err_expected_ident_lbrace);
   }
+  
+  return 0;
+}
+
+/// ParseNamespaceAlias - Parse the part after the '=' in a namespace
+/// alias definition.
+///
+Parser::DeclTy *Parser::ParseNamespaceAlias(SourceLocation AliasLoc, 
+                                            IdentifierInfo *Alias) {
+  assert(Tok.is(tok::equal) && "Not equal token");
+  
+  ConsumeToken(); // eat the '='.
+  
+  CXXScopeSpec SS;
+  // Parse (optional) nested-name-specifier.
+  ParseOptionalCXXScopeSpecifier(SS);
+
+  if (SS.isInvalid() || Tok.isNot(tok::identifier)) {
+    Diag(Tok, diag::err_expected_namespace_name);
+    // Skip to end of the definition and eat the ';'.
+    SkipUntil(tok::semi);
+    return 0;
+  }
+
+  // Parse identifier.
+  IdentifierInfo *NamespaceName = Tok.getIdentifierInfo();
+  SourceLocation NamespaceLoc = ConsumeToken();
+  
+  // Eat the ';'.
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                   "namespace name", tok::semi);
   
   return 0;
 }

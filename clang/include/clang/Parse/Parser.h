@@ -997,7 +997,8 @@ private:
   DeclTy *ParseUsingDirective(unsigned Context, SourceLocation UsingLoc);
   DeclTy *ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc);
   DeclTy *ParseStaticAssertDeclaration();
-
+  DeclTy *ParseNamespaceAlias(SourceLocation AliasLoc, IdentifierInfo *Alias);
+  
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
   TypeTy *ParseClassName(SourceLocation &EndLocation, 
