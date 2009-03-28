@@ -32,6 +32,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class FileManager;
   class ASTRecordLayout;
   class Expr;
   class IdentifierTable;
@@ -146,6 +147,7 @@ public:
   DeclarationNameTable DeclarationNames;
 
   SourceManager& getSourceManager() { return SourceMgr; }
+  const SourceManager& getSourceManager() const { return SourceMgr; }
   void *Allocate(unsigned Size, unsigned Align = 8) {
     return FreeMemory ? MallocAlloc.Allocate(Size, Align) :
                         BumpAlloc.Allocate(Size, Align);
@@ -673,6 +675,10 @@ public:
   //===--------------------------------------------------------------------===//
   //                    Serialization
   //===--------------------------------------------------------------------===//
+
+  void EmitAll(llvm::Serializer& S) const;
+  static ASTContext* CreateAll(llvm::Deserializer &D,
+                               FileManager &FMgr);  
 
   void Emit(llvm::Serializer& S) const;
   static ASTContext* Create(llvm::Deserializer& D);  

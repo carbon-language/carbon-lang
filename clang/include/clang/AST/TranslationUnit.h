@@ -44,10 +44,7 @@ public:
   ~TranslationUnit();
 
   const std::string& getSourceFile() const;
-  
-  /// Emit - Emit the translation unit to an arbitray bitcode stream.
-  void Emit(llvm::Serializer& S) const;
-  
+ 
   /// Create - Reconsititute a translation unit from a bitcode stream.
   static TranslationUnit* Create(llvm::Deserializer& D, FileManager& FMgr);
   

@@ -17,12 +17,12 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MathExtras.h"
-
 using namespace clang;
 
 enum FloatingRank {
@@ -3080,6 +3080,47 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
 //                         Serialization Support
 //===----------------------------------------------------------------------===//
 
+enum {
+  BasicMetadataBlock = 1,
+  ASTContextBlock = 2,
+  DeclsBlock = 3
+};
+
+void ASTContext::EmitAll(llvm::Serializer &S) const {
+  // ===---------------------------------------------------===/
+  //      Serialize the "Translation Unit" metadata.
+  // ===---------------------------------------------------===/
+  
+  // Emit ASTContext.
+  S.EnterBlock(ASTContextBlock);  
+  S.EmitOwnedPtr(this);  
+  S.ExitBlock();      // exit "ASTContextBlock"
+  
+  S.EnterBlock(BasicMetadataBlock);
+  
+  // Block for SourceManager and Target.  Allows easy skipping
+  // around to the block for the Selectors during deserialization.
+  S.EnterBlock();
+  
+  // Emit the SourceManager.
+  S.Emit(getSourceManager());
+  
+  // Emit the Target.
+  S.EmitPtr(&Target);
+  S.EmitCStr(Target.getTargetTriple());
+  
+  S.ExitBlock(); // exit "SourceManager and Target Block"
+  
+  // Emit the Selectors.
+  S.Emit(Selectors);
+  
+  // Emit the Identifier Table.
+  S.Emit(Idents);
+  
+  S.ExitBlock(); // exit "BasicMetadataBlock"
+}
+
+
 /// Emit - Serialize an ASTContext object to Bitcode.
 void ASTContext::Emit(llvm::Serializer& S) const {
   S.Emit(LangOpts);
@@ -3099,6 +3140,51 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   S.EmitOwnedPtr(TUDecl);
 
   // FIXME: S.EmitOwnedPtr(CFConstantStringTypeDecl);
+}
+
+ASTContext* ASTContext::CreateAll(llvm::Deserializer &Dezr,
+                                  FileManager &FMgr) {
+  // ===---------------------------------------------------===/
+  //      Deserialize the "Translation Unit" metadata.
+  // ===---------------------------------------------------===/
+  
+  // Skip to the BasicMetaDataBlock.  First jump to ASTContextBlock
+  // (which will appear earlier) and record its location.
+  
+  bool FoundBlock = Dezr.SkipToBlock(ASTContextBlock);
+  assert (FoundBlock);
+  
+  llvm::Deserializer::Location ASTContextBlockLoc =
+  Dezr.getCurrentBlockLocation();
+  
+  FoundBlock = Dezr.SkipToBlock(BasicMetadataBlock);
+  assert (FoundBlock);
+  
+  // Read the SourceManager.
+  SourceManager::CreateAndRegister(Dezr, FMgr);
+  
+  { // Read the TargetInfo.
+    llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
+    char* triple = Dezr.ReadCStr(NULL,0,true);
+    Dezr.RegisterPtr(PtrID, TargetInfo::CreateTargetInfo(std::string(triple)));
+    delete [] triple;
+  }
+  
+  // For Selectors, we must read the identifier table first because the
+  //  SelectorTable depends on the identifiers being already deserialized.
+  llvm::Deserializer::Location SelectorBlkLoc = Dezr.getCurrentBlockLocation();
+  Dezr.SkipBlock();
+  
+  // Read the identifier table.
+  IdentifierTable::CreateAndRegister(Dezr);
+  
+  // Now jump back and read the selectors.
+  Dezr.JumpTo(SelectorBlkLoc);
+  SelectorTable::CreateAndRegister(Dezr);
+  
+  // Now jump back to ASTContextBlock and read the ASTContext.
+  Dezr.JumpTo(ASTContextBlockLoc);
+  return Dezr.ReadOwnedPtr<ASTContext>();
 }
 
 ASTContext* ASTContext::Create(llvm::Deserializer& D) {

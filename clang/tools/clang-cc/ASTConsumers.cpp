@@ -659,8 +659,7 @@ public:
   DeclContextPrinter() : Out(llvm::errs()) {}
 
   void HandleTranslationUnit(TranslationUnit& TU) {
-    TranslationUnitDecl* TUD = TU.getContext().getTranslationUnitDecl();
-    PrintDeclContext(TUD, 4);
+    PrintDeclContext(TU.getContext().getTranslationUnitDecl(), 4);
   }
 
   void PrintDeclContext(const DeclContext* DC, unsigned Indentation);

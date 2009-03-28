@@ -26,9 +26,6 @@
 
 using namespace clang;
 
-enum { BasicMetadataBlock = 1,
-       ASTContextBlock = 2,
-       DeclsBlock = 3 };
 
 TranslationUnit::~TranslationUnit() {
   if (OwnsMetaData && Context) {
@@ -79,7 +76,7 @@ bool clang::EmitASTBitcodeBuffer(const TranslationUnit& TU,
     llvm::Serializer Sezr(Stream);  
     
     // Emit the translation unit.
-    TU.Emit(Sezr);
+    TU.getContext().EmitAll(Sezr);
   }
   
   return true;
@@ -116,40 +113,6 @@ bool clang::EmitASTBitcodeFile(const TranslationUnit& TU,
   }
 
   return false;  
-}
-
-void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
-  // ===---------------------------------------------------===/
-  //      Serialize the "Translation Unit" metadata.
-  // ===---------------------------------------------------===/
-
-  // Emit ASTContext.
-  Sezr.EnterBlock(ASTContextBlock);  
-  Sezr.EmitOwnedPtr(Context);  
-  Sezr.ExitBlock();      // exit "ASTContextBlock"
-  
-  Sezr.EnterBlock(BasicMetadataBlock);
-  
-  // Block for SourceManager and Target.  Allows easy skipping
-  // around to the block for the Selectors during deserialization.
-  Sezr.EnterBlock();
-    
-  // Emit the SourceManager.
-  Sezr.Emit(Context->getSourceManager());
-    
-  // Emit the Target.
-  Sezr.EmitPtr(&Context->Target);
-  Sezr.EmitCStr(Context->Target.getTargetTriple());
-  
-  Sezr.ExitBlock(); // exit "SourceManager and Target Block"
-  
-  // Emit the Selectors.
-  Sezr.Emit(Context->Selectors);
-  
-  // Emit the Identifier Table.
-  Sezr.Emit(Context->Idents);
-  
-  Sezr.ExitBlock(); // exit "BasicMetadataBlock"
 }
 
 TranslationUnit*
@@ -202,48 +165,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   // Create the translation unit object.
   TranslationUnit* TU = new TranslationUnit();
   
-  // ===---------------------------------------------------===/
-  //      Deserialize the "Translation Unit" metadata.
-  // ===---------------------------------------------------===/
-  
-  // Skip to the BasicMetaDataBlock.  First jump to ASTContextBlock
-  // (which will appear earlier) and record its location.
-  
-  bool FoundBlock = Dezr.SkipToBlock(ASTContextBlock);
-  assert (FoundBlock);
-  
-  llvm::Deserializer::Location ASTContextBlockLoc =
-  Dezr.getCurrentBlockLocation();
-  
-  FoundBlock = Dezr.SkipToBlock(BasicMetadataBlock);
-  assert (FoundBlock);
-  
-  // Read the SourceManager.
-  SourceManager::CreateAndRegister(Dezr,FMgr);
-    
-  { // Read the TargetInfo.
-    llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
-    char* triple = Dezr.ReadCStr(NULL,0,true);
-    Dezr.RegisterPtr(PtrID, TargetInfo::CreateTargetInfo(std::string(triple)));
-    delete [] triple;
-  }
-  
-  // For Selectors, we must read the identifier table first because the
-  //  SelectorTable depends on the identifiers being already deserialized.
-  llvm::Deserializer::Location SelectorBlkLoc = Dezr.getCurrentBlockLocation();
-  Dezr.SkipBlock();
-  
-  // Read the identifier table.
-  IdentifierTable::CreateAndRegister(Dezr);
-  
-  // Now jump back and read the selectors.
-  Dezr.JumpTo(SelectorBlkLoc);
-  SelectorTable::CreateAndRegister(Dezr);
-  
-  // Now jump back to ASTContextBlock and read the ASTContext.
-  Dezr.JumpTo(ASTContextBlockLoc);
-  TU->Context = Dezr.ReadOwnedPtr<ASTContext>();
+  TU->Context = ASTContext.CreateAll(Dezr, FmMgr);
   
   return TU;
 }
-
