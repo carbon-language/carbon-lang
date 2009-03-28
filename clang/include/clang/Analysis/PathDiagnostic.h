@@ -64,6 +64,14 @@ public:
   
   PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
     : K(Range), R(r), S(0), SM(&sm) {}
+  
+  bool operator==(const PathDiagnosticLocation &X) const {
+    return K == X.K && R == X.R && S == X.S;
+  }
+  
+  bool operator!=(const PathDiagnosticLocation &X) const {
+    return K != X.K || R != X.R || S != X.S;
+  }
     
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;
