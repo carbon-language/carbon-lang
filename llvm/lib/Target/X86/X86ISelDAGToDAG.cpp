@@ -1214,7 +1214,7 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, In2L, In2H, LSI, Chain };
   return CurDAG->getTargetNode(Opc, Node->getDebugLoc(),
                                MVT::i32, MVT::i32, MVT::Other, Ops,
-                               sizeof(Ops)/sizeof(SDValue));
+                               array_lengthof(Ops));
 }
 
 SDNode *X86DAGToDAGISel::Select(SDValue N) {
@@ -1309,7 +1309,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
-                                sizeof(Ops)/sizeof(SDValue));
+                                array_lengthof(Ops));
         InFlag = SDValue(CNode, 1);
         // Update the chain.
         ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
@@ -1429,7 +1429,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           Move =
             SDValue(CurDAG->getTargetNode(X86::MOVZX16rm8, dl, MVT::i16, 
                                           MVT::Other, Ops,
-                                          sizeof(Ops)/sizeof(SDValue)), 0);
+                                          array_lengthof(Ops)), 0);
           Chain = Move.getValue(1);
           ReplaceUses(N0.getValue(1), Chain);
         } else {
@@ -1460,7 +1460,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
-                                sizeof(Ops)/sizeof(SDValue));
+                                array_lengthof(Ops));
         InFlag = SDValue(CNode, 1);
         // Update the chain.
         ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
@@ -1604,7 +1604,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Ops[] = { Tmp1, Tmp2, Chain };
       return CurDAG->getTargetNode(TargetInstrInfo::DECLARE, dl,
                                    MVT::Other, Ops,
-                                   sizeof(Ops)/sizeof(SDValue));
+                                   array_lengthof(Ops));
     }
   }
 
