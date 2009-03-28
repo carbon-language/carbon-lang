@@ -151,9 +151,37 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   while (isa<Expr>(S)) {
     const Stmt *Parent = P.getParent(S);
     
-    if (!Parent || isa<CompoundStmt>(Parent) || isa<StmtExpr>(Parent))
-      return PathDiagnosticLocation(S, SMgr);
+    if (!Parent)
+      break;
     
+    switch (Parent->getStmtClass()) {
+      case Stmt::CompoundStmtClass:
+      case Stmt::StmtExprClass:
+        return PathDiagnosticLocation(S, SMgr);               
+      case Stmt::DoStmtClass:
+        if (cast<DoStmt>(Parent)->getCond() != S)
+          return PathDiagnosticLocation(S, SMgr); 
+        break;        
+      case Stmt::ForStmtClass:
+        if (cast<ForStmt>(Parent)->getBody() == S)
+          return PathDiagnosticLocation(S, SMgr); 
+        break;        
+      case Stmt::IfStmtClass:
+        if (cast<IfStmt>(Parent)->getCond() != S)
+          return PathDiagnosticLocation(S, SMgr);
+        break;        
+      case Stmt::ObjCForCollectionStmtClass:
+        if (cast<ObjCForCollectionStmt>(Parent)->getBody() == S)
+          return PathDiagnosticLocation(S, SMgr);
+        break;
+      case Stmt::WhileStmtClass:
+        if (cast<WhileStmt>(Parent)->getCond() != S)
+          return PathDiagnosticLocation(S, SMgr);
+        break;
+      default:
+        break;
+    }
+
     S = Parent;
   }
   
