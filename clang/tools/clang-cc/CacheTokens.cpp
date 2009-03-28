@@ -375,43 +375,12 @@ class VISIBILITY_HIDDEN PTHWriter {
   PTHEntry LexTokens(Lexer& L);
   Offset EmitCachedSpellings();
 
-  /// StatListener - A simple "interpose" object used to monitor stat calls
-  /// invoked by FileManager while processing the original sources used
-  /// as input to PTH generation.  StatListener populates the PTHWriter's
-  /// file map with stat information for directories as well as negative stats.
-  /// Stat information for files are populated elsewhere.
-  class StatListener : public StatSysCallCache {
-    PTHMap& PM;
-  public:
-    StatListener(PTHMap& pm) : PM(pm) {}
-    ~StatListener() {}
-    
-    int stat(const char *path, struct stat *buf) {
-      int result = ::stat(path, buf);
-      
-      if (result != 0) // Failed 'stat'.
-        PM.insert(path, PTHEntry());
-      else if (S_ISDIR(buf->st_mode)) {
-        // Only cache directories with absolute paths.
-        if (!llvm::sys::Path(path).isAbsolute())
-          return result;
-
-        PM.insert(PTHEntryKeyVariant(buf, path), PTHEntry());
-      }
-        
-      return result;
-    }
-  };
-  
 public:
   PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp) 
     : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
     
+  PTHMap &getPM() { return PM; }
   void GeneratePTH(const std::string *MainFile = 0);
-
-  StatSysCallCache *createStatListener() {
-    return new StatListener(PM);
-  }
 };
 } // end anonymous namespace
   
@@ -687,6 +656,37 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
   Emit32(SpellingOff);
 }
 
+namespace {
+/// StatListener - A simple "interpose" object used to monitor stat calls
+/// invoked by FileManager while processing the original sources used
+/// as input to PTH generation.  StatListener populates the PTHWriter's
+/// file map with stat information for directories as well as negative stats.
+/// Stat information for files are populated elsewhere.
+class StatListener : public StatSysCallCache {
+  PTHMap &PM;
+public:
+  StatListener(PTHMap &pm) : PM(pm) {}
+  ~StatListener() {}
+  
+  int stat(const char *path, struct stat *buf) {
+    int result = ::stat(path, buf);
+    
+    if (result != 0) // Failed 'stat'.
+      PM.insert(path, PTHEntry());
+    else if (S_ISDIR(buf->st_mode)) {
+      // Only cache directories with absolute paths.
+      if (!llvm::sys::Path(path).isAbsolute())
+        return result;
+      
+      PM.insert(PTHEntryKeyVariant(buf, path), PTHEntry());
+    }
+    
+    return result;
+  }
+};
+} // end anonymous namespace
+
+
 void clang::CacheTokens(Preprocessor &PP, const std::string &OutFile) {
   // Open up the PTH file.
   std::string ErrMsg;
@@ -715,7 +715,7 @@ void clang::CacheTokens(Preprocessor &PP, const std::string &OutFile) {
   PTHWriter PW(Out, PP);
   
   // Install the 'stat' system call listener in the FileManager.
-  PP.getFileManager().setStatCache(PW.createStatListener());
+  PP.getFileManager().setStatCache(new StatListener(PW.getPM()));
   
   // Lex through the entire file.  This will populate SourceManager with
   // all of the header information.

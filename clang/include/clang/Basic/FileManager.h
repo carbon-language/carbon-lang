@@ -126,7 +126,9 @@ public:
   /// setStatCache - Installs the provided StatSysCallCache object within
   ///  the FileManager.  Ownership of this object is transferred to the
   ///  FileManager.
-  void setStatCache(StatSysCallCache *statCache) { StatCache.reset(statCache); }
+  void setStatCache(StatSysCallCache *statCache) {
+    StatCache.reset(statCache);
+  }
   
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
