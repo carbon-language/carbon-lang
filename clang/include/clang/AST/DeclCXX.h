@@ -953,6 +953,46 @@ public:
   friend class DeclContext;
 };
 
+class NamespaceAliasDecl : public NamedDecl {
+  SourceLocation AliasLoc;
+  
+  /// IdentLoc - Location of namespace identifier.
+  /// FIXME: We don't store location of scope specifier.
+  SourceLocation IdentLoc;
+  
+  /// Namespace - The Decl that this alias points to. Can either be a 
+  /// NamespaceDecl or a NamespaceAliasDecl.
+  NamedDecl *Namespace;
+  
+  NamespaceAliasDecl(DeclContext *DC, SourceLocation L, 
+                     SourceLocation AliasLoc, IdentifierInfo *Alias, 
+                     SourceLocation IdentLoc, NamedDecl *Namespace)
+    : NamedDecl(Decl::NamespaceAlias, DC, L, Alias), AliasLoc(AliasLoc), 
+      IdentLoc(IdentLoc), Namespace(Namespace) { }
+
+public:
+
+  NamespaceDecl *getNamespace() {
+    // FIXME: Namespace can also be an alias decl.
+    return cast<NamespaceDecl>(Namespace);
+  }
+  
+  const NamespaceDecl *getNamespace() const {
+    return const_cast<NamespaceAliasDecl*>(this)->getNamespace();
+  }
+  
+  static NamespaceAliasDecl *Create(ASTContext &C, DeclContext *DC, 
+                                    SourceLocation L, SourceLocation AliasLoc, 
+                                    IdentifierInfo *Alias, 
+                                    SourceLocation IdentLoc, 
+                                    NamedDecl *Namespace);
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::NamespaceAlias;
+  }
+  static bool classof(const NamespaceAliasDecl *D) { return true; }
+};
+  
 class StaticAssertDecl : public Decl {
   Expr *AssertExpr;
   StringLiteral *Message;

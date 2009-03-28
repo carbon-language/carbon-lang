@@ -361,6 +361,16 @@ UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                     Used, CommonAncestor);
 }
 
+NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC, 
+                                               SourceLocation L, 
+                                               SourceLocation AliasLoc, 
+                                               IdentifierInfo *Alias, 
+                                               SourceLocation IdentLoc, 
+                                               NamedDecl *Namespace) {
+  return new (C) NamespaceAliasDecl(DC, L, AliasLoc, Alias, IdentLoc, 
+                                    Namespace);
+}
+
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L, Expr *AssertExpr,
                                            StringLiteral *Message) {

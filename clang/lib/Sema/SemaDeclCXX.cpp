@@ -1707,7 +1707,12 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     return DeclPtrTy();
   }
   
-  return DeclPtrTy();
+  NamespaceAliasDecl *AliasDecl = 
+    NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc, Alias, 
+                               IdentLoc, R);
+  
+  CurContext->addDecl(AliasDecl);
+  return DeclPtrTy::make(AliasDecl);
 }
 
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
