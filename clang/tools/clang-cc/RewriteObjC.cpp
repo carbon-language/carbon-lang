@@ -15,7 +15,6 @@
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
-#include "clang/AST/TranslationUnit.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -134,7 +133,7 @@ namespace {
 
     ~RewriteObjC() {}
     
-    virtual void HandleTranslationUnit(TranslationUnit& TU);
+    virtual void HandleTranslationUnit(ASTContext &C);
     
     void ReplaceStmt(Stmt *Old, Stmt *New) {
       Stmt *ReplacingStmt = ReplacedNodes[Old];
@@ -4516,7 +4515,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
   // Nothing yet.
 }
 
-void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
+void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
   // Get the top-level buffer that this corresponds to.
   
   // Rewrite tabs if we care.

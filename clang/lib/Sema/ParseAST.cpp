@@ -56,7 +56,7 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
     }
   };
   
-  Consumer->HandleTranslationUnit(TU);
+  Consumer->HandleTranslationUnit(TU.getContext());
 
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");

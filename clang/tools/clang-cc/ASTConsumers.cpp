@@ -658,8 +658,8 @@ class DeclContextPrinter : public ASTConsumer {
 public:
   DeclContextPrinter() : Out(llvm::errs()) {}
 
-  void HandleTranslationUnit(TranslationUnit& TU) {
-    PrintDeclContext(TU.getContext().getTranslationUnitDecl(), 4);
+  void HandleTranslationUnit(ASTContext &C) {
+    PrintDeclContext(C.getTranslationUnitDecl(), 4);
   }
 
   void PrintDeclContext(const DeclContext* DC, unsigned Indentation);
@@ -935,8 +935,7 @@ class InheritanceViewer : public ASTConsumer {
 public:
   InheritanceViewer(const std::string& cname) : clsname(cname) {}
   
-  void HandleTranslationUnit(TranslationUnit& TU) {
-    ASTContext& C = TU.getContext();
+  void HandleTranslationUnit(ASTContext &C) {
     for (ASTContext::type_iterator I=C.types_begin(),E=C.types_end(); I!=E; ++I)
       if (RecordType *T = dyn_cast<RecordType>(*I)) {
         if (CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(T->getDecl())) {
@@ -974,7 +973,7 @@ public:
   SingleFileSerializer(const llvm::sys::Path& F, Diagnostic& diags)
     : ASTSerializer(diags), FName(F) {}    
   
-  virtual void HandleTranslationUnit(TranslationUnit& TU) {
+  virtual void HandleTranslationUnit(ASTContext &Ctx) {
     if (Diags.hasErrorOccurred())
       return;
     
@@ -982,7 +981,7 @@ public:
     std::vector<unsigned char> Buffer;
     Buffer.reserve(256*1024);
     
-    EmitASTBitcodeBuffer(TU.getContext(), Buffer);
+    EmitASTBitcodeBuffer(Ctx, Buffer);
     
     // Write the bits to disk. 
     if (FILE* fp = fopen(FName.c_str(),"wb")) {
@@ -998,11 +997,11 @@ public:
   BuildSerializer(const llvm::sys::Path& dir, Diagnostic& diags)
     : ASTSerializer(diags), EmitDir(dir) {}
   
-  virtual void HandleTranslationUnit(TranslationUnit& TU) {
+  virtual void HandleTranslationUnit(ASTContext &Ctx) {
     if (Diags.hasErrorOccurred())
       return;
     
-    SourceManager& SourceMgr = TU.getContext().getSourceManager();
+    SourceManager& SourceMgr = Ctx.getSourceManager();
     FileID ID = SourceMgr.getMainFileID();
     assert(!ID.isInvalid() && "MainFileID not set!");
     const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
@@ -1033,7 +1032,7 @@ public:
     std::vector<unsigned char> Buffer;
     Buffer.reserve(256*1024);
     
-    EmitASTBitcodeBuffer(TU.getContext(), Buffer);
+    EmitASTBitcodeBuffer(Ctx, Buffer);
     
     // Write the bits to disk. 
     if (FILE* fp = fopen(FName.c_str(),"wb")) {

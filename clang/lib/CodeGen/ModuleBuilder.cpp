@@ -74,7 +74,7 @@ namespace {
       Builder->UpdateCompletedType(D);
     }
 
-    virtual void HandleTranslationUnit(TranslationUnit& TU) {
+    virtual void HandleTranslationUnit(ASTContext &Ctx) {
       if (Diags.hasErrorOccurred()) {
         M.reset();
         return;

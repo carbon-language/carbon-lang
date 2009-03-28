@@ -223,7 +223,7 @@ namespace {
     }
     
     virtual void HandleTopLevelDecl(Decl *D);
-    virtual void HandleTranslationUnit(TranslationUnit &TU);
+    virtual void HandleTranslationUnit(ASTContext &C);
     
     void HandleCode(Decl* D, Stmt* Body, Actions& actions);
   };
@@ -444,7 +444,7 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
   }
 }
 
-void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
+void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
   if(!TranslationUnitActions.empty()) {
     AnalysisManager mgr(*this, AnalyzerDisplayProgress);
@@ -454,7 +454,7 @@ void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
   }
 
   if (!ObjCImplementationActions.empty()) {
-    TranslationUnitDecl *TUD = TU.getContext().getTranslationUnitDecl();
+    TranslationUnitDecl *TUD = C.getTranslationUnitDecl();
     
     for (DeclContext::decl_iterator I = TUD->decls_begin(),E = TUD->decls_end();
          I != E; ++I)

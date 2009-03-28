@@ -131,13 +131,13 @@ namespace {
         LLVMIRGeneration.stopTimer();
     }
     
-    virtual void HandleTranslationUnit(TranslationUnit& TU) {
+    virtual void HandleTranslationUnit(ASTContext &C) {
       {
         PrettyStackTraceString CrashInfo("Per-file LLVM IR generation");
         if (CompileOpts.TimePasses)
           LLVMIRGeneration.startTimer();
 
-        Gen->HandleTranslationUnit(TU);
+        Gen->HandleTranslationUnit(C);
 
         if (CompileOpts.TimePasses)
           LLVMIRGeneration.stopTimer();

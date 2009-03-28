@@ -42,7 +42,7 @@ public:
   
   ~SerializationTest() {}
   
-  virtual void HandleTranslationUnit(TranslationUnit& TU);
+  virtual void HandleTranslationUnit(ASTContext &C);
   
 private:
   bool Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint,
@@ -142,7 +142,7 @@ namespace {
   };
 }
 
-void SerializationTest::HandleTranslationUnit(TranslationUnit& TU) {
+void SerializationTest::HandleTranslationUnit(ASTContext &Ctx) {
 
   std::string ErrMsg;
   llvm::sys::Path Dir = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
@@ -157,7 +157,7 @@ void SerializationTest::HandleTranslationUnit(TranslationUnit& TU) {
   llvm::sys::Path FNameDeclBefore = Dir;
   FNameDeclBefore.appendComponent("test.decl_before.txt");
 
-  if (FNameDeclBefore.makeUnique(true,&ErrMsg)) {
+  if (FNameDeclBefore.makeUnique(true, &ErrMsg)) {
     llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
@@ -165,7 +165,7 @@ void SerializationTest::HandleTranslationUnit(TranslationUnit& TU) {
   llvm::sys::Path FNameDeclAfter = Dir;
   FNameDeclAfter.appendComponent("test.decl_after.txt");
   
-  if (FNameDeclAfter.makeUnique(true,&ErrMsg)) {
+  if (FNameDeclAfter.makeUnique(true, &ErrMsg)) {
     llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
@@ -173,13 +173,13 @@ void SerializationTest::HandleTranslationUnit(TranslationUnit& TU) {
   llvm::sys::Path ASTFilename = Dir;
   ASTFilename.appendComponent("test.ast");
   
-  if (ASTFilename.makeUnique(true,&ErrMsg)) {
+  if (ASTFilename.makeUnique(true, &ErrMsg)) {
     llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
   
   // Serialize and then deserialize the ASTs.
-  bool status = Serialize(ASTFilename, FNameDeclBefore, TU.getContext());
+  bool status = Serialize(ASTFilename, FNameDeclBefore, Ctx);
   assert (status && "Serialization failed.");  
   status = Deserialize(ASTFilename, FNameDeclAfter);
   assert (status && "Deserialization failed.");

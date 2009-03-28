@@ -16,7 +16,6 @@
 
 namespace clang {
   class ASTContext;
-  class TranslationUnit;
   class Decl;
   class TagDecl;
   class HandleTagDeclDefinition;
@@ -40,7 +39,7 @@ public:
   
   /// HandleTranslationUnit - This method is called when the ASTs for entire
   ///  translation unit have been parsed.
-  virtual void HandleTranslationUnit(TranslationUnit& TU) {}    
+  virtual void HandleTranslationUnit(ASTContext &Ctx) {}    
   
   /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
   /// (e.g. struct, union, enum, class) is completed.  This allows the client to
