@@ -66,7 +66,8 @@ static void Emit64(llvm::raw_ostream& Out, uint64_t V) {
 static void Pad(llvm::raw_fd_ostream& Out, unsigned A) {
   Offset off = (Offset) Out.tell();
   uint32_t n = ((uintptr_t)(off+A-1) & ~(uintptr_t)(A-1)) - off;
-  for ( ; n ; --n ) Emit8(Out, 0);
+  for (; n ; --n)
+    Emit8(Out, 0);
 }
 
 // Bernstein hash function:
@@ -357,8 +358,8 @@ class VISIBILITY_HIDDEN PTHWriter {
 
   void Emit32(uint32_t V) { ::Emit32(Out, V); }
 
-  void EmitBuf(const char* I, const char* E) {
-    for ( ; I != E ; ++I) Out << *I;
+  void EmitBuf(const char *Ptr, unsigned NumBytes) {
+    Out.write(Ptr, NumBytes);
   }
   
   /// EmitIdentifierTable - Emits two tables to the PTH file.  The first is
@@ -420,13 +421,11 @@ uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {
     return 0;
   
   IDMap::iterator I = IM.find(II);
-
-  if (I == IM.end()) {
-    IM[II] = ++idcount; // Pre-increment since '0' is reserved for NULL.
-    return idcount;
-  }
-  
-  return I->second; // We've already added 1.
+  if (I != IM.end())
+    return I->second; // We've already added 1.
+    
+  IM[II] = ++idcount; // Pre-increment since '0' is reserved for NULL.
+  return idcount;
 }
 
 void PTHWriter::EmitToken(const Token& T) {
@@ -434,7 +433,9 @@ void PTHWriter::EmitToken(const Token& T) {
   Emit32(((uint32_t) T.getKind()) | ((((uint32_t) T.getFlags())) << 8)|
          (((uint32_t) T.getLength()) << 16));
     
-  if (T.isLiteral()) {
+  if (!T.isLiteral()) {
+    Emit32(ResolveID(T.getIdentifierInfo()));
+  } else {
     // We cache *un-cleaned* spellings. This gives us 100% fidelity with the
     // source code.
     const char* s = T.getLiteralData();
@@ -453,8 +454,6 @@ void PTHWriter::EmitToken(const Token& T) {
     // Emit the relative offset into the PTH file for the spelling string.
     Emit32(E->getValue().getOffset());
   }
-  else
-    Emit32(ResolveID(T.getIdentifierInfo()));
   
   // Emit the offset into the original source file of this token so that we
   // can reconstruct its SourceLocation.
@@ -622,12 +621,8 @@ Offset PTHWriter::EmitCachedSpellings() {
   Offset SpellingsOff = Out.tell();
   
   for (std::vector<llvm::StringMapEntry<OffsetOpt>*>::iterator
-       I = StrEntries.begin(), E = StrEntries.end(); I!=E; ++I) {
-
-    const char* data = (*I)->getKeyData();
-    EmitBuf(data, data + (*I)->getKeyLength());
-    Emit8('\0');
-  }
+       I = StrEntries.begin(), E = StrEntries.end(); I!=E; ++I)
+    EmitBuf((*I)->getKeyData(), (*I)->getKeyLength()+1 /*nul included*/);
   
   return SpellingsOff;
 }
@@ -639,14 +634,14 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
   
   // Leave 4 words for the prologue.
   Offset PrologueOffset = Out.tell();
-  for (unsigned i = 0; i < 4 * sizeof(uint32_t); ++i) Emit8(0);
+  for (unsigned i = 0; i < 4; ++i)
+    Emit32(0);
     
   // Write the name of the MainFile.
-  if (MainFile && MainFile->length() > 0) {
+  if (MainFile && !MainFile->empty()) {
     Emit16(MainFile->length());
-    EmitBuf(&((*MainFile)[0]), &((*MainFile)[0]) + MainFile->length());
-  }
-  else {
+    EmitBuf(MainFile->data(), MainFile->length());
+  } else {
     // String with 0 bytes.
     Emit16(0);
   }
@@ -676,7 +671,7 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
   }
 
   // Write out the identifier table.
-  const std::pair<Offset,Offset>& IdTableOff = EmitIdentifierTable();
+  const std::pair<Offset,Offset> &IdTableOff = EmitIdentifierTable();
   
   // Write out the cached strings table.
   Offset SpellingOff = EmitCachedSpellings();
@@ -692,7 +687,7 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
   Emit32(SpellingOff);
 }
 
-void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
+void clang::CacheTokens(Preprocessor &PP, const std::string &OutFile) {
   // Open up the PTH file.
   std::string ErrMsg;
   llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
@@ -712,8 +707,7 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
     llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
     P.appendComponent(MainFilePath.toString());
     MainFileName = P.toString();
-  }
-  else {
+  } else {
     MainFileName = MainFilePath.toString();
   }
 
@@ -736,13 +730,13 @@ void clang::CacheTokens(Preprocessor& PP, const std::string& OutFile) {
 
 //===----------------------------------------------------------------------===//
 
-namespace {
-class VISIBILITY_HIDDEN PTHIdKey {
+class PTHIdKey {
 public:
   const IdentifierInfo* II;
   uint32_t FileOffset;
 };
 
+namespace {
 class VISIBILITY_HIDDEN PTHIdentifierTableTrait {
 public:
   typedef PTHIdKey* key_type;
@@ -787,13 +781,13 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
   //  (2) a map from (IdentifierInfo*, Offset)* -> persistent IDs
 
   // Note that we use 'calloc', so all the bytes are 0.
-  PTHIdKey* IIDMap = (PTHIdKey*) calloc(idcount, sizeof(PTHIdKey));
+  PTHIdKey *IIDMap = (PTHIdKey*)calloc(idcount, sizeof(PTHIdKey));
 
   // Create the hashtable.
   OnDiskChainedHashTableGenerator<PTHIdentifierTableTrait> IIOffMap;
   
   // Generate mapping from persistent IDs -> IdentifierInfo*.
-  for (IDMap::iterator I=IM.begin(), E=IM.end(); I!=E; ++I) {
+  for (IDMap::iterator I = IM.begin(), E = IM.end(); I != E; ++I) {
     // Decrement by 1 because we are using a vector for the lookup and
     // 0 is reserved for NULL.
     assert(I->second > 0);
@@ -815,7 +809,8 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
   // Now emit the table mapping from persistent IDs to PTH file offsets.  
   Offset IDOff = Out.tell();
   Emit32(idcount);  // Emit the number of identifiers.
-  for (unsigned i = 0 ; i < idcount; ++i) Emit32(IIDMap[i].FileOffset);
+  for (unsigned i = 0 ; i < idcount; ++i)
+    Emit32(IIDMap[i].FileOffset);
   
   // Finally, release the inverse map.
   free(IIDMap);
