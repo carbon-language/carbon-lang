@@ -157,7 +157,21 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
     switch (Parent->getStmtClass()) {
       case Stmt::CompoundStmtClass:
       case Stmt::StmtExprClass:
-        return PathDiagnosticLocation(S, SMgr);               
+        return PathDiagnosticLocation(S, SMgr);
+      case Stmt::ChooseExprClass:
+        // Similar to '?' if we are referring to condition, just have the edge
+        // point to the entire choose expression.
+        if (cast<ChooseExpr>(Parent)->getCond() == S)
+          return PathDiagnosticLocation(Parent, SMgr);
+        else
+          return PathDiagnosticLocation(S, SMgr);                
+      case Stmt::ConditionalOperatorClass:
+        // For '?', if we are referring to condition, just have the edge point
+        // to the entire '?' expression.
+        if (cast<ConditionalOperator>(Parent)->getCond() == S)
+          return PathDiagnosticLocation(Parent, SMgr);
+        else
+          return PathDiagnosticLocation(S, SMgr);        
       case Stmt::DoStmtClass:
         if (cast<DoStmt>(Parent)->getCond() != S)
           return PathDiagnosticLocation(S, SMgr); 
@@ -914,7 +928,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::ConditionalOperatorClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
-          os << "'?' condition evaluates to ";
+          os << "'?' condition is ";
 
           if (*(Src->succ_begin()+1) == Dst)
             os << "false";
@@ -922,6 +936,9 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             os << "true";
           
           PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+          
+          if (const Stmt *S = End.asStmt())
+            End = PDB.getEnclosingStmtLocation(S);
           
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
