@@ -1627,6 +1627,7 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
   // Lookup namespace name.
   LookupResult R = LookupParsedName(S, &SS, NamespcName,
                                     LookupNamespaceName, false);
+  // FIXME: Can the result of a namespace lookup ever be ambiguous?
   if (R.isAmbiguous()) {
     DiagnoseAmbiguousLookup(R, NamespcName, IdentLoc);
     return 0;
@@ -1693,6 +1694,20 @@ Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *S,
     return 0;
   }
 
+  // Lookup the namespace name.
+  LookupResult R = LookupParsedName(S, &SS, NamespaceName,
+                                    LookupNamespaceName, false);
+  // FIXME: Can the result of a namespace lookup ever be ambiguous?
+  if (R.isAmbiguous()) {
+    DiagnoseAmbiguousLookup(R, NamespaceName, NamespaceLoc);
+    return 0;
+  }
+  
+  if (!R) {
+    Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
+    return 0;
+  }
+  
   return 0;
 }
 
