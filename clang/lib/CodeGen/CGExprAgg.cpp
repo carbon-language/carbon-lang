@@ -313,17 +313,7 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
     // There's a potential optimization opportunity in combining
     // memsets; that would be easy for arrays, but relatively
     // difficult for structures with the current code.
-    const llvm::Type *SizeTy = llvm::Type::Int64Ty;
-    llvm::Value *MemSet = CGF.CGM.getIntrinsic(llvm::Intrinsic::memset,
-                                               &SizeTy, 1);
-    uint64_t Size = CGF.getContext().getTypeSize(T);
-    
-    const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-    llvm::Value* DestPtr = Builder.CreateBitCast(LV.getAddress(), BP, "tmp");
-    Builder.CreateCall4(MemSet, DestPtr, 
-                        llvm::ConstantInt::get(llvm::Type::Int8Ty, 0),
-                        llvm::ConstantInt::get(SizeTy, Size/8),
-                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    CGF.EmitMemSetToZero(LV.getAddress(), T);
   }
 }
 
