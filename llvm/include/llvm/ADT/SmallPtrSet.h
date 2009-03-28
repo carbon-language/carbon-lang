@@ -20,6 +20,29 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+  
+/// PointerLikeTypeInfo - This is a traits object that is used to handle pointer
+/// types and things that are just wrappers for pointers as a uniform entity.
+template <typename T>
+class PointerLikeTypeInfo {
+  //getAsVoidPointer/getFromVoidPointer
+};
+
+// Provide PointerLikeTypeInfo for all pointers.
+template<typename T>
+struct PointerLikeTypeInfo<T*> {
+  static inline void *getAsVoidPointer(T* P) { return P; }
+  static inline T *getFromVoidPointer(void *P) {
+    return static_cast<T*>(P);
+  }
+};
+template<typename T>
+struct PointerLikeTypeInfo<const T*> {
+  static inline const void *getAsVoidPointer(const T* P) { return P; }
+  static inline const T *getFromVoidPointer(const void *P) {
+    return static_cast<const T*>(P);
+  }
+};
 
 class SmallPtrSetIteratorImpl;
 
@@ -168,6 +191,7 @@ protected:
 /// SmallPtrSetIterator - This implements a const_iterator for SmallPtrSet.
 template<typename PtrTy>
 class SmallPtrSetIterator : public SmallPtrSetIteratorImpl {
+  typedef PointerLikeTypeInfo<PtrTy> PtrTraits;
 public:
   explicit SmallPtrSetIterator(const void *const *BP)
     : SmallPtrSetIteratorImpl(BP) {}
@@ -175,7 +199,7 @@ public:
   // Most methods provided by baseclass.
 
   const PtrTy operator*() const {
-    return static_cast<const PtrTy>(const_cast<void*>(*Bucket));
+    return PtrTraits::getFromVoidPointer(const_cast<void*>(*Bucket));
   }
 
   inline SmallPtrSetIterator& operator++() {          // Preincrement
@@ -213,7 +237,7 @@ template<unsigned N>
 struct NextPowerOfTwo {
   enum { Val = NextPowerOfTwoH<N, (N&(N-1)) == 0>::Val };
 };
-
+  
 
 /// SmallPtrSet - This class implements a set which is optimizer for holding
 /// SmallSize or less elements.  This internally rounds up SmallSize to the next
@@ -224,6 +248,7 @@ class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.
   enum { SmallSizePowTwo = NextPowerOfTwo<SmallSize>::Val };
   void *SmallArray[SmallSizePowTwo];
+  typedef PointerLikeTypeInfo<PtrType> PtrTraits;
 public:
   SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
   SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(that) {}
@@ -236,14 +261,20 @@ public:
 
   /// insert - This returns true if the pointer was new to the set, false if it
   /// was already in the set.
-  bool insert(PtrType Ptr) { return insert_imp(Ptr); }
+  bool insert(PtrType Ptr) {
+    return insert_imp(PtrTraits::getAsVoidPointer(Ptr));
+  }
 
   /// erase - If the set contains the specified pointer, remove it and return
   /// true, otherwise return false.
-  bool erase(PtrType Ptr) { return erase_imp(Ptr); }
+  bool erase(PtrType Ptr) {
+    return erase_imp(PtrTraits::getAsVoidPointer(Ptr));
+  }
 
   /// count - Return true if the specified pointer is in the set.
-  bool count(PtrType Ptr) const { return count_imp(Ptr); }
+  bool count(PtrType Ptr) const {
+    return count_imp(PtrTraits::getAsVoidPointer(Ptr));
+  }
 
   template <typename IterT>
   void insert(IterT I, IterT E) {
