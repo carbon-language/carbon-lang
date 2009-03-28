@@ -190,6 +190,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case FunctionTemplate:
     case ClassTemplate:
     case TemplateTemplateParm:
+    case NamespaceAlias:
       return IDNS_Tag | IDNS_Ordinary;
     
     // Never have names.
