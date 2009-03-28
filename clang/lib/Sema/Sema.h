@@ -970,7 +970,7 @@ public:
       return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
       
     case Sema::LookupNamespaceName:
-      return isa<NamespaceDecl>(D);
+      return isa<NamespaceDecl>(D) || isa<NamespaceAliasDecl>(D);
     }
     
     assert(false && 

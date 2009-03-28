@@ -144,6 +144,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
         return NestedNameSpecifier::Create(Context, Prefix, false, 
                                            T.getTypePtr());
     }
+    
+    if (NamespaceAliasDecl *Alias = dyn_cast<NamespaceAliasDecl>(SD))
+      return NestedNameSpecifier::Create(Context, Prefix,
+                                         Alias->getNamespace());
 
     // Fall through to produce an error: we found something that isn't
     // a class or a namespace.

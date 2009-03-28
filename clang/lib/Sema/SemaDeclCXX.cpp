@@ -1676,6 +1676,14 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
     S->PushUsingDirective(DeclPtrTy::make(UDir));
 }
 
+/// getNamespaceDecl - Returns the namespace a decl represents. If the decl
+/// is a namespace alias, returns the namespace it points to.
+static inline NamespaceDecl *getNamespaceDecl(NamedDecl *D) {
+  if (NamespaceAliasDecl *AD = dyn_cast_or_null<NamespaceAliasDecl>(D))
+    return AD->getNamespace();
+  return dyn_cast_or_null<NamespaceDecl>(D);
+}
+
 Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S, 
                                              SourceLocation NamespaceLoc,
                                              SourceLocation AliasLoc,
@@ -1684,10 +1692,18 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
                                              SourceLocation IdentLoc,
                                              IdentifierInfo *Ident) {
   
+  // Lookup the namespace name.
+  LookupResult R = LookupParsedName(S, &SS, Ident, LookupNamespaceName, false);
+
   // Check if we have a previous declaration with the same name.
   if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName, true)) {
-    // FIXME: If this is a namespace alias decl, and it points to the same 
-    // namespace, we shouldn't warn.
+    if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
+      // We already have an alias with the same name that points to the same 
+      // namespace, so don't create a new one.
+      if (!R.isAmbiguous() && AD->getNamespace() == getNamespaceDecl(R))
+        return DeclPtrTy();
+    }
+    
     unsigned DiagID = isa<NamespaceDecl>(PrevDecl) ? diag::err_redefinition :
       diag::err_redefinition_different_kind;
     Diag(AliasLoc, DiagID) << Alias;
@@ -1695,8 +1711,6 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     return DeclPtrTy();
   }
 
-  // Lookup the namespace name.
-  LookupResult R = LookupParsedName(S, &SS, Ident, LookupNamespaceName, false);
   if (R.isAmbiguous()) {
     DiagnoseAmbiguousLookup(R, Ident, IdentLoc);
     return DeclPtrTy();

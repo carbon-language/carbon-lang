@@ -25,3 +25,26 @@ namespace F {
 namespace G { 
   namespace B = N;
 }
+
+namespace H {
+  namespace A1 { }
+  namespace A2 { }
+
+  // These all point to A1.
+  namespace B = A1; // expected-note {{previous definition is here}}
+  namespace B = A1;
+  namespace C = B;
+  namespace B = C;
+
+  namespace B = A2; // expected-error {{redefinition of 'B' as different kind of symbol}}
+}
+
+namespace I { 
+  namespace A1 { int i; }
+  
+  namespace A2 = A1;
+}
+
+int f() {
+  return I::A2::i;
+}
