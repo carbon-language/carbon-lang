@@ -132,15 +132,15 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   // namespace A { int y; }
   //
   // there will be one NamespaceDecl for each declaration.
-  // NextDeclarator points to the next extended declaration.
+  // NextNamespace points to the next extended declaration.
   // OrigNamespace points to the original namespace declaration.
   // OrigNamespace of the first namespace decl points to itself.
-
-  NamespaceDecl *OrigNamespace;
-
+  NamespaceDecl *OrigNamespace, *NextNamespace;
+  
   NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace) {
-      OrigNamespace = this;
+    OrigNamespace = this;
+    NextNamespace = 0;
   }
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
@@ -148,13 +148,9 @@ public:
   
   virtual void Destroy(ASTContext& C);
 
-  NamespaceDecl *getNextNamespace() {
-    return cast_or_null<NamespaceDecl>(getNextDeclarator());
-  }
-  const NamespaceDecl *getNextNamespace() const {
-    return cast_or_null<NamespaceDecl>(getNextDeclarator());
-  }
-  void setNextNamespace(NamespaceDecl *ND) { setNextDeclarator(ND); }
+  NamespaceDecl *getNextNamespace() { return NextNamespace; }
+  const NamespaceDecl *getNextNamespace() const { return NextNamespace; }
+  void setNextNamespace(NamespaceDecl *ND) { NextNamespace = ND; }
 
   NamespaceDecl *getOriginalNamespace() const {
     return OrigNamespace;
