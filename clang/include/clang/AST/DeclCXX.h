@@ -973,7 +973,9 @@ class NamespaceAliasDecl : public NamedDecl {
 public:
 
   NamespaceDecl *getNamespace() {
-    // FIXME: Namespace can also be an alias decl.
+    if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(Namespace))
+      return AD->getNamespace();
+
     return cast<NamespaceDecl>(Namespace);
   }
   
