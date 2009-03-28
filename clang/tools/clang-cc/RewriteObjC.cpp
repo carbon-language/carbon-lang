@@ -127,7 +127,6 @@ namespace {
     virtual void Initialize(ASTContext &context);
 
     virtual void InitializeTU(TranslationUnit &TU) {
-      TU.SetOwnsDecls(false);
       Initialize(TU.getContext());
     }
     

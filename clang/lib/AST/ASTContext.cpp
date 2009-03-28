@@ -35,8 +35,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        bool FreeMem, unsigned size_reserve) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
   ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
-  FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels)
-{  
+  FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
   BuiltinInfo.InitializeBuiltins(idents, Target, LangOpts.NoBuiltin);

@@ -33,17 +33,13 @@ class FileEntry;
 class TranslationUnit {
   ASTContext* Context;
   bool OwnsMetaData;
-  bool OwnsDecls;
 
   // The default ctor is only invoked during deserialization.
-  explicit TranslationUnit() : Context(NULL), OwnsMetaData(true),
-                               OwnsDecls(true) {}
+  explicit TranslationUnit() : Context(NULL), OwnsMetaData(true){}
   
 public:
   explicit TranslationUnit(ASTContext& Ctx)
-    : Context(&Ctx), OwnsMetaData(false), OwnsDecls(true) {}
-
-  void SetOwnsDecls(bool val) { OwnsDecls = val; }
+    : Context(&Ctx), OwnsMetaData(false) {}
 
   ~TranslationUnit();
 
