@@ -627,11 +627,11 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
   if (First) {
     QualType FirstType;
     if (DeclStmt *DS = dyn_cast<DeclStmt>(First)) {
-      if (!DS->hasSolitaryDecl())
+      if (!DS->isSingleDecl())
         return StmtError(Diag((*DS->decl_begin())->getLocation(),
                          diag::err_toomany_element_decls));
 
-      Decl *D = DS->getSolitaryDecl();
+      Decl *D = DS->getSingleDecl();
       FirstType = cast<ValueDecl>(D)->getType();
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
       // declare identifiers for objects having storage class 'auto' or

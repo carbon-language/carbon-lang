@@ -194,7 +194,7 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   VarDecl* VD = 0;
   
   if (DeclStmt* DS = dyn_cast<DeclStmt>(Element))
-    VD = cast<VarDecl>(DS->getSolitaryDecl());
+    VD = cast<VarDecl>(DS->getSingleDecl());
   else {
     Expr* ElemExpr = cast<Expr>(Element)->IgnoreParens();    
     if ((DR = dyn_cast<DeclRefExpr>(ElemExpr)))

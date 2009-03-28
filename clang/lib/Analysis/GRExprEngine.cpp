@@ -1534,7 +1534,7 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   SVal ElementV;
     
   if (DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
-    VarDecl* ElemD = cast<VarDecl>(DS->getSolitaryDecl());
+    VarDecl* ElemD = cast<VarDecl>(DS->getSingleDecl());
     assert (ElemD->getInit() == 0);
     ElementV = getStateManager().GetLValue(GetState(Pred), ElemD);
     VisitObjCForCollectionStmtAux(S, Pred, Dst, ElementV);

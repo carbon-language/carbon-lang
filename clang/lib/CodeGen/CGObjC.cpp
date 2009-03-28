@@ -436,7 +436,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
     EmitStmt(SD);
     assert(HaveInsertPoint() && "DeclStmt destroyed insert point!");
-    const Decl* D = SD->getSolitaryDecl();
+    const Decl* D = SD->getSingleDecl();
     ElementTy = cast<ValueDecl>(D)->getType();
     DeclAddress = LocalDeclMap[D];    
   } else {

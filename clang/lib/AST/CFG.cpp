@@ -358,41 +358,40 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
 
     case Stmt::DeclStmtClass: {
       DeclStmt *DS = cast<DeclStmt>(Terminator);      
-      if (DS->hasSolitaryDecl()) {      
+      if (DS->isSingleDecl()) {      
         Block->appendStmt(Terminator);
-        return WalkAST_VisitDeclSubExpr(DS->getSolitaryDecl());
+        return WalkAST_VisitDeclSubExpr(DS->getSingleDecl());
       }
-      else {
-        typedef llvm::SmallVector<Decl*,10> BufTy;
-        BufTy Buf;        
-        CFGBlock* B = 0;
+      
+      typedef llvm::SmallVector<Decl*,10> BufTy;
+      BufTy Buf;        
+      CFGBlock* B = 0;
 
-        // FIXME: Add a reverse iterator for DeclStmt to avoid this
-        // extra copy.
-        for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
-             DI != DE; ++DI)
-          Buf.push_back(*DI);
+      // FIXME: Add a reverse iterator for DeclStmt to avoid this
+      // extra copy.
+      for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
+           DI != DE; ++DI)
+        Buf.push_back(*DI);
+      
+      for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
+        // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
+        unsigned A = llvm::AlignOf<DeclStmt>::Alignment < 8
+                     ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
         
-        for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
-          // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
-          unsigned A = llvm::AlignOf<DeclStmt>::Alignment < 8
-                       ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
-          
-          // Allocate the DeclStmt using the BumpPtrAllocator.  It will
-          // get automatically freed with the CFG. 
-          DeclGroupRef DG(*I);
-          Decl* D = *I;
-          void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
-          
-          DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(),
-                                            GetEndLoc(D));
-          
-          // Append the fake DeclStmt to block.
-          Block->appendStmt(DS);
-          B = WalkAST_VisitDeclSubExpr(D);
-        }
-        return B;
+        // Allocate the DeclStmt using the BumpPtrAllocator.  It will
+        // get automatically freed with the CFG. 
+        DeclGroupRef DG(*I);
+        Decl* D = *I;
+        void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
+        
+        DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(),
+                                          GetEndLoc(D));
+        
+        // Append the fake DeclStmt to block.
+        Block->appendStmt(DS);
+        B = WalkAST_VisitDeclSubExpr(D);
       }
+      return B;
     }
 
     case Stmt::AddrLabelExprClass: {
