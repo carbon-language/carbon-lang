@@ -2572,26 +2572,40 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
   }
 }
 
-bool TargetLowering::CheckTailCallReturnConstraints(CallSDNode *TheCall, SDValue Ret) {
+/// IgnoreHarmlessInstructions - Ignore instructions between a CALL and RET
+/// node that don't prevent tail call optimization.
+static SDValue IgnoreHarmlessInstructions(SDValue node) {
+  // Found call return.
+  if (node.getOpcode() == ISD::CALL) return node;
+  // Ignore MERGE_VALUES. Will have at least one operand.
+  if (node.getOpcode() == ISD::MERGE_VALUES)
+    return IgnoreHarmlessInstructions(node.getOperand(0));
+  // Ignore ANY_EXTEND node.
+  if (node.getOpcode() == ISD::ANY_EXTEND)
+    return IgnoreHarmlessInstructions(node.getOperand(0));
+  if (node.getOpcode() == ISD::TRUNCATE)
+    return IgnoreHarmlessInstructions(node.getOperand(0));
+  // Any other node type.
+  return node;
+} 
+
+bool TargetLowering::CheckTailCallReturnConstraints(CallSDNode *TheCall,
+                                                    SDValue Ret) {
   unsigned NumOps = Ret.getNumOperands();
-  // Struct return.
-  if(NumOps >= 5&&
-      Ret.getOperand(1).getOpcode()==ISD::MERGE_VALUES &&
-      Ret.getOperand(1).getOperand(0) == SDValue(TheCall, 0))
+  // ISD::CALL results:(value0, ..., valuen, chain)
+  // ISD::RET  operands:(chain, value0, flag0, ..., valuen, flagn)
+  // Value return:
+  // Check that operand of the RET node sources from the CALL node. The RET node
+  // has at least two operands. Operand 0 holds the chain. Operand 1 holds the
+  // value.
+  if (NumOps > 1 &&
+      IgnoreHarmlessInstructions(Ret.getOperand(1)) == SDValue(TheCall,0))
     return true;
-  if ((NumOps == 1 &&
-        (Ret.getOperand(0) == SDValue(TheCall,1) ||
-         Ret.getOperand(0) == SDValue(TheCall,0))) ||
-      (NumOps == 3 &&
-       Ret.getOperand(1).getOpcode() == ISD::ANY_EXTEND && 
-       Ret.getOperand(1).getNumOperands()>0 &&
-       Ret.getOperand(1).getOperand(0).getOpcode() == ISD::TRUNCATE &&
-       Ret.getOperand(1).getOperand(0).getNumOperands()>0 &&
-       Ret.getOperand(1).getOperand(0).getOperand(0) == SDValue(TheCall, 0)) ||
-      (NumOps > 1 &&
-       Ret.getOperand(0) == SDValue(TheCall,
-         TheCall->getNumValues()-1) &&
-       Ret.getOperand(1) == SDValue(TheCall,0)))
+  // void return: The RET node  has the chain result value of the CALL node as
+  // input.
+  if (NumOps == 1 &&
+      Ret.getOperand(0) == SDValue(TheCall, TheCall->getNumValues()-1))
     return true;
+
   return false;
 }
