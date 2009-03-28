@@ -46,7 +46,7 @@ public:
   
 private:
   bool Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint,
-                 TranslationUnit& TU);
+                 ASTContext &Ctx);
   
   bool Deserialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
 };
@@ -61,7 +61,7 @@ clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr) {
 
 bool SerializationTest::Serialize(llvm::sys::Path& Filename,
                                   llvm::sys::Path& FNameDeclPrint,
-                                  TranslationUnit& TU) {
+                                  ASTContext &Ctx) {
   { 
     // Pretty-print the decls to a temp file.
     std::string Err;
@@ -69,7 +69,9 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
     assert (Err.empty() && "Could not open file for printing out decls.");
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
-    for (TranslationUnit::iterator I=TU.begin(), E=TU.end(); I!=E; ++I)
+    TranslationUnitDecl *TUD = Ctx.getTranslationUnitDecl();
+    for (DeclContext::decl_iterator I = TUD->decls_begin(), E =TUD->decls_end();
+         I != E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
   }
   
@@ -79,7 +81,7 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
   std::vector<unsigned char> Buffer;
   Buffer.reserve(256*1024);
   
-  EmitASTBitcodeBuffer(TU,Buffer);
+  EmitASTBitcodeBuffer(Ctx, Buffer);
   
   // Write the bits to disk. 
   if (FILE* fp = fopen(Filename.c_str(),"wb")) {
@@ -177,7 +179,7 @@ void SerializationTest::HandleTranslationUnit(TranslationUnit& TU) {
   }
   
   // Serialize and then deserialize the ASTs.
-  bool status = Serialize(ASTFilename, FNameDeclBefore, TU);
+  bool status = Serialize(ASTFilename, FNameDeclBefore, TU.getContext());
   assert (status && "Serialization failed.");  
   status = Deserialize(ASTFilename, FNameDeclAfter);
   assert (status && "Deserialization failed.");

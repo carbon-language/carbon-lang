@@ -62,7 +62,7 @@ public:
 };
   
 /// EmitASTBitcodeBuffer - Emit a translation unit to a buffer.
-bool EmitASTBitcodeBuffer(const TranslationUnit& TU, 
+bool EmitASTBitcodeBuffer(const ASTContext &Ctx, 
                           std::vector<unsigned char>& Buffer);
 
 /// ReadASTBitcodeBuffer - Reconsitute a translation unit from a buffer.

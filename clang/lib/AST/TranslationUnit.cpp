@@ -39,7 +39,7 @@ TranslationUnit::~TranslationUnit() {
   }  
 }
 
-bool clang::EmitASTBitcodeBuffer(const TranslationUnit& TU, 
+bool clang::EmitASTBitcodeBuffer(const ASTContext &Ctx, 
                                  std::vector<unsigned char>& Buffer) {
   // Create bitstream.
   llvm::BitstreamWriter Stream(Buffer);
@@ -58,7 +58,7 @@ bool clang::EmitASTBitcodeBuffer(const TranslationUnit& TU,
     llvm::Serializer Sezr(Stream);  
     
     // Emit the translation unit.
-    TU.getContext().EmitAll(Sezr);
+    Ctx.EmitAll(Sezr);
   }
   
   return true;

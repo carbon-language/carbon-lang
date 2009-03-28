@@ -982,7 +982,7 @@ public:
     std::vector<unsigned char> Buffer;
     Buffer.reserve(256*1024);
     
-    EmitASTBitcodeBuffer(TU,Buffer);
+    EmitASTBitcodeBuffer(TU.getContext(), Buffer);
     
     // Write the bits to disk. 
     if (FILE* fp = fopen(FName.c_str(),"wb")) {
@@ -1033,7 +1033,7 @@ public:
     std::vector<unsigned char> Buffer;
     Buffer.reserve(256*1024);
     
-    EmitASTBitcodeBuffer(TU,Buffer);
+    EmitASTBitcodeBuffer(TU.getContext(), Buffer);
     
     // Write the bits to disk. 
     if (FILE* fp = fopen(FName.c_str(),"wb")) {
