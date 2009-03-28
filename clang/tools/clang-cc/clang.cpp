@@ -1535,7 +1535,14 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  llvm::OwningPtr<TranslationUnit> TU(ReadASTBitcodeFile(Filename, FileMgr));
+  llvm::OwningPtr<TranslationUnit> TU;
+  
+  // Create the memory buffer that contains the contents of the file.  
+  llvm::OwningPtr<llvm::MemoryBuffer> 
+    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
+  
+  if (MBuffer)
+    TU.reset(ReadASTBitcodeBuffer(*MBuffer, FileMgr));
   
   if (!TU) {
     fprintf(stderr, "error: file '%s' could not be deserialized\n", 

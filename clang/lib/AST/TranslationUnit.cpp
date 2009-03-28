@@ -144,28 +144,13 @@ clang::ReadASTBitcodeBuffer(llvm::MemoryBuffer& MBuffer, FileManager& FMgr) {
   return TranslationUnit::Create(Dezr,FMgr);
 }
 
-TranslationUnit*
-clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
-  
-  // Create the memory buffer that contains the contents of the file.  
-  llvm::OwningPtr<llvm::MemoryBuffer> 
-    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
-  
-  if (!MBuffer) {
-    // FIXME: Provide diagnostic.
-    return NULL;
-  }
-  
-  return ReadASTBitcodeBuffer(*MBuffer, FMgr);
-}
-
 TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
                                          FileManager& FMgr) {
   
   // Create the translation unit object.
   TranslationUnit* TU = new TranslationUnit();
   
-  TU->Context = ASTContext.CreateAll(Dezr, FmMgr);
+  TU->Context = ASTContext::CreateAll(Dezr, FMgr);
   
   return TU;
 }

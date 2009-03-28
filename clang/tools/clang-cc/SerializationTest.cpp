@@ -81,7 +81,18 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
                                     llvm::sys::Path& FNameDeclPrint) {
   
   // Deserialize the translation unit.
-  TranslationUnit* NewTU = ReadASTBitcodeFile(Filename, FMgr);
+  TranslationUnit* NewTU;
+  
+  {
+    // Create the memory buffer that contains the contents of the file.  
+    llvm::OwningPtr<llvm::MemoryBuffer> 
+      MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
+  
+    if (!MBuffer)
+      return false;
+    
+    NewTU = ReadASTBitcodeBuffer(*MBuffer, FMgr);
+  }
 
   if (!NewTU)
     return false;

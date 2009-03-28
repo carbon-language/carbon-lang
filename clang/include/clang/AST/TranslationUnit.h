@@ -82,10 +82,6 @@ bool EmitASTBitcodeBuffer(const TranslationUnit& TU,
 bool EmitASTBitcodeBuffer(const TranslationUnit* TU, 
                           std::vector<unsigned char>& Buffer);
 
-/// ReadASTBitcodeFile - Reconsitute a translation unit from a bitcode file.
-TranslationUnit* ReadASTBitcodeFile(const llvm::sys::Path& Filename,
-                                    FileManager& FMgr); 
-                
 /// ReadASTBitcodeBuffer - Reconsitute a translation unit from a buffer.
 TranslationUnit* ReadASTBitcodeBuffer(llvm::MemoryBuffer& MBuffer,
                                       FileManager& FMgr); 
