@@ -877,6 +877,25 @@ bool parser<bool>::parse(Option &O, const char *ArgName,
   return false;
 }
 
+void parser<bool>::getExtraOptionNames(std::vector<const char*> &OptionNames) {
+  if (!IsInvertable)
+    return;
+  
+  char *s = new char [strlen(ArgStr) + 3 + 1];
+  s[0] = ArgStr[0];
+  if (strncmp(ArgStr+1, "no-", 3) == 0)
+    strcpy(&s[1], &ArgStr[4]);
+  else {
+    s[1] = 'n';
+    s[2] = 'o';
+    s[3] = '-';
+    strcpy(&s[4], ArgStr+1);
+  }
+  OptionNames.push_back(s);
+}
+
+
+
 // parser<boolOrDefault> implementation
 //
 bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
