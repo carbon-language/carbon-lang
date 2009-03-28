@@ -181,6 +181,9 @@ public:
   Kind getKind() const { return DeclKind; }
   const char *getDeclKindName() const;
   
+  Decl *getNextDeclInScope() { return NextDeclInScope; }
+  const Decl *getNextDeclInScope() const { return NextDeclInScope; }
+
   DeclContext *getDeclContext() {
     if (isInSemaDC())
       return getSemanticDC();
@@ -375,8 +378,6 @@ class DeclContext {
   /// DenseMap. Othewise, it is an array.
   bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
 
-  static Decl *getNextDeclInScope(Decl *D) { return D->NextDeclInScope; }
-
 protected:
    DeclContext(Decl::Kind K) 
      : DeclKind(K), LookupPtr(), FirstDecl(0), LastDecl(0) { }
@@ -527,7 +528,10 @@ public:
     reference operator*() const { return Current; }
     pointer operator->() const { return Current; }
 
-    decl_iterator& operator++();
+    decl_iterator& operator++() {
+      Current = Current->getNextDeclInScope();
+      return *this;
+    }
 
     decl_iterator operator++(int) {
       decl_iterator tmp(*this);
@@ -779,13 +783,7 @@ inline bool Decl::isTemplateParameter() const {
 inline bool Decl::isDefinedOutsideFunctionOrMethod() const {
   if (getDeclContext())
     return !getDeclContext()->getLookupContext()->isFunctionOrMethod();
-  else
-    return true;
-}
-
-inline DeclContext::decl_iterator& DeclContext::decl_iterator::operator++() {
-  Current = getNextDeclInScope(Current);
-  return *this;
+  return true;
 }
 
 } // end clang.
