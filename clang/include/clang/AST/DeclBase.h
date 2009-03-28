@@ -86,13 +86,13 @@ private:
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   Decl *NextDeclarator;
   
-  /// NextDeclInScope - The next declaration within the same lexical
+  /// NextDeclInContext - The next declaration within the same lexical
   /// DeclContext. These pointers form the linked list that is
   /// traversed via DeclContext's decls_begin()/decls_end().
   /// FIXME: If NextDeclarator is non-NULL, will it always be the same
-  /// as NextDeclInScope? If so, we can use a
+  /// as NextDeclInContext? If so, we can use a
   /// PointerIntPair<Decl*, 1> to make Decl smaller.
-  Decl *NextDeclInScope;
+  Decl *NextDeclInContext;
 
   friend class DeclContext;
 
@@ -160,7 +160,7 @@ protected:
   friend class CXXClassMemberWrapper;
 
   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
-    : NextDeclarator(0), NextDeclInScope(0), 
+    : NextDeclarator(0), NextDeclInContext(0), 
       DeclCtx(DC, 0), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), 
@@ -181,8 +181,8 @@ public:
   Kind getKind() const { return DeclKind; }
   const char *getDeclKindName() const;
   
-  Decl *getNextDeclInScope() { return NextDeclInScope; }
-  const Decl *getNextDeclInScope() const { return NextDeclInScope; }
+  Decl *getNextDeclInContext() { return NextDeclInContext; }
+  const Decl *getNextDeclInContext() const { return NextDeclInContext; }
 
   DeclContext *getDeclContext() {
     if (isInSemaDC())
@@ -529,7 +529,7 @@ public:
     pointer operator->() const { return Current; }
 
     decl_iterator& operator++() {
-      Current = Current->getNextDeclInScope();
+      Current = Current->getNextDeclInContext();
       return *this;
     }
 

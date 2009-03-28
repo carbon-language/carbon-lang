@@ -46,10 +46,10 @@ void Decl::Emit(Serializer& S) const {
   if (getDeclContext() && 
       !getDeclContext()->isFunctionOrMethod()) {
     S.EmitBool(true);
-    S.EmitOwnedPtr(NextDeclInScope);
+    S.EmitOwnedPtr(NextDeclInContext);
   } else {
     S.EmitBool(false);
-    S.EmitPtr(NextDeclInScope);
+    S.EmitPtr(NextDeclInContext);
   }
 }
 
@@ -151,9 +151,9 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
     DC->ReadOutRec(D, C);
   bool OwnsNext = D.ReadBool();
   if (OwnsNext)
-    Dcl->NextDeclInScope = D.ReadOwnedPtr<Decl>(C);
+    Dcl->NextDeclInContext = D.ReadOwnedPtr<Decl>(C);
   else 
-    D.ReadPtr(Dcl->NextDeclInScope);
+    D.ReadPtr(Dcl->NextDeclInContext);
   return Dcl;
 }
 

@@ -282,15 +282,15 @@ void Decl::Destroy(ASTContext &C) {
   if (DeclContext *DC = dyn_cast<DeclContext>(this))
     DC->decls_begin()->Destroy(C);
 
-  // Observe the unrolled recursion.  By setting N->NextDeclInScope = 0x0
+  // Observe the unrolled recursion.  By setting N->NextDeclInContext = 0x0
   // within the loop, only the Destroy method for the first Decl
   // will deallocate all of the Decls in a chain.
   
-  Decl* N = NextDeclInScope;
+  Decl* N = getNextDeclInContext();
   
   while (N) {
-    Decl* Tmp = N->NextDeclInScope;
-    N->NextDeclInScope = 0;
+    Decl* Tmp = N->getNextDeclInContext();
+    N->NextDeclInContext = 0;
     N->Destroy(C);
     N = Tmp;
   }  
@@ -541,7 +541,7 @@ DeclContext *DeclContext::getPrimaryContext() {
     if (DeclKind >= Decl::TagFirst && DeclKind <= Decl::TagLast) {
       // If this is a tag type that has a definition or is currently
       // being defined, that definition is our primary context.
-      if (const TagType *TagT = cast<TagDecl>(this)->TypeForDecl->getAsTagType())
+      if (const TagType *TagT =cast<TagDecl>(this)->TypeForDecl->getAsTagType())
         if (TagT->isBeingDefined() || 
             (TagT->getDecl() && TagT->getDecl()->isDefinition()))
           return TagT->getDecl();
@@ -568,11 +568,11 @@ DeclContext *DeclContext::getNextContext() {
 void DeclContext::addDecl(Decl *D) {
   assert(D->getLexicalDeclContext() == this &&
          "Decl inserted into wrong lexical context");
-  assert(!D->NextDeclInScope && D != LastDecl && 
+  assert(!D->getNextDeclInContext() && D != LastDecl && 
          "Decl already inserted into a DeclContext");
 
   if (FirstDecl) {
-    LastDecl->NextDeclInScope = D;
+    LastDecl->NextDeclInContext = D;
     LastDecl = D;
   } else {
     FirstDecl = LastDecl = D;
