@@ -393,18 +393,19 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   if (Tok.is(tok::semi)) {
     ConsumeToken();
     // for(is key; in keys) is error.
-    if (D.getContext()  == Declarator::ForContext && isTokIdentifier_in()) {
+    if (D.getContext() == Declarator::ForContext && isTokIdentifier_in()) {
       Diag(Tok, diag::err_parse_error);
       return 0;
     }
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }
+  
   // If this is an ObjC2 for-each loop, this is a successful declarator
   // parse.  The syntax for these looks like:
   // 'for' '(' declaration 'in' expr ')' statement
-  if (D.getContext()  == Declarator::ForContext && isTokIdentifier_in()) {
+  if (D.getContext() == Declarator::ForContext && isTokIdentifier_in())
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
-  }
+
   Diag(Tok, diag::err_parse_error);
   // Skip to end of block or statement
   SkipUntil(tok::r_brace, true, true);
