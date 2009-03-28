@@ -98,6 +98,24 @@ static void EmitRange(llvm::raw_ostream& o, SourceManager* SM, SourceRange R,
   Indent(o, indent) << "</array>\n";
 }
 
+static llvm::raw_ostream& EmitString(llvm::raw_ostream& o,
+                                     const std::string& s) {
+  o << "<string>";
+  for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I) {
+    char c = *I;
+    switch (c) {
+      default:   o << c; break;
+      case '&':  o << "&amp;"; break;
+      case '<':  o << "&lt;"; break;
+      case '>':  o << "&gt;"; break;
+      case '\'': o << "&apos;"; break;
+      case '\"': o << "&quot;"; break;
+    }
+  }
+  o << "</string>";
+  return o;
+}
+
 static void ReportControlFlow(llvm::raw_ostream& o,
                               const PathDiagnosticControlFlowPiece& P,
                               const FIDMap& FM, SourceManager *SM,
@@ -138,7 +156,8 @@ static void ReportControlFlow(llvm::raw_ostream& o,
   // Output any helper text.
   const std::string& s = P.getString();
   if (!s.empty()) {
-    Indent(o, indent) << "<key>alternate</key><string>" << s << "</string>\n";
+    Indent(o, indent) << "<key>alternate</key>";
+    EmitString(o, s) << '\n';
   }
   
   --indent;
@@ -175,12 +194,13 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   // Output the text.
   assert(!P.getString().empty());
   Indent(o, indent) << "<key>extended_message</key>\n";
-  Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
+  Indent(o, indent);
+  EmitString(o, P.getString()) << '\n';
   
   // Output the short text.
   // FIXME: Really use a short string.
   Indent(o, indent) << "<key>message</key>\n";
-  Indent(o, indent) << "<string>" << P.getString() << "</string>\n";
+  EmitString(o, P.getString()) << '\n';
 
   // Finish up.
   --indent;
@@ -288,8 +308,10 @@ PlistDiagnostics::~PlistDiagnostics() {
        " <array>\n";
   
   for (llvm::SmallVectorImpl<FileID>::iterator I=Fids.begin(), E=Fids.end();
-       I!=E; ++I)
-    o << "  <string>" << SM->getFileEntryForID(*I)->getName() << "</string>\n";    
+       I!=E; ++I) {
+    o << "  ";
+    EmitString(o, SM->getFileEntryForID(*I)->getName()) << '\n';
+  }
   
   o << " </array>\n"
        " <key>diagnostics</key>\n"
@@ -314,19 +336,19 @@ PlistDiagnostics::~PlistDiagnostics() {
     o << "   </array>\n";
     
     // Output the bug type and bug category.  
-    o << "   <key>description</key><string>" << D->getDescription()
-      << "</string>\n"
-      << "   <key>category</key><string>" << D->getCategory()
-      << "</string>\n"
-      << "   <key>type</key><string>" << D->getBugType()
-      << "</string>\n";
+    o << "   <key>description</key>";
+    EmitString(o, D->getDescription()) << '\n';
+    o << "   <key>category</key>";
+    EmitString(o, D->getCategory()) << '\n';
+    o << "   <key>type</key>";
+    EmitString(o, D->getBugType()) << '\n';
     
     // Output the location of the bug.
     o << "  <key>location</key>\n";
     EmitLocation(o, SM, D->getLocation(), FM, 2);
     
+    // Close up the entry.
     o << "  </dict>\n";
-
   }
 
   o << " </array>\n";
