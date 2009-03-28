@@ -57,7 +57,6 @@ public:
 };
     
 class DeclGroupRef {
-protected:
   enum Kind { SingleDeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };  
   Decl* D;
 

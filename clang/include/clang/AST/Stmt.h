@@ -225,7 +225,6 @@ public:
 /// the first statement can be an expression or a declaration.
 ///
 class DeclStmt : public Stmt {
-protected:
   DeclGroupRef DG;
   SourceLocation StartLoc, EndLoc;
 public:
@@ -243,6 +242,9 @@ public:
  
   const Decl *getSingleDecl() const { return DG.getSingleDecl(); }
   Decl *getSingleDecl() { return DG.getSingleDecl(); }  
+  
+  const DeclGroupRef getDeclGroup() const { return DG; }
+  DeclGroupRef getDeclGroup() { return DG; }
 
   SourceLocation getStartLoc() const { return StartLoc; }
   SourceLocation getEndLoc() const { return EndLoc; }

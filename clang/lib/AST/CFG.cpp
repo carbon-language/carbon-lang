@@ -363,15 +363,12 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
         return WalkAST_VisitDeclSubExpr(DS->getSingleDecl());
       }
       
-      typedef llvm::SmallVector<Decl*,10> BufTy;
-      BufTy Buf;        
       CFGBlock* B = 0;
 
       // FIXME: Add a reverse iterator for DeclStmt to avoid this
       // extra copy.
-      for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
-           DI != DE; ++DI)
-        Buf.push_back(*DI);
+      typedef llvm::SmallVector<Decl*,10> BufTy;
+      BufTy Buf(DS->decl_begin(), DS->decl_end());
       
       for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
         // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
@@ -384,8 +381,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
         Decl* D = *I;
         void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
         
-        DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(),
-                                          GetEndLoc(D));
+        DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(), GetEndLoc(D));
         
         // Append the fake DeclStmt to block.
         Block->appendStmt(DS);
