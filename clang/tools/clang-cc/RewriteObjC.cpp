@@ -126,11 +126,6 @@ namespace {
   public:
     virtual void Initialize(ASTContext &context);
 
-    virtual void InitializeTU(TranslationUnit &TU) {
-      Initialize(TU.getContext());
-    }
-    
-
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);

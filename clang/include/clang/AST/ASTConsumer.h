@@ -32,8 +32,6 @@ public:
   /// ASTContext.
   virtual void Initialize(ASTContext &Context) {}
   
-  virtual void InitializeTU(TranslationUnit& TU);
-  
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
   ///  called by the parser to process every top-level Decl*. Note that D can
   ///  be the head of a chain of Decls (e.g. for `int a, b` the chain will have

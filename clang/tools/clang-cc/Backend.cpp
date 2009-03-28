@@ -102,18 +102,17 @@ namespace {
       delete PerFunctionPasses;
     }
 
-    virtual void InitializeTU(TranslationUnit& TU) {
-      Context = &TU.getContext();
+    virtual void Initialize(ASTContext &Ctx) {
+      Context = &Ctx;
       
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.startTimer();
       
-      Gen->InitializeTU(TU);
+      Gen->Initialize(Ctx);
 
       TheModule = Gen->GetModule();
       ModuleProvider = new ExistingModuleProvider(TheModule);
-      TheTargetData = 
-        new llvm::TargetData(TU.getContext().Target.getTargetDescription());
+      TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
       
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.stopTimer();

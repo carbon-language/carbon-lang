@@ -14,11 +14,6 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TranslationUnit.h"
-
 using namespace clang;
 
 ASTConsumer::~ASTConsumer() {}
-
-void ASTConsumer::InitializeTU(TranslationUnit& TU) {
-  Initialize(TU.getContext());
-}
