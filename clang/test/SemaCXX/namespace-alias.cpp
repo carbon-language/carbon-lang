@@ -14,3 +14,10 @@ int i;
 namespace D = i; // expected-error {{expected namespace name}}
 
 namespace E = N::Foo; // expected-error {{expected namespace name}}
+
+namespace F {
+  namespace A { namespace B { } } // expected-note {{candidate found by name lookup is 'F::A::B'}}
+  namespace B { } // expected-note {{candidate found by name lookup is 'F::B'}}
+  using namespace A;
+  namespace D = B; // expected-error {{reference to 'B' is ambiguous}}
+}
