@@ -531,8 +531,8 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   Value *Base = Visit(E->getBase());
   Value *Idx  = Visit(E->getIdx());
   bool IdxSigned = E->getIdx()->getType()->isSignedIntegerType();
-  Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(32),
-                              IdxSigned, "vecidxcast");
+  Idx = Builder.CreateIntCast(Idx, llvm::Type::Int32Ty, IdxSigned,
+                              "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
 
