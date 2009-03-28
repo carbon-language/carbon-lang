@@ -69,7 +69,6 @@ public:
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   Value *EmitLoadOfLValue(const Expr *E) {
-    // FIXME: Volatile
     return EmitLoadOfLValue(EmitLValue(E), E->getType());
   }
     
@@ -531,8 +530,9 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   // integer value.
   Value *Base = Visit(E->getBase());
   Value *Idx  = Visit(E->getIdx());
-  
-  // FIXME: Convert Idx to i32 type.
+  bool IdxSigned = E->getIdx()->getType()->isSignedIntegerType();
+  Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(32),
+                              IdxSigned, "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
 
@@ -545,10 +545,10 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
   // If this is due to array->pointer conversion, emit the array expression as
   // an l-value.
   if (Op->getType()->isArrayType()) {
-    // FIXME: For now we assume that all source arrays map to LLVM arrays.  This
-    // will not true when we add support for VLAs.
     Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
 
+    // Note that VLA pointers are always decayed, so we don't need to do
+    // anything here.
     if (!Op->getType()->isVariableArrayType()) {
       assert(isa<llvm::PointerType>(V->getType()) && "Expected pointer");
       assert(isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
@@ -569,12 +569,8 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
       }
     }
     return V;
-    
-  } else if (E->getType()->isReferenceType()) {
-    // FIXME: An expression cannot have reference type.
-    return EmitLValue(Op).getAddress();
   }
-  
+
   return EmitCastExpr(Op, E->getType());
 }
 
@@ -624,11 +620,16 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   Value *InVal = CGF.EmitLoadOfLValue(LV, ValTy).getScalarVal();
   
   int AmountVal = isInc ? 1 : -1;
-  
+
+  if (ValTy->isPointerType() &&
+      ValTy->getAsPointerType()->isVariableArrayType()) {
+    // The amount of the addition/subtraction needs to account for the VLA size
+    CGF.ErrorUnsupported(E, "VLA pointer inc/dec");
+  }
+
   Value *NextVal;
   if (const llvm::PointerType *PT = 
          dyn_cast<llvm::PointerType>(InVal->getType())) {
-    // FIXME: This isn't right for VLAs.
     llvm::Constant *Inc =llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
     if (!isa<llvm::FunctionType>(PT->getElementType())) {
       NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
@@ -769,7 +770,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   BinOpInfo OpInfo;
 
   if (E->getComputationResultType()->isAnyComplexType()) {
-    // FIXME: This needs to go through the complex expression emitter, but
+    // This needs to go through the complex expression emitter, but
     // it's a tad complicated to do that... I'm leaving it out for now.
     // (Note that we do actually need the imaginary part of the RHS for
     // multiplication and division.)
@@ -828,8 +829,11 @@ Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isPointerType())
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
-  
-  // FIXME: What about a pointer to a VLA?
+
+  if (Ops.Ty->getAsPointerType()->isVariableArrayType()) {
+    // The amount of the addition needs to account for the VLA size
+    CGF.ErrorUnsupported(Ops.E, "VLA pointer addition");
+  }
   Value *Ptr, *Idx;
   Expr *IdxExp;
   const PointerType *PT;
@@ -874,6 +878,14 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType()))
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
 
+  if (Ops.E->getLHS()->getType()->getAsPointerType()->isVariableArrayType()) {
+    // The amount of the addition needs to account for the VLA size for
+    // ptr-int
+    // The amount of the division needs to account for the VLA size for
+    // ptr-ptr.
+    CGF.ErrorUnsupported(Ops.E, "VLA pointer subtraction");
+  }
+
   const QualType LHSType = Ops.E->getLHS()->getType();
   const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
   if (!isa<llvm::PointerType>(Ops.RHS->getType())) {
@@ -890,8 +902,6 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
         Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
     }
     Idx = Builder.CreateNeg(Idx, "sub.ptr.neg");
-    
-    // FIXME: The pointer could point to a VLA.
 
     // Explicitly handle GNU void* and function pointer arithmetic
     // extensions. The GNU void* casts amount to no-ops since our
@@ -1041,8 +1051,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // Store the value into the LHS.  Bit-fields are handled specially
   // because the result is altered by the store, i.e., [C99 6.5.16p1]
   // 'An assignment expression has the value of the left operand after
-  // the assignment...'.  
-  // FIXME: Volatility!
+  // the assignment...'.
   if (LHS.isBitfield())
     CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
                                        &RHS);
@@ -1284,7 +1293,6 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   if (!ArgPtr) 
     return Builder.CreateVAArg(ArgValue, ConvertType(VE->getType()));
 
-  // FIXME: volatile?
   return Builder.CreateLoad(ArgPtr);
 }
 

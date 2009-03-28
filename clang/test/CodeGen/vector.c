@@ -8,3 +8,6 @@ void f()
 
 __v4hi x = {1,2,3};
 __v4hi y = {1,2,3,4};
+
+typedef int x __attribute((vector_size(16)));
+int a() { x b; return b[2LL]; }
