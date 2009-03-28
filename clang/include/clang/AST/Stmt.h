@@ -260,37 +260,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  class decl_iterator {
-    DeclGroupRef::iterator I;
-  public:
-    decl_iterator(DeclGroupRef::iterator i) : I(i) {}
-    decl_iterator& operator++() { ++I; return *this; }
-    bool operator==(const decl_iterator& R) const {
-      return R.I == I;
-    }
-    bool operator!=(const decl_iterator& R) const {
-      return R.I != I;
-    }
-    Decl* operator*() const {
-      return *I;
-    }
-  };
-    
-  class const_decl_iterator {
-    DeclGroupRef::const_iterator I;
-  public:
-    const_decl_iterator(DeclGroupRef::const_iterator i) : I(i) {}
-    const_decl_iterator& operator++() { ++I; return *this; }
-    bool operator==(const const_decl_iterator& R) const {
-      return R.I == I;
-    }
-    bool operator!=(const const_decl_iterator& R) const {
-      return R.I != I;
-    }
-    Decl* operator*() const {
-      return *I;
-    }
-  };
+  typedef DeclGroupRef::iterator decl_iterator;
+  typedef DeclGroupRef::const_iterator const_decl_iterator;
   
   decl_iterator decl_begin() { return DG.begin(); }
   decl_iterator decl_end() { return DG.end(); }
