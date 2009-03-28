@@ -93,7 +93,6 @@ public:
     return const_cast<DeclGroupRef*>(this)->getDeclGroup();
   }
   
-
   iterator begin() {
     if (isSingleDecl())
       return D ? &D : 0;
@@ -120,6 +119,13 @@ public:
     return &G[0] + G.size();
   }
 
+  void *getAsOpaquePtr() const { return D; }
+  static DeclGroupRef getFromOpaquePtr(void *Ptr) {
+    DeclGroupRef X;
+    X.D = static_cast<Decl*>(Ptr);
+    return X;
+  }
+  
   /// Emit - Serialize a DeclGroupRef to Bitcode.
   void Emit(llvm::Serializer& S) const;
   
