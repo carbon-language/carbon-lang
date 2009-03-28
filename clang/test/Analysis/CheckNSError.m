@@ -41,7 +41,19 @@ void foo(CFErrorRef* error) { // expected-warning {{Function accepting CFErrorRe
   *error = 0;  // expected-warning {{Potential null dereference.}}
 }
 
-int bar(CFErrorRef* error) {
-  if (error) *error = 0;
+int f1(CFErrorRef* error) {
+  if (error) *error = 0; // no-warning
   return 0;
 }
+
+int f2(CFErrorRef* error) {
+  if (0 != error) *error = 0; // no-warning
+  return 0;
+}
+
+int f3(CFErrorRef* error) {
+  if (error != 0) *error = 0; // no-warning
+  return 0;
+}
+
+

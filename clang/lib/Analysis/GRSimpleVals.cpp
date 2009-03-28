@@ -375,13 +375,11 @@ TryAgain:
         
         return NonLoc::MakeIntTruthVal(BasicVals, b);
       }
-      else if (isa<loc::SymbolVal>(R)) {
+      else if (SymbolRef Sym = R.getAsSymbol()) {
         const SymIntExpr * SE =
-        Eng.getSymbolManager().getSymIntExpr(
-                                    cast<loc::SymbolVal>(R).getSymbol(),
-                                    BinaryOperator::NE,
-                                    cast<loc::ConcreteInt>(L).getValue(),
-                                    Eng.getContext().IntTy);
+          Eng.getSymbolManager().getSymIntExpr(Sym, BinaryOperator::NE,
+                                           cast<loc::ConcreteInt>(L).getValue(),
+                                             Eng.getContext().IntTy);
         return nonloc::SymExprVal(SE);
       }
       
