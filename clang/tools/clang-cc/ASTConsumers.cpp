@@ -543,7 +543,7 @@ namespace {
       PrintDecl(D);
     }
   };
-}
+} // end anonymous namespace
 
 ASTConsumer *clang::CreateASTPrinter(llvm::raw_ostream* out) {
   return new ASTPrinter(out);
@@ -561,53 +561,55 @@ namespace {
     void Initialize(ASTContext &Context) {
       SM = &Context.getSourceManager();
     }
-    
-    virtual void HandleTopLevelDecl(Decl *D) {
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        PrintFunctionDeclStart(FD);
-        
-        if (FD->getBody()) {
-          Out << '\n';
-          // FIXME: convert dumper to use std::ostream?
-          FD->getBody()->dumpAll(*SM);
-          Out << '\n';
-        }
-      } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-        PrintTypeDefDecl(TD);
-      } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
-        Out << "Read objc interface '" << OID->getNameAsString() << "'\n";
-      } else if (ObjCProtocolDecl *OPD = dyn_cast<ObjCProtocolDecl>(D)) {
-        Out << "Read objc protocol '" << OPD->getNameAsString() << "'\n";
-      } else if (ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(D)) {
-        Out << "Read objc category '" << OCD->getNameAsString() << "'\n";
-      } else if (isa<ObjCForwardProtocolDecl>(D)) {
-        Out << "Read objc fwd protocol decl\n";
-      } else if (isa<ObjCClassDecl>(D)) {
-        Out << "Read objc fwd class decl\n";
-      } else if (isa<FileScopeAsmDecl>(D)) {
-        Out << "Read file scope asm decl\n";
-      } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
-        Out << "Read objc method decl: '" << MD->getSelector().getAsString()
-            << "'\n";
-        if (MD->getBody()) {
-          // FIXME: convert dumper to use std::ostream?
-          MD->getBody()->dumpAll(*SM);
-          Out << '\n';
-        }
-      } else if (isa<ObjCImplementationDecl>(D)) {
-        Out << "Read objc implementation decl\n";
-      } else if (isa<ObjCCategoryImplDecl>(D)) {
-        Out << "Read objc category implementation decl\n";
-      } else if (isa<LinkageSpecDecl>(D)) {
-        Out << "Read linkage spec decl\n";
-      } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-        Out << "Read top-level variable decl: '" << ND->getNameAsString()
-            << "'\n";
-      } else {
-        assert(0 && "Unknown decl type!");
-      }
-    }
+
+    virtual void HandleTopLevelDecl(Decl *D);
   };
+} // end anonymous namespace
+
+void ASTDumper::HandleTopLevelDecl(Decl *D) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    PrintFunctionDeclStart(FD);
+    
+    if (FD->getBody()) {
+      Out << '\n';
+      // FIXME: convert dumper to use std::ostream?
+      FD->getBody()->dumpAll(*SM);
+      Out << '\n';
+    }
+  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+    PrintTypeDefDecl(TD);
+  } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    Out << "Read objc interface '" << OID->getNameAsString() << "'\n";
+  } else if (ObjCProtocolDecl *OPD = dyn_cast<ObjCProtocolDecl>(D)) {
+    Out << "Read objc protocol '" << OPD->getNameAsString() << "'\n";
+  } else if (ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(D)) {
+    Out << "Read objc category '" << OCD->getNameAsString() << "'\n";
+  } else if (isa<ObjCForwardProtocolDecl>(D)) {
+    Out << "Read objc fwd protocol decl\n";
+  } else if (isa<ObjCClassDecl>(D)) {
+    Out << "Read objc fwd class decl\n";
+  } else if (isa<FileScopeAsmDecl>(D)) {
+    Out << "Read file scope asm decl\n";
+  } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
+    Out << "Read objc method decl: '" << MD->getSelector().getAsString()
+    << "'\n";
+    if (MD->getBody()) {
+      // FIXME: convert dumper to use std::ostream?
+      MD->getBody()->dumpAll(*SM);
+      Out << '\n';
+    }
+  } else if (isa<ObjCImplementationDecl>(D)) {
+    Out << "Read objc implementation decl\n";
+  } else if (isa<ObjCCategoryImplDecl>(D)) {
+    Out << "Read objc category implementation decl\n";
+  } else if (isa<LinkageSpecDecl>(D)) {
+    Out << "Read linkage spec decl\n";
+  } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+    Out << "Read top-level variable decl: '" << ND->getNameAsString()
+    << "'\n";
+  } else {
+    assert(0 && "Unknown decl type!");
+  }
 }
 
 ASTConsumer *clang::CreateASTDumper() { return new ASTDumper(); }
@@ -623,28 +625,33 @@ namespace {
       SM = &Context.getSourceManager();
     }
     
-    virtual void HandleTopLevelDecl(Decl *D) {
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        DeclPrinter().PrintFunctionDeclStart(FD);
-        
-        if (FD->getBody()) {
-          llvm::cerr << '\n';
-          FD->getBody()->viewAST();
-          llvm::cerr << '\n';
-        }
-      }
-      else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-        DeclPrinter().PrintObjCMethodDecl(MD);
-        
-        if (MD->getBody()) {
-          llvm::cerr << '\n';
-          MD->getBody()->viewAST();
-          llvm::cerr << '\n';
-        }
-      }
-    }
+    virtual void HandleTopLevelDecl(Decl *D);
   };
 }
+
+void ASTViewer::HandleTopLevelDecl(Decl *D) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    DeclPrinter().PrintFunctionDeclStart(FD);
+    
+    if (FD->getBody()) {
+      llvm::cerr << '\n';
+      FD->getBody()->viewAST();
+      llvm::cerr << '\n';
+    }
+    return;
+  }
+  
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    DeclPrinter().PrintObjCMethodDecl(MD);
+    
+    if (MD->getBody()) {
+      llvm::cerr << '\n';
+      MD->getBody()->viewAST();
+      llvm::cerr << '\n';
+    }
+  }
+}
+
 
 ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
 
@@ -664,6 +671,7 @@ public:
 
   void PrintDeclContext(const DeclContext* DC, unsigned Indentation);
 };
+}  // end anonymous namespace
 
 void DeclContextPrinter::PrintDeclContext(const DeclContext* DC, 
                                           unsigned Indentation) {
@@ -919,9 +927,6 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     }
   }
 }
-
-}
-
 ASTConsumer *clang::CreateDeclContextPrinter() { 
   return new DeclContextPrinter(); 
 }
@@ -997,56 +1002,57 @@ public:
   BuildSerializer(const llvm::sys::Path& dir, Diagnostic& diags)
     : ASTSerializer(diags), EmitDir(dir) {}
   
-  virtual void HandleTranslationUnit(ASTContext &Ctx) {
-    if (Diags.hasErrorOccurred())
-      return;
-    
-    SourceManager& SourceMgr = Ctx.getSourceManager();
-    FileID ID = SourceMgr.getMainFileID();
-    assert(!ID.isInvalid() && "MainFileID not set!");
-    const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
-    assert(FE && "No FileEntry for main file.");
-    
-    // FIXME: This is not portable to Windows.
-    // FIXME: This logic should probably be moved elsewhere later.
-        
-    llvm::sys::Path FName(EmitDir);
-    
-    std::vector<char> buf;
-    buf.reserve(strlen(FE->getName())+100);    
-    
-    sprintf(&buf[0], "dev_%llx", (unsigned long long) FE->getDevice());
-    FName.appendComponent(&buf[0]);
-    FName.createDirectoryOnDisk(true);
-    if (!FName.canWrite() || !FName.isDirectory()) {
-      assert (false && "Could not create 'device' serialization directory.");
-      return;
-    }
-            
-    sprintf(&buf[0], "%s-%llX.ast", FE->getName(),
-            (unsigned long long) FE->getInode());
-    FName.appendComponent(&buf[0]);    
-    
-    
-    // Reserve 256K for bitstream buffer.
-    std::vector<unsigned char> Buffer;
-    Buffer.reserve(256*1024);
-    
-    Ctx.EmitASTBitcodeBuffer(Buffer);
-    
-    // Write the bits to disk. 
-    if (FILE* fp = fopen(FName.c_str(),"wb")) {
-      fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
-      fclose(fp);
-    }
-    
-    // Now emit the sources.
-    
-  }
+  virtual void HandleTranslationUnit(ASTContext &Ctx);
 };
-  
-  
 } // end anonymous namespace
+
+
+void BuildSerializer::HandleTranslationUnit(ASTContext &Ctx) {
+  if (Diags.hasErrorOccurred())
+    return;
+  
+  SourceManager& SourceMgr = Ctx.getSourceManager();
+  FileID ID = SourceMgr.getMainFileID();
+  assert(!ID.isInvalid() && "MainFileID not set!");
+  const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
+  assert(FE && "No FileEntry for main file.");
+  
+  // FIXME: This is not portable to Windows.
+  // FIXME: This logic should probably be moved elsewhere later.
+      
+  llvm::sys::Path FName(EmitDir);
+  
+  std::vector<char> buf;
+  buf.reserve(strlen(FE->getName())+100);    
+  
+  sprintf(&buf[0], "dev_%llx", (unsigned long long) FE->getDevice());
+  FName.appendComponent(&buf[0]);
+  FName.createDirectoryOnDisk(true);
+  if (!FName.canWrite() || !FName.isDirectory()) {
+    assert (false && "Could not create 'device' serialization directory.");
+    return;
+  }
+          
+  sprintf(&buf[0], "%s-%llX.ast", FE->getName(),
+          (unsigned long long) FE->getInode());
+  FName.appendComponent(&buf[0]);    
+  
+  
+  // Reserve 256K for bitstream buffer.
+  std::vector<unsigned char> Buffer;
+  Buffer.reserve(256*1024);
+  
+  Ctx.EmitASTBitcodeBuffer(Buffer);
+  
+  // Write the bits to disk. 
+  if (FILE* fp = fopen(FName.c_str(),"wb")) {
+    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+    fclose(fp);
+  }
+  
+  // Now emit the sources.
+  
+}
 
 
 ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
