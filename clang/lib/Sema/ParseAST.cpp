@@ -25,40 +25,24 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-/// the file is parsed.
+/// the file is parsed.  This inserts the parsed decls into TU.
 ///
-/// \param TU If 0, then memory used for AST elements will be allocated only
-/// for the duration of the ParseAST() call. In this case, the client should
-/// not access any AST elements after ParseAST() returns.
 void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
-                     TranslationUnit *TU, bool PrintStats) {
+                     TranslationUnit &TU, bool PrintStats) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
     Stmt::CollectingStats(true);
   }
 
-  llvm::OwningPtr<ASTContext> ContextOwner;
-  llvm::OwningPtr<TranslationUnit> TranslationUnitOwner;
-  if (TU == 0) {
-    ASTContext *Context = new ASTContext(PP.getLangOptions(),
-                                         PP.getSourceManager(),
-                                         PP.getTargetInfo(),
-                                         PP.getIdentifierTable(),
-                                         PP.getSelectorTable());
-    ContextOwner.reset(Context);
-    TU = new TranslationUnit(*Context);
-    TranslationUnitOwner.reset(TU);
-  }
-
-  Sema S(PP, TU->getContext(), *Consumer);
+  Sema S(PP, TU.getContext(), *Consumer);
   Parser P(PP, S);
   PP.EnterMainSourceFile();
     
   // Initialize the parser.
   P.Initialize();
   
-  Consumer->InitializeTU(*TU);
+  Consumer->InitializeTU(TU);
   
   Parser::DeclTy *ADecl;
   
@@ -72,12 +56,12 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
     }
   };
   
-  Consumer->HandleTranslationUnit(*TU);
+  Consumer->HandleTranslationUnit(TU);
 
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     P.getActions().PrintStats();
-    TU->getContext().PrintStats();
+    TU.getContext().PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
     Consumer->PrintStats();

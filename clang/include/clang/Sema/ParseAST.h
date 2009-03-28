@@ -20,14 +20,10 @@ namespace clang {
   class TranslationUnit;
 
   /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-  /// the file is parsed.
+  /// the file is parsed.  This inserts the parsed decls into TU.
   ///
-  /// \param TU If 0, then memory used for AST elements will be allocated only
-  /// for the duration of the ParseAST() call. In this case, the client should
-  /// not access any AST elements after ParseAST() returns.
   void ParseAST(Preprocessor &pp, ASTConsumer *C, 
-                TranslationUnit *TU = 0,
-                bool PrintStats = false);
+                TranslationUnit &TU, bool PrintStats = false);
 
 }  // end namespace clang
 
