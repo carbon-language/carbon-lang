@@ -63,8 +63,23 @@ static Stmt* GetPreviousStmt(const ExplodedNode<GRState>* N) {
 
 static Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
   for (N = GetSuccessorNode(N); N; N = GetSuccessorNode(N))
-    if (Stmt *S = GetStmt(N->getLocation()))
+    if (Stmt *S = GetStmt(N->getLocation())) {
+      // Check if the statement is '?' or '&&'/'||'.  These are "merges",
+      // not actual statement points.
+      switch (S->getStmtClass()) {
+        case Stmt::ChooseExprClass:
+        case Stmt::ConditionalOperatorClass: continue;
+        case Stmt::BinaryOperatorClass: {
+          BinaryOperator::Opcode Op = cast<BinaryOperator>(S)->getOpcode();
+          if (Op == BinaryOperator::LAnd || Op == BinaryOperator::LOr)
+            continue;
+          break;
+        }
+        default:
+          break;
+      }
       return S;
+    }
   
   return 0;
 }
@@ -954,28 +969,45 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
           os << "Left side of '";
-          
+
           if (B->getOpcode() == BinaryOperator::LAnd) {
-            os << "&&";
+            os << "&&" << "' is ";
+            
+            if (*(Src->succ_begin()+1) == Dst) {
+              os << "false";
+              PathDiagnosticLocation End(B->getLHS(), SMgr);
+              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));
+            }            
+            else {
+              os << "true";
+              PathDiagnosticLocation Start(B->getLHS(), SMgr);
+              PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));
+            }              
           }
           else {
             assert(B->getOpcode() == BinaryOperator::LOr);
-            os << "||";
+            os << "||" << "' is ";
+            
+            if (*(Src->succ_begin()+1) == Dst) {
+              os << "false";
+              PathDiagnosticLocation Start(B->getLHS(), SMgr);
+              PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));              
+            }
+            else {
+              os << "true";
+              PathDiagnosticLocation End(B->getLHS(), SMgr);
+              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));                            
+            }
           }
 
-          os << "' is ";
-          if (*(Src->succ_begin()+1) == Dst)
-            os << (B->getOpcode() == BinaryOperator::LAnd
-                   ? "false" : "true");
-          else
-            os << (B->getOpcode() == BinaryOperator::LAnd
-                   ? "true" : "false");
-          
-          PathDiagnosticLocation Start(B->getLHS(), SMgr);
-          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                           os.str()));
           break;
         }
           
