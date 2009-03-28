@@ -405,9 +405,11 @@ void StmtDumper::VisitBinaryOperator(BinaryOperator *Node) {
 }
 void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " '%s' ComputeTy=",
+  fprintf(F, " '%s' ComputeLHSTy=",
           BinaryOperator::getOpcodeStr(Node->getOpcode()));
-  DumpType(Node->getComputationType());
+  DumpType(Node->getComputationLHSType());
+  fprintf(F, " ComputeResultTy=");
+  DumpType(Node->getComputationResultType());
 }
 
 // GNU extensions.

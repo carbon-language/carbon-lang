@@ -456,7 +456,8 @@ CharacterLiteral* CharacterLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
 
 void CompoundAssignOperator::EmitImpl(Serializer& S) const {
   S.Emit(getType());
-  S.Emit(ComputationType);
+  S.Emit(ComputationLHSType);
+  S.Emit(ComputationResultType);
   S.Emit(getOperatorLoc());
   S.EmitInt(getOpcode());
   S.BatchEmitOwnedPtrs(getLHS(),getRHS());
@@ -465,14 +466,15 @@ void CompoundAssignOperator::EmitImpl(Serializer& S) const {
 CompoundAssignOperator* 
 CompoundAssignOperator::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
-  QualType c = QualType::ReadVal(D);
+  QualType cl = QualType::ReadVal(D);
+  QualType cr = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   Opcode Opc = static_cast<Opcode>(D.ReadInt());
   Expr* LHS, *RHS;
   D.BatchReadOwnedPtrs(LHS, RHS, C);
   
   return new (C, llvm::alignof<CompoundAssignOperator>())
-    CompoundAssignOperator(LHS,RHS,Opc,t,c,L);
+    CompoundAssignOperator(LHS,RHS,Opc,t,cl,cr,L);
 }
 
 void CompoundLiteralExpr::EmitImpl(Serializer& S) const {

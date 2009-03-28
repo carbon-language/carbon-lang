@@ -419,7 +419,7 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   LValue LHSLV = CGF.EmitLValue(E->getLHS());
 
   BinOpInfo OpInfo;
-  OpInfo.Ty = E->getComputationType();
+  OpInfo.Ty = E->getComputationResultType();
 
   // We know the LHS is a complex lvalue.
   OpInfo.LHS = EmitLoadOfComplex(LHSLV.getAddress(), LHSLV.isVolatileQualified());

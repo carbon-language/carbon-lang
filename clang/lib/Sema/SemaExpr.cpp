@@ -174,10 +174,10 @@ void Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
 /// GCC.
 QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
                                           bool isCompAssign) {
-  if (!isCompAssign) {
+  if (!isCompAssign)
     UsualUnaryConversions(lhsExpr);
-    UsualUnaryConversions(rhsExpr);
-  }
+
+  UsualUnaryConversions(rhsExpr);
 
   // For conversion purposes, we ignore any qualifiers. 
   // For example, "const float" and "float" are equivalent.
@@ -196,10 +196,9 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     return lhs;
 
   QualType destType = UsualArithmeticConversionsType(lhs, rhs);
-  if (!isCompAssign) {
+  if (!isCompAssign)
     ImpCastExprToType(lhsExpr, destType);
-    ImpCastExprToType(rhsExpr, destType);
-  }
+  ImpCastExprToType(rhsExpr, destType);
   return destType;
 }
 
@@ -3147,16 +3146,22 @@ inline QualType Sema::CheckRemainderOperands(
 }
 
 inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
-  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign)
+  Expr *&lex, Expr *&rex, SourceLocation Loc, QualType* CompLHSTy)
 {
-  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(Loc, lex, rex);
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
+    QualType compType = CheckVectorOperands(Loc, lex, rex);
+    if (CompLHSTy) *CompLHSTy = compType;
+    return compType;
+  }
 
-  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
+  QualType compType = UsualArithmeticConversions(lex, rex, CompLHSTy);
 
   // handle the common case first (both operands are arithmetic).
-  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+  if (lex->getType()->isArithmeticType() &&
+      rex->getType()->isArithmeticType()) {
+    if (CompLHSTy) *CompLHSTy = compType;
     return compType;
+  }
 
   // Put any potential pointer into PExp
   Expr* PExp = lex, *IExp = rex;
@@ -3193,6 +3198,12 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
                                      lex->getType()))
         return QualType();
 
+      if (CompLHSTy) {
+        QualType LHSTy = lex->getType();
+        if (LHSTy->isPromotableIntegerType())
+          LHSTy = Context.IntTy;
+        *CompLHSTy = LHSTy;
+      }
       return PExp->getType();
     }
   }
@@ -3202,17 +3213,22 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
 
 // C99 6.5.6
 QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
-                                        SourceLocation Loc, bool isCompAssign) {
-  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(Loc, lex, rex);
+                                        SourceLocation Loc, QualType* CompLHSTy) {
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
+    QualType compType = CheckVectorOperands(Loc, lex, rex);
+    if (CompLHSTy) *CompLHSTy = compType;
+    return compType;
+  }
 
-  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
+  QualType compType = UsualArithmeticConversions(lex, rex, CompLHSTy);
 
   // Enforce type constraints: C99 6.5.6p3.
 
   // Handle the common case first (both operands are arithmetic).
-  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType()) {
+    if (CompLHSTy) *CompLHSTy = compType;
     return compType;
+  }
 
   // Either ptr - int   or   ptr - ptr.
   if (const PointerType *LHSPTy = lex->getType()->getAsPointerType()) {
@@ -3258,6 +3274,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
           << ComplainAboutFunc->getType() 
           << ComplainAboutFunc->getSourceRange();
 
+      if (CompLHSTy) *CompLHSTy = lex->getType();
       return lex->getType();
     }
 
@@ -3310,7 +3327,8 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
         Diag(Loc, diag::ext_gnu_ptr_func_arith)
           << ComplainAboutFunc->getType() 
           << ComplainAboutFunc->getSourceRange();
-        
+
+      if (CompLHSTy) *CompLHSTy = lex->getType();
       return Context.getPointerDiffType();
     }
   }
@@ -3327,12 +3345,18 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
+  QualType LHSTy;
+  if (lex->getType()->isPromotableIntegerType())
+    LHSTy = Context.IntTy;
+  else
+    LHSTy = lex->getType();
   if (!isCompAssign)
-    UsualUnaryConversions(lex);
+    ImpCastExprToType(lex, LHSTy);
+
   UsualUnaryConversions(rex);
 
   // "The type of the result is that of the promoted left operand."
-  return lex->getType();
+  return LHSTy;
 }
 
 // C99 6.5.8
@@ -4049,9 +4073,11 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
 Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                                   unsigned Op,
                                                   Expr *lhs, Expr *rhs) {
-  QualType ResultTy;  // Result type of the binary operator.
-  QualType CompTy;    // Computation type for compound assignments (e.g. '+=')
+  QualType ResultTy;     // Result type of the binary operator.
   BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)Op;
+  // The following two variables are used for compound assignment operators
+  QualType CompLHSTy;    // Type of LHS after promotions for computation
+  QualType CompResultTy; // Type of computation result
 
   switch (Opc) {
   case BinaryOperator::Assign:
@@ -4100,37 +4126,41 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BinaryOperator::MulAssign:
   case BinaryOperator::DivAssign:
-    CompTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    CompResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true);
+    CompLHSTy = CompResultTy;
+    if (!CompResultTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
   case BinaryOperator::RemAssign:
-    CompTy = CheckRemainderOperands(lhs, rhs, OpLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    CompResultTy = CheckRemainderOperands(lhs, rhs, OpLoc, true);
+    CompLHSTy = CompResultTy;
+    if (!CompResultTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
   case BinaryOperator::AddAssign:
-    CompTy = CheckAdditionOperands(lhs, rhs, OpLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    CompResultTy = CheckAdditionOperands(lhs, rhs, OpLoc, &CompLHSTy);
+    if (!CompResultTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
   case BinaryOperator::SubAssign:
-    CompTy = CheckSubtractionOperands(lhs, rhs, OpLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    CompResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc, &CompLHSTy);
+    if (!CompResultTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
   case BinaryOperator::ShlAssign:
   case BinaryOperator::ShrAssign:
-    CompTy = CheckShiftOperands(lhs, rhs, OpLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    CompResultTy = CheckShiftOperands(lhs, rhs, OpLoc, true);
+    CompLHSTy = CompResultTy;
+    if (!CompResultTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
   case BinaryOperator::AndAssign:
   case BinaryOperator::XorAssign:
   case BinaryOperator::OrAssign:
-    CompTy = CheckBitwiseOperands(lhs, rhs, OpLoc, true);
-    if (!CompTy.isNull())
-      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompTy);
+    CompResultTy = CheckBitwiseOperands(lhs, rhs, OpLoc, true);
+    CompLHSTy = CompResultTy;
+    if (!CompResultTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);
     break;
   case BinaryOperator::Comma:
     ResultTy = CheckCommaOperands(lhs, rhs, OpLoc);
@@ -4138,11 +4168,12 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   }
   if (ResultTy.isNull())
     return ExprError();
-  if (CompTy.isNull())
+  if (CompResultTy.isNull())
     return Owned(new (Context) BinaryOperator(lhs, rhs, Opc, ResultTy, OpLoc));
   else
     return Owned(new (Context) CompoundAssignOperator(lhs, rhs, Opc, ResultTy,
-                                                      CompTy, OpLoc));
+                                                      CompLHSTy, CompResultTy,
+                                                      OpLoc));
 }
 
 // Binary Operators.  'Tok' is the token for the operator.

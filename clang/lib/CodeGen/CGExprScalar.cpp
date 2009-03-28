@@ -768,76 +768,31 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 
   BinOpInfo OpInfo;
 
-  // Load the LHS and RHS operands.
+  if (E->getComputationResultType()->isAnyComplexType()) {
+    // FIXME: This needs to go through the complex expression emitter, but
+    // it's a tad complicated to do that... I'm leaving it out for now.
+    // (Note that we do actually need the imaginary part of the RHS for
+    // multiplication and division.)
+    CGF.ErrorUnsupported(E, "complex compound assignment");
+    return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+  }
+
+  // Load/convert the LHS.
   LValue LHSLV = EmitLValue(E->getLHS());
   OpInfo.LHS = EmitLoadOfLValue(LHSLV, LHSTy);
-
-  // Determine the computation type.  If the RHS is complex, then this is one of
-  // the add/sub/mul/div operators.  All of these operators can be computed in
-  // with just their real component even though the computation domain really is
-  // complex.
-  QualType ComputeType = E->getComputationType();
-  
-  // If the computation type is complex, then the RHS is complex.  Emit the RHS.
-  if (const ComplexType *CT = ComputeType->getAsComplexType()) {
-    ComputeType = CT->getElementType();
-    
-    // Emit the RHS, only keeping the real component.
-    OpInfo.RHS = CGF.EmitComplexExpr(E->getRHS()).first;
-    RHSTy = RHSTy->getAsComplexType()->getElementType();
-  } else {
-    // Otherwise the RHS is a simple scalar value.
-    OpInfo.RHS = Visit(E->getRHS());
-  }
-  
-  QualType LComputeTy, RComputeTy, ResultTy;
-
-  // Compound assignment does not contain enough information about all
-  // the types involved for pointer arithmetic cases. Figure it out
-  // here for now.
-  if (E->getLHS()->getType()->isPointerType()) {
-    // Pointer arithmetic cases: ptr +=,-= int and ptr -= ptr, 
-    assert((E->getOpcode() == BinaryOperator::AddAssign ||
-            E->getOpcode() == BinaryOperator::SubAssign) &&
-           "Invalid compound assignment operator on pointer type.");
-    LComputeTy = E->getLHS()->getType();
-    
-    if (E->getRHS()->getType()->isPointerType()) {    
-      // Degenerate case of (ptr -= ptr) allowed by GCC implicit cast
-      // extension, the conversion from the pointer difference back to
-      // the LHS type is handled at the end.
-      assert(E->getOpcode() == BinaryOperator::SubAssign &&
-             "Invalid compound assignment operator on pointer type.");
-      RComputeTy = E->getLHS()->getType();
-      ResultTy = CGF.getContext().getPointerDiffType();
-    } else {
-      RComputeTy = E->getRHS()->getType();
-      ResultTy = LComputeTy;
-    }
-  } else if (E->getRHS()->getType()->isPointerType()) {
-    // Degenerate case of (int += ptr) allowed by GCC implicit cast
-    // extension.
-    assert(E->getOpcode() == BinaryOperator::AddAssign &&
-           "Invalid compound assignment operator on pointer type.");
-    LComputeTy = E->getLHS()->getType();
-    RComputeTy = E->getRHS()->getType();
-    ResultTy = RComputeTy;
-  } else {
-    LComputeTy = RComputeTy = ResultTy = ComputeType;
-  }
-
-  // Convert the LHS/RHS values to the computation type.
-  OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy, LComputeTy);
-  OpInfo.RHS = EmitScalarConversion(OpInfo.RHS, RHSTy, RComputeTy);
-  OpInfo.Ty = ResultTy;
+  OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy,
+                                    E->getComputationLHSType());
+  // Emit the RHS.
+  OpInfo.RHS = Visit(E->getRHS());
+  OpInfo.Ty = E->getComputationResultType();
   OpInfo.E = E;
   
   // Expand the binary operator.
   Value *Result = (this->*Func)(OpInfo);
   
   // Convert the result back to the LHS type.
-  Result = EmitScalarConversion(Result, ResultTy, LHSTy);
-  
+  Result = EmitScalarConversion(Result, E->getComputationResultType(), LHSTy);
+
   // Store the result value into the LHS lvalue. Bit-fields are
   // handled specially because the result is altered by the store,
   // i.e., [C99 6.5.16p1] 'An assignment expression has the value of

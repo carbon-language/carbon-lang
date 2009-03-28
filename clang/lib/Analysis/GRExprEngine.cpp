@@ -2810,16 +2810,18 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         //  The RHS is not Unknown.
         
         // Get the computation type.
-        QualType CTy = cast<CompoundAssignOperator>(B)->getComputationType();
+        QualType CTy = cast<CompoundAssignOperator>(B)->getComputationResultType();
         CTy = getContext().getCanonicalType(CTy);
-        
+
+        QualType CLHSTy = cast<CompoundAssignOperator>(B)->getComputationLHSType();
+        CLHSTy = getContext().getCanonicalType(CTy);
+
         QualType LTy = getContext().getCanonicalType(LHS->getType());
         QualType RTy = getContext().getCanonicalType(RHS->getType());
-          
-        // Perform promotions.
-        if (LTy != CTy) V = EvalCast(V, CTy);
-        if (RTy != CTy) RightV = EvalCast(RightV, CTy);
-          
+
+        // Promote LHS.
+        V = EvalCast(V, CLHSTy);
+
         // Evaluate operands and promote to result type.                    
         if (RightV.isUndef()) {            
           // Propagate undefined values (right-side).          

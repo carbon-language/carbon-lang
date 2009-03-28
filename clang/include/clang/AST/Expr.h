@@ -1324,18 +1324,25 @@ protected:
 /// place.  This captures the intermediate type which the computation is done
 /// in.
 class CompoundAssignOperator : public BinaryOperator {
-  QualType ComputationType;
+  QualType ComputationLHSType;
+  QualType ComputationResultType;
 public:
   CompoundAssignOperator(Expr *lhs, Expr *rhs, Opcode opc,
-                         QualType ResType, QualType CompType,
+                         QualType ResType, QualType CompLHSType,
+                         QualType CompResultType,
                          SourceLocation OpLoc)
     : BinaryOperator(lhs, rhs, opc, ResType, OpLoc, true),
-      ComputationType(CompType) {
+      ComputationLHSType(CompLHSType),
+      ComputationResultType(CompResultType) {
     assert(isCompoundAssignmentOp() && 
            "Only should be used for compound assignments");
   }
 
-  QualType getComputationType() const { return ComputationType; }
+  // The two computation types are the type the LHS is converted
+  // to for the computation and the type of the result; the two are
+  // distinct in a few cases (specifically, int+=ptr and ptr-=ptr).
+  QualType getComputationLHSType() const { return ComputationLHSType; }
+  QualType getComputationResultType() const { return ComputationResultType; }
   
   static bool classof(const CompoundAssignOperator *) { return true; }
   static bool classof(const Stmt *S) { 
