@@ -231,7 +231,6 @@ namespace {
   
   class VISIBILITY_HIDDEN AnalysisManager : public BugReporterData {
     Decl* D; Stmt* Body; 
-    TranslationUnit* TU;
     
     enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
       
@@ -248,14 +247,13 @@ namespace {
 
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b, bool displayProgress) 
-      : D(d), Body(b), TU(0), AScope(ScopeDecl), C(c), 
+      : D(d), Body(b), AScope(ScopeDecl), C(c), 
         DisplayedFunction(!displayProgress) {
       setManagerCreators();
     }
     
-    AnalysisManager(AnalysisConsumer& c, TranslationUnit* tu,
-                    bool displayProgress) 
-      : D(0), Body(0), TU(tu), AScope(ScopeTU), C(c),
+    AnalysisManager(AnalysisConsumer& c, bool displayProgress) 
+      : D(0), Body(0), AScope(ScopeTU), C(c),
         DisplayedFunction(!displayProgress) {
       setManagerCreators();
     }
@@ -269,11 +267,6 @@ namespace {
       assert (AScope == ScopeDecl);
       return Body;
     }
-    
-    TranslationUnit* getTranslationUnit() const {
-      assert (AScope == ScopeTU);
-      return TU;
-    }    
     
     StoreManagerCreator getStoreManagerCreator() {
       return CreateStoreMgr;
@@ -454,7 +447,7 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
 void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
 
   if(!TranslationUnitActions.empty()) {
-    AnalysisManager mgr(*this, &TU, AnalyzerDisplayProgress);
+    AnalysisManager mgr(*this, AnalyzerDisplayProgress);
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
       (*I)(mgr);  
