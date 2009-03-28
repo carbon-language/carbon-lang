@@ -80,35 +80,3 @@ namespace T6 {
     A *a = c;
   }
 }
-
-namespace T7 {
-  
-class C;
-class A { };
-class B : protected A { // expected-note {{'protected' inheritance specifier here}}
-  void f(C *);
-};
-
-class C : protected B { // expected-note {{'protected' inheritance specifier here}}
-  void f(C *c) {
-    A* a = c;
-  }
-};
-
-void B::f(C *c) {
-  A *a = c; // expected-error {{conversion from 'class T7::C' to inaccessible base class 'class T7::A'}} \
-               expected-error {{incompatible type initializing 'class T7::C *', expected 'class T7::A *'}}
-}
-
-class D : private C  {
-  void f(D *d) {
-    A *a = d;
-  }
-};
-
-void f(B* b) {
-  A *a = b; // expected-error {{conversion from 'class T7::B' to inaccessible base class 'class T7::A'}} \
-               expected-error {{incompatible type initializing 'class T7::B *', expected 'class T7::A *'}}
-}
-
-}

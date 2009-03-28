@@ -1970,18 +1970,6 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
 
   //     -- If the initializer expression
 
-  // Rvalue references cannot bind to lvalues (N2812).
-  // There is absolutely no situation where they can. In particular, note that
-  // this is ill-formed, even if B has a user-defined conversion to A&&:
-  //   B b;
-  //   A&& r = b;
-  if (isRValRef && InitLvalue == Expr::LV_Valid) {
-    if (!ICS)
-      Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
-        << Init->getSourceRange();
-    return true;
-  }
-
   bool BindsDirectly = false;
   //       -- is an lvalue (but is not a bit-field), and “cv1 T1” is
   //          reference-compatible with “cv2 T2,” or
@@ -1991,6 +1979,14 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   if (InitLvalue == Expr::LV_Valid && (ICS || !Init->isBitField()) &&
       RefRelationship >= Ref_Compatible_With_Added_Qualification) {
     BindsDirectly = true;
+
+    // Rvalue references cannot bind to lvalues (N2812).
+    if (isRValRef) {
+      if (!ICS)
+        Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
+          << Init->getSourceRange();
+      return true;
+    }
 
     if (ICS) {
       // C++ [over.ics.ref]p1:
@@ -2008,7 +2004,6 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
       ICS->Standard.ReferenceBinding = true;
       ICS->Standard.DirectBinding = true;
-      ICS->Standard.RRefBinding = false;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
       // derived-to-base conversions is suppressed when we're
@@ -2116,8 +2111,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   }
 
   //     -- Otherwise, the reference shall be to a non-volatile const
-  //        type (i.e., cv1 shall be const), or the reference shall be an
-  //        rvalue reference and the initializer expression shall be an rvalue.
+  //        type (i.e., cv1 shall be const), or shall be an rvalue reference.
   if (!isRValRef && T1.getCVRQualifiers() != QualType::Const) {
     if (!ICS)
       Diag(Init->getSourceRange().getBegin(),
@@ -2146,7 +2140,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   //          shall be callable whether or not the copy is actually
   //          done.
   //
-  // Note that C++0x [dcl.init.ref]p5 takes away this implementation
+  // Note that C++0x [dcl.ref.init]p5 takes away this implementation
   // freedom, so we will always take the first option and never build
   // a temporary in this case. FIXME: We will, however, have to check
   // for the presence of a copy constructor in C++98/03 mode.
@@ -2160,8 +2154,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
       ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
       ICS->Standard.ReferenceBinding = true;
-      ICS->Standard.DirectBinding = false;
-      ICS->Standard.RRefBinding = isRValRef;
+      ICS->Standard.DirectBinding = false;      
     } else {
       // FIXME: Binding to a subobject of the rvalue is going to require
       // more AST annotation than this.
@@ -2206,27 +2199,18 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
 
   // Actually try to convert the initializer to T1.
   if (ICS) {
-    // C++ [over.ics.ref]p2:
-    // 
-    //   When a parameter of reference type is not bound directly to
-    //   an argument expression, the conversion sequence is the one
-    //   required to convert the argument expression to the
-    //   underlying type of the reference according to
-    //   13.3.3.1. Conceptually, this conversion sequence corresponds
-    //   to copy-initializing a temporary of the underlying type with
-    //   the argument expression. Any difference in top-level
-    //   cv-qualification is subsumed by the initialization itself
-    //   and does not constitute a conversion.
+    /// C++ [over.ics.ref]p2:
+    /// 
+    ///   When a parameter of reference type is not bound directly to
+    ///   an argument expression, the conversion sequence is the one
+    ///   required to convert the argument expression to the
+    ///   underlying type of the reference according to
+    ///   13.3.3.1. Conceptually, this conversion sequence corresponds
+    ///   to copy-initializing a temporary of the underlying type with
+    ///   the argument expression. Any difference in top-level
+    ///   cv-qualification is subsumed by the initialization itself
+    ///   and does not constitute a conversion.
     *ICS = TryImplicitConversion(Init, T1, SuppressUserConversions);
-    // Of course, that's still a reference binding.
-    if (ICS->ConversionKind == ImplicitConversionSequence::StandardConversion) {
-      ICS->Standard.ReferenceBinding = true;
-      ICS->Standard.RRefBinding = isRValRef;
-    } else if(ICS->ConversionKind ==
-              ImplicitConversionSequence::UserDefinedConversion) {
-      ICS->UserDefined.After.ReferenceBinding = true;
-      ICS->UserDefined.After.RRefBinding = isRValRef;
-    }
     return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
   } else {
     return PerformImplicitConversion(Init, T1, "initializing");

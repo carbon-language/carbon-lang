@@ -37,15 +37,14 @@ void f() {
   not_int ni2 = over(ret_irr());
 
   int i4 = over2(i1);
-  not_int ni3 = over2(0);
+  // not_int ni3 = over2(0); FIXME: this should be well-formed.
 
   ilr_c1 vilr1 = i1;
   ilr_c2 vilr2 = i1;
 
   conv_to_not_int_rvalue cnir;
-  not_int &&ni4 = cnir; // expected-error {{rvalue reference cannot bind to lvalue}}
+  not_int &&ni4 = cnir;
   not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'struct not_int' cannot be initialized with a value of type 'struct conv_to_not_int_rvalue'}}
-  not_int &&ni6 = conv_to_not_int_rvalue();
 
 
   try {
