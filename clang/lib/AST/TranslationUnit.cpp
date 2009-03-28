@@ -28,15 +28,6 @@ using namespace clang;
 
 
 TranslationUnit::~TranslationUnit() {
-  if (OwnsMetaData && Context) {
-    // The ASTContext object has the sole references to the IdentifierTable
-    // Selectors, and the Target information.  Go and delete them, since
-    // the TranslationUnit effectively owns them.
-    delete &Context->Idents;
-    delete &Context->Selectors;
-    delete &Context->Target;
-    delete Context;
-  }  
 }
 
 bool clang::EmitASTBitcodeBuffer(const ASTContext &Ctx, 
