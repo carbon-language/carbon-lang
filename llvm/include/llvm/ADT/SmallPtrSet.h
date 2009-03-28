@@ -30,14 +30,16 @@ class PointerLikeTypeInfo {
 
 // Provide PointerLikeTypeInfo for all pointers.
 template<typename T>
-struct PointerLikeTypeInfo<T*> {
+class PointerLikeTypeInfo<T*> {
+public:
   static inline void *getAsVoidPointer(T* P) { return P; }
   static inline T *getFromVoidPointer(void *P) {
     return static_cast<T*>(P);
   }
 };
 template<typename T>
-struct PointerLikeTypeInfo<const T*> {
+class PointerLikeTypeInfo<const T*> {
+public:
   static inline const void *getAsVoidPointer(const T* P) { return P; }
   static inline const T *getFromVoidPointer(const void *P) {
     return static_cast<const T*>(P);
