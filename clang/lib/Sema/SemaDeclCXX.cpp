@@ -1685,7 +1685,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
                                              IdentifierInfo *Ident) {
   
   // Check if we have a previous declaration with the same name.
-  if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName)) {
+  if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName, true)) {
     // FIXME: If this is a namespace alias decl, and it points to the same 
     // namespace, we shouldn't warn.
     unsigned DiagID = isa<NamespaceDecl>(PrevDecl) ? diag::err_redefinition :

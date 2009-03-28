@@ -21,3 +21,7 @@ namespace F {
   using namespace A;
   namespace D = B; // expected-error {{reference to 'B' is ambiguous}}
 }
+
+namespace G { 
+  namespace B = N;
+}
