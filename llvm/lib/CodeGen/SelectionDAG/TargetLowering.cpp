@@ -2571,3 +2571,27 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
                        DAG.getConstant(magics.s-1, getShiftAmountTy()));
   }
 }
+
+bool TargetLowering::CheckTailCallReturnConstraints(CallSDNode *TheCall, SDValue Ret) {
+  unsigned NumOps = Ret.getNumOperands();
+  // Struct return.
+  if(NumOps >= 5&&
+      Ret.getOperand(1).getOpcode()==ISD::MERGE_VALUES &&
+      Ret.getOperand(1).getOperand(0) == SDValue(TheCall, 0))
+    return true;
+  if ((NumOps == 1 &&
+        (Ret.getOperand(0) == SDValue(TheCall,1) ||
+         Ret.getOperand(0) == SDValue(TheCall,0))) ||
+      (NumOps == 3 &&
+       Ret.getOperand(1).getOpcode() == ISD::ANY_EXTEND && 
+       Ret.getOperand(1).getNumOperands()>0 &&
+       Ret.getOperand(1).getOperand(0).getOpcode() == ISD::TRUNCATE &&
+       Ret.getOperand(1).getOperand(0).getNumOperands()>0 &&
+       Ret.getOperand(1).getOperand(0).getOperand(0) == SDValue(TheCall, 0)) ||
+      (NumOps > 1 &&
+       Ret.getOperand(0) == SDValue(TheCall,
+         TheCall->getNumValues()-1) &&
+       Ret.getOperand(1) == SDValue(TheCall,0)))
+    return true;
+  return false;
+}

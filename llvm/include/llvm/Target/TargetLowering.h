@@ -1206,18 +1206,7 @@ public:
   /// preceeds the RET node and whether the return uses the result of the node
   /// or is a void return. This function can be used by the target to determine
   /// eligiblity of tail call optimization.
-  static bool CheckTailCallReturnConstraints(CallSDNode *TheCall, SDValue Ret) {
-    unsigned NumOps = Ret.getNumOperands();
-    if ((NumOps == 1 &&
-       (Ret.getOperand(0) == SDValue(TheCall,1) ||
-        Ret.getOperand(0) == SDValue(TheCall,0))) ||
-      (NumOps > 1 &&
-       Ret.getOperand(0) == SDValue(TheCall,
-                                    TheCall->getNumValues()-1) &&
-       Ret.getOperand(1) == SDValue(TheCall,0)))
-      return true;
-    return false;
-  }
+  static bool CheckTailCallReturnConstraints(CallSDNode *TheCall, SDValue Ret); 
 
   /// GetPossiblePreceedingTailCall - Get preceeding TailCallNodeOpCode node if
   /// it exists. Skip a possible ISD::TokenFactor.
