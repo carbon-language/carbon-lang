@@ -1238,8 +1238,7 @@ OptSize("Os", llvm::cl::desc("Optimize for size"));
 static llvm::cl::opt<bool>
 NoCommon("fno-common",
          llvm::cl::desc("Compile common globals like normal definitions"),
-         llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
-         llvm::cl::ZeroOrMore);
+         llvm::cl::ValueDisallowed);
 
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
