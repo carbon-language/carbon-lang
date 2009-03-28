@@ -14,6 +14,54 @@
 #ifndef LLVM_CLANG_PARSE_OWNERSHIP_H
 #define LLVM_CLANG_PARSE_OWNERSHIP_H
 
+//===----------------------------------------------------------------------===//
+// OpaquePtr
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+  template <typename T>
+  class PointerLikeTypeInfo;
+}
+
+namespace clang {
+  /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
+  /// Parser doesn't know about but that Sema or another client does.  The UID
+  /// template argument is used to make sure that "Decl" pointers are not
+  /// compatible with "Type" pointers for example.
+  template<int UID>
+  class OpaquePtr {
+    void *Ptr;
+  public:
+    OpaquePtr() : Ptr(0) {}
+    
+    template <typename T>
+    T* getAs() const { return static_cast<T*>(Ptr); }
+    
+    void *get() const { return Ptr; }
+    
+    static OpaquePtr make(void *P) { OpaquePtr R; R.Ptr = P; return R; }
+    void set(void *P) { Ptr = P; }
+    
+    operator bool() const { return Ptr != 0; }
+  };
+}
+
+namespace llvm {
+  template <int UID>
+  class PointerLikeTypeInfo<clang::OpaquePtr<UID> > {
+  public:
+    static inline void *getAsVoidPointer(clang::OpaquePtr<UID> P) {
+      // FIXME: Doesn't work? return P.getAs< void >();
+      return P.get();
+    }
+    static inline clang::OpaquePtr<UID> getFromVoidPointer(void *P) {
+      return clang::OpaquePtr<UID>::make(P);
+    }
+  };
+}
+
+
+
 // -------------------------- About Move Emulation -------------------------- //
 // The smart pointer classes in this file attempt to emulate move semantics
 // as they appear in C++0x with rvalue references. Since C++03 doesn't have
@@ -138,33 +186,37 @@ namespace clang
     /// the action, plus a sense of whether or not it is valid.
     /// When CompressInvalid is true, the "invalid" flag will be
     /// stored in the low bit of the Val pointer. 
-    template<unsigned UID, 
+    template<unsigned UID,
+             typename PtrTy = void*,
              bool CompressInvalid = IsResultPtrLowBitFree<UID>::value>
     class ActionResult {
-      void *Val;
+      PtrTy Val;
       bool Invalid;
 
     public:
-      ActionResult(bool Invalid = false) : Val(0), Invalid(Invalid) {}
+      ActionResult(bool Invalid = false) : Val(PtrTy()), Invalid(Invalid) {}
       template<typename ActualExprTy>
-      ActionResult(ActualExprTy *val) : Val(val), Invalid(false) {}
-      ActionResult(const DiagnosticBuilder &) : Val(0), Invalid(true) {}
+      ActionResult(ActualExprTy val) : Val(val), Invalid(false) {}
+      ActionResult(const DiagnosticBuilder &) : Val(PtrTy()), Invalid(true) {}
 
-      void *get() const { return Val; }
-      void set(void *V) { Val = V; }
+      PtrTy get() const { return Val; }
+      void set(PtrTy V) { Val = V; }
       bool isInvalid() const { return Invalid; }
 
-      const ActionResult &operator=(void *RHS) {
+      const ActionResult &operator=(PtrTy RHS) {
         Val = RHS;
         Invalid = false;
         return *this;
       }
     };
 
+    ///// FIXME: We just lost the ability to bitmangle into DeclPtrTy's and
+    ///// friends!
+
     // This ActionResult partial specialization places the "invalid"
     // flag into the low bit of the pointer.
     template<unsigned UID>
-    class ActionResult<UID, true> {
+    class ActionResult<UID, void*, true> {
       // A pointer whose low bit is 1 if this result is invalid, 0
       // otherwise.
       uintptr_t PtrWithInvalid;

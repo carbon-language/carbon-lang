@@ -42,7 +42,7 @@ using namespace clang;
 ///       namespace-alias-definition:  [C++ 7.3.2: namespace.alias]
 ///         'namespace' identifier '=' qualified-namespace-specifier ';'
 ///
-Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
   assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
   
@@ -55,7 +55,7 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
   }
   
   // Read label attributes, if present.
-  DeclTy *AttrList = 0;
+  Action::AttrTy *AttrList = 0;
   if (Tok.is(tok::kw___attribute))
     // FIXME: save these somewhere.
     AttrList = ParseAttributes();
@@ -70,7 +70,7 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     // Enter a scope for the namespace.
     ParseScope NamespaceScope(this, Scope::DeclScope);
 
-    DeclTy *NamespcDecl =
+    DeclPtrTy NamespcDecl =
       Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
 
     PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
@@ -93,14 +93,14 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
                       diag::err_expected_ident_lbrace);
   }
   
-  return 0;
+  return DeclPtrTy();
 }
 
 /// ParseNamespaceAlias - Parse the part after the '=' in a namespace
 /// alias definition.
 ///
-Parser::DeclTy *Parser::ParseNamespaceAlias(SourceLocation AliasLoc, 
-                                            IdentifierInfo *Alias) {
+Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation AliasLoc, 
+                                              IdentifierInfo *Alias) {
   assert(Tok.is(tok::equal) && "Not equal token");
   
   ConsumeToken(); // eat the '='.
@@ -113,7 +113,7 @@ Parser::DeclTy *Parser::ParseNamespaceAlias(SourceLocation AliasLoc,
     Diag(Tok, diag::err_expected_namespace_name);
     // Skip to end of the definition and eat the ';'.
     SkipUntil(tok::semi);
-    return 0;
+    return DeclPtrTy();
   }
 
   // Parse identifier.
@@ -135,7 +135,7 @@ Parser::DeclTy *Parser::ParseNamespaceAlias(SourceLocation AliasLoc,
 ///         'extern' string-literal '{' declaration-seq[opt] '}'
 ///         'extern' string-literal declaration
 ///
-Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseLinkage(unsigned Context) {
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallVector<char, 8> LangBuffer;
   // LangBuffer is guaranteed to be big enough.
@@ -146,7 +146,7 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
   SourceLocation Loc = ConsumeStringToken();
 
   ParseScope LinkageScope(this, Scope::DeclScope);
-  DeclTy *LinkageSpec 
+  DeclPtrTy LinkageSpec 
     = Actions.ActOnStartLinkageSpecification(CurScope, 
                                              /*FIXME: */SourceLocation(),
                                              Loc, LangBufPtr, StrSize,
@@ -170,7 +170,7 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
 /// using-directive. Assumes that current token is 'using'.
-Parser::DeclTy *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
   assert(Tok.is(tok::kw_using) && "Not using token");
 
   // Eat 'using'.
@@ -194,8 +194,8 @@ Parser::DeclTy *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
 ///        'using' 'namespace' ::[opt] nested-name-specifier[opt]
 ///                 namespace-name attributes[opt] ;
 ///
-Parser::DeclTy *Parser::ParseUsingDirective(unsigned Context,
-                                            SourceLocation UsingLoc) {
+Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
+                                              SourceLocation UsingLoc) {
   assert(Tok.is(tok::kw_namespace) && "Not 'namespace' token");
 
   // Eat 'namespace'.
@@ -215,7 +215,7 @@ Parser::DeclTy *Parser::ParseUsingDirective(unsigned Context,
     // If there was invalid namespace name, skip to end of decl, and eat ';'.
     SkipUntil(tok::semi);
     // FIXME: Are there cases, when we would like to call ActOnUsingDirective?
-    return 0;
+    return DeclPtrTy();
   }
   
   // Parse identifier.
@@ -242,11 +242,11 @@ Parser::DeclTy *Parser::ParseUsingDirective(unsigned Context,
 ///               unqualified-id [TODO]
 ///       'using' :: unqualified-id [TODO]
 ///
-Parser::DeclTy *Parser::ParseUsingDeclaration(unsigned Context,
-                                              SourceLocation UsingLoc) {
+Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
+                                                SourceLocation UsingLoc) {
   assert(false && "Not implemented");
   // FIXME: Implement parsing.
-  return 0;
+  return DeclPtrTy();
 }
 
 /// ParseStaticAssertDeclaration - Parse C++0x static_assert-declaratoion.
@@ -254,13 +254,13 @@ Parser::DeclTy *Parser::ParseUsingDeclaration(unsigned Context,
 ///      static_assert-declaration:
 ///        static_assert ( constant-expression  ,  string-literal  ) ;
 ///
-Parser::DeclTy *Parser::ParseStaticAssertDeclaration() {
+Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration() {
   assert(Tok.is(tok::kw_static_assert) && "Not a static_assert declaration");
   SourceLocation StaticAssertLoc = ConsumeToken();
   
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen);
-    return 0;
+    return DeclPtrTy();
   }
   
   SourceLocation LParenLoc = ConsumeParen();
@@ -268,21 +268,21 @@ Parser::DeclTy *Parser::ParseStaticAssertDeclaration() {
   OwningExprResult AssertExpr(ParseConstantExpression());
   if (AssertExpr.isInvalid()) {
     SkipUntil(tok::semi);
-    return 0;
+    return DeclPtrTy();
   }
   
   if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::semi))
-    return 0;
+    return DeclPtrTy();
 
   if (Tok.isNot(tok::string_literal)) {
     Diag(Tok, diag::err_expected_string_literal);
     SkipUntil(tok::semi);
-    return 0;
+    return DeclPtrTy();
   }
   
   OwningExprResult AssertMessage(ParseStringLiteralExpression());
   if (AssertMessage.isInvalid()) 
-    return 0;
+    return DeclPtrTy();
 
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
@@ -475,7 +475,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
     TagOrTempResult
       = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
                        StartLoc, SS,
-                       TemplateId->Template, 
+                       DeclPtrTy::make(TemplateId->Template), 
                        TemplateId->TemplateNameLoc, 
                        TemplateId->LAngleLoc, 
                        TemplateArgsPtr,
@@ -518,7 +518,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
   if (TagOrTempResult.isInvalid())
     DS.SetTypeSpecError();
   else if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
-                              TagOrTempResult.get()))
+                              TagOrTempResult.get().getAs<void>()))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 
@@ -529,8 +529,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
 ///       base-specifier-list:
 ///         base-specifier '...'[opt]
 ///         base-specifier-list ',' base-specifier '...'[opt]
-void Parser::ParseBaseClause(DeclTy *ClassDecl)
-{
+void Parser::ParseBaseClause(DeclPtrTy ClassDecl) {
   assert(Tok.is(tok::colon) && "Not a base clause");
   ConsumeToken();
 
@@ -572,8 +571,7 @@ void Parser::ParseBaseClause(DeclTy *ClassDecl)
 ///                        class-name
 ///         access-specifier 'virtual'[opt] ::[opt] nested-name-specifier[opt]
 ///                        class-name
-Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
-{
+Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
   bool IsVirtual = false;
   SourceLocation StartLoc = Tok.getLocation();
 
@@ -666,7 +664,7 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///       constant-initializer:
 ///         '=' constant-expression
 ///
-Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
+Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // static_assert-declaration
   if (Tok.is(tok::kw_static_assert))
     return ParseStaticAssertDeclaration();
@@ -702,7 +700,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
       default:
         Diag(DSStart, diag::err_no_declarators);
-        return 0;
+        return DeclPtrTy();
     }
   }
 
@@ -717,7 +715,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
       SkipUntil(tok::r_brace, true);
       if (Tok.is(tok::semi))
         ConsumeToken();
-      return 0;
+      return DeclPtrTy();
     }
 
     // function-definition:
@@ -727,7 +725,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         Diag(Tok, diag::err_func_def_no_params);
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);
-        return 0;
+        return DeclPtrTy();
       }
 
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
@@ -737,7 +735,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         // assumes the declarator represents a function, not a typedef.
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);
-        return 0;
+        return DeclPtrTy();
       }
 
       return ParseCXXInlineMethodDef(AS, DeclaratorInfo);
@@ -748,7 +746,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   //   member-declarator
   //   member-declarator-list ',' member-declarator
 
-  DeclTy *LastDeclInGroup = 0;
+  DeclPtrTy LastDeclInGroup;
   OwningExprResult BitfieldSize(Actions);
   OwningExprResult Init(Actions);
 
@@ -865,7 +863,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   SkipUntil(tok::r_brace, true, true);
   if (Tok.is(tok::semi))
     ConsumeToken();
-  return 0;
+  return DeclPtrTy();
 }
 
 /// ParseCXXMemberSpecification - Parse the class definition.
@@ -875,7 +873,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 ///         access-specifier ':' member-specification[opt]
 ///
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
-                                         unsigned TagType, DeclTy *TagDecl) {
+                                         unsigned TagType, DeclPtrTy TagDecl) {
   assert((TagType == DeclSpec::TST_struct ||
          TagType == DeclSpec::TST_union  ||
          TagType == DeclSpec::TST_class) && "Invalid TagType!");
@@ -997,7 +995,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 /// [C++]  mem-initializer-list: 
 ///          mem-initializer 
 ///          mem-initializer , mem-initializer-list 
-void Parser::ParseConstructorInitializer(DeclTy *ConstructorDecl) {
+void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
   assert(Tok.is(tok::colon) && "Constructor initializer always starts with ':'");
 
   SourceLocation ColonLoc = ConsumeToken();
@@ -1035,7 +1033,7 @@ void Parser::ParseConstructorInitializer(DeclTy *ConstructorDecl) {
 /// [C++] mem-initializer-id:
 ///         '::'[opt] nested-name-specifier[opt] class-name
 ///         identifier
-Parser::MemInitResult Parser::ParseMemInitializer(DeclTy *ConstructorDecl) {
+Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
   // FIXME: parse '::'[opt] nested-name-specifier[opt]
 
   if (Tok.isNot(tok::identifier)) {

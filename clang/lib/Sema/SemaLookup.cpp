@@ -84,12 +84,11 @@ static void AddScopeUsingDirectives(Scope *S, UsingDirectivesTy &UDirs) {
     AddNamespaceUsingDirectives(Ctx, UDirs, /*ref*/ VisitedNS);
 
   } else {
-    Scope::udir_iterator
-      I = S->using_directives_begin(),
-      End = S->using_directives_end();
+    Scope::udir_iterator I = S->using_directives_begin(),
+                         End = S->using_directives_end();
 
     for (; I != End; ++I) {
-      UsingDirectiveDecl * UD = static_cast<UsingDirectiveDecl*>(*I);
+      UsingDirectiveDecl *UD = I->getAs<UsingDirectiveDecl>();
       UDirs.push_back(UD);
       std::push_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
 
@@ -575,7 +574,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   //
   for (; S && !isNamespaceOrTranslationUnitScope(S); S = S->getParent()) {
     // Check whether the IdResolver has anything in this scope.
-    for (; I != IEnd && S->isDeclScope(*I); ++I) {
+    for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
       if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
         // We found something.  Look for anything else in our scope
         // with this same name and in an acceptable identifier
@@ -583,7 +582,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         // need to.
         IdentifierResolver::iterator LastI = I;
         for (++LastI; LastI != IEnd; ++LastI) {
-          if (!S->isDeclScope(*LastI))
+          if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
             break;
         }
         LookupResult Result =
@@ -666,7 +665,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
            "We should have been looking only at file context here already.");
 
     // Check whether the IdResolver has anything in this scope.
-    for (; I != IEnd && S->isDeclScope(*I); ++I) {
+    for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
       if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
         // We found something.  Look for anything else in our scope
         // with this same name and in an acceptable identifier
@@ -674,7 +673,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         // need to.
         IdentifierResolver::iterator LastI = I;
         for (++LastI; LastI != IEnd; ++LastI) {
-          if (!S->isDeclScope(*LastI))
+          if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
             break;
         }
         
@@ -790,7 +789,7 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
         if (NameKind == LookupRedeclarationWithLinkage) {
           // Determine whether this (or a previous) declaration is
           // out-of-scope.
-          if (!LeftStartingScope && !S->isDeclScope(*I))
+          if (!LeftStartingScope && !S->isDeclScope(DeclPtrTy::make(*I)))
             LeftStartingScope = true;
 
           // If we found something outside of our starting scope that
@@ -804,14 +803,15 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
           // might have a set of overloaded functions.
 
           // Figure out what scope the identifier is in.
-          while (!(S->getFlags() & Scope::DeclScope) || !S->isDeclScope(*I))
+          while (!(S->getFlags() & Scope::DeclScope) ||
+                 !S->isDeclScope(DeclPtrTy::make(*I)))
             S = S->getParent();
 
           // Find the last declaration in this scope (with the same
           // name, naturally).
           IdentifierResolver::iterator LastI = I;
           for (++LastI; LastI != IEnd; ++LastI) {
-            if (!S->isDeclScope(*LastI))
+            if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
               break;
           }
 

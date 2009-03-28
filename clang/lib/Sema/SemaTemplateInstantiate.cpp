@@ -715,17 +715,16 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
                                 NumTemplateArgs))
     Invalid = true;
 
-  llvm::SmallVector<DeclTy *, 32> Fields;
+  llvm::SmallVector<DeclPtrTy, 32> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
-                              MemberEnd = Pattern->decls_end();
-       Member != MemberEnd; ++Member) {
+       MemberEnd = Pattern->decls_end(); Member != MemberEnd; ++Member) {
     Decl *NewMember = InstantiateDecl(*Member, Instantiation,
                                       TemplateArgs, NumTemplateArgs);
     if (NewMember) {
       if (NewMember->isInvalidDecl())
         Invalid = true;
       else if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
-        Fields.push_back(Field);
+        Fields.push_back(DeclPtrTy::make(Field));
     } else {
       // FIXME: Eventually, a NULL return will mean that one of the
       // instantiations was a semantic disaster, and we'll want to set
@@ -735,7 +734,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
 
   // Finish checking fields.
-  ActOnFields(0, Instantiation->getLocation(), Instantiation,
+  ActOnFields(0, Instantiation->getLocation(), DeclPtrTy::make(Instantiation),
               &Fields[0], Fields.size(), SourceLocation(), SourceLocation(),
               0);
 

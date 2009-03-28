@@ -707,7 +707,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         llvm::SmallVector<QualType, 16> ArgTys;
         
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-          ParmVarDecl *Param = (ParmVarDecl *)FTI.ArgInfo[i].Param;
+          ParmVarDecl *Param =
+            cast<ParmVarDecl>(FTI.ArgInfo[i].Param.getAs<Decl>());
           QualType ArgTy = Param->getType();
           assert(!ArgTy.isNull() && "Couldn't parse type?");
 
@@ -849,8 +850,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
 
 /// ObjCGetTypeForMethodDefinition - Builds the type for a method definition
 /// declarator
-QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
-  ObjCMethodDecl *MDecl = cast<ObjCMethodDecl>(static_cast<Decl *>(D));
+QualType Sema::ObjCGetTypeForMethodDefinition(DeclPtrTy D) {
+  ObjCMethodDecl *MDecl = cast<ObjCMethodDecl>(D.getAs<Decl>());
   QualType T = MDecl->getResultType();
   llvm::SmallVector<QualType, 16> ArgTys;
   

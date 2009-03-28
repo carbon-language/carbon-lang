@@ -27,7 +27,7 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   CurScope = 0;
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
-  ObjCImpDecl = 0;
+  ObjCImpDecl = DeclPtrTy();
 
   // Add #pragma handlers. These are removed and destroyed in the
   // destructor.
@@ -324,8 +324,8 @@ void Parser::Initialize() {
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
 /// action tells us to.  This returns true if the EOF was encountered.
-bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
-  Result = 0;
+bool Parser::ParseTopLevelDecl(DeclPtrTy &Result) {
+  Result = DeclPtrTy();
   if (Tok.is(tok::eof)) {
     Actions.ActOnEndOfTranslationUnit();
     return true;
@@ -342,7 +342,7 @@ bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
 void Parser::ParseTranslationUnit() {
   Initialize();
 
-  DeclTy *Res;
+  DeclPtrTy Res;
   while (!ParseTopLevelDecl(Res))
     /*parse them all*/;
   
@@ -368,20 +368,20 @@ void Parser::ParseTranslationUnit() {
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
 ///
-Parser::DeclTy *Parser::ParseExternalDeclaration() {
+Parser::DeclPtrTy Parser::ParseExternalDeclaration() {
   switch (Tok.getKind()) {
   case tok::semi:
     Diag(Tok, diag::ext_top_level_semi);
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
-    return 0;
+    return DeclPtrTy();
   case tok::r_brace:
     Diag(Tok, diag::err_expected_external_declaration);
     ConsumeBrace();
-    return 0;
+    return DeclPtrTy();
   case tok::eof:
     Diag(Tok, diag::err_expected_external_declaration);
-    return 0;
+    return DeclPtrTy();
   case tok::kw___extension__: {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
@@ -396,7 +396,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 
     if (!Result.isInvalid())
       return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), move(Result));
-    return 0;
+    return DeclPtrTy();
   }
   case tok::at:
     // @ is not a legal token unless objc is enabled, no need to check.
@@ -405,11 +405,9 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::plus:
     if (getLang().ObjC1)
       return ParseObjCMethodDefinition();
-    else {
-      Diag(Tok, diag::err_expected_external_declaration);
-      ConsumeToken();
-    }
-    return 0;
+    Diag(Tok, diag::err_expected_external_declaration);
+    ConsumeToken();
+    return DeclPtrTy();
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:
@@ -440,7 +438,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 /// [!C99]  init-declarator-list ';'                   [TODO: warn in c99 mode]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
-Parser::DeclTy *
+Parser::DeclPtrTy
 Parser::ParseDeclarationOrFunctionDefinition(
                                   TemplateParameterLists *TemplateParams,
                                   AccessSpecifier AS) {
@@ -464,7 +462,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
         !Tok.isObjCAtKeyword(tok::objc_protocol)) {
       Diag(Tok, diag::err_objc_unexpected_attr);
       SkipUntil(tok::semi); // FIXME: better skip?
-      return 0;
+      return DeclPtrTy();
     }
     const char *PrevSpec = 0;
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec))
@@ -491,7 +489,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
     SkipUntil(tok::r_brace, true, true);
     if (Tok.is(tok::semi))
       ConsumeToken();
-    return 0;
+    return DeclPtrTy();
   }
 
   // If the declarator is the start of a function definition, handle it.
@@ -521,7 +519,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
       } else {
         SkipUntil(tok::semi);
       }
-      return 0;
+      return DeclPtrTy();
     }
     return ParseFunctionDefinition(DeclaratorInfo);
   } else {
@@ -530,7 +528,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
     else
       Diag(Tok, diag::err_invalid_token_after_toplevel_declarator);
     SkipUntil(tok::semi);
-    return 0;
+    return DeclPtrTy();
   }
 
   // Parse the init-declarator-list for a normal declaration.
@@ -550,7 +548,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
 /// [C++] function-definition: [C++ 8.4]
 ///         decl-specifier-seq[opt] declarator function-try-block [TODO]
 ///
-Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
+Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
@@ -584,7 +582,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
 
     // If we didn't find the '{', bail out.
     if (Tok.isNot(tok::l_brace))
-      return 0;
+      return DeclPtrTy();
   }
 
   // Enter a scope for the function body.
@@ -592,7 +590,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
 
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.
-  DeclTy *Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
+  DeclPtrTy Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
 
   // If we have a colon, then we're probably parsing a C++
   // ctor-initializer.
@@ -652,14 +650,14 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 
     // Handle the full declarator list.
     while (1) {
-      DeclTy *AttrList;
+      Action::AttrTy *AttrList;
       // If attributes are present, parse them.
       if (Tok.is(tok::kw___attribute))
         // FIXME: attach attributes too.
         AttrList = ParseAttributes();
 
       // Ask the actions module to compute the type for this declarator.
-      Action::DeclTy *Param =
+      Action::DeclPtrTy Param =
         Actions.ActOnParamDeclarator(CurScope, ParmDeclarator);
 
       if (Param &&
@@ -862,7 +860,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
     
     // If this is a template-id, annotate with a template-id or type token.
     if (NextToken().is(tok::less)) {
-      DeclTy *Template;
+      DeclPtrTy Template;
       if (TemplateNameKind TNK 
             = Actions.isTemplateName(*Tok.getIdentifierInfo(),
                                      CurScope, Template, &SS))

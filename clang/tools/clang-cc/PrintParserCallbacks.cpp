@@ -29,8 +29,8 @@ namespace {
     /// ActOnDeclarator - This callback is invoked when a declarator is parsed
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
-    virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D,
-                                    DeclTy *LastInGroup) {
+    virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D,
+                                      DeclPtrTy LastInGroup) {
       llvm::cout << __FUNCTION__ << " ";
       if (IdentifierInfo *II = D.getIdentifier()) {
         llvm::cout << "'" << II->getName() << "'";
@@ -57,15 +57,15 @@ namespace {
     }
 
 
-    Action::DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
-                                             IdentifierInfo *ClassName,
-                                             SourceLocation ClassLoc,
-                                             IdentifierInfo *SuperName,
-                                             SourceLocation SuperLoc,
-                                             DeclTy * const *ProtoRefs,
-                                             unsigned NumProtocols,
-                                             SourceLocation EndProtoLoc,
-                                             AttributeList *AttrList) {
+    Action::DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+                                               IdentifierInfo *ClassName,
+                                               SourceLocation ClassLoc,
+                                               IdentifierInfo *SuperName,
+                                               SourceLocation SuperLoc,
+                                               const DeclPtrTy *ProtoRefs,
+                                               unsigned NumProtocols,
+                                               SourceLocation EndProtoLoc,
+                                               AttributeList *AttrList) {
       llvm::cout << __FUNCTION__ << "\n";
       return MinimalAction::ActOnStartClassInterface(AtInterfaceLoc,
                                                      ClassName, ClassLoc, 
@@ -76,9 +76,9 @@ namespace {
 
     /// ActOnForwardClassDeclaration - 
     /// Scope will always be top level file scope. 
-    Action::DeclTy *ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
-                                                 IdentifierInfo **IdentList, 
-                                                 unsigned NumElts) {
+    Action::DeclPtrTy ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
+                                                   IdentifierInfo **IdentList, 
+                                                   unsigned NumElts) {
       llvm::cout << __FUNCTION__ << "\n";
       return MinimalAction::ActOnForwardClassDeclaration(AtClassLoc, IdentList,
                                                          NumElts);
@@ -90,7 +90,7 @@ namespace {
     /// declarator is parsed. This callback only occurs for functions
     /// with prototypes. S is the function prototype scope for the
     /// parameters (C++ [basic.scope.proto]).
-    virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D) {
+    virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D) {
       llvm::cout << __FUNCTION__ << " ";
       if (IdentifierInfo *II = D.getIdentifier()) {
         llvm::cout << "'" << II->getName() << "'";
@@ -98,7 +98,7 @@ namespace {
         llvm::cout << "<anon>";
       }
       llvm::cout << "\n";
-      return 0;
+      return DeclPtrTy();
     }
     
     /// AddInitializerToDecl - This action is called immediately after 
@@ -108,73 +108,75 @@ namespace {
     /// This allows ActOnDeclarator to register "xx" prior to parsing the
     /// initializer. The declaration above should still result in a warning, 
     /// since the reference to "xx" is uninitialized.
-    virtual void AddInitializerToDecl(DeclTy *Dcl, ExprArg Init) {
+    virtual void AddInitializerToDecl(DeclPtrTy Dcl, ExprArg Init) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
     /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
     /// gives the actions implementation a chance to process the group as a whole.
-    virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group) {
+    virtual DeclPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy Group) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
     /// ActOnStartOfFunctionDef - This is called at the start of a function
     /// definition, instead of calling ActOnDeclarator.  The Declarator includes
     /// information about formal arguments that are part of this function.
-    virtual DeclTy *ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
+    virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
     /// ActOnStartOfFunctionDef - This is called at the start of a function
     /// definition, after the FunctionDecl has already been created.
-    virtual DeclTy *ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
+    virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
-    virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclTy *D) {
+    virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
       llvm::cout << __FUNCTION__ << "\n";
     }
   
     /// ActOnFunctionDefBody - This is called when a function body has completed
     /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
-    virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body) {
+    virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
-    virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg AsmString) {
+    virtual DeclPtrTy ActOnFileScopeAsmDecl(SourceLocation Loc,
+                                            ExprArg AsmString) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
   
     /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
     /// no declarator (e.g. "struct foo;") is parsed.
-    virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
+    virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
     
     /// ActOnLinkageSpec - Parsed a C++ linkage-specification that
     /// contained braces. Lang/StrSize contains the language string that
     /// was parsed at location Loc. Decls/NumDecls provides the
     /// declarations parsed inside the linkage specification.
-    virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
-                                     SourceLocation RBrace, const char *Lang,
-                                     unsigned StrSize, 
-                                     DeclTy **Decls, unsigned NumDecls) {
+    virtual DeclPtrTy ActOnLinkageSpec(SourceLocation Loc,
+                                       SourceLocation LBrace,
+                                       SourceLocation RBrace, const char *Lang,
+                                       unsigned StrSize, 
+                                       DeclPtrTy *Decls, unsigned NumDecls) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
     
     /// ActOnLinkageSpec - Parsed a C++ linkage-specification without
     /// braces. Lang/StrSize contains the language string that was
     /// parsed at location Loc. D is the declaration parsed.
-    virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, const char *Lang,
-                                     unsigned StrSize, DeclTy *D) {
-      return 0;
+    virtual DeclPtrTy ActOnLinkageSpec(SourceLocation Loc, const char *Lang,
+                                       unsigned StrSize, DeclPtrTy D) {
+      return DeclPtrTy();
     }
     
     //===--------------------------------------------------------------------===//
@@ -183,58 +185,58 @@ namespace {
   
     virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return TypeResult();
     }
   
-    virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
-                             SourceLocation KWLoc, const CXXScopeSpec &SS,
-                             IdentifierInfo *Name, SourceLocation NameLoc,
-                             AttributeList *Attr, AccessSpecifier AS) {
+    virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagType, TagKind TK,
+                               SourceLocation KWLoc, const CXXScopeSpec &SS,
+                               IdentifierInfo *Name, SourceLocation NameLoc,
+                               AttributeList *Attr, AccessSpecifier AS) {
       // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
       // is (struct/union/enum/class).
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
   
     /// Act on @defs() element found when parsing a structure.  ClassName is the
     /// name of the referenced class.   
-    virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
+    virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                            IdentifierInfo *ClassName,
-                           llvm::SmallVectorImpl<DeclTy*> &Decls) {
+                           llvm::SmallVectorImpl<DeclPtrTy> &Decls) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    virtual DeclTy *ActOnField(Scope *S, DeclTy *TagD, 
-                               SourceLocation DeclStart,
-                               Declarator &D, ExprTy *BitfieldWidth) {
+    virtual DeclPtrTy ActOnField(Scope *S, DeclPtrTy TagD, 
+                                 SourceLocation DeclStart,
+                                 Declarator &D, ExprTy *BitfieldWidth) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
   
-    virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
-                              Declarator &D, ExprTy *BitfieldWidth,
-                              tok::ObjCKeywordKind visibility) {
+    virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
+                                Declarator &D, ExprTy *BitfieldWidth,
+                                tok::ObjCKeywordKind visibility) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
   
-    virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclTy *TagDecl,
-                             DeclTy **Fields, unsigned NumFields, 
+    virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclPtrTy TagDecl,
+                             DeclPtrTy *Fields, unsigned NumFields, 
                              SourceLocation LBrac, SourceLocation RBrac,
                              AttributeList *AttrList) {
       llvm::cout << __FUNCTION__ << "\n";
     }
   
-    virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
-                                      DeclTy *LastEnumConstant,
-                                      SourceLocation IdLoc, IdentifierInfo *Id,
-                                      SourceLocation EqualLoc, ExprTy *Val) {
+    virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
+                                        DeclPtrTy LastEnumConstant,
+                                        SourceLocation IdLoc,IdentifierInfo *Id,
+                                        SourceLocation EqualLoc, ExprTy *Val) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
-    virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
-                               DeclTy **Elements, unsigned NumElements) {
+    virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDecl,
+                               DeclPtrTy *Elements, unsigned NumElements) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
@@ -254,7 +256,7 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
-    virtual OwningStmtResult ActOnDeclStmt(DeclTy *Decl,
+    virtual OwningStmtResult ActOnDeclStmt(DeclPtrTy Decl,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
       llvm::cout << __FUNCTION__ << "\n";
@@ -381,7 +383,7 @@ namespace {
     // Objective-c statements
     virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                   SourceLocation RParen,
-                                                  DeclTy *Parm, StmtArg Body,
+                                                  DeclPtrTy Parm, StmtArg Body,
                                                   StmtArg CatchList) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
@@ -415,13 +417,13 @@ namespace {
     }
 
     // C++ Statements
-    virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D) {
+    virtual DeclPtrTy ActOnExceptionDeclarator(Scope *S, Declarator &D) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
     virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
-                                                DeclTy *ExceptionDecl,
+                                                DeclPtrTy ExceptionDecl,
                                                 StmtArg HandlerBlock) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
@@ -518,7 +520,7 @@ namespace {
                                                       tok::TokenKind OpKind,
                                                       SourceLocation MemberLoc,
                                                       IdentifierInfo &Member,
-                                                      DeclTy *ImplDecl) {
+                                                      DeclPtrTy ImplDecl) {
       llvm::cout << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
@@ -656,14 +658,14 @@ namespace {
       return ExprEmpty();
     }
 
-    virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
-                                          IdentifierInfo *Ident,
-                                          SourceLocation LBrace) {
+    virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
+                                             IdentifierInfo *Ident,
+                                             SourceLocation LBrace) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
-    virtual void ActOnFinishNamespaceDef(DeclTy *Dcl,SourceLocation RBrace) {
+    virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace) {
       llvm::cout << __FUNCTION__ << "\n";
       return;
     }
@@ -671,34 +673,34 @@ namespace {
 #if 0
     // FIXME: AttrList should be deleted by this function, but the definition
     // would have to be available.
-    virtual DeclTy *ActOnUsingDirective(Scope *CurScope,
-                                        SourceLocation UsingLoc,
-                                        SourceLocation NamespcLoc,
-                                        const CXXScopeSpec &SS,
-                                        SourceLocation IdentLoc,
-                                        IdentifierInfo *NamespcName,
-                                        AttributeList *AttrList) {
+    virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
+                                          SourceLocation UsingLoc,
+                                          SourceLocation NamespcLoc,
+                                          const CXXScopeSpec &SS,
+                                          SourceLocation IdentLoc,
+                                          IdentifierInfo *NamespcName,
+                                          AttributeList *AttrList) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 #endif
 
-    virtual void ActOnParamDefaultArgument(DeclTy *param,
+    virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                            SourceLocation EqualLoc,
                                            ExprArg defarg) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    virtual void ActOnParamUnparsedDefaultArgument(DeclTy *param,
+    virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param,
                                                    SourceLocation EqualLoc) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    virtual void ActOnParamDefaultArgumentError(DeclTy *param) {
+    virtual void ActOnParamDefaultArgumentError(DeclPtrTy param) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    virtual void AddCXXDirectInitializerToDecl(DeclTy *Dcl,
+    virtual void AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                                                SourceLocation LParenLoc,
                                                MultiExprArg Exprs,
                                                SourceLocation *CommaLocs,
@@ -707,25 +709,26 @@ namespace {
       return;
     }
 
-    virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method)
+    virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
+                                                       DeclPtrTy Method)
     {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *Param) {
+    virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy Param) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S,
-                                                        DeclTy *Method) {
+                                                        DeclPtrTy Method) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
-                                                 ExprArg AssertExpr,
-                                                 ExprArg AssertMessageExpr) {
+    virtual DeclPtrTy ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
+                                                   ExprArg AssertExpr,
+                                                   ExprArg AssertMessageExpr) {
       llvm::cout << __FUNCTION__ << "\n";
-      return 0;
+      return DeclPtrTy();
     }
 
     virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,

@@ -876,7 +876,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       Scope *CheckS = S;
       while (CheckS) {
         if (CheckS->isWithinElse() && 
-            CheckS->getControlParent()->isDeclScope(Var)) {
+            CheckS->getControlParent()->isDeclScope(DeclPtrTy::make(Var))) {
           if (Var->getType()->isBooleanType())
             ExprError(Diag(Loc, diag::warn_value_always_false)
               << Var->getDeclName());
@@ -1743,7 +1743,7 @@ Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
                                IdentifierInfo &Member,
-                               DeclTy *ObjCImpDecl) {
+                               DeclPtrTy ObjCImpDecl) {
   Expr *BaseExpr = static_cast<Expr *>(Base.release());
   assert(BaseExpr && "no record expression");
 
@@ -1879,7 +1879,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
           // the context as argument to this routine. Ideally, this context need
           // be passed down in the AST node and somehow calculated from the AST
           // for a function decl.
-          Decl *ImplDecl = static_cast<Decl *>(ObjCImpDecl);
+          Decl *ImplDecl = ObjCImpDecl.getAs<Decl>();
           if (ObjCImplementationDecl *IMPD = 
               dyn_cast<ObjCImplementationDecl>(ImplDecl))
             ClassOfMethodDecl = IMPD->getClassInterface();
@@ -4590,13 +4590,13 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   // no arguments, not a function that takes a single void argument.
   if (FTI.hasPrototype &&
       FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-      (!((ParmVarDecl *)FTI.ArgInfo[0].Param)->getType().getCVRQualifiers() &&
-        ((ParmVarDecl *)FTI.ArgInfo[0].Param)->getType()->isVoidType())) {
+     (!FTI.ArgInfo[0].Param.getAs<ParmVarDecl>()->getType().getCVRQualifiers()&&
+        FTI.ArgInfo[0].Param.getAs<ParmVarDecl>()->getType()->isVoidType())) {
     // empty arg list, don't push any params.
     CurBlock->isVariadic = false;
   } else if (FTI.hasPrototype) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-      CurBlock->Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
+      CurBlock->Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
     CurBlock->isVariadic = FTI.isVariadic;
     QualType T = GetTypeForDeclarator (ParamInfo, CurScope);
 

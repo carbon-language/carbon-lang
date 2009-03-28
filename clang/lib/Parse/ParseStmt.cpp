@@ -101,7 +101,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   default: {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation();
-      DeclTy *Decl = ParseDeclaration(Declarator::BlockContext);
+      DeclPtrTy Decl = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart);
     }
@@ -208,7 +208,7 @@ Parser::OwningStmtResult Parser::ParseLabeledStatement() {
   SourceLocation ColonLoc = ConsumeToken();
 
   // Read label attributes, if present.
-  DeclTy *AttrList = 0;
+  Action::AttrTy *AttrList = 0;
   if (Tok.is(tok::kw___attribute))
     // TODO: save these somewhere.
     AttrList = ParseAttributes();
@@ -444,7 +444,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       if (isDeclarationStatement()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
         SourceLocation DeclStart = Tok.getLocation();
-        DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
+        DeclPtrTy Res = ParseDeclaration(Declarator::BlockContext);
         // FIXME: Pass in the right location for the end of the declstmt.
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
       } else {
@@ -912,7 +912,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
     SourceLocation DeclStart = Tok.getLocation();
-    DeclTy *aBlockVarDecl = ParseSimpleDeclaration(Declarator::ForContext);
+    DeclPtrTy aBlockVarDecl = ParseSimpleDeclaration(Declarator::ForContext);
     // FIXME: Pass in the right location for the end of the declstmt.
     FirstPart = Actions.ActOnDeclStmt(aBlockVarDecl, DeclStart,
                                           DeclStart);
@@ -1287,7 +1287,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
   return true;
 }
 
-Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl) {
+Parser::DeclPtrTy Parser::ParseFunctionStatementBody(DeclPtrTy Decl) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
          
@@ -1369,7 +1369,7 @@ Parser::OwningStmtResult Parser::ParseCXXCatchBlock() {
 
   // exception-declaration is equivalent to '...' or a parameter-declaration
   // without default arguments.
-  DeclTy *ExceptionDecl = 0;
+  DeclPtrTy ExceptionDecl;
   if (Tok.isNot(tok::ellipsis)) {
     DeclSpec DS;
     if (ParseCXXTypeSpecifierSeq(DS))

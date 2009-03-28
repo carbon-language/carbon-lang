@@ -133,7 +133,7 @@ private:
   // List of protocol qualifiers for objective-c classes.  Used for 
   // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
   // "id<foo>".
-  Action::DeclTy * const *ProtocolQualifiers;
+  const Action::DeclPtrTy *ProtocolQualifiers;
   unsigned NumProtocolQualifiers;
   
   // SourceLocation info.  These are null if the item wasn't specified or if
@@ -266,7 +266,7 @@ public:
   bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
-                       Action::TypeTy *TypeRep = 0);
+                       void *Rep = 0);
   bool SetTypeSpecError();
 
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
@@ -308,18 +308,18 @@ public:
     return AL;
   }
   
-  typedef const Action::DeclTy * const * ProtocolQualifierListTy;
+  typedef const Action::DeclPtrTy *ProtocolQualifierListTy;
   ProtocolQualifierListTy getProtocolQualifiers() const {
     return ProtocolQualifiers;
   }
   unsigned getNumProtocolQualifiers() const {
     return NumProtocolQualifiers;
   }
-  void setProtocolQualifiers(Action::DeclTy* const *Protos, unsigned NumProtos){
-    if (NumProtos == 0) return;
-    ProtocolQualifiers = new Action::DeclTy*[NumProtos];
-    memcpy((void*)ProtocolQualifiers, Protos,sizeof(Action::DeclTy*)*NumProtos);
-    NumProtocolQualifiers = NumProtos;
+  void setProtocolQualifiers(const Action::DeclPtrTy *Protos, unsigned NP) {
+    if (NP == 0) return;
+    ProtocolQualifiers = new Action::DeclPtrTy[NP];
+    memcpy((void*)ProtocolQualifiers, Protos, sizeof(Action::DeclPtrTy)*NP);
+    NumProtocolQualifiers = NP;
   }
   
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
@@ -489,7 +489,7 @@ struct DeclaratorChunk {
   struct ParamInfo {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
-    Action::DeclTy *Param;
+    Action::DeclPtrTy Param;
 
     /// DefaultArgTokens - When the parameter's default argument
     /// cannot be parsed immediately (because it occurs within the
@@ -499,7 +499,8 @@ struct DeclaratorChunk {
     CachedTokens *DefaultArgTokens;
 
     ParamInfo() {}
-    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::DeclTy *param,
+    ParamInfo(IdentifierInfo *ident, SourceLocation iloc,
+              Action::DeclPtrTy param,
               CachedTokens *DefArgTokens = 0)
       : Ident(ident), IdentLoc(iloc), Param(param), 
         DefaultArgTokens(DefArgTokens) {}

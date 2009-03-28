@@ -37,13 +37,12 @@ Sema::OwningStmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
   return Owned(new (Context) NullStmt(SemiLoc));
 }
 
-Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclTy *decl,
+Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclPtrTy decl,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
-  if (decl == 0)
+  Decl *D = decl.getAs<Decl>();
+  if (D == 0)
     return StmtError();
-
-  Decl *D = static_cast<Decl *>(decl);
 
   // This is a temporary hack until we are always passing around
   // DeclGroupRefs.
@@ -1001,10 +1000,10 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
 
 Action::OwningStmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
-                           SourceLocation RParen, DeclTy *Parm,
+                           SourceLocation RParen, DeclPtrTy Parm,
                            StmtArg Body, StmtArg catchList) {
   Stmt *CatchList = static_cast<Stmt*>(catchList.release());
-  ParmVarDecl *PVD = static_cast<ParmVarDecl*>(Parm);
+  ParmVarDecl *PVD = cast_or_null<ParmVarDecl>(Parm.getAs<Decl>());
   
   // PVD == 0 implies @catch(...).
   if (PVD) {
@@ -1071,11 +1070,11 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
 /// ActOnCXXCatchBlock - Takes an exception declaration and a handler block
 /// and creates a proper catch handler from them.
 Action::OwningStmtResult
-Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclTy *ExDecl,
+Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclPtrTy ExDecl,
                          StmtArg HandlerBlock) {
   // There's nothing to test that ActOnExceptionDecl didn't already test.
   return Owned(new (Context) CXXCatchStmt(CatchLoc,
-                                  static_cast<VarDecl*>(ExDecl),
+                                  cast_or_null<VarDecl>(ExDecl.getAs<Decl>()),
                                   static_cast<Stmt*>(HandlerBlock.release())));
 }
 

@@ -307,7 +307,7 @@ public:
   QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);
 
-  QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
+  QualType ObjCGetTypeForMethodDefinition(DeclPtrTy D);
 
   bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);
 
@@ -326,15 +326,16 @@ public:
 
   /// getDeclName - Return a pretty name for the specified decl if possible, or
   /// an empty string if not.  This is used for pretty crash reporting. 
-  virtual std::string getDeclName(DeclTy *D);
+  virtual std::string getDeclName(DeclPtrTy D);
   
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc, 
                               Scope *S, const CXXScopeSpec *SS);
-  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup){
+  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D,
+                                    DeclPtrTy LastInGroup){
     return ActOnDeclarator(S, D, LastInGroup, false);
   }
-  DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
-                          bool IsFunctionDefinition);
+  DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D, DeclPtrTy LastInGroup,
+                            bool IsFunctionDefinition);
   void RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
                                         Scope *S);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
@@ -355,26 +356,26 @@ public:
   bool CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
                                 bool &Redeclaration, 
                                 bool &OverloadableAttrRequired);
-  virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
-  virtual void ActOnParamDefaultArgument(DeclTy *param,
+  virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D);
+  virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                          SourceLocation EqualLoc,
                                          ExprArg defarg);
-  virtual void ActOnParamUnparsedDefaultArgument(DeclTy *param, 
+  virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
                                                  SourceLocation EqualLoc);
-  virtual void ActOnParamDefaultArgumentError(DeclTy *param);
-  virtual void AddInitializerToDecl(DeclTy *dcl, ExprArg init);
-  void AddInitializerToDecl(DeclTy *dcl, ExprArg init, bool DirectInit);
-  void ActOnUninitializedDecl(DeclTy *dcl);
-  virtual void SetDeclDeleted(DeclTy *dcl, SourceLocation DelLoc);
-  virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
+  virtual void ActOnParamDefaultArgumentError(DeclPtrTy param);
+  virtual void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init);
+  void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit);
+  void ActOnUninitializedDecl(DeclPtrTy dcl);
+  virtual void SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc);
+  virtual DeclPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy Group);
 
   virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D);
-  virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
-  virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D);
-  virtual void ActOnStartOfObjCMethodDef(Scope *S, DeclTy *D);
+  virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *S, Declarator &D);
+  virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *S, DeclPtrTy D);
+  virtual void ActOnStartOfObjCMethodDef(Scope *S, DeclPtrTy D);
 
-  virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtArg Body);
-  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
+  virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body);
+  virtual DeclPtrTy ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 
   /// Scope actions.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);
@@ -382,23 +383,24 @@ public:
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
-  virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);
+  virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);
   
   bool InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                            RecordDecl *AnonRecord);
-  virtual DeclTy *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS, 
-                                              RecordDecl *Record);
+  virtual DeclPtrTy BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS, 
+                                                RecordDecl *Record);
 
-  virtual DeclTy *ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
-                           SourceLocation KWLoc, const CXXScopeSpec &SS,
-                           IdentifierInfo *Name, SourceLocation NameLoc,
-                           AttributeList *Attr, AccessSpecifier AS);
+  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
+                             SourceLocation KWLoc, const CXXScopeSpec &SS,
+                             IdentifierInfo *Name, SourceLocation NameLoc,
+                             AttributeList *Attr, AccessSpecifier AS);
   
-  virtual void ActOnDefs(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
+  virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
-                         llvm::SmallVectorImpl<DeclTy*> &Decls);
-  virtual DeclTy *ActOnField(Scope *S, DeclTy *TagD, SourceLocation DeclStart,
-                             Declarator &D, ExprTy *BitfieldWidth);
+                         llvm::SmallVectorImpl<DeclPtrTy> &Decls);
+  virtual DeclPtrTy ActOnField(Scope *S, DeclPtrTy TagD,
+                               SourceLocation DeclStart,
+                               Declarator &D, ExprTy *BitfieldWidth);
 
   FieldDecl *HandleField(Scope *S, RecordDecl *TagD, SourceLocation DeclStart,
                          Declarator &D, Expr *BitfieldWidth,
@@ -410,25 +412,25 @@ public:
                             AccessSpecifier AS, NamedDecl *PrevDecl,
                             Declarator *D = 0);
   
-  virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
-                            Declarator &D, ExprTy *BitfieldWidth,
-                            tok::ObjCKeywordKind visibility);
+  virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
+                              Declarator &D, ExprTy *BitfieldWidth,
+                              tok::ObjCKeywordKind visibility);
 
   // This is used for both record definitions and ObjC interface declarations.
   virtual void ActOnFields(Scope* S,
-                           SourceLocation RecLoc, DeclTy *TagDecl,
-                           DeclTy **Fields, unsigned NumFields,
+                           SourceLocation RecLoc, DeclPtrTy TagDecl,
+                           DeclPtrTy *Fields, unsigned NumFields,
                            SourceLocation LBrac, SourceLocation RBrac,
                            AttributeList *AttrList);
 
   /// ActOnTagStartDefinition - Invoked when we have entered the
   /// scope of a tag's definition (e.g., for an enumeration, class,
   /// struct, or union).
-  virtual void ActOnTagStartDefinition(Scope *S, DeclTy *TagDecl);
+  virtual void ActOnTagStartDefinition(Scope *S, DeclPtrTy TagDecl);
 
   /// ActOnTagFinishDefinition - Invoked once we have finished parsing
   /// the definition of a tag (enumeration, class, struct, or union).
-  virtual void ActOnTagFinishDefinition(Scope *S, DeclTy *TagDecl);
+  virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl);
 
   EnumConstantDecl *CheckEnumConstant(EnumDecl *Enum,
                                       EnumConstantDecl *LastEnumConst,
@@ -436,12 +438,12 @@ public:
                                       IdentifierInfo *Id,
                                       ExprArg val);
 
-  virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
-                                    DeclTy *LastEnumConstant,
-                                    SourceLocation IdLoc, IdentifierInfo *Id,
-                                    SourceLocation EqualLoc, ExprTy *Val);
-  virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
-                             DeclTy **Elements, unsigned NumElements);
+  virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
+                                      DeclPtrTy LastEnumConstant,
+                                      SourceLocation IdLoc, IdentifierInfo *Id,
+                                      SourceLocation EqualLoc, ExprTy *Val);
+  virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDecl,
+                             DeclPtrTy *Elements, unsigned NumElements);
 
   DeclContext *getContainingDC(DeclContext *DC);
 
@@ -1082,7 +1084,8 @@ public:
   virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                              MultiStmtArg Elts,
                                              bool isStmtExpr);
-  virtual OwningStmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
+  virtual OwningStmtResult ActOnDeclStmt(DeclPtrTy Decl,
+                                         SourceLocation StartLoc,
                                          SourceLocation EndLoc);
   virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
                                     SourceLocation DotDotDotLoc, ExprArg RHSVal,
@@ -1147,7 +1150,7 @@ public:
 
   virtual OwningStmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                                                 SourceLocation RParen,
-                                                DeclTy *Parm, StmtArg Body,
+                                                DeclPtrTy Parm, StmtArg Body,
                                                 StmtArg CatchList);
 
   virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
@@ -1164,9 +1167,9 @@ public:
                                                        ExprArg SynchExpr,
                                                        StmtArg SynchBody);
 
-  virtual DeclTy *ActOnExceptionDeclarator(Scope *S, Declarator &D);
+  virtual DeclPtrTy ActOnExceptionDeclarator(Scope *S, Declarator &D);
   virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
-                                              DeclTy *ExDecl,
+                                              DeclPtrTy ExDecl,
                                               StmtArg HandlerBlock);
   virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
                                             StmtArg TryBlock,
@@ -1255,7 +1258,7 @@ public:
                                                     tok::TokenKind OpKind,
                                                     SourceLocation MemberLoc,
                                                     IdentifierInfo &Member,
-                                                    DeclTy *ImplDecl=0);
+                                                    DeclPtrTy ImplDecl);
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
                                const FunctionProtoType *Proto,
@@ -1358,32 +1361,32 @@ public:
   //===---------------------------- C++ Features --------------------------===//
 
   // Act on C++ namespaces
-  virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
-                                         IdentifierInfo *Ident,
-                                         SourceLocation LBrace);
-  virtual void ActOnFinishNamespaceDef(DeclTy *Dcl, SourceLocation RBrace);
+  virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
+                                           IdentifierInfo *Ident,
+                                           SourceLocation LBrace);
+  virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace);
 
-  virtual DeclTy *ActOnUsingDirective(Scope *CurScope,
-                                      SourceLocation UsingLoc,
-                                      SourceLocation NamespcLoc,
-                                      const CXXScopeSpec &SS,
-                                      SourceLocation IdentLoc,
-                                      IdentifierInfo *NamespcName,
-                                      AttributeList *AttrList);
+  virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,
+                                        SourceLocation UsingLoc,
+                                        SourceLocation NamespcLoc,
+                                        const CXXScopeSpec &SS,
+                                        SourceLocation IdentLoc,
+                                        IdentifierInfo *NamespcName,
+                                        AttributeList *AttrList);
   
   void PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir);
 
-  virtual DeclTy *ActOnNamespaceAliasDef(Scope *CurScope,
-                                         SourceLocation AliasLoc,
-                                         IdentifierInfo *Alias,
-                                         const CXXScopeSpec &SS,
-                                         SourceLocation NamespaceLoc,
-                                         IdentifierInfo *NamespaceName);
+  virtual DeclPtrTy ActOnNamespaceAliasDef(Scope *CurScope,
+                                           SourceLocation AliasLoc,
+                                           IdentifierInfo *Alias,
+                                           const CXXScopeSpec &SS,
+                                           SourceLocation NamespaceLoc,
+                                           IdentifierInfo *NamespaceName);
   
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.
   /// e.g: "int x(1);"
-  virtual void AddCXXDirectInitializerToDecl(DeclTy *Dcl,
+  virtual void AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                                              SourceLocation LParenLoc,
                                              MultiExprArg Exprs,
                                              SourceLocation *CommaLocs,
@@ -1565,15 +1568,15 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Declarations
   //
-  virtual DeclTy *ActOnStartLinkageSpecification(Scope *S,
-                                                 SourceLocation ExternLoc,
-                                                 SourceLocation LangLoc,
-                                                 const char *Lang,
-                                                 unsigned StrSize,
-                                                 SourceLocation LBraceLoc);
-  virtual DeclTy *ActOnFinishLinkageSpecification(Scope *S,
-                                                  DeclTy *LinkageSpec,
-                                                  SourceLocation RBraceLoc);
+  virtual DeclPtrTy ActOnStartLinkageSpecification(Scope *S,
+                                                   SourceLocation ExternLoc,
+                                                   SourceLocation LangLoc,
+                                                   const char *Lang,
+                                                   unsigned StrSize,
+                                                   SourceLocation LBraceLoc);
+  virtual DeclPtrTy ActOnFinishLinkageSpecification(Scope *S,
+                                                    DeclPtrTy LinkageSpec,
+                                                    SourceLocation RBraceLoc);
 
 
   //===--------------------------------------------------------------------===//
@@ -1582,11 +1585,13 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS);
   
-  virtual DeclTy *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
-                                           Declarator &D, ExprTy *BitfieldWidth,
-                                           ExprTy *Init, DeclTy *LastInGroup);
+  virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
+                                             Declarator &D,
+                                             ExprTy *BitfieldWidth,
+                                             ExprTy *Init,
+                                             DeclPtrTy LastInGroup);
 
-  virtual MemInitResult ActOnMemInitializer(DeclTy *ConstructorD,
+  virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorD,
                                             Scope *S,
                                             IdentifierInfo *MemberOrBase,
                                             SourceLocation IdLoc,
@@ -1597,22 +1602,24 @@ public:
 
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
-  virtual void ActOnMemInitializers(DeclTy *ConstructorDecl, 
+  virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl, 
                                     SourceLocation ColonLoc,
                                     MemInitTy **MemInits, unsigned NumMemInits);
   
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
-                                                 DeclTy *TagDecl,
+                                                 DeclPtrTy TagDecl,
                                                  SourceLocation LBrac,
                                                  SourceLocation RBrac);
 
-  virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);
-  virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *Param);
-  virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *Method);
+  virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
+                                                     DeclPtrTy Method);
+  virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy Param);
+  virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S,
+                                                      DeclPtrTy Method);
 
-  virtual DeclTy *ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
-                                               ExprArg AssertExpr,
-                                               ExprArg AssertMessageExpr);
+  virtual DeclPtrTy ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
+                                                 ExprArg AssertExpr,
+                                                 ExprArg AssertMessageExpr);
   
   bool CheckConstructorDeclarator(Declarator &D, QualType &R,
                                   FunctionDecl::StorageClass& SC);
@@ -1621,7 +1628,7 @@ public:
                                  FunctionDecl::StorageClass& SC);
   bool CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
-  DeclTy *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
+  DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
@@ -1633,7 +1640,7 @@ public:
                                        bool Virtual, AccessSpecifier Access,
                                        QualType BaseType, 
                                        SourceLocation BaseLoc);
-  virtual BaseResult ActOnBaseSpecifier(DeclTy *classdecl, 
+  virtual BaseResult ActOnBaseSpecifier(DeclPtrTy classdecl, 
                                         SourceRange SpecifierRange,
                                         bool Virtual, AccessSpecifier Access,
                                         TypeTy *basetype, SourceLocation 
@@ -1641,7 +1648,7 @@ public:
 
   bool AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
                             unsigned NumBases);
-  virtual void ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+  virtual void ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases, 
                                    unsigned NumBases);
 
   bool IsDerivedFrom(QualType Derived, QualType Base);
@@ -1686,36 +1693,36 @@ public:
   // C++ Templates [C++ 14]
   //
   virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
-                                          DeclTy *&TemplateDecl,
+                                          DeclPtrTy &TemplateDecl,
                                           const CXXScopeSpec *SS = 0);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
-  TemplateDecl *AdjustDeclIfTemplate(DeclTy *&Decl);
+  TemplateDecl *AdjustDeclIfTemplate(DeclPtrTy &Decl);
 
-  virtual DeclTy *ActOnTypeParameter(Scope *S, bool Typename,
-                                     SourceLocation KeyLoc,
-                                     IdentifierInfo *ParamName,
-                                     SourceLocation ParamNameLoc,
-                                     unsigned Depth, unsigned Position);
-  virtual void ActOnTypeParameterDefault(DeclTy *TypeParam, 
+  virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename,
+                                       SourceLocation KeyLoc,
+                                       IdentifierInfo *ParamName,
+                                       SourceLocation ParamNameLoc,
+                                       unsigned Depth, unsigned Position);
+  virtual void ActOnTypeParameterDefault(DeclPtrTy TypeParam, 
                                          SourceLocation EqualLoc,
                                          SourceLocation DefaultLoc,
                                          TypeTy *Default);
 
   QualType CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc);
-  virtual DeclTy *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
-                                                unsigned Depth,
-                                                unsigned Position);
-  virtual void ActOnNonTypeTemplateParameterDefault(DeclTy *TemplateParam,
+  virtual DeclPtrTy ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
+                                                  unsigned Depth,
+                                                  unsigned Position);
+  virtual void ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParam,
                                                     SourceLocation EqualLoc,
                                                     ExprArg Default);
-  virtual DeclTy *ActOnTemplateTemplateParameter(Scope *S,
-                                                 SourceLocation TmpLoc,
-                                                 TemplateParamsTy *Params,
-                                                 IdentifierInfo *ParamName,
-                                                 SourceLocation ParamNameLoc,
-                                                 unsigned Depth,
-                                                 unsigned Position);
-  virtual void ActOnTemplateTemplateParameterDefault(DeclTy *TemplateParam,
+  virtual DeclPtrTy ActOnTemplateTemplateParameter(Scope *S,
+                                                   SourceLocation TmpLoc,
+                                                   TemplateParamsTy *Params,
+                                                   IdentifierInfo *ParamName,
+                                                   SourceLocation ParamNameLoc,
+                                                   unsigned Depth,
+                                                   unsigned Position);
+  virtual void ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParam,
                                                      SourceLocation EqualLoc,
                                                      ExprArg Default);
 
@@ -1724,7 +1731,7 @@ public:
                              SourceLocation ExportLoc,
                              SourceLocation TemplateLoc, 
                              SourceLocation LAngleLoc,
-                             DeclTy **Params, unsigned NumParams,
+                             DeclPtrTy *Params, unsigned NumParams,
                              SourceLocation RAngleLoc);
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,
                                   TemplateParameterList *OldParams);
@@ -1745,7 +1752,7 @@ public:
                                 SourceLocation RAngleLoc);
 
   virtual TypeResult
-  ActOnClassTemplateId(DeclTy *Template, SourceLocation TemplateLoc,
+  ActOnClassTemplateId(DeclPtrTy Template, SourceLocation TemplateLoc,
                        SourceLocation LAngleLoc,
                        ASTTemplateArgsPtr TemplateArgs,
                        SourceLocation *TemplateArgLocs,
@@ -1761,7 +1768,7 @@ public:
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,
-                                   DeclTy *Template,
+                                   DeclPtrTy Template,
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
@@ -1981,17 +1988,17 @@ public:
   }
   
   // Objective-C declarations.
-  virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
-                                           IdentifierInfo *ClassName,
-                                           SourceLocation ClassLoc,
-                                           IdentifierInfo *SuperName,
-                                           SourceLocation SuperLoc,
-                                           DeclTy * const *ProtoRefs,
-                                           unsigned NumProtoRefs,
-                                           SourceLocation EndProtoLoc,
-                                           AttributeList *AttrList);
+  virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+                                             IdentifierInfo *ClassName,
+                                             SourceLocation ClassLoc,
+                                             IdentifierInfo *SuperName,
+                                             SourceLocation SuperLoc,
+                                             const DeclPtrTy *ProtoRefs,
+                                             unsigned NumProtoRefs,
+                                             SourceLocation EndProtoLoc,
+                                             AttributeList *AttrList);
   
-  virtual DeclTy *ActOnCompatiblityAlias(
+  virtual DeclPtrTy ActOnCompatiblityAlias(
                     SourceLocation AtCompatibilityAliasLoc,
                     IdentifierInfo *AliasName,  SourceLocation AliasLocation,
                     IdentifierInfo *ClassName, SourceLocation ClassLocation);
@@ -2001,40 +2008,40 @@ public:
     SourceLocation &PLoc, SourceLocation PrevLoc,
     const ObjCList<ObjCProtocolDecl> &PList);
                     
-  virtual DeclTy *ActOnStartProtocolInterface(
+  virtual DeclPtrTy ActOnStartProtocolInterface(
                     SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                    DeclTy * const *ProtoRefNames, unsigned NumProtoRefs,
+                    const DeclPtrTy *ProtoRefNames, unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc,
                     AttributeList *AttrList);
   
-  virtual DeclTy *ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
-                                              IdentifierInfo *ClassName,
-                                              SourceLocation ClassLoc,
-                                              IdentifierInfo *CategoryName,
-                                              SourceLocation CategoryLoc,
-                                              DeclTy * const *ProtoRefs,
-                                              unsigned NumProtoRefs,
-                                              SourceLocation EndProtoLoc);
+  virtual DeclPtrTy ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
+                                                IdentifierInfo *ClassName,
+                                                SourceLocation ClassLoc,
+                                                IdentifierInfo *CategoryName,
+                                                SourceLocation CategoryLoc,
+                                                const DeclPtrTy *ProtoRefs,
+                                                unsigned NumProtoRefs,
+                                                SourceLocation EndProtoLoc);
   
-  virtual DeclTy *ActOnStartClassImplementation(
+  virtual DeclPtrTy ActOnStartClassImplementation(
                     SourceLocation AtClassImplLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperClassname, 
                     SourceLocation SuperClassLoc);
   
-  virtual DeclTy *ActOnStartCategoryImplementation(
+  virtual DeclPtrTy ActOnStartCategoryImplementation(
                                                   SourceLocation AtCatImplLoc,
                                                   IdentifierInfo *ClassName, 
                                                   SourceLocation ClassLoc,
                                                   IdentifierInfo *CatName,
                                                   SourceLocation CatLoc);
   
-  virtual DeclTy *ActOnForwardClassDeclaration(SourceLocation Loc,
+  virtual DeclPtrTy ActOnForwardClassDeclaration(SourceLocation Loc,
                                                IdentifierInfo **IdentList,
                                                unsigned NumElts);
   
-  virtual DeclTy *ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
+  virtual DeclPtrTy ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                             const IdentifierLocPair *IdentList,
                                                   unsigned NumElts,
                                                   AttributeList *attrList);
@@ -2042,7 +2049,7 @@ public:
   virtual void FindProtocolDeclaration(bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
-                                   llvm::SmallVectorImpl<DeclTy *> &Protocols);
+                                   llvm::SmallVectorImpl<DeclPtrTy> &Protocols);
   
   /// Ensure attributes are consistent with type. 
   /// \param [in, out] Attributes The attributes to check; they will
@@ -2057,7 +2064,7 @@ public:
   void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
   
   void MergeProtocolPropertiesIntoClass(Decl *CDecl,
-                                        DeclTy *MergeProtocols);
+                                        DeclPtrTy MergeProtocols);
   
   void DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT, 
                                         ObjCInterfaceDecl *ID);
@@ -2065,28 +2072,29 @@ public:
   void MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
                                            ObjCProtocolDecl *PDecl);
   
-  virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
-                      DeclTy **allMethods = 0, unsigned allNum = 0,
-                      DeclTy **allProperties = 0, unsigned pNum = 0,
-                      DeclTy **allTUVars = 0, unsigned tuvNum = 0);
+  virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
+                      DeclPtrTy *allMethods = 0, unsigned allNum = 0,
+                      DeclPtrTy *allProperties = 0, unsigned pNum = 0,
+                      DeclPtrTy *allTUVars = 0, unsigned tuvNum = 0);
   
-  virtual DeclTy *ActOnProperty(Scope *S, SourceLocation AtLoc,
-                                FieldDeclarator &FD, ObjCDeclSpec &ODS,
-                                Selector GetterSel, Selector SetterSel,
-                                DeclTy *ClassCategory, bool *OverridingProperty,
-                                tok::ObjCKeywordKind MethodImplKind);
+  virtual DeclPtrTy ActOnProperty(Scope *S, SourceLocation AtLoc,
+                                  FieldDeclarator &FD, ObjCDeclSpec &ODS,
+                                  Selector GetterSel, Selector SetterSel,
+                                  DeclPtrTy ClassCategory,
+                                  bool *OverridingProperty,
+                                  tok::ObjCKeywordKind MethodImplKind);
   
-  virtual DeclTy *ActOnPropertyImplDecl(SourceLocation AtLoc, 
-                                        SourceLocation PropertyLoc,
-                                        bool ImplKind, DeclTy *ClassImplDecl,
-                                        IdentifierInfo *PropertyId,
-                                        IdentifierInfo *PropertyIvar);
+  virtual DeclPtrTy ActOnPropertyImplDecl(SourceLocation AtLoc, 
+                                          SourceLocation PropertyLoc,
+                                          bool ImplKind,DeclPtrTy ClassImplDecl,
+                                          IdentifierInfo *PropertyId,
+                                          IdentifierInfo *PropertyIvar);
   
-  virtual DeclTy *ActOnMethodDeclaration(
+  virtual DeclPtrTy ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.
     SourceLocation EndLoc,   // location of the ; or {.
     tok::TokenKind MethodType, 
-    DeclTy *ClassDecl, ObjCDeclSpec &ReturnQT, TypeTy *ReturnType, 
+    DeclPtrTy ClassDecl, ObjCDeclSpec &ReturnQT, TypeTy *ReturnType, 
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().

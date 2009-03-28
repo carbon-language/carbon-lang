@@ -117,7 +117,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         // an operator and not as part of a simple-template-id.
       }
 
-      DeclTy *Template = 0;
+      DeclPtrTy Template;
       TemplateNameKind TNK = TNK_Non_template;
       // FIXME: If the nested-name-specifier thus far is dependent,
       // set TNK = TNK_Dependent_template_name and skip the

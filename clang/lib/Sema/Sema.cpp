@@ -231,10 +231,10 @@ void Sema::ActOnEndOfTranslationUnit() {
     // Note: we traverse the scope's list of declarations rather than
     // the DeclContext's list, because we only want to see the most
     // recent declaration of each identifier.
-    for (Scope::decl_iterator I = TUScope->decl_begin(), 
-                           IEnd = TUScope->decl_end();
+    for (Scope::decl_iterator I = TUScope->decl_begin(),
+         IEnd = TUScope->decl_end();
          I != IEnd; ++I) {
-      Decl *D = static_cast<Decl *>(*I);
+      Decl *D = (*I).getAs<Decl>();
       if (D->isInvalidDecl())
         continue;
 

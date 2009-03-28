@@ -26,19 +26,19 @@ ActionBase::~ActionBase() {}
 Action::~Action() {}
 
 // Defined out-of-line here because of dependecy on AttributeList
-Action::DeclTy *Action::ActOnUsingDirective(Scope *CurScope,
-                                            SourceLocation UsingLoc,
-                                            SourceLocation NamespcLoc,
-                                            const CXXScopeSpec &SS,
-                                            SourceLocation IdentLoc,
-                                            IdentifierInfo *NamespcName,
-                                            AttributeList *AttrList) {
+Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
+                                              SourceLocation UsingLoc,
+                                              SourceLocation NamespcLoc,
+                                              const CXXScopeSpec &SS,
+                                              SourceLocation IdentLoc,
+                                              IdentifierInfo *NamespcName,
+                                              AttributeList *AttrList) {
   
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it
   // temporary state or bug?
   delete AttrList;
-  return 0;
+  return DeclPtrTy();
 }
 
 
@@ -135,7 +135,7 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
 
 TemplateNameKind 
 MinimalAction::isTemplateName(IdentifierInfo &II, Scope *S,
-                              DeclTy *&TemplateDecl,
+                              DeclPtrTy &TemplateDecl,
                               const CXXScopeSpec *SS) {
   return TNK_Non_template;
 }
@@ -143,12 +143,12 @@ MinimalAction::isTemplateName(IdentifierInfo &II, Scope *S,
 /// ActOnDeclarator - If this is a typedef declarator, we modify the
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.
-Action::DeclTy *
-MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
+Action::DeclPtrTy
+MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclPtrTy LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
   
   // If there is no identifier associated with this declarator, bail out.
-  if (II == 0) return 0;
+  if (II == 0) return DeclPtrTy();
   
   TypeNameInfo *weCurrentlyHaveTypeInfo = II->getFETokenInfo<TypeNameInfo>();
   bool isTypeName =
@@ -162,29 +162,29 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
     getTable(TypeNameInfoTablePtr)->AddEntry(isTypeName, II);
   
     // Remember that this needs to be removed when the scope is popped.
-    S->AddDecl(II);
+    S->AddDecl(DeclPtrTy::make(II));
   } 
-  return 0;
+  return DeclPtrTy();
 }
 
-Action::DeclTy *
+Action::DeclPtrTy
 MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                         IdentifierInfo *ClassName,
                                         SourceLocation ClassLoc,
                                         IdentifierInfo *SuperName,
                                         SourceLocation SuperLoc,
-                                        DeclTy * const *ProtoRefs,
+                                        const DeclPtrTy *ProtoRefs,
                                         unsigned NumProtocols,
                                         SourceLocation EndProtoLoc,
                                         AttributeList *AttrList) {
   // Allocate and add the 'TypeNameInfo' "decl".
   getTable(TypeNameInfoTablePtr)->AddEntry(true, ClassName);
-  return 0;
+  return DeclPtrTy();
 }
 
 /// ActOnForwardClassDeclaration - 
 /// Scope will always be top level file scope. 
-Action::DeclTy *
+Action::DeclPtrTy
 MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                 IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -192,9 +192,9 @@ MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     getTable(TypeNameInfoTablePtr)->AddEntry(true, IdentList[i]);
   
     // Remember that this needs to be removed when the scope is popped.
-    TUScope->AddDecl(IdentList[i]);
+    TUScope->AddDecl(DeclPtrTy::make(IdentList[i]));
   }
-  return 0;
+  return DeclPtrTy();
 }
 
 /// ActOnPopScope - When a scope is popped, if any typedefs are now
@@ -204,7 +204,7 @@ void MinimalAction::ActOnPopScope(SourceLocation Loc, Scope *S) {
   
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
-    IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
+    IdentifierInfo &II = *(*I).getAs<IdentifierInfo>();
     TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
     assert(TI && "This decl didn't get pushed??");
     

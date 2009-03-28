@@ -16,7 +16,6 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "AstGuard.h"
-
 using namespace clang;
 
 /// \brief Parse a template declaration or an explicit specialization.
@@ -34,7 +33,7 @@ using namespace clang;
 ///
 ///       explicit-specialization: [ C++ temp.expl.spec]
 ///         'template' '<' '>' declaration
-Parser::DeclTy *
+Parser::DeclPtrTy
 Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                                  AccessSpecifier AS) {
   assert((Tok.is(tok::kw_export) || Tok.is(tok::kw_template)) && 
@@ -78,7 +77,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
       TemplateLoc = ConsumeToken();
     } else {
       Diag(Tok.getLocation(), diag::err_expected_template);
-      return 0;
+      return DeclPtrTy();
     }
   
     // Parse the '<' template-parameter-list '>'
@@ -141,7 +140,7 @@ bool
 Parser::ParseTemplateParameterList(unsigned Depth,
                                    TemplateParameterList &TemplateParams) {
   while(1) {
-    if (DeclTy* TmpParam 
+    if (DeclPtrTy TmpParam
           = ParseTemplateParameter(Depth, TemplateParams.size())) {
       TemplateParams.push_back(TmpParam);
     } else {
@@ -183,7 +182,7 @@ Parser::ParseTemplateParameterList(unsigned Depth,
 ///         'typename' identifier[opt] '=' type-id
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt]
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
-Parser::DeclTy *
+Parser::DeclPtrTy 
 Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
   if(Tok.is(tok::kw_class) ||
      (Tok.is(tok::kw_typename) && 
@@ -210,7 +209,7 @@ Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
 ///         'class' identifier[opt] '=' type-id
 ///         'typename' identifier[opt]
 ///         'typename' identifier[opt] '=' type-id
-Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
+Parser::DeclPtrTy Parser::ParseTypeParameter(unsigned Depth, unsigned Position){
   assert((Tok.is(tok::kw_class) || Tok.is(tok::kw_typename)) &&
 	 "A type-parameter starts with 'class' or 'typename'");
 
@@ -230,12 +229,12 @@ Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     // don't consume this token.
   } else {
     Diag(Tok.getLocation(), diag::err_expected_ident);
-    return 0;
+    return DeclPtrTy();
   }
   
-  DeclTy *TypeParam = Actions.ActOnTypeParameter(CurScope, TypenameKeyword,
-                                                 KeyLoc, ParamName, NameLoc,
-                                                 Depth, Position);
+  DeclPtrTy TypeParam = Actions.ActOnTypeParameter(CurScope, TypenameKeyword,
+                                                   KeyLoc, ParamName, NameLoc,
+                                                   Depth, Position);
 
   // Grab a default type id (if given).
   if(Tok.is(tok::equal)) {
@@ -256,7 +255,7 @@ Parser::DeclTy *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
 ///       type-parameter:    [C++ temp.param]
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt]
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
-Parser::DeclTy * 
+Parser::DeclPtrTy
 Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   assert(Tok.is(tok::kw_template) && "Expected 'template' keyword");
 
@@ -268,7 +267,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     ParseScope TemplateParmScope(this, Scope::TemplateParamScope);
     if(!ParseTemplateParameters(Depth + 1, TemplateParams, LAngleLoc,
                                 RAngleLoc)) {
-      return 0;
+      return DeclPtrTy();
     }
   }
 
@@ -277,7 +276,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   if(!Tok.is(tok::kw_class)) {
     Diag(Tok.getLocation(), diag::err_expected_class_before) 
       << PP.getSpelling(Tok);
-    return 0;
+    return DeclPtrTy();
   }
   SourceLocation ClassLoc = ConsumeToken();
 
@@ -292,7 +291,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     // don't consume this token.
   } else {
     Diag(Tok.getLocation(), diag::err_expected_ident);
-    return 0;
+    return DeclPtrTy();
   }
 
   TemplateParamsTy *ParamList = 
@@ -302,7 +301,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
                                        TemplateParams.size(),
                                        RAngleLoc);
 
-  Parser::DeclTy * Param
+  Parser::DeclPtrTy Param
     = Actions.ActOnTemplateTemplateParameter(CurScope, TemplateLoc,
                                              ParamList, ParamName,
                                              NameLoc, Depth, Position);
@@ -334,7 +333,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
 /// parameters.
 /// FIXME: We need to make a ParseParameterDeclaration that works for
 /// non-type template parameters and normal function parameters.
-Parser::DeclTy * 
+Parser::DeclPtrTy 
 Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   SourceLocation StartLoc = Tok.getLocation();
 
@@ -354,12 +353,12 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
     // TODO: This is currently a placeholder for some kind of Sema Error.
     Diag(Tok.getLocation(), diag::err_parse_error);
     SkipUntil(tok::comma, tok::greater, true, true);
-    return 0;
+    return DeclPtrTy();
   }
 
   // Create the parameter. 
-  DeclTy *Param = Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl,
-                                                        Depth, Position);
+  DeclPtrTy Param = Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl,
+                                                          Depth, Position);
 
   // If there is a default value, parse it.
   if (Tok.is(tok::equal)) {
@@ -402,7 +401,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
 /// last token in the stream (e.g., so that it can be replaced with an
 /// annotation token).
 bool 
-Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
+Parser::ParseTemplateIdAfterTemplateName(DeclPtrTy Template,
                                          SourceLocation TemplateNameLoc, 
                                          const CXXScopeSpec *SS,
                                          bool ConsumeLastToken,
@@ -495,7 +494,7 @@ Parser::ParseTemplateIdAfterTemplateName(DeclTy *Template,
 /// replaced with a type annotation token. Otherwise, the
 /// simple-template-id is always replaced with a template-id
 /// annotation token.
-void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
+void Parser::AnnotateTemplateIdToken(DeclPtrTy Template, TemplateNameKind TNK,
                                      const CXXScopeSpec *SS, 
                                      SourceLocation TemplateKWLoc,
                                      bool AllowTypeAnnotation) {
@@ -552,7 +551,7 @@ void Parser::AnnotateTemplateIdToken(DeclTy *Template, TemplateNameKind TNK,
       = TemplateIdAnnotation::Allocate(TemplateArgs.size());
     TemplateId->TemplateNameLoc = TemplateNameLoc;
     TemplateId->Name = Name;
-    TemplateId->Template = Template;
+    TemplateId->Template = Template.getAs<void*>();
     TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
     TemplateId->RAngleLoc = RAngleLoc;
@@ -599,7 +598,7 @@ bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
                                      TemplateId->NumArgs);
 
   Action::TypeResult Type 
-    = Actions.ActOnClassTemplateId(TemplateId->Template, 
+    = Actions.ActOnClassTemplateId(DeclPtrTy::make(TemplateId->Template),
                                    TemplateId->TemplateNameLoc,
                                    TemplateId->LAngleLoc, 
                                    TemplateArgsPtr,

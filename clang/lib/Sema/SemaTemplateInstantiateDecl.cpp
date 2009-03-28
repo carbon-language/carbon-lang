@@ -20,8 +20,7 @@ using namespace clang;
 
 namespace {
   class VISIBILITY_HIDDEN TemplateDeclInstantiator 
-    : public DeclVisitor<TemplateDeclInstantiator, Decl *> 
-  {
+    : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
     Sema &SemaRef;
     DeclContext *Owner;
     const TemplateArgument *TemplateArgs;
@@ -136,7 +135,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     if (Init.isInvalid())
       Var->setInvalidDecl();
     else
-      SemaRef.AddInitializerToDecl(Var, move(Init),
+      SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), move(Init),
                                    D->hasCXXDirectInitializer());
   }
 
@@ -204,9 +203,9 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
 
   OwningExprResult Message = SemaRef.Clone(D->getMessage());
   Decl *StaticAssert 
-    = (Decl *)SemaRef.ActOnStaticAssertDeclaration(D->getLocation(), 
-                                                move(InstantiatedAssertExpr),
-                                                   move(Message));
+    = SemaRef.ActOnStaticAssertDeclaration(D->getLocation(), 
+                                           move(InstantiatedAssertExpr),
+                                           move(Message)).getAs<Decl>();
   return StaticAssert;
 }
 
@@ -218,7 +217,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   Owner->addDecl(Enum);
   Enum->startDefinition();
 
-  llvm::SmallVector<Sema::DeclTy *, 16> Enumerators;
+  llvm::SmallVector<Sema::DeclPtrTy, 16> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
   for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(),
@@ -250,12 +249,12 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 
     if (EnumConst) {
       Enum->addDecl(EnumConst);
-      Enumerators.push_back(EnumConst);
+      Enumerators.push_back(Sema::DeclPtrTy::make(EnumConst));
       LastEnumConst = EnumConst;
     }
   }
       
-  SemaRef.ActOnEnumBody(Enum->getLocation(), Enum,
+  SemaRef.ActOnEnumBody(Enum->getLocation(), Sema::DeclPtrTy::make(Enum),
                         &Enumerators[0], Enumerators.size());
 
   return Enum;

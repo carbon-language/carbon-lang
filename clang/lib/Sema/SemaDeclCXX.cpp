@@ -105,9 +105,9 @@ namespace {
 /// provided for a function parameter is well-formed. If so, attach it
 /// to the parameter declaration.
 void
-Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc, 
+Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc, 
                                 ExprArg defarg) {
-  ParmVarDecl *Param = (ParmVarDecl *)param;
+  ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
   ExprOwningPtr<Expr> DefaultArg(this, (Expr *)defarg.release());
   QualType ParamType = Param->getType();
 
@@ -153,17 +153,17 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
 /// argument for a function parameter, but we can't parse it yet
 /// because we're inside a class definition. Note that this default
 /// argument will be parsed later.
-void Sema::ActOnParamUnparsedDefaultArgument(DeclTy *param, 
+void Sema::ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
                                              SourceLocation EqualLoc) {
-  ParmVarDecl *Param = (ParmVarDecl*)param;
+  ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
   if (Param)
     Param->setUnparsedDefaultArg();
 }
 
 /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
 /// the default argument for the parameter param failed.
-void Sema::ActOnParamDefaultArgumentError(DeclTy *param) {
-  ((ParmVarDecl*)param)->setInvalidDecl();
+void Sema::ActOnParamDefaultArgumentError(DeclPtrTy param) {
+  cast<ParmVarDecl>(param.getAs<Decl>())->setInvalidDecl();
 }
 
 /// CheckExtraCXXDefaultArguments - Check for any extra default
@@ -179,11 +179,12 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
   //   parameter pack. If it is specified in a
   //   parameter-declaration-clause, it shall not occur within a
   //   declarator or abstract-declarator of a parameter-declaration.
-  for (unsigned i = 0; i < D.getNumTypeObjects(); ++i) {
+  for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     DeclaratorChunk &chunk = D.getTypeObject(i);
     if (chunk.Kind == DeclaratorChunk::Function) {
-      for (unsigned argIdx = 0; argIdx < chunk.Fun.NumArgs; ++argIdx) {
-        ParmVarDecl *Param = (ParmVarDecl *)chunk.Fun.ArgInfo[argIdx].Param;
+      for (unsigned argIdx = 0, e = chunk.Fun.NumArgs; argIdx != e; ++argIdx) {
+        ParmVarDecl *Param =
+          cast<ParmVarDecl>(chunk.Fun.ArgInfo[argIdx].Param.getAs<Decl>());
         if (Param->hasUnparsedDefaultArg()) {
           CachedTokens *Toks = chunk.Fun.ArgInfo[argIdx].DefaultArgTokens;
           Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
@@ -381,11 +382,11 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 ///    class foo : public bar, virtual private baz { 
 /// 'public bar' and 'virtual private baz' are each base-specifiers.
 Sema::BaseResult 
-Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
+Sema::ActOnBaseSpecifier(DeclPtrTy classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          TypeTy *basetype, SourceLocation BaseLoc) {
   AdjustDeclIfTemplate(classdecl);
-  CXXRecordDecl *Class = cast<CXXRecordDecl>((Decl*)classdecl);
+  CXXRecordDecl *Class = cast<CXXRecordDecl>(classdecl.getAs<Decl>());
   QualType BaseType = QualType::getFromOpaquePtr(basetype);
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
                                                       Virtual, Access,
@@ -451,13 +452,13 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
 /// ActOnBaseSpecifiers - Attach the given base specifiers to the
 /// class, after checking whether there are any duplicate base
 /// classes.
-void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases, 
                                unsigned NumBases) {
   if (!ClassDecl || !Bases || !NumBases)
     return;
 
   AdjustDeclIfTemplate(ClassDecl);
-  AttachBaseSpecifiers(cast<CXXRecordDecl>((Decl*)ClassDecl),
+  AttachBaseSpecifiers(cast<CXXRecordDecl>(ClassDecl.getAs<Decl>()),
                        (CXXBaseSpecifier**)(Bases), NumBases);
 }
 
@@ -470,10 +471,10 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if
 /// any. 'LastInGroup' is non-null for cases where one declspec has multiple
 /// declarators on it.
-Sema::DeclTy *
+Sema::DeclPtrTy
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                ExprTy *BW, ExprTy *InitExpr,
-                               DeclTy *LastInGroup) {
+                               DeclPtrTy LastInGroup) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationName Name = GetNameForDeclarator(D);
   Expr *BitWidth = static_cast<Expr*>(BW);
@@ -552,7 +553,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                          AS);
     assert(Member && "HandleField never returns null");
   } else {
-    Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
+    Member = ActOnDeclarator(S, D, LastInGroup).getAs<Decl>();
     if (!Member) {
       if (BitWidth) DeleteExpr(BitWidth);
       return LastInGroup;
@@ -590,18 +591,18 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   assert((Name || isInstField) && "No identifier for non-field ?");
 
   if (Init)
-    AddInitializerToDecl(Member, ExprArg(*this, Init), false);
+    AddInitializerToDecl(DeclPtrTy::make(Member), ExprArg(*this, Init), false);
 
   if (isInstField) {
     FieldCollector->Add(cast<FieldDecl>(Member));
     return LastInGroup;
   }
-  return Member;
+  return DeclPtrTy::make(Member);
 }
 
 /// ActOnMemInitializer - Handle a C++ member initializer.
 Sema::MemInitResult 
-Sema::ActOnMemInitializer(DeclTy *ConstructorD,
+Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                           Scope *S,
                           IdentifierInfo *MemberOrBase,
                           SourceLocation IdLoc,
@@ -610,7 +611,7 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
                           SourceLocation *CommaLocs,
                           SourceLocation RParenLoc) {
   CXXConstructorDecl *Constructor 
-    = dyn_cast<CXXConstructorDecl>((Decl*)ConstructorD);
+    = dyn_cast<CXXConstructorDecl>(ConstructorD.getAs<Decl>());
   if (!Constructor) {
     // The user wrote a constructor initializer on a function that is
     // not a C++ constructor. Ignore the error for now, because we may
@@ -706,11 +707,11 @@ Sema::ActOnMemInitializer(DeclTy *ConstructorD,
   return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs);
 }
 
-void Sema::ActOnMemInitializers(DeclTy *ConstructorDecl, 
+void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl, 
                                 SourceLocation ColonLoc,
                                 MemInitTy **MemInits, unsigned NumMemInits) {
   CXXConstructorDecl *Constructor = 
-  dyn_cast<CXXConstructorDecl>((Decl *)ConstructorDecl);
+  dyn_cast<CXXConstructorDecl>(ConstructorDecl.getAs<Decl>());
   
   if (!Constructor) {
     Diag(ColonLoc, diag::err_only_constructors_take_base_inits);
@@ -917,15 +918,15 @@ namespace {
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
-                                             DeclTy *TagDecl,
+                                             DeclPtrTy TagDecl,
                                              SourceLocation LBrac,
                                              SourceLocation RBrac) {
   TemplateDecl *Template = AdjustDeclIfTemplate(TagDecl);
   ActOnFields(S, RLoc, TagDecl,
-              (DeclTy**)FieldCollector->getCurFields(),
+              (DeclPtrTy*)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
 
-  CXXRecordDecl *RD = cast<CXXRecordDecl>((Decl*)TagDecl);
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(TagDecl.getAs<Decl>());
   if (!RD->isAbstract()) {
     // Collect all the pure virtual methods and see if this is an abstract
     // class after all.
@@ -1159,9 +1160,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 /// Method declaration as if we had just parsed the qualified method
 /// name. However, it should not bring the parameters into scope;
 /// that will be performed by ActOnDelayedCXXMethodParameter.
-void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *MethodD) {
+void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
   CXXScopeSpec SS;
-  FunctionDecl *Method = (FunctionDecl*)MethodD;
+  FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
   QualType ClassTy 
     = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
   SS.setScopeRep(
@@ -1174,15 +1175,15 @@ void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclTy *MethodD) {
 /// function parameter into scope for use in parsing later parts of
 /// the method declaration. For example, we could see an
 /// ActOnParamDefaultArgument event for this parameter.
-void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *ParamD) {
-  ParmVarDecl *Param = (ParmVarDecl*)ParamD;
+void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy ParamD) {
+  ParmVarDecl *Param = cast<ParmVarDecl>(ParamD.getAs<Decl>());
 
   // If this parameter has an unparsed default argument, clear it out
   // to make way for the parsed default argument.
   if (Param->hasUnparsedDefaultArg())
     Param->setDefaultArg(0);
 
-  S->AddDecl(Param);
+  S->AddDecl(DeclPtrTy::make(Param));
   if (Param->getDeclName())
     IdResolver.AddDecl(Param);
 }
@@ -1193,8 +1194,8 @@ void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclTy *ParamD) {
 /// ActOnStartOfFunctionDef action later (not necessarily
 /// immediately!) for this method, if it was also defined inside the
 /// class body.
-void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclTy *MethodD) {
-  FunctionDecl *Method = (FunctionDecl*)MethodD;
+void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
+  FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
   CXXScopeSpec SS;
   QualType ClassTy 
     = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
@@ -1483,7 +1484,7 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
 /// the declaration of the given C++ conversion function. This routine
 /// is responsible for recording the conversion function in the C++
 /// class, if possible.
-Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
+Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   assert(Conversion && "Expected to receive a conversion function declaration");
 
   // Set the lexical context of this conversion function
@@ -1528,14 +1529,14 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
          Conv != ConvEnd; ++Conv) {
       if (*Conv == Conversion->getPreviousDeclaration()) {
         *Conv = Conversion;
-        return (DeclTy *)Conversion;
+        return DeclPtrTy::make(Conversion);
       }
     }
     assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
   } else 
     ClassDecl->addConversionFunction(Context, Conversion);
 
-  return (DeclTy *)Conversion;
+  return DeclPtrTy::make(Conversion);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1544,10 +1545,10 @@ Sema::DeclTy *Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
 
 /// ActOnStartNamespaceDef - This is called at the start of a namespace
 /// definition.
-Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
-                                           SourceLocation IdentLoc,
-                                           IdentifierInfo *II,
-                                           SourceLocation LBrace) {
+Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
+                                             SourceLocation IdentLoc,
+                                             IdentifierInfo *II,
+                                             SourceLocation LBrace) {
   NamespaceDecl *Namespc =
       NamespaceDecl::Create(Context, CurContext, IdentLoc, II);
   Namespc->setLBracLoc(LBrace);
@@ -1573,9 +1574,9 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       Namespc->setOriginalNamespace(OrigNS->getOriginalNamespace());
 
       // Remove the previous declaration from the scope.      
-      if (DeclRegionScope->isDeclScope(OrigNS)) {
+      if (DeclRegionScope->isDeclScope(DeclPtrTy::make(OrigNS))) {
         IdResolver.RemoveDecl(OrigNS);
-        DeclRegionScope->RemoveDecl(OrigNS);
+        DeclRegionScope->RemoveDecl(DeclPtrTy::make(OrigNS));
       }
     } else if (PrevDecl) {
       // This is an invalid name redefinition.
@@ -1597,26 +1598,26 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   // each DeclContext for the namespace has the declarations
   // that showed up in that particular namespace definition.
   PushDeclContext(NamespcScope, Namespc);
-  return Namespc;
+  return DeclPtrTy::make(Namespc);
 }
 
 /// ActOnFinishNamespaceDef - This callback is called after a namespace is
 /// exited. Decl is the DeclTy returned by ActOnStartNamespaceDef.
-void Sema::ActOnFinishNamespaceDef(DeclTy *D, SourceLocation RBrace) {
-  Decl *Dcl = static_cast<Decl *>(D);
+void Sema::ActOnFinishNamespaceDef(DeclPtrTy D, SourceLocation RBrace) {
+  Decl *Dcl = D.getAs<Decl>();
   NamespaceDecl *Namespc = dyn_cast_or_null<NamespaceDecl>(Dcl);
   assert(Namespc && "Invalid parameter, expected NamespaceDecl");
   Namespc->setRBracLoc(RBrace);
   PopDeclContext();
 }
 
-Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
-                                        SourceLocation UsingLoc,
-                                        SourceLocation NamespcLoc,
-                                        const CXXScopeSpec &SS,
-                                        SourceLocation IdentLoc,
-                                        IdentifierInfo *NamespcName,
-                                        AttributeList *AttrList) {
+Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
+                                          SourceLocation UsingLoc,
+                                          SourceLocation NamespcLoc,
+                                          const CXXScopeSpec &SS,
+                                          SourceLocation IdentLoc,
+                                          IdentifierInfo *NamespcName,
+                                          AttributeList *AttrList) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert(NamespcName && "Invalid NamespcName.");
   assert(IdentLoc.isValid() && "Invalid NamespceName location.");
@@ -1629,7 +1630,7 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
                                     LookupNamespaceName, false);
   if (R.isAmbiguous()) {
     DiagnoseAmbiguousLookup(R, NamespcName, IdentLoc);
-    return 0;
+    return DeclPtrTy();
   }
   if (NamedDecl *NS = R) {
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
@@ -1660,7 +1661,7 @@ Sema::DeclTy *Sema::ActOnUsingDirective(Scope *S,
 
   // FIXME: We ignore attributes for now.
   delete AttrList;
-  return UDir;
+  return DeclPtrTy::make(UDir);
 }
 
 void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
@@ -1672,15 +1673,15 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
   else
     // Otherwise it is block-sope. using-directives will affect lookup
     // only to the end of scope.
-    S->PushUsingDirective(UDir);
+    S->PushUsingDirective(DeclPtrTy::make(UDir));
 }
 
-Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *S, 
-                                           SourceLocation AliasLoc,
-                                           IdentifierInfo *Alias,
-                                           const CXXScopeSpec &SS,
-                                           SourceLocation NamespaceLoc,
-                                           IdentifierInfo *NamespaceName) {
+Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S, 
+                                             SourceLocation AliasLoc,
+                                             IdentifierInfo *Alias,
+                                             const CXXScopeSpec &SS,
+                                             SourceLocation NamespaceLoc,
+                                             IdentifierInfo *NamespaceName) {
   
   // Check if we have a previous declaration with the same name.
   if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName)) {
@@ -1690,7 +1691,7 @@ Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *S,
       diag::err_redefinition_different_kind;
     Diag(AliasLoc, DiagID) << Alias;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-    return 0;
+    return DeclPtrTy();
   }
 
   // Lookup the namespace name.
@@ -1698,33 +1699,33 @@ Sema::DeclTy *Sema::ActOnNamespaceAliasDef(Scope *S,
                                     LookupNamespaceName, false);
   if (R.isAmbiguous()) {
     DiagnoseAmbiguousLookup(R, NamespaceName, NamespaceLoc);
-    return 0;
+    return DeclPtrTy();
   }
   
   if (!R) {
     Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
-    return 0;
+    return DeclPtrTy();
   }
   
-  return 0;
+  return DeclPtrTy();
 }
 
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
 /// ActOnDeclarator, when a C++ direct initializer is present.
 /// e.g: "int x(1);"
-void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
+void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
+                                         SourceLocation LParenLoc,
                                          MultiExprArg Exprs,
                                          SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc) {
   unsigned NumExprs = Exprs.size();
   assert(NumExprs != 0 && Exprs.get() && "missing expressions");
-  Decl *RealDecl = static_cast<Decl *>(Dcl);
+  Decl *RealDecl = Dcl.getAs<Decl>();
 
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
-  if (RealDecl == 0) {
+  if (RealDecl == 0)
     return;
-  }
   
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
@@ -2411,12 +2412,12 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
 /// by Lang/StrSize. LBraceLoc, if valid, provides the location of
 /// the '{' brace. Otherwise, this linkage specification does not
 /// have any braces.
-Sema::DeclTy *Sema::ActOnStartLinkageSpecification(Scope *S,
-                                                   SourceLocation ExternLoc,
-                                                   SourceLocation LangLoc,
-                                                   const char *Lang,
-                                                   unsigned StrSize,
-                                                   SourceLocation LBraceLoc) {
+Sema::DeclPtrTy Sema::ActOnStartLinkageSpecification(Scope *S,
+                                                     SourceLocation ExternLoc,
+                                                     SourceLocation LangLoc,
+                                                     const char *Lang,
+                                                     unsigned StrSize,
+                                                     SourceLocation LBraceLoc) {
   LinkageSpecDecl::LanguageIDs Language;
   if (strncmp(Lang, "\"C\"", StrSize) == 0)
     Language = LinkageSpecDecl::lang_c;
@@ -2424,7 +2425,7 @@ Sema::DeclTy *Sema::ActOnStartLinkageSpecification(Scope *S,
     Language = LinkageSpecDecl::lang_cxx;
   else {
     Diag(LangLoc, diag::err_bad_language);
-    return 0;
+    return DeclPtrTy();
   }
   
   // FIXME: Add all the various semantics of linkage specifications
@@ -2434,16 +2435,16 @@ Sema::DeclTy *Sema::ActOnStartLinkageSpecification(Scope *S,
                                                LBraceLoc.isValid());
   CurContext->addDecl(D);
   PushDeclContext(S, D);
-  return D;
+  return DeclPtrTy::make(D);
 }
 
 /// ActOnFinishLinkageSpecification - Completely the definition of
 /// the C++ linkage specification LinkageSpec. If RBraceLoc is
 /// valid, it's the position of the closing '}' brace in a linkage
 /// specification that uses braces.
-Sema::DeclTy *Sema::ActOnFinishLinkageSpecification(Scope *S,
-                                                    DeclTy *LinkageSpec,
-                                                    SourceLocation RBraceLoc) {
+Sema::DeclPtrTy Sema::ActOnFinishLinkageSpecification(Scope *S,
+                                                      DeclPtrTy LinkageSpec,
+                                                      SourceLocation RBraceLoc) {
   if (LinkageSpec)
     PopDeclContext();
   return LinkageSpec;
@@ -2451,8 +2452,7 @@ Sema::DeclTy *Sema::ActOnFinishLinkageSpecification(Scope *S,
 
 /// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
 /// handler.
-Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
-{
+Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   QualType ExDeclType = GetTypeForDeclarator(D, S);
   SourceLocation Begin = D.getDeclSpec().getSourceRange().getBegin();
 
@@ -2497,11 +2497,10 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   if (NamedDecl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
     // The scope should be freshly made just for us. There is just no way
     // it contains any previous declaration.
-    assert(!S->isDeclScope(PrevDecl));
+    assert(!S->isDeclScope(DeclPtrTy::make(PrevDecl)));
     if (PrevDecl->isTemplateParameter()) {
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
-
     }
   }
 
@@ -2517,17 +2516,17 @@ Sema::DeclTy *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D)
   }
 
   // Add the exception declaration into this scope.
-  S->AddDecl(ExDecl);
+  S->AddDecl(DeclPtrTy::make(ExDecl));
   if (II)
     IdResolver.AddDecl(ExDecl);
 
   ProcessDeclAttributes(ExDecl, D);
-  return ExDecl;
+  return DeclPtrTy::make(ExDecl);
 }
 
-Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
-                                                 ExprArg assertexpr,
-                                                 ExprArg assertmessageexpr) {
+Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc, 
+                                                   ExprArg assertexpr,
+                                                   ExprArg assertmessageexpr) {
   Expr *AssertExpr = (Expr *)assertexpr.get();
   StringLiteral *AssertMessage = 
     cast<StringLiteral>((Expr *)assertmessageexpr.get());
@@ -2537,7 +2536,7 @@ Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
     if (!AssertExpr->isIntegerConstantExpr(Value, Context)) {
       Diag(AssertLoc, diag::err_static_assert_expression_is_not_constant) <<
         AssertExpr->getSourceRange();
-      return 0;
+      return DeclPtrTy();
     }
 
     if (Value == 0) {
@@ -2554,11 +2553,11 @@ Sema::DeclTy *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                         AssertExpr, AssertMessage);
   
   CurContext->addDecl(Decl);
-  return Decl;
+  return DeclPtrTy::make(Decl);
 }
 
-void Sema::SetDeclDeleted(DeclTy *dcl, SourceLocation DelLoc) {
-  Decl *Dcl = static_cast<Decl*>(dcl);
+void Sema::SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc) {
+  Decl *Dcl = dcl.getAs<Decl>();
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(Dcl);
   if (!Fn) {
     Diag(DelLoc, diag::err_deleted_non_function);

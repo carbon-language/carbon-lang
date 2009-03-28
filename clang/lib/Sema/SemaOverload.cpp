@@ -4323,7 +4323,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
                                  Method->getResultType().getNonReferenceType(),
                                  OpLoc);
   return ActOnMemberReferenceExpr(S, ExprArg(*this, Base), OpLoc, tok::arrow,
-                                  MemberLoc, Member).release();
+                                  MemberLoc, Member, DeclPtrTy()).release();
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

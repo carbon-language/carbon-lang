@@ -228,7 +228,7 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 /// [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///
-Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseDeclaration(unsigned Context) {
   switch (Tok.getKind()) {
   case tok::kw_export:
   case tok::kw_template:
@@ -248,7 +248,7 @@ Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
 ///         declaration-specifiers init-declarator-list[opt] ';'
 ///[C90/C++]init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
-Parser::DeclTy *Parser::ParseSimpleDeclaration(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -291,12 +291,12 @@ Parser::DeclTy *Parser::ParseSimpleDeclaration(unsigned Context) {
 /// According to the standard grammar, =default and =delete are function
 /// definitions, but that definitely doesn't fit with the parser here.
 ///
-Parser::DeclTy *Parser::
+Parser::DeclPtrTy Parser::
 ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   
   // Declarators may be grouped together ("int X, *Y, Z();").  Provide info so
   // that they can be chained properly if the actions want this.
-  Parser::DeclTy *LastDeclInGroup = 0;
+  Parser::DeclPtrTy LastDeclInGroup;
   
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
@@ -307,7 +307,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
       if (AsmLabel.isInvalid()) {
         SkipUntil(tok::semi);
-        return 0;
+        return DeclPtrTy();
       }
 
       D.setAsmLabel(AsmLabel.release());
@@ -334,7 +334,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         OwningExprResult Init(ParseInitializer());
         if (Init.isInvalid()) {
           SkipUntil(tok::semi);
-          return 0;
+          return DeclPtrTy();
         }
         Actions.AddInitializerToDecl(LastDeclInGroup, move(Init));
       }
@@ -395,7 +395,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     // for(is key; in keys) is error.
     if (D.getContext() == Declarator::ForContext && isTokIdentifier_in()) {
       Diag(Tok, diag::err_parse_error);
-      return 0;
+      return DeclPtrTy();
     }
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }
@@ -411,7 +411,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   SkipUntil(tok::r_brace, true, true);
   if (Tok.is(tok::semi))
     ConsumeToken();
-  return 0;
+  return DeclPtrTy();
 }
 
 /// ParseSpecifierQualifierList
@@ -560,7 +560,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         continue;
       
       SourceLocation EndProtoLoc;
-      llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
+      llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
       ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
       DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
       
@@ -614,7 +614,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         continue;
       
       SourceLocation EndProtoLoc;
-      llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
+      llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
       ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
       DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
       
@@ -809,7 +809,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         
       {
         SourceLocation EndProtoLoc;
-        llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
+        llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
         ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
         DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
         DS.SetRangeEnd(EndProtoLoc);
@@ -917,7 +917,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
       return true;
     
     SourceLocation EndProtoLoc;
-    llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
+    llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
     ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
     DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
     
@@ -1129,7 +1129,7 @@ ParseStructDeclaration(DeclSpec &DS,
 /// [OBC]   '@' 'defs' '(' class-name ')'
 ///
 void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
-                                  unsigned TagType, DeclTy *TagDecl) {
+                                  unsigned TagType, DeclPtrTy TagDecl) {
   PrettyStackTraceActionsDecl CrashInfo(TagDecl, RecordLoc, Actions,
                                         PP.getSourceManager(),
                                         "parsing struct/union body");
@@ -1145,7 +1145,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     Diag(Tok, diag::ext_empty_struct_union_enum)
       << DeclSpec::getSpecifierName((DeclSpec::TST)TagType);
 
-  llvm::SmallVector<DeclTy*, 32> FieldDecls;
+  llvm::SmallVector<DeclPtrTy, 32> FieldDecls;
   llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
 
   // While we still have something to read, read the declarations in the struct.
@@ -1169,9 +1169,9 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
         // Install the declarator into the current TagDecl.
-        DeclTy *Field = Actions.ActOnField(CurScope, TagDecl,
-                                           DS.getSourceRange().getBegin(),
-                                           FD.D, FD.BitfieldSize);
+        DeclPtrTy Field = Actions.ActOnField(CurScope, TagDecl,
+                                             DS.getSourceRange().getBegin(),
+                                             FD.D, FD.BitfieldSize);
         FieldDecls.push_back(Field);
       }
     } else { // Handle @defs
@@ -1188,7 +1188,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         SkipUntil(tok::semi, true, true);
         continue;
       }
-      llvm::SmallVector<DeclTy*, 16> Fields;
+      llvm::SmallVector<DeclPtrTy, 16> Fields;
       Actions.ActOnDefs(CurScope, TagDecl, Tok.getLocation(), 
                         Tok.getIdentifierInfo(), Fields);
       FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
@@ -1292,15 +1292,16 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS, AccessSpecifier AS) {
     TK = Action::TK_Declaration;
   else
     TK = Action::TK_Reference;
-  DeclTy *TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK, StartLoc,
-                                     SS, Name, NameLoc, Attr, AS);
+  DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK,
+                                       StartLoc, SS, Name, NameLoc, Attr, AS);
   
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
   
   // TODO: semantic analysis on the declspec for enums.
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec, TagDecl))
+  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec,
+                         TagDecl.getAs<void>()))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 
@@ -1314,7 +1315,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS, AccessSpecifier AS) {
 ///       enumeration-constant:
 ///         identifier
 ///
-void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
+void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   // Enter the scope of the enum body and start the definition.
   ParseScope EnumScope(this, Scope::DeclScope);
   Actions.ActOnTagStartDefinition(CurScope, EnumDecl);
@@ -1325,9 +1326,9 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
     Diag(Tok, diag::ext_empty_struct_union_enum) << "enum";
   
-  llvm::SmallVector<DeclTy*, 32> EnumConstantDecls;
+  llvm::SmallVector<DeclPtrTy, 32> EnumConstantDecls;
 
-  DeclTy *LastEnumConstDecl = 0;
+  DeclPtrTy LastEnumConstDecl;
   
   // Parse the enumerator-list.
   while (Tok.is(tok::identifier)) {
@@ -1344,11 +1345,11 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
     }
     
     // Install the enumerator constant into EnumDecl.
-    DeclTy *EnumConstDecl = Actions.ActOnEnumConstant(CurScope, EnumDecl,
-                                                      LastEnumConstDecl,
-                                                      IdentLoc, Ident,
-                                                      EqualLoc,
-                                                      AssignedVal.release());
+    DeclPtrTy EnumConstDecl = Actions.ActOnEnumConstant(CurScope, EnumDecl,
+                                                        LastEnumConstDecl,
+                                                        IdentLoc, Ident,
+                                                        EqualLoc,
+                                                        AssignedVal.release());
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
     
@@ -1366,7 +1367,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   Actions.ActOnEnumBody(StartLoc, EnumDecl, &EnumConstantDecls[0],
                         EnumConstantDecls.size());
   
-  DeclTy *AttrList = 0;
+  Action::AttrTy *AttrList = 0;
   // If attributes exist after the identifier list, parse them.
   if (Tok.is(tok::kw___attribute))
     AttrList = ParseAttributes(); // FIXME: where do they do?
@@ -2195,7 +2196,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
-      DeclTy *Param = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
+      DeclPtrTy Param = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
 
       // Parse the default argument, if any. We parse the default
       // arguments in all dialects; the semantic analysis in
@@ -2300,7 +2301,8 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   // identifier in ParamInfo.
   ParamsSoFar.insert(Tok.getIdentifierInfo());
   ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
-                                                 Tok.getLocation(), 0));
+                                                 Tok.getLocation(),
+                                                 DeclPtrTy()));
   
   ConsumeToken();  // eat the first identifier.
   
@@ -2327,7 +2329,8 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
     } else {
       // Remember this identifier in ParamInfo.
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
-                                                     Tok.getLocation(), 0));
+                                                     Tok.getLocation(),
+                                                     DeclPtrTy()));
     }
     
     // Eat the identifier.

@@ -117,7 +117,7 @@ private:
   /// popped, these declarations are removed from the IdentifierTable's notion
   /// of current declaration.  It is up to the current Action implementation to
   /// implement these semantics.
-  typedef llvm::SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
+  typedef llvm::SmallPtrSet<Action::DeclPtrTy, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
   
   /// Entity - The entity with which this scope is associated. For
@@ -126,7 +126,7 @@ private:
   /// maintained by the Action implementation.
   void *Entity;
 
-  typedef llvm::SmallVector<Action::DeclTy*, 2> UsingDirectivesTy;
+  typedef llvm::SmallVector<Action::DeclPtrTy, 2> UsingDirectivesTy;
   UsingDirectivesTy UsingDirectives;
 
 public:
@@ -191,17 +191,17 @@ public:
   decl_iterator decl_end()   const { return DeclsInScope.end(); }
   bool decl_empty()          const { return DeclsInScope.empty(); }
 
-  void AddDecl(Action::DeclTy *D) {
+  void AddDecl(Action::DeclPtrTy D) {
     DeclsInScope.insert(D);
   }
 
-  void RemoveDecl(Action::DeclTy *D) {
+  void RemoveDecl(Action::DeclPtrTy D) {
     DeclsInScope.erase(D);
   }
 
   /// isDeclScope - Return true if this is the scope that the specified decl is
   /// declared in.
-  bool isDeclScope(Action::DeclTy *D) {
+  bool isDeclScope(Action::DeclPtrTy D) {
     return DeclsInScope.count(D) != 0;
   }
 
@@ -249,7 +249,7 @@ public:
   typedef UsingDirectivesTy::iterator udir_iterator;
   typedef UsingDirectivesTy::const_iterator const_udir_iterator;
 
-  void PushUsingDirective(Action::DeclTy *UDir) {
+  void PushUsingDirective(Action::DeclPtrTy UDir) {
     UsingDirectives.push_back(UDir);
   }
 

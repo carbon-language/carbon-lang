@@ -664,26 +664,28 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   } else if (const RecordType *RT = Ty->getAsRecordType()) {
     RecordDecl *RD = RT->getDecl();
     // The type-specifier-seq shall not declare a new class...
-    if (RD->isDefinition() && (RD->getIdentifier() == 0 || S->isDeclScope(RD)))
+    if (RD->isDefinition() &&
+        (RD->getIdentifier() == 0 || S->isDeclScope(DeclPtrTy::make(RD))))
       Diag(RD->getLocation(), diag::err_type_defined_in_condition);
   } else if (const EnumType *ET = Ty->getAsEnumType()) {
     EnumDecl *ED = ET->getDecl();
     // ...or enumeration.
-    if (ED->isDefinition() && (ED->getIdentifier() == 0 || S->isDeclScope(ED)))
+    if (ED->isDefinition() &&
+        (ED->getIdentifier() == 0 || S->isDeclScope(DeclPtrTy::make(ED))))
       Diag(ED->getLocation(), diag::err_type_defined_in_condition);
   }
 
-  DeclTy *Dcl = ActOnDeclarator(S, D, 0);
+  DeclPtrTy Dcl = ActOnDeclarator(S, D, DeclPtrTy());
   if (!Dcl)
     return ExprError();
   AddInitializerToDecl(Dcl, move(AssignExprVal));
 
   // Mark this variable as one that is declared within a conditional.
-  if (VarDecl *VD = dyn_cast<VarDecl>((Decl *)Dcl))
-    VD->setDeclaredInCondition(true);
-
-  return Owned(new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc,
-                                      cast<VarDecl>(static_cast<Decl *>(Dcl))));
+  // We know that the decl had to be a VarDecl because that is the only type of
+  // decl that can be assigned and the grammar requires an '='.
+  VarDecl *VD = cast<VarDecl>(Dcl.getAs<Decl>());
+  VD->setDeclaredInCondition(true);
+  return Owned(new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc, VD));
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.
