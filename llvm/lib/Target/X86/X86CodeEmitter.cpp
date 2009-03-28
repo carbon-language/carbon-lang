@@ -32,6 +32,9 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+// FIXME: This should be some header
+static const int X86AddrNumOperands = 4;
+
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {
@@ -642,8 +645,10 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   }
   case X86II::MRMDestMem: {
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, CurOp, getX86RegNum(MI.getOperand(CurOp+4).getReg()));
-    CurOp += 5;
+    emitMemModRMByte(MI, CurOp,
+                     getX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)
+                                  .getReg()));
+    CurOp +=  X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
@@ -659,12 +664,13 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     break;
 
   case X86II::MRMSrcMem: {
-    intptr_t PCAdj = (CurOp+5 != NumOps) ? X86InstrInfo::sizeOfImm(Desc) : 0;
+    intptr_t PCAdj = (CurOp + X86AddrNumOperands + 1 != NumOps) ?
+      X86InstrInfo::sizeOfImm(Desc) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()),
                      PCAdj);
-    CurOp += 5;
+    CurOp += X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
@@ -714,13 +720,13 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
-    intptr_t PCAdj = (CurOp+4 != NumOps) ?
+    intptr_t PCAdj = (CurOp + X86AddrNumOperands != NumOps) ?
       (MI.getOperand(CurOp+4).isImm() ? X86InstrInfo::sizeOfImm(Desc) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, (Desc->TSFlags & X86II::FormMask)-X86II::MRM0m,
                      PCAdj);
-    CurOp += 4;
+    CurOp += X86AddrNumOperands;
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);

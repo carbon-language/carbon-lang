@@ -763,7 +763,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
       FrameIndex = MI->getOperand(0).getIndex();
-      return MI->getOperand(4).getReg();
+      return MI->getOperand(X86AddrNumOperands).getReg();
     }
     break;
   }
