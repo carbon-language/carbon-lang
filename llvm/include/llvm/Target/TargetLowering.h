@@ -791,9 +791,10 @@ public:
     bool isCalledByLegalizer() const { return CalledByLegalizer; }
     
     void AddToWorklist(SDNode *N);
-    SDValue CombineTo(SDNode *N, const std::vector<SDValue> &To);
-    SDValue CombineTo(SDNode *N, SDValue Res);
-    SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1);
+    SDValue CombineTo(SDNode *N, const std::vector<SDValue> &To,
+                      bool AddTo = true);
+    SDValue CombineTo(SDNode *N, SDValue Res, bool AddTo = true);
+    SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1, bool AddTo = true);
 
     void CommitTargetLoweringOpt(const TargetLoweringOpt &TLO);
   };

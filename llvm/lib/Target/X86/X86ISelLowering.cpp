@@ -826,6 +826,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SRA);
   setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::STORE);
+  if (Subtarget->is64Bit())
+    setTargetDAGCombine(ISD::MUL);
 
   computeRegisterProperties();
 
@@ -8407,6 +8409,74 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
 }
 
 
+/// PerformMulCombine - Optimize a single multiply with constant into two
+/// in order to implement it with two cheaper instructions, e.g.
+/// LEA + SHL, LEA + LEA.
+static SDValue PerformMulCombine(SDNode *N, SelectionDAG &DAG,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  if (DAG.getMachineFunction().
+      getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+    return SDValue();
+
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  MVT VT = N->getValueType(0);
+  if (VT != MVT::i64)
+    return SDValue();
+
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!C)
+    return SDValue();
+  uint64_t MulAmt = C->getZExtValue();
+  if (isPowerOf2_64(MulAmt) || MulAmt == 3 || MulAmt == 5 || MulAmt == 9)
+    return SDValue();
+
+  uint64_t MulAmt1 = 0;
+  uint64_t MulAmt2 = 0;
+  if ((MulAmt % 9) == 0) {
+    MulAmt1 = 9;
+    MulAmt2 = MulAmt / 9;
+  } else if ((MulAmt % 5) == 0) {
+    MulAmt1 = 5;
+    MulAmt2 = MulAmt / 5;
+  } else if ((MulAmt % 3) == 0) {
+    MulAmt1 = 3;
+    MulAmt2 = MulAmt / 3;
+  }
+  if (MulAmt2 &&
+      (isPowerOf2_64(MulAmt2) || MulAmt2 == 3 || MulAmt2 == 5 || MulAmt2 == 9)){
+    DebugLoc DL = N->getDebugLoc();
+
+    if (isPowerOf2_64(MulAmt2) &&
+        !(N->hasOneUse() && N->use_begin()->getOpcode() == ISD::ADD))
+      // If second multiplifer is pow2, issue it first. We want the multiply by
+      // 3, 5, or 9 to be folded into the addressing mode unless the lone use
+      // is an add.
+      std::swap(MulAmt1, MulAmt2);
+
+    SDValue NewMul;
+    if (isPowerOf2_64(MulAmt1)) 
+      NewMul = DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                           DAG.getConstant(Log2_64(MulAmt1), MVT::i8));
+    else
+      NewMul = DAG.getNode(ISD::MUL, DL, VT, N->getOperand(0),
+                           DAG.getConstant(MulAmt1, VT));
+
+    if (isPowerOf2_64(MulAmt2)) 
+      NewMul = DAG.getNode(ISD::SHL, DL, VT, NewMul,
+                           DAG.getConstant(Log2_64(MulAmt2), MVT::i8));
+    else 
+      NewMul = DAG.getNode(ISD::MUL, DL, VT, NewMul,
+                           DAG.getConstant(MulAmt2, VT));
+
+    // Do not add new nodes to DAG combiner worklist.
+    DCI.CombineTo(N, NewMul, false);
+  }
+  return SDValue();
+}
+
+
 /// PerformShiftCombine - Transforms vector shift nodes to use vector shifts
 ///                       when possible.
 static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
@@ -8668,6 +8738,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformBuildVectorCombine(N, DAG, DCI, Subtarget, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
+  case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);

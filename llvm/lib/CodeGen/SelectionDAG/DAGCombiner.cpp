@@ -93,14 +93,14 @@ namespace {
     }
 
     SDValue CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
-                        bool AddTo = true);
+                      bool AddTo = true);
 
     SDValue CombineTo(SDNode *N, SDValue Res, bool AddTo = true) {
       return CombineTo(N, &Res, 1, AddTo);
     }
 
     SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1,
-                        bool AddTo = true) {
+                      bool AddTo = true) {
       SDValue To[] = { Res0, Res1 };
       return CombineTo(N, To, 2, AddTo);
     }
@@ -293,19 +293,19 @@ void TargetLowering::DAGCombinerInfo::AddToWorklist(SDNode *N) {
 }
 
 SDValue TargetLowering::DAGCombinerInfo::
-CombineTo(SDNode *N, const std::vector<SDValue> &To) {
-  return ((DAGCombiner*)DC)->CombineTo(N, &To[0], To.size());
+CombineTo(SDNode *N, const std::vector<SDValue> &To, bool AddTo) {
+  return ((DAGCombiner*)DC)->CombineTo(N, &To[0], To.size(), AddTo);
 }
 
 SDValue TargetLowering::DAGCombinerInfo::
-CombineTo(SDNode *N, SDValue Res) {
-  return ((DAGCombiner*)DC)->CombineTo(N, Res);
+CombineTo(SDNode *N, SDValue Res, bool AddTo) {
+  return ((DAGCombiner*)DC)->CombineTo(N, Res, AddTo);
 }
 
 
 SDValue TargetLowering::DAGCombinerInfo::
-CombineTo(SDNode *N, SDValue Res0, SDValue Res1) {
-  return ((DAGCombiner*)DC)->CombineTo(N, Res0, Res1);
+CombineTo(SDNode *N, SDValue Res0, SDValue Res1, bool AddTo) {
+  return ((DAGCombiner*)DC)->CombineTo(N, Res0, Res1, AddTo);
 }
 
 void TargetLowering::DAGCombinerInfo::
