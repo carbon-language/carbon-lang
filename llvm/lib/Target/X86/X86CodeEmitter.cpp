@@ -32,9 +32,6 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-// FIXME: This should be some header
-static const int X86AddrNumOperands = 4;
-
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {

@@ -31,9 +31,6 @@
 
 using namespace llvm;
 
-// FIXME: This should be some header
-static const int X86AddrNumOperands = 4;
-
 namespace {
   cl::opt<bool>
   NoFusing("disable-spill-fusing",

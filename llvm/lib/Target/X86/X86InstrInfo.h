@@ -243,6 +243,8 @@ namespace X86II {
   };
 }
 
+const int X86AddrNumOperands = 4;
+
 inline static bool isScale(const MachineOperand &MO) {
   return MO.isImm() &&
     (MO.getImm() == 1 || MO.getImm() == 2 ||

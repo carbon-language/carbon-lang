@@ -41,8 +41,6 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-const int X86AddrNumOperands = 4;
-
 static cl::opt<bool>
 DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 

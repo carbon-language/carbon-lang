@@ -616,7 +616,6 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 /// handleOneArgFP - fst <mem>, ST(0)
 ///
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
-  const int X86AddrNumOperands = 4;
   MachineInstr *MI = I;
   unsigned NumOps = MI->getDesc().getNumOperands();
   assert((NumOps == X86AddrNumOperands + 1 || NumOps == 1) &&
