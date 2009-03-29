@@ -27,6 +27,11 @@ using llvm::cast_or_null;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 
+namespace llvm {
+  template <typename T>
+  class PointerLikeTypeInfo;
+}
+
 namespace clang {
   class ASTContext;
   class Type;
@@ -218,6 +223,17 @@ template<> struct simplify_type<const ::clang::QualType> {
 template<> struct simplify_type< ::clang::QualType>
   : public simplify_type<const ::clang::QualType> {};
   
+// Teach SmallPtrSet that QualType is "basically a pointer".
+template<>
+class PointerLikeTypeInfo<clang::QualType> {
+public:
+  static inline void *getAsVoidPointer(clang::QualType P) {
+    return P.getAsOpaquePtr();
+  }
+  static inline clang::QualType getFromVoidPointer(void *P) {
+    return clang::QualType::getFromOpaquePtr(P);
+  }
+};
 } // end namespace llvm
 
 namespace clang {
