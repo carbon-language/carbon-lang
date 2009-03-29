@@ -630,6 +630,9 @@ public:
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:32:32";
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+    IntPtrType = SignedInt;
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
@@ -644,7 +647,8 @@ public:
   DarwinI386TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
-    PtrDiffType = SignedInt;
+    SizeType = UnsignedLong;
+    IntPtrType = SignedLong;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:128:128";
@@ -668,10 +672,7 @@ namespace {
 class FreeBSDX86_32TargetInfo : public X86_32TargetInfo {
 public:
   FreeBSDX86_32TargetInfo(const std::string& triple) :
-      X86_32TargetInfo(triple) {
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
-  }
+      X86_32TargetInfo(triple) { }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
@@ -685,10 +686,7 @@ namespace {
 class DragonFlyX86_32TargetInfo : public X86_32TargetInfo {
 public:
   DragonFlyX86_32TargetInfo(const std::string& triple) :
-      X86_32TargetInfo(triple) {
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
-  }
+      X86_32TargetInfo(triple) { }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
@@ -703,9 +701,6 @@ class LinuxX86_32TargetInfo : public X86_32TargetInfo {
 public:
   LinuxX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
     UserLabelPrefix = "";
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
-    IntPtrType = SignedInt;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -724,8 +719,6 @@ public:
     // FIXME: Fix wchar_t.
     // FIXME: We should probably enable -fms-extensions by default for
     // this target.
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
