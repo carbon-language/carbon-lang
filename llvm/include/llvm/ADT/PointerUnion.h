@@ -78,6 +78,8 @@ namespace llvm {
       Val.setInt(1);
     }
     
+    bool isNull() const { return Val.getPointer() == 0; }
+    
     template<typename T>
     int is() const {
       return Val.getInt() == ::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0);
