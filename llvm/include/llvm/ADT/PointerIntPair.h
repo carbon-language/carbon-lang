@@ -30,10 +30,10 @@ struct DenseMapInfo;
 /// type.
 ///
 /// Note that PointerIntPair always puts the Int part in the highest bits
-/// possible.  For example, PointerIntPair<void*, 1,bool> will put the bit for
+/// possible.  For example, PointerIntPair<void*, 1, bool> will put the bit for
 /// the bool into bit #2, not bit #0, which allows the low two bits to be used
 /// for something else.  For example, this allows:
-///   PointerIntPair<PointerIntPair<void*, 1,bool>, 1, bool>
+///   PointerIntPair<PointerIntPair<void*, 1, bool>, 1, bool>
 /// ... and the two bools will land in different bits.
 ///
 template <typename PointerTy, unsigned IntBits, typename IntType=unsigned,
