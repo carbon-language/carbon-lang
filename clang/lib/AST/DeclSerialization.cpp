@@ -139,7 +139,7 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
   }
   else {
     MultipleDC *MDC = new MultipleDC();
-    Dcl->DeclCtx.setPointer(MDC);
+    Dcl->DeclCtx.setPointer(reinterpret_cast<DeclContext*>(MDC));
     Dcl->DeclCtx.setInt(true);
     // Allow back-patching.  Observe that we register the variable of the
     // *object* for back-patching. Its actual value will get filled in later.

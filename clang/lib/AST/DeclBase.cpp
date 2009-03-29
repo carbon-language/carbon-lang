@@ -141,7 +141,7 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
     MultipleDC *MDC = new MultipleDC();
     MDC->SemanticDC = getDeclContext();
     MDC->LexicalDC = DC;
-    DeclCtx.setPointer(MDC);
+    DeclCtx.setPointer(reinterpret_cast<DeclContext*>(MDC));
     DeclCtx.setInt(true);
   } else {
     getMultipleDC()->LexicalDC = DC;

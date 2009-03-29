@@ -40,6 +40,23 @@ class LinkageSpecDecl;
 class BlockDecl;
 class DeclarationName;
 class CompoundStmt;
+}
+
+namespace llvm {
+// DeclContext* is only 4-byte aligned on 32-bit systems.
+template<>
+  class PointerLikeTypeTraits<clang::DeclContext*> {
+  typedef clang::DeclContext* PT;
+public:
+  static inline void *getAsVoidPointer(PT P) { return P; }
+  static inline PT getFromVoidPointer(void *P) {
+    return static_cast<PT>(P);
+  }
+  enum { NumLowBitsAvailable = 2 };
+};
+}
+
+namespace clang {
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
@@ -109,7 +126,7 @@ private:
   ///   }
   ///   void A::f(); // SemanticDC == namespace 'A'
   ///                // LexicalDC == global namespace
-  llvm::PointerIntPair<void*, 1, bool> DeclCtx;
+  llvm::PointerIntPair<DeclContext*, 1, bool> DeclCtx;
 
   struct MultipleDC {
     DeclContext *SemanticDC;
@@ -120,7 +137,7 @@ private:
   inline bool isOutOfSemaDC() const { return DeclCtx.getInt() != 0; }
   inline MultipleDC *getMultipleDC() const {
     assert(isOutOfSemaDC() && "Invalid accessor");
-    return static_cast<MultipleDC*>(DeclCtx.getPointer());
+    return reinterpret_cast<MultipleDC*>(DeclCtx.getPointer());
   }
 
   inline DeclContext *getSemanticDC() const {

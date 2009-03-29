@@ -234,7 +234,7 @@ public:
     return clang::QualType::getFromOpaquePtr(P);
   }
   // CVR qualifiers go in low bits.
-  static inline unsigned getNumLowBitsAvailable() { return 0; }
+  enum { NumLowBitsAvailable = 0 };
 };
 } // end namespace llvm
 

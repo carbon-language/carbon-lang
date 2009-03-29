@@ -57,7 +57,7 @@ namespace llvm {
     static inline clang::OpaquePtr<UID> getFromVoidPointer(void *P) {
       return clang::OpaquePtr<UID>::make(P);
     }
-    static inline unsigned getNumLowBitsAvailable() { return 3; }
+    enum { NumLowBitsAvailable = 3 };
   };
 }
 
