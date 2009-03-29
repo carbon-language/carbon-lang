@@ -22,7 +22,7 @@ namespace llvm {
 template<typename T>
 struct DenseMapInfo;
 template<typename>
-class PointerLikeTypeInfo;
+class PointerLikeTypeTraits;
 
 /// PointerIntPair - This class implements a pair of a pointer and small
 /// integer.  It is designed to represent this in the space required by one
@@ -97,7 +97,7 @@ struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
 
 // Teach SmallPtrSet that PointerIntPair is "basically a pointer".
 template<typename PointerTy, unsigned IntBits, typename IntType>
-class PointerLikeTypeInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
+class PointerLikeTypeTraits<PointerIntPair<PointerTy, IntBits, IntType> > {
 public:
   static inline void *
   getAsVoidPointer(const PointerIntPair<PointerTy, IntBits, IntType> &P) {
@@ -107,6 +107,7 @@ public:
   getFromVoidPointer(void *P) {
     return PointerIntPair<PointerTy, IntBits, IntType>::getFromOpaqueValue(P);
   }
+  static inline unsigned getNumLowBitsAvailable() { return 0; }
 };
 
 } // end namespace llvm

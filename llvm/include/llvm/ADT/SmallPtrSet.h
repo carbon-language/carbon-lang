@@ -18,33 +18,9 @@
 #include <cassert>
 #include <cstring>
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/PointerLikeTypeTraits.h"
 
 namespace llvm {
-  
-/// PointerLikeTypeInfo - This is a traits object that is used to handle pointer
-/// types and things that are just wrappers for pointers as a uniform entity.
-template <typename T>
-class PointerLikeTypeInfo {
-  //getAsVoidPointer/getFromVoidPointer
-};
-
-// Provide PointerLikeTypeInfo for all pointers.
-template<typename T>
-class PointerLikeTypeInfo<T*> {
-public:
-  static inline void *getAsVoidPointer(T* P) { return P; }
-  static inline T *getFromVoidPointer(void *P) {
-    return static_cast<T*>(P);
-  }
-};
-template<typename T>
-class PointerLikeTypeInfo<const T*> {
-public:
-  static inline const void *getAsVoidPointer(const T* P) { return P; }
-  static inline const T *getFromVoidPointer(const void *P) {
-    return static_cast<const T*>(P);
-  }
-};
 
 class SmallPtrSetIteratorImpl;
 
@@ -193,7 +169,7 @@ protected:
 /// SmallPtrSetIterator - This implements a const_iterator for SmallPtrSet.
 template<typename PtrTy>
 class SmallPtrSetIterator : public SmallPtrSetIteratorImpl {
-  typedef PointerLikeTypeInfo<PtrTy> PtrTraits;
+  typedef PointerLikeTypeTraits<PtrTy> PtrTraits;
 public:
   explicit SmallPtrSetIterator(const void *const *BP)
     : SmallPtrSetIteratorImpl(BP) {}
@@ -250,7 +226,7 @@ class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.
   enum { SmallSizePowTwo = NextPowerOfTwo<SmallSize>::Val };
   void *SmallArray[SmallSizePowTwo];
-  typedef PointerLikeTypeInfo<PtrType> PtrTraits;
+  typedef PointerLikeTypeTraits<PtrType> PtrTraits;
 public:
   SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
   SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(that) {}
