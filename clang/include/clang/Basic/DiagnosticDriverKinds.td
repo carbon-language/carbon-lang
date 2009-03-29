@@ -53,6 +53,6 @@ def warn_drv_not_using_clang_cpp : Warning<
 def warn_drv_not_using_clang_cxx : Warning<
   "not using the clang compiler for C++ inputs">;
 def warn_drv_not_using_clang_arch : Warning<
-  "not using the clang compiler the '%0' architecture">;
+  "not using the clang compiler for the '%0' architecture">;
 
 }
