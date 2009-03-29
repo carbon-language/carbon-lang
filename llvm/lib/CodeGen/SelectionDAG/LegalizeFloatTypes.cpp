@@ -59,6 +59,8 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::ConstantFP:
       R = SoftenFloatRes_ConstantFP(cast<ConstantFPSDNode>(N));
       break;
+    case ISD::EXTRACT_VECTOR_ELT:
+      R = SoftenFloatRes_EXTRACT_VECTOR_ELT(N); break;
     case ISD::FABS:        R = SoftenFloatRes_FABS(N); break;
     case ISD::FADD:        R = SoftenFloatRes_FADD(N); break;
     case ISD::FCEIL:       R = SoftenFloatRes_FCEIL(N); break;
@@ -111,6 +113,13 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {
 SDValue DAGTypeLegalizer::SoftenFloatRes_ConstantFP(ConstantFPSDNode *N) {
   return DAG.getConstant(N->getValueAPF().bitcastToAPInt(),
                          TLI.getTypeToTransformTo(N->getValueType(0)));
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_EXTRACT_VECTOR_ELT(SDNode *N) {
+  SDValue NewOp = BitConvertVectorToIntegerVector(N->getOperand(0));
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, N->getDebugLoc(),
+                     NewOp.getValueType().getVectorElementType(),
+                     NewOp, N->getOperand(1));
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FABS(SDNode *N) {

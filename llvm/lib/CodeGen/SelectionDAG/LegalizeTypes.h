@@ -190,6 +190,7 @@ private:
 
   // Common routines.
   SDValue BitConvertToInteger(SDValue Op);
+  SDValue BitConvertVectorToIntegerVector(SDValue Op);
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
   bool CustomLowerResults(SDNode *N, MVT VT, bool LegalizeResult);
   SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
@@ -392,6 +393,7 @@ private:
   SDValue SoftenFloatRes_BIT_CONVERT(SDNode *N);
   SDValue SoftenFloatRes_BUILD_PAIR(SDNode *N);
   SDValue SoftenFloatRes_ConstantFP(ConstantFPSDNode *N);
+  SDValue SoftenFloatRes_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue SoftenFloatRes_FABS(SDNode *N);
   SDValue SoftenFloatRes_FADD(SDNode *N);
   SDValue SoftenFloatRes_FCEIL(SDNode *N);

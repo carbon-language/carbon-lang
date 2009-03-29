@@ -858,6 +858,17 @@ SDValue DAGTypeLegalizer::BitConvertToInteger(SDValue Op) {
                      MVT::getIntegerVT(BitWidth), Op);
 }
 
+/// BitConvertVectorToIntegerVector - Convert to a vector of integers of the
+/// same size.
+SDValue DAGTypeLegalizer::BitConvertVectorToIntegerVector(SDValue Op) {
+  assert(Op.getValueType().isVector() && "Only applies to vectors!");
+  unsigned EltWidth = Op.getValueType().getVectorElementType().getSizeInBits();
+  MVT EltNVT = MVT::getIntegerVT(EltWidth);
+  unsigned NumElts = Op.getValueType().getVectorNumElements();
+  return DAG.getNode(ISD::BIT_CONVERT, Op.getDebugLoc(),
+                     MVT::getVectorVT(EltNVT, NumElts), Op);
+}
+
 SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
                                                MVT DestVT) {
   DebugLoc dl = Op.getDebugLoc();
