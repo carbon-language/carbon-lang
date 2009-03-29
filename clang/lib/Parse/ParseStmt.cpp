@@ -959,11 +959,8 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     }
 
     // Parse the third part of the for specifier.
-    if (Tok.is(tok::r_paren)) {  // for (...;...;)
-      // no third part.
-    } else {
+    if (Tok.isNot(tok::r_paren))    // for (...;...;)
       ThirdPart = ParseExpression();
-    }
   }
   // Match the ')'.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
