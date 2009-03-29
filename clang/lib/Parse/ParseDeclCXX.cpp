@@ -64,36 +64,34 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
     // FIXME: Verify no attributes were present.
     return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident);
   
-  if (Tok.is(tok::l_brace)) {
-    SourceLocation LBrace = ConsumeBrace();
-
-    // Enter a scope for the namespace.
-    ParseScope NamespaceScope(this, Scope::DeclScope);
-
-    DeclPtrTy NamespcDecl =
-      Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
-
-    PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
-                                          PP.getSourceManager(),
-                                          "parsing namespace");
-    
-    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof))
-      ParseExternalDeclaration();
-    
-    // Leave the namespace scope.
-    NamespaceScope.Exit();
-
-    SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
-    Actions.ActOnFinishNamespaceDef(NamespcDecl, RBrace);
-
-    return NamespcDecl;
-    
-  } else {
+  if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, Ident ? diag::err_expected_lbrace : 
-                      diag::err_expected_ident_lbrace);
+         diag::err_expected_ident_lbrace);
+    return DeclPtrTy();
   }
   
-  return DeclPtrTy();
+  SourceLocation LBrace = ConsumeBrace();
+
+  // Enter a scope for the namespace.
+  ParseScope NamespaceScope(this, Scope::DeclScope);
+
+  DeclPtrTy NamespcDecl =
+    Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
+
+  PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
+                                        PP.getSourceManager(),
+                                        "parsing namespace");
+  
+  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof))
+    ParseExternalDeclaration();
+  
+  // Leave the namespace scope.
+  NamespaceScope.Exit();
+
+  SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
+  Actions.ActOnFinishNamespaceDef(NamespcDecl, RBrace);
+
+  return NamespcDecl;
 }
 
 /// ParseNamespaceAlias - Parse the part after the '=' in a namespace
