@@ -230,7 +230,13 @@ namespace clang
         PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
         assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
       }
-
+      
+      ActionResult(PtrTy V) {
+        void *VP = PtrTraits::getAsVoidPointer(V);
+        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
+        assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
+      }
+      
       ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
 
       PtrTy get() const {
@@ -246,8 +252,9 @@ namespace clang
 
       bool isInvalid() const { return PtrWithInvalid & 0x01; }
 
-      const ActionResult &operator=(void *RHS) {
-        PtrWithInvalid = reinterpret_cast<uintptr_t>(RHS);
+      const ActionResult &operator=(PtrTy RHS) {
+        void *VP = PtrTraits::getAsVoidPointer(RHS);
+        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
         assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
         return *this;
       }
