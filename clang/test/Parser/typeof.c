@@ -9,8 +9,8 @@ static void test() {
   short typeof (int) aShortInt; // expected-error{{'short typeof' is invalid}} 
   int int ttt; // expected-error{{cannot combine with previous 'int' declaration specifier}}
   typeof(TInt) anInt; 
-  short TInt eee; // expected-error{{parse error}}
-  void ary[7] fff; // expected-error{{array has incomplete element type 'void'}} expected-error{{parse error}}
+  short TInt eee; // expected-error{{expected ';' at end of declaration}}
+  void ary[7] fff; // expected-error{{array has incomplete element type 'void'}} expected-error{{expected ';' at end of declaration}}
   typeof(void ary[7]) anIntError; // expected-error{{expected ')'}} expected-note {{to match this '('}}  expected-warning {{type specifier missing, defaults to 'int'}}
   typeof(const int) aci; 
   const typeof (*pi) aConstInt; 

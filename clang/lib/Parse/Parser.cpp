@@ -517,9 +517,13 @@ Parser::ParseDeclarationOrFunctionDefinition(
       Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
       Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
       (getLang().CPlusPlus &&
-       Tok.is(tok::l_paren)) ) {      // int X(0) -> not a function def [C++]
+       Tok.is(tok::l_paren))) {       // int X(0) -> not a function def [C++]
     // Parse the init-declarator-list for a normal declaration.
-    return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+    DeclGroupPtrTy DG =
+      ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+    // Eat the semi colon after the declaration.
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_declation);
+    return DG;
   }
   
   
@@ -564,7 +568,8 @@ Parser::ParseDeclarationOrFunctionDefinition(
 /// [C90] function-definition: [C99 6.7.1] - implicit int result
 /// [C90]   decl-specs[opt] declarator declaration-list[opt] compound-statement
 /// [C++] function-definition: [C++ 8.4]
-///         decl-specifier-seq[opt] declarator ctor-initializer[opt] function-body
+///         decl-specifier-seq[opt] declarator ctor-initializer[opt]
+///         function-body
 /// [C++] function-definition: [C++ 8.4]
 ///         decl-specifier-seq[opt] declarator function-try-block [TODO]
 ///

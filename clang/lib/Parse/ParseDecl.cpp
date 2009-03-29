@@ -273,7 +273,30 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
   Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
   ParseDeclarator(DeclaratorInfo);
   
-  return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+  DeclGroupPtrTy DG =
+    ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+  
+  if (Tok.is(tok::semi)) {
+    ConsumeToken();
+    // for(is key; in keys) is error.
+    if (Context == Declarator::ForContext && isTokIdentifier_in())
+      Diag(Tok, diag::err_parse_error);
+    
+    return DG;
+  }
+  
+  // If this is an ObjC2 for-each loop, this is a successful declarator
+  // parse.  The syntax for these looks like:
+  // 'for' '(' declaration 'in' expr ')' statement
+  if (Context == Declarator::ForContext && isTokIdentifier_in())
+    return DG;
+  
+  Diag(Tok, diag::err_expected_semi_declation);
+  // Skip to end of block or statement
+  SkipUntil(tok::r_brace, true, true);
+  if (Tok.is(tok::semi))
+    ConsumeToken();
+  return DG;
 }
 
 
@@ -315,7 +338,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       SourceLocation Loc;
       OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
       if (AsmLabel.isInvalid()) {
-        SkipUntil(tok::semi);
+        SkipUntil(tok::semi, true, true);
         return DeclGroupPtrTy();
       }
 
@@ -343,7 +366,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       } else {
         OwningExprResult Init(ParseInitializer());
         if (Init.isInvalid()) {
-          SkipUntil(tok::semi);
+          SkipUntil(tok::semi, true, true);
           return DeclGroupPtrTy();
         }
         Actions.AddInitializerToDecl(ThisDecl, move(Init));
@@ -400,31 +423,8 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     ParseDeclarator(D);
   }
   
-  if (Tok.is(tok::semi)) {
-    ConsumeToken();
-    // for(is key; in keys) is error.
-    if (D.getContext() == Declarator::ForContext && isTokIdentifier_in()) {
-      Diag(Tok, diag::err_parse_error);
-      return DeclGroupPtrTy();
-    }
-    
-    return Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
-                                           DeclsInGroup.size());
-  }
-  
-  // If this is an ObjC2 for-each loop, this is a successful declarator
-  // parse.  The syntax for these looks like:
-  // 'for' '(' declaration 'in' expr ')' statement
-  if (D.getContext() == Declarator::ForContext && isTokIdentifier_in())
-    return Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
-                                           DeclsInGroup.size());
-
-  Diag(Tok, diag::err_parse_error);
-  // Skip to end of block or statement
-  SkipUntil(tok::r_brace, true, true);
-  if (Tok.is(tok::semi))
-    ConsumeToken();
-  return DeclGroupPtrTy();
+  return Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
+                                         DeclsInGroup.size());
 }
 
 /// ParseSpecifierQualifierList

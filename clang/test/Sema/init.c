@@ -20,7 +20,7 @@ int *h = &x;
 int test() {
 int a[10];
 int b[10] = a; // expected-error {{initialization with '{...}' expected}}
-int +; // expected-error {{expected identifier or '('}} expected-error {{parse error}}
+int +; // expected-error {{expected identifier or '('}} expected-error {{expected ';' at end of declaration}}
 }
 
 
