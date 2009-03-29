@@ -2463,7 +2463,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
 /// enumeration types.
 class BuiltinCandidateTypeSet  {
   /// TypeSet - A set of types.
-  typedef llvm::SmallPtrSet<void*, 8> TypeSet;
+  typedef llvm::SmallPtrSet<QualType, 8> TypeSet;
 
   /// PointerTypes - The set of pointer types that will be used in the
   /// built-in candidates.
@@ -2480,45 +2480,7 @@ class BuiltinCandidateTypeSet  {
 
 public:
   /// iterator - Iterates through the types that are part of the set.
-  class iterator {
-    TypeSet::iterator Base;
-
-  public:
-    typedef QualType                 value_type;
-    typedef QualType                 reference;
-    typedef QualType                 pointer;
-    typedef std::ptrdiff_t           difference_type;
-    typedef std::input_iterator_tag  iterator_category;
-
-    iterator(TypeSet::iterator B) : Base(B) { }
-
-    iterator& operator++() {
-      ++Base;
-      return *this;
-    }
-
-    iterator operator++(int) {
-      iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-
-    reference operator*() const {
-      return QualType::getFromOpaquePtr(*Base);
-    }
-
-    pointer operator->() const {
-      return **this;
-    }
-
-    friend bool operator==(iterator LHS, iterator RHS) {
-      return LHS.Base == RHS.Base;
-    }
-
-    friend bool operator!=(iterator LHS, iterator RHS) {
-      return LHS.Base != RHS.Base;
-    }
-  };
+  typedef TypeSet::iterator iterator;
 
   BuiltinCandidateTypeSet(ASTContext &Context) : Context(Context) { }
 
@@ -2547,7 +2509,7 @@ public:
 /// false otherwise.
 bool BuiltinCandidateTypeSet::AddWithMoreQualifiedTypeVariants(QualType Ty) {
   // Insert this type.
-  if (!PointerTypes.insert(Ty.getAsOpaquePtr()))
+  if (!PointerTypes.insert(Ty))
     return false;
 
   if (const PointerType *PointerTy = Ty->getAsPointerType()) {
@@ -2623,7 +2585,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       }
     }
   } else if (Ty->isEnumeralType()) {
-    EnumerationTypes.insert(Ty.getAsOpaquePtr());
+    EnumerationTypes.insert(Ty);
   } else if (AllowUserConversions) {
     if (const RecordType *TyRec = Ty->getAsRecordType()) {
       CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
