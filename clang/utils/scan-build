@@ -81,18 +81,21 @@ sub DieDiag {
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
+# First, look for 'clang-cc' in libexec.
 my $ClangSB = Cwd::realpath("$RealBin/libexec/clang-cc");
-
-# Also look for 'clang-cc' in the same directory as scan-build.
+# Second, look for 'clang-cc' in the same directory as scan-build.
 if (!defined $ClangSB || ! -x $ClangSB) {
   $ClangSB = Cwd::realpath("$RealBin/clang-cc");
 }
-
-my $Clang = $ClangSB;
-
+# Third, look for 'clang-cc' in ../libexec
 if (!defined $ClangSB || ! -x $ClangSB) {
-  $Clang = "clang-cc";
+  $ClangSB = Cwd::realpath("$RealBin/../libexec/clang-cc");
 }
+# Finally, default to looking for 'clang-cc' in the path.
+if (!defined $ClangSB || ! -x $ClangSB) {
+  $ClangSB = "clang-cc";
+}
+my $Clang = $ClangSB;
 
 my %AvailableAnalyses;
 
