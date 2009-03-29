@@ -14,11 +14,9 @@
 
 using namespace clang::driver;
 
-Arg::Arg(ArgClass _Kind, const Option *_Opt, unsigned _Index) 
-  : Kind(_Kind),
-    Opt(_Opt),
-    Index(_Index),
-    Claimed(false)
+Arg::Arg(ArgClass _Kind, const Option *_Opt, unsigned _Index, 
+         const Arg *_BaseArg) 
+  : Kind(_Kind), Opt(_Opt), BaseArg(_BaseArg), Index(_Index), Claimed(false)
 {
 }
 
@@ -76,8 +74,8 @@ void Arg::renderAsInput(const ArgList &Args, ArgStringList &Output) const {
     Output.push_back(getValue(Args, i));
 }
 
-FlagArg::FlagArg(const Option *Opt, unsigned Index)
-  : Arg(FlagClass, Opt, Index) {
+FlagArg::FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg)
+  : Arg(FlagClass, Opt, Index, BaseArg) {
 }
 
 void FlagArg::render(const ArgList &Args, ArgStringList &Output) const {
@@ -89,8 +87,9 @@ const char *FlagArg::getValue(const ArgList &Args, unsigned N) const {
   return 0;
 }
 
-PositionalArg::PositionalArg(const Option *Opt, unsigned Index)
-  : Arg(PositionalClass, Opt, Index) {
+PositionalArg::PositionalArg(const Option *Opt, unsigned Index, 
+                             const Arg *BaseArg)
+  : Arg(PositionalClass, Opt, Index, BaseArg) {
 }
 
 void PositionalArg::render(const ArgList &Args, ArgStringList &Output) const {
@@ -102,8 +101,8 @@ const char *PositionalArg::getValue(const ArgList &Args, unsigned N) const {
   return Args.getArgString(getIndex());
 }
 
-JoinedArg::JoinedArg(const Option *Opt, unsigned Index)
-  : Arg(JoinedClass, Opt, Index) {
+JoinedArg::JoinedArg(const Option *Opt, unsigned Index, const Arg *BaseArg)
+  : Arg(JoinedClass, Opt, Index, BaseArg) {
 }
 
 void JoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
@@ -122,8 +121,8 @@ const char *JoinedArg::getValue(const ArgList &Args, unsigned N) const {
 }
 
 CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index, 
-                               const char *Str)
-  : Arg(CommaJoinedClass, Opt, Index) {
+                               const char *Str, const Arg *BaseArg)
+  : Arg(CommaJoinedClass, Opt, Index, BaseArg) {
   const char *Prev = Str;  
   for (;; ++Str) {
     char c = *Str;
@@ -149,8 +148,9 @@ const char *CommaJoinedArg::getValue(const ArgList &Args, unsigned N) const {
   return Values[N].c_str();
 }
 
-SeparateArg::SeparateArg(const Option *Opt, unsigned Index, unsigned _NumValues)
-  : Arg(SeparateClass, Opt, Index), NumValues(_NumValues) {
+SeparateArg::SeparateArg(const Option *Opt, unsigned Index, unsigned _NumValues,
+                         const Arg *BaseArg)
+  : Arg(SeparateClass, Opt, Index, BaseArg), NumValues(_NumValues) {
 }
 
 void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
@@ -172,8 +172,9 @@ const char *SeparateArg::getValue(const ArgList &Args, unsigned N) const {
   return Args.getArgString(getIndex() + 1 + N);
 }
 
-JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index)
-  : Arg(JoinedAndSeparateClass, Opt, Index) {
+JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index, 
+                                           const Arg *BaseArg)
+  : Arg(JoinedAndSeparateClass, Opt, Index, BaseArg) {
 }
 
 void JoinedAndSeparateArg::render(const ArgList &Args, 

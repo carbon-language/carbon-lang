@@ -196,23 +196,24 @@ const char *DerivedArgList::MakeArgString(const char *Str) const {
   return BaseArgs.MakeArgString(Str);
 }
 
-Arg *DerivedArgList::MakeFlagArg(const Option *Opt) const {
-  return new FlagArg(Opt, BaseArgs.MakeIndex(Opt->getName()));
+Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option *Opt) const {
+  return new FlagArg(Opt, BaseArgs.MakeIndex(Opt->getName()), BaseArg);
 }
 
-Arg *DerivedArgList::MakePositionalArg(const Option *Opt, 
+Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt, 
                                        const char *Value) const {
-  return new PositionalArg(Opt, BaseArgs.MakeIndex(Value));
+  return new PositionalArg(Opt, BaseArgs.MakeIndex(Value), BaseArg);
 }
 
-Arg *DerivedArgList::MakeSeparateArg(const Option *Opt, 
+Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt, 
                                      const char *Value) const {
-  return new SeparateArg(Opt, BaseArgs.MakeIndex(Opt->getName(), Value), 1);
+  return new SeparateArg(Opt, BaseArgs.MakeIndex(Opt->getName(), Value), 1, 
+                         BaseArg);
 }
 
-Arg *DerivedArgList::MakeJoinedArg(const Option *Opt, 
+Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt, 
                                    const char *Value) const {
   std::string Joined(Opt->getName());
   Joined += Value;
-  return new JoinedArg(Opt, BaseArgs.MakeIndex(Joined.c_str()));
+  return new JoinedArg(Opt, BaseArgs.MakeIndex(Joined.c_str()), BaseArg);
 }

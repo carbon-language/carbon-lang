@@ -142,7 +142,7 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
 
   if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ, false)) {
     const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-    DAL->append(DAL->MakeJoinedArg(O, MacosxVersionMin.c_str()));
+    DAL->append(DAL->MakeJoinedArg(0, O, MacosxVersionMin.c_str()));
   }
   
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
@@ -173,6 +173,7 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
         continue;
       }
 
+      XarchArg->setBaseArg(A);
       A = XarchArg;
     } 
 
@@ -188,64 +189,65 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
     case options::OPT_mkernel:
     case options::OPT_fapple_kext:
       DAL->append(A);
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_static)));
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_static)));
+      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
+      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
       break;
       
     case options::OPT_dependency_file:
-      DAL->append(DAL->MakeSeparateArg(Opts.getOption(options::OPT_MF),
+      DAL->append(DAL->MakeSeparateArg(A, Opts.getOption(options::OPT_MF),
                                        A->getValue(Args)));
       break;
 
     case options::OPT_gfull:
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_g_Flag)));
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_g_Flag)));
+      DAL->append(DAL->MakeFlagArg(A,
              Opts.getOption(options::OPT_fno_eliminate_unused_debug_symbols)));
       break;
 
     case options::OPT_gused:
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_g_Flag)));
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_g_Flag)));
+      DAL->append(DAL->MakeFlagArg(A,
              Opts.getOption(options::OPT_feliminate_unused_debug_symbols)));
       break;
 
     case options::OPT_fterminated_vtables:
     case options::OPT_findirect_virtual_calls:
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_fapple_kext)));
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_static)));
+      DAL->append(DAL->MakeFlagArg(A,
+                                   Opts.getOption(options::OPT_fapple_kext)));
+      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
       break;
 
     case options::OPT_shared:
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_dynamiclib)));
+      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_dynamiclib)));
       break;
 
     case options::OPT_fconstant_cfstrings:
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A,
                              Opts.getOption(options::OPT_mconstant_cfstrings)));
       break;
 
     case options::OPT_fno_constant_cfstrings:
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A,
                           Opts.getOption(options::OPT_mno_constant_cfstrings)));
       break;
 
     case options::OPT_Wnonportable_cfstrings:
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A,
                      Opts.getOption(options::OPT_mwarn_nonportable_cfstrings)));
       break;
 
     case options::OPT_Wno_nonportable_cfstrings:
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A,
                   Opts.getOption(options::OPT_mno_warn_nonportable_cfstrings)));
       break;
 
     case options::OPT_fpascal_strings:
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A,
                                  Opts.getOption(options::OPT_mpascal_strings)));
       break;
 
     case options::OPT_fno_pascal_strings:
-      DAL->append(DAL->MakeFlagArg(
+      DAL->append(DAL->MakeFlagArg(A,
                               Opts.getOption(options::OPT_mno_pascal_strings)));
       break;
     }
@@ -256,10 +258,10 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
   // look it up.
   if (getArchName() == "x86_64")
     if (!Args.hasArg(options::OPT_m64, false))
-      DAL->append(DAL->MakeFlagArg(Opts.getOption(options::OPT_m64)));
+      DAL->append(DAL->MakeFlagArg(0, Opts.getOption(options::OPT_m64)));
 
   if (!Args.hasArg(options::OPT_mtune_EQ, false))
-    DAL->append(DAL->MakeJoinedArg(Opts.getOption(options::OPT_mtune_EQ),
+    DAL->append(DAL->MakeJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ),
                                     "core2"));
 
   return DAL;

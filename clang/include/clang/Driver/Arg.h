@@ -50,6 +50,10 @@ namespace driver {
     /// The option this argument is an instance of.
     const Option *Opt;
     
+    /// The argument this argument was derived from (during tool chain
+    /// argument translation), if any.
+    const Arg *BaseArg;
+
     /// The index at which this argument appears in the containing
     /// ArgList.
     unsigned Index;
@@ -60,25 +64,34 @@ namespace driver {
     mutable bool Claimed;
 
   protected:
-    Arg(ArgClass Kind, const Option *Opt, unsigned Index);
+    Arg(ArgClass Kind, const Option *Opt, unsigned Index,
+        const Arg *BaseArg = 0);
     
   public:
     Arg(const Arg &);
     virtual ~Arg();
 
     ArgClass getKind() const { return Kind; }
-
     const Option &getOption() const { return *Opt; }
-
     unsigned getIndex() const { return Index; }
+    
+    /// getBaseArg - Return the base argument which generated this
+    /// arg; this is either the argument itself or the argument it was
+    /// derived from during tool chain specific argument translation.
+    const Arg &getBaseArg() const { 
+      return BaseArg ? *BaseArg : *this; 
+    }
+    void setBaseArg(const Arg *_BaseArg) {
+      BaseArg = _BaseArg;
+    }
 
-    bool isClaimed() const { return Claimed; }
+    bool isClaimed() const { return getBaseArg().Claimed; }
 
     /// claim - Set the Arg claimed bit.
     
     // FIXME: We need to deal with derived arguments and set the bit
     // in the original argument; not the derived one.
-    void claim() const { Claimed = true; }
+    void claim() const { getBaseArg().Claimed = true; }
 
     virtual unsigned getNumValues() const = 0;
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
@@ -104,7 +117,7 @@ namespace driver {
   /// FlagArg - An argument with no value.
   class FlagArg : public Arg {
   public:
-    FlagArg(const Option *Opt, unsigned Index);
+    FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
@@ -120,7 +133,7 @@ namespace driver {
   /// PositionalArg - A simple positional argument.
   class PositionalArg : public Arg {
   public:
-    PositionalArg(const Option *Opt, unsigned Index);
+    PositionalArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
@@ -137,7 +150,7 @@ namespace driver {
   /// (suffixed) to the option.
   class JoinedArg : public Arg {
   public:
-    JoinedArg(const Option *Opt, unsigned Index);
+    JoinedArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
@@ -156,7 +169,8 @@ namespace driver {
     unsigned NumValues;
 
   public:
-    SeparateArg(const Option *Opt, unsigned Index, unsigned NumValues);
+    SeparateArg(const Option *Opt, unsigned Index, unsigned NumValues, 
+                const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
@@ -179,7 +193,8 @@ namespace driver {
     std::vector<std::string> Values;
 
   public:
-    CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str);
+    CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str, 
+                   const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
@@ -196,7 +211,8 @@ namespace driver {
   /// values.
   class JoinedAndSeparateArg : public Arg {
   public:
-    JoinedAndSeparateArg(const Option *Opt, unsigned Index);
+    JoinedAndSeparateArg(const Option *Opt, unsigned Index, 
+                         const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 

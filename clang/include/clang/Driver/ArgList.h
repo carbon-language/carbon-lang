@@ -208,19 +208,22 @@ namespace driver {
 
     /// MakeFlagArg - Construct a new FlagArg for the given option
     /// \arg Id.
-    Arg *MakeFlagArg(const Option *Opt) const;
+    Arg *MakeFlagArg(const Arg *BaseArg, const Option *Opt) const;
 
     /// MakePositionalArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakePositionalArg(const Option *Opt, const char *Value) const;
+    Arg *MakePositionalArg(const Arg *BaseArg, const Option *Opt, 
+                           const char *Value) const;
 
     /// MakeSeparateArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeSeparateArg(const Option *Opt, const char *Value) const;
+    Arg *MakeSeparateArg(const Arg *BaseArg, const Option *Opt, 
+                         const char *Value) const;
 
     /// MakeJoinedArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeJoinedArg(const Option *Opt, const char *Value) const;
+    Arg *MakeJoinedArg(const Arg *BaseArg, const Option *Opt, 
+                       const char *Value) const;
 
     /// @}
   };
