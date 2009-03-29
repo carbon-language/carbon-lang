@@ -1584,18 +1584,17 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     return QualCK;
 
   if (SCS1.ReferenceBinding && SCS2.ReferenceBinding) {
-    QualType T1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
-    QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
     // C++0x [over.ics.rank]p3b4:
     //   -- S1 and S2 are reference bindings (8.5.3) and neither refers to an
     //      implicit object parameter of a non-static member function declared
     //      without a ref-qualifier, and S1 binds an rvalue reference to an
     //      rvalue and S2 binds an lvalue reference.
-    // FIXME: We have far too little information for this check. We don't know
-    // if the bound object is an rvalue. We don't know if the binding type is
-    // an rvalue or lvalue reference. We don't know if we're dealing with the
-    // implicit object parameter, or if the member function in this case has
-    // a ref qualifier.
+    // FIXME: We don't know if we're dealing with the implicit object parameter,
+    // or if the member function in this case has a ref qualifier.
+    // (Of course, we don't have ref qualifiers yet.)
+    if (SCS1.RRefBinding != SCS2.RRefBinding)
+      return SCS1.RRefBinding ? ImplicitConversionSequence::Better
+                              : ImplicitConversionSequence::Worse;
 
     // C++ [over.ics.rank]p3b4:
     //   -- S1 and S2 are reference bindings (8.5.3), and the types to
@@ -1603,6 +1602,8 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     //      top-level cv-qualifiers, and the type to which the reference
     //      initialized by S2 refers is more cv-qualified than the type
     //      to which the reference initialized by S1 refers.
+    QualType T1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
+    QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
     T1 = Context.getCanonicalType(T1);
     T2 = Context.getCanonicalType(T2);
     if (T1.getUnqualifiedType() == T2.getUnqualifiedType()) {

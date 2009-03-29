@@ -114,6 +114,10 @@ namespace clang {
     /// direct binding (C++ [dcl.init.ref]).
     bool DirectBinding : 1;
 
+    /// RRefBinding - True when this is a reference binding of an rvalue
+    /// reference to an rvalue (C++0x [over.ics.rank]p3b4).
+    bool RRefBinding : 1;
+
     /// FromType - The type that this conversion is converting
     /// from. This is an opaque pointer that can be translated into a
     /// QualType.
