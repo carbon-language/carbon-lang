@@ -712,6 +712,9 @@ void Driver::BuildJobs(Compilation &C) const {
   if (Diags.getNumErrors())
     return;
 
+  // Claim -### here.
+  (void) C.getArgs().hasArg(options::OPT__HASH_HASH_HASH);
+  
   for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
        it != ie; ++it) {
     Arg *A = *it;
