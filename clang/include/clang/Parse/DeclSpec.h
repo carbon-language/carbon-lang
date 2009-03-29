@@ -18,7 +18,6 @@
 #include "clang/Parse/AttributeList.h"
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
   class LangOptions;
