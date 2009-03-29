@@ -23,6 +23,8 @@ namespace llvm {
 
   struct AlphaTargetAsmInfo : public TargetAsmInfo {
     explicit AlphaTargetAsmInfo(const AlphaTargetMachine &TM);
+
+    virtual unsigned RelocBehaviour() const;
   };
 
 } // namespace llvm
