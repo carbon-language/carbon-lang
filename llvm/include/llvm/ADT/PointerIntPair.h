@@ -107,11 +107,14 @@ template<typename PointerTy, unsigned IntBits, typename IntType>
 struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
   typedef PointerIntPair<PointerTy, IntBits, IntType> Ty;
   static Ty getEmptyKey() {
-    return Ty(reinterpret_cast<PointerTy>(-1 << IntBits),
-              IntType((1 << IntBits)-1));
+    intptr_t Val = -1;
+    Val <<= PointerLikeTypeTraits<PointerTy>::NumLowBitsAvailable;
+    return Ty(reinterpret_cast<PointerTy>(Val), IntType((1 << IntBits)-1));
   }
   static Ty getTombstoneKey() {
-    return Ty(reinterpret_cast<PointerTy>(-2 << IntBits), IntType(0));
+    intptr_t Val = -2;
+    Val <<= PointerLikeTypeTraits<PointerTy>::NumLowBitsAvailable;
+    return Ty(reinterpret_cast<PointerTy>(Val), IntType(0));
   }
   static unsigned getHashValue(Ty V) {
     uintptr_t IV = reinterpret_cast<uintptr_t>(V.getOpaqueValue());
