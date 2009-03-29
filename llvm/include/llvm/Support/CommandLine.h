@@ -744,7 +744,7 @@ template<class DataType, bool ExternalStorage, bool isClass>
 class opt_storage {
   DataType *Location;   // Where to store the object...
 
-  void check() {
+  void check() const {
     assert(Location != 0 && "cl::location(...) not specified for a command "
            "line option with external storage, "
            "or cl::init specified before cl::location()!!");
