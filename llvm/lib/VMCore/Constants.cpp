@@ -90,14 +90,29 @@ bool Constant::canTrap() const {
   }
 }
 
-/// ContaintsRelocations - Return true if the constant value contains
-/// relocations which cannot be resolved at compile time.
-bool Constant::ContainsRelocations() const {
-  if (isa<GlobalValue>(this))
-    return true;
+/// ContainsRelocations - Return true if the constant value contains relocations
+/// which cannot be resolved at compile time. Kind argument is used to filter
+/// only 'interesting' sorts of relocations.
+bool Constant::ContainsRelocations(unsigned Kind) const {
+  if (const GlobalValue* GV = dyn_cast<GlobalValue>(this)) {
+    bool isLocal = GV->hasLocalLinkage();
+    if ((Kind & Reloc::Local) && isLocal) {
+      // Global has local linkage and 'local' kind of relocations are
+      // requested
+      return true;
+    }
+
+    if ((Kind & Reloc::Global) && !isLocal) {
+      // Global has non-local linkage and 'global' kind of relocations are
+      // requested
+      return true;
+    }
+  }
+
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (getOperand(i)->ContainsRelocations())
       return true;
+
   return false;
 }
 
