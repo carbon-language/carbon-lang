@@ -410,8 +410,10 @@ Sema::ExprResult Sema::ActOnClassMessage(
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
       const ObjCInterfaceType *OCIT;
       OCIT = OCTD->getUnderlyingType()->getAsObjCInterfaceType();
-      if (!OCIT)
-        return Diag(receiverLoc, diag::err_invalid_receiver_to_message);
+      if (!OCIT) {
+        Diag(receiverLoc, diag::err_invalid_receiver_to_message);
+        return true;
+      }
       ClassDecl = OCIT->getDecl();
     }
   }

@@ -760,8 +760,7 @@ namespace {
     for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
          BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base) {
       if (const RecordType *RT = Base->getType()->getAsRecordType()) {
-        const CXXRecordDecl *BaseDecl
-          = cast<CXXRecordDecl>(RT->getDecl());
+        const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
         if (BaseDecl && BaseDecl->isAbstract())
           Collect(BaseDecl, Methods);
       }

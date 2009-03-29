@@ -1025,7 +1025,7 @@ public:
                                         bool Virtual, AccessSpecifier Access,
                                         TypeTy *basetype, 
                                         SourceLocation BaseLoc) {
-    return 0;
+    return BaseResult();
   }
 
   virtual void ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases, 
@@ -1440,7 +1440,7 @@ public:
     SourceLocation selectorLoc,
     SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs) {
-    return 0;
+    return ExprResult();
   }
   // ActOnInstanceMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
@@ -1449,7 +1449,7 @@ public:
     ExprTy *receiver, Selector Sel,
     SourceLocation lbrac, SourceLocation selectorLoc, SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs) {
-    return 0;
+    return ExprResult();
   }
   virtual DeclPtrTy ActOnForwardClassDeclaration(
     SourceLocation AtClassLoc,
@@ -1479,7 +1479,7 @@ public:
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                             ExprTy **Strings,
                                             unsigned NumStrings) {
-    return 0;
+    return ExprResult();
   }
 
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
@@ -1487,7 +1487,7 @@ public:
                                                SourceLocation LParenLoc,
                                                TypeTy *Ty,
                                                SourceLocation RParenLoc) {
-    return 0;
+    return ExprResult();
   }
   
   virtual ExprResult ParseObjCSelectorExpression(Selector Sel,
@@ -1495,7 +1495,7 @@ public:
                                                  SourceLocation SelLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc) {
-    return 0;
+    return ExprResult();
   }
   
   virtual ExprResult ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
@@ -1503,7 +1503,7 @@ public:
                                                  SourceLocation ProtoLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc) {
-    return 0;
+    return ExprResult();
   } 
 
   //===---------------------------- Pragmas -------------------------------===//
