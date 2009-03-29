@@ -1157,6 +1157,91 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
+class ARMABIInfo : public ABIInfo {
+  ABIArgInfo classifyReturnType(QualType RetTy, 
+                                ASTContext &Context) const;
+  
+  ABIArgInfo classifyArgumentType(QualType RetTy,
+                                  ASTContext &Context) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const;
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+
+void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it) {
+    it->info = classifyArgumentType(it->type, Context);
+  }
+}
+
+ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
+                                            ASTContext &Context) const {
+  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    return ABIArgInfo::getDirect();
+  }
+  // FIXME: This is kind of nasty... but there isn't much choice
+  // because the ARM backend doesn't support byval.
+  // FIXME: This doesn't handle alignment > 64 bits.
+  const llvm::Type* ElemTy;
+  unsigned SizeRegs;
+  if (Context.getTypeAlign(Ty) > 32) {
+    ElemTy = llvm::Type::Int64Ty;
+    SizeRegs = (Context.getTypeSize(Ty) + 63) / 64;
+  } else {
+    ElemTy = llvm::Type::Int32Ty;
+    SizeRegs = (Context.getTypeSize(Ty) + 31) / 32;
+  }
+  std::vector<const llvm::Type*> LLVMFields;
+  LLVMFields.push_back(llvm::ArrayType::get(ElemTy, SizeRegs));
+  const llvm::Type* STy = llvm::StructType::get(LLVMFields, true);
+  return ABIArgInfo::getCoerce(STy);
+}
+
+ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
+                                          ASTContext &Context) const {
+  if (RetTy->isVoidType()) {
+    return ABIArgInfo::getIgnore();
+  } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    // Aggregates <= 4 bytes are returned in r0; other aggregates
+    // are returned indirectly.
+    uint64_t Size = Context.getTypeSize(RetTy);
+    if (Size <= 32)
+      return ABIArgInfo::getCoerce(llvm::Type::Int32Ty);
+    return ABIArgInfo::getIndirect(0);
+  } else {
+    return ABIArgInfo::getDirect();
+  }
+}
+
+llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                      CodeGenFunction &CGF) const {
+  // FIXME: Need to handle alignment
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
+
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, 
+                                                       "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  llvm::Type *PTy = 
+    llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
+  
+  uint64_t Offset = 
+    llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 4);
+  llvm::Value *NextAddr = 
+    Builder.CreateGEP(Addr, 
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  return AddrTyped;
+}
+
 ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
                                               ASTContext &Context) const {
   if (RetTy->isVoidType()) {
@@ -1197,6 +1282,9 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     case 64:
       return *(TheABIInfo = new X86_64ABIInfo());
     }
+  } else if (strcmp(TargetPrefix, "arm") == 0) {
+    // FIXME: Support for OABI?
+    return *(TheABIInfo = new ARMABIInfo());
   }
 
   return *(TheABIInfo = new DefaultABIInfo);
