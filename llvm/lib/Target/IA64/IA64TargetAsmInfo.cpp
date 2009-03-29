@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "IA64TargetAsmInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
@@ -32,6 +34,11 @@ IA64TargetAsmInfo::IA64TargetAsmInfo(const TargetMachine &TM):
 
   // FIXME: would be nice to have rodata (no 'w') when appropriate?
   ConstantPoolSection = "\n\t.section .data, \"aw\", \"progbits\"\n";
+}
+
+unsigned IA64TargetAsmInfo::RelocBehaviour() const {
+  return (TM.getRelocationModel() != Reloc::Static ?
+          Reloc::LocalOrGlobal : Reloc::Global);
 }
 
 // FIXME: Support small data/bss/rodata sections someday.

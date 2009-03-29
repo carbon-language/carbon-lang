@@ -24,6 +24,7 @@ namespace llvm {
 
   struct IA64TargetAsmInfo : public ELFTargetAsmInfo {
     explicit IA64TargetAsmInfo(const TargetMachine &TM);
+    virtual unsigned RelocBehaviour() const;
   };
 
 
