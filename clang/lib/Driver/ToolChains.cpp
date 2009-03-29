@@ -111,13 +111,12 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
     case Action::BindArchClass:
       assert(0 && "Invalid tool kind.");
     case Action::PreprocessJobClass:
-      T = new tools::gcc::Preprocess(*this); break;
-    case Action::PrecompileJobClass:
-      T = new tools::gcc::Precompile(*this); break;
+      T = new tools::darwin::Preprocess(*this); break;
     case Action::AnalyzeJobClass:
       T = new tools::Clang(*this); break;
+    case Action::PrecompileJobClass:
     case Action::CompileJobClass:
-      T = new tools::gcc::Compile(*this); break;
+      T = new tools::darwin::Compile(*this); break;
     case Action::AssembleJobClass:
       T = new tools::darwin::Assemble(*this); break;
     case Action::LinkJobClass:

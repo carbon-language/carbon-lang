@@ -787,9 +787,12 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
     assert(Output.isPipe() && "Unexpected CC1 output.");
   }
 
-  AddCPPOptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
-
-  Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
+  if (Args.hasArg(options::OPT_E)) {
+    AddCPPOptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
+  } else {
+    AddCPPOptionsArgs(Args, CmdArgs, Inputs, ArgStringList());
+    CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
+  }
   
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec = 
