@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Dwarf.h"
 #include <cctype>
@@ -189,6 +190,12 @@ static bool isConstantString(const Constant *C) {
   return false;
 }
 
+unsigned TargetAsmInfo::RelocBehaviour() const {
+  // By default - all relocations in PIC mode would force symbol to be
+  // placed in r/w section.
+  return (TM.getRelocationModel() != Reloc::Static ?
+          Reloc::LocalOrGlobal : Reloc::None);
+}
 
 SectionKind::Kind
 TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
@@ -208,9 +215,21 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     // check its initializer to decide, which section to output it into. Also
     // note, there is no thread-local r/o section.
     Constant *C = GVar->getInitializer();
-    if (C->ContainsRelocations())
-      return SectionKind::ROData;
-    else {
+    if (C->ContainsRelocations(Reloc::LocalOrGlobal)) {
+      // Decide, whether it is still possible to put symbol into r/o section.
+      unsigned Reloc = RelocBehaviour();
+
+      // We already did a query for 'all' relocs, thus - early exits.
+      if (Reloc == Reloc::LocalOrGlobal)
+        return SectionKind::Data;
+      else if (Reloc == Reloc::None)
+        return SectionKind::ROData;
+      else {
+        // Ok, target wants something funny. Honour it.
+        return (C->ContainsRelocations(Reloc) ?
+                SectionKind::Data : SectionKind::ROData);
+      }
+    } else {
       // Check, if initializer is a null-terminated string
       if (isConstantString(C))
         return SectionKind::RODataMergeStr;

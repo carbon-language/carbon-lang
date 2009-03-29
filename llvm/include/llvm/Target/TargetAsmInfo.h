@@ -577,6 +577,12 @@ namespace llvm {
     virtual SectionKind::Kind
     SectionKindForGlobal(const GlobalValue *GV) const;
 
+    /// RelocBehaviour - Describes how relocations should be treated when
+    /// selecting sections. Reloc::Global bit should be set if global
+    /// relocations should force object to be placed in read-write
+    /// sections. Reloc::Local bit should be set if local relocations should
+    /// force object to be placed in read-write sections.
+    virtual unsigned RelocBehaviour() const;
 
     /// SectionFlagsForGlobal - This hook allows the target to select proper
     /// section flags either for given global or for section.

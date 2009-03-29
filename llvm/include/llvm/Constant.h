@@ -20,6 +20,7 @@ namespace llvm {
   template<typename T> class SmallVectorImpl;
 
   namespace Reloc {
+    const unsigned None   = 0;
     const unsigned Local  = 1 << 0; ///< Local relocations are required
     const unsigned Global = 1 << 1; ///< Global relocations are required
     const unsigned LocalOrGlobal = Local | Global;
