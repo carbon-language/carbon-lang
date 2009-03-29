@@ -20,7 +20,7 @@
 
 namespace llvm {
   template <typename T>
-  class PointerLikeTypeInfo;
+  class PointerLikeTypeTraits;
 }
 
 namespace clang {
@@ -48,7 +48,7 @@ namespace clang {
 
 namespace llvm {
   template <int UID>
-  class PointerLikeTypeInfo<clang::OpaquePtr<UID> > {
+  class PointerLikeTypeTraits<clang::OpaquePtr<UID> > {
   public:
     static inline void *getAsVoidPointer(clang::OpaquePtr<UID> P) {
       // FIXME: Doesn't work? return P.getAs< void >();

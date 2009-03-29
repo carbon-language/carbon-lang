@@ -29,7 +29,7 @@ using llvm::dyn_cast_or_null;
 
 namespace llvm {
   template <typename T>
-  class PointerLikeTypeInfo;
+  class PointerLikeTypeTraits;
 }
 
 namespace clang {
@@ -225,7 +225,7 @@ template<> struct simplify_type< ::clang::QualType>
   
 // Teach SmallPtrSet that QualType is "basically a pointer".
 template<>
-class PointerLikeTypeInfo<clang::QualType> {
+class PointerLikeTypeTraits<clang::QualType> {
 public:
   static inline void *getAsVoidPointer(clang::QualType P) {
     return P.getAsOpaquePtr();
