@@ -477,6 +477,292 @@ const char *darwin::CC1::getCC1Name(types::ID Type) const {
   }
 }
 
+const char *darwin::CC1::getBaseInputName(const ArgList &Args, 
+                                          const InputInfoList &Inputs) const {
+  llvm::sys::Path P(Inputs[0].getBaseInput());
+  return Args.MakeArgString(P.getLast().c_str());
+}
+
+const char *darwin::CC1::getBaseInputStem(const ArgList &Args, 
+                                          const InputInfoList &Inputs) const {
+  const char *Str = getBaseInputName(Args, Inputs);
+
+  if (const char *End = strchr(Str, '.'))
+    return Args.MakeArgString(std::string(Str, End).c_str());
+
+  return Str;
+}
+
+const char *
+darwin::CC1::getDependencyFileName(const ArgList &Args, 
+                                   const InputInfoList &Inputs) const {
+  // FIXME: Think about this more.
+  std::string Res;
+
+  if (Arg *OutputOpt = Args.getLastArg(options::OPT_o)) {
+    std::string Str(OutputOpt->getValue(Args));
+    
+    Res = Str.substr(0, Str.rfind('.'));
+  } else
+    Res = getBaseInputStem(Args, Inputs);
+
+  return Args.MakeArgString((Res + ".d").c_str());
+}
+
+void darwin::CC1::AddCC1Args(const ArgList &Args, 
+                             ArgStringList &CmdArgs) const {
+  // Derived from cc1 spec.
+
+  // FIXME: -fapple-kext seems to disable this too. Investigate.
+  if (!Args.hasArg(options::OPT_mkernel) && !Args.hasArg(options::OPT_static) &&
+      !Args.hasArg(options::OPT_mdynamic_no_pic))
+    CmdArgs.push_back("-fPIC");
+
+  // gcc has some code here to deal with when no -mmacosx-version-min
+  // and no -miphoneos-version-min is present, but this never happens
+  // due to tool chain specific argument translation.
+
+  // FIXME: Remove mthumb
+  // FIXME: Remove mno-thumb
+  // FIXME: Remove faltivec
+  // FIXME: Remove mno-fused-madd
+  // FIXME: Remove mlong-branch
+  // FIXME: Remove mlongcall
+  // FIXME: Remove mcpu=G4
+  // FIXME: Remove mcpu=G5
+  
+  if (Args.hasArg(options::OPT_g_Flag) &&
+      !Args.hasArg(options::OPT_fno_eliminate_unused_debug_symbols))
+    CmdArgs.push_back("-feliminate-unused-debug-symbols");
+}
+
+void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
+                                    const InputInfoList &Inputs,
+                                    const ArgStringList &OutputArgs) const {
+  const Driver &D = getToolChain().getHost().getDriver();
+
+  // Derived from cc1_options spec.
+  if (Args.hasArg(options::OPT_fast) ||
+      Args.hasArg(options::OPT_fastf) ||
+      Args.hasArg(options::OPT_fastcp))
+    CmdArgs.push_back("-O3");
+      
+  if (Arg *A = Args.getLastArg(options::OPT_pg))
+    if (Args.hasArg(options::OPT_fomit_frame_pointer))
+      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << A->getAsString(Args) << "-fomit-frame-pointer";
+
+  AddCC1Args(Args, CmdArgs);
+
+  if (!Args.hasArg(options::OPT_Q))
+    CmdArgs.push_back("-quiet");
+
+  CmdArgs.push_back("-dumpbase");
+  CmdArgs.push_back(getBaseInputName(Args, Inputs));
+
+  Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
+
+  Args.AddAllArgs(CmdArgs, options::OPT_m_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_a_Group);
+
+  // FIXME: The goal is to use the user provided -o if that is our
+  // final output, otherwise to drive from the original input
+  // name. Find a clean way to go about this.
+  if ((Args.hasArg(options::OPT_c) || Args.hasArg(options::OPT_S)) &&
+      Args.hasArg(options::OPT_o)) {
+    Arg *OutputOpt = Args.getLastArg(options::OPT_o);
+    CmdArgs.push_back("-auxbase-strip");
+    CmdArgs.push_back(OutputOpt->getValue(Args));
+  } else {
+    CmdArgs.push_back("-auxbase");
+    CmdArgs.push_back(getBaseInputStem(Args, Inputs));
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_g_Group);
+
+  Args.AddAllArgs(CmdArgs, options::OPT_O);
+  // FIXME: -Wall is getting some special treatment. Investigate.
+  Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
+  Args.AddLastArg(CmdArgs, options::OPT_w);
+  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi, 
+                  options::OPT_trigraphs);
+  if (Args.hasArg(options::OPT_v))
+    CmdArgs.push_back("-version");
+  if (Args.hasArg(options::OPT_pg))
+    CmdArgs.push_back("-p");
+  Args.AddLastArg(CmdArgs, options::OPT_p);
+  
+  // The driver treats -fsyntax-only specially.
+  Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
+  
+  Args.AddAllArgs(CmdArgs, options::OPT_undef);
+  if (Args.hasArg(options::OPT_Qn))
+    CmdArgs.push_back("-fno-ident");
+   
+  // FIXME: This isn't correct.
+  //Args.AddLastArg(CmdArgs, options::OPT__help)
+  //Args.AddLastArg(CmdArgs, options::OPT__targetHelp)
+
+  CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
+
+  // FIXME: Still don't get what is happening here. Investigate.
+  Args.AddAllArgs(CmdArgs, options::OPT__param);
+
+  if (Args.hasArg(options::OPT_fmudflap) ||
+      Args.hasArg(options::OPT_fmudflapth)) {
+    CmdArgs.push_back("-fno-builtin");
+    CmdArgs.push_back("-fno-merge-constants");
+  }
+  
+  if (Args.hasArg(options::OPT_coverage)) {
+    CmdArgs.push_back("-fprofile-arcs");
+    CmdArgs.push_back("-ftest-coverage");
+  }
+
+  if (types::isCXX(Inputs[0].getType()))
+    CmdArgs.push_back("-D__private_extern__=extern");
+}
+
+void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
+                                    const InputInfoList &Inputs,
+                                    const ArgStringList &OutputArgs) const {
+  // Derived from cpp_options
+  AddCPPUniqueOptionsArgs(Args, CmdArgs, Inputs);
+  
+  CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
+
+  AddCC1Args(Args, CmdArgs);
+
+  // NOTE: The code below has some commonality with cpp_options, but
+  // in classic gcc style ends up sending things in different
+  // orders. This may be a good merge candidate once we drop pedantic
+  // compatibility.
+
+  Args.AddAllArgs(CmdArgs, options::OPT_m_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi, 
+                  options::OPT_trigraphs);
+  Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
+  Args.AddLastArg(CmdArgs, options::OPT_w);
+  
+  // The driver treats -fsyntax-only specially.
+  Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
+
+  if (Args.hasArg(options::OPT_g_Group) && !Args.hasArg(options::OPT_g0) &&
+      !Args.hasArg(options::OPT_fno_working_directory))
+    CmdArgs.push_back("-fworking-directory");
+
+  Args.AddAllArgs(CmdArgs, options::OPT_O);
+  Args.AddAllArgs(CmdArgs, options::OPT_undef);
+  if (Args.hasArg(options::OPT_save_temps))
+    CmdArgs.push_back("-fpch-preprocess");
+}
+
+void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args, 
+                                          ArgStringList &CmdArgs,
+                                          const InputInfoList &Inputs) const
+{
+  const Driver &D = getToolChain().getHost().getDriver();
+
+  // Derived from cpp_unique_options.
+  Arg *A;
+  if ((A = Args.getLastArg(options::OPT_C)) || 
+      (A = Args.getLastArg(options::OPT_CC))) {
+    if (!Args.hasArg(options::OPT_E))
+      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << A->getAsString(Args) << "-E";
+  }
+  if (!Args.hasArg(options::OPT_Q))
+    CmdArgs.push_back("-quiet");
+  Args.AddAllArgs(CmdArgs, options::OPT_nostdinc);
+  Args.AddLastArg(CmdArgs, options::OPT_v);
+  Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
+  Args.AddLastArg(CmdArgs, options::OPT_P);
+
+  // FIXME: Handle %I properly.
+  if (getToolChain().getArchName() == "x86_64") {
+    CmdArgs.push_back("-imultilib");
+    CmdArgs.push_back("x86_64");
+  }
+
+  if (Args.hasArg(options::OPT_MD)) {
+    CmdArgs.push_back("-MD");
+    CmdArgs.push_back(getDependencyFileName(Args, Inputs));
+  }
+
+  if (Args.hasArg(options::OPT_MMD)) {
+    CmdArgs.push_back("-MMD");
+    CmdArgs.push_back(getDependencyFileName(Args, Inputs));
+  }
+
+  Args.AddLastArg(CmdArgs, options::OPT_M);
+  Args.AddLastArg(CmdArgs, options::OPT_MM);
+  Args.AddAllArgs(CmdArgs, options::OPT_MF);
+  Args.AddLastArg(CmdArgs, options::OPT_MG);
+  Args.AddLastArg(CmdArgs, options::OPT_MP);
+  Args.AddAllArgs(CmdArgs, options::OPT_MQ);
+  Args.AddAllArgs(CmdArgs, options::OPT_MT);
+  if (!Args.hasArg(options::OPT_M) && !Args.hasArg(options::OPT_MM) &&
+      (Args.hasArg(options::OPT_MD) || Args.hasArg(options::OPT_MMD))) {
+    if (Arg *OutputOpt = Args.getLastArg(options::OPT_o)) {
+      CmdArgs.push_back("-MQ");
+      CmdArgs.push_back(OutputOpt->getValue(Args));
+    }
+  }
+
+  Args.AddLastArg(CmdArgs, options::OPT_remap);
+  if (Args.hasArg(options::OPT_g3))
+    CmdArgs.push_back("-dD");
+  Args.AddLastArg(CmdArgs, options::OPT_H);
+
+  AddCPPArgs(Args, CmdArgs);
+
+  Args.AddAllArgs(CmdArgs, options::OPT_D, options::OPT_U, options::OPT_A);
+  Args.AddAllArgs(CmdArgs, options::OPT_i_Group);
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    
+    if (II.isPipe())
+      CmdArgs.push_back("-");
+    else
+      CmdArgs.push_back(II.getFilename());
+  }
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wp_COMMA,
+                       options::OPT_Xpreprocessor);
+
+  if (Args.hasArg(options::OPT_fmudflap)) {
+    CmdArgs.push_back("-D_MUDFLAP");
+    CmdArgs.push_back("-include");
+    CmdArgs.push_back("mf-runtime.h");
+  }
+
+  if (Args.hasArg(options::OPT_fmudflapth)) {
+    CmdArgs.push_back("-D_MUDFLAP");
+    CmdArgs.push_back("-D_MUDFLAPTH");
+    CmdArgs.push_back("-include");
+    CmdArgs.push_back("mf-runtime.h");
+  }
+}
+
+void darwin::CC1::AddCPPArgs(const ArgList &Args, 
+                             ArgStringList &CmdArgs) const {
+  // Derived from cpp spec.
+
+  if (Args.hasArg(options::OPT_static)) {
+    // The gcc spec is broken here, it refers to dynamic but
+    // that has been translated. Start by being bug compatible.
+            
+    // if (!Args.hasArg(arglist.parser.dynamicOption))
+    CmdArgs.push_back("-D__STATIC__");
+  } else
+    CmdArgs.push_back("-D__DYNAMIC__");
+
+  if (Args.hasArg(options::OPT_pthread))
+    CmdArgs.push_back("-D_REENTRANT");
+}
+
 void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
                                       Job &Dest, const InputInfo &Output, 
                                       const InputInfoList &Inputs, 
@@ -550,7 +836,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
                           Args.hasArg(options::OPT_S));
 
   if (types::getPreprocessedType(InputType) != types::TY_INVALID) {
-    AddCPPUniqueOptionsArgs(Args, CmdArgs);
+    AddCPPUniqueOptionsArgs(Args, CmdArgs, Inputs);
     if (OutputArgsEarly) {
       AddCC1OptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
     } else {

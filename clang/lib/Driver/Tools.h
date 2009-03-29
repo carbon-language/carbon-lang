@@ -119,18 +119,24 @@ namespace darwin {
   class VISIBILITY_HIDDEN CC1 : public Tool  {
   protected:
     const char *getCC1Name(types::ID Type) const;
+    const char *getBaseInputName(const ArgList &Args, 
+                                 const InputInfoList &Input) const;
+    const char *getBaseInputStem(const ArgList &Args, 
+                                 const InputInfoList &Input) const;
+    const char *getDependencyFileName(const ArgList &Args, 
+                                      const InputInfoList &Inputs) const;
 
-    void AddCC1Args(const ArgList &Args, ArgStringList &CmdArgs) const {}
+    void AddCC1Args(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
                            const InputInfoList &Inputs,
-                           const ArgStringList &OutputArgs) const {}
-    void AddCPPUniqueOptionsArgs(const ArgList &Args, 
-                                 ArgStringList &CmdArgs) const {}
-    void AddCPPArgs(const ArgList &Args, ArgStringList &CmdArgs) const {}
-
+                           const ArgStringList &OutputArgs) const;
     void AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
                            const InputInfoList &Inputs,
-                           const ArgStringList &OutputArgs) const {}
+                           const ArgStringList &OutputArgs) const;
+    void AddCPPUniqueOptionsArgs(const ArgList &Args, 
+                                 ArgStringList &CmdArgs,
+                                 const InputInfoList &Inputs) const;
+    void AddCPPArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:
     CC1(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
