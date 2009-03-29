@@ -78,18 +78,34 @@ namespace llvm {
       Val.setInt(1);
     }
     
+    /// isNull - Return true if the pointer help in the union is null,
+    /// regardless of which type it is.
     bool isNull() const { return Val.getPointer() == 0; }
     
+    /// is<T>() return true if the Union currently holds the type matching T.
     template<typename T>
     int is() const {
       return Val.getInt() == ::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0);
     }
+    
+    /// get<T>() - Return the value of the specified pointer type. If the
+    /// specified pointer type is incorrect, assert.
     template<typename T>
     T get() const {
       assert(is<T>() && "Invalid accessor called");
       return static_cast<T>(Val.getPointer());
     }
     
+    /// dyn_cast<T>() - If the current value is of the specified pointer type,
+    /// return it, otherwise return null.
+    template<typename T>
+    T dyn_cast() const {
+      if (is<T>()) return static_cast<T>(Val.getPointer());
+      return T();
+    }
+    
+    /// Assignment operators - Allow assigning into this union from either
+    /// pointer type, setting the discriminator to remember what it came from.
     const PointerUnion &operator=(const PT1 &RHS) {
       Val.setPointer(RHS);
       Val.setInt(0);
