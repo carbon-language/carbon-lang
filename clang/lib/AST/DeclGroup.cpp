@@ -19,13 +19,12 @@
 #include "llvm/Bitcode/Deserialize.h"
 using namespace clang;
 
-DeclGroup* DeclGroup::Create(ASTContext& C, unsigned numdecls, Decl** decls) {
-  assert (numdecls > 0);
-  unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * numdecls;
-  unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
-  void* mem = C.Allocate(size, alignment);
-  new (mem) DeclGroup(numdecls, decls);
-  return static_cast<DeclGroup*>(mem);
+DeclGroup* DeclGroup::Create(ASTContext &C, Decl **Decls, unsigned NumDecls) {
+  assert(NumDecls > 1 && "Invalid DeclGroup");
+  unsigned Size = sizeof(DeclGroup) + sizeof(Decl*) * NumDecls;
+  void* Mem = C.Allocate(Size, llvm::AlignOf<DeclGroup>::Alignment);
+  new (Mem) DeclGroup(NumDecls, Decls);
+  return static_cast<DeclGroup*>(Mem);
 }
 
 /// Emit - Serialize a DeclGroup to Bitcode.
@@ -37,9 +36,9 @@ void DeclGroup::Emit(llvm::Serializer& S) const {
 /// Read - Deserialize a DeclGroup from Bitcode.
 DeclGroup* DeclGroup::Read(llvm::Deserializer& D, ASTContext& C) {
   unsigned NumDecls = (unsigned) D.ReadInt();
-  unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * NumDecls;
+  unsigned Size = sizeof(DeclGroup) + sizeof(Decl*) * NumDecls;
   unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
-  DeclGroup* DG = (DeclGroup*) C.Allocate(size, alignment);
+  DeclGroup* DG = (DeclGroup*) C.Allocate(Size, alignment);
   new (DG) DeclGroup();
   DG->NumDecls = NumDecls;
   D.BatchReadOwnedPtrs(NumDecls, &(*DG)[0], C);

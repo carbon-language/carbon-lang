@@ -328,29 +328,28 @@ public:
   /// an empty string if not.  This is used for pretty crash reporting. 
   virtual std::string getDeclName(DeclPtrTy D);
   
+  DeclGroupPtrTy ConvertDeclToDeclGroup(DeclPtrTy Ptr);
+
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc, 
                               Scope *S, const CXXScopeSpec *SS);
-  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D,
-                                    DeclPtrTy LastInGroup){
-    return ActOnDeclarator(S, D, LastInGroup, false);
+  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
+    return ActOnDeclarator(S, D, false);
   }
-  DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D, DeclPtrTy LastInGroup,
-                            bool IsFunctionDefinition);
+  DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition);
   void RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
                                         Scope *S);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                    QualType R, Decl* LastDeclarator,
+                                    QualType R,
                                     Decl* PrevDecl, bool& InvalidDecl,
                                     bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, Decl* LastDeclarator,
+                                     QualType R, 
                                      NamedDecl* PrevDecl, bool& InvalidDecl,
                                      bool &Redeclaration);
   bool CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
                                 bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, Decl *LastDeclarator,
-                                     NamedDecl* PrevDecl, 
+                                     QualType R, NamedDecl* PrevDecl, 
                                      bool IsFunctionDefinition,
                                      bool& InvalidDecl, bool &Redeclaration);
   bool CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
@@ -367,8 +366,8 @@ public:
   void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit);
   void ActOnUninitializedDecl(DeclPtrTy dcl);
   virtual void SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc);
-  virtual DeclPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy Group);
-
+  virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
+                                                 unsigned NumDecls);
   virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D);
   virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *S, DeclPtrTy D);
@@ -490,8 +489,7 @@ public:
                                 Stmt* ParentCompoundStmt);
 
   /// Subroutines of ActOnDeclarator().
-  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
-                                Decl *LastDecl);
+  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T);
   bool MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
@@ -1084,7 +1082,7 @@ public:
   virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                              MultiStmtArg Elts,
                                              bool isStmtExpr);
-  virtual OwningStmtResult ActOnDeclStmt(DeclPtrTy Decl,
+  virtual OwningStmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
                                          SourceLocation StartLoc,
                                          SourceLocation EndLoc);
   virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
@@ -1589,8 +1587,7 @@ public:
   virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
                                              ExprTy *BitfieldWidth,
-                                             ExprTy *Init,
-                                             DeclPtrTy LastInGroup);
+                                             ExprTy *Init);
 
   virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorD,
                                             Scope *S,
@@ -2076,7 +2073,7 @@ public:
   virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
                       DeclPtrTy *allMethods = 0, unsigned allNum = 0,
                       DeclPtrTy *allProperties = 0, unsigned pNum = 0,
-                      DeclPtrTy *allTUVars = 0, unsigned tuvNum = 0);
+                      DeclGroupPtrTy *allTUVars = 0, unsigned tuvNum = 0);
   
   virtual DeclPtrTy ActOnProperty(Scope *S, SourceLocation AtLoc,
                                   FieldDeclarator &FD, ObjCDeclSpec &ODS,

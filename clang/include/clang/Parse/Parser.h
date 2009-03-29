@@ -120,6 +120,7 @@ public:
   typedef Action::ExprTy ExprTy;
   typedef Action::StmtTy StmtTy;
   typedef Action::DeclPtrTy DeclPtrTy;
+  typedef Action::DeclGroupPtrTy DeclGroupPtrTy;
   typedef Action::TypeTy TypeTy;
   typedef Action::BaseTy BaseTy;
   typedef Action::MemInitTy MemInitTy;
@@ -167,7 +168,7 @@ public:
   
   /// ParseTopLevelDecl - Parse one top-level declaration. Returns true if 
   /// the EOF was encountered.
-  bool ParseTopLevelDecl(DeclPtrTy &Result);
+  bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
   
 private:
   //===--------------------------------------------------------------------===//
@@ -547,8 +548,8 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
-  DeclPtrTy ParseExternalDeclaration();
-  DeclPtrTy ParseDeclarationOrFunctionDefinition(
+  DeclGroupPtrTy ParseExternalDeclaration();
+  DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
             TemplateParameterLists *TemplateParams = 0,
             AccessSpecifier AS = AS_none);
                                                
@@ -807,9 +808,9 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   
-  DeclPtrTy ParseDeclaration(unsigned Context);
-  DeclPtrTy ParseSimpleDeclaration(unsigned Context);
-  DeclPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
+  DeclGroupPtrTy ParseDeclaration(unsigned Context);
+  DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context);
+  DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                                   TemplateParameterLists *TemplateParams = 0,
@@ -1009,7 +1010,7 @@ private:
                            AccessSpecifier AS = AS_none);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclPtrTy TagDecl);
-  DeclPtrTy ParseCXXClassMemberDeclaration(AccessSpecifier AS);
+  void ParseCXXClassMemberDeclaration(AccessSpecifier AS);
   void ParseConstructorInitializer(DeclPtrTy ConstructorDecl);
   MemInitResult ParseMemInitializer(DeclPtrTy ConstructorDecl);
 

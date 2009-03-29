@@ -37,31 +37,13 @@ Sema::OwningStmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
   return Owned(new (Context) NullStmt(SemiLoc));
 }
 
-Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclPtrTy decl,
+Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
-  Decl *D = decl.getAs<Decl>();
-  if (D == 0)
-    return StmtError();
-
-  // This is a temporary hack until we are always passing around
-  // DeclGroupRefs.
-  llvm::SmallVector<Decl*, 10> decls;
-  while (D) { 
-    Decl* d = D;
-    D = D->getNextDeclarator();
-    d->setNextDeclarator(0);
-    decls.push_back(d);
-  }
-
-  assert (!decls.empty());
-
-  if (decls.size() == 1) {
-    DeclGroupRef DG(*decls.begin());                      
-    return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
-  }
-
-  DeclGroupRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));
+  // If we have an invalid decl, just return an error.
+  if (!dg) return StmtError();
+  
+  DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
   return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
 }
 

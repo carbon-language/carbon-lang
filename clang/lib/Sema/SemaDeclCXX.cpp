@@ -473,8 +473,7 @@ void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
 /// declarators on it.
 Sema::DeclPtrTy
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
-                               ExprTy *BW, ExprTy *InitExpr,
-                               DeclPtrTy LastInGroup) {
+                               ExprTy *BW, ExprTy *InitExpr) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationName Name = GetNameForDeclarator(D);
   Expr *BitWidth = static_cast<Expr*>(BW);
@@ -553,10 +552,10 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                          AS);
     assert(Member && "HandleField never returns null");
   } else {
-    Member = ActOnDeclarator(S, D, LastInGroup).getAs<Decl>();
+    Member = ActOnDeclarator(S, D).getAs<Decl>();
     if (!Member) {
       if (BitWidth) DeleteExpr(BitWidth);
-      return LastInGroup;
+      return DeclPtrTy();
     }
 
     // Non-instance-fields can't have a bitfield.
@@ -595,7 +594,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   if (isInstField) {
     FieldCollector->Add(cast<FieldDecl>(Member));
-    return LastInGroup;
+    return DeclPtrTy();
   }
   return DeclPtrTy::make(Member);
 }

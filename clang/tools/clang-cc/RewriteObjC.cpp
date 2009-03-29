@@ -126,7 +126,11 @@ namespace {
     virtual void Initialize(ASTContext &context);
 
     // Top Level Driver code.
-    virtual void HandleTopLevelDecl(Decl *D);
+    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
+        HandleTopLevelSingleDecl(*I);
+    }
+    void HandleTopLevelSingleDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
     RewriteObjC(std::string inFile, std::string outFile,
                 Diagnostic &D, const LangOptions &LOpts);
@@ -550,7 +554,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
 // Top Level Driver Code
 //===----------------------------------------------------------------------===//
 
-void RewriteObjC::HandleTopLevelDecl(Decl *D) {
+void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
   // Two cases: either the decl could be in the main file, or it could be in a
   // #included file.  If the former, rewrite it now.  If the later, check to see
   // if we rewrote the #include/#import.
@@ -583,7 +587,7 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
     for (DeclContext::decl_iterator DI = LSD->decls_begin(),
                                  DIEnd = LSD->decls_end();
          DI != DIEnd; ++DI)
-      HandleTopLevelDecl(*DI);
+      HandleTopLevelSingleDecl(*DI);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->isFromMainFile(Loc))

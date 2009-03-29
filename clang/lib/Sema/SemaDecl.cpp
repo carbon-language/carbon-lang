@@ -39,6 +39,10 @@ std::string Sema::getDeclName(DeclPtrTy d) {
   return "";
 }
 
+Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
+  return DeclGroupPtrTy::make(DeclGroupRef(Ptr.getAs<Decl>()));
+}
+
 /// \brief If the identifier refers to a type name within this scope,
 /// return the declaration of that type.
 ///
@@ -1235,10 +1239,7 @@ static bool isNearlyMatchingFunction(ASTContext &Context,
 }
 
 Sema::DeclPtrTy 
-Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclPtrTy lastDecl,
-                      bool IsFunctionDefinition) {
-  NamedDecl *LastDeclarator =
-    dyn_cast_or_null<NamedDecl>(lastDecl.getAs<Decl>());
+Sema::ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition) {
   DeclarationName Name = GetNameForDeclarator(D);
 
   // All of these full declarators require an identifier.  If it doesn't have
@@ -1356,14 +1357,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclPtrTy lastDecl,
 
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    New = ActOnTypedefDeclarator(S, D, DC, R, LastDeclarator, PrevDecl,
+    New = ActOnTypedefDeclarator(S, D, DC, R, PrevDecl,
                                  InvalidDecl, Redeclaration);
   } else if (R->isFunctionType()) {
-    New = ActOnFunctionDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
+    New = ActOnFunctionDeclarator(S, D, DC, R, PrevDecl, 
                                   IsFunctionDefinition, InvalidDecl,
                                   Redeclaration);
   } else {
-    New = ActOnVariableDeclarator(S, D, DC, R, LastDeclarator, PrevDecl, 
+    New = ActOnVariableDeclarator(S, D, DC, R, PrevDecl, 
                                   InvalidDecl, Redeclaration);
   }
 
@@ -1454,8 +1455,7 @@ Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
 
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                             QualType R, Decl* LastDeclarator,
-                             Decl* PrevDecl, bool& InvalidDecl, 
+                             QualType R, Decl* PrevDecl, bool& InvalidDecl, 
                              bool &Redeclaration) {
   // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
@@ -1475,7 +1475,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
            diag::err_virtual_non_function);
   }
 
-  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, LastDeclarator);
+  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R);
   if (!NewTD) return 0;
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
@@ -1580,8 +1580,7 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
 
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                              QualType R, Decl* LastDeclarator,
-                              NamedDecl* PrevDecl, bool& InvalidDecl,
+                              QualType R,NamedDecl* PrevDecl, bool& InvalidDecl,
                               bool &Redeclaration) {
   DeclarationName Name = GetNameForDeclarator(D);
 
@@ -1645,7 +1644,6 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                           // FIXME: Move to DeclGroup...
                           D.getDeclSpec().getSourceRange().getBegin());
   NewVD->setThreadSpecified(ThreadSpecified);
-  NewVD->setNextDeclarator(LastDeclarator);
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
@@ -1800,8 +1798,8 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
 
 NamedDecl* 
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                              QualType R, Decl *LastDeclarator,
-                              NamedDecl* PrevDecl, bool IsFunctionDefinition,
+                              QualType R, NamedDecl* PrevDecl,
+                              bool IsFunctionDefinition,
                               bool& InvalidDecl, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
@@ -1937,7 +1935,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                  // FIXME: Move to DeclGroup...
                                  D.getDeclSpec().getSourceRange().getBegin());
   }
-  NewFD->setNextDeclarator(LastDeclarator);
 
   // Set the lexical context. If the declarator has a C++
   // scope specifier, the lexical context will be different
@@ -2517,39 +2514,29 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
   }
 }
 
-/// The declarators are chained together backwards, reverse the list.
-Sema::DeclPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy group) {
-  // Often we have single declarators, handle them quickly.
-  Decl *Group = group.getAs<Decl>();
-  if (Group == 0)
-    return DeclPtrTy();
+Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
+                                                   unsigned NumDecls) {
+  llvm::SmallVector<Decl*, 8> Decls;
   
-  Decl *NewGroup = 0;
-  if (Group->getNextDeclarator() == 0) 
-    NewGroup = Group;
-  else { // reverse the list.
-    while (Group) {
-      Decl *Next = Group->getNextDeclarator();
-      Group->setNextDeclarator(NewGroup);
-      NewGroup = Group;
-      Group = Next;
-    }
-  }
+  for (unsigned i = 0; i != NumDecls; ++i)
+    if (Decl *D = Group[i].getAs<Decl>())
+      Decls.push_back(D);
+  
   // Perform semantic analysis that depends on having fully processed both
   // the declarator and initializer.
-  for (Decl *ID = NewGroup; ID; ID = ID->getNextDeclarator()) {
-    VarDecl *IDecl = dyn_cast<VarDecl>(ID);
+  for (unsigned i = 0, e = Decls.size(); i != e; ++i) {
+    VarDecl *IDecl = dyn_cast<VarDecl>(Decls[i]);
     if (!IDecl)
       continue;
     QualType T = IDecl->getType();
-
+    
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
     if (IDecl->isBlockVarDecl() && 
         IDecl->getStorageClass() != VarDecl::Extern) {
       if (!IDecl->isInvalidDecl() &&
           RequireCompleteType(IDecl->getLocation(), T, 
-                                 diag::err_typecheck_decl_incomplete_type))
+                              diag::err_typecheck_decl_incomplete_type))
         IDecl->setInvalidDecl();
     }
     // File scope. C99 6.9.2p2: A declaration of an identifier for and 
@@ -2560,13 +2547,13 @@ Sema::DeclPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy group) {
     if (IDecl->isTentativeDefinition(Context)) {
       QualType CheckType = T;
       unsigned DiagID = diag::err_typecheck_decl_incomplete_type;
-
+      
       const IncompleteArrayType *ArrayT = Context.getAsIncompleteArrayType(T);
       if (ArrayT) {
         CheckType = ArrayT->getElementType();
         DiagID = diag::err_illegal_decl_array_incomplete_type;
       }
-
+      
       if (IDecl->isInvalidDecl()) {
         // Do nothing with invalid declarations
       } else if ((ArrayT || IDecl->getStorageClass() == VarDecl::Static) &&
@@ -2578,8 +2565,10 @@ Sema::DeclPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy group) {
       }
     }
   }
-  return DeclPtrTy::make(NewGroup);
+  return DeclGroupPtrTy::make(DeclGroupRef::Create(Context,
+                                                   &Decls[0], NumDecls));
 }
+
 
 /// ActOnParamDeclarator - Called from Parser::ParseFunctionDeclarator()
 /// to introduce parameters into function prototype scope.
@@ -2722,9 +2711,8 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
   
   Scope *ParentScope = FnBodyScope->getParent();
 
-  return ActOnStartOfFunctionDef(FnBodyScope,
-                                 ActOnDeclarator(ParentScope, D, DeclPtrTy(), 
-                                                /*IsFunctionDefinition=*/true));
+  DeclPtrTy DP = ActOnDeclarator(ParentScope, D, /*IsFunctionDefinition=*/true);
+  return ActOnStartOfFunctionDef(FnBodyScope, DP);
 }
 
 Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
@@ -3056,8 +3044,7 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
   }
 }
 
-TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
-                                    Decl *LastDeclarator) {
+TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
@@ -3076,7 +3063,6 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
       TD->setTypedefForAnonDecl(NewTD);
   }
 
-  NewTD->setNextDeclarator(LastDeclarator);
   if (D.getInvalidType())
     NewTD->setInvalidDecl();
   return NewTD;

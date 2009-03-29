@@ -34,7 +34,7 @@ private:
   DeclGroup(unsigned numdecls, Decl** decls);
 
 public:
-  static DeclGroup* Create(ASTContext& C, unsigned numdecls, Decl** decls);
+  static DeclGroup *Create(ASTContext &C, Decl **Decls, unsigned NumDecls);
   void Destroy(ASTContext& C);
 
   unsigned size() const { return NumDecls; }
@@ -57,6 +57,8 @@ public:
 };
     
 class DeclGroupRef {
+  // Note this is not a PointerIntPair because we need the address of the
+  // non-group case to be valid as a Decl** for iteration.
   enum Kind { SingleDeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };  
   Decl* D;
 
@@ -70,6 +72,14 @@ public:
   explicit DeclGroupRef(Decl* d) : D(d) {}
   explicit DeclGroupRef(DeclGroup* dg)
     : D((Decl*) (reinterpret_cast<uintptr_t>(dg) | DeclGroupKind)) {}
+  
+  static DeclGroupRef Create(ASTContext &C, Decl **Decls, unsigned NumDecls) {
+    if (NumDecls == 0)
+      return DeclGroupRef();
+    if (NumDecls == 1)
+      return DeclGroupRef(Decls[0]);
+    return DeclGroupRef(DeclGroup::Create(C, Decls, NumDecls));
+  }
   
   typedef Decl** iterator;
   typedef Decl* const * const_iterator;

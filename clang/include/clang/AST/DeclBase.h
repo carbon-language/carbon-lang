@@ -100,16 +100,9 @@ public:
   };
     
 private:
-  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
-  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
-  Decl *NextDeclarator;
-  
   /// NextDeclInContext - The next declaration within the same lexical
   /// DeclContext. These pointers form the linked list that is
   /// traversed via DeclContext's decls_begin()/decls_end().
-  /// FIXME: If NextDeclarator is non-NULL, will it always be the same
-  /// as NextDeclInContext? If so, we can use a
-  /// PointerIntPair<Decl*, 1> to make Decl smaller.
   Decl *NextDeclInContext;
 
   friend class DeclContext;
@@ -176,8 +169,7 @@ protected:
   friend class CXXClassMemberWrapper;
 
   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
-    : NextDeclarator(0), NextDeclInContext(0), 
-      DeclCtx(DC), 
+    : NextDeclInContext(0), DeclCtx(DC), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), 
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)), Access(AS_none) {
@@ -276,13 +268,6 @@ public:
   
   void setLexicalDeclContext(DeclContext *DC);
 
-  /// getNextDeclarator - If this decl was part of a multi-declarator
-  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
-  /// declarator.  Otherwise it returns null.
-  Decl *getNextDeclarator() { return NextDeclarator; }
-  const Decl *getNextDeclarator() const { return NextDeclarator; }
-  void setNextDeclarator(Decl *N) { NextDeclarator = N; }
-  
   // isDefinedOutsideFunctionOrMethod - This predicate returns true if this
   // scoped decl is defined outside the current function or method.  This is
   // roughly global variables and functions, but also handles enums (which could

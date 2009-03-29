@@ -101,7 +101,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   default: {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation();
-      DeclPtrTy Decl = ParseDeclaration(Declarator::BlockContext);
+      DeclGroupPtrTy Decl = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart);
     }
@@ -444,7 +444,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       if (isDeclarationStatement()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
         SourceLocation DeclStart = Tok.getLocation();
-        DeclPtrTy Res = ParseDeclaration(Declarator::BlockContext);
+        DeclGroupPtrTy Res = ParseDeclaration(Declarator::BlockContext);
         // FIXME: Pass in the right location for the end of the declstmt.
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
       } else {
@@ -912,10 +912,9 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
     SourceLocation DeclStart = Tok.getLocation();
-    DeclPtrTy aBlockVarDecl = ParseSimpleDeclaration(Declarator::ForContext);
+    DeclGroupPtrTy VarDecls = ParseSimpleDeclaration(Declarator::ForContext);
     // FIXME: Pass in the right location for the end of the declstmt.
-    FirstPart = Actions.ActOnDeclStmt(aBlockVarDecl, DeclStart,
-                                          DeclStart);
+    FirstPart = Actions.ActOnDeclStmt(VarDecls, DeclStart, DeclStart);
     if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
       SecondPart = ParseExpression();
@@ -929,12 +928,10 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
-    }
-    else if ((ForEach = isTokIdentifier_in())) {
+    } else if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
       SecondPart = ParseExpression();
-    }
-    else {
+    } else {
       if (!Value.isInvalid()) Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
@@ -995,11 +992,11 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     return Actions.ActOnForStmt(ForLoc, LParenLoc, move(FirstPart),
                               move(SecondPart), move(ThirdPart),
                               RParenLoc, move(Body));
-  else
-    return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
-                                              move(FirstPart),
-                                              move(SecondPart),
-                                              RParenLoc, move(Body));
+  
+  return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
+                                            move(FirstPart),
+                                            move(SecondPart),
+                                            RParenLoc, move(Body));
 }
 
 /// ParseGotoStatement

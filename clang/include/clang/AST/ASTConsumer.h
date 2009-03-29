@@ -16,7 +16,7 @@
 
 namespace clang {
   class ASTContext;
-  class Decl;
+  class DeclGroupRef;
   class TagDecl;
   class HandleTagDeclDefinition;
   
@@ -25,7 +25,7 @@ namespace clang {
 /// independent of the AST producer (e.g. parser vs AST dump file reader, etc).
 class ASTConsumer {
 public:
-  virtual ~ASTConsumer();
+  virtual ~ASTConsumer() {}
   
   /// Initialize - This is called to initialize the consumer, providing the
   /// ASTContext.
@@ -35,7 +35,7 @@ public:
   ///  called by the parser to process every top-level Decl*. Note that D can
   ///  be the head of a chain of Decls (e.g. for `int a, b` the chain will have
   ///  two elements). Use Decl::getNextDeclarator() to walk the chain.
-  virtual void HandleTopLevelDecl(Decl *D) {}
+  virtual void HandleTopLevelDecl(DeclGroupRef D);
   
   /// HandleTranslationUnit - This method is called when the ASTs for entire
   ///  translation unit have been parsed.

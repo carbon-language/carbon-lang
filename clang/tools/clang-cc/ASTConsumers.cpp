@@ -539,8 +539,9 @@ namespace {
   public:
     ASTPrinter(llvm::raw_ostream* o = NULL) : DeclPrinter(o) {}
     
-    virtual void HandleTopLevelDecl(Decl *D) {
-      PrintDecl(D);
+    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
+        PrintDecl(*I);
     }
   };
 } // end anonymous namespace
@@ -562,11 +563,15 @@ namespace {
       SM = &Context.getSourceManager();
     }
 
-    virtual void HandleTopLevelDecl(Decl *D);
+    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
+        HandleTopLevelSingleDecl(*I);
+    }
+    void HandleTopLevelSingleDecl(Decl *D);
   };
 } // end anonymous namespace
 
-void ASTDumper::HandleTopLevelDecl(Decl *D) {
+void ASTDumper::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     PrintFunctionDeclStart(FD);
     
@@ -624,12 +629,17 @@ namespace {
     void Initialize(ASTContext &Context) {
       SM = &Context.getSourceManager();
     }
+
+    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
+        HandleTopLevelSingleDecl(*I);
+    }
     
-    virtual void HandleTopLevelDecl(Decl *D);
+    void HandleTopLevelSingleDecl(Decl *D);
   };
 }
 
-void ASTViewer::HandleTopLevelDecl(Decl *D) {
+void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     DeclPrinter().PrintFunctionDeclStart(FD);
     

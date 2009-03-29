@@ -94,7 +94,12 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
   // Parse the actual template declaration.
-  return ParseDeclarationOrFunctionDefinition(&ParamLists, AS);
+
+  // FIXME: This accepts template<typename x> int y;
+  // FIXME: Converting DeclGroupPtr to DeclPtr like this is an insanely gruesome
+  // hack, will bring up on cfe-dev.
+  DeclGroupPtrTy DG = ParseDeclarationOrFunctionDefinition(&ParamLists, AS);
+  return DeclPtrTy::make(DG.get());
 }
 
 /// ParseTemplateParameters - Parses a template-parameter-list enclosed in

@@ -44,16 +44,14 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
   
   Consumer->Initialize(Ctx);
   
-  Parser::DeclPtrTy ADecl;
+  Parser::DeclGroupPtrTy ADecl;
   
   while (!P.ParseTopLevelDecl(ADecl)) {  // Not end of file.
     // If we got a null return and something *was* parsed, ignore it.  This
     // is due to a top-level semicolon, an action override, or a parse error
     // skipping something.
-    if (ADecl) {
-      Decl *D = ADecl.getAs<Decl>();      
-      Consumer->HandleTopLevelDecl(D);
-    }
+    if (ADecl)
+      Consumer->HandleTopLevelDecl(ADecl.getAsVal<DeclGroupRef>());
   };
   
   Consumer->HandleTranslationUnit(Ctx);

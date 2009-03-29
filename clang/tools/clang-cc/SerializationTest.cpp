@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CFG.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclGroup.h"
 #include "clang.h"
 #include "ASTConsumers.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -73,7 +74,7 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
     TranslationUnitDecl *TUD = Ctx.getTranslationUnitDecl();
     for (DeclContext::decl_iterator I = TUD->decls_begin(), E =TUD->decls_end();
          I != E; ++I)
-      FilePrinter->HandleTopLevelDecl(*I);
+      FilePrinter->HandleTopLevelDecl(DeclGroupRef(*I));
   }
   
   // Serialize the translation unit.
@@ -124,7 +125,7 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
     TranslationUnitDecl *TUD = NewCtx->getTranslationUnitDecl();
     for (DeclContext::decl_iterator I = TUD->decls_begin(), E = TUD->decls_end();
          I != E; ++I)
-      FilePrinter->HandleTopLevelDecl(*I);
+      FilePrinter->HandleTopLevelDecl(DeclGroupRef(*I));
   }
 
   delete NewCtx;

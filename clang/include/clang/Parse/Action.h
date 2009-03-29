@@ -71,6 +71,7 @@ public:
   typedef ActionBase::ExprTy ExprTy;
   typedef ActionBase::StmtTy StmtTy;
   typedef OpaquePtr<0> DeclPtrTy;
+  typedef OpaquePtr<1> DeclGroupPtrTy;
   typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<1>.
   typedef void AttrTy;
   typedef void BaseTy;
@@ -129,6 +130,13 @@ public:
   //===--------------------------------------------------------------------===//
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
+  
+  /// ConvertDeclToDeclGroup - If the parser has one decl in a context where it
+  /// needs a decl group, it calls this to convert between the two
+  /// representations.
+  virtual DeclGroupPtrTy ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
+    return DeclGroupPtrTy();
+  }
   
   /// getTypeName - Return non-null if the specified identifier is a type name
   /// in the current scope.
@@ -210,11 +218,7 @@ public:
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".
   ///
-  /// LastInGroup is non-null for cases where one declspec has multiple
-  /// declarators on it.  For example in 'int A, B', ActOnDeclarator will be
-  /// called with LastInGroup=A when invoked for B.
-  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D,
-                                    DeclPtrTy LastInGroup) {
+  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
     return DeclPtrTy();
   }
 
@@ -253,10 +257,12 @@ public:
 
   /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
   /// gives the actions implementation a chance to process the group as a whole.
-  virtual DeclPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy Group) {
-    return Group;
+  virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
+                                                 unsigned NumDecls) {
+    return DeclGroupPtrTy();
   }
 
+  
   /// @brief Indicates that all K&R-style parameter declarations have
   /// been parsed prior to a function definition.
   /// @param S  The function prototype scope.
@@ -270,7 +276,7 @@ public:
   virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // Default to ActOnDeclarator.
     return ActOnStartOfFunctionDef(FnBodyScope,
-                                   ActOnDeclarator(FnBodyScope, D,DeclPtrTy()));
+                                   ActOnDeclarator(FnBodyScope, D));
   }
 
   /// ActOnStartOfFunctionDef - This is called at the start of a function
@@ -415,7 +421,8 @@ public:
                                              bool isStmtExpr) {
     return StmtEmpty();
   }
-  virtual OwningStmtResult ActOnDeclStmt(DeclPtrTy Decl,SourceLocation StartLoc,
+  virtual OwningStmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
+                                         SourceLocation StartLoc,
                                          SourceLocation EndLoc) {
     return StmtEmpty();
   }
@@ -1041,8 +1048,7 @@ public:
   virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
                                              ExprTy *BitfieldWidth,
-                                             ExprTy *Init,
-                                             DeclPtrTy LastInGroup) {
+                                             ExprTy *Init) {
     return DeclPtrTy();
   }
 
@@ -1408,9 +1414,8 @@ public:
                           unsigned allNum = 0,
                           DeclPtrTy *allProperties = 0, 
                           unsigned pNum = 0,
-                          DeclPtrTy *allTUVars = 0,
+                          DeclGroupPtrTy *allTUVars = 0,
                           unsigned tuvNum = 0) {
-    return;
   }
   // ActOnProperty - called to build one property AST
   virtual DeclPtrTy ActOnProperty(Scope *S, SourceLocation AtLoc,
@@ -1570,8 +1575,7 @@ public:
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.
-  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D,
-                                    DeclPtrTy LastInGroup);
+  virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D);
   
   /// ActOnPopScope - When a scope is popped, if any typedefs are now 
   /// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.

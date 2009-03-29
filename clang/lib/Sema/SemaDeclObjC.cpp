@@ -1234,8 +1234,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
                       DeclPtrTy *allMethods, unsigned allNum,
                       DeclPtrTy *allProperties, unsigned pNum,
-                      DeclPtrTy *allTUVars,
-                      unsigned tuvNum) {
+                      DeclGroupPtrTy *allTUVars, unsigned tuvNum) {
   Decl *ClassDecl = classDecl.getAs<Decl>();
 
   // FIXME: If we don't have a ClassDecl, we have an error. We should consider
@@ -1339,16 +1338,18 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
       }
     }
   }
-  if (isInterfaceDeclKind)
-    for (unsigned i = 0; i < tuvNum; i++) {
-      if (VarDecl *VDecl = dyn_cast<VarDecl>(allTUVars[i].getAs<Decl>())) {
-        if (VDecl->getStorageClass() != VarDecl::Extern &&
-            VDecl->getStorageClass() != VarDecl::PrivateExtern) {
-          NamedDecl  *ClassNameDecl = dyn_cast<NamedDecl>(ClassDecl);
-          Diag(VDecl->getLocation(), diag::err_objc_var_decl_inclass) 
-            << ClassNameDecl->getIdentifier();
+  if (isInterfaceDeclKind) {
+    // Reject invalid vardecls.
+    for (unsigned i = 0; i != tuvNum; i++) {
+      DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
+      for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
+        if (VarDecl *VDecl = dyn_cast<VarDecl>(*I)) {
+          if (VDecl->getStorageClass() != VarDecl::Extern &&
+              VDecl->getStorageClass() != VarDecl::PrivateExtern)
+            Diag(VDecl->getLocation(), diag::err_objc_var_decl_inclass) 
+              << cast<NamedDecl>(ClassDecl)->getIdentifier();
         }
-     }
+    }
   }
 }
 

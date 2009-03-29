@@ -27,8 +27,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon)) && 
          "Current token not a '{' or ':'!");
 
-  DeclPtrTy FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0,
-                                                   DeclPtrTy());
+  DeclPtrTy FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
 
   // Consume the tokens and store them for later parsing.
 

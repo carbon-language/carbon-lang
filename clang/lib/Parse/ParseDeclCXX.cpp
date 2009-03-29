@@ -663,14 +663,17 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///       constant-initializer:
 ///         '=' constant-expression
 ///
-Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
+void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // static_assert-declaration
-  if (Tok.is(tok::kw_static_assert))
-    return ParseStaticAssertDeclaration();
+  if (Tok.is(tok::kw_static_assert)) {
+    ParseStaticAssertDeclaration();
+    return;
+  }
       
-  if (Tok.is(tok::kw_template))
-    return ParseTemplateDeclarationOrSpecialization(Declarator::MemberContext,
-                                                    AS);
+  if (Tok.is(tok::kw_template)) {
+    ParseTemplateDeclarationOrSpecialization(Declarator::MemberContext, AS);
+    return;
+  }
 
   // Handle:  member-declaration ::= '__extension__' member-declaration
   if (Tok.is(tok::kw___extension__)) {
@@ -692,14 +695,15 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     // class-specifier or an enum-specifier or in a friend declaration.
     // FIXME: Friend declarations.
     switch (DS.getTypeSpecType()) {
-      case DeclSpec::TST_struct:
-      case DeclSpec::TST_union:
-      case DeclSpec::TST_class:
-      case DeclSpec::TST_enum:
-        return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
-      default:
-        Diag(DSStart, diag::err_no_declarators);
-        return DeclPtrTy();
+    case DeclSpec::TST_struct:
+    case DeclSpec::TST_union:
+    case DeclSpec::TST_class:
+    case DeclSpec::TST_enum:
+      Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+      return;
+    default:
+      Diag(DSStart, diag::err_no_declarators);
+      return;
     }
   }
 
@@ -714,7 +718,7 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
       SkipUntil(tok::r_brace, true);
       if (Tok.is(tok::semi))
         ConsumeToken();
-      return DeclPtrTy();
+      return;
     }
 
     // function-definition:
@@ -724,7 +728,7 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         Diag(Tok, diag::err_func_def_no_params);
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);
-        return DeclPtrTy();
+        return;
       }
 
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
@@ -734,10 +738,11 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         // assumes the declarator represents a function, not a typedef.
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);
-        return DeclPtrTy();
+        return;
       }
 
-      return ParseCXXInlineMethodDef(AS, DeclaratorInfo);
+      ParseCXXInlineMethodDef(AS, DeclaratorInfo);
+      return;
     }
   }
 
@@ -745,7 +750,7 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   //   member-declarator
   //   member-declarator-list ',' member-declarator
 
-  DeclPtrTy LastDeclInGroup;
+  llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
   OwningExprResult BitfieldSize(Actions);
   OwningExprResult Init(Actions);
 
@@ -784,14 +789,14 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     }
 
     // NOTE: If Sema is the Action module and declarator is an instance field,
-    // this call will *not* return the created decl; LastDeclInGroup will be
-    // returned instead.
+    // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
-    LastDeclInGroup = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
-                                                       DeclaratorInfo,
-                                                       BitfieldSize.release(),
-                                                       Init.release(),
-                                                       LastDeclInGroup);
+    DeclPtrTy ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
+                                                          DeclaratorInfo,
+                                                          BitfieldSize.release(),
+                                                          Init.release());
+    if (ThisDecl)
+      DeclsInGroup.push_back(ThisDecl);
 
     if (DeclaratorInfo.isFunctionDeclarator() &&
         DeclaratorInfo.getDeclSpec().getStorageClassSpec() 
@@ -807,7 +812,7 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
             // Push this method onto the stack of late-parsed method
             // declarations.
             getCurTopClassStack().MethodDecls.push_back(
-                                   LateParsedMethodDeclaration(LastDeclInGroup));
+                                   LateParsedMethodDeclaration(ThisDecl));
             LateMethod = &getCurTopClassStack().MethodDecls.back();
 
             // Add all of the parameters prior to this one (they don't
@@ -853,8 +858,9 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    // Reverse the chain list.
-    return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
+    Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
+                                    DeclsInGroup.size());
+    return;
   }
 
   Diag(Tok, diag::err_expected_semi_decl_list);
@@ -862,7 +868,7 @@ Parser::DeclPtrTy Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   SkipUntil(tok::r_brace, true, true);
   if (Tok.is(tok::semi))
     ConsumeToken();
-  return DeclPtrTy();
+  return;
 }
 
 /// ParseCXXMemberSpecification - Parse the class definition.

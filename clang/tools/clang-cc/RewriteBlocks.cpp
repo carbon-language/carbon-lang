@@ -83,7 +83,11 @@ public:
                    const char *NewStr, unsigned NewLength);
 
   // Top Level Driver code.
-  virtual void HandleTopLevelDecl(Decl *D);
+  virtual void HandleTopLevelDecl(DeclGroupRef D) {
+    for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
+      HandleTopLevelSingleDecl(*I);
+  }
+  void HandleTopLevelSingleDecl(Decl *D);
   void HandleDeclInMainFile(Decl *D);
   
   // Top level 
@@ -336,7 +340,7 @@ void RewriteBlocks::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 // Top Level Driver Code
 //===----------------------------------------------------------------------===//
 
-void RewriteBlocks::HandleTopLevelDecl(Decl *D) {
+void RewriteBlocks::HandleTopLevelSingleDecl(Decl *D) {
   // Two cases: either the decl could be in the main file, or it could be in a
   // #included file.  If the former, rewrite it now.  If the later, check to see
   // if we rewrote the #include/#import.

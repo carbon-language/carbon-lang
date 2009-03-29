@@ -215,7 +215,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
                                         tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclPtrTy, 32> allMethods;
   llvm::SmallVector<DeclPtrTy, 16> allProperties;
-  llvm::SmallVector<DeclPtrTy, 8> allTUVariables;
+  llvm::SmallVector<DeclGroupPtrTy, 8> allTUVariables;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
   
   SourceLocation AtEndLoc;
@@ -253,8 +253,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
       
       // FIXME: as the name implies, this rule allows function definitions.
       // We could pass a flag or check for functions during semantic analysis.
-      DeclPtrTy VFDecl = ParseDeclarationOrFunctionDefinition();
-      allTUVariables.push_back(VFDecl);
+      allTUVariables.push_back(ParseDeclarationOrFunctionDefinition());
       continue;
     }
     
@@ -359,13 +358,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
   // Insert collected methods declarations into the @interface object.
   // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
   Actions.ActOnAtEnd(AtEndLoc, interfaceDecl,
-                     allMethods.empty() ? 0 : &allMethods[0],
-                     allMethods.size(), 
-                     allProperties.empty() ? 0 : &allProperties[0],
-                     allProperties.size(),
-                     allTUVariables.empty() ? 0 :
-                     &allTUVariables[0],
-                     allTUVariables.size());
+                     &allMethods[0], allMethods.size(), 
+                     &allProperties[0], allProperties.size(),
+                     &allTUVariables[0], allTUVariables.size());
 }
 
 ///   Parse property attribute declarations.

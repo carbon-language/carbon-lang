@@ -228,27 +228,36 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 /// [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///
-Parser::DeclPtrTy Parser::ParseDeclaration(unsigned Context) {
+Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context) {
+  DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::kw_export:
   case tok::kw_template:
-    return ParseTemplateDeclarationOrSpecialization(Context);
+    SingleDecl = ParseTemplateDeclarationOrSpecialization(Context);
+    break;
   case tok::kw_namespace:
-    return ParseNamespace(Context);
+    SingleDecl = ParseNamespace(Context);
+    break;
   case tok::kw_using:
-    return ParseUsingDirectiveOrDeclaration(Context);
+    SingleDecl = ParseUsingDirectiveOrDeclaration(Context);
+    break;
   case tok::kw_static_assert:
-    return ParseStaticAssertDeclaration();
+    SingleDecl = ParseStaticAssertDeclaration();
+    break;
   default:
     return ParseSimpleDeclaration(Context);
   }
+  
+  // This routine returns a DeclGroup, if the thing we parsed only contains a
+  // single decl, convert it now.
+  return Actions.ConvertDeclToDeclGroup(SingleDecl);
 }
 
 ///       simple-declaration: [C99 6.7: declaration] [C++ 7p1: dcl.dcl]
 ///         declaration-specifiers init-declarator-list[opt] ';'
 ///[C90/C++]init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
-Parser::DeclPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
+Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -257,7 +266,8 @@ Parser::DeclPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
   
   Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
@@ -291,12 +301,11 @@ Parser::DeclPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
 /// According to the standard grammar, =default and =delete are function
 /// definitions, but that definitely doesn't fit with the parser here.
 ///
-Parser::DeclPtrTy Parser::
+Parser::DeclGroupPtrTy Parser::
 ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
-  
-  // Declarators may be grouped together ("int X, *Y, Z();").  Provide info so
-  // that they can be chained properly if the actions want this.
-  Parser::DeclPtrTy LastDeclInGroup;
+  // Declarators may be grouped together ("int X, *Y, Z();"). Remember the decls
+  // that we parse together here.
+  llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
   
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
@@ -307,7 +316,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
       if (AsmLabel.isInvalid()) {
         SkipUntil(tok::semi);
-        return DeclPtrTy();
+        return DeclGroupPtrTy();
       }
 
       D.setAsmLabel(AsmLabel.release());
@@ -322,21 +331,22 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     }
 
     // Inform the current actions module that we just parsed this declarator.
-    LastDeclInGroup = Actions.ActOnDeclarator(CurScope, D, LastDeclInGroup);
+    DeclPtrTy ThisDecl = Actions.ActOnDeclarator(CurScope, D);
+    DeclsInGroup.push_back(ThisDecl);
 
     // Parse declarator '=' initializer.
     if (Tok.is(tok::equal)) {
       ConsumeToken();
       if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
         SourceLocation DelLoc = ConsumeToken();
-        Actions.SetDeclDeleted(LastDeclInGroup, DelLoc);
+        Actions.SetDeclDeleted(ThisDecl, DelLoc);
       } else {
         OwningExprResult Init(ParseInitializer());
         if (Init.isInvalid()) {
           SkipUntil(tok::semi);
-          return DeclPtrTy();
+          return DeclGroupPtrTy();
         }
-        Actions.AddInitializerToDecl(LastDeclInGroup, move(Init));
+        Actions.AddInitializerToDecl(ThisDecl, move(Init));
       }
     } else if (Tok.is(tok::l_paren)) {
       // Parse C++ direct initializer: '(' expression-list ')'
@@ -355,12 +365,12 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       if (!InvalidExpr) {
         assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
                "Unexpected number of commas!");
-        Actions.AddCXXDirectInitializerToDecl(LastDeclInGroup, LParenLoc,
+        Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
                                               move_arg(Exprs),
                                               &CommaLocs[0], RParenLoc);
       }
     } else {
-      Actions.ActOnUninitializedDecl(LastDeclInGroup);
+      Actions.ActOnUninitializedDecl(ThisDecl);
     }
     
     // If we don't have a comma, it is either the end of the list (a ';') or an
@@ -395,23 +405,26 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     // for(is key; in keys) is error.
     if (D.getContext() == Declarator::ForContext && isTokIdentifier_in()) {
       Diag(Tok, diag::err_parse_error);
-      return DeclPtrTy();
+      return DeclGroupPtrTy();
     }
-    return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
+    
+    return Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
+                                           DeclsInGroup.size());
   }
   
   // If this is an ObjC2 for-each loop, this is a successful declarator
   // parse.  The syntax for these looks like:
   // 'for' '(' declaration 'in' expr ')' statement
   if (D.getContext() == Declarator::ForContext && isTokIdentifier_in())
-    return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
+    return Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
+                                           DeclsInGroup.size());
 
   Diag(Tok, diag::err_parse_error);
   // Skip to end of block or statement
   SkipUntil(tok::r_brace, true, true);
   if (Tok.is(tok::semi))
     ConsumeToken();
-  return DeclPtrTy();
+  return DeclGroupPtrTy();
 }
 
 /// ParseSpecifierQualifierList

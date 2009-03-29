@@ -144,7 +144,7 @@ MinimalAction::isTemplateName(IdentifierInfo &II, Scope *S,
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.
 Action::DeclPtrTy
-MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclPtrTy LastInGroup) {
+MinimalAction::ActOnDeclarator(Scope *S, Declarator &D) {
   IdentifierInfo *II = D.getIdentifier();
   
   // If there is no identifier associated with this declarator, bail out.

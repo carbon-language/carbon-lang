@@ -324,8 +324,8 @@ void Parser::Initialize() {
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
 /// action tells us to.  This returns true if the EOF was encountered.
-bool Parser::ParseTopLevelDecl(DeclPtrTy &Result) {
-  Result = DeclPtrTy();
+bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
+  Result = DeclGroupPtrTy();
   if (Tok.is(tok::eof)) {
     Actions.ActOnEndOfTranslationUnit();
     return true;
@@ -342,7 +342,7 @@ bool Parser::ParseTopLevelDecl(DeclPtrTy &Result) {
 void Parser::ParseTranslationUnit() {
   Initialize();
 
-  DeclPtrTy Res;
+  DeclGroupPtrTy Res;
   while (!ParseTopLevelDecl(Res))
     /*parse them all*/;
   
@@ -368,20 +368,21 @@ void Parser::ParseTranslationUnit() {
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
 ///
-Parser::DeclPtrTy Parser::ParseExternalDeclaration() {
+Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
+  DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::semi:
     Diag(Tok, diag::ext_top_level_semi);
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
-    return DeclPtrTy();
+    return DeclGroupPtrTy();
   case tok::r_brace:
     Diag(Tok, diag::err_expected_external_declaration);
     ConsumeBrace();
-    return DeclPtrTy();
+    return DeclGroupPtrTy();
   case tok::eof:
     Diag(Tok, diag::err_expected_external_declaration);
-    return DeclPtrTy();
+    return DeclGroupPtrTy();
   case tok::kw___extension__: {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
@@ -394,20 +395,26 @@ Parser::DeclPtrTy Parser::ParseExternalDeclaration() {
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
 
-    if (!Result.isInvalid())
-      return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), move(Result));
-    return DeclPtrTy();
+    if (Result.isInvalid())
+      return DeclGroupPtrTy();
+    SingleDecl = Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), move(Result));
+    break;
   }
   case tok::at:
-    // @ is not a legal token unless objc is enabled, no need to check.
-    return ParseObjCAtDirectives();
+    // @ is not a legal token unless objc is enabled, no need to check for ObjC.
+    /// FIXME: ParseObjCAtDirectives should return a DeclGroup for things like
+    /// @class foo, bar;
+    SingleDecl = ParseObjCAtDirectives();
+    break;
   case tok::minus:
   case tok::plus:
-    if (getLang().ObjC1)
-      return ParseObjCMethodDefinition();
-    Diag(Tok, diag::err_expected_external_declaration);
-    ConsumeToken();
-    return DeclPtrTy();
+    if (!getLang().ObjC1) {
+      Diag(Tok, diag::err_expected_external_declaration);
+      ConsumeToken();
+      return DeclGroupPtrTy();
+    }
+    SingleDecl = ParseObjCMethodDefinition();
+    break;
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:
@@ -420,6 +427,10 @@ Parser::DeclPtrTy Parser::ParseExternalDeclaration() {
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();
   }
+  
+  // This routine returns a DeclGroup, if the thing we parsed only contains a
+  // single decl, convert it now.
+  return Actions.ConvertDeclToDeclGroup(SingleDecl);
 }
 
 /// ParseDeclarationOrFunctionDefinition - Parse either a function-definition or
@@ -438,7 +449,7 @@ Parser::DeclPtrTy Parser::ParseExternalDeclaration() {
 /// [!C99]  init-declarator-list ';'                   [TODO: warn in c99 mode]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
-Parser::DeclPtrTy
+Parser::DeclGroupPtrTy
 Parser::ParseDeclarationOrFunctionDefinition(
                                   TemplateParameterLists *TemplateParams,
                                   AccessSpecifier AS) {
@@ -450,7 +461,8 @@ Parser::ParseDeclarationOrFunctionDefinition(
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
   // ObjC2 allows prefix attributes on class interfaces and protocols.
@@ -462,14 +474,18 @@ Parser::ParseDeclarationOrFunctionDefinition(
         !Tok.isObjCAtKeyword(tok::objc_protocol)) {
       Diag(Tok, diag::err_objc_unexpected_attr);
       SkipUntil(tok::semi); // FIXME: better skip?
-      return DeclPtrTy();
+      return DeclGroupPtrTy();
     }
     const char *PrevSpec = 0;
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec))
       Diag(AtLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+    
+    DeclPtrTy TheDecl;
     if (Tok.isObjCAtKeyword(tok::objc_protocol))
-      return ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
-    return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes());
+      TheDecl = ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
+    else
+      TheDecl = ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes());
+    return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
   // If the declspec consisted only of 'extern' and we have a string
@@ -477,8 +493,10 @@ Parser::ParseDeclarationOrFunctionDefinition(
   // 'extern "C"'.
   if (Tok.is(tok::string_literal) && getLang().CPlusPlus &&
       DS.getStorageClassSpec() == DeclSpec::SCS_extern &&
-      DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier)
-    return ParseLinkage(Declarator::FileContext);
+      DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier) {
+    DeclPtrTy TheDecl = ParseLinkage(Declarator::FileContext);
+    return Actions.ConvertDeclToDeclGroup(TheDecl);
+  }
 
   // Parse the first declarator.
   Declarator DeclaratorInfo(DS, Declarator::FileContext);
@@ -489,7 +507,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
     SkipUntil(tok::r_brace, true, true);
     if (Tok.is(tok::semi))
       ConsumeToken();
-    return DeclPtrTy();
+    return DeclGroupPtrTy();
   }
 
   // If the declarator is the start of a function definition, handle it.
@@ -500,8 +518,12 @@ Parser::ParseDeclarationOrFunctionDefinition(
       Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
       (getLang().CPlusPlus &&
        Tok.is(tok::l_paren)) ) {      // int X(0) -> not a function def [C++]
-    // FALL THROUGH.
-  } else if (DeclaratorInfo.isFunctionDeclarator() &&
+    // Parse the init-declarator-list for a normal declaration.
+    return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+  }
+  
+  
+  if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.is(tok::l_brace) ||             // int X() {}
               (!getLang().CPlusPlus &&
                isDeclarationSpecifier()) ||   // int X(f) int f; {}
@@ -519,20 +541,18 @@ Parser::ParseDeclarationOrFunctionDefinition(
       } else {
         SkipUntil(tok::semi);
       }
-      return DeclPtrTy();
+      return DeclGroupPtrTy();
     }
-    return ParseFunctionDefinition(DeclaratorInfo);
-  } else {
-    if (DeclaratorInfo.isFunctionDeclarator())
-      Diag(Tok, diag::err_expected_fn_body);
-    else
-      Diag(Tok, diag::err_invalid_token_after_toplevel_declarator);
-    SkipUntil(tok::semi);
-    return DeclPtrTy();
+    DeclPtrTy TheDecl = ParseFunctionDefinition(DeclaratorInfo);
+    return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
-
-  // Parse the init-declarator-list for a normal declaration.
-  return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+  
+  if (DeclaratorInfo.isFunctionDeclarator())
+    Diag(Tok, diag::err_expected_fn_body);
+  else
+    Diag(Tok, diag::err_invalid_token_after_toplevel_declarator);
+  SkipUntil(tok::semi);
+  return DeclGroupPtrTy();
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified

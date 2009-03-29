@@ -29,8 +29,7 @@ namespace {
     /// ActOnDeclarator - This callback is invoked when a declarator is parsed
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
-    virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D,
-                                      DeclPtrTy LastInGroup) {
+    virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
       llvm::cout << __FUNCTION__ << " ";
       if (IdentifierInfo *II = D.getIdentifier()) {
         llvm::cout << "'" << II->getName() << "'";
@@ -40,7 +39,7 @@ namespace {
       llvm::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      return MinimalAction::ActOnDeclarator(S, D, LastInGroup);
+      return MinimalAction::ActOnDeclarator(S, D);
     }
     /// ActOnPopScope - This callback is called immediately before the specified
     /// scope is popped and deleted.
@@ -112,17 +111,20 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
-    /// gives the actions implementation a chance to process the group as a whole.
-    virtual DeclPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy Group) {
+    /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed,
+    /// this gives the actions implementation a chance to process the group as
+    /// a whole.
+    virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
+                                                   unsigned NumDecls) {
       llvm::cout << __FUNCTION__ << "\n";
-      return DeclPtrTy();
+      return DeclGroupPtrTy();
     }
 
     /// ActOnStartOfFunctionDef - This is called at the start of a function
     /// definition, instead of calling ActOnDeclarator.  The Declarator includes
     /// information about formal arguments that are part of this function.
-    virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
+    virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope,
+                                              Declarator &D){
       llvm::cout << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
@@ -256,7 +258,7 @@ namespace {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
-    virtual OwningStmtResult ActOnDeclStmt(DeclPtrTy Decl,
+    virtual OwningStmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
       llvm::cout << __FUNCTION__ << "\n";

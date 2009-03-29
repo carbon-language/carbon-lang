@@ -60,16 +60,16 @@ namespace {
                                                *M, *TD, Diags));
     }
     
-    virtual void HandleTopLevelDecl(Decl *D) {
+    virtual void HandleTopLevelDecl(DeclGroupRef DG) {
       // Make sure to emit all elements of a Decl.
-      for (; D; D = D->getNextDeclarator())
-        Builder->EmitTopLevelDecl(D);
+      for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
+        Builder->EmitTopLevelDecl(*I);
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
-    /// (e.g. struct, union, enum, class) is completed. This allows the client to
-    /// hack on the type, which can occur at any point in the file (because these
-    /// can be defined in declspecs).
+    /// to (e.g. struct, union, enum, class) is completed. This allows the
+    /// client hack on the type, which can occur at any point in the file
+    /// (because these can be defined in declspecs).
     virtual void HandleTagDeclDefinition(TagDecl *D) {
       Builder->UpdateCompletedType(D);
     }

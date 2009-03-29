@@ -39,7 +39,6 @@ void Decl::Emit(Serializer& S) const {
   S.EmitInt(Access);
   S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From Decl.
   S.EmitPtr(cast_or_null<Decl>(getLexicalDeclContext()));  // From Decl.
-  S.EmitPtr(NextDeclarator);
   if (const DeclContext *DC = dyn_cast<const DeclContext>(this))
     DC->EmitOutRec(S);
   
@@ -144,7 +143,6 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
     D.ReadPtr(MDC->SemanticDC, SemaDCPtrID);
     D.ReadPtr(MDC->LexicalDC, LexicalDCPtrID);
   }
-  D.ReadPtr(Dcl->NextDeclarator);
   if (DeclContext *DC = dyn_cast<DeclContext>(Dcl))
     DC->ReadOutRec(D, C);
   bool OwnsNext = D.ReadBool();

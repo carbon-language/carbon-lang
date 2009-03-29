@@ -37,6 +37,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclGroup.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LexDiagnostic.h"
@@ -1563,7 +1564,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   TranslationUnitDecl *TUD = Ctx->getTranslationUnitDecl();
   for (DeclContext::decl_iterator I = TUD->decls_begin(), E = TUD->decls_end();
        I != E; ++I)
-    Consumer->HandleTopLevelDecl(*I);
+    Consumer->HandleTopLevelDecl(DeclGroupRef(*I));
 }
 
 

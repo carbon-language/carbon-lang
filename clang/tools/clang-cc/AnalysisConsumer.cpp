@@ -220,7 +220,12 @@ namespace {
       Ctx = &Context;
     }
     
-    virtual void HandleTopLevelDecl(Decl *D);
+    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
+        HandleTopLevelSingleDecl(*I);
+    }
+    
+    void HandleTopLevelSingleDecl(Decl *D);
     virtual void HandleTranslationUnit(ASTContext &C);
     
     void HandleCode(Decl* D, Stmt* Body, Actions& actions);
@@ -411,7 +416,7 @@ namespace llvm {
 // AnalysisConsumer implementation.
 //===----------------------------------------------------------------------===//
 
-void AnalysisConsumer::HandleTopLevelDecl(Decl *D) { 
+void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) { 
   switch (D->getKind()) {
     case Decl::Function: {
       FunctionDecl* FD = cast<FunctionDecl>(D);

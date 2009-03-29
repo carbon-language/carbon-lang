@@ -8,11 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/DeclGroup.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -117,13 +118,14 @@ namespace {
         LLVMIRGeneration.stopTimer();
     }
     
-    virtual void HandleTopLevelDecl(Decl *D) {
-      PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
+    virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      PrettyStackTraceDecl CrashInfo(*D.begin(), SourceLocation(),
                                      Context->getSourceManager(),
                                      "LLVM IR generation of declaration");
+      
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.startTimer();
-      
+
       Gen->HandleTopLevelDecl(D);
 
       if (CompileOpts.TimePasses)

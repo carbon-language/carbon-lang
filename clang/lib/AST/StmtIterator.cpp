@@ -67,12 +67,11 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
   if (inDecl()) {
     assert (decl);
     
+    // FIXME: SIMPLIFY AWAY.
     if (ImmediateAdvance)
-      decl = decl->getNextDeclarator();
-    
-    for ( ; decl ; decl = decl->getNextDeclarator())
-      if (HandleDecl(decl))
-        return;
+      decl = 0;
+    else if (HandleDecl(decl))
+      return;
   }
   else {
     assert (inDeclGroup());
