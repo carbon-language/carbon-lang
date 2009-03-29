@@ -15,6 +15,8 @@
 #ifndef LLVM_SUPPORT_POINTERLIKETYPETRAITS_H
 #define LLVM_SUPPORT_POINTERLIKETYPETRAITS_H
 
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
   
 /// PointerLikeTypeTraits - This is a traits object that is used to handle
@@ -54,6 +56,20 @@ public:
     return static_cast<const T*>(P);
   }
   enum { NumLowBitsAvailable = 3 };
+};
+
+// Provide PointerLikeTypeTraits for uintptr_t.
+template<>
+class PointerLikeTypeTraits<uintptr_t> {
+public:
+  static inline void *getAsVoidPointer(uintptr_t P) {
+    return reinterpret_cast<void*>(P);
+  }
+  static inline uintptr_t getFromVoidPointer(void *P) {
+    return reinterpret_cast<uintptr_t>(P);
+  }
+  // No bits are available!
+  enum { NumLowBitsAvailable = 0 };
 };
   
 } // end namespace llvm
