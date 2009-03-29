@@ -70,7 +70,7 @@ public:
   typedef ActionBase::ExprTy ExprTy;
   typedef ActionBase::StmtTy StmtTy;
   typedef OpaquePtr<0> DeclPtrTy;
-  typedef void TypeTy;
+  typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<1>.
   typedef void AttrTy;
   typedef void BaseTy;
   typedef void MemInitTy;
