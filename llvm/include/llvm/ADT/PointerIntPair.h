@@ -21,6 +21,8 @@ namespace llvm {
 
 template<typename T>
 struct DenseMapInfo;
+template<typename>
+class PointerLikeTypeInfo;
 
 /// PointerIntPair - This class implements a pair of a pointer and small
 /// integer.  It is designed to represent this in the space required by one
@@ -62,6 +64,10 @@ public:
   void *getOpaqueValue() const { return reinterpret_cast<void*>(Value); }
   void setFromOpaqueValue(void *Val) { Value = reinterpret_cast<intptr_t>(Val);}
 
+  static PointerIntPair getFromOpaqueValue(void *V) {
+    PointerIntPair P; P.setFromOpaqueValue(V); return P; 
+  }
+  
   bool operator==(const PointerIntPair &RHS) const {return Value == RHS.Value;}
   bool operator!=(const PointerIntPair &RHS) const {return Value != RHS.Value;}
   bool operator<(const PointerIntPair &RHS) const {return Value < RHS.Value;}
@@ -87,6 +93,20 @@ struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
   }
   static bool isEqual(const Ty &LHS, const Ty &RHS) { return LHS == RHS; }
   static bool isPod() { return true; }
+};
+
+// Teach SmallPtrSet that PointerIntPair is "basically a pointer".
+template<typename PointerTy, unsigned IntBits, typename IntType>
+class PointerLikeTypeInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
+public:
+  static inline void *
+  getAsVoidPointer(const PointerIntPair<PointerTy, IntBits, IntType> &P) {
+    return P.getOpaqueValue();
+  }
+  static inline PointerIntPair<PointerTy, IntBits, IntType>
+  getFromVoidPointer(void *P) {
+    return PointerIntPair<PointerTy, IntBits, IntType>::getFromOpaqueValue(P);
+  }
 };
 
 } // end namespace llvm
