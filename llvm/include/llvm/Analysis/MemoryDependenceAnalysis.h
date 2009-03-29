@@ -171,9 +171,8 @@ namespace llvm {
     CachedNonLocalPointerInfo NonLocalPointerDeps;
 
     // A map from instructions to their non-local pointer dependencies.
-    // The elements of the SmallPtrSet are ValueIsLoadPair's.
     typedef DenseMap<Instruction*, 
-                     SmallPtrSet<void*, 4> > ReverseNonLocalPtrDepTy;
+                     SmallPtrSet<ValueIsLoadPair, 4> > ReverseNonLocalPtrDepTy;
     ReverseNonLocalPtrDepTy ReverseNonLocalPtrDeps;
 
     
