@@ -24,11 +24,21 @@ namespace llvm {
 
 class Value;
 class User;
-
+class Use;
 
 /// Tag - generic tag type for (at least 32 bit) pointers
 enum Tag { noTag, tagOne, tagTwo, tagThree };
 
+// Use** is only 4-byte aligned.
+template<>
+class PointerLikeTypeTraits<Use**> {
+public:
+  static inline void *getAsVoidPointer(Use** P) { return P; }
+  static inline Use **getFromVoidPointer(void *P) {
+    return static_cast<Use**>(P);
+  }
+  enum { NumLowBitsAvailable = 2 };
+};
 
 //===----------------------------------------------------------------------===//
 //                                  Use Class
@@ -212,7 +222,7 @@ template<> struct simplify_type<value_use_iterator<const User> > {
 
 template<> struct simplify_type<const value_use_iterator<const User> >
   : public simplify_type<value_use_iterator<const User> > {};
-
+ 
 } // End llvm namespace
 
 #endif

@@ -42,7 +42,7 @@ public:
   ///
   /// All clients should use assertions to do a run-time check to ensure that
   /// this is actually true.
-  static inline unsigned getNumLowBitsAvailable() { return 3; }
+  enum { NumLowBitsAvailable = 3 };
 };
   
 // Provide PointerLikeTypeTraits for const pointers.
@@ -53,7 +53,7 @@ public:
   static inline const T *getFromVoidPointer(const void *P) {
     return static_cast<const T*>(P);
   }
-  static inline unsigned getNumLowBitsAvailable() { return 3; }
+  enum { NumLowBitsAvailable = 3 };
 };
   
 } // end namespace llvm

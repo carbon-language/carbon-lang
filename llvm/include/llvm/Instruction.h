@@ -227,6 +227,18 @@ public:
   };
 };
 
+// Instruction* is only 4-byte aligned.
+template<>
+class PointerLikeTypeTraits<Instruction*> {
+  typedef Instruction* PT;
+public:
+  static inline void *getAsVoidPointer(PT P) { return P; }
+  static inline PT getFromVoidPointer(void *P) {
+    return static_cast<PT>(P);
+  }
+  enum { NumLowBitsAvailable = 2 };
+};
+  
 } // End llvm namespace
 
 #endif

@@ -15,50 +15,77 @@
 #define LLVM_ADT_POINTERINTPAIR_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
 
 namespace llvm {
 
 template<typename T>
 struct DenseMapInfo;
-template<typename>
-class PointerLikeTypeTraits;
 
 /// PointerIntPair - This class implements a pair of a pointer and small
 /// integer.  It is designed to represent this in the space required by one
 /// pointer by bitmangling the integer into the low part of the pointer.  This
 /// can only be done for small integers: typically up to 3 bits, but it depends
-/// on the alignment returned by the allocator in use.
+/// on the number of bits available according to PointerLikeTypeTraits for the
+/// type.
+///
+/// Note that PointerIntPair always puts the Int part in the highest bits
+/// possible.  For example, PointerIntPair<void*, 1,bool> will put the bit for
+/// the bool into bit #2, not bit #0, which allows the low two bits to be used
+/// for something else.  For example, this allows:
+///   PointerIntPair<PointerIntPair<void*, 1,bool>, 1, bool>
+/// ... and the two bools will land in different bits.
 ///
 template <typename PointerTy, unsigned IntBits, typename IntType=unsigned>
 class PointerIntPair {
   intptr_t Value;
+  typedef PointerLikeTypeTraits<PointerTy> PtrTraits;
+  enum {
+    /// PointerBitMask - The bits that come from the pointer.
+    PointerBitMask = ~(((intptr_t)1 << PtrTraits::NumLowBitsAvailable)-1),
+    /// IntShift - The number of low bits that we reserve for other uses, and
+    /// keep zero.
+    IntShift = PtrTraits::NumLowBitsAvailable-IntBits,
+    
+    /// IntMask - This is the unshifted mask for valid bits of the int type.
+    IntMask = ((intptr_t)1 << IntBits)-1,
+    
+    // ShiftedIntMask - This is the bits for the integer shifted in place.
+    ShiftedIntMask = IntMask << IntShift
+  };
 public:
   PointerIntPair() : Value(0) {}
   PointerIntPair(PointerTy Ptr, IntType Int) : Value(0) {
+    assert(IntBits <= PtrTraits::NumLowBitsAvailable &&
+           "PointerIntPair formed with integer size too large for pointer");
     setPointer(Ptr);
     setInt(Int);
   }
 
   PointerTy getPointer() const {
-    return reinterpret_cast<PointerTy>(Value & ~((1 << IntBits)-1));
+    return reinterpret_cast<PointerTy>(Value & PointerBitMask);
   }
 
   IntType getInt() const {
-    return (IntType)(Value & ((1 << IntBits)-1));
+    return (IntType)((Value >> IntShift) & IntMask);
   }
 
   void setPointer(PointerTy Ptr) {
     intptr_t PtrVal = reinterpret_cast<intptr_t>(Ptr);
-    assert((PtrVal & ((1 << IntBits)-1)) == 0 &&
+    assert((PtrVal & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
            "Pointer is not sufficiently aligned");
-    Value = PtrVal | (intptr_t)getInt();
+    // Preserve all low bits, just update the pointer.
+    Value = PtrVal | (Value & ~PointerBitMask);
   }
 
   void setInt(IntType Int) {
     intptr_t IntVal = Int;
     assert(IntVal < (1 << IntBits) && "Integer too large for field");
-    Value = reinterpret_cast<intptr_t>(getPointer()) | IntVal;
+    
+    // Preserve all bits other than the ones we are updating.
+    Value &= ~ShiftedIntMask;     // Remove integer field.
+    Value |= IntVal << IntShift;  // Set new integer.
   }
 
   void *getOpaqueValue() const { return reinterpret_cast<void*>(Value); }
@@ -107,7 +134,10 @@ public:
   getFromVoidPointer(void *P) {
     return PointerIntPair<PointerTy, IntBits, IntType>::getFromOpaqueValue(P);
   }
-  static inline unsigned getNumLowBitsAvailable() { return 0; }
+  enum {
+    NumLowBitsAvailable = 
+           PointerLikeTypeTraits<PointerTy>::NumLowBitsAvailable - IntBits
+  };
 };
 
 } // end namespace llvm
