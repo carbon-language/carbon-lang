@@ -366,41 +366,40 @@ bool DeclContext::classof(const Decl *D) {
 /// StoredDeclsList - This is an array of decls optimized a common case of only
 /// containing one entry.
 struct StoredDeclsList {
-  /// Data - If the integer is 0, then the pointer is a NamedDecl*.  If the
-  /// integer is 1, then it is a VectorTy;
-  llvm::PointerIntPair<void*, 1, bool> Data;
-  
   /// VectorTy - When in vector form, this is what the Data pointer points to.
   typedef llvm::SmallVector<NamedDecl*, 4> VectorTy;
+
+  /// Data - Union of NamedDecl*/VectorTy*.
+  llvm::PointerUnion<NamedDecl*, VectorTy*> Data;
 public:
   StoredDeclsList() {}
   StoredDeclsList(const StoredDeclsList &RHS) : Data(RHS.Data) {
     if (isVector())
-      Data.setPointer(new VectorTy(getVector()));
+      Data = new VectorTy(*Data.get<VectorTy*>());
   }
   
   ~StoredDeclsList() {
     // If this is a vector-form, free the vector.
     if (isVector())
-      delete &getVector();
+      delete Data.get<VectorTy*>();
   }
   
   StoredDeclsList &operator=(const StoredDeclsList &RHS) {
     if (isVector())
-      delete &getVector();
+      delete Data.get<VectorTy*>();
     Data = RHS.Data;
     if (isVector())
-      Data.setPointer(new VectorTy(getVector()));
+      Data = new VectorTy(*Data.get<VectorTy*>());
     return *this;
   }
   
-  bool isVector() const { return Data.getInt() != 0; }
-  bool isInline() const { return Data.getInt() == 0; }
-  bool isNull() const { return Data.getPointer() == 0; }
+  bool isVector() const { return Data.is<VectorTy*>(); }
+  bool isInline() const { return Data.is<NamedDecl*>(); }
+  bool isNull() const { return Data.isNull(); }
   
   void setOnlyValue(NamedDecl *ND) {
     assert(isInline() && "Not inline");
-    Data.setPointer(ND);
+    Data = ND;
   }
 
   /// getLookupResult - Return an array of all the decls that this list
@@ -416,7 +415,7 @@ public:
     }
     
     // Otherwise, we have a range result.
-    VectorTy &V = getVector();
+    VectorTy &V = *Data.get<VectorTy*>();
     return DeclContext::lookup_result(&V[0], &V[0]+V.size());
   }
   
@@ -425,14 +424,14 @@ public:
   bool HandleRedeclaration(NamedDecl *D) {
     // Most decls only have one entry in their list, special case it.
     if (isInline()) {
-      if (!D->declarationReplaces(getInlineValue()))
+      if (!D->declarationReplaces(Data.get<NamedDecl*>()))
         return false;
       setOnlyValue(D);
       return true;
     }
     
     // Determine if this declaration is actually a redeclaration.
-    VectorTy &Vec = getVector();
+    VectorTy &Vec = *Data.get<VectorTy*>();
     VectorTy::iterator RDI
       = std::find_if(Vec.begin(), Vec.end(),
                      std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
@@ -450,14 +449,13 @@ public:
     // If this is the second decl added to the list, convert this to vector
     // form.
     if (isInline()) {
-      NamedDecl *OldD = getInlineValue();
-      Data.setInt(1);
+      NamedDecl *OldD = Data.get<NamedDecl*>();
       VectorTy *VT = new VectorTy();
       VT->push_back(OldD);
-      Data.setPointer(VT);
+      Data = VT;
     }
     
-    VectorTy &Vec = getVector();
+    VectorTy &Vec = *Data.get<VectorTy*>();
     if (isa<UsingDirectiveDecl>(D) ||
         D->getIdentifierNamespace() == Decl::IDNS_Tag)
       Vec.push_back(D);
@@ -467,18 +465,6 @@ public:
       Vec.push_back(TagD);
     } else
       Vec.push_back(D);
-  }
-      
-  
-private:
-  VectorTy &getVector() const {
-    assert(isVector() && "Not in vector form");
-    return *static_cast<VectorTy*>(Data.getPointer());
-  }
-  
-  NamedDecl *getInlineValue() const {
-    assert(isInline() && "Not in inline form");
-    return (NamedDecl*)Data.getPointer();
   }
 };
 
