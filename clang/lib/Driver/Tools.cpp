@@ -457,6 +457,148 @@ void gcc::Link::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
   // The types are (hopefully) good enough.
 }
 
+const char *darwin::CC1::getCC1Name(types::ID Type) const {
+  switch (Type) {
+  default:
+    assert(0 && "Unexpected type for Darwin CC1 tool.");
+  case types::TY_Asm:
+  case types::TY_C: case types::TY_CHeader:
+  case types::TY_PP_C: case types::TY_PP_CHeader:
+    return "cc1";
+  case types::TY_ObjC: case types::TY_ObjCHeader:
+  case types::TY_PP_ObjC: case types::TY_PP_ObjCHeader:
+    return "cc1obj";
+  case types::TY_CXX: case types::TY_CXXHeader:
+  case types::TY_PP_CXX: case types::TY_PP_CXXHeader:
+    return "cc1plus";
+  case types::TY_ObjCXX: case types::TY_ObjCXXHeader:
+  case types::TY_PP_ObjCXX: case types::TY_PP_ObjCXXHeader:
+    return "cc1objplus";
+  }
+}
+
+void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
+                                      Job &Dest, const InputInfo &Output, 
+                                      const InputInfoList &Inputs, 
+                                      const ArgList &Args, 
+                                      const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  assert(Inputs.size() == 1 && "Unexpected number of inputs!");
+
+  CmdArgs.push_back("-E");
+
+  if (Args.hasArg(options::OPT_traditional) ||
+      Args.hasArg(options::OPT_ftraditional) ||
+      Args.hasArg(options::OPT_traditional_cpp))
+    CmdArgs.push_back("-traditional-cpp");
+  
+  ArgStringList OutputArgs;
+  if (Output.isFilename()) {
+    OutputArgs.push_back("-o");
+    OutputArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isPipe() && "Unexpected CC1 output.");
+  }
+
+  AddCPPOptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
+
+  Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
+  
+  const char *CC1Name = getCC1Name(Inputs[0].getType());
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name).c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));  
+}
+
+void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
+                                   Job &Dest, const InputInfo &Output, 
+                                   const InputInfoList &Inputs, 
+                                   const ArgList &Args, 
+                                   const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getHost().getDriver();
+  ArgStringList CmdArgs;
+
+  assert(Inputs.size() == 1 && "Unexpected number of inputs!");
+
+  types::ID InputType = Inputs[0].getType();
+  const Arg *A;
+  if ((A = Args.getLastArg(options::OPT_traditional)) || 
+      (A = Args.getLastArg(options::OPT_ftraditional)))
+    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+      << A->getAsString(Args) << "-E";
+
+  if (Output.getType() == types::TY_LLVMAsm)
+    CmdArgs.push_back("-emit-llvm");
+  else if (Output.getType() == types::TY_LLVMBC)
+    CmdArgs.push_back("-emit-llvm-bc");
+
+  ArgStringList OutputArgs;
+  if (Output.getType() != types::TY_PCH) {
+    OutputArgs.push_back("-o");
+    if (Output.isPipe())
+      OutputArgs.push_back("-");
+    else if (Output.isNothing())
+      OutputArgs.push_back("/dev/null");
+    else
+      OutputArgs.push_back(Output.getFilename());
+  }
+
+  // There is no need for this level of compatibility, but it makes
+  // diffing easier.
+  bool OutputArgsEarly = (Args.hasArg(options::OPT_fsyntax_only) ||
+                          Args.hasArg(options::OPT_S));
+
+  if (types::getPreprocessedType(InputType) != types::TY_INVALID) {
+    AddCPPUniqueOptionsArgs(Args, CmdArgs);
+    if (OutputArgsEarly) {
+      AddCC1OptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
+    } else {
+      AddCC1OptionsArgs(Args, CmdArgs, Inputs, ArgStringList());
+      CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
+    }
+  } else {
+    CmdArgs.push_back("-fpreprocessed");
+      
+    // FIXME: There is a spec command to remove
+    // -fpredictive-compilation args here. Investigate.
+
+    for (InputInfoList::const_iterator
+           it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+      const InputInfo &II = *it;
+
+      if (II.isPipe())
+        CmdArgs.push_back("-");
+      else
+        CmdArgs.push_back(II.getFilename());
+    }
+
+    if (OutputArgsEarly) {
+      AddCC1OptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
+    } else {
+      AddCC1OptionsArgs(Args, CmdArgs, Inputs, ArgStringList());
+      CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
+    }
+  }
+  
+  if (Output.getType() == types::TY_PCH) {
+    assert(Output.isFilename() && "Invalid PCH output.");
+
+    CmdArgs.push_back("-o");
+    // NOTE: gcc uses a temp .s file for this, but there doesn't seem
+    // to be a good reason.
+    CmdArgs.push_back("/dev/null");
+      
+    CmdArgs.push_back("--output-pch=");
+    CmdArgs.push_back(Output.getFilename());
+  }      
+
+  const char *CC1Name = getCC1Name(Inputs[0].getType());
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name).c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));  
+}
+
 void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                     Job &Dest, const InputInfo &Output, 
                                     const InputInfoList &Inputs, 

@@ -11,6 +11,7 @@
 #define CLANG_LIB_DRIVER_TOOLS_H_
 
 #include "clang/Driver/Tool.h"
+#include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
 
 #include "llvm/Support/Compiler.h"
@@ -115,6 +116,54 @@ namespace gcc {
 } // end namespace gcc
 
 namespace darwin {
+  class VISIBILITY_HIDDEN CC1 : public Tool  {
+  protected:
+    const char *getCC1Name(types::ID Type) const;
+
+    void AddCC1Args(const ArgList &Args, ArgStringList &CmdArgs) const {}
+    void AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
+                           const InputInfoList &Inputs,
+                           const ArgStringList &OutputArgs) const {}
+    void AddCPPUniqueOptionsArgs(const ArgList &Args, 
+                                 ArgStringList &CmdArgs) const {}
+    void AddCPPArgs(const ArgList &Args, ArgStringList &CmdArgs) const {}
+
+    void AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
+                           const InputInfoList &Inputs,
+                           const ArgStringList &OutputArgs) const {}
+
+  public:
+    CC1(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
+
+    virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return true; }
+    virtual bool hasIntegratedCPP() const { return true; }
+  };
+
+  class VISIBILITY_HIDDEN Preprocess : public CC1  {
+  public:
+    Preprocess(const ToolChain &TC) : CC1("darwin::Preprocess", TC) {}
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
+  };
+
+  class VISIBILITY_HIDDEN Compile : public CC1  {
+  public:
+    Compile(const ToolChain &TC) : CC1("darwin::Compile", TC) {}
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
+  };
+
   class VISIBILITY_HIDDEN Assemble : public Tool  {
   public:
     Assemble(const ToolChain &TC) : Tool("darwin::Assemble", TC) {}
