@@ -233,6 +233,8 @@ public:
   static inline clang::QualType getFromVoidPointer(void *P) {
     return clang::QualType::getFromOpaquePtr(P);
   }
+  // CVR qualifiers go in low bits.
+  static inline unsigned getNumLowBitsAvailable() { return 0; }
 };
 } // end namespace llvm
 
