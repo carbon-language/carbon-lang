@@ -37,8 +37,7 @@ class CFGRecStmtDeclVisitor : public CFGRecStmtVisitor<ImplClass> {
 public:  
 
   void VisitDeclRefExpr(DeclRefExpr* DR) {
-    for (Decl* D = DR->getDecl(); D != NULL; D = D->getNextDeclarator())
-      static_cast<ImplClass*>(this)->VisitDecl(D); 
+    static_cast<ImplClass*>(this)->VisitDecl(DR->getDecl()); 
   }
   
   void VisitDeclStmt(DeclStmt* DS) {
