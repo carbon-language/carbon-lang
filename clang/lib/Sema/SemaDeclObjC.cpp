@@ -1409,7 +1409,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   
   ObjCMethodDecl* ObjCMethod = 
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
-                           dyn_cast<DeclContext>(ClassDecl), 
+                           cast<DeclContext>(ClassDecl), 
                            MethodType == tok::minus, isVariadic,
                            false,
                            MethodDeclKind == tok::objc_optional ? 
