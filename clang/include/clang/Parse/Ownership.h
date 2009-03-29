@@ -14,14 +14,11 @@
 #ifndef LLVM_CLANG_PARSE_OWNERSHIP_H
 #define LLVM_CLANG_PARSE_OWNERSHIP_H
 
+#include "llvm/Support/PointerLikeTypeTraits.h"
+
 //===----------------------------------------------------------------------===//
 // OpaquePtr
 //===----------------------------------------------------------------------===//
-
-namespace llvm {
-  template <typename T>
-  class PointerLikeTypeTraits;
-}
 
 namespace clang {
   /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
@@ -35,12 +32,26 @@ namespace clang {
     OpaquePtr() : Ptr(0) {}
     
     template <typename T>
-    T* getAs() const { return static_cast<T*>(Ptr); }
+    T* getAs() const {
+      return llvm::PointerLikeTypeTraits<T*>::getFromVoidPointer(Ptr);
+    }
+    
+    template <typename T>
+    T getAsVal() const {
+      return llvm::PointerLikeTypeTraits<T>::getFromVoidPointer(Ptr);
+    }
     
     void *get() const { return Ptr; }
     
-    static OpaquePtr make(void *P) { OpaquePtr R; R.Ptr = P; return R; }
-    void set(void *P) { Ptr = P; }
+    template<typename T>
+    static OpaquePtr make(T P) {
+      OpaquePtr R; R.set(P); return R;
+    }
+    
+    template<typename T>
+    void set(T P) {
+      Ptr = llvm::PointerLikeTypeTraits<T>::getAsVoidPointer(P);
+    }
     
     operator bool() const { return Ptr != 0; }
   };

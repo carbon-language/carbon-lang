@@ -134,4 +134,21 @@ public:
 };
   
 } // end clang namespace
+
+namespace llvm {
+  // DeclGroupRef is "like a pointer", implement PointerLikeTypeTraits.
+  template <typename T>
+  class PointerLikeTypeTraits;
+  template <>
+  class PointerLikeTypeTraits<clang::DeclGroupRef> {
+  public:
+    static inline void *getAsVoidPointer(clang::DeclGroupRef P) {
+      return P.getAsOpaquePtr();
+    }
+    static inline clang::DeclGroupRef getFromVoidPointer(void *P) {
+      return clang::DeclGroupRef::getFromOpaquePtr(P);
+    }
+    enum { NumLowBitsAvailable = 0 };
+  };
+}
 #endif
