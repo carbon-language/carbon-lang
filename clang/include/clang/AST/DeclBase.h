@@ -19,6 +19,7 @@
 // FIXME: Layering violation
 #include "clang/Parse/AccessSpecifier.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
 class DeclContext;
@@ -113,6 +114,12 @@ private:
 
   friend class DeclContext;
 
+  struct MultipleDC {
+    DeclContext *SemanticDC;
+    DeclContext *LexicalDC;
+  };
+  
+  
   /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
   /// For declarations that don't contain C++ scope specifiers, it contains
   /// the DeclContext where the Decl was declared.
@@ -126,23 +133,15 @@ private:
   ///   }
   ///   void A::f(); // SemanticDC == namespace 'A'
   ///                // LexicalDC == global namespace
-  llvm::PointerIntPair<DeclContext*, 1, bool> DeclCtx;
+  llvm::PointerUnion<DeclContext*, MultipleDC*> DeclCtx;
 
-  struct MultipleDC {
-    DeclContext *SemanticDC;
-    DeclContext *LexicalDC;
-  };
-
-  inline bool isInSemaDC() const { return DeclCtx.getInt() == 0; }
-  inline bool isOutOfSemaDC() const { return DeclCtx.getInt() != 0; }
+  inline bool isInSemaDC() const    { return DeclCtx.is<DeclContext*>(); }
+  inline bool isOutOfSemaDC() const { return DeclCtx.is<MultipleDC*>(); }
   inline MultipleDC *getMultipleDC() const {
-    assert(isOutOfSemaDC() && "Invalid accessor");
-    return reinterpret_cast<MultipleDC*>(DeclCtx.getPointer());
+    return DeclCtx.get<MultipleDC*>();
   }
-
   inline DeclContext *getSemanticDC() const {
-    assert(isInSemaDC() && "Invalid accessor");
-    return static_cast<DeclContext*>(DeclCtx.getPointer());
+    return DeclCtx.get<DeclContext*>();
   }
   
   /// Loc - The location that this decl.
@@ -178,7 +177,7 @@ protected:
 
   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
     : NextDeclarator(0), NextDeclInContext(0), 
-      DeclCtx(DC, 0), 
+      DeclCtx(DC), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), 
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)), Access(AS_none) {

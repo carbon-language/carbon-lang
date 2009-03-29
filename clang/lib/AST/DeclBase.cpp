@@ -129,8 +129,7 @@ void Decl::setDeclContext(DeclContext *DC) {
   if (isOutOfSemaDC())
     delete getMultipleDC();
   
-  DeclCtx.setPointer(DC);
-  DeclCtx.setInt(false);
+  DeclCtx = DC;
 }
 
 void Decl::setLexicalDeclContext(DeclContext *DC) {
@@ -141,8 +140,7 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
     MultipleDC *MDC = new MultipleDC();
     MDC->SemanticDC = getDeclContext();
     MDC->LexicalDC = DC;
-    DeclCtx.setPointer(reinterpret_cast<DeclContext*>(MDC));
-    DeclCtx.setInt(true);
+    DeclCtx = MDC;
   } else {
     getMultipleDC()->LexicalDC = DC;
   }

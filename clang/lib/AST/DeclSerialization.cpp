@@ -135,12 +135,10 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
     // *object* for back-patching. Its actual value will get filled in later.
     uintptr_t X;
     D.ReadUIntPtr(X, SemaDCPtrID); 
-    Dcl->DeclCtx.setFromOpaqueValue(reinterpret_cast<void*>(X));
-  }
-  else {
+    Dcl->DeclCtx = reinterpret_cast<DeclContext*>(X);
+  } else {
     MultipleDC *MDC = new MultipleDC();
-    Dcl->DeclCtx.setPointer(reinterpret_cast<DeclContext*>(MDC));
-    Dcl->DeclCtx.setInt(true);
+    Dcl->DeclCtx = MDC;
     // Allow back-patching.  Observe that we register the variable of the
     // *object* for back-patching. Its actual value will get filled in later.
     D.ReadPtr(MDC->SemanticDC, SemaDCPtrID);
