@@ -14,7 +14,6 @@
 #ifndef LLVM_ADT_POINTERINTPAIR_H
 #define LLVM_ADT_POINTERINTPAIR_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
 
@@ -37,10 +36,10 @@ struct DenseMapInfo;
 ///   PointerIntPair<PointerIntPair<void*, 1,bool>, 1, bool>
 /// ... and the two bools will land in different bits.
 ///
-template <typename PointerTy, unsigned IntBits, typename IntType=unsigned>
+template <typename PointerTy, unsigned IntBits, typename IntType=unsigned,
+          typename PtrTraits = PointerLikeTypeTraits<PointerTy> >
 class PointerIntPair {
   intptr_t Value;
-  typedef PointerLikeTypeTraits<PointerTy> PtrTraits;
   enum {
     /// PointerBitMask - The bits that come from the pointer.
     PointerBitMask = ~(((intptr_t)1 << PtrTraits::NumLowBitsAvailable)-1),
