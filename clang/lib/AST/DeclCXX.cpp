@@ -179,24 +179,6 @@ void CXXRecordDecl::addConversionFunction(ASTContext &Context,
   Conversions.addOverload(ConvDecl);
 }
 
-CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() {
-  if (TemplateOrInstantiation.getInt() == 1)
-    return cast_or_null<CXXRecordDecl>(TemplateOrInstantiation.getPointer());
-  return 0;
-}
-
-void CXXRecordDecl::setDescribedClassTemplate(ClassTemplateDecl *Template) {
-  TemplateOrInstantiation.setInt(0);
-  TemplateOrInstantiation.setPointer(Template);
-}
-
-ClassTemplateDecl *CXXRecordDecl::getDescribedClassTemplate() {
-  if (TemplateOrInstantiation.getInt() == 0)
-    return cast_or_null<ClassTemplateDecl>(
-                                     TemplateOrInstantiation.getPointer());
-  return 0;
-}
-
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,

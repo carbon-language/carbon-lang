@@ -243,11 +243,10 @@ class CXXRecordDecl : public RecordDecl {
   /// 
   /// For non-templates, this value will be NULL. For record
   /// declarations that describe a class template, this will be a
-  /// pointer to a ClassTemplateDecl (the bit is 0). For member
+  /// pointer to a ClassTemplateDecl. For member
   /// classes of class template specializations, this will be the
-  /// RecordDecl from which the member class was instantiated (the bit
-  /// is 1).
-  llvm::PointerIntPair<Decl*, 1> TemplateOrInstantiation;
+  /// RecordDecl from which the member class was instantiated.
+  llvm::PointerUnion<ClassTemplateDecl*, CXXRecordDecl*>TemplateOrInstantiation;
 
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
@@ -395,13 +394,14 @@ public:
   /// the CXXRecordDecl X<T>::A. When a complete definition of
   /// X<int>::A is required, it will be instantiated from the
   /// declaration returned by getInstantiatedFromMemberClass().
-  CXXRecordDecl *getInstantiatedFromMemberClass();
+  CXXRecordDecl *getInstantiatedFromMemberClass() {
+    return TemplateOrInstantiation.dyn_cast<CXXRecordDecl*>();
+  }
 
   /// \brief Specify that this record is an instantiation of the
   /// member class RD.
   void setInstantiationOfMemberClass(CXXRecordDecl *RD) { 
-    TemplateOrInstantiation.setInt(1);
-    TemplateOrInstantiation.setPointer(RD);
+    TemplateOrInstantiation = RD;
   }
 
   /// \brief Retrieves the class template that is described by this
@@ -415,9 +415,13 @@ public:
   /// CXXRecordDecl that from a ClassTemplateDecl, while
   /// getDescribedClassTemplate() retrieves the ClassTemplateDecl from
   /// a CXXRecordDecl.
-  ClassTemplateDecl *getDescribedClassTemplate();
+  ClassTemplateDecl *getDescribedClassTemplate() {
+    return TemplateOrInstantiation.dyn_cast<ClassTemplateDecl*>();
+  }
 
-  void setDescribedClassTemplate(ClassTemplateDecl *Template);
+  void setDescribedClassTemplate(ClassTemplateDecl *Template) {
+    TemplateOrInstantiation = Template;
+  }
 
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
