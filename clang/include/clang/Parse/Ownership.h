@@ -211,35 +211,36 @@ namespace clang
       }
     };
 
-    ///// FIXME: We just lost the ability to bitmangle into DeclPtrTy's and
-    ///// friends!
-
     // This ActionResult partial specialization places the "invalid"
     // flag into the low bit of the pointer.
-    template<unsigned UID>
-    class ActionResult<UID, void*, true> {
+    template<unsigned UID, typename PtrTy>
+    class ActionResult<UID, PtrTy, true> {
       // A pointer whose low bit is 1 if this result is invalid, 0
       // otherwise.
       uintptr_t PtrWithInvalid;
-
+      typedef llvm::PointerLikeTypeTraits<PtrTy> PtrTraits;
     public:
       ActionResult(bool Invalid = false) 
         : PtrWithInvalid(static_cast<uintptr_t>(Invalid)) { }
 
       template<typename ActualExprTy>
-      ActionResult(ActualExprTy *val) 
-        : PtrWithInvalid(reinterpret_cast<uintptr_t>(val)) {
+      ActionResult(ActualExprTy *val) {
+        PtrTy V(val);
+        void *VP = PtrTraits::getAsVoidPointer(V);
+        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
         assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
       }
 
       ActionResult(const DiagnosticBuilder &) : PtrWithInvalid(0x01) { }
 
-      void *get() const { 
-        return reinterpret_cast<void *>(PtrWithInvalid & ~0x01); 
+      PtrTy get() const {
+        void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01); 
+        return PtrTraits::getFromVoidPointer(VP);
       }
 
-      void set(void *V) { 
-        PtrWithInvalid = reinterpret_cast<uintptr_t>(V);
+      void set(PtrTy V) {
+        void *VP = PtrTraits::getAsVoidPointer(V);
+        PtrWithInvalid = reinterpret_cast<uintptr_t>(VP);
         assert((PtrWithInvalid & 0x01) == 0 && "Badly aligned pointer");
       }
 
@@ -394,7 +395,7 @@ namespace clang
     }
 
     /// Move assignment from another owning result
-    ASTOwningResult & operator =(moving::ASTResultMover<Destroyer> mover) {
+    ASTOwningResult &operator=(moving::ASTResultMover<Destroyer> mover) {
       destroy();
       ActionInv = mover->ActionInv;
       Ptr = mover->Ptr;
@@ -403,7 +404,7 @@ namespace clang
     }
 
     /// Assignment from a raw pointer. Takes ownership - beware!
-    ASTOwningResult & operator =(void *raw) {
+    ASTOwningResult &operator=(void *raw) {
       destroy();
       Ptr = raw;
       ActionInv.setInt(false);
@@ -411,7 +412,7 @@ namespace clang
     }
 
     /// Assignment from an ActionResult. Takes ownership - beware!
-    ASTOwningResult & operator =(const DumbResult &res) {
+    ASTOwningResult &operator=(const DumbResult &res) {
       destroy();
       Ptr = res.get();
       ActionInv.setInt(res.isInvalid());
@@ -419,7 +420,7 @@ namespace clang
     }
 
     /// Access to the raw pointer.
-    void * get() const { return Ptr; }
+    void *get() const { return Ptr; }
 
     bool isInvalid() const { return ActionInv.getInt(); }
 
@@ -428,7 +429,7 @@ namespace clang
     bool isUsable() const { return !isInvalid() && get(); }
 
     /// Take outside ownership of the raw pointer.
-    void * take() {
+    void *take() {
       if (isInvalid())
         return 0;
       void *tmp = Ptr;
@@ -443,7 +444,7 @@ namespace clang
     }
 
     /// Alias for interface familiarity with unique_ptr.
-    void * release() { return take(); }
+    void *release() { return take(); }
 
     /// Pass ownership to a classical ActionResult.
     DumbResult result() {
