@@ -257,7 +257,11 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context) {
 ///         declaration-specifiers init-declarator-list[opt] ';'
 ///[C90/C++]init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
-Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
+///
+/// If RequireSemi is false, this does not check for a ';' at the end of the
+/// declaration.
+Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
+                                                      bool RequireSemi) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -275,21 +279,15 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context) {
   
   DeclGroupPtrTy DG =
     ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+
+  // If the client wants to check what comes after the declaration, just return
+  // immediately without checking anything!
+  if (!RequireSemi) return DG;
   
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    // for(is key; in keys) is error.
-    if (Context == Declarator::ForContext && isTokIdentifier_in())
-      Diag(Tok, diag::err_parse_error);
-    
     return DG;
   }
-  
-  // If this is an ObjC2 for-each loop, this is a successful declarator
-  // parse.  The syntax for these looks like:
-  // 'for' '(' declaration 'in' expr ')' statement
-  if (Context == Declarator::ForContext && isTokIdentifier_in())
-    return DG;
   
   Diag(Tok, diag::err_expected_semi_declation);
   // Skip to end of block or statement

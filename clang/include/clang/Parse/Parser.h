@@ -809,7 +809,8 @@ private:
   // C99 6.7: Declarations.
   
   DeclGroupPtrTy ParseDeclaration(unsigned Context);
-  DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context);
+  DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
+                                        bool RequireSemi = true);
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 

@@ -912,12 +912,18 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
     SourceLocation DeclStart = Tok.getLocation();
-    DeclGroupPtrTy VarDecls = ParseSimpleDeclaration(Declarator::ForContext);
-    // FIXME: Pass in the right location for the end of the declstmt.
-    FirstPart = Actions.ActOnDeclStmt(VarDecls, DeclStart, DeclStart);
-    if ((ForEach = isTokIdentifier_in())) {
+    DeclGroupPtrTy DG = ParseSimpleDeclaration(Declarator::ForContext, false);
+    FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
+    
+    if (Tok.is(tok::semi)) {  // for (int x = 4;
+      ConsumeToken();
+    } else if ((ForEach = isTokIdentifier_in())) {
+      // ObjC: for (id x in expr) 
       ConsumeToken(); // consume 'in'
       SecondPart = ParseExpression();
+    } else {
+      Diag(Tok, diag::err_expected_semi_for);
+      SkipUntil(tok::semi);
     }
   } else {
     Value = ParseExpression();
