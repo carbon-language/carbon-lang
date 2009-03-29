@@ -144,8 +144,7 @@ public:
     return getOpcode() == Shl || getOpcode() == LShr;
   }
 
-  /// isLogicalShift - Return true if this is a logical shift left or a logical
-  /// shift right.
+  /// isArithmeticShift - Return true if this is an arithmetic shift right.
   inline bool isArithmeticShift() const {
     return getOpcode() == AShr;
   }
