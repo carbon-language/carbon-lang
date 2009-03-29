@@ -271,7 +271,7 @@ void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
     Indent();
     fprintf(F, "%p ", (void*) D);
     DumpDeclarator(D);
-    if (D->getNextDeclarator())
+    if (DI+1 != DE)
       fprintf(F,"\n");
     --IndentLevel;
   }
