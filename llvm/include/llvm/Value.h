@@ -303,6 +303,19 @@ template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
   return isa<GlobalVariable>(Val) || isa<Function>(Val) ||
          isa<GlobalAlias>(Val);
 }
+  
+  
+// Value* is only 4-byte aligned.
+template<>
+class PointerLikeTypeTraits<Value*> {
+  typedef Value* PT;
+public:
+  static inline void *getAsVoidPointer(PT P) { return P; }
+  static inline PT getFromVoidPointer(void *P) {
+    return static_cast<PT>(P);
+  }
+  enum { NumLowBitsAvailable = 2 };
+};
 
 } // End llvm namespace
 
