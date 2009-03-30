@@ -207,7 +207,7 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
 
 // FreeBSD Host Info
 
-/// FreeBSDHostInfo -  Similar to UnknownHostInfo, but doesn't depend on
+/// FreeBSDHostInfo -  FreeBSD host information implementation.
 class FreeBSDHostInfo : public HostInfo {
   /// Cache of tool chains we have created.
   mutable llvm::StringMap<ToolChain*> ToolChains;
