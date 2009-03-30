@@ -283,6 +283,7 @@ OPTION("-Wno-format-y2k", Wno_format_y2k, Flag, clang_ignored_W_Group, INVALID, 
 OPTION("-Wno-four-char-constants", Wno_four_char_constants, Flag, clang_ignored_W_Group, INVALID, "", 0)
 OPTION("-Wno-missing-field-initializers", Wno_missing_field_initializers, Flag, clang_ignored_W_Group, INVALID, "", 0)
 OPTION("-Wno-nonportable-cfstrings", Wno_nonportable_cfstrings, Joined, W_Group, INVALID, "", 0)
+OPTION("-Wno-pointer-sign", Wno_pointer_sign, Flag, clang_W_Group, INVALID, "", 0)
 OPTION("-Wno-strict-selector-match", Wno_strict_selector_match, Flag, clang_W_Group, INVALID, "", 0)
 OPTION("-Wno-trigraphs", Wno_trigraphs, Flag, clang_ignored_W_Group, INVALID, "", 0)
 OPTION("-Wno-unknown-pragmas", Wno_unknown_pragmas, Flag, clang_ignored_W_Group, INVALID, "", 0)

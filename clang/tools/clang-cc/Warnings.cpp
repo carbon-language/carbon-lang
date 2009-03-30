@@ -136,6 +136,9 @@ static const diag::kind UndefDiags[] = { diag::warn_pp_undef_identifier };
 static const diag::kind ImplicitFunctionDeclarationDiags[] = {
   diag::ext_implicit_function_decl, diag::warn_implicit_function_decl
 };
+static const diag::kind PointerSignDiags[] = {
+  diag::ext_typecheck_convert_incompatible_pointer_sign
+};
 // Hmm ... this option is currently actually completely ignored.
 //static const diag::kind StrictSelectorMatchDiags[] = {  };
 // Second the table of options.  MUST be sorted by name! Binary lookup is done.
@@ -143,6 +146,7 @@ static const WarningOption OptionTable[] = {
   { "float-equal",           DIAGS(FloatEqualDiags) },
   { "format-nonliteral",     DIAGS(FormatNonLiteralDiags) },
   { "implicit-function-declaration", DIAGS(ImplicitFunctionDeclarationDiags) },
+  { "pointer-sign",          DIAGS(PointerSignDiags) },
   { "readonly-setter-attrs", DIAGS(ReadOnlySetterAttrsDiags) },
   { "undef",                 DIAGS(UndefDiags) },
   { "unused-macros",         DIAGS(UnusedMacrosDiags) },
