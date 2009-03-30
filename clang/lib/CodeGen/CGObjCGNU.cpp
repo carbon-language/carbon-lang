@@ -204,9 +204,12 @@ llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
   llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getNameAsString());
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
+  std::vector<const llvm::Type*> Params(1, PtrToInt8Ty);
   llvm::Constant *ClassLookupFn =
-    TheModule.getOrInsertFunction("objc_lookup_class", IdTy, PtrToInt8Ty,
-        NULL);
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy,
+                                                      Params,
+                                                      true),
+                              "objc_lookup_class");
   return Builder.CreateCall(ClassLookupFn, ClassName);
 }
 
@@ -304,11 +307,14 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateStore(ReceiverClass, CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
   // Get the IMP
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(llvm::PointerType::getUnqual(ObjCSuperTy));
+  Params.push_back(SelectorTy);
   llvm::Constant *lookupFunction = 
-     TheModule.getOrInsertFunction("objc_msg_lookup_super",
-                                   llvm::PointerType::getUnqual(impType),
-                                   llvm::PointerType::getUnqual(ObjCSuperTy),
-                                   SelectorTy, NULL);
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+          llvm::PointerType::getUnqual(impType), Params, true),
+        "objc_msg_lookup_super");
+
   llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
   llvm::Value *imp = CGF.Builder.CreateCall(lookupFunction, lookupArgs,
       lookupArgs+2);
@@ -338,10 +344,14 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
   const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
 
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(Receiver->getType());
+  Params.push_back(SelectorTy);
   llvm::Constant *lookupFunction = 
-     TheModule.getOrInsertFunction("objc_msg_lookup",
-                                   llvm::PointerType::getUnqual(impType),
-                                   Receiver->getType(), SelectorTy, NULL);
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+          llvm::PointerType::getUnqual(impType), Params, true),
+        "objc_msg_lookup");
+
   llvm::Value *imp = CGF.Builder.CreateCall2(lookupFunction, Receiver, cmd);
 
   return CGF.EmitCall(FnInfo, imp, ActualArgs);
@@ -939,8 +949,11 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", LoadFunction);
   CGBuilderTy Builder;
   Builder.SetInsertPoint(EntryBB);
-  llvm::Value *Register = TheModule.getOrInsertFunction("__objc_exec_class",
-      llvm::Type::VoidTy, llvm::PointerType::getUnqual(ModuleTy), NULL);
+
+  std::vector<const llvm::Type*> Params(1,
+      llvm::PointerType::getUnqual(ModuleTy));
+  llvm::Value *Register = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+        llvm::Type::VoidTy, Params, true), "__objc_exec_class");
   Builder.CreateCall(Register, Module);
   Builder.CreateRetVoid();
   return LoadFunction;
@@ -977,9 +990,10 @@ llvm::Function *CGObjCGNU::GetPropertySetFunction() {
 }
 
 llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
-return  
-  (llvm::Function*)TheModule.getOrInsertFunction(
-    "objc_enumerationMutation", llvm::Type::VoidTy, IdTy, NULL);
+  std::vector<const llvm::Type*> Params(1, IdTy);
+  return cast<llvm::Function>(CGM.CreateRuntimeFunction(
+        llvm::FunctionType::get(llvm::Type::VoidTy, Params, true),
+        "objc_enumerationMutation"));
 }
 
 void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
