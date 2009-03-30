@@ -685,8 +685,8 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   }
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
-  if (Info.Ctx.getLangOptions().CPlusPlus &&
-      E->getType().getCVRQualifiers() == QualType::Const) {
+  // In C, they can also be folded, although they are not ICEs.
+  if (E->getType().getCVRQualifiers() == QualType::Const) {
     if (const VarDecl *D = dyn_cast<VarDecl>(E->getDecl())) {
       if (const Expr *Init = D->getInit())
         return Visit(const_cast<Expr*>(Init));
