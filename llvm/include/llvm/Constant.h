@@ -19,6 +19,13 @@
 namespace llvm {
   template<typename T> class SmallVectorImpl;
 
+  /// If object contains references to other objects, then relocations are
+  /// usually required for emission of such object (especially in PIC mode). One
+  /// usually distinguishes local and global relocations. Local relocations are
+  /// made wrt objects in the same module and these objects have local (internal
+  /// or private) linkage. Global relocations are made wrt externally visible
+  /// objects. In most cases local relocations can be resolved via so-called
+  /// 'pre-link' technique.
   namespace Reloc {
     const unsigned None   = 0;
     const unsigned Local  = 1 << 0; ///< Local relocations are required
@@ -70,7 +77,9 @@ public:
   bool canTrap() const;
 
   /// ContainsRelocations - Return true if the constant value contains
-  /// relocations which cannot be resolved at compile time.
+  /// relocations which cannot be resolved at compile time. Note that answer is
+  /// not exclusive: there can be possibility that relocations of other kind are
+  /// required as well.
   bool ContainsRelocations(unsigned Kind = Reloc::LocalOrGlobal) const;
 
   // Specialize get/setOperand for Constants as their operands are always
