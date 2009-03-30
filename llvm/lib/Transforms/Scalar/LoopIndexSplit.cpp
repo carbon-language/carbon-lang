@@ -48,6 +48,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -345,10 +346,25 @@ bool LoopIndexSplit::processOneIterationLoop() {
   if (!L->isLoopInvariant(SplitValue))
     return false;
   Instruction *OPI = dyn_cast<Instruction>(OPV);
-  if (!OPI) return false;
+  if (!OPI) 
+    return false;
   if (OPI->getParent() != Header || isUsedOutsideLoop(OPI, L))
     return false;
-  
+  Value *StartValue = IVStartValue;
+  Value *ExitValue = IVExitValue;;
+
+  if (OPV != IndVar) {
+    // If BR operand is IV based then use this operand to calculate
+    // effective conditions for loop body.
+    BinaryOperator *BOPV = dyn_cast<BinaryOperator>(OPV);
+    if (!BOPV) 
+      return false;
+    if (BOPV->getOpcode() != Instruction::Add) 
+      return false;
+    StartValue = BinaryOperator::CreateAdd(OPV, StartValue, "" , BR);
+    ExitValue = BinaryOperator::CreateAdd(OPV, ExitValue, "" , BR);
+  }
+
   if (!cleanBlock(Header))
     return false;
 
@@ -399,13 +415,13 @@ bool LoopIndexSplit::processOneIterationLoop() {
   //      and i32 c1, c2 
   Instruction *C1 = new ICmpInst(ExitCondition->isSignedPredicate() ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
-                                 SplitValue, IVStartValue, "lisplit", BR);
+                                 SplitValue, StartValue, "lisplit", BR);
 
   CmpInst::Predicate C2P  = ExitCondition->getPredicate();
   BranchInst *LatchBR = cast<BranchInst>(Latch->getTerminator());
   if (LatchBR->getOperand(0) != Header)
     C2P = CmpInst::getInversePredicate(C2P);
-  Instruction *C2 = new ICmpInst(C2P, SplitValue, IVExitValue, "lisplit", BR);
+  Instruction *C2 = new ICmpInst(C2P, SplitValue, ExitValue, "lisplit", BR);
   Instruction *NSplitCond = BinaryOperator::CreateAnd(C1, C2, "lisplit", BR);
 
   SplitCondition->replaceAllUsesWith(NSplitCond);
@@ -419,11 +435,11 @@ bool LoopIndexSplit::processOneIterationLoop() {
     if (Header != *SI)
       LatchSucc = *SI;
   }
-  LatchBR->setUnconditionalDest(LatchSucc);
 
-  // Remove IVIncrement
-  IVIncrement->replaceAllUsesWith(UndefValue::get(IVIncrement->getType()));
-  IVIncrement->eraseFromParent();
+  // Clean up latch block.
+  Value *LatchBRCond = LatchBR->getCondition();
+  LatchBR->setUnconditionalDest(LatchSucc);
+  RecursivelyDeleteTriviallyDeadInstructions(LatchBRCond);
   
   LPM->deleteLoopFromQueue(L);
 
