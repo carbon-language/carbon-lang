@@ -131,7 +131,7 @@ namespace ARM_AM {
   static inline unsigned getSOImmValImm(unsigned Imm) {
     return Imm & 0xFF;
   }
-  /// getSOImmValRotate - Given an encoded imm field for the reg/imm form, return
+  /// getSOImmValRot - Given an encoded imm field for the reg/imm form, return
   /// the rotate amount.
   static inline unsigned getSOImmValRot(unsigned Imm) {
     return (Imm >> 8) * 2;
