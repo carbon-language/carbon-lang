@@ -52,6 +52,10 @@ def ext_nonstandard_escape : Extension<
   "use of non-standard escape character '\\%0'">;
 def ext_unknown_escape : Extension<"unknown escape sequence '\\%0'">;
 def err_hex_escape_no_digits : Error<"\\x used with no following hex digits">;
+def err_ucn_escape_no_digits : Error<"\\u used with no following hex digits">;
+def err_ucn_escape_invalid : Error<"invalid universal character">;
+def err_ucn_escape_incomplete : Error<"incomplete universal character name">;
+def err_ucn_escape_too_big : Error<"universal character name is too long">;
 def err_invalid_decimal_digit : Error<"invalid digit '%0' in decimal constant">;
 def err_invalid_binary_digit : Error<"invalid digit '%0' in binary constant">;
 def err_invalid_octal_digit : Error<"invalid digit '%0' in octal constant">;

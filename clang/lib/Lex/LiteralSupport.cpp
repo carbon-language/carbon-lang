@@ -71,8 +71,6 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
   case 'v':
     ResultChar = 11;
     break;
-    
-    //case 'u': case 'U':  // FIXME: UCNs.
   case 'x': { // Hex escape.
     ResultChar = 0;
     if (ThisTokBuf == ThisTokEnd || !isxdigit(*ThisTokBuf)) {
@@ -151,7 +149,90 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
   return ResultChar;
 }
 
+/// ProcessUCNEscape - Read the Universal Character Name, check constraints and
+/// convert the UTF32 to UTF8. This is a subroutine of StringLiteralParser.
+/// When we decide to implement UCN's for character constants and identifiers,
+/// we will likely rework our support for UCN's.
+static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd, 
+                             char *&ResultBuf, const char *ResultBufEnd,
+                             bool &HadError, 
+                             SourceLocation Loc, Preprocessor &PP) {
+  // FIXME: Add a warning - UCN's are only valid in C++ & C99.
+  
+  // Skip the '\u' char's.
+  ThisTokBuf += 2;
 
+  if (ThisTokBuf == ThisTokEnd || !isxdigit(*ThisTokBuf)) {
+    PP.Diag(Loc, diag::err_ucn_escape_no_digits);
+    HadError = 1;
+    return;
+  }
+  typedef unsigned int UTF32;
+  
+  UTF32 UcnVal = 0;
+  unsigned short UcnLen = (ThisTokBuf[-1] == 'u' ? 4 : 8);
+  for (; ThisTokBuf != ThisTokEnd && UcnLen; ++ThisTokBuf, UcnLen--) {
+    int CharVal = HexDigitValue(ThisTokBuf[0]);
+    if (CharVal == -1) break;
+    UcnVal <<= 4;
+    UcnVal |= CharVal;
+  }
+  // If we didn't consume the proper number of digits, there is a problem.
+  if (UcnLen) {
+    PP.Diag(Loc, diag::err_ucn_escape_incomplete);
+    HadError = 1;
+    return;
+  }
+  // Check UCN constraints (C99 6.4.3p2)
+  if ((UcnVal < 0xa0 &&
+      (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60 )) // $, @, `
+      || (UcnVal >= 0xD800 && UcnVal <= 0xDFFF)) {
+    PP.Diag(Loc, diag::err_ucn_escape_invalid);
+    HadError = 1;
+    return;
+  }
+  // Now that we've parsed/checked the UCN, we convert from UTF32->UTF8.
+  // The conversion below was inspired by:
+  //   http://www.unicode.org/Public/PROGRAMS/CVTUTF/ConvertUTF.c
+  // First, we determine how many bytes the result will require. 
+  typedef unsigned char UTF8;
+
+  unsigned short bytesToWrite = 0;
+  if (UcnVal < (UTF32)0x80)
+    bytesToWrite = 1;
+  else if (UcnVal < (UTF32)0x800)
+    bytesToWrite = 2;
+  else if (UcnVal < (UTF32)0x10000)
+    bytesToWrite = 3;
+  else
+    bytesToWrite = 4;
+	
+  // If the buffer isn't big enough, bail.
+  if ((ResultBuf + bytesToWrite) >= ResultBufEnd) {
+    PP.Diag(Loc, diag::err_ucn_escape_too_big);
+    HadError = 1;
+    return;
+  }
+  const unsigned byteMask = 0xBF;
+  const unsigned byteMark = 0x80;
+  
+  // Once the bits are split out into bytes of UTF8, this is a mask OR-ed
+  // into the first byte, depending on how many bytes follow.  There are
+  // as many entries in this table as there are UTF8 sequence types.
+  static const UTF8 firstByteMark[7] = { 
+    0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC 
+  };
+  // Finally, we write the bytes into ResultBuf.
+  ResultBuf += bytesToWrite;
+  switch (bytesToWrite) { // note: everything falls through.
+    case 4: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
+    case 3: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
+    case 2: *--ResultBuf = (UTF8)((UcnVal | byteMark) & byteMask); UcnVal >>= 6;
+    case 1: *--ResultBuf = (UTF8) (UcnVal | firstByteMark[bytesToWrite]);
+  }
+  // Update the buffer.
+  ResultBuf += bytesToWrite;
+}
 
 
 ///       integer-constant: [C99 6.4.4.1]
@@ -757,23 +838,29 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
             *ResultPtr++ = InStart[0];
             // Add zeros at the end.
             for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
-            *ResultPtr++ = 0;
+              *ResultPtr++ = 0;
           }
         }
         continue;
       }
       
-      // Otherwise, this is an escape character.  Process it.
-      unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
-                                              StringToks[i].getLocation(),
-                                              ThisIsWide, PP);
-      
-      // Note: our internal rep of wide char tokens is always little-endian.
-      *ResultPtr++ = ResultChar & 0xFF;
-      
-      if (AnyWide) {
-        for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
-          *ResultPtr++ = ResultChar >> i*8;
+      if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
+        ProcessUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr, 
+                         GetString() + ResultBuf.size(),
+                         hadError, StringToks[i].getLocation(), PP);
+      } else {
+        // Otherwise, this is a non-UCN escape character.  Process it.
+        unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
+                                                StringToks[i].getLocation(),
+                                                ThisIsWide, PP);
+        
+        // Note: our internal rep of wide char tokens is always little-endian.
+        *ResultPtr++ = ResultChar & 0xFF;
+        
+        if (AnyWide) {
+          for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
+            *ResultPtr++ = ResultChar >> i*8;
+        }
       }
     }
   }
