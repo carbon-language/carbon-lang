@@ -563,13 +563,8 @@ stored alongside the BC file.  The structure of this file header is:
 </p>
 
 <p>
-<pre>
-[Magic<sub>32</sub>,
- Version<sub>32</sub>,
- Offset<sub>32</sub>,
- Size<sub>32</sub>,
- CPUType<sub>32</sub>]
-</pre></p>
+<tt>[Magic<sub>32</sub>, Version<sub>32</sub>, Offset<sub>32</sub>,
+ Size<sub>32</sub>, CPUType<sub>32</sub>]</tt></p>
 
 <p>Each of the fields are 32-bit fields stored in little endian form (as with
 the rest of the bitcode file fields).  The Magic number is always
