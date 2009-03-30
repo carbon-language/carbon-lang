@@ -27,6 +27,14 @@ td {
       classes</a></li>
   </ul>
 </li>
+<li><a href="#libdriver">The Driver Library</a>
+  <ul>
+  </ul>
+</li>
+<li><a href="#libfrontend">The Frontend Library</a>
+  <ul>
+  </ul>
+</li>
 <li><a href="#liblex">The Lexer and Preprocessor Library</a>
   <ul>
   <li><a href="#Token">The Token class</a></li>
@@ -530,6 +538,20 @@ tracked correctly.  If it is ever incorrect, the front-end may get confused and
 die.  The reason for this is that the notion of the 'spelling' of a Token in
 Clang depends on being able to find the original input characters for the token.
 This concept maps directly to the "spelling location" for the token.</p>
+
+<!-- ======================================================================= -->
+<h2 id="libdriver">The Driver Library</h2>
+<!-- ======================================================================= -->
+
+<p>The clang Driver and library are documented <a href="DriverInternals.html">here<a>.<p>
+
+<!-- ======================================================================= -->
+<h2 id="libfrontend">The Frontend Library</h2>
+<!-- ======================================================================= -->
+
+<p>The Frontend library contains functionality useful for building
+tools on top of the clang libraries, for example several methods for
+outputting diagnostics.</p>
 
 <!-- ======================================================================= -->
 <h2 id="liblex">The Lexer and Preprocessor Library</h2>
