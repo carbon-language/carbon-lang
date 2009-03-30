@@ -110,7 +110,7 @@ bool Constant::ContainsRelocations(unsigned Kind) const {
   }
 
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (getOperand(i)->ContainsRelocations())
+    if (getOperand(i)->ContainsRelocations(Kind))
       return true;
 
   return false;
