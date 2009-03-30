@@ -54,7 +54,7 @@ namespace llvm {
   ///    printf("%d %d", P.is<int*>(), P.is<float*>());  // prints "1 0"
   ///    X = P.get<int*>();     // ok.
   ///    Y = P.get<float*>();   // runtime assertion failure.
-  ///    Z = P.get<double*>();  // does not compile.
+  ///    Z = P.get<double*>();  // runtime assertion failure (regardless of tag)
   ///    P = (float*)0;
   ///    Y = P.get<float*>();   // ok.
   ///    X = P.get<int*>();     // runtime assertion failure.
