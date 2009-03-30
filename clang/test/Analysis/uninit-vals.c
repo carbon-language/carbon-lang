@@ -44,3 +44,10 @@ void f7(int i) {
     x += y; // expected-warning {{use of uninitialized variable}}
   }
 }
+
+int f8(int j) {
+  int x = 1, y = x + 1;
+  if (y) // no-warning
+    return x;
+  return y;
+}
