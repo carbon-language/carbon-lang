@@ -23,7 +23,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
-#include <fstream>
 #include <string>
 
 using namespace clang;
@@ -33,9 +32,8 @@ class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
   std::vector<std::string> Files;
   llvm::StringSet<> FilesSet;
   const Preprocessor *PP;
-  std::ofstream OS;
-  const std::string &InputFile;
   std::vector<std::string> Targets;
+  llvm::raw_ostream *OS;
 
 private:
   bool FileMatchesDepCriteria(const char *Filename,
@@ -43,36 +41,33 @@ private:
   void OutputDependencyFile();
 
 public:
-  DependencyFileCallback(const Preprocessor *PP, 
-                         const std::string &InputFile,
-                         const std::string &DepFile,
-                         const std::vector<std::string> &Targets,
-                         const char  *&ErrStr);
-  ~DependencyFileCallback();
+  DependencyFileCallback(const Preprocessor *_PP, 
+                         llvm::raw_ostream *_OS, 
+                         const std::vector<std::string> &_Targets)
+    : PP(_PP), Targets(_Targets), OS(_OS) {
+  }
+
+  ~DependencyFileCallback() {
+    OutputDependencyFile();
+    OS->flush();
+    delete OS;
+  }
+
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType);
 };
 }
 
-static const char *DependencyFileExt = "d";
-static const char *ObjectFileExt = "o";
-
 //===----------------------------------------------------------------------===//
 // Dependency file options
 //===----------------------------------------------------------------------===//
-static llvm::cl::opt<bool>
-GenerateDependencyFile("MD",
-             llvm::cl::desc("Generate dependency for main source file "
-                            "(system headers included)"));
-
-static llvm::cl::opt<bool>
-GenerateDependencyFileNoSysHeaders("MMD",
-             llvm::cl::desc("Generate dependency for main source file "
-                            "(no system headers)"));
-
 static llvm::cl::opt<std::string>
-DependencyOutputFile("MF",
-           llvm::cl::desc("Specify dependency output file"));
+DependencyFile("dependency-file",
+               llvm::cl::desc("Filename (or -) to write dependency output to"));
+
+static llvm::cl::opt<bool>
+DependenciesIncludeSystemHeaders("sys-header-deps",
+                 llvm::cl::desc("Include system headers in dependency output"));
 
 static llvm::cl::list<std::string>
 DependencyTargets("MT",
@@ -85,82 +80,41 @@ PhonyDependencyTarget("MP",
                            "(other than main file)"));
 
 bool clang::CreateDependencyFileGen(Preprocessor *PP,
-                                    std::string &OutputFile,
-                                    const std::string &InputFile,
-                                    const char  *&ErrStr) {
-  assert(!InputFile.empty() && "No file given");
-  
-  ErrStr = NULL;
+                                    std::string &ErrStr) {
+  ErrStr = "";
+  if (DependencyFile.empty())
+    return false;
 
-  if (!GenerateDependencyFile && !GenerateDependencyFileNoSysHeaders) {
-    if (!DependencyOutputFile.empty() || !DependencyTargets.empty() ||
-        PhonyDependencyTarget)
-      ErrStr = "Error: to generate dependencies you must specify -MD or -MMD\n";
+  if (DependencyTargets.empty()) {
+    ErrStr = "-dependency-file requires at least one -MT option\n";
     return false;
   }
-  
-  // Handle conflicting options
-  if (GenerateDependencyFileNoSysHeaders)
-    GenerateDependencyFile = false;
 
-  // Determine name of dependency output filename
-  llvm::sys::Path DepFile;
-  if (!DependencyOutputFile.empty())
-    DepFile = DependencyOutputFile;
-  else if (!OutputFile.empty()) {
-    DepFile = OutputFile;
-    DepFile.eraseSuffix();
-    DepFile.appendSuffix(DependencyFileExt);
-  }
-  else {
-    DepFile = InputFile;
-    DepFile.eraseSuffix();
-    DepFile.appendSuffix(DependencyFileExt);
-  }
-
-  std::vector<std::string> Targets(DependencyTargets);
-
-  // Infer target name if unspecified
-  if (Targets.empty()) {
-    if (!OutputFile.empty()) {
-      llvm::sys::Path TargetPath(OutputFile);
-      TargetPath.eraseSuffix();
-      TargetPath.appendSuffix(ObjectFileExt);
-      Targets.push_back(TargetPath.toString());
-    } else {
-      llvm::sys::Path TargetPath(InputFile);
-      TargetPath.eraseSuffix();
-      TargetPath.appendSuffix(ObjectFileExt);
-      Targets.push_back(TargetPath.toString());
-    }
+  std::string ErrMsg;
+  llvm::raw_ostream *OS =
+    new llvm::raw_fd_ostream(DependencyFile.c_str(), false, ErrStr);
+  if (!ErrMsg.empty()) {
+    ErrStr = "unable to open dependency file: " + ErrMsg;
+    return false;
   }
 
   DependencyFileCallback *PPDep = 
-    new DependencyFileCallback(PP, InputFile, DepFile.toString(),
-                               Targets, ErrStr);
-  if (ErrStr){
-    delete PPDep;
-    return false;
-  }
-  else {
-    PP->setPPCallbacks(PPDep);
-    return true;
-  }
+    new DependencyFileCallback(PP, OS, DependencyTargets);
+  PP->setPPCallbacks(PPDep);
+  return true;
 }
 
 /// FileMatchesDepCriteria - Determine whether the given Filename should be
 /// considered as a dependency.
 bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
                                           SrcMgr::CharacteristicKind FileType) {
-  if (strcmp(InputFile.c_str(), Filename) != 0 &&
-      strcmp("<built-in>", Filename) != 0) {
-      if (GenerateDependencyFileNoSysHeaders)
-        return FileType == SrcMgr::C_User;
-      else
-        return true;
-  }
+  if (strcmp("<built-in>", Filename) == 0)
+    return false;
 
-  return false;
+  if (DependenciesIncludeSystemHeaders)
+    return true;
+
+  return FileType == SrcMgr::C_User;
 }
 
 void DependencyFileCallback::FileChanged(SourceLocation Loc,
@@ -169,9 +123,9 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
   if (Reason != PPCallbacks::EnterFile)
     return;
   
-  // Depedency generation really does want to go all the way to the file entry
-  // for a source location to find out what is depended on.  We do not want
-  // #line markers to affect dependency generation!
+  // Dependency generation really does want to go all the way to the
+  // file entry for a source location to find out what is depended on.
+  // We do not want #line markers to affect dependency generation!
   SourceManager &SM = PP->getSourceManager();
   
   const FileEntry *FE =
@@ -203,17 +157,17 @@ void DependencyFileCallback::OutputDependencyFile() {
     unsigned N = I->length();
     if (Columns == 0) {
       Columns += N;
-      OS << *I;
+      *OS << *I;
     } else if (Columns + N + 2 > MaxColumns) {
       Columns = N + 2;
-      OS << " \\\n  " << *I;
+      *OS << " \\\n  " << *I;
     } else {
       Columns += N + 1;
-      OS << " " << *I;
+      *OS << ' ' << *I;
     }
   }
 
-  OS << ":";
+  *OS << ':';
   Columns += 1;
   
   // Now add each dependency in the order it was seen, but avoiding
@@ -225,48 +179,22 @@ void DependencyFileCallback::OutputDependencyFile() {
     // break the line on the next iteration.
     unsigned N = I->length();
     if (Columns + (N + 1) + 2 > MaxColumns) {
-      OS << " \\\n ";
+      *OS << " \\\n ";
       Columns = 2;
     }
-    OS << " " << *I;
+    *OS << ' ' << *I;
     Columns += N + 1;
   }
-  OS << "\n";
+  *OS << '\n';
 
   // Create phony targets if requested.
   if (PhonyDependencyTarget) {
     // Skip the first entry, this is always the input file itself.
     for (std::vector<std::string>::iterator I = Files.begin() + 1,
            E = Files.end(); I != E; ++I) {
-      OS << "\n";
-      OS << *I << ":\n";
+      *OS << '\n';
+      *OS << *I << ":\n";
     }
   }
-}
-
-DependencyFileCallback::DependencyFileCallback(const Preprocessor *PP,
-                                               const std::string &InputFile,
-                                               const std::string &DepFile,
-                                               const std::vector<std::string>
-                                               &Targets,
-                                               const char  *&ErrStr)
-  : PP(PP), InputFile(InputFile), Targets(Targets) {
-
-  OS.open(DepFile.c_str());
-  if (OS.fail())
-    ErrStr = "Could not open dependency output file\n";
-  else
-    ErrStr = NULL;
-
-  Files.push_back(InputFile);
-}
-
-DependencyFileCallback::~DependencyFileCallback() {
-  if ((!GenerateDependencyFile && !GenerateDependencyFileNoSysHeaders) || 
-      OS.fail())
-    return;
-  
-  OutputDependencyFile();
-  OS.close();
 }
 

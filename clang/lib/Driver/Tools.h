@@ -117,14 +117,16 @@ namespace gcc {
 
 namespace darwin {
   class VISIBILITY_HIDDEN CC1 : public Tool  {
+  public:
+    static const char *getBaseInputName(const ArgList &Args, 
+                                 const InputInfoList &Input);
+    static const char *getBaseInputStem(const ArgList &Args, 
+                                 const InputInfoList &Input);
+    static const char *getDependencyFileName(const ArgList &Args, 
+                                             const InputInfoList &Inputs);
+
   protected:
     const char *getCC1Name(types::ID Type) const;
-    const char *getBaseInputName(const ArgList &Args, 
-                                 const InputInfoList &Input) const;
-    const char *getBaseInputStem(const ArgList &Args, 
-                                 const InputInfoList &Input) const;
-    const char *getDependencyFileName(const ArgList &Args, 
-                                      const InputInfoList &Inputs) const;
 
     void AddCC1Args(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,

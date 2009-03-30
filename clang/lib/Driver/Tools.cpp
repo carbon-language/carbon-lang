@@ -210,14 +210,58 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // FIXME: Add --stack-protector-buffer-size=<xxx> on
     // -fstack-protect.
 
-    Args.AddLastArg(CmdArgs, options::OPT_MD);
-    Args.AddLastArg(CmdArgs, options::OPT_MMD);
-    Args.AddAllArgs(CmdArgs, options::OPT_MF);
+    // Handle dependency file generation.
+    Arg *A;
+    if ((A = Args.getLastArg(options::OPT_M)) ||
+        (A = Args.getLastArg(options::OPT_MM)) ||
+        (A = Args.getLastArg(options::OPT_MD)) ||
+        (A = Args.getLastArg(options::OPT_MMD))) {
+      // Determine the output location.
+      const char *DepFile;
+      if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
+        DepFile = MF->getValue(Args);
+      } else if (A->getOption().getId() == options::OPT_M ||
+                 A->getOption().getId() == options::OPT_MM) {
+        DepFile = "-";
+      } else {
+        DepFile = darwin::CC1::getDependencyFileName(Args, Inputs);
+      }
+      CmdArgs.push_back("-dependency-file");
+      CmdArgs.push_back(DepFile);
+
+      // Add an -MT option if the user didn't specify their own.
+      // FIXME: This should use -MQ, when we support it.
+      if (!Args.hasArg(options::OPT_MT) && !Args.hasArg(options::OPT_MQ)) {
+        const char *DepTarget;
+
+        // If user provided -o, that is the dependency target.
+        if (Arg *A = Args.getLastArg(options::OPT_o)) {
+          DepTarget = A->getValue(Args); 
+        } else {
+          // Otherwise derive from the base input.
+          //
+          // FIXME: This should use the computed output file location.
+          llvm::sys::Path P(Inputs[0].getBaseInput());
+          
+          P.eraseSuffix();
+          P.appendSuffix("o");
+          DepTarget = Args.MakeArgString(P.getLast().c_str());
+        }
+
+        CmdArgs.push_back("-MT");
+        CmdArgs.push_back(DepTarget);
+      }
+
+      if (A->getOption().getId() == options::OPT_M ||
+          A->getOption().getId() == options::OPT_MD)
+        CmdArgs.push_back("-sys-header-deps");
+    }
+
     Args.AddLastArg(CmdArgs, options::OPT_MP);
     Args.AddAllArgs(CmdArgs, options::OPT_MT);
 
     Arg *Unsupported = Args.getLastArg(options::OPT_M);
-    if (!Unsupported) 
+     if (!Unsupported) 
       Unsupported = Args.getLastArg(options::OPT_MM);
     if (!Unsupported) 
       Unsupported = Args.getLastArg(options::OPT_MG);
@@ -327,7 +371,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-arch");
   CmdArgs.push_back(getToolChain().getArchName().c_str());
 
-  if (Output.isPipe()) {
+  // FIXME: We should have a separate type for this.
+  if (Args.hasArg(options::OPT_M) || Args.hasArg(options::OPT_MM)) {
+    CmdArgs.push_back("-M");
+  } else if (Output.isPipe()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back("-");
   } else if (Output.isFilename()) {
@@ -478,13 +525,13 @@ const char *darwin::CC1::getCC1Name(types::ID Type) const {
 }
 
 const char *darwin::CC1::getBaseInputName(const ArgList &Args, 
-                                          const InputInfoList &Inputs) const {
+                                          const InputInfoList &Inputs) {
   llvm::sys::Path P(Inputs[0].getBaseInput());
   return Args.MakeArgString(P.getLast().c_str());
 }
 
 const char *darwin::CC1::getBaseInputStem(const ArgList &Args, 
-                                          const InputInfoList &Inputs) const {
+                                          const InputInfoList &Inputs) {
   const char *Str = getBaseInputName(Args, Inputs);
 
   if (const char *End = strchr(Str, '.'))
@@ -495,7 +542,7 @@ const char *darwin::CC1::getBaseInputStem(const ArgList &Args,
 
 const char *
 darwin::CC1::getDependencyFileName(const ArgList &Args, 
-                                   const InputInfoList &Inputs) const {
+                                   const InputInfoList &Inputs) {
   // FIXME: Think about this more.
   std::string Res;
 
@@ -504,7 +551,7 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
     
     Res = Str.substr(0, Str.rfind('.'));
   } else
-    Res = getBaseInputStem(Args, Inputs);
+    Res = darwin::CC1::getBaseInputStem(Args, Inputs);
 
   return Args.MakeArgString((Res + ".d").c_str());
 }
@@ -558,7 +605,7 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     CmdArgs.push_back("-quiet");
 
   CmdArgs.push_back("-dumpbase");
-  CmdArgs.push_back(getBaseInputName(Args, Inputs));
+  CmdArgs.push_back(darwin::CC1::getBaseInputName(Args, Inputs));
 
   Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
 
@@ -575,7 +622,7 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     CmdArgs.push_back(OutputOpt->getValue(Args));
   } else {
     CmdArgs.push_back("-auxbase");
-    CmdArgs.push_back(getBaseInputStem(Args, Inputs));
+    CmdArgs.push_back(darwin::CC1::getBaseInputStem(Args, Inputs));
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_g_Group);
@@ -686,12 +733,12 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
 
   if (Args.hasArg(options::OPT_MD)) {
     CmdArgs.push_back("-MD");
-    CmdArgs.push_back(getDependencyFileName(Args, Inputs));
+    CmdArgs.push_back(darwin::CC1::getDependencyFileName(Args, Inputs));
   }
 
   if (Args.hasArg(options::OPT_MMD)) {
     CmdArgs.push_back("-MMD");
-    CmdArgs.push_back(getDependencyFileName(Args, Inputs));
+    CmdArgs.push_back(darwin::CC1::getDependencyFileName(Args, Inputs));
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_M);

@@ -1197,11 +1197,11 @@ public:
     }
     
     /// FIXME: PP can only handle one callback
-    if (ProgAction != PrintPreprocessedInput) {    
-      const char* ErrStr;
-      bool DFG = CreateDependencyFileGen(PP.get(), OutputFile, InFile, ErrStr);
-       if (!DFG && ErrStr) {
-        fprintf(stderr, "%s", ErrStr);
+    if (ProgAction != PrintPreprocessedInput) {
+      std::string ErrStr;
+      bool DFG = CreateDependencyFileGen(PP.get(), ErrStr);
+      if (!DFG && !ErrStr.empty()) {
+        fprintf(stderr, "%s", ErrStr.c_str());
         return NULL;
       }
     }
