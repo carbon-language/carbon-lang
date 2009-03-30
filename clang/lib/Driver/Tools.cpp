@@ -246,7 +246,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         // when we are only generating a dependency file.
         Arg *OutputOpt = Args.getLastArg(options::OPT_o);
         if (OutputOpt && Output.getType() != types::TY_Dependencies) {
-          DepTarget = A->getValue(Args); 
+          DepTarget = OutputOpt->getValue(Args); 
         } else {
           // Otherwise derive from the base input.
           //
