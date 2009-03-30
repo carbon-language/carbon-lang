@@ -395,6 +395,7 @@ public:
   }
 
   void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
+  void AddCheck(GRSimpleAPICheck* A);
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.  

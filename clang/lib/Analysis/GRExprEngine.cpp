@@ -46,9 +46,11 @@ class VISIBILITY_HIDDEN MappedBatchAuditor : public GRSimpleAPICheck {
   
   MapTy M;
   Checks::Factory F;
+  Checks AllStmts;
 
 public:
-  MappedBatchAuditor(llvm::BumpPtrAllocator& Alloc) : F(Alloc) {}
+  MappedBatchAuditor(llvm::BumpPtrAllocator& Alloc) :
+    F(Alloc), AllStmts(F.GetEmptyList()) {}
   
   virtual ~MappedBatchAuditor() {
     llvm::DenseSet<GRSimpleAPICheck*> AlreadyVisited;
@@ -66,26 +68,33 @@ public:
       }
   }
 
-  void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
+  void AddCheck(GRSimpleAPICheck *A, Stmt::StmtClass C) {
     assert (A && "Check cannot be null.");
     void* key = reinterpret_cast<void*>((uintptr_t) C);
     MapTy::iterator I = M.find(key);
     M[key] = F.Concat(A, I == M.end() ? F.GetEmptyList() : I->second);
   }
+  
+  void AddCheck(GRSimpleAPICheck *A) {
+    assert (A && "Check cannot be null.");
+    AllStmts = F.Concat(A, AllStmts);    
+  }
 
   virtual bool Audit(NodeTy* N, GRStateManager& VMgr) {
+    // First handle the auditors that accept all statements.
+    bool isSink = false;
+    for (Checks::iterator I = AllStmts.begin(), E = AllStmts.end(); I!=E; ++I)
+      isSink |= (*I)->Audit(N, VMgr);
+    
+    // Next handle the auditors that accept only specific statements.
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
     void* key = reinterpret_cast<void*>((uintptr_t) S->getStmtClass());
     MapTy::iterator MI = M.find(key);
-
-    if (MI == M.end())
-      return false;
+    if (MI != M.end()) {    
+      for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E; ++I)
+        isSink |= (*I)->Audit(N, VMgr);
+    }
     
-    bool isSink = false;
-    
-    for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E; ++I)
-      isSink |= (*I)->Audit(N, VMgr);
-
     return isSink;    
   }
 };
@@ -141,6 +150,13 @@ void GRExprEngine::AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
     BatchAuditor.reset(new MappedBatchAuditor(getGraph().getAllocator()));
   
   ((MappedBatchAuditor*) BatchAuditor.get())->AddCheck(A, C);
+}
+
+void GRExprEngine::AddCheck(GRSimpleAPICheck *A) {
+  if (!BatchAuditor)
+    BatchAuditor.reset(new MappedBatchAuditor(getGraph().getAllocator()));
+
+  ((MappedBatchAuditor*) BatchAuditor.get())->AddCheck(A);
 }
 
 const GRState* GRExprEngine::getInitialState() {
