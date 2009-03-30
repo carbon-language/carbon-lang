@@ -91,11 +91,15 @@ bool clang::CreateDependencyFileGen(Preprocessor *PP,
   }
 
   std::string ErrMsg;
-  llvm::raw_ostream *OS =
-    new llvm::raw_fd_ostream(DependencyFile.c_str(), false, ErrStr);
-  if (!ErrMsg.empty()) {
-    ErrStr = "unable to open dependency file: " + ErrMsg;
-    return false;
+  llvm::raw_ostream *OS;
+  if (DependencyFile == "-") {
+    OS = new llvm::raw_stdout_ostream();
+  } else {
+    OS = new llvm::raw_fd_ostream(DependencyFile.c_str(), false, ErrStr);
+    if (!ErrMsg.empty()) {
+      ErrStr = "unable to open dependency file: " + ErrMsg;
+      return false;
+    }
   }
 
   DependencyFileCallback *PPDep = 

@@ -54,6 +54,10 @@ public:
   const std::string &getPlatform() const { return Platform; }
   const std::string &getOS() const { return OS; }
 
+  const std::string getTripleString() const {
+    return getArchName() + "-" + getPlatform() + "-" + getOS();
+  }
+
   path_list &getFilePaths() { return FilePaths; }
   const path_list &getFilePaths() const { return FilePaths; }
 

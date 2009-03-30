@@ -245,8 +245,7 @@ void Driver::PrintVersion(const Compilation &C) const {
   llvm::errs() << "clang version 1.0 (" << vers << " " << revision << ")" << "\n";
 
   const ToolChain &TC = C.getDefaultToolChain();
-  llvm::errs() << "Target: " << TC.getArchName() << '-' 
-               << TC.getPlatform() << '-' << TC.getOS() << '\n';
+  llvm::errs() << "Target: " << TC.getTripleString() << '\n';
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
@@ -379,9 +378,6 @@ void Driver::BuildUniversalActions(const ArgList &Args,
   if (Archs.size() > 1) {
     // No recovery needed, the point of this is just to prevent
     // overwriting the same files.
-    if (const Arg *A = Args.getLastArg(options::OPT_M_Group))
-      Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs) 
-        << A->getAsString(Args);
     if (const Arg *A = Args.getLastArg(options::OPT_save_temps))
       Diag(clang::diag::err_drv_invalid_opt_with_multiple_archs) 
         << A->getAsString(Args);
@@ -618,9 +614,15 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   switch (Phase) {
   case phases::Link: assert(0 && "link action invalid here.");
   case phases::Preprocess: {
-    types::ID OutputTy = types::getPreprocessedType(Input->getType());
-    assert(OutputTy != types::TY_INVALID &&
-           "Cannot preprocess this input type!");
+    types::ID OutputTy;
+    // -{M, MM} alter the output type.
+    if (Args.hasArg(options::OPT_M) || Args.hasArg(options::OPT_MM)) {
+      OutputTy = types::TY_Dependencies;
+    } else {
+      OutputTy = types::getPreprocessedType(Input->getType());
+      assert(OutputTy != types::TY_INVALID &&
+             "Cannot preprocess this input type!");
+    }
     return new PreprocessJobAction(Input, OutputTy);
   }
   case phases::Precompile:
@@ -848,7 +850,8 @@ void Driver::BuildJobsForAction(Compilation &C,
   }
 
   if (CCCPrintBindings) {
-    llvm::errs() << "bind - \"" << T.getName() << "\", inputs: [";
+    llvm::errs() << "# \"" << T.getToolChain().getTripleString() << '"'
+                 << " - \"" << T.getName() << "\", inputs: [";
     for (unsigned i = 0, e = InputInfos.size(); i != e; ++i) {
       llvm::errs() << InputInfos[i].getAsString();
       if (i + 1 != e)

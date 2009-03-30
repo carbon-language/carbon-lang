@@ -43,7 +43,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     assert(JA.getType() == types::TY_Plist && "Invalid output type.");
     CmdArgs.push_back("-analyze");
   } else if (isa<PreprocessJobAction>(JA)) {
-    CmdArgs.push_back("-E");
+    if (Output.getType() == types::TY_Dependencies)
+      CmdArgs.push_back("-Eonly");
+    else
+      CmdArgs.push_back("-E");
   } else if (isa<PrecompileJobAction>(JA)) {
     // No special option needed, driven by -x.
     //
@@ -218,7 +221,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         (A = Args.getLastArg(options::OPT_MMD))) {
       // Determine the output location.
       const char *DepFile;
-      if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
+      if (Output.getType() == types::TY_Dependencies) {
+        if (Output.isPipe())
+          DepFile = "-";
+        else
+          DepFile = Output.getFilename();
+      } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
         DepFile = MF->getValue(Args);
       } else if (A->getOption().getId() == options::OPT_M ||
                  A->getOption().getId() == options::OPT_MM) {
@@ -234,8 +242,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       if (!Args.hasArg(options::OPT_MT) && !Args.hasArg(options::OPT_MQ)) {
         const char *DepTarget;
 
-        // If user provided -o, that is the dependency target.
-        if (Arg *A = Args.getLastArg(options::OPT_o)) {
+        // If user provided -o, that is the dependency target, except
+        // when we are only generating a dependency file.
+        Arg *OutputOpt = Args.getLastArg(options::OPT_o);
+        if (OutputOpt && Output.getType() != types::TY_Dependencies) {
           DepTarget = A->getValue(Args); 
         } else {
           // Otherwise derive from the base input.
@@ -260,14 +270,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddLastArg(CmdArgs, options::OPT_MP);
     Args.AddAllArgs(CmdArgs, options::OPT_MT);
 
-    Arg *Unsupported = Args.getLastArg(options::OPT_M);
-     if (!Unsupported) 
-      Unsupported = Args.getLastArg(options::OPT_MM);
-    if (!Unsupported) 
-      Unsupported = Args.getLastArg(options::OPT_MG);
-    if (!Unsupported) 
-      Unsupported = Args.getLastArg(options::OPT_MQ);
-    if (Unsupported) {
+    Arg *Unsupported;
+    if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
+        (Unsupported = Args.getLastArg(options::OPT_MQ))) {
       const Driver &D = getToolChain().getHost().getDriver();
       D.Diag(clang::diag::err_drv_unsupported_opt) 
         << Unsupported->getOption().getName();
@@ -371,9 +376,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-arch");
   CmdArgs.push_back(getToolChain().getArchName().c_str());
 
-  // FIXME: We should have a separate type for this.
-  if (Args.hasArg(options::OPT_M) || Args.hasArg(options::OPT_MM)) {
-    CmdArgs.push_back("-M");
+  if (Output.getType() == types::TY_Dependencies) {
+    // Handled with other dependency code.
   } else if (Output.isPipe()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back("-");
