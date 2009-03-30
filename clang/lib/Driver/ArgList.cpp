@@ -51,7 +51,7 @@ Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1, bool Claim) const {
 
 bool ArgList::hasFlag(options::ID Pos, options::ID Neg, bool Default) const {
   Arg *PosA = getLastArg(Pos);
-  Arg *NegA = getLastArg(Pos);
+  Arg *NegA = getLastArg(Neg);
   if (PosA && NegA)
     return NegA->getIndex() < PosA->getIndex();
   if (PosA) return true;
