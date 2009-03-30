@@ -36,8 +36,8 @@ def lea64_32mem : Operand<i32> {
 // Complex Pattern Definitions.
 //
 def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
-                               [add, mul, shl, or, frameindex, X86Wrapper],
-                               []>;
+                        [add, mul, X86mul_imm, shl, or, frameindex, X86Wrapper],
+                        []>;
 
 //===----------------------------------------------------------------------===//
 // Pattern fragments.

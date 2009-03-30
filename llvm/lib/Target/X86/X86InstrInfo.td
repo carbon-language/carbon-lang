@@ -157,6 +157,8 @@ def X86umul_flag : SDNode<"X86ISD::UMUL", SDTUnaryArithWithFlags>;
 def X86inc_flag  : SDNode<"X86ISD::INC",  SDTUnaryArithWithFlags>;
 def X86dec_flag  : SDNode<"X86ISD::DEC",  SDTUnaryArithWithFlags>;
 
+def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
+
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
 //

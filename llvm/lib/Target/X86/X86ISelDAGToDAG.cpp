@@ -852,6 +852,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     if (N.getResNo() != 0) break;
     // FALL THROUGH
   case ISD::MUL:
+  case X86ISD::MUL_IMM:
     // X*[3,5,9] -> X+X*[2,4,8]
     if (AM.BaseType == X86ISelAddressMode::RegBase &&
         AM.Base.Reg.getNode() == 0 &&

@@ -7176,6 +7176,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UMUL:               return "X86ISD::UMUL";
   case X86ISD::INC:                return "X86ISD::INC";
   case X86ISD::DEC:                return "X86ISD::DEC";
+  case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   }
 }
 
@@ -8458,14 +8459,14 @@ static SDValue PerformMulCombine(SDNode *N, SelectionDAG &DAG,
       NewMul = DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
                            DAG.getConstant(Log2_64(MulAmt1), MVT::i8));
     else
-      NewMul = DAG.getNode(ISD::MUL, DL, VT, N->getOperand(0),
+      NewMul = DAG.getNode(X86ISD::MUL_IMM, DL, VT, N->getOperand(0),
                            DAG.getConstant(MulAmt1, VT));
 
     if (isPowerOf2_64(MulAmt2)) 
       NewMul = DAG.getNode(ISD::SHL, DL, VT, NewMul,
                            DAG.getConstant(Log2_64(MulAmt2), MVT::i8));
     else 
-      NewMul = DAG.getNode(ISD::MUL, DL, VT, NewMul,
+      NewMul = DAG.getNode(X86ISD::MUL_IMM, DL, VT, NewMul,
                            DAG.getConstant(MulAmt2, VT));
 
     // Do not add new nodes to DAG combiner worklist.

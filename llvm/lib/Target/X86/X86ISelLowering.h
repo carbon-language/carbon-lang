@@ -237,7 +237,10 @@ namespace llvm {
 
       // ADD, SUB, SMUL, UMUL, etc. - Arithmetic operations with FLAGS results.
       ADD, SUB, SMUL, UMUL,
-      INC, DEC
+      INC, DEC,
+
+      // MUL_IMM - X86 specific multiply by immediate.
+      MUL_IMM
     };
   }
 
