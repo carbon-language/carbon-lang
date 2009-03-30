@@ -1091,6 +1091,7 @@ public:
     Dynamic
   };
 private:
+  unsigned IvarKind : 1;
   SourceLocation AtLoc;   // location of @synthesize or @dynamic
   /// Property declaration being implemented
   ObjCPropertyDecl *PropertyDecl;
@@ -1102,7 +1103,7 @@ private:
                        ObjCPropertyDecl *property, 
                        Kind PK, 
                        ObjCIvarDecl *ivarDecl)
-    : Decl(ObjCPropertyImpl, DC, L), AtLoc(atLoc), 
+    : Decl(ObjCPropertyImpl, DC, L), IvarKind(false), AtLoc(atLoc), 
       PropertyDecl(property), PropertyIvarDecl(ivarDecl) {
     assert (PK == Dynamic || PropertyIvarDecl);
   }
@@ -1126,6 +1127,16 @@ public:
   
   ObjCIvarDecl *getPropertyIvarDecl() const {
     return PropertyIvarDecl;
+  }
+  void SetPropertyIvarDecl(ObjCIvarDecl *Ivar) {
+    assert(PropertyIvarDecl && "PropertyIvarDecl is already defined");
+    PropertyIvarDecl = Ivar;
+  }
+  void SetIvarSynthesized() {
+    IvarKind = true;
+  }
+  bool IsIvarSynthesized() const {
+    return IvarKind;
   }
   
   static bool classof(const Decl *D) {
