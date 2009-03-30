@@ -243,12 +243,9 @@ bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
 bool ScanReachableSymbols::scan(SVal val) {
   if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
     return scan(X->getRegion());
-    
-  if (loc::SymbolVal *X = dyn_cast<loc::SymbolVal>(&val))
-    return visitor.VisitSymbol(X->getSymbol());
-  
-  if (nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(&val))
-    return visitor.VisitSymbol(X->getSymbol());
+
+  if (SymbolRef Sym = val.getAsSymbol())
+    return visitor.VisitSymbol(Sym);
   
   if (nonloc::CompoundVal *X = dyn_cast<nonloc::CompoundVal>(&val))
     return scan(*X);
@@ -304,12 +301,9 @@ bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
   if (nonloc::ConcreteInt* X = dyn_cast<nonloc::ConcreteInt>(&V))
     return X->getValue() == Y;
     
-  if (nonloc::SymbolVal* X = dyn_cast<nonloc::SymbolVal>(&V))
-    return ConstraintMgr->isEqual(state, X->getSymbol(), Y);
-  
-  if (loc::SymbolVal* X = dyn_cast<loc::SymbolVal>(&V))
-    return ConstraintMgr->isEqual(state, X->getSymbol(), Y);
-  
+  if (SymbolRef Sym = V.getAsSymbol())
+    return ConstraintMgr->isEqual(state, Sym, Y);
+
   return false;
 }
   
