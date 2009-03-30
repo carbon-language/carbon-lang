@@ -67,6 +67,8 @@ public:
 
 const HostInfo *createDarwinHostInfo(const Driver &D, const char *Arch, 
                                      const char *Platform, const char *OS);
+const HostInfo *createFreeBSDHostInfo(const Driver &D, const char *Arch, 
+                                      const char *Platform, const char *OS);
 const HostInfo *createUnknownHostInfo(const Driver &D, const char *Arch, 
                                       const char *Platform, const char *OS);
 

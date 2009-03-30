@@ -367,3 +367,32 @@ const char *Generic_GCC::GetForcedPicModel() const {
 DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args) const {
   return new DerivedArgList(Args, true);
 }
+
+/// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
+
+FreeBSD::FreeBSD(const HostInfo &Host, const char *Arch, 
+                 const char *Platform, const char *OS, bool Lib32)
+  : Generic_GCC(Host, Arch, Platform, OS) {
+  if (Lib32)
+    getFilePaths().push_back(getHost().getDriver().Dir + "/../lib32");
+  else
+    getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+}
+
+Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    default:
+      T = &Generic_GCC::SelectTool(C, JA);
+    }
+  }
+
+  return *T;
+}

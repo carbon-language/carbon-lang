@@ -205,6 +205,68 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
   return TC;
 }
 
+// FreeBSD Host Info
+
+/// FreeBSDHostInfo -  Similar to UnknownHostInfo, but doesn't depend on
+class FreeBSDHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  FreeBSDHostInfo(const Driver &D, const char *Arch, 
+                  const char *Platform, const char *OS);
+  ~FreeBSDHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *getToolChain(const ArgList &Args, 
+                                  const char *ArchName) const;
+};
+
+FreeBSDHostInfo::FreeBSDHostInfo(const Driver &D, const char *Arch, 
+                                 const char *Platform, const char *OS) 
+  : HostInfo(D, Arch, Platform, OS) {
+}
+
+FreeBSDHostInfo::~FreeBSDHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool FreeBSDHostInfo::useDriverDriver() const { 
+  return false;
+}
+
+ToolChain *FreeBSDHostInfo::getToolChain(const ArgList &Args, 
+                                         const char *ArchName) const {
+  bool Lib32 = false;
+
+  assert(!ArchName && 
+         "Unexpected arch name on platform without driver driver support.");
+  
+  // On x86_64 we need to be able to compile 32-bits binaries as well.
+  // Compiling 64-bit binaries on i386 is not supported. We don't have a
+  // lib64.
+  ArchName = getArchName().c_str();
+  if (Args.hasArg(options::OPT_m32) && getArchName() == "x86_64") {
+    ArchName = "i386";
+    Lib32 = true;
+  } 
+  
+  ToolChain *&TC = ToolChains[ArchName];
+  if (!TC)
+    TC = new toolchains::FreeBSD(*this, ArchName, 
+                                 getPlatformName().c_str(), 
+                                 getOSName().c_str(), Lib32);
+
+  return TC;
+}
+
 }
 
 const HostInfo *clang::driver::createDarwinHostInfo(const Driver &D,
@@ -212,6 +274,13 @@ const HostInfo *clang::driver::createDarwinHostInfo(const Driver &D,
                                                     const char *Platform, 
                                                     const char *OS) {
   return new DarwinHostInfo(D, Arch, Platform, OS);
+}
+
+const HostInfo *clang::driver::createFreeBSDHostInfo(const Driver &D,
+                                                     const char *Arch, 
+                                                     const char *Platform, 
+                                                     const char *OS) {
+  return new FreeBSDHostInfo(D, Arch, Platform, OS);
 }
 
 const HostInfo *clang::driver::createUnknownHostInfo(const Driver &D,

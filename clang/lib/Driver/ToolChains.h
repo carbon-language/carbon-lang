@@ -26,6 +26,7 @@ namespace toolchains {
   /// all subcommands; this relies on gcc translating the majority of
   /// command line options.
 class VISIBILITY_HIDDEN Generic_GCC : public ToolChain {
+protected:
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
 public:
@@ -105,6 +106,14 @@ public:
              const char *OS) : Generic_GCC(Host, Arch, Platform, OS) {}
 
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }
+};
+
+class VISIBILITY_HIDDEN FreeBSD : public Generic_GCC {
+public:
+  FreeBSD(const HostInfo &Host, const char *Arch, const char *Platform, 
+          const char *OS, bool Lib32);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
 } // end namespace toolchains

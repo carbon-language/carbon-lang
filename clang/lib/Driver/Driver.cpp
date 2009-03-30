@@ -999,6 +999,9 @@ const HostInfo *Driver::GetHostInfo(const char *Triple) const {
   if (memcmp(&OS[0], "darwin", 6) == 0)
     return createDarwinHostInfo(*this, Arch.c_str(), Platform.c_str(), 
                                 OS.c_str());
+  if (memcmp(&OS[0], "freebsd", 7) == 0)
+    return createFreeBSDHostInfo(*this, Arch.c_str(), Platform.c_str(), 
+                                 OS.c_str());
     
   return createUnknownHostInfo(*this, Arch.c_str(), Platform.c_str(), 
                                OS.c_str());
