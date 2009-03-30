@@ -695,8 +695,7 @@ will help you separate benign warnings from actual test failures.</p>
 
 <p>First, all tests are executed within the LLVM object directory tree.  They
 <i>are not</i> executed inside of the LLVM source tree. This is because the
-test suite creates temporary files during execution. This means you must create
-a build tree separate from the LLVM source tree in which to run the test suite.</p>
+test suite creates temporary files during execution.</p>
 
 <p>To run the test suite, you need to use the following steps:</p>
 
@@ -711,13 +710,10 @@ a build tree separate from the LLVM source tree in which to run the test suite.<
 % svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 </pre>
 </div>
-      <p>This will get the test suite into <tt>llvm/projects/test-suite</tt>.
-         <br>[The Makefiles expect the test suite directory to be named either
-         <tt>test-suite</tt> or <tt>llvm-test</tt>. To be safe, use
-         <tt>test-suite</tt> as in the above svn command line.]</p>
+      <p>This will get the test suite into <tt>llvm/projects/test-suite</tt>.</p>
   </li>
   <li><p>Configure llvm from the top level of each build tree (LLVM object directory tree)
-  in which you want to run the test suite, just like what you do before building LLVM.</p>
+  in which you want to run the test suite, just as you do before building LLVM.</p>
   <p>When running configure, you must either: (1) have <tt>llvm-gcc</tt>
   in your path, or (2) specify the directory where <tt>llvm-gcc</tt> is
   installed using <tt>--with-llvmgccdir=$LLVM_GCC_DIR</tt>.</p>
