@@ -24,7 +24,6 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
-class DeclContext; // FIXME: die die die
 class NamespaceDecl;
 class IdentifierInfo;
 class Type;
