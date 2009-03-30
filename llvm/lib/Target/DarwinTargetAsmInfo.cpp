@@ -85,6 +85,9 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     else
       return TextSection;
    case SectionKind::Data:
+   case SectionKind::DataRel:
+   case SectionKind::DataRelRO:
+   case SectionKind::DataRelROLocal:
    case SectionKind::ThreadData:
    case SectionKind::BSS:
    case SectionKind::ThreadBSS:

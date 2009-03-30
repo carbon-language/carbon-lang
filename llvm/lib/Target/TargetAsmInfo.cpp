@@ -124,7 +124,7 @@ void TargetAsmInfo::fillDefaultValues() {
   DataSection = getUnnamedSection("\t.data", SectionFlags::Writeable);
 }
 
-TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) 
+TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   : TM(tm) {
   fillDefaultValues();
 }
@@ -220,14 +220,18 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
       unsigned Reloc = RelocBehaviour();
 
       // We already did a query for 'all' relocs, thus - early exits.
-      if (Reloc == Reloc::LocalOrGlobal)
-        return SectionKind::Data;
-      else if (Reloc == Reloc::None)
+      if (Reloc == Reloc::LocalOrGlobal) {
+        return (C->ContainsRelocations(Reloc::Local) ?
+                SectionKind::DataRelROLocal : SectionKind::DataRelRO);
+      } else if (Reloc == Reloc::None)
         return SectionKind::ROData;
       else {
         // Ok, target wants something funny. Honour it.
-        return (C->ContainsRelocations(Reloc) ?
-                SectionKind::Data : SectionKind::ROData);
+        if (C->ContainsRelocations(Reloc)) {
+          return (Reloc == Reloc::Local ?
+                  SectionKind::DataRelROLocal : SectionKind::DataRelRO);
+        } else
+          return SectionKind::ROData;
       }
     } else {
       // Check, if initializer is a null-terminated string
@@ -238,8 +242,19 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     }
   }
 
-  // Variable is not constant or thread-local - emit to generic data section.
-  return (isThreadLocal ? SectionKind::ThreadData : SectionKind::Data);
+  // Variable either is not constant or thread-local - output to data section.
+  if (isThreadLocal)
+    return SectionKind::ThreadData;
+
+  if (GVar->hasInitializer()) {
+    Constant *C = GVar->getInitializer();
+    unsigned Reloc = RelocBehaviour();
+    if (Reloc != Reloc::None && C->ContainsRelocations(Reloc))
+      return (C->ContainsRelocations(Reloc::Local) ?
+              SectionKind::DataRelLocal : SectionKind::DataRel);
+  }
+
+  return SectionKind::Data;
 }
 
 unsigned
@@ -259,6 +274,10 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Flags |= SectionFlags::TLS;
       // FALLS THROUGH
      case SectionKind::Data:
+     case SectionKind::DataRel:
+     case SectionKind::DataRelLocal:
+     case SectionKind::DataRelRO:
+     case SectionKind::DataRelROLocal:
      case SectionKind::BSS:
       Flags |= SectionFlags::Writeable;
       break;
@@ -360,6 +379,14 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
     return ".gnu.linkonce.t." + GV->getName();
    case SectionKind::Data:
     return ".gnu.linkonce.d." + GV->getName();
+   case SectionKind::DataRel:
+    return ".gnu.linkonce.d.rel" + GV->getName();
+   case SectionKind::DataRelLocal:
+    return ".gnu.linkonce.d.rel.local" + GV->getName();
+   case SectionKind::DataRelRO:
+    return ".gnu.linkonce.d.rel.ro" + GV->getName();
+   case SectionKind::DataRelROLocal:
+    return ".gnu.linkonce.d.rel.ro.local" + GV->getName();
    case SectionKind::SmallData:
     return ".gnu.linkonce.s." + GV->getName();
    case SectionKind::BSS:

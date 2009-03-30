@@ -35,6 +35,13 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
   TLSBSSSection = getNamedSection("\t.tbss",
                 SectionFlags::Writeable | SectionFlags::TLS | SectionFlags::BSS);
 
+  DataRelSection = getNamedSection("\t.data.rel", SectionFlags::Writeable);
+  DataRelLocalSection = getNamedSection("\t.data.rel.local",
+                                        SectionFlags::Writeable);
+  DataRelROSection = getNamedSection("\t.data.rel.ro",
+                                     SectionFlags::Writeable);
+  DataRelROLocalSection = getNamedSection("\t.data.rel.ro.local",
+                                          SectionFlags::Writeable);
 }
 
 const Section*
@@ -67,6 +74,14 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
        case SectionKind::Data:
        case SectionKind::SmallData:
         return DataSection;
+       case SectionKind::DataRel:
+        return DataRelSection;
+       case SectionKind::DataRelLocal:
+        return DataRelLocalSection;
+       case SectionKind::DataRelRO:
+        return DataRelROSection;
+       case SectionKind::DataRelROLocal:
+        return DataRelROLocalSection;
        case SectionKind::BSS:
        case SectionKind::SmallBSS:
         // ELF targets usually have BSS sections

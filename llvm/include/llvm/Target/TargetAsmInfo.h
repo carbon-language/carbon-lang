@@ -36,8 +36,12 @@ namespace llvm {
       Unknown = 0,      ///< Custom section
       Text,             ///< Text section
       Data,             ///< Data section
+      DataRel,          ///< Contains data that has relocations
+      DataRelLocal,     ///< Contains data that has only local relocations
       BSS,              ///< BSS section
       ROData,           ///< Readonly data section
+      DataRelRO,        ///< Contains data that is otherwise readonly
+      DataRelROLocal,   ///< Contains r/o data with only local relocations
       RODataMergeStr,   ///< Readonly data section (mergeable strings)
       RODataMergeConst, ///< Readonly data section (mergeable constants)
       SmallData,        ///< Small data section

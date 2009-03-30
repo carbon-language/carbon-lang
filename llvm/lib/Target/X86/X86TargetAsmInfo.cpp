@@ -305,17 +305,12 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
   switch (kind) {
    case SectionKind::Text:
     return ".text$linkonce" + GV->getName();
-   case SectionKind::Data:
-   case SectionKind::BSS:
-   case SectionKind::ThreadData:
-   case SectionKind::ThreadBSS:
-    return ".data$linkonce" + GV->getName();
    case SectionKind::ROData:
    case SectionKind::RODataMergeConst:
    case SectionKind::RODataMergeStr:
     return ".rdata$linkonce" + GV->getName();
    default:
-    assert(0 && "Unknown section kind");
+    return ".data$linkonce" + GV->getName();
   }
   return NULL;
 }

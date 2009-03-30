@@ -32,6 +32,11 @@ namespace llvm {
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
     virtual const Section*
     SelectSectionForMachineConst(const Type *Ty) const;
+
+    const Section* DataRelSection;
+    const Section* DataRelLocalSection;
+    const Section* DataRelROSection;
+    const Section* DataRelROLocalSection;
   };
 }
 
