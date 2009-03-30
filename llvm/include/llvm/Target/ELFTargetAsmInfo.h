@@ -25,6 +25,7 @@ namespace llvm {
   struct ELFTargetAsmInfo: public TargetAsmInfo {
     explicit ELFTargetAsmInfo(const TargetMachine &TM);
 
+    SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV) const;
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
     virtual std::string printSectionFlags(unsigned flags) const;
     const Section* MergeableConstSection(const GlobalVariable *GV) const;

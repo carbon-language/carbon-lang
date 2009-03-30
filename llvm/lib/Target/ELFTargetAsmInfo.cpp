@@ -44,6 +44,30 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
                                           SectionFlags::Writeable);
 }
 
+SectionKind::Kind
+ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
+  SectionKind::Kind Kind = TargetAsmInfo::SectionKindForGlobal(GV);
+
+  if (Kind != SectionKind::Data)
+    return Kind;
+
+  // Decide, whether we need data.rel stuff
+  const GlobalVariable* GVar = dyn_cast<GlobalVariable>(GV);
+  if (GVar->hasInitializer()) {
+    Constant *C = GVar->getInitializer();
+    bool isConstant = GVar->isConstant();
+    unsigned Reloc = RelocBehaviour();
+    if (Reloc != Reloc::None && C->ContainsRelocations(Reloc))
+      return (C->ContainsRelocations(Reloc::Local) ?
+              (isConstant ?
+               SectionKind::DataRelROLocal : SectionKind::DataRelLocal) :
+              (isConstant ?
+               SectionKind::DataRelRO : SectionKind::DataRel));
+  }
+
+  return Kind;
+}
+
 const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);

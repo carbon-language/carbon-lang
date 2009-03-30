@@ -220,18 +220,14 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
       unsigned Reloc = RelocBehaviour();
 
       // We already did a query for 'all' relocs, thus - early exits.
-      if (Reloc == Reloc::LocalOrGlobal) {
-        return (C->ContainsRelocations(Reloc::Local) ?
-                SectionKind::DataRelROLocal : SectionKind::DataRelRO);
-      } else if (Reloc == Reloc::None)
+      if (Reloc == Reloc::LocalOrGlobal)
+        return SectionKind::Data;
+      else if (Reloc == Reloc::None)
         return SectionKind::ROData;
       else {
         // Ok, target wants something funny. Honour it.
-        if (C->ContainsRelocations(Reloc)) {
-          return (Reloc == Reloc::Local ?
-                  SectionKind::DataRelROLocal : SectionKind::DataRelRO);
-        } else
-          return SectionKind::ROData;
+        return (C->ContainsRelocations(Reloc) ?
+                SectionKind::Data : SectionKind::ROData);
       }
     } else {
       // Check, if initializer is a null-terminated string
@@ -243,18 +239,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   }
 
   // Variable either is not constant or thread-local - output to data section.
-  if (isThreadLocal)
-    return SectionKind::ThreadData;
-
-  if (GVar->hasInitializer()) {
-    Constant *C = GVar->getInitializer();
-    unsigned Reloc = RelocBehaviour();
-    if (Reloc != Reloc::None && C->ContainsRelocations(Reloc))
-      return (C->ContainsRelocations(Reloc::Local) ?
-              SectionKind::DataRelLocal : SectionKind::DataRel);
-  }
-
-  return SectionKind::Data;
+  return (isThreadLocal ? SectionKind::ThreadData : SectionKind::Data);
 }
 
 unsigned
