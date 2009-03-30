@@ -194,11 +194,11 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
   assert (ParamR && "Parameters always have VarRegions.");
   SVal ParamSVal = rootState.GetSVal(ParamR);
   
-
   // FIXME: For now assume that ParamSVal is symbolic.  We need to generalize
   // this later.
-  loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&ParamSVal);
-  if (!SV) return;
+  SymbolRef ParamSym = ParamSVal.getAsLocSymbol();
+  if (!ParamSym)
+    return;
   
   // Iterate over the implicit-null dereferences.
   for (GRExprEngine::null_deref_iterator I=Eng.implicit_null_derefs_begin(),
@@ -206,13 +206,11 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
     
     GRStateRef state = GRStateRef((*I)->getState(), Eng.getStateManager());
     const SVal* X = state.get<GRState::NullDerefTag>();    
-    const loc::SymbolVal* SVX = dyn_cast_or_null<loc::SymbolVal>(X);
-    if (!SVX || SVX->getSymbol() != SV->getSymbol()) continue;
+
+    if (!X || X->getAsSymbol() != ParamSym)
+      continue;
 
     // Emit an error.
-
-    
-
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
       os << "Potential null dereference.  According to coding standards ";

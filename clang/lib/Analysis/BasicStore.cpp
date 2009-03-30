@@ -239,7 +239,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
       // FIXME: Should we have symbolic regions be typed or typeless?
       //  Here we assume that these regions are typeless, even though the
       //  symbol is typed.
-      SymbolRef Sym = cast<loc::SymbolVal>(&BaseL)->getSymbol();
+      SymbolRef Sym = BaseL.getAsSymbol();
       // Create a region to represent this symbol.
       // FIXME: In the future we may just use symbolic regions instead of
       //  SymbolVals to reason about symbolic memory chunks.

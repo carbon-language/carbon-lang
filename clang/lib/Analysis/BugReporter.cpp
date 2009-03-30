@@ -635,16 +635,11 @@ public:
   
   bool HandleBinding(StoreManager& SMgr, Store store,
                      const MemRegion* R, SVal V) {
-    SymbolRef ScanSym = 0;
-  
-    if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
-      ScanSym = SV->getSymbol();
-    else if (nonloc::SymbolVal* SV = dyn_cast<nonloc::SymbolVal>(&V))
-      ScanSym = SV->getSymbol();
-    else
+
+    SymbolRef ScanSym = V.getAsSymbol();
+
+    if (!ScanSym)
       return true;
-  
-    assert (ScanSym);
   
     if (!BR.isNotable(ScanSym))
       return true;
