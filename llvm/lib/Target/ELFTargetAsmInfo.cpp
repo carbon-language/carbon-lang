@@ -58,11 +58,11 @@ ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     bool isConstant = GVar->isConstant();
     unsigned Reloc = RelocBehaviour();
     if (Reloc != Reloc::None && C->ContainsRelocations(Reloc))
-      return (C->ContainsRelocations(Reloc::Local) ?
+      return (C->ContainsRelocations(Reloc::Global) ?
               (isConstant ?
-               SectionKind::DataRelROLocal : SectionKind::DataRelLocal) :
+               SectionKind::DataRelRO : SectionKind::DataRel) :
               (isConstant ?
-               SectionKind::DataRelRO : SectionKind::DataRel));
+               SectionKind::DataRelROLocal : SectionKind::DataRelLocal));
   }
 
   return Kind;
