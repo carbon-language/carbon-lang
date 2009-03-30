@@ -111,28 +111,6 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 // getLValueType() and getRValueType()
 //===----------------------------------------------------------------------===//
 
-QualType SymbolicRegion::getRValueType(ASTContext& C) const {
-  // Get the type of the symbol.
-  QualType T = sym->getType(C);
-
-  if (const PointerType* PTy = T->getAsPointerType())
-    return PTy->getPointeeType();
-    
-  if (const BlockPointerType* PTy = T->getAsBlockPointerType())
-    return PTy->getPointeeType();
-
-  // There is no rvalue type of id<...>.
-  if (T->getAsObjCQualifiedIdType())
-    return QualType();
-  
-  assert(Loc::IsLocType(T) && "Non-location type.");
-  return QualType();
-}
-
-QualType SymbolicRegion::getLValueType(ASTContext& C) const {
-  return sym->getType(C);
-}
-
 QualType ElementRegion::getRValueType(ASTContext& C) const {
   // Strip off typedefs from the ArrayRegion's RvalueType.
   QualType T = getArrayRegion()->getRValueType(C)->getDesugaredType();
