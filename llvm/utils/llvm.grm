@@ -130,9 +130,7 @@ OptCallingConv ::= + _ |
                  cc EUINT64VAL ;
 
 ParamAttr ::= zeroext
- | zext
  | signext
- | sext
  | inreg
  | sret
  | noalias
