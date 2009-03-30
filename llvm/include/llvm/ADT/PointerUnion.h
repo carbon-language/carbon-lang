@@ -193,9 +193,11 @@ namespace llvm {
     template<typename T>
     T get() const {
       assert(is<T>() && "Invalid accessor called");
-      if (Val.is<T>())
-        return Val.get<T>();
-      return Val.get<InnerUnion>().get<T>();
+      // Is it PT1/PT2?
+      if (::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0) != -1)
+        return Val.get<InnerUnion>().get<T>();
+      
+      return Val.get<T>();
     }
     
     /// dyn_cast<T>() - If the current value is of the specified pointer type,
