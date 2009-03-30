@@ -60,6 +60,9 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 /// EmitBlockVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
 void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
+  if (D.getAttr<AsmLabelAttr>())
+    CGM.ErrorUnsupported(&D, "__asm__");
+  
   switch (D.getStorageClass()) {
   case VarDecl::Static:
     return EmitStaticBlockVarDecl(D);
