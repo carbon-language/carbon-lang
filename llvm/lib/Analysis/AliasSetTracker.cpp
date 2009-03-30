@@ -520,6 +520,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   if (Entry.hasAliasSet()) return;    // Already in the tracker!
 
   // Add it to the alias set it aliases...
+  I = PointerMap.find(From);
   AliasSet *AS = I->second->getAliasSet(*this);
   AS->addPointer(*this, Entry, I->second->getSize(), true);
 }
