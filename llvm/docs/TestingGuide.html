@@ -695,12 +695,14 @@ will help you separate benign warnings from actual test failures.</p>
 
 <p>First, all tests are executed within the LLVM object directory tree.  They
 <i>are not</i> executed inside of the LLVM source tree. This is because the
-test suite creates temporary files during execution.</p>
+test suite creates temporary files during execution. This means you must create
+a build tree separate from the LLVM source tree in which to run the test suite.</p>
 
 <p>To run the test suite, you need to use the following steps:</p>
 
 <ol>
-  <li><tt>cd</tt> into the <tt>llvm/projects</tt> directory</li>
+  <li><tt>cd</tt> into the <tt>llvm/projects</tt> directory in your source tree.
+  </li>
 
   <li><p>Check out the <tt>test-suite</tt> module with:</p>
 
@@ -709,24 +711,35 @@ test suite creates temporary files during execution.</p>
 % svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 </pre>
 </div>
-
-      <p>This will get the test suite into <tt>llvm/projects/llvm-test</tt></p>
-
-  <li><p>Configure the test suite using llvm configure. This will automatically
-  configure test-suite.  You must do it from the top level otherwise llvm-gcc
-  will not be set which is required to run llvm-test:</p>
+      <p>This will get the test suite into <tt>llvm/projects/test-suite</tt>.
+         <br>[The Makefiles expect the test suite directory to be named either
+         <tt>test-suite</tt> or <tt>llvm-test</tt>. To be safe, use
+         <tt>test-suite</tt> as in the above svn command line.]</p>
+  </li>
+  <li><p>Configure llvm from the top level of each build tree (LLVM object directory tree)
+  in which you want to run the test suite, just like what you do before building LLVM.</p>
+  <p>When running configure, you must either: (1) have <tt>llvm-gcc</tt>
+  in your path, or (2) specify the directory where <tt>llvm-gcc</tt> is
+  installed using <tt>--with-llvmgccdir=$LLVM_GCC_DIR</tt>.</p>
+  <p>This step tells the configure machinery that the test suite
+  is now available so it can be configured for your build tree:</p>
 <div class="doc_code">
 <pre>
-% cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure --with-llvmgccdir=$LLVM_GCC_DIR
+% cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure [--with-llvmgccdir=$LLVM_GCC_DIR]
 </pre>
 </div>
-    <p>Note that that <tt>$LLVM_GCC_DIR</tt> is the directory where you
-    <em>installed</em> llvm-gcc, not its src or obj directory.</p>
+    <p>[Remember that <tt>$LLVM_GCC_DIR</tt> is the directory where you
+    <em>installed</em> llvm-gcc, not its src or obj directory.]</p>
   </li>
 
-  <li><p>Change back to the <tt>llvm/projects/test-suite</tt> directory you created before
-  and run <tt>gmake</tt> (or just "<tt>make</tt>" on systems where GNU make is
-  the default, such as linux.</p></li>
+  <li><p>You can now run the test suite from your build tree as follows:</p>
+<div class="doc_code">
+<pre>
+% cd $LLVM_OBJ_ROOT/projects/test-suite
+% make
+</pre>
+</div>
+  </li>
 </ol>
 <p>Note that the second and third steps only need to be done once. After you
 have the suite checked out and configured, you don't need to do it again (unless
