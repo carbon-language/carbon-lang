@@ -362,13 +362,9 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
     BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
     break;
 
-  case loc::SymbolValKind: {
-    SymbolRef Sym = cast<loc::SymbolVal>(&BaseL)->getSymbol();
-    const SymbolicRegion* SR = MRMgr.getSymbolicRegion(Sym);
-    // Layer the type information.
-    BaseR = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
+  case loc::SymbolValKind:
+    BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
     break;
-  }
   
   case loc::GotoLabelKind:
   case loc::FuncValKind:
@@ -411,14 +407,9 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 
   const TypedRegion* BaseRegion = 0;
 
-  if (isa<loc::SymbolVal>(Base)) {
-    SymbolRef Sym = cast<loc::SymbolVal>(Base).getSymbol();
-    SymbolicRegion* SR = MRMgr.getSymbolicRegion(Sym);
-    // Layer the type information.
-    BaseRegion = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-  } 
-  else
-    BaseRegion = cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
+  BaseRegion = isa<loc::SymbolVal>(Base)
+               ? MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(Base).getSymbol())
+               : cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
 
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);

@@ -39,10 +39,10 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind,
-              SymbolicRegionKind,
               AllocaRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
+               SymbolicRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                TypedViewRegionKind,
@@ -179,17 +179,20 @@ public:
 ///  either a real region, a NULL pointer, etc.  It essentially is used to
 ///  map the concept of symbolic values into the domain of regions.  Symbolic
 ///  regions do not need to be typed.
-class SymbolicRegion : public SubRegion {
+class SymbolicRegion : public TypedRegion {
 protected:
   const SymbolRef sym;
 
 public:
   SymbolicRegion(const SymbolRef s, const MemRegion* sreg) 
-    : SubRegion(sreg, SymbolicRegionKind), sym(s) {}
+    : TypedRegion(sreg, SymbolicRegionKind), sym(s) {}
     
   SymbolRef getSymbol() const {
     return sym;
   }
+
+  QualType getRValueType(ASTContext& C) const;
+  QualType getLValueType(ASTContext& C) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
