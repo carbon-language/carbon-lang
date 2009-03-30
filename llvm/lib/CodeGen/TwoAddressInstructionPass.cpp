@@ -96,6 +96,13 @@ namespace {
                             MachineFunction::iterator &mbbi,
                             unsigned RegB, unsigned RegC, unsigned Dist);
 
+    bool isProfitableToConv3Addr(unsigned RegA);
+
+    bool ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
+                            MachineBasicBlock::iterator &nmi,
+                            MachineFunction::iterator &mbbi,
+                            unsigned RegB, unsigned Dist);
+
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
   public:
@@ -334,7 +341,9 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
 /// as a two-address use. If so, return the destination register by reference.
 static bool isTwoAddrUse(MachineInstr &MI, unsigned Reg, unsigned &DstReg) {
   const TargetInstrDesc &TID = MI.getDesc();
-  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
+  unsigned NumOps = (MI.getOpcode() == TargetInstrInfo::INLINEASM)
+    ? MI.getNumOperands() : TID.getNumOperands();
+  for (unsigned i = 0; i != NumOps; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || MO.getReg() != Reg)
       continue;
@@ -501,6 +510,53 @@ TwoAddressInstructionPass::CommuteInstruction(MachineBasicBlock::iterator &mi,
   }
 
   return true;
+}
+
+/// isProfitableToConv3Addr - Return true if it is profitable to convert the
+/// given 2-address instruction to a 3-address one.
+bool
+TwoAddressInstructionPass::isProfitableToConv3Addr(unsigned RegA) {
+  // Look for situations like this:
+  // %reg1024<def> = MOV r1
+  // %reg1025<def> = MOV r0
+  // %reg1026<def> = ADD %reg1024, %reg1025
+  // r2            = MOV %reg1026
+  // Turn ADD into a 3-address instruction to avoid a copy.
+  unsigned FromRegA = getMappedReg(RegA, SrcRegMap);
+  unsigned ToRegA = getMappedReg(RegA, DstRegMap);
+  return (FromRegA && ToRegA && !regsAreCompatible(FromRegA, ToRegA, TRI));
+}
+
+/// ConvertInstTo3Addr - Convert the specified two-address instruction into a
+/// three address one. Return true if this transformation was successful.
+bool
+TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
+                                              MachineBasicBlock::iterator &nmi,
+                                              MachineFunction::iterator &mbbi,
+                                              unsigned RegB, unsigned Dist) {
+  MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, LV);
+  if (NewMI) {
+    DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
+    DOUT << "2addr:         TO 3-ADDR: " << *NewMI;
+    bool Sunk = false;
+
+    if (NewMI->findRegisterUseOperand(RegB, false, TRI))
+      // FIXME: Temporary workaround. If the new instruction doesn't
+      // uses RegB, convertToThreeAddress must have created more
+      // then one instruction.
+      Sunk = Sink3AddrInstruction(mbbi, NewMI, RegB, mi);
+
+    mbbi->erase(mi); // Nuke the old inst.
+
+    if (!Sunk) {
+      DistanceMap.insert(std::make_pair(NewMI, Dist));
+      mi = NewMI;
+      nmi = next(mi);
+    }
+    return true;
+  }
+
+  return false;
 }
 
 /// ProcessCopy - If the specified instruction is not yet processed, process it
@@ -716,26 +772,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
-              MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, LV);
-              if (NewMI) {
-                DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
-                DOUT << "2addr:         TO 3-ADDR: " << *NewMI;
-                bool Sunk = false;
-
-                if (NewMI->findRegisterUseOperand(regB, false, TRI))
-                  // FIXME: Temporary workaround. If the new instruction doesn't
-                  // uses regB, convertToThreeAddress must have created more
-                  // then one instruction.
-                  Sunk = Sink3AddrInstruction(mbbi, NewMI, regB, mi);
-
-                mbbi->erase(mi); // Nuke the old inst.
-
-                if (!Sunk) {
-                  DistanceMap.insert(std::make_pair(NewMI, Dist));
-                  mi = NewMI;
-                  nmi = next(mi);
-                }
-
+              if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
                 ++NumConvertedTo3Addr;
                 break; // Done with this instruction.
               }
@@ -750,7 +787,17 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 ++NumAggrCommuted;
                 ++NumCommuted;
                 regB = regC;
+                goto InstructionRearranged;
               }
+          }
+
+          // If it's profitable to convert the 2-address instruction to a
+          // 3-address one, do so.
+          if (TID.isConvertibleTo3Addr() && isProfitableToConv3Addr(regA)) {
+            if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
+              ++NumConvertedTo3Addr;
+              break; // Done with this instruction.
+            }
           }
 
         InstructionRearranged:
