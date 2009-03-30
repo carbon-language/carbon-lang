@@ -906,7 +906,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                               AvailableSpills &Spills, BitVector &RegKills,
                               std::vector<MachineOperand*> &KillOps) {
   DOUT << "\n**** Local spiller rewriting MBB '"
-       << MBB.getBasicBlock()->getName() << ":\n";
+       << MBB.getBasicBlock()->getName() << "':\n";
 
   MachineFunction &MF = *MBB.getParent();
   
