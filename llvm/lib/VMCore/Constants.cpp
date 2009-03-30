@@ -107,6 +107,8 @@ bool Constant::ContainsRelocations(unsigned Kind) const {
       // requested
       return true;
     }
+
+    return false;
   }
 
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
