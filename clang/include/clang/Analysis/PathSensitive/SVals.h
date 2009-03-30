@@ -208,15 +208,18 @@ public:
 class Loc : public SVal {
 protected:
   Loc(unsigned SubKind, const void* D)
-    : SVal(const_cast<void*>(D), true, SubKind) {}
+  : SVal(const_cast<void*>(D), true, SubKind) {}
   
-  // Equality operators.
-  NonLoc EQ(SymbolManager& SM, const Loc& R) const;
-  NonLoc NE(SymbolManager& SM, const Loc& R) const;
+//  // Equality operators.
+//  NonLoc EQ(SymbolManager& SM, Loc R) const;
+//  NonLoc NE(SymbolManager& SM, Loc R) const;
   
 public:
   void print(llvm::raw_ostream& Out) const;
 
+  Loc(const Loc& X) : SVal(X.Data, true, X.getSubKind()) {}
+  Loc& operator=(const Loc& X) { memcpy(this, &X, sizeof(Loc)); return *this; }
+    
   static Loc MakeVal(const MemRegion* R);
     
   static Loc MakeVal(AddrLabelExpr* E);
