@@ -537,18 +537,11 @@ public:
                        PathDiagnostic& pd, BugReporter& br)
     : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
                         
-  bool HandleBinding(StoreManager& SMgr, Store store,
-                     const MemRegion* R, SVal V) {
+  bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
+                     SVal V) {
 
-    SymbolRef ScanSym = 0;
-    
-    if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
-      ScanSym = SV->getSymbol();
-    else if (nonloc::SymbolVal* SV = dyn_cast<nonloc::SymbolVal>(&V))
-      ScanSym = SV->getSymbol();
-    else
-      return true;
-    
+    SymbolRef ScanSym = V.getAsSymbol();
+
     if (ScanSym != Sym)
       return true;
     
