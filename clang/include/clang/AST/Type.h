@@ -16,11 +16,13 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/NestedNameSpecifier.h"
+#include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+
 using llvm::isa;
 using llvm::cast;
 using llvm::cast_or_null;
@@ -39,7 +41,7 @@ namespace clang {
   class TemplateDecl;
   class TemplateTypeParmDecl;
   class NonTypeTemplateParmDecl;
-  class TemplateTemplateParamDecl;
+  class TemplateTemplateParmDecl;
   class TagDecl;
   class RecordDecl;
   class CXXRecordDecl;
@@ -437,8 +439,8 @@ public:
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
-  const ClassTemplateSpecializationType *
-    getAsClassTemplateSpecializationType() const;
+  const TemplateSpecializationType *
+    getAsTemplateSpecializationType() const;
   
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.
@@ -1494,32 +1496,34 @@ protected:
   friend class Type;
 };
 
-/// \brief Represents the type of a class template specialization as
-/// written in the source code.
+/// \brief Represents the type of a template specialization as written
+/// in the source code.
 ///
-/// Class template specialization types represent the syntactic form
-/// of a template-id that refers to a type, e.g., @c vector<int>. All
-/// class template specialization types are syntactic sugar, whose
-/// canonical type will point to some other type node that represents
-/// the instantiation or class template specialization. For example, a
+/// Template specialization types represent the syntactic form of a
+/// template-id that refers to a type, e.g., @c vector<int>. Some
+/// template specialization types are syntactic sugar, whose canonical
+/// type will point to some other type node that represents the
+/// instantiation or class template specialization. For example, a
 /// class template specialization type of @c vector<int> will refer to
-/// a tag type for the instantiation
+/// a tag type for the instantiation 
 /// @c std::vector<int, std::allocator<int>>.
-class ClassTemplateSpecializationType 
+///
+/// Other template specialization types, for which the template name
+/// is dependent, may be canonical types. These types are always
+/// dependent.
+class TemplateSpecializationType 
   : public Type, public llvm::FoldingSetNode {
 
-  // FIXME: Do we want templates to have a representation in the type
-  // system? It will probably help with dependent templates and
-  // possibly with template-names preceded by a nested-name-specifier.
-  TemplateDecl *Template;
+  /// \brief The name of the template being specialized.
+  TemplateName Template;
 
   /// \brief - The number of template arguments named in this class
   /// template specialization.
   unsigned NumArgs;
 
-  ClassTemplateSpecializationType(TemplateDecl *T, 
-                                  const TemplateArgument *Args,
-                                  unsigned NumArgs, QualType Canon);
+  TemplateSpecializationType(TemplateName T,
+                             const TemplateArgument *Args,
+                             unsigned NumArgs, QualType Canon);
 
   virtual void Destroy(ASTContext& C);
 
@@ -1541,8 +1545,8 @@ public:
   iterator begin() const { return getArgs(); }
   iterator end() const;
 
-  /// \brief Retrieve the template that we are specializing.
-  TemplateDecl *getTemplate() const { return Template; }
+  /// \brief Retrieve the name of the template that we are specializing.
+  TemplateName getTemplateName() const { return Template; }
 
   /// \brief Retrieve the template arguments.
   const TemplateArgument *getArgs() const { 
@@ -1562,13 +1566,13 @@ public:
     Profile(ID, Template, getArgs(), NumArgs);
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, TemplateDecl *T,
+  static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,
                       const TemplateArgument *Args, unsigned NumArgs);
 
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == ClassTemplateSpecialization; 
+    return T->getTypeClass() == TemplateSpecialization; 
   }
-  static bool classof(const ClassTemplateSpecializationType *T) { return true; }
+  static bool classof(const TemplateSpecializationType *T) { return true; }
 
 protected:
   virtual void EmitImpl(llvm::Serializer& S) const;

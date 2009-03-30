@@ -885,7 +885,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
     
     // If this is a template-id, annotate with a template-id or type token.
     if (NextToken().is(tok::less)) {
-      DeclPtrTy Template;
+      TemplateTy Template;
       if (TemplateNameKind TNK 
             = Actions.isTemplateName(*Tok.getIdentifierInfo(),
                                      CurScope, Template, &SS))

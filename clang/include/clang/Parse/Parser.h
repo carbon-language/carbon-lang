@@ -126,6 +126,7 @@ public:
   typedef Action::MemInitTy MemInitTy;
   typedef Action::CXXScopeTy CXXScopeTy;
   typedef Action::TemplateParamsTy TemplateParamsTy;
+  typedef Action::TemplateTy TemplateTy;
 
   typedef llvm::SmallVector<TemplateParamsTy *, 4> TemplateParameterLists;
 
@@ -1050,7 +1051,7 @@ private:
   typedef llvm::SmallVector<bool, 16> TemplateArgIsTypeList;
   typedef llvm::SmallVector<SourceLocation, 16> TemplateArgLocationList;
 
-  bool ParseTemplateIdAfterTemplateName(DeclPtrTy Template,
+  bool ParseTemplateIdAfterTemplateName(TemplateTy Template,
                                         SourceLocation TemplateNameLoc, 
                                         const CXXScopeSpec *SS,
                                         bool ConsumeLastToken,
@@ -1060,7 +1061,7 @@ private:
                                TemplateArgLocationList &TemplateArgLocations,
                                         SourceLocation &RAngleLoc);
 
-  void AnnotateTemplateIdToken(DeclPtrTy Template, TemplateNameKind TNK,
+  void AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                const CXXScopeSpec *SS,
                                SourceLocation TemplateKWLoc = SourceLocation(),
                                bool AllowTypeAnnotation = true);

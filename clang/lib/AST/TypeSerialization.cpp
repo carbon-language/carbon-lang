@@ -391,29 +391,17 @@ Type* TemplateTypeParmType::CreateImpl(ASTContext& Context, Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
-// ClassTemplateSpecializationType
+// TemplateSpecializationType
 //===----------------------------------------------------------------------===//
 
-void ClassTemplateSpecializationType::EmitImpl(Serializer& S) const {
-  S.Emit(getCanonicalTypeInternal());
-  S.EmitPtr(Template);
-  S.EmitInt(NumArgs);
-  // FIXME: Serialize class template specialization types
+void TemplateSpecializationType::EmitImpl(Serializer& S) const {
+  // FIXME: Serialization support
 }
 
 Type* 
-ClassTemplateSpecializationType::
+TemplateSpecializationType::
 CreateImpl(ASTContext& Context, Deserializer& D) {
-  llvm::SmallVector<uintptr_t, 16> Args;
-  llvm::SmallVector<bool, 16> ArgIsType;
-
-  QualType Canon = QualType::ReadVal(D);
-  TemplateDecl *Template = cast<TemplateDecl>(D.ReadPtr<Decl>());
-  unsigned NumArgs = D.ReadInt();
-
-  // FIXME: De-serialize class template specialization types
-  (void)Template;
-  (void)NumArgs;
+  // FIXME: Deserialization support
   return 0;
 }
 

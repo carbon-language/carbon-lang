@@ -483,6 +483,10 @@ ASTContext::getTypeInfo(const Type *T) {
     Align = Layout.getAlignment();
     break;
   }
+
+  case Type::TemplateSpecialization:
+    assert(false && "Dependent types have no size");
+    break;
   }
   
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
@@ -1358,30 +1362,31 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
 }
 
 QualType 
-ASTContext::getClassTemplateSpecializationType(TemplateDecl *Template,
-                                               const TemplateArgument *Args,
-                                               unsigned NumArgs,
-                                               QualType Canon) {
+ASTContext::getTemplateSpecializationType(TemplateName Template,
+                                          const TemplateArgument *Args,
+                                          unsigned NumArgs,
+                                          QualType Canon) {
+  // FIXME: If Template is dependent, canonicalize it!
+
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
 
   llvm::FoldingSetNodeID ID;
-  ClassTemplateSpecializationType::Profile(ID, Template, Args, NumArgs);
+  TemplateSpecializationType::Profile(ID, Template, Args, NumArgs);
 
   void *InsertPos = 0;
-  ClassTemplateSpecializationType *Spec
-    = ClassTemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
+  TemplateSpecializationType *Spec
+    = TemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
 
   if (Spec)
     return QualType(Spec, 0);
   
-  void *Mem = Allocate((sizeof(ClassTemplateSpecializationType) + 
+  void *Mem = Allocate((sizeof(TemplateSpecializationType) + 
                         sizeof(TemplateArgument) * NumArgs),
                        8);
-  Spec = new (Mem) ClassTemplateSpecializationType(Template, Args, NumArgs, 
-                                                   Canon);
+  Spec = new (Mem) TemplateSpecializationType(Template, Args, NumArgs, Canon);
   Types.push_back(Spec);
-  ClassTemplateSpecializationTypes.InsertNode(Spec, InsertPos);
+  TemplateSpecializationTypes.InsertNode(Spec, InsertPos);
 
   return QualType(Spec, 0);  
 }
@@ -2486,6 +2491,53 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
+/// \brief Retrieve the template name that represents a qualified
+/// template name such as \c std::vector.
+TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS, 
+                                                  bool TemplateKeyword,
+                                                  TemplateDecl *Template) {
+  llvm::FoldingSetNodeID ID;
+  QualifiedTemplateName::Profile(ID, NNS, TemplateKeyword, Template);
+
+  void *InsertPos = 0;
+  QualifiedTemplateName *QTN =
+    QualifiedTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+  if (!QTN) {
+    QTN = new (*this,4) QualifiedTemplateName(NNS, TemplateKeyword, Template);
+    QualifiedTemplateNames.InsertNode(QTN, InsertPos);
+  }
+
+  return TemplateName(QTN);
+}
+
+/// \brief Retrieve the template name that represents a dependent
+/// template name such as \c MetaFun::template apply.
+TemplateName ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS, 
+                                                  const IdentifierInfo *Name) {
+  assert(NNS->isDependent() && "Nested name specifier must be dependent");
+
+  llvm::FoldingSetNodeID ID;
+  DependentTemplateName::Profile(ID, NNS, Name);
+
+  void *InsertPos = 0;
+  DependentTemplateName *QTN =
+    DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (QTN)
+    return TemplateName(QTN);
+
+  NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
+  if (CanonNNS == NNS) {
+    QTN = new (*this,4) DependentTemplateName(NNS, Name);
+  } else {
+    TemplateName Canon = getDependentTemplateName(CanonNNS, Name);
+    QTN = new (*this,4) DependentTemplateName(NNS, Name, Canon);
+  }
+
+  DependentTemplateNames.InsertNode(QTN, InsertPos);
+  return TemplateName(QTN);
+}
+
 /// getFromTargetType - Given one of the integer types provided by
 /// TargetInfo, produce the corresponding type. The unsigned @p Type
 /// is actually a value of type @c TargetInfo::IntType.
@@ -3033,6 +3085,10 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     ResultType.setCVRQualifiers(LHSCan.getCVRQualifiers());
     return ResultType;
 #endif
+
+  case Type::TemplateSpecialization:
+    assert(false && "Dependent types have no size");
+    break;
   }
 
   return QualType();

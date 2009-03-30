@@ -474,7 +474,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
     TagOrTempResult
       = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
                        StartLoc, SS,
-                       DeclPtrTy::make(TemplateId->Template), 
+                       TemplateTy::make(TemplateId->Template), 
                        TemplateId->TemplateNameLoc, 
                        TemplateId->LAngleLoc, 
                        TemplateArgsPtr,

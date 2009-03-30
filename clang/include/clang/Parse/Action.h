@@ -72,7 +72,8 @@ public:
   typedef ActionBase::StmtTy StmtTy;
   typedef OpaquePtr<0> DeclPtrTy;
   typedef OpaquePtr<1> DeclGroupPtrTy;
-  typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<1>.
+  typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<N>.
+  typedef OpaquePtr<2> TemplateTy;
   typedef void AttrTy;
   typedef void BaseTy;
   typedef void MemInitTy;
@@ -157,7 +158,7 @@ public:
   /// optional CXXScope can be passed to indicate the C++ scope in
   /// which the identifier will be found.
   virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
-                                          DeclPtrTy &TemplateDecl,
+                                          TemplateTy &Template,
                                           const CXXScopeSpec *SS = 0) = 0;
 
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
@@ -1206,8 +1207,8 @@ public:
     return DeclResult();
   }
 
-  /// \brief Form a class template specialization from a template and
-  /// a list of template arguments.
+  /// \brief Form a type from a template and a list of template
+  /// arguments.
   ///
   /// This action merely forms the type for the template-id, possibly
   /// checking well-formedness of the template arguments. It does not
@@ -1219,13 +1220,12 @@ public:
   /// \param IsSpecialization true when we are naming the class
   /// template specialization as part of an explicit class
   /// specialization or class template partial specialization.
-  virtual TypeResult ActOnClassTemplateId(DeclPtrTy Template,
-                                          SourceLocation TemplateLoc,
-                                          SourceLocation LAngleLoc,
-                                          ASTTemplateArgsPtr TemplateArgs,
-                                          SourceLocation *TemplateArgLocs,
-                                          SourceLocation RAngleLoc,
-                                          const CXXScopeSpec *SS) {
+  virtual TypeResult ActOnTemplateIdType(TemplateTy Template,
+                                         SourceLocation TemplateLoc,
+                                         SourceLocation LAngleLoc,
+                                         ASTTemplateArgsPtr TemplateArgs,
+                                         SourceLocation *TemplateArgLocs,
+                                         SourceLocation RAngleLoc) {
     return TypeResult();
   };
 
@@ -1279,7 +1279,7 @@ public:
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,
-                                   DeclPtrTy Template,
+                                   TemplateTy Template,
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
@@ -1569,7 +1569,7 @@ public:
                                   const CXXScopeSpec *SS);
 
   virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
-                                          DeclPtrTy &TemplateDecl,
+                                          TemplateTy &Template,
                                           const CXXScopeSpec *SS = 0);
 
   /// ActOnDeclarator - If this is a typedef declarator, we modify the

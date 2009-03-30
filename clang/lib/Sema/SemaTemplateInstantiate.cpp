@@ -114,7 +114,7 @@ void Sema::PrintInstantiationStack() {
     case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation: {
       TemplateDecl *Template = cast<TemplateDecl>((Decl *)Active->Entity);
       std::string TemplateArgsStr
-        = ClassTemplateSpecializationType::PrintTemplateArgumentList(
+        = TemplateSpecializationType::PrintTemplateArgumentList(
                                                       Active->TemplateArgs, 
                                                       Active->NumTemplateArgs);
       Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
@@ -433,13 +433,12 @@ InstantiateTemplateTypeParmType(const TemplateTypeParmType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateClassTemplateSpecializationType(
-                                  const ClassTemplateSpecializationType *T,
+InstantiateTemplateSpecializationType(
+                                  const TemplateSpecializationType *T,
                                   unsigned Quals) const {
   llvm::SmallVector<TemplateArgument, 16> InstantiatedTemplateArgs;
   InstantiatedTemplateArgs.reserve(T->getNumArgs());
-  for (ClassTemplateSpecializationType::iterator Arg = T->begin(), 
-                                              ArgEnd = T->end();
+  for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
        Arg != ArgEnd; ++Arg) {
     switch (Arg->getKind()) {
     case TemplateArgument::Type: {
@@ -473,12 +472,13 @@ InstantiateClassTemplateSpecializationType(
 
   // FIXME: We're missing the locations of the template name, '<', and
   // '>'.
-  return SemaRef.CheckClassTemplateId(cast<ClassTemplateDecl>(T->getTemplate()),
-                                      Loc,
-                                      SourceLocation(),
-                                      &InstantiatedTemplateArgs[0],
-                                      InstantiatedTemplateArgs.size(),
-                                      SourceLocation());
+  // FIXME: Need to instantiate into the template name.
+  return SemaRef.CheckTemplateIdType(T->getTemplateName(),
+                                     Loc,
+                                     SourceLocation(),
+                                     &InstantiatedTemplateArgs[0],
+                                     InstantiatedTemplateArgs.size(),
+                                     SourceLocation());
 }
 
 QualType 

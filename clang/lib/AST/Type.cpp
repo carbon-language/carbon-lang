@@ -93,8 +93,8 @@ QualType Type::getDesugaredType() const {
     return TOE->getUnderlyingExpr()->getType().getDesugaredType();
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
     return TOT->getUnderlyingType().getDesugaredType();
-  if (const ClassTemplateSpecializationType *Spec 
-        = dyn_cast<ClassTemplateSpecializationType>(this))
+  if (const TemplateSpecializationType *Spec 
+        = dyn_cast<TemplateSpecializationType>(this))
     return Spec->getCanonicalTypeInternal().getDesugaredType();
   if (const QualifiedNameType *QualName  = dyn_cast<QualifiedNameType>(this))
     return QualName->getNamedType().getDesugaredType();
@@ -549,11 +549,11 @@ const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
   return dyn_cast<TemplateTypeParmType>(CanonicalType);
 }
 
-const ClassTemplateSpecializationType *
-Type::getAsClassTemplateSpecializationType() const {
+const TemplateSpecializationType *
+Type::getAsTemplateSpecializationType() const {
   // There is no sugar for class template specialization types, so
   // just return the canonical type pointer if it is the right class.
-  return dyn_cast<ClassTemplateSpecializationType>(CanonicalType);
+  return dyn_cast<TemplateSpecializationType>(CanonicalType);
 }
 
 bool Type::isIntegerType() const {
@@ -972,7 +972,7 @@ bool EnumType::classof(const TagType *TT) {
 }
 
 bool 
-ClassTemplateSpecializationType::
+TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx) {
     switch (Args[Idx].getKind()) {
@@ -997,17 +997,16 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
   return false;
 }
 
-ClassTemplateSpecializationType::
-ClassTemplateSpecializationType(TemplateDecl *T, const TemplateArgument *Args,
-                                unsigned NumArgs, QualType Canon)
-  : Type(ClassTemplateSpecialization, 
+TemplateSpecializationType::
+TemplateSpecializationType(TemplateName T, const TemplateArgument *Args,
+                           unsigned NumArgs, QualType Canon)
+  : Type(TemplateSpecialization, 
          Canon.isNull()? QualType(this, 0) : Canon,
-         /*FIXME: Check for dependent template */
-         anyDependentTemplateArguments(Args, NumArgs)),
+         T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)),
     Template(T), NumArgs(NumArgs)
 {
   assert((!Canon.isNull() || 
-          anyDependentTemplateArguments(Args, NumArgs)) &&
+          T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)) &&
          "No canonical type for non-dependent class template specialization");
 
   TemplateArgument *TemplateArgs 
@@ -1016,7 +1015,7 @@ ClassTemplateSpecializationType(TemplateDecl *T, const TemplateArgument *Args,
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
 }
 
-void ClassTemplateSpecializationType::Destroy(ASTContext& C) {
+void TemplateSpecializationType::Destroy(ASTContext& C) {
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
     // FIXME: Not all expressions get cloned, so we can't yet perform
     // this destruction.
@@ -1025,24 +1024,23 @@ void ClassTemplateSpecializationType::Destroy(ASTContext& C) {
   }
 }
 
-ClassTemplateSpecializationType::iterator
-ClassTemplateSpecializationType::end() const {
+TemplateSpecializationType::iterator
+TemplateSpecializationType::end() const {
   return begin() + getNumArgs();
 }
 
 const TemplateArgument &
-ClassTemplateSpecializationType::getArg(unsigned Idx) const {
+TemplateSpecializationType::getArg(unsigned Idx) const {
   assert(Idx < getNumArgs() && "Template argument out of range");
   return getArgs()[Idx];
 }
 
 void 
-ClassTemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID, 
-                                         TemplateDecl *T, 
-                                         const TemplateArgument *Args, 
-                                         unsigned NumArgs) {
-  ID.AddPointer(T);
-
+TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID, 
+                                    TemplateName T, 
+                                    const TemplateArgument *Args, 
+                                    unsigned NumArgs) {
+  T.Profile(ID);
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
     Args[Idx].Profile(ID);
 }
@@ -1351,7 +1349,7 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
     InnerString = Name->getName() + InnerString;
 }
 
-std::string ClassTemplateSpecializationType::PrintTemplateArgumentList(
+std::string TemplateSpecializationType::PrintTemplateArgumentList(
                                               const TemplateArgument *Args,
                                               unsigned NumArgs) {
   std::string SpecString;
@@ -1403,9 +1401,15 @@ std::string ClassTemplateSpecializationType::PrintTemplateArgumentList(
 }
 
 void 
-ClassTemplateSpecializationType::
+TemplateSpecializationType::
 getAsStringInternal(std::string &InnerString) const {
-  std::string SpecString = Template->getNameAsString();
+  std::string SpecString;
+
+  {
+    llvm::raw_string_ostream OS(SpecString);
+    Template.Print(OS);
+  }
+
   SpecString += PrintTemplateArgumentList(getArgs(), getNumArgs());
   if (InnerString.empty())
     InnerString.swap(SpecString);
@@ -1515,7 +1519,7 @@ void TagType::getAsStringInternal(std::string &InnerString,
   if (ClassTemplateSpecializationDecl *Spec 
         = dyn_cast<ClassTemplateSpecializationDecl>(getDecl())) {
     std::string TemplateArgs 
-      = ClassTemplateSpecializationType::PrintTemplateArgumentList(
+      = TemplateSpecializationType::PrintTemplateArgumentList(
                                                   Spec->getTemplateArgs(),
                                                   Spec->getNumTemplateArgs());
     InnerString = TemplateArgs + InnerString;
@@ -1534,7 +1538,7 @@ void TagType::getAsStringInternal(std::string &InnerString,
       } else if (ClassTemplateSpecializationDecl *Spec 
                    = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
         std::string TemplateArgs 
-          = ClassTemplateSpecializationType::PrintTemplateArgumentList(
+          = TemplateSpecializationType::PrintTemplateArgumentList(
                                                   Spec->getTemplateArgs(),
                                                   Spec->getNumTemplateArgs());
         MyPart = Spec->getIdentifier()->getName() + TemplateArgs;

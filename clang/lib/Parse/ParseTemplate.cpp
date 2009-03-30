@@ -406,7 +406,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
 /// last token in the stream (e.g., so that it can be replaced with an
 /// annotation token).
 bool 
-Parser::ParseTemplateIdAfterTemplateName(DeclPtrTy Template,
+Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
                                          SourceLocation TemplateNameLoc, 
                                          const CXXScopeSpec *SS,
                                          bool ConsumeLastToken,
@@ -499,7 +499,7 @@ Parser::ParseTemplateIdAfterTemplateName(DeclPtrTy Template,
 /// replaced with a type annotation token. Otherwise, the
 /// simple-template-id is always replaced with a template-id
 /// annotation token.
-void Parser::AnnotateTemplateIdToken(DeclPtrTy Template, TemplateNameKind TNK,
+void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                      const CXXScopeSpec *SS, 
                                      SourceLocation TemplateKWLoc,
                                      bool AllowTypeAnnotation) {
@@ -531,12 +531,13 @@ void Parser::AnnotateTemplateIdToken(DeclPtrTy Template, TemplateNameKind TNK,
     return; 
 
   // Build the annotation token.
+  // FIXME: Not just for class templates!
   if (TNK == TNK_Class_template && AllowTypeAnnotation) {
     Action::TypeResult Type 
-      = Actions.ActOnClassTemplateId(Template, TemplateNameLoc,
-                                     LAngleLoc, TemplateArgsPtr,
-                                     &TemplateArgLocations[0],
-                                     RAngleLoc, SS);
+      = Actions.ActOnTemplateIdType(Template, TemplateNameLoc,
+                                    LAngleLoc, TemplateArgsPtr,
+                                    &TemplateArgLocations[0],
+                                    RAngleLoc);
     if (Type.isInvalid()) // FIXME: better recovery?
       return;
 
@@ -603,12 +604,12 @@ bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
                                      TemplateId->NumArgs);
 
   Action::TypeResult Type 
-    = Actions.ActOnClassTemplateId(DeclPtrTy::make(TemplateId->Template),
-                                   TemplateId->TemplateNameLoc,
-                                   TemplateId->LAngleLoc, 
-                                   TemplateArgsPtr,
-                                   TemplateId->getTemplateArgLocations(),
-                                   TemplateId->RAngleLoc, SS);
+    = Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
+                                  TemplateId->TemplateNameLoc,
+                                  TemplateId->LAngleLoc, 
+                                  TemplateArgsPtr,
+                                  TemplateId->getTemplateArgLocations(),
+                                  TemplateId->RAngleLoc);
   if (Type.isInvalid()) {
     // FIXME: better recovery?
     ConsumeToken();

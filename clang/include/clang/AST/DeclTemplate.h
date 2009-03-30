@@ -705,7 +705,7 @@ protected:
     llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
   };
 
-  /// \brief Previous declaration of 
+  /// \brief Previous declaration of this class template.
   ClassTemplateDecl *PreviousDeclaration;
 
   /// \brief Pointer to the data that is common to all of the

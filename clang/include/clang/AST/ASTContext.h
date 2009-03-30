@@ -19,6 +19,7 @@
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
+#include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
@@ -71,12 +72,14 @@ class ASTContext {
   llvm::FoldingSet<FunctionNoProtoType> FunctionNoProtoTypes;
   llvm::FoldingSet<FunctionProtoType> FunctionProtoTypes;
   llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
-  llvm::FoldingSet<ClassTemplateSpecializationType> 
-    ClassTemplateSpecializationTypes;
+  llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
   llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
   llvm::FoldingSet<TypenameType> TypenameTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
   llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
+
+  llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
+  llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
 
   /// \brief The set of nested name specifiers.
   ///
@@ -291,10 +294,10 @@ public:
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
                                    IdentifierInfo *Name = 0);
 
-  QualType getClassTemplateSpecializationType(TemplateDecl *Template,
-                                              const TemplateArgument *Args,
-                                              unsigned NumArgs,
-                                              QualType Canon = QualType());
+  QualType getTemplateSpecializationType(TemplateName T,
+                                         const TemplateArgument *Args,
+                                         unsigned NumArgs,
+                                         QualType Canon = QualType());
 
   QualType getQualifiedNameType(NestedNameSpecifier *NNS,
                                 QualType NamedType);
@@ -406,6 +409,13 @@ public:
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
 
   QualType getFixedWidthIntType(unsigned Width, bool Signed);
+
+  TemplateName getQualifiedTemplateName(NestedNameSpecifier *NNS, 
+                                        bool TemplateKeyword,
+                                        TemplateDecl *Template);
+
+  TemplateName getDependentTemplateName(NestedNameSpecifier *NNS, 
+                                        const IdentifierInfo *Name);
 
 private:
   QualType getFromTargetType(unsigned Type) const;

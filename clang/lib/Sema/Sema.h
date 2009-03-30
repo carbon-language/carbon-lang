@@ -1691,7 +1691,7 @@ public:
   // C++ Templates [C++ 14]
   //
   virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
-                                          DeclPtrTy &TemplateDecl,
+                                          TemplateTy &Template,
                                           const CXXScopeSpec *SS = 0);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
   TemplateDecl *AdjustDeclIfTemplate(DeclPtrTy &Decl);
@@ -1742,20 +1742,19 @@ public:
                      MultiTemplateParamsArg TemplateParameterLists,
                      AccessSpecifier AS);
 
-  QualType CheckClassTemplateId(ClassTemplateDecl *ClassTemplate,
-                                SourceLocation TemplateLoc,
-                                SourceLocation LAngleLoc,
-                                const TemplateArgument *TemplateArgs,
-                                unsigned NumTemplateArgs,
-                                SourceLocation RAngleLoc);
+  QualType CheckTemplateIdType(TemplateName Template,
+                               SourceLocation TemplateLoc,
+                               SourceLocation LAngleLoc,
+                               const TemplateArgument *TemplateArgs,
+                               unsigned NumTemplateArgs,
+                               SourceLocation RAngleLoc);
 
   virtual TypeResult
-  ActOnClassTemplateId(DeclPtrTy Template, SourceLocation TemplateLoc,
-                       SourceLocation LAngleLoc,
-                       ASTTemplateArgsPtr TemplateArgs,
-                       SourceLocation *TemplateArgLocs,
-                       SourceLocation RAngleLoc,
-                       const CXXScopeSpec *SS);
+  ActOnTemplateIdType(TemplateTy Template, SourceLocation TemplateLoc,
+                      SourceLocation LAngleLoc,
+                      ASTTemplateArgsPtr TemplateArgs,
+                      SourceLocation *TemplateArgLocs,
+                      SourceLocation RAngleLoc);
   
   bool CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
                                     ClassTemplateSpecializationDecl *PrevDecl,
@@ -1766,7 +1765,7 @@ public:
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,
-                                   DeclPtrTy Template,
+                                   TemplateTy Template,
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,

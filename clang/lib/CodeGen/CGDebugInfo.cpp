@@ -561,7 +561,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::FixedWidthInt:
   case Type::BlockPointer:
   case Type::MemberPointer:
-  case Type::ClassTemplateSpecialization:
+  case Type::TemplateSpecialization:
   case Type::QualifiedName:
   case Type::ObjCQualifiedClass:
     // Unsupported types

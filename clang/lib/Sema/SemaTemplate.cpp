@@ -27,19 +27,23 @@ using namespace clang;
 /// passed to indicate the C++ scope in which the identifier will be
 /// found. 
 TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
-                                      DeclPtrTy &Template,
+                                      TemplateTy &TemplateResult,
                                       const CXXScopeSpec *SS) {
   NamedDecl *IIDecl = LookupParsedName(S, SS, &II, LookupOrdinaryName);
 
+  TemplateNameKind TNK = TNK_Non_template;
+  TemplateDecl *Template = 0;
+
   if (IIDecl) {
-    if (isa<TemplateDecl>(IIDecl)) {
-      Template = DeclPtrTy::make(IIDecl);
+    if ((Template = dyn_cast<TemplateDecl>(IIDecl))) {
       if (isa<FunctionTemplateDecl>(IIDecl))
-        return TNK_Function_template;
-      if (isa<ClassTemplateDecl>(IIDecl))
-        return TNK_Class_template;
-      assert(isa<TemplateTemplateParmDecl>(IIDecl) && "Unknown TemplateDecl");
-      return TNK_Template_template_parm;
+        TNK = TNK_Function_template;
+      else if (isa<ClassTemplateDecl>(IIDecl))
+        TNK = TNK_Class_template;
+      else if (isa<TemplateTemplateParmDecl>(IIDecl))
+        TNK = TNK_Template_template_parm;
+      else
+        assert(false && "Unknown template declaration kind");
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(IIDecl)) {
       // C++ [temp.local]p1:
       //   Like normal (non-template) classes, class templates have an
@@ -54,12 +58,12 @@ TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
       //   specialization.
       if (Record->isInjectedClassName()) {
         Record = cast<CXXRecordDecl>(Context.getCanonicalDecl(Record));
-        if ((Template = DeclPtrTy::make(Record->getDescribedClassTemplate())))
-          return TNK_Class_template;
-        if (ClassTemplateSpecializationDecl *Spec
+        if ((Template = Record->getDescribedClassTemplate()))
+          TNK = TNK_Class_template;
+        else if (ClassTemplateSpecializationDecl *Spec
                    = dyn_cast<ClassTemplateSpecializationDecl>(Record)) {
-          Template = DeclPtrTy::make(Spec->getSpecializedTemplate());
-          return TNK_Class_template;
+          Template = Spec->getSpecializedTemplate();
+          TNK = TNK_Class_template;
         }
       }
     }
@@ -67,7 +71,7 @@ TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
     // FIXME: What follows is a gross hack.
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(IIDecl)) {
       if (FD->getType()->isDependentType()) {
-        Template = DeclPtrTy::make(FD);
+        TemplateResult = TemplateTy::make(FD);
         return TNK_Function_template;
       }
     } else if (OverloadedFunctionDecl *Ovl 
@@ -76,13 +80,25 @@ TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
                                                   FEnd = Ovl->function_end();
            F != FEnd; ++F) {
         if ((*F)->getType()->isDependentType()) {
-          Template = DeclPtrTy::make(Ovl);
+          TemplateResult = TemplateTy::make(Ovl);
           return TNK_Function_template;
         }
       }
     }
+
+    if (TNK != TNK_Non_template) {
+      if (SS && SS->isSet() && !SS->isInvalid()) {
+        NestedNameSpecifier *Qualifier 
+          = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+        TemplateResult 
+          = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, 
+                                                              false,
+                                                              Template));
+      } else
+        TemplateResult = TemplateTy::make(TemplateName(Template));
+    }
   }
-  return TNK_Non_template;
+  return TNK;
 }
 
 /// DiagnoseTemplateParameterShadow - Produce a diagnostic complaining
@@ -700,27 +716,30 @@ translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
   }
 }
 
-QualType Sema::CheckClassTemplateId(ClassTemplateDecl *ClassTemplate,
-                                    SourceLocation TemplateLoc,
-                                    SourceLocation LAngleLoc,
-                                    const TemplateArgument *TemplateArgs,
-                                    unsigned NumTemplateArgs,
-                                    SourceLocation RAngleLoc) {
+QualType Sema::CheckTemplateIdType(TemplateName Name,
+                                   SourceLocation TemplateLoc,
+                                   SourceLocation LAngleLoc,
+                                   const TemplateArgument *TemplateArgs,
+                                   unsigned NumTemplateArgs,
+                                   SourceLocation RAngleLoc) {
+  TemplateDecl *Template = Name.getAsTemplateDecl();
+  assert(Template && "Cannot handle dependent template-names yet");
+
   // Check that the template argument list is well-formed for this
   // template.
   llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
-  if (CheckTemplateArgumentList(ClassTemplate, TemplateLoc, LAngleLoc, 
+  if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
                                 TemplateArgs, NumTemplateArgs, RAngleLoc,
                                 ConvertedTemplateArgs))
     return QualType();
 
   assert((ConvertedTemplateArgs.size() == 
-            ClassTemplate->getTemplateParameters()->size()) &&
+            Template->getTemplateParameters()->size()) &&
          "Converted template argument list is too short!");
 
   QualType CanonType;
 
-  if (ClassTemplateSpecializationType::anyDependentTemplateArguments(
+  if (TemplateSpecializationType::anyDependentTemplateArguments(
                                                       TemplateArgs,
                                                       NumTemplateArgs)) {
     // This class template specialization is a dependent
@@ -731,10 +750,11 @@ QualType Sema::CheckClassTemplateId(ClassTemplateDecl *ClassTemplate,
     //
     //   template<typename T, typename U = T> struct A;
 
-    CanonType = Context.getClassTemplateSpecializationType(ClassTemplate, 
+    CanonType = Context.getTemplateSpecializationType(Name, 
                                                     &ConvertedTemplateArgs[0],
                                                 ConvertedTemplateArgs.size());
-  } else {
+  } else if (ClassTemplateDecl *ClassTemplate 
+               = dyn_cast<ClassTemplateDecl>(Template)) {
     // Find the class template specialization declaration that
     // corresponds to these arguments.
     llvm::FoldingSetNodeID ID;
@@ -764,35 +784,26 @@ QualType Sema::CheckClassTemplateId(ClassTemplateDecl *ClassTemplate,
   // Build the fully-sugared type for this class template
   // specialization, which refers back to the class template
   // specialization we created or found.
-  return Context.getClassTemplateSpecializationType(ClassTemplate, 
-                                                    TemplateArgs,
-                                                    NumTemplateArgs, 
-                                                    CanonType);
+  return Context.getTemplateSpecializationType(Name, TemplateArgs,
+                                               NumTemplateArgs, CanonType);
 }
 
 Action::TypeResult
-Sema::ActOnClassTemplateId(DeclPtrTy TemplateD, SourceLocation TemplateLoc,
-                           SourceLocation LAngleLoc, 
-                           ASTTemplateArgsPtr TemplateArgsIn,
-                           SourceLocation *TemplateArgLocs,
-                           SourceLocation RAngleLoc,
-                           const CXXScopeSpec *SS) {
-  TemplateDecl *Template = cast<TemplateDecl>(TemplateD.getAs<Decl>());
-  ClassTemplateDecl *ClassTemplate = cast<ClassTemplateDecl>(Template);
+Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
+                          SourceLocation LAngleLoc, 
+                          ASTTemplateArgsPtr TemplateArgsIn,
+                          SourceLocation *TemplateArgLocs,
+                          SourceLocation RAngleLoc) {
+  TemplateName Template = TemplateD.getAsVal<TemplateName>();
 
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
   translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
 
-  QualType Result = CheckClassTemplateId(ClassTemplate, TemplateLoc,
-                                         LAngleLoc, 
-                                         &TemplateArgs[0],
-                                         TemplateArgs.size(),
-                                         RAngleLoc);
+  QualType Result = CheckTemplateIdType(Template, TemplateLoc, LAngleLoc,
+                                        &TemplateArgs[0], TemplateArgs.size(),
+                                        RAngleLoc);
   
-  if (SS)
-    Result = getQualifiedNameType(*SS, Result);
-
   TemplateArgsIn.release();
   return Result.getAsOpaquePtr();
 }
@@ -1795,7 +1806,7 @@ Sema::DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                        SourceLocation KWLoc, 
                                        const CXXScopeSpec &SS,
-                                       DeclPtrTy TemplateD,
+                                       TemplateTy TemplateD,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
                                        ASTTemplateArgsPtr TemplateArgsIn,
@@ -1804,10 +1815,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                        AttributeList *Attr,
                                MultiTemplateParamsArg TemplateParameterLists) {
   // Find the class template we're specializing
+  TemplateName Name = TemplateD.getAsVal<TemplateName>();
   ClassTemplateDecl *ClassTemplate 
-    = dyn_cast_or_null<ClassTemplateDecl>(TemplateD.getAs<Decl>());
-  if (!ClassTemplate)
-    return true;
+    = cast<ClassTemplateDecl>(Name.getAsTemplateDecl());
 
   // Check the validity of the template headers that introduce this
   // template.
@@ -1937,11 +1947,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // name based on the "canonical" representation used to store the
   // template arguments in the specialization.
   QualType WrittenTy 
-    = Context.getClassTemplateSpecializationType(ClassTemplate, 
-                                                 &TemplateArgs[0],
-                                                 TemplateArgs.size(),
+    = Context.getTemplateSpecializationType(Name, 
+                                            &TemplateArgs[0],
+                                            TemplateArgs.size(),
                                   Context.getTypeDeclType(Specialization));
-  Specialization->setTypeAsWritten(getQualifiedNameType(SS, WrittenTy));
+  Specialization->setTypeAsWritten(WrittenTy);
   TemplateArgsIn.release();
 
   // C++ [temp.expl.spec]p9:

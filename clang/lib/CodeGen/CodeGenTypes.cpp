@@ -392,6 +392,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // http://gcc.gnu.org/onlinedocs/gccint/Type-Layout.html#Type-Layout
     assert(0 && "FIXME: We can't handle member pointers yet.");
     return llvm::OpaqueType::get();
+
+  case Type::TemplateSpecialization:
+    assert(false && "Dependent types can't get here");
   }
   
   // FIXME: implement.
