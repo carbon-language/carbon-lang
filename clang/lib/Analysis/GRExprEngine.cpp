@@ -1877,7 +1877,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     // Check for casts from array type to another type.
     if (ExTy->isArrayType()) {
       // We will always decay to a pointer.
-      V = StateMgr.ArrayToPointer(V);
+      V = StateMgr.ArrayToPointer(cast<Loc>(V));
       
       // Are we casting from an array to a pointer?  If so just pass on
       // the decayed value.

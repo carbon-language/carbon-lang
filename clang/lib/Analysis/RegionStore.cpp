@@ -199,7 +199,7 @@ public:
   ///  version of that lvalue (i.e., a pointer to the first element of
   ///  the array).  This is called by GRExprEngine when evaluating
   ///  casts from arrays to pointers.
-  SVal ArrayToPointer(SVal Array);
+  SVal ArrayToPointer(Loc Array);
 
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
@@ -562,12 +562,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
 ///  version of that lvalue (i.e., a pointer to the first element of
 ///  the array).  This is called by GRExprEngine when evaluating casts
 ///  from arrays to pointers.
-SVal RegionStoreManager::ArrayToPointer(SVal Array) {
-  // FIXME: This should be factored into GRExprEngine.  This allows
-  // us to pass a "loc" instead of an "SVal" for "Array".
-  if (Array.isUnknownOrUndef())
-    return Array;
-  
+SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   if (!isa<loc::MemRegionVal>(Array))
     return UnknownVal();
   

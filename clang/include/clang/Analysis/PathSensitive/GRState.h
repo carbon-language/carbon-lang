@@ -461,7 +461,7 @@ public:
     return BindExpr(St, Ex, V, isBlkExpr, Invalidate);
   }
 
-  SVal ArrayToPointer(SVal Array) {
+  SVal ArrayToPointer(Loc Array) {
     return StoreMgr->ArrayToPointer(Array);
   }
   

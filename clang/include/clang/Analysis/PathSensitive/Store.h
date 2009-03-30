@@ -106,7 +106,7 @@ public:
 
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
-  virtual SVal ArrayToPointer(SVal Array) = 0;
+  virtual SVal ArrayToPointer(Loc Array) = 0;
 
   
   class CastResult {

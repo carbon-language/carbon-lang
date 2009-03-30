@@ -85,7 +85,7 @@ public:
 
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
-  SVal ArrayToPointer(SVal Array) { return Array; }
+  SVal ArrayToPointer(Loc Array) { return Array; }
 
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
