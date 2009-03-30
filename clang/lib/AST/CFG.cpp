@@ -129,10 +129,13 @@ public:
     return Block;
   }
   
-  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S) { return NYS(); }
-  CFGBlock* VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) { return NYS(); }
-  CFGBlock* VisitObjCAtFinallyStmt(ObjCAtFinallyStmt* S) { return NYS(); }
-  
+  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S);
+  CFGBlock* VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) { 
+    // FIXME: For now we pretend that @catch and the code it contains
+    //  does not exit.
+    return Block;
+  }
+
   // FIXME: This is not completely supported.  We basically @throw like
   // a 'return'.
   CFGBlock* VisitObjCAtThrowStmt(ObjCAtThrowStmt* S);
@@ -888,7 +891,17 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   Block = createBlock();
   return addStmt(S->getCollection());
 }    
-
+  
+CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
+  // Process the statements of the @finally block.
+  if (ObjCAtFinallyStmt *FS = S->getFinallyStmt())
+    Visit(FS->getFinallyBody());
+  
+  // FIXME: Handle the @catch statements.
+  
+  // Process the try body
+  return Visit(S->getTryBody());
+}
 
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // "while" is a control-flow statement.  Thus we stop processing the
