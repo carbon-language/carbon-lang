@@ -125,8 +125,10 @@ struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
 };
 
 // Teach SmallPtrSet that PointerIntPair is "basically a pointer".
-template<typename PointerTy, unsigned IntBits, typename IntType>
-class PointerLikeTypeTraits<PointerIntPair<PointerTy, IntBits, IntType> > {
+template<typename PointerTy, unsigned IntBits, typename IntType,
+         typename PtrTraits>
+class PointerLikeTypeTraits<PointerIntPair<PointerTy, IntBits, IntType,
+                                           PtrTraits> > {
 public:
   static inline void *
   getAsVoidPointer(const PointerIntPair<PointerTy, IntBits, IntType> &P) {
