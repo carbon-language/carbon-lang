@@ -1746,7 +1746,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
           //   vr1024 = op 
           //          = vr1025
           // Even though vr1025 is copied from vr1024, it's not safe to
-          // coalesced them since live range of vr1025 intersects the
+          // coalesce them since the live range of vr1025 intersects the
           // def of vr1024. This happens because vr1025 is assigned the
           // value of the previous iteration of vr1024.
           return false;
