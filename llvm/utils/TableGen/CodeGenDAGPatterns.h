@@ -145,7 +145,8 @@ public:
 /// TreePatternNode objects!
 class TreePatternNode {
   /// The inferred type for this node, or EMVT::isUnknown if it hasn't
-  /// been determined yet.
+  /// been determined yet. This is a std::vector because during inference
+  /// there may be multiple possible types.
   std::vector<unsigned char> Types;
   
   /// Operator - The Record for the operator if this is an interior node (not
