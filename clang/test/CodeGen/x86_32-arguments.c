@@ -15,8 +15,6 @@
 // tests. This should be the same as @f8_2.
 // RUN: grep 'define void @f9_2(%.truct.s9\* byval %a0)' %t &&
 
-// RUN: true
-
 char f0(void) {
 }
 
@@ -64,4 +62,14 @@ struct s9 f9_1(void) {
 }
 void f9_2(struct s9 a0) {
 }
+
+// Return of small structures and unions...
+
+// RUN: grep 'float @f10()' %t &&
+struct s10 {
+  union { };
+  float f;
+} f10(void) {}
+
+// RUN: true
 

@@ -140,11 +140,11 @@ void ABIArgInfo::dump() const {
 
 /***/
 
-/// isEmptyStruct - Return true iff a structure has no non-empty
+/// isEmptyRecord - Return true iff a structure has no non-empty
 /// members. Note that a structure with a flexible array member is not
 /// considered empty.
-static bool isEmptyStruct(QualType T) {
-  const RecordType *RT = T->getAsStructureType();
+static bool isEmptyRecord(QualType T) {
+  const RecordType *RT = T->getAsRecordType();
   if (!RT)
     return 0;
   const RecordDecl *RD = RT->getDecl();
@@ -153,7 +153,7 @@ static bool isEmptyStruct(QualType T) {
   for (RecordDecl::field_iterator i = RD->field_begin(), 
          e = RD->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
-    if (!isEmptyStruct(FD->getType()))
+    if (!isEmptyRecord(FD->getType()))
       return false;
   }
   return true;
@@ -182,7 +182,7 @@ static const FieldDecl *isSingleElementStruct(QualType T) {
     const FieldDecl *FD = *i;
     QualType FT = FD->getType();
 
-    if (isEmptyStruct(FT)) {
+    if (isEmptyRecord(FT)) {
       // Ignore
     } else if (Found) {
       return 0;
