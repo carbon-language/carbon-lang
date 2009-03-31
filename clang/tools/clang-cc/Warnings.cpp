@@ -139,10 +139,13 @@ static const diag::kind ImplicitFunctionDeclarationDiags[] = {
 static const diag::kind PointerSignDiags[] = {
   diag::ext_typecheck_convert_incompatible_pointer_sign
 };
+static const diag::kind DeprecatedDeclarations[] = { diag::warn_deprecated };
+
 // Hmm ... this option is currently actually completely ignored.
 //static const diag::kind StrictSelectorMatchDiags[] = {  };
 // Second the table of options.  MUST be sorted by name! Binary lookup is done.
 static const WarningOption OptionTable[] = {
+  { "deprecated-declarations", DIAGS(DeprecatedDeclarations) },
   { "float-equal",           DIAGS(FloatEqualDiags) },
   { "format-nonliteral",     DIAGS(FormatNonLiteralDiags) },
   { "implicit-function-declaration", DIAGS(ImplicitFunctionDeclarationDiags) },
