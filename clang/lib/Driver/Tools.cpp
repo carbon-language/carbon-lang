@@ -1451,3 +1451,39 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
     Args.MakeArgString(getToolChain().GetProgramPath(C, "lipo").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
+
+void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                    Job &Dest, const InputInfo &Output, 
+                                    const InputInfoList &Inputs, 
+                                    const ArgList &Args, 
+                                    const char *LinkingOutput) const
+{
+  ArgStringList CmdArgs;
+
+  // Conceptually, i386 on x86_64 is a separate tool chain, but for
+  // now we just detect this situation by looking for -m32.
+  if (Args.hasArg(options::OPT_m32))
+    CmdArgs.push_back("--32");
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  CmdArgs.push_back("-o");
+  if (Output.isPipe())
+    CmdArgs.push_back("-");
+  else
+    CmdArgs.push_back(Output.getFilename());
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    if (II.isPipe())
+      CmdArgs.push_back("-");
+    else
+      CmdArgs.push_back(II.getFilename());
+  }
+
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));
+}

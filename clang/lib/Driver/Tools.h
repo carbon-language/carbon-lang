@@ -233,6 +233,25 @@ namespace darwin {
   };
 }
 
+  /// freebsd -- Directly call GNU Binutils assembler and linker
+namespace freebsd {
+  class VISIBILITY_HIDDEN Assemble : public Tool  {
+  public:
+    Assemble(const ToolChain &TC) : Tool("freebsd::Assemble", TC) {}
+
+    virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return true; }
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output, 
+                              const InputInfoList &Inputs, 
+                              const ArgList &TCArgs, 
+                              const char *LinkingOutput) const;
+  };
+}
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

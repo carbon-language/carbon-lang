@@ -389,6 +389,8 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::freebsd::Assemble(*this); break;
     default:
       T = &Generic_GCC::SelectTool(C, JA);
     }
