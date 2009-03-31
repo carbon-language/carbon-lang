@@ -20,6 +20,7 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
 
@@ -30,8 +31,8 @@ namespace llvm {
 //                          BitcodeReaderValueList Class
 //===----------------------------------------------------------------------===//
 
-class BitcodeReaderValueList : public User {
-  unsigned Capacity;
+class BitcodeReaderValueList {
+  std::vector<WeakVH> ValuePtrs;
   
   /// ResolveConstants - As we resolve forward-referenced constants, we add
   /// information about them to this vector.  This allows us to resolve them in
@@ -43,87 +44,45 @@ class BitcodeReaderValueList : public User {
   typedef std::vector<std::pair<Constant*, unsigned> > ResolveConstantsTy;
   ResolveConstantsTy ResolveConstants;
 public:
-  BitcodeReaderValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0)
-                           , Capacity(0) {}
+  BitcodeReaderValueList() {}
   ~BitcodeReaderValueList() {
     assert(ResolveConstants.empty() && "Constants not resolved?");
   }
 
-  /// Provide fast operand accessors
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-
   // vector compatibility methods
-  unsigned size() const { return getNumOperands(); }
-  void resize(unsigned);
+  unsigned size() const { return ValuePtrs.size(); }
+  void resize(unsigned N) { ValuePtrs.resize(N); }
   void push_back(Value *V) {
-    unsigned OldOps(NumOperands), NewOps(NumOperands + 1);
-    resize(NewOps);
-    NumOperands = NewOps;
-    OperandList[OldOps] = V;
+    ValuePtrs.push_back(V);
   }
   
   void clear() {
     assert(ResolveConstants.empty() && "Constants not resolved?");
-    if (OperandList) dropHungoffUses(OperandList);
-    Capacity = 0;
+    ValuePtrs.clear();
   }
   
-  Value *operator[](unsigned i) const { return getOperand(i); }
+  Value *operator[](unsigned i) const {
+    assert(i < ValuePtrs.size());
+    return ValuePtrs[i];
+  }
   
-  Value *back() const { return getOperand(size() - 1); }
-  void pop_back() { setOperand(size() - 1, 0); --NumOperands; }
-  bool empty() const { return NumOperands == 0; }
+  Value *back() const { return ValuePtrs.back(); }
+    void pop_back() { ValuePtrs.pop_back(); }
+  bool empty() const { return ValuePtrs.empty(); }
   void shrinkTo(unsigned N) {
-    assert(N <= NumOperands && "Invalid shrinkTo request!");
-    while (NumOperands > N)
-      pop_back();
+    assert(N <= size() && "Invalid shrinkTo request!");
+    ValuePtrs.resize(N);
   }
-  virtual void print(std::ostream&) const {}
   
   Constant *getConstantFwdRef(unsigned Idx, const Type *Ty);
   Value *getValueFwdRef(unsigned Idx, const Type *Ty);
   
-  void AssignValue(Value *V, unsigned Idx) {
-    if (Idx == size()) {
-      push_back(V);
-    } else if (Value *OldV = getOperand(Idx)) {
-      // Handle constants and non-constants (e.g. instrs) differently for
-      // efficiency.
-      if (Constant *PHC = dyn_cast<Constant>(OldV)) {
-        ResolveConstants.push_back(std::make_pair(PHC, Idx));
-        setOperand(Idx, V);
-      } else {
-        // If there was a forward reference to this value, replace it.
-        setOperand(Idx, V);
-        OldV->replaceAllUsesWith(V);
-        delete OldV;
-      }
-    } else {
-      initVal(Idx, V);
-    }
-  }
+  void AssignValue(Value *V, unsigned Idx);
   
   /// ResolveConstantForwardRefs - Once all constants are read, this method bulk
   /// resolves any forward references.
   void ResolveConstantForwardRefs();
-  
-private:
-  void initVal(unsigned Idx, Value *V) {
-    if (Idx >= size()) {
-      // Insert a bunch of null values.
-      resize(Idx * 2 + 1);
-    }
-    assert(getOperand(Idx) == 0 && "Cannot init an already init'd Use!");
-    OperandList[Idx] = V;
-  }
 };
-
-template <>
-struct OperandTraits<BitcodeReaderValueList>
-  : HungoffOperandTraits</*16 FIXME*/> {
-};
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BitcodeReaderValueList, Value)  
 
 class BitcodeReader : public ModuleProvider {
   MemoryBuffer *Buffer;

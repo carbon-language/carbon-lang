@@ -146,64 +146,67 @@ namespace {
     
     
     /// Provide fast operand accessors
-    DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+    //DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   };
 }
 
-
-  // FIXME: can we inherit this from ConstantExpr?
+// FIXME: can we inherit this from ConstantExpr?
 template <>
 struct OperandTraits<ConstantPlaceHolder> : FixedNumOperandTraits<1> {
 };
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantPlaceHolder, Value)
 }
 
-void BitcodeReaderValueList::resize(unsigned Desired) {
-  if (Desired > Capacity) {
-    // Since we expect many values to come from the bitcode file we better
-    // allocate the double amount, so that the array size grows exponentially
-    // at each reallocation.  Also, add a small amount of 100 extra elements
-    // each time, to reallocate less frequently when the array is still small.
-    //
-    Capacity = Desired * 2 + 100;
-    Use *New = allocHungoffUses(Capacity);
-    Use *Old = OperandList;
-    unsigned Ops = getNumOperands();
-    for (int i(Ops - 1); i >= 0; --i)
-      New[i] = Old[i].get();
-    OperandList = New;
-    if (Old) Use::zap(Old, Old + Ops, true);
+
+void BitcodeReaderValueList::AssignValue(Value *V, unsigned Idx) {
+  if (Idx == size()) {
+    push_back(V);
+    return;
+  }
+  
+  if (Idx >= size())
+    resize(Idx+1);
+  
+  WeakVH &OldV = ValuePtrs[Idx];
+  if (OldV == 0) {
+    OldV = V;
+    return;
+  }
+  
+  // Handle constants and non-constants (e.g. instrs) differently for
+  // efficiency.
+  if (Constant *PHC = dyn_cast<Constant>(&*OldV)) {
+    ResolveConstants.push_back(std::make_pair(PHC, Idx));
+    OldV = V;
+  } else {
+    // If there was a forward reference to this value, replace it.
+    Value *PrevVal = OldV;
+    OldV->replaceAllUsesWith(V);
+    delete PrevVal;
   }
 }
+  
 
 Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
                                                     const Type *Ty) {
-  if (Idx >= size()) {
-    // Insert a bunch of null values.
+  if (Idx >= size())
     resize(Idx + 1);
-    NumOperands = Idx+1;
-  }
 
-  if (Value *V = OperandList[Idx]) {
+  if (Value *V = ValuePtrs[Idx]) {
     assert(Ty == V->getType() && "Type mismatch in constant table!");
     return cast<Constant>(V);
   }
 
   // Create and return a placeholder, which will later be RAUW'd.
   Constant *C = new ConstantPlaceHolder(Ty);
-  OperandList[Idx] = C;
+  ValuePtrs[Idx] = C;
   return C;
 }
 
 Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
-  if (Idx >= size()) {
-    // Insert a bunch of null values.
+  if (Idx >= size())
     resize(Idx + 1);
-    NumOperands = Idx+1;
-  }
   
-  if (Value *V = OperandList[Idx]) {
+  if (Value *V = ValuePtrs[Idx]) {
     assert((Ty == 0 || Ty == V->getType()) && "Type mismatch in value table!");
     return V;
   }
@@ -213,7 +216,7 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
   
   // Create and return a placeholder, which will later be RAUW'd.
   Value *V = new Argument(Ty);
-  OperandList[Idx] = V;
+  ValuePtrs[Idx] = V;
   return V;
 }
 
@@ -232,7 +235,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
   SmallVector<Constant*, 64> NewOps;
   
   while (!ResolveConstants.empty()) {
-    Value *RealVal = getOperand(ResolveConstants.back().second);
+    Value *RealVal = operator[](ResolveConstants.back().second);
     Constant *Placeholder = ResolveConstants.back().first;
     ResolveConstants.pop_back();
     
@@ -268,7 +271,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
                              std::pair<Constant*, unsigned>(cast<Constant>(*I),
                                                             0));
           assert(It != ResolveConstants.end() && It->first == *I);
-          NewOp = this->getOperand(It->second);
+          NewOp = operator[](It->second);
         }
 
         NewOps.push_back(cast<Constant>(NewOp));
@@ -2064,7 +2067,7 @@ Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
         if (CallInst* CI = dyn_cast<CallInst>(*UI++))
           UpgradeIntrinsicCall(CI, I->second);
       }
-      ValueList.replaceUsesOfWith(I->first, I->second);
+      I->first->replaceAllUsesWith(I->second);
       I->first->eraseFromParent();
     }
   }
