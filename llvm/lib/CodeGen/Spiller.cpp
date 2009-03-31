@@ -578,20 +578,6 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
   DOUT << "**** Post Machine Instrs ****\n";
   DEBUG(MF.dump());
 
-  // See if any of the spills we added are actually dead and can be deleted.
-  for (std::vector<MachineInstr*> >::iterator
-         I = AddedSpills.begin(), E = AddedSpills.end(); I != E; ++I) {
-    MachineInstr *MI = *I;
-
-    if (VRM.OnlyUseOfStackSlot(MI)) {
-      MachineBasicBlock *MBB = MI->getParent();
-      DOUT << "Removed dead store:\t" << *MI;
-      VRM.RemoveMachineInstrFromMaps(MI);
-      MBB->erase(MI);
-      ++NumDSE;
-    }
-  }
-
   // Mark unused spill slots.
   MachineFrameInfo *MFI = MF.getFrameInfo();
   int SS = VRM.getLowSpillSlot();
@@ -602,7 +588,6 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
         ++NumDSS;
       }
 
-  AddedSpills.clear();
   return true;
 }
 
@@ -813,50 +798,9 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
   return false;
 }
 
-void LocalSpiller::RemoveDeadStore(MachineInstr *Store,
-                                   MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator &MII,
-                                   SmallSet<MachineInstr*, 4> &ReMatDefs,
-                                   BitVector &RegKills,
-                                   std::vector<MachineOperand*> &KillOps,
-                                   VirtRegMap &VRM) {
-  // If there is a dead store to this stack slot, nuke it now.
-  DOUT << "Removed dead store:\t" << *Store;
-  ++NumDSE;
-  SmallVector<unsigned, 2> KillRegs;
-  InvalidateKills(*Store, RegKills, KillOps, &KillRegs);
-
-  MachineBasicBlock::iterator PrevMII = Store;
-  bool CheckDef = PrevMII != MBB.begin();
-  if (CheckDef) --PrevMII;
-
-  VRM.RemoveMachineInstrFromMaps(Store);
-  MBB.erase(Store);
-
-  if (CheckDef) {
-    // Look at defs of killed registers on the store. Mark the defs as dead
-    // since the store has been deleted and they aren't being reused.
-    for (unsigned j = 0, ee = KillRegs.size(); j != ee; ++j) {
-      bool HasOtherDef = false;
-
-      if (InvalidateRegDef(PrevMII, *MII, KillRegs[j], HasOtherDef)) {
-        MachineInstr *DeadDef = PrevMII;
-
-        if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
-          // FIXME: This assumes a remat def does not have side effects.
-          VRM.RemoveMachineInstrFromMaps(DeadDef);
-          MBB.erase(DeadDef);
-          ++NumDRM;
-        }
-      }
-    }
-  }
-}
-
 /// SpillRegToStackSlot - Spill a register to a specified stack slot. Check if
 /// the last store to the same slot is now dead. If so, remove the last store.
-void
-LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
+void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator &MII,
                                   int Idx, unsigned PhysReg, int StackSlot,
                                   const TargetRegisterClass *RC,
@@ -872,8 +816,36 @@ LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
   DOUT << "Store:\t" << *StoreMI;
 
   // If there is a dead store to this stack slot, nuke it now.
-  if (LastStore)
-    RemoveDeadStore(LastStore, MBB, MII, ReMatDefs, RegKills, KillOps, VRM);
+  if (LastStore) {
+    DOUT << "Removed dead store:\t" << *LastStore;
+    ++NumDSE;
+    SmallVector<unsigned, 2> KillRegs;
+    InvalidateKills(*LastStore, RegKills, KillOps, &KillRegs);
+    MachineBasicBlock::iterator PrevMII = LastStore;
+    bool CheckDef = PrevMII != MBB.begin();
+    if (CheckDef)
+      --PrevMII;
+    VRM.RemoveMachineInstrFromMaps(LastStore);
+    MBB.erase(LastStore);
+    if (CheckDef) {
+      // Look at defs of killed registers on the store. Mark the defs
+      // as dead since the store has been deleted and they aren't
+      // being reused.
+      for (unsigned j = 0, ee = KillRegs.size(); j != ee; ++j) {
+        bool HasOtherDef = false;
+        if (InvalidateRegDef(PrevMII, *MII, KillRegs[j], HasOtherDef)) {
+          MachineInstr *DeadDef = PrevMII;
+          if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
+            // FIXME: This assumes a remat def does not have side
+            // effects.
+            VRM.RemoveMachineInstrFromMaps(DeadDef);
+            MBB.erase(DeadDef);
+            ++NumDRM;
+          }
+        }
+      }
+    }
+  }
 
   LastStore = next(MII);
 
@@ -1088,7 +1060,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
     if (VRM.isSpillPt(&MI)) {
       std::vector<std::pair<unsigned,bool> > &SpillRegs =
         VRM.getSpillPtSpills(&MI);
-
       for (unsigned i = 0, e = SpillRegs.size(); i != e; ++i) {
         unsigned VirtReg = SpillRegs[i].first;
         bool isKill = SpillRegs[i].second;
@@ -1102,9 +1073,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         VRM.addSpillSlotUse(StackSlot, StoreMI);
         DOUT << "Store:\t" << *StoreMI;
         VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
-        AddedSpills.push_back(StoreMI);
       }
-
       NextMII = next(MII);
     }
 

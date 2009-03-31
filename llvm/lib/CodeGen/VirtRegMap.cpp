@@ -188,7 +188,7 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
     if (MF->getFrameInfo()->isFixedObjectIndex(FI))
       continue;
     // This stack reference was produced by instruction selection and
-    // is not a spill.
+    // is not a spill
     if (FI < LowSpillSlot)
       continue;
     assert((unsigned)FI-LowSpillSlot < SpillSlotToUsesMap.size()
@@ -199,27 +199,6 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
   SpillPt2VirtMap.erase(MI);
   RestorePt2VirtMap.erase(MI);
   EmergencySpillMap.erase(MI);
-}
-
-bool VirtRegMap::OnlyUseOfStackSlot(const MachineInstr *MI) const {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isFI())
-      continue;
-    int FI = MO.getIndex();
-    if (MF->getFrameInfo()->isFixedObjectIndex(FI))
-      continue;
-    // This stack reference was produced by instruction selection and
-    // is not a spill.
-    if (FI < LowSpillSlot)
-      continue;
-    assert((unsigned)FI-LowSpillSlot < SpillSlotToUsesMap.size()
-           && "Invalid spill slot");
-    if (SpillSlotToUsesMap[FI - LowSpillSlot].size() != 1)
-      return false;
-  }
-
-  return true;
 }
 
 void VirtRegMap::print(std::ostream &OS, const Module* M) const {
