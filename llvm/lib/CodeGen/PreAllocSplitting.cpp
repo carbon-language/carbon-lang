@@ -232,68 +232,38 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
                                   unsigned &SpillIndex) {
   MachineBasicBlock::iterator Pt = MBB->begin();
 
-  // Go top down if RefsInMBB is empty.
-  if (RefsInMBB.empty() && !DefMI) {
-    MachineBasicBlock::iterator MII = MBB->begin();
-    MachineBasicBlock::iterator EndPt = MI;
+  MachineBasicBlock::iterator MII = MI;
+  MachineBasicBlock::iterator EndPt = DefMI
+    ? MachineBasicBlock::iterator(DefMI) : MBB->begin();
     
-    if (MII == EndPt) return Pt;
+  while (MII != EndPt && !RefsInMBB.count(MII) &&
+         MII->getOpcode() != TRI->getCallFrameSetupOpcode())
+    --MII;
+  if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
     
-    do {
-      ++MII;
-      unsigned Index = LIs->getInstructionIndex(MII);
-      unsigned Gap = LIs->findGapBeforeInstr(Index);
-      
-      // We can't insert the spill between the barrier (a call), and its
-      // corresponding call frame setup/teardown.
-      if (prior(MII)->getOpcode() == TRI->getCallFrameSetupOpcode()) {
-        bool reachedBarrier = false;
-        do {
-          if (MII == EndPt) {
-            reachedBarrier = true;
-            break;
-          }
-          ++MII;
-        } while (MII->getOpcode() != TRI->getCallFrameDestroyOpcode());
-        
-        if (reachedBarrier) break;
-      } else if (Gap) {
-        Pt = MII;
-        SpillIndex = Gap;
-        break;
-      }
-    } while (MII != EndPt);
-  } else {
-    MachineBasicBlock::iterator MII = MI;
-    MachineBasicBlock::iterator EndPt = DefMI
-      ? MachineBasicBlock::iterator(DefMI) : MBB->begin();
+  while (MII != EndPt && !RefsInMBB.count(MII)) {
+    unsigned Index = LIs->getInstructionIndex(MII);
     
-    while (MII != EndPt && !RefsInMBB.count(MII)) {
-      unsigned Index = LIs->getInstructionIndex(MII);
-      
-      // We can't insert the spill between the barrier (a call), and its
-      // corresponding call frame setup.
-      if (prior(MII)->getOpcode() == TRI->getCallFrameSetupOpcode()) {
+    // We can't insert the spill between the barrier (a call), and its
+    // corresponding call frame setup.
+    if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode()) {
+      while (MII->getOpcode() != TRI->getCallFrameSetupOpcode()) {
         --MII;
-        continue;
-      } if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode()) {
-        bool reachedBarrier = false;
-        while (MII->getOpcode() != TRI->getCallFrameSetupOpcode()) {
-          --MII;
-          if (MII == EndPt) {
-            reachedBarrier = true;
-            break;
-          }
+        if (MII == EndPt) {
+          return Pt;
         }
-        
-        if (reachedBarrier) break;
-        else continue;
-      } else if (LIs->hasGapBeforeInstr(Index)) {
-        Pt = MII;
-        SpillIndex = LIs->findGapBeforeInstr(Index, true);
       }
-      --MII;
+      continue;
+    } else if (LIs->hasGapBeforeInstr(Index)) {
+      Pt = MII;
+      SpillIndex = LIs->findGapBeforeInstr(Index, true);
     }
+    
+    if (RefsInMBB.count(MII))
+      return Pt;
+    
+    
+    --MII;
   }
 
   return Pt;
@@ -311,81 +281,44 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
   // FIXME: Allow spill to be inserted to the beginning of the mbb. Update mbb
   // begin index accordingly.
   MachineBasicBlock::iterator Pt = MBB->end();
-  unsigned EndIdx = LIs->getMBBEndIdx(MBB);
+  MachineBasicBlock::iterator EndPt = MBB->getFirstTerminator();
 
-  // Go bottom up if RefsInMBB is empty and the end of the mbb isn't beyond
-  // the last index in the live range.
-  if (RefsInMBB.empty() && LastIdx >= EndIdx) {
-    MachineBasicBlock::iterator MII = MBB->getFirstTerminator();
-    MachineBasicBlock::iterator EndPt = MI;
-    
-    if (MII == EndPt) return Pt;
-    
-    --MII;
-    do {
-      unsigned Index = LIs->getInstructionIndex(MII);
-      unsigned Gap = LIs->findGapBeforeInstr(Index);
+  // We start at the call, so walk forward until we find the call frame teardown
+  // since we can't insert restores before that.  Bail if we encounter a use
+  // during this time.
+  MachineBasicBlock::iterator MII = MI;
+  if (MII == EndPt) return Pt;
+  
+  while (MII != EndPt && !RefsInMBB.count(MII) &&
+         MII->getOpcode() != TRI->getCallFrameDestroyOpcode())
+    ++MII;
+  if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
+  ++MII;
+  
+  // FIXME: Limit the number of instructions to examine to reduce
+  // compile time?
+  while (MII != EndPt) {
+    unsigned Index = LIs->getInstructionIndex(MII);
+    if (Index > LastIdx)
+      break;
+    unsigned Gap = LIs->findGapBeforeInstr(Index);
       
-      // We can't insert a restore between the barrier (a call) and its 
-      // corresponding call frame teardown.
-      if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode()) {
-        bool reachedBarrier = false;
-        while (MII->getOpcode() != TRI->getCallFrameSetupOpcode()) {
-          --MII;
-          if (MII == EndPt) {
-            reachedBarrier = true;
-            break;
-          }
-        }
-        
-        if (reachedBarrier) break;
-        else continue;
-      } else if (Gap) {
-        Pt = MII;
-        RestoreIndex = Gap;
-        break;
-      }
-      
-      --MII;
-    } while (MII != EndPt);
-  } else {
-    MachineBasicBlock::iterator MII = MI;
-    MII = ++MII;
-    
-    // FIXME: Limit the number of instructions to examine to reduce
-    // compile time?
-    while (MII != MBB->getFirstTerminator()) {
-      unsigned Index = LIs->getInstructionIndex(MII);
-      if (Index > LastIdx)
-        break;
-      unsigned Gap = LIs->findGapBeforeInstr(Index);
-      
-      // We can't insert a restore between the barrier (a call) and its 
-      // corresponding call frame teardown.
-      if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode()) {
+    // We can't insert a restore between the barrier (a call) and its 
+    // corresponding call frame teardown.
+    if (MII->getOpcode() == TRI->getCallFrameSetupOpcode()) {
+      do {
+        if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
         ++MII;
-        continue;
-      } else if (prior(MII)->getOpcode() == TRI->getCallFrameSetupOpcode()) {
-        bool reachedBarrier = false;
-        do {
-          if (MII == MBB->getFirstTerminator() || RefsInMBB.count(MII)) {
-            reachedBarrier = true;
-            break;
-          }
-          
-          ++MII;
-        } while (MII->getOpcode() != TRI->getCallFrameDestroyOpcode());
-        
-        if (reachedBarrier) break;
-      } else if (Gap) {
-        Pt = MII;
-        RestoreIndex = Gap;
-      }
-      
-      if (RefsInMBB.count(MII))
-        break;
-      ++MII;
+      } while (MII->getOpcode() != TRI->getCallFrameDestroyOpcode());
+    } else if (Gap) {
+      Pt = MII;
+      RestoreIndex = Gap;
     }
+    
+    if (RefsInMBB.count(MII))
+      return Pt;
+    
+    ++MII;
   }
 
   return Pt;
