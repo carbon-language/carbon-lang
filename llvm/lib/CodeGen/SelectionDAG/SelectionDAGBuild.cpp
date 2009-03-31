@@ -4587,15 +4587,15 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
             isSExt = false, FromVT = MVT::i1;  // ASSERT ZEXT 1
           else if (NumSignBits > RegSize-8)
             isSExt = true, FromVT = MVT::i8;   // ASSERT SEXT 8
-          else if (NumZeroBits >= RegSize-9)
+          else if (NumZeroBits >= RegSize-8)
             isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
           else if (NumSignBits > RegSize-16)
             isSExt = true, FromVT = MVT::i16;  // ASSERT SEXT 16
-          else if (NumZeroBits >= RegSize-17)
+          else if (NumZeroBits >= RegSize-16)
             isSExt = false, FromVT = MVT::i16; // ASSERT ZEXT 16
           else if (NumSignBits > RegSize-32)
             isSExt = true, FromVT = MVT::i32;  // ASSERT SEXT 32
-          else if (NumZeroBits >= RegSize-33)
+          else if (NumZeroBits >= RegSize-32)
             isSExt = false, FromVT = MVT::i32; // ASSERT ZEXT 32
 
           if (FromVT != MVT::Other) {
