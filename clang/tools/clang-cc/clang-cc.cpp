@@ -723,6 +723,8 @@ MacOSVersionMin("mmacosx-version-min",
 
 // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
 // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
+
+// FIXME: We should have the driver do this instead.
 static void HandleMacOSVersionMin(std::string &Triple) {
   std::string::size_type DarwinDashIdx = Triple.find("-darwin");
   if (DarwinDashIdx == std::string::npos) {
@@ -781,6 +783,8 @@ static std::string CreateTargetTriple() {
   
   // If -arch foo was specified, remove the architecture from the triple we have
   // so far and replace it with the specified one.
+
+  // FIXME: -arch should be removed, the driver should handle this.
   if (!Arch.empty()) {
     // Decompose the base triple into "arch" and suffix.
     std::string::size_type FirstDashIdx = Triple.find('-');
