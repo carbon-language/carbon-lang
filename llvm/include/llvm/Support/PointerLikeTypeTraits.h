@@ -58,6 +58,20 @@ public:
   enum { NumLowBitsAvailable = 3 };
 };
 
+// Pointers to pointers are only 4-byte aligned on 32-bit systems.
+template<typename T>
+class PointerLikeTypeTraits<T**> {
+public:
+  static inline void *getAsVoidPointer(T** P) { return P; }
+  static inline T **getFromVoidPointer(void *P) {
+    return static_cast<T**>(P);
+  }
+  enum { NumLowBitsAvailable = 2 };
+};
+  
+  
+  
+  
 // Provide PointerLikeTypeTraits for uintptr_t.
 template<>
 class PointerLikeTypeTraits<uintptr_t> {
