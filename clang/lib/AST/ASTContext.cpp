@@ -705,6 +705,12 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
     const ObjCIvarDecl* Ivar = (*IVI);
     NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
   }
+  // Also synthesized ivars
+  for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(),
+       E = D->prop_end(); I != E; ++I) {
+    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
+      NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
+  }
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.

@@ -1673,6 +1673,12 @@ static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
   for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
        E = OI->ivar_end(); I != E; ++I)
     ++count;
+  // look into properties.
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
+       E = OI->prop_end(); I != E; ++I) {
+    if ((*I)->getPropertyIvarDecl())
+      ++count;
+  }
   return count;
 }
 
@@ -4559,13 +4565,20 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   
   RecordDecl::field_iterator i,p;
   const RecordDecl *RD = GetFirstIvarInRecord(OID, i,p);
-  ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin();
-  
+  // collect declared and synthesized ivars in a small vector.
+  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
+  for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
+       E = OID->ivar_end(); I != E; ++I) 
+     OIvars.push_back(*I);
+  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(),
+       E = OID->prop_end(); I != E; ++I)
+    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
+      OIvars.push_back(IV);
+  unsigned iv = 0;
   for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {
     FieldDecl *Field = *i;
     uint64_t offset = GetIvarBaseOffset(Layout, Field);
-    const ObjCIvarDecl *ivarDecl = *I++;
-    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), ivarDecl, offset);
+    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), OIvars[iv++], offset);
     if (Field->getIdentifier())
       Ivar[1] = GetMethodVarName(Field->getIdentifier());
     else
