@@ -287,6 +287,8 @@ private:
   /// subclasses can pack their bitfields into the same word.
   unsigned TC : 5;
 
+  Type(const Type&);           // DO NOT IMPLEMENT.
+  void operator=(const Type&); // DO NOT IMPLEMENT.
 protected:
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }

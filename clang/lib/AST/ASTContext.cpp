@@ -631,7 +631,7 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
                                          D->getIdentifier());
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
-  for (unsigned int i = 0; i != RecFields.size(); i++) {
+  for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     NewRD->addDecl(FieldDecl::Create(*this, NewRD, 
                                      RecFields[i]->getLocation(), 
                                      RecFields[i]->getIdentifier(),
