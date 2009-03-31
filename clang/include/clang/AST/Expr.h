@@ -533,7 +533,12 @@ public:
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
   bool isWide() const { return IsWide; }
-  
+  bool containsNonAscii() const {
+    for (unsigned i = 0; i < getByteLength(); ++i)
+      if (!isascii(getStrData()[i]))
+        return true;
+    return false;
+  }
   /// getNumConcatenated - Get the number of string literal tokens that were
   /// concatenated in translation phase #6 to form this string literal.
   unsigned getNumConcatenated() const { return NumConcatenated; }

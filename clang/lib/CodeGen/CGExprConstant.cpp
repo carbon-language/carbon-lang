@@ -417,9 +417,7 @@ public:
       return CGM.GetAddrOfConstantStringFromObjCEncode(cast<ObjCEncodeExpr>(E));
     case Expr::ObjCStringLiteralClass: {
       ObjCStringLiteral* SL = cast<ObjCStringLiteral>(E);
-      std::string S(SL->getString()->getStrData(), 
-                    SL->getString()->getByteLength());
-      llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(S);
+      llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(SL);
       return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
     }
     case Expr::PredefinedExprClass: {
@@ -445,6 +443,7 @@ public:
       const Expr *Arg = CE->getArg(0)->IgnoreParenCasts();
       const StringLiteral *Literal = cast<StringLiteral>(Arg);
       std::string S(Literal->getStrData(), Literal->getByteLength());
+      // FIXME: need to deal with UCN conversion issues.
       return CGM.GetAddrOfConstantCFString(S);
     }
     case Expr::BlockExprClass: {

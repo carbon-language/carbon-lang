@@ -48,6 +48,7 @@ namespace CodeGen {
   class ObjCProtocolDecl;
   class Selector;
   class ObjCIvarDecl;
+  class ObjCStringLiteral;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -72,7 +73,7 @@ public:
                                    Selector Sel) = 0;
 
   /// Generate a constant string object.
-  virtual llvm::Constant *GenerateConstantString(const std::string &String) = 0;
+  virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *) = 0;
 
   /// Generate a category.  A category contains a list of methods (and
   /// accompanying metadata) and a list of protocols.
