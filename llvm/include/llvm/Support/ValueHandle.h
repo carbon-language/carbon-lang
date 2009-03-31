@@ -123,6 +123,9 @@ public:
   WeakVH(const WeakVH &RHS)
     : ValueHandleBase(Weak, RHS) {}
 
+  operator Value*() const {
+    return getValPtr();
+  }
 };  
   
 /// AssertingVH - This is a Value Handle that points to a value and asserts out
