@@ -598,21 +598,20 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
 }
 
 void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                             std::vector<FieldDecl*> &Fields) const {
+                             llvm::SmallVectorImpl<FieldDecl*> &Fields) const {
   const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
   if (SuperClass)
     CollectObjCIvars(SuperClass, Fields);
   for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
        E = OI->ivar_end(); I != E; ++I) {
-    ObjCIvarDecl *IVDecl = (*I);
+    ObjCIvarDecl *IVDecl = *I;
     if (!IVDecl->isInvalidDecl())
       Fields.push_back(cast<FieldDecl>(IVDecl));
   }
   // look into properties.
   for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
        E = OI->prop_end(); I != E; ++I) {
-    ObjCPropertyDecl *PDecl = (*I);
-    if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
+    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
       Fields.push_back(cast<FieldDecl>(IV));
   }
 }
@@ -620,12 +619,12 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
 /// addRecordToClass - produces record info. for the class for its
 /// ivars and all those inherited.
 ///
-const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D)
-{
+const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
   const RecordDecl *&RD = ASTRecordForInterface[D];
   if (RD)
     return RD;
-  std::vector<FieldDecl*> RecFields;
+  
+  llvm::SmallVector<FieldDecl*, 32> RecFields;
   CollectObjCIvars(D, RecFields);
   RecordDecl *NewRD = RecordDecl::Create(*this, TagDecl::TK_struct, 0,
                                          D->getLocation(),
@@ -633,13 +632,13 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D)
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
   for (unsigned int i = 0; i != RecFields.size(); i++) {
-    FieldDecl *Field =  FieldDecl::Create(*this, NewRD, 
-                                          RecFields[i]->getLocation(), 
-                                          RecFields[i]->getIdentifier(),
-                                          RecFields[i]->getType(), 
-                                          RecFields[i]->getBitWidth(), false);
-    NewRD->addDecl(Field);
+    NewRD->addDecl(FieldDecl::Create(*this, NewRD, 
+                                     RecFields[i]->getLocation(), 
+                                     RecFields[i]->getIdentifier(),
+                                     RecFields[i]->getType(), 
+                                     RecFields[i]->getBitWidth(), false));
   }
+  
   NewRD->completeDefinition(*this);
   RD = NewRD;
   return RD;
@@ -2401,9 +2400,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     const IdentifierInfo *II = OI->getIdentifier();
     S += II->getName();
     S += '=';
-    std::vector<FieldDecl*> RecFields;
+    llvm::SmallVector<FieldDecl*, 32> RecFields;
     CollectObjCIvars(OI, RecFields);
-    for (unsigned int i = 0; i != RecFields.size(); i++) {
+    for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
       if (RecFields[i]->isBitField())
         getObjCEncodingForTypeImpl(RecFields[i]->getType(), S, false, true, 
                                    RecFields[i]);

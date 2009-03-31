@@ -430,7 +430,7 @@ protected:
   void BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
-                           const std::vector<FieldDecl*>& RecFields,
+                           const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
                            unsigned int BytePos, bool ForStrongLayout,
                            int &Index, int &SkIndex, bool &HasUnion);
 
@@ -2530,7 +2530,7 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
 void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                               const llvm::StructLayout *Layout,
                               const RecordDecl *RD,
-                              const std::vector<FieldDecl*>& RecFields,
+                             const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
                               unsigned int BytePos, bool ForStrongLayout,
                               int &Index, int &SkIndex, bool &HasUnion) {
   bool IsUnion = (RD && RD->isUnion());
@@ -2538,23 +2538,23 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   uint64_t MaxSkippedUnionIvarSize = 0;
   FieldDecl *MaxField = 0;
   FieldDecl *MaxSkippedField = 0;
-  unsigned int base = 0;
+  unsigned base = 0;
   if (RecFields.empty())
     return;
   if (IsUnion)
     base = BytePos + GetFieldBaseOffset(OI, Layout, RecFields[0]);
-  unsigned WordSizeInBits = CGM.getContext().getTypeSize(
-                                                    CGM.getContext().VoidPtrTy);
-  unsigned ByteSizeInBits = CGM.getContext().getTypeSize(
-                                                    CGM.getContext().CharTy);
-  for (unsigned i = 0; i < RecFields.size(); i++) {
+  unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
+  unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
+
+  llvm::SmallVector<FieldDecl*, 16> TmpRecFields;
+
+  for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
     // Skip over unnamed or bitfields
     if (!Field->getIdentifier() || Field->isBitField())
       continue;
     QualType FQT = Field->getType();
     if (FQT->isRecordType() || FQT->isUnionType()) {
-      std::vector<FieldDecl*> NestedRecFields;
       if (FQT->isUnionType())
         HasUnion = true;
       else
@@ -2564,18 +2564,17 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       const RecordType *RT = FQT->getAsRecordType();
       const RecordDecl *RD = RT->getDecl();
       // FIXME - Find a more efficiant way of passing records down.
-      unsigned j = 0;
-      for (RecordDecl::field_iterator i = RD->field_begin(),
-           e = RD->field_end(); i != e; ++i)
-        NestedRecFields[j++] = (*i);
+      TmpRecFields.append(RD->field_begin(), RD->field_end());
       // FIXME - Is Layout correct?
-      BuildAggrIvarLayout(OI, Layout, RD, NestedRecFields,
+      BuildAggrIvarLayout(OI, Layout, RD, TmpRecFields,
                           BytePos + GetFieldBaseOffset(OI, Layout, Field),
                           ForStrongLayout, Index, SkIndex,
                           HasUnion);
+      TmpRecFields.clear();
       continue;
     }
-    else if (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
+    
+    if (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
       const ConstantArrayType *CArray = 
                                  dyn_cast_or_null<ConstantArrayType>(Array);
       assert(CArray && "only array with know element size is supported");
@@ -2593,20 +2592,19 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         int OldIndex = Index;
         int OldSkIndex = SkIndex;
         
-        std::vector<FieldDecl*> ElementRecFields;
         // FIXME - Use a common routine with the above!
         const RecordType *RT = FQT->getAsRecordType();
         const RecordDecl *RD = RT->getDecl();
         // FIXME - Find a more efficiant way of passing records down.
-        unsigned j = 0;
-        for (RecordDecl::field_iterator i = RD->field_begin(),
-             e = RD->field_end(); i != e; ++i)
-          ElementRecFields[j++] = (*i);
+        TmpRecFields.append(RD->field_begin(), RD->field_end());
+        
         BuildAggrIvarLayout(OI, Layout, RD,
-                            ElementRecFields,
+                            TmpRecFields,
                             BytePos + GetFieldBaseOffset(OI, Layout, Field),
                             ForStrongLayout, Index, SkIndex,
                             HasUnion);
+        TmpRecFields.clear();
+
         // Replicate layout information for each array element. Note that
         // one element is already done.
         uint64_t ElIx = 1;
@@ -2621,8 +2619,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
             IvarsInfo.push_back(gcivar); ++Index;
           }
           
-          for (int i = OldSkIndex+1; i <= FirstSkIndex; ++i)
-          {
+          for (int i = OldSkIndex+1; i <= FirstSkIndex; ++i) {
             GC_IVAR skivar;
             skivar.ivar_bytepos = SkipIvars[i].ivar_bytepos + Size*ElIx;
             skivar.ivar_size = SkipIvars[i].ivar_size;
@@ -2651,6 +2648,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         break;
       }
     } while (true);
+    
     if ((ForStrongLayout && GCAttr == QualType::Strong)
         || (!ForStrongLayout && GCAttr == QualType::Weak)) {
       if (IsUnion)
@@ -2694,26 +2692,24 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       }
     }
   }
-  if (MaxField)
-  {
+  if (MaxField) {
     GC_IVAR gcivar;
     gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, MaxField);
     gcivar.ivar_size = MaxUnionIvarSize;
     IvarsInfo.push_back(gcivar); ++Index;
   }
-  if (MaxSkippedField)
-  {
+  
+  if (MaxSkippedField) {
     GC_IVAR skivar;
     skivar.ivar_bytepos = BytePos + 
                           GetFieldBaseOffset(OI, Layout, MaxSkippedField);
     skivar.ivar_size = MaxSkippedUnionIvarSize;
     SkipIvars.push_back(skivar); ++SkIndex;
   }
-  return;
 }
 
 static int
-IvarBytePosCompare (const void *a, const void *b)
+IvarBytePosCompare(const void *a, const void *b)
 {
   unsigned int sa = ((CGObjCCommonMac::GC_IVAR *)a)->ivar_bytepos;
   unsigned int sb = ((CGObjCCommonMac::GC_IVAR *)b)->ivar_bytepos;
@@ -2753,17 +2749,18 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
     return llvm::Constant::getNullValue(PtrTy);
   
-  std::vector<FieldDecl*> RecFields;
+  llvm::SmallVector<FieldDecl*, 32> RecFields;
   const ObjCInterfaceDecl *OI = OMD->getClassInterface();
   CGM.getContext().CollectObjCIvars(OI, RecFields);
   if (RecFields.empty())
     return llvm::Constant::getNullValue(PtrTy);
+  
   SkipIvars.clear(); 
   IvarsInfo.clear();
   
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OI);
-  BuildAggrIvarLayout (OI, Layout, 0, RecFields, 0, ForStrongLayout, 
-                       Index, SkIndex, hasUnion);
+  BuildAggrIvarLayout(OI, Layout, 0, RecFields, 0, ForStrongLayout, 
+                      Index, SkIndex, hasUnion);
   if (Index == -1)
     return llvm::Constant::getNullValue(PtrTy);
   
