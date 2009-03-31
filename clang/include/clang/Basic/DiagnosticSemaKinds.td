@@ -712,6 +712,7 @@ def warn_deprecated : Warning<"%0 is deprecated">;
 def warn_unavailable : Warning<"%0 is unavailable">;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;
+def warn_missing_prototype : Warning<"no previous prototype for function %0">;
 def err_redefinition : Error<"redefinition of %0">;
 def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;

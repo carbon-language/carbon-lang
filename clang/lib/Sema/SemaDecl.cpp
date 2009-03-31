@@ -2741,6 +2741,28 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
                           diag::err_func_def_incomplete_result))
     FD->setInvalidDecl();
 
+  // GNU warning -Wmissing-prototypes:
+  //   Warn if a global function is defined without a previous
+  //   prototype declaration. This warning is issued even if the
+  //   definition itself provides a prototype. The aim is to detect
+  //   global functions that fail to be declared in header files.
+  if (!FD->isInvalidDecl() && FD->isGlobal() && !isa<CXXMethodDecl>(FD)) {
+    bool MissingPrototype = true;
+    for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
+         Prev; Prev = Prev->getPreviousDeclaration()) {
+      // Ignore any declarations that occur in function or method
+      // scope, because they aren't visible from the header.
+      if (Prev->getDeclContext()->isFunctionOrMethod())
+        continue;
+
+      MissingPrototype = !Prev->getType()->isFunctionProtoType();
+      break;
+    }
+
+    if (MissingPrototype)
+      Diag(FD->getLocation(), diag::warn_missing_prototype) << FD;
+  }
+
   PushDeclContext(FnBodyScope, FD);
 
   // Check the validity of our function parameters

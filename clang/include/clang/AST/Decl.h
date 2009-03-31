@@ -670,6 +670,9 @@ public:
   /// external, C linkage.
   bool isExternC(ASTContext &Context) const;
 
+  /// \brief Determines whether this is a global function.
+  bool isGlobal() const;
+
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.
   const FunctionDecl *getPreviousDeclaration() const {

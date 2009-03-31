@@ -140,6 +140,9 @@ static const diag::kind PointerSignDiags[] = {
   diag::ext_typecheck_convert_incompatible_pointer_sign
 };
 static const diag::kind DeprecatedDeclarations[] = { diag::warn_deprecated };
+static const diag::kind MissingPrototypesDiags[] = { 
+  diag::warn_missing_prototype 
+};
 
 // Hmm ... this option is currently actually completely ignored.
 //static const diag::kind StrictSelectorMatchDiags[] = {  };
@@ -149,6 +152,7 @@ static const WarningOption OptionTable[] = {
   { "float-equal",           DIAGS(FloatEqualDiags) },
   { "format-nonliteral",     DIAGS(FormatNonLiteralDiags) },
   { "implicit-function-declaration", DIAGS(ImplicitFunctionDeclarationDiags) },
+  { "missing-prototypes", DIAGS(MissingPrototypesDiags) },
   { "pointer-sign",          DIAGS(PointerSignDiags) },
   { "readonly-setter-attrs", DIAGS(ReadOnlySetterAttrsDiags) },
   { "undef",                 DIAGS(UndefDiags) },
@@ -179,6 +183,7 @@ bool ProcessWarningOptions(Diagnostic &Diags) {
   Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
   Diags.setDiagnosticMapping(diag::err_template_recursion_depth_exceeded, 
                              diag::MAP_FATAL);
+  Diags.setDiagnosticMapping(diag::warn_missing_prototype, diag::MAP_IGNORE);
   Diags.setSuppressSystemWarnings(!OptWarnInSystemHeaders);
 
   for (OptionsList::iterator it = Options.begin(), e = Options.end();

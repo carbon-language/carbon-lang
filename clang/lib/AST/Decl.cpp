@@ -341,6 +341,26 @@ bool FunctionDecl::isExternC(ASTContext &Context) const {
   return false;
 }
 
+bool FunctionDecl::isGlobal() const {
+  if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(this))
+    return Method->isStatic();
+
+  if (getStorageClass() == Static)
+    return false;
+
+  for (const DeclContext *DC = getDeclContext(); 
+       DC->isNamespace();
+       DC = DC->getParent()) {
+    if (const NamespaceDecl *Namespace = cast<NamespaceDecl>(DC)) {
+      if (!Namespace->getDeclName())
+        return false;
+      break;
+    }
+  }
+
+  return true;
+}
+
 /// \brief Returns a value indicating whether this function
 /// corresponds to a builtin function.
 ///
