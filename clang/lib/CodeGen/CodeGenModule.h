@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/ValueHandle.h"
 #include <list>
 
 namespace llvm {
@@ -119,7 +120,7 @@ class CodeGenModule : public BlockModule {
   /// present in the object file; bitcast to i8*. This is used for
   /// forcing visibility of symbols which may otherwise be optimized
   /// out.
-  std::vector<llvm::Constant*> LLVMUsed;
+  std::vector<llvm::WeakVH> LLVMUsed;
 
   /// GlobalCtors - Store the list of global constructors and their respective
   /// priorities to be emitted when the translation unit is complete.

@@ -320,8 +320,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
 void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
   assert(!GV->isDeclaration() && 
          "Only globals with definition can force usage.");
-  llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  LLVMUsed.push_back(llvm::ConstantExpr::getBitCast(GV, i8PTy));
+  LLVMUsed.push_back(GV);
 }
 
 void CodeGenModule::EmitLLVMUsed() {
@@ -329,12 +328,21 @@ void CodeGenModule::EmitLLVMUsed() {
   if (LLVMUsed.empty())
     return;
 
-  llvm::ArrayType *ATy = llvm::ArrayType::get(LLVMUsed[0]->getType(), 
-                                              LLVMUsed.size());
+  llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, LLVMUsed.size());
+  
+  // Convert LLVMUsed to what ConstantArray needs.
+  std::vector<llvm::Constant*> UsedArray;
+  UsedArray.resize(LLVMUsed.size());
+  for (unsigned i = 0, e = LLVMUsed.size(); i != e; ++i) {
+    UsedArray[i] = 
+     llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*LLVMUsed[i]), i8PTy);
+  }
+  
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(ATy, false, 
                              llvm::GlobalValue::AppendingLinkage,
-                             llvm::ConstantArray::get(ATy, LLVMUsed),
+                             llvm::ConstantArray::get(ATy, UsedArray),
                              "llvm.used", &getModule());
 
   GV->setSection("llvm.metadata");
@@ -725,7 +733,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     Entry->replaceAllUsesWith(NewPtrForOldDecl);
 
     // Erase the old global, since it is no longer used.
-    // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
     cast<llvm::GlobalValue>(Entry)->eraseFromParent();
   }
 
@@ -839,8 +846,6 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     Entry->replaceAllUsesWith(NewPtrForOldDecl);
     
     // Ok, delete the old function now, which is dead.
-    // FIXME: If it was attribute(used) the pointer will dangle from the
-    // LLVMUsed array!
     cast<llvm::GlobalValue>(Entry)->eraseFromParent();
     
     Entry = NewFn;
@@ -905,7 +910,6 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
     
     Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
                                                           Entry->getType()));
-    // FIXME: What if it was attribute used?  Dangling pointer from LLVMUsed.
     Entry->eraseFromParent();
   }
   

@@ -47,3 +47,8 @@ void test3() {
 void foo6() __asm__("var2");
 void foo6() {
 }
+
+
+
+int foo7 __asm__("foo7") __attribute__((used));
+float foo8 __asm__("foo7") = 42;
