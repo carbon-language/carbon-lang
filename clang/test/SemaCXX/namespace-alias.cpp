@@ -48,3 +48,17 @@ namespace I {
 int f() {
   return I::A2::i;
 }
+
+namespace J {
+  namespace A { 
+    namespace B { void func (); }
+  }
+
+  namespace C = A;
+
+  using namespace C::B;
+
+  void g() {
+    func();
+  }
+}
