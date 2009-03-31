@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 int main(void) {
+  int a[sizeof("hello \u2192 \u2603 \u2190 world") == 24 ? 1 : -1];
+  
   printf("%s (%d)\n", "hello \u2192 \u2603 \u2190 world", sizeof("hello \u2192 \u2603 \u2190 world"));
   printf("%s (%d)\n", "\U00010400\U0001D12B", sizeof("\U00010400\U0001D12B"));
   // Some error conditions...

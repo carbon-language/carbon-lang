@@ -154,10 +154,11 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 /// When we decide to implement UCN's for character constants and identifiers,
 /// we will likely rework our support for UCN's.
 static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd, 
-                             char *&ResultBuf, const char *ResultBufEnd,
-                             bool &HadError, 
-                             SourceLocation Loc, Preprocessor &PP) {
+                             char *&ResultBuf, bool &HadError, 
+                             SourceLocation Loc, bool IsWide, Preprocessor &PP) 
+{
   // FIXME: Add a warning - UCN's are only valid in C++ & C99.
+  // FIXME: Handle wide strings.
   
   // Skip the '\u' char's.
   ThisTokBuf += 2;
@@ -183,10 +184,11 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
     HadError = 1;
     return;
   }
-  // Check UCN constraints (C99 6.4.3p2)
+  // Check UCN constraints (C99 6.4.3p2). 
   if ((UcnVal < 0xa0 &&
       (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60 )) // $, @, `
-      || (UcnVal >= 0xD800 && UcnVal <= 0xDFFF)) {
+      || (UcnVal >= 0xD800 && UcnVal <= 0xDFFF) 
+      || (UcnVal > 0x10FFFF)) /* the maximum legal UTF32 value */ {
     PP.Diag(Loc, diag::err_ucn_escape_invalid);
     HadError = 1;
     return;
@@ -207,20 +209,13 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   else
     bytesToWrite = 4;
 	
-  // If the buffer isn't big enough, bail.
-  if ((ResultBuf + bytesToWrite) >= ResultBufEnd) {
-    PP.Diag(Loc, diag::err_ucn_escape_too_big);
-    HadError = 1;
-    return;
-  }
   const unsigned byteMask = 0xBF;
   const unsigned byteMark = 0x80;
   
   // Once the bits are split out into bytes of UTF8, this is a mask OR-ed
-  // into the first byte, depending on how many bytes follow.  There are
-  // as many entries in this table as there are UTF8 sequence types.
-  static const UTF8 firstByteMark[7] = { 
-    0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC 
+  // into the first byte, depending on how many bytes follow.
+  static const UTF8 firstByteMark[5] = { 
+    0x00, 0x00, 0xC0, 0xE0, 0xF0
   };
   // Finally, we write the bytes into ResultBuf.
   ResultBuf += bytesToWrite;
@@ -846,8 +841,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       
       if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
         ProcessUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr, 
-                         GetString() + ResultBuf.size(),
-                         hadError, StringToks[i].getLocation(), PP);
+                         hadError, StringToks[i].getLocation(), ThisIsWide, PP);
       } else {
         // Otherwise, this is a non-UCN escape character.  Process it.
         unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
