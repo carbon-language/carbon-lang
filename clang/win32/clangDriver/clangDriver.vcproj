@@ -206,7 +206,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Driver\clang.cpp"
+				RelativePath="..\..\Driver\clang-cc.cpp"
 				>
 			</File>
 			<File
@@ -260,7 +260,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Driver\clang.h"
+				RelativePath="..\..\Driver\clang-cc.h"
 				>
 			</File>
 		</Filter>
