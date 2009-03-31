@@ -118,17 +118,6 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 /// const char* containing the mangled name.  Otherwise, returns
 /// the unmangled name.
 ///
-/// FIXME: Returning an IdentifierInfo* here is a total hack. We
-/// really need some kind of string abstraction that either stores a
-/// mangled name or stores an IdentifierInfo*. This will require
-/// changes to the GlobalDeclMap, too. (I disagree, I think what we
-/// actually need is for Sema to provide some notion of which Decls
-/// refer to the same semantic decl. We shouldn't need to mangle the
-/// names and see what comes out the same to figure this out. - DWD)
-///
-/// FIXME: Performance here is going to be terribly until we start
-/// caching mangled names. However, we should fix the problem above
-/// first.
 const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
   // In C, functions with no attributes never need to be mangled. Fastpath them.
   if (!getLangOptions().CPlusPlus && !ND->hasAttrs()) {

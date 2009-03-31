@@ -15,16 +15,13 @@
 #define CLANG_CODEGEN_CODEGENFUNCTION_H
 
 #include "clang/AST/Type.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
-#include "clang/Basic/TargetInfo.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
-
-#include <vector>
+#include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ValueHandle.h"
 #include <map>
-
 #include "CGBlocks.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
@@ -87,7 +84,7 @@ public:
 
   /// AllocaInsertPoint - This is an instruction in the entry block before which
   /// we prefer to insert allocas.
-  llvm::Instruction *AllocaInsertPt;
+  llvm::AssertingVH<llvm::Instruction> AllocaInsertPt;
 
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;

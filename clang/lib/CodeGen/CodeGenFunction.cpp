@@ -133,8 +133,9 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   EmitFunctionEpilog(*CurFnInfo, ReturnValue);
 
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
-  AllocaInsertPt->eraseFromParent();
+  llvm::Instruction *Ptr = AllocaInsertPt;
   AllocaInsertPt = 0;
+  Ptr->eraseFromParent();
 }
 
 void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy, 
