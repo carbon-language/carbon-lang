@@ -26,7 +26,7 @@ add_clang_executable(clang-cc
   ASTConsumers.cpp
   Backend.cpp
   CacheTokens.cpp
-  clang.cpp
+  clang-cc.cpp
   DependencyFile.cpp
   DiagChecker.cpp
   HTMLPrint.cpp

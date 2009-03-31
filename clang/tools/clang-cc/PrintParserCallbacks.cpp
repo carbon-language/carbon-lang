@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang.h"
+#include "clang-cc.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/Streams.h"

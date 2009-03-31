@@ -22,7 +22,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang.h"
+#include "clang-cc.h"
 #include "ASTConsumers.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"

@@ -19,7 +19,7 @@
 #include "clang/AST/CFG.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
-#include "clang.h"
+#include "clang-cc.h"
 #include "ASTConsumers.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"

@@ -1,4 +1,4 @@
-//===--- clang.h - C-Language Front-end -----------------------------------===//
+//===--- clang-cc.h - C-Language Front-end --------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CLANG_H
-#define LLVM_CLANG_CLANG_H
+#ifndef LLVM_CLANG_CLANG_CC_H
+#define LLVM_CLANG_CLANG_CC_H
 
 #include <vector>
 #include <string>
