@@ -948,6 +948,8 @@ def ext_typecheck_comparison_of_pointer_integer : Warning<
   "comparison between pointer and integer (%0 and %1)">;
 def ext_typecheck_comparison_of_distinct_pointers : Warning<
   "comparison of distinct pointer types (%0 and %1)">;
+def err_typecheck_vector_comparison : Error<
+  "comparison of vector types (%0 and %1) not supported yet">;
 def err_typecheck_assign_const : Error<"read-only variable is not assignable">;
 def err_stmtexpr_file_scope : Error<
   "statement expression not allowed at file scope">;
