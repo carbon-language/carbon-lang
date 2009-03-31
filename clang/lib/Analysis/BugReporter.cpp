@@ -31,7 +31,7 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// static functions.
+// Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//
 
 static inline Stmt* GetStmt(ProgramPoint P) {
@@ -99,7 +99,7 @@ static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 }
 
 //===----------------------------------------------------------------------===//
-// Diagnostics for 'execution continues on line XXX'.
+// PathDiagnosticBuilder and its associated routines and helper objects.
 //===----------------------------------------------------------------------===//
 
 typedef llvm::DenseMap<const ExplodedNode<GRState>*,
@@ -249,6 +249,469 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   
   assert(S && "Cannot have null Stmt for PathDiagnosticLocation");
   return PathDiagnosticLocation(S, SMgr);
+}
+
+//===----------------------------------------------------------------------===//
+// ScanNotableSymbols: closure-like callback for scanning Store bindings.
+//===----------------------------------------------------------------------===//
+
+static const VarDecl*
+GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
+                            GRStateManager& VMgr, SVal X) {
+  
+  for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
+    
+    ProgramPoint P = N->getLocation();
+    
+    if (!isa<PostStmt>(P))
+      continue;
+    
+    DeclRefExpr* DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
+    
+    if (!DR)
+      continue;
+    
+    SVal Y = VMgr.GetSVal(N->getState(), DR);
+    
+    if (X != Y)
+      continue;
+    
+    VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
+    
+    if (!VD)
+      continue;
+    
+    return VD;
+  }
+  
+  return 0;
+}
+
+namespace {
+class VISIBILITY_HIDDEN NotableSymbolHandler 
+: public StoreManager::BindingsHandler {
+  
+  SymbolRef Sym;
+  const GRState* PrevSt;
+  const Stmt* S;
+  GRStateManager& VMgr;
+  const ExplodedNode<GRState>* Pred;
+  PathDiagnostic& PD; 
+  BugReporter& BR;
+  
+public:
+  
+  NotableSymbolHandler(SymbolRef sym, const GRState* prevst, const Stmt* s,
+                       GRStateManager& vmgr, const ExplodedNode<GRState>* pred,
+                       PathDiagnostic& pd, BugReporter& br)
+  : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
+  
+  bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
+                     SVal V) {
+    
+    SymbolRef ScanSym = V.getAsSymbol();
+    
+    if (ScanSym != Sym)
+      return true;
+    
+    // Check if the previous state has this binding.    
+    SVal X = VMgr.GetSVal(PrevSt, loc::MemRegionVal(R));
+    
+    if (X == V) // Same binding?
+      return true;
+    
+    // Different binding.  Only handle assignments for now.  We don't pull
+    // this check out of the loop because we will eventually handle other 
+    // cases.
+    
+    VarDecl *VD = 0;
+    
+    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+      if (!B->isAssignmentOp())
+        return true;
+      
+      // What variable did we assign to?
+      DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParenCasts());
+      
+      if (!DR)
+        return true;
+      
+      VD = dyn_cast<VarDecl>(DR->getDecl());
+    }
+    else if (const DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
+      // FIXME: Eventually CFGs won't have DeclStmts.  Right now we
+      //  assume that each DeclStmt has a single Decl.  This invariant
+      //  holds by contruction in the CFG.
+      VD = dyn_cast<VarDecl>(*DS->decl_begin());
+    }
+    
+    if (!VD)
+      return true;
+    
+    // What is the most recently referenced variable with this binding?
+    const VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
+    
+    if (!MostRecent)
+      return true;
+    
+    // Create the diagnostic.
+    FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
+    
+    if (Loc::IsLocType(VD->getType())) {
+      std::string msg = "'" + std::string(VD->getNameAsString()) +
+      "' now aliases '" + MostRecent->getNameAsString() + "'";
+      
+      PD.push_front(new PathDiagnosticEventPiece(L, msg));
+    }
+    
+    return true;
+  }  
+};
+}
+
+static void HandleNotableSymbol(const ExplodedNode<GRState>* N,
+                                const Stmt* S,
+                                SymbolRef Sym, BugReporter& BR,
+                                PathDiagnostic& PD) {
+  
+  const ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
+  const GRState* PrevSt = Pred ? Pred->getState() : 0;
+  
+  if (!PrevSt)
+    return;
+  
+  // Look at the region bindings of the current state that map to the
+  // specified symbol.  Are any of them not in the previous state?
+  GRStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
+  NotableSymbolHandler H(Sym, PrevSt, S, VMgr, Pred, PD, BR);
+  cast<GRBugReporter>(BR).getStateManager().iterBindings(N->getState(), H);
+}
+
+namespace {
+class VISIBILITY_HIDDEN ScanNotableSymbols
+: public StoreManager::BindingsHandler {
+  
+  llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
+  const ExplodedNode<GRState>* N;
+  Stmt* S;
+  GRBugReporter& BR;
+  PathDiagnostic& PD;
+  
+public:
+  ScanNotableSymbols(const ExplodedNode<GRState>* n, Stmt* s, GRBugReporter& br,
+                     PathDiagnostic& pd)
+  : N(n), S(s), BR(br), PD(pd) {}
+  
+  bool HandleBinding(StoreManager& SMgr, Store store,
+                     const MemRegion* R, SVal V) {
+    
+    SymbolRef ScanSym = V.getAsSymbol();
+    
+    if (!ScanSym)
+      return true;
+    
+    if (!BR.isNotable(ScanSym))
+      return true;
+    
+    if (AlreadyProcessed.count(ScanSym))
+      return true;
+    
+    AlreadyProcessed.insert(ScanSym);
+    
+    HandleNotableSymbol(N, S, ScanSym, BR, PD);
+    return true;
+  }
+};
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// "Minimal" path diagnostic generation algorithm.
+//===----------------------------------------------------------------------===//
+
+static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
+                                          PathDiagnosticBuilder &PDB,
+                                          const ExplodedNode<GRState> *N) {
+  ASTContext& Ctx = PDB.getContext();
+  SourceManager& SMgr = PDB.getSourceManager();
+  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
+                                        ? NULL : *(N->pred_begin());
+  while (NextNode) {
+    N = NextNode;    
+    NextNode = GetPredecessorNode(N);
+    
+    ProgramPoint P = N->getLocation();
+    
+    if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+      CFGBlock* Src = BE->getSrc();
+      CFGBlock* Dst = BE->getDst();
+      Stmt* T = Src->getTerminator();
+      
+      if (!T)
+        continue;
+      
+      FullSourceLoc Start(T->getLocStart(), SMgr);
+      
+      switch (T->getStmtClass()) {
+        default:
+          break;
+          
+        case Stmt::GotoStmtClass:
+        case Stmt::IndirectGotoStmtClass: {          
+          Stmt* S = GetNextStmt(N);
+          
+          if (!S)
+            continue;
+          
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);          
+          const PathDiagnosticLocation &End = PDB.getEnclosingStmtLocation(S);
+          
+          os << "Control jumps to line "
+          << End.asLocation().getInstantiationLineNumber();
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
+          break;
+        }
+          
+        case Stmt::SwitchStmtClass: {          
+          // Figure out what case arm we took.
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
+          
+          if (Stmt* S = Dst->getLabel()) {
+            PathDiagnosticLocation End(S, SMgr);
+            
+            switch (S->getStmtClass()) {
+              default:
+                os << "No cases match in the switch statement. "
+                "Control jumps to line "
+                << End.asLocation().getInstantiationLineNumber();
+                break;
+              case Stmt::DefaultStmtClass:
+                os << "Control jumps to the 'default' case at line "
+                << End.asLocation().getInstantiationLineNumber();
+                break;
+                
+              case Stmt::CaseStmtClass: {
+                os << "Control jumps to 'case ";              
+                CaseStmt* Case = cast<CaseStmt>(S);              
+                Expr* LHS = Case->getLHS()->IgnoreParenCasts();
+                
+                // Determine if it is an enum.              
+                bool GetRawInt = true;
+                
+                if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
+                  // FIXME: Maybe this should be an assertion.  Are there cases
+                  // were it is not an EnumConstantDecl?
+                  EnumConstantDecl* D =
+                  dyn_cast<EnumConstantDecl>(DR->getDecl());
+                  
+                  if (D) {
+                    GetRawInt = false;
+                    os << D->getNameAsString();
+                  }
+                }
+                
+                if (GetRawInt) {
+                  
+                  // Not an enum.
+                  Expr* CondE = cast<SwitchStmt>(T)->getCond();
+                  unsigned bits = Ctx.getTypeSize(CondE->getType());
+                  llvm::APSInt V(bits, false);
+                  
+                  if (!LHS->isIntegerConstantExpr(V, Ctx, 0, true)) {
+                    assert (false && "Case condition must be constant.");
+                    continue;
+                  }
+                  
+                  os << V;
+                }       
+                
+                os << ":'  at line "
+                << End.asLocation().getInstantiationLineNumber();
+                break;
+              }
+            }
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             os.str()));
+          }
+          else {
+            os << "'Default' branch taken. ";
+            const PathDiagnosticLocation &End = PDB.ExecutionContinues(os, N);            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             os.str()));
+          }
+          
+          break;
+        }
+          
+        case Stmt::BreakStmtClass:
+        case Stmt::ContinueStmtClass: {
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
+          PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
+          break;
+        }
+          
+          // Determine control-flow for ternary '?'.
+        case Stmt::ConditionalOperatorClass: {
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
+          os << "'?' condition is ";
+          
+          if (*(Src->succ_begin()+1) == Dst)
+            os << "false";
+          else
+            os << "true";
+          
+          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+          
+          if (const Stmt *S = End.asStmt())
+            End = PDB.getEnclosingStmtLocation(S);
+          
+          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                           os.str()));
+          break;
+        }
+          
+          // Determine control-flow for short-circuited '&&' and '||'.
+        case Stmt::BinaryOperatorClass: {
+          if (!PDB.supportsLogicalOpControlFlow())
+            break;
+          
+          BinaryOperator *B = cast<BinaryOperator>(T);
+          std::string sbuf;
+          llvm::raw_string_ostream os(sbuf);
+          os << "Left side of '";
+          
+          if (B->getOpcode() == BinaryOperator::LAnd) {
+            os << "&&" << "' is ";
+            
+            if (*(Src->succ_begin()+1) == Dst) {
+              os << "false";
+              PathDiagnosticLocation End(B->getLHS(), SMgr);
+              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));
+            }            
+            else {
+              os << "true";
+              PathDiagnosticLocation Start(B->getLHS(), SMgr);
+              PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));
+            }              
+          }
+          else {
+            assert(B->getOpcode() == BinaryOperator::LOr);
+            os << "||" << "' is ";
+            
+            if (*(Src->succ_begin()+1) == Dst) {
+              os << "false";
+              PathDiagnosticLocation Start(B->getLHS(), SMgr);
+              PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));              
+            }
+            else {
+              os << "true";
+              PathDiagnosticLocation End(B->getLHS(), SMgr);
+              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
+              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                               os.str()));                            
+            }
+          }
+          
+          break;
+        }
+          
+        case Stmt::DoStmtClass:  {          
+          if (*(Src->succ_begin()) == Dst) {
+            std::string sbuf;
+            llvm::raw_string_ostream os(sbuf);
+            
+            os << "Loop condition is true. ";
+            PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
+            
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             os.str()));
+          }
+          else {
+            PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+            
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                              "Loop condition is false.  Exiting loop"));
+          }
+          
+          break;
+        }
+          
+        case Stmt::WhileStmtClass:
+        case Stmt::ForStmtClass: {          
+          if (*(Src->succ_begin()+1) == Dst) {
+            std::string sbuf;
+            llvm::raw_string_ostream os(sbuf);
+            
+            os << "Loop condition is false. ";
+            PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             os.str()));
+          }
+          else {
+            PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+            if (const Stmt *S = End.asStmt())
+              End = PDB.getEnclosingStmtLocation(S);
+            
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             "Loop condition is true.  Entering loop body"));
+          }
+          
+          break;
+        }
+          
+        case Stmt::IfStmtClass: {
+          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
+          
+          if (const Stmt *S = End.asStmt())
+            End = PDB.getEnclosingStmtLocation(S);
+          
+          if (*(Src->succ_begin()+1) == Dst)
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             "Taking false branch"));
+          else  
+            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                             "Taking true branch"));
+          
+          break;
+        }
+      }
+    }
+    
+    if (PathDiagnosticPiece* p =
+        PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
+                                  PDB.getBugReporter(),
+                                  PDB.getNodeMapClosure())) {
+          PD.push_front(p);
+        }
+    
+    if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
+      // Scan the region bindings, and see if a "notable" symbol has a new
+      // lval binding.
+      ScanNotableSymbols SNS(N, PS->getStmt(), PDB.getBugReporter(), PD);
+      PDB.getStateManager().iterBindings(N->getState(), SNS);
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -516,175 +979,6 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
                         std::make_pair(First, NodeIndex));
 }
 
-static const VarDecl*
-GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
-                            GRStateManager& VMgr, SVal X) {
-  
-  for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
-    
-    ProgramPoint P = N->getLocation();
-    
-    if (!isa<PostStmt>(P))
-      continue;
-    
-    DeclRefExpr* DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
-    
-    if (!DR)
-      continue;
-    
-    SVal Y = VMgr.GetSVal(N->getState(), DR);
-    
-    if (X != Y)
-      continue;
-    
-    VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
-    
-    if (!VD)
-      continue;
-    
-    return VD;
-  }
-  
-  return 0;
-}
-
-namespace {
-class VISIBILITY_HIDDEN NotableSymbolHandler 
-  : public StoreManager::BindingsHandler {
-    
-  SymbolRef Sym;
-  const GRState* PrevSt;
-  const Stmt* S;
-  GRStateManager& VMgr;
-  const ExplodedNode<GRState>* Pred;
-  PathDiagnostic& PD; 
-  BugReporter& BR;
-    
-public:
-  
-  NotableSymbolHandler(SymbolRef sym, const GRState* prevst, const Stmt* s,
-                       GRStateManager& vmgr, const ExplodedNode<GRState>* pred,
-                       PathDiagnostic& pd, BugReporter& br)
-    : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
-                        
-  bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
-                     SVal V) {
-
-    SymbolRef ScanSym = V.getAsSymbol();
-
-    if (ScanSym != Sym)
-      return true;
-    
-    // Check if the previous state has this binding.    
-    SVal X = VMgr.GetSVal(PrevSt, loc::MemRegionVal(R));
-    
-    if (X == V) // Same binding?
-      return true;
-    
-    // Different binding.  Only handle assignments for now.  We don't pull
-    // this check out of the loop because we will eventually handle other 
-    // cases.
-    
-    VarDecl *VD = 0;
-    
-    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
-      if (!B->isAssignmentOp())
-        return true;
-      
-      // What variable did we assign to?
-      DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParenCasts());
-      
-      if (!DR)
-        return true;
-      
-      VD = dyn_cast<VarDecl>(DR->getDecl());
-    }
-    else if (const DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
-      // FIXME: Eventually CFGs won't have DeclStmts.  Right now we
-      //  assume that each DeclStmt has a single Decl.  This invariant
-      //  holds by contruction in the CFG.
-      VD = dyn_cast<VarDecl>(*DS->decl_begin());
-    }
-    
-    if (!VD)
-      return true;
-    
-    // What is the most recently referenced variable with this binding?
-    const VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
-    
-    if (!MostRecent)
-      return true;
-    
-    // Create the diagnostic.
-    FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
-    
-    if (Loc::IsLocType(VD->getType())) {
-      std::string msg = "'" + std::string(VD->getNameAsString()) +
-      "' now aliases '" + MostRecent->getNameAsString() + "'";
-      
-      PD.push_front(new PathDiagnosticEventPiece(L, msg));
-    }
-    
-    return true;
-  }  
-};
-}
-
-static void HandleNotableSymbol(const ExplodedNode<GRState>* N,
-                                const Stmt* S,
-                                SymbolRef Sym, BugReporter& BR,
-                                PathDiagnostic& PD) {
-  
-  const ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
-  const GRState* PrevSt = Pred ? Pred->getState() : 0;
-  
-  if (!PrevSt)
-    return;
-  
-  // Look at the region bindings of the current state that map to the
-  // specified symbol.  Are any of them not in the previous state?
-  GRStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
-  NotableSymbolHandler H(Sym, PrevSt, S, VMgr, Pred, PD, BR);
-  cast<GRBugReporter>(BR).getStateManager().iterBindings(N->getState(), H);
-}
-
-namespace {
-class VISIBILITY_HIDDEN ScanNotableSymbols
-  : public StoreManager::BindingsHandler {
-    
-  llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
-  const ExplodedNode<GRState>* N;
-  Stmt* S;
-  GRBugReporter& BR;
-  PathDiagnostic& PD;
-    
-public:
-  ScanNotableSymbols(const ExplodedNode<GRState>* n, Stmt* s, GRBugReporter& br,
-                     PathDiagnostic& pd)
-    : N(n), S(s), BR(br), PD(pd) {}
-  
-  bool HandleBinding(StoreManager& SMgr, Store store,
-                     const MemRegion* R, SVal V) {
-
-    SymbolRef ScanSym = V.getAsSymbol();
-
-    if (!ScanSym)
-      return true;
-  
-    if (!BR.isNotable(ScanSym))
-      return true;
-  
-    if (AlreadyProcessed.count(ScanSym))
-      return true;
-  
-    AlreadyProcessed.insert(ScanSym);
-  
-    HandleNotableSymbol(N, S, ScanSym, BR, PD);
-    return true;
-  }
-};
-} // end anonymous namespace
-
 /// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
 ///  and collapses PathDiagosticPieces that are expanded by macros.
 static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
@@ -777,10 +1071,6 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
   }
 }
 
-static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
-                                          PathDiagnosticBuilder &PDB,
-                                          const ExplodedNode<GRState> *N);
-
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                           BugReportEquivClass& EQ) {
  
@@ -833,296 +1123,6 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   // PathDiagnosticPieces that occur within a macro.
   CompactPathDiagnostic(PD, PDB.getSourceManager());  
 }
-
-static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
-                                          PathDiagnosticBuilder &PDB,
-                                          const ExplodedNode<GRState> *N) {
-  
-
-  ASTContext& Ctx = PDB.getContext();
-  SourceManager& SMgr = PDB.getSourceManager();
-  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
-                                          ? NULL : *(N->pred_begin());
-
-  while (NextNode) {
-    N = NextNode;    
-    NextNode = GetPredecessorNode(N);
-    
-    ProgramPoint P = N->getLocation();
-    
-    if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
-      CFGBlock* Src = BE->getSrc();
-      CFGBlock* Dst = BE->getDst();
-      Stmt* T = Src->getTerminator();
-      
-      if (!T)
-        continue;
-      
-      FullSourceLoc Start(T->getLocStart(), SMgr);
-      
-      switch (T->getStmtClass()) {
-        default:
-          break;
-          
-        case Stmt::GotoStmtClass:
-        case Stmt::IndirectGotoStmtClass: {          
-          Stmt* S = GetNextStmt(N);
-          
-          if (!S)
-            continue;
-          
-          std::string sbuf;
-          llvm::raw_string_ostream os(sbuf);          
-          const PathDiagnosticLocation &End = PDB.getEnclosingStmtLocation(S);
-          
-          os << "Control jumps to line "
-             << End.asLocation().getInstantiationLineNumber();
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                           os.str()));
-          break;
-        }
-          
-        case Stmt::SwitchStmtClass: {          
-          // Figure out what case arm we took.
-          std::string sbuf;
-          llvm::raw_string_ostream os(sbuf);
-
-          if (Stmt* S = Dst->getLabel()) {
-            PathDiagnosticLocation End(S, SMgr);
-          
-            switch (S->getStmtClass()) {
-              default:
-                os << "No cases match in the switch statement. "
-                      "Control jumps to line "
-                   << End.asLocation().getInstantiationLineNumber();
-                break;
-              case Stmt::DefaultStmtClass:
-                os << "Control jumps to the 'default' case at line "
-                   << End.asLocation().getInstantiationLineNumber();
-                break;
-                
-              case Stmt::CaseStmtClass: {
-                os << "Control jumps to 'case ";              
-                CaseStmt* Case = cast<CaseStmt>(S);              
-                Expr* LHS = Case->getLHS()->IgnoreParenCasts();
-                
-                // Determine if it is an enum.              
-                bool GetRawInt = true;
-                
-                if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
-                  // FIXME: Maybe this should be an assertion.  Are there cases
-                  // were it is not an EnumConstantDecl?
-                  EnumConstantDecl* D =
-                    dyn_cast<EnumConstantDecl>(DR->getDecl());
-
-                  if (D) {
-                    GetRawInt = false;
-                    os << D->getNameAsString();
-                  }
-                }
-
-                if (GetRawInt) {
-                
-                  // Not an enum.
-                  Expr* CondE = cast<SwitchStmt>(T)->getCond();
-                  unsigned bits = Ctx.getTypeSize(CondE->getType());
-                  llvm::APSInt V(bits, false);
-                  
-                  if (!LHS->isIntegerConstantExpr(V, Ctx, 0, true)) {
-                    assert (false && "Case condition must be constant.");
-                    continue;
-                  }
-                  
-                  os << V;
-                }       
-                
-                os << ":'  at line "
-                   << End.asLocation().getInstantiationLineNumber();
-                break;
-              }
-            }
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             os.str()));
-          }
-          else {
-            os << "'Default' branch taken. ";
-            const PathDiagnosticLocation &End = PDB.ExecutionContinues(os, N);            
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             os.str()));
-          }
-          
-          break;
-        }
-          
-        case Stmt::BreakStmtClass:
-        case Stmt::ContinueStmtClass: {
-          std::string sbuf;
-          llvm::raw_string_ostream os(sbuf);
-          PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                           os.str()));
-          break;
-        }
-
-        // Determine control-flow for ternary '?'.
-        case Stmt::ConditionalOperatorClass: {
-          std::string sbuf;
-          llvm::raw_string_ostream os(sbuf);
-          os << "'?' condition is ";
-
-          if (*(Src->succ_begin()+1) == Dst)
-            os << "false";
-          else
-            os << "true";
-          
-          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-          
-          if (const Stmt *S = End.asStmt())
-            End = PDB.getEnclosingStmtLocation(S);
-          
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                           os.str()));
-          break;
-        }
-          
-        // Determine control-flow for short-circuited '&&' and '||'.
-        case Stmt::BinaryOperatorClass: {
-          if (!PDB.supportsLogicalOpControlFlow())
-            break;
-          
-          BinaryOperator *B = cast<BinaryOperator>(T);
-          std::string sbuf;
-          llvm::raw_string_ostream os(sbuf);
-          os << "Left side of '";
-
-          if (B->getOpcode() == BinaryOperator::LAnd) {
-            os << "&&" << "' is ";
-            
-            if (*(Src->succ_begin()+1) == Dst) {
-              os << "false";
-              PathDiagnosticLocation End(B->getLHS(), SMgr);
-              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                               os.str()));
-            }            
-            else {
-              os << "true";
-              PathDiagnosticLocation Start(B->getLHS(), SMgr);
-              PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                               os.str()));
-            }              
-          }
-          else {
-            assert(B->getOpcode() == BinaryOperator::LOr);
-            os << "||" << "' is ";
-            
-            if (*(Src->succ_begin()+1) == Dst) {
-              os << "false";
-              PathDiagnosticLocation Start(B->getLHS(), SMgr);
-              PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                               os.str()));              
-            }
-            else {
-              os << "true";
-              PathDiagnosticLocation End(B->getLHS(), SMgr);
-              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                               os.str()));                            
-            }
-          }
-
-          break;
-        }
-          
-        case Stmt::DoStmtClass:  {          
-          if (*(Src->succ_begin()) == Dst) {
-            std::string sbuf;
-            llvm::raw_string_ostream os(sbuf);
-            
-            os << "Loop condition is true. ";
-            PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
-
-            if (const Stmt *S = End.asStmt())
-              End = PDB.getEnclosingStmtLocation(S);
-            
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             os.str()));
-          }
-          else {
-            PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-            
-            if (const Stmt *S = End.asStmt())
-              End = PDB.getEnclosingStmtLocation(S);
-
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                    "Loop condition is false.  Exiting loop"));
-          }
-          
-          break;
-        }
-          
-        case Stmt::WhileStmtClass:
-        case Stmt::ForStmtClass: {          
-          if (*(Src->succ_begin()+1) == Dst) {
-            std::string sbuf;
-            llvm::raw_string_ostream os(sbuf);
-
-            os << "Loop condition is false. ";
-            PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
-            if (const Stmt *S = End.asStmt())
-              End = PDB.getEnclosingStmtLocation(S);
-
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             os.str()));
-          }
-          else {
-            PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-            if (const Stmt *S = End.asStmt())
-              End = PDB.getEnclosingStmtLocation(S);
-            
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                               "Loop condition is true.  Entering loop body"));
-          }
-          
-          break;
-        }
-          
-        case Stmt::IfStmtClass: {
-          PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-
-          if (const Stmt *S = End.asStmt())
-            End = PDB.getEnclosingStmtLocation(S);
-          
-          if (*(Src->succ_begin()+1) == Dst)
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                       "Taking false branch"));
-          else  
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                       "Taking true branch"));
-          
-          break;
-        }
-      }
-    }
-
-    if (PathDiagnosticPiece* p =
-          PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
-                                        PDB.getBugReporter(),
-                                        PDB.getNodeMapClosure())) {
-      PD.push_front(p);
-    }
-    
-    if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
-      // Scan the region bindings, and see if a "notable" symbol has a new
-      // lval binding.
-      ScanNotableSymbols SNS(N, PS->getStmt(), PDB.getBugReporter(), PD);
-      PDB.getStateManager().iterBindings(N->getState(), SNS);
-    }
-  }
-}
-
 
 void BugReporter::Register(BugType *BT) {
   BugTypes = F.Add(BugTypes, BT);
