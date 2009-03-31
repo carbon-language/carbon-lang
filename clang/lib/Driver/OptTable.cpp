@@ -21,6 +21,8 @@ using namespace clang::driver::options;
 struct Info {
   const char *Name;
   const char *Flags;
+  const char *HelpText;
+  const char *MetaVar;
 
   Option::OptionClass Kind;
   unsigned GroupID;
@@ -72,12 +74,14 @@ static inline bool operator<(const Info &A, const Info &B) {
 
 static Info OptionInfos[] = {
   // The InputOption info
-  { "<input>", "d", Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
+  { "<input>", "d", 0, 0, Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
   // The UnknownOption info
-  { "<unknown>", "", Option::UnknownClass, OPT_INVALID, OPT_INVALID, 0 },
+  { "<unknown>", "", 0, 0, Option::UnknownClass, OPT_INVALID, OPT_INVALID, 0 },
   
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM)              \
-  { NAME, FLAGS, Option::KIND##Class, OPT_##GROUP, OPT_##ALIAS, PARAM },
+#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+               HELPTEXT, METAVAR)   \
+  { NAME, FLAGS, HELPTEXT, METAVAR, \
+    Option::KIND##Class, OPT_##GROUP, OPT_##ALIAS, PARAM },
 #include "clang/Driver/Options.def"
 };
 static const unsigned numOptions = sizeof(OptionInfos) / sizeof(OptionInfos[0]);
@@ -131,6 +135,16 @@ unsigned OptTable::getNumOptions() const {
 
 const char *OptTable::getOptionName(options::ID id) const {
   return getInfo(id).Name;
+}
+
+const char *OptTable::getOptionHelpText(options::ID id) const {
+  return getInfo(id).HelpText;
+}
+
+const char *OptTable::getOptionMetaVar(options::ID id) const {
+  const char *Name = getInfo(id).MetaVar;
+  // FIXME: This will need translation.
+  return Name ? Name : "<var>";
 }
 
 const Option *OptTable::getOption(options::ID id) const {

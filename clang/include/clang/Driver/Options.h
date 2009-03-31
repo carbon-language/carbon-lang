@@ -17,7 +17,8 @@ namespace options {
     OPT_INVALID = 0, // This is not an option ID.
     OPT_INPUT,       // Reserved ID for input option.
     OPT_UNKNOWN,     // Reserved ID for unknown option.
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM) OPT_##ID,
+#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+               HELPTEXT, METAVAR) OPT_##ID,
 #include "clang/Driver/Options.def"
     LastOption
 #undef OPTION
@@ -59,6 +60,14 @@ namespace options {
     /// getOption - Get the given \arg id's Option instance, lazily
     /// creating it if necessary.
     const Option *getOption(options::ID id) const;
+
+    /// getOptionHelpText - Get the help text to use to describe this
+    /// option.
+    const char *getOptionHelpText(options::ID id) const;
+
+    /// getOptionMetaVar - Get the meta-variable name to use when
+    /// describing this options values in the help text.
+    const char *getOptionMetaVar(options::ID id) const;
 
     /// parseOneArg - Parse a single argument; returning the new
     /// argument and updating Index.
