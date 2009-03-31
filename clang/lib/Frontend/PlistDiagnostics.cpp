@@ -40,7 +40,9 @@ namespace {
     ~PlistDiagnostics();
     void HandlePathDiagnostic(const PathDiagnostic* D);
     
+    PathGenerationScheme getGenerationScheme() const { return Extensive; }
     bool supportsLogicalOpControlFlow() const { return true; }
+    bool supportsAllBlockEdges() const { return true; }
   };  
 } // end anonymous namespace
 

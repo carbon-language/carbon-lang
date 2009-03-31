@@ -31,7 +31,7 @@ namespace clang {
 
 class PathDiagnostic;
 class Stmt;
-  
+
 class PathDiagnosticClient : public DiagnosticClient  {
 public:
   PathDiagnosticClient() {}
@@ -42,7 +42,10 @@ public:
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
   
+  enum PathGenerationScheme { Minimal, Extensive };  
+  virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }   
   virtual bool supportsLogicalOpControlFlow() const { return false; }
+  virtual bool supportsAllBlockEdges() const { return false; }
 };  
   
 //===----------------------------------------------------------------------===//

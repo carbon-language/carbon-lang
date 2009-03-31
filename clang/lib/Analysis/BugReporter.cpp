@@ -102,16 +102,37 @@ static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 // Diagnostics for 'execution continues on line XXX'.
 //===----------------------------------------------------------------------===//
 
+typedef llvm::DenseMap<const ExplodedNode<GRState>*,
+const ExplodedNode<GRState>*> NodeBackMap;
+
 namespace {
+class VISIBILITY_HIDDEN NodeMapClosure : public BugReport::NodeResolver {
+  NodeBackMap& M;
+public:
+  NodeMapClosure(NodeBackMap *m) : M(*m) {}
+  ~NodeMapClosure() {}
+  
+  const ExplodedNode<GRState>* getOriginalNode(const ExplodedNode<GRState>* N) {
+    NodeBackMap::iterator I = M.find(N);
+    return I == M.end() ? 0 : I->second;
+  }
+};
+  
 class VISIBILITY_HIDDEN PathDiagnosticBuilder {
+  GRBugReporter &BR;
   SourceManager &SMgr;
+  ExplodedGraph<GRState> *ReportGraph;
+  BugReport *R;
   const Decl& CodeDecl;
   PathDiagnosticClient *PDC;
   llvm::OwningPtr<ParentMap> PM;
+  NodeMapClosure NMC;
 public:  
-  PathDiagnosticBuilder(SourceManager &smgr, const Decl& codedecl,
-                        PathDiagnosticClient *pdc)
-    : SMgr(smgr), CodeDecl(codedecl), PDC(pdc) {}
+  PathDiagnosticBuilder(GRBugReporter &br, ExplodedGraph<GRState> *reportGraph,
+                        BugReport *r, NodeBackMap *Backmap, 
+                        const Decl& codedecl, PathDiagnosticClient *pdc)
+    : BR(br), SMgr(BR.getSourceManager()), ReportGraph(reportGraph), R(r),
+      CodeDecl(codedecl), PDC(pdc), NMC(Backmap) {}
   
   PathDiagnosticLocation ExecutionContinues(const ExplodedNode<GRState>* N);
   
@@ -123,8 +144,20 @@ public:
     return *PM.get();
   }
   
+  ExplodedGraph<GRState>& getGraph() { return *ReportGraph; }
+  NodeMapClosure& getNodeMapClosure() { return NMC; }
+  ASTContext& getContext() { return BR.getContext(); }
+  SourceManager& getSourceManager() { return SMgr; }
+  BugReport& getReport() { return *R; }
+  GRBugReporter& getBugReporter() { return BR; }
+  GRStateManager& getStateManager() { return BR.getStateManager(); }
+  
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
   
+  PathDiagnosticClient::PathGenerationScheme getGenerationScheme() const {
+    return PDC ? PDC->getGenerationScheme() : PathDiagnosticClient::Extensive;
+  }
+
   bool supportsLogicalOpControlFlow() const {
     return PDC ? PDC->supportsLogicalOpControlFlow() : true;
   }  
@@ -351,9 +384,6 @@ void BugReporter::FlushReports() {
 //===----------------------------------------------------------------------===//
 // PathDiagnostics generation.
 //===----------------------------------------------------------------------===//
-
-typedef llvm::DenseMap<const ExplodedNode<GRState>*,
-                       const ExplodedNode<GRState>*> NodeBackMap;
 
 static std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
                  std::pair<ExplodedNode<GRState>*, unsigned> >
@@ -655,20 +685,6 @@ public:
 };
 } // end anonymous namespace
 
-namespace {
-class VISIBILITY_HIDDEN NodeMapClosure : public BugReport::NodeResolver {
-  NodeBackMap& M;
-public:
-  NodeMapClosure(NodeBackMap *m) : M(*m) {}
-  ~NodeMapClosure() {}
-  
-  const ExplodedNode<GRState>* getOriginalNode(const ExplodedNode<GRState>* N) {
-    NodeBackMap::iterator I = M.find(N);
-    return I == M.end() ? 0 : I->second;
-  }
-};
-}
-
 /// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
 ///  and collapses PathDiagosticPieces that are expanded by macros.
 static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
@@ -761,11 +777,15 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
   }
 }
 
-void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                           BugReportEquivClass& EQ) {
-  
-  std::vector<const ExplodedNode<GRState>*> Nodes;
+static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
+                                          PathDiagnosticBuilder &PDB,
+                                          const ExplodedNode<GRState> *N);
 
+void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
+                                          BugReportEquivClass& EQ) {
+ 
+  std::vector<const ExplodedNode<GRState>*> Nodes;
+  
   for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
     const ExplodedNode<GRState>* N = I->getEndNode();
     if (N) Nodes.push_back(N);
@@ -777,8 +797,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   // Construct a new graph that contains only a single path from the error
   // node to a root.  
   const std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
-                  std::pair<ExplodedNode<GRState>*, unsigned> >&
-    GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
+  std::pair<ExplodedNode<GRState>*, unsigned> >&
+  GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
   
   // Find the BugReport with the original location.
   BugReport *R = 0;
@@ -791,22 +811,39 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first.first);
   llvm::OwningPtr<NodeBackMap> BackMap(GPair.first.second);
   const ExplodedNode<GRState> *N = GPair.second.first;
-
+ 
   // Start building the path diagnostic...  
   if (PathDiagnosticPiece* Piece = R->getEndPath(*this, N))
     PD.push_back(Piece);
   else
     return;
-  
-  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
-                                        ? NULL : *(N->pred_begin());
-  
-  ASTContext& Ctx = getContext();
-  SourceManager& SMgr = Ctx.getSourceManager();
-  NodeMapClosure NMC(BackMap.get());
-  PathDiagnosticBuilder PDB(SMgr, getStateManager().getCodeDecl(),
+
+  PathDiagnosticBuilder PDB(*this, ReportGraph.get(), R, BackMap.get(),
+                            getStateManager().getCodeDecl(),
                             getPathDiagnosticClient());
   
+  switch (PDB.getGenerationScheme()) {
+    case PathDiagnosticClient::Extensive:
+    case PathDiagnosticClient::Minimal:
+      GenerateMinimalPathDiagnostic(PD, PDB, N);
+      break;
+  }
+  
+  // After constructing the full PathDiagnostic, do a pass over it to compact
+  // PathDiagnosticPieces that occur within a macro.
+  CompactPathDiagnostic(PD, PDB.getSourceManager());  
+}
+
+static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
+                                          PathDiagnosticBuilder &PDB,
+                                          const ExplodedNode<GRState> *N) {
+  
+
+  ASTContext& Ctx = PDB.getContext();
+  SourceManager& SMgr = PDB.getSourceManager();
+  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
+                                          ? NULL : *(N->pred_begin());
+
   while (NextNode) {
     N = NextNode;    
     NextNode = GetPredecessorNode(N);
@@ -1070,21 +1107,20 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       }
     }
 
-    if (PathDiagnosticPiece* p = R->VisitNode(N, NextNode, *ReportGraph, *this,
-                                              NMC))
+    if (PathDiagnosticPiece* p =
+          PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
+                                        PDB.getBugReporter(),
+                                        PDB.getNodeMapClosure())) {
       PD.push_front(p);
+    }
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
       // Scan the region bindings, and see if a "notable" symbol has a new
       // lval binding.
-      ScanNotableSymbols SNS(N, PS->getStmt(), *this, PD);
-      getStateManager().iterBindings(N->getState(), SNS);
+      ScanNotableSymbols SNS(N, PS->getStmt(), PDB.getBugReporter(), PD);
+      PDB.getStateManager().iterBindings(N->getState(), SNS);
     }
   }
-  
-  // After constructing the full PathDiagnostic, do a pass over it to compact
-  // PathDiagnosticPieces that occur within a macro.
-  CompactPathDiagnostic(PD, getSourceManager());
 }
 
 
