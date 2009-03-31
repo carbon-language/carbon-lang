@@ -161,9 +161,9 @@ int f19(void) {
   return x;
 }
 
-int f19b(void) { // FIXME: Should this case be considered the same as f19?
+int f19b(void) { // This case is the same as f19.
   const int MyConstant = 0;
-  int x = MyConstant; // expected-warning{{never read}}
+  int x = MyConstant; // no-warning
   x = 1;
   return x;  
 }
