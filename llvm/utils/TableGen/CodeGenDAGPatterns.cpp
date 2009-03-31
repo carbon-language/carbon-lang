@@ -75,16 +75,16 @@ static bool LHSIsSubsetOfRHS(const std::vector<unsigned char> &LHS,
   return true;
 }
 
-/// isExtIntegerVT - Return true if the specified extended value type vector
-/// contains isInt or an integer value type.
 namespace llvm {
 namespace EMVT {
+/// isExtIntegerInVTs - Return true if the specified extended value type vector
+/// contains isInt or an integer value type.
 bool isExtIntegerInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
   return EVTs[0] == isInt || !(FilterEVTs(EVTs, isInteger).empty());
 }
 
-/// isExtFloatingPointVT - Return true if the specified extended value type 
+/// isExtFloatingPointInVTs - Return true if the specified extended value type
 /// vector contains isFP or a FP value type.
 bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
