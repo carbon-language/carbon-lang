@@ -160,9 +160,8 @@ namespace {
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
 
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM,
-                      bool isRoot = true, unsigned Depth = 0);
-    bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM,
-                          bool isRoot, unsigned Depth);
+                      unsigned Depth = 0);
+    bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
     bool SelectAddr(SDValue Op, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp);
     bool SelectLEAAddr(SDValue Op, SDValue N, SDValue &Base,
@@ -731,13 +730,13 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
-                                   bool isRoot, unsigned Depth) {
+                                   unsigned Depth) {
   bool is64Bit = Subtarget->is64Bit();
   DebugLoc dl = N.getDebugLoc();
   DOUT << "MatchAddress: "; DEBUG(AM.dump());
   // Limit recursion.
   if (Depth > 5)
-    return MatchAddressBase(N, AM, isRoot, Depth);
+    return MatchAddressBase(N, AM);
   
   // RIP relative addressing: %rip + 32-bit displacement!
   if (AM.isRIPRel) {
@@ -896,12 +895,12 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
 
   case ISD::ADD: {
     X86ISelAddressMode Backup = AM;
-    if (!MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1) &&
-        !MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1))
+    if (!MatchAddress(N.getNode()->getOperand(0), AM, Depth+1) &&
+        !MatchAddress(N.getNode()->getOperand(1), AM, Depth+1))
       return false;
     AM = Backup;
-    if (!MatchAddress(N.getNode()->getOperand(1), AM, false, Depth+1) &&
-        !MatchAddress(N.getNode()->getOperand(0), AM, false, Depth+1))
+    if (!MatchAddress(N.getNode()->getOperand(1), AM, Depth+1) &&
+        !MatchAddress(N.getNode()->getOperand(0), AM, Depth+1))
       return false;
     AM = Backup;
 
@@ -926,7 +925,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
       X86ISelAddressMode Backup = AM;
       uint64_t Offset = CN->getSExtValue();
       // Start with the LHS as an addr mode.
-      if (!MatchAddress(N.getOperand(0), AM, false) &&
+      if (!MatchAddress(N.getOperand(0), AM, Depth+1) &&
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
@@ -1005,13 +1004,12 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   }
   }
 
-  return MatchAddressBase(N, AM, isRoot, Depth);
+  return MatchAddressBase(N, AM);
 }
 
 /// MatchAddressBase - Helper for MatchAddress. Add the specified node to the
 /// specified addressing mode without any further recursion.
-bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM,
-                                       bool isRoot, unsigned Depth) {
+bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM) {
   // Is the base register already occupied?
   if (AM.BaseType != X86ISelAddressMode::RegBase || AM.Base.Reg.getNode()) {
     // If so, check to see if the scale index register is set.
@@ -1051,7 +1049,7 @@ bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
       for (SDNode::use_iterator UI = N.getNode()->use_begin(),
              UE = N.getNode()->use_end(); UI != UE; ++UI) {
         if (UI->getOpcode() == ISD::CopyToReg) {
-          MatchAddressBase(N, AM, true, 0);
+          MatchAddressBase(N, AM);
           Done = true;
           break;
         }
