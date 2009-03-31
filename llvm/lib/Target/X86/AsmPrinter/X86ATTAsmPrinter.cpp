@@ -238,7 +238,10 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (!I->pred_empty()) {
+    if (!VerboseAsm && (I->pred_empty() || I->isOnlyReachableByFallthrough())) {
+      // This is an entry block or a block that's only reachable via a
+      // fallthrough edge. In non-VerboseAsm mode, don't print the label.
+    } else {
       printBasicBlockLabel(I, true, true, VerboseAsm);
       O << '\n';
     }

@@ -123,6 +123,16 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   return I;
 }
 
+bool
+MachineBasicBlock::isOnlyReachableByFallthrough() const {
+  return !isLandingPad() &&
+         !pred_empty() &&
+         next(pred_begin()) == pred_end() &&
+         (*pred_begin())->isLayoutSuccessor(this) &&
+         ((*pred_begin())->empty() ||
+          !(*pred_begin())->back().getDesc().isBarrier());
+}
+
 void MachineBasicBlock::dump() const {
   print(*cerr.stream());
 }
