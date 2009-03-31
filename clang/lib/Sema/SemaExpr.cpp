@@ -1783,16 +1783,16 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       = LookupQualifiedName(RDecl, DeclarationName(&Member),
                             LookupMemberName, false);
 
-    NamedDecl *MemberDecl = 0;
     if (!Result)
       return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member)
                << &Member << BaseExpr->getSourceRange());
-    else if (Result.isAmbiguous()) {
+    if (Result.isAmbiguous()) {
       DiagnoseAmbiguousLookup(Result, DeclarationName(&Member),
                               MemberLoc, BaseExpr->getSourceRange());
       return ExprError();
-    } else
-      MemberDecl = Result;
+    }
+    
+    NamedDecl *MemberDecl = Result;
 
     // If the decl being referenced had an error, return an error for this
     // sub-expr without emitting another error, in order to avoid cascading
@@ -1826,21 +1826,24 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
                                             MemberLoc, MemberType));
-    } else if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl))
+    }
+    
+    if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl))
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
-                                  Var, MemberLoc,
-                                  Var->getType().getNonReferenceType()));
-    else if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl))
+                                            Var, MemberLoc,
+                                         Var->getType().getNonReferenceType()));
+    if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl))
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
-                                  MemberFn, MemberLoc, MemberFn->getType()));
-    else if (OverloadedFunctionDecl *Ovl
-             = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
+                                            MemberFn, MemberLoc,
+                                            MemberFn->getType()));
+    if (OverloadedFunctionDecl *Ovl
+          = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl,
-                                  MemberLoc, Context.OverloadTy));
-    else if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl))
+                                            MemberLoc, Context.OverloadTy));
+    if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl))
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                             Enum, MemberLoc, Enum->getType()));
-    else if (isa<TypeDecl>(MemberDecl))
+    if (isa<TypeDecl>(MemberDecl))
       return ExprError(Diag(MemberLoc,diag::err_typecheck_member_reference_type)
         << DeclarationName(&Member) << int(OpKind == tok::arrow));
 
@@ -1887,6 +1890,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                       dyn_cast<ObjCCategoryImplDecl>(ImplDecl))
             ClassOfMethodDecl = CatImplClass->getClassInterface();
         }
+        
         if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
           if (ClassDeclared != IFTy->getDecl() || 
               ClassOfMethodDecl != ClassDeclared)
