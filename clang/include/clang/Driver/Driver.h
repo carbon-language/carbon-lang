@@ -157,14 +157,17 @@ public:
   /// @name Helper Methods
   /// @{
 
+  /// PrintActions - Print the list of actions.
+  void PrintActions(const Compilation &C) const;
+
+  /// PrintOptions - Print the help text.
+  void PrintHelp() const;
+
   /// PrintOptions - Print the list of arguments.
   void PrintOptions(const ArgList &Args) const;
 
   /// PrintVersion - Print the driver version.
   void PrintVersion(const Compilation &C) const;
-
-  /// PrintActions - Print the list of actions.
-  void PrintActions(const Compilation &C) const;
 
   /// GetFilePath - Lookup \arg Name in the list of file search paths.
   ///

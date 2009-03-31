@@ -225,6 +225,71 @@ void Driver::PrintOptions(const ArgList &Args) const {
   }
 }
 
+static std::string getOptionHelpName(const OptTable &Opts, options::ID Id) {
+  std::string Name = Opts.getOptionName(Id);
+  
+  // Add metavar, if used.
+  switch (Opts.getOptionKind(Id)) {
+  case Option::GroupClass: case Option::InputClass: case Option::UnknownClass: 
+    assert(0 && "Invalid option with help text.");
+
+  case Option::MultiArgClass: case Option::JoinedAndSeparateClass:
+    assert(0 && "Cannot print metavar for this kind of option.");
+
+  case Option::FlagClass:
+    break;
+
+  case Option::SeparateClass: case Option::JoinedOrSeparateClass:
+    Name += ' ';
+    // FALLTHROUGH
+  case Option::JoinedClass: case Option::CommaJoinedClass:
+    Name += Opts.getOptionMetaVar(Id);
+    break;
+  }
+
+  return Name;
+}
+
+void Driver::PrintHelp() const {
+  llvm::raw_ostream &OS = llvm::outs();
+
+  OS << "OVERVIEW: clang \"gcc-compatible\" driver\n";
+  OS << '\n';
+  OS << "USAGE: " << Name << " [options] <input files>\n";
+  OS << '\n';
+  OS << "OPTIONS:\n";
+
+  // Render help text into (option, help) pairs.
+  std::vector< std::pair<std::string, const char*> > OptionHelp;
+
+  for (unsigned i = options::OPT_INPUT, e = options::LastOption; i != e; ++i) {
+    options::ID Id = (options::ID) i;
+    if (const char *Text = getOpts().getOptionHelpText(Id))
+      OptionHelp.push_back(std::make_pair(getOptionHelpName(getOpts(), Id),
+                                          Text));
+  }
+
+  // Find the maximum option length. 
+  unsigned OptionFieldWidth = 0;
+  for (unsigned i = 0, e = OptionHelp.size(); i != e; ++i) {
+    // Limit the amount of padding we are willing to give up for
+    // alignment.
+    unsigned Length = OptionHelp[i].first.size();
+    if (Length <= 23)
+      OptionFieldWidth = std::max(OptionFieldWidth, Length);
+  }
+
+  for (unsigned i = 0, e = OptionHelp.size(); i != e; ++i) {
+    const std::string &Option = OptionHelp[i].first;
+    OS << "  " << Option;
+    for (int j = Option.length(), e = OptionFieldWidth; j < e; ++j)
+      OS << ' ';
+    OS << ' ' << OptionHelp[i].second << '\n';
+  }
+
+  OS.flush();
+}
+
 void Driver::PrintVersion(const Compilation &C) const {
   static char buf[] = "$URL$";
   char *zap = strstr(buf, "/lib/Driver");
@@ -252,6 +317,12 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // The order these options are handled in in gcc is all over the
   // place, but we don't expect inconsistencies w.r.t. that to matter
   // in practice.
+
+  if (C.getArgs().hasArg(options::OPT__help)) {
+    PrintHelp();
+    return false;
+  }
+
   if (C.getArgs().hasArg(options::OPT_v) || 
       C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     PrintVersion(C);
@@ -276,6 +347,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
       llvm::outs() << *it;
     }
     llvm::outs() << "\n";
+    return false;
   }
 
   // FIXME: The following handlers should use a callback mechanism, we

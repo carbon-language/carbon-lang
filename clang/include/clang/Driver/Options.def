@@ -74,7 +74,8 @@
 // --help, or 0 if undocumented.
 
 // The METAVAR value is the name to use for this values arguments (if
-// any) in the help text, or 0 to use the default ("<arg>").
+// any) in the help text. This must be defined if the help text is
+// specified and this option takes extra arguments.
 
 //
 
@@ -117,11 +118,13 @@ OPTION("<clang ignored f group>", clang_ignored_f_Group, Group, f_Group,
 //////////
 // Options
 
-OPTION("-###", _HASH_HASH_HASH, Flag, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-###", _HASH_HASH_HASH, Flag, INVALID, INVALID, "d", 0, 
+       "Print the commands to run for this compilation", 0)
 OPTION("--CLASSPATH=", _CLASSPATH_EQ, Joined, INVALID, fclasspath_EQ, "", 0, 0, 0)
 OPTION("--CLASSPATH", _CLASSPATH, Separate, INVALID, fclasspath_EQ, "J", 0, 0, 0)
 OPTION("--all-warnings", _all_warnings, Flag, INVALID, Wall, "", 0, 0, 0)
-OPTION("--analyze", _analyze, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("--analyze", _analyze, Flag, INVALID, INVALID, "d", 0, 
+       "Run the static analyzer", 0)
 OPTION("--ansi", _ansi, Flag, INVALID, ansi, "", 0, 0, 0)
 OPTION("--assemble", _assemble, Flag, INVALID, S, "", 0, 0, 0)
 OPTION("--assert=", _assert_EQ, Joined, INVALID, A, "S", 0, 0, 0)
@@ -151,7 +154,8 @@ OPTION("--for-linker=", _for_linker_EQ, Joined, INVALID, Xlinker, "liS", 0, 0, 0
 OPTION("--for-linker", _for_linker, Separate, INVALID, Xlinker, "li", 0, 0, 0)
 OPTION("--force-link=", _force_link_EQ, Joined, INVALID, u, "S", 0, 0, 0)
 OPTION("--force-link", _force_link, Separate, INVALID, u, "", 0, 0, 0)
-OPTION("--help", _help, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("--help", _help, Flag, INVALID, INVALID, "", 0, 
+       "Display available options", 0)
 OPTION("--imacros=", _imacros_EQ, Joined, INVALID, imacros, "S", 0, 0, 0)
 OPTION("--imacros", _imacros, Separate, INVALID, imacros, "", 0, 0, 0)
 OPTION("--include-barrier", _include_barrier, Flag, INVALID, I_, "", 0, 0, 0)
@@ -239,7 +243,8 @@ OPTION("-B", B, JoinedOrSeparate, INVALID, INVALID, "u", 0, 0, 0)
 OPTION("-CC", CC, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-C", C, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-D", D, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-E", E, Flag, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-E", E, Flag, INVALID, INVALID, "d", 0, 
+       "Only run the preprocessor", 0)
 OPTION("-F", F, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-H", H, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-I-", I_, Flag, I_Group, INVALID, "", 0, 0, 0)
@@ -256,21 +261,25 @@ OPTION("-MT", MT, JoinedOrSeparate, M_Group, INVALID, "", 0, 0, 0)
 OPTION("-Mach", Mach, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-M", M, Flag, M_Group, INVALID, "", 0, 0, 0)
 OPTION("-O4", O4, Joined, O_Group, INVALID, "", 0, 0, 0)
-OPTION("-ObjC++", ObjCXX, Flag, INVALID, INVALID, "d", 0, 0, 0)
-OPTION("-ObjC", ObjC, Flag, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-ObjC++", ObjCXX, Flag, INVALID, INVALID, "d", 0, 
+       "Treat source input files as Objective-C++ inputs", 0)
+OPTION("-ObjC", ObjC, Flag, INVALID, INVALID, "d", 0, 
+       "Treat source input files as Objective-C inputs", 0)
 OPTION("-O", O, Joined, O_Group, INVALID, "", 0, 0, 0)
 OPTION("-P", P, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-Qn", Qn, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-Q", Q, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-R", R, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-S", S, Flag, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-S", S, Flag, INVALID, INVALID, "d", 0, 
+       "Only run preprocess and compilation steps", 0)
 OPTION("-Tbss", Tbss, JoinedOrSeparate, T_Group, INVALID, "", 0, 0, 0)
 OPTION("-Tdata", Tdata, JoinedOrSeparate, T_Group, INVALID, "", 0, 0, 0)
 OPTION("-Ttext", Ttext, JoinedOrSeparate, T_Group, INVALID, "", 0, 0, 0)
 OPTION("-T", T, JoinedOrSeparate, T_Group, INVALID, "", 0, 0, 0)
 OPTION("-U", U, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-V", V, JoinedOrSeparate, INVALID, INVALID, "u", 0, 0, 0)
-OPTION("-Wa,", Wa_COMMA, CommaJoined, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-V", V, JoinedOrSeparate, INVALID, INVALID, "du", 0, 0, 0)
+OPTION("-Wa,", Wa_COMMA, CommaJoined, INVALID, INVALID, "", 0, 
+       "Pass the comma separated arguments in <arg> to the assembler", "<arg>")
 OPTION("-Wall", Wall, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wcast-align", Wcast_align, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wchar-align", Wchar_align, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
@@ -282,7 +291,8 @@ OPTION("-Wfloat-equal", Wfloat_equal, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wimplicit-function-declaration", Wimplicit_function_declaration, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Winline", Winline, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wint-to-pointer-cast", Wint_to_pointer_cast, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
-OPTION("-Wl,", Wl_COMMA, CommaJoined, INVALID, INVALID, "li", 0, 0, 0)
+OPTION("-Wl,", Wl_COMMA, CommaJoined, INVALID, INVALID, "li", 0, 
+       "Pass the comma separated arguments in <arg> to the linker", "<arg>")
 OPTION("-Wmissing-braces", Wmissing_braces, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wmissing-prototypes", Wmissing_prototypes, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wmost", Wmost, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
@@ -300,7 +310,8 @@ OPTION("-Wno-trigraphs", Wno_trigraphs, Flag, clang_ignored_W_Group, INVALID, ""
 OPTION("-Wno-unknown-pragmas", Wno_unknown_pragmas, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-unused-parameter", Wno_unused_parameter, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wnonportable-cfstrings", Wnonportable_cfstrings, Joined, W_Group, INVALID, "", 0, 0, 0)
-OPTION("-Wp,", Wp_COMMA, CommaJoined, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-Wp,", Wp_COMMA, CommaJoined, INVALID, INVALID, "", 0, 
+       "Pass the comma separated arguments in <arg> to the preprocessor", "<arg>")
 OPTION("-Wparentheses", Wparentheses, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wpointer-arith", Wpointer_arith, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wpointer-to-int-cast", Wpointer_to_int_cast, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
@@ -316,12 +327,17 @@ OPTION("-Wunused-value", Wunused_value, Flag, clang_ignored_W_Group, INVALID, ""
 OPTION("-Wunused-variable", Wunused_variable, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wwrite-strings", Wwrite_strings, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-W", W, Joined, W_Group, INVALID, "", 0, 0, 0)
-OPTION("-Xanalyzer", Xanalyzer, Separate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-Xarch_", Xarch__, JoinedAndSeparate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-Xassembler", Xassembler, Separate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-Xclang", Xclang, Separate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-Xlinker", Xlinker, Separate, INVALID, INVALID, "li", 0, 0, 0)
-OPTION("-Xpreprocessor", Xpreprocessor, Separate, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-Xanalyzer", Xanalyzer, Separate, INVALID, INVALID, "", 0, 
+       "Pass <arg> to the static analyzer", "<arg>")
+OPTION("-Xarch_", Xarch__, JoinedAndSeparate, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-Xassembler", Xassembler, Separate, INVALID, INVALID, "", 0, 
+       "Pass <arg> to the assembler", "<arg>")
+OPTION("-Xclang", Xclang, Separate, INVALID, INVALID, "", 0, 
+       "Pass <arg> to the clang compiler", "<arg>")
+OPTION("-Xlinker", Xlinker, Separate, INVALID, INVALID, "li", 0, 
+       "Pass <arg> to the linker", "<arg>")
+OPTION("-Xpreprocessor", Xpreprocessor, Separate, INVALID, INVALID, "", 0,
+       "Pass <arg> to the preprocessor", "<arg>")
 OPTION("-X", X_Flag, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-X", X_Joined, Joined, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-Z", Z_Flag, Flag, INVALID, INVALID, "", 0, 0, 0)
@@ -341,7 +357,8 @@ OPTION("-compatibility_version", compatibility__version, JoinedOrSeparate, INVAL
 OPTION("-coverage", coverage, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-cpp-precomp", cpp_precomp, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-current_version", current__version, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-c", c, Flag, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-c", c, Flag, INVALID, INVALID, "d", 0, 
+       "Only run preprocess, compile, and assemble steps", 0)
 OPTION("-dA", dA, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-dM", dM, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-dead_strip", dead__strip, Flag, INVALID, INVALID, "", 0, 0, 0)
@@ -356,7 +373,8 @@ OPTION("-dynamiclib", dynamiclib, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-dynamic", dynamic, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-d", d_Flag, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-d", d_Joined, Joined, d_Group, INVALID, "", 0, 0, 0)
-OPTION("-emit-llvm", emit_llvm, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-emit-llvm", emit_llvm, Flag, INVALID, INVALID, "", 0, 
+       "Use the LLVM representation for assembler and object files", 0)
 OPTION("-exported_symbols_list", exported__symbols__list, Separate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-e", e, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-fPIC", fPIC, Flag, f_Group, INVALID, "", 0, 0, 0)
@@ -513,23 +531,29 @@ OPTION("-nostartfiles", nostartfiles, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-nostdinc", nostdinc, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-nostdlib", nostdlib, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-object", object, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-o", o, JoinedOrSeparate, INVALID, INVALID, "di", 0, 0, 0)
+OPTION("-o", o, JoinedOrSeparate, INVALID, INVALID, "di", 0, 
+       "Write output to <file>", "<file>")
 OPTION("-pagezero_size", pagezero__size, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-pass-exit-codes", pass_exit_codes, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-pass-exit-codes", pass_exit_codes, Flag, INVALID, INVALID, "u", 0, 0, 0)
 OPTION("-pedantic-errors", pedantic_errors, Flag, pedantic_Group, INVALID, "", 0, 0, 0)
 OPTION("-pedantic", pedantic, Flag, pedantic_Group, INVALID, "", 0, 0, 0)
 OPTION("-pg", pg, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-pipe", pipe, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-pipe", pipe, Flag, INVALID, INVALID, "", 0, 
+       "Use pipes between commands, when possible", 0)
 OPTION("-prebind_all_twolevel_modules", prebind__all__twolevel__modules, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-prebind", prebind, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-preload", preload, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-print-file-name=", print_file_name_EQ, Joined, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-print-libgcc-file-name", print_libgcc_file_name, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-print-file-name=", print_file_name_EQ, Joined, INVALID, INVALID, "", 0,
+       "Print the full library path of <file>", "<file>")
+OPTION("-print-libgcc-file-name", print_libgcc_file_name, Flag, INVALID, INVALID, "", 0, 
+       "Print the library path for \"libgcc.a\"", 0)
 OPTION("-print-multi-directory", print_multi_directory, Flag, INVALID, INVALID, "u", 0, 0, 0)
 OPTION("-print-multi-lib", print_multi_lib, Flag, INVALID, INVALID, "u", 0, 0, 0)
 OPTION("-print-multi-os-directory", print_multi_os_directory, Flag, INVALID, INVALID, "u", 0, 0, 0)
-OPTION("-print-prog-name=", print_prog_name_EQ, Joined, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-print-search-dirs", print_search_dirs, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-print-prog-name=", print_prog_name_EQ, Joined, INVALID, INVALID, "", 0,
+       "Print the full program path of <name>", "<name>")
+OPTION("-print-search-dirs", print_search_dirs, Flag, INVALID, INVALID, "", 0, 
+       "Print the paths used for finding libraries and programs", 0)
 OPTION("-private_bundle", private__bundle, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-pthreads", pthreads, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-pthread", pthread, Flag, INVALID, INVALID, "", 0, 0, 0)
@@ -537,7 +561,8 @@ OPTION("-p", p, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-read_only_relocs", read__only__relocs, Separate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-remap", remap, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-r", r, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-save-temps", save_temps, Flag, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-save-temps", save_temps, Flag, INVALID, INVALID, "d", 0, 
+       "Save intermediate compilation results", 0)
 OPTION("-sectalign", sectalign, MultiArg, INVALID, INVALID, "", 3, 0, 0)
 OPTION("-sectcreate", sectcreate, MultiArg, INVALID, INVALID, "", 3, 0, 0)
 OPTION("-sectobjectsymbols", sectobjectsymbols, MultiArg, INVALID, INVALID, "", 2, 0, 0)
@@ -563,7 +588,8 @@ OPTION("-std=", std_EQ, Joined, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-sub_library", sub__library, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-sub_umbrella", sub__umbrella, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-s", s, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-time", time, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-time", time, Flag, INVALID, INVALID, "", 0, 
+       "Time individual commands", 0)
 OPTION("-traditional-cpp", traditional_cpp, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-traditional", traditional, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-trigraphs", trigraphs, Flag, INVALID, INVALID, "", 0, 0, 0)
@@ -575,7 +601,8 @@ OPTION("-undefined", undefined, JoinedOrSeparate, u_Group, INVALID, "", 0, 0, 0)
 OPTION("-undef", undef, Flag, u_Group, INVALID, "", 0, 0, 0)
 OPTION("-unexported_symbols_list", unexported__symbols__list, Separate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-u", u, JoinedOrSeparate, u_Group, INVALID, "", 0, 0, 0)
-OPTION("-v", v, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-v", v, Flag, INVALID, INVALID, "", 0, 
+       "Show commands to run and use verbose output", 0)
 OPTION("-weak-l", weak_l, Joined, INVALID, INVALID, "l", 0, 0, 0)
 OPTION("-weak_framework", weak__framework, Separate, INVALID, INVALID, "l", 0, 0, 0)
 OPTION("-weak_library", weak__library, Separate, INVALID, INVALID, "l", 0, 0, 0)
@@ -583,5 +610,6 @@ OPTION("-weak_reference_mismatches", weak__reference__mismatches, Separate, INVA
 OPTION("-whatsloaded", whatsloaded, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-whyload", whyload, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-w", w, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-x", x, JoinedOrSeparate, INVALID, INVALID, "d", 0, 0, 0)
+OPTION("-x", x, JoinedOrSeparate, INVALID, INVALID, "d", 0, 
+       "Treat subsequent input files as having type <language>", "<language>")
 OPTION("-y", y, Joined, INVALID, INVALID, "", 0, 0, 0)
