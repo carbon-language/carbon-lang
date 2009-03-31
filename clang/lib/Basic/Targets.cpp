@@ -653,11 +653,21 @@ public:
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:128:128";
   }
+
+  virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
+    return IsConstant ? "\01LC" : "\01lC";
+  }
+
+  virtual const char *getCFStringSymbolPrefix() const { 
+    return "\01LC";
+  }
+
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
     getDarwinDefines(Defines, getTargetTriple());
   }
+
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
   /// options. 
@@ -795,6 +805,14 @@ class DarwinX86_64TargetInfo : public X86_64TargetInfo {
 public:
   DarwinX86_64TargetInfo(const std::string& triple) :
     X86_64TargetInfo(triple) {}
+
+  virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
+    return IsConstant ? "\01LC" : "\01lC";
+  }
+
+  virtual const char *getCFStringSymbolPrefix() const { 
+    return "\01L_unnamed_cfstring_";
+  }
 
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {

@@ -396,14 +396,16 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 
   // Get the two global values corresponding to the ConstantArrays we just
   // created to hold the bytes of the strings.
+  const char *StringPrefix = getContext().Target.getStringSymbolPrefix(true);
   llvm::GlobalValue *annoGV = 
   new llvm::GlobalVariable(anno->getType(), false,
                            llvm::GlobalValue::InternalLinkage, anno,
-                           GV->getName() + ".str", M);
+                           GV->getName() + StringPrefix, M);
   // translation unit name string, emitted into the llvm.metadata section.
   llvm::GlobalValue *unitGV =
   new llvm::GlobalVariable(unit->getType(), false,
-                           llvm::GlobalValue::InternalLinkage, unit, ".str", M);
+                           llvm::GlobalValue::InternalLinkage, unit, 
+                           StringPrefix, M);
 
   // Create the ConstantStruct that is the global annotion.
   llvm::Constant *Fields[4] = {
@@ -1010,8 +1012,8 @@ GetAddrOfConstantCFString(const std::string &str) {
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
     CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
   
-  if (Entry.getValue())
-    return Entry.getValue();
+  if (llvm::Constant *C = Entry.getValue())
+    return C;
   
   llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
@@ -1062,11 +1064,15 @@ GetAddrOfConstantCFString(const std::string &str) {
   CurField = NextField;
   NextField = *Field++;
   llvm::Constant *C = llvm::ConstantArray::get(str);
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &getModule());
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(C->getType(), true, 
+                             llvm::GlobalValue::InternalLinkage,
+                             C, getContext().Target.getStringSymbolPrefix(true),
+                             &getModule());
+  if (const char *Sect = getContext().Target.getCFStringDataSection())
+    GV->setSection(Sect);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2),
+                        llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2),
                         CFRD, STy);
   
   // String length.
@@ -1078,12 +1084,12 @@ GetAddrOfConstantCFString(const std::string &str) {
   
   // The struct.
   C = llvm::ConstantStruct::get(STy, Fields);
-  llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(C->getType(), true, 
-                             llvm::GlobalVariable::InternalLinkage, 
-                             C, "", &getModule());
-  
-  GV->setSection("__DATA,__cfstring");
+  GV = new llvm::GlobalVariable(C->getType(), true, 
+                                llvm::GlobalVariable::InternalLinkage, C, 
+                                getContext().Target.getCFStringSymbolPrefix(), 
+                                &getModule());
+  if (const char *Sect = getContext().Target.getCFStringSection())
+    GV->setSection(Sect);
   Entry.setValue(GV);
   
   return GV;
@@ -1141,8 +1147,7 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
   // Create a global variable for this string
   return new llvm::GlobalVariable(C->getType(), constant, 
                                   llvm::GlobalValue::InternalLinkage,
-                                  C, GlobalName ? GlobalName : ".str", 
-                                  &CGM.getModule());
+                                  C, GlobalName, &CGM.getModule());
 }
 
 /// GetAddrOfConstantString - Returns a pointer to a character array
@@ -1155,8 +1160,14 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
 /// The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
                                                        const char *GlobalName) {
-  // Don't share any string literals if writable-strings is turned on.
-  if (Features.WritableStrings)
+  bool IsConstant = !Features.WritableStrings;
+
+  // Get the default prefix if a name wasn't specified.
+  if (!GlobalName)
+    GlobalName = getContext().Target.getStringSymbolPrefix(IsConstant);
+
+  // Don't share any string literals if strings aren't constant.
+  if (!IsConstant)
     return GenerateStringLiteral(str, false, *this, GlobalName);
   
   llvm::StringMapEntry<llvm::Constant *> &Entry = 

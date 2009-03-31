@@ -245,6 +245,31 @@ public:
 
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
+  /// getStringSymbolPrefix - Get the default symbol prefix to
+  /// use for string literals.
+  virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
+    return ".str";
+  }
+
+  /// getCFStringSymbolPrefix - Get the default symbol prefix
+  /// to use for CFString literals.
+  virtual const char *getCFStringSymbolPrefix() const { 
+    return "";
+  }
+
+  /// getCFStringSection - Return the section to use for the CFString
+  /// literals, or 0 if no special section is used.
+  virtual const char *getCFStringSection() const { 
+    return "__DATA,__cfstring";
+  }
+
+  /// getCFStringDataSection - Return the section to use for the
+  /// constant string data associated with a CFString literal, or 0 if
+  /// no special section is used.
+  virtual const char *getCFStringDataSection() const { 
+    return "__TEXT,__cstring,cstring_literals";
+  }
+
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
   /// options. 
