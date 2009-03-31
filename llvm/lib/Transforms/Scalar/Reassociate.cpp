@@ -32,6 +32,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
@@ -71,7 +72,7 @@ static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
 namespace {
   class VISIBILITY_HIDDEN Reassociate : public FunctionPass {
     std::map<BasicBlock*, unsigned> RankMap;
-    std::map<Value*, unsigned> ValueRankMap;
+    std::map<AssertingVH<>, unsigned> ValueRankMap;
     bool MadeChange;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -138,7 +139,7 @@ void Reassociate::BuildRankMap(Function &F) {
 
   // Assign distinct ranks to function arguments
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
-    ValueRankMap[I] = ++i;
+    ValueRankMap[&*I] = ++i;
 
   ReversePostOrderTraversal<Function*> RPOT(&F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
@@ -151,7 +152,7 @@ void Reassociate::BuildRankMap(Function &F) {
     // all different in the block.
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (isUnmovableInstruction(I))
-        ValueRankMap[I] = ++BBRank;
+        ValueRankMap[&*I] = ++BBRank;
   }
 }
 
@@ -197,7 +198,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 /// LowerNegateToMultiply - Replace 0-X with X*-1.
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
-                                     std::map<Value*, unsigned> &ValueRankMap) {
+                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
   Constant *Cst = ConstantInt::getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
@@ -427,7 +428,7 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
 static Instruction *BreakUpSubtract(Instruction *Sub,
-                                    std::map<Value*, unsigned> &ValueRankMap) {
+                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
   // Convert a subtract into an add and a neg instruction... so that sub
   // instructions can be commuted with other add instructions...
   //
@@ -452,7 +453,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
 /// by one, change this into a multiply by a constant to assist with further
 /// reassociation.
 static Instruction *ConvertShiftToMul(Instruction *Shl, 
-                                      std::map<Value*, unsigned> &ValueRankMap){
+                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||
