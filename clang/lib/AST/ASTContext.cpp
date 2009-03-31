@@ -650,9 +650,7 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D)
 void ASTContext::setFieldDecl(const ObjCInterfaceDecl *OI,
                               const ObjCIvarDecl *Ivar,
                               const ObjCIvarRefExpr *MRef) {
-  FieldDecl *FD = (const_cast<ObjCInterfaceDecl *>(OI))->
-                    lookupFieldDeclForIvar(*this, Ivar);
-  ASTFieldForIvarRef[MRef] = FD;
+  ASTFieldForIvarRef[MRef] = OI->lookupFieldDeclForIvar(*this, Ivar);
 }
 
 /// getASTObjcInterfaceLayout - Get or compute information about the layout of

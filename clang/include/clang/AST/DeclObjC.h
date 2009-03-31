@@ -412,6 +412,11 @@ public:
   FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
                                     const ObjCIvarDecl *ivar);
 
+  const FieldDecl *lookupFieldDeclForIvar(ASTContext &Ctx, 
+                                          const ObjCIvarDecl *IV) const {
+    return const_cast<ObjCInterfaceDecl*>(this)->lookupFieldDeclForIvar(Ctx,IV);
+  }
+
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
   
