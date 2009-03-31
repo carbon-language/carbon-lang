@@ -334,12 +334,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       ConvertTypeRecursive(QualType(cast<ExtQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface: {
-    // Warning: Use of this is strongly discouraged.  Late binding of instance
-    // variables is supported on some runtimes and so using static binding can
-    // break code when libraries are updated.  Only use this if you have
-    // previously checked that the ObjCRuntime subclass in use does not support
-    // late-bound ivars.
-    // We are issuing warnings elsewhere!
     ObjCInterfaceDecl *ID = cast<ObjCInterfaceType>(Ty).getDecl();
     return ConvertTagDeclType(Context.addRecordToClass(ID));
   }
