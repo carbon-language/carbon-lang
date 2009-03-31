@@ -153,8 +153,6 @@ public:
                                             bool IsVariadic);
   
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
-  /// Returns a StructType representing an Objective-C object
-  const llvm::Type *ConvertObjCInterfaceToStruct(const ObjCInterfaceDecl *OID);
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.

@@ -333,16 +333,17 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return
       ConvertTypeRecursive(QualType(cast<ExtQualType>(Ty).getBaseType(), 0));
 
+  case Type::ObjCQualifiedInterface: {
+    // Lower foo<P1,P2> just like foo.
+    ObjCInterfaceDecl *ID = cast<ObjCQualifiedInterfaceType>(Ty).getDecl();
+    return ConvertTypeRecursive(Context.getObjCInterfaceType(ID));
+  }
+      
   case Type::ObjCInterface: {
     ObjCInterfaceDecl *ID = cast<ObjCInterfaceType>(Ty).getDecl();
     return ConvertTagDeclType(Context.addRecordToClass(ID));
   }
       
-  case Type::ObjCQualifiedInterface: {
-    ObjCInterfaceDecl *ID = cast<ObjCQualifiedInterfaceType>(Ty).getDecl();
-    return ConvertTypeRecursive(Context.getObjCInterfaceType(ID));
-  }
-
   case Type::ObjCQualifiedId:
   case Type::ObjCQualifiedClass:
     // Protocols don't influence the LLVM type.
