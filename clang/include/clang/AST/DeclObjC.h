@@ -1009,6 +1009,7 @@ private:
   
   ObjCMethodDecl *GetterMethodDecl; // Declaration of getter instance method
   ObjCMethodDecl *SetterMethodDecl; // Declaration of setter instance method
+  ObjCIvarDecl *PropertyIvarDecl;   // Synthesize ivar for this property
 
   ObjCPropertyDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
                    QualType T)
@@ -1016,7 +1017,7 @@ private:
       PropertyAttributes(OBJC_PR_noattr), PropertyImplementation(None),
       GetterName(Selector()), 
       SetterName(Selector()),
-      GetterMethodDecl(0), SetterMethodDecl(0) {}
+      GetterMethodDecl(0), SetterMethodDecl(0) , PropertyIvarDecl(0) {}
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, DeclContext *DC, 
                                   SourceLocation L, 
@@ -1074,6 +1075,13 @@ public:
     return PropertyControl(PropertyImplementation);
   }  
   
+  void setPropertyIvarDecl(ObjCIvarDecl *Ivar) {
+    PropertyIvarDecl = Ivar;
+  }
+  ObjCIvarDecl *getPropertyIvarDecl() const {
+    return PropertyIvarDecl;
+  }
+  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCProperty;
   }
@@ -1091,7 +1099,6 @@ public:
     Dynamic
   };
 private:
-  unsigned IvarKind : 1;
   SourceLocation AtLoc;   // location of @synthesize or @dynamic
   /// Property declaration being implemented
   ObjCPropertyDecl *PropertyDecl;
@@ -1103,7 +1110,7 @@ private:
                        ObjCPropertyDecl *property, 
                        Kind PK, 
                        ObjCIvarDecl *ivarDecl)
-    : Decl(ObjCPropertyImpl, DC, L), IvarKind(false), AtLoc(atLoc), 
+    : Decl(ObjCPropertyImpl, DC, L), AtLoc(atLoc), 
       PropertyDecl(property), PropertyIvarDecl(ivarDecl) {
     assert (PK == Dynamic || PropertyIvarDecl);
   }
@@ -1127,16 +1134,6 @@ public:
   
   ObjCIvarDecl *getPropertyIvarDecl() const {
     return PropertyIvarDecl;
-  }
-  void SetPropertyIvarDecl(ObjCIvarDecl *Ivar) {
-    assert(PropertyIvarDecl && "PropertyIvarDecl is already defined");
-    PropertyIvarDecl = Ivar;
-  }
-  void SetIvarSynthesized() {
-    IvarKind = true;
-  }
-  bool IsIvarSynthesized() const {
-    return IvarKind;
   }
   
   static bool classof(const Decl *D) {

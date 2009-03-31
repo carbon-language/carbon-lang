@@ -608,6 +608,13 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
     if (!IVDecl->isInvalidDecl())
       Fields.push_back(cast<FieldDecl>(IVDecl));
   }
+  // look into properties.
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
+       E = OI->prop_end(); I != E; ++I) {
+    ObjCPropertyDecl *PDecl = (*I);
+    if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
+      Fields.push_back(cast<FieldDecl>(IV));
+  }
 }
 
 /// addRecordToClass - produces record info. for the class for its

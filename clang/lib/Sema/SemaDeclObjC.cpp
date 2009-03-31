@@ -1765,17 +1765,22 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // @synthesize
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
+    QualType PropType = Context.getCanonicalType(property->getType());
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar);
     if (!Ivar) {
-      if (getLangOptions().ObjCNonFragileABI)
-        Diag(PropertyLoc, diag::error_synthesized_ivar_yet_not_supported) 
-                          << PropertyId;
-      else
+      if (getLangOptions().ObjCNonFragileABI) {
+        Ivar = ObjCIvarDecl::Create(Context, CurContext, PropertyLoc, 
+                                    PropertyIvar, PropType, 
+                                    ObjCIvarDecl::Private,
+                                    (Expr *)0);
+        property->setPropertyIvarDecl(Ivar);
+      }
+      else {
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
-      return DeclPtrTy();
+        return DeclPtrTy();
+      }
     }
-    QualType PropType = Context.getCanonicalType(property->getType());
     QualType IvarType = Context.getCanonicalType(Ivar->getType());
     
     // Check that type of property and its ivar are type compatible.
