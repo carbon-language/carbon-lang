@@ -957,6 +957,11 @@ public:
   friend class DeclContext;
 };
 
+/// NamespaceAliasDecl - Represents a C++ namespace alias. For example:
+///
+/// @code
+/// namespace Foo = Bar;
+/// @endcode
 class NamespaceAliasDecl : public NamedDecl {
   SourceLocation AliasLoc;
   
