@@ -37,6 +37,7 @@ template<typename ValueTy> class StringMapEntry;
 typedef StringMapEntry<Value*> ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
+class ValueHandleBase;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -50,10 +51,14 @@ class AssemblyAnnotationWriter;
 /// automatically updates the module's symbol table.
 ///
 /// Every value has a "use list" that keeps track of which other Values are
-/// using this Value.
+/// using this Value.  A Value can also have an arbitrary number of ValueHandle
+/// objects that watch it and listen to RAUW and Destroy events see
+/// llvm/Support/ValueHandle.h for details.
+///
 /// @brief LLVM Value Representation
 class Value {
   const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
+  unsigned char HasValueHandle : 1; // Has a ValueHandle pointing to this?
 protected:
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
@@ -65,6 +70,7 @@ private:
 
   friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
   friend class SymbolTable;      // Allow SymbolTable to directly poke Name.
+  friend class ValueHandleBase;
   ValueName *Name;
 
   void operator=(const Value &);     // Do not implement
