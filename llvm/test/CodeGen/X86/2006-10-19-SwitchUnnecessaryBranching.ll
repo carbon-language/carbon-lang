@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | %prcontext je 1 | \
+; RUN: llvm-as < %s | llc -march=x86 -asm-verbose | %prcontext je 1 | \
 ; RUN:   grep BB1_1:
 
 @str = internal constant [14 x i8] c"Hello world!\0A\00"		; <[14 x i8]*> [#uses=1]
