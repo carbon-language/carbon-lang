@@ -279,6 +279,18 @@ public:
     return *this;
   }
 
+  /// isPointerIntoBucketsArray - Return true if the specified pointer points
+  /// somewhere into the DenseMap's array of buckets (i.e. either to a key or
+  /// value in the DenseMap).
+  bool isPointerIntoBucketsArray(const void *Ptr) const {
+    return Ptr >= Buckets && Ptr < Buckets+NumBuckets;
+  }
+
+  /// getPointerIntoBucketsArray() - Return an opaque pointer into the buckets
+  /// array.  In conjunction with the previous method, this can be used to
+  /// determine whether an insertion caused the DenseMap to reallocate.
+  const void *getPointerIntoBucketsArray() const { return Buckets; }
+
 private:
   void CopyFrom(const DenseMap& other) {
     if (NumBuckets != 0 && (!KeyInfoT::isPod() || !ValueInfoT::isPod())) {
