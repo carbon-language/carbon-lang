@@ -23,6 +23,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 using namespace clang;
@@ -77,13 +78,10 @@ int main(int argc, const char **argv) {
 
   Diagnostic Diags(DiagClient.get());
 
-  // FIXME: Use the triple of the host, not the triple that we were
-  // compiled on.
-  llvm::OwningPtr<Driver> TheDriver(new Driver(Path.getBasename().c_str(),
-                                               Path.getDirname().c_str(),
-                                               LLVM_HOSTTRIPLE,
-                                               "a.out",
-                                               Diags));
+  llvm::OwningPtr<Driver> 
+    TheDriver(new Driver(Path.getBasename().c_str(), Path.getDirname().c_str(),
+                         llvm::sys::getHostTriple().c_str(),
+                         "a.out", Diags));
                                                
   llvm::OwningPtr<Compilation> C(TheDriver->BuildCompilation(argc, argv));
 

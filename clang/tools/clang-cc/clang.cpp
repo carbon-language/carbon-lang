@@ -764,7 +764,7 @@ static void HandleMacOSVersionMin(std::string &Triple) {
   
   if (MacOSVersionMinIsInvalid) {
     fprintf(stderr, 
-        "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n", 
+        "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n",
             MacOSVersionMin.c_str());
     exit(1);
   }
@@ -776,25 +776,8 @@ static std::string CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
   std::string Triple = TargetTriple;
-  if (Triple.empty()) {
-    Triple = LLVM_HOSTTRIPLE;
-
-    // Force i<N>86 to i386 when using LLVM_HOSTTRIPLE.
-    if (Triple[0] == 'i' && isdigit(Triple[1]) && 
-        Triple[2] == '8' && Triple[3] == '6')
-      Triple[1] = '3';
-
-    // On darwin, we want to update the version to match that of the
-    // host.    
-    std::string::size_type DarwinDashIdx = Triple.find("-darwin");
-    if (DarwinDashIdx != std::string::npos) {
-      Triple.resize(DarwinDashIdx + strlen("-darwin"));
-
-      // Only add the major part of the os version.
-      std::string Version = llvm::sys::getOSVersion();
-      Triple += Version.substr(0, Version.find('.'));
-    }
-  }
+  if (Triple.empty())
+    Triple = llvm::sys::getHostTriple();
   
   // If -arch foo was specified, remove the architecture from the triple we have
   // so far and replace it with the specified one.

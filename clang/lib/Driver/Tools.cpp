@@ -39,6 +39,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
+  CmdArgs.push_back("-triple");
+  const char *TripleStr = 
+    Args.MakeArgString(getToolChain().getTripleString().c_str());
+  CmdArgs.push_back(TripleStr);
+
   if (isa<AnalyzeJobAction>(JA)) {
     assert(JA.getType() == types::TY_Plist && "Invalid output type.");
     CmdArgs.push_back("-analyze");
@@ -370,11 +375,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_dM);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
-
-  // FIXME: Always pass the full triple once we aren't concerned with
-  // ccc compat.
-  CmdArgs.push_back("-arch");
-  CmdArgs.push_back(getToolChain().getArchName().c_str());
 
   if (Output.getType() == types::TY_Dependencies) {
     // Handled with other dependency code.
