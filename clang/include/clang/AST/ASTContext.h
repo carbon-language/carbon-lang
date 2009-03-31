@@ -97,11 +97,9 @@ class ASTContext {
   llvm::DenseMap<unsigned, FixedWidthIntType*> SignedFixedWidthIntTypes;
   llvm::DenseMap<unsigned, FixedWidthIntType*> UnsignedFixedWidthIntTypes;
 
-  // FIXME: Shouldn't ASTRecordForInterface/ASTFieldForIvarRef and
-  // addRecordToClass/getFieldDecl be part of the backend (i.e. CodeGenTypes and
-  // CodeGenFunction)?
-  llvm::DenseMap<const ObjCInterfaceDecl*,
-                 const RecordDecl*> ASTRecordForInterface;
+  // FIXME: ASTRecordForInterface/ASTFieldForIvarRef and addRecordToClass and
+  // getFieldDecl be part of the backend (i.e. CodeGenTypes)?
+  llvm::DenseMap<const ObjCInterfaceDecl*, RecordDecl*> ASTRecordForInterface;
   llvm::DenseMap<const ObjCIvarRefExpr*, const FieldDecl*> ASTFieldForIvarRef;
   
   /// BuiltinVaListType - built-in va list type.

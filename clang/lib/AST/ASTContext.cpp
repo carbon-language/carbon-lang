@@ -69,10 +69,10 @@ ASTContext::~ASTContext() {
   }
 
   {
-    llvm::DenseMap<const ObjCInterfaceDecl*, const RecordDecl*>::iterator
+    llvm::DenseMap<const ObjCInterfaceDecl*, RecordDecl*>::iterator
       I = ASTRecordForInterface.begin(), E = ASTRecordForInterface.end();
     while (I != E) {
-      RecordDecl *R = const_cast<RecordDecl*>((I++)->second);
+      RecordDecl *R = (I++)->second;
       R->Destroy(*this);
     }
   }
@@ -620,27 +620,37 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
 /// ivars and all those inherited.
 ///
 const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
-  const RecordDecl *&RD = ASTRecordForInterface[D];
-  if (RD)
-    return RD;
+  RecordDecl *&RD = ASTRecordForInterface[D];
+  if (RD) {
+    // If we have a record decl already and it is either a definition or if 'D'
+    // is still a forward declaration, return it.
+    if (RD->isDefinition() || D->isForwardDecl())
+      return RD;
+  }
+  
+  // If D is a forward declaration, then just make a forward struct decl.
+  if (D->isForwardDecl())
+    return RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0,
+                                   D->getLocation(),
+                                   D->getIdentifier());
   
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   CollectObjCIvars(D, RecFields);
-  RecordDecl *NewRD = RecordDecl::Create(*this, TagDecl::TK_struct, 0,
-                                         D->getLocation(),
-                                         D->getIdentifier());
+  
+  if (RD == 0)
+    RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, D->getLocation(),
+                            D->getIdentifier());
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
-    NewRD->addDecl(FieldDecl::Create(*this, NewRD, 
-                                     RecFields[i]->getLocation(), 
-                                     RecFields[i]->getIdentifier(),
-                                     RecFields[i]->getType(), 
-                                     RecFields[i]->getBitWidth(), false));
+    RD->addDecl(FieldDecl::Create(*this, RD, 
+                                  RecFields[i]->getLocation(), 
+                                  RecFields[i]->getIdentifier(),
+                                  RecFields[i]->getType(), 
+                                  RecFields[i]->getBitWidth(), false));
   }
   
-  NewRD->completeDefinition(*this);
-  RD = NewRD;
+  RD->completeDefinition(*this);
   return RD;
 }
 
@@ -1332,7 +1342,7 @@ QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
 /// declaration, regardless. It also removes any previously built 
 /// record declaration so caller can rebuild it.
 QualType ASTContext::buildObjCInterfaceType(ObjCInterfaceDecl *Decl) {
-  const RecordDecl *&RD = ASTRecordForInterface[Decl];
+  RecordDecl *&RD = ASTRecordForInterface[Decl];
   if (RD)
     RD = 0;
   Decl->TypeForDecl = new(*this,8) ObjCInterfaceType(Type::ObjCInterface, Decl);
