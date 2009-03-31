@@ -1231,6 +1231,78 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
   return false;
 }
 
+/// ExpandShiftWithUnknownAmountBit - Fully general expansion of integer shift
+/// of any size.
+bool DAGTypeLegalizer::
+ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
+  SDValue Amt = N->getOperand(1);
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  MVT ShTy = Amt.getValueType();
+  unsigned NVTBits = NVT.getSizeInBits();
+  assert(isPowerOf2_32(NVTBits) &&
+         "Expanded integer type size not a power of two!");
+  DebugLoc dl = N->getDebugLoc();
+
+  // Get the incoming operand to be shifted.
+  SDValue InL, InH;
+  GetExpandedInteger(N->getOperand(0), InL, InH);
+
+  SDValue NVBitsNode = DAG.getConstant(NVTBits, ShTy);
+  SDValue Amt2 = DAG.getNode(ISD::SUB, dl, ShTy, NVBitsNode, Amt);
+  SDValue Cmp = DAG.getSetCC(dl, TLI.getSetCCResultType(ShTy),
+                             Amt, NVBitsNode, ISD::SETULT);
+
+  SDValue Lo1, Hi1, Lo2, Hi2;
+  switch (N->getOpcode()) {
+  default: assert(0 && "Unknown shift");
+  case ISD::SHL:
+    // ShAmt < NVTBits
+    Lo1 = DAG.getConstant(0, NVT);                  // Low part is zero.
+    Hi1 = DAG.getNode(ISD::SHL, dl, NVT, InL, Amt); // High part from Lo part.
+
+    // ShAmt >= NVTBits
+    Lo2 = DAG.getNode(ISD::SHL, dl, NVT, InL, Amt);
+    Hi2 = DAG.getNode(ISD::OR, dl, NVT,
+                      DAG.getNode(ISD::SHL, dl, NVT, InH, Amt),
+                      DAG.getNode(ISD::SRL, dl, NVT, InL, Amt2));
+
+    Lo = DAG.getNode(ISD::SELECT, dl, NVT, Cmp, Lo1, Lo2);
+    Hi = DAG.getNode(ISD::SELECT, dl, NVT, Cmp, Hi1, Hi2);
+    return true;
+  case ISD::SRL:
+    // ShAmt < NVTBits
+    Hi1 = DAG.getConstant(0, NVT);                  // Hi part is zero.
+    Lo1 = DAG.getNode(ISD::SRL, dl, NVT, InH, Amt); // Lo part from Hi part.
+
+    // ShAmt >= NVTBits
+    Hi2 = DAG.getNode(ISD::SRL, dl, NVT, InH, Amt);
+    Lo2 = DAG.getNode(ISD::OR, dl, NVT,
+                     DAG.getNode(ISD::SRL, dl, NVT, InL, Amt),
+                     DAG.getNode(ISD::SHL, dl, NVT, InH, Amt2));
+
+    Lo = DAG.getNode(ISD::SELECT, dl, NVT, Cmp, Lo1, Lo2);
+    Hi = DAG.getNode(ISD::SELECT, dl, NVT, Cmp, Hi1, Hi2);
+    return true;
+  case ISD::SRA:
+    // ShAmt < NVTBits
+    Hi1 = DAG.getNode(ISD::SRA, dl, NVT, InH,       // Sign extend high part.
+                       DAG.getConstant(NVTBits-1, ShTy));
+    Lo1 = DAG.getNode(ISD::SRA, dl, NVT, InH, Amt); // Lo part from Hi part.
+
+    // ShAmt >= NVTBits
+    Hi2 = DAG.getNode(ISD::SRA, dl, NVT, InH, Amt);
+    Lo2 = DAG.getNode(ISD::OR, dl, NVT,
+                      DAG.getNode(ISD::SRL, dl, NVT, InL, Amt),
+                      DAG.getNode(ISD::SHL, dl, NVT, InH, Amt2));
+
+    Lo = DAG.getNode(ISD::SELECT, dl, NVT, Cmp, Lo1, Lo2);
+    Hi = DAG.getNode(ISD::SELECT, dl, NVT, Cmp, Hi1, Hi2);
+    return true;
+  }
+
+  return false;
+}
+
 void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                                            SDValue &Lo, SDValue &Hi) {
   DebugLoc dl = N->getDebugLoc();
@@ -1792,10 +1864,15 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     else if (VT == MVT::i128)
       LC = RTLIB::SRA_I128;
   }
-  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported shift!");
+  
+  if (LC != RTLIB::UNKNOWN_LIBCALL && TLI.getLibcallName(LC)) {
+    SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
+    SplitInteger(MakeLibCall(LC, VT, Ops, 2, isSigned, dl), Lo, Hi);
+    return;
+  }
 
-  SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
-  SplitInteger(MakeLibCall(LC, VT, Ops, 2, isSigned, dl), Lo, Hi);
+  if (!ExpandShiftWithUnknownAmountBit(N, Lo, Hi))
+    assert(0 && "Unsupported shift!");
 }
 
 void DAGTypeLegalizer::ExpandIntRes_SIGN_EXTEND(SDNode *N,
