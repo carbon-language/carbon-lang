@@ -53,7 +53,7 @@ class AssemblyAnnotationWriter;
 /// using this Value.
 /// @brief LLVM Value Representation
 class Value {
-  const unsigned short SubclassID;   // Subclass identifier (for isa/dyn_cast)
+  const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
 protected:
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
