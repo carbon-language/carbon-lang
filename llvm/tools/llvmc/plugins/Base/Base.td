@@ -38,6 +38,8 @@ def OptList : OptionList<[
     (help "Add a directory to include path")),
  (prefix_list_option "Wa,",
     (help "Pass options to assembler")),
+ (prefix_list_option "Wllc,",
+    (help "Pass options to llc")),
  (prefix_list_option "L",
     (help "Add a directory to link path")),
  (prefix_list_option "l",
@@ -113,8 +115,10 @@ def llc : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "assembler"),
  (output_suffix "s"),
- (cmd_line "llc -relocation-model=pic -f $INFILE -o $OUTFILE"),
- (actions (case (switch_on "S"), (stop_compilation)))
+ (cmd_line "llc -f $INFILE -o $OUTFILE"),
+ (actions (case
+          (switch_on "S"), (stop_compilation),
+          (not_empty "Wllc,"), (unpack_values "Wllc,")))
 ]>;
 
 // Base class for linkers
