@@ -1693,6 +1693,14 @@ static const ObjCInterfaceDecl *getInterfaceDeclForIvar(
        E = OI->ivar_end(); I != E; ++I)
     if ((*I)->getIdentifier() == IVD->getIdentifier())
       return OI;
+  // look into properties.
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
+       E = OI->prop_end(); I != E; ++I) {
+    ObjCPropertyDecl *PDecl = (*I);
+    if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
+      if (IV->getIdentifier() == IVD->getIdentifier())
+        return OI;
+  }
   return getInterfaceDeclForIvar(OI->getSuperClass(), IVD);
 }
 
