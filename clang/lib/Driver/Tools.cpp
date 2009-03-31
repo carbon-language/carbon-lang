@@ -39,6 +39,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
+  assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
+
   CmdArgs.push_back("-triple");
   const char *TripleStr = 
     Args.MakeArgString(getToolChain().getTripleString().c_str());
@@ -373,6 +375,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
+
+  // Add -Wp, and -Xassembler if using the preprocessor.
+
+  // FIXME: There is a very unfortunate problem here, some troubled
+  // souls abuse -Wp, to pass preprocessor options in gcc syntax. To
+  // really support that we would have to parse and then translate
+  // those options. :(
+  if (types::getPreprocessedType(Inputs[0].getType()) != types::TY_INVALID)
+    Args.AddAllArgValues(CmdArgs, options::OPT_Wp_COMMA, 
+                         options::OPT_Xpreprocessor);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
 
