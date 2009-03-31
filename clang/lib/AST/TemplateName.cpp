@@ -14,6 +14,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "llvm/Support/raw_ostream.h"
+#include <stdio.h>
 
 using namespace clang;
 
@@ -51,4 +52,13 @@ void TemplateName::Print(llvm::raw_ostream &OS) const {
     OS << "template ";
     OS << DTN->getName()->getName();
   }
+}
+
+void TemplateName::Dump() const {
+  std::string Result;
+  {
+    llvm::raw_string_ostream OS(Result);
+    Print(OS);
+  }
+  fprintf(stderr, "%s", Result.c_str());
 }

@@ -701,6 +701,8 @@ def note_typename_refers_here : Note<
 
 def err_template_kw_refers_to_non_template : Error<
     "%0 following the 'template' keyword does not refer to a template">;
+def err_template_kw_refers_to_function_template : Error<
+    "%0 following the 'template' keyword refers to a function template">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;

@@ -99,6 +99,10 @@ public:
   /// \brief Print the template name.
   void Print(llvm::raw_ostream &OS) const;
 
+  /// \brief Debugging aid that dumps the template name to standard
+  /// error.
+  void Dump() const;
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddPointer(Storage.getOpaqueValue());
   }

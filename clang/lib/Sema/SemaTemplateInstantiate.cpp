@@ -472,10 +472,13 @@ InstantiateTemplateSpecializationType(
 
   // FIXME: We're missing the locations of the template name, '<', and
   // '>'.
-  // FIXME: Need to instantiate into the template name.
-  return SemaRef.CheckTemplateIdType(T->getTemplateName(),
-                                     Loc,
-                                    SourceLocation(),
+
+  TemplateName Name = SemaRef.InstantiateTemplateName(T->getTemplateName(),
+                                                      Loc, 
+                                                      TemplateArgs,
+                                                      NumTemplateArgs);
+
+  return SemaRef.CheckTemplateIdType(Name, Loc, SourceLocation(),
                                      &InstantiatedTemplateArgs[0],
                                      InstantiatedTemplateArgs.size(),
                                      SourceLocation());
@@ -838,4 +841,73 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
 
   // Required to silence a GCC warning
   return 0;
+}
+
+TemplateName
+Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
+                              const TemplateArgument *TemplateArgs,
+                              unsigned NumTemplateArgs) {
+  if (TemplateTemplateParmDecl *TTP 
+        = dyn_cast_or_null<TemplateTemplateParmDecl>(
+                                                 Name.getAsTemplateDecl())) {
+    assert(TTP->getDepth() == 0 && 
+           "Cannot reduce depth of a template template parameter");
+    assert(TTP->getPosition() < NumTemplateArgs && "Wrong # of template args");
+    assert(dyn_cast_or_null<ClassTemplateDecl>(
+                          TemplateArgs[TTP->getPosition()].getAsDecl()) &&
+           "Wrong kind of template template argument");
+    ClassTemplateDecl *ClassTemplate 
+      = dyn_cast<ClassTemplateDecl>(
+                               TemplateArgs[TTP->getPosition()].getAsDecl());
+
+    if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
+      NestedNameSpecifier *NNS 
+        = InstantiateNestedNameSpecifier(QTN->getQualifier(),
+                                         /*FIXME=*/SourceRange(Loc),
+                                         TemplateArgs, NumTemplateArgs);
+      if (NNS)
+        return Context.getQualifiedTemplateName(NNS, 
+                                                QTN->hasTemplateKeyword(),
+                                                ClassTemplate);
+    }
+
+    return TemplateName(ClassTemplate);
+  } else if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
+    NestedNameSpecifier *NNS 
+      = InstantiateNestedNameSpecifier(DTN->getQualifier(),
+                                       /*FIXME=*/SourceRange(Loc),
+                                       TemplateArgs, NumTemplateArgs);
+    
+    if (!NNS) // FIXME: Not the best recovery strategy.
+      return Name;
+    
+    if (NNS->isDependent())
+      return Context.getDependentTemplateName(NNS, DTN->getName());
+
+    // Somewhat redundant with ActOnDependentTemplateName.
+    CXXScopeSpec SS;
+    SS.setRange(SourceRange(Loc));
+    SS.setScopeRep(NNS);
+    TemplateTy Template;
+    TemplateNameKind TNK = isTemplateName(*DTN->getName(), 0, Template, &SS);
+    if (TNK == TNK_Non_template) {
+      Diag(Loc, diag::err_template_kw_refers_to_non_template)
+        << DTN->getName();
+      return Name;
+    } else if (TNK == TNK_Function_template) {
+      Diag(Loc, diag::err_template_kw_refers_to_non_template)
+        << DTN->getName();
+      return Name;
+    }
+    
+    return Template.getAsVal<TemplateName>();
+  }
+
+  
+
+  // FIXME: Even if we're referring to a Decl that isn't a template
+  // template parameter, we may need to instantiate the outer contexts
+  // of that Decl. However, this won't be needed until we implement
+  // member templates.
+  return Name;
 }

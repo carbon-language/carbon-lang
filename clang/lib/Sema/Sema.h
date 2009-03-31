@@ -1981,6 +1981,11 @@ public:
                                  const TemplateArgument *TemplateArgs,
                                  unsigned NumTemplateArgs);
 
+  TemplateName
+  InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs);
+
   // Simple function for cloning expressions.
   template<typename T> 
   OwningExprResult Clone(T *E) {

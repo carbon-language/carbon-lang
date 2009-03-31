@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 struct add_pointer {
   template<typename T>
@@ -10,20 +10,21 @@ struct add_pointer {
 struct add_reference {
   template<typename T>
   struct apply {
-    typedef T& type;
+    typedef T& type; // expected-error{{cannot form a reference to 'void'}}
   };
 };
 
 template<typename MetaFun, typename T>
 struct apply1 {
-  typedef typename MetaFun::template apply<T>::type type;
+  typedef typename MetaFun::template apply<T>::type type; // expected-note{{in instantiation of template class 'struct add_reference::apply<void>' requested here}}
 };
 
-#if 0
-// FIXME: The code below requires template instantiation for dependent
-// template-names that occur within nested-name-specifiers.
 int i;
-
 apply1<add_pointer, int>::type ip = &i;
 apply1<add_reference, int>::type ir = i;
-#endif
+apply1<add_reference, float>::type fr = i; // expected-error{{non-const lvalue reference to type 'float' cannot be initialized with a value of type 'int'}}
+
+void test() {
+  apply1<add_reference, void>::type t; // expected-note{{in instantiation of template class 'struct apply1<struct add_reference, void>' requested here}} \
+  // FIXME: expected-error{{unexpected type name 'type': expected expression}}
+}
