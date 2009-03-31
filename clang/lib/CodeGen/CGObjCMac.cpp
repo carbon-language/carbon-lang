@@ -456,12 +456,12 @@ protected:
 
   /// GetIvarBaseOffset - returns ivars byte offset.
   uint64_t GetIvarBaseOffset(const llvm::StructLayout *Layout,
-                             FieldDecl *Field);
+                             const FieldDecl *Field);
   
-  /// GetFieldBaseOffset - return's field byt offset.
+  /// GetFieldBaseOffset - return's field byte offset.
   uint64_t GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
                               const llvm::StructLayout *Layout,
-                              FieldDecl *Field);
+                              const FieldDecl *Field);
   
   /// CreateMetadataVar - Create a global variable with internal
   /// linkage for use by the Objective-C runtime.
@@ -1829,7 +1829,7 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
 }
 
 uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
-                                            FieldDecl *Field) {
+                                            const FieldDecl *Field) {
   if (!Field->isBitField())
     return Layout->getElementOffset(
             CGM.getTypes().getLLVMFieldNo(Field));
@@ -1844,12 +1844,10 @@ uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
 /// GetFieldBaseOffset - return's field byt offset.
 uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
                                              const llvm::StructLayout *Layout,
-                                             FieldDecl *Field) {
+                                             const FieldDecl *Field) {
   const ObjCIvarDecl *Ivar = cast<ObjCIvarDecl>(Field);
-  Field = const_cast<ObjCInterfaceDecl*>(OI)->lookupFieldDeclForIvar(
-                                                      CGM.getContext(), Ivar);
-  uint64_t Offset = GetIvarBaseOffset(Layout, Field);
-  return Offset;
+  const FieldDecl *FD = OI->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
+  return GetIvarBaseOffset(Layout, FD);
 }
 
 llvm::GlobalVariable *
