@@ -183,9 +183,7 @@ namespace llvm {
       // Is it PT1/PT2?
       if (::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0) != -1)
         return Val.is<InnerUnion>() && Val.get<InnerUnion>().is<T>();
-      // Must be PT3 or statically invalid.
-      assert(Val.is<T>());
-      return true;
+      return Val.is<T>();
     }
     
     /// get<T>() - Return the value of the specified pointer type. If the
