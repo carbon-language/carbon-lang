@@ -1,4 +1,4 @@
-//===-- llvm/CallingConvLower.cpp - Calling Conventions -------------------===//
+//===-- CallingConvLower.cpp - Calling Conventions ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
