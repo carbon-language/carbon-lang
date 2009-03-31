@@ -322,12 +322,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     }
     // The function type can be built; call the appropriate routines to
     // build it.
-    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(&Ty)) {
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(&Ty))
       return GetFunctionType(getFunctionInfo(FPT), FPT->isVariadic());
-    } else {
-      const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
-      return GetFunctionType(getFunctionInfo(FNPT), true);
-    }
+
+    const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
+    return GetFunctionType(getFunctionInfo(FNPT), true);
   }
   
   case Type::ExtQual:
@@ -341,16 +340,13 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // previously checked that the ObjCRuntime subclass in use does not support
     // late-bound ivars.
     // We are issuing warnings elsewhere!
-    ObjCInterfaceType OIT = cast<ObjCInterfaceType>(Ty);
-    ObjCInterfaceDecl *ID = OIT.getDecl();
-    const RecordDecl *RD = Context.addRecordToClass(ID);
-    return ConvertTagDeclType(cast<TagDecl>(RD));
+    ObjCInterfaceDecl *ID = cast<ObjCInterfaceType>(Ty).getDecl();
+    return ConvertTagDeclType(Context.addRecordToClass(ID));
   }
       
   case Type::ObjCQualifiedInterface: {
-    ObjCQualifiedInterfaceType QIT = cast<ObjCQualifiedInterfaceType>(Ty);
-    
-    return ConvertTypeRecursive(Context.getObjCInterfaceType(QIT.getDecl()));
+    ObjCInterfaceDecl *ID = cast<ObjCQualifiedInterfaceType>(Ty).getDecl();
+    return ConvertTypeRecursive(Context.getObjCInterfaceType(ID));
   }
 
   case Type::ObjCQualifiedId:
