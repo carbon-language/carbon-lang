@@ -338,7 +338,7 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
 }
 
 void ObjCInterfaceDecl::Destroy(ASTContext &C) {  
-  for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
+  for (ivar_iterator I = ivar_begin(), E = ivar_end(); I != E; ++I)
     if (*I) (*I)->Destroy(C);
   
   IVars.Destroy(C);
@@ -371,13 +371,10 @@ FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context,
                                                      const ObjCIvarDecl *IVar) {
   const RecordDecl *RecordForDecl = Context.addRecordToClass(this);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
-  DeclarationName Member = IVar->getDeclName();
-  DeclContext::lookup_result Lookup =
-    (const_cast< RecordDecl *>(RecordForDecl))->lookup(Member);
+  DeclContext::lookup_const_result Lookup =
+    RecordForDecl->lookup(IVar->getDeclName());
   assert((Lookup.first != Lookup.second) && "field decl not found");
-  FieldDecl *MemberDecl = dyn_cast<FieldDecl>(*Lookup.first);
-  assert(MemberDecl && "field decl not found");
-  return MemberDecl;
+  return cast<FieldDecl>(*Lookup.first);
 }
 
 //===----------------------------------------------------------------------===//
