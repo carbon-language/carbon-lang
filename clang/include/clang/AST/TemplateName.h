@@ -97,11 +97,11 @@ public:
   bool isDependent() const;
 
   /// \brief Print the template name.
-  void Print(llvm::raw_ostream &OS) const;
+  void print(llvm::raw_ostream &OS) const;
 
   /// \brief Debugging aid that dumps the template name to standard
   /// error.
-  void Dump() const;
+  void dump() const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddPointer(Storage.getOpaqueValue());

@@ -159,7 +159,7 @@ public:
 
   /// \brief Print this nested name specifier to the given output
   /// stream.
-  void Print(llvm::raw_ostream &OS) const;
+  void print(llvm::raw_ostream &OS) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(Prefix);
@@ -171,7 +171,7 @@ public:
 
   /// \brief Dump the nested name specifier to standard output to aid
   /// in debugging.
-  void Dump();
+  void dump();
 };
 
 }

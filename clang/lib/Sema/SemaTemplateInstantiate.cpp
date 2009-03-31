@@ -853,13 +853,12 @@ Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
     assert(TTP->getDepth() == 0 && 
            "Cannot reduce depth of a template template parameter");
     assert(TTP->getPosition() < NumTemplateArgs && "Wrong # of template args");
-    assert(dyn_cast_or_null<ClassTemplateDecl>(
-                          TemplateArgs[TTP->getPosition()].getAsDecl()) &&
+    assert(TemplateArgs[TTP->getPosition()].getAsDecl() &&
            "Wrong kind of template template argument");
     ClassTemplateDecl *ClassTemplate 
       = dyn_cast<ClassTemplateDecl>(
                                TemplateArgs[TTP->getPosition()].getAsDecl());
-
+    assert(ClassTemplate && "Expected a class template");
     if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
       NestedNameSpecifier *NNS 
         = InstantiateNestedNameSpecifier(QTN->getQualifier(),

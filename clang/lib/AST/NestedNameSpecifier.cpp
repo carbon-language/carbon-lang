@@ -17,7 +17,6 @@
 #include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
-#include <stdio.h>
 
 using namespace clang;
 
@@ -105,9 +104,9 @@ bool NestedNameSpecifier::isDependent() const {
 
 /// \brief Print this nested name specifier to the given output
 /// stream.
-void NestedNameSpecifier::Print(llvm::raw_ostream &OS) const {
+void NestedNameSpecifier::print(llvm::raw_ostream &OS) const {
   if (Prefix)
-    Prefix->Print(OS);
+    Prefix->print(OS);
 
   switch (getKind()) {
   case Identifier:
@@ -152,11 +151,6 @@ void NestedNameSpecifier::Destroy(ASTContext &Context) {
   Context.Deallocate((void *)this);
 }
 
-void NestedNameSpecifier::Dump() {
-  std::string Result;
-  {
-    llvm::raw_string_ostream OS(Result);
-    Print(OS);
-  }
-  fprintf(stderr, "%s", Result.c_str());
+void NestedNameSpecifier::dump() {
+  print(llvm::errs());
 }

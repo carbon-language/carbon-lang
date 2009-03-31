@@ -1411,7 +1411,7 @@ getAsStringInternal(std::string &InnerString) const {
 
   {
     llvm::raw_string_ostream OS(SpecString);
-    Template.Print(OS);
+    Template.print(OS);
   }
 
   SpecString += PrintTemplateArgumentList(getArgs(), getNumArgs());
@@ -1426,7 +1426,7 @@ void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
 
   {
     llvm::raw_string_ostream OS(MyString);
-    NNS->Print(OS);
+    NNS->print(OS);
   }
   
   std::string TypeStr;
@@ -1449,7 +1449,7 @@ void TypenameType::getAsStringInternal(std::string &InnerString) const {
   {
     llvm::raw_string_ostream OS(MyString);
     OS << "typename ";
-    NNS->Print(OS);
+    NNS->print(OS);
     OS << Name->getName();
   }
   

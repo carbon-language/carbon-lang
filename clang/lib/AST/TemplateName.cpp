@@ -14,7 +14,6 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "llvm/Support/raw_ostream.h"
-#include <stdio.h>
 
 using namespace clang;
 
@@ -39,26 +38,21 @@ bool TemplateName::isDependent() const {
   return true;
 }
 
-void TemplateName::Print(llvm::raw_ostream &OS) const {
+void TemplateName::print(llvm::raw_ostream &OS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     OS << Template->getIdentifier()->getName();
   else if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
-    QTN->getQualifier()->Print(OS);
+    QTN->getQualifier()->print(OS);
     if (QTN->hasTemplateKeyword())
       OS << "template ";
     OS << QTN->getTemplateDecl()->getIdentifier()->getName();
   } else if (DependentTemplateName *DTN = getAsDependentTemplateName()) {
-    DTN->getQualifier()->Print(OS);
+    DTN->getQualifier()->print(OS);
     OS << "template ";
     OS << DTN->getName()->getName();
   }
 }
 
-void TemplateName::Dump() const {
-  std::string Result;
-  {
-    llvm::raw_string_ostream OS(Result);
-    Print(OS);
-  }
-  fprintf(stderr, "%s", Result.c_str());
+void TemplateName::dump() const {
+  print(llvm::errs());
 }
