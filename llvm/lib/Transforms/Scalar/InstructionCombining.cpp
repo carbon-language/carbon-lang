@@ -223,6 +223,7 @@ namespace {
     Instruction *visitBitCast(BitCastInst &CI);
     Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                 Instruction *FI);
+    Instruction *FoldSelectIntoOp(SelectInst &SI, Value*, Value*);
     Instruction *visitSelectInst(SelectInst &SI);
     Instruction *visitSelectInstWithICmp(SelectInst &SI, ICmpInst *ICI);
     Instruction *visitCallInst(CallInst &CI);
@@ -8836,6 +8837,83 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
   return 0;
 }
 
+static bool isSelect01(Constant *C1, Constant *C2) {
+  ConstantInt *C1I = dyn_cast<ConstantInt>(C1);
+  if (!C1I)
+    return false;
+  ConstantInt *C2I = dyn_cast<ConstantInt>(C2);
+  if (!C2I)
+    return false;
+  return (C1I->isZero() || C1I->isOne()) && (C2I->isZero() || C2I->isOne());
+}
+
+/// FoldSelectIntoOp - Try fold the select into one of the operands to
+/// facilitate further optimization.
+Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
+                                            Value *FalseVal) {
+  // See the comment above GetSelectFoldableOperands for a description of the
+  // transformation we are doing here.
+  if (Instruction *TVI = dyn_cast<Instruction>(TrueVal)) {
+    if (TVI->hasOneUse() && TVI->getNumOperands() == 2 &&
+        !isa<Constant>(FalseVal)) {
+      if (unsigned SFO = GetSelectFoldableOperands(TVI)) {
+        unsigned OpToFold = 0;
+        if ((SFO & 1) && FalseVal == TVI->getOperand(0)) {
+          OpToFold = 1;
+        } else  if ((SFO & 2) && FalseVal == TVI->getOperand(1)) {
+          OpToFold = 2;
+        }
+
+        if (OpToFold) {
+          Constant *C = GetSelectFoldableConstant(TVI);
+          Value *OOp = TVI->getOperand(2-OpToFold);
+          // Avoid creating select between 2 constants unless it's selecting
+          // between 0 and 1.
+          if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
+            Instruction *NewSel = SelectInst::Create(SI.getCondition(), OOp, C);
+            InsertNewInstBefore(NewSel, SI);
+            NewSel->takeName(TVI);
+            if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TVI))
+              return BinaryOperator::Create(BO->getOpcode(), FalseVal, NewSel);
+            assert(0 && "Unknown instruction!!");
+          }
+        }
+      }
+    }
+  }
+
+  if (Instruction *FVI = dyn_cast<Instruction>(FalseVal)) {
+    if (FVI->hasOneUse() && FVI->getNumOperands() == 2 &&
+        !isa<Constant>(TrueVal)) {
+      if (unsigned SFO = GetSelectFoldableOperands(FVI)) {
+        unsigned OpToFold = 0;
+        if ((SFO & 1) && TrueVal == FVI->getOperand(0)) {
+          OpToFold = 1;
+        } else  if ((SFO & 2) && TrueVal == FVI->getOperand(1)) {
+          OpToFold = 2;
+        }
+
+        if (OpToFold) {
+          Constant *C = GetSelectFoldableConstant(FVI);
+          Value *OOp = FVI->getOperand(2-OpToFold);
+          // Avoid creating select between 2 constants unless it's selecting
+          // between 0 and 1.
+          if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
+            Instruction *NewSel = SelectInst::Create(SI.getCondition(), C, OOp);
+            InsertNewInstBefore(NewSel, SI);
+            NewSel->takeName(FVI);
+            if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FVI))
+              return BinaryOperator::Create(BO->getOpcode(), TrueVal, NewSel);
+            assert(0 && "Unknown instruction!!");
+          }
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
 /// visitSelectInstWithICmp - Visit a SelectInst that has an
 /// ICmpInst as its first operand.
 ///
@@ -9181,58 +9259,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
   // See if we can fold the select into one of our operands.
   if (SI.getType()->isInteger()) {
-    // See the comment above GetSelectFoldableOperands for a description of the
-    // transformation we are doing here.
-    if (Instruction *TVI = dyn_cast<Instruction>(TrueVal))
-      if (TVI->hasOneUse() && TVI->getNumOperands() == 2 &&
-          !isa<Constant>(FalseVal))
-        if (unsigned SFO = GetSelectFoldableOperands(TVI)) {
-          unsigned OpToFold = 0;
-          if ((SFO & 1) && FalseVal == TVI->getOperand(0)) {
-            OpToFold = 1;
-          } else  if ((SFO & 2) && FalseVal == TVI->getOperand(1)) {
-            OpToFold = 2;
-          }
-
-          if (OpToFold) {
-            Constant *C = GetSelectFoldableConstant(TVI);
-            Instruction *NewSel =
-              SelectInst::Create(SI.getCondition(),
-                                 TVI->getOperand(2-OpToFold), C);
-            InsertNewInstBefore(NewSel, SI);
-            NewSel->takeName(TVI);
-            if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TVI))
-              return BinaryOperator::Create(BO->getOpcode(), FalseVal, NewSel);
-            else {
-              assert(0 && "Unknown instruction!!");
-            }
-          }
-        }
-
-    if (Instruction *FVI = dyn_cast<Instruction>(FalseVal))
-      if (FVI->hasOneUse() && FVI->getNumOperands() == 2 &&
-          !isa<Constant>(TrueVal))
-        if (unsigned SFO = GetSelectFoldableOperands(FVI)) {
-          unsigned OpToFold = 0;
-          if ((SFO & 1) && TrueVal == FVI->getOperand(0)) {
-            OpToFold = 1;
-          } else  if ((SFO & 2) && TrueVal == FVI->getOperand(1)) {
-            OpToFold = 2;
-          }
-
-          if (OpToFold) {
-            Constant *C = GetSelectFoldableConstant(FVI);
-            Instruction *NewSel =
-              SelectInst::Create(SI.getCondition(), C,
-                                 FVI->getOperand(2-OpToFold));
-            InsertNewInstBefore(NewSel, SI);
-            NewSel->takeName(FVI);
-            if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FVI))
-              return BinaryOperator::Create(BO->getOpcode(), TrueVal, NewSel);
-            else
-              assert(0 && "Unknown instruction!!");
-          }
-        }
+    Instruction *FoldI = FoldSelectIntoOp(SI, TrueVal, FalseVal);
+    if (FoldI)
+      return FoldI;
   }
 
   if (BinaryOperator::isNot(CondVal)) {
