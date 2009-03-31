@@ -430,6 +430,8 @@ namespace llvm {
     /// the folded instruction map and spill point map.
     void RemoveMachineInstrFromMaps(MachineInstr *MI);
 
+    bool OnlyUseOfStackSlot(const MachineInstr *MI) const;
+
     void print(std::ostream &OS, const Module* M = 0) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }
     void dump() const;

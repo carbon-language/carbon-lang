@@ -285,6 +285,7 @@ namespace llvm {
     const TargetRegisterInfo *TRI;
     const TargetInstrInfo *TII;
     DenseMap<MachineInstr*, unsigned> DistanceMap;
+    std::vector<MachineInstr*> AddedSpills;
   public:
     bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM);
   private:
@@ -305,6 +306,14 @@ namespace llvm {
                              std::vector<MachineOperand*> &KillOps,
                              const TargetRegisterInfo *TRI,
                              VirtRegMap &VRM);
+    void RemoveDeadStore(MachineInstr *Store,
+                         MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator &MII,
+                         SmallSet<MachineInstr*, 4> &ReMatDefs,
+                         BitVector &RegKills,
+                         std::vector<MachineOperand*> &KillOps,
+                         VirtRegMap &VRM);
+
     void SpillRegToStackSlot(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator &MII,
                              int Idx, unsigned PhysReg, int StackSlot,
