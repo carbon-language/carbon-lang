@@ -17,21 +17,7 @@
 
 using namespace llvm;
 
-std::string sys::getOSName() {
-  return "Windows";
-}
-
-std::string sys::getOSVersion() {
-  OSVERSIONINFO osvi;
-
-  memset(&osvi, 0, sizeof(osvi));
-  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-  if (!GetVersionEx(&osvi))
-    return "";
-
-  char buf[64];
-  sprintf(buf, "%d.%d", (int)osvi.dwMajorVersion, (int)osvi.dwMinorVersion);
-
-  return buf;
+std::string sys::getHostTriple() {
+  // FIXME: Adapt to running version.
+  return LLVM_HOSTTRIPLE;
 }

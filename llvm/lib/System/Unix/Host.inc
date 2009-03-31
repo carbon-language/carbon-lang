@@ -23,20 +23,36 @@
 
 using namespace llvm;
 
-std::string llvm::sys::getOSName() {
-  struct utsname info;
-
-  if (uname(&info))
-    return "";
-
-  return info.sysname;
-}
-
-std::string llvm::sys::getOSVersion() {
+static std::string getOSVersion() {
   struct utsname info;
 
   if (uname(&info))
     return "";
 
   return info.release;
+}
+
+std::string sys::getHostTriple() {
+  // FIXME: Derive more directly instead of relying on the autoconf
+  // generated variable.
+
+  std::string Triple = LLVM_HOSTTRIPLE;
+
+  // Force i<N>86 to i386.
+  if (Triple[0] == 'i' && isdigit(Triple[1]) && 
+      Triple[2] == '8' && Triple[3] == '6')
+    Triple[1] = '3';
+
+  // On darwin, we want to update the version to match that of the
+  // host.    
+  std::string::size_type DarwinDashIdx = Triple.find("-darwin");
+  if (DarwinDashIdx != std::string::npos) {
+    Triple.resize(DarwinDashIdx + strlen("-darwin"));
+    
+    // Only add the major part of the os version.
+    std::string Version = getOSVersion();
+    Triple += Version.substr(0, Version.find('.'));
+  }
+
+  return Triple;
 }

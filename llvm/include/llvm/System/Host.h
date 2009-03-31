@@ -32,13 +32,15 @@ namespace sys {
     return !isLittleEndianHost();
   }
 
-  /// getOSName() - Return the name of the host operating system or "" if
-  /// unknown.
-  std::string getOSName();
+  /// getHostTriple() - Return the target triple of the running
+  /// system.
+  ///
+  /// The target triple is a string in the format of:
+  ///   CPU_TYPE-VENDOR-OPERATING_SYSTEM
+  /// or
+  ///   CPU_TYPE-VENDOR-KERNEL-OPERATING_SYSTEM
+  std::string getHostTriple();
 
-  /// getOSVersion() - Return the operating system version as a string or
-  /// "" if unknown.
-  std::string getOSVersion();
 }
 }
 
