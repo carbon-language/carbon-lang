@@ -137,14 +137,16 @@ const char *OptTable::getOptionName(options::ID id) const {
   return getInfo(id).Name;
 }
 
+unsigned OptTable::getOptionKind(options::ID id) const {
+  return getInfo(id).Kind;
+}
+
 const char *OptTable::getOptionHelpText(options::ID id) const {
   return getInfo(id).HelpText;
 }
 
 const char *OptTable::getOptionMetaVar(options::ID id) const {
-  const char *Name = getInfo(id).MetaVar;
-  // FIXME: This will need translation.
-  return Name ? Name : "<var>";
+  return getInfo(id).MetaVar;
 }
 
 const Option *OptTable::getOption(options::ID id) const {

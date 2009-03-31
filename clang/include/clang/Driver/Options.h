@@ -61,6 +61,9 @@ namespace options {
     /// creating it if necessary.
     const Option *getOption(options::ID id) const;
 
+    /// getOptionKind - Get the kind of the given option.
+    unsigned getOptionKind(options::ID id) const;
+
     /// getOptionHelpText - Get the help text to use to describe this
     /// option.
     const char *getOptionHelpText(options::ID id) const;
