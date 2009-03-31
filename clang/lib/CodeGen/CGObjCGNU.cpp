@@ -71,6 +71,7 @@ private:
       const llvm::SmallVectorImpl<Selector>  &MethodSels, 
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes, 
       bool isClassMethodList);
+  llvm::Constant *GenerateEmptyProtocol(const std::string &ProtocolName);
   llvm::Constant *GenerateProtocolList(
       const llvm::SmallVectorImpl<std::string> &Protocols);
   llvm::Constant *GenerateClassStructure(
@@ -554,8 +555,11 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
   std::vector<llvm::Constant*> Elements; 
   for (const std::string *iter = Protocols.begin(), *endIter = Protocols.end();
       iter != endIter ; iter++) {
+    llvm::Constant *protocol = ExistingProtocols[*iter];
+    if (!protocol)
+      protocol = GenerateEmptyProtocol(*iter);
     llvm::Constant *Ptr =
-      llvm::ConstantExpr::getBitCast(ExistingProtocols[*iter], PtrToInt8Ty);
+      llvm::ConstantExpr::getBitCast(protocol, PtrToInt8Ty);
     Elements.push_back(Ptr);
   }
   llvm::Constant * ProtocolArray = llvm::ConstantArray::get(ProtocolArrayTy,
@@ -569,7 +573,40 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
 
 llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder, 
                                             const ObjCProtocolDecl *PD) {
-  return ExistingProtocols[PD->getNameAsString()];
+  llvm::Value *protocol = ExistingProtocols[PD->getNameAsString()];
+  const llvm::Type *T = 
+    CGM.getTypes().ConvertType(CGM.getContext().getObjCProtoType());
+  return Builder.CreateBitCast(protocol, llvm::PointerType::getUnqual(T));
+}
+
+llvm::Constant *CGObjCGNU::GenerateEmptyProtocol(
+  const std::string &ProtocolName) {
+  llvm::SmallVector<std::string, 0> EmptyStringVector;
+  llvm::SmallVector<llvm::Constant*, 0> EmptyConstantVector;
+
+  llvm::Constant *ProtocolList = GenerateProtocolList(EmptyStringVector);
+  llvm::Constant *InstanceMethodList =
+    GenerateProtocolMethodList(EmptyConstantVector, EmptyConstantVector);
+  llvm::Constant *ClassMethodList =
+    GenerateProtocolMethodList(EmptyConstantVector, EmptyConstantVector);
+  // Protocols are objects containing lists of the methods implemented and
+  // protocols adopted.
+  llvm::StructType *ProtocolTy = llvm::StructType::get(IdTy,
+      PtrToInt8Ty,
+      ProtocolList->getType(),
+      InstanceMethodList->getType(),
+      ClassMethodList->getType(),
+      NULL);
+  std::vector<llvm::Constant*> Elements; 
+  // The isa pointer must be set to a magic number so the runtime knows it's
+  // the correct layout.
+  Elements.push_back(llvm::ConstantExpr::getIntToPtr(
+        llvm::ConstantInt::get(llvm::Type::Int32Ty, ProtocolVersion), IdTy));
+  Elements.push_back(MakeConstantString(ProtocolName, ".objc_protocol_name"));
+  Elements.push_back(ProtocolList);
+  Elements.push_back(InstanceMethodList);
+  Elements.push_back(ClassMethodList);
+  return MakeGlobal(ProtocolTy, Elements, ".objc_protocol");
 }
 
 void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
