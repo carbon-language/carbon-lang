@@ -1373,8 +1373,6 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
                                           QualType Canon) {
-  // FIXME: If Template is dependent, canonicalize it!
-
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
 

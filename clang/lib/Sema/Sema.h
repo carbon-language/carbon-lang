@@ -1690,7 +1690,7 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
-  virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
+  virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
                                           TemplateTy &Template,
                                           const CXXScopeSpec *SS = 0);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
@@ -1756,6 +1756,11 @@ public:
                       SourceLocation *TemplateArgLocs,
                       SourceLocation RAngleLoc);
   
+  virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
+                                                const IdentifierInfo &Name,
+                                                SourceLocation NameLoc,
+                                                const CXXScopeSpec &SS);
+
   bool CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
                                     ClassTemplateSpecializationDecl *PrevDecl,
                                              SourceLocation TemplateNameLoc,

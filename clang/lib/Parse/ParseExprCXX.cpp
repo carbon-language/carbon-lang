@@ -92,9 +92,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         Tok.is(tok::kw_template)) {
       // Parse the optional 'template' keyword, then make sure we have
       // 'identifier <' after it.
-      SourceLocation TemplateKWLoc;
       if (Tok.is(tok::kw_template)) {
-        TemplateKWLoc = ConsumeToken();
+        SourceLocation TemplateKWLoc = ConsumeToken();
         
         if (Tok.isNot(tok::identifier)) {
           Diag(Tok.getLocation(), 
@@ -110,20 +109,20 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
             << SourceRange(TemplateKWLoc, Tok.getLocation());
           break;
         }
-      }
-      else {
-        // FIXME: If the nested-name-specifier thus far is dependent,
-        // we need to break out of here, because this '<' is taken as
-        // an operator and not as part of a simple-template-id.
+
+        TemplateTy Template 
+          = Actions.ActOnDependentTemplateName(TemplateKWLoc,
+                                               *Tok.getIdentifierInfo(),
+                                               Tok.getLocation(),
+                                               SS);
+        AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
+                                &SS, TemplateKWLoc, false);
+        continue;
       }
 
       TemplateTy Template;
-      TemplateNameKind TNK = TNK_Non_template;
-      // FIXME: If the nested-name-specifier thus far is dependent,
-      // set TNK = TNK_Dependent_template_name and skip the
-      // "isTemplateName" check.
-      TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(),
-                                   CurScope, Template, &SS);
+      TemplateNameKind TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(),
+                                                    CurScope, Template, &SS);
       if (TNK) {
         // We have found a template name, so annotate this this token
         // with a template-id annotation. We do not permit the
@@ -131,7 +130,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         // because some clients (e.g., the parsing of class template
         // specializations) still want to see the original template-id
         // token.
-        AnnotateTemplateIdToken(Template, TNK, &SS, TemplateKWLoc, false);
+        AnnotateTemplateIdToken(Template, TNK, &SS, SourceLocation(), false);
         continue;
       }
     }
@@ -142,12 +141,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       //   simple-template-id '::'
       //
       // So we need to check whether the simple-template-id is of the
-      // right kind (it should name a type), and then convert it into
-      // a type within the nested-name-specifier.
+      // right kind (it should name a type or be dependent), and then
+      // convert it into a type within the nested-name-specifier.
       TemplateIdAnnotation *TemplateId 
         = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
 
-      if (TemplateId->Kind == TNK_Class_template) {
+      if (TemplateId->Kind == TNK_Type_template || 
+          TemplateId->Kind == TNK_Dependent_template_name) {
         if (AnnotateTemplateIdTokenAsType(&SS))
           SS.clear();
 
@@ -172,7 +172,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         SS.setEndLoc(CCLoc);
         continue;
       } else
-        assert(false && "FIXME: Only class template names supported here");
+        assert(false && "FIXME: Only type template names supported here");
     }
 
     // We don't have any tokens that form the beginning of a

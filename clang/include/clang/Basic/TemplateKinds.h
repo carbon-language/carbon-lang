@@ -22,12 +22,14 @@ enum TemplateNameKind {
   /// The name refers to a function template or a set of overloaded
   /// functions that includes at least one function template.
   TNK_Function_template,
-  /// The name refers to a class template.
-  TNK_Class_template,
-  /// The name referes to a template template parameter.
-  TNK_Template_template_parm,
-  /// The name is dependent and is known to be a template name based
-  /// on syntax, e.g., "Alloc::template rebind<Other>".
+  /// The name refers to a template whose specialization produces a
+  /// type. The template itself could be a class template, template
+  /// template parameter, or C++0x template alias.
+  TNK_Type_template,
+  /// The name refers to a dependent template name. Whether the
+  /// template name is assumed to refer to a type template or a
+  /// function template depends on the context in which the template
+  /// name occurs.
   TNK_Dependent_template_name
 };
 

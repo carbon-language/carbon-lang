@@ -699,6 +699,9 @@ def err_typename_nested_not_type : Error<
 def note_typename_refers_here : Note<
     "referenced member %0 is declared here">;
 
+def err_template_kw_refers_to_non_template : Error<
+    "%0 following the 'template' keyword does not refer to a template">;
+
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
 def err_unexpected_namespace : Error<

@@ -94,8 +94,12 @@ QualType Type::getDesugaredType() const {
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
     return TOT->getUnderlyingType().getDesugaredType();
   if (const TemplateSpecializationType *Spec 
-        = dyn_cast<TemplateSpecializationType>(this))
-    return Spec->getCanonicalTypeInternal().getDesugaredType();
+        = dyn_cast<TemplateSpecializationType>(this)) {
+    QualType Canon = Spec->getCanonicalTypeInternal();
+    if (Canon->getAsTemplateSpecializationType())
+      return QualType(this, 0);
+    return Canon->getDesugaredType();
+  }
   if (const QualifiedNameType *QualName  = dyn_cast<QualifiedNameType>(this))
     return QualName->getNamedType().getDesugaredType();
 

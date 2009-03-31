@@ -513,7 +513,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       Token Next = NextToken();
       if (Next.is(tok::annot_template_id) && 
           static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue())
-          ->Kind == TNK_Class_template) {
+            ->Kind == TNK_Type_template) {
         // We have a qualified template-id, e.g., N::A<int>
         CXXScopeSpec SS;
         ParseOptionalCXXScopeSpecifier(SS);
@@ -640,7 +640,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::annot_template_id: {
       TemplateIdAnnotation *TemplateId 
         = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-      if (TemplateId->Kind != TNK_Class_template) {
+      if (TemplateId->Kind != TNK_Type_template) {
         // This template-id does not refer to a type name, so we're
         // done with the type-specifiers.
         goto DoneWithDeclSpec;

@@ -531,8 +531,7 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
     return; 
 
   // Build the annotation token.
-  // FIXME: Not just for class templates!
-  if (TNK == TNK_Class_template && AllowTypeAnnotation) {
+  if (TNK == TNK_Type_template && AllowTypeAnnotation) {
     Action::TypeResult Type 
       = Actions.ActOnTemplateIdType(Template, TemplateNameLoc,
                                     LAngleLoc, TemplateArgsPtr,
@@ -550,8 +549,8 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
     else 
       Tok.setLocation(TemplateNameLoc);
   } else {
-    // This is a function template. We'll be building a template-id
-    // annotation token.
+    // Build a template-id annotation token that can be processed
+    // later.
     Tok.setKind(tok::annot_template_id);
     TemplateIdAnnotation *TemplateId 
       = TemplateIdAnnotation::Allocate(TemplateArgs.size());
@@ -595,8 +594,9 @@ bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
 
   TemplateIdAnnotation *TemplateId 
     = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-  assert(TemplateId->Kind == TNK_Class_template &&
-         "Only works for class templates");
+  assert((TemplateId->Kind == TNK_Type_template ||
+          TemplateId->Kind == TNK_Dependent_template_name) &&
+         "Only works for type and dependent templates");
   
   ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
                                      TemplateId->getTemplateArgs(),

@@ -26,7 +26,7 @@ using namespace clang;
 /// declaration if II names a template. An optional CXXScope can be
 /// passed to indicate the C++ scope in which the identifier will be
 /// found. 
-TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
+TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
                                       TemplateTy &TemplateResult,
                                       const CXXScopeSpec *SS) {
   NamedDecl *IIDecl = LookupParsedName(S, SS, &II, LookupOrdinaryName);
@@ -38,10 +38,9 @@ TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
     if ((Template = dyn_cast<TemplateDecl>(IIDecl))) {
       if (isa<FunctionTemplateDecl>(IIDecl))
         TNK = TNK_Function_template;
-      else if (isa<ClassTemplateDecl>(IIDecl))
-        TNK = TNK_Class_template;
-      else if (isa<TemplateTemplateParmDecl>(IIDecl))
-        TNK = TNK_Template_template_parm;
+      else if (isa<ClassTemplateDecl>(IIDecl) || 
+               isa<TemplateTemplateParmDecl>(IIDecl))
+        TNK = TNK_Type_template;
       else
         assert(false && "Unknown template declaration kind");
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(IIDecl)) {
@@ -59,11 +58,11 @@ TemplateNameKind Sema::isTemplateName(IdentifierInfo &II, Scope *S,
       if (Record->isInjectedClassName()) {
         Record = cast<CXXRecordDecl>(Context.getCanonicalDecl(Record));
         if ((Template = Record->getDescribedClassTemplate()))
-          TNK = TNK_Class_template;
+          TNK = TNK_Type_template;
         else if (ClassTemplateSpecializationDecl *Spec
                    = dyn_cast<ClassTemplateSpecializationDecl>(Record)) {
           Template = Spec->getSpecializedTemplate();
-          TNK = TNK_Class_template;
+          TNK = TNK_Type_template;
         }
       }
     }
@@ -716,6 +715,56 @@ translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
   }
 }
 
+/// \brief Build a canonical version of a template argument list. 
+///
+/// This function builds a canonical version of the given template
+/// argument list, where each of the template arguments has been
+/// converted into its canonical form. This routine is typically used
+/// to canonicalize a template argument list when the template name
+/// itself is dependent. When the template name refers to an actual
+/// template declaration, Sema::CheckTemplateArgumentList should be
+/// used to check and canonicalize the template arguments.
+///
+/// \param TemplateArgs The incoming template arguments.
+///
+/// \param NumTemplateArgs The number of template arguments in \p
+/// TemplateArgs.
+///
+/// \param Canonical A vector to be filled with the canonical versions
+/// of the template arguments.
+///
+/// \param Context The ASTContext in which the template arguments live.
+static void CanonicalizeTemplateArguments(const TemplateArgument *TemplateArgs,
+                                          unsigned NumTemplateArgs,
+                            llvm::SmallVectorImpl<TemplateArgument> &Canonical,
+                                          ASTContext &Context) {
+  Canonical.reserve(NumTemplateArgs);
+  for (unsigned Idx = 0; Idx < NumTemplateArgs; ++Idx) {
+    switch (TemplateArgs[Idx].getKind()) {
+    case TemplateArgument::Expression:
+      // FIXME: Build canonical expression (!)
+      Canonical.push_back(TemplateArgs[Idx]);
+      break;
+
+    case TemplateArgument::Declaration:
+      Canonical.push_back(TemplateArgument(SourceLocation(),
+                                           TemplateArgs[Idx].getAsDecl()));
+      break;
+
+    case TemplateArgument::Integral:
+      Canonical.push_back(TemplateArgument(SourceLocation(),
+                                           *TemplateArgs[Idx].getAsIntegral(),
+                                        TemplateArgs[Idx].getIntegralType()));
+
+    case TemplateArgument::Type: {
+      QualType CanonType 
+        = Context.getCanonicalType(TemplateArgs[Idx].getAsType());
+      Canonical.push_back(TemplateArgument(SourceLocation(), CanonType));
+    }
+    }
+  }
+}
+
 QualType Sema::CheckTemplateIdType(TemplateName Name,
                                    SourceLocation TemplateLoc,
                                    SourceLocation LAngleLoc,
@@ -723,7 +772,25 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                    unsigned NumTemplateArgs,
                                    SourceLocation RAngleLoc) {
   TemplateDecl *Template = Name.getAsTemplateDecl();
-  assert(Template && "Cannot handle dependent template-names yet");
+  if (!Template) {
+    // The template name does not resolve to a template, so we just
+    // build a dependent template-id type.
+
+    // Canonicalize the template arguments to build the canonical
+    // template-id type.
+    llvm::SmallVector<TemplateArgument, 16> CanonicalTemplateArgs;
+    CanonicalizeTemplateArguments(TemplateArgs, NumTemplateArgs,
+                                  CanonicalTemplateArgs, Context);
+
+    // FIXME: Get the canonical template-name
+    QualType CanonType
+      = Context.getTemplateSpecializationType(Name, &CanonicalTemplateArgs[0],
+                                              CanonicalTemplateArgs.size());
+
+    // Build the dependent template-id type.
+    return Context.getTemplateSpecializationType(Name, TemplateArgs,
+                                                 NumTemplateArgs, CanonType);
+  }
 
   // Check that the template argument list is well-formed for this
   // template.
@@ -806,6 +873,57 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   
   TemplateArgsIn.release();
   return Result.getAsOpaquePtr();
+}
+
+/// \brief Form a dependent template name.
+///
+/// This action forms a dependent template name given the template
+/// name and its (presumably dependent) scope specifier. For
+/// example, given "MetaFun::template apply", the scope specifier \p
+/// SS will be "MetaFun::", \p TemplateKWLoc contains the location
+/// of the "template" keyword, and "apply" is the \p Name.
+Sema::TemplateTy 
+Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
+                                 const IdentifierInfo &Name,
+                                 SourceLocation NameLoc,
+                                 const CXXScopeSpec &SS) {
+  if (!SS.isSet() || SS.isInvalid())
+    return TemplateTy();
+
+  NestedNameSpecifier *Qualifier 
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+
+  // FIXME: member of the current instantiation
+
+  if (!Qualifier->isDependent()) {
+    // C++0x [temp.names]p5:
+    //   If a name prefixed by the keyword template is not the name of
+    //   a template, the program is ill-formed. [Note: the keyword
+    //   template may not be applied to non-template members of class
+    //   templates. -end note ] [ Note: as is the case with the
+    //   typename prefix, the template prefix is allowed in cases
+    //   where it is not strictly necessary; i.e., when the
+    //   nested-name-specifier or the expression on the left of the ->
+    //   or . is not dependent on a template-parameter, or the use
+    //   does not appear in the scope of a template. -end note]
+    //
+    // Note: C++03 was more strict here, because it banned the use of
+    // the "template" keyword prior to a template-name that was not a
+    // dependent name. C++ DR468 relaxed this requirement (the
+    // "template" keyword is now permitted). We follow the C++0x
+    // rules, even in C++03 mode, retroactively applying the DR.
+    TemplateTy Template;
+    TemplateNameKind TNK = isTemplateName(Name, 0, Template, &SS);
+    if (TNK == TNK_Non_template) {
+      Diag(NameLoc, diag::err_template_kw_refers_to_non_template)
+        << &Name;
+      return TemplateTy();
+    }
+
+    return Template;
+  }
+
+  return TemplateTy::make(Context.getDependentTemplateName(Qualifier, &Name));
 }
 
 /// \brief Check that the given template argument list is well-formed

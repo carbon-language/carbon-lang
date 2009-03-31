@@ -42,8 +42,21 @@ namespace N {
   struct A<int> {
     struct X;
   };
+
+  struct B;
 }
 
 struct ::N::A<int>::X {
   int foo;
 };
+
+#if 0
+// FIXME: the following crashes the parser, because Sema has no way to
+// community that the "dependent" template-name N::template B doesn't
+// actually refer to a template.
+template<typename T>
+struct TestA {
+  typedef typename N::template B<T>::type type; // xpected-error{{'B' following the 'template' keyword does not refer to a template}}
+  // FIXME: should show what B *does* refer to.
+};
+#endif

@@ -901,7 +901,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId 
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-    if (TemplateId->Kind == TNK_Class_template) {
+    if (TemplateId->Kind == TNK_Type_template) {
       // A template-id that refers to a type was parsed into a
       // template-id annotation in a context where we weren't allowed
       // to produce a type annotation token. Update the template-id

@@ -307,7 +307,7 @@ Parser::TypeTy *Parser::ParseClassName(SourceLocation &EndLocation,
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId 
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-    if (TemplateId->Kind == TNK_Class_template) {
+    if (TemplateId->Kind == TNK_Type_template) {
       if (AnnotateTemplateIdTokenAsType(SS))
         return 0;
 
@@ -419,7 +419,7 @@ void Parser::ParseClassSpecifier(DeclSpec &DS,
     TemplateId = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
     NameLoc = ConsumeToken();
 
-    if (TemplateId->Kind != TNK_Class_template) {
+    if (TemplateId->Kind != TNK_Type_template) {
       // The template-name in the simple-template-id refers to
       // something other than a class template. Give an appropriate
       // error message and skip to the ';'.

@@ -157,7 +157,7 @@ public:
   /// returned, and \p TemplateDecl receives the declaration. An
   /// optional CXXScope can be passed to indicate the C++ scope in
   /// which the identifier will be found.
-  virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
+  virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
                                           TemplateTy &Template,
                                           const CXXScopeSpec *SS = 0) = 0;
 
@@ -1229,6 +1229,20 @@ public:
     return TypeResult();
   };
 
+  /// \brief Form a dependent template name.
+  ///
+  /// This action forms a dependent template name given the template
+  /// name and its (presumably dependent) scope specifier. For
+  /// example, given "MetaFun::template apply", the scope specifier \p
+  /// SS will be "MetaFun::", \p TemplateKWLoc contains the location
+  /// of the "template" keyword, and "apply" is the \p Name.
+  virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
+                                                const IdentifierInfo &Name,
+                                                SourceLocation NameLoc,
+                                                const CXXScopeSpec &SS) {
+    return TemplateTy();
+  }
+
   /// \brief Process the declaration or definition of an explicit
   /// class template specialization or a class template partial
   /// specialization.
@@ -1568,7 +1582,7 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
                                   const CXXScopeSpec *SS);
 
-  virtual TemplateNameKind isTemplateName(IdentifierInfo &II, Scope *S,
+  virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
                                           TemplateTy &Template,
                                           const CXXScopeSpec *SS = 0);
 

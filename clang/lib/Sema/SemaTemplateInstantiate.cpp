@@ -475,7 +475,7 @@ InstantiateTemplateSpecializationType(
   // FIXME: Need to instantiate into the template name.
   return SemaRef.CheckTemplateIdType(T->getTemplateName(),
                                      Loc,
-                                     SourceLocation(),
+                                    SourceLocation(),
                                      &InstantiatedTemplateArgs[0],
                                      InstantiatedTemplateArgs.size(),
                                      SourceLocation());
