@@ -614,6 +614,17 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
     if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
       Fields.push_back(cast<FieldDecl>(IV));
   }
+  // look into continuation class.
+  for (ObjCCategoryDecl *Categories = OI->getCategoryList();
+       Categories; Categories = Categories->getNextClassCategory())
+    if (!Categories->getIdentifier()) {
+      for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
+           E = Categories->prop_end(); I != E; ++I) {
+        if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
+          Fields.push_back(cast<FieldDecl>(IV));      
+      }
+      break;
+    }
 }
 
 /// addRecordToClass - produces record info. for the class for its
@@ -711,7 +722,18 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
     if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
       NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
   }
-
+  // Also continuation class.
+  for (ObjCCategoryDecl *Categories = D->getCategoryList();
+       Categories; Categories = Categories->getNextClassCategory())
+    if (!Categories->getIdentifier()) {
+      for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
+           E = Categories->prop_end(); I != E; ++I) {
+        if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
+          NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
+      }
+      break;
+    }
+  
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
   NewEntry->FinalizeLayout();

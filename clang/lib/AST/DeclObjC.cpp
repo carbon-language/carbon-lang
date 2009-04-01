@@ -147,6 +147,22 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
           return IV;
         }
     }
+    // look into continuation class.
+    for (ObjCCategoryDecl *Categories = ClassDecl->getCategoryList();
+         Categories; Categories = Categories->getNextClassCategory())
+      if (!Categories->getIdentifier()) {
+        for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
+             E = Categories->prop_end(); I != E; ++I) {
+          ObjCPropertyDecl *PDecl = (*I);
+          if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
+            if (IV->getIdentifier() == ID) {
+              clsDeclared = ClassDecl;
+              return IV;
+            }          
+        }
+        break;
+      }
+    
     ClassDecl = ClassDecl->getSuperClass();
   }
   return NULL;

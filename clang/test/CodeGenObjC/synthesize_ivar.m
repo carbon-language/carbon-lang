@@ -12,3 +12,16 @@
    return IP;
 }
 @end
+
+// Test for synthesis of ivar for a property
+// declared in continuation class.
+@interface OrganizerViolatorView
+@end
+
+@interface OrganizerViolatorView()
+@property (retain) id bindingInfo;
+@end
+
+@implementation OrganizerViolatorView
+@synthesize bindingInfo;
+@end
