@@ -135,8 +135,8 @@ static const std::string &getOptName(const Record *R) {
 
 namespace {
 struct VISIBILITY_HIDDEN CompareOptName {  
-  bool operator()(const Record* A, const Record* B) {
-    return getOptName(A) < getOptName(B);    
+  bool operator()(const Record* A, const Record* B) const {
+    return getOptName(A) < getOptName(B);
   }
 };
 }
