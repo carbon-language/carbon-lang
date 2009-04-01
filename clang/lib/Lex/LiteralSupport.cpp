@@ -863,12 +863,13 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     ResultBuf[0] = ResultPtr-&ResultBuf[0]-1;
 
     // Verify that pascal strings aren't too large.
-    if (GetStringLength() > 256)
+    if (GetStringLength() > 256) {
       PP.Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long)
         << SourceRange(StringToks[0].getLocation(),
                        StringToks[NumStringToks-1].getLocation());
-    hadError = 1;
-    return;
+      hadError = 1;
+      return;
+    }
   }
 }
 
