@@ -1002,7 +1002,11 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
 // We still need to work out the details of handling UTF-16. 
 // See: <rdr://2996215>
 llvm::Constant *CodeGenModule::
-GetAddrOfConstantCFString(const std::string &str) {
+GetAddrOfConstantCFString(const StringLiteral *Literal) {
+  //  if (Literal->containsNonAsciiOrNull()) {
+  //    // FIXME: Convert from UTF-8 to UTF-16.
+  //  }
+  std::string str(Literal->getStrData(), Literal->getByteLength());
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
     CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
   

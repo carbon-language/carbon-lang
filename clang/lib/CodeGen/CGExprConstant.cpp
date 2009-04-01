@@ -442,9 +442,8 @@ public:
         break;
       const Expr *Arg = CE->getArg(0)->IgnoreParenCasts();
       const StringLiteral *Literal = cast<StringLiteral>(Arg);
-      std::string S(Literal->getStrData(), Literal->getByteLength());
       // FIXME: need to deal with UCN conversion issues.
-      return CGM.GetAddrOfConstantCFString(S);
+      return CGM.GetAddrOfConstantCFString(Literal);
     }
     case Expr::BlockExprClass: {
       std::string FunctionName;

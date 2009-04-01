@@ -900,12 +900,7 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel) {
 
 llvm::Constant *CGObjCCommonMac::GenerateConstantString(
   const ObjCStringLiteral *SL) {
-  std::string Str(SL->getString()->getStrData(), 
-                  SL->getString()->getByteLength());
-  if (SL->getString()->containsNonAscii()) {
-    // FIXME: Convert from UTF-8 to UTF-16.
-  }
-  return CGM.GetAddrOfConstantCFString(Str);
+  return CGM.GetAddrOfConstantCFString(SL->getString());
 }
 
 /// Generates a message send where the super is the receiver.  This is

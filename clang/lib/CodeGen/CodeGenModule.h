@@ -187,7 +187,7 @@ public:
 
   /// GetAddrOfConstantCFString - Return a pointer to a constant CFString object
   /// for the given string.
-  llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
+  llvm::Constant *GetAddrOfConstantCFString(const StringLiteral *Literal);
 
   /// GetAddrOfConstantStringFromLiteral - Return a pointer to a constant array
   /// for the given string literal.

@@ -533,9 +533,9 @@ public:
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
   bool isWide() const { return IsWide; }
-  bool containsNonAscii() const {
+  bool containsNonAsciiOrNull() const {
     for (unsigned i = 0; i < getByteLength(); ++i)
-      if (!isascii(getStrData()[i]))
+      if (!isascii(getStrData()[i]) || !getStrData()[i])
         return true;
     return false;
   }
