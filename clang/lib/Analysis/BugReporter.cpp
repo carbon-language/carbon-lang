@@ -810,12 +810,8 @@ static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
   if (const ForStmt *FS = dyn_cast<ForStmt>(Parent))
     return FS->getInit() == DS;
 
-  // FIXME: In the future IfStmt/WhileStmt may contain DeclStmts in their condition.
-//  if (const IfStmt *IF = dyn_cast<IfStmt>(Parent))
-//    return IF->getCond() == DS;
-//  
-//  if (const WhileStmt *WS = dyn_cast<WhileStmt>(Parent))
-//    return WS->getCond() == DS;
+  // FIXME: In the future IfStmt/WhileStmt may contain DeclStmts in their
+  // condition.
   
   return false;
 }
@@ -847,11 +843,13 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       }
       
       if (const Stmt *Term = Blk.getTerminator()) {
-        const Stmt *Cond = Blk.getTerminatorCondition();
-        
+        const Stmt *Cond = Blk.getTerminatorCondition();        
         if (!Cond || !IsControlFlowExpr(Cond)) {
-          GenExtAddEdge(PD, PDB, PathDiagnosticLocation(Term, SMgr), PrevLoc,
-                        true);
+          // For terminators that are control-flow expressions like '&&', '?',
+          // have the condition be the anchor point for the control-flow edge
+          // instead of the terminator.
+          const Stmt *X = isa<Expr>(Term) ? (Cond ? Cond : Term) : Term;          
+          GenExtAddEdge(PD, PDB, PathDiagnosticLocation(X, SMgr), PrevLoc,true);
           continue;
         }
       }
@@ -893,7 +891,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                 PDB.getBugReporter(), PDB.getNodeMapClosure());
     
     if (p) {
-      GenExtAddEdge(PD, PDB, p->getLocation(), PrevLoc);
+      GenExtAddEdge(PD, PDB, p->getLocation(), PrevLoc, true);
       PD.push_front(p);
     }
   }
