@@ -154,6 +154,14 @@ public:
   
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
   
+  PathDiagnosticLocation
+  getEnclosingStmtLocation(const PathDiagnosticLocation &L) {
+    if (const Stmt *S = L.asStmt())
+      return getEnclosingStmtLocation(S);
+    
+    return L;
+  }
+  
   PathDiagnosticClient::PathGenerationScheme getGenerationScheme() const {
     return PDC ? PDC->getGenerationScheme() : PathDiagnosticClient::Extensive;
   }
@@ -196,13 +204,21 @@ PathDiagnosticLocation
 PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt* passed to getEnclosingStmtLocation");
   ParentMap &P = getParentMap();
-  while (isa<Expr>(S)) {
+    
+  while (isa<DeclStmt>(S) || isa<Expr>(S)) {
     const Stmt *Parent = P.getParent(S);
     
     if (!Parent)
       break;
     
     switch (Parent->getStmtClass()) {
+      case Stmt::BinaryOperatorClass: {
+        const BinaryOperator *B = cast<BinaryOperator>(Parent);
+        if (B->isLogicalOp())
+          return PathDiagnosticLocation(S, SMgr);
+        break;
+      }
+        
       case Stmt::CompoundStmtClass:
       case Stmt::StmtExprClass:
         return PathDiagnosticLocation(S, SMgr);
@@ -674,7 +690,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
               End = PDB.getEnclosingStmtLocation(S);
             
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             "Loop condition is true.  Entering loop body"));
+                            "Loop condition is true.  Entering loop body"));
           }
           
           break;
@@ -688,10 +704,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           
           if (*(Src->succ_begin()+1) == Dst)
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             "Taking false branch"));
+                                                        "Taking false branch"));
           else  
             PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                             "Taking true branch"));
+                                                         "Taking true branch"));
           
           break;
         }
@@ -714,6 +730,151 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
   }
 }
 
+//===----------------------------------------------------------------------===//
+// "Extensive" PathDiagnostic generation.
+//===----------------------------------------------------------------------===//
+
+static bool IsControlFlowExpr(const Stmt *S) {
+  const Expr *E = dyn_cast<Expr>(S);
+
+  if (!E)
+    return false;
+  
+  E = E->IgnoreParenCasts();  
+  
+  if (isa<ConditionalOperator>(E))
+    return true;
+  
+  if (const BinaryOperator *B = dyn_cast<BinaryOperator>(E))
+    if (B->isLogicalOp())
+      return true;
+  
+  return false;  
+}
+
+static void GenExtAddEdge(PathDiagnostic& PD,
+                          PathDiagnosticBuilder &PDB,
+                          PathDiagnosticLocation NewLoc,
+                          PathDiagnosticLocation &PrevLoc,
+                          PathDiagnosticLocation UpdateLoc) {
+
+  if (const Stmt *S = NewLoc.asStmt()) {
+    if (IsControlFlowExpr(S))
+      return;    
+  }
+  
+  
+  if (!PrevLoc.isValid()) {
+    PrevLoc = NewLoc;
+    return;
+  }
+  
+  if (NewLoc == PrevLoc)
+    return;
+  
+  PD.push_front(new PathDiagnosticControlFlowPiece(NewLoc, PrevLoc));
+  PrevLoc = UpdateLoc;
+}
+
+static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
+  const DeclStmt *DS = dyn_cast<DeclStmt>(S);
+
+  if (!DS)
+    return false;
+  
+  const Stmt *Parent = PM.getParent(DS);
+  if (!Parent)
+    return false;
+  
+  if (const ForStmt *FS = dyn_cast<ForStmt>(Parent))
+    return FS->getInit() == DS;
+
+  // FIXME: In the future IfStmt/WhileStmt may contain DeclStmts in their condition.
+//  if (const IfStmt *IF = dyn_cast<IfStmt>(Parent))
+//    return IF->getCond() == DS;
+//  
+//  if (const WhileStmt *WS = dyn_cast<WhileStmt>(Parent))
+//    return WS->getCond() == DS;
+  
+  return false;
+}
+
+static void GenExtAddEdge(PathDiagnostic& PD,
+                          PathDiagnosticBuilder &PDB,
+                          const PathDiagnosticLocation &NewLoc,
+                          PathDiagnosticLocation &PrevLoc) {  
+  GenExtAddEdge(PD, PDB, NewLoc, PrevLoc, NewLoc);
+}
+
+static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
+                                            PathDiagnosticBuilder &PDB,
+                                            const ExplodedNode<GRState> *N) {
+
+  SourceManager& SMgr = PDB.getSourceManager();
+  const ExplodedNode<GRState>* NextNode = N->pred_empty()  
+                                          ? NULL : *(N->pred_begin());
+
+  PathDiagnosticLocation PrevLoc;
+  
+  while (NextNode) {
+    N = NextNode;    
+    NextNode = GetPredecessorNode(N);    
+    ProgramPoint P = N->getLocation();
+    
+    // Block edges.
+    if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      const CFGBlock &Blk = *BE->getSrc();
+      if (const Stmt *Term = Blk.getTerminator()) {
+        const Stmt *Cond = Blk.getTerminatorCondition();
+        
+        if (!Cond || !IsControlFlowExpr(Cond)) {
+          GenExtAddEdge(PD, PDB, PathDiagnosticLocation(Term, SMgr), PrevLoc);
+          continue;
+        }
+      }
+      
+      // Only handle blocks with more than 1 statement here, as the blocks
+      // with one statement are handled at BlockEntrances.
+      if (Blk.size() > 1) {
+        const Stmt *S = *Blk.rbegin();
+        
+        // We don't add control-flow edges for DeclStmt's that appear in
+        // the condition of if/while/for or are control-flow merge expressions.
+        if (!IsControlFlowExpr(S) && !IsNestedDeclStmt(S, PDB.getParentMap())) {
+          GenExtAddEdge(PD, PDB, PathDiagnosticLocation(S, SMgr), PrevLoc);
+        }
+      }
+
+      continue;
+    }
+    
+    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
+      if (const Stmt* S = BE->getFirstStmt()) {        
+        if (!IsControlFlowExpr(S) && !IsNestedDeclStmt(S, PDB.getParentMap())) {
+          // Are we jumping with the same enclosing statement?
+          if (PrevLoc.isValid() && PDB.getEnclosingStmtLocation(S) ==
+                                   PDB.getEnclosingStmtLocation(PrevLoc)) {
+            continue;
+          }
+          
+          GenExtAddEdge(PD, PDB, PDB.getEnclosingStmtLocation(S), PrevLoc);
+        }
+      }
+      
+      continue;
+    }
+      
+    PathDiagnosticPiece* p =
+      PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
+                                PDB.getBugReporter(), PDB.getNodeMapClosure());
+    
+    if (p) {
+      GenExtAddEdge(PD, PDB, p->getLocation(), PrevLoc);
+      PD.push_front(p);
+    }
+  }
+}
+    
 //===----------------------------------------------------------------------===//
 // Methods for BugType and subclasses.
 //===----------------------------------------------------------------------===//
@@ -993,7 +1154,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
   
   for (PathDiagnostic::iterator I = PD.begin(), E = PD.end(); I!=E; ++I) {
     // Get the location of the PathDiagnosticPiece.
-    const FullSourceLoc Loc = I->getLocation();    
+    const FullSourceLoc Loc = I->getLocation().asLocation();    
     
     // Determine the instantiation location, which is the location we group
     // related PathDiagnosticPieces.
@@ -1114,6 +1275,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   switch (PDB.getGenerationScheme()) {
     case PathDiagnosticClient::Extensive:
+      GenerateExtensivePathDiagnostic(PD,PDB, N);
+      break;
     case PathDiagnosticClient::Minimal:
       GenerateMinimalPathDiagnostic(PD, PDB, N);
       break;

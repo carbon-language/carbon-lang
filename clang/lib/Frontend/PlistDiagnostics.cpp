@@ -40,7 +40,7 @@ namespace {
     ~PlistDiagnostics();
     void HandlePathDiagnostic(const PathDiagnostic* D);
     
-    PathGenerationScheme getGenerationScheme() const { return Extensive; }
+    PathGenerationScheme getGenerationScheme() const { return Minimal; }
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
   };  
@@ -56,7 +56,7 @@ clang::CreatePlistDiagnosticClient(const std::string& s,
 }
 
 static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
-                   SourceManager* SM, SourceLocation L) {
+                   const SourceManager* SM, SourceLocation L) {
 
   FileID FID = SM->getFileID(SM->getInstantiationLoc(L));
   FIDMap::iterator I = FIDs.find(FID);
@@ -65,7 +65,8 @@ static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
   V.push_back(FID);
 }
 
-static unsigned GetFID(const FIDMap& FIDs, SourceManager* SM, SourceLocation L){
+static unsigned GetFID(const FIDMap& FIDs, const SourceManager* SM,
+                       SourceLocation L) {
   FileID FID = SM->getFileID(SM->getInstantiationLoc(L));
   FIDMap::const_iterator I = FIDs.find(FID);
   assert(I != FIDs.end());
@@ -77,7 +78,7 @@ static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
   return o;
 }
 
-static void EmitLocation(llvm::raw_ostream& o, SourceManager* SM,
+static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
                          SourceLocation L, const FIDMap& FM,
                          const unsigned indent) {
 
@@ -91,8 +92,15 @@ static void EmitLocation(llvm::raw_ostream& o, SourceManager* SM,
   Indent(o, indent) << "</dict>\n";
 }
 
-static void EmitRange(llvm::raw_ostream& o, SourceManager* SM, SourceRange R,
-                      const FIDMap& FM, const unsigned indent) {
+static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
+                         const PathDiagnosticLocation &L, const FIDMap& FM,
+                         const unsigned indent) {
+  EmitLocation(o, SM, L.asLocation(), FM, indent);
+}
+
+static void EmitRange(llvm::raw_ostream& o, const SourceManager* SM,
+                      SourceRange R, const FIDMap& FM,
+                      const unsigned indent) {
  
   Indent(o, indent) << "<array>\n";
   EmitLocation(o, SM, R.getBegin(), FM, indent+1);
@@ -120,7 +128,7 @@ static llvm::raw_ostream& EmitString(llvm::raw_ostream& o,
 
 static void ReportControlFlow(llvm::raw_ostream& o,
                               const PathDiagnosticControlFlowPiece& P,
-                              const FIDMap& FM, SourceManager *SM,
+                              const FIDMap& FM, const SourceManager *SM,
                               unsigned indent) {
   
   Indent(o, indent) << "<dict>\n";
@@ -167,7 +175,8 @@ static void ReportControlFlow(llvm::raw_ostream& o,
 }
 
 static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
-                        const FIDMap& FM, SourceManager* SM, unsigned indent) {
+                        const FIDMap& FM, const SourceManager* SM,
+                        unsigned indent) {
   
   Indent(o, indent) << "<dict>\n";
   ++indent;
@@ -175,7 +184,7 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   Indent(o, indent) << "<key>kind</key><string>event</string>\n";
   
   // Output the location.
-  FullSourceLoc L = P.getLocation();
+  FullSourceLoc L = P.getLocation().asLocation();
   
   Indent(o, indent) << "<key>location</key>\n";
   EmitLocation(o, SM, L, FM, indent);
@@ -211,7 +220,7 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
 
 static void ReportMacro(llvm::raw_ostream& o,
                         const PathDiagnosticMacroPiece& P,
-                        const FIDMap& FM, SourceManager *SM,
+                        const FIDMap& FM, const SourceManager *SM,
                         unsigned indent) {
   
   for (PathDiagnosticMacroPiece::const_iterator I=P.begin(), E=P.end();
@@ -231,7 +240,7 @@ static void ReportMacro(llvm::raw_ostream& o,
 }
 
 static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
-                       const FIDMap& FM, SourceManager* SM) {
+                       const FIDMap& FM, const SourceManager* SM) {
 
   unsigned indent = 4;
   
@@ -267,7 +276,7 @@ PlistDiagnostics::~PlistDiagnostics() {
   // ranges of the diagnostics.
   FIDMap FM;
   llvm::SmallVector<FileID, 10> Fids;
-  SourceManager* SM = 0;
+  const SourceManager* SM = 0;
   
   if (!BatchedDiags.empty())  
     SM = &(*BatchedDiags.begin())->begin()->getLocation().getManager();
@@ -278,7 +287,7 @@ PlistDiagnostics::~PlistDiagnostics() {
     const PathDiagnostic *D = *DI;
   
     for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I!=E; ++I) {
-      AddFID(FM, Fids, SM, I->getLocation());
+      AddFID(FM, Fids, SM, I->getLocation().asLocation());
     
       for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
            RE=I->ranges_end(); RI!=RE; ++RI) {

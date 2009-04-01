@@ -130,12 +130,12 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   if (noDir)
     return;
   
-  SourceManager &SMgr = D.begin()->getLocation().getManager();
+  const SourceManager &SMgr = D.begin()->getLocation().getManager();
   FileID FID;
   
   // Verify that the entire path is from the same FileID.
   for (PathDiagnostic::const_iterator I = D.begin(), E = D.end(); I != E; ++I) {
-    FullSourceLoc L = I->getLocation().getInstantiationLoc();
+    FullSourceLoc L = I->getLocation().asLocation().getInstantiationLoc();
     
     if (FID.isInvalid()) {
       FID = SMgr.getFileID(L);
@@ -162,7 +162,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     return; // FIXME: Emit a warning?
   
   // Create a new rewriter to generate HTML.
-  Rewriter R(SMgr);
+  Rewriter R(const_cast<SourceManager&>(SMgr));
   
   // Process the path.  
   unsigned n = D.size();
@@ -215,18 +215,18 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     llvm::raw_string_ostream os(s);
     
     os << "<!-- REPORTHEADER -->\n"
-       << "<h3>Bug Summary</h3>\n<table class=\"simpletable\">\n"
+      << "<h3>Bug Summary</h3>\n<table class=\"simpletable\">\n"
           "<tr><td class=\"rowname\">File:</td><td>"
-       << html::EscapeText(DirName)
-       << html::EscapeText(Entry->getName())
-       << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
-          "<a href=\"#EndPath\">line "      
-       << (*D.rbegin()).getLocation().getInstantiationLineNumber()
-       << ", column "
-       << (*D.rbegin()).getLocation().getInstantiationColumnNumber()
-       << "</a></td></tr>\n"
-          "<tr><td class=\"rowname\">Description:</td><td>"
-       << D.getDescription() << "</td></tr>\n";
+      << html::EscapeText(DirName)
+      << html::EscapeText(Entry->getName())
+      << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
+         "<a href=\"#EndPath\">line "      
+      << (*D.rbegin()).getLocation().asLocation().getInstantiationLineNumber()
+      << ", column "
+      << (*D.rbegin()).getLocation().asLocation().getInstantiationColumnNumber()
+      << "</a></td></tr>\n"
+         "<tr><td class=\"rowname\">Description:</td><td>"
+      << D.getDescription() << "</td></tr>\n";
     
     // Output any other meta data.
     
@@ -280,7 +280,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     std::string s;
     llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGLINE "
-       << D.back()->getLocation().getInstantiationLineNumber() << " -->\n";
+       << D.back()->getLocation().asLocation().getInstantiationLineNumber()
+       << " -->\n";
     R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
@@ -336,7 +337,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   
   // For now, just draw a box above the line in question, and emit the
   // warning.
-  FullSourceLoc Pos = P.getLocation();
+  FullSourceLoc Pos = P.getLocation().asLocation();
   
   if (!Pos.isValid())
     return;  
@@ -460,7 +461,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     
     // Get the name of the macro by relexing it.
     {
-      FullSourceLoc L = MP->getLocation().getInstantiationLoc();
+      FullSourceLoc L = MP->getLocation().asLocation().getInstantiationLoc();
       assert(L.isFileID());
       std::pair<const char*, const char*> BufferInfo = L.getBufferData();
       const char* MacroName = L.getDecomposedLoc().second + BufferInfo.first;

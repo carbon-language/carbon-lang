@@ -59,6 +59,9 @@ private:
   const Stmt *S;
   const SourceManager *SM;
 public:
+  PathDiagnosticLocation()
+    : K(SingleLoc), S(0), SM(0) {}
+  
   PathDiagnosticLocation(FullSourceLoc L)
     : K(SingleLoc), R(L, L), S(0), SM(&L.getManager()) {}
   
@@ -75,10 +78,30 @@ public:
   bool operator!=(const PathDiagnosticLocation &X) const {
     return K != X.K || R != X.R || S != X.S;
   }
+  
+  PathDiagnosticLocation& operator=(const PathDiagnosticLocation &X) {
+    K = X.K;
+    R = X.R;
+    S = X.S;
+    SM = X.SM;
+    return *this;
+  }
+  
+  bool isValid() const {
+    return SM != 0;
+  }
     
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;
-  const Stmt *asStmt() const { return S; }
+  const Stmt *asStmt() const { assert(isValid()); return S; }
+  
+  bool hasRange() const { return K == Statement || K == Range; }
+  
+  void invalidate() {
+    *this = PathDiagnosticLocation();
+  }
+  
+  const SourceManager& getManager() const { assert(isValid()); return *SM; }
 };
 
 class PathDiagnosticLocationPair {
@@ -130,7 +153,7 @@ public:
   ///  be displayed by the PathDiagnosticClient.
   DisplayHint getDisplayHint() const { return Hint; }
   
-  virtual FullSourceLoc getLocation() const = 0;
+  virtual PathDiagnosticLocation getLocation() const = 0;
   
   Kind getKind() const { return kind; }
   
@@ -176,13 +199,15 @@ private:
 public:
   PathDiagnosticSpotPiece(const PathDiagnosticLocation &pos,
                           const std::string& s,
-                          PathDiagnosticPiece::Kind k)
+                          PathDiagnosticPiece::Kind k,
+                          bool addPosRange = true)
   : PathDiagnosticPiece(s, k), Pos(pos) {
     assert(Pos.asLocation().isValid() &&
            "PathDiagnosticSpotPiece's must have a valid location.");
+    if (addPosRange && Pos.hasRange()) addRange(Pos.asRange());
   }  
 
-  FullSourceLoc getLocation() const { return Pos.asLocation(); }
+  PathDiagnosticLocation getLocation() const { return Pos; }
 };
   
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
@@ -227,21 +252,21 @@ public:
   
   ~PathDiagnosticControlFlowPiece();
   
-  FullSourceLoc getStartLocation() const {
+  PathDiagnosticLocation getStartLocation() const {
     assert(!LPairs.empty() &&
            "PathDiagnosticControlFlowPiece needs at least one location.");
-    return LPairs[0].getStart().asLocation();
+    return LPairs[0].getStart();
   }
     
-  FullSourceLoc getEndLocation() const {
+  PathDiagnosticLocation getEndLocation() const {
     assert(!LPairs.empty() &&
            "PathDiagnosticControlFlowPiece needs at least one location.");
-    return LPairs[0].getEnd().asLocation();
+    return LPairs[0].getEnd();
   }
   
   void push_back(const PathDiagnosticLocationPair &X) { LPairs.push_back(X); }
   
-  virtual FullSourceLoc getLocation() const { return getStartLocation(); }
+  virtual PathDiagnosticLocation getLocation() const { return getStartLocation(); }
   
   typedef std::vector<PathDiagnosticLocationPair>::iterator iterator;
   iterator begin() { return LPairs.begin(); }
@@ -313,7 +338,7 @@ public:
   void addMeta(const std::string& s) { OtherDesc.push_back(s); }
   void addMeta(const char* s) { OtherDesc.push_back(s); }
   
-  FullSourceLoc getLocation() const {
+  PathDiagnosticLocation getLocation() const {
     assert(Size > 0 && "getLocation() requires a non-empty PathDiagnostic.");
     return rbegin()->getLocation();
   }

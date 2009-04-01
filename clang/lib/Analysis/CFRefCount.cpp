@@ -2635,13 +2635,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       os << "+0 retain count (non-owning reference).";
     }
     
-    FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
-    PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
-    
-    if (Expr* Exp = dyn_cast<Expr>(S))
-      P->addRange(Exp->getSourceRange());
-    
-    return P;    
+    PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
+    return new PathDiagnosticEventPiece(Pos, os.str());
   }
   
   // Gather up the effects that were performed on the object at this
@@ -2797,7 +2792,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     return 0; // We have nothing to say!
   
   Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
-  FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
+  PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
   PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
   
   // Add the range by scanning the children of the statement for any bindings
@@ -2958,7 +2953,9 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   assert(LeakN && S && "No leak site found.");
 
   // Generate the diagnostic.
-  FullSourceLoc L(S->getLocStart(), SMgr);
+  // FIXME: We need to do a better job at determing the leak site, e.g., at
+  // the end of function bodies.
+  PathDiagnosticLocation L(S, SMgr);
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
   

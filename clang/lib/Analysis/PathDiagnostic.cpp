@@ -140,6 +140,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
 //===----------------------------------------------------------------------===//
 
 FullSourceLoc PathDiagnosticLocation::asLocation() const {
+  assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
@@ -154,6 +155,7 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
 }
 
 SourceRange PathDiagnosticLocation::asRange() const {
+  assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
