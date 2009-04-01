@@ -21,6 +21,7 @@
 
 #include "Win32.h"
 #include <malloc.h>
+#include <cstdio>
 
 // We need to undo a macro defined in Windows.h, otherwise we won't compile:
 #undef CopyFile
