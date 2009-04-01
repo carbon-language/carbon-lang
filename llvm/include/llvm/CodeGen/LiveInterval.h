@@ -25,6 +25,7 @@
 #include "llvm/Support/Allocator.h"
 #include <iosfwd>
 #include <cassert>
+#include <climits>
 
 namespace llvm {
   class MachineInstr;
@@ -115,7 +116,7 @@ namespace llvm {
     LiveInterval(unsigned Reg, float Weight, bool IsSS = false)
       : reg(Reg), weight(Weight), preference(0)  {
       if (IsSS)
-        reg = reg | (1U << (sizeof(unsigned)*8-1));
+        reg = reg | (1U << (sizeof(unsigned)*CHAR_BIT-1));
     }
 
     typedef Ranges::iterator iterator;
@@ -159,14 +160,14 @@ namespace llvm {
     /// isStackSlot - Return true if this is a stack slot interval.
     ///
     bool isStackSlot() const {
-      return reg & (1U << (sizeof(unsigned)*8-1));
+      return reg & (1U << (sizeof(unsigned)*CHAR_BIT-1));
     }
 
     /// getStackSlotIndex - Return stack slot index if this is a stack slot
     /// interval.
     int getStackSlotIndex() const {
       assert(isStackSlot() && "Interval is not a stack slot interval!");
-      return reg & ~(1U << (sizeof(unsigned)*8-1));
+      return reg & ~(1U << (sizeof(unsigned)*CHAR_BIT-1));
     }
 
     bool hasAtLeastOneValue() const { return !valnos.empty(); }

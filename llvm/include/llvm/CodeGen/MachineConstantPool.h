@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
 #include <cassert>
+#include <climits>
 #include <vector>
 
 namespace llvm {
@@ -81,7 +82,7 @@ public:
   MachineConstantPoolEntry(MachineConstantPoolValue *V, unsigned A)
     : Alignment(A) {
     Val.MachineCPVal = V; 
-    Alignment |= 1 << (sizeof(unsigned)*8-1);
+    Alignment |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
   }
 
   bool isMachineConstantPoolEntry() const {
@@ -89,7 +90,7 @@ public:
   }
 
   int getAlignment() const { 
-    return Alignment & ~(1 << (sizeof(unsigned)*8-1));
+    return Alignment & ~(1 << (sizeof(unsigned)*CHAR_BIT-1));
   }
 
   const Type *getType() const;

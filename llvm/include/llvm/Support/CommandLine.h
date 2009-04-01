@@ -25,6 +25,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
 #include <cassert>
+#include <climits>
 #include <cstdarg>
 #include <string>
 #include <utility>
@@ -1109,7 +1110,7 @@ class bits_storage {
   template<class T>
   static unsigned Bit(const T &V) {
     unsigned BitPos = reinterpret_cast<unsigned>(V);
-    assert(BitPos < sizeof(unsigned) * 8 &&
+    assert(BitPos < sizeof(unsigned) * CHAR_BIT &&
           "enum exceeds width of bit vector!");
     return 1 << BitPos;
   }
@@ -1150,7 +1151,7 @@ class bits_storage<DataType, bool> {
   template<class T>
   static unsigned Bit(const T &V) {
     unsigned BitPos = reinterpret_cast<unsigned>(V);
-    assert(BitPos < sizeof(unsigned) * 8 &&
+    assert(BitPos < sizeof(unsigned) * CHAR_BIT &&
           "enum exceeds width of bit vector!");
     return 1 << BitPos;
   }

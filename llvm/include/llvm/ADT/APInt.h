@@ -18,6 +18,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
+#include <climits>
 #include <cstring>
 #include <string>
 
@@ -81,7 +82,8 @@ class APInt {
   /// This enum is used to hold the constants we needed for APInt.
   enum {
     /// Bits in a word
-    APINT_BITS_PER_WORD = static_cast<unsigned int>(sizeof(uint64_t)) * 8,
+    APINT_BITS_PER_WORD = static_cast<unsigned int>(sizeof(uint64_t)) *
+                          CHAR_BIT,
     /// Byte size of a word
     APINT_WORD_SIZE = static_cast<unsigned int>(sizeof(uint64_t))
   };

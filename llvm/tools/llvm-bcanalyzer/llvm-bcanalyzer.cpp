@@ -425,7 +425,7 @@ static int AnalyzeBitcode() {
   
   if (Dump) std::cerr << "\n\n";
   
-  uint64_t BufferSizeBits = Buffer->getBufferSize()*8;
+  uint64_t BufferSizeBits = Buffer->getBufferSize()*CHAR_BIT;
   // Print a summary of the read file.
   std::cerr << "Summary of " << InputFilename << ":\n";
   std::cerr << "         Total size: ";

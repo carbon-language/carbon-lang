@@ -2909,7 +2909,7 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
                                                   const SelectionDAG &DAG,
                                                   unsigned Depth ) const {
 #if 0
-  const uint64_t uint64_sizebits = sizeof(uint64_t) * 8;
+  const uint64_t uint64_sizebits = sizeof(uint64_t) * CHAR_BIT;
 
   switch (Op.getOpcode()) {
   default:

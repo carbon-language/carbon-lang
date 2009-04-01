@@ -1631,7 +1631,7 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
   // can't use 64-bit operands here because we don't have native results of 
   // 128-bits. Furthermore, casting the 64-bit values to 32-bit values won't 
   // work on large-endian machines.
-  uint64_t mask = ~0ull >> (sizeof(unsigned)*8);
+  uint64_t mask = ~0ull >> (sizeof(unsigned)*CHAR_BIT);
   unsigned n = rhsWords * 2;
   unsigned m = (lhsWords * 2) - n;
 
@@ -1661,7 +1661,7 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
   for (unsigned i = 0; i < lhsWords; ++i) {
     uint64_t tmp = (LHS.getNumWords() == 1 ? LHS.VAL : LHS.pVal[i]);
     U[i * 2] = (unsigned)(tmp & mask);
-    U[i * 2 + 1] = (unsigned)(tmp >> (sizeof(unsigned)*8));
+    U[i * 2 + 1] = (unsigned)(tmp >> (sizeof(unsigned)*CHAR_BIT));
   }
   U[m+n] = 0; // this extra word is for "spill" in the Knuth algorithm.
 
@@ -1670,7 +1670,7 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
   for (unsigned i = 0; i < rhsWords; ++i) {
     uint64_t tmp = (RHS.getNumWords() == 1 ? RHS.VAL : RHS.pVal[i]);
     V[i * 2] = (unsigned)(tmp & mask);
-    V[i * 2 + 1] = (unsigned)(tmp >> (sizeof(unsigned)*8));
+    V[i * 2 + 1] = (unsigned)(tmp >> (sizeof(unsigned)*CHAR_BIT));
   }
 
   // initialize the quotient and remainder

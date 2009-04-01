@@ -1092,10 +1092,10 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     Dest.PointerVal = Src.PointerVal;
   } else if (DstTy->isInteger()) {
     if (SrcTy == Type::FloatTy) {
-      Dest.IntVal.zext(sizeof(Src.FloatVal) * 8);
+      Dest.IntVal.zext(sizeof(Src.FloatVal) * CHAR_BIT);
       Dest.IntVal.floatToBits(Src.FloatVal);
     } else if (SrcTy == Type::DoubleTy) {
-      Dest.IntVal.zext(sizeof(Src.DoubleVal) * 8);
+      Dest.IntVal.zext(sizeof(Src.DoubleVal) * CHAR_BIT);
       Dest.IntVal.doubleToBits(Src.DoubleVal);
     } else if (SrcTy->isInteger()) {
       Dest.IntVal = Src.IntVal;

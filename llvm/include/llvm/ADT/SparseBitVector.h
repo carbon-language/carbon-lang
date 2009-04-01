@@ -16,6 +16,7 @@
 #define LLVM_ADT_SPARSEBITVECTOR_H
 
 #include <cassert>
+#include <climits>
 #include <cstring>
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/STLExtras.h"
@@ -44,7 +45,7 @@ struct SparseBitVectorElement
 public:
   typedef unsigned long BitWord;
   enum {
-    BITWORD_SIZE = sizeof(BitWord) * 8,
+    BITWORD_SIZE = sizeof(BitWord) * CHAR_BIT,
     BITWORDS_PER_ELEMENT = (ElementSize + BITWORD_SIZE - 1) / BITWORD_SIZE,
     BITS_PER_ELEMENT = ElementSize
   };

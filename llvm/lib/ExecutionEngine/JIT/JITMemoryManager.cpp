@@ -18,6 +18,7 @@
 #include <map>
 #include <vector>
 #include <cassert>
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -48,7 +49,7 @@ namespace {
     
     /// BlockSize - This is the size in bytes of this memory block,
     /// including this header.
-    uintptr_t BlockSize : (sizeof(intptr_t)*8 - 2);
+    uintptr_t BlockSize : (sizeof(intptr_t)*CHAR_BIT - 2);
     
 
     /// getBlockAfter - Return the memory block immediately after this one.

@@ -17,6 +17,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <cstring>
 
 namespace llvm {
@@ -24,7 +25,7 @@ namespace llvm {
 class BitVector {
   typedef unsigned long BitWord;
 
-  enum { BITWORD_SIZE = (unsigned)sizeof(BitWord) * 8 };
+  enum { BITWORD_SIZE = (unsigned)sizeof(BitWord) * CHAR_BIT };
 
   BitWord  *Bits;        // Actual bits.
   unsigned Size;         // Size of bitvector in bits.

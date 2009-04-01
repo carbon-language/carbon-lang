@@ -32,6 +32,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/CodeGen/DebugLoc.h"
 #include <cassert>
+#include <climits>
 
 namespace llvm {
 
@@ -1864,7 +1865,7 @@ protected:
              getSDVTList(VT)), Offset(o), Alignment(0) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
-    Offset |= 1 << (sizeof(unsigned)*8-1);
+    Offset |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      MVT VT, int o, unsigned Align)
@@ -1873,7 +1874,7 @@ protected:
              getSDVTList(VT)), Offset(o), Alignment(Align) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
-    Offset |= 1 << (sizeof(unsigned)*8-1);
+    Offset |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
   }
 public:
 
@@ -1892,7 +1893,7 @@ public:
   }
 
   int getOffset() const {
-    return Offset & ~(1 << (sizeof(unsigned)*8-1));
+    return Offset & ~(1 << (sizeof(unsigned)*CHAR_BIT-1));
   }
 
   // Return the alignment of this constant pool object, which is either 0 (for

@@ -16,6 +16,7 @@
 #define BITSTREAM_READER_H
 
 #include "llvm/Bitcode/BitCodes.h"
+#include <climits>
 #include <vector>
 
 namespace llvm {
@@ -114,7 +115,7 @@ public:
 
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
-    return (NextChar-FirstChar)*8 + ((32-BitsInCurWord) & 31);
+    return (NextChar-FirstChar)*CHAR_BIT + ((32-BitsInCurWord) & 31);
   }
 
   /// JumpToBit - Reset the stream to the specified bit number.
