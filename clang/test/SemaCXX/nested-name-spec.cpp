@@ -18,12 +18,12 @@ A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-e
 
 int A::C::Ag1() { return 0; }
 
-static int A::C::Ag2() { return 0; } // expected-error{{'static' can not be specified on an out-of-line static member}}
+static int A::C::Ag2() { return 0; } // expected-error{{'static' can}}
 
 int A::C::cx = 17;
 
 
-static int A::C::cx2 = 17; // expected-error{{'static' can not be specified on an out-of-line static member}}
+static int A::C::cx2 = 17; // expected-error{{'static' can}}
 
 class C2 {
   void m(); // expected-note{{member declaration nearly matches}}

@@ -3402,11 +3402,25 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // operand is null), the user probably wants strcmp.
     if ((isa<StringLiteral>(LHSStripped) || isa<ObjCEncodeExpr>(LHSStripped)) &&
         !RHSStripped->isNullPointerConstant(Context))
-      Diag(Loc, diag::warn_stringcompare) << lex->getSourceRange();
+      Diag(Loc, diag::warn_stringcompare) 
+        << lex->getSourceRange()
+        << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
+        << CodeModificationHint::CreateInsertion(lex->getLocStart(),
+                                                 "strcmp(")
+        << CodeModificationHint::CreateInsertion(
+                                       PP.getLocForEndOfToken(rex->getLocEnd()),
+                                       ") == 0");
     else if ((isa<StringLiteral>(RHSStripped) ||
               isa<ObjCEncodeExpr>(RHSStripped)) &&
              !LHSStripped->isNullPointerConstant(Context))
-      Diag(Loc, diag::warn_stringcompare) << rex->getSourceRange();
+      Diag(Loc, diag::warn_stringcompare) 
+        << rex->getSourceRange()
+        << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
+        << CodeModificationHint::CreateInsertion(lex->getLocStart(),
+                                                 "strcmp(")
+        << CodeModificationHint::CreateInsertion(
+                                       PP.getLocForEndOfToken(rex->getLocEnd()),
+                                       ") == 0");
   }
 
   // The result of comparisons is 'bool' in C++, 'int' in C.

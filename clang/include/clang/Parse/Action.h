@@ -268,7 +268,8 @@ public:
   /// been parsed prior to a function definition.
   /// @param S  The function prototype scope.
   /// @param D  The function declarator.
-  virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D) {
+  virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
+                                               SourceLocation LocAfterDecls) {
   }
 
   /// ActOnStartOfFunctionDef - This is called at the start of a function

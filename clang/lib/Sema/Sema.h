@@ -368,7 +368,8 @@ public:
   virtual void SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc);
   virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
                                                  unsigned NumDecls);
-  virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D);
+  virtual void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
+                                               SourceLocation LocAfterDecls);
   virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *S, DeclPtrTy D);
   virtual void ActOnStartOfObjCMethodDef(Scope *S, DeclPtrTy D);

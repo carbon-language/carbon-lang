@@ -462,11 +462,13 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     //   template declaration (7.1.5.3).
     RecordDecl *PrevRecordDecl = PrevClassTemplate->getTemplatedDecl();
     if (PrevRecordDecl->getTagKind() != Kind) {
-      Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
+      Diag(KWLoc, diag::err_use_with_wrong_tag) 
+        << Name
+        << CodeModificationHint::CreateReplacement(KWLoc, 
+                            PrevRecordDecl->getKindName());
       Diag(PrevRecordDecl->getLocation(), diag::note_previous_use);
-      return true;
+      Kind = PrevRecordDecl->getTagKind();
     }
-
 
     // Check for redefinition of this class template.
     if (TK == TK_Definition) {
@@ -1974,7 +1976,10 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
   }
   if (ClassTemplate->getTemplatedDecl()->getTagKind() != Kind) {
-    Diag(KWLoc, diag::err_use_with_wrong_tag) << ClassTemplate;
+    Diag(KWLoc, diag::err_use_with_wrong_tag) 
+      << ClassTemplate
+      << CodeModificationHint::CreateReplacement(KWLoc, 
+                            ClassTemplate->getTemplatedDecl()->getKindName());
     Diag(ClassTemplate->getTemplatedDecl()->getLocation(), 
          diag::note_previous_use);
     Kind = ClassTemplate->getTemplatedDecl()->getTagKind();

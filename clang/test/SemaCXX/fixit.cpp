@@ -6,9 +6,25 @@
    modifications and compile the result to test that no warnings
    remain. */
 
-struct C1 { };
+struct C1 { 
+  virtual void f();
+  static void g();
+};
 struct C2 : virtual public virtual C1 { }; // expected-error{{duplicate}}
 
-template<int Value> struct CT { };
+virtual void C1::f() { } // expected-error{{'virtual' can only be specified inside the class definition}}
+
+static void C1::g() { } // expected-error{{'static' can only be specified inside the class definition}}
+
+template<int Value> struct CT { }; // expected-note{{previous use is here}}
 
 CT<10 >> 2> ct; // expected-warning{{require parentheses}}
+
+class C3 {
+public:
+  C3(C3, int i = 0); // expected-error{{copy constructor must pass its first argument by reference}}
+};
+
+struct CT<0> { }; // expected-error{{'template<>'}}
+
+template<> class CT<1> { }; // expected-error{{tag type}}

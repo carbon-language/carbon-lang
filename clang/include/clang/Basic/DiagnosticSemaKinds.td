@@ -258,7 +258,7 @@ def err_virtual_out_of_class : Error<
   "'virtual' can only be specified inside the class definition">;
 def err_static_not_bitfield : Error<"static member %0 cannot be a bit-field">;
 def err_static_out_of_line : Error<
-  "'static' can not be specified on an out-of-line static member definition">;
+  "'static' can only be specified inside the class definition">;
 def err_typedef_not_bitfield : Error<"typedef member %0 cannot be a bit-field">;
 def err_not_integral_type_bitfield : Error<
   "bit-field %0 has non-integral type %1">;
@@ -465,7 +465,7 @@ def err_ident_list_in_fn_declaration : Error<
   "a parameter list without types is only allowed in a function definition">;
 def ext_param_not_declared : Extension<
   "parameter %0 was not declared, defaulting to type 'int'">;
-def ext_param_typedef_of_void : Extension<
+def err_param_typedef_of_void : Error<
   "empty parameter list defined with a typedef of 'void' not allowed in C++">;
 def err_param_default_argument : Error<
   "C does not support default arguments">;
@@ -580,8 +580,6 @@ def err_template_arg_list_different_arity : Error<
   "%select{too few|too many}0 template arguments for "
   "%select{class template|function template|template template parameter"
   "|template}1 %2">;
-
-
 def note_template_decl_here : Note<"template is declared here">;
 def note_member_of_template_here : Note<"member is declared here">;
 def err_template_arg_must_be_type : Error<
@@ -604,11 +602,9 @@ def note_template_arg_refers_here_func : Note<
 def err_template_arg_template_params_mismatch : Error<
   "template template argument has different template parameters than its "
   "corresponding template template parameter">;
-
 def err_template_arg_not_integral_or_enumeral : Error<
   "non-type template argument of type %0 must have an integral or enumeration"
   " type">;
-
 def err_template_arg_not_ice : Error<
   "non-type template argument of type %0 is not an integral constant "
   "expression">;
@@ -618,11 +614,9 @@ def err_template_arg_not_convertible : Error<
 def err_template_arg_negative : Error<
   "non-type template argument provides negative value '%0' for unsigned "
   "template parameter of type %1">;
-
 def err_template_arg_too_large : Error<
   "non-type template argument value '%0' is too large for template "
   "parameter of type %1">;
-
 def err_template_arg_no_ref_bind : Error<
   "non-type template parameter of reference type %0 cannot bind to template "
   "argument of type %1">;

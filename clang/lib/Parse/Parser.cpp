@@ -740,7 +740,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
   }
 
   // The actions module must verify that all arguments were declared.
-  Actions.ActOnFinishKNRParamDeclarations(CurScope, D);
+  Actions.ActOnFinishKNRParamDeclarations(CurScope, D, Tok.getLocation());
 }
 
 

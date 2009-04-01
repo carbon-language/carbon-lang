@@ -2041,7 +2041,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // typedef of void is not permitted.
       if (getLangOptions().CPlusPlus &&
           Param->getType().getUnqualifiedType() != Context.VoidTy) {
-        Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
+        Diag(Param->getLocation(), diag::err_param_typedef_of_void);
       }
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
@@ -2697,7 +2697,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   return DeclPtrTy::make(New);
 }
 
-void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D) {
+void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
+                                           SourceLocation LocAfterDecls) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
@@ -2707,8 +2708,13 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D) {
   if (!FTI.hasPrototype) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
       if (FTI.ArgInfo[i].Param == 0) {
+        std::string Code = "int ";
+        Code += FTI.ArgInfo[i].Ident->getName();
+        Code += ";\n ";
         Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
-          << FTI.ArgInfo[i].Ident;
+          << FTI.ArgInfo[i].Ident
+          << CodeModificationHint::CreateInsertion(LocAfterDecls, Code);
+
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.
         DeclSpec DS;
@@ -3215,13 +3221,29 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
-          Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
+          bool SafeToContinue 
+            = (PrevTagDecl->getTagKind() != TagDecl::TK_enum &&
+               Kind != TagDecl::TK_enum);
+          if (SafeToContinue)
+            Diag(KWLoc, diag::err_use_with_wrong_tag) 
+              << Name
+              << CodeModificationHint::CreateReplacement(SourceRange(KWLoc),
+                                                  PrevTagDecl->getKindName());
+          else
+            Diag(KWLoc, diag::err_use_with_wrong_tag) << Name;
           Diag(PrevDecl->getLocation(), diag::note_previous_use);
-          // Recover by making this an anonymous redefinition.
-          Name = 0;
-          PrevDecl = 0;
-          Invalid = true;
-        } else {
+
+          if (SafeToContinue) 
+            Kind = PrevTagDecl->getTagKind();
+          else {
+            // Recover by making this an anonymous redefinition.
+            Name = 0;
+            PrevDecl = 0;
+            Invalid = true;
+          }
+        }
+
+        if (!Invalid) {
           // If this is a use, just return the declaration we found.
 
           // FIXME: In the future, return a variant or some other clue

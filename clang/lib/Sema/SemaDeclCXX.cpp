@@ -1307,8 +1307,9 @@ bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
     QualType ParamType = Constructor->getParamDecl(0)->getType();
     QualType ClassTy = Context.getTagDeclType(ClassDecl);
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
-      Diag(Constructor->getLocation(), diag::err_constructor_byvalue_arg)
-        << SourceRange(Constructor->getParamDecl(0)->getLocation());
+      SourceLocation ParamLoc = Constructor->getParamDecl(0)->getLocation();
+      Diag(ParamLoc, diag::err_constructor_byvalue_arg)
+        << CodeModificationHint::CreateInsertion(ParamLoc, "const &");
       Invalid = true;
     }
   }
