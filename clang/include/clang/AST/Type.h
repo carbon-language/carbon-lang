@@ -15,12 +15,14 @@
 #define LLVM_CLANG_AST_TYPE_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 
 using llvm::isa;
@@ -1649,13 +1651,22 @@ class TypenameType : public Type, public llvm::FoldingSetNode {
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
+  typedef llvm::PointerUnion<const IdentifierInfo *, 
+                             const TemplateSpecializationType *> NameType;
+
   /// \brief The type that this typename specifier refers to.
-  /// FIXME: Also need to represent the "template simple-template-id" case.
-  const IdentifierInfo *Name;
+  NameType Name;
 
   TypenameType(NestedNameSpecifier *NNS, const IdentifierInfo *Name,
                QualType CanonType)
     : Type(Typename, CanonType, true), NNS(NNS), Name(Name) { 
+    assert(NNS->isDependent() && 
+           "TypenameType requires a dependent nested-name-specifier");
+  }
+
+  TypenameType(NestedNameSpecifier *NNS, const TemplateSpecializationType *Ty,
+               QualType CanonType)
+    : Type(Typename, CanonType, true), NNS(NNS), Name(Ty) { 
     assert(NNS->isDependent() && 
            "TypenameType requires a dependent nested-name-specifier");
   }
@@ -1666,8 +1677,21 @@ public:
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
-  /// \brief Retrieve the type named by the typename specifier.
-  const IdentifierInfo *getName() const { return Name; }
+  /// \brief Retrieve the type named by the typename specifier as an
+  /// identifier.
+  ///
+  /// This routine will return a non-NULL identifier pointer when the
+  /// form of the original typename was terminated by an identifier,
+  /// e.g., "typename T::type".
+  const IdentifierInfo *getIdentifier() const { 
+    return Name.dyn_cast<const IdentifierInfo *>(); 
+  }
+
+  /// \brief Retrieve the type named by the typename specifier as a
+  /// type specialization.
+  const TemplateSpecializationType *getTemplateId() const {
+    return Name.dyn_cast<const TemplateSpecializationType *>();
+  }
 
   virtual void getAsStringInternal(std::string &InnerString) const;
 
@@ -1676,9 +1700,9 @@ public:
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
-                      const IdentifierInfo *Name) {
+                      NameType Name) {
     ID.AddPointer(NNS);
-    ID.AddPointer(Name);
+    ID.AddPointer(Name.getOpaqueValue());
   }
 
   static bool classof(const Type *T) { 

@@ -1450,7 +1450,14 @@ void TypenameType::getAsStringInternal(std::string &InnerString) const {
     llvm::raw_string_ostream OS(MyString);
     OS << "typename ";
     NNS->print(OS);
-    OS << Name->getName();
+
+    if (const IdentifierInfo *Ident = getIdentifier())
+      OS << Ident->getName();
+    else if (const TemplateSpecializationType *Spec = getTemplateId()) {
+      Spec->getTemplateName().print(OS, true);
+      OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                         Spec->getArgs(), Spec->getNumArgs());
+    }
   }
   
   if (InnerString.empty())

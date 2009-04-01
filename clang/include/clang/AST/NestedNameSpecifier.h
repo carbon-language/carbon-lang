@@ -40,7 +40,11 @@ class Type;
 class NestedNameSpecifier : public llvm::FoldingSetNode {
   /// \brief The nested name specifier that precedes this nested name
   /// specifier.
-  NestedNameSpecifier *Prefix;
+  ///
+  /// The pointer is the nested-name-specifier that precedes this
+  /// one. The integer stores one of the first four values of type
+  /// SpecifierKind.
+  llvm::PointerIntPair<NestedNameSpecifier *, 2> Prefix;
 
   /// \brief The last component in the nested name specifier, which
   /// can be an identifier, a declaration, or a type.
@@ -48,9 +52,8 @@ class NestedNameSpecifier : public llvm::FoldingSetNode {
   /// When the pointer is NULL, this specifier represents the global
   /// specifier '::'. Otherwise, the pointer is one of
   /// IdentifierInfo*, Namespace*, or Type*, depending on the kind of
-  /// specifier. The integer stores one ofthe first four values of
-  /// type SpecifierKind.
-  llvm::PointerIntPair<void*, 2> Specifier;
+  /// specifier as encoded within the prefix.
+  void* Specifier;
 
 public:
   /// \brief The kind of specifier that completes this nested name
@@ -71,7 +74,7 @@ public:
 
 private:
   /// \brief Builds the global specifier.
-  NestedNameSpecifier() : Prefix(0), Specifier(0, 0) { }
+  NestedNameSpecifier() : Prefix(0, 0), Specifier(0) { }
 
   /// \brief Copy constructor used internally to clone nested name
   /// specifiers.
@@ -84,7 +87,8 @@ private:
 
   /// \brief Either find or insert the given nested name specifier
   /// mockup in the given context.
-  static NestedNameSpecifier *FindOrInsert(ASTContext &Context, const NestedNameSpecifier &Mockup);
+  static NestedNameSpecifier *FindOrInsert(ASTContext &Context, 
+                                           const NestedNameSpecifier &Mockup);
 
 public:
   /// \brief Builds a specifier combining a prefix and an identifier.
@@ -117,20 +121,20 @@ public:
   /// nested name specifier that represents "foo::bar::", the current
   /// specifier will contain "bar::" and the prefix will contain
   /// "foo::".
-  NestedNameSpecifier *getPrefix() const { return Prefix; }
+  NestedNameSpecifier *getPrefix() const { return Prefix.getPointer(); }
 
   /// \brief Determine what kind of nested name specifier is stored.
   SpecifierKind getKind() const { 
-    if (Specifier.getPointer() == 0)
+    if (Specifier == 0)
       return Global;
-    return (SpecifierKind)Specifier.getInt(); 
+    return (SpecifierKind)Prefix.getInt(); 
   }
 
   /// \brief Retrieve the identifier stored in this nested name
   /// specifier.
   IdentifierInfo *getAsIdentifier() const {
-    if (Specifier.getInt() == Identifier)
-      return (IdentifierInfo *)Specifier.getPointer();
+    if (Prefix.getInt() == Identifier)
+      return (IdentifierInfo *)Specifier;
 
     return 0;
   }
@@ -138,17 +142,17 @@ public:
   /// \brief Retrieve the namespace stored in this nested name
   /// specifier.
   NamespaceDecl *getAsNamespace() const {
-    if (Specifier.getInt() == Namespace)
-      return (NamespaceDecl *)Specifier.getPointer();
+    if (Prefix.getInt() == Namespace)
+      return (NamespaceDecl *)Specifier;
 
     return 0;
   }
 
   /// \brief Retrieve the type stored in this nested name specifier.
   Type *getAsType() const {
-    if (Specifier.getInt() == TypeSpec || 
-        Specifier.getInt() == TypeSpecWithTemplate)
-      return (Type *)Specifier.getPointer();
+    if (Prefix.getInt() == TypeSpec || 
+        Prefix.getInt() == TypeSpecWithTemplate)
+      return (Type *)Specifier;
 
     return 0;
   }
@@ -162,9 +166,8 @@ public:
   void print(llvm::raw_ostream &OS) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    ID.AddPointer(Prefix);
-    ID.AddPointer(Specifier.getPointer());
-    ID.AddInteger(Specifier.getInt());
+    ID.AddPointer(Prefix.getOpaqueValue());
+    ID.AddPointer(Specifier);
   }
 
   void Destroy(ASTContext &Context);

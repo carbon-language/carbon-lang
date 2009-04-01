@@ -1305,7 +1305,7 @@ public:
   }
 
   /// \brief Called when the parser has parsed a C++ typename
-  /// specifier, e.g., "typename T::type".
+  /// specifier that ends in an identifier, e.g., "typename T::type".
   ///
   /// \param TypenameLoc the location of the 'typename' keyword
   /// \param SS the nested-name-specifier following the typename (e.g., 'T::').
@@ -1314,6 +1314,20 @@ public:
   virtual TypeResult
   ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                     const IdentifierInfo &II, SourceLocation IdLoc) {
+    return TypeResult();
+  }
+
+  /// \brief Called when the parser has parsed a C++ typename
+  /// specifier that ends in a template-id, e.g., 
+  /// "typename MetaFun::template apply<T1, T2>".
+  ///
+  /// \param TypenameLoc the location of the 'typename' keyword
+  /// \param SS the nested-name-specifier following the typename (e.g., 'T::').
+  /// \param TemplateLoc the location of the 'template' keyword, if any.
+  /// \param Ty the type that the typename specifier refers to.
+  virtual TypeResult
+  ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
+                    SourceLocation TemplateLoc, TypeTy *Ty) {
     return TypeResult();
   }
 

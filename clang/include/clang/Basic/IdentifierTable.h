@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include "llvm/Support/PointerLikeTypeTraits.h"
 #include <string> 
 #include <cassert> 
 
@@ -510,6 +511,32 @@ struct DenseMapInfo<clang::Selector> {
   }
   
   static bool isPod() { return true; }
+};
+
+// Provide PointerLikeTypeTraits for IdentifierInfo pointers, which
+// are not guaranteed to be 8-byte aligned.
+template<>
+class PointerLikeTypeTraits<clang::IdentifierInfo*> {
+public:
+  static inline void *getAsVoidPointer(clang::IdentifierInfo* P) {
+    return P; 
+  }
+  static inline clang::IdentifierInfo *getFromVoidPointer(void *P) {
+    return static_cast<clang::IdentifierInfo*>(P);
+  }
+  enum { NumLowBitsAvailable = 1 };
+};
+
+template<>
+class PointerLikeTypeTraits<const clang::IdentifierInfo*> {
+public:
+  static inline const void *getAsVoidPointer(const clang::IdentifierInfo* P) {
+    return P; 
+  }
+  static inline const clang::IdentifierInfo *getFromVoidPointer(const void *P) {
+    return static_cast<const clang::IdentifierInfo*>(P);
+  }
+  enum { NumLowBitsAvailable = 1 };
 };
 
 }  // end namespace llvm

@@ -226,6 +226,8 @@ def err_template_spec_syntax_non_template : Error<
   "template|<unused>|refers to a template template parameter}1">;
 def err_id_after_template_in_nested_name_spec : Error<
   "expected template name after 'template' keyword in nested name specifier">;
+def err_id_after_template_in_typename_spec : Error<
+  "expected template name after 'template' keyword in typename specifier">;
 def err_less_after_template_name_in_nested_name_spec : Error<
   "expected '<' after 'template %0' in nested name specifier">;
 def err_two_right_angle_brackets_need_space : Error<
@@ -236,6 +238,10 @@ def warn_cxx0x_right_shift_in_template_arg : Warning<
 
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;
+def err_typename_refers_to_non_type_template : Error<
+  "typename specifier refers to a non-template">;
+def err_expected_type_name_after_typename : Error<
+  "expected an identifier or template-id after '::'">;
 
 // Language specific pragmas
 // - Generic warnings

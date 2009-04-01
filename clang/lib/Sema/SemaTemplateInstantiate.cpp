@@ -497,6 +497,15 @@ InstantiateQualifiedNameType(const QualifiedNameType *T,
 QualType 
 TemplateTypeInstantiator::
 InstantiateTypenameType(const TypenameType *T, unsigned Quals) const {
+  if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
+    // When the typename type refers to a template-id, the template-id
+    // is dependent and has enough information to instantiate the
+    // result of the typename type. Since we don't care about keeping
+    // the spelling of the typename type in template instantiations,
+    // we just instantiate the template-id.
+    return InstantiateTemplateSpecializationType(TemplateId, Quals);
+  }
+
   NestedNameSpecifier *NNS 
     = SemaRef.InstantiateNestedNameSpecifier(T->getQualifier(), 
                                              SourceRange(Loc),
@@ -504,7 +513,7 @@ InstantiateTypenameType(const TypenameType *T, unsigned Quals) const {
   if (!NNS)
     return QualType();
 
-  return SemaRef.CheckTypenameType(NNS, *T->getName(), SourceRange(Loc));
+  return SemaRef.CheckTypenameType(NNS, *T->getIdentifier(), SourceRange(Loc));
 }
 
 QualType 
@@ -801,10 +810,20 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
   }
 
   switch (NNS->getKind()) {
-  case NestedNameSpecifier::Identifier:
-    // FIXME: Implement this lookup!
-    assert(false && "Cannot instantiate this nested-name-specifier");
+  case NestedNameSpecifier::Identifier: {
+    assert(Prefix && 
+           "Can't have an identifier nested-name-specifier with no prefix");
+    CXXScopeSpec SS;
+    // FIXME: The source location information is all wrong.
+    SS.setRange(Range);
+    SS.setScopeRep(Prefix);
+    return static_cast<NestedNameSpecifier *>(
+                                 ActOnCXXNestedNameSpecifier(0, SS,
+                                                             Range.getEnd(),
+                                                             Range.getEnd(),
+                                                   *NNS->getAsIdentifier()));
     break;
+  }
 
   case NestedNameSpecifier::Namespace:
   case NestedNameSpecifier::Global:
@@ -816,9 +835,6 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
     if (!T->isDependentType())
       return NNS;
 
-    // FIXME: We won't be able to perform the instantiation here when
-    // the template-name is dependent, e.g., we have something like
-    // "T::template apply<U>::type".
     T = InstantiateType(T, TemplateArgs, NumTemplateArgs, Range.getBegin(),
                         DeclarationName());
     if (T.isNull())
@@ -826,9 +842,7 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
 
     if (T->isRecordType() ||
         (getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
-      // Note that T.getTypePtr(), below, strips cv-qualifiers. This is
-      // perfectly reasonable, since cv-qualified types in
-      // nested-name-specifiers don't matter.
+      assert(T.getCVRQualifiers() == 0 && "Can't get cv-qualifiers here");
       return NestedNameSpecifier::Create(Context, Prefix, 
                  NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
                                          T.getTypePtr());

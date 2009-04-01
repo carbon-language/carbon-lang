@@ -2105,6 +2105,22 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   return T.getAsOpaquePtr();
 }
 
+Sema::TypeResult
+Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
+                        SourceLocation TemplateLoc, TypeTy *Ty) {
+  QualType T = QualType::getFromOpaquePtr(Ty);
+  NestedNameSpecifier *NNS 
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  const TemplateSpecializationType *TemplateId 
+    = T->getAsTemplateSpecializationType();
+  assert(TemplateId && "Expected a template specialization type");
+
+  if (NNS->isDependent())
+    return Context.getTypenameType(NNS, TemplateId).getAsOpaquePtr();
+
+  return Context.getQualifiedNameType(NNS, T).getAsOpaquePtr();
+}
+
 /// \brief Build the type that describes a C++ typename specifier,
 /// e.g., "typename T::type".
 QualType

@@ -38,16 +38,18 @@ bool TemplateName::isDependent() const {
   return true;
 }
 
-void TemplateName::print(llvm::raw_ostream &OS) const {
+void TemplateName::print(llvm::raw_ostream &OS, bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     OS << Template->getIdentifier()->getName();
   else if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
-    QTN->getQualifier()->print(OS);
+    if (!SuppressNNS)
+      QTN->getQualifier()->print(OS);
     if (QTN->hasTemplateKeyword())
       OS << "template ";
     OS << QTN->getTemplateDecl()->getIdentifier()->getName();
   } else if (DependentTemplateName *DTN = getAsDependentTemplateName()) {
-    DTN->getQualifier()->print(OS);
+    if (!SuppressNNS)
+      DTN->getQualifier()->print(OS);
     OS << "template ";
     OS << DTN->getName()->getName();
   }

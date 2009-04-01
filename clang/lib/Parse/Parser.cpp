@@ -828,7 +828,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
     //   typename-specifier:
     //     'typename' '::' [opt] nested-name-specifier identifier
     //     'typename' '::' [opt] nested-name-specifier template [opt] 
-    //            simple-template-id  [TODO]
+    //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
     bool HadNestedNameSpecifier = ParseOptionalCXXScopeSpecifier(SS);
@@ -842,16 +842,35 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
       // FIXME: check whether the next token is '<', first!
       Ty = Actions.ActOnTypenameType(TypenameLoc, SS, *Tok.getIdentifierInfo(), 
                                      Tok.getLocation());
-      // FIXME: better error recovery!
-      Tok.setKind(tok::annot_typename);
-      Tok.setAnnotationValue(Ty.get());
-      Tok.setAnnotationEndLoc(Tok.getLocation());
-      Tok.setLocation(TypenameLoc);
-      PP.AnnotateCachedTokens(Tok);
-      return true;
-    } 
+    } else if (Tok.is(tok::annot_template_id)) {
+      TemplateIdAnnotation *TemplateId 
+        = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+      if (TemplateId->Kind == TNK_Function_template) {
+        Diag(Tok, diag::err_typename_refers_to_non_type_template)
+          << Tok.getAnnotationRange();
+        return false;
+      }
 
-    return false;
+      if (AnnotateTemplateIdTokenAsType(0))
+        return false;
+
+      assert(Tok.is(tok::annot_typename) && 
+             "AnnotateTemplateIdTokenAsType isn't working properly");
+      Ty = Actions.ActOnTypenameType(TypenameLoc, SS, SourceLocation(),
+                                     Tok.getAnnotationValue());
+    } else {
+      Diag(Tok, diag::err_expected_type_name_after_typename)
+        << SS.getRange();
+      return false;
+    }
+
+    // FIXME: better error recovery!
+    Tok.setKind(tok::annot_typename);
+    Tok.setAnnotationValue(Ty.get());
+    Tok.setAnnotationEndLoc(Tok.getLocation());
+    Tok.setLocation(TypenameLoc);
+    PP.AnnotateCachedTokens(Tok);
+    return true;
   }
 
   CXXScopeSpec SS;

@@ -1454,6 +1454,39 @@ QualType ASTContext::getTypenameType(NestedNameSpecifier *NNS,
   return QualType(T, 0);  
 }
 
+QualType 
+ASTContext::getTypenameType(NestedNameSpecifier *NNS, 
+                            const TemplateSpecializationType *TemplateId,
+                            QualType Canon) {
+  assert(NNS->isDependent() && "nested-name-specifier must be dependent");
+
+  if (Canon.isNull()) {
+    NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
+    QualType CanonType = getCanonicalType(QualType(TemplateId, 0));
+    if (CanonNNS != NNS || CanonType != QualType(TemplateId, 0)) {
+      const TemplateSpecializationType *CanonTemplateId
+        = CanonType->getAsTemplateSpecializationType();
+      assert(CanonTemplateId &&
+             "Canonical type must also be a template specialization type");
+      Canon = getTypenameType(CanonNNS, CanonTemplateId);
+    }
+  }
+
+  llvm::FoldingSetNodeID ID;
+  TypenameType::Profile(ID, NNS, TemplateId);
+
+  void *InsertPos = 0;
+  TypenameType *T 
+    = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
+  T = new (*this) TypenameType(NNS, TemplateId, Canon);
+  Types.push_back(T);
+  TypenameTypes.InsertNode(T, InsertPos);
+  return QualType(T, 0);    
+}
+
 /// CmpProtocolNames - Comparison predicate for sorting protocols
 /// alphabetically.
 static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,

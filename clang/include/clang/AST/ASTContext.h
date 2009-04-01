@@ -302,6 +302,9 @@ public:
   QualType getTypenameType(NestedNameSpecifier *NNS, 
                            const IdentifierInfo *Name,
                            QualType Canon = QualType());
+  QualType getTypenameType(NestedNameSpecifier *NNS, 
+                           const TemplateSpecializationType *TemplateId,
+                           QualType Canon = QualType());
 
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and

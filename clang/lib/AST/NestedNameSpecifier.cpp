@@ -30,7 +30,7 @@ NestedNameSpecifier::FindOrInsert(ASTContext &Context,
   NestedNameSpecifier *NNS 
     = Context.NestedNameSpecifiers.FindNodeOrInsertPos(ID, InsertPos);
   if (!NNS) {
-    NNS = new (Context) NestedNameSpecifier(Mockup);
+    NNS = new (Context, 4) NestedNameSpecifier(Mockup);
     Context.NestedNameSpecifiers.InsertNode(NNS, InsertPos);
   }
 
@@ -44,9 +44,9 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
   assert(Prefix && Prefix->isDependent() && "Prefix must be dependent");
 
   NestedNameSpecifier Mockup;
-  Mockup.Prefix = Prefix;
-  Mockup.Specifier.setPointer(II);
-  Mockup.Specifier.setInt(Identifier);
+  Mockup.Prefix.setPointer(Prefix);
+  Mockup.Prefix.setInt(Identifier);
+  Mockup.Specifier = II;
   return FindOrInsert(Context, Mockup);
 }
 
@@ -58,9 +58,9 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
           (Prefix->getAsType() == 0 && Prefix->getAsIdentifier() == 0)) &&
          "Broken nested name specifier");
   NestedNameSpecifier Mockup;
-  Mockup.Prefix = Prefix;
-  Mockup.Specifier.setPointer(NS);
-  Mockup.Specifier.setInt(Namespace);
+  Mockup.Prefix.setPointer(Prefix);
+  Mockup.Prefix.setInt(Namespace);
+  Mockup.Specifier = NS;
   return FindOrInsert(Context, Mockup);
 }
 
@@ -69,15 +69,15 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
                             bool Template, Type *T) {
   assert(T && "Type cannot be NULL");
   NestedNameSpecifier Mockup;
-  Mockup.Prefix = Prefix;
-  Mockup.Specifier.setPointer(T);
-  Mockup.Specifier.setInt(Template? TypeSpecWithTemplate : TypeSpec);
+  Mockup.Prefix.setPointer(Prefix);
+  Mockup.Prefix.setInt(Template? TypeSpecWithTemplate : TypeSpec);
+  Mockup.Specifier = T;
   return FindOrInsert(Context, Mockup);
 }
   
 NestedNameSpecifier *NestedNameSpecifier::GlobalSpecifier(ASTContext &Context) {
   if (!Context.GlobalNestedNameSpecifier)
-    Context.GlobalNestedNameSpecifier = new (Context) NestedNameSpecifier();
+    Context.GlobalNestedNameSpecifier = new (Context, 4) NestedNameSpecifier();
   return Context.GlobalNestedNameSpecifier;
 }
 
@@ -105,8 +105,8 @@ bool NestedNameSpecifier::isDependent() const {
 /// \brief Print this nested name specifier to the given output
 /// stream.
 void NestedNameSpecifier::print(llvm::raw_ostream &OS) const {
-  if (Prefix)
-    Prefix->print(OS);
+  if (getPrefix())
+    getPrefix()->print(OS);
 
   switch (getKind()) {
   case Identifier:

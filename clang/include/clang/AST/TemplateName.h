@@ -97,7 +97,14 @@ public:
   bool isDependent() const;
 
   /// \brief Print the template name.
-  void print(llvm::raw_ostream &OS) const;
+  ///
+  /// \param OS the output stream to which the template name will be
+  /// printed.
+  ///
+  /// \param SuppressNNS if true, don't print the
+  /// nested-name-specifier that precedes the template name (if it has
+  /// one).
+  void print(llvm::raw_ostream &OS, bool SuppressNNS = false) const;
 
   /// \brief Debugging aid that dumps the template name to standard
   /// error.
