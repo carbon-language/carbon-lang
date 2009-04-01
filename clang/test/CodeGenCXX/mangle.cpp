@@ -24,3 +24,5 @@ void f(u) { }
 typedef struct { int a; } x,y;
 void f(y) { }
 
+// RUN: grep _Z1fv %t | count 1
+void f() { }
