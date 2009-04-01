@@ -1596,28 +1596,26 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   // May modify Attributes.
   CheckObjCPropertyAttributes(T, AtLoc, Attributes);
   
+  ObjCMethodDecl *SetterDecl = 0;
   if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
     if (!CDecl->getIdentifier()) {
-      // This is an anonymous category. property requires special 
+      // This is a continuation class. property requires special 
       // handling.
       if (ObjCInterfaceDecl *ICDecl = CDecl->getClassInterface()) {
         if (ObjCPropertyDecl *PIDecl =
             ICDecl->FindPropertyDeclaration(FD.D.getIdentifier())) {
           // property 'PIDecl's readonly attribute will be over-ridden
-          // with anonymous category's readwrite property attribute!
+          // with continuation class's readwrite property attribute!
           unsigned PIkind = PIDecl->getPropertyAttributes();
           if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
             if ((Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) !=
                 (PIkind & ObjCPropertyDecl::OBJC_PR_nonatomic))
               Diag(AtLoc, diag::warn_property_attr_mismatch);
-            PIDecl->makeitReadWriteAttribute();
-            if (Attributes & ObjCDeclSpec::DQ_PR_retain)
-              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
-            if (Attributes & ObjCDeclSpec::DQ_PR_copy)
-              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
-            PIDecl->setSetterName(SetterSel);
+            // Make the continuation class property attribute Read/Write
+            Attributes &= ~ObjCPropertyDecl::OBJC_PR_readonly;
+            Attributes |= ObjCPropertyDecl::OBJC_PR_readwrite;    
             // FIXME: use a common routine with addPropertyMethods.
-            ObjCMethodDecl *SetterDecl =
+            SetterDecl =
               ObjCMethodDecl::Create(Context, AtLoc, AtLoc, SetterSel,
                                      Context.VoidTy,
                                      ICDecl,
@@ -1628,12 +1626,13 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                                         FD.D.getIdentifier(),
                                                         T, VarDecl::None, 0);
             SetterDecl->setMethodParams(&Argument, 1, Context);
-            PIDecl->setSetterMethodDecl(SetterDecl);
           }
-          else
-            Diag(AtLoc, diag::err_use_continuation_class) << ICDecl->getDeclName();
-          *isOverridingProperty = true;
-          return DeclPtrTy();
+          else {
+            Diag(AtLoc, 
+                 diag::err_use_continuation_class) << ICDecl->getDeclName();
+            *isOverridingProperty = true;
+            return DeclPtrTy();
+          }
         }
         // No matching property found in the main class. Just fall thru
         // and add property to the anonymous category. It looks like
@@ -1660,6 +1659,7 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
 
   // Regardless of setter/getter attribute, we save the default getter/setter
   // selector names in anticipation of declaration of setter/getter methods.
+  PDecl->setSetterMethodDecl(SetterDecl);
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
   
