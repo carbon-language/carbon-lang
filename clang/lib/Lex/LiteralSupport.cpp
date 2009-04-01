@@ -160,6 +160,9 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   // FIXME: Add a warning - UCN's are only valid in C++ & C99.
   // FIXME: Handle wide strings.
   
+  // Save the beginning of the string (for error diagnostics).
+  const char *ThisTokBegin = ThisTokBuf;
+  
   // Skip the '\u' char's.
   ThisTokBuf += 2;
 
@@ -168,7 +171,7 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
     HadError = 1;
     return;
   }
-  typedef unsigned int UTF32;
+  typedef uint32_t UTF32;
   
   UTF32 UcnVal = 0;
   unsigned short UcnLen = (ThisTokBuf[-1] == 'u' ? 4 : 8);
@@ -180,7 +183,8 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   }
   // If we didn't consume the proper number of digits, there is a problem.
   if (UcnLen) {
-    PP.Diag(Loc, diag::err_ucn_escape_incomplete);
+    PP.Diag(PP.AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin),
+            diag::err_ucn_escape_incomplete);
     HadError = 1;
     return;
   }
@@ -197,7 +201,7 @@ static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   // The conversion below was inspired by:
   //   http://www.unicode.org/Public/PROGRAMS/CVTUTF/ConvertUTF.c
   // First, we determine how many bytes the result will require. 
-  typedef unsigned char UTF8;
+  typedef uint8_t UTF8;
 
   unsigned short bytesToWrite = 0;
   if (UcnVal < (UTF32)0x80)
@@ -838,23 +842,23 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
         }
         continue;
       }
-      
+      // Is this a Universal Character Name escape?
       if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
         ProcessUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr, 
                          hadError, StringToks[i].getLocation(), ThisIsWide, PP);
-      } else {
-        // Otherwise, this is a non-UCN escape character.  Process it.
-        unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
-                                                StringToks[i].getLocation(),
-                                                ThisIsWide, PP);
-        
-        // Note: our internal rep of wide char tokens is always little-endian.
-        *ResultPtr++ = ResultChar & 0xFF;
-        
-        if (AnyWide) {
-          for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
-            *ResultPtr++ = ResultChar >> i*8;
-        }
+        continue;
+      }
+      // Otherwise, this is a non-UCN escape character.  Process it.
+      unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
+                                              StringToks[i].getLocation(),
+                                              ThisIsWide, PP);
+      
+      // Note: our internal rep of wide char tokens is always little-endian.
+      *ResultPtr++ = ResultChar & 0xFF;
+      
+      if (AnyWide) {
+        for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
+          *ResultPtr++ = ResultChar >> i*8;
       }
     }
   }
