@@ -176,11 +176,11 @@ void TargetData::init(const std::string &TargetDescription) {
   PointerPrefAlign = PointerABIAlign;
 
   // Default alignments
-  setAlignment(INTEGER_ALIGN,   1,  1, 1);   // Bool
-  setAlignment(INTEGER_ALIGN,   1,  1, 8);   // Byte
-  setAlignment(INTEGER_ALIGN,   2,  2, 16);  // short
-  setAlignment(INTEGER_ALIGN,   4,  4, 32);  // int
-  setAlignment(INTEGER_ALIGN,   4,  8, 64);  // long
+  setAlignment(INTEGER_ALIGN,   1,  1, 1);   // i1
+  setAlignment(INTEGER_ALIGN,   1,  1, 8);   // i8
+  setAlignment(INTEGER_ALIGN,   2,  2, 16);  // i16
+  setAlignment(INTEGER_ALIGN,   4,  4, 32);  // i32
+  setAlignment(INTEGER_ALIGN,   4,  8, 64);  // i64
   setAlignment(FLOAT_ALIGN,     4,  4, 32);  // float
   setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32
