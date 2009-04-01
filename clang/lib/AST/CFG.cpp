@@ -605,8 +605,13 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     Block = NULL;        
     ThenBlock = Visit(Then);
     
-    if (!ThenBlock) // Can occur when the Then body has all NullStmts.
-      ThenBlock = sv.get();
+    if (!ThenBlock) {
+      // We can reach here if the "then" body has all NullStmts.
+      // Create an empty block so we can distinguish between true and false
+      // branches in path-sensitive analyses.
+      ThenBlock = createBlock(false);
+      ThenBlock->addSuccessor(sv.get());
+    }
     else if (Block)
       FinishBlock(ThenBlock);
   }
