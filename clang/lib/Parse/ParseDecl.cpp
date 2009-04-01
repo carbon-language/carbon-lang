@@ -558,8 +558,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     }
         
     case tok::annot_typename: {
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
-                                     Tok.getAnnotationValue());
+      if (Tok.getAnnotationValue())
+        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
+                                       Tok.getAnnotationValue());
+      else
+        DS.SetTypeSpecError();
       DS.SetRangeEnd(Tok.getAnnotationEndLoc());
       ConsumeToken(); // The typename
       
@@ -648,9 +651,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // Turn the template-id annotation token into a type annotation
       // token, then try again to parse it as a type-specifier.
-      if (AnnotateTemplateIdTokenAsType())
-        DS.SetTypeSpecError();
-
+      AnnotateTemplateIdTokenAsType();
       continue;
     }
 
@@ -915,8 +916,11 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
       
   // simple-type-specifier:
   case tok::annot_typename: {
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
-                                   Tok.getAnnotationValue());
+    if (Tok.getAnnotationValue())
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
+                                     Tok.getAnnotationValue());
+    else
+      DS.SetTypeSpecError();
     DS.SetRangeEnd(Tok.getAnnotationEndLoc());
     ConsumeToken(); // The typename
     
@@ -1893,11 +1897,11 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           // FIXME: Inaccurate.
           SourceLocation NameLoc = Tok.getLocation();
           SourceLocation EndLoc;
-          if (TypeTy *Type = ParseClassName(EndLoc)) {
-            D.setDestructor(Type, TildeLoc, NameLoc);
-          } else {
+          TypeResult Type = ParseClassName(EndLoc);
+          if (Type.isInvalid())
             D.SetIdentifier(0, TildeLoc);
-          }
+          else
+            D.setDestructor(Type.get(), TildeLoc, NameLoc);
         } else {
           Diag(Tok, diag::err_expected_class_name);
           D.SetIdentifier(0, TildeLoc);

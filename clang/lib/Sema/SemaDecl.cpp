@@ -80,9 +80,34 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
 
   case LookupResult::AmbiguousBaseSubobjectTypes:
   case LookupResult::AmbiguousBaseSubobjects:
-  case LookupResult::AmbiguousReference:
+  case LookupResult::AmbiguousReference: {
+    // Look to see if we have a type anywhere in the list of results.
+    for (LookupResult::iterator Res = Result.begin(), ResEnd = Result.end();
+         Res != ResEnd; ++Res) {
+      if (isa<TypeDecl>(*Res) || isa<ObjCInterfaceDecl>(*Res)) {
+        IIDecl = *Res;
+        break;
+      }
+    }
+
+    if (!IIDecl) {
+      // None of the entities we found is a type, so there is no way
+      // to even assume that the result is a type. In this case, don't
+      // complain about the ambiguity. The parser will either try to
+      // perform this lookup again (e.g., as an object name), which
+      // will produce the ambiguity, or will complain that it expected
+      // a type name.
+      Result.Destroy();
+      return 0;
+    }
+
+    // We found a type within the ambiguous lookup; diagnose the
+    // ambiguity and then return that type. This might be the right
+    // answer, or it might not be, but it suppresses any attempt to
+    // perform the name lookup again.
     DiagnoseAmbiguousLookup(Result, DeclarationName(&II), NameLoc);
-    return 0;
+    break;
+  }
 
   case LookupResult::Found:
     IIDecl = Result.getAsDecl();
@@ -3153,7 +3178,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       //
       // struct S s;
       //
-      // causes needless err_ovl_no_viable_function_in_init latter.
+      // causes needless "incomplete type" error later.
       Name = 0;
       PrevDecl = 0;
       Invalid = true;

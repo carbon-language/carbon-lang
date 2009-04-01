@@ -148,12 +148,11 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
 
       if (TemplateId->Kind == TNK_Type_template || 
           TemplateId->Kind == TNK_Dependent_template_name) {
-        if (AnnotateTemplateIdTokenAsType(&SS))
-          SS.clear();
+        AnnotateTemplateIdTokenAsType(&SS);
+        SS.clear();
 
         assert(Tok.is(tok::annot_typename) && 
                "AnnotateTemplateIdTokenAsType isn't working");
-
         Token TypeToken = Tok;
         ConsumeToken();
         assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
@@ -163,12 +162,15 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
           SS.setBeginLoc(TypeToken.getLocation());
           HasScopeSpecifier = true;
         }
-
-        SS.setScopeRep(
-          Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, 
-                                              TypeToken.getAnnotationValue(),
-                                              TypeToken.getAnnotationRange(),
-                                              CCLoc));
+        
+        if (TypeToken.getAnnotationValue())
+          SS.setScopeRep(
+            Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, 
+                                                TypeToken.getAnnotationValue(),
+                                                TypeToken.getAnnotationRange(),
+                                                CCLoc));
+        else
+          SS.setScopeRep(0);
         SS.setEndLoc(CCLoc);
         continue;
       } else

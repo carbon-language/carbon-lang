@@ -25,6 +25,34 @@
 
 using namespace clang;
 
+/// \brief Computes the set of declarations referenced by these base
+/// paths.
+void BasePaths::ComputeDeclsFound() {
+  assert(NumDeclsFound == 0 && !DeclsFound && 
+         "Already computed the set of declarations");
+  
+  std::set<NamedDecl *> Decls;
+  for (BasePaths::paths_iterator Path = begin(), PathEnd = end();
+       Path != PathEnd; ++Path)
+    Decls.insert(*Path->Decls.first);
+
+  NumDeclsFound = Decls.size();
+  DeclsFound = new NamedDecl * [NumDeclsFound];
+  std::copy(Decls.begin(), Decls.end(), DeclsFound);
+}
+
+NamedDecl **BasePaths::found_decls_begin() {
+  if (NumDeclsFound == 0)
+    ComputeDeclsFound();
+  return DeclsFound;
+}
+
+NamedDecl **BasePaths::found_decls_end() {
+  if (NumDeclsFound == 0)
+    ComputeDeclsFound();
+  return DeclsFound + NumDeclsFound;
+}
+
 /// isAmbiguous - Determines whether the set of paths provided is
 /// ambiguous, i.e., there are two or more paths that refer to
 /// different base class subobjects of the same type. BaseType must be

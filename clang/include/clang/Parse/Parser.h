@@ -1005,8 +1005,8 @@ private:
   
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
-  TypeTy *ParseClassName(SourceLocation &EndLocation, 
-                         const CXXScopeSpec *SS = 0);
+  TypeResult ParseClassName(SourceLocation &EndLocation, 
+                            const CXXScopeSpec *SS = 0);
   void ParseClassSpecifier(DeclSpec &DS, 
                            TemplateParameterLists *TemplateParams = 0,
                            AccessSpecifier AS = AS_none);
@@ -1065,7 +1065,7 @@ private:
                                const CXXScopeSpec *SS,
                                SourceLocation TemplateKWLoc = SourceLocation(),
                                bool AllowTypeAnnotation = true);
-  bool AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);
+  void AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
                                  TemplateArgIsTypeList &TemplateArgIsType,
                                  TemplateArgLocationList &TemplateArgLocations);

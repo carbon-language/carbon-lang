@@ -437,13 +437,16 @@ Sema::LookupResult::iterator::operator*() const {
   case OverloadedDeclFromIdResolver:
     return *IdentifierResolver::iterator::getFromOpaqueValue(Current);
 
-  case OverloadedDeclFromDeclContext:
-    return *reinterpret_cast<DeclContext::lookup_iterator>(Current);
-  
-  case AmbiguousLookupStoresDecls:
   case AmbiguousLookupStoresBasePaths:
-    assert(false && "Cannot look into ambiguous lookup results");
-    break;
+    if (Result->Last)
+      return *reinterpret_cast<NamedDecl**>(Current);
+
+    // Fall through to handle the DeclContext::lookup_iterator we're
+    // storing.
+
+  case OverloadedDeclFromDeclContext:
+  case AmbiguousLookupStoresDecls:
+    return *reinterpret_cast<DeclContext::lookup_iterator>(Current);
   }
 
   return 0;
@@ -470,39 +473,90 @@ Sema::LookupResult::iterator& Sema::LookupResult::iterator::operator++() {
     break;
   }
 
-  case OverloadedDeclFromDeclContext: {
+  case AmbiguousLookupStoresBasePaths: 
+    if (Result->Last) {
+      NamedDecl ** I = reinterpret_cast<NamedDecl**>(Current);
+      ++I;
+      Current = reinterpret_cast<uintptr_t>(I);
+      break;
+    }
+    // Fall through to handle the DeclContext::lookup_iterator we're
+    // storing.
+
+  case OverloadedDeclFromDeclContext:
+  case AmbiguousLookupStoresDecls: {
     DeclContext::lookup_iterator I 
       = reinterpret_cast<DeclContext::lookup_iterator>(Current);
     ++I;
     Current = reinterpret_cast<uintptr_t>(I);
     break;
   }
-
-  case AmbiguousLookupStoresDecls:
-  case AmbiguousLookupStoresBasePaths:
-    assert(false && "Cannot look into ambiguous lookup results");
-    break;
   }
 
   return *this;
 }
 
 Sema::LookupResult::iterator Sema::LookupResult::begin() {
-  assert(!isAmbiguous() && "Lookup into an ambiguous result");
-  if (StoredKind != OverloadedDeclSingleDecl)
+  switch (StoredKind) {
+  case SingleDecl:
+  case OverloadedDeclFromIdResolver:
+  case OverloadedDeclFromDeclContext:
+  case AmbiguousLookupStoresDecls:
     return iterator(this, First);
-  OverloadedFunctionDecl * Ovl =
-    reinterpret_cast<OverloadedFunctionDecl*>(First);
-  return iterator(this, reinterpret_cast<uintptr_t>(&(*Ovl->function_begin())));
+
+  case OverloadedDeclSingleDecl: {
+    OverloadedFunctionDecl * Ovl =
+      reinterpret_cast<OverloadedFunctionDecl*>(First);
+    return iterator(this, 
+                    reinterpret_cast<uintptr_t>(&(*Ovl->function_begin())));
+  }
+
+  case AmbiguousLookupStoresBasePaths:
+    if (Last)
+      return iterator(this, 
+              reinterpret_cast<uintptr_t>(getBasePaths()->found_decls_begin()));
+    else
+      return iterator(this,
+              reinterpret_cast<uintptr_t>(getBasePaths()->front().Decls.first));
+  }
+
+  // Required to suppress GCC warning.
+  return iterator();
 }
 
 Sema::LookupResult::iterator Sema::LookupResult::end() {
-  assert(!isAmbiguous() && "Lookup into an ambiguous result");
-  if (StoredKind != OverloadedDeclSingleDecl)
+  switch (StoredKind) {
+  case SingleDecl:
+  case OverloadedDeclFromIdResolver:
+  case OverloadedDeclFromDeclContext:
+  case AmbiguousLookupStoresDecls:
     return iterator(this, Last);
-  OverloadedFunctionDecl * Ovl =
-    reinterpret_cast<OverloadedFunctionDecl*>(First);
-  return iterator(this, reinterpret_cast<uintptr_t>(&(*Ovl->function_end())));
+
+  case OverloadedDeclSingleDecl: {
+    OverloadedFunctionDecl * Ovl =
+      reinterpret_cast<OverloadedFunctionDecl*>(First);
+    return iterator(this, 
+                    reinterpret_cast<uintptr_t>(&(*Ovl->function_end())));
+  }
+
+  case AmbiguousLookupStoresBasePaths:
+    if (Last)
+      return iterator(this, 
+               reinterpret_cast<uintptr_t>(getBasePaths()->found_decls_end()));
+    else
+      return iterator(this, reinterpret_cast<uintptr_t>(
+                                     getBasePaths()->front().Decls.second));
+  }
+
+  // Required to suppress GCC warning.
+  return iterator();
+}
+
+void Sema::LookupResult::Destroy() {
+  if (BasePaths *Paths = getBasePaths())
+    delete Paths;
+  else if (getKind() == AmbiguousReference)
+    delete[] reinterpret_cast<NamedDecl **>(First);
 }
 
 static void
@@ -1071,8 +1125,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                    SourceRange LookupRange) {
   assert(Result.isAmbiguous() && "Lookup result must be ambiguous");
 
-  if (BasePaths *Paths = Result.getBasePaths())
-  {
+  if (BasePaths *Paths = Result.getBasePaths()) {
     if (Result.getKind() == LookupResult::AmbiguousBaseSubobjects) {
       QualType SubobjectType = Paths->front().back().Base->getType();
       Diag(NameLoc, diag::err_ambiguous_member_multiple_subobjects)
@@ -1080,11 +1133,13 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
         << LookupRange;
 
       DeclContext::lookup_iterator Found = Paths->front().Decls.first;
-      while (isa<CXXMethodDecl>(*Found) && cast<CXXMethodDecl>(*Found)->isStatic())
+      while (isa<CXXMethodDecl>(*Found) && 
+             cast<CXXMethodDecl>(*Found)->isStatic())
         ++Found;
 
       Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
 
+      Result.Destroy();
       return true;
     } 
 
@@ -1102,20 +1157,18 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
         Diag(D->getLocation(), diag::note_ambiguous_member_found);
     }
 
-    delete Paths;
+    Result.Destroy();
     return true;
   } else if (Result.getKind() == LookupResult::AmbiguousReference) {
-
     Diag(NameLoc, diag::err_ambiguous_reference) << Name << LookupRange;
 
     NamedDecl **DI = reinterpret_cast<NamedDecl **>(Result.First),
-       **DEnd = reinterpret_cast<NamedDecl **>(Result.Last);
+            **DEnd = reinterpret_cast<NamedDecl **>(Result.Last);
 
     for (; DI != DEnd; ++DI)
       Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
 
-    delete[] reinterpret_cast<NamedDecl **>(Result.First);
-
+    Result.Destroy();
     return true;
   }
 
@@ -1466,7 +1519,6 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
                                      AssociatedNamespaces, AssociatedClasses);
 
   // C++ [basic.lookup.argdep]p3:
-  //
   //   Let X be the lookup set produced by unqualified lookup (3.4.1)
   //   and let Y be the lookup set produced by argument dependent
   //   lookup (defined as follows). If X contains [...] then Y is

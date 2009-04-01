@@ -851,22 +851,22 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
         return false;
       }
 
-      if (AnnotateTemplateIdTokenAsType(0))
-        return false;
-
+      AnnotateTemplateIdTokenAsType(0);
       assert(Tok.is(tok::annot_typename) && 
              "AnnotateTemplateIdTokenAsType isn't working properly");
-      Ty = Actions.ActOnTypenameType(TypenameLoc, SS, SourceLocation(),
-                                     Tok.getAnnotationValue());
+      if (Tok.getAnnotationValue())
+        Ty = Actions.ActOnTypenameType(TypenameLoc, SS, SourceLocation(),
+                                       Tok.getAnnotationValue());
+      else
+        Ty = true;
     } else {
       Diag(Tok, diag::err_expected_type_name_after_typename)
         << SS.getRange();
       return false;
     }
 
-    // FIXME: better error recovery!
     Tok.setKind(tok::annot_typename);
-    Tok.setAnnotationValue(Ty.get());
+    Tok.setAnnotationValue(Ty.isInvalid()? 0 : Ty.get());
     Tok.setAnnotationEndLoc(Tok.getLocation());
     Tok.setLocation(TypenameLoc);
     PP.AnnotateCachedTokens(Tok);
@@ -925,7 +925,8 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
       // template-id annotation in a context where we weren't allowed
       // to produce a type annotation token. Update the template-id
       // annotation token to a type annotation token now.
-      return !AnnotateTemplateIdTokenAsType(&SS);
+      AnnotateTemplateIdTokenAsType(&SS);
+      return true;
     }
   }
 

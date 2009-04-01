@@ -52,7 +52,7 @@ struct ::N::A<int>::X {
 
 #if 0
 // FIXME: the following crashes the parser, because Sema has no way to
-// community that the "dependent" template-name N::template B doesn't
+// communicate that the "dependent" template-name N::template B doesn't
 // actually refer to a template.
 template<typename T>
 struct TestA {

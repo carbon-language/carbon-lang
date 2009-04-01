@@ -301,21 +301,23 @@ Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration() {
 ///         identifier
 ///         simple-template-id
 /// 
-Parser::TypeTy *Parser::ParseClassName(SourceLocation &EndLocation,
-                                       const CXXScopeSpec *SS) {
+Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
+                                          const CXXScopeSpec *SS) {
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId 
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
     if (TemplateId->Kind == TNK_Type_template) {
-      if (AnnotateTemplateIdTokenAsType(SS))
-        return 0;
+      AnnotateTemplateIdTokenAsType(SS);
 
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
       TypeTy *Type = Tok.getAnnotationValue();
       EndLocation = Tok.getAnnotationEndLoc();
       ConsumeToken();
-      return Type;
+
+      if (Type)
+        return Type;
+      return true;
     }
 
     // Fall through to produce an error below.
@@ -323,7 +325,7 @@ Parser::TypeTy *Parser::ParseClassName(SourceLocation &EndLocation,
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_class_name);
-    return 0;
+    return true;
   }
 
   // We have an identifier; check whether it is actually a type.
@@ -331,7 +333,7 @@ Parser::TypeTy *Parser::ParseClassName(SourceLocation &EndLocation,
                                      Tok.getLocation(), CurScope, SS);
   if (!Type) {
     Diag(Tok, diag::err_expected_class_name);
-    return 0;
+    return true;
   }
 
   // Consume the identifier.
@@ -592,7 +594,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
     if (IsVirtual) {
       // Complain about duplicate 'virtual'
       Diag(VirtualLoc, diag::err_dup_virtual)
-        << SourceRange(VirtualLoc, VirtualLoc);
+        << CodeModificationHint::CreateRemoval(SourceRange(VirtualLoc));
     }
 
     IsVirtual = true;
@@ -607,8 +609,8 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
 
   // Parse the class-name.
   SourceLocation EndLocation;
-  TypeTy *BaseType = ParseClassName(EndLocation, &SS);
-  if (!BaseType)
+  TypeResult BaseType = ParseClassName(EndLocation, &SS);
+  if (BaseType.isInvalid())
     return true;
   
   // Find the complete source range for the base-specifier.  
@@ -617,7 +619,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
   // Notify semantic analysis that we have parsed a complete
   // base-specifier.
   return Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access,
-                                    BaseType, BaseLoc);
+                                    BaseType.get(), BaseLoc);
 }
 
 /// getAccessSpecifierIfPresent - Determine whether the next token is

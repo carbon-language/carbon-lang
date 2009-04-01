@@ -588,8 +588,10 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
 /// \brief Replaces a template-id annotation token with a type
 /// annotation token.
 ///
-/// \returns true if there was an error, false otherwise.
-bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
+/// If there was a failure when forming the type from the template-id,
+/// a type annotation token will still be created, but will have a
+/// NULL type pointer to signify an error.
+void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
   assert(Tok.is(tok::annot_template_id) && "Requires template-id tokens");
 
   TemplateIdAnnotation *TemplateId 
@@ -610,16 +612,9 @@ bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
                                   TemplateArgsPtr,
                                   TemplateId->getTemplateArgLocations(),
                                   TemplateId->RAngleLoc);
-  if (Type.isInvalid()) {
-    // FIXME: better recovery?
-    ConsumeToken();
-    TemplateId->Destroy();
-    return true;
-  }
-
   // Create the new "type" annotation token.
   Tok.setKind(tok::annot_typename);
-  Tok.setAnnotationValue(Type.get());
+  Tok.setAnnotationValue(Type.isInvalid()? 0 : Type.get());
   if (SS && SS->isNotEmpty()) // it was a C++ qualified type name.
     Tok.setLocation(SS->getBeginLoc());
 
@@ -629,8 +624,6 @@ bool Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
   // class template specialization again.
   PP.ReplaceLastTokenWithAnnotation(Tok);
   TemplateId->Destroy();
-
-  return false;
 }
 
 /// ParseTemplateArgument - Parse a C++ template argument (C++ [temp.names]).

@@ -755,7 +755,6 @@ public:
       /// pointers used to reconstruct new'ed Decl*[] array containing
       /// found ambiguous decls. LookupResult is owner of this array.
       AmbiguousLookupStoresDecls
-
     } StoredKind;
 
     /// The first lookup result, whose contents depend on the kind of
@@ -939,6 +938,9 @@ public:
 
     iterator begin();
     iterator end();
+
+    /// \brief Free the memory associated with this lookup.
+    void Destroy();
   };
 
 private:

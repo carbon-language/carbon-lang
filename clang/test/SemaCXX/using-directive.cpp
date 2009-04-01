@@ -1,9 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL
-// fails due to exact diagnostic matching
 
 namespace A {
-  short i; // expected-note{{candidate found by name lookup is 'A::i'}}
+  short i; // expected-note 2{{candidate found by name lookup is 'A::i'}}
   namespace B {
     long i; // expected-note{{candidate found by name lookup is 'A::B::i'}}
     void f() {} // expected-note{{candidate function}}
@@ -58,7 +56,7 @@ void K1::foo() {} // okay
 
 // FIXME: Do we want err_ovl_no_viable_function_in_init here?
 struct K2 k2; // expected-error{{reference to 'K2' is ambiguous}} \
-                 expected-error{{no matching constructor}}
+                 expected-error{{incomplete type}}
 
 // FIXME: This case is incorrectly diagnosed!
 //K2 k3;
@@ -66,7 +64,7 @@ struct K2 k2; // expected-error{{reference to 'K2' is ambiguous}} \
 
 class X { // expected-note{{candidate found by name lookup is 'X'}}
   // FIXME: produce a suitable error message for this
-  using namespace A; // expected-error{{expected unqualified-id}}
+  using namespace A; // expected-error{{expected member name or}}
 };
 
 namespace N {
@@ -96,7 +94,8 @@ namespace OneFunction {
 }
 
 namespace TwoTag {
-  struct X; // expected-note{{candidate found by name lookup is 'TwoTag::X'}}
+  struct X; // expected-note{{candidate found by name lookup is 'TwoTag::X'}} \
+  // expected-note{{forward declaration}}
 }
 
 namespace FuncHidesTagAmbiguity {
@@ -105,6 +104,7 @@ namespace FuncHidesTagAmbiguity {
   using namespace TwoTag;
 
   void test() {
-    (void)X(); // expected-error{{reference to 'X' is ambiguous}}
+    (void)X(); // expected-error{{reference to 'X' is ambiguous}} \
+      // FIXME: expected-error{{invalid use of incomplete type}}
   }
 }

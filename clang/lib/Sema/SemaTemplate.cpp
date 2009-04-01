@@ -870,8 +870,11 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, LAngleLoc,
                                         &TemplateArgs[0], TemplateArgs.size(),
                                         RAngleLoc);
-  
   TemplateArgsIn.release();
+
+  if (Result.isNull())
+    return true;
+
   return Result.getAsOpaquePtr();
 }
 
@@ -2102,6 +2105,8 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     return true;
 
   QualType T = CheckTypenameType(NNS, II, SourceRange(TypenameLoc, IdLoc));
+  if (T.isNull())
+    return true;
   return T.getAsOpaquePtr();
 }
 

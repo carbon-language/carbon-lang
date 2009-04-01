@@ -132,7 +132,15 @@ namespace clang {
     /// DetectedVirtual - The base class that is virtual.
     const RecordType *DetectedVirtual;
 
+    /// \brief Array of the declarations that have been found. This
+    /// array is constructed only if needed, e.g., to iterate over the
+    /// results within LookupResult.
+    NamedDecl **DeclsFound;
+    unsigned NumDeclsFound;
+
     friend class Sema;
+
+    void ComputeDeclsFound();
 
   public:
     typedef std::list<BasePath>::const_iterator paths_iterator;
@@ -143,14 +151,20 @@ namespace clang {
                        bool RecordPaths = true,
                        bool DetectVirtual = true)
       : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths),
-        DetectVirtual(DetectVirtual), DetectedVirtual(0)
+        DetectVirtual(DetectVirtual), DetectedVirtual(0), DeclsFound(0),
+        NumDeclsFound(0)
     {}
+
+    ~BasePaths() { delete [] DeclsFound; }
 
     paths_iterator begin() const { return Paths.begin(); }
     paths_iterator end()   const { return Paths.end(); }
 
     BasePath&       front()       { return Paths.front(); }
     const BasePath& front() const { return Paths.front(); }
+
+    NamedDecl **found_decls_begin();
+    NamedDecl **found_decls_end();
 
     bool isAmbiguous(QualType BaseType);
 
