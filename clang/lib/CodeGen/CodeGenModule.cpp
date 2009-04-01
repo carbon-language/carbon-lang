@@ -923,12 +923,6 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   SetGlobalValueAttributes(D, false, false, GA, true);
 }
 
-void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
-  // Make sure that this type is translated.
-  Types.UpdateCompletedType(TD);
-}
-
-
 /// getBuiltinLibFunction - Given a builtin id for a function like
 /// "__builtin_fabsf", return a Function* for "fabsf".
 llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {

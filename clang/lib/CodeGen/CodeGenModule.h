@@ -248,7 +248,10 @@ public:
   llvm::Constant *CreateRuntimeVariable(const llvm::Type *Ty,
                                         const char *Name);
 
-  void UpdateCompletedType(const TagDecl *D);
+  void UpdateCompletedType(const TagDecl *TD) {
+    // Make sure that this type is translated.
+    Types.UpdateCompletedType(TD);
+  }
 
   /// EmitConstantExpr - Try to emit the given expression as a
   /// constant; returns 0 if the expression cannot be emitted as a
