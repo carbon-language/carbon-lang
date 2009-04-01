@@ -793,6 +793,38 @@ static void GenExtAddEdge(PathDiagnostic& PD,
           return;
       }
   
+  // Add an extra edge when jumping between contexts.
+  while (1) {
+    if (const Stmt *PS = PrevLoc.asStmt())    
+      if (const Stmt *NS = NewLoc.asStmt()) {
+        PathDiagnosticLocation X = PDB.getEnclosingStmtLocation(PS);
+        // FIXME: We need a version of getParent that ignores '()' and casts.
+        const Stmt *parentX = PDB.getParent(X.asStmt());
+
+        const PathDiagnosticLocation &Y = PDB.getEnclosingStmtLocation(NS);
+        // FIXME: We need a version of getParent that ignores '()' and casts.
+        const Stmt *parentY = PDB.getParent(Y.asStmt());
+
+        if (IsControlFlowExpr(parentX)) {
+          if (IsControlFlowExpr(parentY) && parentX == parentY) {
+            break;
+          }
+          else {
+            const PathDiagnosticLocation &W =
+              PDB.getEnclosingStmtLocation(PDB.getParent(parentX));
+            
+            if (W != Y) X = W;
+          }
+        }
+        
+        if (X != Y && PrevLoc.asLocation() != X.asLocation()) {
+          PD.push_front(new PathDiagnosticControlFlowPiece(X, PrevLoc));
+          PrevLoc = X;
+        }
+      }
+    break;
+  }
+  
   PD.push_front(new PathDiagnosticControlFlowPiece(NewLoc, PrevLoc));
   PrevLoc = NewLoc;
 }
