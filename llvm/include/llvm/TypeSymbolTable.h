@@ -87,7 +87,7 @@ public:
   /// @brief Get a const_iterator to the start of the symbol table
   inline const_iterator begin() const { return tmap.begin(); }
 
-  /// Get an iterator to the end of the symbol talbe. 
+  /// Get an iterator to the end of the symbol table.
   inline iterator end() { return tmap.end(); }
 
   /// Get a const_iterator to the end of the symbol table.
