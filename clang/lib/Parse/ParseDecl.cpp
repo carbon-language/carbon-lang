@@ -496,7 +496,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, PP.getSourceManager(), getLang());
+      DS.Finish(Diags, PP);
       return;
         
     case tok::coloncolon: // ::foo::bar
@@ -1169,7 +1169,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
-      Diag(Tok, diag::ext_extra_struct_semi);
+      Diag(Tok, diag::ext_extra_struct_semi)
+        << CodeModificationHint::CreateRemoval(SourceRange(Tok.getLocation()));
       ConsumeToken();
       continue;
     }
@@ -1372,8 +1373,11 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
       break;
     SourceLocation CommaLoc = ConsumeToken();
     
-    if (Tok.isNot(tok::identifier) && !getLang().C99)
-      Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
+    if (Tok.isNot(tok::identifier) && 
+        !(getLang().C99 || getLang().CPlusPlus0x))
+      Diag(CommaLoc, diag::ext_enumerator_list_comma)
+        << getLang().CPlusPlus
+        << CodeModificationHint::CreateRemoval((SourceRange(CommaLoc)));
   }
   
   // Eat the }.
@@ -1625,7 +1629,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
       DoneWithTypeQuals:
       // If this is not a type-qualifier token, we're done reading type
       // qualifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, PP.getSourceManager(), getLang());
+      DS.Finish(Diags, PP);
       return;
     }
 

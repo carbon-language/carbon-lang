@@ -17,15 +17,15 @@ def w_asm_qualifier_ignored : Warning<"ignored %0 qualifier on asm">;
 
 def ext_empty_source_file : Extension<"ISO C forbids an empty source file">;
 def ext_top_level_semi : Extension<
-  "ISO C does not allow an extra ';' outside of a function">;
+  "extra ';' outside of a function">;
 def ext_extra_struct_semi : Extension<
-  "ISO C does not allow an extra ';' inside a struct or union">;
+  "extra ';' inside a struct or union">;
 
 def ext_duplicate_declspec : Extension<"duplicate '%0' declaration specifier">;
-def ext_plain_complex : Extension<
-  "ISO C does not support plain '_Complex' meaning '_Complex double'">;
+def ext_plain_complex : ExtWarn<
+  "plain '_Complex' requires a type specifier; assuming '_Complex double'">;
 def ext_integer_complex : Extension<
-  "ISO C does not support complex integer types">;
+  "complex integer types are an extension">;
 def ext_thread_before : Extension<"'__thread' before 'static'">;
 
 def ext_empty_struct_union_enum : Extension<"use of empty %0 extension">;
@@ -43,8 +43,8 @@ def ext_c99_variable_decl_in_for_loop : Extension<
   "variable declaration in for loop is a C99-specific feature">;
 def ext_c99_compound_literal : Extension<
   "compound literals are a C99-specific feature">;
-def ext_c99_enumerator_list_comma : Extension<
-  "commas at the end of enumerator lists are a C99-specific feature">;
+def ext_enumerator_list_comma : Extension<
+  "commas at the end of enumerator lists are a %select{C99|C++0x}0-specific feature">;
 
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">;

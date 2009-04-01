@@ -372,7 +372,8 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::semi:
-    Diag(Tok, diag::ext_top_level_semi);
+    Diag(Tok, diag::ext_top_level_semi)
+      << CodeModificationHint::CreateRemoval(SourceRange(Tok.getLocation()));
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
     return DeclGroupPtrTy();

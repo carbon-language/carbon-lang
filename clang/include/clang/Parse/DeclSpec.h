@@ -324,7 +324,7 @@ public:
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-  void Finish(Diagnostic &D, SourceManager& SrcMgr, const LangOptions &Lang);
+  void Finish(Diagnostic &D, Preprocessor &PP);
 
   /// isMissingDeclaratorOk - This checks if this DeclSpec can stand alone,
   /// without a Declarator. Only tag declspecs can stand alone.

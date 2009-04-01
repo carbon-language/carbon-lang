@@ -608,7 +608,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   // GNU typeof support.
   case tok::kw_typeof:
     ParseTypeofSpecifier(DS);
-    DS.Finish(Diags, PP.getSourceManager(), getLang());
+    DS.Finish(Diags, PP);
     return;
   }
   if (Tok.is(tok::annot_typename))
@@ -616,7 +616,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   else
     DS.SetRangeEnd(Tok.getLocation());
   ConsumeToken();
-  DS.Finish(Diags, PP.getSourceManager(), getLang());
+  DS.Finish(Diags, PP);
 }
 
 /// ParseCXXTypeSpecifierSeq - Parse a C++ type-specifier-seq (C++

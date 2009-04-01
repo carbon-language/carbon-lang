@@ -13,6 +13,7 @@
 
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstring>
@@ -283,9 +284,9 @@ bool DeclSpec::SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr, 
-                      const LangOptions &Lang) {
+void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   // Check the type specifier components first.
+  SourceManager &SrcMgr = PP.getSourceManager();
 
   // signed/unsigned are only valid with int/char/wchar_t.
   if (TypeSpecSign != TSS_unspecified) {
@@ -330,7 +331,10 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
   // disallow their use.  Need information about the backend.
   if (TypeSpecComplex != TSC_unspecified) {
     if (TypeSpecType == TST_unspecified) {
-      Diag(D, TSCLoc, SrcMgr, diag::ext_plain_complex);
+      Diag(D, TSCLoc, SrcMgr, diag::ext_plain_complex)
+        << CodeModificationHint::CreateInsertion(
+                              PP.getLocForEndOfToken(getTypeSpecComplexLoc()),
+                                                 " double");
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
     } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
       // Note that this intentionally doesn't include _Complex _Bool.
