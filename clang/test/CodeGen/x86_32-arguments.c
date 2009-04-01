@@ -71,5 +71,19 @@ struct s10 {
   float f;
 } f10(void) {}
 
-// RUN: true
+// Small vectors and 1 x {i64,double} are returned in registers...
 
+// RUN: grep 'i32 @f11()' %t &&
+// RUN: grep -F 'void @f12(<2 x i32>* noalias sret %agg.result)' %t &&
+// RUN: grep 'i64 @f13()' %t &&
+// RUN: grep 'i64 @f14()' %t &&
+typedef short T11 __attribute__ ((vector_size (4)));
+T11 f11(void) {}
+typedef int T12 __attribute__ ((vector_size (8)));
+T12 f12(void) {}
+typedef long long T13 __attribute__ ((vector_size (8)));
+T13 f13(void) {}
+typedef double T14 __attribute__ ((vector_size (8)));
+T14 f14(void) {}
+
+// RUN: true

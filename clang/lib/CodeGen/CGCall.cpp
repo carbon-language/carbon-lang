@@ -278,6 +278,28 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
   if (RetTy->isVoidType()) {
     return ABIArgInfo::getIgnore();
+  } else if (const VectorType *VT = RetTy->getAsVectorType()) {
+    // On Darwin, some vectors are returned in registers.
+    if (IsDarwin) {
+      uint64_t Size = Context.getTypeSize(RetTy);
+
+      // 128-bit vectors are a special case; they are returned in
+      // registers and we need to make sure to pick a type the LLVM
+      // backend will like.
+      if (Size == 128)
+        return ABIArgInfo::getCoerce(llvm::VectorType::get(llvm::Type::Int64Ty, 
+                                                           2));
+
+      // Always return in register if it fits in a general purpose
+      // register, or if it is 64 bits and has a single element.
+      if ((Size == 8 || Size == 16 || Size == 32) ||
+          (Size == 64 && VT->getNumElements() == 1))
+        return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+        
+      return ABIArgInfo::getIndirect(0);
+    }
+
+    return ABIArgInfo::getDirect();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
     // Outside of Darwin, structs and unions are always indirect.
     if (!IsDarwin && !RetTy->isAnyComplexType())
