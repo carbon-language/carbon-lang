@@ -2067,7 +2067,8 @@ Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
         if (CallInst* CI = dyn_cast<CallInst>(*UI++))
           UpgradeIntrinsicCall(CI, I->second);
       }
-      I->first->replaceAllUsesWith(I->second);
+      if (!I->first->use_empty())
+        I->first->replaceAllUsesWith(I->second);
       I->first->eraseFromParent();
     }
   }
