@@ -1267,6 +1267,16 @@ bool FunctionPassManagerImpl::doFinalization(Module &M) {
   return Changed;
 }
 
+/// cleanup - After running all passes, clean up pass manager cache.
+void FPPassManager::cleanup() {
+ for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    FunctionPass *FP = getContainedPass(Index);
+    AnalysisResolver *AR = FP->getResolver();
+    assert(AR && "Analysis Resolver is not set");
+    AR->clearAnalysisImpls();
+ }
+}
+
 // Execute all the passes managed by this top level manager.
 // Return true if any function is modified by a pass.
 bool FunctionPassManagerImpl::run(Function &F) {
@@ -1279,6 +1289,10 @@ bool FunctionPassManagerImpl::run(Function &F) {
   initializeAllAnalysisInfo();
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
     Changed |= getContainedManager(Index)->runOnFunction(F);
+
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
+    getContainedManager(Index)->cleanup();
+
   return Changed;
 }
 

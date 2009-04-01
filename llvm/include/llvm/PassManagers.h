@@ -414,6 +414,9 @@ public:
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnFunction(Function &F);
   bool runOnModule(Module &M);
+  
+  /// cleanup - After running all passes, clean up pass manager cache.
+  void cleanup();
 
   /// doInitialization - Run all of the initializers for the function passes.
   ///

@@ -143,6 +143,12 @@ public:
     AnalysisImpls.push_back(pir);
   }
 
+  /// clearAnalysisImpls - Clear cache that is used to connect a pass to the
+  /// the analysis (PassInfo).
+  void clearAnalysisImpls() {
+    AnalysisImpls.clear();
+  }
+
   // getAnalysisIfAvailable - Return analysis result or null if it doesn't exist
   Pass *getAnalysisIfAvailable(AnalysisID ID, bool Direction) const;
 
