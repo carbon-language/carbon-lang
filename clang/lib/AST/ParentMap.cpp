@@ -45,3 +45,43 @@ Stmt* ParentMap::getParent(Stmt* S) const {
   MapTy::iterator I = M->find(S);
   return I == M->end() ? 0 : I->second;
 }
+
+bool ParentMap::isConsumedExpr(Expr* E) const {
+  Stmt *P = getParent(E);
+  Stmt *DirectChild = E;
+  
+  // Ignore parents that are parentheses or casts.
+  while (P && (isa<ParenExpr>(E) || isa<CastExpr>(E))) {
+    DirectChild = P;
+    P = getParent(P);
+  }
+  
+  if (!P)
+    return false;
+  
+  switch (P->getStmtClass()) {
+    default:
+      return isa<Expr>(P);
+    case Stmt::DeclStmtClass:
+      return true;
+    case Stmt::BinaryOperatorClass: {
+      BinaryOperator *BE = cast<BinaryOperator>(P);
+      return BE->getOpcode()==BinaryOperator::Comma && DirectChild==BE->getLHS();
+    }
+    case Stmt::ForStmtClass:
+      return DirectChild == cast<ForStmt>(P)->getCond();
+    case Stmt::WhileStmtClass:
+      return DirectChild == cast<WhileStmt>(P)->getCond();      
+    case Stmt::DoStmtClass:
+      return DirectChild == cast<DoStmt>(P)->getCond();
+    case Stmt::IfStmtClass:
+      return DirectChild == cast<IfStmt>(P)->getCond();
+    case Stmt::IndirectGotoStmtClass:
+      return DirectChild == cast<IndirectGotoStmt>(P)->getTarget();
+    case Stmt::SwitchStmtClass:
+      return DirectChild == cast<SwitchStmt>(P)->getCond();
+    case Stmt::ReturnStmtClass:
+      return true;
+  }
+}
+

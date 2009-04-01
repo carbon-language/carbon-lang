@@ -13,9 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ParentMap.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRExprEngineBuilders.h"
-
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/PrettyStackTrace.h"
@@ -1690,7 +1690,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     
     if (isFeasibleNull) {
       // Check if the receiver was nil and the return value a struct.
-      if (ME->getType()->isRecordType()) {
+      if (ME->getType()->isRecordType() &&
+          BR.getParentMap().isConsumedExpr(ME)) {
         // The [0 ...] expressions will return garbage.  Flag either an
         // explicit or implicit error.  Because of the structure of this
         // function we currently do not bifurfacte the state graph at

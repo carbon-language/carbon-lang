@@ -17,3 +17,9 @@ void createFoo() {
   Bar f = [obj foo]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value (of type 'Bar') to be garbage or otherwise undefined.}}
 }
 
+void createFoo2() {
+  MyClass *obj = 0;  
+  [obj foo]; // no-warning
+  Bar f = [obj foo]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value (of type 'Bar') to be garbage or otherwise undefined.}}
+}
+

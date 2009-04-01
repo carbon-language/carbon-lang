@@ -98,7 +98,7 @@ protected:
   //   to lazily evaluate such logic.  The downside is that it eagerly
   //   bifurcates paths.
   const bool EagerlyAssume;
-  
+
 public:
   typedef llvm::SmallPtrSet<NodeTy*,2> ErrorNodes;  
   typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
