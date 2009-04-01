@@ -262,6 +262,8 @@ class X86_32ABIInfo : public ABIInfo {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
   }
 
+  static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context);
+
 public:
   ABIArgInfo classifyReturnType(QualType RetTy, 
                                 ASTContext &Context) const;
@@ -281,6 +283,60 @@ public:
 
   X86_32ABIInfo(bool d) : ABIInfo(), IsDarwin(d) {}
 };
+}
+
+
+/// shouldReturnTypeInRegister - Determine if the given type should be
+/// passed in a register (for the Darwin ABI).
+bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
+                                               ASTContext &Context) {
+  uint64_t Size = Context.getTypeSize(Ty);
+
+  // Type must be register sized.
+  if (!isRegisterSize(Size))
+    return false;
+
+  if (Ty->isVectorType()) {
+    // 64- and 128- bit vectors inside structures are not returned in
+    // registers.
+    if (Size == 64 || Size == 128)
+      return false;
+
+    return true;
+  }
+
+  // If this is a builtin, pointer, or complex type, it is ok.
+  if (Ty->getAsBuiltinType() || Ty->isPointerType() || Ty->isAnyComplexType())
+    return true;
+
+  // Arrays are treated like records.
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty))
+    return shouldReturnTypeInRegister(AT->getElementType(), Context);
+
+  // Otherwise, it must be a record type.
+  const RecordType *RT = Ty->getAsRecordType();
+  if (!RT) return false;
+
+  // Structure types are passed in register if all fields would be
+  // passed in a register.
+  for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(), 
+         e = RT->getDecl()->field_end(); i != e; ++i) {
+    const FieldDecl *FD = *i;
+    
+    // FIXME: Reject bitfields wholesale for now; this is incorrect.
+    if (FD->isBitField())
+      return false;
+
+    // Empty structures are ignored.
+    if (isEmptyRecord(FD->getType()))
+      continue;
+
+    // Check fields recursively.
+    if (!shouldReturnTypeInRegister(FD->getType(), Context))
+      return false;
+  }
+
+  return true;
 }
 
 ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
@@ -345,8 +401,18 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
     }
 
     uint64_t Size = Context.getTypeSize(RetTy);
-    if (isRegisterSize(Size))
-      return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+    if (isRegisterSize(Size)) {
+      // Always return in register for unions for now.
+      // FIXME: This is wrong, but better than treating as a
+      // structure.
+      if (RetTy->isUnionType())
+        return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+
+      // Small structures which are register sized are generally returned
+      // in a register.
+      if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, Context))
+        return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+    }
 
     return ABIArgInfo::getIndirect(0);
   } else {

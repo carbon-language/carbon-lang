@@ -9,11 +9,6 @@
 // RUN: grep 'define void @f7(i32 %a0)' %t &&
 // RUN: grep 'define i64 @f8_1()' %t && 
 // RUN: grep 'define void @f8_2(i32 %a0.0, i32 %a0.1)' %t &&
-// RUN: grep 'define i64 @f9_1()' %t &&
-
-// FIXME: This is wrong, but we want the coverage of the other
-// tests. This should be the same as @f8_2.
-// RUN: grep 'define void @f9_2(%.truct.s9\* byval %a0)' %t &&
 
 char f0(void) {
 }
@@ -52,8 +47,13 @@ void f8_2(struct s8 a0) {
 
 // This should be passed just as s8.
 
-// FIXME: This is currently broken, but the test case is accepting it
-// so we get coverage of the other cases.
+// FIXME: This is wrong, but we want the coverage of the other
+// tests. This should be the same as @f8_1.
+// RUN: grep 'define void @f9_1(%.truct.s9\* noalias sret %agg.result)' %t &&
+
+// FIXME: This is wrong, but we want the coverage of the other
+// tests. This should be the same as @f8_2.
+// RUN: grep 'define void @f9_2(%.truct.s9\* byval %a0)' %t &&
 struct s9 {
   int a : 17;
   int b;
@@ -96,11 +96,11 @@ T16 f16(void) {}
 // 128-bits).
 
 // RUN: grep 'i32 @f17()' %t &&
-// RUN: grep -F 'void @f18(%0* noalias sret %agg.result)' %t &&
-// RUN: grep -F 'void @f19(%1* noalias sret %agg.result)' %t &&
-// RUN: grep -F 'void @f20(%2* noalias sret %agg.result)' %t &&
-// RUN: grep -F 'void @f21(%3* noalias sret %agg.result)' %t &&
-// RUN: grep -F 'void @f22(%4* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f18(%3* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f19(%4* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f20(%5* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f21(%6* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f22(%7* noalias sret %agg.result)' %t &&
 struct { T11 a; } f17(void) {}
 struct { T12 a; } f18(void) {}
 struct { T13 a; } f19(void) {}
@@ -116,5 +116,11 @@ struct { T16 a; } f22(void) {}
 struct { float a; } f23(void) {}
 struct { float a[1]; } f24(void) {}
 struct { struct {} a; struct { float a[1]; } b; } f25(void) {}
+
+// Small structures are handled recursively
+// RUN: grep -F 'i32 @f26()' %t &&
+// RUN: grep 'void @f27(%.truct.s27\* noalias sret %agg.result)' %t &&
+struct s26 { struct { char a, b; } a; struct { char a, b } b; } f26(void) {}
+struct s27 { struct { char a, b, c; } a; struct { char a } b; } f27(void) {}
 
 // RUN: true
