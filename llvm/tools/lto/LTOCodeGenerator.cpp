@@ -240,6 +240,27 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
             args.push_back("-arch");
             args.push_back("ppc64");
         }
+        else if (strncmp(targetTriple.c_str(), "arm-apple-", 10) == 0) {
+            args.push_back("-arch");
+            args.push_back("arm");
+        }
+        else if ((strncmp(targetTriple.c_str(), "armv4t-apple-", 13) == 0) ||
+                 (strncmp(targetTriple.c_str(), "thumbv4t-apple-", 15) == 0)) {
+            args.push_back("-arch");
+            args.push_back("armv4t");
+        }
+        else if ((strncmp(targetTriple.c_str(), "armv5-apple-", 12) == 0) ||
+                 (strncmp(targetTriple.c_str(), "armv5e-apple-", 13) == 0) ||
+                 (strncmp(targetTriple.c_str(), "thumbv5-apple-", 14) == 0) ||
+                 (strncmp(targetTriple.c_str(), "thumbv5e-apple-", 15) == 0)) {
+            args.push_back("-arch");
+            args.push_back("armv5");
+        }
+        else if ((strncmp(targetTriple.c_str(), "armv6-apple-", 12) == 0) ||
+                 (strncmp(targetTriple.c_str(), "thumbv6-apple-", 14) == 0)) {
+            args.push_back("-arch");
+            args.push_back("armv6");
+        }
     }
     args.push_back("-c");
     args.push_back("-x");
