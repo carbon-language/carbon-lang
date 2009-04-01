@@ -675,14 +675,6 @@ void InitializeGCMode(LangOptions &Options) {
     Options.setGCMode(LangOptions::HybridGC);
 }
 
-static llvm::cl::opt<bool>
-OverflowChecking("ftrapv",
-           llvm::cl::desc("Trap on integer overflow"),
-           llvm::cl::init(false));
-
-void InitializeOverflowChecking(LangOptions &Options) {
-  Options.OverflowChecking = OverflowChecking;
-}
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
 //===----------------------------------------------------------------------===//
@@ -1634,7 +1626,6 @@ int main(int argc, char **argv) {
     LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
     InitializeGCMode(LangInfo);
-    InitializeOverflowChecking(LangInfo);
     InitializeLanguageStandard(LangInfo, LK, Target.get());
           
     // Process the -I options and set them in the HeaderInfo.
