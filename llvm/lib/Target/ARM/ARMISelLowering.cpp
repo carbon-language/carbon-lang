@@ -2014,3 +2014,138 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
 
   return std::vector<unsigned>();
 }
+
+/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+/// vector.  If it is invalid, don't add anything to Ops.
+void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
+                                                     char Constraint,
+                                                     bool hasMemory,
+                                                     std::vector<SDValue>&Ops,
+                                                     SelectionDAG &DAG) const {
+  SDValue Result(0, 0);
+
+  switch (Constraint) {
+  default: break;
+  case 'I': case 'J': case 'K': case 'L':
+  case 'M': case 'N': case 'O':
+    ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
+    if (!C)
+      return;
+
+    int64_t CVal64 = C->getSExtValue();
+    int CVal = (int) CVal64;
+    // None of these constraints allow values larger than 32 bits.  Check
+    // that the value fits in an int.
+    if (CVal != CVal64)
+      return;
+
+    switch (Constraint) {
+      case 'I':
+        if (Subtarget->isThumb()) {
+          // This must be a constant between 0 and 255, for ADD immediates.
+          if (CVal >= 0 && CVal <= 255)
+            break;
+        } else {
+          // A constant that can be used as an immediate value in a
+          // data-processing instruction.
+          if (ARM_AM::getSOImmVal(CVal) != -1)
+            break;
+        }
+        return;
+
+      case 'J':
+        if (Subtarget->isThumb()) {
+          // This must be a constant between -255 and -1, for negated ADD
+          // immediates. This can be used in GCC with an "n" modifier that
+          // prints the negated value, for use with SUB instructions. It is
+          // not useful otherwise but is implemented for compatibility.
+          if (CVal >= -255 && CVal <= -1)
+            break;
+        } else {
+          // This must be a constant between -4095 and 4095. It is not clear
+          // what this constraint is intended for. Implemented for
+          // compatibility with GCC.
+          if (CVal >= -4095 && CVal <= 4095)
+            break;
+        }
+        return;
+
+      case 'K':
+        if (Subtarget->isThumb()) {
+          // A 32-bit value where only one byte has a nonzero value. Exclude
+          // zero to match GCC. This constraint is used by GCC internally for
+          // constants that can be loaded with a move/shift combination.
+          // It is not useful otherwise but is implemented for compatibility.
+          if (CVal != 0 && ARM_AM::isThumbImmShiftedVal(CVal))
+            break;
+        } else {
+          // A constant whose bitwise inverse can be used as an immediate
+          // value in a data-processing instruction. This can be used in GCC
+          // with a "B" modifier that prints the inverted value, for use with
+          // BIC and MVN instructions. It is not useful otherwise but is
+          // implemented for compatibility.
+          if (ARM_AM::getSOImmVal(~CVal) != -1)
+            break;
+        }
+        return;
+
+      case 'L':
+        if (Subtarget->isThumb()) {
+          // This must be a constant between -7 and 7,
+          // for 3-operand ADD/SUB immediate instructions.
+          if (CVal >= -7 && CVal < 7)
+            break;
+        } else {
+          // A constant whose negation can be used as an immediate value in a
+          // data-processing instruction. This can be used in GCC with an "n"
+          // modifier that prints the negated value, for use with SUB
+          // instructions. It is not useful otherwise but is implemented for
+          // compatibility.
+          if (ARM_AM::getSOImmVal(-CVal) != -1)
+            break;
+        }
+        return;
+
+      case 'M':
+        if (Subtarget->isThumb()) {
+          // This must be a multiple of 4 between 0 and 1020, for
+          // ADD sp + immediate.
+          if ((CVal >= 0 && CVal <= 1020) && ((CVal & 3) == 0))
+            break;
+        } else {
+          // A power of two or a constant between 0 and 32.  This is used in
+          // GCC for the shift amount on shifted register operands, but it is
+          // useful in general for any shift amounts.
+          if ((CVal >= 0 && CVal <= 32) || ((CVal & (CVal - 1)) == 0))
+            break;
+        }
+        return;
+
+      case 'N':
+        if (Subtarget->isThumb()) {
+          // This must be a constant between 0 and 31, for shift amounts.
+          if (CVal >= 0 && CVal <= 31)
+            break;
+        }
+        return;
+
+      case 'O':
+        if (Subtarget->isThumb()) {
+          // This must be a multiple of 4 between -508 and 508, for
+          // ADD/SUB sp = sp + immediate.
+          if ((CVal >= -508 && CVal <= 508) && ((CVal & 3) == 0))
+            break;
+        }
+        return;
+    }
+    Result = DAG.getTargetConstant(CVal, Op.getValueType());
+    break;
+  }
+
+  if (Result.getNode()) {
+    Ops.push_back(Result);
+    return;
+  }
+  return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, hasMemory,
+                                                      Ops, DAG);
+}
