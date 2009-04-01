@@ -72,10 +72,6 @@ enum PassManagerType {
 class Pass {
   AnalysisResolver *Resolver;  // Used to resolve analysis
   intptr_t PassID;
-  // AnalysisImpls - This keeps track of which passes implement the interfaces
-  // that are required by the current pass (to implement getAnalysis()).
-  //
-  std::vector<std::pair<const PassInfo*, Pass*> > AnalysisImpls;
 
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
