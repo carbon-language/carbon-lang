@@ -500,8 +500,10 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       II.getInputArg().render(Args, CmdArgs);
   }
 
+  const char *GCCName = 
+    getToolChain().getHost().getDriver().CCCGenericGCCName.c_str();
   const char *Exec = 
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "gcc").c_str());
+    Args.MakeArgString(getToolChain().GetProgramPath(C, GCCName).c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
 

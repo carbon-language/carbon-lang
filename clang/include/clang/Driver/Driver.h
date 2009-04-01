@@ -78,6 +78,9 @@ public:
   /// Only print tool bindings, don't build any jobs.
   bool CCCPrintBindings : 1;
 
+  /// Name to use when calling the generic gcc.
+  std::string CCCGenericGCCName;
+
 private:
   /// Use the clang compiler where possible.
   bool CCCUseClang : 1;
