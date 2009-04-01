@@ -86,7 +86,7 @@ def pp_hash_warning : Warning<"#warning%0">;
 def pp_include_next_in_primary : Warning<
   "#include_next in primary source file">;
 def pp_include_next_absolute_path : Warning<"#include_next with absolute path">;
-def ext_c99_whitespace_required_after_macro_name : Warning<
+def ext_c99_whitespace_required_after_macro_name : ExtWarn<
   "ISO C99 requires whitespace after the macro name">;
 def pp_pragma_once_in_main_file : Warning<"#pragma once in main file">;
 def pp_pragma_sysheader_in_main_file : Warning<
