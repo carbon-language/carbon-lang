@@ -1294,9 +1294,28 @@ bool GVN::processInstruction(Instruction *I,
   uint32_t nextNum = VN.getNextUnusedValueNumber();
   unsigned num = VN.lookup_or_add(I);
   
+  if (BranchInst* BI = dyn_cast<BranchInst>(I)) {
+    localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
+    
+    if (!BI->isConditional() || isa<Constant>(BI->getCondition()))
+      return false;
+    
+    Value* branchCond = BI->getCondition();
+    uint32_t condVN = VN.lookup_or_add(branchCond);
+    
+    BasicBlock* trueSucc = BI->getSuccessor(0);
+    BasicBlock* falseSucc = BI->getSuccessor(1);
+    
+    if (trueSucc->getSinglePredecessor())
+      localAvail[trueSucc]->table[condVN] = ConstantInt::getTrue();
+    if (falseSucc->getSinglePredecessor())
+      localAvail[falseSucc]->table[condVN] = ConstantInt::getFalse();
+
+    return false;
+    
   // Allocations are always uniquely numbered, so we can save time and memory
-  // by fast failing them.
-  if (isa<AllocationInst>(I) || isa<TerminatorInst>(I)) {
+  // by fast failing them.  
+  } else if (isa<AllocationInst>(I) || isa<TerminatorInst>(I)) {
     localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
     return false;
   }
@@ -1405,17 +1424,10 @@ bool GVN::runOnFunction(Function& F) {
 
 
 bool GVN::processBlock(BasicBlock* BB) {
-  DomTreeNode* DTN = DT->getNode(BB);
   // FIXME: Kill off toErase by doing erasing eagerly in a helper function (and
   // incrementing BI before processing an instruction).
   SmallVector<Instruction*, 8> toErase;
   bool changed_function = false;
-  
-  if (DTN->getIDom())
-    localAvail[BB] =
-                  new ValueNumberScope(localAvail[DTN->getIDom()->getBlock()]);
-  else
-    localAvail[BB] = new ValueNumberScope(0);
   
   for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
        BI != BE;) {
@@ -1606,6 +1618,15 @@ bool GVN::performPRE(Function& F) {
 /// iterateOnFunction - Executes one iteration of GVN
 bool GVN::iterateOnFunction(Function &F) {
   cleanupGlobalSets();
+
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
+       DE = df_end(DT->getRootNode()); DI != DE; ++DI) {
+    if (DI->getIDom())
+      localAvail[DI->getBlock()] =
+                   new ValueNumberScope(localAvail[DI->getIDom()->getBlock()]);
+    else
+      localAvail[DI->getBlock()] = new ValueNumberScope(0);
+  }
 
   // Top-down walk of the dominator tree
   bool changed = false;
