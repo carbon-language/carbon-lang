@@ -1476,9 +1476,9 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 {
   ArgStringList CmdArgs;
 
-  // Conceptually, i386 on x86_64 is a separate tool chain, but for
-  // now we just detect this situation by looking for -m32.
-  if (Args.hasArg(options::OPT_m32))
+  // When building 32-bit code on FreeBSD/amd64, we have to explicitly
+  // instruct as in the base system to assemble 32-bit code.
+  if (getToolChain().getArchName() == "i386")
     CmdArgs.push_back("--32");
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -1501,5 +1501,110 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec = 
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
+  Dest.addCommand(new Command(Exec, CmdArgs));
+}
+
+void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                 Job &Dest, const InputInfo &Output, 
+                                 const InputInfoList &Inputs, 
+                                 const ArgList &Args, 
+                                 const char *LinkingOutput) const
+{
+  ArgStringList CmdArgs;
+
+  if (Args.hasArg(options::OPT_static)) {
+    CmdArgs.push_back("-Bstatic");
+  } else {
+    CmdArgs.push_back("--eh-frame-hdr");
+    if (Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back("-Bshareable");
+    } else {
+      CmdArgs.push_back("-dynamic-linker");
+      CmdArgs.push_back("/libexec/ld-elf.so.1");
+    }
+  }
+
+  // When building 32-bit code on FreeBSD/amd64, we have to explicitly
+  // instruct ld in the base system to link 32-bit code.
+  if (getToolChain().getArchName() == "i386") {
+    CmdArgs.push_back("-m");
+    CmdArgs.push_back("elf_i386_fbsd");
+  }
+
+  if (Output.isPipe()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back("-");
+  } else if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o").c_str()));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o").c_str()));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o").c_str()));
+    } else {
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o").c_str()));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o").c_str()));
+    }
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_e);
+
+  for (InputInfoList::const_iterator
+       it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    if (II.isPipe())
+      CmdArgs.push_back("-");
+    else if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      II.getInputArg().renderAsInput(Args, CmdArgs);
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    // FIXME: For some reason GCC passes -lgcc and -lgcc_s before adding
+    // the default system libraries. Just mimic this for now.
+    CmdArgs.push_back("-lgcc");
+    if (Args.hasArg(options::OPT_static)) {
+      CmdArgs.push_back("-lgcc_eh");
+    } else {
+      CmdArgs.push_back("--as-needed");
+      CmdArgs.push_back("-lgcc_s");
+      CmdArgs.push_back("--no-as-needed");
+    }
+
+    if (Args.hasArg(options::OPT_pthread))
+      CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-lc");
+
+    CmdArgs.push_back("-lgcc");
+    if (Args.hasArg(options::OPT_static)) {
+      CmdArgs.push_back("-lgcc_eh");
+    } else {
+      CmdArgs.push_back("--as-needed");
+      CmdArgs.push_back("-lgcc_s");
+      CmdArgs.push_back("--no-as-needed");
+    }
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o").c_str()));
+    else
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o").c_str()));
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o").c_str()));
+  }
+
+  const char *Exec = 
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
