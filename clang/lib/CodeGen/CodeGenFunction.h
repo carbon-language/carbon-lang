@@ -339,6 +339,11 @@ public:
   /// label maps to.
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
 
+  /// SimplifyForwardingBlocks - If the given basic block is only a
+  /// branch to another basic block, simplify it. This assumes that no
+  /// other code could potentially reference the basic block.
+  void SimplifyForwardingBlocks(llvm::BasicBlock *BB);
+
   /// EmitBlock - Emit the given block \arg BB and set it as the insert point,
   /// adding a fall-through branch from the current insert block if
   /// necessary. It is legal to call this function even if there is no current

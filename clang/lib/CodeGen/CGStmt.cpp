@@ -175,6 +175,24 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   return RV;
 }
 
+void CodeGenFunction::SimplifyForwardingBlocks(llvm::BasicBlock *BB) {
+  llvm::BranchInst *BI = dyn_cast<llvm::BranchInst>(BB->getTerminator());
+  
+  // If there is a cleanup stack, then we it isn't worth trying to
+  // simplify this block (we would need to remove it from the scope map
+  // and cleanup entry).
+  if (!CleanupEntries.empty())
+    return;
+
+  // Can only simplify direct branches.
+  if (!BI || !BI->isUnconditional())
+    return;
+
+  BB->replaceAllUsesWith(BI->getSuccessor(0));
+  BI->eraseFromParent();
+  BB->eraseFromParent();
+}
+
 void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB, bool IsFinished) {
   // Fall out of the current block (if necessary).
   EmitBranch(BB);
@@ -339,13 +357,10 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // Emit the exit block.
   EmitBlock(ExitBlock, true);
 
-  // If LoopHeader is a simple forwarding block then eliminate it.
-  if (!EmitBoolCondBranch 
-      && &LoopHeader->front() == LoopHeader->getTerminator()) {
-    LoopHeader->replaceAllUsesWith(LoopBody);
-    LoopHeader->getTerminator()->eraseFromParent();
-    LoopHeader->eraseFromParent();
-  }
+  // The LoopHeader typically is just a branch if we skipped emitting
+  // a branch, try to erase it.
+  if (!EmitBoolCondBranch)
+    SimplifyForwardingBlocks(LoopHeader);
 }
 
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
@@ -387,14 +402,12 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
     Builder.CreateCondBr(BoolCondVal, LoopBody, AfterDo);
   
   // Emit the exit block.
-  EmitBlock(AfterDo, true);
+  EmitBlock(AfterDo);
 
-  // If DoCond is a simple forwarding block then eliminate it.
-  if (!EmitBoolCondBranch && &DoCond->front() == DoCond->getTerminator()) {
-    DoCond->replaceAllUsesWith(AfterDo);
-    DoCond->getTerminator()->eraseFromParent();
-    DoCond->eraseFromParent();
-  }
+  // The DoCond block typically is just a branch if we skipped
+  // emitting a branch, try to erase it.
+  if (!EmitBoolCondBranch)
+    SimplifyForwardingBlocks(DoCond);
 }
 
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
