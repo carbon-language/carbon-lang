@@ -3,6 +3,20 @@
 // RUN: clang -ccc-host-triple i386-apple-darwin9 -arch i386 -arch x86_64 %s -### -o foo 2> %t.log &&
 // RUN: grep '".*collect2" .*"-arch_multiple" "-final_output" "foo"' %t.log &&
 
+// RUN: clang -ccc-host-triple i386-apple-darwin9 -### -filelist FOO -static 2> %t.log &&
+// RUN: grep '"-lcrt0.o" .*"-lgcc_static"' %t.log &&
+// RUN: grep '"-lgcc"' %t.log | count 0 &&
+// RUN: clang -ccc-host-triple i386-apple-darwin7 -### -filelist FOO 2> %t.log &&
+// RUN: grep '"-lcrt1.o" .*"-lgcc" "-lSystem"' %t.log &&
+// RUN: grep '"-lgcc_s"' %t.log | count 0 &&
+// RUN: clang -ccc-host-triple i386-apple-darwin8 -### -filelist FOO 2> %t.log &&
+// RUN: grep '"-lcrt1.o" .*"-lgcc_s.10.4" "-lgcc" "-lSystem"' %t.log &&
+// RUN: clang -ccc-host-triple i386-apple-darwin9 -### -filelist FOO 2> %t.log &&
+// RUN: grep '"-lcrt1.10.5.o" .*"-lgcc_s.10.5" "-lgcc" "-lSystem"' %t.log &&
+// RUN: clang -ccc-host-triple i386-apple-darwin10 -### -filelist FOO 2> %t.log &&
+// RUN: grep '"-lcrt1.10.6.o" .*"-lSystem" "-lgcc"' %t.log &&
+// RUN: grep '"-lgcc_s"' %t.log | count 0 &&
+
 // Splatter test case. This is gross, but it works for now. For the
 // driver, just getting coverage of the tool code and checking the
 // output options is nearly good enough. The main thing we are

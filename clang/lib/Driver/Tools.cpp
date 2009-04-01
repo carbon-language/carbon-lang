@@ -1050,11 +1050,6 @@ static bool isMacosxVersionLT(unsigned (&A)[3],
   return isMacosxVersionLT(A, B);
 }
 
-static bool isMacosxVersionGTE(unsigned(&A)[3], 
-                              unsigned V0, unsigned V1=0, unsigned V2=0) {
-  return !isMacosxVersionLT(A, V0, V1, V2);
-}
-
 const toolchains::Darwin_X86 &darwin::Link::getDarwinToolChain() const {
   return reinterpret_cast<const toolchains::Darwin_X86&>(getToolChain());
 }
@@ -1280,15 +1275,17 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // Derived from startfile spec.
     if (Args.hasArg(options::OPT_dynamiclib)) {
         // Derived from darwin_dylib1 spec.
-      if (Args.hasArg(options::OPT_miphoneos_version_min_EQ) ||
-          isMacosxVersionLT(MacosxVersion, 10, 5))
+      if (isMacosxVersionLT(MacosxVersion, 10, 5))
         CmdArgs.push_back("-ldylib1.o");
-      else
+      else if (isMacosxVersionLT(MacosxVersion, 10, 6))
         CmdArgs.push_back("-ldylib1.10.5.o");
     } else {
       if (Args.hasArg(options::OPT_bundle)) {
-        if (!Args.hasArg(options::OPT_static))
-          CmdArgs.push_back("-lbundle1.o");
+        if (!Args.hasArg(options::OPT_static)) {
+          // Derived from darwin_bundle1 spec.
+          if (isMacosxVersionLT(MacosxVersion, 10, 6))
+            CmdArgs.push_back("-lbundle1.o");
+        }
       } else {
         if (Args.hasArg(options::OPT_pg)) {
           if (Args.hasArg(options::OPT_static) ||
@@ -1307,14 +1304,14 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
             CmdArgs.push_back("-lcrt0.o");
           } else {
             // Derived from darwin_crt1 spec.
-            if (Args.hasArg(options::OPT_miphoneos_version_min_EQ) ||
-                isMacosxVersionLT(MacosxVersion, 10, 5)) {
+            if (isMacosxVersionLT(MacosxVersion, 10, 5))
               CmdArgs.push_back("-lcrt1.o");
-            } else {
+            else if (isMacosxVersionLT(MacosxVersion, 10, 6))
               CmdArgs.push_back("-lcrt1.10.5.o");
-              
-              // darwin_crt2 spec is empty.
-            }
+            else
+              CmdArgs.push_back("-lcrt1.10.6.o");
+            
+            // darwin_crt2 spec is empty.
           }
         }
       }
@@ -1383,36 +1380,40 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     // link_ssp spec is empty.
 
-    // Derived from libgcc spec.
+    // Derived from libgcc and lib specs but refactored.
     if (Args.hasArg(options::OPT_static)) {
       CmdArgs.push_back("-lgcc_static");
-    } else if (Args.hasArg(options::OPT_static_libgcc)) {
-      CmdArgs.push_back("-lgcc_eh");
-      CmdArgs.push_back("-lgcc");
-    } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
-      // Derived from darwin_iphoneos_libgcc spec.
-      CmdArgs.push_back("-lgcc_s.10.5");
-      CmdArgs.push_back("-lgcc");
-    } else if (Args.hasArg(options::OPT_shared_libgcc) ||
-               Args.hasArg(options::OPT_fexceptions) ||
-               Args.hasArg(options::OPT_fgnu_runtime)) {
-      if (isMacosxVersionLT(MacosxVersion, 10, 5))
-        CmdArgs.push_back("-lgcc_s.10.4");
-      else
-        CmdArgs.push_back("-lgcc_s.10.5");
-      CmdArgs.push_back("-lgcc");
     } else {
-      if (isMacosxVersionLT(MacosxVersion, 10, 5) &&
-          isMacosxVersionGTE(MacosxVersion, 10, 3, 9))
-        CmdArgs.push_back("-lgcc_s.10.4");
-      if (isMacosxVersionGTE(MacosxVersion, 10, 5))
+      if (Args.hasArg(options::OPT_static_libgcc)) {
+        CmdArgs.push_back("-lgcc_eh");
+      } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
+        // Derived from darwin_iphoneos_libgcc spec.
         CmdArgs.push_back("-lgcc_s.10.5");
-      CmdArgs.push_back("-lgcc");
-    }
+      } else if (Args.hasArg(options::OPT_shared_libgcc) ||
+                 Args.hasArg(options::OPT_fexceptions) ||
+                 Args.hasArg(options::OPT_fgnu_runtime)) {
+        // FIXME: This is probably broken on 10.3?
+        if (isMacosxVersionLT(MacosxVersion, 10, 5))
+          CmdArgs.push_back("-lgcc_s.10.4");
+        else if (isMacosxVersionLT(MacosxVersion, 10, 6))
+          CmdArgs.push_back("-lgcc_s.10.5");
+      } else {
+        if (isMacosxVersionLT(MacosxVersion, 10, 3, 9))
+          ; // Do nothing.
+        else if (isMacosxVersionLT(MacosxVersion, 10, 5))
+          CmdArgs.push_back("-lgcc_s.10.4");
+        else if (isMacosxVersionLT(MacosxVersion, 10, 6))
+          CmdArgs.push_back("-lgcc_s.10.5");
+      }
 
-    // Derived from lib spec.
-    if (!Args.hasArg(options::OPT_static))
-      CmdArgs.push_back("-lSystem");
+      if (isMacosxVersionLT(MacosxVersion, 10, 6)) {
+        CmdArgs.push_back("-lgcc");
+        CmdArgs.push_back("-lSystem");
+      } else {
+        CmdArgs.push_back("-lSystem");
+        CmdArgs.push_back("-lgcc");
+      }
+    }
   }
 
   if (!Args.hasArg(options::OPT_A) &&
