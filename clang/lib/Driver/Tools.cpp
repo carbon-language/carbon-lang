@@ -962,10 +962,15 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   const InputInfo &Input = Inputs[0];
 
   // Bit of a hack, this is only used for original inputs.
+  // 
+  // FIXME: This is broken for preprocessed .s inputs.
   if (Input.isFilename() &&
-      strcmp(Input.getFilename(), Input.getBaseInput()) == 0 &&
-      Args.hasArg(options::OPT_g_Group))
-    CmdArgs.push_back("--gstabs");
+      strcmp(Input.getFilename(), Input.getBaseInput()) == 0) {
+    if (Args.hasArg(options::OPT_gstabs))
+      CmdArgs.push_back("--gstabs");
+    else if (Args.hasArg(options::OPT_g_Group))
+      CmdArgs.push_back("--gdwarf2");
+  }
   
   // Derived from asm spec.
   CmdArgs.push_back("-arch");
