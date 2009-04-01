@@ -161,6 +161,8 @@ public:
   /// UpdateCompletedType - When we find the full definition for a TagDecl,
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
+  /// Likewise for an ObjC Interface.
+  void UpdateCompletedType(const ObjCInterfaceDecl *OID);
 
   /// getFunctionInfo - Get the CGFunctionInfo for this function signature.
   const CGFunctionInfo &getFunctionInfo(QualType RetTy, 

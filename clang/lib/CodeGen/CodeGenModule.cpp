@@ -1242,9 +1242,13 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ObjCClass:
   case Decl::ObjCForwardProtocol:
   case Decl::ObjCCategory:
-  case Decl::ObjCInterface:
     break;
-      
+  case Decl::ObjCInterface:
+    // If we already laid out this interface due to an @class, and if we
+    // codegen'd a reference it, update the 'opaque' type to be a real type now.
+    Types.UpdateCompletedType(cast<ObjCInterfaceDecl>(D));
+    break;
+
   case Decl::ObjCProtocol:
     Runtime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
     break;
@@ -1252,7 +1256,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ObjCCategoryImpl:
     // Categories have properties but don't support synthesize so we
     // can ignore them here.
-
     Runtime->GenerateCategory(cast<ObjCCategoryImplDecl>(D));
     break;
 

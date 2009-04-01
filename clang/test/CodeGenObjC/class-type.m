@@ -1,5 +1,4 @@
 // RUN: clang-cc -triple x86_64-unknown-unknown -emit-llvm -o %t %s
-// XFAIL: *
 
 @interface I0 {
   struct { int a; } a;
