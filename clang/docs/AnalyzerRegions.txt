@@ -70,6 +70,30 @@ MEMORY REGIONS and REGION TAXONOMY
   NOTE: We plan not to use loc::SymbolVal in RegionStore and remove it
   gradually.
 
+  Symbolic regions get their rvalue types through the following ways:
+  * through the parameter or global variable that points to it, e.g.:
+
+    void f(struct s* p) {
+      ...
+    }
+
+    The symbolic region pointed to by 'p' has type 'struct s'.
+
+  * through explicit or implicit casts, e.g.:
+    void f(void* p) {
+      struct s* q = (struct s*) p;
+      ...
+    }
+
+  We attach the type information to the symbolic region lazily. For the first
+  case above, we create the TypedViewRegion only when the pointer is actually
+  used to access the pointee memory object, that is when the element or field
+  region is created. For the cast case, the TypedViewRegion is created when
+  visiting the CastExpr.
+
+  The reason for doing lazy typing is that symbolic regions are sometimes only
+  used to do location comparison.
+
 Pointer Casts
 
 Pointer casts allow people to impose different 'views' onto a chunk of memory.
