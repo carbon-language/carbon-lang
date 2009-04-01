@@ -97,11 +97,9 @@ int main(int argc, const char **argv) {
       const char *Next = strchr(Cur, ',');
       
       if (Next) {
-        if (Cur != Next) {
-          const char *P = 
-            SavedStrings.insert(std::string(Cur, Next)).first->c_str();
-          StringPointers.push_back(P);
-        }
+        const char *P = 
+          SavedStrings.insert(std::string(Cur, Next)).first->c_str();
+        StringPointers.push_back(P);
         Cur = Next + 1;
       } else {
         if (*Cur != '\0') {
