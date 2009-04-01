@@ -50,7 +50,7 @@ def err_invalid_character_to_charify : Error<
 // Literal
 def ext_nonstandard_escape : Extension<
   "use of non-standard escape character '\\%0'">;
-def ext_unknown_escape : Extension<"unknown escape sequence '\\%0'">;
+def ext_unknown_escape : ExtWarn<"unknown escape sequence '\\%0'">;
 def err_hex_escape_no_digits : Error<"\\x used with no following hex digits">;
 def err_ucn_escape_no_digits : Error<"\\u used with no following hex digits">;
 def err_ucn_escape_invalid : Error<"invalid universal character">;
