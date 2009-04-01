@@ -148,6 +148,14 @@ public:
     return getParentMap().getParent(S);
   }
   
+  const CFG& getCFG() {
+    return *BR.getCFG();
+  }
+  
+  const Decl& getCodeDecl() {
+    return BR.getStateManager().getCodeDecl();
+  }
+  
   ExplodedGraph<GRState>& getGraph() { return *ReportGraph; }
   NodeMapClosure& getNodeMapClosure() { return NMC; }
   ASTContext& getContext() { return BR.getContext(); }
@@ -830,6 +838,14 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     // Block edges.
     if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
       const CFGBlock &Blk = *BE->getSrc();
+
+      // Add a special edge for the entrance into the function/method.
+      if (&Blk == &PDB.getCFG().getEntry()) {
+        FullSourceLoc L = FullSourceLoc(PDB.getCodeDecl().getLocation(), SMgr);
+        GenExtAddEdge(PD, PDB, L.getSpellingLoc(), PrevLoc);
+        continue;
+      }
+      
       if (const Stmt *Term = Blk.getTerminator()) {
         const Stmt *Cond = Blk.getTerminatorCondition();
         
@@ -859,7 +875,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       if (const Stmt* S = BE->getFirstStmt()) {        
         if (!IsControlFlowExpr(S) && !IsNestedDeclStmt(S, PDB.getParentMap())) {
           if (PrevLoc.isValid()) {
-            // Are we jumping with the same enclosing statement?          
+            // Are we jumping within the same enclosing statement?          
             if (PDB.getEnclosingStmtLocation(S) ==
                 PDB.getEnclosingStmtLocation(PrevLoc))
             continue;
