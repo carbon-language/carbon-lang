@@ -55,9 +55,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-E");
   } else if (isa<PrecompileJobAction>(JA)) {
-    // No special option needed, driven by -x.
-    //
-    // FIXME: Don't drive this by -x, that is gross.
+    CmdArgs.push_back("-emit-pth");
   } else {
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
   
