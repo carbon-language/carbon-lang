@@ -144,6 +144,10 @@ public:
     return *PM.get();
   }
   
+  const Stmt *getParent(const Stmt *S) {
+    return getParentMap().getParent(S);
+  }
+  
   ExplodedGraph<GRState>& getGraph() { return *ReportGraph; }
   NodeMapClosure& getNodeMapClosure() { return NMC; }
   ASTContext& getContext() { return BR.getContext(); }
@@ -756,7 +760,7 @@ static void GenExtAddEdge(PathDiagnostic& PD,
                           PathDiagnosticBuilder &PDB,
                           PathDiagnosticLocation NewLoc,
                           PathDiagnosticLocation &PrevLoc,
-                          PathDiagnosticLocation UpdateLoc) {
+                          bool allowBlockJump = false) {
 
   if (const Stmt *S = NewLoc.asStmt()) {
     if (IsControlFlowExpr(S))
@@ -771,9 +775,18 @@ static void GenExtAddEdge(PathDiagnostic& PD,
   
   if (NewLoc == PrevLoc)
     return;
+
+  // Are we jumping between statements with the same compound statement?
+  if (!allowBlockJump)
+    if (const Stmt *PS = PrevLoc.asStmt())
+      if (const Stmt *NS = NewLoc.asStmt()) {
+        const Stmt *parentPS = PDB.getParent(PS);
+        if (isa<CompoundStmt>(parentPS) && parentPS == PDB.getParent(NS))
+          return;
+      }
   
   PD.push_front(new PathDiagnosticControlFlowPiece(NewLoc, PrevLoc));
-  PrevLoc = UpdateLoc;
+  PrevLoc = NewLoc;
 }
 
 static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
@@ -799,13 +812,6 @@ static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
   return false;
 }
 
-static void GenExtAddEdge(PathDiagnostic& PD,
-                          PathDiagnosticBuilder &PDB,
-                          const PathDiagnosticLocation &NewLoc,
-                          PathDiagnosticLocation &PrevLoc) {  
-  GenExtAddEdge(PD, PDB, NewLoc, PrevLoc, NewLoc);
-}
-
 static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
                                             const ExplodedNode<GRState> *N) {
@@ -828,7 +834,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         const Stmt *Cond = Blk.getTerminatorCondition();
         
         if (!Cond || !IsControlFlowExpr(Cond)) {
-          GenExtAddEdge(PD, PDB, PathDiagnosticLocation(Term, SMgr), PrevLoc);
+          GenExtAddEdge(PD, PDB, PathDiagnosticLocation(Term, SMgr), PrevLoc,
+                        true);
           continue;
         }
       }
@@ -851,9 +858,10 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
       if (const Stmt* S = BE->getFirstStmt()) {        
         if (!IsControlFlowExpr(S) && !IsNestedDeclStmt(S, PDB.getParentMap())) {
-          // Are we jumping with the same enclosing statement?
-          if (PrevLoc.isValid() && PDB.getEnclosingStmtLocation(S) ==
-                                   PDB.getEnclosingStmtLocation(PrevLoc)) {
+          if (PrevLoc.isValid()) {
+            // Are we jumping with the same enclosing statement?          
+            if (PDB.getEnclosingStmtLocation(S) ==
+                PDB.getEnclosingStmtLocation(PrevLoc))
             continue;
           }
           
