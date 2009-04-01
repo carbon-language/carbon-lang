@@ -1,4 +1,4 @@
-//===- llvm/unittest/Support/raw_ostream.cpp - raw_ostream unit tests -----===//
+//===- llvm/unittest/Support/raw_ostream_test.cpp - raw_ostream tests -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
