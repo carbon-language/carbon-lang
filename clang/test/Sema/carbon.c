@@ -1,8 +1,5 @@
 // RUN: clang-cc %s -print-stats &&
-// RUN: clang-cc %s -disable-free &&
-// RUN: clang-cc -emit-pth -o %t %s && 
-// RUN: clang-cc -token-cache %t %s &&
-// RUN: clang-cc -token-cache %t %s -E %s -o /dev/null
+// RUN: clang-cc %s -disable-free
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
 #endif
