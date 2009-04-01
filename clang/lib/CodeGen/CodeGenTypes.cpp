@@ -99,7 +99,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
 }
 
 const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
-  T = Context.getCanonicalType(T);;
+  T = Context.getCanonicalType(T);
   
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator

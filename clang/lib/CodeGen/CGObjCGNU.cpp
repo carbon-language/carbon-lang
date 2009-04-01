@@ -728,21 +728,19 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     SuperClassName = SuperClassDecl->getNameAsString();
 
   // Get the class name
-  ObjCInterfaceDecl * ClassDecl = (ObjCInterfaceDecl*)OID->getClassInterface();
+  ObjCInterfaceDecl *ClassDecl =
+    const_cast<ObjCInterfaceDecl *>(OID->getClassInterface());
   std::string ClassName = ClassDecl->getNameAsString();
+
+  // This is required by newer ObjC runtimes.
+  assert(!LateBoundIVars() &&"Late-bound instance variables not yet supported");
 
   // Get the size of instances.  For runtimes that support late-bound instances
   // this should probably be something different (size just of instance
   // varaibles in this class, not superclasses?).
-  int instanceSize = 0;
-  const llvm::Type *ObjTy = 0;
-  if (!LateBoundIVars()) {
-    ObjTy = CGM.getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
-    instanceSize = CGM.getTargetData().getTypePaddedSize(ObjTy);
-  } else {
-    // This is required by newer ObjC runtimes.
-    assert(0 && "Late-bound instance variables not yet supported");
-  }
+  const llvm::Type *ObjTy =
+    CGM.getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
+  int instanceSize = CGM.getTargetData().getTypePaddedSize(ObjTy);
 
   // Collect information about instance variables.
   llvm::SmallVector<llvm::Constant*, 16> IvarNames;
