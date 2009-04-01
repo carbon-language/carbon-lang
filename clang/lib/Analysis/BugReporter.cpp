@@ -784,7 +784,7 @@ static void GenExtAddEdge(PathDiagnostic& PD,
   if (NewLoc == PrevLoc)
     return;
 
-  // Are we jumping between statements with the same compound statement?
+  // Are we jumping between statements within the same compound statement?
   if (!allowBlockJump)
     if (const Stmt *PS = PrevLoc.asStmt())
       if (const Stmt *NS = NewLoc.asStmt()) {
