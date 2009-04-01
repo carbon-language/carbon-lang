@@ -4,48 +4,48 @@ void donotwarn();
 int (^IFP) ();
 int (^II) (int);
 int test1() {
-	int (^PFR) (int) = 0;	// OK
-	PFR = II;	// OK
+  int (^PFR) (int) = 0;	// OK
+  PFR = II;	// OK
 
-	if (PFR == II)	// OK
-	  donotwarn();
+  if (PFR == II)	// OK
+    donotwarn();
 
-	if (PFR == IFP) // expected-error {{comparison of distinct block types}}
-	  donotwarn();
+  if (PFR == IFP) // expected-error {{comparison of distinct block types}}
+    donotwarn();
 
-	if (PFR == (int (^) (int))IFP) // OK
-	  donotwarn();
+  if (PFR == (int (^) (int))IFP) // OK
+    donotwarn();
 
-	if (PFR == 0) // OK
-	  donotwarn();
+  if (PFR == 0) // OK
+    donotwarn();
 
-	if (PFR)	// OK
-	  donotwarn();
+  if (PFR)	// OK
+    donotwarn();
 
-	if (!PFR)	// OK
-	  donotwarn();
+  if (!PFR)	// OK
+    donotwarn();
 
-	return PFR != IFP;	// expected-error {{comparison of distinct block types}}
+  return PFR != IFP;	// expected-error {{comparison of distinct block types}}
 }
 
 int test2(double (^S)()) {
-   double (^I)(int)  = (void*) S;
-   (void*)I = (void *)S; 	// expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
+  double (^I)(int)  = (void*) S;
+  (void*)I = (void *)S; 	// expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
 
-   void *pv = I;
+  void *pv = I;
 
-   pv = S;		
+  pv = S;		
 
-   I(1);
- 
-   return (void*)I == (void *)S;
+  I(1);
+
+  return (void*)I == (void *)S;
 }
 
 int^ x; // expected-error {{block pointer to non-function type is invalid}}
 int^^ x1; // expected-error {{block pointer to non-function type is invalid}} expected-error {{block pointer to non-function type is invalid}}
 
 int test3() {
-	char *^ y; // expected-error {{block pointer to non-function type is invalid}}
+  char *^ y; // expected-error {{block pointer to non-function type is invalid}}
 }
 
 
@@ -72,8 +72,13 @@ void test5() {
 
 // rdar://6405429 - __func__ in a block refers to the containing function name.
 const char*test6() {
-    return ^{
-        return __func__;
-    } ();
+  return ^{
+    return __func__;
+  } ();
 }
 
+// radr://6732116 - block comparisons
+void (^g)();
+int foo(void (^p)()) {
+  return g == p;
+}

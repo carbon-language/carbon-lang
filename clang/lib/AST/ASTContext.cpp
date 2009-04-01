@@ -2701,9 +2701,9 @@ bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
   const FunctionType *rbase = rhs->getAsFunctionType();
   const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
   const FunctionProtoType *rproto = dyn_cast<FunctionProtoType>(rbase);
-  if (lproto && rproto)
-    return !mergeTypes(lhs, rhs).isNull();
-  return false;
+  if (lproto && rproto == 0)
+    return false;
+  return !mergeTypes(lhs, rhs).isNull();
 }
 
 /// areCompatVectorTypes - Return true if the two specified vector types are 

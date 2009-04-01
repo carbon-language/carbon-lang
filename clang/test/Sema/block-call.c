@@ -10,7 +10,7 @@ int main() {
 	int (^PFR) (int) = IFP;	// expected-warning {{incompatible block pointer types initializing 'int (^)()', expected 'int (^)(int)'}}
 	PFR = II;	// OK
 
-	int (^IFP) () = PFR;	// expected-warning {{incompatible block pointer types initializing 'int (^)(int)', expected 'int (^)()'}}
+	int (^IFP) () = PFR;
 
 
 	const int (^CIC) () = IFP; // expected-warning {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}

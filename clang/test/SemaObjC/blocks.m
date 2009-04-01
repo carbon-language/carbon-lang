@@ -18,9 +18,19 @@ void foo3(id (*objectCreationBlock)(int)) {
 
 void bar4(id(^)());
 void foo4(id (^objectCreationBlock)(int)) {
-    return bar4(objectCreationBlock); // expected-warning{{incompatible block pointer types passing 'id (^)(int)', expected 'id (^)()'}}
+    return bar4(objectCreationBlock);
 }
 
-void foo5(id (^x)(int)) {
+void bar5(id(^)(void));
+void foo5(id (^objectCreationBlock)(int)) {
+    return bar5(objectCreationBlock); // expected-warning{{incompatible block pointer types passing 'id (^)(int)', expected 'id (^)(void)'}}
+}
+
+void bar6(id(^)(int));
+void foo6(id (^objectCreationBlock)()) {
+    return bar6(objectCreationBlock); // expected-warning{{incompatible block pointer types passing 'id (^)()', expected 'id (^)(int)'}}
+}
+
+void foo67(id (^x)(int)) {
   if (x) { }
 }

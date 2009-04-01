@@ -412,18 +412,19 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
 /// function type for the block, including the first block literal argument.
 static QualType getBlockFunctionType(ASTContext &Ctx,
                                      const BlockPointerType *BPT) {
-  const FunctionProtoType *FTy = cast<FunctionProtoType>(BPT->getPointeeType());
+  const FunctionProtoType *FTy = dyn_cast<FunctionProtoType>(BPT->getPointeeType());
+  const clang::QualType ResType = BPT->getPointeeType()->getAsFunctionType()->getResultType();
 
   llvm::SmallVector<QualType, 8> Types;
   Types.push_back(Ctx.getPointerType(Ctx.VoidTy));
 
-  for (FunctionProtoType::arg_type_iterator i = FTy->arg_type_begin(),
-       e = FTy->arg_type_end(); i != e; ++i)
-    Types.push_back(*i);
+  if (FTy)
+    for (FunctionProtoType::arg_type_iterator i = FTy->arg_type_begin(),
+           e = FTy->arg_type_end(); i != e; ++i)
+      Types.push_back(*i);
 
-  return Ctx.getFunctionType(FTy->getResultType(),
-                             &Types[0], Types.size(),
-                             FTy->isVariadic(), 0);
+  return Ctx.getFunctionType(ResType, &Types[0], Types.size(),
+                             FTy && FTy->isVariadic(), 0);
 }
 
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
