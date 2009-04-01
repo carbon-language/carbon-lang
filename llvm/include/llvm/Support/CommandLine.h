@@ -537,7 +537,7 @@ struct basic_parser : public basic_parser_impl {
 //
 template<>
 class parser<bool> : public basic_parser<bool> {
-  bool IsInvertable;	// Should we synthezise a -xno- style option?
+  bool IsInvertible;	// Should we synthesize a -xno- style option?
   const char *ArgStr;
 public:
   void getExtraOptionNames(std::vector<const char*> &OptionNames);
@@ -547,10 +547,7 @@ public:
 
   template <class Opt>
   void initialize(Opt &O) {
-    if (O.getMiscFlags() & llvm::cl::AllowInverse)
-      IsInvertable = true;
-    else
-      IsInvertable = false;
+    IsInvertible = (O.getMiscFlags() & llvm::cl::AllowInverse);
     ArgStr = O.ArgStr;
   }
 

@@ -872,13 +872,13 @@ bool parser<bool>::parse(Option &O, const char *ArgName,
     return O.error(": '" + Arg +
                    "' is invalid value for boolean argument! Try 0 or 1");
   }
-  if (IsInvertable && strncmp(ArgName+1, "no-", 3) == 0)
+  if (IsInvertible && strncmp(ArgName+1, "no-", 3) == 0)
     Value = !Value;
   return false;
 }
 
 void parser<bool>::getExtraOptionNames(std::vector<const char*> &OptionNames) {
-  if (!IsInvertable)
+  if (!IsInvertible)
     return;
   
   char *s = new char [strlen(ArgStr) + 3 + 1];
