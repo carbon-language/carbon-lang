@@ -1218,6 +1218,12 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
   }
 }
 
+void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
+  for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
+       I != E; ++I)
+    EmitTopLevelDecl(*I);
+}
+
 /// EmitTopLevelDecl - Emit code for a single top level declaration.
 void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // If an error has occurred, stop code generation, but continue
@@ -1233,7 +1239,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
 
   case Decl::Namespace:
-    ErrorUnsupported(D, "namespace");
+    EmitNamespace(cast<NamespaceDecl>(D));
     break;
 
     // Objective-C Decls

@@ -26,3 +26,9 @@ void f(y) { }
 
 // RUN: grep _Z1fv %t | count 1
 void f() { }
+
+// RUN: grep _ZN1N1fEv %t | count 1
+namespace N { void f() { } }
+
+// RUN: grep _ZN1N1N1fEv %t | count 1
+namespace N { namespace N { void f() { } } }
