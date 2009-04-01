@@ -26,6 +26,7 @@ add_clang_library(clangAST
   StmtPrinter.cpp
   StmtSerialization.cpp
   StmtViz.cpp
+  TemplateName.cpp
   Type.cpp
   TypeSerialization.cpp
   )
