@@ -82,8 +82,43 @@ int main(int argc, const char **argv) {
     TheDriver(new Driver(Path.getBasename().c_str(), Path.getDirname().c_str(),
                          llvm::sys::getHostTriple().c_str(),
                          "a.out", Diags));
-                                               
-  llvm::OwningPtr<Compilation> C(TheDriver->BuildCompilation(argc, argv));
+
+  llvm::OwningPtr<Compilation> C;
+
+  // Handle CCC_ADD_ARGS, a comma separated list of extra arguments.
+  if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
+    std::set<std::string> SavedStrings;
+    std::vector<const char*> StringPointers;
+
+    // FIXME: Driver shouldn't take extra initial argument.
+    StringPointers.push_back(argv[0]);
+
+    for (;;) {
+      const char *Next = strchr(Cur, ',');
+      
+      if (Next) {
+        if (Cur != Next) {
+          const char *P = 
+            SavedStrings.insert(std::string(Cur, Next)).first->c_str();
+          StringPointers.push_back(P);
+        }
+        Cur = Next + 1;
+      } else {
+        if (*Cur != '\0') {
+          const char *P = 
+            SavedStrings.insert(std::string(Cur)).first->c_str();
+          StringPointers.push_back(P);
+        }
+        break;
+      }
+    }
+
+    StringPointers.insert(StringPointers.end(), argv + 1, argv + argc);
+
+    C.reset(TheDriver->BuildCompilation(StringPointers.size(), 
+                                        &StringPointers[0]));
+  } else
+    C.reset(TheDriver->BuildCompilation(argc, argv));
 
   int Res = 0;
   if (C.get())
