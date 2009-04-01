@@ -200,8 +200,37 @@ void addHTTPService(servers::Server const &server, ::services::WebService const 
 
 <h2>Fix-it Hints</h2>
 
-<p>simple example + template&lt;&gt; example</p>
+<p>"Fix-it" hints provide advice for fixing small, localized problems
+in source code. When Clang produces a diagnostic about a particular
+problem that it can work around (e.g., non-standard or redundant
+syntax, missing keywords, common mistakes, etc.), it may also provide
+specific guidance in the form of a code transformation to correct the
+problem. For example, here Clang warns about the use of a GCC
+extension that has been considered obsolete since 1993:</p>
 
+<pre>
+  $ <b>clang t.c</b>
+  t.c:5:28: warning: use of GNU old-style field designator extension
+  <font color="darkgreen">struct point origin = { x: 0.0, y: 0.0 };</font>
+                          <font color="red">~~</font> <font color="blue">^</font>
+                          <font color="darkgreen">.x = </font>
+  t.c:5:36: warning: use of GNU old-style field designator extension
+  <font color="darkgreen">struct point origin = { x: 0.0, y: 0.0 };</font>
+                                  <font color="red">~~</font> <font color="blue">^</font>
+                                  <font color="darkgreen">.y = </font>
+</pre>
+
+<p>The underlined code should be removed, then replaced with the code below the caret line (".x =" or ".y =", respectively). "Fix-it" hints are most useful for working around common user errors and misconceptions. For example, C++ users commonly forget the syntax for explicit specialization of class templates, as in the following error:</p>
+
+<pre>
+  $ <b>clang t.cpp</b>
+  t.cpp:9:3: error: template specialization requires 'template&lt;&gt;'
+    struct iterator_traits&lt;file_iterator&gt; {
+    <font color="blue">^</font>
+    <font color="darkgreen">template&lt;&gt; </font>
+</pre>
+
+<p>Again, after describing the problem, Clang provides the fix--add <code>template&lt;&gt;</code>--as part of the diagnostic.<p>
 
 <h2>Automatic Macro Expansion</h2>
 
