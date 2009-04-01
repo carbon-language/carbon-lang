@@ -749,7 +749,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
 
   std::string Name = Decl->getNameAsString();
 
-  QualType T = M->getContext().buildObjCInterfaceType(Decl);
+  QualType T = M->getContext().getObjCInterfaceType(Decl);
   if (T->isIncompleteArrayType()) {
     
     // CodeGen turns int[] into int[1] so we'll do the same here.

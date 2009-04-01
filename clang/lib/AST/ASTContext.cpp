@@ -1344,18 +1344,6 @@ QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// buildObjCInterfaceType - Returns a new type for the interface
-/// declaration, regardless. It also removes any previously built 
-/// record declaration so caller can rebuild it.
-QualType ASTContext::buildObjCInterfaceType(ObjCInterfaceDecl *Decl) {
-  RecordDecl *&RD = ASTRecordForInterface[Decl];
-  if (RD)
-    RD = 0;
-  Decl->TypeForDecl = new(*this,8) ObjCInterfaceType(Type::ObjCInterface, Decl);
-  Types.push_back(Decl->TypeForDecl);
-  return QualType(Decl->TypeForDecl, 0);
-}
-
 /// \brief Retrieve the template type parameter type for a template
 /// parameter with the given depth, index, and (optionally) name.
 QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index, 

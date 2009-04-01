@@ -287,7 +287,6 @@ public:
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
   QualType getObjCInterfaceType(ObjCInterfaceDecl *Decl);
-  QualType buildObjCInterfaceType(ObjCInterfaceDecl *Decl);
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
                                    IdentifierInfo *Name = 0);

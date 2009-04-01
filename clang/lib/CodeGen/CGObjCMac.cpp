@@ -1459,7 +1459,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
                      Interface->protocol_begin(),
                      Interface->protocol_end());
   const llvm::Type *InterfaceTy = 
-   CGM.getTypes().ConvertType(CGM.getContext().buildObjCInterfaceType(Interface));
+   CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
   unsigned Flags = eClassFlags_Factory;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
 
@@ -4246,9 +4246,6 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     SuperClassGV = GetClassGlobal(ObjCClassName + RootClassName);
   }
   // FIXME: Gross
-  ObjCInterfaceDecl *Interface =
-    const_cast<ObjCInterfaceDecl*>(ID->getClassInterface()); 
-  CGM.getTypes().ConvertType(CGM.getContext().buildObjCInterfaceType(Interface));
   InstanceStart = InstanceSize = 0;
   if (ObjCInterfaceDecl *OID = 
       const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
