@@ -7,7 +7,7 @@ add_custom_target(intrinsics_gen ALL
 
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} intrinsics_gen PARENT_SCOPE)
 
-if( MSVC_IDE )
+if( MSVC_IDE OR XCODE )
   # Creates a dummy target containing all headers for the benefit of
   # Visual Studio users.
   file(GLOB_RECURSE headers *.h)
