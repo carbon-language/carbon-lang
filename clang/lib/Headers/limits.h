@@ -96,4 +96,19 @@
 #define ULLONG_MAX (__LONG_LONG_MAX__*2ULL+1ULL)
 #endif
 
+/* LONG_LONG_MIN/LONG_LONG_MAX/ULONG_LONG_MAX are a GNU extension.  It's too bad
+   that we don't have something like #pragma poison that could be used to
+   deprecate a macro - the code should just use LLONG_MAX and friends.
+ */
+#if defined(__GNU_LIBRARY__) ? defined(__USE_GNU) : !defined(__STRICT_ANSI__)
+
+#undef   LONG_LONG_MIN
+#undef   LONG_LONG_MAX
+#undef   ULONG_LONG_MAX
+
+#define LONG_LONG_MAX  __LONG_LONG_MAX__
+#define LONG_LONG_MIN  (-__LONG_LONG_MAX__-1LL)
+#define ULONG_LONG_MAX (__LONG_LONG_MAX__*2ULL+1ULL)
+#endif
+
 #endif /* __CLANG_LIMITS_H */
