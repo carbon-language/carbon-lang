@@ -167,7 +167,7 @@ static bool isEmptyRecord(QualType T) {
 ///
 /// \return The field declaration for the single non-empty field, if
 /// it exists.
-static const FieldDecl *isSingleElementStruct(QualType T) {
+static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
   const RecordType *RT = T->getAsStructureType();
   if (!RT)
     return 0;
@@ -176,20 +176,25 @@ static const FieldDecl *isSingleElementStruct(QualType T) {
   if (RD->hasFlexibleArrayMember())
     return 0;
 
-  const FieldDecl *Found = 0;
+  const Type *Found = 0;
   for (RecordDecl::field_iterator i = RD->field_begin(), 
          e = RD->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
     QualType FT = FD->getType();
+
+    // Treat single element arrays as the element
+    if (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
+      if (AT->getSize().getZExtValue() == 1)
+        FT = AT->getElementType();
 
     if (isEmptyRecord(FT)) {
       // Ignore
     } else if (Found) {
       return 0;
     } else if (!CodeGenFunction::hasAggregateLLVMType(FT)) {
-      Found = FD;
+      Found = FT.getTypePtr();
     } else {
-      Found = isSingleElementStruct(FT);
+      Found = isSingleElementStruct(FT, Context);
       if (!Found)
         return 0;
     }
@@ -253,6 +258,10 @@ class DefaultABIInfo : public ABIInfo {
 class X86_32ABIInfo : public ABIInfo {
   bool IsDarwin;
 
+  static bool isRegisterSize(unsigned Size) {
+    return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
+  }
+
 public:
   ABIArgInfo classifyReturnType(QualType RetTy, 
                                 ASTContext &Context) const;
@@ -305,9 +314,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
     if (!IsDarwin && !RetTy->isAnyComplexType())
       return ABIArgInfo::getIndirect(0);
     // Classify "single element" structs as their element type.
-    const FieldDecl *SeltFD = isSingleElementStruct(RetTy);
-    if (SeltFD) {
-      QualType SeltTy = SeltFD->getType()->getDesugaredType();
+    if (const Type *SeltTy = isSingleElementStruct(RetTy, Context)) {
       if (const BuiltinType *BT = SeltTy->getAsBuiltinType()) {
         // FIXME: This is gross, it would be nice if we could just
         // pass back SeltTy and have clients deal with it. Is it worth
@@ -326,21 +333,22 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
         llvm::Type *PtrTy = 
           llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
         return ABIArgInfo::getCoerce(PtrTy);
+      } else if (SeltTy->isVectorType()) {
+        // 64- and 128-bit vectors are never returned in a
+        // register when inside a structure.
+        uint64_t Size = Context.getTypeSize(RetTy);
+        if (Size == 64 || Size == 128)
+          return ABIArgInfo::getIndirect(0);
+
+        return classifyReturnType(QualType(SeltTy, 0), Context);
       }
     }
 
     uint64_t Size = Context.getTypeSize(RetTy);
-    if (Size == 8) {
-      return ABIArgInfo::getCoerce(llvm::Type::Int8Ty);
-    } else if (Size == 16) {
-      return ABIArgInfo::getCoerce(llvm::Type::Int16Ty);
-    } else if (Size == 32) {
-      return ABIArgInfo::getCoerce(llvm::Type::Int32Ty);
-    } else if (Size == 64) {
-      return ABIArgInfo::getCoerce(llvm::Type::Int64Ty);
-    } else {
-      return ABIArgInfo::getIndirect(0);
-    }
+    if (isRegisterSize(Size))
+      return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+
+    return ABIArgInfo::getIndirect(0);
   } else {
     return ABIArgInfo::getDirect();
   }

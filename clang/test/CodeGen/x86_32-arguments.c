@@ -63,7 +63,7 @@ struct s9 f9_1(void) {
 void f9_2(struct s9 a0) {
 }
 
-// Return of small structures and unions...
+// Return of small structures and unions
 
 // RUN: grep 'float @f10()' %t &&
 struct s10 {
@@ -71,12 +71,14 @@ struct s10 {
   float f;
 } f10(void) {}
 
-// Small vectors and 1 x {i64,double} are returned in registers...
+// Small vectors and 1 x {i64,double} are returned in registers
 
 // RUN: grep 'i32 @f11()' %t &&
 // RUN: grep -F 'void @f12(<2 x i32>* noalias sret %agg.result)' %t &&
 // RUN: grep 'i64 @f13()' %t &&
 // RUN: grep 'i64 @f14()' %t &&
+// RUN: grep '<2 x i64> @f15()' %t &&
+// RUN: grep '<2 x i64> @f16()' %t &&
 typedef short T11 __attribute__ ((vector_size (4)));
 T11 f11(void) {}
 typedef int T12 __attribute__ ((vector_size (8)));
@@ -85,5 +87,34 @@ typedef long long T13 __attribute__ ((vector_size (8)));
 T13 f13(void) {}
 typedef double T14 __attribute__ ((vector_size (8)));
 T14 f14(void) {}
+typedef long long T15 __attribute__ ((vector_size (16)));
+T15 f15(void) {}
+typedef double T16 __attribute__ ((vector_size (16)));
+T16 f16(void) {}
+
+// And when the single element in a struct (but not for 64 and
+// 128-bits).
+
+// RUN: grep 'i32 @f17()' %t &&
+// RUN: grep -F 'void @f18(%0* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f19(%1* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f20(%2* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f21(%3* noalias sret %agg.result)' %t &&
+// RUN: grep -F 'void @f22(%4* noalias sret %agg.result)' %t &&
+struct { T11 a; } f17(void) {}
+struct { T12 a; } f18(void) {}
+struct { T13 a; } f19(void) {}
+struct { T14 a; } f20(void) {}
+struct { T15 a; } f21(void) {}
+struct { T16 a; } f22(void) {}
+
+// Single element structures are handled specially
+
+// RUN: grep -F 'float @f23()' %t &&
+// RUN: grep -F 'float @f24()' %t &&
+// RUN: grep -F 'float @f25()' %t &&
+struct { float a; } f23(void) {}
+struct { float a[1]; } f24(void) {}
+struct { struct {} a; struct { float a[1]; } b; } f25(void) {}
 
 // RUN: true
