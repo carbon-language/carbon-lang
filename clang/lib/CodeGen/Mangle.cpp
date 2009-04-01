@@ -219,8 +219,8 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   //           ::= # empty
   //           ::= <substitution>
   // FIXME: We only handle mangling of namespaces and classes at the moment.
-  if (DC->getParent() != DC)
-    manglePrefix(DC);
+  if (!DC->getParent()->isTranslationUnit())
+    manglePrefix(DC->getParent());
 
   if (const NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(DC))
     mangleSourceName(Namespace->getIdentifier());
