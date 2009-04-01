@@ -75,8 +75,13 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
 /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
 /// concrete.
-QualType QualType::getDesugaredType() const {
-  return getTypePtr()->getDesugaredType()
+///
+/// \param ForDisplay When true, the desugaring is provided for
+/// display purposes only. In this case, we apply more heuristics to
+/// decide whether it is worth providing a desugared form of the type
+/// or not.
+QualType QualType::getDesugaredType(bool ForDisplay) const {
+  return getTypePtr()->getDesugaredType(ForDisplay)
      .getWithAdditionalQualifiers(getCVRQualifiers());
 }
 
@@ -86,7 +91,12 @@ QualType QualType::getDesugaredType() const {
 /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
 /// example, it return "T*" as "T*", (not as "int*"), because the pointer is
 /// concrete.
-QualType Type::getDesugaredType() const {
+///
+/// \param ForDisplay When true, the desugaring is provided for
+/// display purposes only. In this case, we apply more heuristics to
+/// decide whether it is worth providing a desugared form of the type
+/// or not.
+QualType Type::getDesugaredType(bool ForDisplay) const {
   if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
     return TDT->LookThroughTypedefs().getDesugaredType();
   if (const TypeOfExprType *TOE = dyn_cast<TypeOfExprType>(this))
@@ -95,16 +105,26 @@ QualType Type::getDesugaredType() const {
     return TOT->getUnderlyingType().getDesugaredType();
   if (const TemplateSpecializationType *Spec 
         = dyn_cast<TemplateSpecializationType>(this)) {
+    if (ForDisplay)
+      return QualType(this, 0);
+
     QualType Canon = Spec->getCanonicalTypeInternal();
     if (Canon->getAsTemplateSpecializationType())
       return QualType(this, 0);
     return Canon->getDesugaredType();
   }
-  if (const QualifiedNameType *QualName  = dyn_cast<QualifiedNameType>(this))
-    return QualName->getNamedType().getDesugaredType();
+  if (const QualifiedNameType *QualName  = dyn_cast<QualifiedNameType>(this)) {
+    if (ForDisplay) {
+      // If desugaring the type that the qualified name is referring to
+      // produces something interesting, that's our desugared type.
+      QualType NamedType = QualName->getNamedType().getDesugaredType();
+      if (NamedType != QualName->getNamedType())
+        return NamedType;
+    } else
+      return QualName->getNamedType().getDesugaredType();
+  }
 
-  // FIXME: remove this cast.
-  return QualType(const_cast<Type*>(this), 0);
+  return QualType(this, 0);
 }
 
 /// isVoidType - Helper method to determine if this is the 'void' type.

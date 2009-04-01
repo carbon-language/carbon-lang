@@ -162,7 +162,7 @@ public:
   /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
   /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
   /// concrete.
-  QualType getDesugaredType() const;
+  QualType getDesugaredType(bool ForDisplay = false) const;
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
@@ -461,7 +461,7 @@ public:
   /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
   /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
   /// concrete.
-  QualType getDesugaredType() const;
+  QualType getDesugaredType(bool ForDisplay = false) const;
   
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2

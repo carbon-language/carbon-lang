@@ -156,6 +156,48 @@ is useful for the compiler to expose underlying details of a typedef:</p>
 <p>If the user was somehow confused about how the system "pid_t" typedef is
 defined, Clang helpfully displays it with "aka".</p>
 
+<p>In C++, type preservation includes retaining any qualification written into type names. For example, if we take a small snippet of code such as:
+
+<blockquote>
+<pre>
+namespace services {
+  struct WebService {  };
+}
+namespace myapp {
+  namespace servers {
+    struct Server {  };
+  }
+}
+
+using namespace myapp;
+void addHTTPService(servers::Server const &server, ::services::WebService const *http) {
+  server += http;
+}
+</pre>
+</blockquote>
+
+<p>and then compile it, we see that Clang is both providing more accurate information and is retaining the types as written by the user (e.g., "servers::Server", "::services::WebService"):
+
+<pre>
+  $ <b>g++-4.2 -fsyntax-only t.cpp</b>
+  t.cpp:9: error: no match for 'operator+=' in 'server += http'
+  $ <b>clang -fsyntax-only t.cpp</b>
+  t.cpp:9:10: error: invalid operands to binary expression ('servers::Server const' and '::services::WebService const *')
+    <font color="darkgreen">server += http;</font>
+    <font color="blue">~~~~~~ ^  ~~~~</font>
+</pre>
+
+<p>Naturally, type preservation extends to uses of templates, and Clang retains information about how a particular template specialization (like <code>std::vector&lt;Real&gt;</code>) was spelled within the source code. For example:</p>
+
+<pre>
+  $ <b>g++-4.2 -fsyntax-only t.cpp</b>
+  t.cpp:12: error: no match for 'operator=' in 'str = vec'
+  $ <b>clang -fsyntax-only t.cpp</b>
+  t.cpp:12:7: error: incompatible type assigning 'vector&lt;Real&gt;', expected 'std::string' (aka 'class std::basic_string&lt;char&gt;')
+    <font color="darkgreen">str = vec</font>;
+        <font color="blue">^ ~~~</font>
+</pre>
+
 <h2>Fix-it Hints</h2>
 
 <p>simple example + template&lt;&gt; example</p>
@@ -202,11 +244,6 @@ implements the "wwopen" class of APIs):</p>
 
 <p>In practice, we've found that this is actually more useful in multiply nested
 macros that in simple ones.</p>
-
-<h2>C++ Fun Examples</h2>
-
-<p>...</p>
-
 
 </div>
 </body>

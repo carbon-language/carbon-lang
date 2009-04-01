@@ -40,7 +40,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     
     // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
     // level of the sugar so that the type is more obvious to the user.
-    QualType DesugaredTy = Ty->getDesugaredType();
+    QualType DesugaredTy = Ty->getDesugaredType(true);
     DesugaredTy.setCVRQualifiers(DesugaredTy.getCVRQualifiers() |
                                  Ty.getCVRQualifiers());
 

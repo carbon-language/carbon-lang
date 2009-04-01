@@ -21,12 +21,12 @@ namespace bar {
 void test() {
   foo::wibble::x a;
   ::bar::y b;
-  a + b; // expected-error{{invalid operands to binary expression ('foo::wibble::x' (aka 'struct foo::wibble::x') and '::bar::y' (aka 'int'))}}
+  a + b; // expected-error{{invalid operands to binary expression ('foo::wibble::x' and '::bar::y' (aka 'int'))}}
 
   ::foo::wibble::bar::wonka::x::y c;
-  c + b; // expected-error{{invalid operands to binary expression ('::foo::wibble::bar::wonka::x::y' (aka 'struct foo::wibble::bar::wonka::x::y') and '::bar::y' (aka 'int'))}}
+  c + b; // expected-error{{invalid operands to binary expression ('::foo::wibble::bar::wonka::x::y' and '::bar::y' (aka 'int'))}}
 
-  (void)sizeof(bar::incomplete); // expected-error{{invalid application of 'sizeof' to an incomplete type 'bar::incomplete' (aka 'struct bar::incomplete')}}
+  (void)sizeof(bar::incomplete); // expected-error{{invalid application of 'sizeof' to an incomplete type 'bar::incomplete'}}
 }
 
 int ::foo::wibble::bar::wonka::x::y::* ptrmem;
