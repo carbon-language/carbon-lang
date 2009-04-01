@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
@@ -261,8 +262,13 @@ public:
     
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
+    if (CGF.getContext().getLangOptions().OverflowChecking)
+      return EmitOverflowCheckedBinOp(Ops);
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
   }
+  /// Create a binary op that checks for overflow.
+  /// Currently only supports +, - and *.
+  Value *EmitOverflowCheckedBinOp(const BinOpInfo &Ops);
   Value *EmitDiv(const BinOpInfo &Ops);
   Value *EmitRem(const BinOpInfo &Ops);
   Value *EmitAdd(const BinOpInfo &Ops);
@@ -825,10 +831,114 @@ Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
     return Builder.CreateSRem(Ops.LHS, Ops.RHS, "rem");
 }
 
+Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
+  unsigned IID;
+  unsigned OpID = 0;
+  if (Ops.Ty->isSignedIntegerType()) {
+    switch (Ops.E->getOpcode()) {
+      case BinaryOperator::Add:
+        OpID = 1;
+        IID = llvm::Intrinsic::sadd_with_overflow;
+        break;
+      case BinaryOperator::Sub:
+        OpID = 2;
+        IID = llvm::Intrinsic::ssub_with_overflow;
+        break;
+      case BinaryOperator::Mul:
+        OpID = 3;
+        IID = llvm::Intrinsic::smul_with_overflow;
+        break;
+      default:
+        assert(false && "Unsupported operation for overflow detection");
+    }
+    OpID <<= 1;
+    OpID |= 1;
+  }
+  else {
+    assert(Ops.Ty->isUnsignedIntegerType() && 
+        "Must be either a signed or unsigned integer op");
+    switch (Ops.E->getOpcode()) {
+      case BinaryOperator::Add:
+        OpID = 1;
+        IID = llvm::Intrinsic::uadd_with_overflow;
+        break;
+      case BinaryOperator::Sub:
+        OpID = 2;
+        IID = llvm::Intrinsic::usub_with_overflow;
+        break;
+      case BinaryOperator::Mul:
+        OpID = 3;
+        IID = llvm::Intrinsic::umul_with_overflow;
+        break;
+      default:
+        assert(false && "Unsupported operation for overflow detection");
+    }
+    OpID <<= 1;
+  }
+  const llvm::Type *opTy = CGF.CGM.getTypes().ConvertType(Ops.Ty);
+
+  llvm::Function *intrinsic = CGF.CGM.getIntrinsic(IID, &opTy, 1);
+
+  Value *resultAndOverflow = Builder.CreateCall2(intrinsic, Ops.LHS, Ops.RHS);
+  Value *result = Builder.CreateExtractValue(resultAndOverflow, 0);
+  Value *overflow = Builder.CreateExtractValue(resultAndOverflow, 1);
+
+  // Branch in case of overflow.
+  llvm::BasicBlock *initialBB = Builder.GetInsertBlock();
+  llvm::BasicBlock *overflowBB =
+    CGF.createBasicBlock("overflow", CGF.CurFn);
+  llvm::BasicBlock *continueBB =
+    CGF.createBasicBlock("overflow.continue", CGF.CurFn);
+
+  Builder.CreateCondBr(overflow, overflowBB, continueBB);
+
+  // Handle overflow
+
+  Builder.SetInsertPoint(overflowBB);
+
+  // Handler is:
+  // long long *__overflow_handler)(long long a, long long b, char op, 
+  // char width)
+  std::vector<const llvm::Type*> handerArgTypes;
+  handerArgTypes.push_back(llvm::Type::Int64Ty);
+  handerArgTypes.push_back(llvm::Type::Int64Ty);
+  handerArgTypes.push_back(llvm::Type::Int8Ty);
+  handerArgTypes.push_back(llvm::Type::Int8Ty);
+  llvm::FunctionType *handlerTy = llvm::FunctionType::get(llvm::Type::Int64Ty,
+      handerArgTypes, false);
+  llvm::Value *handlerFunction =
+    CGF.CGM.getModule().getOrInsertGlobal("__overflow_handler",
+        llvm::PointerType::getUnqual(handlerTy));
+  handlerFunction = Builder.CreateLoad(handlerFunction);
+
+  llvm::Value *handlerResult = Builder.CreateCall4(handlerFunction,
+      Builder.CreateSExt(Ops.LHS, llvm::Type::Int64Ty),
+      Builder.CreateSExt(Ops.RHS, llvm::Type::Int64Ty),
+      llvm::ConstantInt::get(llvm::Type::Int8Ty, OpID),
+      llvm::ConstantInt::get(llvm::Type::Int8Ty, 
+        cast<llvm::IntegerType>(opTy)->getBitWidth()));
+
+  handlerResult = Builder.CreateTrunc(handlerResult, opTy);
+
+  Builder.CreateBr(continueBB);
+  
+  // Set up the continuation
+  Builder.SetInsertPoint(continueBB);
+  // Get the correct result
+  llvm::PHINode *phi = Builder.CreatePHI(opTy);
+  phi->reserveOperandSpace(2);
+  phi->addIncoming(result, initialBB);
+  phi->addIncoming(handlerResult, overflowBB);
+
+  return phi;
+}
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
-  if (!Ops.Ty->isPointerType())
+  if (!Ops.Ty->isPointerType()) {
+    if (CGF.getContext().getLangOptions().OverflowChecking)
+      return EmitOverflowCheckedBinOp(Ops);
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
+  }
 
   if (Ops.Ty->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size
@@ -875,8 +985,11 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 }
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
-  if (!isa<llvm::PointerType>(Ops.LHS->getType()))
+  if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
+    if (CGF.getContext().getLangOptions().OverflowChecking)
+      return EmitOverflowCheckedBinOp(Ops);
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
+  }
 
   if (Ops.E->getLHS()->getType()->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size for

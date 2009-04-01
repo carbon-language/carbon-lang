@@ -59,6 +59,9 @@ public:
   unsigned MathErrno         : 1; // Math functions must respect errno
                                   // (modulo the platform support).
 
+  unsigned OverflowChecking  : 1; // Extension to call a handler function when
+                                  // integer arithmetic overflows.
+
   unsigned HeinousExtensions : 1; // Extensions that we really don't like and
                                   // may be ripped out at any time.
 private:
@@ -86,6 +89,8 @@ public:
     Blocks = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
+
+    OverflowChecking = 0;
 
     InstantiationDepth = 99;
   }
