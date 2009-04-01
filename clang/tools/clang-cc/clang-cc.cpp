@@ -253,16 +253,12 @@ enum LangKind {
   langkind_c,
   langkind_c_cpp,
   langkind_asm_cpp,
-  langkind_c_pch,
   langkind_cxx,
   langkind_cxx_cpp,
-  langkind_cxx_pch,
   langkind_objc,
   langkind_objc_cpp,
-  langkind_objc_pch,
   langkind_objcxx,
-  langkind_objcxx_cpp,
-  langkind_objcxx_pch
+  langkind_objcxx_cpp
 };
 
 static llvm::cl::opt<LangKind>
@@ -282,14 +278,14 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                                "Preprocessed Objective C"),
                     clEnumValN(langkind_objcxx_cpp, "objective-c++-cpp-output",
                                "Preprocessed Objective C++"),
-                    clEnumValN(langkind_c_pch, "c-header",
-                               "Precompiled C header"),
-                    clEnumValN(langkind_objc_pch, "objective-c-header",
-                               "Precompiled Objective-C header"),
-                    clEnumValN(langkind_cxx_pch, "c++-header",
-                               "Precompiled C++ header"),
-                    clEnumValN(langkind_objcxx_pch, "objective-c++-header",
-                               "Precompiled Objective-C++ header"),
+                    clEnumValN(langkind_c, "c-header",
+                               "C header"),
+                    clEnumValN(langkind_objc, "objective-c-header",
+                               "Objective-C header"),
+                    clEnumValN(langkind_cxx, "c++-header",
+                               "C++ header"),
+                    clEnumValN(langkind_objcxx, "objective-c++-header",
+                               "Objective-C++ header"),
                     clEnumValEnd));
 
 static llvm::cl::opt<bool>
@@ -358,32 +354,9 @@ static void InitializeObjCOptions(LangOptions &Options) {
 }
   
 
-static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
+static void InitializeLangOptions(LangOptions &Options, LangKind LK){
   // FIXME: implement -fpreprocessed mode.
   bool NoPreprocess = false;
-  bool PCH = false;
-
-  // Test for 'PCH'.
-  switch (LK) {
-  default:
-    break;
-  case langkind_c_pch:
-    LK = langkind_c;
-    PCH = true;
-    break;
-  case langkind_objc_pch:
-    LK = langkind_objc;
-    PCH = true;
-    break;
-  case langkind_cxx_pch:
-    LK = langkind_cxx;
-    PCH = true;
-    break;
-  case langkind_objcxx_pch:
-    LK = langkind_objcxx;
-    PCH = true;
-    break;
-  }
   
   switch (LK) {
   default: assert(0 && "Unknown language kind!");
@@ -416,8 +389,6 @@ static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
     Options.CPlusPlus = 1;
     break;
   }
-  
-  return PCH;
 }
 
 /// LangStds - Language standards we support.
@@ -581,18 +552,14 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     case langkind_c:
     case langkind_asm_cpp:
     case langkind_c_cpp:
-    case langkind_c_pch:
     case langkind_objc:
     case langkind_objc_cpp:
-    case langkind_objc_pch:
       LangStd = lang_gnu99;
       break;
     case langkind_cxx:
     case langkind_cxx_cpp:
-    case langkind_cxx_pch:
     case langkind_objcxx:
     case langkind_objcxx_cpp:
-    case langkind_objcxx_pch:
       LangStd = lang_gnucxx98;
       break;
     }
@@ -1657,7 +1624,7 @@ int main(int argc, char **argv) {
     LangOptions LangInfo;
     InitializeBaseLanguage();
     LangKind LK = GetLanguage(InFile);
-    bool PCH = InitializeLangOptions(LangInfo, LK);
+    InitializeLangOptions(LangInfo, LK);
     InitializeGCMode(LangInfo);
     InitializeLanguageStandard(LangInfo, LK, Target.get());
           
@@ -1688,7 +1655,7 @@ int main(int argc, char **argv) {
       Diags.setClient(TextDiagClient);
 
     // Process the source file.
-    ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
+    ProcessInputFile(*PP, PPFactory, InFile, ProgAction);
     
     HeaderInfo.ClearFileInfo();      
   }
