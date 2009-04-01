@@ -51,6 +51,17 @@ struct DenseMapInfo<T*> {
   static bool isPod() { return true; }
 };
 
+// Provide DenseMapInfo for chars.
+template<> struct DenseMapInfo<char> {
+  static inline char getEmptyKey() { return ~0; }
+  static inline char getTombstoneKey() { return ~0 - 1; }
+  static unsigned getHashValue(const char& Val) { return Val * 37; }
+  static bool isPod() { return true; }
+  static bool isEqual(const char &LHS, const char &RHS) {
+    return LHS == RHS;
+  }
+};
+  
 // Provide DenseMapInfo for unsigned ints.
 template<> struct DenseMapInfo<unsigned> {
   static inline unsigned getEmptyKey() { return ~0; }
