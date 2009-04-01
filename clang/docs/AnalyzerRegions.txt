@@ -130,36 +130,37 @@ MEMORY REGIONS and REGION TAXONOMY
 
 Pointer Casts
 
-Pointer casts allow people to impose different 'views' onto a chunk of memory.
-
-Usually we have two kinds of casts. One kind of casts cast down with in the type
-hierarchy. It imposes more specific views onto more generic memory regions. The
-other kind of casts cast up with in the type hierarchy. It strips away more
-specific views on top of the more generic memory regions. 
-
-We simulate the down casts by layering another TypedViewRegion on top of the
-original region. We simulate the up casts by striping away the top
-TypedViewRegion. Down casts is usually simple. For up casts, if the there is no
-TypedViewRegion to be stripped, we return the original region. If the underlying
-region is of the different type than the cast-to type, we flag an error state.
-
-For toll-free bridging casts, we return the original region.
+  Pointer casts allow people to impose different 'views' onto a chunk of memory.
+  
+  Usually we have two kinds of casts. One kind of casts cast down with in the
+  type hierarchy. It imposes more specific views onto more generic memory
+  regions. The other kind of casts cast up with in the type hierarchy. It strips
+  away more specific views on top of the more generic memory regions.
+  
+  We simulate the down casts by layering another TypedViewRegion on top of the
+  original region. We simulate the up casts by striping away the top
+  TypedViewRegion. Down casts is usually simple. For up casts, if the there is
+  no TypedViewRegion to be stripped, we return the original region. If the
+  underlying region is of the different type than the cast-to type, we flag an
+  error state.
+  
+  For toll-free bridging casts, we return the original region.
 
 Region Bindings
 
-The following region kinds are boundable: VarRegion, CompoundLiteralRegion,
-StringRegion, ElementRegion, FieldRegion, and ObjCIvarRegion.
+  The following region kinds are boundable: VarRegion, CompoundLiteralRegion,
+  StringRegion, ElementRegion, FieldRegion, and ObjCIvarRegion.
 
-When binding regions, we perform canonicalization on element regions and field
-regions. This is because we can have different views on the same region, some of
-which are essentially the same view with different sugar type names.
+  When binding regions, we perform canonicalization on element regions and field
+  regions. This is because we can have different views on the same region, some
+  of which are essentially the same view with different sugar type names.
 
-To canonicalize a region, we get the canonical types for all TypedViewRegions
-along the way up to the root region, and make new TypedViewRegions with those
-canonical types.
-
-All bindings and retrievings are done on the canonicalized regions.
-
-Canonicalization is transparent outside the region store manager, and more
-specifically, unaware outside the Bind() and Retrieve() method. We don't need to
-consider region canonicalization when doing pointer cast.
+  To canonicalize a region, we get the canonical types for all TypedViewRegions
+  along the way up to the root region, and make new TypedViewRegions with those
+  canonical types.
+  
+  All bindings and retrievings are done on the canonicalized regions.
+  
+  Canonicalization is transparent outside the region store manager, and more
+  specifically, unaware outside the Bind() and Retrieve() method. We don't need
+  to consider region canonicalization when doing pointer cast.
