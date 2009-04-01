@@ -25,7 +25,7 @@ TEST(MathExtras, isPowerOf2_64) {
   EXPECT_TRUE(isPowerOf2_64(1LL << 46));
   EXPECT_TRUE(isPowerOf2_64(1LL << 12));
   EXPECT_FALSE(isPowerOf2_64((1LL << 53) + 3));
-  EXPECT_FALSE(isPowerOf2_64(0xABCDEF0ABCDEF0));
+  EXPECT_FALSE(isPowerOf2_64(0xABCDEF0ABCDEF0LL));
 }
 
 TEST(MathExtras, ByteSwap_32) {
@@ -34,8 +34,8 @@ TEST(MathExtras, ByteSwap_32) {
 }
 
 TEST(MathExtras, ByteSwap_64) {
-  EXPECT_EQ(0x8877665544332211ULL, ByteSwap_64(0x1122334455667788));
-  EXPECT_EQ(0x1100FFEEDDCCBBAAULL, ByteSwap_64(0xAABBCCDDEEFF0011));
+  EXPECT_EQ(0x8877665544332211ULL, ByteSwap_64(0x1122334455667788LL));
+  EXPECT_EQ(0x1100FFEEDDCCBBAAULL, ByteSwap_64(0xAABBCCDDEEFF0011LL));
 }
 
 TEST(MathExtras, CountLeadingZeros_32) {
@@ -47,7 +47,7 @@ TEST(MathExtras, CountLeadingZeros_32) {
 }
 
 TEST(MathExtras, CountLeadingZeros_64) {
-  EXPECT_EQ(8u, CountLeadingZeros_64(0x00F1234500F12345));
+  EXPECT_EQ(8u, CountLeadingZeros_64(0x00F1234500F12345LL));
   EXPECT_EQ(1u, CountLeadingZeros_64(1LL << 62));
   for (unsigned i = 0; i <= 62; ++i) {
     EXPECT_EQ(63 - i, CountLeadingZeros_64(1LL << i));
@@ -64,7 +64,7 @@ TEST(MathExtras, CountLeadingOnes_32) {
 TEST(MathExtras, CountLeadingOnes_64) {
   for (int i = 62; i >= 0; --i) {
     // Start with all ones and unset some bit.
-    EXPECT_EQ(63u - i, CountLeadingOnes_64(0xFFFFFFFFFFFFFFFF ^ (1LL << i)));
+    EXPECT_EQ(63u - i, CountLeadingOnes_64(0xFFFFFFFFFFFFFFFFLL ^ (1LL << i)));
   }
   for (int i = 30; i >= 0; --i) {
     // Start with all ones and unset some bit.
