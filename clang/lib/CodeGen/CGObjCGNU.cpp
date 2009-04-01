@@ -969,8 +969,9 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   Elements.clear();
   // Runtime version used for compatibility checking.
   Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
-  //FIXME: Should be sizeof(ModuleTy)
-  Elements.push_back(llvm::ConstantInt::get(LongTy, 16));
+  // sizeof(ModuleTy)
+  llvm::TargetData td = llvm::TargetData::TargetData(&TheModule);
+  Elements.push_back(llvm::ConstantInt::get(LongTy, td.getTypeSizeInBits(ModuleTy)/8));
   //FIXME: Should be the path to the file where this module was declared
   Elements.push_back(NULLPtr);
   Elements.push_back(SymTab);
