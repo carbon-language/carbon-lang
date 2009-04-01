@@ -1441,8 +1441,6 @@ def err_ret_local_block : Error<
 // CFString checking
 def err_cfstring_literal_not_string_constant : Error<
   "CFString literal is not a string constant">;
-def warn_cfstring_literal_contains_non_ascii_character : Warning<
-  "CFString literal contains non-ASCII character">;
 def warn_cfstring_literal_contains_nul_character : Warning<
   "CFString literal contains NUL character">;
 

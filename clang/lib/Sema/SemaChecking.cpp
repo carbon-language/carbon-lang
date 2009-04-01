@@ -173,13 +173,6 @@ bool Sema::CheckObjCString(Expr *Arg) {
   unsigned Length = Literal->getByteLength();
   
   for (unsigned i = 0; i < Length; ++i) {
-    if (!isascii(Data[i])) {
-      Diag(getLocationOfStringLiteralByte(Literal, i),
-           diag::warn_cfstring_literal_contains_non_ascii_character)
-        << Arg->getSourceRange();
-      break;
-    }
-    
     if (!Data[i]) {
       Diag(getLocationOfStringLiteralByte(Literal, i),
            diag::warn_cfstring_literal_contains_nul_character)

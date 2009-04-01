@@ -1000,10 +1000,11 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
   }
 }
 
-// We still need to work out the details of handling UTF-16. 
-// See: <rdr://2996215>
 llvm::Constant *CodeGenModule::
 GetAddrOfConstantCFString(const StringLiteral *Literal) {
+  std::string str;
+  unsigned StringLength;
+  
   bool isUTF16 = false;
   if (Literal->containsNonAsciiOrNull()) {
     // Convert from UTF-8 to UTF-16.
@@ -1016,10 +1017,14 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
                                 &ToPtr, ToPtr+Literal->getByteLength(),
                                 strictConversion);
     assert(Result == conversionOK && "UTF-8 to UTF-16 conversion failed");
+    
+    StringLength = ToPtr-&ToBuf[0];
+    str.assign((char *)&ToBuf[0], StringLength*2); // Twice as many UTF8 chars.
     isUTF16 = true;
-    // FIXME: Do something with the converted value!
+  } else {
+    str.assign(Literal->getStrData(), Literal->getByteLength());
+    StringLength = str.length();
   }
-  std::string str(Literal->getStrData(), Literal->getByteLength());
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
     CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
   
@@ -1093,7 +1098,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   NextField = 0;
   Ty = getTypes().ConvertType(getContext().LongTy);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        llvm::ConstantInt::get(Ty, str.length()), CFRD, STy);
+                        llvm::ConstantInt::get(Ty, StringLength), CFRD, STy);
   
   // The struct.
   C = llvm::ConstantStruct::get(STy, Fields);
