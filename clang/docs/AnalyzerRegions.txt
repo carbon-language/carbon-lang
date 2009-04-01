@@ -50,6 +50,40 @@ INTRODUCTION
 
 MEMORY REGIONS and REGION TAXONOMY
 
+  POINTERS
+
+  Before talking about the memory regions, we would talk about the pointers
+  since memory regions are essentially used to represent pointer values.
+
+  The pointer is a type of values. Pointer values have two semantic aspects. One
+  is its physical value, which is an address or location. The other is the type
+  of the memory object residing in the address.
+
+  Memory regions are designed to abstract these two properties of the
+  pointer. The physical value of a pointer is represented by MemRegion
+  pointers. The rvalue type of the region corresponds to the type of the pointee
+  object.
+
+  One complication is that we could have different view regions on the same
+  memory chunk. They represent the same memory location, but have different
+  abstract location, i.e., MemRegion pointers. Thus we need to canonicalize
+  the abstract locations to get a unique abstract location for one physical
+  location.
+
+  Furthermore, these different view regions may or may not represent memory
+  objects of different types. Some different types are semantically the same,
+  for example, 'struct s' and 'my_type' are the same type.
+    struct s;
+    typedef struct s my_type;
+
+  But 'char' and 'int' are not the same type in the code below:
+    void *p;
+    int *q = (int*) p;
+    char *r = (char*) p;
+
+  Thus we need to canonicalize the MemRegion which is used in binding and
+  retrieving.
+
   SYMBOLIC REGIONS
 
   A symbolic region is a map of the concept of symbolic values into the domain
