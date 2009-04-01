@@ -453,7 +453,14 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   // If using a driver driver, force the arch.
   if (getToolChain().getHost().useDriverDriver()) {
     CmdArgs.push_back("-arch");
-    CmdArgs.push_back(getToolChain().getArchName().c_str());
+
+    // FIXME: Remove these special cases.
+    const char *Str = getToolChain().getArchName().c_str();
+    if (strcmp(Str, "powerpc") == 0)
+      Str = "ppc";
+    else if (strcmp(Str, "powerpc64") == 0)
+      Str = "ppc64";
+    CmdArgs.push_back(Str);
   }
 
   if (Output.isPipe()) {

@@ -77,7 +77,7 @@ DarwinHostInfo::DarwinHostInfo(const Driver &D, const char *_Arch,
   : HostInfo(D, _Arch, _Platform, _OS) {
   
   assert((getArchName() == "i386" || getArchName() == "x86_64" || 
-          getArchName() == "ppc" || getArchName() == "ppc64") &&
+          getArchName() == "powerpc" || getArchName() == "powerpc64") &&
          "Unknown Darwin arch.");
 
   assert(memcmp(&getOSName()[0], "darwin", 6) == 0 &&
@@ -117,11 +117,17 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
       if (getArchName() == "i386" || getArchName() == "x86_64") {
         ArchName = 
           (A->getOption().getId() == options::OPT_m32) ? "i386" : "x86_64";
-      } else if (getArchName() == "ppc" || getArchName() == "ppc64") {
-        ArchName = 
-          (A->getOption().getId() == options::OPT_m32) ? "ppc" : "ppc64";
+      } else if (getArchName() == "powerpc" || getArchName() == "powerpc64") {
+        ArchName = (A->getOption().getId() == options::OPT_m32) ? "powerpc" : 
+          "powerpc64";
       }
     } 
+  } else {
+    // Normalize arch name; we shouldn't be doing this here.
+    if (strcmp(ArchName, "ppc") == 0)
+      ArchName = "powerpc";
+    else if (strcmp(ArchName, "ppc64") == 0)
+      ArchName = "powerpc64";
   }
 
   ToolChain *&TC = ToolChains[ArchName];
@@ -190,9 +196,9 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
     if (getArchName() == "i386" || getArchName() == "x86_64") {
       ArchName = 
         (A->getOption().getId() == options::OPT_m32) ? "i386" : "x86_64";
-    } else if (getArchName() == "ppc" || getArchName() == "ppc64") {
+    } else if (getArchName() == "powerpc" || getArchName() == "powerpc64") {
       ArchName = 
-        (A->getOption().getId() == options::OPT_m32) ? "ppc" : "ppc64";
+        (A->getOption().getId() == options::OPT_m32) ? "powerpc" : "powerpc64";
     }
   } 
   

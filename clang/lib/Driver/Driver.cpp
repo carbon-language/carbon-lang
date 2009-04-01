@@ -1065,8 +1065,10 @@ const HostInfo *Driver::GetHostInfo(const char *Triple) const {
     Arch = "i386";
   else if (Arch == "amd64")
     Arch = "x86_64";
-  else if (Arch == "powerpc" || Arch == "Power Macintosh")
-    Arch = "ppc";
+  else if (Arch == "ppc" || Arch == "Power Macintosh")
+    Arch = "powerpc";
+  else if (Arch == "ppc64")
+    Arch = "powerpc64";
   
   if (memcmp(&OS[0], "darwin", 6) == 0)
     return createDarwinHostInfo(*this, Arch.c_str(), Platform.c_str(), 
@@ -1080,7 +1082,14 @@ const HostInfo *Driver::GetHostInfo(const char *Triple) const {
 }
 
 bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
-                                    const std::string &ArchName) const {
+                                    const std::string &ArchNameStr) const {
+  // FIXME: Remove this hack.
+  const char *ArchName = ArchNameStr.c_str();
+  if (ArchNameStr == "powerpc")
+    ArchName = "ppc";
+  else if (ArchNameStr == "powerpc64")
+    ArchName = "ppc64";
+
   // Check if user requested no clang, or clang doesn't understand
   // this type (we only handle single inputs for now).
   if (!CCCUseClang || JA.size() != 1 || 
