@@ -87,6 +87,7 @@
 		84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84AF36A00CB17A3B00C820A5 /* DeclObjC.h */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
+		906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */ = {isa = PBXBuildFile; fileRef = 906BF4AF0F83BA2E001071FA /* ConvertUTF.c */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
@@ -449,6 +450,8 @@
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Parse/AttributeList.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; tabWidth = 2; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		906BF4AE0F83BA16001071FA /* ConvertUTF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConvertUTF.h; sourceTree = "<group>"; };
+		906BF4AF0F83BA2E001071FA /* ConvertUTF.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ConvertUTF.c; sourceTree = "<group>"; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = lib/Parse/ParseExprCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1128,6 +1131,7 @@
 		DED7D7300A524295003AD0FB /* Basic */ = {
 			isa = PBXGroup;
 			children = (
+				906BF4AE0F83BA16001071FA /* ConvertUTF.h */,
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
 				1A7019E90F79BC1100FEC4D1 /* DiagnosticAnalysisKinds.td */,
 				1A7019EA0F79BC1100FEC4D1 /* DiagnosticASTKinds.td */,
@@ -1183,6 +1187,7 @@
 		DED7D7500A5242C7003AD0FB /* Basic */ = {
 			isa = PBXGroup;
 			children = (
+				906BF4AF0F83BA2E001071FA /* ConvertUTF.c */,
 				DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */,
 				DED7D75E0A5242C7003AD0FB /* FileManager.cpp */,
 				DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */,
@@ -1557,6 +1562,7 @@
 				DEDFE6670F7B3B830035BD10 /* HostInfo.cpp in Sources */,
 				DEDFE6680F7B3B830035BD10 /* Driver.cpp in Sources */,
 				1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */,
+				906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

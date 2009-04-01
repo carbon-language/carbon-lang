@@ -1,6 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangBasic
+  ConvertUTF.c
   Diagnostic.cpp
   FileManager.cpp
   IdentifierTable.cpp

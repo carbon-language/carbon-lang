@@ -24,6 +24,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/ConvertUTF.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
@@ -1003,9 +1004,21 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
 // See: <rdr://2996215>
 llvm::Constant *CodeGenModule::
 GetAddrOfConstantCFString(const StringLiteral *Literal) {
-  //  if (Literal->containsNonAsciiOrNull()) {
-  //    // FIXME: Convert from UTF-8 to UTF-16.
-  //  }
+  bool isUTF16 = false;
+  if (Literal->containsNonAsciiOrNull()) {
+    // Convert from UTF-8 to UTF-16.
+    llvm::SmallVector<UTF16, 128> ToBuf(Literal->getByteLength());
+    const UTF8 *FromPtr = (UTF8 *)Literal->getStrData();
+    UTF16 *ToPtr = &ToBuf[0];
+        
+    ConversionResult Result;
+    Result = ConvertUTF8toUTF16(&FromPtr, FromPtr+Literal->getByteLength(),
+                                &ToPtr, ToPtr+Literal->getByteLength(),
+                                strictConversion);
+    assert(Result == conversionOK && "UTF-8 to UTF-16 conversion failed");
+    isUTF16 = true;
+    // FIXME: Do something with the converted value!
+  }
   std::string str(Literal->getStrData(), Literal->getByteLength());
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
     CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
@@ -1056,7 +1069,9 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   NextField = *Field++;
   const llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        llvm::ConstantInt::get(Ty, 0x07C8), CFRD, STy);
+                        isUTF16 ? llvm::ConstantInt::get(Ty, 0x07d0)
+                                : llvm::ConstantInt::get(Ty, 0x07C8), 
+                        CFRD, STy);
     
   // String pointer.
   CurField = NextField;
