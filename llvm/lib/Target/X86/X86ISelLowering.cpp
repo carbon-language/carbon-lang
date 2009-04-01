@@ -4869,8 +4869,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
     case TLSModel::InitialExec:  // not implemented
     case TLSModel::LocalExec:    // not implemented
       return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
-    default:
-      assert (0 && "Unknown TLS model");
     }
   } else {
     switch (model) {
@@ -4881,10 +4879,10 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
     case TLSModel::InitialExec:
     case TLSModel::LocalExec:
       return LowerToTLSExecModel(GA, DAG, getPointerTy(), model);
-    default:
-      assert (0 && "Unknown TLS model");
     }
   }
+  assert(0 && "Unreachable");
+  return SDValue();
 }
 
 SDValue
