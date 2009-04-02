@@ -39,5 +39,8 @@ extern "C" { namespace N { void unmangled_function() { } } }
 // RUN: grep unmangled_variable %t | count 1 &&
 extern "C" { namespace N { int unmangled_variable; } }
 
-// RUN: grep _ZN1N1iE %t | count 1
+// RUN: grep _ZN1N1iE %t | count 1 &&
 namespace N { int i; }
+
+// RUN: grep _ZZN1N1fEiiE1b %t | count 2
+namespace N { int f(int, int) { static int b; return b; } }

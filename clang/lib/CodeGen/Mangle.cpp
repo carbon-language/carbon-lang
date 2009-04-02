@@ -42,6 +42,7 @@ namespace {
     void mangleName(const NamedDecl *ND);
     void mangleUnqualifiedName(const NamedDecl *ND);
     void mangleSourceName(const IdentifierInfo *II);
+    void mangleLocalName(const NamedDecl *ND);
     void mangleNestedName(const NamedDecl *ND);
     void manglePrefix(const DeclContext *DC);
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
@@ -149,9 +150,10 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   else if (isStdNamespace(ND->getDeclContext())) {
     Out << "St";
     mangleUnqualifiedName(ND);
-  } else {
+  } else if (isa<FunctionDecl>(ND->getDeclContext()))
+    mangleLocalName(ND);
+  else
     mangleNestedName(ND);
-  }
 }
 
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
@@ -224,6 +226,16 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   manglePrefix(ND->getDeclContext());
   mangleUnqualifiedName(ND);
   Out << 'E';
+}
+
+void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
+  // <local-name> := Z <function encoding> E <entity name> [<discriminator>]
+  //              := Z <function encoding> E s [<discriminator>]
+  // <discriminator> := _ <non-negative number> 
+  Out << 'Z';
+  mangleFunctionEncoding(cast<FunctionDecl>(ND->getDeclContext()));
+  Out << 'E';
+  mangleSourceName(ND->getIdentifier());
 }
 
 void CXXNameMangler::manglePrefix(const DeclContext *DC) {
