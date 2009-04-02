@@ -1071,11 +1071,11 @@ SourceManager::CreateAndRegister(llvm::Deserializer &D, FileManager &FMgr) {
     ContentCache::ReadToSourceManager(D,*M,&FMgr,Buf);
   }*/
     
-  { // Read: MemBufferInfos.
+  /*{ // FIXME Read: MemBufferInfos.
     llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
     while (!D.FinishedBlock(BLoc))
     ContentCache::ReadToSourceManager(D,*M,NULL,Buf);
-  }
+    }*/
   
   // FIXME: Read SLocEntryTable.
   

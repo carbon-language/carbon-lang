@@ -36,6 +36,7 @@ void Decl::Emit(Serializer& S) const {
   S.EmitBool(InvalidDecl);
   // FIXME: HasAttrs?
   S.EmitBool(Implicit);
+  S.EmitInt(IdentifierNamespace);
   S.EmitInt(Access);
   S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From Decl.
   S.EmitPtr(cast_or_null<Decl>(getLexicalDeclContext()));  // From Decl.
@@ -122,6 +123,7 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
   Dcl->InvalidDecl = D.ReadBool();
   // FIXME: HasAttrs?
   Dcl->Implicit = D.ReadBool();
+  Dcl->IdentifierNamespace = D.ReadInt();
   Dcl->Access = D.ReadInt();
 
   assert(Dcl->DeclCtx.getOpaqueValue() == 0);
@@ -274,11 +276,21 @@ void ValueDecl::ReadInRec(Deserializer& D, ASTContext& C) {
 void VarDecl::EmitInRec(Serializer& S) const {
   ValueDecl::EmitInRec(S);
   S.EmitInt(getStorageClass());             // From VarDecl.
+  S.EmitBool(ThreadSpecified);
+  S.EmitBool(HasCXXDirectInit);
+  S.EmitBool(DeclaredInCondition);
+  S.EmitPtr(PreviousDeclaration);
+  S.Emit(TypeSpecStartLoc);
 }
 
 void VarDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   ValueDecl::ReadInRec(D, C);
   SClass = static_cast<StorageClass>(D.ReadInt());  // From VarDecl. 
+  ThreadSpecified = D.ReadBool();
+  HasCXXDirectInit = D.ReadBool();
+  DeclaredInCondition = D.ReadBool();
+  D.ReadPtr(PreviousDeclaration);
+  TypeSpecStartLoc = SourceLocation::ReadVal(D);
 }
 
 void VarDecl::EmitOutRec(Serializer& S) const {
