@@ -210,7 +210,7 @@ public:
   void append(in_iter in_start, in_iter in_end) {
     size_type NumInputs = std::distance(in_start, in_end);
     // Grow allocated space if needed.
-    if (End+NumInputs > Capacity)
+    if (NumInputs > size_type(Capacity-End))
       grow(size()+NumInputs);
 
     // Copy the new elements over.
@@ -222,7 +222,7 @@ public:
   ///
   void append(size_type NumInputs, const T &Elt) {
     // Grow allocated space if needed.
-    if (End+NumInputs > Capacity)
+    if (NumInputs > size_type(Capacity-End))
       grow(size()+NumInputs);
 
     // Copy the new elements over.
@@ -456,9 +456,9 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
     std::swap(Capacity, RHS.Capacity);
     return;
   }
-  if (Begin+RHS.size() > Capacity)
+  if (RHS.size() > size_type(Capacity-Begin))
     grow(RHS.size());
-  if (RHS.begin()+size() > RHS.Capacity)
+  if (size() > size_type(RHS.Capacity-RHS.begin()))
     RHS.grow(size());
 
   // Swap the shared elements.
