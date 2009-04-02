@@ -86,19 +86,25 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
 
-  std::string ContextName;
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl))
-    ContextName = CGM.getMangledName(FD);
-  else if (isa<ObjCMethodDecl>(CurFuncDecl))
-    ContextName = std::string(CurFn->getNameStart(), 
-                              CurFn->getNameStart() + CurFn->getNameLen());
-  else
-    assert(0 && "Unknown context for block var decl");
+  std::string Name;
+  if (getContext().getLangOptions().CPlusPlus) {
+    Name = CGM.getMangledName(&D);
+  } else {
+    std::string ContextName;
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl))
+      ContextName = CGM.getMangledName(FD);
+    else if (isa<ObjCMethodDecl>(CurFuncDecl))
+      ContextName = std::string(CurFn->getNameStart(), 
+                                CurFn->getNameStart() + CurFn->getNameLen());
+    else
+      assert(0 && "Unknown context for block var decl");
+    
+    Name = ContextName + Separator + D.getNameAsString();
+  }
 
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   return new llvm::GlobalVariable(LTy, Ty.isConstant(getContext()), Linkage,
-                                  llvm::Constant::getNullValue(LTy), 
-                                  ContextName + Separator + D.getNameAsString(),
+                                  llvm::Constant::getNullValue(LTy), Name,
                                   &CGM.getModule(), 0, Ty.getAddressSpace());
 }
 
