@@ -589,7 +589,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       
       Res = Actions.ActOnClassPropertyRefExpr(ReceiverName, PropertyName,
                                               IdentLoc, PropertyLoc);
-      return move(Res);
+      // These can be followed by postfix-expr pieces.
+      return ParsePostfixExpressionSuffix(move(Res));
     }
     // Consume the identifier so that we can see if it is followed by a '('.
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
