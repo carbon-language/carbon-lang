@@ -12,8 +12,9 @@
 // then forwards any diagnostics to the adapted diagnostic client.
 //
 //===----------------------------------------------------------------------===//
-#include "clang/Basic/SourceManager.h"
+
 #include "clang/Frontend/FixItRewriter.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Rewrite/Rewriter.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Streams.h"
@@ -37,16 +38,14 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
   if (NumFailures > 0) {
     // FIXME: Use diagnostic machinery!
     std::fprintf(stderr, 
-                 "%d fix-it failures detected; code will not be modified",
+                 "%d fix-it failures detected; code will not be modified\n",
                  NumFailures);
     return true;
   }
 
   llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
   llvm::raw_ostream *OutFile;
-  if (OutFileName == "-") {
-    OutFile = &llvm::outs();
-  } else if (!OutFileName.empty()) {
+  if (!OutFileName.empty()) {
     std::string Err;
     OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), 
                                        // set binary mode (critical for Windoze)
@@ -81,7 +80,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
 }
 
 bool FixItRewriter::IncludeInDiagnosticCounts() const {
-  return Client? Client->IncludeInDiagnosticCounts() : false;
+  return Client? Client->IncludeInDiagnosticCounts() : true;
 }
 
 void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
@@ -91,13 +90,12 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
 
   // Make sure that we can perform all of the modifications we
   // in this diagnostic.
-  bool CanRewrite = true;
-  for (unsigned Idx = 0; Idx < Info.getNumCodeModificationHints(); ++Idx) {
+  bool CanRewrite = Info.getNumCodeModificationHints() > 0;
+  for (unsigned Idx = 0, Last = Info.getNumCodeModificationHints();
+       Idx < Last; ++Idx) {
     const CodeModificationHint &Hint = Info.getCodeModificationHint(Idx);
     if (Hint.RemoveRange.isValid() &&
-        (!Rewrite->isRewritable(Hint.RemoveRange.getBegin()) ||
-         !Rewrite->isRewritable(Hint.RemoveRange.getEnd()) ||
-         Rewrite->getRangeSize(Hint.RemoveRange) == -1)) {
+        Rewrite->getRangeSize(Hint.RemoveRange) == -1) {
       CanRewrite = false;
       break;
     }
@@ -109,33 +107,49 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
     }
   }
 
-  if (!CanRewrite) // FIXME: warn the user that this rewrite couldn't be done
+  if (!CanRewrite) { 
+    if (Info.getNumCodeModificationHints() > 0) {
+      // FIXME: warn the user that this rewrite couldn't be done
+    }
+
+    // If this was an error, refuse to perform any rewriting.
+    if (DiagLevel == Diagnostic::Error || DiagLevel == Diagnostic::Fatal) {
+      if (++NumFailures == 1) {
+        // FIXME: use diagnostic machinery to print this.
+        std::fprintf(stderr, "error without fix-it advice detected; "
+                     "fix-it will produce no output\n");
+      }
+    }
     return;
+  }
 
   bool Failed = false;
-  for (unsigned Idx = 0; Idx < Info.getNumCodeModificationHints(); ++Idx) {
+  for (unsigned Idx = 0, Last = Info.getNumCodeModificationHints(); 
+       Idx < Last; ++Idx) {
     const CodeModificationHint &Hint = Info.getCodeModificationHint(Idx);
-    if (Hint.RemoveRange.isValid()) {
-      if (Hint.CodeToInsert.empty()) {
-        // We're removing code.
-        if (Rewrite->RemoveText(Hint.RemoveRange.getBegin(),
-                                Rewrite->getRangeSize(Hint.RemoveRange)))
-          Failed = true;
-      } else {
-        // We're replacing code.
-        if (Rewrite->ReplaceText(Hint.RemoveRange.getBegin(),
-                                 Rewrite->getRangeSize(Hint.RemoveRange),
-                                 Hint.CodeToInsert.c_str(),
-                                 Hint.CodeToInsert.size()))
-          Failed = true;
-      }
-    } else {
+    if (!Hint.RemoveRange.isValid()) {
       // We're adding code.
       if (Rewrite->InsertStrBefore(Hint.InsertionLoc, Hint.CodeToInsert))
         Failed = true;
+      continue;
     }
+    
+    if (Hint.CodeToInsert.empty()) {
+      // We're removing code.
+      if (Rewrite->RemoveText(Hint.RemoveRange.getBegin(),
+                              Rewrite->getRangeSize(Hint.RemoveRange)))
+        Failed = true;
+      continue;
+    } 
+      
+    // We're replacing code.
+    if (Rewrite->ReplaceText(Hint.RemoveRange.getBegin(),
+                             Rewrite->getRangeSize(Hint.RemoveRange),
+                             Hint.CodeToInsert.c_str(),
+                             Hint.CodeToInsert.size()))
+      Failed = true;
   }
 
-  if (Failed)
+  if (Failed) // FIXME: notify the user that the rewrite failed.
     ++NumFailures;
 }
