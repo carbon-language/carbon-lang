@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
-#include "llvm/Support/PointerLikeTypeTraits.h"
 
 namespace llvm {
   class raw_ostream;
@@ -232,7 +231,7 @@ public:
   }
 };
 
-}
+} // end namespace clang.
 
 namespace llvm {
 
@@ -252,6 +251,6 @@ public:
   enum { NumLowBitsAvailable = 0 };
 };
 
-}
+} // end namespace llvm.
 
 #endif

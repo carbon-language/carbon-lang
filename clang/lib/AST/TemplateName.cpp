@@ -10,11 +10,11 @@
 //  This file defines the TemplateName interface and subclasses.
 //
 //===----------------------------------------------------------------------===//
+
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "llvm/Support/raw_ostream.h"
-
 using namespace clang;
 
 TemplateDecl *TemplateName::getAsTemplateDecl() const {

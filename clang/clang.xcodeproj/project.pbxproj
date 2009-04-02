@@ -233,6 +233,7 @@
 		DEDFE6660F7B3B830035BD10 /* Tool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6570F7B3B830035BD10 /* Tool.cpp */; };
 		DEDFE6670F7B3B830035BD10 /* HostInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6580F7B3B830035BD10 /* HostInfo.cpp */; };
 		DEDFE6680F7B3B830035BD10 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6590F7B3B830035BD10 /* Driver.cpp */; };
+		DEDFF8880F848CF80035BD10 /* TemplateName.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFF8870F848CF80035BD10 /* TemplateName.cpp */; };
 		DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBBD430C19C5D200A9FE82 /* TODO.txt */; };
 		DEEBC3BA0C2363B800A9FE82 /* CodeGenTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */; };
 		DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */; };
@@ -636,6 +637,8 @@
 		DEDFE6570F7B3B830035BD10 /* Tool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tool.cpp; path = lib/Driver/Tool.cpp; sourceTree = "<group>"; };
 		DEDFE6580F7B3B830035BD10 /* HostInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfo.cpp; path = lib/Driver/HostInfo.cpp; sourceTree = "<group>"; };
 		DEDFE6590F7B3B830035BD10 /* Driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Driver.cpp; path = lib/Driver/Driver.cpp; sourceTree = "<group>"; };
+		DEDFF87F0F848CE30035BD10 /* TemplateName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TemplateName.h; path = clang/AST/TemplateName.h; sourceTree = "<group>"; };
+		DEDFF8870F848CF80035BD10 /* TemplateName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TemplateName.cpp; path = lib/AST/TemplateName.cpp; sourceTree = "<group>"; };
 		DEEBBD430C19C5D200A9FE82 /* TODO.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CodeGenTypes.h; path = lib/CodeGen/CodeGenTypes.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = lib/CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1073,6 +1076,7 @@
 				35847BE30CC7DB9000C40FFF /* StmtIterator.h */,
 				35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */,
 				1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */,
+				DEDFF87F0F848CE30035BD10 /* TemplateName.h */,
 				DE3464210B03040900DBC861 /* Type.h */,
 			);
 			name = AST;
@@ -1106,6 +1110,7 @@
 				35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */,
 				35839B090CDF845F006ED061 /* StmtSerialization.cpp */,
 				35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */,
+				DEDFF8870F848CF80035BD10 /* TemplateName.cpp */,
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
 				35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */,
 			);
@@ -1563,6 +1568,7 @@
 				DEDFE6680F7B3B830035BD10 /* Driver.cpp in Sources */,
 				1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */,
 				906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */,
+				DEDFF8880F848CF80035BD10 /* TemplateName.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
