@@ -64,7 +64,7 @@ public:
 class VISIBILITY_HIDDEN NullDeref : public BuiltinBug {
 public:
   NullDeref(GRExprEngine* eng)
-    : BuiltinBug(eng,"null dereference", "Dereference of null pointer.") {}
+    : BuiltinBug(eng,"Null dereference", "Dereference of null pointer.") {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.null_derefs_begin(), Eng.null_derefs_end());
@@ -75,7 +75,7 @@ class VISIBILITY_HIDDEN NilReceiverStructRet : public BugType {
   GRExprEngine &Eng;
 public:
   NilReceiverStructRet(GRExprEngine* eng) :
-    BugType("nil receiver with struct return type", "Logic Errors"),  
+    BugType("'nil' receiver with struct return type", "Logic Errors"),  
     Eng(*eng) {}
 
   void FlushReports(BugReporter& BR) {
@@ -112,7 +112,8 @@ public:
 class VISIBILITY_HIDDEN DivZero : public BuiltinBug {
 public:
   DivZero(GRExprEngine* eng)
-    : BuiltinBug(eng,"divide-by-zero", "Division by zero or undefined value.") {}
+    : BuiltinBug(eng,"Division-by-zero",
+                 "Division by zero or undefined value.") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.explicit_bad_divides_begin(), Eng.explicit_bad_divides_end());
@@ -121,7 +122,7 @@ public:
   
 class VISIBILITY_HIDDEN UndefResult : public BuiltinBug {
 public:
-  UndefResult(GRExprEngine* eng) : BuiltinBug(eng,"undefined result",
+  UndefResult(GRExprEngine* eng) : BuiltinBug(eng,"Undefined result",
                              "Result of operation is undefined.") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
@@ -132,7 +133,7 @@ public:
 class VISIBILITY_HIDDEN BadCall : public BuiltinBug {
 public:
   BadCall(GRExprEngine *eng)
-  : BuiltinBug(eng,"invalid function call",
+  : BuiltinBug(eng, "Invalid function call",
         "Called function pointer is a null or undefined pointer value") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
@@ -142,11 +143,11 @@ public:
 
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
 public:
-  BadArg(GRExprEngine* eng) : BuiltinBug(eng,"uninitialized argument",  
+  BadArg(GRExprEngine* eng) : BuiltinBug(eng,"Uninitialized argument",  
     "Pass-by-value argument in function call is undefined.") {}
 
   BadArg(GRExprEngine* eng, const char* d)
-    : BuiltinBug(eng,"uninitialized argument", d) {}
+    : BuiltinBug(eng,"Uninitialized argument", d) {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::UndefArgsTy::iterator I = Eng.undef_arg_begin(),
@@ -163,7 +164,7 @@ public:
 class VISIBILITY_HIDDEN BadMsgExprArg : public BadArg {
 public:
   BadMsgExprArg(GRExprEngine* eng) 
-    : BadArg(eng,"Pass-by-value argument in message expression is undefined."){}
+    : BadArg(eng,"Pass-by-value argument in message expression is undefined"){}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::UndefArgsTy::iterator I=Eng.msg_expr_undef_arg_begin(),
@@ -180,15 +181,15 @@ public:
 class VISIBILITY_HIDDEN BadReceiver : public BuiltinBug {
 public:  
   BadReceiver(GRExprEngine* eng)
-  : BuiltinBug(eng,"uninitialized receiver",
-               "Receiver in message expression is an uninitialized value.") {}
+  : BuiltinBug(eng,"Uninitialized receiver",
+               "Receiver in message expression is an uninitialized value") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::ErrorNodes::iterator I=Eng.undef_receivers_begin(),
          End = Eng.undef_receivers_end(); I!=End; ++I) {
       
       // Generate a report for this bug.
-      RangedBugReport *report = new RangedBugReport(*this, desc.c_str(), *I);      
+      RangedBugReport *report = new RangedBugReport(*this, desc.c_str(), *I);
       ExplodedNode<GRState>* N = *I;
       Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
       Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
@@ -202,7 +203,7 @@ public:
 class VISIBILITY_HIDDEN RetStack : public BuiltinBug {
 public:
   RetStack(GRExprEngine* eng)
-    : BuiltinBug(eng, "return of address to stack-allocated memory") {}
+    : BuiltinBug(eng, "Return of address to stack-allocated memory") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::ret_stackaddr_iterator I=Eng.ret_stackaddr_begin(),
@@ -260,7 +261,7 @@ public:
   
 class VISIBILITY_HIDDEN RetUndef : public BuiltinBug {
 public:
-  RetUndef(GRExprEngine* eng) : BuiltinBug(eng,"uninitialized return value",
+  RetUndef(GRExprEngine* eng) : BuiltinBug(eng, "Uninitialized return value",
               "Uninitialized or undefined return value returned to caller.") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
@@ -293,7 +294,7 @@ class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
   
 public:
   UndefBranch(GRExprEngine *eng)
-    : BuiltinBug(eng,"uninitialized value",
+    : BuiltinBug(eng,"Use of uninitialized value",
                  "Branch condition evaluates to an uninitialized value.") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
@@ -339,7 +340,7 @@ public:
 class VISIBILITY_HIDDEN OutOfBoundMemoryAccess : public BuiltinBug {
 public:
   OutOfBoundMemoryAccess(GRExprEngine* eng)
-    : BuiltinBug(eng,"out-of-bounds memory access",
+    : BuiltinBug(eng,"Out-of-bounds memory access",
                      "Load or store into an out-of-bound memory position.") {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
@@ -349,7 +350,8 @@ public:
   
 class VISIBILITY_HIDDEN BadSizeVLA : public BuiltinBug {
 public:
-  BadSizeVLA(GRExprEngine* eng) : BuiltinBug(eng, "bad VLA size") {}
+  BadSizeVLA(GRExprEngine* eng) :
+    BuiltinBug(eng, "Bad variable-length array (VLA) size") {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::ErrorNodes::iterator
@@ -368,7 +370,8 @@ public:
       
       std::string buf;
       llvm::raw_string_ostream os(buf);
-      os << "The expression used to specify the number of elements in the VLA '"
+      os << "The expression used to specify the number of elements in the "
+            "variable-length array (VLA) '"
          << VD->getNameAsString() << "' evaluates to ";
       
       if (Eng.getStateManager().GetSVal(N->getState(), SizeExpr).isUndef())
@@ -421,7 +424,8 @@ public:
       // Lazily allocate the BugType object if it hasn't already been created.
       // Ownership is transferred to the BugReporter object once the BugReport
       // is passed to 'EmitWarning'.
-      if (!BT) BT = new BugType("argument with 'nonnull' attribute passed null", "API");
+      if (!BT) BT =
+        new BugType("Argument with 'nonnull' attribute passed null", "API");
       
       RangedBugReport *R = new RangedBugReport(*BT,
                                    "Null pointer passed as an argument to a "
