@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/Triple.h"
 #include <cassert>
+#include <cstring>
 using namespace llvm;
 
 //
