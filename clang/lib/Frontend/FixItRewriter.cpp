@@ -81,8 +81,43 @@ bool FixItRewriter::IncludeInDiagnosticCounts() const {
 
 void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                      const DiagnosticInfo &Info) {
-  if (Client)
-    Client->HandleDiagnostic(DiagLevel, Info);
+  Client->HandleDiagnostic(DiagLevel, Info);
+
+  // Skip over any diagnostics that are ignored.
+  if (DiagLevel == Diagnostic::Ignored)
+    return;
+
+  if (!FixItLocations.empty()) {
+    // The user has specified the locations where we should perform
+    // the various fix-it modifications.
+
+    // If this diagnostic does not have any code modifications,
+    // completely ignore it, even if it's an error: fix-it locations
+    // are meant to perform specific fix-ups even in the presence of
+    // other errors.
+    if (Info.getNumCodeModificationHints() == 0)
+      return;
+
+    // See if the location of the error is one that matches what the
+    // user requested.
+    bool AcceptableLocation = false;
+    const FileEntry *File 
+      = Rewrite.getSourceMgr().getFileEntryForID(
+                                            Info.getLocation().getFileID());
+    unsigned Line = Info.getLocation().getSpellingLineNumber();
+    unsigned Column = Info.getLocation().getSpellingColumnNumber();
+    for (llvm::SmallVector<RequestedSourceLocation, 4>::iterator
+           Loc = FixItLocations.begin(), LocEnd = FixItLocations.end();
+         Loc != LocEnd; ++Loc) {
+      if (Loc->File == File && Loc->Line == Line && Loc->Column == Column) {
+        AcceptableLocation = true;
+        break;
+      }
+    }
+
+    if (!AcceptableLocation)
+      return;
+  }
 
   // Make sure that we can perform all of the modifications we
   // in this diagnostic.

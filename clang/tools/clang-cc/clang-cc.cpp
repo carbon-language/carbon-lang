@@ -58,7 +58,92 @@
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
+#include <cstdlib>
+
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Source Location Parser
+//===----------------------------------------------------------------------===//
+
+/// \brief A source location that has been parsed on the command line.
+struct ParsedSourceLocation {
+  std::string FileName;
+  unsigned Line;
+  unsigned Column;
+
+  /// \brief Try to resolve the file name of a parsed source location.
+  ///
+  /// \returns true if there was an error, false otherwise.
+  bool ResolveLocation(FileManager &FileMgr, RequestedSourceLocation &Result);
+};
+
+bool
+ParsedSourceLocation::ResolveLocation(FileManager &FileMgr, 
+                                      RequestedSourceLocation &Result) {
+  const FileEntry *File = FileMgr.getFile(FileName);
+  if (!File)
+    return true;
+
+  Result.File = File;
+  Result.Line = Line;
+  Result.Column = Column;
+  return false;
+}
+
+namespace llvm {
+  namespace cl {
+    /// \brief Command-line option parser that parses source locations.
+    ///
+    /// Source locations are of the form filename:line:column.
+    template<>
+    class parser<ParsedSourceLocation> 
+      : public basic_parser<ParsedSourceLocation> {
+    public:
+      bool parse(Option &O, const char *ArgName, 
+                 const std::string &ArgValue,
+                 ParsedSourceLocation &Val);
+    };
+
+    bool 
+    parser<ParsedSourceLocation>::
+    parse(Option &O, const char *ArgName, const std::string &ArgValue, 
+          ParsedSourceLocation &Val) {
+      using namespace clang;
+
+      const char *ExpectedFormat 
+        = "source location must be of the form filename:line:column";
+      std::string::size_type SecondColon = ArgValue.rfind(':');
+      if (SecondColon == std::string::npos) {
+        std::fprintf(stderr, "%s\n", ExpectedFormat);
+        return true;
+      }
+      char *EndPtr;
+      long Column 
+        = std::strtol(ArgValue.c_str() + SecondColon + 1, &EndPtr, 10);
+      if (EndPtr != ArgValue.c_str() + ArgValue.size()) {
+        std::fprintf(stderr, "%s\n", ExpectedFormat);
+        return true;
+      }
+
+      std::string::size_type FirstColon = ArgValue.rfind(':', SecondColon-1);
+      if (SecondColon == std::string::npos) {
+        std::fprintf(stderr, "%s\n", ExpectedFormat);
+        return true;
+      }
+      long Line = std::strtol(ArgValue.c_str() + FirstColon + 1, &EndPtr, 10);
+      if (EndPtr != ArgValue.c_str() + SecondColon) {
+        std::fprintf(stderr, "%s\n", ExpectedFormat);
+        return true;
+      }
+      
+      Val.FileName = ArgValue.substr(0, FirstColon);
+      Val.Line = Line;
+      Val.Column = Column;
+      return false;
+    }
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Global options.
@@ -1262,6 +1347,13 @@ static void InitializeCompileOptions(CompileOptions &Opts,
 }
 
 //===----------------------------------------------------------------------===//
+// Fix-It Options
+//===----------------------------------------------------------------------===//
+static llvm::cl::list<ParsedSourceLocation>
+FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
+   llvm::cl::desc("Perform Fix-It modifications at the given source location"));
+
+//===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
 
@@ -1453,6 +1545,35 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
   if (Consumer) {
     llvm::OwningPtr<ASTContext> ContextOwner;
+
+    if (FixItAtLocations.size() > 0) {
+      // Even without the "-fixit" flag, with may have some specific
+      // locations where the user has requested fixes. Process those
+      // locations now.
+      if (!FixItRewrite)
+        FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
+                                         PP.getSourceManager());
+
+      bool AddedFixitLocation = false;
+      for (unsigned Idx = 0, Last = FixItAtLocations.size(); 
+           Idx != Last; ++Idx) {
+        RequestedSourceLocation Requested;
+        if (FixItAtLocations[Idx].ResolveLocation(PP.getFileManager(), 
+                                                  Requested)) {
+          fprintf(stderr, "FIX-IT could not find file \"%s\"\n",
+                  FixItAtLocations[Idx].FileName.c_str());
+        } else {
+          FixItRewrite->addFixItLocation(Requested);
+          AddedFixitLocation = true;
+        }
+      }
+
+      if (!AddedFixitLocation) {
+        // All of the fix-it locations were bad. Don't fix anything.
+        delete FixItRewrite;
+        FixItRewrite = 0;
+      }
+    }
 
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
                                       PP.getSourceManager(),

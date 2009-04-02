@@ -17,10 +17,23 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Rewrite/Rewriter.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 
 class SourceManager;
+class FileEntry;
+
+/// \brief Stores a source location in the form that it shows up on
+/// the Clang command line, e.g., file:line:column.
+///
+/// FIXME: Would prefer to use real SourceLocations, but I don't see a
+/// good way to resolve them during parsing.
+struct RequestedSourceLocation {
+  const FileEntry *File;
+  unsigned Line;
+  unsigned Column;
+};
 
 class FixItRewriter : public DiagnosticClient {
   /// \brief The diagnostics machinery.
@@ -37,12 +50,23 @@ class FixItRewriter : public DiagnosticClient {
   /// \brief The number of rewriter failures.
   unsigned NumFailures;
 
+  /// \brief Locations at which we should perform fix-its.
+  /// 
+  /// When empty, perform fix-it modifications everywhere.
+  llvm::SmallVector<RequestedSourceLocation, 4> FixItLocations;
+
 public:
   /// \brief Initialize a new fix-it rewriter.
   FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr);
 
   /// \brief Destroy the fix-it rewriter.
   ~FixItRewriter();
+
+  /// \brief Add a location where fix-it modifications should be
+  /// performed.
+  void addFixItLocation(RequestedSourceLocation Loc) {
+    FixItLocations.push_back(Loc);
+  }
 
   /// \brief Write the modified source file.
   ///
