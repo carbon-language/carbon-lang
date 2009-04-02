@@ -1477,6 +1477,7 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
 
+
 void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                     Job &Dest, const InputInfo &Output, 
                                     const InputInfoList &Inputs, 
