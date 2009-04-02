@@ -36,6 +36,8 @@ namespace N { namespace N { void f() { } } }
 // RUN: grep unmangled_function %t | count 1 &&
 extern "C" { namespace N { void unmangled_function() { } } }
 
-// RUN: grep unmangled_variable %t | count 1
+// RUN: grep unmangled_variable %t | count 1 &&
 extern "C" { namespace N { int unmangled_variable; } }
 
+// RUN: grep _ZN1N1iE %t | count 1
+namespace N { int i; }

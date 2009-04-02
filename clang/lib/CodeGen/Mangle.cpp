@@ -109,6 +109,16 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     return mangleFunctionDecl(FD);
   
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (!Context.getLangOptions().CPlusPlus ||
+        isInCLinkageSpecification(D))
+      return false;
+    
+    Out << "_Z";
+    mangleName(VD);
+    return true;
+  }
+  
   return false;
 }
 
