@@ -59,10 +59,6 @@ public:
   unsigned MathErrno         : 1; // Math functions must respect errno
                                   // (modulo the platform support).
 
-  unsigned UnsignedOverflowChecking : 1;
-                                  // Extension to call a handler function when
-                                  // unsigned and signed integer arithmetic overflows.
-
   unsigned OverflowChecking  : 1; // Extension to call a handler function when
                                   // signed integer arithmetic overflows.
 
@@ -94,7 +90,6 @@ public:
     EmitAllDecls = 0;
     MathErrno = 1;
 
-    UnsignedOverflowChecking = 0;
     OverflowChecking = 0;
 
     InstantiationDepth = 99;
