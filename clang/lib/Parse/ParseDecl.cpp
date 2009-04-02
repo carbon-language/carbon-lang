@@ -215,7 +215,8 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
-/// 'Context' should be a Declarator::TheContext value.
+/// 'Context' should be a Declarator::TheContext value.  This returns the
+/// location of the semicolon in DeclEnd.
 ///
 ///       declaration: [C99 6.7]
 ///         block-declaration ->
@@ -228,24 +229,25 @@ void Parser::FuzzyParseMicrosoftDeclSpec() {
 /// [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///
-Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context) {
+Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
+                                                SourceLocation &DeclEnd) {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::kw_export:
   case tok::kw_template:
-    SingleDecl = ParseTemplateDeclarationOrSpecialization(Context);
+    SingleDecl = ParseTemplateDeclarationOrSpecialization(Context, DeclEnd);
     break;
   case tok::kw_namespace:
-    SingleDecl = ParseNamespace(Context);
+    SingleDecl = ParseNamespace(Context, DeclEnd);
     break;
   case tok::kw_using:
-    SingleDecl = ParseUsingDirectiveOrDeclaration(Context);
+    SingleDecl = ParseUsingDirectiveOrDeclaration(Context, DeclEnd);
     break;
   case tok::kw_static_assert:
-    SingleDecl = ParseStaticAssertDeclaration();
+    SingleDecl = ParseStaticAssertDeclaration(DeclEnd);
     break;
   default:
-    return ParseSimpleDeclaration(Context);
+    return ParseSimpleDeclaration(Context, DeclEnd);
   }
   
   // This routine returns a DeclGroup, if the thing we parsed only contains a
@@ -261,6 +263,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context) {
 /// If RequireSemi is false, this does not check for a ';' at the end of the
 /// declaration.
 Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
+                                                      SourceLocation &DeclEnd,
                                                       bool RequireSemi) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
@@ -280,6 +283,8 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   DeclGroupPtrTy DG =
     ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 
+  DeclEnd = Tok.getLocation();
+  
   // If the client wants to check what comes after the declaration, just return
   // immediately without checking anything!
   if (!RequireSemi) return DG;

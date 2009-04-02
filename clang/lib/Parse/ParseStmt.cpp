@@ -100,10 +100,9 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 
   default: {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
-      SourceLocation DeclStart = Tok.getLocation();
-      DeclGroupPtrTy Decl = ParseDeclaration(Declarator::BlockContext);
-      // FIXME: Pass in the right location for the end of the declstmt.
-      return Actions.ActOnDeclStmt(Decl, DeclStart, DeclStart);
+      SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
+      DeclGroupPtrTy Decl = ParseDeclaration(Declarator::BlockContext, DeclEnd);
+      return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
     }
 
     if (Tok.is(tok::r_brace)) {
@@ -442,11 +441,10 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
       // If this is the start of a declaration, parse it as such.
       if (isDeclarationStatement()) {
-        // FIXME: Save the __extension__ on the decl as a node somehow.
-        SourceLocation DeclStart = Tok.getLocation();
-        DeclGroupPtrTy Res = ParseDeclaration(Declarator::BlockContext);
-        // FIXME: Pass in the right location for the end of the declstmt.
-        R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
+        // FIXME: Save the __extension__ on the decl as a node somehow?
+        SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
+        DeclGroupPtrTy Res = ParseDeclaration(Declarator::BlockContext,DeclEnd);
+        R = Actions.ActOnDeclStmt(Res, DeclStart, DeclEnd);
       } else {
         // Otherwise this was a unary __extension__ marker.
         OwningExprResult Res(ParseExpressionWithLeadingExtension(ExtLoc));
@@ -911,8 +909,9 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     if (!C99orCXX)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
-    SourceLocation DeclStart = Tok.getLocation();
-    DeclGroupPtrTy DG = ParseSimpleDeclaration(Declarator::ForContext, false);
+    SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
+    DeclGroupPtrTy DG = ParseSimpleDeclaration(Declarator::ForContext, DeclEnd,
+                                               false);
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
     
     if (Tok.is(tok::semi)) {  // for (int x = 4;

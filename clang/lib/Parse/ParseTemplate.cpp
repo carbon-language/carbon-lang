@@ -35,6 +35,7 @@ using namespace clang;
 ///         'template' '<' '>' declaration
 Parser::DeclPtrTy
 Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
+                                                 SourceLocation &DeclEnd,
                                                  AccessSpecifier AS) {
   assert((Tok.is(tok::kw_export) || Tok.is(tok::kw_template)) && 
 	 "Token does not start a template declaration.");
@@ -99,6 +100,9 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // FIXME: Converting DeclGroupPtr to DeclPtr like this is an insanely gruesome
   // hack, will bring up on cfe-dev.
   DeclGroupPtrTy DG = ParseDeclarationOrFunctionDefinition(&ParamLists, AS);
+  // FIXME: Should be ';' location not the token after it.  Resolve with above
+  // fixmes.
+  DeclEnd = Tok.getLocation();
   return DeclPtrTy::make(DG.get());
 }
 

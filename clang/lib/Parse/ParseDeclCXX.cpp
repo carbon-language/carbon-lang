@@ -42,7 +42,8 @@ using namespace clang;
 ///       namespace-alias-definition:  [C++ 7.3.2: namespace.alias]
 ///         'namespace' identifier '=' qualified-namespace-specifier ';'
 ///
-Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
+                                         SourceLocation &DeclEnd) {
   assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
   
@@ -62,7 +63,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
   
   if (Tok.is(tok::equal))
     // FIXME: Verify no attributes were present.
-    return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident);
+    return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident, DeclEnd);
   
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, Ident ? diag::err_expected_lbrace : 
@@ -88,9 +89,10 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
   // Leave the namespace scope.
   NamespaceScope.Exit();
 
-  SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
-  Actions.ActOnFinishNamespaceDef(NamespcDecl, RBrace);
+  SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBrace);
+  Actions.ActOnFinishNamespaceDef(NamespcDecl, RBraceLoc);
 
+  DeclEnd = RBraceLoc;
   return NamespcDecl;
 }
 
@@ -99,7 +101,8 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context) {
 ///
 Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
                                               SourceLocation AliasLoc, 
-                                              IdentifierInfo *Alias) {
+                                              IdentifierInfo *Alias,
+                                              SourceLocation &DeclEnd) {
   assert(Tok.is(tok::equal) && "Not equal token");
   
   ConsumeToken(); // eat the '='.
@@ -120,6 +123,7 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
   SourceLocation IdentLoc = ConsumeToken();
   
   // Eat the ';'.
+  DeclEnd = Tok.getLocation();
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                    "namespace name", tok::semi);
   
@@ -169,7 +173,8 @@ Parser::DeclPtrTy Parser::ParseLinkage(unsigned Context) {
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
 /// using-directive. Assumes that current token is 'using'.
-Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
+                                                     SourceLocation &DeclEnd) {
   assert(Tok.is(tok::kw_using) && "Not using token");
 
   // Eat 'using'.
@@ -177,10 +182,10 @@ Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
 
   if (Tok.is(tok::kw_namespace))
     // Next token after 'using' is 'namespace' so it must be using-directive
-    return ParseUsingDirective(Context, UsingLoc);
+    return ParseUsingDirective(Context, UsingLoc, DeclEnd);
 
   // Otherwise, it must be using-declaration.
-  return ParseUsingDeclaration(Context, UsingLoc);
+  return ParseUsingDeclaration(Context, UsingLoc, DeclEnd);
 }
 
 /// ParseUsingDirective - Parse C++ using-directive, assumes
@@ -194,7 +199,8 @@ Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context) {
 ///                 namespace-name attributes[opt] ;
 ///
 Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
-                                              SourceLocation UsingLoc) {
+                                              SourceLocation UsingLoc,
+                                              SourceLocation &DeclEnd) {
   assert(Tok.is(tok::kw_namespace) && "Not 'namespace' token");
 
   // Eat 'namespace'.
@@ -226,6 +232,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
     AttrList = ParseAttributes();
   
   // Eat ';'.
+  DeclEnd = Tok.getLocation();
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                    AttrList ? "attributes list" : "namespace name", tok::semi);
 
@@ -242,7 +249,8 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
 ///       'using' :: unqualified-id [TODO]
 ///
 Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
-                                                SourceLocation UsingLoc) {
+                                                SourceLocation UsingLoc,
+                                                SourceLocation &DeclEnd) {
   assert(false && "Not implemented");
   // FIXME: Implement parsing.
   return DeclPtrTy();
@@ -253,7 +261,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
 ///      static_assert-declaration:
 ///        static_assert ( constant-expression  ,  string-literal  ) ;
 ///
-Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration() {
+Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   assert(Tok.is(tok::kw_static_assert) && "Not a static_assert declaration");
   SourceLocation StaticAssertLoc = ConsumeToken();
   
@@ -285,6 +293,7 @@ Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration() {
 
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
+  DeclEnd = Tok.getLocation();
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_static_assert);
 
   return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc, move(AssertExpr), 
@@ -668,12 +677,15 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // static_assert-declaration
   if (Tok.is(tok::kw_static_assert)) {
-    ParseStaticAssertDeclaration();
+    SourceLocation DeclEnd;
+    ParseStaticAssertDeclaration(DeclEnd);
     return;
   }
       
   if (Tok.is(tok::kw_template)) {
-    ParseTemplateDeclarationOrSpecialization(Declarator::MemberContext, AS);
+    SourceLocation DeclEnd;
+    ParseTemplateDeclarationOrSpecialization(Declarator::MemberContext, DeclEnd,
+                                             AS);
     return;
   }
 

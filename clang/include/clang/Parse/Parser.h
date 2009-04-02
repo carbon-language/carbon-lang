@@ -809,8 +809,9 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   
-  DeclGroupPtrTy ParseDeclaration(unsigned Context);
+  DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd);
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
+                                        SourceLocation &DeclEnd,
                                         bool RequireSemi = true);
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
@@ -994,14 +995,18 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 7: Declarations [dcl.dcl]
   
-  DeclPtrTy ParseNamespace(unsigned Context);
+  DeclPtrTy ParseNamespace(unsigned Context, SourceLocation &DeclEnd);
   DeclPtrTy ParseLinkage(unsigned Context);
-  DeclPtrTy ParseUsingDirectiveOrDeclaration(unsigned Context);
-  DeclPtrTy ParseUsingDirective(unsigned Context, SourceLocation UsingLoc);
-  DeclPtrTy ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc);
-  DeclPtrTy ParseStaticAssertDeclaration();
+  DeclPtrTy ParseUsingDirectiveOrDeclaration(unsigned Context,
+                                             SourceLocation &DeclEnd);
+  DeclPtrTy ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
+                                SourceLocation &DeclEnd);
+  DeclPtrTy ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
+                                  SourceLocation &DeclEnd);
+  DeclPtrTy ParseStaticAssertDeclaration(SourceLocation &DeclEnd);
   DeclPtrTy ParseNamespaceAlias(SourceLocation NamespaceLoc,
-                                SourceLocation AliasLoc, IdentifierInfo *Alias);
+                                SourceLocation AliasLoc, IdentifierInfo *Alias,
+                                SourceLocation &DeclEnd);
   
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
@@ -1035,6 +1040,7 @@ private:
 
   // C++ 14.1: Template Parameters [temp.param]
   DeclPtrTy ParseTemplateDeclarationOrSpecialization(unsigned Context,
+                                                     SourceLocation &DeclEnd,
                                                    AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth, 
                                TemplateParameterList &TemplateParams,

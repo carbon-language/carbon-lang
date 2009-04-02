@@ -423,7 +423,10 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
   case tok::kw_export:    // As in 'export template'
   case tok::kw_static_assert:
     // A function definition cannot start with a these keywords.
-    return ParseDeclaration(Declarator::FileContext);
+    {
+      SourceLocation DeclEnd;
+      return ParseDeclaration(Declarator::FileContext, DeclEnd);
+    }
   default:
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();
