@@ -94,6 +94,7 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
     return;
   }
   
+  const_cast<PathDiagnostic*>(D)->flattenLocations();
   BatchedDiags.push_back(D);
 }
 
