@@ -328,6 +328,11 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     return false;
   }
 
+  if (C.getArgs().hasArg(options::OPT__version)) {
+    PrintVersion(C);
+    return false;
+  }
+
   if (C.getArgs().hasArg(options::OPT_v) || 
       C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     PrintVersion(C);
