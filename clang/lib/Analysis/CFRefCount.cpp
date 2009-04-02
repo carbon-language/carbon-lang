@@ -2499,13 +2499,13 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
   const char* name = 0;
   
   if (isGCEnabled())
-    name = "leak of returned object (GC)";
+    name = "Leak of returned object when using garbage collection";
   else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "[naming convention] leak of returned object (hybrid MM, "
-           "non-GC)";
+    name = "Leak of returned object when not using garbage collection (GC) in "
+           "dual GC/non-GC code";
   else {
     assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "leak of returned object";
+    name = "Leak of returned object";
   }
   
   leakAtReturn = new LeakAtReturn(this, name);
@@ -2513,12 +2513,13 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
 
   // Second, register leaks within a function/method.
   if (isGCEnabled())
-    name = "leak (GC)";  
+    name = "Leak of object when using garbage collection";  
   else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "leak (hybrid MM, non-GC)";
+    name = "Leak of object when not using garbage collection (GC) in "
+           "dual GC/non-GC code";
   else {
     assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "leak";
+    name = "Leak";
   }
   
   leakWithinFunction = new LeakWithinFunction(this, name);
