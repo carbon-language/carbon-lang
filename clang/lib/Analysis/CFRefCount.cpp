@@ -3020,7 +3020,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   
   // FIXME: AllocBinding doesn't get populated for RegionStore yet.
   if (AllocBinding)
-    os << " and store into '" << AllocBinding->getString() << '\'';
+    os << " and stored into '" << AllocBinding->getString() << '\'';
 }
 
 //===----------------------------------------------------------------------===//
