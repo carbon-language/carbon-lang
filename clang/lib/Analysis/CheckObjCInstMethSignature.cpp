@@ -21,7 +21,7 @@
 #include "clang/AST/ASTContext.h"
 
 #include "llvm/ADT/DenseMap.h"
-#include <sstream>
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
@@ -46,7 +46,8 @@ static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
   QualType ResAncestor = MethAncestor->getResultType(); 
   
   if (!AreTypesCompatible(ResDerived, ResAncestor, Ctx)) {
-    std::ostringstream os;
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
     
     os << "The Objective-C class '"
        << MethDerived->getClassInterface()->getNameAsString()
@@ -64,7 +65,7 @@ static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
        << "'.  These two types are incompatible, and may result in undefined "
           "behavior for clients of these classes.";
     
-    BR.EmitBasicReport("incompatible instance method return type",
+    BR.EmitBasicReport("Incompatible instance method return type",
                        os.str().c_str(), MethDerived->getLocStart());
   }
 }
