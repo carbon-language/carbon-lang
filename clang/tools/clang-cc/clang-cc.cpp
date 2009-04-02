@@ -192,7 +192,7 @@ enum ProgActions {
   DumpTokens,                   // Dump out preprocessed tokens.
   DumpRawTokens,                // Dump out raw tokens.
   RunAnalysis,                  // Run one or more source code analyses. 
-  GeneratePCH,                  // Generate precompiled header.
+  GeneratePTH,                  // Generate pre-tokenized header.
   InheritanceView               // View C++ inheritance for a specified class.
 };
 
@@ -226,7 +226,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and view them with GraphViz"),
              clEnumValN(PrintDeclContext, "print-decl-contexts",
                         "Print DeclContexts and their Decls"),
-             clEnumValN(GeneratePCH, "emit-pth",
+             clEnumValN(GeneratePTH, "emit-pth",
                         "Generate pre-tokenized header file"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
@@ -1490,7 +1490,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }
       
-  case GeneratePCH: {
+  case GeneratePTH: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
     CacheTokens(PP, OutputFile);
     ClearSourceMgr = true;
