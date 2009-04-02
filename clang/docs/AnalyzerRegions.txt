@@ -146,15 +146,16 @@ Pointer Casts
   
   For toll-free bridging casts, we return the original region.
 
-  We can set up a lattice for pointer types, with the most general type 'void*'
-  at the top. The lattice enforces a partial order among types.
+  We can set up a partial order for pointer types, with the most general type
+  'void*' at the top. The partial order forms a tree with 'void*' as its root
+  node.
 
-  Every MemRegion has a root position in the type lattice. For example, the
-  pointee region of 'void *p' has its root position at the top of the lattice.
+  Every MemRegion has a root position in the type tree. For example, the pointee
+  region of 'void *p' has its root position at the root node of the tree.
   VarRegion of 'int x' has its root position at the 'int type' node.
 
-  TypedViewRegion is used to move the region down or up in the lattice. Moving
-  down in the lattice adds a TypedViewRegion. Moving up in the lattice removes a
+  TypedViewRegion is used to move the region down or up in the tree. Moving
+  down in the tree adds a TypedViewRegion. Moving up in the tree removes a
   TypedViewRegion.
 
   Do we want to allow moving up beyond the root position? This happens when:
