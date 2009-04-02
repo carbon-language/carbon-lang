@@ -448,6 +448,7 @@ OPTION("-ftemplate-depth-", ftemplate_depth_, Joined, f_Group, INVALID, "", 0, 0
 OPTION("-fterminated-vtables", fterminated_vtables, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-ftime-report", ftime_report, Flag, clang_f_Group, INVALID, "", 0, 0, 0)
 OPTION("-ftraditional", ftraditional, Flag, f_Group, INVALID, "", 0, 0, 0)
+OPTION("-ftrapu", ftrapu, Flag, clang_f_Group, INVALID, "", 0, 0, 0)
 OPTION("-ftrapv", ftrapv, Flag, clang_f_Group, INVALID, "", 0, 0, 0)
 OPTION("-funwind-tables", funwind_tables, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fverbose-asm", fverbose_asm, Flag, f_Group, INVALID, "", 0, 0, 0)

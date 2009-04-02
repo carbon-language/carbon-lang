@@ -262,7 +262,9 @@ public:
     
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
-    if (CGF.getContext().getLangOptions().OverflowChecking)
+    if (CGF.getContext().getLangOptions().UnsignedOverflowChecking
+        || (CGF.getContext().getLangOptions().OverflowChecking
+            && Ops.Ty->isSignedIntegerType()))
       return EmitOverflowCheckedBinOp(Ops);
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
   }
@@ -834,21 +836,26 @@ Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
 Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   unsigned IID;
   unsigned OpID = 0;
+
   if (Ops.Ty->isSignedIntegerType()) {
     switch (Ops.E->getOpcode()) {
       case BinaryOperator::Add:
+      case BinaryOperator::AddAssign:
         OpID = 1;
         IID = llvm::Intrinsic::sadd_with_overflow;
         break;
       case BinaryOperator::Sub:
+      case BinaryOperator::SubAssign:
         OpID = 2;
         IID = llvm::Intrinsic::ssub_with_overflow;
         break;
       case BinaryOperator::Mul:
+      case BinaryOperator::MulAssign:
         OpID = 3;
         IID = llvm::Intrinsic::smul_with_overflow;
         break;
       default:
+		fprintf(stderr, "Opcode: %d\n", Ops.E->getOpcode());
         assert(false && "Unsupported operation for overflow detection");
     }
     OpID <<= 1;
@@ -859,14 +866,17 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
         "Must be either a signed or unsigned integer op");
     switch (Ops.E->getOpcode()) {
       case BinaryOperator::Add:
+      case BinaryOperator::AddAssign:
         OpID = 1;
         IID = llvm::Intrinsic::uadd_with_overflow;
         break;
       case BinaryOperator::Sub:
+      case BinaryOperator::SubAssign:
         OpID = 2;
         IID = llvm::Intrinsic::usub_with_overflow;
         break;
       case BinaryOperator::Mul:
+      case BinaryOperator::MulAssign:
         OpID = 3;
         IID = llvm::Intrinsic::umul_with_overflow;
         break;
@@ -935,7 +945,9 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isPointerType()) {
-    if (CGF.getContext().getLangOptions().OverflowChecking)
+    if (CGF.getContext().getLangOptions().UnsignedOverflowChecking
+        || (CGF.getContext().getLangOptions().OverflowChecking
+            && Ops.Ty->isSignedIntegerType()))
       return EmitOverflowCheckedBinOp(Ops);
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
@@ -986,7 +998,9 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
-    if (CGF.getContext().getLangOptions().OverflowChecking)
+    if (CGF.getContext().getLangOptions().UnsignedOverflowChecking
+        || (CGF.getContext().getLangOptions().OverflowChecking
+            && Ops.Ty->isSignedIntegerType()))
       return EmitOverflowCheckedBinOp(Ops);
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }

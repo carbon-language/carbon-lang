@@ -676,12 +676,18 @@ void InitializeGCMode(LangOptions &Options) {
 }
 
 static llvm::cl::opt<bool>
+UnsignedOverflowChecking("ftrapu",
+                         llvm::cl::desc("Trap on unsigned and signed integer overflow"),
+                         llvm::cl::init(false));
+
+static llvm::cl::opt<bool>
 OverflowChecking("ftrapv",
-           llvm::cl::desc("Trap on integer overflow"),
+           llvm::cl::desc("Trap on signed integer overflow"),
            llvm::cl::init(false));
 
 void InitializeOverflowChecking(LangOptions &Options) {
-  Options.OverflowChecking = OverflowChecking;
+  Options.OverflowChecking = OverflowChecking | UnsignedOverflowChecking;
+  Options.UnsignedOverflowChecking = UnsignedOverflowChecking;
 }
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
