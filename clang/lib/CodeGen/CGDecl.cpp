@@ -426,12 +426,6 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   if (!Ty->isConstantSizeType()) {
     // Variable sized values always are passed by-reference.
     DeclPtr = Arg;
-  } else if (Target.useGlobalsForAutomaticVariables()) {
-    // Targets that don't have stack use global address space for parameters.
-    // Specify external linkage for such globals so that llvm optimizer do
-    // not assume there values initialized as zero.
-    DeclPtr = CreateStaticBlockVarDecl(D, ".arg.",
-                                       llvm::GlobalValue::ExternalLinkage);
   } else {
     // A fixed sized single-value variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertTypeForMem(Ty);
