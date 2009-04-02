@@ -1269,8 +1269,6 @@ PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const {
 // unwanted store operations
 SDValue PIC16TargetLowering::
 PerformStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const {
-  SelectionDAG &DAG = DCI.DAG;
-  SDValue Chain;
   return SDValue(N, 0);
   /*
   // Storing an undef value is of no use, so remove it
