@@ -373,10 +373,13 @@ DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args) const {
 FreeBSD::FreeBSD(const HostInfo &Host, const char *Arch, 
                  const char *Platform, const char *OS, bool Lib32)
   : Generic_GCC(Host, Arch, Platform, OS) {
-  if (Lib32)
+  if (Lib32) {
     getFilePaths().push_back(getHost().getDriver().Dir + "/../lib32");
-  else
+    getFilePaths().push_back("/usr/lib32");
+  } else {
     getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+    getFilePaths().push_back("/usr/lib");
+  }
 }
 
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
