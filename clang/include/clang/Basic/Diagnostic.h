@@ -299,6 +299,9 @@ public:
   /// @c Pos represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
   inline DiagnosticBuilder Report(FullSourceLoc Pos, unsigned DiagID);
+
+  /// \brief Clear out the current diagnostic.
+  void Clear() { CurDiagID = ~0U; }
   
 private:
   /// getDiagnosticLevel - This is an internal implementation helper used when
@@ -423,8 +426,8 @@ public:
     // DiagnosticClient.
     DiagObj->ProcessDiag();
 
-    // This diagnostic is no longer in flight.
-    DiagObj->CurDiagID = ~0U;
+    // Clear out the current diagnostic object.
+    DiagObj->Clear();
 
     // This diagnostic is dead.
     DiagObj = 0;

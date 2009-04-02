@@ -1452,9 +1452,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   case FixIt:
     llvm::TimeRegion Timer(ClangFrontendTimer);
     Consumer.reset(new ASTConsumer());
-    FixItRewrite = new FixItRewriter(PP.getDiagnostics().getClient(),
+    FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                      PP.getSourceManager());
-    PP.getDiagnostics().setClient(FixItRewrite);
     break;
   }
 
