@@ -40,7 +40,7 @@ namespace {
     ~PlistDiagnostics();
     void HandlePathDiagnostic(const PathDiagnostic* D);
     
-    PathGenerationScheme getGenerationScheme() const { return Minimal; }
+    PathGenerationScheme getGenerationScheme() const { return Extensive; }
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
   };  
