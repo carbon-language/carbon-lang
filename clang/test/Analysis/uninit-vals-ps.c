@@ -43,6 +43,21 @@ int f3(void) {
     return 1;
 }
 
+void f4_aux(float* x);
+float f4(void) {
+  float x;
+  f4_aux(&x);
+  return x;  // no-warning
+}
+
+struct f5_struct { int x; };
+void f5_aux(struct f5_struct* s);
+int f5(void) {
+  struct f5_struct s;
+  f5_aux(&s);
+  return s.x; // no-warning
+}
+
 int ret_uninit() {
   int i;
   int *p = &i;
