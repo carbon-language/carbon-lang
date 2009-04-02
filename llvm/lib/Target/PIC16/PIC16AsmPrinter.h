@@ -45,7 +45,6 @@ namespace llvm {
     void EmitUnInitData (Module &M);
     void EmitRomData (Module &M);
     void emitFunctionData(MachineFunction &MF);
-    void emitFunctionTempData(MachineFunction &MF, unsigned &FrameSize);
 
     protected:
     bool doInitialization(Module &M);

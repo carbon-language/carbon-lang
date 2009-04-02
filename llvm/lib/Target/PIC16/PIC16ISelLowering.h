@@ -29,6 +29,10 @@ namespace llvm {
       Lo,            // Low 8-bits of GlobalAddress.
       Hi,            // High 8-bits of GlobalAddress.
       PIC16Load,
+      PIC16LdArg,   // This is replica of PIC16Load but used to load function 
+                    // arguments and is being used for facilitating for some 
+                    // store removal optimizations. 
+
       PIC16LdWF,
       PIC16Store,
       PIC16StWF,
@@ -103,17 +107,17 @@ namespace llvm {
 
     SDValue ExpandStore(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandLoad(SDNode *N, SelectionDAG &DAG);
-    //SDValue ExpandAdd(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandExternalSymbol(SDNode *N, SelectionDAG &DAG);
     SDValue ExpandFrameIndex(SDNode *N, SelectionDAG &DAG);
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
     SDValue PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
+    SDValue PerformStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
 
   private:
-    // If the Node is a BUILD_PAIR representing representing an Address
-    // then this function will return true
+    // If the Node is a BUILD_PAIR representing a direct Address,
+    // then this function will return true.
     bool isDirectAddress(const SDValue &Op);
 
     // If the Node is a DirectAddress in ROM_SPACE then this 
@@ -149,14 +153,14 @@ namespace llvm {
 
 
     // Extending the LIB Call framework of LLVM
-    // To hold the names of PIC16Libcalls
+    // to hold the names of PIC16Libcalls.
     const char *PIC16LibcallNames[PIC16ISD::PIC16UnknownCall]; 
 
-    // To set and retrieve the lib call names
+    // To set and retrieve the lib call names.
     void setPIC16LibcallName(PIC16ISD::PIC16Libcall Call, const char *Name);
     const char *getPIC16LibcallName(PIC16ISD::PIC16Libcall Call);
 
-    // Make PIC16 Libcall
+    // Make PIC16 Libcall.
     SDValue MakePIC16Libcall(PIC16ISD::PIC16Libcall Call, MVT RetVT, 
                              const SDValue *Ops, unsigned NumOps, bool isSigned,
                              SelectionDAG &DAG, DebugLoc dl);

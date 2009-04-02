@@ -88,8 +88,9 @@ def PIC16StWF : SDNode<"PIC16ISD::PIC16StWF", SDT_PIC16Store,
                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 // Node to match a direct load operation.
-def PIC16Load : SDNode<"PIC16ISD::PIC16Load", SDT_PIC16Load, [SDNPHasChain]>;
-def PIC16LdWF : SDNode<"PIC16ISD::PIC16LdWF", SDT_PIC16Load, 
+def PIC16Load  : SDNode<"PIC16ISD::PIC16Load", SDT_PIC16Load, [SDNPHasChain]>;
+def PIC16LdArg  : SDNode<"PIC16ISD::PIC16LdArg", SDT_PIC16Load, [SDNPHasChain]>;
+def PIC16LdWF  : SDNode<"PIC16ISD::PIC16LdWF", SDT_PIC16Load, 
                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 // Node to match PIC16 call
@@ -267,6 +268,7 @@ def movf : MOVF_INSN<0, tglobaladdr, PIC16Load>;
 
 // Load from an ES.
 def movf_1 : MOVF_INSN<0, texternalsym, PIC16Load>;
+def movf_1_1 : MOVF_INSN<0, texternalsym, PIC16LdArg>;
 
 // Load with InFlag and OutFlag
 // This is same as movf_1 but has a flag. A flag is required to 

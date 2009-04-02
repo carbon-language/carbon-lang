@@ -335,6 +335,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
 void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   std::string FuncName = Mang->getValueName(F);
+  MachineFrameInfo *MFI= MF.getFrameInfo();
   Module *M = const_cast<Module *>(F->getParent());
   const TargetData *TD = TM.getTargetData();
   unsigned FrameSize = 0;
@@ -346,15 +347,30 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
                                                SectionFlags::Writeable);
   SwitchToSection(fDataSection);
   
-  //Emit function return value.
-  O << CurrentFnName << ".retval:\n";
+
+  // Emit function frame label
+  O << CurrentFnName << ".frame:\n";
+
   const Type *RetType = F->getReturnType();
   unsigned RetSize = 0; 
   if (RetType->getTypeID() != Type::VoidTyID) 
     RetSize = TD->getTypePaddedSize(RetType);
   
-  // Emit function arguments.
-  O << CurrentFnName << ".args:\n";
+  //Emit function return value space
+  if(RetSize > 0)
+     O << CurrentFnName << ".retval    RES  " << RetSize << "\n";
+  else
+     O << CurrentFnName << ".retval:\n";
+   
+  // Emit variable to hold the space for function arguments 
+  unsigned ArgSize = 0;
+  for (Function::const_arg_iterator argi = F->arg_begin(),
+           arge = F->arg_end(); argi != arge ; ++argi) {
+    const Type *Ty = argi->getType();
+    ArgSize += TD->getTypePaddedSize(Ty);
+   }
+  O << CurrentFnName << ".args      RES  " << ArgSize << "\n";
+
   // Emit the function variables. 
    
   // In PIC16 all the function arguments and local variables are global.
@@ -382,34 +398,15 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     O << VarName << "  RES  " << Size << "\n";
   }
 
-  // Return value can not overlap with temp data, becasue a temp slot
-  // may be read/written after a return value is calculated and saved 
-  // within the function.
-  if (RetSize > FrameSize)
-    O << CurrentFnName << ".dummy" << " RES " << (RetSize - FrameSize) << "\n";
 
-  emitFunctionTempData(MF, FrameSize);
-}
-
-void PIC16AsmPrinter::emitFunctionTempData(MachineFunction &MF,
-                                           unsigned &FrameSize) {
-  // Emit temporary variables.
-  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-  if (FrameInfo->hasStackObjects()) {
-    int indexBegin = FrameInfo->getObjectIndexBegin();
-    int indexEnd = FrameInfo->getObjectIndexEnd();
-
-    if (indexBegin < indexEnd) { 
-      FrameSize += indexEnd - indexBegin; 
-      O << CurrentFnName << ".tmp RES"<< " " 
-        <<indexEnd - indexBegin <<"\n";
-    } 
-    /*
-    while (indexBegin < indexEnd) {
-        O << CurrentFnName << "_tmp_" << indexBegin << " " << "RES"<< " " 
-          << 1 << "\n" ;
-        indexBegin++;
+  // Emit the variable to hold the space for temporary locations
+  // in function frame.
+  if (MFI->hasStackObjects()) {
+    int indexBegin = MFI->getObjectIndexBegin();
+    int indexEnd = MFI->getObjectIndexEnd();
+    if (indexBegin < indexEnd) {
+      int TempSize = indexEnd - indexBegin; 
+      O << CurrentFnName << ".tmp       RES  " << TempSize <<"\n";
     }
-    */
   }
 }

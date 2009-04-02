@@ -244,6 +244,7 @@ const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PIC16ISD::MTHI:             return "PIC16ISD::MTHI";
   case PIC16ISD::Banksel:          return "PIC16ISD::Banksel";
   case PIC16ISD::PIC16Load:        return "PIC16ISD::PIC16Load";
+  case PIC16ISD::PIC16LdArg:       return "PIC16ISD::PIC16LdArg";
   case PIC16ISD::PIC16LdWF:        return "PIC16ISD::PIC16LdWF";
   case PIC16ISD::PIC16Store:       return "PIC16ISD::PIC16Store";
   case PIC16ISD::PIC16StWF:        return "PIC16ISD::PIC16StWF";
@@ -503,13 +504,24 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
 
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *Func = MF.getFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
   const std::string Name = Func->getName();
 
   char *tmpName = new char [strlen(Name.c_str()) +  8];
-  sprintf(tmpName, "%s.args", Name.c_str());
+  sprintf(tmpName, "%s.frame", Name.c_str());
   ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
   FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(Op);
-  Offset = FR->getIndex();
+
+  // FrameIndices are not stack offsets. But they represent the request
+  // for space on stack. That space requested may be more than one byte. 
+  // Therefore, to calculate the stack offset that a FrameIndex aligns
+  // with, we need to traverse all the FrameIndices available earlier in 
+  // the list and add their requested size.
+  unsigned FIndex = FR->getIndex();
+  Offset = 0;
+  for (unsigned i=0; i<FIndex ; ++i) {
+    Offset += MFI->getObjectSize(i);
+  }
 
   return;
 }
@@ -810,7 +822,7 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
   const Function *Func = MF.getFunction();
   const std::string FuncName = Func->getName();
 
-  char *tmpName = new char [strlen(FuncName.c_str()) +  6];
+  char *tmpName = new char [strlen(FuncName.c_str()) +  8];
 
   // Put the value on stack.
   // Get a stack slot index and convert to es.
@@ -938,11 +950,41 @@ PIC16TargetLowering::LowerCallReturn(SDValue Op, SDValue Chain,
 }
 
 SDValue PIC16TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
- //int NumOps = Op.getNode()->getNumOperands();
+  SDValue Chain = Op.getOperand(0);
+  DebugLoc dl = Op.getDebugLoc();
 
- // For default cases LLVM returns the value on the function frame 
- // So let LLVM do this for all the cases other than character
- return Op; 
+  if (Op.getNumOperands() == 1)   // return void
+    return Op;
+
+  // return should have odd number of operands
+  if ((Op.getNumOperands() % 2) == 0 ) {
+    assert(0 && "Do not know how to return this many arguments!");
+    abort();
+  }
+  
+  // Number of values to return 
+  unsigned NumRet = (Op.getNumOperands() / 2);
+
+  // Function returns value always on stack with the offset starting
+  // from 0 
+  MachineFunction &MF = DAG.getMachineFunction();
+  const Function *F = MF.getFunction();
+  std::string FuncName = F->getName();
+
+  char *tmpName = new char [strlen(FuncName.c_str()) +  8];
+  sprintf(tmpName, "%s.frame", FuncName.c_str());
+  SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
+  SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
+  SDValue BS = DAG.getConstant(1, MVT::i8);
+  SDValue RetVal;
+  for(unsigned i=0;i<NumRet; ++i) {
+    RetVal = Op.getNode()->getOperand(2*i + 1);
+    Chain =  DAG.getNode (PIC16ISD::PIC16Store, dl, MVT::Other, Chain, RetVal,
+                        ES, BS,
+                        DAG.getConstant (i, MVT::i8));
+      
+  }
+  return DAG.getNode(ISD::RET, dl, MVT::Other, Chain);
 }
 
 SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
@@ -1164,13 +1206,26 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
 SDValue PIC16TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, 
                                                     SelectionDAG &DAG) {
   SmallVector<SDValue, 8> ArgValues;
-  unsigned NumArgs = Op.getNumOperands() - 3;
+  unsigned NumArgs = Op.getNode()->getNumValues()-1;
   DebugLoc dl = Op.getDebugLoc();
+  SDValue Chain = Op.getOperand(0);    // Formal arguments' chain
 
-  // Creating UNDEF nodes to meet the requirement of MERGE_VALUES node.
-  for(unsigned i = 0 ; i<NumArgs ; i++) {
-    SDValue TempNode = DAG.getUNDEF(Op.getNode()->getValueType(i));
-    ArgValues.push_back(TempNode);
+  MachineFunction &MF = DAG.getMachineFunction();
+  //const TargetData *TD = getTargetData();
+  const Function *F = MF.getFunction();
+  std::string FuncName = F->getName();
+
+  char *tmpName = new char [strlen(FuncName.c_str()) +  6];
+  sprintf(tmpName, "%s.args", FuncName.c_str());
+  SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
+  SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
+  SDValue BS = DAG.getConstant(1, MVT::i8);
+  for (unsigned i=0; i<NumArgs ; ++i) {
+    SDValue Offset = DAG.getConstant(i, MVT::i8);
+    SDValue PICLoad = DAG.getNode(PIC16ISD::PIC16LdArg, dl, VTs, Chain, ES, BS,
+                                     Offset);
+    Chain = getChain(PICLoad);
+    ArgValues.push_back(PICLoad);
   }
 
   ArgValues.push_back(Op.getOperand(0));
@@ -1191,11 +1246,34 @@ PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const {
   return SDValue();
 }
 
+// For all the functions with arguments some STORE nodes are generated 
+// that store the argument on the frameindex. However in PIC16 the arguments
+// are passed on stack only. Therefore these STORE nodes are redundant. 
+// To remove these STORE nodes will be removed in PerformStoreCombine 
+//
+// Currently this function is doint nothing and will be updated for removing
+// unwanted store operations
+SDValue PIC16TargetLowering::
+PerformStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue Chain;
+  return SDValue(N, 0);
+  /*
+  // Storing an undef value is of no use, so remove it
+  if (isStoringUndef(N, Chain, DAG)) {
+    return Chain; // remove the store and return the chain
+  }
+  //else everything is ok.
+  return SDValue(N, 0);
+  */
+}
 
 SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N, 
                                                DAGCombinerInfo &DCI) const {
   switch (N->getOpcode()) {
-  case PIC16ISD::PIC16Load:
+  case ISD::STORE:   
+   return PerformStoreCombine(N, DCI); 
+  case PIC16ISD::PIC16Load:   
     return PerformPIC16LoadCombine(N, DCI);
   }
   return SDValue();
