@@ -34,6 +34,10 @@ namespace {
       : Context(C), Out(os) { }
 
     bool mangle(const NamedDecl *D);
+    
+  private:
+    bool mangleFunctionDecl(const FunctionDecl *FD);
+    
     void mangleFunctionEncoding(const FunctionDecl *FD);
     void mangleName(const NamedDecl *ND);
     void mangleUnqualifiedName(const NamedDecl *ND);
@@ -55,6 +59,37 @@ namespace {
   };
 }
 
+static bool isInCLinkageSpecification(const Decl *D) {
+  for (const DeclContext *DC = D->getDeclContext(); 
+       !DC->isTranslationUnit(); DC = DC->getParent()) {
+    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC)) 
+      return Linkage->getLanguage() == LinkageSpecDecl::lang_c;
+  }
+  
+  return false;
+}
+
+bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
+  // Clang's "overloadable" attribute extension to C/C++ implies
+  // name mangling (always).
+  if (FD->getAttr<OverloadableAttr>()) {
+    ; // fall into mangling code unconditionally.
+  } else if (// C functions are not mangled
+             !Context.getLangOptions().CPlusPlus ||
+             // "main" is not mangled in C++
+             FD->isMain() ||
+             // No mangling in an "implicit extern C" header.
+             Context.getSourceManager().getFileCharacteristic(FD->getLocation())
+               == SrcMgr::C_ExternCSystem ||
+             // No name mangling in a C linkage specification.
+             isInCLinkageSpecification(FD))
+    return false;
+
+  // If we get here, mangle the decl name!
+  Out << "_Z";
+  mangleFunctionEncoding(FD);
+  return true;
+}
 
 bool CXXNameMangler::mangle(const NamedDecl *D) {
   // Any decl can be declared with __asm("foo") on it, and this takes
@@ -71,41 +106,10 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   //            ::= <special-name>
 
   // FIXME: Actually use a visitor to decode these?
-  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD)  // Can only mangle functions so far.
-    return false;
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return mangleFunctionDecl(FD);
   
-  // Clang's "overloadable" attribute extension to C/C++ implies
-  // name mangling (always).
-  if (FD->getAttr<OverloadableAttr>()) {
-    ; // fall into mangling code unconditionally.
-  } else if (// C functions are not mangled
-             !Context.getLangOptions().CPlusPlus ||
-             // "main" is not mangled in C++
-             FD->isMain() ||
-             // No mangling in an "implicit extern C" header.
-             Context.getSourceManager().getFileCharacteristic(FD->getLocation())
-               == SrcMgr::C_ExternCSystem)
-    return false;
-  else {
-    // No name mangling in a C linkage specification.
-
-    for (const DeclContext *DC = FD->getDeclContext(); 
-         !DC->isTranslationUnit(); DC = DC->getParent()) {
-      if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC)) {
-        // extern "C" functions don't use name mangling.
-        if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-          return false;
-        // Others do.
-        break;
-      }
-    }
-  }
-
-  // If we get here, mangle the decl name!
-  Out << "_Z";
-  mangleFunctionEncoding(FD);
-  return true;
+  return false;
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
