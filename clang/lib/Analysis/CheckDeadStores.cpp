@@ -51,27 +51,27 @@ public:
         assert(false && "Impossible dead store type.");
         
       case DeadInit:
-        BugType = "dead initialization";
+        BugType = "Dead initialization";
         msg = "Value stored to '" + name +
           "' during its initialization is never read";
         break;
         
       case DeadIncrement:
-        BugType = "dead increment";
+        BugType = "Dead increment";
       case Standard:
-        if (!BugType) BugType = "dead assignment";
+        if (!BugType) BugType = "Dead assignment";
         msg = "Value stored to '" + name + "' is never read";
         break;
         
       case Enclosing:
-        BugType = "dead nested assignment";
+        BugType = "Dead nested assignment";
         msg = "Although the value stored to '" + name +
           "' is used in the enclosing expression, the value is never actually"
           " read from '" + name + "'";
         break;
     }
       
-    BR.EmitBasicReport(BugType, "Dead Store", msg.c_str(), L, R);      
+    BR.EmitBasicReport(BugType, "Dead store", msg.c_str(), L, R);      
   }
   
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,
