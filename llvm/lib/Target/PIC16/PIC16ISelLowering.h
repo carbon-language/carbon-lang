@@ -48,6 +48,7 @@ namespace llvm {
       SUBCC,	     // Compare for equality or inequality.
       SELECT_ICC,    // Psuedo to be caught in schedular and expanded to brcond.
       BRCOND,        // Conditional branch.
+      PIC16StopPoint,
       Dummy
     };
 
@@ -91,6 +92,7 @@ namespace llvm {
                                SDValue InFlag, SelectionDAG &DAG);
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerStopPoint(SDValue Op, SelectionDAG &DAG);
     SDValue getPIC16Cmp(SDValue LHS, SDValue RHS, unsigned OrigCC, SDValue &CC,
                         SelectionDAG &DAG, DebugLoc dl);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,

@@ -137,6 +137,8 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   //setOperationAction(ISD::TRUNCATE, MVT::i16, Custom);
   setTruncStoreAction(MVT::i16,   MVT::i8,  Custom);
 
+  setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Custom);
+
   // Now deduce the information based on the above mentioned 
   // actions
   computeRegisterProperties();
@@ -258,6 +260,7 @@ const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PIC16ISD::SELECT_ICC:       return "PIC16ISD::SELECT_ICC";
   case PIC16ISD::BRCOND:           return "PIC16ISD::BRCOND";
   case PIC16ISD::Dummy:            return "PIC16ISD::Dummy";
+  case PIC16ISD::PIC16StopPoint:   return "PIC16ISD::PIC16StopPoint";
   }
 }
 
@@ -808,8 +811,19 @@ SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       return LowerBR_CC(Op, DAG);
     case ISD::SELECT_CC:
       return LowerSELECT_CC(Op, DAG);
+    case ISD::DBG_STOPPOINT:
+      return LowerStopPoint(Op, DAG);
   }
   return SDValue();
+}
+
+SDValue PIC16TargetLowering::LowerStopPoint(SDValue Op, SelectionDAG &DAG) {
+  DbgStopPointSDNode *SP = dyn_cast<DbgStopPointSDNode>(Op);
+  unsigned line = SP->getLine();
+  SDValue LineNode = DAG.getConstant(line, MVT::i8);
+  DebugLoc dl = Op.getDebugLoc();
+  return DAG.getNode(PIC16ISD::PIC16StopPoint, dl, MVT::Other, 
+                     Op.getOperand(0), LineNode);
 }
 
 SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,

@@ -21,6 +21,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 
 using namespace llvm;
 
@@ -187,6 +189,12 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
   // The processor should be passed to llc as in input and the header file
   // should be generated accordingly.
   O << "\t#include P16F1937.INC\n";
+  MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  assert(MMI);
+  DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
+  assert(DW && "Dwarf Writer is not available");
+  DW->BeginModule(&M, MMI, O, this, TAI);
+
   EmitExternsAndGlobals (M);
   EmitInitData (M);
   EmitUnInitData(M);

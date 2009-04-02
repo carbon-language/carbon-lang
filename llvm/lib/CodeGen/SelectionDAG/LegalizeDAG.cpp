@@ -1314,6 +1314,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       }
       break;
     }
+   case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.getNode()) 
+        break;
     case TargetLowering::Legal: {
       LegalizeAction Action = getTypeAction(Node->getOperand(1).getValueType());
       if (Action == Legal && Tmp1 == Node->getOperand(0))
