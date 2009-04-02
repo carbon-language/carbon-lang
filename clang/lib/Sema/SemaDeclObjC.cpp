@@ -1592,18 +1592,25 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                     !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
   QualType T = GetTypeForDeclarator(FD.D, S);
   Decl *ClassDecl = ClassCategory.getAs<Decl>();
-
+  ObjCInterfaceDecl *CCPrimary = 0; // continuation class's primary class
   // May modify Attributes.
   CheckObjCPropertyAttributes(T, AtLoc, Attributes);
-  
-  ObjCMethodDecl *SetterDecl = 0;
   if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
     if (!CDecl->getIdentifier()) {
       // This is a continuation class. property requires special 
       // handling.
-      if (ObjCInterfaceDecl *ICDecl = CDecl->getClassInterface()) {
-        if (ObjCPropertyDecl *PIDecl =
-            ICDecl->FindPropertyDeclaration(FD.D.getIdentifier())) {
+      if ((CCPrimary = CDecl->getClassInterface())) {
+        // Find the property in continuation class's primary class only.
+        ObjCPropertyDecl *PIDecl = 0;
+        IdentifierInfo *PropertyId = FD.D.getIdentifier();
+        for (ObjCInterfaceDecl::prop_iterator I = CCPrimary->prop_begin(), 
+             E = CCPrimary->prop_end(); I != E; ++I)
+          if ((*I)->getIdentifier() == PropertyId) {
+            PIDecl = *I;
+            break;
+          }
+            
+        if (PIDecl) {
           // property 'PIDecl's readonly attribute will be over-ridden
           // with continuation class's readwrite property attribute!
           unsigned PIkind = PIDecl->getPropertyAttributes();
@@ -1611,38 +1618,40 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
             if ((Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) !=
                 (PIkind & ObjCPropertyDecl::OBJC_PR_nonatomic))
               Diag(AtLoc, diag::warn_property_attr_mismatch);
-            // Make the continuation class property attribute Read/Write
-            Attributes &= ~ObjCPropertyDecl::OBJC_PR_readonly;
-            Attributes |= ObjCPropertyDecl::OBJC_PR_readwrite;    
+            PIDecl->makeitReadWriteAttribute();
+            if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
+            if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
+            PIDecl->setSetterName(SetterSel);
             // FIXME: use a common routine with addPropertyMethods.
-            SetterDecl =
+            ObjCMethodDecl *SetterDecl =
               ObjCMethodDecl::Create(Context, AtLoc, AtLoc, SetterSel,
                                      Context.VoidTy,
-                                     ICDecl,
+                                     CCPrimary,
                                      true, false, true, 
                                      ObjCMethodDecl::Required);
             ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterDecl,
                                                         SourceLocation(),
-                                                        FD.D.getIdentifier(),
+                                                        PropertyId,
                                                         T, VarDecl::None, 0);
             SetterDecl->setMethodParams(&Argument, 1, Context);
+            PIDecl->setSetterMethodDecl(SetterDecl);
           }
-          else {
-            Diag(AtLoc, 
-                 diag::err_use_continuation_class) << ICDecl->getDeclName();
-            *isOverridingProperty = true;
-            return DeclPtrTy();
-          }
+          else
+            Diag(AtLoc, diag::err_use_continuation_class) 
+              << CCPrimary->getDeclName();
+          *isOverridingProperty = true;
+          return DeclPtrTy();
         }
-        // No matching property found in the main class. Just fall thru
-        // and add property to the anonymous category. It looks like
-        // it works as is. This category becomes just like a category
-        // for its primary class.
+        // No matching property found in the primary class. Just fall thru
+        // and add property to continuation class's primary class.
+        ClassDecl = CCPrimary;
       } else {
         Diag(CDecl->getLocation(), diag::err_continuation_class);
         *isOverridingProperty = true;
         return DeclPtrTy();
-      }
+      } 
     }
 
   Type *t = T.getTypePtr();
@@ -1659,7 +1668,6 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
 
   // Regardless of setter/getter attribute, we save the default getter/setter
   // selector names in anticipation of declaration of setter/getter methods.
-  PDecl->setSetterMethodDecl(SetterDecl);
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
   
@@ -1691,6 +1699,11 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
     PDecl->setPropertyImplementation(ObjCPropertyDecl::Required);
   else if (MethodImplKind == tok::objc_optional)
     PDecl->setPropertyImplementation(ObjCPropertyDecl::Optional);
+  // A case of continuation class adding a new property in the class. This
+  // is not what it was meant for. However, gcc supports it and so should we.
+  // Make sure setter/getters are declared here.
+  if (CCPrimary)
+    ProcessPropertyDecl(PDecl, CCPrimary);
   
   return DeclPtrTy::make(PDecl);
 }

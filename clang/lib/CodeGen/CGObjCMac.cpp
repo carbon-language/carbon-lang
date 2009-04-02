@@ -1674,18 +1674,6 @@ static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
     if ((*I)->getPropertyIvarDecl())
       ++count;
   }
-  // look into continuation class.
-  for (ObjCCategoryDecl *Categories = OI->getCategoryList();
-       Categories; Categories = Categories->getNextClassCategory()) {
-    if (!Categories->getIdentifier()) {
-      for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
-           E = Categories->prop_end(); I != E; ++I) {
-        if ((*I)->getPropertyIvarDecl())
-          ++count;
-      }
-      break;
-    }
-  }
   return count;
 }
 
@@ -1713,20 +1701,6 @@ static const ObjCInterfaceDecl *getInterfaceDeclForIvar(
     if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
       if (IV->getIdentifier() == IVD->getIdentifier())
         return OI;
-  }
-  // look into continuation class.
-  for (ObjCCategoryDecl *Categories = OI->getCategoryList();
-       Categories; Categories = Categories->getNextClassCategory()) {
-    if (!Categories->getIdentifier()) {
-      for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
-           E = Categories->prop_end(); I != E; ++I) {
-        ObjCPropertyDecl *PDecl = (*I);
-        if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
-          if (IV->getIdentifier() == IVD->getIdentifier())
-            return OI;
-      }
-      break;
-    }
   }
   return getInterfaceDeclForIvar(OI->getSuperClass(), IVD);
 }
@@ -4592,17 +4566,6 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
        E = OID->prop_end(); I != E; ++I)
     if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
       OIvars.push_back(IV);
-  // look into continuation class.
-  for (ObjCCategoryDecl *Categories = OID->getCategoryList();
-       Categories; Categories = Categories->getNextClassCategory())
-    if (!Categories->getIdentifier()) {
-      for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
-           E = Categories->prop_end(); I != E; ++I) {
-        if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
-          OIvars.push_back(IV);
-      }
-      break;
-    }
     
   unsigned iv = 0;
   for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {

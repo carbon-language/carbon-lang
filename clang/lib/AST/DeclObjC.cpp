@@ -91,16 +91,6 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
   for (prop_iterator I = prop_begin(), E = prop_end(); I != E; ++I)
     if ((*I)->getIdentifier() == PropertyId)
       return *I;
-  // Also look for property declared in its continuation class.
-  if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this))
-    for (ObjCCategoryDecl *Categories = OID->getCategoryList();
-         Categories; Categories = Categories->getNextClassCategory())
-      if (!Categories->getIdentifier()) {
-        for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
-             E = Categories->prop_end(); I != E; ++I)
-          if ((*I)->getIdentifier() == PropertyId)
-            return *I;
-      }
   
   const ObjCProtocolDecl *PID = dyn_cast<ObjCProtocolDecl>(this);
   if (PID) {
@@ -157,22 +147,6 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
           return IV;
         }
     }
-    // look into continuation class.
-    for (ObjCCategoryDecl *Categories = ClassDecl->getCategoryList();
-         Categories; Categories = Categories->getNextClassCategory())
-      if (!Categories->getIdentifier()) {
-        for (ObjCInterfaceDecl::prop_iterator I = Categories->prop_begin(),
-             E = Categories->prop_end(); I != E; ++I) {
-          ObjCPropertyDecl *PDecl = (*I);
-          if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
-            if (IV->getIdentifier() == ID) {
-              clsDeclared = ClassDecl;
-              return IV;
-            }          
-        }
-        break;
-      }
-    
     ClassDecl = ClassDecl->getSuperClass();
   }
   return NULL;
