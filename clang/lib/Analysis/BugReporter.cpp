@@ -806,15 +806,16 @@ static void GenExtAddEdge(PathDiagnostic& PD,
         // FIXME: We need a version of getParent that ignores '()' and casts.
         const Stmt *parentY = PDB.getParent(Y.asStmt());
 
-        if (IsControlFlowExpr(parentX)) {
-          if (IsControlFlowExpr(parentY) && parentX == parentY) {
+        if (parentX && IsControlFlowExpr(parentX)) {
+          if (parentX == parentY)
             break;
-          }
           else {
-            const PathDiagnosticLocation &W =
-              PDB.getEnclosingStmtLocation(PDB.getParent(parentX));
-            
-            if (W != Y) X = W;
+            if (const Stmt *grandparentX = PDB.getParent(parentX)) {
+              const PathDiagnosticLocation &W =
+                PDB.getEnclosingStmtLocation(grandparentX);
+              
+              if (W != Y) X = W;
+            }
           }
         }
         
