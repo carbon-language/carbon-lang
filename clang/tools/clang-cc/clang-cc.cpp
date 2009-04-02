@@ -25,6 +25,7 @@
 #include "clang-cc.h"
 #include "ASTConsumers.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/InitHeaderSearch.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
@@ -85,6 +86,7 @@ enum ProgActions {
   RewriteBlocks,                // ObjC->C Rewriter for Blocks.
   RewriteMacros,                // Expand macros but not #includes.
   RewriteTest,                  // Rewriter playground
+  FixIt,                        // Fix-It Rewriter
   HTMLTest,                     // HTML displayer testing stuff.
   EmitAssembly,                 // Emit a .s file.
   EmitLLVM,                     // Emit a .ll file.
@@ -161,6 +163,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Expand macros without full preprocessing"),
              clEnumValN(RewriteBlocks, "rewrite-blocks",
                         "Rewrite Blocks to C"),
+             clEnumValN(FixIt, "fixit",
+                        "Apply fix-it advice to the input source"),
              clEnumValEnd));
 
 
@@ -1342,7 +1346,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                              const std::string &InFile, ProgActions PA) {
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
-  
+  FixItRewriter *FixItRewrite = 0;
+
   switch (PA) {
   default:
     Consumer.reset(CreateASTConsumer(InFile, PP.getDiagnostics(),
@@ -1443,6 +1448,14 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
     break;
   }
+
+  case FixIt:
+    llvm::TimeRegion Timer(ClangFrontendTimer);
+    Consumer.reset(new ASTConsumer());
+    FixItRewrite = new FixItRewriter(PP.getDiagnostics().getClient(),
+                                     PP.getSourceManager());
+    PP.getDiagnostics().setClient(FixItRewrite);
+    break;
   }
 
   if (Consumer) {
@@ -1458,6 +1471,9 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats);
     
+    if (FixItRewrite)
+      FixItRewrite->WriteFixedFile(InFile, OutputFile);
+
     // If in -disable-free mode, don't deallocate these when they go out of
     // scope.
     if (DisableFree)

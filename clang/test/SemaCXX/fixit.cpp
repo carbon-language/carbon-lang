@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -verify %s 
+// RUN: clang-cc -fsyntax-only -pedantic -fixit %s -o - | clang-cc -fsyntax-only -pedantic -Werror -x c++ -
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. Eventually,

@@ -1309,7 +1309,7 @@ bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
       SourceLocation ParamLoc = Constructor->getParamDecl(0)->getLocation();
       Diag(ParamLoc, diag::err_constructor_byvalue_arg)
-        << CodeModificationHint::CreateInsertion(ParamLoc, "const &");
+        << CodeModificationHint::CreateInsertion(ParamLoc, " const &");
       Invalid = true;
     }
   }

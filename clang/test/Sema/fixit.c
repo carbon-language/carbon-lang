@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -pedantic %s 
+// RUN: clang -fsyntax-only -pedantic -fixit %s -o - | clang-cc -pedantic -Werror -x c -
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. Eventually,
@@ -25,5 +25,6 @@ int i0 = { 17 };
 
 int f2(const char *my_string) {
   // FIXME: terminal output isn't so good when "my_string" is shorter
-  return my_string == "foo";
+  // FIXME: Needs an #include hint, too!
+  //  return my_string == "foo";
 }

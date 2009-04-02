@@ -218,7 +218,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       (Desig.getDesignator(0).isArrayDesignator() ||
        Desig.getDesignator(0).isArrayRangeDesignator())) {
     Diag(Tok, diag::ext_gnu_missing_equal_designator)
-      << CodeModificationHint::CreateInsertion(Tok.getLocation(), "=");
+      << CodeModificationHint::CreateInsertion(Tok.getLocation(), "= ");
     return Actions.ActOnDesignatedInitializer(Desig, Tok.getLocation(),
                                               true, ParseInitializer());
   }
