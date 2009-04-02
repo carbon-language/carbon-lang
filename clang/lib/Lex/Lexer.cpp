@@ -1224,7 +1224,9 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   // C99 5.1.1.2p2: If the file is non-empty and didn't end in a newline, issue
   // a pedwarn.
   if (CurPtr != BufferStart && (CurPtr[-1] != '\n' && CurPtr[-1] != '\r'))
-    Diag(BufferEnd, diag::ext_no_newline_eof);
+    Diag(BufferEnd, diag::ext_no_newline_eof)
+      << CodeModificationHint::CreateInsertion(getSourceLocation(BufferEnd),
+                                               "\n");
   
   BufferPtr = CurPtr;
 
