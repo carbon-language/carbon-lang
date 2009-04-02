@@ -101,6 +101,14 @@ public:
     *this = PathDiagnosticLocation();
   }
   
+  void flatten() {
+    if (K == Statement) {
+      R = asRange();
+      K = Range;
+      S = 0;
+    }    
+  }
+  
   const SourceManager& getManager() const { assert(isValid()); return *SM; }
 };
 
@@ -114,6 +122,11 @@ public:
   
   const PathDiagnosticLocation &getStart() const { return Start; }
   const PathDiagnosticLocation &getEnd() const { return End; }
+  
+  void flatten() {
+    Start.flatten();
+    End.flatten();
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -154,6 +167,7 @@ public:
   DisplayHint getDisplayHint() const { return Hint; }
   
   virtual PathDiagnosticLocation getLocation() const = 0;
+  virtual void flattenLocations() = 0;
   
   Kind getKind() const { return kind; }
   
@@ -208,6 +222,7 @@ public:
   }  
 
   PathDiagnosticLocation getLocation() const { return Pos; }
+  virtual void flattenLocations() { Pos.flatten(); }
 };
   
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
@@ -266,12 +281,18 @@ public:
   
   void push_back(const PathDiagnosticLocationPair &X) { LPairs.push_back(X); }
   
-  virtual PathDiagnosticLocation getLocation() const { return getStartLocation(); }
+  virtual PathDiagnosticLocation getLocation() const {
+    return getStartLocation();
+  }
   
   typedef std::vector<PathDiagnosticLocationPair>::iterator iterator;
   iterator begin() { return LPairs.begin(); }
   iterator end()   { return LPairs.end(); }
 
+  virtual void flattenLocations() {
+    for (iterator I=begin(), E=end(); I!=E; ++I) I->flatten();
+  }
+  
   typedef std::vector<PathDiagnosticLocationPair>::const_iterator
           const_iterator;
   const_iterator begin() const { return LPairs.begin(); }
@@ -297,6 +318,11 @@ public:
   typedef std::vector<PathDiagnosticPiece*>::iterator iterator;
   iterator begin() { return SubPieces.begin(); }
   iterator end() { return SubPieces.end(); }
+  
+  virtual void flattenLocations() {
+    PathDiagnosticSpotPiece::flattenLocations();
+    for (iterator I=begin(), E=end(); I!=E; ++I) (*I)->flattenLocations();
+  }
   
   typedef std::vector<PathDiagnosticPiece*>::const_iterator const_iterator;
   const_iterator begin() const { return SubPieces.begin(); }
@@ -434,6 +460,10 @@ public:
   const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
   reverse_iterator rend()              { return reverse_iterator(begin()); }
   const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
+  
+  void flattenLocations() {
+    for (iterator I = begin(), E = end(); I != E; ++I) I->flattenLocations();
+  }
 };
   
   

@@ -267,6 +267,10 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
     return;
   }
   
+  // We need to flatten the locations (convert Stmt* to locations) because
+  // the referenced statements may be freed by the time the diagnostics
+  // are emitted.
+  const_cast<PathDiagnostic*>(D)->flattenLocations();  
   BatchedDiags.push_back(D);
 }
 
