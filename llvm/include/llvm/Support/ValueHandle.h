@@ -141,7 +141,7 @@ public:
 /// operations.  This means that RAUW's need to explicitly update the
 /// AssertingVH's as it moves.  This is required because in non-assert mode this
   /// class turns into a trivial wrapper around a pointer.
-template <typename ValueTy = Value>
+template <typename ValueTy>
 class AssertingVH 
 #ifndef NDEBUG
   : public ValueHandleBase
@@ -185,7 +185,7 @@ public:
   }
 
   ValueTy *operator->() const { return getValPtr(); }
-  ValueTy &operator*() const { return getValPtr(); }
+  ValueTy &operator*() const { return *getValPtr(); }
 
   // Duplicate these from the base class so that they work when assertions are
   // off.
