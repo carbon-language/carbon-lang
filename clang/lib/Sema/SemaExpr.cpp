@@ -2368,6 +2368,15 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   } else {
     assert(isa<FunctionNoProtoType>(FuncT) && "Unknown FunctionType!");
 
+    if (FDecl) {
+      // Check if we have too few/too many template arguments, based
+      // on our knowledge of the function definition.
+      const FunctionDecl *Def = 0;
+      if (FDecl->getBody(Def) && NumArgs != Def->param_size())
+        Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
+          << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
+    }
+
     // Promote the arguments (C99 6.5.2.2p6).
     for (unsigned i = 0; i != NumArgs; i++) {
       Expr *Arg = Args[i];

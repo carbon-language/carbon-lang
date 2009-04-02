@@ -27,7 +27,7 @@ int t9(int a, );  // expected-error {{expected parameter declarator}}
 
 // PR2042
 void t10(){}
-void t11(){t10(1);}
+void t11(){t10(1);} // expected-warning{{too many arguments}}
 
 // PR3208
 void t12(int) {}  // expected-error{{parameter name omitted}}

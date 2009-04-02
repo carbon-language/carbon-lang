@@ -9,6 +9,6 @@ int f3(y, x,
 } 
 
 void f4(void) { 
-  f3 (1, 1, 2, 3, 4);
+  f3 (1, 1, 2, 3, 4); // expected-warning{{too many arguments}}
 }
 

@@ -1177,6 +1177,8 @@ def err_typecheck_call_too_few_args : Error<
   "too few arguments to %select{function|block|method}0 call">;
 def err_typecheck_call_too_many_args : Error<
   "too many arguments to %select{function|block|method}0 call">;
+def warn_call_wrong_number_of_arguments : Warning<
+  "too %select{few|many}0 arguments in call to %1">;
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
 def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
   "cannot pass object of non-POD type %0 through variadic "
