@@ -1236,8 +1236,21 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
   }
 }
 
+/// EmitNamespace - Emit all declarations in a namespace.
 void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
   for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
+       I != E; ++I)
+    EmitTopLevelDecl(*I);
+}
+
+// EmitLinkageSpec - Emit all declarations in a linkage spec.
+void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
+  if (LSD->getLanguage() != LinkageSpecDecl::lang_c) {
+    ErrorUnsupported(LSD, "linkage spec");
+    return;
+  }
+
+  for (RecordDecl::decl_iterator I = LSD->decls_begin(), E = LSD->decls_end();
        I != E; ++I)
     EmitTopLevelDecl(*I);
 }
@@ -1300,14 +1313,9 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     // compatibility-alias is a directive and has no code gen.
     break;
 
-  case Decl::LinkageSpec: {
-    LinkageSpecDecl *LSD = cast<LinkageSpecDecl>(D);
-    if (LSD->getLanguage() == LinkageSpecDecl::lang_cxx)
-      ErrorUnsupported(LSD, "linkage spec");
-    // FIXME: implement C++ linkage, C linkage works mostly by C
-    // language reuse already.
+  case Decl::LinkageSpec:
+    EmitLinkageSpec(cast<LinkageSpecDecl>(D));
     break;
-  }
 
   case Decl::FileScopeAsm: {
     FileScopeAsmDecl *AD = cast<FileScopeAsmDecl>(D);

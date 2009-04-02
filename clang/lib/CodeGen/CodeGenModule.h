@@ -328,6 +328,7 @@ private:
   void EmitAliasDefinition(const ValueDecl *D);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitNamespace(const NamespaceDecl *D);
+  void EmitLinkageSpec(const LinkageSpecDecl *D);
   
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function * Ctor, int Priority=65535);

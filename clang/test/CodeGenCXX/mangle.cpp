@@ -20,15 +20,22 @@ void f(e) { }
 typedef union { int a; } u;
 void f(u) { }
 
-// RUN: grep _Z1f1x %t | count 1
+// RUN: grep _Z1f1x %t | count 1 &&
 typedef struct { int a; } x,y;
 void f(y) { }
 
-// RUN: grep _Z1fv %t | count 1
+// RUN: grep _Z1fv %t | count 1 &&
 void f() { }
 
-// RUN: grep _ZN1N1fEv %t | count 1
+// RUN: grep _ZN1N1fEv %t | count 1 &&
 namespace N { void f() { } }
 
-// RUN: grep _ZN1N1N1fEv %t | count 1
+// RUN: grep _ZN1N1N1fEv %t | count 1 &&
 namespace N { namespace N { void f() { } } }
+
+// RUN: grep unmangled_function %t | count 1 &&
+extern "C" { namespace N { void unmangled_function() { } } }
+
+// RUN: grep unmangled_variable %t | count 1
+extern "C" { namespace N { int unmangled_variable; } }
+
