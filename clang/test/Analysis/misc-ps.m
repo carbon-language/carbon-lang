@@ -107,7 +107,7 @@ void check_zero_sized_VLA(int x) {
 
 void check_uninit_sized_VLA() {
   int x;
-  int vla[x]; // expected-warning{{The expression used to specify the number of elements in the VLA 'vla' evaluates to an undefined or garbage value.}}
+  int vla[x]; // expected-warning{{The expression used to specify the number of elements in the variable-length array (VLA) 'vla' evaluates to an undefined or garbage value}}
 }
 
 // sizeof(void)
