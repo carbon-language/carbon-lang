@@ -57,8 +57,9 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     OutFile = &llvm::outs();
   } else {
     llvm::sys::Path Path(InFileName);
+    std::string Suffix = Path.getSuffix();
     Path.eraseSuffix();
-    Path.appendSuffix("cpp");
+    Path.appendSuffix("fixit." + Suffix);
     std::string Err;
     OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), 
                                        // set binary mode (critical for Windoze)

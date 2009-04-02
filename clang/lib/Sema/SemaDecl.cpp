@@ -2706,11 +2706,12 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
   // Verify 6.9.1p6: 'every identifier in the identifier list shall be declared'
   // for a K&R function.
   if (!FTI.hasPrototype) {
-    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+    for (int i = FTI.NumArgs; i != 0; /* decrement in loop */) {
+      --i;
       if (FTI.ArgInfo[i].Param == 0) {
-        std::string Code = "int ";
+        std::string Code = "  int ";
         Code += FTI.ArgInfo[i].Ident->getName();
-        Code += ";\n ";
+        Code += ";\n";
         Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
           << FTI.ArgInfo[i].Ident
           << CodeModificationHint::CreateInsertion(LocAfterDecls, Code);
