@@ -789,7 +789,8 @@ static void GenExtAddEdge(PathDiagnostic& PD,
     if (const Stmt *PS = PrevLoc.asStmt())
       if (const Stmt *NS = NewLoc.asStmt()) {
         const Stmt *parentPS = PDB.getParent(PS);
-        if (isa<CompoundStmt>(parentPS) && parentPS == PDB.getParent(NS))
+        if (parentPS && isa<CompoundStmt>(parentPS) &&
+            parentPS == PDB.getParent(NS))
           return;
       }
   
