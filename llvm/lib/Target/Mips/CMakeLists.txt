@@ -10,8 +10,7 @@ tablegen(MipsGenDAGISel.inc -gen-dag-isel)
 tablegen(MipsGenCallingConv.inc -gen-callingconv)
 tablegen(MipsGenSubtarget.inc -gen-subtarget)
 
-add_llvm_target(Mips
-  MipsAsmPrinter.cpp
+add_llvm_target(MipsCodeGen
   MipsDelaySlotFiller.cpp
   MipsInstrInfo.cpp
   MipsISelDAGToDAG.cpp

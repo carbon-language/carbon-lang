@@ -7,7 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = LLVMMips
+LIBRARYNAME = LLVMMipsCodeGen
 TARGET = Mips
 
 # Make sure that tblgen is run, first thing.
@@ -16,6 +16,8 @@ BUILT_SOURCES = MipsGenRegisterInfo.h.inc MipsGenRegisterNames.inc \
                 MipsGenInstrInfo.inc MipsGenAsmWriter.inc \
                 MipsGenDAGISel.inc MipsGenCallingConv.inc \
                 MipsGenSubtarget.inc
+
+DIRS = AsmPrinter
 
 include $(LEVEL)/Makefile.common
 
