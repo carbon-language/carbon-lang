@@ -1062,6 +1062,9 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   if (E->getCallee()->getType()->isBlockPointerType())
     return EmitBlockCallExpr(E);
 
+  if (const CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(E))
+    return EmitCXXMemberCallExpr(CE);
+  
   const Decl *TargetDecl = 0;
   if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E->getCallee())) {
     if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {

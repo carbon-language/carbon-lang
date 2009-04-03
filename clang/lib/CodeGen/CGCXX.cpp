@@ -17,6 +17,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
@@ -135,3 +136,43 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
   EmitBlock(EndBlock);
 }
 
+RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
+  const MemberExpr *ME = cast<MemberExpr>(CE->getCallee());
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
+  assert(MD->isInstance() && 
+         "Trying to emit a member call expr on a static method!");
+  
+  bool IsVariadic = MD->getType()->getAsFunctionProtoType()->isVariadic();
+  const llvm::Type *Ty = 
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
+                                   IsVariadic);
+    
+  llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, Ty);
+  
+  llvm::Value *BaseValue = 0;
+  
+  // There's a deref operator node added in Sema::BuildCallToMemberFunction
+  // that's giving the wrong type for -> call exprs so we just ignore them
+  // for now.
+  if (ME->isArrow())
+    return EmitUnsupportedRValue(CE, "C++ member call expr");
+  else {
+    LValue BaseLV = EmitLValue(ME->getBase());
+    BaseValue = BaseLV.getAddress();
+  }
+  
+  CallArgList Args;
+  
+  // Push the 'this' pointer.
+  Args.push_back(std::make_pair(RValue::get(BaseValue), 
+                                MD->getThisType(getContext())));
+  
+  for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end(); 
+       I != E; ++I)
+    Args.push_back(std::make_pair(EmitAnyExprToTemp(*I), I->getType()));
+  
+  QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
+                  Callee, Args, MD);
+  return EmitUnsupportedRValue(CE, "C++ member call expr");
+}
