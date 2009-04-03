@@ -113,6 +113,25 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
   }
 }
 
+static void setGlobalOptionVisibility(llvm::GlobalValue *GV,
+                                      LangOptions::VisibilityMode Vis) {
+  switch (Vis) {
+  default: assert(0 && "Unknown visibility!");
+  case LangOptions::NonVisibility:
+    break;
+  case LangOptions::DefaultVisibility:
+    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
+    break;
+  case LangOptions::HiddenVisibility:
+    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    break;
+  case LangOptions::ProtectedVisibility:
+    GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
+    break;
+  }
+}
+                                      
+
 /// \brief Retrieves the mangled name for the given declaration.
 ///
 /// If the given declaration requires a mangled name, returns an
@@ -247,7 +266,8 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
   // -fvisibility, and private_extern.
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setGlobalVisibility(GV, attr->getVisibility());
-  // FIXME: else handle -fvisibility
+  else
+    setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
@@ -751,7 +771,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setGlobalVisibility(GV, attr->getVisibility());
-  // FIXME: else handle -fvisibility
+  else
+    setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
 
   // Set the llvm linkage type as appropriate.
   if (D->getStorageClass() == VarDecl::Static)

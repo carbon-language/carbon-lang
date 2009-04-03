@@ -764,6 +764,28 @@ void InitializeGCMode(LangOptions &Options) {
     Options.setGCMode(LangOptions::HybridGC);
 }
 
+static llvm::cl::opt<std::string>
+SymbolVisibility("fvisibility",
+  llvm::cl::desc("Set the default visibility to the specific option"));
+
+void InitializeSymbolVisibility(LangOptions &Options) {
+  if (SymbolVisibility.empty())
+    return;
+  std::string Visibility = SymbolVisibility;
+  const char *vkind = Visibility.c_str();
+  if (!strcmp(vkind, "default"))
+    Options.setVisibilityMode(LangOptions::DefaultVisibility);
+  else if (!strcmp(vkind, "protected"))
+    Options.setVisibilityMode(LangOptions::ProtectedVisibility);
+  else if (!strcmp(vkind, "hidden"))
+    Options.setVisibilityMode(LangOptions::HiddenVisibility);
+  else if (!strcmp(vkind, "internal"))
+    Options.setVisibilityMode(LangOptions::InternalVisibility);
+  else
+    fprintf(stderr,
+            "-fvisibility only valid for default|protected|hidden|internal\n");
+}
+
 static llvm::cl::opt<bool>
 OverflowChecking("ftrapv",
            llvm::cl::desc("Trap on integer overflow"),
@@ -1770,6 +1792,7 @@ int main(int argc, char **argv) {
     LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
     InitializeGCMode(LangInfo);
+    InitializeSymbolVisibility(LangInfo);
     InitializeOverflowChecking(LangInfo);
     InitializeLanguageStandard(LangInfo, LK, Target.get());
           

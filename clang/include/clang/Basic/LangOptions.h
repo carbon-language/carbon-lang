@@ -64,14 +64,19 @@ public:
 
   unsigned HeinousExtensions : 1; // Extensions that we really don't like and
                                   // may be ripped out at any time.
+
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
                    // signed.  Set/Query this value using accessors.  
+  unsigned SymbolVisibility  : 3; // Symbol's visibility.
+
 public:  
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
   enum GCMode { NonGC, GCOnly, HybridGC };
+  enum VisibilityMode {NonVisibility, DefaultVisibility, ProtectedVisibility, 
+                       HiddenVisibility, InternalVisibility };
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = AsmPreprocessor = 0;
@@ -97,6 +102,9 @@ public:
   
   GCMode getGCMode() const { return (GCMode) GC; }
   void setGCMode(GCMode m) { GC = (unsigned) m; }
+
+  VisibilityMode getVisibilityMode() const { return (VisibilityMode) SymbolVisibility; }
+  void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
   
   /// Emit - Emit this LangOptions object to bitcode.
   void Emit(llvm::Serializer& S) const;
