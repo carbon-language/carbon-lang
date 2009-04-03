@@ -481,7 +481,7 @@ IdentifierTable* IdentifierTable::CreateAndRegister(llvm::Deserializer& D) {
     IdentifierInfo *II = &t->get(&buff[0], &buff[0] + buff.size());
     II->Read(D);
     
-    if (InfoPtrID) D.RegisterRef(InfoPtrID, II);
+    if (InfoPtrID) D.RegisterPtr(InfoPtrID, II);
     if (KeyPtrID)  D.RegisterPtr(KeyPtrID, II->getName());
   }
   
