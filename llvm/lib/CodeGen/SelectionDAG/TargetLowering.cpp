@@ -1464,6 +1464,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
       // in the same partial word, see if we can shorten the load.
       if (DCI.isBeforeLegalize() &&
           N0.getOpcode() == ISD::AND && C1 == 0 &&
+          N0.getNode()->hasOneUse() &&
           isa<LoadSDNode>(N0.getOperand(0)) &&
           N0.getOperand(0).getNode()->hasOneUse() &&
           isa<ConstantSDNode>(N0.getOperand(1))) {
