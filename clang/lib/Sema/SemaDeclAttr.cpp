@@ -1465,17 +1465,16 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (NumParams.getLimitedValue(4) > 3) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
+  if (S.Context.Target.getRegParmMax() == 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
       << NumParamsExpr->getSourceRange();
     return;
   }
 
-  const char *TargetPrefix = S.Context.Target.getTargetPrefix();
-  unsigned PointerWidth = S.Context.Target.getPointerWidth(0);
-  if (strcmp(TargetPrefix, "x86") || PointerWidth != 32) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
-      << NumParamsExpr->getSourceRange();
+  // FIXME: we need to honour command line settings also...
+  if (NumParams.getLimitedValue(4) > S.Context.Target.getRegParmMax()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
+      << S.Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
     return;
   }
 

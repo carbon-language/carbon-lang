@@ -48,6 +48,7 @@ protected:
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
+  unsigned char RegParmMax, SSERegParmMax;
 
   // TargetInfo Constructor.  Default initializes all fields.
   TargetInfo(const std::string &T);
@@ -304,6 +305,12 @@ public:
       return -1;
     return 0;
   }
+
+  // getRegParmMax - Returns maximal number of args passed in registers.
+  unsigned getRegParmMax() const {
+    return RegParmMax;
+  }
+
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
     return PointerWidth;

@@ -436,9 +436,9 @@ def err_attribute_cleanup_func_arg_incompatible_type : Error<
   "'cleanup' function %0 parameter has type %1 which is incompatible with "
   "type %2">;
 def err_attribute_regparm_wrong_platform : Error<
-  "'regparm' is not valid on platforms other than x86-32">;
+  "'regparm' is not valid on this platform">;
 def err_attribute_regparm_invalid_number : Error<
-  "'regparm' parameter must be between 0 and 3 inclusive">;
+  "'regparm' parameter must be between 0 and %0 inclusive">;
 
 
 // Clang-Specific Attributes
