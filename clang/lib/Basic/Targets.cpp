@@ -658,6 +658,14 @@ public:
     return IsConstant ? "\01LC" : "\01lC";
   }
 
+  virtual const char *getUnicodeStringSymbolPrefix() const { 
+    return "__utf16_string_";
+  }
+
+  virtual const char *getUnicodeStringSection() const { 
+    return "__TEXT,__ustring";
+  }
+
   virtual const char *getCFStringSymbolPrefix() const { 
     return "\01LC";
   }
@@ -808,6 +816,14 @@ public:
 
   virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
     return IsConstant ? "\01LC" : "\01lC";
+  }
+
+  virtual const char *getUnicodeStringSymbolPrefix() const { 
+    return "__utf16_string_";
+  }
+
+  virtual const char *getUnicodeStringSection() const { 
+    return "__TEXT,__ustring";
   }
 
   virtual const char *getCFStringSymbolPrefix() const { 

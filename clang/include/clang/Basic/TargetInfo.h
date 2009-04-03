@@ -257,6 +257,18 @@ public:
     return "";
   }
 
+  /// getUnicodeStringSymbolPrefix - Get the default symbol prefix to
+  /// use for string literals.
+  virtual const char *getUnicodeStringSymbolPrefix() const { 
+    return ".str";
+  }
+
+  /// getUnicodeStringSymbolPrefix - Get the default symbol prefix to
+  /// use for string literals.
+  virtual const char *getUnicodeStringSection() const { 
+    return 0;
+  }
+
   /// getCFStringSection - Return the section to use for the CFString
   /// literals, or 0 if no special section is used.
   virtual const char *getCFStringSection() const { 

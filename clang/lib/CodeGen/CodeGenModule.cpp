@@ -1082,13 +1082,31 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   CurField = NextField;
   NextField = *Field++;
   llvm::Constant *C = llvm::ConstantArray::get(str);
+
+  const char *Sect, *Prefix;
+  bool isConstant;
+  if (isUTF16) {
+    Prefix = getContext().Target.getUnicodeStringSymbolPrefix();
+    Sect = getContext().Target.getUnicodeStringSection();
+    // FIXME: Why does GCC not set constant here?
+    isConstant = false;
+  } else {
+    Prefix = getContext().Target.getStringSymbolPrefix(true);
+    Sect = getContext().Target.getCFStringDataSection();
+    // FIXME: -fwritable-strings should probably affect this, but we
+    // are following gcc here.
+    isConstant = true;
+  }
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(C->getType(), true, 
+    new llvm::GlobalVariable(C->getType(), isConstant, 
                              llvm::GlobalValue::InternalLinkage,
-                             C, getContext().Target.getStringSymbolPrefix(true),
-                             &getModule());
-  if (const char *Sect = getContext().Target.getCFStringDataSection())
+                             C, Prefix, &getModule());
+  if (Sect)
     GV->setSection(Sect);
+  if (isUTF16) {
+    unsigned Align = getContext().getTypeAlign(getContext().ShortTy)/8;
+    GV->setAlignment(Align); 
+  }
   appendFieldAndPadding(*this, Fields, CurField, NextField,
                         llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2),
                         CFRD, STy);
