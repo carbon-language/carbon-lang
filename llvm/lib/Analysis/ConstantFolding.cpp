@@ -571,10 +571,9 @@ llvm::canConstantFoldCallTo(const Function *F) {
   default: break;
   }
 
-  const ValueName *NameVal = F->getValueName();
-  if (NameVal == 0) return false;
-  const char *Str = NameVal->getKeyData();
-  unsigned Len = NameVal->getKeyLength();
+  if (!F->hasName()) return false;
+  const char *Str = F->getNameStart();
+  unsigned Len = F->getNameLen();
   
   // In these cases, the check of the length is required.  We don't want to
   // return true for a name like "cos\0blah" which strcmp would return equal to
@@ -675,10 +674,9 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
 Constant *
 llvm::ConstantFoldCall(Function *F, 
                        Constant* const* Operands, unsigned NumOperands) {
-  const ValueName *NameVal = F->getValueName();
-  if (NameVal == 0) return 0;
-  const char *Str = NameVal->getKeyData();
-  unsigned Len = NameVal->getKeyLength();
+  if (!F->hasName()) return 0;
+  const char *Str = F->getNameStart();
+  unsigned Len = F->getNameLen();
   
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
