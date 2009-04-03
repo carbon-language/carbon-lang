@@ -34,7 +34,9 @@ class InlineAsm;
 class ValueSymbolTable;
 class TypeSymbolTable;
 template<typename ValueTy> class StringMapEntry;
-typedef StringMapEntry<Value*> ValueName;
+template <typename ValueTy = Value>
+class AssertingVH;
+typedef StringMapEntry<AssertingVH<> > ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
