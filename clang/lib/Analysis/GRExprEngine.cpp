@@ -1138,7 +1138,7 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
   bool isFeasibleNull = false;
   GRStateRef StNull = GRStateRef(Assume(state, LV, false, isFeasibleNull),
                                  getStateManager());
-  
+
   if (isFeasibleNull) {
     
     // Use the Generic Data Map to mark in the state what lval was null.
@@ -1920,7 +1920,22 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       //  to a desugared type.
       
       assert(Loc::IsLocType(T));
-      assert(Loc::IsLocType(ExTy));
+      // We get a symbolic function pointer for a dereference of a function
+      // pointer, but it is of function type. Example:
+
+      //  struct FPRec {
+      //    void (*my_func)(int * x);  
+      //  };
+      //
+      //  int bar(int x);
+      //
+      //  int f1_a(struct FPRec* foo) {
+      //    int x;
+      //    (*foo->my_func)(&x);
+      //    return bar(x)+1; // no-warning
+      //  }
+
+      assert(Loc::IsLocType(ExTy) || ExTy->isFunctionType());
 
       const MemRegion* R = RV->getRegion();
       StoreManager& StoreMgr = getStoreManager();

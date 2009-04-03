@@ -28,6 +28,7 @@ namespace clang {
 class CompoundValData;
 class BasicValueFactory;
 class MemRegion;
+class MemRegionManager;
 class GRStateManager;
   
 class SVal {
@@ -72,7 +73,8 @@ public:
   }
 
   /// GetRValueSymbolVal - make a unique symbol for value of R.
-  static SVal GetRValueSymbolVal(SymbolManager& SymMgr, const MemRegion* R);
+  static SVal GetRValueSymbolVal(SymbolManager& SymMgr, MemRegionManager& MRMgr,
+                                 const MemRegion* R);
 
   static SVal GetConjuredSymbolVal(SymbolManager& SymMgr, const Expr *E,
                                    unsigned Count);  

@@ -360,6 +360,10 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
   switch (BaseL.getSubKind()) {
   case loc::MemRegionKind:
     BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
+    if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(BaseR)) {
+      SymbolRef Sym = SR->getSymbol();
+      BaseR = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
+    }
     break;
 
   case loc::SymbolValKind: {
@@ -412,13 +416,20 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   const TypedRegion* BaseRegion = 0;
 
   if (isa<loc::SymbolVal>(Base)) {
+    // FIXME: This case will be removed.
     SymbolRef Sym = cast<loc::SymbolVal>(Base).getSymbol();
     SymbolicRegion* SR = MRMgr.getSymbolicRegion(Sym);
     // Layer the type information.
     BaseRegion = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-  } 
-  else
-    BaseRegion = cast<TypedRegion>(cast<loc::MemRegionVal>(Base).getRegion());
+  } else {
+    const MemRegion* R = cast<loc::MemRegionVal>(Base).getRegion();
+    if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
+      SymbolRef Sym = SR->getSymbol();
+      BaseRegion = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
+    }
+    else
+      BaseRegion = cast<TypedRegion>(R);
+  }
 
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
@@ -617,8 +628,11 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
   if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
 
-  const TypedRegion* TR 
-    = cast<TypedRegion>(cast<loc::MemRegionVal>(L).getRegion());
+  const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
+  if (isa<SymbolicRegion>(MR))
+    return UnknownVal();
+
+  const TypedRegion* TR = cast<TypedRegion>(MR);
 
   const ElementRegion* ER = dyn_cast<ElementRegion>(TR);
   
@@ -683,10 +697,17 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   if (isa<loc::FuncVal>(L))
     return L;
 
+  const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
+
+  // We return unknown for symbolic region for now. This might be improved.
+  // Example:
+  // void f(int* p) { int x = *p; }
+  if (isa<SymbolicRegion>(MR))
+    return UnknownVal();
+
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
-  const TypedRegion* R 
-    = cast<TypedRegion>(cast<loc::MemRegionVal>(L).getRegion());
+  const TypedRegion* R = cast<TypedRegion>(MR);
   assert(R && "bad region");
 
   // FIXME: We should eventually handle funny addressing.  e.g.:
@@ -735,7 +756,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
     if (SR == SelfRegion) {
       // FIXME: Do we need to handle the case where the super region
       // has a view?  We want to canonicalize the bindings.
-      return SVal::GetRValueSymbolVal(getSymbolManager(), R);
+      return SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, R);
     }
     
     // Otherwise, we need a new symbol.  For now return Unknown.
@@ -757,7 +778,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
         VD->hasGlobalStorage()) {
       QualType VTy = VD->getType();
       if (Loc::IsLocType(VTy) || VTy->isIntegerType())
-        return SVal::GetRValueSymbolVal(getSymbolManager(), VR);
+        return SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, VR);
       else
         return UnknownVal();
     }
@@ -773,7 +794,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   // All other integer values are symbolic.
   if (Loc::IsLocType(RTy) || RTy->isIntegerType())
-    return SVal::GetRValueSymbolVal(getSymbolManager(), R);
+    return SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, R);
   else
     return UnknownVal();
 }
@@ -811,7 +832,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
       if (MRMgr.onStack(FR) || MRMgr.onHeap(FR))
         FieldValue = UndefinedVal();
       else
-        FieldValue = SVal::GetRValueSymbolVal(getSymbolManager(), FR);        
+        FieldValue = SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, FR);
     }
 
     StructVal = getBasicVals().consVals(FieldValue, StructVal);

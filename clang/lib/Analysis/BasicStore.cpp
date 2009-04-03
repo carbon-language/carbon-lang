@@ -125,6 +125,9 @@ public:
   }
 
   void print(Store store, std::ostream& Out, const char* nl, const char *sep);
+
+private:
+  ASTContext& getContext() { return StateMgr.getContext(); }
 };
     
 } // end anonymous namespace
@@ -273,9 +276,10 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
         break;
       }
       
-      // FIXME: Handle SymbolRegions?  Shouldn't be possible in 
-      // BasicStoreManager.
-      assert(!isa<SymbolicRegion>(R));
+      if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
+        SymbolRef Sym = SR->getSymbol();
+        BaseR = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
+      }
       
       break;
     }
@@ -477,7 +481,7 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
                                                          SelfRegion);
           
           SVal X = SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(),
-                                            IVR);
+                                            MRMgr, IVR);
           
           St = BindInternal(St, Loc::MakeVal(IVR), X);
         }
@@ -534,7 +538,7 @@ Store BasicStoreManager::getInitialStore() {
       const MemRegion *R = StateMgr.getRegion(VD);
       SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                 isa<ImplicitParamDecl>(VD))
-            ? SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(), R)
+            ? SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(), MRMgr,R)
             : UndefinedVal();
 
       St = BindInternal(St, Loc::MakeVal(R), X);
