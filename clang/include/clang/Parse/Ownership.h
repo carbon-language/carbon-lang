@@ -14,13 +14,15 @@
 #ifndef LLVM_CLANG_PARSE_OWNERSHIP_H
 #define LLVM_CLANG_PARSE_OWNERSHIP_H
 
-#include "llvm/Support/PointerLikeTypeTraits.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 //===----------------------------------------------------------------------===//
 // OpaquePtr
 //===----------------------------------------------------------------------===//
 
 namespace clang {
+  class ActionBase;
+  
   /// OpaquePtr - This is a very simple POD type that wraps a pointer that the
   /// Parser doesn't know about but that Sema or another client does.  The UID
   /// template argument is used to make sure that "Decl" pointers are not
@@ -165,10 +167,20 @@ namespace llvm {
 // Flip this switch to measure performance impact of the smart pointers.
 //#define DISABLE_SMART_POINTERS
 
-#include "llvm/ADT/PointerIntPair.h"
+namespace llvm {
+  template<>
+  class PointerLikeTypeTraits<clang::ActionBase*> {
+    typedef clang::ActionBase* PT;
+  public:
+    static inline void *getAsVoidPointer(PT P) { return P; }
+    static inline PT getFromVoidPointer(void *P) {
+      return static_cast<PT>(P);
+    }
+    enum { NumLowBitsAvailable = 2 };
+  };
+}
 
-namespace clang
-{
+namespace clang {
   // Basic
   class DiagnosticBuilder;
 
@@ -739,9 +751,7 @@ namespace clang
   ASTMultiPtr<Destroyer>& move(ASTMultiPtr<Destroyer> &ptr) {
     return ptr;
   }
-
 #endif
-
 }
 
 #endif
