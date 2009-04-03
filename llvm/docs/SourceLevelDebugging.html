@@ -301,7 +301,7 @@ a defined enum DW_TAG_user_base = 0x1000.)</p>
 
 <p>The fields of debug descriptors used internally by LLVM (MachineModuleInfo)
 are restricted to only the simple data types <tt>int</tt>, <tt>uint</tt>,
-<tt>bool</tt>, <tt>float</tt>, <tt>double</tt>, <tt>sbyte*</tt> and <tt> { }*
+<tt>bool</tt>, <tt>float</tt>, <tt>double</tt>, <tt>i8*</tt> and <tt> { }*
 </tt>.  References to arbitrary values are handled using a <tt> { }* </tt> and a
 cast to <tt> { }* </tt> expression; typically references to other field
 descriptors, arrays of descriptors or global variables.</p>
@@ -375,9 +375,9 @@ deleted.</p>
     uint,   ;; Tag = 17 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_compile_unit)
     {  }*,  ;; Compile unit anchor = cast = (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*)
     uint,   ;; Dwarf language identifier (ex. DW_LANG_C89) 
-    sbyte*, ;; Source file name
-    sbyte*, ;; Source file directory (includes trailing slash)
-    sbyte*  ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
+    i8*, ;; Source file name
+    i8*, ;; Source file directory (includes trailing slash)
+    i8*  ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
     bool    ;; True if this is a main compile unit. 
   }
 </pre>
@@ -415,9 +415,9 @@ file.
     uint,   ;; Tag = 52 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_variable)
     {  }*,  ;; Global variable anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*),  
     {  }*,  ;; Reference to context descriptor
-    sbyte*, ;; Name
-    sbyte*, ;; Display name (fully qualified C++ name)
-    sbyte*, ;; MIPS linkage name (for C++)
+    i8*,    ;; Name
+    i8*,    ;; Display name (fully qualified C++ name)
+    i8*,    ;; MIPS linkage name (for C++)
     {  }*,  ;; Reference to compile unit where defined
     uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
@@ -444,9 +444,9 @@ provide details such as name, type and where the variable is defined.</p>
     uint,   ;; Tag = 46 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_subprogram)
     {  }*,  ;; Subprogram anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*),  
     {  }*,  ;; Reference to context descriptor
-    sbyte*, ;; Name
-    sbyte*, ;; Display name (fully qualified C++ name)
-    sbyte*, ;; MIPS linkage name (for C++)
+    i8*,    ;; Name
+    i8*,    ;; Display name (fully qualified C++ name)
+    i8*,    ;; MIPS linkage name (for C++)
     {  }*,  ;; Reference to compile unit where defined
     uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
@@ -469,7 +469,7 @@ location where the subprogram is defined.</p>
 
 <pre>
   %<a href="#format_blocks">llvm.dbg.block</a> = type {
-    uint,   ;; Tag = 13 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_lexical_block)
+    i32,    ;; Tag = 13 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_lexical_block)
     {  }*   ;; Reference to context descriptor
   }
 </pre>
@@ -491,11 +491,11 @@ and deeper nested blocks.</p>
   %<a href="#format_basic_type">llvm.dbg.basictype.type</a> = type {
     uint,   ;; Tag = 36 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_base_type)
     {  }*,  ;; Reference to context (typically a compile unit)
-    sbyte*, ;; Name (may be "" for anonymous types)
+    i8*,    ;; Name (may be "" for anonymous types)
     {  }*,  ;; Reference to compile unit where defined (may be NULL)
     uint,   ;; Line number where defined (may be 0)
-    uint,   ;; Size in bits
-    uint,   ;; Alignment in bits
+    i64,    ;; Size in bits
+    i64,    ;; Alignment in bits
     uint,   ;; Offset in bits
     uint    ;; Dwarf type encoding
   }
@@ -537,7 +537,7 @@ one of the following:</p>
   %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> = type {
     uint,   ;; Tag (see below)
     {  }*,  ;; Reference to context
-    sbyte*, ;; Name (may be "" for anonymous types)
+    i8*,    ;; Name (may be "" for anonymous types)
     {  }*,  ;; Reference to compile unit where defined (may be NULL)
     uint,   ;; Line number where defined (may be 0)
     uint,   ;; Size in bits
@@ -601,7 +601,7 @@ NULL derived type.</p>
   %<a href="#format_composite_type">llvm.dbg.compositetype.type</a> = type {
     uint,   ;; Tag (see below)
     {  }*,  ;; Reference to context
-    sbyte*, ;; Name (may be "" for anonymous types)
+    i8*,    ;; Name (may be "" for anonymous types)
     {  }*,  ;; Reference to compile unit where defined (may be NULL)
     uint,   ;; Line number where defined (may be 0)
     uint,   ;; Size in bits
@@ -701,7 +701,7 @@ low == high the array will be unbounded.</p>
 <pre>
   %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> = type {
     uint,   ;; Tag = 40 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_enumerator)
-    sbyte*, ;; Name
+    i8*,    ;; Name
     uint    ;; Value
   }
 </pre>
@@ -722,7 +722,7 @@ value.</p>
   %<a href="#format_variables">llvm.dbg.variable.type</a> = type {
     uint,    ;; Tag (see below)
     {  }*,   ;; Context
-    sbyte*,  ;; Name
+    i8*,     ;; Name
     {  }*,   ;; Reference to compile unit where defined
     uint,    ;; Line number where defined
     {  }*    ;; Type descriptor
@@ -1082,7 +1082,7 @@ int main(int argc, char *argv[]) {
 ;; for compile units.
 ;;
 %<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
-%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = type { uint, {  }*, uint, uint, sbyte*, sbyte*, sbyte* }
+%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = type { uint, {  }*, uint, uint, i8*, i8*, i8* }
 ...
 ;;
 ;; Define the anchor for compile units.  Note that the second field of the
@@ -1099,9 +1099,9 @@ int main(int argc, char *argv[]) {
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*), 
     uint 1, 
     uint 1, 
-    sbyte* getelementptr ([13 x sbyte]* %str1, int 0, int 0), 
-    sbyte* getelementptr ([21 x sbyte]* %str2, int 0, int 0), 
-    sbyte* getelementptr ([33 x sbyte]* %str3, int 0, int 0) }, section "llvm.metadata"
+    i8* getelementptr ([13 x i8]* %str1, i32 0, i32 0), 
+    i8* getelementptr ([21 x i8]* %str2, i32 0, i32 0), 
+    i8* getelementptr ([33 x i8]* %str3, i32 0, i32 0) }, section "llvm.metadata"
     
 ;;
 ;; Define the compile unit for the header file "/Users/mine/sources/MyHeader.h".
@@ -1111,17 +1111,17 @@ int main(int argc, char *argv[]) {
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*), 
     uint 1, 
     uint 1, 
-    sbyte* getelementptr ([11 x sbyte]* %str4, int 0, int 0), 
-    sbyte* getelementptr ([21 x sbyte]* %str2, int 0, int 0), 
-    sbyte* getelementptr ([33 x sbyte]* %str3, int 0, int 0) }, section "llvm.metadata"
+    i8* getelementptr ([11 x i8]* %str4, int 0, int 0), 
+    i8* getelementptr ([21 x i8]* %str2, int 0, int 0), 
+    i8* getelementptr ([33 x i8]* %str3, int 0, int 0) }, section "llvm.metadata"
 
 ;;
 ;; Define each of the strings used in the compile units.
 ;;
-%str1 = internal constant [13 x sbyte] c"MySource.cpp\00", section "llvm.metadata";
-%str2 = internal constant [21 x sbyte] c"/Users/mine/sources/\00", section "llvm.metadata";
-%str3 = internal constant [33 x sbyte] c"4.0.1 LLVM (LLVM research group)\00", section "llvm.metadata";
-%str4 = internal constant [11 x sbyte] c"MyHeader.h\00", section "llvm.metadata";
+%str1 = internal constant [13 x i8] c"MySource.cpp\00", section "llvm.metadata";
+%str2 = internal constant [21 x i8] c"/Users/mine/sources/\00", section "llvm.metadata";
+%str3 = internal constant [33 x i8] c"4.0.1 LLVM (LLVM research group)\00", section "llvm.metadata";
+%str4 = internal constant [11 x i8] c"MyHeader.h\00", section "llvm.metadata";
 ...
 </pre>
 
@@ -1149,8 +1149,8 @@ int MyGlobal = 100;
 ;; compile unit.
 ;;
 %<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
-%<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, uint, {  }*, bool, bool, {  }*, uint }
-%<a href="#format_basic_type">llvm.dbg.basictype.type</a> = type { uint, {  }*, sbyte*, {  }*, int, uint, uint, uint, uint }
+%<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type { uint, {  }*, {  }*, i8*, {  }*, uint, {  }*, bool, bool, {  }*, uint }
+%<a href="#format_basic_type">llvm.dbg.basictype.type</a> = type { uint, {  }*, i8*, {  }*, int, uint, uint, uint, uint }
 %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
 ...
 ;;
@@ -1173,8 +1173,8 @@ int MyGlobal = 100;
     uint add(uint 52, uint 262144), 
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([9 x sbyte]* %str1, int 0, int 0), 
-    sbyte* getelementptr ([1 x sbyte]* %str2, int 0, int 0), 
+    i8* getelementptr ([9 x i8]* %str1, int 0, int 0), 
+    i8* getelementptr ([1 x i8]* %str2, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     uint 1,
     {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*), 
@@ -1189,7 +1189,7 @@ int MyGlobal = 100;
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([4 x sbyte]* %str3, int 0, int 0), 
+    i8* getelementptr ([4 x i8]* %str3, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
@@ -1200,9 +1200,9 @@ int MyGlobal = 100;
 ;;
 ;; Define the names of the global variable and basic type.
 ;;
-%str1 = internal constant [9 x sbyte] c"MyGlobal\00", section "llvm.metadata"
-%str2 = internal constant [1 x sbyte] c"\00", section "llvm.metadata"
-%str3 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
+%str1 = internal constant [9 x i8] c"MyGlobal\00", section "llvm.metadata"
+%str2 = internal constant [1 x i8] c"\00", section "llvm.metadata"
+%str3 = internal constant [4 x i8] c"int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1230,7 +1230,7 @@ int main(int argc, char *argv[]) {
 ;; descriptor, one for the global's basic type and one for the subprogram's
 ;; compile unit.
 ;;
-%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, bool, bool }
+%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, i8*, {  }*, bool, bool }
 %<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
 %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
 	
@@ -1248,8 +1248,8 @@ int main(int argc, char *argv[]) {
     uint add(uint 46, uint 262144), 
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([5 x sbyte]* %str1, int 0, int 0), 
-    sbyte* getelementptr ([1 x sbyte]* %str2, int 0, int 0), 
+    i8* getelementptr ([5 x i8]* %str1, int 0, int 0), 
+    i8* getelementptr ([1 x i8]* %str2, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*),
     uint 1,
     {  }* null, 
@@ -1259,13 +1259,13 @@ int main(int argc, char *argv[]) {
 ;;
 ;; Define the name of the subprogram.
 ;;
-%str1 = internal constant [5 x sbyte] c"main\00", section "llvm.metadata"
-%str2 = internal constant [1 x sbyte] c"\00", section "llvm.metadata"
+%str1 = internal constant [5 x i8] c"main\00", section "llvm.metadata"
+%str2 = internal constant [1 x i8] c"\00", section "llvm.metadata"
 
 ;;
 ;; Define the subprogram itself.
 ;;
-int %main(int %argc, sbyte** %argv) {
+int %main(int %argc, i8** %argv) {
 ...
 }
 </pre>
@@ -1294,14 +1294,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([5 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([5 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 2 }, section "llvm.metadata"
-%str1 = internal constant [5 x sbyte] c"bool\00", section "llvm.metadata"
+%str1 = internal constant [5 x i8] c"bool\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1317,14 +1317,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([5 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([5 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 8, 
     uint 8, 
     uint 0, 
     uint 6 }, section "llvm.metadata"
-%str1 = internal constant [5 x sbyte] c"char\00", section "llvm.metadata"
+%str1 = internal constant [5 x i8] c"char\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1340,14 +1340,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([14 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([14 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 8, 
     uint 8, 
     uint 0, 
     uint 8 }, section "llvm.metadata"
-%str1 = internal constant [14 x sbyte] c"unsigned char\00", section "llvm.metadata"
+%str1 = internal constant [14 x i8] c"unsigned char\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1363,14 +1363,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([10 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([10 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 16, 
     uint 16, 
     uint 0, 
     uint 5 }, section "llvm.metadata"
-%str1 = internal constant [10 x sbyte] c"short int\00", section "llvm.metadata"
+%str1 = internal constant [10 x i8] c"short int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1386,14 +1386,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([19 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([19 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 16, 
     uint 16, 
     uint 0, 
     uint 7 }, section "llvm.metadata"
-%str1 = internal constant [19 x sbyte] c"short unsigned int\00", section "llvm.metadata"
+%str1 = internal constant [19 x i8] c"short unsigned int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1409,14 +1409,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([4 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([4 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 5 }, section "llvm.metadata"
-%str1 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
+%str1 = internal constant [4 x i8] c"int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1432,14 +1432,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([13 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([13 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 7 }, section "llvm.metadata"
-%str1 = internal constant [13 x sbyte] c"unsigned int\00", section "llvm.metadata"
+%str1 = internal constant [13 x i8] c"unsigned int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1455,14 +1455,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([14 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([14 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 64, 
     uint 64, 
     uint 0, 
     uint 5 }, section "llvm.metadata"
-%str1 = internal constant [14 x sbyte] c"long long int\00", section "llvm.metadata"
+%str1 = internal constant [14 x i8] c"long long int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1478,14 +1478,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([23 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([23 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 64, 
     uint 64, 
     uint 0, 
     uint 7 }, section "llvm.metadata"
-%str1 = internal constant [23 x sbyte] c"long long unsigned int\00", section "llvm.metadata"
+%str1 = internal constant [23 x 8] c"long long unsigned int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1501,14 +1501,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([6 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([6 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 4 }, section "llvm.metadata"
-%str1 = internal constant [6 x sbyte] c"float\00", section "llvm.metadata"
+%str1 = internal constant [6 x i8] c"float\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1524,14 +1524,14 @@ int %main(int %argc, sbyte** %argv) {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([7 x sbyte]* %str1, int 0, int 0), 
+    8* getelementptr ([7 x 8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 64, 
     uint 64, 
     uint 0, 
     uint 4 }, section "llvm.metadata"
-%str1 = internal constant [7 x sbyte] c"double\00", section "llvm.metadata"
+%str1 = internal constant [7 x 8] c"double\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1558,14 +1558,14 @@ typedef const int *IntPtr;
 %<a href="#format_derived_type">llvm.dbg.derivedtype1</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint add(uint 22, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([7 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([7 x 8]* %str1, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     int 1, 
     uint 0, 
     uint 0, 
     uint 0, 
     {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype2</a> to {  }*) }, section "llvm.metadata"
-%str1 = internal constant [7 x sbyte] c"IntPtr\00", section "llvm.metadata"
+%str1 = internal constant [7 x 8] c"IntPtr\00", section "llvm.metadata"
 
 ;;
 ;; Define the pointer type.
@@ -1573,7 +1573,7 @@ typedef const int *IntPtr;
 %<a href="#format_derived_type">llvm.dbg.derivedtype2</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint add(uint 15, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* null, 
+    i8* null, 
     {  }* null, 
     int 0, 
     uint 32, 
@@ -1587,7 +1587,7 @@ typedef const int *IntPtr;
 %<a href="#format_derived_type">llvm.dbg.derivedtype3</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint add(uint 38, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* null, 
+    i8* null, 
     {  }* null, 
     int 0, 
     uint 0, 
@@ -1601,14 +1601,14 @@ typedef const int *IntPtr;
 %<a href="#format_basic_type">llvm.dbg.basictype1</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([4 x sbyte]* %str2, int 0, int 0), 
+    8* getelementptr ([4 x 8]* %str2, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 5 }, section "llvm.metadata"
-%str2 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
+%str2 = internal constant [4 x 8] c"int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1639,14 +1639,14 @@ struct Color {
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([13 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([13 x i8]* %str1, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 7 }, section "llvm.metadata"
-%str1 = internal constant [13 x sbyte] c"unsigned int\00", section "llvm.metadata"
+%str1 = internal constant [13 x i8] c"unsigned int\00", section "llvm.metadata"
 
 ;;
 ;; Define composite type for struct Color.
@@ -1654,7 +1654,7 @@ struct Color {
 %<a href="#format_composite_type">llvm.dbg.compositetype</a> = internal constant %<a href="#format_composite_type">llvm.dbg.compositetype.type</a> {
     uint add(uint 19, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([6 x sbyte]* %str2, int 0, int 0), 
+    i8* getelementptr ([6 x i8]* %str2, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     int 1, 
     uint 96, 
@@ -1662,7 +1662,7 @@ struct Color {
     uint 0, 
     {  }* null,
     {  }* cast ([3 x {  }*]* %llvm.dbg.array to {  }*) }, section "llvm.metadata"
-%str2 = internal constant [6 x sbyte] c"Color\00", section "llvm.metadata"
+%str2 = internal constant [6 x i8] c"Color\00", section "llvm.metadata"
 
 ;;
 ;; Define the Red field.
@@ -1670,14 +1670,14 @@ struct Color {
 %<a href="#format_derived_type">llvm.dbg.derivedtype1</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint add(uint 13, uint 262144), 
     {  }* null, 
-    sbyte* getelementptr ([4 x sbyte]* %str3, int 0, int 0), 
+    i8* getelementptr ([4 x i8]* %str3, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     int 2, 
     uint 32, 
     uint 32, 
     uint 0, 
     {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*) }, section "llvm.metadata"
-%str3 = internal constant [4 x sbyte] c"Red\00", section "llvm.metadata"
+%str3 = internal constant [4 x i8] c"Red\00", section "llvm.metadata"
 
 ;;
 ;; Define the Green field.
@@ -1685,14 +1685,14 @@ struct Color {
 %<a href="#format_derived_type">llvm.dbg.derivedtype2</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint add(uint 13, uint 262144), 
     {  }* null, 
-    sbyte* getelementptr ([6 x sbyte]* %str4, int 0, int 0), 
+    i8* getelementptr ([6 x i8]* %str4, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     int 3, 
     uint 32, 
     uint 32, 
     uint 32, 
     {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*) }, section "llvm.metadata"
-%str4 = internal constant [6 x sbyte] c"Green\00", section "llvm.metadata"
+%str4 = internal constant [6 x i8] c"Green\00", section "llvm.metadata"
 
 ;;
 ;; Define the Blue field.
@@ -1700,14 +1700,14 @@ struct Color {
 %<a href="#format_derived_type">llvm.dbg.derivedtype3</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint add(uint 13, uint 262144), 
     {  }* null, 
-    sbyte* getelementptr ([5 x sbyte]* %str5, int 0, int 0), 
+    i8* getelementptr ([5 x i8]* %str5, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     int 4, 
     uint 32, 
     uint 32, 
     uint 64, 
     {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*) }, section "llvm.metadata"
-%str5 = internal constant [5 x sbyte] c"Blue\00", section "llvm.metadata"
+%str5 = internal constant [5 x 8] c"Blue\00", section "llvm.metadata"
 
 ;;
 ;; Define the array of fields used by the composite type Color.
@@ -1746,7 +1746,7 @@ enum Trees {
 %<a href="#format_composite_type">llvm.dbg.compositetype</a> = internal constant %<a href="#format_composite_type">llvm.dbg.compositetype.type</a> {
     uint add(uint 4, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([6 x sbyte]* %str1, int 0, int 0), 
+    i8* getelementptr ([6 x i8]* %str1, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     int 1, 
     uint 32, 
@@ -1754,34 +1754,34 @@ enum Trees {
     uint 0, 
     {  }* null, 
     {  }* cast ([3 x {  }*]* %llvm.dbg.array to {  }*) }, section "llvm.metadata"
-%str1 = internal constant [6 x sbyte] c"Trees\00", section "llvm.metadata"
+%str1 = internal constant [6 x i8] c"Trees\00", section "llvm.metadata"
 
 ;;
 ;; Define Spruce enumerator.
 ;;
 %<a href="#format_enumeration">llvm.dbg.enumerator1</a> = internal constant %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> {
     uint add(uint 40, uint 262144), 
-    sbyte* getelementptr ([7 x sbyte]* %str2, int 0, int 0), 
+    i8* getelementptr ([7 x i8]* %str2, int 0, int 0), 
     int 100 }, section "llvm.metadata"
-%str2 = internal constant [7 x sbyte] c"Spruce\00", section "llvm.metadata"
+%str2 = internal constant [7 x i8] c"Spruce\00", section "llvm.metadata"
 
 ;;
 ;; Define Oak enumerator.
 ;;
 %<a href="#format_enumeration">llvm.dbg.enumerator2</a> = internal constant %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> {
     uint add(uint 40, uint 262144), 
-    sbyte* getelementptr ([4 x sbyte]* %str3, int 0, int 0), 
+    i8* getelementptr ([4 x i8]* %str3, int 0, int 0), 
     int 200 }, section "llvm.metadata"
-%str3 = internal constant [4 x sbyte] c"Oak\00", section "llvm.metadata"
+%str3 = internal constant [4 x i8] c"Oak\00", section "llvm.metadata"
 
 ;;
 ;; Define Maple enumerator.
 ;;
 %<a href="#format_enumeration">llvm.dbg.enumerator3</a> = internal constant %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> {
     uint add(uint 40, uint 262144), 
-    sbyte* getelementptr ([6 x sbyte]* %str4, int 0, int 0), 
+    i8* getelementptr ([6 x i8]* %str4, int 0, int 0), 
     int 300 }, section "llvm.metadata"
-%str4 = internal constant [6 x sbyte] c"Maple\00", section "llvm.metadata"
+%str4 = internal constant [6 x i8] c"Maple\00", section "llvm.metadata"
 
 ;;
 ;; Define the array of enumerators used by composite type Trees.
