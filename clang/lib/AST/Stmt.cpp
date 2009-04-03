@@ -177,9 +177,6 @@ int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
   for (unsigned i = 0, e = getNumOutputs(); i != e; ++i) {
     if (getOutputName(i) == SymbolicName)
       return i;
-    
-    // Keep track of the number of '+' operands.
-    if (isOutputPlusConstraint(i)) ++NumPlusOperands;
   }
   
   for (unsigned i = 0, e = getNumInputs(); i != e; ++i)
