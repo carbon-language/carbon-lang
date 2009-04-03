@@ -83,13 +83,13 @@ add_custom_command(OUTPUT ${FINAL_LIBDEPS}
   COMMENT "Checking for cyclic dependencies between LLVM libraries.")
 
 add_custom_command(OUTPUT ${LLVM_CONFIG}
-  COMMAND echo 's,@LLVM_CPPFLAGS@,${CMAKE_CPP_FLAGS},' > temp.sed
-  COMMAND echo 's,@LLVM_CFLAGS@,${CMAKE_C_FLAGS},' >> temp.sed
-  COMMAND echo 's,@LLVM_CXXFLAGS@,${CMAKE_CXX_FLAGS},' >> temp.sed
-  # TODO: Use general flags for linking, not just for shared libs:
-  COMMAND echo 's,@LLVM_LDFLAGS@,${CMAKE_SHARED_LINKER_FLAGS},' >> temp.sed
-  COMMAND echo 's,@LIBS@,,' >> temp.sed                    # TODO: System libs
-  COMMAND echo 's,@LLVM_BUILDMODE@,${CMAKE_BUILD_TYPE},' >> temp.sed
+  COMMAND echo 's!@LLVM_CPPFLAGS@!${CMAKE_CPP_FLAGS}!' > temp.sed
+  COMMAND echo 's!@LLVM_CFLAGS@!${CMAKE_C_FLAGS}!' >> temp.sed
+  COMMAND echo 's!@LLVM_CXXFLAGS@!${CMAKE_CXX_FLAGS}!' >> temp.sed
+  # TODO: Use general flags for linking! not just for shared libs:
+  COMMAND echo 's!@LLVM_LDFLAGS@!${CMAKE_SHARED_LINKER_FLAGS}!' >> temp.sed
+  COMMAND echo 's!@LIBS@!!' >> temp.sed                    # TODO: System libs
+  COMMAND echo 's!@LLVM_BUILDMODE@!${CMAKE_BUILD_TYPE}!' >> temp.sed
   COMMAND sed -f temp.sed < ${LLVM_CONFIG_IN} > ${LLVM_CONFIG}
   COMMAND ${CMAKE_COMMAND} -E remove -f temp.sed
   COMMAND cat ${FINAL_LIBDEPS} >> ${LLVM_CONFIG}
