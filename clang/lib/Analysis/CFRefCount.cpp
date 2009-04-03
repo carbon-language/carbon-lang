@@ -2366,7 +2366,7 @@ namespace {
   class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
   public:
     UseAfterRelease(CFRefCount* tf)
-      : CFRefBug(tf, "use-after-release") {}
+      : CFRefBug(tf, "Use-after-release") {}
     
     const char* getDescription() const {
       return "Reference-counted object is used after it is released";
