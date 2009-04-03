@@ -140,6 +140,15 @@ void ArgList::AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
   }
 }
 
+void ArgList::ClaimAllArgs(options::ID Id0) const {
+  // FIXME: Make fast.
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(Id0))
+      A->claim();
+  }
+}
+
 //
 
 InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd) 

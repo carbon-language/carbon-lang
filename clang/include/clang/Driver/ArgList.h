@@ -116,6 +116,10 @@ namespace driver {
     void AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
                               const char *Translation) const;
 
+    /// ClaimAllArgs - Claim all arguments which match the given
+    /// option id.
+    void ClaimAllArgs(options::ID Id0) const;
+
     /// @}
     /// @name Arg Synthesis
     /// @{

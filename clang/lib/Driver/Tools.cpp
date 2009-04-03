@@ -415,6 +415,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 
+  // Claim some arguments which clang supports automatically.
+
+  // -fpch-preprocess is used with gcc to add a special marker in the
+  // -output to include the PCH file. Clang's PTH solution is
+  // -completely transparent, so we do not need to deal with it at
+  // -all.
+  Args.ClaimAllArgs(options::OPT_fpch_preprocess);
+  
   // Claim some arguments which clang doesn't support, but we don't
   // care to warn the user about.
   

@@ -454,6 +454,7 @@ OPTION("-force_cpusubtype_ALL", force__cpusubtype__ALL, Flag, INVALID, INVALID, 
 OPTION("-force_flat_namespace", force__flat__namespace, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-foutput-class-dir=", foutput_class_dir_EQ, Joined, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fpascal-strings", fpascal_strings, Flag, clang_f_Group, INVALID, "", 0, 0, 0)
+OPTION("-fpch-preprocess", fpch_preprocess, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fpic", fpic, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fpie", fpie, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fprint-source-range-info", fprint_source_range_info, Flag, clang_f_Group, INVALID, "", 0, 0, 0)
