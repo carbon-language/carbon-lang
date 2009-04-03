@@ -371,6 +371,16 @@ int main() {
     </li>
   </ul>
 
+  <ul>
+    <li>In Visual C++, if you are linking with the x86 target statically, the
+    linker will remove the x86 target library from your generated executable
+    or shared library because there are no references to it. You can force the
+    linker to include these references by using 
+    "/INCLUDE:_X86TargetMachineModule" when linking. In Visual Studio IDE, this 
+    can be added in Project Properties->Linker->Input->Force Symbol References.
+    </li>
+  </ul>
+
 <p>If you are having problems building or using LLVM, or if you have any other
 general questions about LLVM, please consult the <a href="FAQ.html">Frequently
 Asked Questions</a> page.</p>
