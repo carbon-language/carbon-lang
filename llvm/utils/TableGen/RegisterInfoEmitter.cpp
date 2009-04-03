@@ -319,6 +319,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << RC.getName() << "Class::" << RC.getName() 
          << "Class()  : TargetRegisterClass("
          << RC.getName() + "RegClassID" << ", "
+         << '\"' << RC.getName() << "\", "
          << RC.getName() + "VTs" << ", "
          << RC.getName() + "Subclasses" << ", "
          << RC.getName() + "Superclasses" << ", "

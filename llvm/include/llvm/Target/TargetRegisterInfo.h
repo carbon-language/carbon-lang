@@ -56,6 +56,7 @@ public:
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
   unsigned ID;
+  const char *Name;
   bool  isSubClass;
   const vt_iterator VTs;
   const sc_iterator SubClasses;
@@ -65,19 +66,24 @@ private:
   const iterator RegsBegin, RegsEnd;
 public:
   TargetRegisterClass(unsigned id,
+                      const char *name,
                       const MVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       unsigned RS, unsigned Al, int CC,
                       iterator RB, iterator RE)
-    : ID(id), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
+    : ID(id), Name(name), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
     RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
   /// getID() - Return the register class ID number.
   ///
   unsigned getID() const { return ID; }
-  
+
+  /// getName() - Return the register class name for debugging.
+  ///
+  const char *getName() const { return Name; }
+
   /// begin/end - Return all of the registers in this class.
   ///
   iterator       begin() const { return RegsBegin; }
