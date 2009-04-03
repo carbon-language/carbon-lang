@@ -264,7 +264,7 @@ public:
   }
 
   /// getUnicodeStringSymbolPrefix - Get the default symbol prefix to
-  /// use for string literals.
+  /// use for unicode string literals.
   virtual const char *getUnicodeStringSection() const { 
     return 0;
   }
