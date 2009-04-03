@@ -6,8 +6,8 @@ int main() {
   NSLog(@"Hi…");
   NSLog(@"Exposé");
   NSLog(@"\U00010400\U0001D12B");
-  // FIXME: the following is still not working (will investigate).
-  //NSLog(@"hello \u2192 \u2603 \u2190 world");
+  NSLog(@"hello \u2192 \u2603 \u2190 world");
+  NSLog(@"hello → ☃ ← world");
   return 0;
 }
 
