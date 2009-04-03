@@ -5165,9 +5165,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SRA_PARTS:   return "sra_parts";
   case ISD::SRL_PARTS:   return "srl_parts";
 
-  case ISD::EXTRACT_SUBREG:     return "extract_subreg";
-  case ISD::INSERT_SUBREG:      return "insert_subreg";
-
   // Conversion operators.
   case ISD::SIGN_EXTEND: return "sign_extend";
   case ISD::ZERO_EXTEND: return "zero_extend";

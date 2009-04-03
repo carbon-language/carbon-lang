@@ -1967,25 +1967,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "                              MVT::Other, Tmp1, Tmp2, Chain);\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_EXTRACT_SUBREG(const SDValue &N) {\n"
-     << "  SDValue N0 = N.getOperand(0);\n"
-     << "  SDValue N1 = N.getOperand(1);\n"
-     << "  unsigned C = cast<ConstantSDNode>(N1)->getZExtValue();\n"
-     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EXTRACT_SUBREG,\n"
-     << "                              N.getValueType(), N0, Tmp);\n"
-     << "}\n\n";
-
-  OS << "SDNode *Select_INSERT_SUBREG(const SDValue &N) {\n"
-     << "  SDValue N0 = N.getOperand(0);\n"
-     << "  SDValue N1 = N.getOperand(1);\n"
-     << "  SDValue N2 = N.getOperand(2);\n"
-     << "  unsigned C = cast<ConstantSDNode>(N2)->getZExtValue();\n"
-     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::INSERT_SUBREG,\n"
-     << "                              N.getValueType(), N0, N1, Tmp);\n"
-     << "}\n\n";
-
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDValue N) {\n"
      << "  MVT::SimpleValueType NVT = N.getNode()->getValueType(0).getSimpleVT();\n"
@@ -2020,8 +2001,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::DBG_LABEL: return Select_DBG_LABEL(N);\n"
      << "  case ISD::EH_LABEL: return Select_EH_LABEL(N);\n"
      << "  case ISD::DECLARE: return Select_DECLARE(N);\n"
-     << "  case ISD::EXTRACT_SUBREG: return Select_EXTRACT_SUBREG(N);\n"
-     << "  case ISD::INSERT_SUBREG: return Select_INSERT_SUBREG(N);\n"
      << "  case ISD::UNDEF: return Select_UNDEF(N);\n";
 
   // Loop over all of the case statements, emiting a call to each method we

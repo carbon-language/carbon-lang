@@ -1589,23 +1589,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       AddLegalizedOperand(SDValue(Node, i), Tmp1);
     }
     return Tmp2;
-   case ISD::EXTRACT_SUBREG: {
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      ConstantSDNode *idx = dyn_cast<ConstantSDNode>(Node->getOperand(1));
-      assert(idx && "Operand must be a constant");
-      Tmp2 = DAG.getTargetConstant(idx->getAPIntValue(), idx->getValueType(0));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-    }
-    break;
-  case ISD::INSERT_SUBREG: {
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      Tmp2 = LegalizeOp(Node->getOperand(1));
-      ConstantSDNode *idx = dyn_cast<ConstantSDNode>(Node->getOperand(2));
-      assert(idx && "Operand must be a constant");
-      Tmp3 = DAG.getTargetConstant(idx->getAPIntValue(), idx->getValueType(0));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-    }
-    break;
   case ISD::BUILD_VECTOR:
     switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");

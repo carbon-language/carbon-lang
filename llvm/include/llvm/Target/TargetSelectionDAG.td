@@ -406,11 +406,6 @@ def vector_extract : SDNode<"ISD::EXTRACT_VECTOR_ELT",
 def vector_insert : SDNode<"ISD::INSERT_VECTOR_ELT",
     SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisPtrTy<3>]>, []>;
     
-def extract_subreg : SDNode<"ISD::EXTRACT_SUBREG", 
-    SDTypeProfile<1, 2, []>>;
-def insert_subreg : SDNode<"ISD::INSERT_SUBREG", 
-    SDTypeProfile<1, 3, []>>;
-
 // Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
 // these internally.  Don't reference these directly.
 def intrinsic_void : SDNode<"ISD::INTRINSIC_VOID", 
