@@ -89,6 +89,8 @@ public:
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
     
+    SymbolVisibility = 0;
+    
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;
     Blocks = 0;
