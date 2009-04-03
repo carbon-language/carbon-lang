@@ -864,6 +864,8 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
   }
   
+  Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
+
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec = 
     Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name).c_str());
