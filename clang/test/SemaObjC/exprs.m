@@ -15,5 +15,7 @@ void test2() {
             "bar"
            @"baz"
            " b\0larg";  // expected-warning {{literal contains NUL character}}
+
   
+  if (@encode(int) == "foo") { }  // expected-warning {{result of comparison against @encode is unspecified}}
 }

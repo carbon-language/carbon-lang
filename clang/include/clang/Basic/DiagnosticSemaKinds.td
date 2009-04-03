@@ -1417,8 +1417,8 @@ def warn_ret_stack_ref : Warning<
 def warn_selfcomparison : Warning<
   "self-comparison always results in a constant value">;
 def warn_stringcompare : Warning<
-  "result of comparison against a string literal is unspecified "
-  "(use strcmp?)">;
+  "result of comparison against %select{a string literal|@encode}0 is "
+  "unspecified (use strcmp instead)">;
 
 
 

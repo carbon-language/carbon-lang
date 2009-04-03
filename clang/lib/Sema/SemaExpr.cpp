@@ -3411,7 +3411,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // operand is null), the user probably wants strcmp.
     if ((isa<StringLiteral>(LHSStripped) || isa<ObjCEncodeExpr>(LHSStripped)) &&
         !RHSStripped->isNullPointerConstant(Context))
-      Diag(Loc, diag::warn_stringcompare) 
+      Diag(Loc, diag::warn_stringcompare)
+        << isa<ObjCEncodeExpr>(LHSStripped)
         << lex->getSourceRange()
         << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
         << CodeModificationHint::CreateInsertion(lex->getLocStart(),
@@ -3423,6 +3424,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
               isa<ObjCEncodeExpr>(RHSStripped)) &&
              !LHSStripped->isNullPointerConstant(Context))
       Diag(Loc, diag::warn_stringcompare) 
+        << isa<ObjCEncodeExpr>(RHSStripped)
         << rex->getSourceRange()
         << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
         << CodeModificationHint::CreateInsertion(lex->getLocStart(),
