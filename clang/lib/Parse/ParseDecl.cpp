@@ -832,6 +832,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         DS.SetRangeEnd(EndProtoLoc);
 
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
+          << CodeModificationHint::CreateInsertion(Loc, "id")
           << SourceRange(Loc, EndProtoLoc);
         // Need to support trailing type qualifiers (e.g. "id<p> const").
         // If a type specifier follows, it will be diagnosed elsewhere.
