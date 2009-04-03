@@ -8,7 +8,7 @@ tablegen(IA64GenInstrInfo.inc -gen-instr-desc)
 tablegen(IA64GenAsmWriter.inc -gen-asm-writer)
 tablegen(IA64GenDAGISel.inc -gen-dag-isel)
 
-add_llvm_target(IA64
+add_llvm_target(IA64CodeGen
   IA64AsmPrinter.cpp
   IA64Bundling.cpp
   IA64InstrInfo.cpp
