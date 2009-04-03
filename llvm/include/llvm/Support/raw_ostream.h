@@ -119,7 +119,17 @@ public:
   }
 
   raw_ostream &operator<<(const char *Str) {
-    write(Str, strlen(Str));
+    // Inline fast path, particulary for constant strings where a
+    // sufficiently smart compiler will simplify strlen.
+
+    unsigned Size = strlen(Str);
+
+    // Make sure we can use the fast path.
+    if (OutBufCur+Size > OutBufEnd)
+      return write(Str, Size);
+
+    memcpy(OutBufCur, Str, Size);
+    OutBufCur += Size;
     return *this;
   }
 
