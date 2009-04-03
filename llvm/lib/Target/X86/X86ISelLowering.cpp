@@ -8061,15 +8061,43 @@ static bool EltsFromConsecutiveLoads(SDNode *N, SDValue PermMask,
 /// PerformShuffleCombine - Combine a vector_shuffle that is equal to
 /// build_vector load1, load2, load3, load4, <0, 1, 2, 3> into a 128-bit load
 /// if the load addresses are consecutive, non-overlapping, and in the right
-/// order.
+/// order.  In the case of v2i64, it will see if it can rewrite the
+/// shuffle to be an appropriate build vector so it can take advantage of
+// performBuildVectorCombine.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                        const TargetLowering &TLI) {
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   DebugLoc dl = N->getDebugLoc();
   MVT VT = N->getValueType(0);
   MVT EVT = VT.getVectorElementType();
   SDValue PermMask = N->getOperand(2);
   unsigned NumElems = PermMask.getNumOperands();
+
+  // For x86-32 machines, if we see an insert and then a shuffle in a v2i64
+  // where the upper half is 0, it is advantageous to rewrite it as a build
+  // vector of (0, val) so it can use movq.
+  if (VT == MVT::v2i64) {
+    SDValue In[2];
+    In[0] = N->getOperand(0);
+    In[1] = N->getOperand(1);
+    unsigned Idx0 =cast<ConstantSDNode>(PermMask.getOperand(0))->getZExtValue();
+    unsigned Idx1 =cast<ConstantSDNode>(PermMask.getOperand(1))->getZExtValue();
+    if (In[0].getValueType().getVectorNumElements() == NumElems &&
+        In[Idx0/2].getOpcode() == ISD::INSERT_VECTOR_ELT &&
+        In[Idx1/2].getOpcode() == ISD::BUILD_VECTOR) {
+      ConstantSDNode* InsertVecIdx =
+                             dyn_cast<ConstantSDNode>(In[Idx0/2].getOperand(2));
+      if (InsertVecIdx &&
+          InsertVecIdx->getZExtValue() == (Idx0 % 2) &&
+          isZeroNode(In[Idx1/2].getOperand(Idx1 % 2))) {
+        return DAG.getNode(ISD::BUILD_VECTOR, dl, VT,
+                           In[Idx0/2].getOperand(1),
+                           In[Idx1/2].getOperand(Idx1 % 2));
+      }
+    }
+  }
+
+  // Try to combine a vector_shuffle into a 128-bit load.
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   SDNode *Base = NULL;
   if (!EltsFromConsecutiveLoads(N, PermMask, NumElems, EVT, Base,
                                 DAG, MFI, TLI))
