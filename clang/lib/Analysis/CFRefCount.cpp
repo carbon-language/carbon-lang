@@ -1184,8 +1184,10 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   //  Thus, we need to track an NSWindow's display status.
   //  This is tracked in <rdar://problem/6062711>.
   //  See also http://llvm.org/bugs/show_bug.cgi?id=3714.
-  addClassMethSummary("NSWindow", "alloc",
-                      getPersistentSummary(RetEffect::MakeNoRet()));
+  RetainSummary *NoTrackYet = getPersistentSummary(RetEffect::MakeNoRet());
+  
+  addClassMethSummary("NSWindow", "alloc", NoTrackYet);
+
 
 #if 0
   RetainSummary *NSWindowSumm =
@@ -1200,6 +1202,10 @@ void RetainSummaryManager::InitializeMethodSummaries() {
     
   // For NSPanel (which subclasses NSWindow), allocated objects are not
   //  self-owned.
+  // FIXME: For now we don't track NSPanels. object for the same reason
+  //   as for NSWindow objects.
+  addClassMethSummary("NSPanel", "alloc", NoTrackYet);
+  
   addInstMethSummary("NSPanel", InitSumm, "initWithContentRect",
                      "styleMask", "backing", "defer", NULL);
   
