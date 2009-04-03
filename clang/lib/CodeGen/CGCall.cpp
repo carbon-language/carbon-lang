@@ -18,6 +18,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/StringExtras.h"
@@ -52,7 +53,23 @@ CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
   return getFunctionInfo(FTP->getResultType(), ArgTys);
 }
 
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+  // Add the 'this' pointer.
+  ArgTys.push_back(MD->getThisType(Context));
+  
+  const FunctionProtoType *FTP = MD->getType()->getAsFunctionProtoType();
+  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+    ArgTys.push_back(FTP->getArgType(i));
+  return getFunctionInfo(FTP->getResultType(), ArgTys);
+}
+
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+    if (MD->isInstance())
+      return getFunctionInfo(MD);
+  }
+  
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
   if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FTy))
     return getFunctionInfo(FTP);

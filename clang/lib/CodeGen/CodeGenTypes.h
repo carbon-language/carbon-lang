@@ -32,6 +32,7 @@ namespace llvm {
 namespace clang {
   class ABIInfo;
   class ASTContext;
+  class CXXMethodDecl;
   class FieldDecl;
   class FunctionProtoType;
   class ObjCInterfaceDecl;
@@ -172,6 +173,7 @@ public:
   const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *FTNP);
   const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *FTP);
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
+  const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(QualType ResTy, 
                                         const CallArgList &Args);
