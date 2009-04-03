@@ -211,7 +211,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     break;
   }
 
-  // Try spliting an indexed load / store to a un-indexed one plus an add/sub
+  // Try splitting an indexed load/store to an un-indexed one plus an add/sub
   // operation.
   unsigned MemOpc = getUnindexedOpcode(MI->getOpcode());
   if (MemOpc == 0)
@@ -401,8 +401,8 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     return false;
   }
 
-  // Likewise if it ends with a branch table followed by an unconditional branch.
-  // The branch folder can create these, and we must get rid of them for
+  // ...likewise if it ends with a branch table followed by an unconditional
+  // branch. The branch folder can create these, and we must get rid of them for
   // correctness of Thumb constant islands.
   if ((SecondLastOpc == ARM::BR_JTr || SecondLastOpc==ARM::BR_JTm ||
        SecondLastOpc == ARM::BR_JTadd || SecondLastOpc==ARM::tBR_JTr) &&
@@ -692,7 +692,7 @@ MachineInstr *ARMInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   default: break;
   case ARM::MOVr: {
     if (MI->getOperand(4).getReg() == ARM::CPSR)
-      // If it is updating CPSR, then it cannot be foled.
+      // If it is updating CPSR, then it cannot be folded.
       break;
     unsigned Pred = MI->getOperand(2).getImm();
     unsigned PredReg = MI->getOperand(3).getReg();
@@ -781,7 +781,7 @@ bool ARMInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   switch (Opc) {
   default: break;
   case ARM::MOVr:
-    // If it is updating CPSR, then it cannot be foled.
+    // If it is updating CPSR, then it cannot be folded.
     return MI->getOperand(4).getReg() != ARM::CPSR;
   case ARM::tMOVr: {
     if (OpNum == 0) { // move -> store
