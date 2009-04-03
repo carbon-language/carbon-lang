@@ -866,8 +866,15 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
     ObjCMethodDecl *method = *I;
     if (method->getImplementationControl() != ObjCMethodDecl::Optional && 
         !method->isSynthesized() && !InsMap.count(method->getSelector()) &&
-        (!Super || !Super->lookupInstanceMethod(method->getSelector())))
-      WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
+        (!Super || !Super->lookupInstanceMethod(method->getSelector()))) {
+        // Ugly, but necessary. Method declared in protcol might have
+        // have been synthesized due to a property declared in the class which
+        // uses the protocol.
+        ObjCMethodDecl *MethodInClass = 
+          IDecl->lookupInstanceMethod(method->getSelector());
+        if (!MethodInClass || !MethodInClass->isSynthesized())
+          WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
+      }
   }
   // check unimplemented class methods
   for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
