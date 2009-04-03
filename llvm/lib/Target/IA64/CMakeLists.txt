@@ -9,7 +9,6 @@ tablegen(IA64GenAsmWriter.inc -gen-asm-writer)
 tablegen(IA64GenDAGISel.inc -gen-dag-isel)
 
 add_llvm_target(IA64CodeGen
-  IA64AsmPrinter.cpp
   IA64Bundling.cpp
   IA64InstrInfo.cpp
   IA64ISelDAGToDAG.cpp
