@@ -1039,6 +1039,11 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
                                 strictConversion);
     assert(Result == conversionOK && "UTF-8 to UTF-16 conversion failed");
     
+    // FIXME: Storing UTF-16 in a C string is a hack to test Unicode strings
+    // without doing more surgery to this routine. Since we aren't explicitly
+    // checking for endianness here, it's also a bug (when generating code for
+    // a target that doesn't match the host endianness). Modeling this as an i16
+    // array is likely the cleanest solution.
     StringLength = ToPtr-&ToBuf[0];
     str.assign((char *)&ToBuf[0], StringLength*2); // Twice as many UTF8 chars.
     isUTF16 = true;
