@@ -1,4 +1,4 @@
-##===- lib/Target/CellSPU/Makefile -------------------------*- Makefile -*-===##
+##===- lib/Target/IA64/AsmPrinter/Makefile -----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
