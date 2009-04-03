@@ -25,8 +25,9 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-static cl::opt<bool> EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
-                                  cl::desc("Enable ARM 2-addr to 3-addr conv"));
+static cl::opt<bool>
+EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
+               cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
 static inline
 const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
@@ -445,9 +446,10 @@ unsigned ARMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return 2;
 }
 
-unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                            const SmallVectorImpl<MachineOperand> &Cond) const {
+unsigned
+ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                           MachineBasicBlock *FBB,
+                           const SmallVectorImpl<MachineOperand> &Cond) const {
   // FIXME this should probably have a DebugLoc argument
   DebugLoc dl = DebugLoc::getUnknownLoc();
   MachineFunction &MF = *MBB.getParent();
@@ -477,10 +479,10 @@ unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *T
 }
 
 bool ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC) const {
+                                MachineBasicBlock::iterator I,
+                                unsigned DestReg, unsigned SrcReg,
+                                const TargetRegisterClass *DestRC,
+                                const TargetRegisterClass *SrcRC) const {
   if (DestRC != SrcRC) {
     // Not yet supported!
     return false;
@@ -600,10 +602,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
-void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                   SmallVectorImpl<MachineOperand> &Addr,
-                                   const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+void ARMInstrInfo::
+loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                SmallVectorImpl<MachineOperand> &Addr,
+                const TargetRegisterClass *RC,
+                SmallVectorImpl<MachineInstr*> &NewMIs) const {
   DebugLoc DL = DebugLoc::getUnknownLoc();
   unsigned Opc = 0;
   if (RC == ARM::GPRRegisterClass) {
@@ -632,9 +635,10 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   return;
 }
 
-bool ARMInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
+bool ARMInstrInfo::
+spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator MI,
+                          const std::vector<CalleeSavedInfo> &CSI) const {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   if (!AFI->isThumbFunction() || CSI.empty())
@@ -653,9 +657,10 @@ bool ARMInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                 MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
+bool ARMInstrInfo::
+restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            const std::vector<CalleeSavedInfo> &CSI) const {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   if (!AFI->isThumbFunction() || CSI.empty())
@@ -679,10 +684,9 @@ bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-MachineInstr *ARMInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                                  MachineInstr *MI,
-                                        const SmallVectorImpl<unsigned> &Ops,
-                                                  int FI) const {
+MachineInstr *ARMInstrInfo::
+foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                      const SmallVectorImpl<unsigned> &Ops, int FI) const {
   if (Ops.size() != 1) return NULL;
 
   unsigned OpNum = Ops[0];
@@ -772,8 +776,9 @@ MachineInstr *ARMInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   return NewMI;
 }
 
-bool ARMInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
-                                  const SmallVectorImpl<unsigned> &Ops) const {
+bool ARMInstrInfo::
+canFoldMemoryOperand(const MachineInstr *MI,
+                     const SmallVectorImpl<unsigned> &Ops) const {
   if (Ops.size() != 1) return false;
 
   unsigned OpNum = Ops[0];
@@ -837,8 +842,9 @@ bool ARMInstrInfo::isPredicated(const MachineInstr *MI) const {
   return PIdx != -1 && MI->getOperand(PIdx).getImm() != ARMCC::AL;
 }
 
-bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const {
+bool ARMInstrInfo::
+PredicateInstruction(MachineInstr *MI,
+                     const SmallVectorImpl<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setDesc(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
@@ -857,9 +863,9 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
   return false;
 }
 
-bool
-ARMInstrInfo::SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                            const SmallVectorImpl<MachineOperand> &Pred2) const{
+bool ARMInstrInfo::
+SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                  const SmallVectorImpl<MachineOperand> &Pred2) const {
   if (Pred1.size() > 2 || Pred2.size() > 2)
     return false;
 
