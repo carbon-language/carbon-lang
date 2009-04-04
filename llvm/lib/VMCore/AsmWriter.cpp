@@ -23,6 +23,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
+#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
@@ -361,8 +362,8 @@ namespace {
         return;
       
       // If this is a structure or opaque type, add a name for the type.
-      if ((isa<StructType>(Ty) || isa<OpaqueType>(Ty))
-          && !TP.hasTypeName(Ty)) {
+      if (((isa<StructType>(Ty) && cast<StructType>(Ty)->getNumElements())
+            || isa<OpaqueType>(Ty)) && !TP.hasTypeName(Ty)) {
         TP.addTypeName(Ty, "%"+utostr(unsigned(NumberedTypes.size())));
         NumberedTypes.push_back(Ty);
       }
@@ -935,7 +936,27 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << "undef";
     return;
   }
+  
+  if (const MDString *S = dyn_cast<MDString>(CV)) {
+    Out << "!\"";
+    PrintEscapedString(S->begin(), S->size(), Out);
+    Out << '"';
+    return;
+  }
 
+  if (const MDNode *N = dyn_cast<MDNode>(CV)) {
+    Out << "!{";
+    for (MDNode::const_op_iterator I = N->op_begin(), E = N->op_end(); I != E;){
+      TypePrinter.print((*I)->getType(), Out);
+      Out << ' ';
+      WriteAsOperandInternal(Out, *I, TypePrinter, Machine);
+      if (++I != E)
+        Out << ", ";
+    }
+    Out << "}";
+    return;
+  }
+  
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName();
     if (CE->isCompare())

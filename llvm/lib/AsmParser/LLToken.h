@@ -115,6 +115,9 @@ namespace lltok {
     LocalVar,          // %foo %"foo"
     StringConstant,    // "foo"
 
+    // Metadata valued tokens.
+    Metadata,          // !"foo" !{i8 42}
+
     // Type valued tokens (TyVal).
     Type,
 

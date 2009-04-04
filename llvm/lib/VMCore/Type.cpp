@@ -288,6 +288,8 @@ const IntegerType *Type::Int16Ty = new BuiltinIntegerType(16);
 const IntegerType *Type::Int32Ty = new BuiltinIntegerType(32);
 const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 
+const Type *Type::EmptyStructTy = StructType::get(NULL, NULL);
+
 
 //===----------------------------------------------------------------------===//
 //                          Derived Type Constructors

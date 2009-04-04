@@ -26,6 +26,7 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -812,6 +813,109 @@ public:
     return V->getValueID() == UndefValueVal;
   }
 };
+
+//===----------------------------------------------------------------------===//
+/// MDString - a single uniqued string.
+/// These are used to efficiently contain a byte sequence for metadata.
+///
+class MDString : public Constant {
+  MDString(const MDString &);            // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  MDString(const char *begin, const char *end);
+
+  const char *StrBegin, *StrEnd;
+protected:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+public:
+  /// get() - Static factory methods - Return objects of the specified value.
+  ///
+  static MDString *get(const char *StrBegin, const char *StrEnd);
+
+  /// size() - The length of this string.
+  ///
+  unsigned size() const { return StrEnd - StrBegin; }
+
+  /// begin() - Pointer to the first byte of the string.
+  ///
+  const char *begin() const { return StrBegin; }
+
+  /// end() - Pointer to one byte past the end of the string.
+  ///
+  const char *end() const { return StrEnd; }
+
+  /// getType() specialization - Type is always an empty struct.
+  ///
+  inline const Type *getType() const {
+    return Type::EmptyStructTy;
+  }
+
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.  This always returns false because getNullValue will never
+  /// produce metadata.
+  virtual bool isNullValue() const {
+    return false;
+  }
+
+  virtual void destroyConstant();
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const MDString *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == MDStringVal;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// MDNode - a tuple of other values.
+/// These contain a list of the Constants that represent the metadata.
+///
+class MDNode : public Constant, public FoldingSetNode {
+  MDNode(const MDNode &);      // DO NOT IMPLEMENT
+protected:
+  explicit MDNode(Constant*const* Vals, unsigned NumVals);
+public:
+  /// get() - Static factory methods - Return objects of the specified value.
+  ///
+  static MDNode *get(Constant*const* Vals, unsigned NumVals);
+
+  // Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
+
+  /// getType() specialization - Type is always an empty struct.
+  ///
+  inline const Type *getType() const {
+    return Type::EmptyStructTy;
+  }
+
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.  This always returns false because getNullValue will never
+  /// produce metadata.
+  virtual bool isNullValue() const {
+    return false;
+  }
+
+  /// Profile - calculate a unique identifier for this MDNode to collapse
+  /// duplicates
+  void Profile(FoldingSetNodeID &ID);
+
+  virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const MDNode *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == MDNodeVal;
+  }
+};
+
+template <>
+struct OperandTraits<MDNode> : VariadicOperandTraits<> {
+};
+
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(MDNode, Constant)
 
 } // End llvm namespace
 

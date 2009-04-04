@@ -203,13 +203,15 @@ public:
     ConstantStructVal,        // This is an instance of ConstantStruct
     ConstantVectorVal,        // This is an instance of ConstantVector
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
+    MDStringVal,              // This is an instance of MDString
+    MDNodeVal,                // This is an instance of MDNode
     InlineAsmVal,             // This is an instance of InlineAsm
     PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
     InstructionVal,           // This is an instance of Instruction
     
     // Markers:
     ConstantFirstVal = FunctionVal,
-    ConstantLastVal  = ConstantPointerNullVal
+    ConstantLastVal  = MDNodeVal
   };
 
   /// getValueID - Return an ID for the concrete type of this object.  This is

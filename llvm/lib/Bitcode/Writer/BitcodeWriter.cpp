@@ -458,6 +458,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   unsigned String8Abbrev = 0;
   unsigned CString7Abbrev = 0;
   unsigned CString6Abbrev = 0;
+  unsigned MDString8Abbrev = 0;
+  unsigned MDString6Abbrev = 0;
   // If this is a constant pool for the module, emit module-specific abbrevs.
   if (isGlobal) {
     // Abbrev for CST_CODE_AGGREGATE.
@@ -485,6 +487,19 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
     CString6Abbrev = Stream.EmitAbbrev(Abbv);
+
+    // Abbrev for CST_CODE_MDSTRING.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_MDSTRING));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+    MDString8Abbrev = Stream.EmitAbbrev(Abbv);
+    // Abbrev for CST_CODE_MDSTRING.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_MDSTRING));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+    MDString6Abbrev = Stream.EmitAbbrev(Abbv);
   }  
   
   SmallVector<uint64_t, 64> Record;
@@ -677,6 +692,22 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         Record.push_back(VE.getValueID(C->getOperand(1)));
         Record.push_back(CE->getPredicate());
         break;
+      }
+    } else if (const MDString *S = dyn_cast<MDString>(C)) {
+      Code = bitc::CST_CODE_MDSTRING;
+      AbbrevToUse = MDString6Abbrev;
+      for (unsigned i = 0, e = S->size(); i != e; ++i) {
+        char V = S->begin()[i];
+        Record.push_back(V);
+
+        if (!BitCodeAbbrevOp::isChar6(V))
+          AbbrevToUse = MDString8Abbrev;
+      }
+    } else if (const MDNode *N = dyn_cast<MDNode>(C)) {
+      Code = bitc::CST_CODE_MDNODE;
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+        Record.push_back(VE.getTypeID(N->getOperand(i)->getType()));
+        Record.push_back(VE.getValueID(N->getOperand(i)));
       }
     } else {
       assert(0 && "Unknown constant!");

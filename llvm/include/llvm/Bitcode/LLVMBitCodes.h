@@ -126,7 +126,9 @@ namespace bitc {
     CST_CODE_CE_SHUFFLEVEC = 16,  // CE_SHUFFLEVEC: [opval, opval, opval]
     CST_CODE_CE_CMP        = 17,  // CE_CMP:        [opty, opval, opval, pred]
     CST_CODE_INLINEASM     = 18,  // INLINEASM:     [sideeffect,asmstr,conststr]
-    CST_CODE_CE_SHUFVEC_EX = 19   // SHUFVEC_EX:    [opty, opval, opval, opval]
+    CST_CODE_CE_SHUFVEC_EX = 19,  // SHUFVEC_EX:    [opty, opval, opval, opval]
+    CST_CODE_MDSTRING      = 20,  // MDSTRING:      [values]
+    CST_CODE_MDNODE        = 21   // MDNODE:        [n x (type num, value num)]
   };
 
   /// CastOpcodes - These are values used in the bitcode files to encode which

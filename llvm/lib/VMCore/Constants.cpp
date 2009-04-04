@@ -17,7 +17,9 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -1657,6 +1659,63 @@ void UndefValue::destroyConstant() {
   destroyConstantImpl();
 }
 
+//---- MDString::get() implementation
+//
+
+MDString::MDString(const char *begin, const char *end)
+  : Constant(Type::EmptyStructTy, MDStringVal, 0, 0),
+    StrBegin(begin), StrEnd(end) {}
+
+static ManagedStatic<StringMap<MDString*> > MDStringCache;
+
+MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
+  StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(StrBegin,
+                                                                      StrEnd);
+  MDString *&S = Entry.getValue();
+  if (!S) S = new MDString(Entry.getKeyData(),
+                           Entry.getKeyData() + Entry.getKeyLength());
+  return S;
+}
+
+void MDString::destroyConstant() {
+  MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
+  destroyConstantImpl();
+}
+
+//---- MDNode::get() implementation
+//
+
+static ManagedStatic<FoldingSet<MDNode> > MDNodeSet;
+
+MDNode::MDNode(Constant*const* Vals, unsigned NumVals)
+  : Constant(Type::EmptyStructTy, MDNodeVal,
+             OperandTraits<MDNode>::op_end(this) - NumVals, NumVals) {
+  std::copy(Vals, Vals + NumVals, OperandList);
+}
+
+void MDNode::Profile(FoldingSetNodeID &ID) {
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    ID.AddPointer(*I);
+}
+
+MDNode *MDNode::get(Constant*const* Vals, unsigned NumVals) {
+  FoldingSetNodeID ID;
+  for (unsigned i = 0; i != NumVals; ++i)
+    ID.AddPointer(Vals[i]);
+
+  void *InsertPoint;
+  if (MDNode *N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint))
+    return N;
+
+  // InsertPoint will have been set by the FindNodeOrInsertPos call.
+  MDNode *N = new(NumVals) MDNode(Vals, NumVals);
+  MDNodeSet->InsertNode(N, InsertPoint);
+  return N;
+}
+
+void MDNode::destroyConstant() {
+  destroyConstantImpl();
+}
 
 //---- ConstantExpr::get() implementations...
 //
@@ -2733,6 +2792,27 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     return;
   }
   
+  assert(Replacement != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();
+}
+
+void MDNode::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  
+  SmallVector<Constant*, 8> Values;
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
+    if (Val == From) Val = cast<Constant>(To);
+    Values.push_back(Val);
+  }
+  
+  Constant *Replacement = MDNode::get(&Values[0], Values.size());
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.

@@ -1561,6 +1561,29 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.StrVal = Lex.getStrVal();
     ID.Kind = ValID::t_LocalName;
     break;
+  case lltok::Metadata: {  // !{...} MDNode, !"foo" MDString
+    ID.Kind = ValID::t_Constant;
+    Lex.Lex();
+    if (Lex.getKind() == lltok::lbrace) {
+      // MDNode:
+      //  ::= '!' '{' TypeAndValue (',' TypeAndValue)* '}'
+      SmallVector<Constant*, 16> Elts;
+      if (ParseMDNodeVector(Elts) ||
+          ParseToken(lltok::rbrace, "expected end of metadata node"))
+        return true;
+    
+      ID.ConstantVal = MDNode::get(&Elts[0], Elts.size());
+      return false;
+    }
+
+    // MDString:
+    //   ::= '!' STRINGCONSTANT
+    std::string Str;
+    if (ParseStringConstant(Str)) return true;
+
+    ID.ConstantVal = MDString::get(Str.data(), Str.data() + Str.size());
+    return false;
+  }
   case lltok::APSInt:
     ID.APSIntVal = Lex.getAPSIntVal(); 
     ID.Kind = ValID::t_APSInt;
@@ -1661,7 +1684,7 @@ bool LLParser::ParseValID(ValID &ID) {
                      "array element #" + utostr(i) +
                      " is not of type '" +Elts[0]->getType()->getDescription());
     }
-          
+    
     ID.ConstantVal = ConstantArray::get(ATy, &Elts[0], Elts.size());
     ID.Kind = ValID::t_Constant;
     return false;
@@ -3219,5 +3242,23 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
                                         Indices.end()))
     return Error(Loc0, "invalid indices for insertvalue");
   Inst = InsertValueInst::Create(Val0, Val1, Indices.begin(), Indices.end());
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
+// Embedded metadata.
+//===----------------------------------------------------------------------===//
+
+/// ParseMDNodeVector
+///   ::= TypeAndValue (',' TypeAndValue)*
+bool LLParser::ParseMDNodeVector(SmallVectorImpl<Constant*> &Elts) {
+  assert(Lex.getKind() == lltok::lbrace);
+  Lex.Lex();
+  do {
+    Constant *C;
+    if (ParseGlobalTypeAndValue(C)) return true;
+    Elts.push_back(C);
+  } while (EatIfPresent(lltok::comma));
+
   return false;
 }

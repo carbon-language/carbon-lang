@@ -27,6 +27,8 @@ namespace llvm {
   class Instruction;
   class Constant;
   class GlobalValue;
+  class MDString;
+  class MDNode;
   struct ValID;
 
   class LLParser {
@@ -156,6 +158,7 @@ namespace llvm {
     bool ParseGlobalValue(const Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
+    bool ParseMDNodeVector(SmallVectorImpl<Constant*> &);
 
 
     // Function Semantic Analysis.

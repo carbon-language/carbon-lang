@@ -286,10 +286,12 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
                                    UserCS->getType()->isPacked());
       } else if (isa<ConstantVector>(UserC)) {
         NewC = ConstantVector::get(&NewOps[0], NewOps.size());
-      } else {
-        // Must be a constant expression.
+      } else if (isa<ConstantExpr>(UserC)) {
         NewC = cast<ConstantExpr>(UserC)->getWithOperands(&NewOps[0],
                                                           NewOps.size());
+      } else {
+        assert(isa<MDNode>(UserC) && "Must be a metadata node.");
+        NewC = MDNode::get(&NewOps[0], NewOps.size());
       }
       
       UserC->replaceAllUsesWith(NewC);
@@ -997,6 +999,29 @@ bool BitcodeReader::ParseConstants() {
       const PointerType *PTy = cast<PointerType>(CurTy);
       V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
                          AsmStr, ConstrStr, HasSideEffects);
+      break;
+    }
+    case bitc::CST_CODE_MDSTRING: {
+      if (Record.size() < 2) return Error("Invalid MDSTRING record");
+      unsigned MDStringLength = Record.size();
+      SmallString<8> String;
+      String.resize(MDStringLength);
+      for (unsigned i = 0; i != MDStringLength; ++i)
+        String[i] = Record[i];
+      V = MDString::get(String.c_str(), String.c_str() + MDStringLength);
+      break;
+    }
+    case bitc::CST_CODE_MDNODE: {
+      if (Record.empty() || Record.size() % 2 == 1)
+        return Error("Invalid CST_MDNODE record");
+      
+      unsigned Size = Record.size();
+      SmallVector<Constant*, 8> Elts;
+      for (unsigned i = 0; i != Size; i += 2) {
+        const Type *Ty = getTypeByID(Record[i], false);
+        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], Ty));
+      }
+      V = MDNode::get(&Elts[0], Elts.size());
       break;
     }
     }
