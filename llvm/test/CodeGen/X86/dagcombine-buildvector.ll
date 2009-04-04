@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t -f
 ; RUN: grep unpcklpd %t | count 1
 ; RUN: grep movapd %t | count 1
 
