@@ -1471,7 +1471,7 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (NumParams.getLimitedValue(4) > S.Context.Target.getRegParmMax()) {
+  if (NumParams.getLimitedValue(255) > S.Context.Target.getRegParmMax()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
       << S.Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
     return;
