@@ -312,6 +312,8 @@ void Driver::PrintVersion(const Compilation &C) const {
 #endif
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
+
+  // FIXME: Do not hardcode clang version.
   llvm::errs() << "clang version 1.0 (" << vers << " " << revision << ")" << "\n";
 
   const ToolChain &TC = C.getDefaultToolChain();
@@ -322,6 +324,12 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // The order these options are handled in in gcc is all over the
   // place, but we don't expect inconsistencies w.r.t. that to matter
   // in practice.
+
+  if (C.getArgs().hasArg(options::OPT_dumpversion)) {
+    // FIXME: Do not hardcode clang version.
+    llvm::outs() << "1.0\n";
+    return false;
+  }
 
   if (C.getArgs().hasArg(options::OPT__help)) {
     PrintHelp();
