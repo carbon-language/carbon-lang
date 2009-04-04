@@ -232,6 +232,10 @@ private:
   /// BlockScopes - Map of which "cleanup scope" scope basic blocks have.
   BlockScopeMap BlockScopes;
 
+  /// CXXThisDecl - When parsing an C++ function, this will hold the implicit
+  /// 'this' declaration.
+  ImplicitParamDecl *CXXThisDecl;
+  
 public:
   CodeGenFunction(CodeGenModule &cgm);
 

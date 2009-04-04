@@ -820,18 +820,26 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
-  const llvm::FunctionType *Ty = 
-    cast<llvm::FunctionType>(getTypes().ConvertType(D->getType()));
+  const llvm::FunctionType *Ty;
 
-  // As a special case, make sure that definitions of K&R function
-  // "type foo()" aren't declared as varargs (which forces the backend
-  // to do unnecessary work).
-  if (D->getType()->isFunctionNoProtoType()) {
-    assert(Ty->isVarArg() && "Didn't lower type as expected");
-    // Due to stret, the lowered function could have arguments.  Just create the
-    // same type as was lowered by ConvertType but strip off the varargs bit.
-    std::vector<const llvm::Type*> Args(Ty->param_begin(), Ty->param_end());
-    Ty = llvm::FunctionType::get(Ty->getReturnType(), Args, false);
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+    bool isVariadic = D->getType()->getAsFunctionProtoType()->isVariadic();
+    
+    Ty = getTypes().GetFunctionType(getTypes().getFunctionInfo(MD), isVariadic);
+  } else {
+    Ty = cast<llvm::FunctionType>(getTypes().ConvertType(D->getType()));
+    
+    // As a special case, make sure that definitions of K&R function
+    // "type foo()" aren't declared as varargs (which forces the backend
+    // to do unnecessary work).
+    if (D->getType()->isFunctionNoProtoType()) {
+      assert(Ty->isVarArg() && "Didn't lower type as expected");
+      // Due to stret, the lowered function could have arguments. 
+      // Just create the same type as was lowered by ConvertType 
+      // but strip off the varargs bit.
+      std::vector<const llvm::Type*> Args(Ty->param_begin(), Ty->param_end());
+      Ty = llvm::FunctionType::get(Ty->getReturnType(), Args, false);
+    }
   }
 
   // Get or create the prototype for teh function.
@@ -1305,6 +1313,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     return;
 
   switch (D->getKind()) {
+  case Decl::CXXMethod:
   case Decl::Function:
   case Decl::Var:
     EmitGlobal(cast<ValueDecl>(D));

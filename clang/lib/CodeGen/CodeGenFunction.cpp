@@ -18,6 +18,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
@@ -26,7 +27,8 @@ using namespace CodeGen;
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
   : BlockFunction(cgm, *this, Builder), CGM(cgm),
     Target(CGM.getContext().Target),
-    DebugInfo(0), SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0) {
+    DebugInfo(0), SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0), 
+    CXXThisDecl(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
 }
@@ -201,6 +203,19 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
     DebugInfo = CGM.getDebugInfo();
   
   FunctionArgList Args;
+  
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+    if (MD->isInstance()) {
+      // Create the implicit 'this' decl.
+      // FIXME: I'm not entirely sure I like using a fake decl just for code
+      // generation. Maybe we can come up with a better way?
+      CXXThisDecl = ImplicitParamDecl::Create(getContext(), 0, SourceLocation(),
+                                              &getContext().Idents.get("this"), 
+                                              MD->getThisType(getContext()));
+      Args.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
+    }
+  }
+  
   if (FD->getNumParams()) {
     const FunctionProtoType* FProto = FD->getType()->getAsFunctionProtoType();
     assert(FProto && "Function def must have prototype!");
@@ -221,6 +236,10 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
   } else {
     FinishFunction();
   }
+    
+  // Destroy the 'this' declaration.
+  if (CXXThisDecl)
+    CXXThisDecl->Destroy(getContext());
 }
 
 /// ContainsLabel - Return true if the statement contains a label in it.  If
