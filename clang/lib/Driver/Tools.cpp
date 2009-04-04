@@ -1446,13 +1446,23 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     Args.MakeArgString(getToolChain().GetProgramPath(C, "collect2").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));  
 
+  // Find the first non-empty base input (we want to ignore linker
+  // inputs).
+  const char *BaseInput = "";
+  for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
+    if (Inputs[i].getBaseInput()[0] != '\0') {
+      BaseInput = Inputs[i].getBaseInput();
+      break;
+    }
+  }
+  
   if (Args.getLastArg(options::OPT_g_Group) &&
       !Args.getLastArg(options::OPT_gstabs) &&
       !Args.getLastArg(options::OPT_g0)) {
     // FIXME: This is gross, but matches gcc. The test only considers
     // the suffix (not the -x type), and then only of the first
-    // input. Awesome.
-    const char *Suffix = strchr(Inputs[0].getBaseInput(), '.');
+    // source input. Awesome.
+    const char *Suffix = strrchr(BaseInput, '.');
     if (Suffix && isSourceSuffix(Suffix + 1)) {
       const char *Exec = 
        Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil").c_str());

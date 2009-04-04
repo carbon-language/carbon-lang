@@ -17,6 +17,12 @@
 // RUN: grep '"-lcrt1.10.6.o" .*"-lSystem" "-lgcc"' %t.log &&
 // RUN: grep '"-lgcc_s"' %t.log | count 0 &&
 
+// Make sure we run dsymutil on source input files.
+// RUN: clang -ccc-host-triple i386-apple-darwin9 -### -g %s -o BAR 2> %t.log &&
+// RUN: grep '".*dsymutil" "BAR"' %t.log &&
+// RUN: clang -ccc-host-triple i386-apple-darwin9 -### -g -filelist FOO %s -o BAR 2> %t.log &&
+// RUN: grep '".*dsymutil" "BAR"' %t.log &&
+
 // Splatter test case. This is gross, but it works for now. For the
 // driver, just getting coverage of the tool code and checking the
 // output options is nearly good enough. The main thing we are
