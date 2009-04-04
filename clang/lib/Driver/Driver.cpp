@@ -807,9 +807,29 @@ void Driver::BuildJobs(Compilation &C) const {
     // FIXME: It would be nice to be able to send the argument to the
     // Diagnostic, so that extra values, position, and so on could be
     // printed.
-    if (!A->isClaimed())
+    if (!A->isClaimed()) {
+      // Suppress the warning automatically if this is just a flag,
+      // and it is an instance of an argument we already claimed.
+      const Option &Opt = A->getOption();
+      if (isa<FlagOption>(Opt)) {
+        bool DuplicateClaimed = false;
+
+        // FIXME: Use iterator.
+        for (ArgList::const_iterator it = C.getArgs().begin(), 
+               ie = C.getArgs().end(); it != ie; ++it) {
+          if ((*it)->isClaimed() && (*it)->getOption().matches(Opt.getId())) {
+            DuplicateClaimed = true;
+            break;
+          }
+        }
+
+        if (DuplicateClaimed)
+          continue;
+      }
+
       Diag(clang::diag::warn_drv_unused_argument) 
         << A->getAsString(C.getArgs());
+    }
   }
 }
 
