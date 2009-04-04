@@ -180,13 +180,15 @@ value of 24 (011 << 3) with no continuation.  The sum (3+24) yields the value
 <p>6-bit characters encode common characters into a fixed 6-bit field.  They
 represent the following characters with the following 6-bit values:</p>
 
-<ul>
-<li>'a' .. 'z' - 0 .. 25</li>
-<li>'A' .. 'Z' - 26 .. 51</li>
-<li>'0' .. '9' - 52 .. 61</li>
-<li>'.' - 62</li>
-<li>'_' - 63</li>
-</ul>
+<div class="doc_code">
+<pre>
+'a' .. 'z' &mdash;  0 .. 25
+'A' .. 'Z' &mdash; 26 .. 51
+'0' .. '9' &mdash; 52 .. 61
+       '.' &mdash; 62
+       '_' &mdash; 63
+</pre>
+</div>
 
 <p>This encoding is only suitable for encoding characters and strings that
 consist only of the above characters.  It is completely incapable of encoding
@@ -226,14 +228,14 @@ The set of builtin abbrev IDs is:
 </p>
 
 <ul>
-<li>0 - <a href="#END_BLOCK">END_BLOCK</a> - This abbrev ID marks the end of the
-    current block.</li>
-<li>1 - <a href="#ENTER_SUBBLOCK">ENTER_SUBBLOCK</a> - This abbrev ID marks the
-    beginning of a new block.</li>
-<li>2 - <a href="#DEFINE_ABBREV">DEFINE_ABBREV</a> - This defines a new
-    abbreviation.</li>
-<li>3 - <a href="#UNABBREV_RECORD">UNABBREV_RECORD</a> - This ID specifies the
-    definition of an unabbreviated record.</li>
+<li><tt>0 - <a href="#END_BLOCK">END_BLOCK</a></tt> &mdash; This abbrev ID marks
+    the end of the current block.</li>
+<li><tt>1 - <a href="#ENTER_SUBBLOCK">ENTER_SUBBLOCK</a></tt> &mdash; This
+    abbrev ID marks the beginning of a new block.</li>
+<li><tt>2 - <a href="#DEFINE_ABBREV">DEFINE_ABBREV</a></tt> &mdash; This defines
+    a new abbreviation.</li>
+<li><tt>3 - <a href="#UNABBREV_RECORD">UNABBREV_RECORD</a></tt> &mdash; This ID
+    specifies the definition of an unabbreviated record.</li>
 </ul>
 
 <p>Abbreviation IDs 4 and above are defined by the stream itself, and specify
@@ -273,14 +275,17 @@ block.  In particular, each block maintains:
 <li>A set of abbreviations.  Abbreviations may be defined within a block, in
     which case they are only defined in that block (neither subblocks nor
     enclosing blocks see the abbreviation).  Abbreviations can also be defined
-    inside a <a href="#BLOCKINFO">BLOCKINFO</a> block, in which case they are
-    defined in all blocks that match the ID that the BLOCKINFO block is describing.
+    inside a <tt><a href="#BLOCKINFO">BLOCKINFO</a></tt> block, in which case
+    they are defined in all blocks that match the ID that the BLOCKINFO block is
+    describing.
 </li>
 </ol>
 
-<p>As sub blocks are entered, these properties are saved and the new sub-block
-has its own set of abbreviations, and its own abbrev id width.  When a sub-block
-is popped, the saved values are restored.</p>
+<p>
+As sub blocks are entered, these properties are saved and the new sub-block has
+its own set of abbreviations, and its own abbrev id width.  When a sub-block is
+popped, the saved values are restored.
+</p>
 
 </div>
 
@@ -294,14 +299,14 @@ Encoding</a></div>
      &lt;align32bits&gt;, blocklen<sub>32</sub>]</tt></p>
 
 <p>
-The ENTER_SUBBLOCK abbreviation ID specifies the start of a new block record.
-The <tt>blockid</tt> value is encoded as a 8-bit VBR identifier, and indicates
-the type of block being entered (which can be a <a href="#stdblocks">standard
-block</a> or an application-specific block).  The
-<tt>newabbrevlen</tt> value is a 4-bit VBR which specifies the
-abbrev id width for the sub-block.  The <tt>blocklen</tt> is a 32-bit aligned
-value that specifies the size of the subblock, in 32-bit words.  This value
-allows the reader to skip over the entire block in one jump.
+The <tt>ENTER_SUBBLOCK</tt> abbreviation ID specifies the start of a new block
+record.  The <tt>blockid</tt> value is encoded as an 8-bit VBR identifier, and
+indicates the type of block being entered, which can be
+a <a href="#stdblocks">standard block</a> or an application-specific block.
+The <tt>newabbrevlen</tt> value is a 4-bit VBR, which specifies the abbrev id
+width for the sub-block.  The <tt>blocklen</tt> value is a 32-bit aligned value
+that specifies the size of the subblock in 32-bit words. This value allows the
+reader to skip over the entire block in one jump.
 </p>
 
 </div>
@@ -315,9 +320,10 @@ Encoding</a></div>
 <p><tt>[END_BLOCK, &lt;align32bits&gt;]</tt></p>
 
 <p>
-The END_BLOCK abbreviation ID specifies the end of the current block record.
-Its end is aligned to 32-bits to ensure that the size of the block is an even
-multiple of 32-bits.</p>
+The <tt>END_BLOCK</tt> abbreviation ID specifies the end of the current block
+record.  Its end is aligned to 32-bits to ensure that the size of the block is
+an even multiple of 32-bits.
+</p>
 
 </div>
 
@@ -331,11 +337,12 @@ multiple of 32-bits.</p>
 <p>
 Data records consist of a record code and a number of (up to) 64-bit integer
 values.  The interpretation of the code and values is application specific and
-there are multiple different ways to encode a record (with an unabbrev record
-or with an abbreviation).  In the LLVM IR format, for example, there is a record
-which encodes the target triple of a module.  The code is MODULE_CODE_TRIPLE,
-and the values of the record are the ascii codes for the characters in the
-string.</p>
+there are multiple different ways to encode a record (with an unabbrev record or
+with an abbreviation).  In the LLVM IR format, for example, there is a record
+which encodes the target triple of a module.  The code is
+<tt>MODULE_CODE_TRIPLE</tt>, and the values of the record are the ASCII codes
+for the characters in the string.
+</p>
 
 </div>
 
@@ -348,17 +355,21 @@ Encoding</a></div>
 <p><tt>[UNABBREV_RECORD, code<sub>vbr6</sub>, numops<sub>vbr6</sub>,
        op0<sub>vbr6</sub>, op1<sub>vbr6</sub>, ...]</tt></p>
 
-<p>An UNABBREV_RECORD provides a default fallback encoding, which is both
-completely general and also extremely inefficient.  It can describe an arbitrary
-record, by emitting the code and operands as vbrs.</p>
+<p>
+An <tt>UNABBREV_RECORD</tt> provides a default fallback encoding, which is both
+completely general and extremely inefficient.  It can describe an arbitrary
+record by emitting the code and operands as vbrs.
+</p>
 
-<p>For example, emitting an LLVM IR target triple as an unabbreviated record
-requires emitting the UNABBREV_RECORD abbrevid, a vbr6 for the
-MODULE_CODE_TRIPLE code, a vbr6 for the length of the string (which is equal to
-the number of operands), and a vbr6 for each character.  Since there are no
-letters with value less than 32, each letter would need to be emitted as at
-least a two-part VBR, which means that each letter would require at least 12
-bits.  This is not an efficient encoding, but it is fully general.</p>
+<p>
+For example, emitting an LLVM IR target triple as an unabbreviated record
+requires emitting the <tt>UNABBREV_RECORD</tt> abbrevid, a vbr6 for the
+<tt>MODULE_CODE_TRIPLE</tt> code, a vbr6 for the length of the string, which is
+equal to the number of operands, and a vbr6 for each character.  Because there
+are no letters with values less than 32, each letter would need to be emitted as
+at least a two-part VBR, which means that each letter would require at least 12
+bits.  This is not an efficient encoding, but it is fully general.
+</p>
 
 </div>
 
@@ -370,13 +381,14 @@ Encoding</a></div>
 
 <p><tt>[&lt;abbrevid&gt;, fields...]</tt></p>
 
-<p>An abbreviated record is a abbreviation id followed by a set of fields that
-are encoded according to the <a href="#abbreviations">abbreviation 
-definition</a>.  This allows records to be encoded significantly more densely
-than records encoded with the <a href="#UNABBREV_RECORD">UNABBREV_RECORD</a>
-type, and allows the abbreviation types to be specified in the stream itself,
-which allows the files to be completely self describing.  The actual encoding
-of abbreviations is defined below.
+<p>
+An abbreviated record is a abbreviation id followed by a set of fields that are
+encoded according to the <a href="#abbreviations">abbreviation definition</a>.
+This allows records to be encoded significantly more densely than records
+encoded with the <tt><a href="#UNABBREV_RECORD">UNABBREV_RECORD</a></tt> type,
+and allows the abbreviation types to be specified in the stream itself, which
+allows the files to be completely self describing.  The actual encoding of
+abbreviations is defined below.
 </p>
 
 </div>
@@ -395,7 +407,7 @@ emitted.
 </p>
 
 <p>
-Abbreviations can be determined dynamically per client, per file.  Since the
+Abbreviations can be determined dynamically per client, per file. Because the
 abbreviations are stored in the bitstream itself, different streams of the same
 format can contain different sets of abbreviations if the specific stream does
 not need it.  As a concrete example, LLVM IR files usually emit an abbreviation
@@ -413,33 +425,36 @@ operators, the abbreviation does not need to be emitted.
 <p><tt>[DEFINE_ABBREV, numabbrevops<sub>vbr5</sub>, abbrevop0, abbrevop1,
  ...]</tt></p>
 
-<p>A DEFINE_ABBREV record adds an abbreviation to the list of currently
-defined abbreviations in the scope of this block.  This definition only
-exists inside this immediate block -- it is not visible in subblocks or
-enclosing blocks.
-Abbreviations are implicitly assigned IDs
-sequentially starting from 4 (the first application-defined abbreviation ID).
-Any abbreviations defined in a BLOCKINFO record receive IDs first, in order,
-followed by any abbreviations defined within the block itself.
-Abbreviated data records reference this ID to indicate what abbreviation
-they are invoking.</p>
+<p>
+A <tt>DEFINE_ABBREV</tt> record adds an abbreviation to the list of currently
+defined abbreviations in the scope of this block.  This definition only exists
+inside this immediate block &mdash; it is not visible in subblocks or enclosing
+blocks.  Abbreviations are implicitly assigned IDs sequentially starting from 4
+(the first application-defined abbreviation ID).  Any abbreviations defined in a
+<tt>BLOCKINFO</tt> record receive IDs first, in order, followed by any
+abbreviations defined within the block itself.  Abbreviated data records
+reference this ID to indicate what abbreviation they are invoking.
+</p>
 
-<p>An abbreviation definition consists of the DEFINE_ABBREV abbrevid followed
-by a VBR that specifies the number of abbrev operands, then the abbrev
+<p>
+An abbreviation definition consists of the <tt>DEFINE_ABBREV</tt> abbrevid
+followed by a VBR that specifies the number of abbrev operands, then the abbrev
 operands themselves.  Abbreviation operands come in three forms.  They all start
 with a single bit that indicates whether the abbrev operand is a literal operand
-(when the bit is 1) or an encoding operand (when the bit is 0).</p>
+(when the bit is 1) or an encoding operand (when the bit is 0).
+</p>
 
 <ol>
-<li>Literal operands - <tt>[1<sub>1</sub>, litvalue<sub>vbr8</sub>]</tt> -
-Literal operands specify that the value in the result
-is always a single specific value.  This specific value is emitted as a vbr8
-after the bit indicating that it is a literal operand.</li>
-<li>Encoding info without data - <tt>[0<sub>1</sub>, encoding<sub>3</sub>]</tt>
- - Operand encodings that do not have extra data are just emitted as their code.
+<li>Literal operands &mdash; <tt>[1<sub>1</sub>, litvalue<sub>vbr8</sub>]</tt>
+&mdash; Literal operands specify that the value in the result is always a single
+specific value.  This specific value is emitted as a vbr8 after the bit
+indicating that it is a literal operand.</li>
+<li>Encoding info without data &mdash; <tt>[0<sub>1</sub>,
+ encoding<sub>3</sub>]</tt> &mdash; Operand encodings that do not have extra
+ data are just emitted as their code.
 </li>
-<li>Encoding info with data - <tt>[0<sub>1</sub>, encoding<sub>3</sub>, 
-value<sub>vbr5</sub>]</tt> - Operand encodings that do have extra data are
+<li>Encoding info with data &mdash; <tt>[0<sub>1</sub>, encoding<sub>3</sub>,
+value<sub>vbr5</sub>]</tt> &mdash; Operand encodings that do have extra data are
 emitted as their code, followed by the extra data.
 </li>
 </ol>
@@ -447,53 +462,65 @@ emitted as their code, followed by the extra data.
 <p>The possible operand encodings are:</p>
 
 <ul>
-<li>1 - Fixed - The field should be emitted as a <a 
-    href="#fixedwidth">fixed-width value</a>, whose width
-    is specified by the operand's extra data.</li>
-<li>2 - VBR - The field should be emitted as a <a 
-    href="#variablewidth">variable-width value</a>, whose width
-    is specified by the operand's extra data.</li>
-<li>3 - Array - This field is an array of values.  The array operand has no
-    extra data, but expects another operand to follow it which indicates the
-    element type of the array.  When reading an array in an abbreviated record,
-    the first integer is a vbr6 that indicates the array length, followed by
-    the encoded elements of the array.  An array may only occur as the last
-    operand of an abbreviation (except for the one final operand that gives
-    the array's type).</li>
-<li>4 - Char6 - This field should be emitted as a <a href="#char6">char6-encoded
-    value</a>.  This operand type takes no extra data.</li>
+<li>1 &mdash; Fixed &mdash; The field should be emitted as
+    a <a href="#fixedwidth">fixed-width value</a>, whose width is specified by
+    the operand's extra data.</li>
+<li>2 &mdash; VBR &mdash; The field should be emitted as
+    a <a href="#variablewidth">variable-width value</a>, whose width is
+    specified by the operand's extra data.</li>
+<li>3 &mdash; Array &mdash; This field is an array of values.  The array operand
+    has no extra data, but expects another operand to follow it which indicates
+    the element type of the array.  When reading an array in an abbreviated
+    record, the first integer is a vbr6 that indicates the array length,
+    followed by the encoded elements of the array.  An array may only occur as
+    the last operand of an abbreviation (except for the one final operand that
+    gives the array's type).</li>
+<li>4 &mdash; Char6 &mdash; This field should be emitted as
+    a <a href="#char6">char6-encoded value</a>.  This operand type takes no
+    extra data.</li>
 </ul>
 
-<p>For example, target triples in LLVM modules are encoded as a record of the
+<p>
+For example, target triples in LLVM modules are encoded as a record of the
 form <tt>[TRIPLE, 'a', 'b', 'c', 'd']</tt>.  Consider if the bitstream emitted
-the following abbrev entry:</p>
+the following abbrev entry:
+</p>
 
-<ul>
-<li><tt>[0, Fixed, 4]</tt></li>
-<li><tt>[0, Array]</tt></li>
-<li><tt>[0, Char6]</tt></li>
-</ul>
+<div class="doc_code">
+<pre>
+[0, Fixed, 4]
+[0, Array]
+[0, Char6]
+</pre>
+</div>
 
-<p>When emitting a record with this abbreviation, the above entry would be
-emitted as:</p>
+<p>
+When emitting a record with this abbreviation, the above entry would be emitted
+as:
+</p>
 
-<p><tt>[4<sub>abbrevwidth</sub>, 2<sub>4</sub>, 4<sub>vbr6</sub>,
-   0<sub>6</sub>, 1<sub>6</sub>, 2<sub>6</sub>, 3<sub>6</sub>]</tt></p>
+<div class="doc_code">
+<pre>
+[4<sub>abbrevwidth</sub>, 2<sub>4</sub>, 4<sub>vbr6</sub>, 0<sub>6</sub>, 1<sub>6</sub>, 2<sub>6</sub>, 3<sub>6</sub>]
+</pre>
+</div>
 
 <p>These values are:</p>
 
 <ol>
 <li>The first value, 4, is the abbreviation ID for this abbreviation.</li>
-<li>The second value, 2, is the code for TRIPLE in LLVM IR files.</li>
+<li>The second value, 2, is the code for <tt>TRIPLE</tt> in LLVM IR files.</li>
 <li>The third value, 4, is the length of the array.</li>
-<li>The rest of the values are the char6 encoded values for "abcd".</li>
+<li>The rest of the values are the char6 encoded values
+    for <tt>"abcd"</tt>.</li>
 </ol>
 
-<p>With this abbreviation, the triple is emitted with only 37 bits (assuming a
+<p>
+With this abbreviation, the triple is emitted with only 37 bits (assuming a
 abbrev id width of 3).  Without the abbreviation, significantly more space would
-be required to emit the target triple.  Also, since the TRIPLE value is not
-emitted as a literal in the abbreviation, the abbreviation can also be used for
-any other string value.
+be required to emit the target triple.  Also, because the <tt>TRIPLE</tt> value
+is not emitted as a literal in the abbreviation, the abbreviation can also be
+used for any other string value.
 </p>
 
 </div>
@@ -519,33 +546,38 @@ Block</a></div>
 
 <div class="doc_text">
 
-<p>The BLOCKINFO block allows the description of metadata for other blocks.  The
-  currently specified records are:</p>
- 
-<ul>
-<li><tt>[SETBID (#1), blockid]</tt></li>
-<li><tt>[DEFINE_ABBREV, ...]</tt></li>
-</ul>
+<p>
+The <tt>BLOCKINFO</tt> block allows the description of metadata for other
+blocks.  The currently specified records are:
+</p>
+
+<div class="doc_code">
+<pre>
+[SETBID (#1), blockid]
+[DEFINE_ABBREV, ...]
+</pre>
+</div>
 
 <p>
-The SETBID record indicates which block ID is being described.  SETBID
-records can occur multiple times throughout the block to change which
-block ID is being described.  There must be a SETBID record prior to
-any other records.
+The <tt>SETBID</tt> record indicates which block ID is being
+described.  <tt>SETBID</tt> records can occur multiple times throughout the
+block to change which block ID is being described.  There must be
+a <tt>SETBID</tt> record prior to any other records.
 </p>
 
 <p>
-Standard DEFINE_ABBREV records can occur inside BLOCKINFO blocks, but unlike
-their occurrence in normal blocks, the abbreviation is defined for blocks
-matching the block ID we are describing, <i>not</i> the BLOCKINFO block itself.
-The abbreviations defined in BLOCKINFO blocks receive abbreviation ids
-as described in <a href="#DEFINE_ABBREV">DEFINE_ABBREV</a>.
+Standard <tt>DEFINE_ABBREV</tt> records can occur inside <tt>BLOCKINFO</tt>
+blocks, but unlike their occurrence in normal blocks, the abbreviation is
+defined for blocks matching the block ID we are describing, <i>not</i> the
+<tt>BLOCKINFO</tt> block itself.  The abbreviations defined
+in <tt>BLOCKINFO</tt> blocks receive abbreviation IDs as described
+in <tt><a href="#DEFINE_ABBREV">DEFINE_ABBREV</a></tt>.
 </p>
 
 <p>
-Note that although the data in BLOCKINFO blocks is described as "metadata," the
-abbreviations they contain are essential for parsing records from the
-corresponding blocks.  It is not safe to skip them.
+Note that although the data in <tt>BLOCKINFO</tt> blocks is described as
+"metadata," the abbreviations they contain are essential for parsing records
+from the corresponding blocks.  It is not safe to skip them.
 </p>
 
 </div>
@@ -556,24 +588,29 @@ corresponding blocks.  It is not safe to skip them.
 
 <div class="doc_text">
 
-<p>Bitcode files for LLVM IR may optionally be wrapped in a simple wrapper
+<p>
+Bitcode files for LLVM IR may optionally be wrapped in a simple wrapper
 structure.  This structure contains a simple header that indicates the offset
 and size of the embedded BC file.  This allows additional information to be
 stored alongside the BC file.  The structure of this file header is:
 </p>
 
-<p>
-<tt>[Magic<sub>32</sub>, Version<sub>32</sub>, Offset<sub>32</sub>,
- Size<sub>32</sub>, CPUType<sub>32</sub>]</tt></p>
+<div class="doc_code">
+<pre>
+[Magic<sub>32</sub>, Version<sub>32</sub>, Offset<sub>32</sub>, Size<sub>32</sub>, CPUType<sub>32</sub>]
+</pre>
+</div>
 
-<p>Each of the fields are 32-bit fields stored in little endian form (as with
+<p>
+Each of the fields are 32-bit fields stored in little endian form (as with
 the rest of the bitcode file fields).  The Magic number is always
 <tt>0x0B17C0DE</tt> and the version is currently always <tt>0</tt>.  The Offset
 field is the offset in bytes to the start of the bitcode stream in the file, and
 the Size field is a size in bytes of the stream. CPUType is a target-specific
 value that can be used to encode the CPU of the target.
-</div>
+</p>
 
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="llvmir">LLVM IR Encoding</a></div>
@@ -581,12 +618,14 @@ value that can be used to encode the CPU of the target.
 
 <div class="doc_text">
 
-<p>LLVM IR is encoded into a bitstream by defining blocks and records.  It uses
+<p>
+LLVM IR is encoded into a bitstream by defining blocks and records.  It uses
 blocks for things like constant pools, functions, symbol tables, etc.  It uses
 records for things like instructions, global variable descriptors, type
 descriptions, etc.  This document does not describe the set of abbreviations
 that the writer uses, as these are fully self-described in the file, and the
-reader is not allowed to build in any knowledge of this.</p>
+reader is not allowed to build in any knowledge of this.
+</p>
 
 </div>
 
@@ -603,9 +642,16 @@ reader is not allowed to build in any knowledge of this.</p>
 The magic number for LLVM IR files is:
 </p>
 
-<p><tt>[0x0<sub>4</sub>, 0xC<sub>4</sub>, 0xE<sub>4</sub>, 0xD<sub>4</sub>]</tt></p>
+<div class="doc_code">
+<pre>
+[0x0<sub>4</sub>, 0xC<sub>4</sub>, 0xE<sub>4</sub>, 0xD<sub>4</sub>]
+</pre>
+</div>
 
-<p>When combined with the bitcode magic number and viewed as bytes, this is "BC 0xC0DE".</p>
+<p>
+When combined with the bitcode magic number and viewed as bytes, this is
+<tt>"BC&nbsp;0xC0DE"</tt>.
+</p>
 
 </div>
 
@@ -618,9 +664,12 @@ The magic number for LLVM IR files is:
 <a href="#variablewidth">Variable Width Integers</a> are an efficient way to
 encode arbitrary sized unsigned values, but is an extremely inefficient way to
 encode signed values (as signed values are otherwise treated as maximally large
-unsigned values).</p>
+unsigned values).
+</p>
 
-<p>As such, signed vbr values of a specific width are emitted as follows:</p>
+<p>
+As such, signed vbr values of a specific width are emitted as follows:
+</p>
 
 <ul>
 <li>Positive values are emitted as vbrs of the specified width, but with their
@@ -629,8 +678,10 @@ unsigned values).</p>
     value is shifted left by one, and the low bit is set.</li>
 </ul>
 
-<p>With this encoding, small positive and small negative values can both be
-emitted efficiently.</p>
+<p>
+With this encoding, small positive and small negative values can both be emitted
+efficiently.
+</p>
 
 </div>
 
@@ -645,15 +696,21 @@ LLVM IR is defined with the following blocks:
 </p>
 
 <ul>
-<li>8  - MODULE_BLOCK - This is the top-level block that contains the
-    entire module, and describes a variety of per-module information.</li>
-<li>9  - PARAMATTR_BLOCK - This enumerates the parameter attributes.</li>
-<li>10 - TYPE_BLOCK - This describes all of the types in the module.</li>
-<li>11 - CONSTANTS_BLOCK - This describes constants for a module or
-    function.</li>
-<li>12 - FUNCTION_BLOCK - This describes a function body.</li>
-<li>13 - TYPE_SYMTAB_BLOCK - This describes the type symbol table.</li>
-<li>14 - VALUE_SYMTAB_BLOCK - This describes a value symbol table.</li>
+<li>8  &mdash; <tt>MODULE_BLOCK</tt> &mdash; This is the top-level block that
+    contains the entire module, and describes a variety of per-module
+    information.</li>
+<li>9  &mdash; <tt>PARAMATTR_BLOCK</tt> &mdash; This enumerates the parameter
+    attributes.</li>
+<li>10 &mdash; <tt>TYPE_BLOCK</tt> &mdash; This describes all of the types in
+    the module.</li>
+<li>11 &mdash; <tt>CONSTANTS_BLOCK</tt> &mdash; This describes constants for a
+    module or function.</li>
+<li>12 &mdash; <tt>FUNCTION_BLOCK</tt> &mdash; This describes a function
+    body.</li>
+<li>13 &mdash; <tt>TYPE_SYMTAB_BLOCK</tt> &mdash; This describes the type symbol
+    table.</li>
+<li>14 &mdash; <tt>VALUE_SYMTAB_BLOCK</tt> &mdash; This describes a value symbol
+    table.</li>
 </ul>
 
 </div>
