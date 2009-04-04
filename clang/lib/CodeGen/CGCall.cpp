@@ -1646,6 +1646,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   unsigned FuncAttrs = 0;
   unsigned RetAttrs = 0;
 
+  // FIXME: handle sseregparm someday...
   if (TargetDecl) {
     if (TargetDecl->getAttr<NoThrowAttr>())
       FuncAttrs |= llvm::Attribute::NoUnwind;
@@ -1691,19 +1692,29 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   if (RetAttrs)
     PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
+
+  // FIXME: we need to honour command line settings also...
+  // FIXME: RegParm should be reduced in case of nested functions and/or global
+  // register variable.
+  signed RegParm = 0;
+  if (TargetDecl)
+    if (const RegparmAttr *RegParmAttr = TargetDecl->getAttr<RegparmAttr>())
+      RegParm = RegParmAttr->getNumParams();
+
+  unsigned PointerWidth = getContext().Target.getPointerWidth(0);
   for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(), 
          ie = FI.arg_end(); it != ie; ++it) {
     QualType ParamType = it->type;
     const ABIArgInfo &AI = it->info;
     unsigned Attributes = 0;
-    
+
     switch (AI.getKind()) {
     case ABIArgInfo::Coerce:
       break;
 
     case ABIArgInfo::Indirect:
       Attributes |= llvm::Attribute::ByVal;
-      Attributes |= 
+      Attributes |=
         llvm::Attribute::constructAlignmentFromInt(AI.getIndirectAlign());
       // byval disables readnone and readonly.
       FuncAttrs &= ~(llvm::Attribute::ReadOnly |
@@ -1718,8 +1729,16 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
           Attributes |= llvm::Attribute::ZExt;
         }
       }
+      if (RegParm > 0 &&
+          (ParamType->isIntegerType() || ParamType->isPointerType())) {
+        RegParm -=
+          (Context.getTypeSize(ParamType) + PointerWidth - 1) / PointerWidth;
+        if (RegParm >= 0)
+          Attributes |= llvm::Attribute::InReg;
+      }
+      // FIXME: handle sseregparm someday...
       break;
-     
+
     case ABIArgInfo::Ignore:
       // Skip increment, no matching LLVM parameter.
       continue; 

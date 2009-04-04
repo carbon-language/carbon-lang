@@ -552,7 +552,7 @@ class RegparmAttr : public Attr {
 public:
   RegparmAttr(unsigned np) : Attr(Regparm), NumParams(np) {}
 
-  unsigned getNumParams() { return NumParams; }
+  unsigned getNumParams() const { return NumParams; }
 
   // Implement isa/cast/dyncast/etc.
     

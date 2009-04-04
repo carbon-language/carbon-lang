@@ -1471,7 +1471,6 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  // FIXME: we need to honour command line settings also...
   if (NumParams.getLimitedValue(4) > S.Context.Target.getRegParmMax()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
       << S.Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
