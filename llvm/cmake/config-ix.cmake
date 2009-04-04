@@ -52,6 +52,11 @@ check_symbol_exists(mallinfo malloc.h HAVE_MALLINFO)
 check_symbol_exists(pthread_mutex_lock pthread.h HAVE_PTHREAD_MUTEX_LOCK)
 check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
 
+check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
+if( LLVM_USING_GLIBC )
+  add_llvm_definitions( -D_GNU_SOURCE )
+endif()
+
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
 
