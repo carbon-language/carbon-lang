@@ -1,3 +1,5 @@
+# See docs/CMake.html for instructions about how to build LLVM with CMake.
+
 project(LLVM)
 cmake_minimum_required(VERSION 2.6.1)
 
