@@ -60,3 +60,10 @@ void f7(int a, ...) {
   int *x = &__builtin_va_arg(ap, int); // expected-error {{address expression must be an lvalue or a function designator}}
   __builtin_va_end(ap);
 }
+
+// rdar://6726818
+void f8() {
+  const __builtin_va_list args2;
+  (void)__builtin_va_arg(args2, int);
+}
+

@@ -4724,7 +4724,10 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   Expr *E = static_cast<Expr*>(expr.get());
   UsualUnaryConversions(E);
 
-  if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible)
+  AssignConvertType ConvResult = 
+    CheckAssignmentConstraints(VaListType, E->getType());
+  if (ConvResult != Compatible &&
+      ConvResult != CompatiblePointerDiscardsQualifiers)
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << E->getType() << E->getSourceRange());
