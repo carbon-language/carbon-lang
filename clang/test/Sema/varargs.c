@@ -61,9 +61,3 @@ void f7(int a, ...) {
   __builtin_va_end(ap);
 }
 
-// rdar://6726818
-void f8() {
-  const __builtin_va_list args2;
-  (void)__builtin_va_arg(args2, int);
-}
-

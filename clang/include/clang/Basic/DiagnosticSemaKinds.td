@@ -1464,6 +1464,8 @@ def err_va_start_used_in_non_variadic_function : Error<
   "'va_start' used in function with fixed args">;
 def warn_second_parameter_of_va_start_not_last_named_argument : Warning<
   "second parameter of 'va_start' not last named argument">;
+def warn_va_arg_with_qualified_va_list : Warning<
+  "va_arg applied to va_list type %0 with unexpected qualifiers">;
 def err_first_argument_to_va_arg_not_of_type_va_list : Error<
   "first argument to 'va_arg' is of type %0 and not 'va_list'">;
 

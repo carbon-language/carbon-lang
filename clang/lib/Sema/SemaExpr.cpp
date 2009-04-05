@@ -4726,11 +4726,18 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
 
   AssignConvertType ConvResult = 
     CheckAssignmentConstraints(VaListType, E->getType());
-  if (ConvResult != Compatible &&
-      ConvResult != CompatiblePointerDiscardsQualifiers)
+  switch (ConvResult) {
+  case Compatible: break;  // Everything good.
+  case CompatiblePointerDiscardsQualifiers:
+    Diag(E->getLocStart(), diag::warn_va_arg_with_qualified_va_list)
+      << E->getType() << E->getSourceRange();
+    break;
+
+  default:
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << E->getType() << E->getSourceRange());
+  }
 
   // FIXME: Check that type is complete/non-abstract
   // FIXME: Warn if a non-POD type is passed in.
