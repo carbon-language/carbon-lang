@@ -848,6 +848,14 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
     LexingRawMode = true;
     C = getAndAdvanceChar(CurPtr, Result);
     LexingRawMode = OldRawMode;
+
+    // If the char that we finally got was a \n, then we must have had something
+    // like \<newline><newline>.  We don't want to have consumed the second
+    // newline, we want CurPtr, to end up pointing to it down below.
+    if (C == '\n' || C == '\r') {
+      --CurPtr;
+      C = 'x'; // doesn't matter what this is.
+    }
     
     // If we read multiple characters, and one of those characters was a \r or
     // \n, then we had an escaped newline within the comment.  Emit diagnostic
