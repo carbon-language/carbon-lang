@@ -15,6 +15,7 @@
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Lex/Lexer.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
@@ -80,22 +81,27 @@ static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
 
 static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
                          SourceLocation L, const FIDMap& FM,
-                         const unsigned indent) {
+                         const unsigned indent, bool extend = false) {
 
+  FullSourceLoc Loc(SM->getInstantiationLoc(L), const_cast<SourceManager&>(*SM));
+
+  // Add in the length of the token, so that we cover multi-char tokens.
+  unsigned offset = extend ? Lexer::MeasureTokenLength(Loc, *SM) - 1 : 0;
+  
   Indent(o, indent) << "<dict>\n";
   Indent(o, indent) << " <key>line</key><integer>"
-                    << SM->getInstantiationLineNumber(L) << "</integer>\n";
+                    << Loc.getInstantiationLineNumber() << "</integer>\n";
   Indent(o, indent) << " <key>col</key><integer>"
-                    << SM->getInstantiationColumnNumber(L) << "</integer>\n";
+                    << Loc.getInstantiationColumnNumber() + offset << "</integer>\n";
   Indent(o, indent) << " <key>file</key><integer>"
-                    << GetFID(FM, SM, L) << "</integer>\n";
+                    << GetFID(FM, SM, Loc) << "</integer>\n";
   Indent(o, indent) << "</dict>\n";
 }
 
 static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
                          const PathDiagnosticLocation &L, const FIDMap& FM,
-                         const unsigned indent) {
-  EmitLocation(o, SM, L.asLocation(), FM, indent);
+                         const unsigned indent, bool extend = false) {
+  EmitLocation(o, SM, L.asLocation(), FM, indent, extend);
 }
 
 static void EmitRange(llvm::raw_ostream& o, const SourceManager* SM,
@@ -103,8 +109,8 @@ static void EmitRange(llvm::raw_ostream& o, const SourceManager* SM,
                       const unsigned indent) {
  
   Indent(o, indent) << "<array>\n";
-  EmitLocation(o, SM, R.getBegin(), FM, indent+1);
-  EmitLocation(o, SM, R.getEnd(), FM, indent+1);
+  EmitLocation(o, SM, R.getBegin(), FM, indent+1);  
+  EmitLocation(o, SM, R.getEnd(), FM, indent+1, true);
   Indent(o, indent) << "</array>\n";
 }
 
