@@ -4710,7 +4710,9 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                                         ExprArg expr, TypeTy *type,
                                         SourceLocation RPLoc) {
   QualType T = QualType::getFromOpaquePtr(type);
-
+  Expr *E = static_cast<Expr*>(expr.get());
+  Expr *OrigExpr = E;
+  
   InitBuiltinVaListType();
 
   // Get the va_list type
@@ -4721,7 +4723,6 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   if (VaListType->isArrayType())
     VaListType = Context.getArrayDecayedType(VaListType);
   // Make sure the input expression also decays appropriately.
-  Expr *E = static_cast<Expr*>(expr.get());
   UsualUnaryConversions(E);
 
   AssignConvertType ConvResult = 
@@ -4730,13 +4731,13 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   case Compatible: break;  // Everything good.
   case CompatiblePointerDiscardsQualifiers:
     Diag(E->getLocStart(), diag::warn_va_arg_with_qualified_va_list)
-      << E->getType() << E->getSourceRange();
+      << OrigExpr->getType() << E->getSourceRange();
     break;
 
   default:
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
-      << E->getType() << E->getSourceRange());
+      << OrigExpr->getType() << E->getSourceRange());
   }
 
   // FIXME: Check that type is complete/non-abstract

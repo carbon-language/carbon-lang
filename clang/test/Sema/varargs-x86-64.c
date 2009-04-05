@@ -3,6 +3,6 @@
 // rdar://6726818
 void f1() {
   const __builtin_va_list args2;
-  (void)__builtin_va_arg(args2, int); // expected-warning {{va_arg applied to va_list type 'struct __va_list_tag const *' with unexpected qualifiers}}
+  (void)__builtin_va_arg(args2, int); // expected-warning {{va_arg applied to va_list type '__builtin_va_list const' with unexpected qualifiers}}
 }
 
