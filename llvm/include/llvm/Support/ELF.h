@@ -280,6 +280,7 @@ struct Elf32_Phdr {
   Elf32_Word p_align;  // Segment alignment constraint
 };
 
+// Segment types.
 enum {
   PT_NULL    = 0, // Unused segment.
   PT_LOAD    = 1, // Loadable segment.
@@ -290,6 +291,14 @@ enum {
   PT_PHDR    = 6, // The program header table itself.
   PT_LOPROC  = 0x70000000, // Lowest processor-specific program hdr entry type.
   PT_HIPROC  = 0x7fffffff  // Highest processor-specific program hdr entry type.
+};
+
+// Segment flag bits.
+enum {
+  PF_X        = 1,         // Execute
+  PF_W        = 2,         // Write
+  PF_R        = 4,         // Read
+  PF_MASKPROC = 0xf0000000 // Unspecified
 };
 
 } // end namespace ELF
