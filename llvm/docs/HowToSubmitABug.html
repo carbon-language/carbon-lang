@@ -269,7 +269,7 @@ Backend, and then link in the shared object it generates.</p>
 <div class="doc_code">
 <pre>
 bugpoint -run-jit -output=[correct output file] [bitcode file]  \
-         --tool-args -- [arguments to pass to lli]               \
+         --tool-args -- [arguments to pass to lli]              \
          --args -- [program arguments]
 </pre>
 </div>
@@ -279,7 +279,7 @@ bugpoint -run-jit -output=[correct output file] [bitcode file]  \
 <div class="doc_code">
 <pre>
 bugpoint -run-llc -output=[correct output file] [bitcode file]  \
-         --tool-args -- [arguments to pass to llc]               \
+         --tool-args -- [arguments to pass to llc]              \
          --args -- [program arguments]
 </pre>
 </div>
