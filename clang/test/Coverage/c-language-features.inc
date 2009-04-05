@@ -172,3 +172,6 @@ void f8(x)
      short x;
 {
 }
+
+// Function which inputs an array
+void f9(int x[]) { }

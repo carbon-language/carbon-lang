@@ -926,13 +926,18 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<parameter> " << PVD->getNameAsString() << "\n";
       break;
     }
+    case Decl::OriginalParmVar: {
+      OriginalParmVarDecl* OPVD = cast<OriginalParmVarDecl>(*I);
+      Out << "<original parameter> " << OPVD->getNameAsString() << "\n";
+      break;
+    }
     case Decl::ObjCProperty: {
       ObjCPropertyDecl* OPD = cast<ObjCPropertyDecl>(*I);
       Out << "<objc property> " << OPD->getNameAsString() << "\n";
       break;
     }
     default:
-      fprintf(stderr, "DeclKind: %d\n", DK);
+      fprintf(stderr, "DeclKind: %d \"%s\"\n", DK, I->getDeclKindName());
       assert(0 && "decl unhandled");
     }
   }
