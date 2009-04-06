@@ -2341,7 +2341,7 @@ public:
   QualType CheckShiftOperands( // C99 6.5.7
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckCompareOperands( // C99 6.5.8/9
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isRelational);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc, bool isRelational);
   QualType CheckBitwiseOperands( // C99 6.5.[10...12]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckLogicalOperands( // C99 6.5.[13,14]

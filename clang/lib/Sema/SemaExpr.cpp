@@ -3374,7 +3374,9 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
 // C99 6.5.8
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
-                                    bool isRelational) {
+                                    unsigned OpaqueOpc, bool isRelational) {
+  BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)OpaqueOpc;
+
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
 
@@ -3409,29 +3411,41 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     
     // Warn about comparisons against a string constant (unless the other
     // operand is null), the user probably wants strcmp.
+    Expr *literalString = 0;
+    Expr *literalStringStripped = 0;
     if ((isa<StringLiteral>(LHSStripped) || isa<ObjCEncodeExpr>(LHSStripped)) &&
-        !RHSStripped->isNullPointerConstant(Context))
-      Diag(Loc, diag::warn_stringcompare)
-        << isa<ObjCEncodeExpr>(LHSStripped)
-        << lex->getSourceRange()
-        << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
-        << CodeModificationHint::CreateInsertion(lex->getLocStart(),
-                                                 "strcmp(")
-        << CodeModificationHint::CreateInsertion(
-                                       PP.getLocForEndOfToken(rex->getLocEnd()),
-                                       ") == 0");
+        !RHSStripped->isNullPointerConstant(Context)) {
+      literalString = lex;
+      literalStringStripped = LHSStripped;
+    }
     else if ((isa<StringLiteral>(RHSStripped) ||
               isa<ObjCEncodeExpr>(RHSStripped)) &&
-             !LHSStripped->isNullPointerConstant(Context))
-      Diag(Loc, diag::warn_stringcompare) 
-        << isa<ObjCEncodeExpr>(RHSStripped)
-        << rex->getSourceRange()
+             !LHSStripped->isNullPointerConstant(Context)) {
+      literalString = rex;
+      literalStringStripped = RHSStripped;
+    }
+
+    if (literalString) {
+      std::string resultComparison;
+      switch (Opc) {
+      case BinaryOperator::LT: resultComparison = ") < 0"; break;
+      case BinaryOperator::GT: resultComparison = ") > 0"; break;
+      case BinaryOperator::LE: resultComparison = ") <= 0"; break;
+      case BinaryOperator::GE: resultComparison = ") >= 0"; break;
+      case BinaryOperator::EQ: resultComparison = ") == 0"; break;
+      case BinaryOperator::NE: resultComparison = ") != 0"; break;
+      default: assert(false && "Invalid comparison operator");
+      }
+      Diag(Loc, diag::warn_stringcompare)
+        << isa<ObjCEncodeExpr>(literalStringStripped)
+        << literalString->getSourceRange()
         << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
         << CodeModificationHint::CreateInsertion(lex->getLocStart(),
                                                  "strcmp(")
         << CodeModificationHint::CreateInsertion(
                                        PP.getLocForEndOfToken(rex->getLocEnd()),
-                                       ") == 0");
+                                       resultComparison);
+    }
   }
 
   // The result of comparisons is 'bool' in C++, 'int' in C.
@@ -4146,11 +4160,11 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   case BinaryOperator::LT:
   case BinaryOperator::GE:
   case BinaryOperator::GT:
-    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, true);
+    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, Opc, true);
     break;
   case BinaryOperator::EQ:
   case BinaryOperator::NE:
-    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, false);
+    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, Opc, false);
     break;
   case BinaryOperator::And:
   case BinaryOperator::Xor:

@@ -4,6 +4,7 @@
    provided as part of warning or extension diagnostics. All of the
    warnings will be fixed by -fixit, and the resulting file should
    compile cleanly with -Werror -pedantic. */
+#include <string.h> // FIXME: FIX-IT hint should add this for us!
 
 void f0(void) { };
 
@@ -24,6 +25,5 @@ int i0 = { 17 };
 
 int f2(const char *my_string) {
   // FIXME: terminal output isn't so good when "my_string" is shorter
-  // FIXME: Needs an #include hint, too!
-  //  return my_string == "foo";
+  return my_string == "foo";
 }
