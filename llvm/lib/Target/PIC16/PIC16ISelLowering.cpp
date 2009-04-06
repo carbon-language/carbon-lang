@@ -31,7 +31,7 @@ using namespace llvm;
 
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
-  : TargetLowering(TM) {
+  : TargetLowering(TM), TmpSize(0) {
   
   Subtarget = &TM.getSubtarget<PIC16Subtarget>();
 
@@ -153,6 +153,17 @@ static SDValue getOutFlag(SDValue &Op) {
           && "Node does not have an out Flag");
 
   return Flag;
+}
+// Get the TmpOffset for FrameIndex
+unsigned PIC16TargetLowering::GetTmpOffsetForFI(unsigned FI) {
+  std::map<unsigned, unsigned>::iterator 
+            MapIt = FiTmpOffsetMap.find(FI);
+  if (MapIt != FiTmpOffsetMap.end())
+      return MapIt->second;
+
+  // This FI (FrameIndex) is not yet mapped, so map it
+  FiTmpOffsetMap[FI] = TmpSize; 
+  return TmpSize++;
 }
 
 // To extract chain value from the SDValue Nodes
@@ -541,9 +552,9 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
 //         and non-constant operand of ADD will be treated as pointer.
 // Returns the high and lo part of the address, and the offset(in case of ADD).
 
-void PIC16TargetLowering:: LegalizeAddress(SDValue Ptr, SelectionDAG &DAG, 
-                                           SDValue &Lo, SDValue &Hi,
-                                           unsigned &Offset, DebugLoc dl) {
+void PIC16TargetLowering::LegalizeAddress(SDValue Ptr, SelectionDAG &DAG, 
+                                          SDValue &Lo, SDValue &Hi,
+                                          unsigned &Offset, DebugLoc dl) {
 
   // Offset, by default, should be 0
   Offset = 0;
@@ -849,13 +860,15 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
                                DAG.getEntryNode(),
                                Op, ES, 
                                DAG.getConstant (1, MVT::i8), // Banksel.
-                               DAG.getConstant (FI, MVT::i8));
+                               DAG.getConstant (GetTmpOffsetForFI(FI), 
+                                                MVT::i8));
 
   // Load the value from ES.
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other);
   SDValue Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Store,
                              ES, DAG.getConstant (1, MVT::i8),
-                             DAG.getConstant (FI, MVT::i8));
+                             DAG.getConstant (GetTmpOffsetForFI(FI), 
+                             MVT::i8));
     
   return Load.getValue(0);
 }
@@ -1212,40 +1225,45 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1));
 }
 
-// LowerFORMAL_ARGUMENTS - In Lowering FORMAL ARGUMENTS - MERGE_VALUES nodes
-// is returned. MERGE_VALUES nodes number of operands and number of values are
-// equal. Therefore to construct MERGE_VALUE node, UNDEF nodes equal to the
-// number of arguments of function have been created.
+// LowerFORMAL_ARGUMENTS - Argument values are loaded from the
+// <fname>.args + offset. All arguments are already broken to leaglized
+// types, so the offset just runs from 0 to NumArgVals - 1.
 
 SDValue PIC16TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, 
-                                                    SelectionDAG &DAG) {
+                                                   SelectionDAG &DAG) {
   SmallVector<SDValue, 8> ArgValues;
-  unsigned NumArgs = Op.getNode()->getNumValues()-1;
+  unsigned NumArgVals = Op.getNode()->getNumValues() - 1;
   DebugLoc dl = Op.getDebugLoc();
   SDValue Chain = Op.getOperand(0);    // Formal arguments' chain
 
+
+  // Reset the map of FI and TmpOffset 
+  ResetTmpOffsetMap();
+  // Get the callee's name to create the <fname>.args label to pass args.
   MachineFunction &MF = DAG.getMachineFunction();
-  //const TargetData *TD = getTargetData();
   const Function *F = MF.getFunction();
   std::string FuncName = F->getName();
 
+  // Create the <fname>.args external symbol.
   char *tmpName = new char [strlen(FuncName.c_str()) +  6];
   sprintf(tmpName, "%s.args", FuncName.c_str());
-  SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
+
+  // Load arg values from the label + offset.
+  SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
   SDValue BS = DAG.getConstant(1, MVT::i8);
-  for (unsigned i=0; i<NumArgs ; ++i) {
+  for (unsigned i = 0; i < NumArgVals ; ++i) {
     SDValue Offset = DAG.getConstant(i, MVT::i8);
     SDValue PICLoad = DAG.getNode(PIC16ISD::PIC16LdArg, dl, VTs, Chain, ES, BS,
-                                     Offset);
+                                  Offset);
     Chain = getChain(PICLoad);
     ArgValues.push_back(PICLoad);
   }
 
+  // Return a MERGE_VALUE node.
   ArgValues.push_back(Op.getOperand(0));
   return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(), 
-                     &ArgValues[0],
-                     ArgValues.size()).getValue(Op.getResNo());
+                     &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
 }
 
 // Perform DAGCombine of PIC16Load.

@@ -343,7 +343,6 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
 void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   std::string FuncName = Mang->getValueName(F);
-  MachineFrameInfo *MFI= MF.getFrameInfo();
   Module *M = const_cast<Module *>(F->getParent());
   const TargetData *TD = TM.getTargetData();
   unsigned FrameSize = 0;
@@ -406,15 +405,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     O << VarName << "  RES  " << Size << "\n";
   }
 
-
-  // Emit the variable to hold the space for temporary locations
-  // in function frame.
-  if (MFI->hasStackObjects()) {
-    int indexBegin = MFI->getObjectIndexBegin();
-    int indexEnd = MFI->getObjectIndexEnd();
-    if (indexBegin < indexEnd) {
-      int TempSize = indexEnd - indexBegin; 
-      O << CurrentFnName << ".tmp       RES  " << TempSize <<"\n";
-    }
-  }
+  int TempSize = PTLI->GetTmpSize();
+  if (TempSize > 0 )
+    O << CurrentFnName << ".tmp       RES  " << TempSize <<"\n";
 }

@@ -24,11 +24,12 @@
 
 namespace llvm {
   struct VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
-  PIC16AsmPrinter(raw_ostream &O, TargetMachine &TM,
+  PIC16AsmPrinter(raw_ostream &O, PIC16TargetMachine &TM,
                     const TargetAsmInfo *T, bool F, bool V)
       : AsmPrinter(O, TM, T, F, V) {
       CurBank = "";
       IsRomData = false;
+      PTLI = TM.getTargetLowering();
     }
     private :
     virtual const char *getPassName() const {
@@ -51,6 +52,7 @@ namespace llvm {
     bool doFinalization(Module &M);
 
     private:
+    PIC16TargetLowering *PTLI;
     std::string CurBank;
     bool IsRomData;
   };

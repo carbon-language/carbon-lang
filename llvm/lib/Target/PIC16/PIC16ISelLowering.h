@@ -19,6 +19,7 @@
 #include "PIC16Subtarget.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
+#include <map>
 
 namespace llvm {
   namespace PIC16ISD {
@@ -117,6 +118,16 @@ namespace llvm {
     SDValue PerformPIC16LoadCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
     SDValue PerformStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
 
+    // This function returns the Tmp Offset for FrameIndex. If any TmpOffset 
+    // already exists for the FI then it returns the same else it creates the 
+    // new offset and returns.
+    unsigned GetTmpOffsetForFI(unsigned FI); 
+    void ResetTmpOffsetMap() { FiTmpOffsetMap.clear(); SetTmpSize(0); }
+
+    // Return the size of Tmp variable 
+    unsigned GetTmpSize() { return TmpSize; }
+    void SetTmpSize(unsigned Size) { TmpSize = Size; }
+
   private:
     // If the Node is a BUILD_PAIR representing a direct Address,
     // then this function will return true.
@@ -170,6 +181,11 @@ namespace llvm {
     // Check if operation has a direct load operand.
     inline bool isDirectLoad(const SDValue Op);
 
+  private:
+    // The frameindexes generated for spill/reload are stack based.
+    // This maps maintain zero based indexes for these FIs.
+    std::map<unsigned, unsigned> FiTmpOffsetMap;
+    unsigned TmpSize;
   };
 } // namespace llvm
 

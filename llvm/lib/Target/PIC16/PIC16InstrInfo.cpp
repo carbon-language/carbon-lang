@@ -69,6 +69,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned SrcReg, bool isKill, int FI,
                                          const TargetRegisterClass *RC) const {
+  PIC16TargetLowering *PTLI = TM.getTargetLowering();
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -84,7 +85,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     //MachineRegisterInfo &RI = MF.getRegInfo();
     BuildMI(MBB, I, DL, get(PIC16::movwf))
       .addReg(SrcReg, false, false, isKill)
-      .addImm(FI)
+      .addImm(PTLI->GetTmpOffsetForFI(FI))
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.
   }
@@ -98,6 +99,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I,
                                           unsigned DestReg, int FI,
                                           const TargetRegisterClass *RC) const {
+  PIC16TargetLowering *PTLI = TM.getTargetLowering();
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -112,7 +114,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     //MachineFunction &MF = *MBB.getParent();
     //MachineRegisterInfo &RI = MF.getRegInfo();
     BuildMI(MBB, I, DL, get(PIC16::movf), DestReg)
-      .addImm(FI)
+      .addImm(PTLI->GetTmpOffsetForFI(FI))
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.
   }
