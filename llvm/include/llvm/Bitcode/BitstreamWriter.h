@@ -252,18 +252,23 @@ public:
   //===--------------------------------------------------------------------===//
 
 private:
+  /// EmitAbbreviatedLiteral - Emit a literal value according to its abbrev
+  /// record.  This is a no-op, since the abbrev specifies the literal to use. 
+  template<typename uintty>
+  void EmitAbbreviatedLiteral(const BitCodeAbbrevOp &Op, uintty V) {
+    assert(Op.isLiteral() && "Not a literal");
+    // If the abbrev specifies the literal value to use, don't emit
+    // anything.
+    assert(V == Op.getLiteralValue() &&
+           "Invalid abbrev for record!");
+  }
+  
   /// EmitAbbreviatedField - Emit a single scalar field value with the specified
   /// encoding.
   template<typename uintty>
   void EmitAbbreviatedField(const BitCodeAbbrevOp &Op, uintty V) {
-    if (Op.isLiteral()) {
-      // If the abbrev specifies the literal value to use, don't emit
-      // anything.
-      assert(V == Op.getLiteralValue() &&
-             "Invalid abbrev for record!");
-      return;
-    }
-
+    assert(!Op.isLiteral() && "Literals should use EmitAbbreviatedLiteral!");
+    
     // Encode the value as we are commanded.
     switch (Op.getEncoding()) {
     default: assert(0 && "Unknown encoding!");
@@ -278,6 +283,7 @@ private:
       break;
     }
   }
+  
 public:
 
   /// EmitRecord - Emit the specified record to the stream, using an abbrev if
@@ -309,7 +315,11 @@ public:
     for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
          i != e; ++i) {
       const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-      if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+      if (Op.isLiteral()) {
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        EmitAbbreviatedLiteral(Op, Vals[RecordIdx]);
+        ++RecordIdx;
+      } else if (Op.getEncoding() != BitCodeAbbrevOp::Array) {
         assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
         EmitAbbreviatedField(Op, Vals[RecordIdx]);
         ++RecordIdx;
