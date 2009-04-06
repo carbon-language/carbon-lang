@@ -739,7 +739,10 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
+    case 'a': // Don't print "#" before a global var name or constant.
     case 'c': // Don't print "$" before a global var name or constant.
+      printOperand(MI, OpNo, "no_hash");
+      return false;
     case 'P': // Print a VFP double precision register.
       printOperand(MI, OpNo);
       return false;
