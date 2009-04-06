@@ -18,7 +18,7 @@
 @protocol PROTO<p1>     // expected-note {{previous definition is here}}
 @end
 
-@protocol PROTO<p1>	// expected-error {{duplicate protocol definition of 'PROTO'}}
+@protocol PROTO<p1>	// expected-warning {{duplicate protocol definition of 'PROTO'}}
 @end
 
 @protocol PROTO3<p1, p1>

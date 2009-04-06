@@ -128,7 +128,7 @@ def err_undef_superclass : Error<
 def warn_previous_alias_decl : Warning<"previously declared alias is ignored">;
 def err_conflicting_aliasing_type : Error<"conflicting types for alias %0">;
 def warn_undef_interface : Warning<"cannot find interface declaration for %0">;
-def err_duplicate_protocol_def : Error<"duplicate protocol definition of %0">;
+def warn_duplicate_protocol_def : Warning<"duplicate protocol definition of %0 is ignored">;
 def err_protocol_has_circular_dependency : Error<
   "protocol has circular dependency">;
 def err_undeclared_protocol : Error<"cannot find protocol declaration for %0">;
