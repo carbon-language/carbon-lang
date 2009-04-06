@@ -1020,8 +1020,8 @@ def err_catch_param_not_objc_type : Error<
   "@catch parameter is not an Objective-C class type">;
 def err_illegal_qualifiers_on_catch_parm : Error<
   "illegal qualifiers on @catch parameter">;
-def err_illegal_super_cast : Error<
-  "cannot cast 'super' (it isn't an expression)">;
+def warn_super_cast_deprecated : Warning<
+  "casting 'super' is deprecated (it isn't an expression)">;
 
 
 // C++ casts

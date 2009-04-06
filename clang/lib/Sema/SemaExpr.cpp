@@ -2500,7 +2500,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
     if (CheckVectorCast(TyR, castType, castExpr->getType()))
       return true;
   } else if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr)) {
-    return Diag(castExpr->getLocStart(), diag::err_illegal_super_cast) << TyR;
+    Diag(castExpr->getLocStart(), diag::warn_super_cast_deprecated) << TyR;
   }
   return false;
 }
