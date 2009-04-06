@@ -337,13 +337,17 @@ private:
   //===--------------------------------------------------------------------===//
 
 private:
+  void ReadAbbreviatedLiteral(const BitCodeAbbrevOp &Op,
+                              SmallVectorImpl<uint64_t> &Vals) {
+    assert(Op.isLiteral() && "Not a literal");
+    // If the abbrev specifies the literal value to use, use it.
+    Vals.push_back(Op.getLiteralValue());
+  }
+  
   void ReadAbbreviatedField(const BitCodeAbbrevOp &Op,
                             SmallVectorImpl<uint64_t> &Vals) {
-    if (Op.isLiteral()) {
-      // If the abbrev specifies the literal value to use, use it.
-      Vals.push_back(Op.getLiteralValue());
-      return;
-    }
+    assert(!Op.isLiteral() && "Use ReadAbbreviatedLiteral for literals!");
+    
     // Decode the value as we are commanded.
     switch (Op.getEncoding()) {
     default: assert(0 && "Unknown encoding!");
@@ -374,7 +378,9 @@ public:
 
     for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
       const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-      if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+      if (Op.isLiteral()) {
+        ReadAbbreviatedLiteral(Op, Vals); 
+      } else if (Op.getEncoding() != BitCodeAbbrevOp::Array) {
         ReadAbbreviatedField(Op, Vals);
       } else {
         // Array case.  Read the number of elements as a vbr6.
