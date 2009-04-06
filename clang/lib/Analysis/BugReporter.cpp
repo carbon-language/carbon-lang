@@ -456,6 +456,8 @@ public:
 // "Minimal" path diagnostic generation algorithm.
 //===----------------------------------------------------------------------===//
 
+static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM);
+
 static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
                                           const ExplodedNode<GRState> *N) {
@@ -740,6 +742,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       PDB.getStateManager().iterBindings(N->getState(), SNS);
     }
   }
+  
+  // After constructing the full PathDiagnostic, do a pass over it to compact
+  // PathDiagnosticPieces that occur within a macro.
+  CompactPathDiagnostic(PD, PDB.getSourceManager());
 }
 
 //===----------------------------------------------------------------------===//
@@ -748,7 +754,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
 static bool IsControlFlowExpr(const Stmt *S) {
   const Expr *E = dyn_cast<Expr>(S);
-
+  
   if (!E)
     return false;
   
@@ -764,12 +770,264 @@ static bool IsControlFlowExpr(const Stmt *S) {
   return false;  
 }
 
+#if 1
+
+namespace {
+class VISIBILITY_HIDDEN EdgeBuilder {
+  std::vector<PathDiagnosticLocation> CLocs;
+  typedef std::vector<PathDiagnosticLocation>::iterator iterator;
+  PathDiagnostic &PD;
+  PathDiagnosticBuilder &PDB;
+  PathDiagnosticLocation PrevLoc;
+
+  bool containsLocation(const PathDiagnosticLocation &Container,
+                        const PathDiagnosticLocation &Containee);
+  
+  PathDiagnosticLocation getContextLocation(const PathDiagnosticLocation &L);
+  void rawAddEdge(PathDiagnosticLocation NewLoc);
+  
+  void popLocation() {
+    rawAddEdge(CLocs.back());
+    CLocs.pop_back();
+  }
+  
+  PathDiagnosticLocation IgnoreParens(const PathDiagnosticLocation &L);  
+
+public:
+  EdgeBuilder(PathDiagnostic &pd, PathDiagnosticBuilder &pdb)
+    : PD(pd), PDB(pdb) {
+      CLocs.push_back(PathDiagnosticLocation(&PDB.getCodeDecl(),
+                                             PDB.getSourceManager()));
+      if (!PD.empty()) {
+        PrevLoc = PD.begin()->getLocation();
+        
+        if (const Stmt *S = PrevLoc.asStmt())
+          addContext(PDB.getEnclosingStmtLocation(S).asStmt());
+      }
+  }
+
+  ~EdgeBuilder() {
+    while (!CLocs.empty()) popLocation();
+  }
+
+  void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false);
+  
+  void addEdge(const Stmt *S, bool alwaysAdd = false) {
+    addEdge(PathDiagnosticLocation(S, PDB.getSourceManager()), alwaysAdd);
+  }
+  
+  void addContext(const Stmt *S);
+};  
+} // end anonymous namespace
+
+
+PathDiagnosticLocation
+EdgeBuilder::getContextLocation(const PathDiagnosticLocation &L) {
+  if (const Stmt *S = L.asStmt()) {
+    if (IsControlFlowExpr(S))
+      return L;
+    
+    return PDB.getEnclosingStmtLocation(S);    
+  }
+  
+  return L;
+}
+
+bool EdgeBuilder::containsLocation(const PathDiagnosticLocation &Container,
+                                   const PathDiagnosticLocation &Containee) {
+
+  if (Container == Containee)
+    return true;
+    
+  if (Container.asDecl())
+    return true;
+  
+  if (const Stmt *S = Containee.asStmt())
+    if (const Stmt *ContainerS = Container.asStmt()) {
+      while (S) {
+        if (S == ContainerS)
+          return true;
+        S = PDB.getParent(S);
+      }
+      return false;
+    }
+
+  // Less accurate: compare using source ranges.
+  SourceRange ContainerR = Container.asRange();
+  SourceRange ContaineeR = Containee.asRange();
+  
+  SourceManager &SM = PDB.getSourceManager();
+  SourceLocation ContainerRBeg = SM.getInstantiationLoc(ContainerR.getBegin());
+  SourceLocation ContainerREnd = SM.getInstantiationLoc(ContainerR.getEnd());
+  SourceLocation ContaineeRBeg = SM.getInstantiationLoc(ContaineeR.getBegin());
+  SourceLocation ContaineeREnd = SM.getInstantiationLoc(ContaineeR.getEnd());
+  
+  unsigned ContainerBegLine = SM.getInstantiationLineNumber(ContainerRBeg);
+  unsigned ContainerEndLine = SM.getInstantiationLineNumber(ContainerREnd);
+  unsigned ContaineeBegLine = SM.getInstantiationLineNumber(ContaineeRBeg);
+  unsigned ContaineeEndLine = SM.getInstantiationLineNumber(ContaineeREnd);
+  
+  assert(ContainerBegLine <= ContainerEndLine);
+  assert(ContaineeBegLine <= ContaineeEndLine);  
+  
+  return (ContainerBegLine <= ContaineeBegLine &&
+          ContainerEndLine >= ContaineeEndLine &&
+          (ContainerBegLine != ContaineeBegLine ||
+           SM.getInstantiationColumnNumber(ContainerRBeg) <= 
+           SM.getInstantiationColumnNumber(ContaineeRBeg)) &&
+          (ContainerEndLine != ContaineeEndLine ||
+           SM.getInstantiationColumnNumber(ContainerREnd) >=
+           SM.getInstantiationColumnNumber(ContainerREnd)));
+}
+
+PathDiagnosticLocation
+EdgeBuilder::IgnoreParens(const PathDiagnosticLocation &L) {
+  if (const Expr* E = dyn_cast_or_null<Expr>(L.asStmt()))
+      return PathDiagnosticLocation(E->IgnoreParenCasts(),
+                                    PDB.getSourceManager());
+  return L;
+}
+
+void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
+  if (!PrevLoc.isValid()) {
+    PrevLoc = NewLoc;
+    return;
+  }
+  
+  if (NewLoc.asLocation() == PrevLoc.asLocation())
+    return;
+    
+  // FIXME: Ignore intra-macro edges for now.
+  if (NewLoc.asLocation().getInstantiationLoc() ==
+      PrevLoc.asLocation().getInstantiationLoc())
+    return;
+
+  PD.push_front(new PathDiagnosticControlFlowPiece(NewLoc, PrevLoc));
+  PrevLoc = NewLoc;  
+}
+
+void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
+  const PathDiagnosticLocation &CLoc = getContextLocation(NewLoc);
+
+  while (!CLocs.empty()) {
+    const PathDiagnosticLocation &TopContextLoc = CLocs.back();
+    
+    // Is the top location context the same as the one for the new location?
+    if (TopContextLoc == CLoc) {
+      if (alwaysAdd && NewLoc.asLocation() != CLoc.asLocation())
+        rawAddEdge(NewLoc);
+
+      return;
+    }
+
+    if (containsLocation(TopContextLoc, CLoc)) {
+      if (alwaysAdd)
+        rawAddEdge(NewLoc);
+
+      CLocs.push_back(CLoc);
+      return;      
+    }
+
+    // Context does not contain the location.  Flush it.
+    popLocation();
+  }
+
+  assert(0 && "addEdge should never pop the top context");
+}
+
+void EdgeBuilder::addContext(const Stmt *S) {
+  if (!S)
+    return;
+
+  PathDiagnosticLocation L(S, PDB.getSourceManager());
+  
+  while (!CLocs.empty()) {
+    const PathDiagnosticLocation &TopContextLoc = CLocs.back();
+
+    // Is the top location context the same as the one for the new location?
+    if (TopContextLoc == L)
+      return;
+
+    if (containsLocation(TopContextLoc, L)) {
+    //   if (const Stmt *S = L.asStmt())
+    //     if (isa<Expr>(S))
+    //       if (const Stmt *P = PDB.getParent(S))
+    //         addContext(PDB.getEnclosingStmtLocation(P).asStmt());
+      
+      CLocs.push_back(L);
+      return;      
+    }
+
+    // Context does not contain the location.  Flush it.
+    popLocation();
+  }
+
+  CLocs.push_back(L);
+}
+
+static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
+                                            PathDiagnosticBuilder &PDB,
+                                            const ExplodedNode<GRState> *N) {
+  
+  
+  EdgeBuilder EB(PD, PDB);
+
+  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
+                                        ? NULL : *(N->pred_begin());
+
+  while (NextNode) {
+    N = NextNode;
+    NextNode = GetPredecessorNode(N);
+    ProgramPoint P = N->getLocation();
+
+    // Block edges.
+    if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      const CFGBlock &Blk = *BE->getSrc();
+
+      if (const Stmt *Term = Blk.getTerminator())
+        EB.addContext(Term);
+
+      // Only handle blocks with more than 1 statement here, as the blocks
+      // with one statement are handled at BlockEntrances.
+      if (Blk.size() > 1) {
+        const Stmt *S = *Blk.rbegin();
+        EB.addEdge(S);
+      }
+
+      continue;
+    }
+
+    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
+      if (const Stmt* S = BE->getFirstStmt()) {
+       if (IsControlFlowExpr(S))
+         EB.addContext(S);
+       else
+        EB.addEdge(S);
+      }
+
+      continue;
+    }
+    
+    PathDiagnosticPiece* p =
+    PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
+                              PDB.getBugReporter(), PDB.getNodeMapClosure());
+    
+    if (p) {
+      EB.addEdge(p->getLocation(), true);
+      PD.push_front(p);
+    }
+  }
+}
+
+
+#else
+
 static void GenExtAddEdge(PathDiagnostic& PD,
                           PathDiagnosticBuilder &PDB,
                           PathDiagnosticLocation NewLoc,
                           PathDiagnosticLocation &PrevLoc,
                           bool allowBlockJump = false) {
-
+  
   if (const Stmt *S = NewLoc.asStmt()) {
     if (IsControlFlowExpr(S))
       return;    
@@ -783,7 +1041,7 @@ static void GenExtAddEdge(PathDiagnostic& PD,
   
   if (NewLoc == PrevLoc)
     return;
-
+  
   // Are we jumping between statements within the same compound statement?
   if (!allowBlockJump)
     if (const Stmt *PS = PrevLoc.asStmt())
@@ -801,18 +1059,18 @@ static void GenExtAddEdge(PathDiagnostic& PD,
         PathDiagnosticLocation X = PDB.getEnclosingStmtLocation(PS);
         // FIXME: We need a version of getParent that ignores '()' and casts.
         const Stmt *parentX = PDB.getParent(X.asStmt());
-
+        
         const PathDiagnosticLocation &Y = PDB.getEnclosingStmtLocation(NS);
         // FIXME: We need a version of getParent that ignores '()' and casts.
         const Stmt *parentY = PDB.getParent(Y.asStmt());
-
+        
         if (parentX && IsControlFlowExpr(parentX)) {
           if (parentX == parentY)
             break;
           else {
             if (const Stmt *grandparentX = PDB.getParent(parentX)) {
               const PathDiagnosticLocation &W =
-                PDB.getEnclosingStmtLocation(grandparentX);
+              PDB.getEnclosingStmtLocation(grandparentX);
               
               if (W != Y) X = W;
             }
@@ -833,7 +1091,7 @@ static void GenExtAddEdge(PathDiagnostic& PD,
 
 static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
   const DeclStmt *DS = dyn_cast<DeclStmt>(S);
-
+  
   if (!DS)
     return false;
   
@@ -843,7 +1101,7 @@ static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
   
   if (const ForStmt *FS = dyn_cast<ForStmt>(Parent))
     return FS->getInit() == DS;
-
+  
   // FIXME: In the future IfStmt/WhileStmt may contain DeclStmts in their
   // condition.
   
@@ -853,11 +1111,11 @@ static bool IsNestedDeclStmt(const Stmt *S, ParentMap &PM) {
 static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
                                             const ExplodedNode<GRState> *N) {
-
+  
   SourceManager& SMgr = PDB.getSourceManager();
   const ExplodedNode<GRState>* NextNode = N->pred_empty()  
-                                          ? NULL : *(N->pred_begin());
-
+  ? NULL : *(N->pred_begin());
+  
   PathDiagnosticLocation PrevLoc;
   
   while (NextNode) {
@@ -868,7 +1126,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     // Block edges.
     if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
       const CFGBlock &Blk = *BE->getSrc();
-
+      
       // Add a special edge for the entrance into the function/method.
       if (&Blk == &PDB.getCFG().getEntry()) {
         FullSourceLoc L = FullSourceLoc(PDB.getCodeDecl().getLocation(), SMgr);
@@ -899,7 +1157,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           GenExtAddEdge(PD, PDB, PathDiagnosticLocation(S, SMgr), PrevLoc);
         }
       }
-
+      
       continue;
     }
     
@@ -910,7 +1168,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
             // Are we jumping within the same enclosing statement?          
             if (PDB.getEnclosingStmtLocation(S) ==
                 PDB.getEnclosingStmtLocation(PrevLoc))
-            continue;
+              continue;
           }
           
           GenExtAddEdge(PD, PDB, PDB.getEnclosingStmtLocation(S), PrevLoc);
@@ -919,10 +1177,10 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       
       continue;
     }
-      
+    
     PathDiagnosticPiece* p =
-      PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
-                                PDB.getBugReporter(), PDB.getNodeMapClosure());
+    PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
+                              PDB.getBugReporter(), PDB.getNodeMapClosure());
     
     if (p) {
       GenExtAddEdge(PD, PDB, p->getLocation(), PrevLoc, true);
@@ -930,7 +1188,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     }
   }
 }
-    
+#endif
+
 //===----------------------------------------------------------------------===//
 // Methods for BugType and subclasses.
 //===----------------------------------------------------------------------===//
@@ -1337,10 +1596,6 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       GenerateMinimalPathDiagnostic(PD, PDB, N);
       break;
   }
-  
-  // After constructing the full PathDiagnostic, do a pass over it to compact
-  // PathDiagnosticPieces that occur within a macro.
-  CompactPathDiagnostic(PD, PDB.getSourceManager());  
 }
 
 void BugReporter::Register(BugType *BT) {
