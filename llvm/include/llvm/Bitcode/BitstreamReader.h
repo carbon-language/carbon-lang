@@ -363,6 +363,14 @@ private:
     }
   }
 public:
+
+  /// getAbbrev - Return the abbreviation for the specified AbbrevId. 
+  const BitCodeAbbrev *getAbbrev(unsigned AbbrevID) {
+    unsigned AbbrevNo = AbbrevID-bitc::FIRST_APPLICATION_ABBREV;
+    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+    return CurAbbrevs[AbbrevNo];
+  }
+  
   unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals) {
     if (AbbrevID == bitc::UNABBREV_RECORD) {
       unsigned Code = ReadVBR(6);
@@ -372,9 +380,7 @@ public:
       return Code;
     }
 
-    unsigned AbbrevNo = AbbrevID-bitc::FIRST_APPLICATION_ABBREV;
-    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
-    BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+    const BitCodeAbbrev *Abbv = getAbbrev(AbbrevID);
 
     for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
       const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
