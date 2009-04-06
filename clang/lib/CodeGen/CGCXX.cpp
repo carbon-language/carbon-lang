@@ -142,10 +142,11 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   assert(MD->isInstance() && 
          "Trying to emit a member call expr on a static method!");
   
+  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(MD);
+  
   bool IsVariadic = MD->getType()->getAsFunctionProtoType()->isVariadic();
   const llvm::Type *Ty = 
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
-                                   IsVariadic);
+    CGM.getTypes().GetFunctionType(FnInfo, IsVariadic);
     
   llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, Ty);
   
@@ -172,7 +173,5 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
     Args.push_back(std::make_pair(EmitAnyExprToTemp(*I), I->getType()));
   
   QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
-                  Callee, Args, MD);
-  return EmitUnsupportedRValue(CE, "C++ member call expr");
+  return EmitCall(FnInfo, Callee, Args, MD);
 }
