@@ -88,7 +88,8 @@ public:
     Fixed = 1,  // A fixed width field, Val specifies number of bits.
     VBR   = 2,  // A VBR field where Val specifies the width of each chunk.
     Array = 3,  // A sequence of fields, next field species elt encoding.
-    Char6 = 4   // A 6-bit fixed field which maps to [a-zA-Z0-9._].
+    Char6 = 4,  // A 6-bit fixed field which maps to [a-zA-Z0-9._].
+    Blob  = 5   // 8-bit aligned array of 8-bit characters.
   };
 
   explicit BitCodeAbbrevOp(uint64_t V) :  Val(V), IsLiteral(true) {}
@@ -117,6 +118,7 @@ public:
       return true;
     case Array:
     case Char6:
+    case Blob:
       return false;
     }
   }

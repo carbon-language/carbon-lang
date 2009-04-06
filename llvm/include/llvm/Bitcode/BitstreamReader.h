@@ -149,7 +149,7 @@ public:
     }
 
     // If we run out of data, stop at the end of the stream.
-    if (LastChar == NextChar) {
+    if (NextChar == LastChar) {
       CurWord = 0;
       BitsInCurWord = 0;
       return 0;
@@ -380,9 +380,7 @@ public:
       const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
       if (Op.isLiteral()) {
         ReadAbbreviatedLiteral(Op, Vals); 
-      } else if (Op.getEncoding() != BitCodeAbbrevOp::Array) {
-        ReadAbbreviatedField(Op, Vals);
-      } else {
+      } else if (Op.getEncoding() == BitCodeAbbrevOp::Array) {
         // Array case.  Read the number of elements as a vbr6.
         unsigned NumElts = ReadVBR(6);
 
@@ -393,6 +391,29 @@ public:
         // Read all the elements.
         for (; NumElts; --NumElts)
           ReadAbbreviatedField(EltEnc, Vals);
+      } else if (Op.getEncoding() == BitCodeAbbrevOp::Blob) {
+        // Blob case.  Read the number of bytes as a vbr6.
+        unsigned NumElts = ReadVBR(6);
+        SkipToWord();  // 32-bit alignment
+
+        // Figure out where the end of this blob will be including tail padding.
+        const unsigned char *NewEnd = NextChar+((NumElts+3)&~3);
+        
+        // If this would read off the end of the bitcode file, just set the
+        // record to empty and return.
+        if (NewEnd > LastChar) {
+          Vals.append(NumElts, 0);
+          NextChar = LastChar;
+          break;
+        }
+        
+        // Otherwise, read the number of bytes.
+        for (; NumElts; ++NextChar, --NumElts)
+          Vals.push_back(*NextChar);
+        // Skip over tail padding.
+        NextChar = NewEnd;
+      } else {
+        ReadAbbreviatedField(Op, Vals);
       }
     }
 

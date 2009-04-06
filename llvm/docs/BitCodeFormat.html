@@ -478,6 +478,13 @@ emitted as their code, followed by the extra data.
 <li value="4">Char6: This field should be emitted as
     a <a href="#char6">char6-encoded value</a>.  This operand type takes no
     extra data.</li>
+<li value="5">Blob: This field is emitted as a vbr6, followed by padding to a
+    32-bit boundary (for alignment) and an array of 8-bit objects.  The array of
+    bytes is further followed by tail padding to ensure that its total length is
+    a multiple of 4 bytes.  This makes it very efficient for the reader to
+    decode the data without having to make a copy of it: it can use a pointer to
+    the data in the mapped in file and poke directly at it.  A blob may only
+    occur as the last operand of an abbreviation.</li>
 </ol>
 
 <p>

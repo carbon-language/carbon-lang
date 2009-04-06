@@ -319,11 +319,7 @@ public:
         assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
         EmitAbbreviatedLiteral(Op, Vals[RecordIdx]);
         ++RecordIdx;
-      } else if (Op.getEncoding() != BitCodeAbbrevOp::Array) {
-        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
-        EmitAbbreviatedField(Op, Vals[RecordIdx]);
-        ++RecordIdx;
-      } else {
+      } else if (Op.getEncoding() == BitCodeAbbrevOp::Array) {
         // Array case.
         assert(i+2 == e && "array op not second to last?");
         const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
@@ -334,6 +330,26 @@ public:
         // Emit each field.
         for (; RecordIdx != Vals.size(); ++RecordIdx)
           EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
+      } else if (Op.getEncoding() == BitCodeAbbrevOp::Blob) {
+        // Emit a vbr6 to indicate the number of elements present.
+        EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
+        // Flush to a 32-bit alignment boundary.
+        FlushToWord();
+        assert((Out.size() & 3) == 0 && "Not 32-bit aligned");
+
+        // Emit each field as a literal byte.
+        for (; RecordIdx != Vals.size(); ++RecordIdx) {
+          assert(Vals[RecordIdx] < 256 && "Value too large to emit as blob");
+          Out.push_back((unsigned char)Vals[RecordIdx]);
+        }
+        // Align end to 32-bits.
+        while (Out.size() & 3)
+          Out.push_back(0);
+        
+      } else {  // Single scalar field.
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        EmitAbbreviatedField(Op, Vals[RecordIdx]);
+        ++RecordIdx;
       }
     }
     assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
