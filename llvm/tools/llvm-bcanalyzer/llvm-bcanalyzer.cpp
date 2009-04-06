@@ -341,12 +341,33 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
       ++BlockStats.NumAbbrevs;
       break;
     default:
-      ++BlockStats.NumRecords;
-      if (AbbrevID != bitc::UNABBREV_RECORD)
-        ++BlockStats.NumAbbreviatedRecords;
-      
       Record.clear();
-      unsigned Code = Stream.ReadRecord(AbbrevID, Record);
+      bool HasBlob = false;
+
+      ++BlockStats.NumRecords;
+      if (AbbrevID != bitc::UNABBREV_RECORD) {
+        ++BlockStats.NumAbbreviatedRecords;
+        const BitCodeAbbrev *Abbv = Stream.getAbbrev(AbbrevID);
+        if (Abbv->getNumOperandInfos() != 0) {
+          const BitCodeAbbrevOp &LastOp =  
+            Abbv->getOperandInfo(Abbv->getNumOperandInfos()-1);
+          // If the last operand is a blob, then this record has blob data.
+          if (LastOp.isEncoding() && 
+              LastOp.getEncoding() == BitCodeAbbrevOp::Blob)
+            HasBlob = true;
+        }
+      }
+        
+      unsigned Code;
+      const char *BlobStart = 0;
+      unsigned BlobLen = 0;
+      if (!HasBlob)
+        Code = Stream.ReadRecord(AbbrevID, Record);
+      else {
+        Code = Stream.ReadRecord(AbbrevID, Record);
+        BlobStart = BlobStart;
+        BlobLen = BlobLen;
+      }
 
       // Increment the # occurrences of this code.
       if (BlockStats.CodeFreq.size() <= Code)
