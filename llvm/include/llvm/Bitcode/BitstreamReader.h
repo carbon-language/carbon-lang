@@ -342,20 +342,20 @@ private:
     if (Op.isLiteral()) {
       // If the abbrev specifies the literal value to use, use it.
       Vals.push_back(Op.getLiteralValue());
-    } else {
-      // Decode the value as we are commanded.
-      switch (Op.getEncoding()) {
-      default: assert(0 && "Unknown encoding!");
-      case BitCodeAbbrevOp::Fixed:
-        Vals.push_back(Read((unsigned)Op.getEncodingData()));
-        break;
-      case BitCodeAbbrevOp::VBR:
-        Vals.push_back(ReadVBR64((unsigned)Op.getEncodingData()));
-        break;
-      case BitCodeAbbrevOp::Char6:
-        Vals.push_back(BitCodeAbbrevOp::DecodeChar6(Read(6)));
-        break;
-      }
+      return;
+    }
+    // Decode the value as we are commanded.
+    switch (Op.getEncoding()) {
+    default: assert(0 && "Unknown encoding!");
+    case BitCodeAbbrevOp::Fixed:
+      Vals.push_back(Read((unsigned)Op.getEncodingData()));
+      break;
+    case BitCodeAbbrevOp::VBR:
+      Vals.push_back(ReadVBR64((unsigned)Op.getEncodingData()));
+      break;
+    case BitCodeAbbrevOp::Char6:
+      Vals.push_back(BitCodeAbbrevOp::DecodeChar6(Read(6)));
+      break;
     }
   }
 public:
