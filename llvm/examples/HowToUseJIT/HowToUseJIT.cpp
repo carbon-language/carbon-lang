@@ -42,7 +42,6 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -110,8 +109,5 @@ int main() {
 
   // Import result of execution:
   outs() << "Result: " << gv.IntVal << "\n";
-  EE->freeMachineCodeForFunction(FooF);
-  delete EE;
-  llvm_shutdown();
   return 0;
 }
