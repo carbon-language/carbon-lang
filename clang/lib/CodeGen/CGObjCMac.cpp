@@ -107,7 +107,13 @@ public:
   llvm::Constant *ExceptionThrowFn;
   
   /// SyncEnterFn - LLVM object_sync_enter function.
-  llvm::Constant *SyncEnterFn;
+  llvm::Constant *getSyncEnterFn() {
+    // void objc_sync_enter (id)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_sync_enter");
+  }
   
   /// SyncExitFn - LLVM object_sync_exit function.
   llvm::Constant *SyncExitFn;
@@ -295,7 +301,14 @@ public:
 
   /// EHPersonalityPtr - LLVM value for an i8* to the Objective-C
   /// exception personality function.
-  llvm::Value *EHPersonalityPtr;
+  llvm::Value *getEHPersonalityPtr() {
+    llvm::Constant *Personality = 
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                              std::vector<const llvm::Type*>(),
+                                                        true),
+                              "__objc_personality_v0");
+    return llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
+  }
 
   llvm::Constant *UnwindResumeOrRethrowFn, *ObjCBeginCatchFn, *ObjCEndCatchFn;
 
@@ -2012,7 +2025,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     SyncArg = 
       CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
     SyncArg = CGF.Builder.CreateBitCast(SyncArg, ObjCTypes.ObjectPtrTy);
-    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn, SyncArg);
+    CGF.Builder.CreateCall(ObjCTypes.getSyncEnterFn(), SyncArg);
   }
 
   // Push an EH context entry, used for handling rethrows and jumps
@@ -3277,13 +3290,11 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
     CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
 
   // synchronized APIs
-  // void objc_sync_enter (id)
   // void objc_sync_exit (id)
   Params.clear();
   Params.push_back(IdType);
 
   FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
-  SyncEnterFn = CGM.CreateRuntimeFunction(FTy, "objc_sync_enter");
   SyncExitFn = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
 }
 
@@ -3873,14 +3884,6 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                                       Params,
                                                       true),
                               "objc_msgSendSuper2_stret_fixup");
-
-  Params.clear();
-  llvm::Constant *Personality = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
-                                                      Params,
-                                                      true),
-                              "__objc_personality_v0");
-  EHPersonalityPtr = llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
 
   Params.clear();
   Params.push_back(Int8PtrTy);
@@ -5280,7 +5283,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     SyncArg = 
       CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
     SyncArg = CGF.Builder.CreateBitCast(SyncArg, ObjCTypes.ObjectPtrTy);
-    CGF.Builder.CreateCall(ObjCTypes.SyncEnterFn, SyncArg);
+    CGF.Builder.CreateCall(ObjCTypes.getSyncEnterFn(), SyncArg);
   }
 
   // Push an EH context entry, used for handling rethrows and jumps
@@ -5309,7 +5312,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   llvm::SmallVector<llvm::Value*, 8> SelectorArgs;
   SelectorArgs.push_back(Exc);
-  SelectorArgs.push_back(ObjCTypes.EHPersonalityPtr);
+  SelectorArgs.push_back(ObjCTypes.getEHPersonalityPtr());
 
   // Construct the lists of (type, catch body) to handle.
   llvm::SmallVector<std::pair<const ParmVarDecl*, const Stmt*>, 8> Handlers;
@@ -5427,7 +5430,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // though we don't use the result.
       llvm::SmallVector<llvm::Value*, 8> Args;
       Args.push_back(Exc);
-      Args.push_back(ObjCTypes.EHPersonalityPtr);
+      Args.push_back(ObjCTypes.getEHPersonalityPtr());
       Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                             0));
       CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
@@ -5459,7 +5462,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // though we don't use the result.
       Args.clear();
       Args.push_back(Exc);
-      Args.push_back(ObjCTypes.EHPersonalityPtr);
+      Args.push_back(ObjCTypes.getEHPersonalityPtr());
       Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                             0));
       CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
