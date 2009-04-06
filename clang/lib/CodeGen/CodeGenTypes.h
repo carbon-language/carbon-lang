@@ -172,11 +172,14 @@ public:
 
   const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *FTNP);
   const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *FTP);
+  const CGFunctionInfo &getFunctionInfo(const BlockPointerType *BPT);
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
+//private:
   const CGFunctionInfo &getFunctionInfo(QualType ResTy, 
                                         const CallArgList &Args);
+public:
   const CGFunctionInfo &getFunctionInfo(QualType ResTy, 
                                         const FunctionArgList &Args);
   
