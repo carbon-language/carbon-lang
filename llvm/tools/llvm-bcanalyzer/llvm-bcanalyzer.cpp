@@ -30,6 +30,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -382,16 +383,24 @@ static void PrintSize(double Bits) {
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
   // Read the input file.
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str());
+  MemoryBuffer *MemBuf = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str());
 
-  if (Buffer == 0)
+  if (MemBuf == 0)
     return Error("Error reading '" + InputFilename + "'.");
   
-  if (Buffer->getBufferSize() & 3)
+  if (MemBuf->getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");
   
-  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
-  BitstreamReader Stream(BufPtr, BufPtr+Buffer->getBufferSize());
+  unsigned char *BufPtr = (unsigned char *)MemBuf->getBufferStart();
+  unsigned char *EndBufPtr = BufPtr+MemBuf->getBufferSize();
+  
+  // If we have a wrapper header, parse it and ignore the non-bc file contents.
+  // The magic number is 0x0B17C0DE stored in little endian.
+  if (isBitcodeWrapper(BufPtr, EndBufPtr))
+    if (SkipBitcodeWrapperHeader(BufPtr, EndBufPtr))
+      return Error("Invalid bitcode wrapper header");
+  
+  BitstreamReader Stream(BufPtr, EndBufPtr);
 
   
   // Read the stream signature.
@@ -425,7 +434,7 @@ static int AnalyzeBitcode() {
   
   if (Dump) std::cerr << "\n\n";
   
-  uint64_t BufferSizeBits = Buffer->getBufferSize()*CHAR_BIT;
+  uint64_t BufferSizeBits = (EndBufPtr-BufPtr)*CHAR_BIT;
   // Print a summary of the read file.
   std::cerr << "Summary of " << InputFilename << ":\n";
   std::cerr << "         Total size: ";
