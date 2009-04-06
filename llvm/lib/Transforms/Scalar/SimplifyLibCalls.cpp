@@ -514,11 +514,11 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
     // the string .. we're concatenating).
-    Dst = B.CreateGEP(Dst, DstLen, "endptr");
+    Value *CpyDst = B.CreateGEP(Dst, DstLen, "endptr");
     
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
-    EmitMemCpy(Dst, Src, ConstantInt::get(TD->getIntPtrType(), Len+1), 1, B);
+    EmitMemCpy(CpyDst, Src, ConstantInt::get(TD->getIntPtrType(), Len+1), 1, B);
     return Dst;
   }
 };

@@ -1,6 +1,9 @@
 ; Test that the StrCatOptimizer works correctly
+; PR3661
 ; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call.*strcat}
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
+; RUN:   grep {puts.*%arg1}
 
 @hello = constant [6 x i8] c"hello\00"		; <[6 x i8]*> [#uses=1]
 @null = constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=1]
