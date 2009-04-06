@@ -461,24 +461,24 @@ emitted as their code, followed by the extra data.
 
 <p>The possible operand encodings are:</p>
 
-<ul>
-<li>1 &mdash; Fixed &mdash; The field should be emitted as
+<ol>
+<li value="1">Fixed: The field should be emitted as
     a <a href="#fixedwidth">fixed-width value</a>, whose width is specified by
     the operand's extra data.</li>
-<li>2 &mdash; VBR &mdash; The field should be emitted as
+<li value="2">VBR: The field should be emitted as
     a <a href="#variablewidth">variable-width value</a>, whose width is
     specified by the operand's extra data.</li>
-<li>3 &mdash; Array &mdash; This field is an array of values.  The array operand
+<li value="3">Array: This field is an array of values.  The array operand
     has no extra data, but expects another operand to follow it which indicates
     the element type of the array.  When reading an array in an abbreviated
     record, the first integer is a vbr6 that indicates the array length,
     followed by the encoded elements of the array.  An array may only occur as
     the last operand of an abbreviation (except for the one final operand that
     gives the array's type).</li>
-<li>4 &mdash; Char6 &mdash; This field should be emitted as
+<li value="4">Char6: This field should be emitted as
     a <a href="#char6">char6-encoded value</a>.  This operand type takes no
     extra data.</li>
-</ul>
+</ol>
 
 <p>
 For example, target triples in LLVM modules are encoded as a record of the
