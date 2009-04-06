@@ -284,6 +284,99 @@ private:
     }
   }
   
+  /// EmitRecordWithAbbrevImpl - This is the core implementation of the record
+  /// emission code.  If BlobData is non-null, then it specifies an array of
+  /// data that should be emitted as part of the Blob or Array operand that is
+  /// known to exist at the end of the the record.
+  template<typename uintty>
+  void EmitRecordWithAbbrevImpl(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
+                                const char *BlobData, unsigned BlobLen) {
+    unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
+    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+    BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+
+    EmitCode(Abbrev);
+
+    unsigned RecordIdx = 0;
+    for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
+         i != e; ++i) {
+      const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+      if (Op.isLiteral()) {
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        EmitAbbreviatedLiteral(Op, Vals[RecordIdx]);
+        ++RecordIdx;
+      } else if (Op.getEncoding() == BitCodeAbbrevOp::Array) {
+        // Array case.
+        assert(i+2 == e && "array op not second to last?");
+        const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+
+        // If this record has blob data, emit it, otherwise we must have record
+        // entries to encode this way.
+        if (BlobData) {
+          assert(RecordIdx == Vals.size() &&
+                 "Blob data and record entries specified for array!");
+          // Emit a vbr6 to indicate the number of elements present.
+          EmitVBR(static_cast<uint32_t>(BlobLen), 6);
+          
+          // Emit each field.
+          for (unsigned i = 0; i != BlobLen; ++i)
+            EmitAbbreviatedField(EltEnc, (unsigned char)BlobData[i]);
+          
+          // Know that blob data is consumed for assertion below.
+          BlobData = 0;
+        } else {
+          // Emit a vbr6 to indicate the number of elements present.
+          EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
+
+          // Emit each field.
+          for (unsigned e = Vals.size(); RecordIdx != e; ++RecordIdx)
+            EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
+        }
+      } else if (Op.getEncoding() == BitCodeAbbrevOp::Blob) {
+        // If this record has blob data, emit it, otherwise we must have record
+        // entries to encode this way.
+        
+        // Emit a vbr6 to indicate the number of elements present.
+        if (BlobData) {
+          EmitVBR(static_cast<uint32_t>(BlobLen), 6);
+          assert(RecordIdx == Vals.size() &&
+                 "Blob data and record entries specified for blob operand!");
+        } else {
+          EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
+        }
+        
+        // Flush to a 32-bit alignment boundary.
+        FlushToWord();
+        assert((Out.size() & 3) == 0 && "Not 32-bit aligned");
+
+        // Emit each field as a literal byte.
+        if (BlobData) {
+          for (unsigned i = 0; i != BlobLen; ++i)
+            Out.push_back((unsigned char)BlobData[i]);
+          
+          // Know that blob data is consumed for assertion below.
+          BlobData = 0;
+        } else {
+          for (unsigned e = Vals.size(); RecordIdx != e; ++RecordIdx) {
+            assert(Vals[RecordIdx] < 256 && "Value too large to emit as blob");
+            Out.push_back((unsigned char)Vals[RecordIdx]);
+          }
+        }
+        // Align end to 32-bits.
+        while (Out.size() & 3)
+          Out.push_back(0);
+        
+      } else {  // Single scalar field.
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        EmitAbbreviatedField(Op, Vals[RecordIdx]);
+        ++RecordIdx;
+      }
+    }
+    assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
+    assert(BlobData == 0 &&
+           "Blob data specified for record that doesn't use it!");
+  }
+  
 public:
 
   /// EmitRecord - Emit the specified record to the stream, using an abbrev if
@@ -301,60 +394,40 @@ public:
         EmitVBR64(Vals[i], 6);
       return;
     }
-    
-    unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
-    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
-    BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
-
-    EmitCode(Abbrev);
 
     // Insert the code into Vals to treat it uniformly.
     Vals.insert(Vals.begin(), Code);
-
-    unsigned RecordIdx = 0;
-    for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
-         i != e; ++i) {
-      const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-      if (Op.isLiteral()) {
-        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
-        EmitAbbreviatedLiteral(Op, Vals[RecordIdx]);
-        ++RecordIdx;
-      } else if (Op.getEncoding() == BitCodeAbbrevOp::Array) {
-        // Array case.
-        assert(i+2 == e && "array op not second to last?");
-        const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
-
-        // Emit a vbr6 to indicate the number of elements present.
-        EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
-
-        // Emit each field.
-        for (; RecordIdx != Vals.size(); ++RecordIdx)
-          EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
-      } else if (Op.getEncoding() == BitCodeAbbrevOp::Blob) {
-        // Emit a vbr6 to indicate the number of elements present.
-        EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
-        // Flush to a 32-bit alignment boundary.
-        FlushToWord();
-        assert((Out.size() & 3) == 0 && "Not 32-bit aligned");
-
-        // Emit each field as a literal byte.
-        for (; RecordIdx != Vals.size(); ++RecordIdx) {
-          assert(Vals[RecordIdx] < 256 && "Value too large to emit as blob");
-          Out.push_back((unsigned char)Vals[RecordIdx]);
-        }
-        // Align end to 32-bits.
-        while (Out.size() & 3)
-          Out.push_back(0);
-        
-      } else {  // Single scalar field.
-        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
-        EmitAbbreviatedField(Op, Vals[RecordIdx]);
-        ++RecordIdx;
-      }
-    }
-    assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
+    
+    EmitRecordWithAbbrev(Abbrev, Vals);
+  }
+  
+  /// EmitRecordWithAbbrev - Emit a record with the specified abbreviation.
+  /// Unlike EmitRecord, the code for the record should be included in Vals as
+  /// the first entry.
+  template<typename uintty>
+  void EmitRecordWithAbbrev(unsigned Abbrev, SmallVectorImpl<uintty> &Vals) {
+    EmitRecordWithAbbrevImpl(Abbrev, Vals, 0, 0);
+  }
+  
+  /// EmitRecordWithBlob - Emit the specified record to the stream, using an
+  /// abbrev that includes a blob at the end.  The blob data to emit is
+  /// specified by the pointer and length specified at the end.  In contrast to
+  /// EmitRecord, this routine expects that the first entry in Vals is the code
+  /// of the record.
+  template<typename uintty>
+  void EmitRecordWithBlob(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
+                          const char *BlobData, unsigned BlobLen) {
+    EmitRecordWithAbbrevImpl(Abbrev, Vals, BlobData, BlobLen);
   }
 
+  /// EmitRecordWithArray - Just like EmitRecordWithBlob, works with records
+  /// that end with an array.
+  template<typename uintty>
+  void EmitRecordWithArray(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
+                          const char *ArrayData, unsigned ArrayLen) {
+    EmitRecordWithAbbrevImpl(Abbrev, Vals, ArrayData, ArrayLen);
+  }
+  
   //===--------------------------------------------------------------------===//
   // Abbrev Emission
   //===--------------------------------------------------------------------===//
