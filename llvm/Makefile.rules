@@ -229,10 +229,12 @@ endif
 CPP.Defines :=
 # OPTIMIZE_OPTION - The optimization level option we want to build LLVM with
 # this can be overridden on the make command line.
-ifneq ($(OS),MingW)
-  OPTIMIZE_OPTION := -O3
-else
+# Avoid -O3 on Darwin, there are unresolved issues with
+# -fstrict-aliasing and ipa-type-escape radr://6756684
+ifeq ($(OS), $(filter $(OS), MingW Darwin))
   OPTIMIZE_OPTION := -O2
+else
+  OPTIMIZE_OPTION := -O3
 endif
 
 ifdef ENABLE_PROFILING
