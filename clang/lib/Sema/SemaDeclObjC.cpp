@@ -1795,7 +1795,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       if (getLangOptions().ObjCNonFragileABI) {
         Ivar = ObjCIvarDecl::Create(Context, CurContext, PropertyLoc, 
                                     PropertyIvar, PropType, 
-                                    ObjCIvarDecl::Private,
+                                    ObjCIvarDecl::Public,
                                     (Expr *)0);
         property->setPropertyIvarDecl(Ivar);
       }

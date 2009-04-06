@@ -4493,37 +4493,34 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
   std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
                            + Ivar->getNameAsString());
   llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.LongTy, Offset);
-  
   llvm::GlobalVariable *IvarOffsetGV = 
     CGM.getModule().getGlobalVariable(ExternalName);
-  if (IvarOffsetGV) {
+  if (IvarOffsetGV)
     // ivar offset symbol already built due to user code referencing it.
-    IvarOffsetGV->setAlignment(
-      CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
     IvarOffsetGV->setInitializer(Init);
-    IvarOffsetGV->setSection("__DATA, __objc_const");
-    UsedGlobals.push_back(IvarOffsetGV);
-    return IvarOffsetGV;
-  }
-  
-  IvarOffsetGV = 
-    new llvm::GlobalVariable(Init->getType(),
-                             false,
-                             llvm::GlobalValue::ExternalLinkage,
-                             Init,
-                             ExternalName,
-                             &CGM.getModule());
+  else
+    IvarOffsetGV = 
+      new llvm::GlobalVariable(Init->getType(),
+                               false,
+                               llvm::GlobalValue::ExternalLinkage,
+                               Init,
+                               ExternalName,
+                               &CGM.getModule());
   IvarOffsetGV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
   // @private and @package have hidden visibility.
   bool globalVisibility = (Ivar->getAccessControl() == ObjCIvarDecl::Public ||
-                           Ivar->getAccessControl() == ObjCIvarDecl::Protected);
+                           Ivar->getAccessControl() == ObjCIvarDecl::Protected);  
   if (!globalVisibility)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  else 
-    if (IsClassHidden(ID))
+  else if (IsClassHidden(ID))
       IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-
+  else if (CGM.getLangOptions().getVisibilityMode() == 
+           LangOptions::HiddenVisibility)
+    IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  else if (CGM.getLangOptions().getVisibilityMode() == 
+           LangOptions::DefaultVisibility)
+    IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
   IvarOffsetGV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(IvarOffsetGV);
   return IvarOffsetGV;
