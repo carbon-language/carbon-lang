@@ -20,6 +20,7 @@
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		1ADF47AF0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */; };
+		1AFEF4070F8A6B2300476F2B /* clang-cc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFEF4050F8A6B2300476F2B /* clang-cc.cpp */; };
 		3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */; };
 		351318600CD14468006B66F7 /* DeclSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513185F0CD14468006B66F7 /* DeclSerialization.cpp */; };
 		352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */; };
@@ -209,7 +210,6 @@
 		DEDFE63A0F7B3B180035BD10 /* Backend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6270F7B3B180035BD10 /* Backend.cpp */; };
 		DEDFE63B0F7B3B180035BD10 /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6280F7B3B180035BD10 /* PrintParserCallbacks.cpp */; };
 		DEDFE63C0F7B3B180035BD10 /* RewriteBlocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6290F7B3B180035BD10 /* RewriteBlocks.cpp */; };
-		DEDFE63D0F7B3B180035BD10 /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE62A0F7B3B180035BD10 /* clang.cpp */; };
 		DEDFE63E0F7B3B180035BD10 /* AnalysisConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE62D0F7B3B180035BD10 /* AnalysisConsumer.cpp */; };
 		DEDFE63F0F7B3B180035BD10 /* ASTConsumers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE62E0F7B3B180035BD10 /* ASTConsumers.cpp */; };
 		DEDFE6400F7B3B180035BD10 /* RewriteObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE62F0F7B3B180035BD10 /* RewriteObjC.cpp */; };
@@ -337,6 +337,8 @@
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiateDecl.cpp; path = lib/Sema/SemaTemplateInstantiateDecl.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1AFEF4050F8A6B2300476F2B /* clang-cc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = "clang-cc.cpp"; path = "tools/clang-cc/clang-cc.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		1AFEF4060F8A6B2300476F2B /* clang-cc.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = "clang-cc.h"; path = "tools/clang-cc/clang-cc.h"; sourceTree = "<group>"; tabWidth = 2; };
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
 		3513185F0CD14468006B66F7 /* DeclSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSerialization.cpp; path = lib/AST/DeclSerialization.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = lib/Frontend/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
@@ -599,25 +601,23 @@
 		DEDFE5270F63A9230035BD10 /* DeclNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = DeclNodes.def; path = clang/AST/DeclNodes.def; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NestedNameSpecifier.h; path = clang/AST/NestedNameSpecifier.h; sourceTree = "<group>"; };
 		DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NestedNameSpecifier.cpp; path = lib/AST/NestedNameSpecifier.cpp; sourceTree = "<group>"; };
-		DEDFE6220F7B3B180035BD10 /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = "tools/clang-cc/Warnings.cpp"; sourceTree = "<group>"; };
-		DEDFE6230F7B3B180035BD10 /* SerializationTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTest.cpp; path = "tools/clang-cc/SerializationTest.cpp"; sourceTree = "<group>"; };
-		DEDFE6240F7B3B180035BD10 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = "tools/clang-cc/RewriteTest.cpp"; sourceTree = "<group>"; };
-		DEDFE6250F7B3B180035BD10 /* DependencyFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DependencyFile.cpp; path = "tools/clang-cc/DependencyFile.cpp"; sourceTree = "<group>"; };
-		DEDFE6260F7B3B180035BD10 /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLPrint.cpp; path = "tools/clang-cc/HTMLPrint.cpp"; sourceTree = "<group>"; };
-		DEDFE6270F7B3B180035BD10 /* Backend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Backend.cpp; path = "tools/clang-cc/Backend.cpp"; sourceTree = "<group>"; };
-		DEDFE6280F7B3B180035BD10 /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = "tools/clang-cc/PrintParserCallbacks.cpp"; sourceTree = "<group>"; };
-		DEDFE6290F7B3B180035BD10 /* RewriteBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteBlocks.cpp; path = "tools/clang-cc/RewriteBlocks.cpp"; sourceTree = "<group>"; };
-		DEDFE62A0F7B3B180035BD10 /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = clang.cpp; path = "tools/clang-cc/clang.cpp"; sourceTree = "<group>"; };
-		DEDFE62B0F7B3B180035BD10 /* clang.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = clang.h; path = "tools/clang-cc/clang.h"; sourceTree = "<group>"; };
-		DEDFE62C0F7B3B180035BD10 /* Analyses.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Analyses.def; path = "tools/clang-cc/Analyses.def"; sourceTree = "<group>"; };
-		DEDFE62D0F7B3B180035BD10 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = "tools/clang-cc/AnalysisConsumer.cpp"; sourceTree = "<group>"; };
-		DEDFE62E0F7B3B180035BD10 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = "tools/clang-cc/ASTConsumers.cpp"; sourceTree = "<group>"; };
-		DEDFE62F0F7B3B180035BD10 /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteObjC.cpp; path = "tools/clang-cc/RewriteObjC.cpp"; sourceTree = "<group>"; };
-		DEDFE6300F7B3B180035BD10 /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = "tools/clang-cc/PrintPreprocessedOutput.cpp"; sourceTree = "<group>"; };
-		DEDFE6310F7B3B180035BD10 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteMacros.cpp; path = "tools/clang-cc/RewriteMacros.cpp"; sourceTree = "<group>"; };
-		DEDFE6320F7B3B180035BD10 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = "tools/clang-cc/DiagChecker.cpp"; sourceTree = "<group>"; };
-		DEDFE6330F7B3B180035BD10 /* CacheTokens.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CacheTokens.cpp; path = "tools/clang-cc/CacheTokens.cpp"; sourceTree = "<group>"; };
-		DEDFE6340F7B3B180035BD10 /* ASTConsumers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumers.h; path = "tools/clang-cc/ASTConsumers.h"; sourceTree = "<group>"; };
+		DEDFE6220F7B3B180035BD10 /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = "tools/clang-cc/Warnings.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6230F7B3B180035BD10 /* SerializationTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTest.cpp; path = "tools/clang-cc/SerializationTest.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6240F7B3B180035BD10 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = "tools/clang-cc/RewriteTest.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6250F7B3B180035BD10 /* DependencyFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DependencyFile.cpp; path = "tools/clang-cc/DependencyFile.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6260F7B3B180035BD10 /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLPrint.cpp; path = "tools/clang-cc/HTMLPrint.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6270F7B3B180035BD10 /* Backend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Backend.cpp; path = "tools/clang-cc/Backend.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6280F7B3B180035BD10 /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = "tools/clang-cc/PrintParserCallbacks.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6290F7B3B180035BD10 /* RewriteBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteBlocks.cpp; path = "tools/clang-cc/RewriteBlocks.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE62C0F7B3B180035BD10 /* Analyses.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = Analyses.def; path = "tools/clang-cc/Analyses.def"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE62D0F7B3B180035BD10 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = "tools/clang-cc/AnalysisConsumer.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE62E0F7B3B180035BD10 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = "tools/clang-cc/ASTConsumers.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE62F0F7B3B180035BD10 /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteObjC.cpp; path = "tools/clang-cc/RewriteObjC.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6300F7B3B180035BD10 /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = "tools/clang-cc/PrintPreprocessedOutput.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6310F7B3B180035BD10 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteMacros.cpp; path = "tools/clang-cc/RewriteMacros.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6320F7B3B180035BD10 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = "tools/clang-cc/DiagChecker.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6330F7B3B180035BD10 /* CacheTokens.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CacheTokens.cpp; path = "tools/clang-cc/CacheTokens.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6340F7B3B180035BD10 /* ASTConsumers.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ASTConsumers.h; path = "tools/clang-cc/ASTConsumers.h"; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE6450F7B3B4E0035BD10 /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = tools/driver/driver.cpp; sourceTree = "<group>"; };
 		DEDFE6480F7B3B830035BD10 /* Types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Types.cpp; path = lib/Driver/Types.cpp; sourceTree = "<group>"; };
 		DEDFE6490F7B3B830035BD10 /* Tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tools.h; path = lib/Driver/Tools.h; sourceTree = "<group>"; };
@@ -1263,8 +1263,8 @@
 				DEDFE6240F7B3B180035BD10 /* RewriteTest.cpp */,
 				DEDFE6230F7B3B180035BD10 /* SerializationTest.cpp */,
 				DEDFE6220F7B3B180035BD10 /* Warnings.cpp */,
-				DEDFE62A0F7B3B180035BD10 /* clang.cpp */,
-				DEDFE62B0F7B3B180035BD10 /* clang.h */,
+				1AFEF4050F8A6B2300476F2B /* clang-cc.cpp */,
+				1AFEF4060F8A6B2300476F2B /* clang-cc.h */,
 			);
 			name = "clang-cc";
 			sourceTree = "<group>";
@@ -1542,7 +1542,6 @@
 				DEDFE63A0F7B3B180035BD10 /* Backend.cpp in Sources */,
 				DEDFE63B0F7B3B180035BD10 /* PrintParserCallbacks.cpp in Sources */,
 				DEDFE63C0F7B3B180035BD10 /* RewriteBlocks.cpp in Sources */,
-				DEDFE63D0F7B3B180035BD10 /* clang.cpp in Sources */,
 				DEDFE63E0F7B3B180035BD10 /* AnalysisConsumer.cpp in Sources */,
 				DEDFE63F0F7B3B180035BD10 /* ASTConsumers.cpp in Sources */,
 				DEDFE6400F7B3B180035BD10 /* RewriteObjC.cpp in Sources */,
@@ -1569,6 +1568,7 @@
 				1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */,
 				906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */,
 				DEDFF8880F848CF80035BD10 /* TemplateName.cpp in Sources */,
+				1AFEF4070F8A6B2300476F2B /* clang-cc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
