@@ -285,39 +285,7 @@ public:
   template<typename uintty>
   void EmitRecord(unsigned Code, SmallVectorImpl<uintty> &Vals,
                   unsigned Abbrev = 0) {
-    if (Abbrev) {
-      unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
-      assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
-      BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
-
-      EmitCode(Abbrev);
-
-      // Insert the code into Vals to treat it uniformly.
-      Vals.insert(Vals.begin(), Code);
-
-      unsigned RecordIdx = 0;
-      for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
-           i != e; ++i) {
-        const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-        if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
-          assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
-          EmitAbbreviatedField(Op, Vals[RecordIdx]);
-          ++RecordIdx;
-        } else {
-          // Array case.
-          assert(i+2 == e && "array op not second to last?");
-          const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
-
-          // Emit a vbr6 to indicate the number of elements present.
-          EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
-
-          // Emit each field.
-          for (; RecordIdx != Vals.size(); ++RecordIdx)
-            EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
-        }
-      }
-      assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
-    } else {
+    if (!Abbrev) {
       // If we don't have an abbrev to use, emit this in its fully unabbreviated
       // form.
       EmitCode(bitc::UNABBREV_RECORD);
@@ -325,7 +293,40 @@ public:
       EmitVBR(static_cast<uint32_t>(Vals.size()), 6);
       for (unsigned i = 0, e = static_cast<unsigned>(Vals.size()); i != e; ++i)
         EmitVBR64(Vals[i], 6);
+      return;
     }
+    
+    unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
+    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+    BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+
+    EmitCode(Abbrev);
+
+    // Insert the code into Vals to treat it uniformly.
+    Vals.insert(Vals.begin(), Code);
+
+    unsigned RecordIdx = 0;
+    for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
+         i != e; ++i) {
+      const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+      if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        EmitAbbreviatedField(Op, Vals[RecordIdx]);
+        ++RecordIdx;
+      } else {
+        // Array case.
+        assert(i+2 == e && "array op not second to last?");
+        const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+
+        // Emit a vbr6 to indicate the number of elements present.
+        EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
+
+        // Emit each field.
+        for (; RecordIdx != Vals.size(); ++RecordIdx)
+          EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
+      }
+    }
+    assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
   }
 
   //===--------------------------------------------------------------------===//
