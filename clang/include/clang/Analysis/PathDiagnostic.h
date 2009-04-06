@@ -31,6 +31,7 @@ namespace clang {
 
 class PathDiagnostic;
 class Stmt;
+class Decl;
 
 class PathDiagnosticClient : public DiagnosticClient  {
 public:
@@ -54,35 +55,40 @@ public:
   
 class PathDiagnosticLocation {
 private:
-  enum Kind { Range, SingleLoc, Statement } K;
+  enum Kind { RangeK, SingleLocK, StmtK, DeclK } K;
   SourceRange R;
   const Stmt *S;
+  const Decl *D;
   const SourceManager *SM;
 public:
   PathDiagnosticLocation()
-    : K(SingleLoc), S(0), SM(0) {}
+    : K(SingleLocK), S(0), D(0), SM(0) {}
   
   PathDiagnosticLocation(FullSourceLoc L)
-    : K(SingleLoc), R(L, L), S(0), SM(&L.getManager()) {}
+    : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()) {}
   
   PathDiagnosticLocation(const Stmt *s, const SourceManager &sm)
-    : K(Statement), S(s), SM(&sm) {}
+    : K(StmtK), S(s), D(0), SM(&sm) {}
   
   PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
-    : K(Range), R(r), S(0), SM(&sm) {}
+    : K(RangeK), R(r), S(0), D(0), SM(&sm) {}
+  
+  PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
+    : K(DeclK), S(0), D(d), SM(&sm) {}
   
   bool operator==(const PathDiagnosticLocation &X) const {
-    return K == X.K && R == X.R && S == X.S;
+    return K == X.K && R == X.R && S == X.S && D == X.D;
   }
   
   bool operator!=(const PathDiagnosticLocation &X) const {
-    return K != X.K || R != X.R || S != X.S;
+    return K != X.K || R != X.R || S != X.S || D != X.D;;
   }
   
   PathDiagnosticLocation& operator=(const PathDiagnosticLocation &X) {
     K = X.K;
     R = X.R;
     S = X.S;
+    D = X.D;
     SM = X.SM;
     return *this;
   }
@@ -94,20 +100,15 @@ public:
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;
   const Stmt *asStmt() const { assert(isValid()); return S; }
+  const Decl *asDecl() const { assert(isValid()); return D; }
   
-  bool hasRange() const { return K == Statement || K == Range; }
+  bool hasRange() const { return K == StmtK || K == RangeK || K == DeclK; }
   
   void invalidate() {
     *this = PathDiagnosticLocation();
   }
   
-  void flatten() {
-    if (K == Statement) {
-      R = asRange();
-      K = Range;
-      S = 0;
-    }    
-  }
+  void flatten();
   
   const SourceManager& getManager() const { assert(isValid()); return *SM; }
 };

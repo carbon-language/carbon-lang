@@ -13,6 +13,8 @@
 
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include <sstream>
@@ -144,11 +146,13 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
-    case SingleLoc:
-    case Range:
+    case SingleLocK:
+    case RangeK:
       break;
-    case Statement:
+    case StmtK:
       return FullSourceLoc(S->getLocStart(), const_cast<SourceManager&>(*SM));
+    case DeclK:
+      return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
   }
   
   return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
@@ -159,13 +163,39 @@ SourceRange PathDiagnosticLocation::asRange() const {
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
-    case SingleLoc:
-    case Range:
+    case SingleLocK:
+    case RangeK:
       break;
-    case Statement:
+    case StmtK:
       return S->getSourceRange();
+    case DeclK:
+      if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+        return MD->getSourceRange();
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+        return FD->getBody()->getSourceRange();
+      else {
+        SourceLocation L = D->getLocation();
+        return SourceRange(L, L);
+      }
   }
   
   return R;
 }
+
+void PathDiagnosticLocation::flatten() {
+  if (K == StmtK) {
+    R = asRange();
+    K = RangeK;
+    S = 0;
+    D = 0;
+  }
+  else if (K == DeclK) {
+    SourceLocation L = D->getLocation();
+    R = SourceRange(L, L);
+    K = SingleLocK;
+    S = 0;
+    D = 0;
+  }
+}
+
 
