@@ -547,6 +547,11 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__int64=__INT64_TYPE__");
   }
   
+  if (PP.getLangOptions().Optimize)
+    DefineBuiltinMacro(Buf, "__OPTIMIZE__=1");
+  if (PP.getLangOptions().OptimizeSize)
+    DefineBuiltinMacro(Buf, "__OPTIMIZE_SIZE__=1");
+    
   // Initialize target-specific preprocessor defines.
   const TargetInfo &TI = PP.getTargetInfo();
   

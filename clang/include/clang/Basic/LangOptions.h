@@ -65,6 +65,9 @@ public:
   unsigned HeinousExtensions : 1; // Extensions that we really don't like and
                                   // may be ripped out at any time.
 
+  unsigned Optimize          : 1; // Whether __OPTIMIZE__ should be defined.
+  unsigned OptimizeSize      : 1; // Whether __OPTIMIZE_SIZE__ should be 
+                                  // defined.
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -100,6 +103,9 @@ public:
     OverflowChecking = 0;
 
     InstantiationDepth = 99;
+    
+    Optimize = 0;
+    OptimizeSize = 0;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

@@ -601,6 +601,33 @@ TemplateDepth("ftemplate-depth", llvm::cl::init(99),
               llvm::cl::desc("Maximum depth of recursive template "
                              "instantiation"));
 
+
+static llvm::cl::opt<bool>
+OptSize("Os", llvm::cl::desc("Optimize for size"));
+
+static llvm::cl::opt<bool>
+NoCommon("fno-common",
+         llvm::cl::desc("Compile common globals like normal definitions"),
+         llvm::cl::ValueDisallowed);
+
+
+// It might be nice to add bounds to the CommandLine library directly.
+struct OptLevelParser : public llvm::cl::parser<unsigned> {
+  bool parse(llvm::cl::Option &O, const char *ArgName,
+             const std::string &Arg, unsigned &Val) {
+    if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
+      return true;
+    // FIXME: Support -O4.
+    if (Val > 3)
+      return O.error(": '" + Arg + "' invalid optimization level!");
+    return false;
+  }
+};
+static llvm::cl::opt<unsigned, false, OptLevelParser>
+OptLevel("O", llvm::cl::Prefix,
+         llvm::cl::desc("Optimization level"),
+         llvm::cl::init(0));
+
 // FIXME: add:
 //   -fdollars-in-identifiers
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
@@ -746,6 +773,13 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (EmitAllDecls)
     Options.EmitAllDecls = 1;
+
+  if (OptSize)
+    Options.OptimizeSize = 1;
+  
+  // -Os implies -O2
+  if (Options.OptimizeSize || OptLevel)
+    Options.Optimize = 1;
 }
 
 static llvm::cl::opt<bool>
@@ -1307,31 +1341,6 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 static llvm::cl::opt<bool>
 GenerateDebugInfo("g",
                   llvm::cl::desc("Generate source level debug information"));
-
-static llvm::cl::opt<bool>
-OptSize("Os", llvm::cl::desc("Optimize for size"));
-
-static llvm::cl::opt<bool>
-NoCommon("fno-common",
-         llvm::cl::desc("Compile common globals like normal definitions"),
-         llvm::cl::ValueDisallowed);
-
-// It might be nice to add bounds to the CommandLine library directly.
-struct OptLevelParser : public llvm::cl::parser<unsigned> {
-  bool parse(llvm::cl::Option &O, const char *ArgName,
-             const std::string &Arg, unsigned &Val) {
-    if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
-      return true;
-    // FIXME: Support -O4.
-    if (Val > 3)
-      return O.error(": '" + Arg + "' invalid optimization level!");
-    return false;
-  }
-};
-static llvm::cl::opt<unsigned, false, OptLevelParser>
-OptLevel("O", llvm::cl::Prefix,
-         llvm::cl::desc("Optimization level"),
-         llvm::cl::init(0));
 
 static llvm::cl::opt<std::string>
 TargetCPU("mcpu",
