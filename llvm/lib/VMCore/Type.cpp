@@ -666,6 +666,22 @@ protected:
   std::multimap<unsigned, PATypeHolder> TypesByHash;
 
 public:
+  ~TypeMapBase()
+  {
+    for (std::multimap<unsigned, PATypeHolder>::iterator I
+         = TypesByHash.begin(), E = TypesByHash.end(); I != E;) {
+      Type *Ty = I->second.get();
+      if (!Ty->isAbstract() && (isa<PointerType>(Ty) || isa<FunctionType>(Ty) ||
+                                isa<VectorType>(Ty))) {
+        TypesByHash.erase(I++);
+        // PATypeHolder won't destroy it, so we must
+        Ty->destroy();
+      }
+      else
+        ++I;
+    }
+  }
+
   void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
     std::multimap<unsigned, PATypeHolder>::iterator I =
       TypesByHash.lower_bound(Hash);
