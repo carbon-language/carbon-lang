@@ -4725,16 +4725,7 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   // Make sure the input expression also decays appropriately.
   UsualUnaryConversions(E);
 
-  AssignConvertType ConvResult = 
-    CheckAssignmentConstraints(VaListType, E->getType());
-  switch (ConvResult) {
-  case Compatible: break;  // Everything good.
-  case CompatiblePointerDiscardsQualifiers:
-    Diag(E->getLocStart(), diag::warn_va_arg_with_qualified_va_list)
-      << OrigExpr->getType() << E->getSourceRange();
-    break;
-
-  default:
+  if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible) {
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << OrigExpr->getType() << E->getSourceRange());
