@@ -835,6 +835,9 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
         ObjCImplementations[IDecl->getIdentifier()])
     if (ImpDecl->getInstanceMethod(PDecl->getSetterName()))
       return false;
+  // If all fails, look at the super class.
+  if (ObjCInterfaceDecl *SIDecl = IDecl->getSuperClass())
+    return isPropertyReadonly(PDecl, SIDecl);
   return true;
 }
 
