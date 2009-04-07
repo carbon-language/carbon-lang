@@ -914,7 +914,7 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
     
     // Is the top location context the same as the one for the new location?
     if (TopContextLoc == CLoc) {
-      if (alwaysAdd && NewLoc.asLocation() != CLoc.asLocation())
+      if (alwaysAdd)
         rawAddEdge(NewLoc);
 
       return;
@@ -949,7 +949,7 @@ void EdgeBuilder::addContext(const Stmt *S) {
       return;
 
     if (containsLocation(TopContextLoc, L)) {
-    //   if (const Stmt *S = L.asStmt())
+    // /  if (const Stmt *S = L.asStmt())
     //     if (isa<Expr>(S))
     //       if (const Stmt *P = PDB.getParent(S))
     //         addContext(PDB.getEnclosingStmtLocation(P).asStmt());
