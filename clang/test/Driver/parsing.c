@@ -15,6 +15,10 @@
 // RUN: not clang -sectalign 1 2 2> %t &&
 // RUN: grep "error: argument to '-sectalign' is missing (expected 3 values)" %t &&
 
+// Verify that search continues after find the first option.
+// RUN: clang -ccc-print-options -Wally 2> %t &&
+// RUN: grep 'Option 0 - Name: "-W", Values: {"ally"}' %t &&
+
 // RUN: true
 
 

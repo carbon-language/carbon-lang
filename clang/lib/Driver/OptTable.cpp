@@ -230,19 +230,26 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
   struct Info *Start = OptionInfos + FirstSearchableOption - 1;
   struct Info *End = OptionInfos + LastOption - 1;
 
-  // Find the first option which could be a prefix.
+  // Search for the first next option which could be a prefix.
   Start = std::lower_bound(Start, End, Str);
 
-  // Scan for first option which is a proper prefix.
-  for (; Start != End; ++Start)
-    if (memcmp(Str, Start->Name, strlen(Start->Name)) == 0)
-      break;
-
-  // Look for a match until we don't have a prefix.
+  // Options are stored in sorted order, with '\0' at the end of the
+  // alphabet. Since the only options which can accept a string must
+  // prefix it, we iteratively search for the next option which could
+  // be a prefix.
+  //
+  // FIXME: This is searching much more than necessary, but I am
+  // blanking on the simplest way to make it fast. We can solve this
+  // problem when we move to TableGen.
   for (; Start != End; ++Start) {
-    if (memcmp(Start->Name, Str, strlen(Start->Name)) != 0)
+    // Scan for first option which is a proper prefix.
+    for (; Start != End; ++Start)
+      if (memcmp(Str, Start->Name, strlen(Start->Name)) == 0)
+        break;
+    if (Start == End)
       break;
 
+    // See if this option matches.
     options::ID id = (options::ID) (Start - OptionInfos + 1);
     if (Arg *A = getOption(id)->accept(Args, Index))
       return A;
