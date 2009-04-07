@@ -3926,8 +3926,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DW && DW->ValidDebugInfo(RSI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
+      if (Fast)
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
     }
 
     return 0;
@@ -3938,8 +3939,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DW && DW->ValidDebugInfo(REI.getContext())) {
       unsigned LabelID =
         DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
+      if (Fast)
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
     }
 
     return 0;
