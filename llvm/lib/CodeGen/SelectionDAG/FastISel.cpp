@@ -57,11 +57,15 @@
 using namespace llvm;
 
 unsigned FastISel::getRegForValue(Value *V) {
-  MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
+  MVT RealVT = TLI.getValueType(V->getType(), /*AllowUnknown=*/true);
+  // Don't handle non-simple values in FastISel.
+  if (!RealVT.isSimple())
+    return 0;
 
   // Ignore illegal types. We must do this before looking up the value
   // in ValueMap because Arguments are given virtual registers regardless
   // of whether FastISel can handle them.
+  MVT::SimpleValueType VT = RealVT.getSimpleVT();
   if (!TLI.isTypeLegal(VT)) {
     // Promote MVT::i1 to a legal type though, because it's common and easy.
     if (VT == MVT::i1)
