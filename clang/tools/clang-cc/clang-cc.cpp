@@ -617,7 +617,6 @@ struct OptLevelParser : public llvm::cl::parser<unsigned> {
              const std::string &Arg, unsigned &Val) {
     if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
       return true;
-    // FIXME: Support -O4.
     if (Val > 3)
       return O.error(": '" + Arg + "' invalid optimization level!");
     return false;
