@@ -74,6 +74,9 @@
 
     <li><a href="#llvmc">The <tt>llvmc</tt> program gives me errors/doesn't
         work.</a></li>
+
+    <li><a href="#srcdir-objdir">When I compile LLVM-GCC with srcdir == objdir,
+        it fails. Why?</a></li>
   </ol></li>
 
   <li><a href="#felangs">Source Languages</a>
@@ -412,13 +415,33 @@ Stop.
    rebuilding.</p>
 </div>
 
-<div class="question"><p><a name="llvmc">
-<p>The <tt>llvmc</tt> program gives me errors/doesn't work.</a></p>
+<div class="question">
+<p><a name="llvmc">The <tt>llvmc</tt> program gives me errors/doesn't
+   work.</a></p>
 </div>
 
 <div class="answer">
 <p><tt>llvmc</tt> is experimental and isn't really supported. We suggest
    using <tt>llvm-gcc</tt> instead.</p>
+</div>
+
+<div class="question">
+<p><a href="srcdir-objdir">When I compile LLVM-GCC with srcdir == objdir, it
+   fails. Why?</a></p>
+</div>
+
+<div class="answer">
+<p>The <tt>GNUmakefile</tt> in the top-level directory of LLVM-GCC is a special
+   <tt>Makefile</tt> used by Apple to invoke the <tt>build_gcc</tt> script after
+   setting up a special environment. This has the unforunate side-effect that
+   trying to build LLVM-GCC with srcdir == objdir in a "non-Apple way" invokes
+   the <tt>GNUmakefile</tt> instead of <tt>Makefile</tt>. Because the
+   environment isn't set up correctly to do this, the build fails.</p>
+
+<p>People not building LLVM-GCC the "Apple way" need to build LLVM-GCC with
+   srcdir != objdir, or simply remove the GNUmakefile entirely.</p>
+
+<p>We regret the inconvenience.</p>
 </div>
 
 <!-- *********************************************************************** -->
