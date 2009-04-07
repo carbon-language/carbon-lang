@@ -37,6 +37,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfoList &Inputs,
                          const ArgList &Args,
                          const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
 
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
@@ -277,11 +278,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     Arg *Unsupported;
     if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
-        (Unsupported = Args.getLastArg(options::OPT_MQ))) {
-      const Driver &D = getToolChain().getHost().getDriver();
+        (Unsupported = Args.getLastArg(options::OPT_MQ)))
       D.Diag(clang::diag::err_drv_unsupported_opt) 
         << Unsupported->getOption().getName();
-    }
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
@@ -414,6 +413,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec = 
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
+
+  // Explicitly warn that these options are unsupported, even though
+  // we are allowing compilation to continue.
+  // FIXME: Use iterator.
+  for (ArgList::const_iterator 
+         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(options::OPT_pg)) {
+      A->claim();
+      D.Diag(clang::diag::warn_drv_clang_unsupported) 
+        << A->getAsString(Args);
+    }
+  }
 
   // Claim some arguments which clang supports automatically.
 
