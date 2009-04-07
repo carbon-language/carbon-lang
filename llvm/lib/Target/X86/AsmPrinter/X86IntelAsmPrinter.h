@@ -88,17 +88,9 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
     O << "XMMWORD PTR ";
     printMemReference(MI, OpNo);
   }
-  void printlea32mem(const MachineInstr *MI, unsigned OpNo) {
-    O << "DWORD PTR ";
-    printLeaMemReference(MI, OpNo);
-  }
-  void printlea64mem(const MachineInstr *MI, unsigned OpNo) {
-    O << "QWORD PTR ";
-    printLeaMemReference(MI, OpNo);
-  }
   void printlea64_32mem(const MachineInstr *MI, unsigned OpNo) {
     O << "QWORD PTR ";
-    printLeaMemReference(MI, OpNo, "subreg64");
+    printMemReference(MI, OpNo, "subreg64");
   }
 
   bool printAsmMRegister(const MachineOperand &MO, const char Mode);
@@ -111,8 +103,6 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op,
                          const char *Modifier=NULL);
-  void printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                            const char *Modifier=NULL);
   void printPICJumpTableSetLabel(unsigned uid,
                                  const MachineBasicBlock *MBB) const;
   void printPICJumpTableSetLabel(unsigned uid, unsigned uid2,

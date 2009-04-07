@@ -69,7 +69,6 @@ namespace {
     unsigned Scale;
     SDValue IndexReg; 
     int32_t Disp;
-    SDValue Segment;
     GlobalValue *GV;
     Constant *CP;
     const char *ES;
@@ -78,7 +77,7 @@ namespace {
 
     X86ISelAddressMode()
       : BaseType(RegBase), isRIPRel(false), Scale(1), IndexReg(), Disp(0),
-        Segment(), GV(0), CP(0), ES(0), JT(-1), Align(0) {
+        GV(0), CP(0), ES(0), JT(-1), Align(0) {
     }
 
     bool hasSymbolicDisplacement() const {
@@ -160,25 +159,20 @@ namespace {
     SDNode *Select(SDValue N);
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
 
-    bool MatchSegmentBaseAddress(SDValue N, X86ISelAddressMode &AM);
-    bool MatchLoad(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM,
                       unsigned Depth = 0);
     bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
     bool SelectAddr(SDValue Op, SDValue N, SDValue &Base,
-                    SDValue &Scale, SDValue &Index, SDValue &Disp,
-                    SDValue &Segment);
+                    SDValue &Scale, SDValue &Index, SDValue &Disp);
     bool SelectLEAAddr(SDValue Op, SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp);
     bool SelectScalarSSELoad(SDValue Op, SDValue Pred,
                              SDValue N, SDValue &Base, SDValue &Scale,
                              SDValue &Index, SDValue &Disp,
-                             SDValue &Segment,
                              SDValue &InChain, SDValue &OutChain);
     bool TryFoldLoad(SDValue P, SDValue N,
                      SDValue &Base, SDValue &Scale,
-                     SDValue &Index, SDValue &Disp,
-                     SDValue &Segment);
+                     SDValue &Index, SDValue &Disp);
     void PreprocessForRMW();
     void PreprocessForFPConvert();
 
@@ -192,7 +186,7 @@ namespace {
 
     inline void getAddressOperands(X86ISelAddressMode &AM, SDValue &Base, 
                                    SDValue &Scale, SDValue &Index,
-                                   SDValue &Disp, SDValue &Segment) {
+                                   SDValue &Disp) {
       Base  = (AM.BaseType == X86ISelAddressMode::FrameIndexBase) ?
         CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy()) :
         AM.Base.Reg;
@@ -211,11 +205,6 @@ namespace {
         Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32);
       else
         Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
-
-      if (AM.Segment.getNode())
-        Segment = AM.Segment;
-      else
-        Segment = CurDAG->getRegister(0, MVT::i32);
     }
 
     /// getI8Imm - Return a target constant with the specified value, of type
@@ -737,33 +726,6 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
     EmitSpecialCodeForMain(BB, MF.getFrameInfo());
 }
 
-
-bool X86DAGToDAGISel::MatchSegmentBaseAddress(SDValue N,
-                                              X86ISelAddressMode &AM) {
-  assert(N.getOpcode() == X86ISD::SegmentBaseAddress);
-  SDValue Segment = N.getOperand(0);
-
-  if (AM.Segment.getNode() == 0) {
-    AM.Segment = Segment;
-    return false;
-  }
-
-  return true;
-}
-
-bool X86DAGToDAGISel::MatchLoad(SDValue N, X86ISelAddressMode &AM) {
-  // This optimization is valid because the GNU TLS model defines that
-  // gs:0 (or fs:0 on X86-64) contains its own address.
-  // For more information see http://people.redhat.com/drepper/tls.pdf
-
-  SDValue Address = N.getOperand(1);
-  if (Address.getOpcode() == X86ISD::SegmentBaseAddress &&
-      !MatchSegmentBaseAddress (Address, AM))
-    return false;
-
-  return true;
-}
-
 /// MatchAddress - Add the specified node to the specified addressing mode,
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode.
@@ -798,11 +760,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     }
     break;
   }
-
-  case X86ISD::SegmentBaseAddress:
-    if (!MatchSegmentBaseAddress(N, AM))
-      return false;
-    break;
 
   case X86ISD::Wrapper: {
     DOUT << "Wrapper: 64bit " << is64Bit;
@@ -849,11 +806,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     }
     break;
   }
-
-  case ISD::LOAD:
-    if (!MatchLoad(N, AM))
-      return false;
-    break;
 
   case ISD::FrameIndex:
     if (AM.BaseType == X86ISelAddressMode::RegBase
@@ -1082,7 +1034,7 @@ bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM) {
 /// match by reference.
 bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
                                  SDValue &Scale, SDValue &Index,
-                                 SDValue &Disp, SDValue &Segment) {
+                                 SDValue &Disp) {
   X86ISelAddressMode AM;
   bool Done = false;
   if (AvoidDupAddrCompute && !N.hasOneUse()) {
@@ -1117,7 +1069,7 @@ bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
   if (!AM.IndexReg.getNode())
     AM.IndexReg = CurDAG->getRegister(0, VT);
 
-  getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
+  getAddressOperands(AM, Base, Scale, Index, Disp);
   return true;
 }
 
@@ -1127,8 +1079,7 @@ bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
 bool X86DAGToDAGISel::SelectScalarSSELoad(SDValue Op, SDValue Pred,
                                           SDValue N, SDValue &Base,
                                           SDValue &Scale, SDValue &Index,
-                                          SDValue &Disp, SDValue &Segment,
-                                          SDValue &InChain,
+                                          SDValue &Disp, SDValue &InChain,
                                           SDValue &OutChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
     InChain = N.getOperand(0).getValue(1);
@@ -1137,7 +1088,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDValue Op, SDValue Pred,
         N.hasOneUse() &&
         IsLegalAndProfitableToFold(N.getNode(), Pred.getNode(), Op.getNode())) {
       LoadSDNode *LD = cast<LoadSDNode>(InChain);
-      if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
+      if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp))
         return false;
       OutChain = LD->getChain();
       return true;
@@ -1154,7 +1105,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDValue Op, SDValue Pred,
       N.getOperand(0).getOperand(0).hasOneUse()) {
     // Okay, this is a zero extending load.  Fold it.
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
-    if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
+    if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp))
       return false;
     OutChain = LD->getChain();
     InChain = SDValue(LD, 1);
@@ -1171,11 +1122,6 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
                                     SDValue &Index, SDValue &Disp) {
   X86ISelAddressMode AM;
   if (MatchAddress(N, AM))
-    return false;
-
-  //Is it better to set AM.Segment before calling MatchAddress to
-  //prevent it from adding a segment?
-  if (AM.Segment.getNode())
     return false;
 
   MVT VT = N.getValueType();
@@ -1216,8 +1162,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
     Complexity++;
 
   if (Complexity > 2) {
-    SDValue Segment;
-    getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
+    getAddressOperands(AM, Base, Scale, Index, Disp);
     return true;
   }
   return false;
@@ -1225,12 +1170,11 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
 
 bool X86DAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
                                   SDValue &Base, SDValue &Scale,
-                                  SDValue &Index, SDValue &Disp,
-                                  SDValue &Segment) {
+                                  SDValue &Index, SDValue &Disp) {
   if (ISD::isNON_EXTLoad(N.getNode()) &&
       N.hasOneUse() &&
       IsLegalAndProfitableToFold(N.getNode(), P.getNode(), P.getNode()))
-    return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp, Segment);
+    return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp);
   return false;
 }
 
@@ -1286,11 +1230,11 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue In1 = Node->getOperand(1);
   SDValue In2L = Node->getOperand(2);
   SDValue In2H = Node->getOperand(3);
-  SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (!SelectAddr(In1, In1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+  SDValue Tmp0, Tmp1, Tmp2, Tmp3;
+  if (!SelectAddr(In1, In1, Tmp0, Tmp1, Tmp2, Tmp3))
     return NULL;
   SDValue LSI = Node->getOperand(4);    // MemOperand
-  const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, In2L, In2H, LSI, Chain};
+  const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, In2L, In2H, LSI, Chain };
   return CurDAG->getTargetNode(Opc, Node->getDebugLoc(),
                                MVT::i32, MVT::i32, MVT::Other, Ops,
                                array_lengthof(Ops));
@@ -1372,11 +1316,11 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       case MVT::i64: LoReg = X86::RAX; HiReg = X86::RDX; break;
       }
 
-      SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-      bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
+      SDValue Tmp0, Tmp1, Tmp2, Tmp3;
+      bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       // multiplty is commmutative
       if (!foldedLoad) {
-        foldedLoad = TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
+        foldedLoad = TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3);
         if (foldedLoad)
           std::swap(N0, N1);
       }
@@ -1385,8 +1329,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                               N0, SDValue()).getValue(1);
 
       if (foldedLoad) {
-        SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
-                          InFlag };
+        SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
                                 array_lengthof(Ops));
@@ -1495,17 +1438,17 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         break;
       }
 
-      SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-      bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
+      SDValue Tmp0, Tmp1, Tmp2, Tmp3;
+      bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       bool signBitIsZero = CurDAG->SignBitIsZero(N0);
 
       SDValue InFlag;
       if (NVT == MVT::i8 && (!isSigned || signBitIsZero)) {
         // Special case for div8, just use a move with zero extension to AX to
         // clear the upper 8 bits (AH).
-        SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Move, Chain;
-        if (TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
-          SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N0.getOperand(0) };
+        SDValue Tmp0, Tmp1, Tmp2, Tmp3, Move, Chain;
+        if (TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3)) {
+          SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N0.getOperand(0) };
           Move =
             SDValue(CurDAG->getTargetNode(X86::MOVZX16rm8, dl, MVT::i16, 
                                           MVT::Other, Ops,
@@ -1537,8 +1480,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
 
       if (foldedLoad) {
-        SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
-                          InFlag };
+        SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
                                 array_lengthof(Ops));
@@ -1707,13 +1649,13 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 bool X86DAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                              std::vector<SDValue> &OutOps) {
-  SDValue Op0, Op1, Op2, Op3, Op4;
+  SDValue Op0, Op1, Op2, Op3;
   switch (ConstraintCode) {
   case 'o':   // offsetable        ??
   case 'v':   // not offsetable    ??
   default: return true;
   case 'm':   // memory
-    if (!SelectAddr(Op, Op, Op0, Op1, Op2, Op3, Op4))
+    if (!SelectAddr(Op, Op, Op0, Op1, Op2, Op3))
       return true;
     break;
   }
@@ -1722,7 +1664,6 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   OutOps.push_back(Op1);
   OutOps.push_back(Op2);
   OutOps.push_back(Op3);
-  OutOps.push_back(Op4);
   return false;
 }
 

@@ -76,18 +76,18 @@ def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
 // These are 'extloads' from a scalar to the low element of a vector, zeroing
 // the top elements.  These are used for the SSE 'ss' and 'sd' instruction
 // forms.
-def sse_load_f32 : ComplexPattern<v4f32, 5, "SelectScalarSSELoad", [],
+def sse_load_f32 : ComplexPattern<v4f32, 4, "SelectScalarSSELoad", [],
                                   [SDNPHasChain, SDNPMayLoad]>;
-def sse_load_f64 : ComplexPattern<v2f64, 5, "SelectScalarSSELoad", [],
+def sse_load_f64 : ComplexPattern<v2f64, 4, "SelectScalarSSELoad", [],
                                   [SDNPHasChain, SDNPMayLoad]>;
 
 def ssmem : Operand<v4f32> {
   let PrintMethod = "printf32mem";
-  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm, i8imm);
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
 }
 def sdmem : Operand<v2f64> {
   let PrintMethod = "printf64mem";
-  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm, i8imm);
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
 }
 
 //===----------------------------------------------------------------------===//

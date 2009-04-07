@@ -188,11 +188,8 @@ namespace llvm {
       /// in order to obtain suitable precision.
       FRSQRT, FRCP,
 
-      // TLSADDR - Thread Local Storage.
-      TLSADDR,
-
-      // SegmentBaseAddress - The address segment:0
-      SegmentBaseAddress,
+      // TLSADDR, THREAD_POINTER - Thread Local Storage.
+      TLSADDR, THREAD_POINTER,
 
       // EH_RETURN - Exception Handling helpers.
       EH_RETURN,

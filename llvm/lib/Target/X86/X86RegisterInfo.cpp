@@ -971,8 +971,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (MFI->hasVarSizedObjects()) {
     if (CSSize) {
       unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
-      MachineInstr *MI = addLeaRegOffset(BuildMI(MF, DL, TII.get(Opc), StackPtr),
-                                         FramePtr, false, -CSSize);
+      MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(Opc), StackPtr),
+                                      FramePtr, false, -CSSize);
       MBB.insert(MBBI, MI);
     } else
       BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),

@@ -1490,7 +1490,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
       else
         Opc = X86::LEA64r;
       unsigned ResultReg = createResultReg(RC);
-      addLeaAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
+      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
       return ResultReg;
     }
     return 0;
@@ -1535,7 +1535,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
   unsigned Opc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
   TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
   unsigned ResultReg = createResultReg(RC);
-  addLeaAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
+  addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), AM);
   return ResultReg;
 }
 
