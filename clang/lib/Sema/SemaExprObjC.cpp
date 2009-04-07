@@ -548,6 +548,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
         break;
+      // Since we aren't supporting "Class<foo>", look for a class method.
+      if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
+        break;
     }
   } else if (const ObjCInterfaceType *OCIType = 
                 ReceiverCType->getAsPointerToObjCInterfaceType()) {

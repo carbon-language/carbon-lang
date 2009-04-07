@@ -41,8 +41,8 @@ id objc_getClass(const char *s);
 }
 + (int) class_func2
 {
-   int i = [(id <Func>)self class_func0];  // expected-warning {{method '-class_func0' not found (return type defaults to 'id')}} // expected-warning {{incompatible pointer to integer conversion initializing 'id', expected 'int'}}
-   i += [(id <Func>)super class_func0];    // expected-warning {{casting 'super' is deprecated (it isn't an expression)}} // expected-warning {{method '-class_func0' not found (return type defaults to 'id')}} // expected-warning {{incompatible pointer to integer conversion assigning 'id', expected 'int'}}
+   int i = [(id <Func>)self class_func0];
+   i += [(id <Func>)super class_func0];    // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
    i += [(Class <Func>)self class_func0];  // expected-error {{protocol qualified 'Class' is unsupported}}
    return i + [(Class <Func>)super class_func0]; // expected-error {{protocol qualified 'Class' is unsupported}} // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
 }
