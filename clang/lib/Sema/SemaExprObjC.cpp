@@ -69,19 +69,21 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     return true;
 
   // Initialize the constant string interface lazily. This assumes
-  // the NSConstantString interface is seen in this translation unit.
+  // the NSString interface is seen in this translation unit. Note: We
+  // don't use NSConstantString, since the runtime team considers this
+  // interface private (even though it appears in the header files).
   QualType Ty = Context.getObjCConstantStringInterface();
   if (!Ty.isNull()) {
     Ty = Context.getPointerType(Ty);
   } else {
-    IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
+    IdentifierInfo *NSIdent = &Context.Idents.get("NSString");
     NamedDecl *IF = LookupName(TUScope, NSIdent, LookupOrdinaryName);
     if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
       Context.setObjCConstantStringInterface(StrIF);
       Ty = Context.getObjCConstantStringInterface();
       Ty = Context.getPointerType(Ty);
     } else {
-      // If there is no NSConstantString interface defined then treat constant
+      // If there is no NSString interface defined then treat constant
       // strings as untyped objects and let the runtime figure it out later.
       Ty = Context.getObjCIdType();
     }
