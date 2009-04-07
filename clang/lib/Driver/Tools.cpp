@@ -410,26 +410,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fblocks=0");
   }
 
-  // -fno-pascal-strings is default, only pass non-default.
+  // -fno-pascal-strings is default, only pass non-default. If the
+  // -tool chain happened to translate to -mpascal-strings, we want to
+  // -back translate here.
+  //
+  // FIXME: This is gross; that translation should be pulled from the
+  // tool chain.
   if (Args.hasFlag(options::OPT_fpascal_strings, 
-                      options::OPT_fno_pascal_strings))
+                   options::OPT_fno_pascal_strings,
+                   false) ||
+      Args.hasFlag(options::OPT_mpascal_strings,
+                   options::OPT_mno_pascal_strings,
+                   false))
     CmdArgs.push_back("-fpascal-strings");
 
   // -fcommon is default, only pass non-default.
   if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common))
     CmdArgs.push_back("-fno-common");
-
-  // If tool chain translates fpascal-strings, we want to back
-  // translate here.
-  // FIXME: This is gross; that translation should be pulled from the
-  // tool chain.
-  if (Arg *A = Args.getLastArg(options::OPT_mpascal_strings,
-                               options::OPT_mno_pascal_strings)) {
-    if (A->getOption().matches(options::OPT_mpascal_strings))
-      CmdArgs.push_back("-fpascal-strings");
-    else
-      CmdArgs.push_back("-fno-pascal-strings");
-  }
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
 
