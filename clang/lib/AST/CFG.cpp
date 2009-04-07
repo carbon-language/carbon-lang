@@ -1086,8 +1086,11 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   Block->setTerminator(C);
   
   // If there is no target for the continue, then we are looking at an
-  // incomplete AST.  Handle this by not registering a successor.
-  if (ContinueTargetBlock) Block->addSuccessor(ContinueTargetBlock);
+  // incomplete AST.  This means the CFG cannot be constructed.
+  if (ContinueTargetBlock)
+    Block->addSuccessor(ContinueTargetBlock);
+  else
+    badCFG = true;
   
   return Block;
 }
@@ -1102,8 +1105,12 @@ CFGBlock* CFGBuilder::VisitBreakStmt(BreakStmt* B) {
   Block->setTerminator(B);
   
   // If there is no target for the break, then we are looking at an
-  // incomplete AST.  Handle this by not registering a successor.
-  if (BreakTargetBlock) Block->addSuccessor(BreakTargetBlock);
+  // incomplete AST.  This means that the CFG cannot be constructed.
+  if (BreakTargetBlock)
+    Block->addSuccessor(BreakTargetBlock);
+  else 
+    badCFG = true;
+
 
   return Block;  
 }
