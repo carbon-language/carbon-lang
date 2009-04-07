@@ -5223,10 +5223,11 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
     // Convert to correct type.
     if (Op->getType() != IntPtrTy) {
       if (Constant *OpC = dyn_cast<Constant>(Op))
-        Op = ConstantExpr::getSExt(OpC, IntPtrTy);
+        Op = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true);
       else
-        Op = IC.InsertNewInstBefore(new SExtInst(Op, IntPtrTy,
-                                                 Op->getName()+".c"), I);
+        Op = IC.InsertNewInstBefore(CastInst::CreateIntegerCast(Op, IntPtrTy,
+                                                                true,
+                                                      Op->getName()+".c"), I);
     }
     if (Size != 1) {
       Constant *Scale = ConstantInt::get(IntPtrTy, Size);
