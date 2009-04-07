@@ -91,7 +91,7 @@ namespace driver {
     /// negation is present, and \arg Default if neither option is
     /// given. If both the option and its negation are present, the
     /// last one wins.
-    bool hasFlag(options::ID Pos, options::ID Neg, bool Default) const;
+    bool hasFlag(options::ID Pos, options::ID Neg, bool Default=true) const;
 
     /// AddLastArg - Render only the last argument match \arg Id0, if
     /// present.
