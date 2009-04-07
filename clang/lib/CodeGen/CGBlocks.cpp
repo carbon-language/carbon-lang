@@ -412,10 +412,6 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   const BlockPointerType *BPT =
     E->getCallee()->getType()->getAsBlockPointerType();
 
-  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(BPT);
-  bool IsVariadic = 
-    BPT->getPointeeType()->getAsFunctionProtoType()->isVariadic();
-  
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
 
   // Get a pointer to the generic block literal.
@@ -428,14 +424,6 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 
   // Get the function pointer from the literal.
   llvm::Value *FuncPtr = Builder.CreateStructGEP(BlockLiteral, 3, "tmp");
-  llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
-
-  // Cast the function pointer to the right type.
-  const llvm::Type *BlockFTy = 
-    CGM.getTypes().GetFunctionType(FnInfo, IsVariadic);
-  
-  const llvm::Type *BlockFTyPtr = llvm::PointerType::getUnqual(BlockFTy);
-  Func = Builder.CreateBitCast(Func, BlockFTyPtr);
 
   BlockLiteral =
     Builder.CreateBitCast(BlockLiteral,
@@ -453,6 +441,20 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
     Args.push_back(std::make_pair(EmitAnyExprToTemp(*i),
                                   i->getType()));
 
+  // Load the function.
+  llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
+
+  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(BPT);
+  bool IsVariadic = 
+    BPT->getPointeeType()->getAsFunctionProtoType()->isVariadic();
+  
+  // Cast the function pointer to the right type.
+  const llvm::Type *BlockFTy = 
+    CGM.getTypes().GetFunctionType(FnInfo, IsVariadic);
+  
+  const llvm::Type *BlockFTyPtr = llvm::PointerType::getUnqual(BlockFTy);
+  Func = Builder.CreateBitCast(Func, BlockFTyPtr);
+  
   // And call the block.
   return EmitCall(FnInfo, Func, Args);
 }
