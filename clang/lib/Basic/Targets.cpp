@@ -138,10 +138,20 @@ static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min) {
   return true;
 }
 
-static void getDarwinDefines(std::vector<char> &Defs, const char *Triple) {
+static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts,
+                             const char *Triple) {
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
   Define(Defs, "OBJC_NEW_PROPERTIES");
+  
+  // Darwin defines __weak and __strong even in C mode.
+  if (!Opts.ObjC1 || Opts.getGCMode() == LangOptions::NonGC) {
+    Define(Defs, "__weak", "");
+    Define(Defs, "__strong", "");
+  } else {
+    Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
+    Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
+  }
   
   // FIXME: OBJC_ZEROCOST_EXCEPTIONS when using zero cost eh.
   
@@ -375,7 +385,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     PPC32TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, getTargetTriple());
+    getDarwinDefines(Defines, Opts, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -394,7 +404,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     PPC64TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, getTargetTriple());
+    getDarwinDefines(Defines, Opts, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -674,7 +684,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, getTargetTriple());
+    getDarwinDefines(Defines, Opts, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -835,7 +845,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, getTargetTriple());
+    getDarwinDefines(Defines, Opts, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -923,7 +933,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     ARMTargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, getTargetTriple());
+    getDarwinDefines(Defines, Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace.

@@ -500,15 +500,9 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     if (PP.getLangOptions().ObjCNonFragileABI)
       DefineBuiltinMacro(Buf, "__OBJC2__=1");
 
-    if (PP.getLangOptions().getGCMode() == LangOptions::NonGC) {
-      DefineBuiltinMacro(Buf, "__weak=");
-      DefineBuiltinMacro(Buf, "__strong=");
-    } else {
-      DefineBuiltinMacro(Buf, "__weak=__attribute__((objc_gc(weak)))");
-      DefineBuiltinMacro(Buf, "__strong=__attribute__((objc_gc(strong)))");
+    if (PP.getLangOptions().getGCMode() != LangOptions::NonGC)
       DefineBuiltinMacro(Buf, "__OBJC_GC__=1");
-    }
-
+    
     if (PP.getLangOptions().NeXTRuntime)
       DefineBuiltinMacro(Buf, "__NEXT_RUNTIME__=1");
   }
