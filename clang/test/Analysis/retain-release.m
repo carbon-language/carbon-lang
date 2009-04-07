@@ -272,6 +272,17 @@ void f14_leakimmediately() {
   CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
 }
 
+// Test that we track an allocated object beyond the point where the *name*
+// of the variable storing the reference is no longer live.
+void f15() {
+  // Create the array.
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  CFMutableArrayRef *B = &A;
+  // At this point, the name 'A' is no longer live.
+  CFRelease(*B);  // no-warning
+}
+
+
 // Test basic tracking of ivars associated with 'self'.  For the retain/release
 // checker we currently do not want to flag leaks associated with stores
 // of tracked objects to ivars.
