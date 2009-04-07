@@ -204,6 +204,7 @@ Option *OptTable::constructOption(options::ID id) const {
     case 'd': Opt->setDriverOption(true); break;
     case 'i': Opt->setNoOptAsInput(true); break;
     case 'l': Opt->setLinkerInput(true); break;
+    case 'q': Opt->setNoArgumentUnused(true); break;
     case 'u': Opt->setUnsupported(true); break;
     }
   }

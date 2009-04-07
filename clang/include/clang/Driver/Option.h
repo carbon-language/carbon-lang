@@ -82,8 +82,11 @@ namespace driver {
     /// Always render this option joined with its value.
     bool ForceJoinedRender : 1;    
 
-    /// This option is only for consumed by the driver.
+    /// This option is only consumed by the driver.
     bool DriverOption : 1;    
+
+    /// This option should not report argument unused errors.
+    bool NoArgumentUnused : 1;    
 
   protected:
     Option(OptionClass Kind, options::ID ID, const char *Name, 
@@ -114,6 +117,9 @@ namespace driver {
     
     bool isDriverOption() const { return DriverOption; }
     void setDriverOption(bool Value) { DriverOption = Value; }
+
+    bool hasNoArgumentUnused() const { return NoArgumentUnused; }
+    void setNoArgumentUnused(bool Value) { NoArgumentUnused = Value; }
 
     bool hasForwardToGCC() const { return !DriverOption && !LinkerInput; }
 

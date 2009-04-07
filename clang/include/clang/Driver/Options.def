@@ -57,6 +57,11 @@
 //
 //  l: The option is a linker input.
 //
+//  q: Don't report argument unused warnings for this option; this is
+//     useful for options like -static or -dynamic which a user may
+//     always end up passing, even if the platform defaults to (or
+//     only supports) that option.
+//
 //  u: The option is unsupported, and the driver will reject command
 //     lines that use it.
 //
@@ -405,7 +410,7 @@ OPTION("-dylib_file", dylib__file, Separate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-dylinker_install_name", dylinker__install__name, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-dylinker", dylinker, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-dynamiclib", dynamiclib, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-dynamic", dynamic, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-dynamic", dynamic, Flag, INVALID, INVALID, "q", 0, 0, 0)
 OPTION("-d", d_Flag, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-d", d_Joined, Joined, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-emit-llvm", emit_llvm, Flag, INVALID, INVALID, "", 0, 
@@ -534,7 +539,7 @@ OPTION("-m3dnowa", m3dnowa, Flag, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-m3dnow", m3dnow, Flag, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-m64", m64, Flag, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-mconstant-cfstrings", mconstant_cfstrings, Flag, clang_ignored_m_Group, INVALID, "", 0, 0, 0)
-OPTION("-mdynamic-no-pic", mdynamic_no_pic, Joined, m_Group, INVALID, "", 0, 0, 0)
+OPTION("-mdynamic-no-pic", mdynamic_no_pic, Joined, m_Group, INVALID, "q", 0, 0, 0)
 OPTION("-mfix-and-continue", mfix_and_continue, Flag, clang_ignored_m_Group, INVALID, "", 0, 0, 0)
 OPTION("-miphoneos-version-min=", miphoneos_version_min_EQ, Joined, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-mkernel", mkernel, Flag, m_Group, INVALID, "", 0, 0, 0)
@@ -636,7 +641,7 @@ OPTION("-single_module", single__module, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-specs=", specs_EQ, Joined, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-specs", specs, Separate, INVALID, INVALID, "u", 0, 0, 0)
 OPTION("-static-libgcc", static_libgcc, Flag, INVALID, INVALID, "", 0, 0, 0)
-OPTION("-static", static, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-static", static, Flag, INVALID, INVALID, "q", 0, 0, 0)
 OPTION("-std=", std_EQ, Joined, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-sub_library", sub__library, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-sub_umbrella", sub__umbrella, JoinedOrSeparate, INVALID, INVALID, "", 0, 0, 0)

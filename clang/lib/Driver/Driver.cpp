@@ -802,7 +802,8 @@ void Driver::BuildJobs(Compilation &C) const {
 
   // If the user passed -Qunused-arguments or there were errors, don't
   // warn about any unused arguments.
-  if (Diags.getNumErrors() || C.getArgs().hasArg(options::OPT_Qunused_arguments))
+  if (Diags.getNumErrors() || 
+      C.getArgs().hasArg(options::OPT_Qunused_arguments))
     return;
 
   // Claim -### here.
@@ -816,6 +817,9 @@ void Driver::BuildJobs(Compilation &C) const {
     // Diagnostic, so that extra values, position, and so on could be
     // printed.
     if (!A->isClaimed()) {
+      if (A->getOption().hasNoArgumentUnused())
+        continue;
+
       // Suppress the warning automatically if this is just a flag,
       // and it is an instance of an argument we already claimed.
       const Option &Opt = A->getOption();
