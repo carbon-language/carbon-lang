@@ -357,7 +357,33 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  // Forward -f options which we can pass directly.
   Args.AddAllArgs(CmdArgs, options::OPT_clang_f_Group);
+
+  // Forward -f options with positive and negative forms; we translate
+  // these by hand.
+
+  // -fbuiltin is default, only pass non-default.
+  if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
+    CmdArgs.push_back("-fbuiltin=0");
+
+  // -fblocks default varies depending on platform and language;
+  // -always pass if specified.
+  if (Arg *A = Args.getLastArg(options::OPT_fblocks, options::OPT_fno_blocks)) {
+    if (A->getOption().matches(options::OPT_fblocks))
+      CmdArgs.push_back("-fblocks");
+    else
+      CmdArgs.push_back("-fblocks=0");
+  }
+
+  // -fno-pascal-strings is default, only pass non-default.
+  if (Args.hasFlag(options::OPT_fpascal_strings, 
+                      options::OPT_fno_pascal_strings))
+    CmdArgs.push_back("-fpascal-strings");
+
+  // -fcommon is default, only pass non-default.
+  if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common))
+    CmdArgs.push_back("-fno-common");
 
   // If tool chain translates fpascal-strings, we want to back
   // translate here.

@@ -323,15 +323,13 @@ Freestanding("ffreestanding",
                             "freestanding environment"));
 
 static llvm::cl::opt<bool>
-AllowBuiltins("fbuiltin",
-              llvm::cl::desc("Disable implicit builtin knowledge of functions"),
-              llvm::cl::init(true), llvm::cl::AllowInverse);
+AllowBuiltins("fbuiltin", llvm::cl::init(true),
+             llvm::cl::desc("Disable implicit builtin knowledge of functions"));
 
 
 static llvm::cl::opt<bool>
-MathErrno("fmath-errno", 
-          llvm::cl::desc("Require math functions to respect errno"),
-          llvm::cl::init(true), llvm::cl::AllowInverse);
+MathErrno("fmath-errno", llvm::cl::init(true),
+          llvm::cl::desc("Require math functions to respect errno"));
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -546,9 +544,7 @@ NoLaxVectorConversions("fno-lax-vector-conversions",
                                       "elements or different element types"));
 
 static llvm::cl::opt<bool>
-EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"),
-             llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
-             llvm::cl::ZeroOrMore);
+EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"));
 
 static llvm::cl::opt<bool>
 EnableHeinousExtensions("fheinous-gnu-extensions",
