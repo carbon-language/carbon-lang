@@ -99,6 +99,10 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
 /// GlobalValue according to the given clang AST visibility value.
 static void setGlobalVisibility(llvm::GlobalValue *GV,
                                 VisibilityAttr::VisibilityTypes Vis) {
+  // Do not change the visibility of internal definitions.
+  if (GV->hasInternalLinkage())
+    return;
+
   switch (Vis) {
   default: assert(0 && "Unknown visibility!");
   case VisibilityAttr::DefaultVisibility:
@@ -115,6 +119,10 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 
 static void setGlobalOptionVisibility(llvm::GlobalValue *GV,
                                       LangOptions::VisibilityMode Vis) {
+  // Do not change the visibility of internal definitions.
+  if (GV->hasInternalLinkage())
+    return;
+
   switch (Vis) {
   default: assert(0 && "Unknown visibility!");
   case LangOptions::NonVisibility:
