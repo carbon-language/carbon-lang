@@ -949,11 +949,6 @@ void EdgeBuilder::addContext(const Stmt *S) {
       return;
 
     if (containsLocation(TopContextLoc, L)) {
-    // /  if (const Stmt *S = L.asStmt())
-    //     if (isa<Expr>(S))
-    //       if (const Stmt *P = PDB.getParent(S))
-    //         addContext(PDB.getEnclosingStmtLocation(P).asStmt());
-      
       CLocs.push_back(L);
       return;      
     }
@@ -974,7 +969,6 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
   const ExplodedNode<GRState>* NextNode = N->pred_empty() 
                                         ? NULL : *(N->pred_begin());
-
   while (NextNode) {
     N = NextNode;
     NextNode = GetPredecessorNode(N);
@@ -987,13 +981,6 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       if (const Stmt *Term = Blk.getTerminator())
         EB.addContext(Term);
 
-      // Only handle blocks with more than 1 statement here, as the blocks
-      // with one statement are handled at BlockEntrances.
-//      if (Blk.size() > 1) {
-//        const Stmt *S = *Blk.rbegin();
-//        EB.addEdge(S);
-//      }
-
       continue;
     }
 
@@ -1002,15 +989,15 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
        if (IsControlFlowExpr(S))
          EB.addContext(S);
        else
-        EB.addEdge(S);
+         EB.addContext(PDB.getEnclosingStmtLocation(S).asStmt());
       }
 
       continue;
     }
     
     PathDiagnosticPiece* p =
-    PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
-                              PDB.getBugReporter(), PDB.getNodeMapClosure());
+      PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
+                                PDB.getBugReporter(), PDB.getNodeMapClosure());
     
     if (p) {
       EB.addEdge(p->getLocation(), true);
