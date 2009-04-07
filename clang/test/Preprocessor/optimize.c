@@ -3,7 +3,7 @@
   #ifndef __OPTIMIZE__
     #error "__OPTIMIZE__ not defined"
   #endif
-  #ifdef __OPTIMIZE_SIZE
+  #ifdef __OPTIMIZE_SIZE__
     #error "__OPTIMIZE_SIZE__ defined"
   #endif
 #endif
@@ -13,7 +13,7 @@
   #ifdef __OPTIMIZE__
     #error "__OPTIMIZE__ defined"
   #endif
-  #ifdef __OPTIMIZE_SIZE
+  #ifdef __OPTIMIZE_SIZE__
     #error "__OPTIMIZE_SIZE__ defined"
   #endif
 #endif
@@ -23,7 +23,7 @@
   #ifndef __OPTIMIZE__
     #error "__OPTIMIZE__ not defined"
   #endif
-  #ifndef __OPTIMIZE_SIZE
+  #ifndef __OPTIMIZE_SIZE__
     #error "__OPTIMIZE_SIZE__ not defined"
   #endif
 #endif
