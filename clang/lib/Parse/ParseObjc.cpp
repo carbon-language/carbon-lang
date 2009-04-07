@@ -1294,8 +1294,14 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           FirstPart = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
         } else
           ConsumeToken(); // consume '...'
-        SourceLocation RParenLoc = ConsumeParen();
+          
+        SourceLocation RParenLoc;
         
+        if (Tok.is(tok::r_paren))
+          RParenLoc = ConsumeParen();
+        else // Skip over garbage, until we get to ')'.  Eat the ')'.
+          SkipUntil(tok::r_paren, true, false);
+
         OwningStmtResult CatchBody(Actions, true);
         if (Tok.is(tok::l_brace))
           CatchBody = ParseCompoundStatementBody();
