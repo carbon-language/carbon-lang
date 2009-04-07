@@ -1739,6 +1739,22 @@ static Decl *FindGetterNameDecl(const ObjCQualifiedIdType *QIdTy,
   return GDecl;
 }
 
+/// FindMethodInNestedImplementations - Look up a method in current and
+/// all base class implementations.
+///
+ObjCMethodDecl *Sema::FindMethodInNestedImplementations(
+                                              const ObjCInterfaceDecl *IFace,
+                                              const Selector &Sel) {
+  ObjCMethodDecl *Method = 0;
+  if (ObjCImplementationDecl *ImpDecl =
+      Sema::ObjCImplementations[IFace->getIdentifier()])
+    Method = ImpDecl->getInstanceMethod(Sel);
+  
+  if (!Method && IFace->getSuperClass())
+    return FindMethodInNestedImplementations(IFace->getSuperClass(), Sel);
+  return Method;
+}
+
 Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -1953,9 +1969,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     // If this reference is in an @implementation, check for 'private' methods.
     if (!Getter)
-      if (ObjCImplementationDecl *ImpDecl =
-          ObjCImplementations[IFace->getIdentifier()])
-        Getter = ImpDecl->getInstanceMethod(Sel);
+      Getter = FindMethodInNestedImplementations(IFace, Sel);
 
     // Look through local category implementations associated with the class.
     if (!Getter) {
@@ -1978,9 +1992,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (!Setter) {
       // If this reference is in an @implementation, also check for 'private'
       // methods.
-      if (ObjCImplementationDecl *ImpDecl =
-          ObjCImplementations[IFace->getIdentifier()])
-        Setter = ImpDecl->getInstanceMethod(SetterSel);
+      Setter = FindMethodInNestedImplementations(IFace, SetterSel);
     }
     // Look through local category implementations associated with the class.
     if (!Setter) {
@@ -2061,9 +2073,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
         // methods.
-        if (ObjCImplementationDecl *ImpDecl =
-            ObjCImplementations[IFace->getIdentifier()])
-          Setter = ImpDecl->getInstanceMethod(SetterSel);
+        Setter = FindMethodInNestedImplementations(IFace, SetterSel);
       }
       // Look through local category implementations associated with the class.
       if (!Setter) {
