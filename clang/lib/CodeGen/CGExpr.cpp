@@ -1204,15 +1204,11 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType,
                                      const Decl *TargetDecl) {
   // Get the actual function type. The callee type will always be a
   // pointer to function type or a block pointer type.
-  QualType ResultType;
-  if (const BlockPointerType *BPT = dyn_cast<BlockPointerType>(CalleeType)) {
-    ResultType = BPT->getPointeeType()->getAsFunctionType()->getResultType();
-  } else {
-    assert(CalleeType->isFunctionPointerType() && 
-           "Call must have function pointer type!");
-    QualType FnType = CalleeType->getAsPointerType()->getPointeeType();
-    ResultType = FnType->getAsFunctionType()->getResultType();
-  }
+  assert(CalleeType->isFunctionPointerType() && 
+         "Call must have function pointer type!");
+
+  QualType FnType = CalleeType->getAsPointerType()->getPointeeType();
+  QualType ResultType = FnType->getAsFunctionType()->getResultType();
 
   CallArgList Args;
   for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I)
