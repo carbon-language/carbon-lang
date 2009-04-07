@@ -388,6 +388,10 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 #endif
 }
 
+void PATypeHolder::destroy() {
+  Ty = 0;
+}
+
 // dropAllTypeUses - When this (abstract) type is resolved to be equal to
 // another (more concrete) type, we must eliminate all references to other
 // types, to avoid some circular reference problems.
@@ -666,6 +670,27 @@ protected:
   std::multimap<unsigned, PATypeHolder> TypesByHash;
 
 public:
+  ~TypeMapBase()
+  {
+    //PATypeHolder won't destroy non-abstract types.
+    //We can't destroy them by simply iterating,  because
+    //they may contain references to each-other
+
+    for (std::multimap<unsigned, PATypeHolder>::iterator I
+         = TypesByHash.begin(), E = TypesByHash.end(); I != E; ++I) {
+      Type *Ty = const_cast<Type*>(I->second.Ty);
+      I->second.destroy();
+      // We can't invoke destroy or delete, because the type may
+      // contain references to already freed types.
+      // So we have to destruct the object the ugly way.
+      if (Ty) {
+        Ty->AbstractTypeUsers.clear();
+        static_cast<const Type*>(Ty)->Type::~Type();
+        operator delete(Ty);
+      }
+    }
+  }
+
   void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
     std::multimap<unsigned, PATypeHolder>::iterator I =
       TypesByHash.lower_bound(Hash);

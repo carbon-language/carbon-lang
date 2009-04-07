@@ -137,6 +137,7 @@ public:
 ///
 class PATypeHolder {
   mutable const Type *Ty;
+  void destroy();
 public:
   PATypeHolder(const Type *ty) : Ty(ty) {
     addRef();
@@ -145,7 +146,7 @@ public:
     addRef();
   }
 
-  ~PATypeHolder() { dropRef(); }
+  ~PATypeHolder() { if (Ty) dropRef(); }
 
   operator Type *() const { return get(); }
   Type *get() const;
@@ -173,6 +174,7 @@ public:
 private:
   void addRef();
   void dropRef();
+  friend class TypeMapBase;
 };
 
 // simplify_type - Allow clients to treat uses just like values when using
