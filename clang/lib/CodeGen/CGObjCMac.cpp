@@ -440,6 +440,8 @@ protected:
   llvm::Constant *BuildIvarLayout(const ObjCImplementationDecl *OI,
                                   bool ForStrongLayout);
   
+  bool IsClassHidden(const ObjCInterfaceDecl *ID);
+  
   void BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
@@ -1426,10 +1428,8 @@ enum ClassFlags {
   eClassFlags_ABI2_HasCXXStructors = 0x00004   // <rdr://4923634>
 };
 
-// <rdr://5142207&4705298&4843145>
-static bool IsClassHidden(const ObjCInterfaceDecl *ID) {
+bool CGObjCCommonMac::IsClassHidden(const ObjCInterfaceDecl *ID) {
   if (const VisibilityAttr *attr = ID->getAttr<VisibilityAttr>()) {
-    // FIXME: Support -fvisibility
     switch (attr->getVisibility()) {
     default: 
       assert(0 && "Unknown visibility");
@@ -1440,9 +1440,9 @@ static bool IsClassHidden(const ObjCInterfaceDecl *ID) {
     case VisibilityAttr::HiddenVisibility:
       return true;
     }
-  } else {
-    return false; // FIXME: Support -fvisibility
-  }
+  } else
+      return (CGM.getLangOptions().getVisibilityMode() ==
+              LangOptions::HiddenVisibility);
 }
 
 /*
@@ -4522,9 +4522,6 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   else if (IsClassHidden(ID))
       IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  else if (CGM.getLangOptions().getVisibilityMode() == 
-           LangOptions::HiddenVisibility)
-    IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   else if (CGM.getLangOptions().getVisibilityMode() == 
            LangOptions::DefaultVisibility)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
