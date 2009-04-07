@@ -272,10 +272,12 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
 
   // FIXME: Figure out the relative priority of the attribute,
   // -fvisibility, and private_extern.
-  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
-    setGlobalVisibility(GV, attr->getVisibility());
-  else
-    setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
+  if (ForDefinition) {
+    if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
+      setGlobalVisibility(GV, attr->getVisibility());
+    else
+      setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
+  }
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
