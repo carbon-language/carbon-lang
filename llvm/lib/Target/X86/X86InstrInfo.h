@@ -243,7 +243,7 @@ namespace X86II {
   };
 }
 
-const int X86AddrNumOperands = 4;
+const int X86AddrNumOperands = 5;
 
 inline static bool isScale(const MachineOperand &MO) {
   return MO.isImm() &&
@@ -251,7 +251,7 @@ inline static bool isScale(const MachineOperand &MO) {
      MO.getImm() == 4 || MO.getImm() == 8);
 }
 
-inline static bool isMem(const MachineInstr *MI, unsigned Op) {
+inline static bool isLeaMem(const MachineInstr *MI, unsigned Op) {
   if (MI->getOperand(Op).isFI()) return true;
   return Op+4 <= MI->getNumOperands() &&
     MI->getOperand(Op  ).isReg() && isScale(MI->getOperand(Op+1)) &&
@@ -260,6 +260,13 @@ inline static bool isMem(const MachineInstr *MI, unsigned Op) {
      MI->getOperand(Op+3).isGlobal() ||
      MI->getOperand(Op+3).isCPI() ||
      MI->getOperand(Op+3).isJTI());
+}
+
+inline static bool isMem(const MachineInstr *MI, unsigned Op) {
+  if (MI->getOperand(Op).isFI()) return true;
+  return Op+5 <= MI->getNumOperands() &&
+    MI->getOperand(Op+4).isReg() &&
+    isLeaMem(MI, Op);
 }
 
 class X86InstrInfo : public TargetInstrInfoImpl {

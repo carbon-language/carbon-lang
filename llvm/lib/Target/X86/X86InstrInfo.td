@@ -65,7 +65,7 @@ def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 def SDT_X86TLSADDR : SDTypeProfile<1, 1, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
 
-def SDT_X86TLSTP : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
+def SDT_X86SegmentBaseAddress : SDTypeProfile<1, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
@@ -142,7 +142,8 @@ def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
 
 def X86tlsaddr : SDNode<"X86ISD::TLSADDR", SDT_X86TLSADDR,
                         [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-def X86TLStp : SDNode<"X86ISD::THREAD_POINTER", SDT_X86TLSTP, []>;
+def X86SegmentBaseAddress : SDNode<"X86ISD::SegmentBaseAddress",
+                                 SDT_X86SegmentBaseAddress, []>;
 
 def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
                         [SDNPHasChain]>;
@@ -167,7 +168,7 @@ def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 //
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
-  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm, i8imm);
 }
 
 def i8mem   : X86MemOperand<"printi8mem">;
@@ -181,7 +182,7 @@ def f80mem  : X86MemOperand<"printf80mem">;
 def f128mem : X86MemOperand<"printf128mem">;
 
 def lea32mem : Operand<i32> {
-  let PrintMethod = "printi32mem";
+  let PrintMethod = "printlea32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
 }
 
@@ -207,7 +208,7 @@ def brtarget : Operand<OtherVT>;
 //
 
 // Define X86 specific addressing mode.
-def addr      : ComplexPattern<iPTR, 4, "SelectAddr", [], []>;
+def addr      : ComplexPattern<iPTR, 5, "SelectAddr", [], []>;
 def lea32addr : ComplexPattern<i32, 4, "SelectLEAAddr",
                                [add, mul, shl, or, frameindex], []>;
 
@@ -2922,100 +2923,10 @@ def MOV32_mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32_:$src),
 // Thread Local Storage Instructions
 //
 
-// FIXME: there is duplication with the non-TLS case.
-// There is a suggestion on how to fix this at
-// http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20090309/075212.html
-
 let Uses = [EBX] in
 def TLS_addr32 : I<0, Pseudo, (outs GR32:$dst), (ins i32imm:$sym),
                   "leal\t${sym:mem}(,%ebx,1), $dst",
                   [(set GR32:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>;
-
-let AddedComplexity = 10 in
-def TLS_gs_rr  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src),
-                  "movl\t%gs:($src), $dst",
-                  [(set GR32:$dst, (load (add X86TLStp, GR32:$src)))]>;
-
-let AddedComplexity = 15 in
-def TLS_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                  "movl\t%gs:${src:mem}, $dst",
-                  [(set GR32:$dst,
-                    (load (add X86TLStp, (X86Wrapper tglobaltlsaddr:$src))))]>,
-                  SegGS;
-
-let AddedComplexity = 15 in
-def TLS16_gs_ri : I<0x8B, Pseudo, (outs GR16:$dst), (ins i32imm:$src),
-                    "movw\t%gs:${src:mem}, $dst",
-                    [(set GR16:$dst,
-                      (load (add X86TLStp,
-                        (X86Wrapper tglobaltlsaddr:$src))))]>,
-                    SegGS;
-
-let AddedComplexity = 15 in
-def TLS8_gs_ri : I<0x8B, Pseudo, (outs GR8:$dst), (ins i32imm:$src),
-                   "movb\t%gs:${src:mem}, $dst",
-                   [(set GR8:$dst,
-                     (load (add X86TLStp,
-                       (X86Wrapper tglobaltlsaddr:$src))))]>,
-                   SegGS;
-
-let AddedComplexity = 15 in
-def TLS_ext16_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                        "movzwl\t%gs:${src:mem}, $dst",
-                        [(set GR32:$dst,
-                          (extloadi32i16
-                            (add X86TLStp,
-                              (X86Wrapper tglobaltlsaddr:$src))))]>,
-                        SegGS;
-
-let AddedComplexity = 15 in
-def TLS_sext16_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                         "movswl\t%gs:${src:mem}, $dst",
-                         [(set GR32:$dst,
-                           (sextloadi32i16
-                             (add X86TLStp,
-                               (X86Wrapper tglobaltlsaddr:$src))))]>,
-                         SegGS;
-
-let AddedComplexity = 15 in
-def TLS_zext16_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                         "movzwl\t%gs:${src:mem}, $dst",
-                         [(set GR32:$dst,
-                           (zextloadi32i16
-                             (add X86TLStp,
-                               (X86Wrapper tglobaltlsaddr:$src))))]>,
-                         SegGS;
-
-let AddedComplexity = 15 in
-def TLS_ext8_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                        "movzbl\t%gs:${src:mem}, $dst",
-                        [(set GR32:$dst,
-                          (extloadi32i8
-                            (add X86TLStp,
-                              (X86Wrapper tglobaltlsaddr:$src))))]>,
-                        SegGS;
-
-let AddedComplexity = 15 in
-def TLS_sext8_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                         "movsbl\t%gs:${src:mem}, $dst",
-                         [(set GR32:$dst,
-                           (sextloadi32i8
-                             (add X86TLStp,
-                               (X86Wrapper tglobaltlsaddr:$src))))]>,
-                         SegGS;
-
-let AddedComplexity = 15 in
-def TLS_zext8_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
-                         "movzbl\t%gs:${src:mem}, $dst",
-                         [(set GR32:$dst,
-                           (zextloadi32i8
-                             (add X86TLStp,
-                              (X86Wrapper tglobaltlsaddr:$src))))]>,
-                         SegGS;
-
-def TLS_tp : I<0x8B, Pseudo, (outs GR32:$dst), (ins),
-               "movl\t%gs:0, $dst",
-               [(set GR32:$dst, X86TLStp)]>, SegGS;
 
 let AddedComplexity = 5 in
 def GS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),

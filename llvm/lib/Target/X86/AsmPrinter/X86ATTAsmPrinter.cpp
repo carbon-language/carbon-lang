@@ -566,9 +566,8 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   }
 }
 
-void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
-                                         const char *Modifier){
-  assert(isMem(MI, Op) && "Invalid memory reference!");
+void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
+                                            const char *Modifier){
   MachineOperand BaseReg  = MI->getOperand(Op);
   MachineOperand IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
@@ -609,6 +608,17 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
     }
     O << ')';
   }
+}
+
+void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
+                                         const char *Modifier){
+  assert(isMem(MI, Op) && "Invalid memory reference!");
+  MachineOperand Segment = MI->getOperand(Op+4);
+  if (Segment.getReg()) {
+      printOperand(MI, Op+4, Modifier);
+      O << ':';
+    }
+  printLeaMemReference(MI, Op, Modifier);
 }
 
 void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
