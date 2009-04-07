@@ -23,17 +23,33 @@ using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
 
-/// Utility to insert an atomic instruction based Instrinsic::ID and
-// the expression node
-static RValue EmitBinaryAtomic(CodeGenFunction& CFG, 
+/// Utility to insert an atomic instruction based on Instrinsic::ID
+/// and the expression node.
+static RValue EmitBinaryAtomic(CodeGenFunction& CGF, 
                                Intrinsic::ID Id, const CallExpr *E) {
   const llvm::Type *ResType[2];
-  ResType[0] = CFG.ConvertType(E->getType());
-  ResType[1] = CFG.ConvertType(E->getArg(0)->getType());
-  Value *AtomF = CFG.CGM.getIntrinsic(Id, ResType, 2);
-  return RValue::get(CFG.Builder.CreateCall2(AtomF,
-                                             CFG.EmitScalarExpr(E->getArg(0)),
-                                             CFG.EmitScalarExpr(E->getArg(1))));
+  ResType[0] = CGF.ConvertType(E->getType());
+  ResType[1] = CGF.ConvertType(E->getArg(0)->getType());
+  Value *AtomF = CGF.CGM.getIntrinsic(Id, ResType, 2);
+  return RValue::get(CGF.Builder.CreateCall2(AtomF, 
+                                             CGF.EmitScalarExpr(E->getArg(0)), 
+                                             CGF.EmitScalarExpr(E->getArg(1))));
+}
+
+/// Utility to insert an atomic instruction based Instrinsic::ID and
+// the expression node, where the return value is the result of the
+// operation.
+static RValue EmitBinaryAtomicPost(CodeGenFunction& CGF, 
+                                   Intrinsic::ID Id, const CallExpr *E,
+                                   Instruction::BinaryOps Op) {
+  const llvm::Type *ResType[2];
+  ResType[0] = CGF.ConvertType(E->getType());
+  ResType[1] = CGF.ConvertType(E->getArg(0)->getType());
+  Value *AtomF = CGF.CGM.getIntrinsic(Id, ResType, 2);
+  Value *Ptr = CGF.EmitScalarExpr(E->getArg(0));
+  Value *Operand = CGF.EmitScalarExpr(E->getArg(1));
+  Value *Result = CGF.Builder.CreateCall2(AtomF, Ptr, Operand);
+  return RValue::get(CGF.Builder.CreateBinOp(Op, Result, Operand));
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD, 
@@ -295,6 +311,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::frameaddress, 0, 0);
     return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
   }
+
   case Builtin::BI__sync_fetch_and_add:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_add, E);
   case Builtin::BI__sync_fetch_and_sub:
@@ -313,6 +330,23 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_or, E);
   case Builtin::BI__sync_fetch_and_xor:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
+
+  case Builtin::BI__sync_add_and_fetch:
+    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_add, E, 
+                                llvm::Instruction::Add);
+  case Builtin::BI__sync_sub_and_fetch:
+    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_sub, E,
+                                llvm::Instruction::Sub);
+  case Builtin::BI__sync_and_and_fetch:
+    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_and, E,
+                                llvm::Instruction::And);
+  case Builtin::BI__sync_or_and_fetch:
+    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_or, E,
+                                llvm::Instruction::Or);
+  case Builtin::BI__sync_xor_and_fetch:
+    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_xor, E,
+                                llvm::Instruction::Xor);
+
   case Builtin::BI__sync_val_compare_and_swap: {
     const llvm::Type *ResType[2];
     ResType[0]= ConvertType(E->getType());
@@ -323,6 +357,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                            EmitScalarExpr(E->getArg(1)),
                                            EmitScalarExpr(E->getArg(2))));
   }
+
+  case Builtin::BI__sync_bool_compare_and_swap: {
+    const llvm::Type *ResType[2];
+    ResType[0]= ConvertType(E->getType());
+    ResType[1] = ConvertType(E->getArg(0)->getType());
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
+    Value *OldVal = EmitScalarExpr(E->getArg(1));
+    Value *PrevVal = Builder.CreateCall3(AtomF, 
+                                        EmitScalarExpr(E->getArg(0)),
+                                        OldVal,
+                                        EmitScalarExpr(E->getArg(2)));
+    Value *Result = Builder.CreateICmpEQ(PrevVal, OldVal);
+    // zext bool to int.
+    return RValue::get(Builder.CreateZExt(Result, ConvertType(E->getType())));
+  }
+
   case Builtin::BI__sync_lock_test_and_set:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
 
