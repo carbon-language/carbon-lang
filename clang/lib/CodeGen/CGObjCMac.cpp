@@ -5547,12 +5547,31 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.ClearInsertionPoint();
 }
 
+static bool hasObjCExceptionAttribute(const ObjCInterfaceDecl *OID) {
+  if (OID->getAttr<ObjCExceptionAttr>())
+    return true;
+  if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
+    return hasObjCExceptionAttribute(Super);
+  return false;
+}
+
 llvm::Value *
 CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceType *IT) {
   const ObjCInterfaceDecl *ID = IT->getDecl();
   llvm::GlobalVariable * &Entry = EHTypeReferences[ID->getIdentifier()];
   if (Entry)
     return Entry;
+
+  // If this type (or a super class) has the __objc_exception__
+  // attribute, emit an external reference.
+  if (hasObjCExceptionAttribute(IT->getDecl()))
+    return Entry = 
+      new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+                               llvm::GlobalValue::ExternalLinkage,
+                               0, 
+                               (std::string("OBJC_EHTYPE_$_") + 
+                                ID->getIdentifier()->getName()),
+                               &CGM.getModule());
 
   std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
   std::string VTableName = "objc_ehtype_vtable";

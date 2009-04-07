@@ -24,14 +24,17 @@ class multidict:
     def __len__(self):
         return len(self.data)
 
-kGCCErrorRE = re.compile('(.*):([0-9]+): error: (.*)')
-kGCCWarningRE = re.compile('(.*):([0-9]+): warning: (.*)')
-kClangErrorRE = re.compile('(.*):([0-9]+):([0-9]+): error: (.*)')
-kClangWarningRE = re.compile('(.*):([0-9]+):([0-9]+): warning: (.*)')
+kDiagnosticRE = re.compile(': (error|warning): (.*)')
 kAssertionRE = re.compile('Assertion failed: (.*, function .*, file .*, line [0-9]+\\.)')
-kStackDumpLineRE = re.compile('^[0-9]+ +([^ ]+) +0x[0-9a-fA-F]+ +([^ ]+)')
 
 def readInfo(path, opts):
+    lastProgress = [-100,0]
+    def progress(pos):
+        pct = (100. * pos) / (size * 2)
+        if (pct - lastProgress[0]) >= 10:
+            lastProgress[0] = pct
+            print '%d/%d = %.2f%%' % (pos, size*2, pct)
+
     f = open(path)
     data = f.read()
     f.close()
@@ -39,30 +42,45 @@ def readInfo(path, opts):
     if opts.truncate != -1:
         data = data[:opts.truncate]
 
-    gccwarnings = multidict([(m.group(3),m) for m in kGCCWarningRE.finditer(data)]).items()
-    gccerrors = multidict([(m.group(3),m) for m in kGCCErrorRE.finditer(data)]).items()
-    assertions = multidict([(m.group(1),m) for m in kAssertionRE.finditer(data)]).items()
+    size = len(data)
+    warnings = multidict()
+    errors = multidict()
+    for m in kDiagnosticRE.finditer(data):
+        progress(m.end())
+        if m.group(1) == 'error':
+            d = errors
+        else:
+            d = warnings
+        d[m.group(2)] = m
+    warnings = warnings.items()
+    errors = errors.items()
+    assertions = multidict()
+    for m in kAssertionRE.finditer(data):
+        print '%d/%d = %.2f%%' % (size + m.end(), size, (float(m.end()) / (size*2)) * 100.)
+        assertions[m.group(1)] = m
+    assertions = assertions.items()
 
     # Manual scan for stack traces
     aborts = multidict()
-    prevLine = None
-    lnIter = iter(data.split('\n'))
-    for ln in lnIter:
-        m = kStackDumpLineRE.match(ln)
-        if m:
-            stack = [m.group(2)]
-            for ln in lnIter:
-                m = kStackDumpLineRE.match(ln)
-                if not m:
-                    break
-                stack.append(m.group(2))
-            if prevLine is None or not kAssertionRE.match(prevLine):
-                aborts[tuple(stack)] = stack
-        prevLine = ln
+    if 0:
+        prevLine = None
+        lnIter = iter(data.split('\n'))
+        for ln in lnIter:
+            m = kStackDumpLineRE.match(ln)
+            if m:
+                stack = [m.group(2)]
+                for ln in lnIter:
+                    m = kStackDumpLineRE.match(ln)
+                    if not m:
+                        break
+                    stack.append(m.group(2))
+                if prevLine is None or not kAssertionRE.match(prevLine):
+                    aborts[tuple(stack)] = stack
+            prevLine = ln
 
     sections = [
-        (gccwarnings, 'Warnings'),
-        (gccerrors, 'Errors'),
+        (warnings, 'Warnings'),
+        (errors, 'Errors'),
         (assertions, 'Assertions'),
         (aborts.items(), 'Aborts'),
         ]
