@@ -13,6 +13,9 @@
 #ifndef LLVM_CLANG_AST_DECLVISITOR_H
 #define LLVM_CLANG_AST_DECLVISITOR_H
 
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 
 namespace clang {

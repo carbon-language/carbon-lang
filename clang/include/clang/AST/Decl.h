@@ -870,6 +870,9 @@ protected:
     : NamedDecl(DK, DC, L, Id), TypeForDecl(0) {}
 
 public:
+  // Low-level accessor
+  Type *getTypeForDecl() const { return TypeForDecl; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= TypeFirst && D->getKind() <= TypeLast;

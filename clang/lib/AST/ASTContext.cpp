@@ -103,7 +103,8 @@ void ASTContext::PrintStats() const {
   unsigned NumObjCInterfaces = 0, NumObjCQualifiedInterfaces = 0;
   unsigned NumObjCQualifiedIds = 0;
   unsigned NumTypeOfTypes = 0, NumTypeOfExprTypes = 0;
-  
+  unsigned NumExtQual = 0;
+
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
     if (isa<BuiltinType>(T))
@@ -149,6 +150,8 @@ void ASTContext::PrintStats() const {
       ++NumTypeOfTypes;
     else if (isa<TypeOfExprType>(T))
       ++NumTypeOfExprTypes;
+    else if (isa<ExtQualType>(T))
+      ++NumExtQual;
     else {
       QualType(T, 0).dump();
       assert(0 && "Unknown type!");
@@ -179,6 +182,7 @@ void ASTContext::PrintStats() const {
           NumObjCQualifiedIds);
   fprintf(stderr, "    %d typeof types\n", NumTypeOfTypes);
   fprintf(stderr, "    %d typeof exprs\n", NumTypeOfExprTypes);
+  fprintf(stderr, "    %d attribute-qualified types\n", NumExtQual);
 
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
@@ -189,7 +193,8 @@ void ASTContext::PrintStats() const {
     NumFunctionP*sizeof(FunctionProtoType)+
     NumFunctionNP*sizeof(FunctionNoProtoType)+
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)+
-    NumTypeOfTypes*sizeof(TypeOfType)+NumTypeOfExprTypes*sizeof(TypeOfExprType)));
+    NumTypeOfTypes*sizeof(TypeOfType)+NumTypeOfExprTypes*sizeof(TypeOfExprType)+
+    NumExtQual*sizeof(ExtQualType)));
 }
 
 

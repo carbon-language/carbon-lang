@@ -375,10 +375,6 @@ class DeclContext {
   /// another pointer.
   Decl *LastDecl;
 
-  /// isLookupMap - Determine if the lookup structure is a
-  /// DenseMap. Othewise, it is an array.
-  bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
-
 protected:
    DeclContext(Decl::Kind K) 
      : DeclKind(K), LookupPtr(), FirstDecl(0), LastDecl(0) { }
@@ -760,6 +756,15 @@ public:
   udir_iterator using_directives_end() const {
     return getUsingDirectives().second;
   }
+
+  // Low-level accessors
+
+  /// \brief Determine if the lookup structure is a
+  /// DenseMap. Othewise, it is an array.
+  bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
+
+  /// \brief Retrieve the internal representation of the lookup structure.
+  llvm::PointerIntPair<void*, 3> getLookupPtr() const { return LookupPtr; }
 
   static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }

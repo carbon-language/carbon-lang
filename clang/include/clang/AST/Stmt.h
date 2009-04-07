@@ -587,9 +587,8 @@ public:
     SwitchLoc = SL;
   }  
   void addSwitchCase(SwitchCase *SC) {
-    if (FirstCase)
-      SC->setNextSwitchCase(FirstCase);
-
+    assert(!SC->getNextSwitchCase() && "case/default already added to a switch");
+    SC->setNextSwitchCase(FirstCase);
     FirstCase = SC;
   }
   virtual SourceRange getSourceRange() const { 
