@@ -117,7 +117,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     }
   }
 
-  addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
+  if (Subtarget->isThumb())
+    addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
+  else
+    addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
   if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
     addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
     addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
@@ -937,6 +940,7 @@ static SDValue LowerFORMAL_ARGUMENT(SDValue Op, SelectionDAG &DAG,
   MVT ObjectVT = Op.getValue(ArgNo).getValueType();
   SDValue Root = Op.getOperand(0);
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   static const unsigned GPRArgRegs[] = {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
@@ -955,17 +959,28 @@ static SDValue LowerFORMAL_ARGUMENT(SDValue Op, SelectionDAG &DAG,
 
   SDValue ArgValue;
   if (ObjGPRs == 1) {
-    unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+    unsigned VReg;
+    if (AFI->isThumbFunction())
+      VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
+    else
+      VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
     RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
     ArgValue = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
     if (ObjectVT == MVT::f32)
       ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue);
   } else if (ObjGPRs == 2) {
-    unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+    unsigned VReg;
+    if (AFI->isThumbFunction())
+      VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
+    else
+      VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
     RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
     ArgValue = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
 
-    VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+    if (AFI->isThumbFunction())
+      VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
+    else
+      VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
     RegInfo.addLiveIn(GPRArgRegs[NumGPRs+1], VReg);
     SDValue ArgValue2 = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
 
@@ -1029,7 +1044,11 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
       SmallVector<SDValue, 4> MemOps;
       for (; NumGPRs < 4; ++NumGPRs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+        unsigned VReg;
+        if (AFI->isThumbFunction())
+          VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
+        else
+          VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
         RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
         SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
         SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
@@ -1965,8 +1984,10 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // GCC RS6000 Constraint Letters
     switch (Constraint[0]) {
     case 'l':
-    // FIXME: in thumb mode, 'l' is only low-regs.
-    // FALL THROUGH.
+      if (Subtarget->isThumb())
+        return std::make_pair(0U, ARM::tGPRRegisterClass);
+      else
+        return std::make_pair(0U, ARM::GPRRegisterClass);
     case 'r':
       return std::make_pair(0U, ARM::GPRRegisterClass);
     case 'w':
@@ -1989,6 +2010,9 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
   switch (Constraint[0]) {      // GCC ARM Constraint Letters
   default: break;
   case 'l':
+    return make_vector<unsigned>(ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+                                 ARM::R4, ARM::R5, ARM::R6, ARM::R7,
+                                 0);
   case 'r':
     return make_vector<unsigned>(ARM::R0, ARM::R1, ARM::R2, ARM::R3,
                                  ARM::R4, ARM::R5, ARM::R6, ARM::R7,

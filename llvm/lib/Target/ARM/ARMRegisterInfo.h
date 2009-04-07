@@ -54,6 +54,8 @@ public:
   const TargetRegisterClass *getPointerRegClass() const;
 
   /// Code Generation virtual methods...
+  const TargetRegisterClass *
+    getPhysicalRegisterRegClass(unsigned Reg, MVT VT = MVT::Other) const;
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const*

@@ -584,10 +584,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     // Selects to ADDri FI, 0 which in turn will become ADDri SP, imm.
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-    if (Subtarget->isThumb())
+    if (Subtarget->isThumb()) {
       return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, TFI,
                                   CurDAG->getTargetConstant(0, MVT::i32));
-    else {
+    } else {
       SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
                           getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                           CurDAG->getRegister(0, MVT::i32) };
@@ -607,7 +607,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       std::swap(LHSR, RHSR);
     }
     if (RHSR && RHSR->getReg() == ARM::SP) {
-      return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), N0, N1);
+      SDValue Val = SDValue(CurDAG->getTargetNode(ARM::tMOVlor2hir, dl,
+                                  Op.getValueType(), N0, N0), 0);
+      return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), Val, N1);
     }
     break;
   }

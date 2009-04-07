@@ -211,6 +211,22 @@ bool ARMRegisterInfo::isLowRegister(unsigned Reg) const {
   }
 }
 
+const TargetRegisterClass*
+ARMRegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, MVT VT) const {
+  if (STI.isThumb()) {
+    if (isLowRegister(Reg))
+      return ARM::tGPRRegisterClass;
+    switch (Reg) {
+    default:
+      break;
+    case ARM::R8:  case ARM::R9:  case ARM::R10:  case ARM::R11:
+    case ARM::R12: case ARM::SP:  case ARM::LR:   case ARM::PC:
+      return ARM::GPRRegisterClass;
+    }
+  }
+  return TargetRegisterInfo::getPhysicalRegisterRegClass(Reg, VT);
+}
+
 const unsigned*
 ARMRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
@@ -244,7 +260,16 @@ ARMRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
-  return CalleeSavedRegClasses;
+  static const TargetRegisterClass * const ThumbCalleeSavedRegClasses[] = {
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::tGPRRegClass,
+    &ARM::tGPRRegClass,&ARM::tGPRRegClass,&ARM::tGPRRegClass,
+
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    0
+  };
+  return STI.isThumb() ? ThumbCalleeSavedRegClasses : CalleeSavedRegClasses;
 }
 
 BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -400,7 +425,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     if (DestReg == ARM::SP) {
       assert(BaseReg == ARM::SP && "Unexpected!");
       LdReg = ARM::R3;
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::R12)
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
         .addReg(ARM::R3, false, false, true);
     }
 
@@ -423,7 +448,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     else
       MIB.addReg(LdReg).addReg(BaseReg, false, false, true);
     if (DestReg == ARM::SP)
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::R3)
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVhir2lor), ARM::R3)
         .addReg(ARM::R12, false, false, true);
 }
 
@@ -616,6 +641,7 @@ static
 unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
                              ARMFunctionInfo *AFI) {
   unsigned Reg = RS ? RS->FindUnusedReg(RC, true) : (unsigned) ARM::R12;
+  assert (!AFI->isThumbFunction());
   if (Reg == 0)
     // Try a already spilled CS register.
     Reg = RS->FindUnusedReg(RC, AFI->getSpilledCSRegisters());
@@ -717,7 +743,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setDesc(TII.get(ARM::tMOVr));
+      MI.setDesc(TII.get(ARM::tMOVhir2lor));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(i+1);
       return;
@@ -891,12 +917,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       unsigned TmpReg = ARM::R3;
       bool UseRR = false;
       if (ValReg == ARM::R3) {
-        BuildMI(MBB, II, dl, TII.get(ARM::tMOVr), ARM::R12)
+        BuildMI(MBB, II, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
           .addReg(ARM::R2, false, false, true);
         TmpReg = ARM::R2;
       }
       if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
-        BuildMI(MBB, II, dl, TII.get(ARM::tMOVr), ARM::R12)
+        BuildMI(MBB, II, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
           .addReg(ARM::R3, false, false, true);
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
@@ -919,10 +945,10 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
       MachineBasicBlock::iterator NII = next(II);
       if (ValReg == ARM::R3)
-        BuildMI(MBB, NII, dl, TII.get(ARM::tMOVr), ARM::R2)
+        BuildMI(MBB, NII, dl, TII.get(ARM::tMOVhir2lor), ARM::R2)
           .addReg(ARM::R12, false, false, true);
       if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
-        BuildMI(MBB, NII, dl, TII.get(ARM::tMOVr), ARM::R3)
+        BuildMI(MBB, NII, dl, TII.get(ARM::tMOVhir2lor), ARM::R3)
           .addReg(ARM::R12, false, false, true);
     } else
       assert(false && "Unexpected opcode!");
@@ -1401,7 +1427,8 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
           emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes,
                                     TII, *this, dl);
         else
-          BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::SP).addReg(FramePtr);
+          BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVlor2hir), ARM::SP)
+            .addReg(FramePtr);
       } else {
         if (MBBI->getOpcode() == ARM::tBX_RET &&
             &MBB.front() != MBBI &&

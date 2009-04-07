@@ -130,17 +130,10 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       ARM::R8, ARM::R10,ARM::R11,
       ARM::R7 };
 
-    // FP is R7, only low registers available.
-    static const unsigned THUMB_GPR_AO[] = {
-      ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
-
     GPRClass::iterator
     GPRClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.isThumb())
-        return THUMB_GPR_AO;
       if (Subtarget.useThumbBacktraces()) {
         if (Subtarget.isR9Reserved())
           return ARM_GPR_AO_4;
@@ -160,9 +153,8 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       GPRClass::iterator I;
-      if (Subtarget.isThumb())
-        I = THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
-      else if (Subtarget.useThumbBacktraces()) {
+
+      if (Subtarget.useThumbBacktraces()) {
         if (Subtarget.isR9Reserved()) {
           I = ARM_GPR_AO_4 + (sizeof(ARM_GPR_AO_4)/sizeof(unsigned));
         } else {
@@ -176,6 +168,40 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
         }
       }
 
+      // Mac OS X requires FP not to be clobbered for backtracing purpose.
+      return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+    }
+  }];
+}
+
+// Thumb registers are R0-R7 normally. Some instructions can still use
+// the general GPR register class above (MOV, e.g.)
+def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  // FIXME: We are reserving r3 in Thumb mode in case the PEI needs to use it
+  // to generate large stack offset. Make it available once we have register
+  // scavenging.
+  let MethodBodies = [{
+    static const unsigned THUMB_tGPR_AO[] = {
+      ARM::R2, ARM::R1, ARM::R0,
+      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
+
+    // FP is R7, only low registers available.
+    tGPRClass::iterator
+    tGPRClass::allocation_order_begin(const MachineFunction &MF) const {
+      return THUMB_tGPR_AO;
+    }
+
+    tGPRClass::iterator
+    tGPRClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+      tGPRClass::iterator I =
+        THUMB_tGPR_AO + (sizeof(THUMB_tGPR_AO)/sizeof(unsigned));
       // Mac OS X requires FP not to be clobbered for backtracing purpose.
       return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
     }
