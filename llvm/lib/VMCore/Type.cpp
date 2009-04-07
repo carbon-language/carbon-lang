@@ -672,9 +672,9 @@ protected:
 public:
   ~TypeMapBase()
   {
-    //PATypeHolder won't destroy non-abstract types.
-    //We can't destroy them by simply iterating,  because
-    //they may contain references to each-other
+    // PATypeHolder won't destroy non-abstract types.
+    // We can't destroy them by simply iterating, because
+    // they may contain references to each-other.
 
     for (std::multimap<unsigned, PATypeHolder>::iterator I
          = TypesByHash.begin(), E = TypesByHash.end(); I != E; ++I) {
