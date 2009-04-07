@@ -17,9 +17,11 @@
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;
@@ -30,16 +32,20 @@ class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   BugReporter& BR;
   ParentMap& Parents;
+  llvm::SmallPtrSet<VarDecl*, 20> Escaped;
   
   enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
     
 public:
-  DeadStoreObs(ASTContext &ctx, BugReporter& br, ParentMap& parents)
-    : Ctx(ctx), BR(br), Parents(parents) {}
+  DeadStoreObs(ASTContext &ctx, BugReporter& br, ParentMap& parents,
+               llvm::SmallPtrSet<VarDecl*, 20> &escaped)
+    : Ctx(ctx), BR(br), Parents(parents), Escaped(escaped) {}
   
   virtual ~DeadStoreObs() {}
 
   void Report(VarDecl* V, DeadStoreKind dsk, SourceLocation L, SourceRange R) {
+    if (Escaped.count(V))
+      return;
 
     std::string name = V->getNameAsString();
     
@@ -219,7 +225,35 @@ public:
 // Driver function to invoke the Dead-Stores checker on a CFG.
 //===----------------------------------------------------------------------===//
 
-void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {  
-  DeadStoreObs A(BR.getContext(), BR, BR.getParentMap());
+namespace {
+class VISIBILITY_HIDDEN FindEscaped : public CFGRecStmtDeclVisitor<FindEscaped>{
+  CFG *cfg;
+public:
+  FindEscaped(CFG *c) : cfg(c) {}
+  
+  CFG& getCFG() { return *cfg; }
+  
+  llvm::SmallPtrSet<VarDecl*, 20> Escaped;
+
+  void VisitUnaryOperator(UnaryOperator* U) {
+    // Check for '&'.  Any VarDecl whose value has its address-taken we
+    // treat as escaped.
+    Expr* E = U->getSubExpr()->IgnoreParenCasts();
+    if (U->getOpcode() == UnaryOperator::AddrOf)
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
+        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+          Escaped.insert(VD);
+          return;
+        }
+    Visit(E);
+  }
+};
+} // end anonymous namespace
+  
+
+void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {
+  FindEscaped FS(BR.getCFG());
+  FS.getCFG().VisitBlockStmts(FS);  
+  DeadStoreObs A(BR.getContext(), BR, BR.getParentMap(), FS.Escaped);
   L.runOnAllBlocks(*BR.getCFG(), &A);
 }
