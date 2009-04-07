@@ -2900,12 +2900,40 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
     GetAllocationSite(BR.getStateManager(), EndN, Sym);
   
   // Get the allocate site.  
-  assert (AllocNode);
+  assert(AllocNode);
   Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
 
   SourceManager& SMgr = BR.getContext().getSourceManager();
   unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
 
+#if 1
+  const ExplodedNode<GRState>* LeakN = EndN;
+  PathDiagnosticLocation L;
+  
+  while (LeakN) {
+    ProgramPoint P = LeakN->getLocation();
+    
+    if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
+      L = PathDiagnosticLocation(PS->getStmt()->getLocStart(), SMgr);
+      break;
+    }
+    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      if (const Stmt* Term = BE->getSrc()->getTerminator()) {
+        L = PathDiagnosticLocation(Term->getLocStart(), SMgr);
+        break;
+      }
+    }
+
+
+    LeakN = LeakN->succ_empty() ? 0 : *(LeakN->succ_begin());
+  }
+  
+  if (!L.isValid()) {
+    CompoundStmt *CS = BR.getStateManager().getCodeDecl().getBody();
+    L = PathDiagnosticLocation(CS->getRBracLoc(), SMgr);
+  }
+
+#else
   // Get the leak site.  We want to find the last place where the symbol
   // was used in an expression.
   const ExplodedNode<GRState>* LeakN = EndN;
@@ -2963,6 +2991,7 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   // FIXME: We need to do a better job at determing the leak site, e.g., at
   // the end of function bodies.
   PathDiagnosticLocation L(S, SMgr);
+#endif
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
   
