@@ -1,4 +1,5 @@
 // RUN: clang-cc -fsyntax-only -verify %s
+// XFAIL
 
 namespace A {
   short i; // expected-note 2{{candidate found by name lookup is 'A::i'}}
