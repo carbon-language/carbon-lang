@@ -359,7 +359,25 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Forward -f options which we can pass directly.
-  Args.AddAllArgs(CmdArgs, options::OPT_clang_f_Group);
+  Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
+  Args.AddLastArg(CmdArgs, options::OPT_fexceptions);
+  Args.AddLastArg(CmdArgs, options::OPT_ffreestanding);
+  Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
+  Args.AddLastArg(CmdArgs, options::OPT_fgnu_runtime);
+  Args.AddLastArg(CmdArgs, options::OPT_flax_vector_conversions);
+  Args.AddLastArg(CmdArgs, options::OPT_fms_extensions);
+  Args.AddLastArg(CmdArgs, options::OPT_fnext_runtime);
+  Args.AddLastArg(CmdArgs, options::OPT_fno_caret_diagnostics);
+  Args.AddLastArg(CmdArgs, options::OPT_fno_show_column);
+  Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc_only);
+  Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc);
+  // FIXME: Should we remove this?
+  Args.AddLastArg(CmdArgs, options::OPT_fobjc_nonfragile_abi);
+  Args.AddLastArg(CmdArgs, options::OPT_fprint_source_range_info);
+  Args.AddLastArg(CmdArgs, options::OPT_ftime_report);
+  Args.AddLastArg(CmdArgs, options::OPT_ftrapv);
+  Args.AddLastArg(CmdArgs, options::OPT_fvisibility_EQ);
+  Args.AddLastArg(CmdArgs, options::OPT_fwritable_strings);
 
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
