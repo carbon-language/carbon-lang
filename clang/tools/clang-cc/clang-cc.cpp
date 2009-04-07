@@ -585,9 +585,6 @@ NeXTRuntime("fnext-runtime",
 static llvm::cl::opt<bool>
 Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences."));
 
-static llvm::cl::opt<bool>
-Ansi("ansi", llvm::cl::desc("Equivalent to specifying -std=c89."));
-
 static llvm::cl::list<std::string>
 TargetFeatures("mattr", llvm::cl::CommaSeparated,
         llvm::cl::desc("Target specific attributes (-mattr=help for details)"));
@@ -653,9 +650,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     }
   }
   
-  if (Ansi) // "The -ansi option is equivalent to -std=c89."
-    LangStd = lang_c89;
-  
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
     switch (LK) {
@@ -719,8 +713,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   else
     Options.ImplicitInt = 0;
   
-  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs or -ansi
-  // is specified, or -std is set to a conforming mode.  
+  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
+  // is specified, or -std is set to a conforming mode.
   Options.Trigraphs = !Options.GNUMode;
   if (Trigraphs.getPosition())
     Options.Trigraphs = Trigraphs;  // Command line option wins if specified.

@@ -350,8 +350,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group, 
                   options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
-  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi, 
-                  options::OPT_trigraphs);
+
+  // Handle -{std, ansi, trigraphs} -- take the last of -{std, ansi}
+  // (-ansi is equivalent to -std=c89).
+  //
+  // If a std is supplied, only add -trigraphs if it follows the
+  // option.
+  if (Arg *Std = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi)) {
+    if (Std->getOption().matches(options::OPT_ansi))
+      CmdArgs.push_back("-std=c89");
+    else
+      Std->render(Args, CmdArgs);
+
+    if (Arg *A = Args.getLastArg(options::OPT_trigraphs))
+      if (A->getIndex() > Std->getIndex())
+        A->render(Args, CmdArgs);
+  } else
+    Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
   
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");
