@@ -969,7 +969,12 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
     // Turn the = into ' '.
     Buf.insert(Buf.end(), Macro, Equal);
     Buf.push_back(' ');
-    Buf.insert(Buf.end(), Equal+1, Equal+strlen(Equal));
+    
+    // Per GCC -D semantics, the macro ends at \n if it exists.
+    const char *End = strpbrk(Equal, "\n\r");
+    if (End == 0) End = Equal+strlen(Equal);
+    
+    Buf.insert(Buf.end(), Equal+1, End);
   } else {
     // Push "macroname 1".
     Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
