@@ -408,29 +408,14 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   return GenericExtendedBlockLiteralType;
 }
 
-/// getBlockFunctionType - Given a BlockPointerType, will return the
-/// function type for the block, including the first block literal argument.
-static QualType getBlockFunctionType(ASTContext &Ctx,
-                                     const BlockPointerType *BPT) {
-  const FunctionProtoType *FTy = dyn_cast<FunctionProtoType>(BPT->getPointeeType());
-  const clang::QualType ResType = BPT->getPointeeType()->getAsFunctionType()->getResultType();
-
-  llvm::SmallVector<QualType, 8> Types;
-  Types.push_back(Ctx.getPointerType(Ctx.VoidTy));
-
-  if (FTy)
-    for (FunctionProtoType::arg_type_iterator i = FTy->arg_type_begin(),
-           e = FTy->arg_type_end(); i != e; ++i)
-      Types.push_back(*i);
-
-  return Ctx.getFunctionType(ResType, &Types[0], Types.size(),
-                             FTy && FTy->isVariadic(), 0);
-}
-
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   const BlockPointerType *BPT =
     E->getCallee()->getType()->getAsBlockPointerType();
 
+  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(BPT);
+  bool IsVariadic = 
+    BPT->getPointeeType()->getAsFunctionProtoType()->isVariadic();
+  
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
 
   // Get a pointer to the generic block literal.
@@ -446,8 +431,9 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
 
   // Cast the function pointer to the right type.
-  const llvm::Type *BlockFTy =
-    ConvertType(getBlockFunctionType(getContext(), BPT));
+  const llvm::Type *BlockFTy = 
+    CGM.getTypes().GetFunctionType(FnInfo, IsVariadic);
+  
   const llvm::Type *BlockFTyPtr = llvm::PointerType::getUnqual(BlockFTy);
   Func = Builder.CreateBitCast(Func, BlockFTyPtr);
 
@@ -468,8 +454,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
                                   i->getType()));
 
   // And call the block.
-  return EmitCall(CGM.getTypes().getFunctionInfo(E->getType(), Args),
-                  Func, Args);
+  return EmitCall(FnInfo, Func, Args);
 }
 
 llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
