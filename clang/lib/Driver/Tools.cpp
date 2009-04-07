@@ -287,7 +287,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_D, options::OPT_U);
   Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
   Args.AddLastArg(CmdArgs, options::OPT_P);
-  Args.AddAllArgs(CmdArgs, options::OPT_mmacosx_version_min_EQ);
+  Args.AddLastArg(CmdArgs, options::OPT_mmacosx_version_min_EQ);
 
   // Special case debug options to only pass -g to clang. This is
   // wrong.
@@ -296,7 +296,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
 
-  // FIXME: Clang isn't going to accept just anything here.
+  Args.AddLastArg(CmdArgs, options::OPT_isysroot);
+
   // FIXME: Use iterator.
 
   // Add -i* options, and automatically translate to -include-pth for
@@ -306,7 +307,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   for (ArgList::const_iterator 
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
-    if (!A->getOption().matches(options::OPT_i_Group)) 
+    if (!A->getOption().matches(options::OPT_clang_i_Group)) 
       continue;
 
     if (A->getOption().matches(options::OPT_include)) {
