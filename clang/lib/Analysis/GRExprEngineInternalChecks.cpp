@@ -64,7 +64,7 @@ public:
 class VISIBILITY_HIDDEN NullDeref : public BuiltinBug {
 public:
   NullDeref(GRExprEngine* eng)
-    : BuiltinBug(eng,"Null dereference", "Dereference of null pointer.") {}
+    : BuiltinBug(eng,"Null dereference", "Dereference of null pointer") {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.null_derefs_begin(), Eng.null_derefs_end());
