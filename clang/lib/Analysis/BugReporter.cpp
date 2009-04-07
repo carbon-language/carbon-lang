@@ -989,10 +989,10 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
       // Only handle blocks with more than 1 statement here, as the blocks
       // with one statement are handled at BlockEntrances.
-      if (Blk.size() > 1) {
-        const Stmt *S = *Blk.rbegin();
-        EB.addEdge(S);
-      }
+//      if (Blk.size() > 1) {
+//        const Stmt *S = *Blk.rbegin();
+//        EB.addEdge(S);
+//      }
 
       continue;
     }
