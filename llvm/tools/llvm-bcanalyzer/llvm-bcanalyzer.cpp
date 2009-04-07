@@ -342,32 +342,14 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
       break;
     default:
       Record.clear();
-      bool HasBlob = false;
 
       ++BlockStats.NumRecords;
-      if (AbbrevID != bitc::UNABBREV_RECORD) {
+      if (AbbrevID != bitc::UNABBREV_RECORD)
         ++BlockStats.NumAbbreviatedRecords;
-        const BitCodeAbbrev *Abbv = Stream.getAbbrev(AbbrevID);
-        if (Abbv->getNumOperandInfos() != 0) {
-          const BitCodeAbbrevOp &LastOp =  
-            Abbv->getOperandInfo(Abbv->getNumOperandInfos()-1);
-          // If the last operand is a blob, then this record has blob data.
-          if (LastOp.isEncoding() && 
-              LastOp.getEncoding() == BitCodeAbbrevOp::Blob)
-            HasBlob = true;
-        }
-      }
         
-      unsigned Code;
       const char *BlobStart = 0;
       unsigned BlobLen = 0;
-      if (!HasBlob)
-        Code = Stream.ReadRecord(AbbrevID, Record);
-      else {
-        Code = Stream.ReadRecord(AbbrevID, Record);
-        BlobStart = BlobStart;
-        BlobLen = BlobLen;
-      }
+      unsigned Code = Stream.ReadRecord(AbbrevID, Record, BlobStart, BlobLen);
 
       // Increment the # occurrences of this code.
       if (BlockStats.CodeFreq.size() <= Code)
@@ -388,7 +370,24 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
         for (unsigned i = 0, e = Record.size(); i != e; ++i)
           std::cerr << " op" << i << "=" << (int64_t)Record[i];
         
-        std::cerr << "/>\n";
+        std::cerr << "/>";
+        
+        if (BlobStart) {
+          std::cerr << " blob data = ";
+          bool BlobIsPrintable = true;
+          for (unsigned i = 0; i != BlobLen; ++i)
+            if (!isprint(BlobStart[i])) {
+              BlobIsPrintable = false;
+              break;
+            }
+          
+          if (BlobIsPrintable)
+            std::cerr << "'" << std::string(BlobStart, BlobStart+BlobLen) <<"'";
+          else
+            std::cerr << "unprintable, " << BlobLen << " bytes.";
+        }
+        
+        std::cerr << "\n";
       }
       
       break;

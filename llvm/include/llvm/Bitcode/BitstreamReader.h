@@ -371,7 +371,8 @@ public:
     return CurAbbrevs[AbbrevNo];
   }
   
-  unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals) {
+  unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
+                      const char **BlobStart = 0, unsigned *BlobLen = 0) {
     if (AbbrevID == bitc::UNABBREV_RECORD) {
       unsigned Code = ReadVBR(6);
       unsigned NumElts = ReadVBR(6);
@@ -413,9 +414,15 @@ public:
           break;
         }
         
-        // Otherwise, read the number of bytes.
-        for (; NumElts; ++NextChar, --NumElts)
-          Vals.push_back(*NextChar);
+        // Otherwise, read the number of bytes.  If we can return a reference to
+        // the data, do so to avoid copying it.
+        if (BlobStart) {
+          *BlobStart = (const char*)NextChar;
+          *BlobLen = NumElts;
+        } else {
+          for (; NumElts; ++NextChar, --NumElts)
+            Vals.push_back(*NextChar);
+        }
         // Skip over tail padding.
         NextChar = NewEnd;
       } else {
@@ -428,6 +435,12 @@ public:
     return Code;
   }
 
+  unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
+                      const char *&BlobStart, unsigned &BlobLen) {
+    return ReadRecord(AbbrevID, Vals, &BlobStart, &BlobLen);
+  }
+
+  
   //===--------------------------------------------------------------------===//
   // Abbrev Processing
   //===--------------------------------------------------------------------===//
