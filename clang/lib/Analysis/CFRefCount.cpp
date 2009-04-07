@@ -3004,59 +3004,6 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
 // Handle dead symbols and end-of-path.
 //===----------------------------------------------------------------------===//
 
-static ExplodedNode<GRState>*
-GetLeakNode(ExplodedNode<GRState>* EndN, SymbolRef Sym,
-            GRStateManager &StateMgr) {
-  
-  // Get the leak site.  We want to find the last place where the symbol
-  // was used in an expression.
-  ExplodedNode<GRState>* LeakN = EndN;
-  Stmt *S = 0;
-  
-  while (LeakN) {
-    ProgramPoint P = LeakN->getLocation();
-    
-    if (const PostStmt *PS = dyn_cast<PostStmt>(&P))
-      S = PS->getStmt();
-    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      // FIXME: What we really want is to set LeakN to be the node
-      // for the BlockEntrance for the branch we took and have BugReporter
-      // do the right thing.
-      S = BE->getSrc()->getTerminator();
-    }
-    
-    if (S) {
-      // Scan 'S' for uses of Sym.
-      GRStateRef state(LeakN->getState(), StateMgr);
-      bool foundSymbol = false;
-      
-      // First check if 'S' itself binds to the symbol.
-      if (Expr *Ex = dyn_cast<Expr>(S))
-        if (state.GetSValAsScalarOrLoc(Ex).getAsLocSymbol() == Sym)
-          foundSymbol = true;
-          
-          if (!foundSymbol)
-            for (Stmt::child_iterator I=S->child_begin(), E=S->child_end();
-                 I!=E; ++I)
-              if (Expr *Ex = dyn_cast_or_null<Expr>(*I)) {
-                SVal X = state.GetSValAsScalarOrLoc(Ex);
-                if (X.getAsLocSymbol() == Sym) {
-                  foundSymbol = true;        
-                  break;
-                }
-              }
-      
-      if (foundSymbol)
-        break;
-    }
-
-    LeakN = LeakN->pred_empty() ? 0 : *(LeakN->pred_begin());
-  }
-  
-  assert(LeakN && "No leak site found.");
-  return LeakN;
-}
-
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder<GRState>& Builder) {
   
@@ -3091,10 +3038,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
     CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
                                                     : leakWithinFunction);
     assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report =
-      new CFRefLeakReport(*BT, *this,
-                          GetLeakNode(N, I->first, Eng.getStateManager()),
-                          I->first, Eng);
+    CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
     BR->EmitReport(report);
   }
 }
