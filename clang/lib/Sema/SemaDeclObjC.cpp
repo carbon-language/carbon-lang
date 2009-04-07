@@ -1825,7 +1825,8 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         return DeclPtrTy();
       }
       // __weak is explicit. So it works on Canonical type.
-      if (PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak()) {
+      if (PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak() &&
+          getLangOptions().getGCMode() != LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_weak_property)
         << property->getDeclName() << Ivar->getDeclName();
         return DeclPtrTy();
