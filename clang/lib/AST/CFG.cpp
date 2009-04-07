@@ -898,14 +898,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
 }    
   
 CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
-  // Process the statements of the @finally block.
-  if (ObjCAtFinallyStmt *FS = S->getFinallyStmt())
-    Visit(FS->getFinallyBody());
-  
-  // FIXME: Handle the @catch statements.
-  
-  // Process the try body
-  return Visit(S->getTryBody());
+  return NYS();
 }
 
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
