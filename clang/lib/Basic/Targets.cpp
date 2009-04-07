@@ -144,14 +144,14 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts,
   Define(Defs, "__MACH__");
   Define(Defs, "OBJC_NEW_PROPERTIES");
   
-  // Darwin defines __weak and __strong even in C mode.
-  if (!Opts.ObjC1 || Opts.getGCMode() == LangOptions::NonGC) {
-    Define(Defs, "__weak", "");
+  // __weak is always defined, for use in blocks and with objc pointers.
+  Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
+  
+  // Darwin defines __strong even in C mode (just to nothing).
+  if (!Opts.ObjC1 || Opts.getGCMode() == LangOptions::NonGC)
     Define(Defs, "__strong", "");
-  } else {
-    Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
+  else
     Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
-  }
   
   // FIXME: OBJC_ZEROCOST_EXCEPTIONS when using zero cost eh.
   
