@@ -431,7 +431,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
     if (A->getOption().matches(options::OPT_clang_ignored_W_Group) ||
-        A->getOption().matches(options::OPT_clang_ignored_f_Group))
+        A->getOption().matches(options::OPT_clang_ignored_f_Group) ||
+        A->getOption().matches(options::OPT_clang_ignored_m_Group))
       A->claim();
   }
 }
