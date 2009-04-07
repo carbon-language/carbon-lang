@@ -1478,6 +1478,24 @@ Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
   }
 }
 
+/// \brief Diagnose function specifiers on a declaration of an identifier that
+/// does not identify a function.
+void Sema::DiagnoseFunctionSpecifiers(Declarator& D) {
+  // FIXME: We should probably indicate the identifier in question to avoid
+  // confusion for constructs like "inline int a(), b;"
+  if (D.getDeclSpec().isInlineSpecified())
+    Diag(D.getDeclSpec().getInlineSpecLoc(), 
+         diag::err_inline_non_function);
+
+  if (D.getDeclSpec().isVirtualSpecified())
+    Diag(D.getDeclSpec().getVirtualSpecLoc(), 
+         diag::err_virtual_non_function);
+
+  if (D.getDeclSpec().isExplicitSpecified())
+    Diag(D.getDeclSpec().getExplicitSpecLoc(), 
+         diag::err_explicit_non_function);
+}
+
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              QualType R, Decl* PrevDecl, bool& InvalidDecl, 
@@ -1494,11 +1512,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (getLangOptions().CPlusPlus) {
     // Check that there are no default arguments (C++ only).
     CheckExtraCXXDefaultArguments(D);
-
-    if (D.getDeclSpec().isVirtualSpecified())
-      Diag(D.getDeclSpec().getVirtualSpecLoc(), 
-           diag::err_virtual_non_function);
   }
+
+  DiagnoseFunctionSpecifiers(D);
 
   TypedefDecl *NewTD = ParseTypedefDecl(S, D, R);
   if (!NewTD) return 0;
@@ -1639,9 +1655,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     return 0;
   }
 
-  if (D.getDeclSpec().isVirtualSpecified())
-    Diag(D.getDeclSpec().getVirtualSpecLoc(), 
-         diag::err_virtual_non_function);
+  DiagnoseFunctionSpecifiers(D);
 
   bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
   if (!DC->isRecord() && S->getFnParent() == 0) {
@@ -2615,7 +2629,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
          diag::err_invalid_storage_class_in_func_decl);
     D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
-  
+  DiagnoseFunctionSpecifiers(D);
+
   // Check that there are no default arguments inside the type of this
   // parameter (C++ only).
   if (getLangOptions().CPlusPlus)
@@ -3566,11 +3581,9 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 
   if (getLangOptions().CPlusPlus) {
     CheckExtraCXXDefaultArguments(D);
-
-    if (D.getDeclSpec().isVirtualSpecified())
-      Diag(D.getDeclSpec().getVirtualSpecLoc(), 
-           diag::err_virtual_non_function);
   }
+
+  DiagnoseFunctionSpecifiers(D);
 
   NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
   if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))

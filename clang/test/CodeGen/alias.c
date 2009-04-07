@@ -20,7 +20,7 @@ int foo() __attribute__((alias("foo1")));
 
 
 // RUN: grep '@bar1 = internal global i32 42' %t
-static inline int bar1 = 42;
+static int bar1 = 42;
 int bar() __attribute__((alias("bar1")));
 
 

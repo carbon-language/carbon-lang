@@ -87,6 +87,8 @@ def err_declarator_need_ident : Error<"declarator requires an identifier">;
 def err_bad_language : Error<"unknown linkage language">;
 def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
+def err_inline_non_function : Error<
+  "'inline' can only appear on functions">;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<
@@ -253,6 +255,8 @@ def err_mutable_const : Error<"'mutable' and 'const' cannot be mixed">;
 def err_mutable_nonmember : Error<
   "'mutable' can only be applied to member variables">;
 def err_virtual_non_function : Error<
+  "'virtual' can only appear on non-static member functions">;
+def err_explicit_non_function : Error<
   "'virtual' can only appear on non-static member functions">;
 def err_virtual_out_of_class : Error<
   "'virtual' can only be specified inside the class definition">;

@@ -338,6 +338,7 @@ public:
   DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition);
   void RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
                                         Scope *S);
+  void DiagnoseFunctionSpecifiers(Declarator& D);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R,
                                     Decl* PrevDecl, bool& InvalidDecl,
