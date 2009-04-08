@@ -98,6 +98,37 @@ public:
     }
   }
 };
+
+class VISIBILITY_HIDDEN NilReceiverLargerThanVoidPtrRet : public BugType {
+  GRExprEngine &Eng;
+public:
+  NilReceiverLargerThanVoidPtrRet(GRExprEngine* eng) :
+  BugType("'nil' receiver with return type larger than sizeof(void *)", 
+          "Logic Errors"),  
+  Eng(*eng) {}
+  
+  void FlushReports(BugReporter& BR) {
+    for (GRExprEngine::nil_receiver_larger_than_voidptr_ret_iterator
+         I=Eng.nil_receiver_larger_than_voidptr_ret_begin(),
+         E=Eng.nil_receiver_larger_than_voidptr_ret_end(); I!=E; ++I) {
+      
+      std::string sbuf;
+      llvm::raw_string_ostream os(sbuf);
+      PostStmt P = cast<PostStmt>((*I)->getLocation());
+      ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
+      os << "The receiver in the message expression is 'nil' and results in the"
+      " returned value (of type '"
+      << ME->getType().getAsString()
+      << "' and of size "
+      << Eng.getContext().getTypeSize(ME->getType()) / 8
+      << " bytes) to be garbage or otherwise undefined.";
+      
+      RangedBugReport *R = new RangedBugReport(*this, os.str().c_str(), *I);
+      R->addRange(ME->getReceiver()->getSourceRange());
+      BR.EmitReport(R);
+    }
+  }
+};
   
 class VISIBILITY_HIDDEN UndefinedDeref : public BuiltinBug {
 public:
@@ -465,6 +496,7 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new OutOfBoundMemoryAccess(this));
   BR.Register(new BadSizeVLA(this));
   BR.Register(new NilReceiverStructRet(this));
+  BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
   
   // The following checks do not need to have their associated BugTypes
   // explicitly registered with the BugReporter.  If they issue any BugReports,

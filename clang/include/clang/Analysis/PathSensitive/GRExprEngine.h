@@ -113,6 +113,16 @@ public:
   //  (an undefined value).
   ErrorNodes NilReceiverStructRetImplicit;
   
+  /// NilReceiverLargerThanVoidPtrRetExplicit - Nodes in the ExplodedGraph that
+  /// resulted from [x ...] with 'x' definitely being nil and the result's size
+  // was larger than sizeof(void *) (an undefined value).
+  ErrorNodes NilReceiverLargerThanVoidPtrRetExplicit;
+
+  /// NilReceiverLargerThanVoidPtrRetImplicit - Nodes in the ExplodedGraph that
+  /// resulted from [x ...] with 'x' possibly being nil and the result's size
+  // was larger than sizeof(void *) (an undefined value).
+  ErrorNodes NilReceiverLargerThanVoidPtrRetImplicit;
+  
   /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
   ///  the address of a stack variable.
   ErrorNodes RetsStackAddr;
@@ -327,6 +337,18 @@ public:
 
   nil_receiver_struct_ret_iterator nil_receiver_struct_ret_end() {
     return NilReceiverStructRetExplicit.end();
+  }
+  
+  typedef ErrorNodes::iterator nil_receiver_larger_than_voidptr_ret_iterator;
+  
+  nil_receiver_larger_than_voidptr_ret_iterator
+  nil_receiver_larger_than_voidptr_ret_begin() {
+    return NilReceiverLargerThanVoidPtrRetExplicit.begin();
+  }
+
+  nil_receiver_larger_than_voidptr_ret_iterator
+  nil_receiver_larger_than_voidptr_ret_end() {
+    return NilReceiverLargerThanVoidPtrRetExplicit.end();
   }
   
   typedef ErrorNodes::iterator undef_deref_iterator;

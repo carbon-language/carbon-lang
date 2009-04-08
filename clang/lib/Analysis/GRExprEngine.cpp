@@ -1690,20 +1690,40 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     
     if (isFeasibleNull) {
       // Check if the receiver was nil and the return value a struct.
-      if (ME->getType()->isRecordType() &&
-          BR.getParentMap().isConsumedExpr(ME)) {
-        // The [0 ...] expressions will return garbage.  Flag either an
-        // explicit or implicit error.  Because of the structure of this
-        // function we currently do not bifurfacte the state graph at
-        // this point.
-        // FIXME: We should bifurcate and fill the returned struct with
-        //  garbage.                
-        if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
-          N->markAsSink();
-          if (isFeasibleNotNull)
-            NilReceiverStructRetImplicit.insert(N);
-          else
-            NilReceiverStructRetExplicit.insert(N);
+      if (BR.getParentMap().isConsumedExpr(ME)) {
+        if(ME->getType()->isRecordType()) {
+          // The [0 ...] expressions will return garbage.  Flag either an
+          // explicit or implicit error.  Because of the structure of this
+          // function we currently do not bifurfacte the state graph at
+          // this point.
+          // FIXME: We should bifurcate and fill the returned struct with
+          //  garbage.                
+          if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
+            N->markAsSink();
+            if (isFeasibleNotNull)
+              NilReceiverStructRetImplicit.insert(N);
+            else
+              NilReceiverStructRetExplicit.insert(N);
+          }
+        }
+        else {
+          ASTContext& Ctx = getContext();
+          
+          // sizeof(void *)
+          const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
+          
+          // sizeof(return type)
+          const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
+          
+          if(voidPtrSize < returnTypeSize) {
+            if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
+              N->markAsSink();
+              if(isFeasibleNotNull)
+                NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
+              else
+                NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
+            }
+          }
         }
       }
     }
