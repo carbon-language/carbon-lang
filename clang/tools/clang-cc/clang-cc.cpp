@@ -1029,6 +1029,9 @@ static void AddImplicitIncludeMacros(std::vector<char> &Buf,
   Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
   Buf.push_back('"');
   Buf.push_back('\n');
+  // Marker token to stop the __include_macros fetch loop.
+  const char *Marker = "##\n"; // ##?
+  Buf.insert(Buf.end(), Marker, Marker+strlen(Marker));
 }
 
 /// AddImplicitIncludePTH - Add an implicit #include using the original file

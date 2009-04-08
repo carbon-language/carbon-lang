@@ -1050,8 +1050,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return;
   }
   
-  // Verify that there is nothing after the filename, other than EOM.  Use the
-  // preprocessor to lex this in case lexing the filename entered a macro.
+  // Verify that there is nothing after the filename, other than EOM.
   CheckEndOfDirective("#include");
 
   // Check that we don't have infinite #include recursion.
@@ -1141,8 +1140,15 @@ void Preprocessor::HandleIncludeMacrosDirective(Token &IncludeMacrosTok) {
     return;
   }
   
-  // TODO: implement me :)
-  DiscardUntilEndOfDirective();
+  // Treat this as a normal #include for checking purposes.  If this is
+  // successful, it will push a new lexer onto the include stack.
+  HandleIncludeDirective(IncludeMacrosTok, 0, false);
+  
+  Token TmpTok;
+  do {
+    Lex(TmpTok);
+    assert(TmpTok.isNot(tok::eof) && "Didn't find end of -imacros!");
+  } while (TmpTok.isNot(tok::hashhash));
 }
 
 //===----------------------------------------------------------------------===//
