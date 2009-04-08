@@ -90,6 +90,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::SELECT_CC:   R = SoftenFloatRes_SELECT_CC(N); break;
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
+    case ISD::UNDEF:       R = SoftenFloatRes_UNDEF(N); break;
     case ISD::VAARG:       R = SoftenFloatRes_VAARG(N); break;
   }
 
@@ -462,6 +463,10 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
   return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(),
                      LHS.getValueType(), N->getOperand(0),
                      N->getOperand(1), LHS, RHS, N->getOperand(4));
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_UNDEF(SDNode *N) {
+  return DAG.getUNDEF(TLI.getTypeToTransformTo(N->getValueType(0)));
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_VAARG(SDNode *N) {

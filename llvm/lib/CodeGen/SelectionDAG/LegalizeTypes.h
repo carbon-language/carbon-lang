@@ -422,6 +422,7 @@ private:
   SDValue SoftenFloatRes_LOAD(SDNode *N);
   SDValue SoftenFloatRes_SELECT(SDNode *N);
   SDValue SoftenFloatRes_SELECT_CC(SDNode *N);
+  SDValue SoftenFloatRes_UNDEF(SDNode *N);
   SDValue SoftenFloatRes_VAARG(SDNode *N);
   SDValue SoftenFloatRes_XINT_TO_FP(SDNode *N);
 
