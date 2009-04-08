@@ -166,9 +166,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   Args.push_back(std::make_pair(RValue::get(BaseValue), 
                                 MD->getThisType(getContext())));
   
-  for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end(); 
-       I != E; ++I)
-    Args.push_back(std::make_pair(EmitAnyExprToTemp(*I), I->getType()));
+  EmitCallArgs(Args, FPT, CE->arg_begin(), CE->arg_end());
   
   QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), 

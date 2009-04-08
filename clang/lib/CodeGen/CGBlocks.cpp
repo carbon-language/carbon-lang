@@ -435,16 +435,15 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   CallArgList Args;
   Args.push_back(std::make_pair(RValue::get(BlockLiteral), VoidPtrTy));
 
+  QualType FnType = BPT->getPointeeType();
+
   // And the rest of the arguments.
-  for (CallExpr::const_arg_iterator i = E->arg_begin(), e = E->arg_end();
-       i != e; ++i)
-    Args.push_back(std::make_pair(EmitAnyExprToTemp(*i),
-                                  i->getType()));
+  EmitCallArgs(Args, FnType->getAsFunctionProtoType(),
+               E->arg_begin(), E->arg_end());
 
   // Load the function.
   llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
 
-  QualType FnType = BPT->getPointeeType();
   QualType ResultType = FnType->getAsFunctionType()->getResultType();
 
   const CGFunctionInfo &FnInfo = 

@@ -1214,9 +1214,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType,
   QualType ResultType = FnType->getAsFunctionType()->getResultType();
 
   CallArgList Args;
-  for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I)
-    Args.push_back(std::make_pair(EmitAnyExprToTemp(*I), 
-                                  I->getType()));
+  EmitCallArgs(Args, FnType->getAsFunctionProtoType(), ArgBeg, ArgEnd);
 
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), 
                   Callee, Args, TargetDecl);
