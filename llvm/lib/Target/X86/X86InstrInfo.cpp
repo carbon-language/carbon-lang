@@ -1138,9 +1138,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
       unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                           .addReg(Dest, true, false, false, isDead),
-                           Src, isKill, 1);
+      NewMI = addLeaRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
+                              .addReg(Dest, true, false, false, isDead),
+                              Src, isKill, 1);
       break;
     }
     case X86::INC16r:
@@ -1157,9 +1157,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
       unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
-      NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                           .addReg(Dest, true, false, false, isDead),
-                           Src, isKill, -1);
+      NewMI = addLeaRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
+                              .addReg(Dest, true, false, false, isDead),
+                              Src, isKill, -1);
       break;
     }
     case X86::DEC16r:
@@ -1200,18 +1200,18 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD64ri8:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       if (MI->getOperand(2).isImm())
-        NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
-                             .addReg(Dest, true, false, false, isDead),
-                             Src, isKill, MI->getOperand(2).getImm());
+        NewMI = addLeaRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
+                                .addReg(Dest, true, false, false, isDead),
+                                Src, isKill, MI->getOperand(2).getImm());
       break;
     case X86::ADD32ri:
     case X86::ADD32ri8:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       if (MI->getOperand(2).isImm()) {
         unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
-        NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
-                             .addReg(Dest, true, false, false, isDead),
-                             Src, isKill, MI->getOperand(2).getImm());
+        NewMI = addLeaRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
+                                .addReg(Dest, true, false, false, isDead),
+                                Src, isKill, MI->getOperand(2).getImm());
       }
       break;
     case X86::ADD16ri:
@@ -1959,7 +1959,7 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
   for (unsigned i = 0; i != NumAddrOps; ++i)
     MIB.addOperand(MOs[i]);
   if (NumAddrOps < 4)  // FrameIndex only
-    MIB.addImm(1).addReg(0).addImm(0);
+    addOffset(MIB, 0);
   
   // Loop over the rest of the ri operands, converting them over.
   unsigned NumOps = MI->getDesc().getNumOperands()-2;
@@ -1990,7 +1990,7 @@ static MachineInstr *FuseInst(MachineFunction &MF,
       for (unsigned i = 0; i != NumAddrOps; ++i)
         MIB.addOperand(MOs[i]);
       if (NumAddrOps < 4)  // FrameIndex only
-        MIB.addImm(1).addReg(0).addImm(0);
+        addOffset(MIB, 0);
     } else {
       MIB.addOperand(MO);
     }
@@ -2008,7 +2008,7 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
   for (unsigned i = 0; i != NumAddrOps; ++i)
     MIB.addOperand(MOs[i]);
   if (NumAddrOps < 4)  // FrameIndex only
-    MIB.addImm(1).addReg(0).addImm(0);
+    addOffset(MIB, 0);
   return MIB.addImm(0);
 }
 
@@ -2164,7 +2164,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   } else if (Ops.size() != 1)
     return NULL;
 
-  SmallVector<MachineOperand,4> MOs;
+  SmallVector<MachineOperand,X86AddrNumOperands> MOs;
   if (LoadMI->getOpcode() == X86::V_SET0 ||
       LoadMI->getOpcode() == X86::V_SETALLONES) {
     // Folding a V_SET0 or V_SETALLONES as a load, to ease register pressure.
@@ -2193,6 +2193,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     MOs.push_back(MachineOperand::CreateImm(1));
     MOs.push_back(MachineOperand::CreateReg(0, false));
     MOs.push_back(MachineOperand::CreateCPI(CPI, 0));
+    MOs.push_back(MachineOperand::CreateReg(0, false));
   } else {
     // Folding a normal load. Just copy the load's address operands.
     unsigned NumOps = LoadMI->getDesc().getNumOperands();
@@ -2882,11 +2883,6 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
       break;
     }
-    case X86::TLS_tp:
-    case X86::TLS_gs_ri:
-      FinalSize += 2;
-      FinalSize += sizeGlobalAddress(false);
-      break;
     }
     CurOp = NumOps;
     break;

@@ -4834,8 +4834,13 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                    const MVT PtrVT, TLSModel::Model model) {
   DebugLoc dl = GA->getDebugLoc();
   // Get the Thread Pointer
-  SDValue ThreadPointer = DAG.getNode(X86ISD::THREAD_POINTER,
-                                      DebugLoc::getUnknownLoc(), PtrVT);
+  SDValue Base = DAG.getNode(X86ISD::SegmentBaseAddress,
+                             DebugLoc::getUnknownLoc(), PtrVT,
+                             DAG.getRegister(X86::GS, MVT::i32));
+
+  SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Base,
+                                      NULL, 0);
+
   // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
   // exec)
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
@@ -7149,7 +7154,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
   case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
-  case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
+  case X86ISD::SegmentBaseAddress: return "X86ISD::SegmentBaseAddress";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
@@ -7483,7 +7488,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   unsigned t2 = F->getRegInfo().createVirtualRegister(RC);
   MIB = BuildMI(thisMBB, dl, TII->get(LoadOpc), t2);
   // add 4 to displacement.
-  for (int i=0; i <= lastAddrIndx-1; ++i)
+  for (int i=0; i <= lastAddrIndx-2; ++i)
     (*MIB).addOperand(*argOpers[i]);
   MachineOperand newOp3 = *(argOpers[3]);
   if (newOp3.isImm())
@@ -7491,6 +7496,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   else
     newOp3.setOffset(newOp3.getOffset()+4);
   (*MIB).addOperand(newOp3);
+  (*MIB).addOperand(*argOpers[lastAddrIndx]);
 
   // t3/4 are defined later, at the bottom of the loop
   unsigned t3 = F->getRegInfo().createVirtualRegister(RC);

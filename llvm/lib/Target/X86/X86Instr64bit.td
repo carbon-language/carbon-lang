@@ -23,7 +23,7 @@ def i64i32imm  : Operand<i64>;
 def i64i8imm   : Operand<i64>;
 
 def lea64mem : Operand<i64> {
-  let PrintMethod = "printi64mem";
+  let PrintMethod = "printlea64mem";
   let MIOperandInfo = (ops GR64, i8imm, GR64, i32imm);
 }
 

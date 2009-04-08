@@ -66,6 +66,15 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
   return MIB.addReg(Reg).addImm(1).addReg(0).addImm(0);
 }
 
+inline const MachineInstrBuilder &addLeaOffset(const MachineInstrBuilder &MIB,
+                                            int Offset) {
+  return MIB.addImm(1).addReg(0).addImm(Offset);
+}
+
+inline const MachineInstrBuilder &addOffset(const MachineInstrBuilder &MIB,
+                                            int Offset) {
+  return addLeaOffset(MIB, Offset).addReg(0);
+}
 
 /// addRegOffset - This function is used to add a memory reference of the form
 /// [Reg + Offset], i.e., one with no scale or index, but with a
@@ -74,8 +83,13 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
                                                unsigned Reg, bool isKill,
                                                int Offset) {
-  return MIB.addReg(Reg, false, false, isKill)
-    .addImm(1).addReg(0).addImm(Offset);
+  return addOffset(MIB.addReg(Reg, false, false, isKill), Offset);
+}
+
+inline const MachineInstrBuilder &addLeaRegOffset(const MachineInstrBuilder &MIB,
+                                                  unsigned Reg, bool isKill,
+                                                  int Offset) {
+  return addLeaOffset(MIB.addReg(Reg, false, false, isKill), Offset);
 }
 
 /// addRegReg - This function is used to add a memory reference of the form:
@@ -87,8 +101,8 @@ inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
     .addReg(Reg2, false, false, isKill2).addImm(0);
 }
 
-inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
-                                                 const X86AddressMode &AM) {
+inline const MachineInstrBuilder &addLeaAddress(const MachineInstrBuilder &MIB,
+                                                const X86AddressMode &AM) {
   assert (AM.Scale == 1 || AM.Scale == 2 || AM.Scale == 4 || AM.Scale == 8);
 
   if (AM.BaseType == X86AddressMode::RegBase)
@@ -102,6 +116,11 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
     return MIB.addGlobalAddress(AM.GV, AM.Disp);
   else
     return MIB.addImm(AM.Disp);
+}
+
+inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
+                                                 const X86AddressMode &AM) {
+  return addLeaAddress(MIB, AM).addReg(0);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of
@@ -125,7 +144,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
                         MFI.getObjectOffset(FI) + Offset,
                         MFI.getObjectSize(FI),
                         MFI.getObjectAlignment(FI));
-  return MIB.addFrameIndex(FI).addImm(1).addReg(0).addImm(Offset)
+  return addOffset(MIB.addFrameIndex(FI), Offset)
             .addMemOperand(MMO);
 }
 
@@ -139,7 +158,9 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
                          unsigned GlobalBaseReg = 0) {
-  return MIB.addReg(GlobalBaseReg).addImm(1).addReg(0).addConstantPoolIndex(CPI);
+  //FIXME: factor this
+  return MIB.addReg(GlobalBaseReg).addImm(1).addReg(0)
+    .addConstantPoolIndex(CPI).addReg(0);
 }
 
 } // End llvm namespace

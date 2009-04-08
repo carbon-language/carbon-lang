@@ -168,6 +168,14 @@ let Namespace = "X86" in {
 
   // Status flags register
   def EFLAGS : Register<"flags">;
+
+  // Segment registers
+  def CS : Register<"cs">;
+  def DS : Register<"ds">;
+  def SS : Register<"ss">;
+  def ES : Register<"es">;
+  def FS : Register<"fs">;
+  def GS : Register<"gs">;
 }
 
 
