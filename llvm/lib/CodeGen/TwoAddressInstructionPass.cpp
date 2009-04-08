@@ -177,7 +177,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
     break;
   }
 
-  if (!KillMI || KillMI->getParent() != MBB)
+  if (!KillMI || KillMI->getParent() != MBB || KillMI == MI)
     return false;
 
   // If any of the definitions are used by another instruction between the
@@ -326,6 +326,9 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
     } else if (MI.getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(2).getReg();
+    } else if (MI.getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+      DstReg = MI.getOperand(0).getReg();
+      SrcReg = MI.getOperand(2).getReg();
     }
   }
 
@@ -335,6 +338,46 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
     return true;
   }
   return false;
+}
+
+/// isKilled - Test if the given register value, which is used by the given
+/// instruction, is killed by the given instruction. This looks through
+/// coalescable copies to see if the original value is potentially not killed.
+///
+/// For example, in this code:
+///
+///   %reg1034 = copy %reg1024
+///   %reg1035 = copy %reg1025<kill>
+///   %reg1036 = add %reg1034<kill>, %reg1035<kill>
+///
+/// %reg1034 is not considered to be killed, since it is copied from a
+/// register which is not killed. Treating it as not killed lets the
+/// normal heuristics commute the (two-address) add, which lets
+/// coalescing eliminate the extra copy.
+///
+static bool isKilled(MachineInstr &MI, unsigned Reg,
+                     const MachineRegisterInfo *MRI,
+                     const TargetInstrInfo *TII) {
+  MachineInstr *DefMI = &MI;
+  for (;;) {
+    if (!DefMI->killsRegister(Reg))
+      return false;
+    if (TargetRegisterInfo::isPhysicalRegister(Reg))
+      return true;
+    MachineRegisterInfo::def_iterator Begin = MRI->def_begin(Reg);
+    // If there are multiple defs, we can't do a simple analysis, so just
+    // go with what the kill flag says.
+    if (next(Begin) != MRI->def_end())
+      return true;
+    DefMI = &*Begin;
+    bool IsSrcPhys, IsDstPhys;
+    unsigned SrcReg,  DstReg;
+    // If the def is something other than a copy, then it isn't going to
+    // be coalesced, so follow the kill flag.
+    if (!isCopyToReg(*DefMI, TII, SrcReg, DstReg, IsSrcPhys, IsDstPhys))
+      return true;
+    Reg = SrcReg;
+  }
 }
 
 /// isTwoAddrUse - Return true if the specified MI uses the specified register
@@ -735,7 +778,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // rearrange the code to make it so.  Making it the killing user will
           // allow us to coalesce A and B together, eliminating the copy we are
           // about to insert.
-          if (!mi->killsRegister(regB)) {
+          if (!isKilled(*mi, regB, MRI, TII)) {
             // If regA is dead and the instruction can be deleted, just delete
             // it so it doesn't clobber regB.
             if (mi->getOperand(ti).isDead() && isSafeToDelete(mi, TII)) {
@@ -753,7 +796,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               assert(mi->getOperand(3-si).isReg() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
-              if (mi->killsRegister(regC)) {
+              if (isKilled(*mi, regC, MRI, TII)) {
                 if (CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
                   ++NumCommuted;
                   regB = regC;

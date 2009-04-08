@@ -1666,9 +1666,11 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // fold (OP (zext x), (zext y)) -> (zext (OP x, y))
   // fold (OP (sext x), (sext y)) -> (sext (OP x, y))
   // fold (OP (aext x), (aext y)) -> (aext (OP x, y))
-  // fold (OP (trunc x), (trunc y)) -> (trunc (OP x, y))
+  // fold (OP (trunc x), (trunc y)) -> (trunc (OP x, y)) (if trunc isn't free)
   if ((N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND||
-       N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::TRUNCATE) &&
+       N0.getOpcode() == ISD::SIGN_EXTEND ||
+       (N0.getOpcode() == ISD::TRUNCATE &&
+        !TLI.isTruncateFree(N0.getOperand(0).getValueType(), VT))) &&
       N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
     SDValue ORNode = DAG.getNode(N->getOpcode(), N0.getDebugLoc(),
                                  N0.getOperand(0).getValueType(),
@@ -3121,10 +3123,14 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     return DAG.getZeroExtendInReg(Op, N->getDebugLoc(), N0.getValueType());
   }
 
-  // fold (zext (and (trunc x), cst)) -> (and x, cst).
+  // Fold (zext (and (trunc x), cst)) -> (and x, cst),
+  // if either of the casts is not free.
   if (N0.getOpcode() == ISD::AND &&
       N0.getOperand(0).getOpcode() == ISD::TRUNCATE &&
-      N0.getOperand(1).getOpcode() == ISD::Constant) {
+      N0.getOperand(1).getOpcode() == ISD::Constant &&
+      (!TLI.isTruncateFree(N0.getOperand(0).getOperand(0).getValueType(),
+                           N0.getValueType()) ||
+       !TLI.isZExtFree(N0.getValueType(), VT))) {
     SDValue X = N0.getOperand(0).getOperand(0);
     if (X.getValueType().bitsLT(VT)) {
       X = DAG.getNode(ISD::ANY_EXTEND, X.getDebugLoc(), VT, X);
@@ -3252,10 +3258,13 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
     return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, TruncOp);
   }
 
-  // fold (aext (and (trunc x), cst)) -> (and x, cst).
+  // Fold (aext (and (trunc x), cst)) -> (and x, cst)
+  // if the trunc is not free.
   if (N0.getOpcode() == ISD::AND &&
       N0.getOperand(0).getOpcode() == ISD::TRUNCATE &&
-      N0.getOperand(1).getOpcode() == ISD::Constant) {
+      N0.getOperand(1).getOpcode() == ISD::Constant &&
+      !TLI.isTruncateFree(N0.getOperand(0).getOperand(0).getValueType(),
+                          N0.getValueType())) {
     SDValue X = N0.getOperand(0).getOperand(0);
     if (X.getValueType().bitsLT(VT)) {
       X = DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, X);

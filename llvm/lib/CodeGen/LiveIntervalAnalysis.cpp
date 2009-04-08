@@ -399,6 +399,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
         mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+        mi->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
         tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
       CopyMI = mi;
     // Earlyclobbers move back one.
@@ -556,6 +557,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
       if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
           mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+          mi->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
           tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
@@ -658,6 +660,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
         MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+        MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
         tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
       CopyMI = MI;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, MO, 
@@ -855,7 +858,8 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       Reg = tri_->getSubReg(Reg, VNI->copy->getOperand(2).getImm());
     return Reg;
-  } else if (VNI->copy->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
+  } else if (VNI->copy->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+             VNI->copy->getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
     return VNI->copy->getOperand(2).getReg();
 
   unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;

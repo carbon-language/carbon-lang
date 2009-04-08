@@ -292,16 +292,33 @@ def MOVZX64rm16: I<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                    [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
 
 // There's no movzlq instruction, but movl can be used for this purpose, using
-// implicit zero-extension. We need this because the seeming alternative for
-// implementing zext from 32 to 64, an EXTRACT_SUBREG/SUBREG_TO_REG pair, isn't
-// safe because both instructions could be optimized away in the
-// register-to-register case, leaving nothing behind to do the zero extension.
+// implicit zero-extension. The preferred way to do 32-bit-to-64-bit zero
+// extension on x86-64 is to use a SUBREG_TO_REG to utilize implicit
+// zero-extension, however this isn't possible when the 32-bit value is
+// defined by a truncate or is copied from something where the high bits aren't
+// necessarily all zero. In such cases, we fall back to these explicit zext
+// instructions.
 def MOVZX64rr32 : I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR32:$src),
                     "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                     [(set GR64:$dst, (zext GR32:$src))]>;
 def MOVZX64rm32 : I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                     "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                     [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
+
+// Any instruction that defines a 32-bit result leaves the high half of the
+// register. Truncate can be lowered to EXTRACT_SUBREG, and CopyFromReg may
+// be copying from a truncate, but any other 32-bit operation will zero-extend
+// up to 64 bits.
+def def32 : PatLeaf<(i32 GR32:$src), [{
+  return N->getOpcode() != ISD::TRUNCATE &&
+         N->getOpcode() != TargetInstrInfo::EXTRACT_SUBREG &&
+         N->getOpcode() != ISD::CopyFromReg;
+}]>;
+
+// In the case of a 32-bit def that is known to implicitly zero-extend,
+// we can use a SUBREG_TO_REG.
+def : Pat<(i64 (zext def32:$src)),
+          (SUBREG_TO_REG (i64 0), GR32:$src, x86_subreg_32bit)>;
 
 let neverHasSideEffects = 1 in {
   let Defs = [RAX], Uses = [EAX] in
@@ -1442,10 +1459,6 @@ def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_O, EFLAGS),
           (CMOVNO64rm GR64:$src2, addr:$src1)>;
 def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, X86_COND_NO, EFLAGS),
           (CMOVO64rm GR64:$src2, addr:$src1)>;
-
-// Zero-extension
-def : Pat<(i64 (zext GR32:$src)), 
-          (SUBREG_TO_REG (i64 0), GR32:$src, x86_subreg_32bit)>;
 
 // zextload bool -> zextload byte
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;

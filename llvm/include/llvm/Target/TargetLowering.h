@@ -747,6 +747,13 @@ public:
     /// there are any bits set in the constant that are not demanded.  If so,
     /// shrink the constant and return true.
     bool ShrinkDemandedConstant(SDValue Op, const APInt &Demanded);
+
+    /// ShrinkDemandedOp - Convert x+y to (VT)((SmallVT)x+(SmallVT)y) if the
+    /// casts are free.  This uses isZExtFree and ZERO_EXTEND for the widening
+    /// cast, but it could be generalized for targets with other types of
+    /// implicit widening casts.
+    bool ShrinkDemandedOp(SDValue Op, unsigned BitWidth, const APInt &Demanded,
+                          DebugLoc dl);
   };
                                                 
   /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
@@ -1386,7 +1393,23 @@ public:
   virtual bool isTruncateFree(MVT VT1, MVT VT2) const {
     return false;
   }
-  
+
+  /// isZExtFree - Return true if any actual instruction that defines a
+  /// value of type Ty1 implicit zero-extends the value to Ty2 in the result
+  /// register. This does not necessarily include registers defined in
+  /// unknown ways, such as incoming arguments, or copies from unknown
+  /// virtual registers. Also, if isTruncateFree(Ty2, Ty1) is true, this
+  /// does not necessarily apply to truncate instructions. e.g. on x86-64,
+  /// all instructions that define 32-bit values implicit zero-extend the
+  /// result out to 64 bits.
+  virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const {
+    return false;
+  }
+
+  virtual bool isZExtFree(MVT VT1, MVT VT2) const {
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //

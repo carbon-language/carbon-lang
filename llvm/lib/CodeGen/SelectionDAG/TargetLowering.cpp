@@ -777,6 +777,48 @@ bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDValue Op,
   return false;
 }
 
+/// ShrinkDemandedOp - Convert x+y to (VT)((SmallVT)x+(SmallVT)y) if the
+/// casts are free.  This uses isZExtFree and ZERO_EXTEND for the widening
+/// cast, but it could be generalized for targets with other types of
+/// implicit widening casts.
+bool
+TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
+                                                    unsigned BitWidth,
+                                                    const APInt &Demanded,
+                                                    DebugLoc dl) {
+  assert(Op.getNumOperands() == 2 &&
+         "ShrinkDemandedOp only supports binary operators!");
+  assert(Op.getNode()->getNumValues() == 1 &&
+         "ShrinkDemandedOp only supports nodes with one result!");
+
+  // Don't do this if the node has another user, which may require the
+  // full value.
+  if (!Op.getNode()->hasOneUse())
+    return false;
+
+  // Search for the smallest integer type with free casts to and from
+  // Op's type. For expedience, just check power-of-2 integer types.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  unsigned SmallVTBits = BitWidth - Demanded.countLeadingZeros();
+  if (!isPowerOf2_32(SmallVTBits))
+    SmallVTBits = NextPowerOf2(SmallVTBits);
+  for (; SmallVTBits < BitWidth; SmallVTBits = NextPowerOf2(SmallVTBits)) {
+    MVT SmallVT = MVT::getIntegerVT(SmallVTBits);
+    if (TLI.isTruncateFree(Op.getValueType(), SmallVT) &&
+        TLI.isZExtFree(SmallVT, Op.getValueType())) {
+      // We found a type with free casts.
+      SDValue X = DAG.getNode(Op.getOpcode(), dl, SmallVT,
+                              DAG.getNode(ISD::TRUNCATE, dl, SmallVT,
+                                          Op.getNode()->getOperand(0)),
+                              DAG.getNode(ISD::TRUNCATE, dl, SmallVT,
+                                          Op.getNode()->getOperand(1)));
+      SDValue Z = DAG.getNode(ISD::ZERO_EXTEND, dl, Op.getValueType(), X);
+      return CombineTo(Op, Z);
+    }
+  }
+  return false;
+}
+
 /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
 /// DemandedMask bits of the result of Op are ever used downstream.  If we can
 /// use this information to simplify Op, create a new simplified DAG node and
@@ -865,7 +907,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If the RHS is a constant, see if we can simplify it.
     if (TLO.ShrinkDemandedConstant(Op, ~KnownZero2 & NewMask))
       return true;
-      
+    // If the operation can be done in a smaller type, do so.
+    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+      return true;
+
     // Output known-1 bits are only known if set in both the LHS & RHS.
     KnownOne &= KnownOne2;
     // Output known-0 are known to be clear if zero in either the LHS | RHS.
@@ -896,7 +941,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If the RHS is a constant, see if we can simplify it.
     if (TLO.ShrinkDemandedConstant(Op, NewMask))
       return true;
-          
+    // If the operation can be done in a smaller type, do so.
+    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+      return true;
+
     // Output known-0 bits are only known if clear in both the LHS & RHS.
     KnownZero &= KnownZero2;
     // Output known-1 are known to be set if set in either the LHS | RHS.
@@ -918,7 +966,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       return TLO.CombineTo(Op, Op.getOperand(0));
     if ((KnownZero2 & NewMask) == NewMask)
       return TLO.CombineTo(Op, Op.getOperand(1));
-      
+    // If the operation can be done in a smaller type, do so.
+    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+      return true;
+
     // If all of the unknown bits are known to be zero on one side or the other
     // (but not both) turn this into an *inclusive* or.
     //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
@@ -1333,6 +1384,24 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     }
 #endif
     break;
+  case ISD::ADD:
+  case ISD::MUL:
+  case ISD::SUB: {
+    // Add, Sub, and Mul don't demand any bits in positions beyond that
+    // of the highest bit demanded of them.
+    APInt LoMask = APInt::getLowBitsSet(BitWidth,
+                                        BitWidth - NewMask.countLeadingZeros());
+    if (SimplifyDemandedBits(Op.getOperand(0), LoMask, KnownZero2,
+                             KnownOne2, TLO, Depth+1))
+      return true;
+    if (SimplifyDemandedBits(Op.getOperand(1), LoMask, KnownZero2,
+                             KnownOne2, TLO, Depth+1))
+      return true;
+    // See if the operation should be performed at a smaller bit width.
+    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+      return true;
+  }
+  // FALL THROUGH
   default:
     // Just use ComputeMaskedBits to compute output bits.
     TLO.DAG.ComputeMaskedBits(Op, NewMask, KnownZero, KnownOne, Depth);

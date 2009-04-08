@@ -7258,6 +7258,16 @@ bool X86TargetLowering::isTruncateFree(MVT VT1, MVT VT2) const {
   return Subtarget->is64Bit() || NumBits1 < 64;
 }
 
+bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
+  // x86-64 has implicitly zero-extends 32-bit results in 64-bit registers.
+  return Ty1 == Type::Int32Ty && Ty2 == Type::Int64Ty && Subtarget->is64Bit();
+}
+
+bool X86TargetLowering::isZExtFree(MVT VT1, MVT VT2) const {
+  // x86-64 has implicitly zero-extends 32-bit results in 64-bit registers.
+  return VT1 == MVT::i32 && VT2 == MVT::i64 && Subtarget->is64Bit();
+}
+
 /// isShuffleMaskLegal - Targets can use this to indicate that they only
 /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values

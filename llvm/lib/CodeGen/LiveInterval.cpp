@@ -579,24 +579,41 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
   
   iterator IP = begin();
   for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
+    bool Done = false;
     unsigned Start = I->start, End = I->end;
-    IP = std::upper_bound(IP, end(), Start);
-    
-    // If the start of this range overlaps with an existing liverange, trim it.
-    if (IP != begin() && IP[-1].end > Start) {
-      Start = IP[-1].end;
-      // Trimmed away the whole range?
-      if (Start >= End) continue;
+    // If a clobber range starts before an existing range and ends after
+    // it, the clobber range will need to be split into multiple ranges.
+    // Loop until the entire clobber range is handled.
+    while (!Done) {
+      Done = true;
+      IP = std::upper_bound(IP, end(), Start);
+      unsigned SubRangeStart = Start;
+      unsigned SubRangeEnd = End;
+
+      // If the start of this range overlaps with an existing liverange, trim it.
+      if (IP != begin() && IP[-1].end > SubRangeStart) {
+        SubRangeStart = IP[-1].end;
+        // Trimmed away the whole range?
+        if (SubRangeStart >= SubRangeEnd) continue;
+      }
+      // If the end of this range overlaps with an existing liverange, trim it.
+      if (IP != end() && SubRangeEnd > IP->start) {
+        // If the clobber live range extends beyond the existing live range,
+        // it'll need at least another live range, so set the flag to keep
+        // iterating.
+        if (SubRangeEnd > IP->end) {
+          Start = IP->end;
+          Done = false;
+        }
+        SubRangeEnd = IP->start;
+        // If this trimmed away the whole range, ignore it.
+        if (SubRangeStart == SubRangeEnd) continue;
+      }
+
+      // Insert the clobber interval.
+      IP = addRangeFrom(LiveRange(SubRangeStart, SubRangeEnd, ClobberValNo),
+                        IP);
     }
-    // If the end of this range overlaps with an existing liverange, trim it.
-    if (IP != end() && End > IP->start) {
-      End = IP->start;
-      // If this trimmed away the whole range, ignore it.
-      if (Start == End) continue;
-    }
-    
-    // Insert the clobber interval.
-    IP = addRangeFrom(LiveRange(Start, End, ClobberValNo), IP);
   }
 }
 

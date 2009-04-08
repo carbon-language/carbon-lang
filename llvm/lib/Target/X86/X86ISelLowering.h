@@ -458,7 +458,18 @@ namespace llvm {
     /// register EAX to i16 by referencing its sub-register AX.
     virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
     virtual bool isTruncateFree(MVT VT1, MVT VT2) const;
-  
+
+    /// isZExtFree - Return true if any actual instruction that defines a
+    /// value of type Ty1 implicit zero-extends the value to Ty2 in the result
+    /// register. This does not necessarily include registers defined in
+    /// unknown ways, such as incoming arguments, or copies from unknown
+    /// virtual registers. Also, if isTruncateFree(Ty2, Ty1) is true, this
+    /// does not necessarily apply to truncate instructions. e.g. on x86-64,
+    /// all instructions that define 32-bit values implicit zero-extend the
+    /// result out to 64 bits.
+    virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const;
+    virtual bool isZExtFree(MVT VT1, MVT VT2) const;
+
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
