@@ -1900,8 +1900,9 @@ private:
     DIArray Args = SPTy.getTypeArray();
     
     // Add Return Type.
+    unsigned SPTag = SPTy.getTag();
     if (!IsConstructor) {
-      if (Args.isNull()) 
+      if (Args.isNull() || SPTag != DW_TAG_subroutine_type)
         AddType(DW_Unit, SPDie, SPTy);
       else
         AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getGV()));
@@ -1912,7 +1913,7 @@ private:
       // Add arguments.
       // Do not add arguments for subprogram definition. They will be
       // handled through RecordVariable.
-      if (!Args.isNull())
+      if (SPTag == DW_TAG_subroutine_type)
         for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
           AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
