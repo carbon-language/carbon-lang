@@ -971,7 +971,7 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
     // Per GCC -D semantics, the macro ends at \n if it exists.
     const char *End = strpbrk(Equal, "\n\r");
     if (End) {
-      fprintf(stderr, "warning: macro '%s' contains embeded newline, text "
+      fprintf(stderr, "warning: macro '%s' contains embedded newline, text "
               "after the newline is ignored.\n",
               std::string(Macro, Equal).c_str());
     } else {
