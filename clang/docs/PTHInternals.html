@@ -17,23 +17,23 @@
 <h1>Pretokenized Headers</h1>
 
 <p> <a href="http://en.wikipedia.org/wiki/Precompiled_header">Precompiled
-headers</a> is a general approach employed by many compilers to reduce
-compilation time. The underlying motivation of the approach is that within a
-codebase frequently the same (and often large) header files are included by
+headers</a> are a general approach employed by many compilers to reduce
+compilation time. The underlying motivation of the approach is that it is
+common for the same (and often large) header files to be included by
 multiple source files. Consequently, compile times can often be greatly improved
 by caching some of the (redundant) work done by a compiler to process headers.
-Precompiled header files, which represent one of possibly many ways to implement
+Precompiled header files, which represent one of many ways to implement
 this optimization, are literally files that represent an on-disk cache that
 contains the vital information necessary to reduce some (or all) of the work
 needed to process a corresponding header file. While details of precompiled
 headers vary between compilers, precompiled headers have been shown to be a
 highly effective at speeding up program compilation on systems with very large
-system headers (e.g., Mac OS X).</p>
+system headers (e.g., Mac OS/X).</p>
 
 <p>Clang supports an implementation of precompiled headers known as
 <em>pre-tokenized headers</em> (PTH). Clang's pre-tokenized headers support most
 of same interfaces as GCC's pre-compiled headers (as well as others) but are
-completely different in their implementation. This pages first describes the
+completely different in their implementation. This first describes the
 interface for using PTH and then briefly elaborates on their design and
 implementation.</p>
 
@@ -76,8 +76,8 @@ and not specified on the command line using <tt>-include</tt>.</p>
 
 <h2>Using Pretokenized Headers (Low-level Interface)</h2>
 
-<p>The low-level Clang driver, <tt>clang-cc</tt>, supports three command line
-options for generating and using PTH files.<p>
+<p>The low-level Clang compiler tool, <tt>clang-cc</tt>, supports three command
+line options for generating and using PTH files.<p>
 
 <p>To generate PTH files using <tt>clang-cc</tt>, use the option <tt>-emit-pth</tt>:
   
