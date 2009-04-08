@@ -7927,6 +7927,22 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
+/// isSafeIntegerType - Return true if this is a basic integer type, not a crazy
+/// type like i42.  We don't want to introduce operations on random non-legal
+/// integer types where they don't already exist in the code.  In the future,
+/// we should consider making this based off target-data, so that 32-bit targets
+/// won't get i64 operations etc.
+static bool isSafeIntegerType(const Type *Ty) {
+  switch (Ty->getPrimitiveSizeInBits()) {
+  case 8:
+  case 16:
+  case 32:
+  case 64:
+    return true;
+  default: 
+    return false;
+  }
+}
 
 /// Only the TRUNC, ZEXT, SEXT, and BITCAST can both operand and result as
 /// integer types. This function implements the common transforms for all those
@@ -7956,6 +7972,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // Attempt to propagate the cast into the instruction for int->int casts.
   int NumCastsRemoved = 0;
   if (!isa<BitCastInst>(CI) &&
+      // Only do this if the dest type is a simple type, don't convert the
+      // expression tree to something weird like i93 unless the source is also
+      // strange.
+      (isSafeIntegerType(DestTy) || !isSafeIntegerType(SrcI->getType())) &&
       CanEvaluateInDifferentType(SrcI, cast<IntegerType>(DestTy),
                                  CI.getOpcode(), NumCastsRemoved)) {
     // If this cast is a truncate, evaluting in a different type always
