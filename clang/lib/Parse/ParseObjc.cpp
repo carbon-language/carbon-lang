@@ -1449,9 +1449,11 @@ Parser::OwningExprResult Parser::ParseObjCMessageExpression() {
   // Parse receiver
   if (isTokObjCMessageIdentifierReceiver()) {
     IdentifierInfo *ReceiverName = Tok.getIdentifierInfo();
-    SourceLocation NameLoc = ConsumeToken();
-    return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName,
-                                          ExprArg(Actions));
+    if (ReceiverName != Ident_super || GetLookAheadToken(1).isNot(tok::period)) {
+      SourceLocation NameLoc = ConsumeToken();
+      return ParseObjCMessageExpressionBody(LBracLoc, NameLoc, ReceiverName,
+                                            ExprArg(Actions));
+    }
   }
 
   OwningExprResult Res(ParseExpression());
