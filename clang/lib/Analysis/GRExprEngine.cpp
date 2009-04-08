@@ -1682,7 +1682,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     
     // "Assume" that the receiver is not NULL.    
     bool isFeasibleNotNull = false;
-    Assume(state, L, true, isFeasibleNotNull);
+    const GRState *StNotNull = Assume(state, L, true, isFeasibleNotNull);
     
     // "Assume" that the receiver is NULL.    
     bool isFeasibleNull = false;
@@ -1724,8 +1724,21 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
                 NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
             }
           }
+          else {
+            // Handle the safe cases where the return value is 0 if the receiver
+            // is nil.
+            SVal V = SVal::MakeZero(getBasicVals(), ME->getType());
+            MakeNode(Dst, ME, Pred, BindExpr(StNull, ME, V));
+          }
         }
       }
+      
+      // We have handled the cases where the receiver is nil.  The remainder
+      // of this method should assume that the receiver is not nil.      
+      if (!isFeasibleNotNull)
+        return;
+
+      state = StNotNull;
     }
     
     // Check if the "raise" message was sent.
@@ -2445,7 +2458,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             //    transfer functions as "0 == E".
             
             if (isa<Loc>(V)) {
-              loc::ConcreteInt X(getBasicVals().getZeroWithPtrWidth());
+              Loc X = Loc::MakeNull(getBasicVals());
               SVal Result = EvalBinOp(BinaryOperator::EQ, cast<Loc>(V), X,
                                       U->getType());
               state = BindExpr(state, U, Result);

@@ -202,6 +202,22 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
 }
 
 //===----------------------------------------------------------------------===//
+// Utility methods for constructing SVals.
+//===----------------------------------------------------------------------===//
+
+SVal SVal::MakeZero(BasicValueFactory &BasicVals, QualType T) {
+  if (Loc::IsLocType(T))
+    return Loc::MakeNull(BasicVals);
+
+  if (T->isIntegerType())
+    return NonLoc::MakeVal(BasicVals, 0, T);
+  
+  // FIXME: Handle floats.
+  // FIXME: Handle structs.
+  return UnknownVal();  
+}
+
+//===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-Locs.
 //===----------------------------------------------------------------------===//
 
@@ -313,6 +329,10 @@ Loc Loc::MakeVal(const MemRegion* R) { return loc::MemRegionVal(R); }
 Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
 
 Loc Loc::MakeVal(SymbolRef sym) { return loc::SymbolVal(sym); }
+
+Loc Loc::MakeNull(BasicValueFactory &BasicVals) {
+  return loc::ConcreteInt(BasicVals.getZeroWithPtrWidth());
+}
 
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.

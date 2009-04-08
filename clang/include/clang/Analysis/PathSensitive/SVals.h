@@ -95,6 +95,8 @@ public:
     return getRawKind() > UnknownKind;
   }
   
+  static SVal MakeZero(BasicValueFactory &BasicVals, QualType T);
+  
   bool isZeroConstant() const;
   
   /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
@@ -211,11 +213,7 @@ class Loc : public SVal {
 protected:
   Loc(unsigned SubKind, const void* D)
   : SVal(const_cast<void*>(D), true, SubKind) {}
-  
-//  // Equality operators.
-//  NonLoc EQ(SymbolManager& SM, Loc R) const;
-//  NonLoc NE(SymbolManager& SM, Loc R) const;
-  
+
 public:
   void print(llvm::raw_ostream& Out) const;
 
@@ -227,6 +225,8 @@ public:
   static Loc MakeVal(AddrLabelExpr* E);
 
   static Loc MakeVal(SymbolRef sym);
+  
+  static Loc MakeNull(BasicValueFactory &BasicVals);
   
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {

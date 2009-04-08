@@ -46,3 +46,14 @@ void createFoo5() {
   double d = [obj doubleM]; // no-warning
 }
 
+void handleNilPruneLoop(MyClass *obj) {
+  if (!!obj)
+    return;
+  
+  // Test if [obj intM] evaluates to 0, thus pruning the entire loop.
+  for (int i = 0; i < [obj intM]; i++) {
+    long long j = [obj longlongM]; // no-warning
+  }
+  
+  long long j = [obj longlongM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
+}
