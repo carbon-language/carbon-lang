@@ -699,7 +699,7 @@ static inline char toOctal(int X) {
 
 /// printStringChar - Print a char, escaped if necessary.
 ///
-static void printStringChar(raw_ostream &O, char C) {
+static void printStringChar(raw_ostream &O, unsigned char C) {
   if (C == '"') {
     O << "\\\"";
   } else if (C == '\\') {
@@ -733,10 +733,8 @@ void AsmPrinter::EmitString(const std::string &String) const {
   else
     O << TAI->getAsciiDirective();
   O << '\"';
-  for (unsigned i = 0, N = String.size(); i < N; ++i) {
-    unsigned char C = String[i];
-    printStringChar(O, C);
-  }
+  for (unsigned i = 0, N = String.size(); i < N; ++i)
+    printStringChar(O, String[i]);
   if (AscizDirective)
     O << '\"';
   else
@@ -747,10 +745,8 @@ void AsmPrinter::EmitString(const std::string &String) const {
 /// EmitFile - Emit a .file directive.
 void AsmPrinter::EmitFile(unsigned Number, const std::string &Name) const {
   O << "\t.file\t" << Number << " \"";
-  for (unsigned i = 0, N = Name.size(); i < N; ++i) {
-    unsigned char C = Name[i];
-    printStringChar(O, C);
-  }
+  for (unsigned i = 0, N = Name.size(); i < N; ++i)
+    printStringChar(O, Name[i]);
   O << '\"';
 }
 
