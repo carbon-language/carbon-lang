@@ -74,6 +74,12 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   const char *DirName = FE ? FE->getDir()->getName() : "<unknown>";
   
   const LangOptions &LO = M->getLangOptions();
+
+  // If this is the main file, use the user provided main file name if
+  // specified.
+  if (isMain && LO.getMainFileName())
+    FileName = LO.getMainFileName();
+
   unsigned LangTag;
   if (LO.CPlusPlus) {
     if (LO.ObjC1)

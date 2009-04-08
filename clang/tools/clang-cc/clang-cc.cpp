@@ -603,6 +603,9 @@ NoCommon("fno-common",
          llvm::cl::desc("Compile common globals like normal definitions"),
          llvm::cl::ValueDisallowed);
 
+static llvm::cl::opt<std::string>
+MainFileName("main-file-name",
+             llvm::cl::desc("Main file name to use for debug info"));
 
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
@@ -777,6 +780,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
+
+  if (MainFileName.getPosition())
+    Options.setMainFileName(MainFileName.c_str());
 }
 
 static llvm::cl::opt<bool>

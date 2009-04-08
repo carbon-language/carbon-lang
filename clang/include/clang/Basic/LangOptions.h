@@ -76,6 +76,11 @@ private:
                    // signed.  Set/Query this value using accessors.  
   unsigned SymbolVisibility  : 3; // Symbol's visibility.
 
+  /// The user provided name for the "main file", if non-null. This is
+  /// useful in situations where the input file name does not match
+  /// the original input file, for example with -save-temps.
+  const char *MainFileName;
+
 public:  
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
@@ -110,10 +115,15 @@ public:
     OptimizeSize = 0;
 
     PICLevel = 0;
+
+    MainFileName = 0;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }
   void setGCMode(GCMode m) { GC = (unsigned) m; }
+
+  const char *getMainFileName() const { return MainFileName; }
+  void setMainFileName(const char *Name) { MainFileName = Name; }
 
   VisibilityMode getVisibilityMode() const { return (VisibilityMode) SymbolVisibility; }
   void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
