@@ -1100,12 +1100,15 @@ static bool InitializePreprocessor(Preprocessor &PP,
       DefineBuiltinMacro(PredefineBuffer, U_macros[u++].c_str(), "#undef ");
   }
 
-  // FIXME: Read any files specified by -imacros.
+  // If -imacros are specified, include them now.  These are processed before
+  // any -include directives.
+
+  for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
+    AddImplicitIncludeMacros(PredefineBuffer, ImplicitMacroIncludes[i]);
   
-  if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty() ||
-      !ImplicitMacroIncludes.empty()) {
-    // We want to add these paths to the predefines buffer in order, make a temporary
-    // vector to sort by their occurrence.
+  if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty()) {
+    // We want to add these paths to the predefines buffer in order, make a
+    // temporary vector to sort by their occurrence.
     llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
 
     if (!ImplicitIncludePTH.empty())
@@ -1114,10 +1117,6 @@ static bool InitializePreprocessor(Preprocessor &PP,
     for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
       OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
                                             &ImplicitIncludes[i]));
-    for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
-      OrderedPaths.push_back(std::make_pair(ImplicitMacroIncludes
-                                               .getPosition(i),
-                                            &ImplicitMacroIncludes[i]));
     llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
 
     // Now that they are ordered by position, add to the predefines buffer.
@@ -1127,13 +1126,9 @@ static bool InitializePreprocessor(Preprocessor &PP,
           Ptr >= &ImplicitIncludes[0] &&
           Ptr <= &ImplicitIncludes[ImplicitIncludes.size()-1]) {
         AddImplicitInclude(PredefineBuffer, *Ptr);
-      } else if (Ptr == &ImplicitIncludePTH) {
-        AddImplicitIncludePTH(PredefineBuffer, PP);
       } else {
-        assert(Ptr >= &ImplicitMacroIncludes[0] &&
-               Ptr <= &ImplicitMacroIncludes[ImplicitMacroIncludes.size()-1] &&
-               "String must have been in -imacros?");
-        AddImplicitIncludeMacros(PredefineBuffer, *Ptr);
+        assert(Ptr == &ImplicitIncludePTH);
+        AddImplicitIncludePTH(PredefineBuffer, PP);
       }
     }
   }
