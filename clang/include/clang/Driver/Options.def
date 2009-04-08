@@ -332,7 +332,7 @@ OPTION("-Wno-nonportable-cfstrings", Wno_nonportable_cfstrings, Joined, W_Group,
 OPTION("-Wno-parentheses", Wno_parentheses, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-pointer-sign", Wno_pointer_sign, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-strict-selector-match", Wno_strict_selector_match, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
-OPTION("-Wno-trigraphs", Wno_trigraphs, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
+OPTION("-Wno-trigraphs", Wno_trigraphs, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-unknown-pragmas", Wno_unknown_pragmas, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-unused-parameter", Wno_unused_parameter, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-variadic-macros", Wno_variadic_macros, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
