@@ -2793,7 +2793,8 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   //   prototype declaration. This warning is issued even if the
   //   definition itself provides a prototype. The aim is to detect
   //   global functions that fail to be declared in header files.
-  if (!FD->isInvalidDecl() && FD->isGlobal() && !isa<CXXMethodDecl>(FD)) {
+  if (!FD->isInvalidDecl() && FD->isGlobal() && !isa<CXXMethodDecl>(FD) &&
+      !FD->isMain()) {
     bool MissingPrototype = true;
     for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
          Prev; Prev = Prev->getPreviousDeclaration()) {

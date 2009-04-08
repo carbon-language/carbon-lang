@@ -32,3 +32,5 @@ int f2(int);
 int f2();
 
 int f2(int x) { return x; }
+
+int main(void) { return 0; }
