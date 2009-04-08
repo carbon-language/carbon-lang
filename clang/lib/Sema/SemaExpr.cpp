@@ -2714,6 +2714,20 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     }
   }
 
+  // GCC compatibility: soften pointer/integer mismatch.
+  if (RHSTy->isPointerType() && LHSTy->isIntegerType()) {
+    Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
+      << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+    ImpCastExprToType(LHS, RHSTy); // promote the integer to a pointer.
+    return RHSTy;
+  }
+  if (LHSTy->isPointerType() && RHSTy->isIntegerType()) {
+    Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
+      << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+    ImpCastExprToType(RHS, LHSTy); // promote the integer to a pointer.
+    return LHSTy;
+  }
+
   // Selection between block pointer types is ok as long as they are the same.
   if (LHSTy->isBlockPointerType() && RHSTy->isBlockPointerType() &&
       Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy))

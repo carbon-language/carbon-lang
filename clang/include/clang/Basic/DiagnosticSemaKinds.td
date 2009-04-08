@@ -1207,6 +1207,8 @@ def err_typecheck_cond_incompatible_operands : Error<
   "incompatible operand types (%0 and %1)">;
 def warn_typecheck_cond_incompatible_pointers : Warning<
   "pointer type mismatch (%0 and %1)">;
+def warn_typecheck_cond_pointer_integer_mismatch : Warning<
+  "pointer/integer type mismatch in conditional expression (%0 and %1)">;
 def err_typecheck_choose_expr_requires_constant : Error<
   "'__builtin_choose_expr' requires a constant expression">;
 def ext_typecheck_expression_not_constant_but_accepted : Extension<

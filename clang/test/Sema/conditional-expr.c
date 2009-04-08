@@ -40,3 +40,12 @@ int Postgresql() {
   char x;
   return ((((&x) != ((void *) 0)) ? (*(&x) = ((char) 1)) : (void) ((void *) 0)), (unsigned long) ((void *) 0)); // expected-warning {{C99 forbids conditional expressions with only one void side}}
 }
+
+#define nil ((void*) 0)
+
+extern int f1(void);
+
+int f0(int a) {
+  // GCC considers this a warning.
+  return a ? f1() : nil; // expected-warning {{pointer/integer type mismatch in conditional expression ('int' and 'void *')}} expected-warning {{incompatible pointer to integer conversion returning 'void *', expected 'int'}}
+}
