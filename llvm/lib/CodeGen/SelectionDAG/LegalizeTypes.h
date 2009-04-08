@@ -414,6 +414,7 @@ private:
   SDValue SoftenFloatRes_FP_ROUND(SDNode *N);
   SDValue SoftenFloatRes_FPOW(SDNode *N);
   SDValue SoftenFloatRes_FPOWI(SDNode *N);
+  SDValue SoftenFloatRes_FREM(SDNode *N);
   SDValue SoftenFloatRes_FRINT(SDNode *N);
   SDValue SoftenFloatRes_FSIN(SDNode *N);
   SDValue SoftenFloatRes_FSQRT(SDNode *N);
