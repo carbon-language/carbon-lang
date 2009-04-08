@@ -679,6 +679,8 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
   // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
   // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
   ASTRecordLayout *NewEntry = NULL;
+  // FIXME. Add actual count of synthesized ivars, instead of count
+  // of properties which is the upper bound, but is safe.
   unsigned FieldCount = 
     D->ivar_size() + std::distance(D->prop_begin(), D->prop_end());
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
