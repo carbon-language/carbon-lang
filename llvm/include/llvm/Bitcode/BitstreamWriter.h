@@ -80,7 +80,7 @@ public:
   std::vector<unsigned char> &getBuffer() { return Out; }
 
   /// \brief Retrieve the current position in the stream, in bits.
-  uint64_t GetCurrentBitNo() const { return Out.size() * CHAR_BIT + CurBit; }
+  uint64_t GetCurrentBitNo() const { return Out.size() * 8 + CurBit; }
 
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
