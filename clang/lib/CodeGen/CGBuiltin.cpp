@@ -66,7 +66,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   switch (BuiltinID) {
   default: break;  // Handle intrinsics and libm functions below.
   case Builtin::BI__builtin___CFStringMakeConstantString:
-    return RValue::get(CGM.EmitConstantExpr(E, 0));
+    return RValue::get(CGM.EmitConstantExpr(E, E->getType(), 0));
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {

@@ -121,7 +121,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   DMEntry = GV;
 
   if (D.getInit()) {
-    llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), this);
+    llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
 
     // If constant emission failed, then this should be a C++ static
     // initializer.

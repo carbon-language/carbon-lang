@@ -693,7 +693,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     }
     Init = llvm::Constant::getNullValue(InitTy);
   } else {
-    Init = EmitConstantExpr(D->getInit());
+    Init = EmitConstantExpr(D->getInit(), D->getType());
     if (!Init) {
       ErrorUnsupported(D, "static initializer");
       QualType T = D->getInit()->getType();

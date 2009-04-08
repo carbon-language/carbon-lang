@@ -55,7 +55,9 @@ public:
     // GCC cast to union extension
     if (E->getType()->isUnionType()) {
       const llvm::Type *Ty = ConvertType(E->getType());
-      return EmitUnion(CGM.EmitConstantExpr(E->getSubExpr(), CGF), Ty);
+      Expr *SubExpr = E->getSubExpr();
+      return EmitUnion(CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF), 
+                       Ty);
     }
     if (CGM.getContext().getCanonicalType(E->getSubExpr()->getType()) ==
         CGM.getContext().getCanonicalType(E->getType())) {
@@ -91,7 +93,8 @@ public:
     unsigned i = 0;
     bool RewriteType = false;
     for (; i < NumInitableElts; ++i) {
-      llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(i), CGF);
+      Expr *Init = ILE->getInit(i);
+      llvm::Constant *C = CGM.EmitConstantExpr(Init, Init->getType(), CGF);
       if (!C)
         return 0;
       RewriteType |= (C->getType() != ElemTy);
@@ -117,7 +120,7 @@ public:
   void InsertBitfieldIntoStruct(std::vector<llvm::Constant*>& Elts,
                                 FieldDecl* Field, Expr* E) {
     // Calculate the value to insert
-    llvm::Constant *C = CGM.EmitConstantExpr(E, CGF);
+    llvm::Constant *C = CGM.EmitConstantExpr(E, Field->getType(), CGF);
     if (!C)
       return;
 
@@ -204,7 +207,8 @@ public:
         InsertBitfieldIntoStruct(Elts, *Field, ILE->getInit(EltNo));
       } else {
         unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(*Field);
-        llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(EltNo), CGF);
+        llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(EltNo), 
+                                                 Field->getType(), CGF);
         if (!C) return 0;
         RewriteType |= (C->getType() != Elts[FieldNo]->getType());
         Elts[FieldNo] = C;
@@ -283,7 +287,8 @@ public:
       return llvm::ConstantArray::get(RetTy, Elts);
     }
 
-    return EmitUnion(CGM.EmitConstantExpr(ILE->getInit(0), CGF), Ty);
+    Expr *Init = ILE->getInit(0);
+    return EmitUnion(CGM.EmitConstantExpr(Init, Init->getType(), CGF), Ty);
   }
 
   llvm::Constant *EmitVectorInitialization(InitListExpr *ILE) {
@@ -299,7 +304,8 @@ public:
     // Copy initializer elements.
     unsigned i = 0;
     for (; i < NumInitableElts; ++i) {
-      llvm::Constant *C = CGM.EmitConstantExpr(ILE->getInit(i), CGF);
+      Expr *Init = ILE->getInit(i);
+      llvm::Constant *C = CGM.EmitConstantExpr(Init, Init->getType(), CGF);
       if (!C)
         return 0;
       Elts.push_back(C);
@@ -319,9 +325,10 @@ public:
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
     if (ILE->getType()->isScalarType()) {
       // We have a scalar in braces. Just use the first element.
-      if (ILE->getNumInits() > 0)
-        return CGM.EmitConstantExpr(ILE->getInit(0), CGF);
-
+      if (ILE->getNumInits() > 0) {
+        Expr *Init = ILE->getInit(0);
+        return CGM.EmitConstantExpr(Init, Init->getType(), CGF);
+      }
       const llvm::Type* RetTy = CGM.getTypes().ConvertType(ILE->getType());
       return llvm::Constant::getNullValue(RetTy);
     }
@@ -463,6 +470,7 @@ public:
 }  // end anonymous namespace.
 
 llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
+                                                QualType DestType,
                                                 CodeGenFunction *CGF) {
   Expr::EvalResult Result;
   
