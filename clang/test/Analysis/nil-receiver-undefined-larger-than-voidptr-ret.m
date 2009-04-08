@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s -verify
+// RUN: clang-cc -triple i386-apple-darwin9 -analyze -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s -verify
 
 @interface MyClass {}
 - (void *)voidPtrM;
