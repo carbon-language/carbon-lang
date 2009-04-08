@@ -712,7 +712,7 @@ private:
   /// FinishNonFragileABIModule - Write out global data structures at the end of
   /// processing a translation unit.
   void FinishNonFragileABIModule();
-  
+
   llvm::GlobalVariable * BuildClassRoTInitializer(unsigned flags, 
                                 unsigned InstanceStart,
                                 unsigned InstanceSize,
@@ -795,9 +795,10 @@ private:
   /// for the given selector.
   llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
 
-  /// GetInterfaceEHType - Get the ehtype for the given Objective-C
+  /// GetInterfaceEHType - Get the cached ehtype for the given Objective-C
   /// interface. The return value has type EHTypePtrTy.
-  llvm::Value *GetInterfaceEHType(const ObjCInterfaceType *IT);
+  llvm::Value *GetInterfaceEHType(const ObjCInterfaceDecl *ID,
+                                  bool ForDefinition);
 
   const char *getMetaclassSymbolPrefix() const { 
     return "OBJC_METACLASS_$_";
@@ -889,6 +890,16 @@ static llvm::Constant *getConstantGEP(llvm::Constant *C,
     llvm::ConstantInt::get(llvm::Type::Int32Ty, idx1)
   };
   return llvm::ConstantExpr::getGetElementPtr(C, Idxs, 2);
+}
+
+/// hasObjCExceptionAttribute - Return true if this class or any super
+/// class has the __objc_exception__ attribute.
+static bool hasObjCExceptionAttribute(const ObjCInterfaceDecl *OID) {
+  if (OID->getAttr<ObjCExceptionAttr>())
+    return true;
+  if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
+    return hasObjCExceptionAttribute(Super);
+  return false;
 }
 
 /* *** CGObjCMac Public Interface *** */
@@ -4238,6 +4249,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   flags = CLS;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
+
+  if (hasObjCExceptionAttribute(ID->getClassInterface()))
+    flags |= CLS_EXCEPTION;
+
   if (!ID->getClassInterface()->getSuperClass()) {
     flags |= CLS_ROOT;
     SuperClassGV = 0;
@@ -4287,6 +4302,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                        classIsHidden);
   UsedGlobals.push_back(ClassMD);
   DefinedClasses.push_back(ClassMD);
+
+  // Force the definition of the EHType if necessary.
+  if (flags & CLS_EXCEPTION)
+    GetInterfaceEHType(ID->getClassInterface(), true);
 }
 
 /// GenerateProtocolRef - This routine is called to generate code for
@@ -5356,7 +5375,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         const ObjCInterfaceType *IT = 
           PT->getPointeeType()->getAsObjCInterfaceType();
         assert(IT && "Invalid @catch type.");
-        llvm::Value *EHType = GetInterfaceEHType(IT);
+        llvm::Value *EHType = GetInterfaceEHType(IT->getDecl(), false);
         SelectorArgs.push_back(EHType);
       }
     }
@@ -5544,32 +5563,32 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.ClearInsertionPoint();
 }
 
-static bool hasObjCExceptionAttribute(const ObjCInterfaceDecl *OID) {
-  if (OID->getAttr<ObjCExceptionAttr>())
-    return true;
-  if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
-    return hasObjCExceptionAttribute(Super);
-  return false;
-}
-
 llvm::Value *
-CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceType *IT) {
-  const ObjCInterfaceDecl *ID = IT->getDecl();
+CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID, 
+                                           bool ForDefinition) {
   llvm::GlobalVariable * &Entry = EHTypeReferences[ID->getIdentifier()];
-  if (Entry)
-    return Entry;
 
-  // If this type (or a super class) has the __objc_exception__
-  // attribute, emit an external reference.
-  if (hasObjCExceptionAttribute(IT->getDecl()))
-    return Entry = 
-      new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0, 
-                               (std::string("OBJC_EHTYPE_$_") + 
-                                ID->getIdentifier()->getName()),
-                               &CGM.getModule());
+  // If we don't need a definition, return the entry if found or check
+  // if we use an external reference.
+  if (!ForDefinition) {
+    if (Entry)
+      return Entry;
 
+    // If this type (or a super class) has the __objc_exception__
+    // attribute, emit an external reference.
+    if (hasObjCExceptionAttribute(ID))
+      return Entry = 
+        new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0, 
+                                 (std::string("OBJC_EHTYPE_$_") + 
+                                  ID->getIdentifier()->getName()),
+                                 &CGM.getModule());
+  }
+  
+  // Otherwise we need to either make a new entry or fill in the
+  // initializer.
+  assert((!Entry || !Entry->hasInitializer()) && "Duplicate EHType definition");
   std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
   std::string VTableName = "objc_ehtype_vtable";
   llvm::GlobalVariable *VTableGV = 
@@ -5587,17 +5606,28 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceType *IT) {
   Values[2] = GetClassGlobal(ClassName, false);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
 
-  Entry = 
-    new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
-                             llvm::GlobalValue::WeakAnyLinkage,
-                             Init, 
-                             (std::string("OBJC_EHTYPE_$_") + 
-                              ID->getIdentifier()->getName()),
-                             &CGM.getModule());
+  if (Entry) {
+    Entry->setInitializer(Init);
+  } else {
+    Entry = new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+                                     llvm::GlobalValue::WeakAnyLinkage,
+                                     Init, 
+                                     (std::string("OBJC_EHTYPE_$_") + 
+                                      ID->getIdentifier()->getName()),
+                                     &CGM.getModule());
+  }
+
   if (CGM.getLangOptions().getVisibilityMode() ==
       LangOptions::HiddenVisibility)
     Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  Entry->setSection("__DATA,__datacoal_nt,coalesced");
+  Entry->setAlignment(8);
+
+  if (ForDefinition) {
+    Entry->setSection("__DATA,__objc_const");
+    Entry->setLinkage(llvm::GlobalValue::ExternalLinkage);
+  } else {
+    Entry->setSection("__DATA,__datacoal_nt,coalesced");
+  }
 
   return Entry;
 }

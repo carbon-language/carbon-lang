@@ -2,8 +2,10 @@
 
 // RUN: grep '@"OBJC_METACLASS_$_A" = global .*section "__DATA, __objc_data", align 8' %t && 
 // RUN: grep '@"OBJC_CLASS_$_A" = global .*section "__DATA, __objc_data", align 8' %t &&
-// RUN: grep '@"OBJC_EHTYPE_$_EH1" = weak global .*section "__DATA,__datacoal_nt,coalesced"' %t &&
+// RUN: grep '@"OBJC_EHTYPE_$_EH1" = weak global .*section "__DATA,__datacoal_nt,coalesced", align 8' %t &&
 // RUN: grep '@"OBJC_EHTYPE_$_EH2" = external global' %t &&
+// RUN: grep '@"OBJC_EHTYPE_$_EH3" = global .*section "__DATA,__objc_const", align 8' %t &&
+// RUN: grep '@"OBJC_EHTYPE_$_EH3"' %t | count 3 &&
 // RUN: grep -F 'define internal void @"\01-[A im0]"' %t &&
 // FIXME: Should include category name.
 // RUN: grep -F 'define internal void @"\01-[A im1]"' %t &&
@@ -13,6 +15,8 @@
 // RUN: grep '@"OBJC_METACLASS_$_A" = hidden global .*section "__DATA, __objc_data", align 8' %t && 
 // RUN: grep '@"OBJC_CLASS_$_A" = hidden global .*section "__DATA, __objc_data", align 8' %t &&
 // RUN: grep '@"OBJC_EHTYPE_$_EH1" = weak hidden global .*section "__DATA,__datacoal_nt,coalesced"' %t &&
+// RUN: grep '@"OBJC_EHTYPE_$_EH2" = external global' %t &&
+// RUN: grep '@"OBJC_EHTYPE_$_EH3" = hidden global .*section "__DATA,__objc_const", align 8' %t &&
 // RUN: grep -F 'define internal void @"\01-[A im0]"' %t &&
 // FIXME: Should include category name.
 // RUN: grep -F 'define internal void @"\01-[A im1]"' %t &&
@@ -39,6 +43,10 @@ __attribute__((__objc_exception__))
 @interface EH2
 @end
 
+__attribute__((__objc_exception__))
+@interface EH3
+@end
+
 void f1();
 
 void f0(id x) {
@@ -46,5 +54,9 @@ void f0(id x) {
     f1();
   } @catch (EH1 *x) {
   } @catch (EH2 *x) {
+  } @catch (EH3 *x) {
   }
 }
+
+@implementation EH3
+@end
