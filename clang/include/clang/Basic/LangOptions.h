@@ -68,6 +68,8 @@ public:
   unsigned Optimize          : 1; // Whether __OPTIMIZE__ should be defined.
   unsigned OptimizeSize      : 1; // Whether __OPTIMIZE_SIZE__ should be 
                                   // defined.
+  unsigned PICLevel          : 2; // The value for __PIC__, if non-zero.
+
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -106,6 +108,8 @@ public:
     
     Optimize = 0;
     OptimizeSize = 0;
+
+    PICLevel = 0;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

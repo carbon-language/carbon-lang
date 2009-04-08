@@ -497,8 +497,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   if (PP.getLangOptions().ObjC1) {
     DefineBuiltinMacro(Buf, "__OBJC__=1");
-    if (PP.getLangOptions().ObjCNonFragileABI)
+    if (PP.getLangOptions().ObjCNonFragileABI) {
       DefineBuiltinMacro(Buf, "__OBJC2__=1");
+      DefineBuiltinMacro(Buf, "OBJC_ZEROCOST_EXCEPTIONS=1");
+    }
 
     if (PP.getLangOptions().getGCMode() != LangOptions::NonGC)
       DefineBuiltinMacro(Buf, "__OBJC_GC__=1");
@@ -629,7 +631,14 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
   DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
-  DefineBuiltinMacro(Buf, "__PIC__=1");
+
+  if (unsigned PICLevel = PP.getLangOptions().PICLevel) {
+    sprintf(MacroBuf, "__PIC__=%d", PICLevel);
+    DefineBuiltinMacro(Buf, MacroBuf);
+
+    sprintf(MacroBuf, "__pic__=%d", PICLevel);
+    DefineBuiltinMacro(Buf, MacroBuf);
+  }
 
   // Macros to control C99 numerics and <float.h>
   DefineBuiltinMacro(Buf, "__FLT_EVAL_METHOD__=0");

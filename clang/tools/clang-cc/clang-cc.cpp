@@ -620,6 +620,11 @@ OptLevel("O", llvm::cl::Prefix,
          llvm::cl::desc("Optimization level"),
          llvm::cl::init(0));
 
+static llvm::cl::opt<unsigned>
+PICLevel("pic-level", llvm::cl::Prefix,
+         llvm::cl::desc("Value for __PIC__"),
+         llvm::cl::init(0));
+
 // FIXME: add:
 //   -fdollars-in-identifiers
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
@@ -769,6 +774,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   // -Os implies -O2
   if (Options.OptimizeSize || OptLevel)
     Options.Optimize = 1;
+
+  assert(PICLevel <= 2 && "Invalid value for -pic-level");
+  Options.PICLevel = PICLevel;
 }
 
 static llvm::cl::opt<bool>
