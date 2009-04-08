@@ -82,7 +82,7 @@ add_custom_command(OUTPUT ${FINAL_LIBDEPS}
   DEPENDS ${LIBDEPS}
   COMMENT "Checking for cyclic dependencies between LLVM libraries.")
 
-string(TOUPPER ${CMAKE_BUILD_TYPE} uppercase_CMAKE_BUILD_TYPE)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 set(C_FLGS "${CMAKE_C_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 set(CXX_FLGS "${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 set(CPP_FLGS "${CMAKE_CPP_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
