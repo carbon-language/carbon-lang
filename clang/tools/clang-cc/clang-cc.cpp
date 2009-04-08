@@ -624,9 +624,10 @@ OptLevel("O", llvm::cl::Prefix,
          llvm::cl::init(0));
 
 static llvm::cl::opt<unsigned>
-PICLevel("pic-level", llvm::cl::Prefix,
-         llvm::cl::desc("Value for __PIC__"),
-         llvm::cl::init(0));
+PICLevel("pic-level", llvm::cl::desc("Value for __PIC__"));
+
+static llvm::cl::opt<bool>
+StaticDefine("static-define", llvm::cl::desc("Should __STATIC__ be defined"));
 
 // FIXME: add:
 //   -fdollars-in-identifiers
@@ -771,15 +772,22 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (EmitAllDecls)
     Options.EmitAllDecls = 1;
 
-  if (OptSize)
-    Options.OptimizeSize = 1;
+  // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't
+  // support.
+  Options.OptimizeSize = 0;
   
   // -Os implies -O2
-  if (Options.OptimizeSize || OptLevel)
+  if (OptSize || OptLevel)
     Options.Optimize = 1;
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
+
+  Options.GNUInline = !Options.C99;
+  // FIXME: This is affected by other options (-fno-inline). 
+  Options.NoInline = !OptSize && !OptLevel;
+
+  Options.Static = StaticDefine;
 
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());

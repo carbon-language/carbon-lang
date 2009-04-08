@@ -486,6 +486,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
   else if (0) // STDC94 ?
     DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
+
+  // Standard conforming mode?
+  if (!PP.getLangOptions().GNUMode)
+    DefineBuiltinMacro(Buf, "__STRICT_ANSI__=1");
   
   if (PP.getLangOptions().CPlusPlus0x)
     DefineBuiltinMacro(Buf, "__GXX_EXPERIMENTAL_CXX0X__");
@@ -500,6 +504,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     if (PP.getLangOptions().ObjCNonFragileABI) {
       DefineBuiltinMacro(Buf, "__OBJC2__=1");
       DefineBuiltinMacro(Buf, "OBJC_ZEROCOST_EXCEPTIONS=1");
+      DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
     }
 
     if (PP.getLangOptions().getGCMode() != LangOptions::NonGC)
@@ -628,9 +633,20 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   // Build configuration options.  FIXME: these should be controlled by
   // command line options or something.
-  DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
-  DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
+
+  if (PP.getLangOptions().Static)
+    DefineBuiltinMacro(Buf, "__STATIC__=1");
+  else
+    DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
+
+  if (PP.getLangOptions().GNUInline)
+    DefineBuiltinMacro(Buf, "__GNUC_GNU_INLINE__=1");
+  else
+    DefineBuiltinMacro(Buf, "__GNUC_STDC_INLINE__=1");
+
+  if (PP.getLangOptions().NoInline)
+    DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
 
   if (unsigned PICLevel = PP.getLangOptions().PICLevel) {
     sprintf(MacroBuf, "__PIC__=%d", PICLevel);

@@ -79,6 +79,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-main-file-name");
   CmdArgs.push_back(darwin::CC1::getBaseInputName(Args, Inputs));
 
+  // Some flags which affect the language (via preprocessor
+  // defines). See darwin::CC1::AddCPPArgs.
+  if (Args.hasArg(options::OPT_static))
+    CmdArgs.push_back("-static-define");
+
   if (isa<AnalyzeJobAction>(JA)) {
     // Add default argument set.
     //

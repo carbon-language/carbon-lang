@@ -68,7 +68,13 @@ public:
   unsigned Optimize          : 1; // Whether __OPTIMIZE__ should be defined.
   unsigned OptimizeSize      : 1; // Whether __OPTIMIZE_SIZE__ should be 
                                   // defined.
+  unsigned Static            : 1; // Should __STATIC__ be defined (as
+                                  // opposed to __DYNAMIC__).
   unsigned PICLevel          : 2; // The value for __PIC__, if non-zero.
+
+  unsigned GNUInline         : 1; // Should GNU inline semantics be
+                                  // used (instead of C99 semantics).
+  unsigned NoInline          : 1; // Should __NO_INLINE__ be defined.
 
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
@@ -114,7 +120,11 @@ public:
     Optimize = 0;
     OptimizeSize = 0;
 
+    Static = 0;
     PICLevel = 0;
+
+    GNUInline = 0;
+    NoInline = 0;
 
     MainFileName = 0;
   }
