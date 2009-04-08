@@ -25,6 +25,11 @@ namespace toolchains {
 namespace tools {
 
   class VISIBILITY_HIDDEN Clang : public Tool {
+    void AddPreprocessingOptions(const ArgList &Args,
+                                 ArgStringList &CmdArgs,
+                                 const InputInfo &Output,
+                                 const InputInfoList &Inputs) const;
+
   public:
     Clang(const ToolChain &TC) : Tool("clang", TC) {}
 

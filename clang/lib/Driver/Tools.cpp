@@ -31,6 +31,118 @@
 using namespace clang::driver;
 using namespace clang::driver::tools;
 
+void Clang::AddPreprocessingOptions(const ArgList &Args,
+                                    ArgStringList &CmdArgs,
+                                    const InputInfo &Output,
+                                    const InputInfoList &Inputs) const {
+  // Handle dependency file generation.
+  Arg *A;
+  if ((A = Args.getLastArg(options::OPT_M)) ||
+      (A = Args.getLastArg(options::OPT_MM)) ||
+      (A = Args.getLastArg(options::OPT_MD)) ||
+      (A = Args.getLastArg(options::OPT_MMD))) {
+    // Determine the output location.
+    const char *DepFile;
+    if (Output.getType() == types::TY_Dependencies) {
+      if (Output.isPipe())
+        DepFile = "-";
+      else
+        DepFile = Output.getFilename();
+    } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
+      DepFile = MF->getValue(Args);
+    } else if (A->getOption().getId() == options::OPT_M ||
+               A->getOption().getId() == options::OPT_MM) {
+      DepFile = "-";
+    } else {
+      DepFile = darwin::CC1::getDependencyFileName(Args, Inputs);
+    }
+    CmdArgs.push_back("-dependency-file");
+    CmdArgs.push_back(DepFile);
+
+    // Add an -MT option if the user didn't specify their own.
+    // FIXME: This should use -MQ, when we support it.
+    if (!Args.hasArg(options::OPT_MT) && !Args.hasArg(options::OPT_MQ)) {
+      const char *DepTarget;
+
+      // If user provided -o, that is the dependency target, except
+      // when we are only generating a dependency file.
+      Arg *OutputOpt = Args.getLastArg(options::OPT_o);
+      if (OutputOpt && Output.getType() != types::TY_Dependencies) {
+        DepTarget = OutputOpt->getValue(Args);
+      } else {
+        // Otherwise derive from the base input.
+        //
+        // FIXME: This should use the computed output file location.
+        llvm::sys::Path P(Inputs[0].getBaseInput());
+
+        P.eraseSuffix();
+        P.appendSuffix("o");
+        DepTarget = Args.MakeArgString(P.getLast().c_str());
+      }
+
+      CmdArgs.push_back("-MT");
+      CmdArgs.push_back(DepTarget);
+    }
+
+    if (A->getOption().getId() == options::OPT_M ||
+        A->getOption().getId() == options::OPT_MD)
+      CmdArgs.push_back("-sys-header-deps");
+  }
+
+  Args.AddLastArg(CmdArgs, options::OPT_MP);
+  Args.AddAllArgs(CmdArgs, options::OPT_MT);
+
+  // FIXME: Use iterator.
+
+  // Add -i* options, and automatically translate to -include-pth for
+  // transparent PCH support. It's wonky, but we include looking for
+  // .gch so we can support seamless replacement into a build system
+  // already set up to be generating .gch files.
+  for (ArgList::const_iterator
+         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (!A->getOption().matches(options::OPT_clang_i_Group))
+      continue;
+
+    if (A->getOption().matches(options::OPT_include)) {
+      bool FoundPTH = false;
+      llvm::sys::Path P(A->getValue(Args));
+      P.appendSuffix("pth");
+      if (P.exists()) {
+        FoundPTH = true;
+      } else {
+        P.eraseSuffix();
+        P.appendSuffix("gch");
+        if (P.exists())
+          FoundPTH = true;
+      }
+
+      if (FoundPTH) {
+        A->claim();
+        CmdArgs.push_back("-include-pth");
+        CmdArgs.push_back(Args.MakeArgString(P.c_str()));
+        continue;
+      }
+    }
+
+    // Not translated, render as usual.
+    A->claim();
+    A->render(Args, CmdArgs);
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_D, options::OPT_U);
+  Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
+
+  // Add -Wp, and -Xassembler if using the preprocessor.
+
+  // FIXME: There is a very unfortunate problem here, some troubled
+  // souls abuse -Wp, to pass preprocessor options in gcc syntax. To
+  // really support that we would have to parse and then translate
+  // those options. :(
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wp_COMMA,
+                       options::OPT_Xpreprocessor);
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          Job &Dest,
                          const InputInfo &Output,
@@ -43,7 +155,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
 
   CmdArgs.push_back("-triple");
-  const char *TripleStr = 
+  const char *TripleStr =
     Args.MakeArgString(getToolChain().getTripleString().c_str());
   CmdArgs.push_back(TripleStr);
 
@@ -59,7 +171,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-emit-pth");
   } else {
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
-  
+
     if (JA.getType() == types::TY_Nothing) {
       CmdArgs.push_back("-fsyntax-only");
     } else if (JA.getType() == types::TY_LLVMAsm) {
@@ -95,7 +207,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Do not enable the missing -dealloc check.
     // '-warn-objc-missing-dealloc',
     CmdArgs.push_back("-warn-objc-unused-ivars");
-    
+
     CmdArgs.push_back("-analyzer-output=plist");
 
     // Add -Xanalyzer arguments when running as analyzer.
@@ -109,10 +221,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     //
     // FIXME: This is currently broken for -f flags when -fno
     // variants are present.
-    
+
     // This comes from the default translation the driver + cc1
     // would do to enable flag_pic.
-    // 
+    //
     // FIXME: Centralize this code.
     bool PICEnabled = (Args.hasArg(options::OPT_fPIC) ||
                        Args.hasArg(options::OPT_fpic) ||
@@ -134,7 +246,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--relocation-model");
     CmdArgs.push_back(Model);
 
-    // Infer the __PIC__ value. 
+    // Infer the __PIC__ value.
     //
     // FIXME:  This isn't quite right on Darwin, which always sets
     // __PIC__=2.
@@ -163,20 +275,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // FIXME: set --inline-threshhold=50 if (optimize_size || optimize
     // < 3)
     if (Args.hasFlag(options::OPT_funwind_tables,
-                      options::OPT_fno_unwind_tables,
-                      getToolChain().IsUnwindTablesDefault()))
+                     options::OPT_fno_unwind_tables,
+                     getToolChain().IsUnwindTablesDefault()))
       CmdArgs.push_back("--unwind-tables=1");
     else
       CmdArgs.push_back("--unwind-tables=0");
     if (!Args.hasFlag(options::OPT_mred_zone,
-                       options::OPT_mno_red_zone,
-                       true))
+                      options::OPT_mno_red_zone,
+                      true))
       CmdArgs.push_back("--disable-red-zone");
     if (Args.hasFlag(options::OPT_msoft_float,
-                      options::OPT_mno_soft_float,
-                      false))
+                     options::OPT_mno_soft_float,
+                     false))
       CmdArgs.push_back("--soft-float");
-        
+
     // FIXME: Need target hooks.
     if (memcmp(getToolChain().getPlatform().c_str(), "darwin", 6) == 0) {
       if (getToolChain().getArchName() == "x86_64")
@@ -184,12 +296,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       else if (getToolChain().getArchName() == "i386")
         CmdArgs.push_back("--mcpu=yonah");
     }
-    
+
     // FIXME: Ignores ordering. Also, we need to find a realistic
     // solution for this.
-    static const struct { 
-      options::ID Pos, Neg; 
-      const char *Name; 
+    static const struct {
+      options::ID Pos, Neg;
+      const char *Name;
     } FeatureOptions[] = {
       { options::OPT_mmmx, options::OPT_mno_mmx, "mmx" },
       { options::OPT_msse, options::OPT_mno_sse, "sse" },
@@ -202,7 +314,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       { options::OPT_m3dnow, options::OPT_mno_3dnow, "3dnow" },
       { options::OPT_m3dnowa, options::OPT_mno_3dnowa, "3dnowa" }
     };
-    const unsigned NumFeatureOptions = 
+    const unsigned NumFeatureOptions =
       sizeof(FeatureOptions)/sizeof(FeatureOptions[0]);
 
     // FIXME: Avoid std::string
@@ -226,8 +338,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
 
     if (Args.hasFlag(options::OPT_fmath_errno,
-                      options::OPT_fno_math_errno,
-                      getToolChain().IsMathErrnoDefault()))
+                     options::OPT_fno_math_errno,
+                     getToolChain().IsMathErrnoDefault()))
       CmdArgs.push_back("--fmath-errno=1");
     else
       CmdArgs.push_back("--fmath-errno=0");
@@ -236,77 +348,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("--limit-float-precision");
       CmdArgs.push_back(A->getValue(Args));
     }
-    
+
     // FIXME: Add --stack-protector-buffer-size=<xxx> on
     // -fstack-protect.
-
-    // Handle dependency file generation.
-    Arg *A;
-    if ((A = Args.getLastArg(options::OPT_M)) ||
-        (A = Args.getLastArg(options::OPT_MM)) ||
-        (A = Args.getLastArg(options::OPT_MD)) ||
-        (A = Args.getLastArg(options::OPT_MMD))) {
-      // Determine the output location.
-      const char *DepFile;
-      if (Output.getType() == types::TY_Dependencies) {
-        if (Output.isPipe())
-          DepFile = "-";
-        else
-          DepFile = Output.getFilename();
-      } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
-        DepFile = MF->getValue(Args);
-      } else if (A->getOption().getId() == options::OPT_M ||
-                 A->getOption().getId() == options::OPT_MM) {
-        DepFile = "-";
-      } else {
-        DepFile = darwin::CC1::getDependencyFileName(Args, Inputs);
-      }
-      CmdArgs.push_back("-dependency-file");
-      CmdArgs.push_back(DepFile);
-
-      // Add an -MT option if the user didn't specify their own.
-      // FIXME: This should use -MQ, when we support it.
-      if (!Args.hasArg(options::OPT_MT) && !Args.hasArg(options::OPT_MQ)) {
-        const char *DepTarget;
-
-        // If user provided -o, that is the dependency target, except
-        // when we are only generating a dependency file.
-        Arg *OutputOpt = Args.getLastArg(options::OPT_o);
-        if (OutputOpt && Output.getType() != types::TY_Dependencies) {
-          DepTarget = OutputOpt->getValue(Args); 
-        } else {
-          // Otherwise derive from the base input.
-          //
-          // FIXME: This should use the computed output file location.
-          llvm::sys::Path P(Inputs[0].getBaseInput());
-          
-          P.eraseSuffix();
-          P.appendSuffix("o");
-          DepTarget = Args.MakeArgString(P.getLast().c_str());
-        }
-
-        CmdArgs.push_back("-MT");
-        CmdArgs.push_back(DepTarget);
-      }
-
-      if (A->getOption().getId() == options::OPT_M ||
-          A->getOption().getId() == options::OPT_MD)
-        CmdArgs.push_back("-sys-header-deps");
-    }
-
-    Args.AddLastArg(CmdArgs, options::OPT_MP);
-    Args.AddAllArgs(CmdArgs, options::OPT_MT);
 
     Arg *Unsupported;
     if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
         (Unsupported = Args.getLastArg(options::OPT_MQ)))
-      D.Diag(clang::diag::err_drv_unsupported_opt) 
+      D.Diag(clang::diag::err_drv_unsupported_opt)
         << Unsupported->getOption().getName();
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
-  Args.AddAllArgs(CmdArgs, options::OPT_D, options::OPT_U);
-  Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
   Args.AddLastArg(CmdArgs, options::OPT_P);
   Args.AddLastArg(CmdArgs, options::OPT_mmacosx_version_min_EQ);
 
@@ -319,48 +372,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_isysroot);
 
-  // FIXME: Use iterator.
-
-  // Add -i* options, and automatically translate to -include-pth for
-  // transparent PCH support. It's wonky, but we include looking for
-  // .gch so we can support seamless replacement into a build system
-  // already set up to be generating .gch files.
-  for (ArgList::const_iterator 
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (!A->getOption().matches(options::OPT_clang_i_Group)) 
-      continue;
-
-    if (A->getOption().matches(options::OPT_include)) {
-      bool FoundPTH = false;
-      llvm::sys::Path P(A->getValue(Args));
-      P.appendSuffix("pth");
-      if (P.exists()) {
-        FoundPTH = true;
-      } else {
-        P.eraseSuffix();
-        P.appendSuffix("gch");
-        if (P.exists())
-          FoundPTH = true;
-      }
-
-      if (FoundPTH) {
-        A->claim();
-        CmdArgs.push_back("-include-pth");
-        CmdArgs.push_back(Args.MakeArgString(P.c_str()));
-        continue;
-      }
-    }
-
-    // Not translated, render as usual.
-    A->claim();
-    A->render(Args, CmdArgs);
-  }
+  // Add preprocessing options like -I, -D, etc. if we are using the
+  // preprocessor.
+  //
+  // FIXME: Support -fpreprocessed
+  types::ID InputType = Inputs[0].getType();
+  if (types::getPreprocessedType(InputType) != types::TY_INVALID)
+    AddPreprocessingOptions(Args, CmdArgs, Output, Inputs);
 
   // Manually translate -O to -O1 and -O4 to -O3; let clang reject
   // others.
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
-    if (A->getOption().getId() == options::OPT_O4) 
+    if (A->getOption().getId() == options::OPT_O4)
       CmdArgs.push_back("-O3");
     else if (A->getValue(Args)[0] == '\0')
       CmdArgs.push_back("-O1");
@@ -368,7 +391,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
-  Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group, 
+  Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group,
                   options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
 
@@ -388,7 +411,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         A->render(Args, CmdArgs);
   } else
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
-  
+
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");
     CmdArgs.push_back(A->getValue(Args));
@@ -437,7 +460,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: This is gross; that translation should be pulled from the
   // tool chain.
-  if (Args.hasFlag(options::OPT_fpascal_strings, 
+  if (Args.hasFlag(options::OPT_fpascal_strings,
                    options::OPT_fno_pascal_strings,
                    false) ||
       Args.hasFlag(options::OPT_mpascal_strings,
@@ -450,16 +473,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-common");
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
-
-  // Add -Wp, and -Xassembler if using the preprocessor.
-
-  // FIXME: There is a very unfortunate problem here, some troubled
-  // souls abuse -Wp, to pass preprocessor options in gcc syntax. To
-  // really support that we would have to parse and then translate
-  // those options. :(
-  if (types::getPreprocessedType(Inputs[0].getType()) != types::TY_INVALID)
-    Args.AddAllArgValues(CmdArgs, options::OPT_Wp_COMMA, 
-                         options::OPT_Xpreprocessor);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
 
@@ -487,20 +500,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       II.getInputArg().renderAsInput(Args, CmdArgs);
   }
-      
-  const char *Exec = 
+
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 
   // Explicitly warn that these options are unsupported, even though
   // we are allowing compilation to continue.
   // FIXME: Use iterator.
-  for (ArgList::const_iterator 
+  for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
     if (A->getOption().matches(options::OPT_pg)) {
       A->claim();
-      D.Diag(clang::diag::warn_drv_clang_unsupported) 
+      D.Diag(clang::diag::warn_drv_clang_unsupported)
         << A->getAsString(Args);
     }
   }
@@ -512,12 +525,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -completely transparent, so we do not need to deal with it at
   // -all.
   Args.ClaimAllArgs(options::OPT_fpch_preprocess);
-  
+
   // Claim some arguments which clang doesn't support, but we don't
   // care to warn the user about.
-  
+
   // FIXME: Use iterator.
-  for (ArgList::const_iterator 
+  for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
     if (A->getOption().matches(options::OPT_clang_ignored_W_Group) ||
@@ -535,7 +548,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
                                const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
-  for (ArgList::const_iterator 
+  for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
     if (A->getOption().hasForwardToGCC()) {
@@ -546,7 +559,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
     }
   }
-  
+
   RenderExtraToolArgs(CmdArgs);
 
   // If using a driver driver, force the arch.
@@ -599,9 +612,9 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       II.getInputArg().render(Args, CmdArgs);
   }
 
-  const char *GCCName = 
+  const char *GCCName =
     getToolChain().getHost().getDriver().CCCGenericGCCName.c_str();
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, GCCName).c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
@@ -646,13 +659,13 @@ const char *darwin::CC1::getCC1Name(types::ID Type) const {
   }
 }
 
-const char *darwin::CC1::getBaseInputName(const ArgList &Args, 
+const char *darwin::CC1::getBaseInputName(const ArgList &Args,
                                           const InputInfoList &Inputs) {
   llvm::sys::Path P(Inputs[0].getBaseInput());
   return Args.MakeArgString(P.getLast().c_str());
 }
 
-const char *darwin::CC1::getBaseInputStem(const ArgList &Args, 
+const char *darwin::CC1::getBaseInputStem(const ArgList &Args,
                                           const InputInfoList &Inputs) {
   const char *Str = getBaseInputName(Args, Inputs);
 
@@ -663,14 +676,14 @@ const char *darwin::CC1::getBaseInputStem(const ArgList &Args,
 }
 
 const char *
-darwin::CC1::getDependencyFileName(const ArgList &Args, 
+darwin::CC1::getDependencyFileName(const ArgList &Args,
                                    const InputInfoList &Inputs) {
   // FIXME: Think about this more.
   std::string Res;
 
   if (Arg *OutputOpt = Args.getLastArg(options::OPT_o)) {
     std::string Str(OutputOpt->getValue(Args));
-    
+
     Res = Str.substr(0, Str.rfind('.'));
   } else
     Res = darwin::CC1::getBaseInputStem(Args, Inputs);
@@ -678,7 +691,7 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
   return Args.MakeArgString((Res + ".d").c_str());
 }
 
-void darwin::CC1::AddCC1Args(const ArgList &Args, 
+void darwin::CC1::AddCC1Args(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   // Derived from cc1 spec.
 
@@ -699,7 +712,7 @@ void darwin::CC1::AddCC1Args(const ArgList &Args,
   // FIXME: Remove mlongcall
   // FIXME: Remove mcpu=G4
   // FIXME: Remove mcpu=G5
-  
+
   if (Args.hasArg(options::OPT_g_Flag) &&
       !Args.hasArg(options::OPT_fno_eliminate_unused_debug_symbols))
     CmdArgs.push_back("-feliminate-unused-debug-symbols");
@@ -715,7 +728,7 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
       Args.hasArg(options::OPT_fastf) ||
       Args.hasArg(options::OPT_fastcp))
     CmdArgs.push_back("-O3");
-      
+
   if (Arg *A = Args.getLastArg(options::OPT_pg))
     if (Args.hasArg(options::OPT_fomit_frame_pointer))
       D.Diag(clang::diag::err_drv_argument_not_allowed_with)
@@ -753,21 +766,21 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
   // FIXME: -Wall is getting some special treatment. Investigate.
   Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
-  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi, 
+  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi,
                   options::OPT_trigraphs);
   if (Args.hasArg(options::OPT_v))
     CmdArgs.push_back("-version");
   if (Args.hasArg(options::OPT_pg))
     CmdArgs.push_back("-p");
   Args.AddLastArg(CmdArgs, options::OPT_p);
-  
+
   // The driver treats -fsyntax-only specially.
   Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
-  
+
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
   if (Args.hasArg(options::OPT_Qn))
     CmdArgs.push_back("-fno-ident");
-   
+
   // FIXME: This isn't correct.
   //Args.AddLastArg(CmdArgs, options::OPT__help)
   //Args.AddLastArg(CmdArgs, options::OPT__targetHelp)
@@ -782,7 +795,7 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     CmdArgs.push_back("-fno-builtin");
     CmdArgs.push_back("-fno-merge-constants");
   }
-  
+
   if (Args.hasArg(options::OPT_coverage)) {
     CmdArgs.push_back("-fprofile-arcs");
     CmdArgs.push_back("-ftest-coverage");
@@ -797,7 +810,7 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
                                     const ArgStringList &OutputArgs) const {
   // Derived from cpp_options
   AddCPPUniqueOptionsArgs(Args, CmdArgs, Inputs);
-  
+
   CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
 
   AddCC1Args(Args, CmdArgs);
@@ -808,11 +821,11 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
   // compatibility.
 
   Args.AddAllArgs(CmdArgs, options::OPT_m_Group);
-  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi, 
+  Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi,
                   options::OPT_trigraphs);
   Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
-  
+
   // The driver treats -fsyntax-only specially.
   Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
 
@@ -826,7 +839,7 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     CmdArgs.push_back("-fpch-preprocess");
 }
 
-void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args, 
+void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
                                           ArgStringList &CmdArgs,
                                           const InputInfoList &Inputs) const
 {
@@ -834,7 +847,7 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
 
   // Derived from cpp_unique_options.
   Arg *A;
-  if ((A = Args.getLastArg(options::OPT_C)) || 
+  if ((A = Args.getLastArg(options::OPT_C)) ||
       (A = Args.getLastArg(options::OPT_CC))) {
     if (!Args.hasArg(options::OPT_E))
       D.Diag(clang::diag::err_drv_argument_only_allowed_with)
@@ -891,7 +904,7 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    
+
     if (II.isPipe())
       CmdArgs.push_back("-");
     else
@@ -915,14 +928,14 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
   }
 }
 
-void darwin::CC1::AddCPPArgs(const ArgList &Args, 
+void darwin::CC1::AddCPPArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   // Derived from cpp spec.
 
   if (Args.hasArg(options::OPT_static)) {
     // The gcc spec is broken here, it refers to dynamic but
     // that has been translated. Start by being bug compatible.
-            
+
     // if (!Args.hasArg(arglist.parser.dynamicOption))
     CmdArgs.push_back("-D__STATIC__");
   } else
@@ -933,9 +946,9 @@ void darwin::CC1::AddCPPArgs(const ArgList &Args,
 }
 
 void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
-                                      Job &Dest, const InputInfo &Output, 
-                                      const InputInfoList &Inputs, 
-                                      const ArgList &Args, 
+                                      Job &Dest, const InputInfo &Output,
+                                      const InputInfoList &Inputs,
+                                      const ArgList &Args,
                                       const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
@@ -947,7 +960,7 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
       Args.hasArg(options::OPT_ftraditional) ||
       Args.hasArg(options::OPT_traditional_cpp))
     CmdArgs.push_back("-traditional-cpp");
-  
+
   ArgStringList OutputArgs;
   if (Output.isFilename()) {
     OutputArgs.push_back("-o");
@@ -962,19 +975,19 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
     AddCPPOptionsArgs(Args, CmdArgs, Inputs, ArgStringList());
     CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
   }
-  
+
   Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
 
   const char *CC1Name = getCC1Name(Inputs[0].getType());
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name).c_str());
-  Dest.addCommand(new Command(Exec, CmdArgs));  
+  Dest.addCommand(new Command(Exec, CmdArgs));
 }
 
 void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
-                                   Job &Dest, const InputInfo &Output, 
-                                   const InputInfoList &Inputs, 
-                                   const ArgList &Args, 
+                                   Job &Dest, const InputInfo &Output,
+                                   const InputInfoList &Inputs,
+                                   const ArgList &Args,
                                    const char *LinkingOutput) const {
   const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
@@ -983,7 +996,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
 
   types::ID InputType = Inputs[0].getType();
   const Arg *A;
-  if ((A = Args.getLastArg(options::OPT_traditional)) || 
+  if ((A = Args.getLastArg(options::OPT_traditional)) ||
       (A = Args.getLastArg(options::OPT_ftraditional)))
     D.Diag(clang::diag::err_drv_argument_only_allowed_with)
       << A->getAsString(Args) << "-E";
@@ -1019,7 +1032,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     }
   } else {
     CmdArgs.push_back("-fpreprocessed");
-      
+
     // FIXME: There is a spec command to remove
     // -fpredictive-compilation args here. Investigate.
 
@@ -1040,7 +1053,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.append(OutputArgs.begin(), OutputArgs.end());
     }
   }
-  
+
   if (Output.getType() == types::TY_PCH) {
     assert(Output.isFilename() && "Invalid PCH output.");
 
@@ -1048,21 +1061,21 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     // NOTE: gcc uses a temp .s file for this, but there doesn't seem
     // to be a good reason.
     CmdArgs.push_back("/dev/null");
-      
+
     CmdArgs.push_back("--output-pch=");
     CmdArgs.push_back(Output.getFilename());
-  }      
+  }
 
   const char *CC1Name = getCC1Name(Inputs[0].getType());
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name).c_str());
-  Dest.addCommand(new Command(Exec, CmdArgs));  
+  Dest.addCommand(new Command(Exec, CmdArgs));
 }
 
 void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
-                                    Job &Dest, const InputInfo &Output, 
-                                    const InputInfoList &Inputs, 
-                                    const ArgList &Args, 
+                                    Job &Dest, const InputInfo &Output,
+                                    const InputInfoList &Inputs,
+                                    const ArgList &Args,
                                     const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
@@ -1070,7 +1083,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   const InputInfo &Input = Inputs[0];
 
   // Bit of a hack, this is only used for original inputs.
-  // 
+  //
   // FIXME: This is broken for preprocessed .s inputs.
   if (Input.isFilename() &&
       strcmp(Input.getFilename(), Input.getBaseInput()) == 0) {
@@ -1079,7 +1092,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     else if (Args.hasArg(options::OPT_g_Group))
       CmdArgs.push_back("--gdwarf2");
   }
-  
+
   // Derived from asm spec.
   CmdArgs.push_back("-arch");
   CmdArgs.push_back(getToolChain().getArchName().c_str());
@@ -1089,8 +1102,8 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
        Args.hasArg(options::OPT_static) ||
        Args.hasArg(options::OPT_fapple_kext)) &&
       !Args.hasArg(options::OPT_dynamic))
-      CmdArgs.push_back("-static");
-  
+    CmdArgs.push_back("-static");
+
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
                        options::OPT_Xassembler);
 
@@ -1107,7 +1120,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   // asm_final spec is empty.
 
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
@@ -1152,7 +1165,7 @@ static bool isMacosxVersionLT(unsigned (&A)[3], unsigned (&B)[3]) {
   return false;
 }
 
-static bool isMacosxVersionLT(unsigned (&A)[3], 
+static bool isMacosxVersionLT(unsigned (&A)[3],
                               unsigned V0, unsigned V1=0, unsigned V2=0) {
   unsigned B[3] = { V0, V1, V2 };
   return isMacosxVersionLT(A, B);
@@ -1162,21 +1175,21 @@ const toolchains::Darwin_X86 &darwin::Link::getDarwinToolChain() const {
   return reinterpret_cast<const toolchains::Darwin_X86&>(getToolChain());
 }
 
-void darwin::Link::AddDarwinArch(const ArgList &Args, 
+void darwin::Link::AddDarwinArch(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   // Derived from darwin_arch spec.
   CmdArgs.push_back("-arch");
   CmdArgs.push_back(getToolChain().getArchName().c_str());
 }
 
-void darwin::Link::AddDarwinSubArch(const ArgList &Args, 
+void darwin::Link::AddDarwinSubArch(const ArgList &Args,
                                     ArgStringList &CmdArgs) const {
   // Derived from darwin_subarch spec, not sure what the distinction
   // exists for but at least for this chain it is the same.
   AddDarwinArch(Args, CmdArgs);
 }
 
-void darwin::Link::AddLinkArgs(const ArgList &Args, 
+void darwin::Link::AddLinkArgs(const ArgList &Args,
                                ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getHost().getDriver();
 
@@ -1188,7 +1201,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
     // FIXME: gcc replaces -lobjc in forward args with -lobjc-gnu
     // here. How do we wish to handle such things?
   }
-    
+
   if (!Args.hasArg(options::OPT_dynamiclib)) {
     if (Args.hasArg(options::OPT_force__cpusubtype__ALL)) {
       AddDarwinArch(Args, CmdArgs);
@@ -1222,7 +1235,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
         (A = Args.getLastArg(options::OPT_private__bundle)))
       D.Diag(clang::diag::err_drv_argument_not_allowed_with)
         << A->getAsString(Args) << "-dynamiclib";
-    
+
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_compatibility__version,
                               "-dylib_compatibility_version");
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_current__version,
@@ -1230,7 +1243,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
 
     if (Args.hasArg(options::OPT_force__cpusubtype__ALL)) {
       AddDarwinArch(Args, CmdArgs);
-          // NOTE: We don't add -force_cpusubtype_ALL on this path. Ok.
+      // NOTE: We don't add -force_cpusubtype_ALL on this path. Ok.
     } else
       AddDarwinSubArch(Args, CmdArgs);
 
@@ -1253,13 +1266,13 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
 
   if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ)) {
     if (!Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
-        // FIXME: I don't understand what is going on here. This is
-        // supposed to come from darwin_ld_minversion, but gcc doesn't
-        // seem to be following that; it must be getting overridden
-        // somewhere.
-        CmdArgs.push_back("-macosx_version_min");
-        CmdArgs.push_back(getDarwinToolChain().getMacosxVersionStr());
-      }
+      // FIXME: I don't understand what is going on here. This is
+      // supposed to come from darwin_ld_minversion, but gcc doesn't
+      // seem to be following that; it must be getting overridden
+      // somewhere.
+      CmdArgs.push_back("-macosx_version_min");
+      CmdArgs.push_back(getDarwinToolChain().getMacosxVersionStr());
+    }
   } else {
     // Adding all arguments doesn't make sense here but this is what
     // gcc does.
@@ -1274,7 +1287,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddLastArg(CmdArgs, options::OPT_single__module);
   Args.AddAllArgs(CmdArgs, options::OPT_multiply__defined);
   Args.AddAllArgs(CmdArgs, options::OPT_multiply__defined__unused);
-  
+
   if (Args.hasArg(options::OPT_fpie))
     CmdArgs.push_back("-pie");
 
@@ -1325,9 +1338,9 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
 }
 
 void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
-                                Job &Dest, const InputInfo &Output, 
-                                const InputInfoList &Inputs, 
-                                const ArgList &Args, 
+                                Job &Dest, const InputInfo &Output,
+                                const InputInfoList &Inputs,
+                                const ArgList &Args,
                                 const char *LinkingOutput) const {
   assert(Output.getType() == types::TY_Image && "Invalid linker output type.");
   // The logic here is derived from gcc's behavior; most of which
@@ -1365,7 +1378,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   unsigned MacosxVersion[3];
   if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
     bool HadExtra;
-    if (!Driver::GetReleaseVersion(A->getValue(Args), MacosxVersion[0], 
+    if (!Driver::GetReleaseVersion(A->getValue(Args), MacosxVersion[0],
                                    MacosxVersion[1], MacosxVersion[2],
                                    HadExtra) ||
         HadExtra) {
@@ -1376,13 +1389,13 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   } else {
     getDarwinToolChain().getMacosxVersion(MacosxVersion);
   }
-    
+
   if (!Args.hasArg(options::OPT_A) &&
       !Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     // Derived from startfile spec.
     if (Args.hasArg(options::OPT_dynamiclib)) {
-        // Derived from darwin_dylib1 spec.
+      // Derived from darwin_dylib1 spec.
       if (isMacosxVersionLT(MacosxVersion, 10, 5))
         CmdArgs.push_back("-ldylib1.o");
       else if (isMacosxVersionLT(MacosxVersion, 10, 6))
@@ -1402,9 +1415,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
             CmdArgs.push_back("-lgcrt0.o");
           } else {
             CmdArgs.push_back("-lgcrt1.o");
-                
+
             // darwin_crt2 spec is empty.
-          } 
+          }
         } else {
           if (Args.hasArg(options::OPT_static) ||
               Args.hasArg(options::OPT_object) ||
@@ -1418,7 +1431,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
               CmdArgs.push_back("-lcrt1.10.5.o");
             else
               CmdArgs.push_back("-lcrt1.10.6.o");
-            
+
             // darwin_crt2 spec is empty.
           }
         }
@@ -1434,7 +1447,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
-  
+
   if (Args.hasArg(options::OPT_fopenmp))
     // This is more complicated in gcc...
     CmdArgs.push_back("-lgomp");
@@ -1443,29 +1456,29 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const char *TCDir = getDarwinToolChain().getToolChainDir().c_str();
   if (getToolChain().getArchName() == "x86_64") {
     CmdArgs.push_back(MakeFormattedString(Args,
-                              llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
+                                          llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
     // Intentionally duplicated for (temporary) gcc bug compatibility.
     CmdArgs.push_back(MakeFormattedString(Args,
-                              llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
+                                          llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
   }
-  CmdArgs.push_back(MakeFormattedString(Args, 
-                                        llvm::format("-L/usr/lib/%s", TCDir)));
-  CmdArgs.push_back(MakeFormattedString(Args, 
-                                     llvm::format("-L/usr/lib/gcc/%s", TCDir)));
-  // Intentionally duplicated for (temporary) gcc bug compatibility.
-  CmdArgs.push_back(MakeFormattedString(Args, 
-                                     llvm::format("-L/usr/lib/gcc/%s", TCDir)));
-  CmdArgs.push_back(MakeFormattedString(Args, 
-                  llvm::format("-L/usr/lib/gcc/%s/../../../%s", TCDir, TCDir)));
   CmdArgs.push_back(MakeFormattedString(Args,
-                            llvm::format("-L/usr/lib/gcc/%s/../../..", TCDir)));
-  
+                                        llvm::format("-L/usr/lib/%s", TCDir)));
+  CmdArgs.push_back(MakeFormattedString(Args,
+                                        llvm::format("-L/usr/lib/gcc/%s", TCDir)));
+  // Intentionally duplicated for (temporary) gcc bug compatibility.
+  CmdArgs.push_back(MakeFormattedString(Args,
+                                        llvm::format("-L/usr/lib/gcc/%s", TCDir)));
+  CmdArgs.push_back(MakeFormattedString(Args,
+                                        llvm::format("-L/usr/lib/gcc/%s/../../../%s", TCDir, TCDir)));
+  CmdArgs.push_back(MakeFormattedString(Args,
+                                        llvm::format("-L/usr/lib/gcc/%s/../../..", TCDir)));
+
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
     if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
-    else 
+    else
       II.getInputArg().renderAsInput(Args, CmdArgs);
   }
 
@@ -1480,10 +1493,10 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       Args.hasArg(options::OPT_fcreate_profile) ||
       Args.hasArg(options::OPT_coverage))
     CmdArgs.push_back("-lgcov");
-  
+
   if (Args.hasArg(options::OPT_fnested_functions))
     CmdArgs.push_back("-allow_stack_execute");
-  
+
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     // FIXME: g++ is more complicated here, it tries to put -lstdc++
@@ -1538,9 +1551,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_F);
 
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "collect2").c_str());
-  Dest.addCommand(new Command(Exec, CmdArgs));  
+  Dest.addCommand(new Command(Exec, CmdArgs));
 
   // Find the first non-empty base input (we want to ignore linker
   // inputs).
@@ -1551,7 +1564,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       break;
     }
   }
-  
+
   if (Args.getLastArg(options::OPT_g_Group) &&
       !Args.getLastArg(options::OPT_gstabs) &&
       !Args.getLastArg(options::OPT_g0)) {
@@ -1560,8 +1573,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // source input. Awesome.
     const char *Suffix = strrchr(BaseInput, '.');
     if (Suffix && isSourceSuffix(Suffix + 1)) {
-      const char *Exec = 
-       Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil").c_str());
+      const char *Exec =
+        Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil").c_str());
       ArgStringList CmdArgs;
       CmdArgs.push_back(Output.getFilename());
       C.getJobs().addCommand(new Command(Exec, CmdArgs));
@@ -1570,9 +1583,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 }
 
 void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
-                                Job &Dest, const InputInfo &Output, 
-                                const InputInfoList &Inputs, 
-                                const ArgList &Args, 
+                                Job &Dest, const InputInfo &Output,
+                                const InputInfoList &Inputs,
+                                const ArgList &Args,
                                 const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
@@ -1588,17 +1601,17 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
     assert(II.isFilename() && "Unexpected lipo input.");
     CmdArgs.push_back(II.getFilename());
   }
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "lipo").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
 
 
 void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
-                                    Job &Dest, const InputInfo &Output, 
-                                    const InputInfoList &Inputs, 
-                                    const ArgList &Args, 
-                                    const char *LinkingOutput) const
+                                     Job &Dest, const InputInfo &Output,
+                                     const InputInfoList &Inputs,
+                                     const ArgList &Args,
+                                     const char *LinkingOutput) const
 {
   ArgStringList CmdArgs;
 
@@ -1625,15 +1638,15 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(II.getFilename());
   }
 
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
 
 void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
-                                 Job &Dest, const InputInfo &Output, 
-                                 const InputInfoList &Inputs, 
-                                 const ArgList &Args, 
+                                 Job &Dest, const InputInfo &Output,
+                                 const InputInfoList &Inputs,
+                                 const ArgList &Args,
                                  const char *LinkingOutput) const
 {
   ArgStringList CmdArgs;
@@ -1684,7 +1697,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_e);
 
   for (InputInfoList::const_iterator
-       it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
     if (II.isPipe())
       CmdArgs.push_back("-");
@@ -1730,7 +1743,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o").c_str()));
   }
 
-  const char *Exec = 
+  const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 }
