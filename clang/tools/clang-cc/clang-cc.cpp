@@ -48,6 +48,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -966,6 +967,9 @@ U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
 static llvm::cl::list<std::string>
 ImplicitIncludes("include", llvm::cl::value_desc("file"),
                  llvm::cl::desc("Include file before parsing"));
+static llvm::cl::list<std::string>
+ImplicitMacroIncludes("imacros", llvm::cl::value_desc("file"),
+                      llvm::cl::desc("Include macros from file before parsing"));
 
 static llvm::cl::opt<std::string>
 ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
@@ -1012,9 +1016,18 @@ static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
   Buf.push_back('\n');
 }
 
+static void AddImplicitIncludeMacros(std::vector<char> &Buf,
+                                     const std::string &File) {
+  const char *Inc = "#__include_macros \"";
+  Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
+  Buf.insert(Buf.end(), File.begin(), File.end());
+  Buf.push_back('"');
+  Buf.push_back('\n');
+}
+
 /// AddImplicitIncludePTH - Add an implicit #include using the original file
 ///  used to generate a PTH cache.
-static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor & PP) {
+static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor &PP) {
   PTHManager *P = PP.getPTHManager();
   assert(P && "No PTHManager.");
   const char *OriginalFile = P->getOriginalSourceFile();
@@ -1083,19 +1096,41 @@ static bool InitializePreprocessor(Preprocessor &PP,
 
   // FIXME: Read any files specified by -imacros.
   
-  // Add implicit #includes from -include and -include-pth.
-  bool handledPTH = ImplicitIncludePTH.empty();
-  for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i) {
-    if (!handledPTH &&
-        ImplicitIncludePTH.getPosition() < ImplicitIncludes.getPosition(i)) {
-      AddImplicitIncludePTH(PredefineBuffer, PP);
-      handledPTH = true;
-    }    
-    
-    AddImplicitInclude(PredefineBuffer, ImplicitIncludes[i]);
+  if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty() ||
+      !ImplicitMacroIncludes.empty()) {
+    // We want to add these paths to the predefines buffer in order, make a temporary
+    // vector to sort by their occurrence.
+    llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
+
+    if (!ImplicitIncludePTH.empty())
+      OrderedPaths.push_back(std::make_pair(ImplicitIncludePTH.getPosition(),
+                                            &ImplicitIncludePTH));
+    for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
+      OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
+                                            &ImplicitIncludes[i]));
+    for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
+      OrderedPaths.push_back(std::make_pair(ImplicitMacroIncludes
+                                               .getPosition(i),
+                                            &ImplicitMacroIncludes[i]));
+    llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
+
+    // Now that they are ordered by position, add to the predefines buffer.
+    for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i) {
+      std::string *Ptr = OrderedPaths[i].second;
+      if (!ImplicitIncludes.empty() &&
+          Ptr >= &ImplicitIncludes[0] &&
+          Ptr <= &ImplicitIncludes[ImplicitIncludes.size()-1]) {
+        AddImplicitInclude(PredefineBuffer, *Ptr);
+      } else if (Ptr == &ImplicitIncludePTH) {
+        AddImplicitIncludePTH(PredefineBuffer, PP);
+      } else {
+        assert(Ptr >= &ImplicitMacroIncludes[0] &&
+               Ptr <= &ImplicitMacroIncludes[ImplicitMacroIncludes.size()-1] &&
+               "String must have been in -imacros?");
+        AddImplicitIncludeMacros(PredefineBuffer, *Ptr);
+      }
+    }
   }
-  if (!handledPTH && !ImplicitIncludePTH.empty())
-    AddImplicitIncludePTH(PredefineBuffer, PP);
   
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);

@@ -59,6 +59,7 @@ PPKEYWORD(defined)
 
 // C99 6.10.2 - Source File Inclusion.
 PPKEYWORD(include)
+PPKEYWORD(__include_macros)
 
 // C99 6.10.3 - Macro Replacement.
 PPKEYWORD(define)

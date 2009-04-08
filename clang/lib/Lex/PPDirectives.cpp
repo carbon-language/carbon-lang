@@ -528,8 +528,10 @@ TryAgain:
       
     // C99 6.10.2 - Source File Inclusion.
     case tok::pp_include:
-      return HandleIncludeDirective(Result);            // Handle #include.
-
+      return HandleIncludeDirective(Result);       // Handle #include.
+    case tok::pp___include_macros:
+      return HandleIncludeDirective(Result);       // Handle #__include_macros.
+        
     // C99 6.10.3 - Macro Replacement.
     case tok::pp_define:
       return HandleDefineDirective(Result);
