@@ -1481,6 +1481,11 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
+    // FIXME: g++ is more complicated here, it tries to put -lstdc++
+    // before -lm, for example.
+    if (getToolChain().getHost().getDriver().CCCIsCXX)
+      CmdArgs.push_back("-lstdc++");
+
     // link_ssp spec is empty.
 
     // Derived from libgcc and lib specs but refactored.
