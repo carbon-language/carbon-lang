@@ -609,7 +609,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
   // FIXME: Why is this using CurLoc???
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   SourceManager &SM = M->getContext().getSourceManager();
-  unsigned LineNo = SM.getInstantiationLineNumber(CurLoc);
+  unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
   
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(Unit, Name, Name, "", Unit, LineNo,
@@ -639,8 +639,8 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
 
   // Get the appropriate compile unit.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
-  DebugFactory.InsertStopPoint(Unit, SM.getInstantiationLineNumber(CurLoc),
-                               SM.getInstantiationColumnNumber(CurLoc),
+  PresumedLoc PLoc = SM.getPresumedLoc(CurLoc);
+  DebugFactory.InsertStopPoint(Unit, PLoc.getLine(), PLoc.getColumn(),
                                Builder.GetInsertBlock()); 
 }
 
