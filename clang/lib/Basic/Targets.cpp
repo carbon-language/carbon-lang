@@ -859,11 +859,25 @@ public:
 
 namespace {
 class ARMTargetInfo : public TargetInfo {
+  enum {
+    Armv4t,
+    Armv5,
+    Armv6,
+    XScale
+  } ArmArch;
 public:
   ARMTargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Are the defaults correct for ARM?
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
+    if (triple.find("arm-") || triple.find("armv6-"))
+      ArmArch = Armv6;
+    else if (triple.find("armv5-"))
+      ArmArch = Armv5;
+    else if (triple.find("armv4t-"))
+      ArmArch = Armv4t;
+    else if (triple.find("xscale-"))
+      ArmArch = XScale;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defs) const {
@@ -874,8 +888,22 @@ public:
     // Target properties.
     Define(Defs, "__LITTLE_ENDIAN__");
     
-    // Subtarget options.  [hard coded to v6 for now]
-    Define(Defs, "__ARM_ARCH_6K__");
+    // Subtarget options.
+    if (ArmArch == Armv6) {
+      Define(Defs, "__ARM_ARCH_6K__");
+      Define(Defs, "__THUMB_INTERWORK__");
+    } else if (ArmArch == Armv5) {
+      Define(Defs, "__ARM_ARCH_5TEJ__");
+      Define(Defs, "__THUMB_INTERWORK__");
+      Define(Defs, "__SOFTFP__");
+    } else if (ArmArch == Armv4t) {
+      Define(Defs, "__ARM_ARCH_4T__");
+      Define(Defs, "__SOFTFP__");
+    } else if (ArmArch == XScale) {
+      Define(Defs, "__ARM_ARCH_5TE__");
+      Define(Defs, "__XSCALE__");
+      Define(Defs, "__SOFTFP__");
+    }
     Define(Defs, "__ARMEL__");
     Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
   }
@@ -1141,7 +1169,9 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     return new PPC64TargetInfo(T);
   }
 
-  if (T.find("armv6-") == 0 || T.find("arm-") == 0) {
+  if (T.find("armv6-") == 0 || T.find("arm-") == 0
+      || T.find("armv4t") == 0 || T.find("armv5-") == 0
+      || T.find("xscale") == 0) {
     if (isDarwin)
       return new DarwinARMTargetInfo(T);
     if (isFreeBSD)
