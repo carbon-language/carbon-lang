@@ -33,16 +33,13 @@
 //
 // Because of this complex handling of options, the default parser is replaced.
 
+#include "clang-cc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/Support/CommandLine.h"
-#include <vector>
-#include <string>
 #include <utility>
 #include <algorithm>
-#include <string.h>
-
 using namespace clang;
 
 namespace {
@@ -117,9 +114,6 @@ namespace {
     const diag::kind *Members;
     size_t NumMembers;
   };
-  bool operator <(const WarningOption& lhs, const WarningOption& rhs) {
-    return strcmp(lhs.Name, rhs.Name) < 0;
-  }
 }
 #define DIAGS(a) a, (sizeof(a) / sizeof(a[0]))
 // These tables will be TableGenerated later.
@@ -143,6 +137,10 @@ static const diag::kind DeprecatedDeclarations[] = { diag::warn_deprecated };
 static const diag::kind MissingPrototypesDiags[] = { 
   diag::warn_missing_prototype 
 };
+static const diag::kind TrigraphsDiags[] = {
+  diag::trigraph_ignored, diag::trigraph_ignored_block_comment,
+  diag::trigraph_ends_block_comment, diag::trigraph_converted
+};
 
 // Hmm ... this option is currently actually completely ignored.
 //static const diag::kind StrictSelectorMatchDiags[] = {  };
@@ -155,6 +153,7 @@ static const WarningOption OptionTable[] = {
   { "missing-prototypes", DIAGS(MissingPrototypesDiags) },
   { "pointer-sign",          DIAGS(PointerSignDiags) },
   { "readonly-setter-attrs", DIAGS(ReadOnlySetterAttrsDiags) },
+  { "trigraphs",             DIAGS(TrigraphsDiags) },
   { "undef",                 DIAGS(UndefDiags) },
   { "unused-macros",         DIAGS(UnusedMacrosDiags) },
 //  { "strict-selector-match", DIAGS(StrictSelectorMatchDiags) }
@@ -162,9 +161,12 @@ static const WarningOption OptionTable[] = {
 static const size_t OptionTableSize =
   sizeof(OptionTable) / sizeof(OptionTable[0]);
 
-namespace clang {
+static bool WarningOptionCompare(const WarningOption &LHS,
+                                 const WarningOption &RHS) {
+  return strcmp(LHS.Name, RHS.Name) < 0;
+}
 
-bool ProcessWarningOptions(Diagnostic &Diags) {
+bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   // FIXME: These should be mapped to group options.
   Diags.setIgnoreAllWarnings(OptNoWarnings);
   Diags.setWarnOnExtensions(OptPedantic);
@@ -214,9 +216,9 @@ bool ProcessWarningOptions(Diagnostic &Diags) {
       continue;
     }
     WarningOption Key = { it->Name.c_str(), 0, 0 };
-    const WarningOption *Found = std::lower_bound(OptionTable,
-                                                  OptionTable + OptionTableSize,
-                                                  Key);
+    const WarningOption *Found =
+      std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
+                       WarningOptionCompare);
     if (Found == OptionTable + OptionTableSize ||
         strcmp(Found->Name, Key.Name) != 0) {
       fprintf(stderr, "Unknown warning option: -W%s\n", Key.Name);
@@ -224,11 +226,8 @@ bool ProcessWarningOptions(Diagnostic &Diags) {
     }
 
     // Option exists.
-    for (size_t i = 0; i < Found->NumMembers; ++i) {
+    for (size_t i = 0, e = Found->NumMembers; i != e; ++i)
       Diags.setDiagnosticMapping(Found->Members[i], it->Mapping);
-    }
   }
   return false;
-}
-
 }
