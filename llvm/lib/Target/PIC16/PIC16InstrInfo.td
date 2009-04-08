@@ -42,8 +42,12 @@ def SDT_PIC16Load : SDTypeProfile<1, 3, [SDTCisI8<0>, SDTCisI8<1>,
 def SDT_PIC16Store : SDTypeProfile<0, 4, [SDTCisI8<0>, SDTCisI8<1>, 
                                           SDTCisI8<2>, SDTCisI8<3>]>;
 
+def SDT_PIC16Connect : SDTypeProfile<1, 2, [SDTCisI8<0>, SDTCisI8<1>,
+                                            SDTCisI8<2>]>;
+
 // PIC16ISD::CALL type prorile
 def SDT_PIC16call : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
+def SDT_PIC16callw : SDTypeProfile<1, -1, [SDTCisInt<0>]>;
 
 // PIC16ISD::BRCOND
 def SDT_PIC16Brcond: SDTypeProfile<0, 2, 
@@ -79,8 +83,9 @@ def PIC16Hi : SDNode<"PIC16ISD::Hi", SDTI8UnaryOp>;
 // The MTHI and MTLO nodes are used only to match them in the incoming 
 // DAG for replacement by corresponding set_fsrhi, set_fsrlo insntructions.
 // These nodes are not used for defining any instructions.
-def MTLO : SDNode<"PIC16ISD::MTLO", SDTI8UnaryOp>;
-def MTHI : SDNode<"PIC16ISD::MTHI", SDTI8UnaryOp>;
+def MTLO     : SDNode<"PIC16ISD::MTLO", SDTI8UnaryOp>;
+def MTHI     : SDNode<"PIC16ISD::MTHI", SDTI8UnaryOp>;
+def MTPCLATH : SDNode<"PIC16ISD::MTPCLATH", SDTI8UnaryOp>;
 
 // Node to generate Bank Select for a GlobalAddress.
 def Banksel : SDNode<"PIC16ISD::Banksel", SDTI8UnaryOp>;
@@ -95,9 +100,12 @@ def PIC16Load  : SDNode<"PIC16ISD::PIC16Load", SDT_PIC16Load, [SDNPHasChain]>;
 def PIC16LdArg  : SDNode<"PIC16ISD::PIC16LdArg", SDT_PIC16Load, [SDNPHasChain]>;
 def PIC16LdWF  : SDNode<"PIC16ISD::PIC16LdWF", SDT_PIC16Load, 
                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+def PIC16Connect: SDNode<"PIC16ISD::PIC16Connect", SDT_PIC16Connect, []>;
 
 // Node to match PIC16 call
 def PIC16call : SDNode<"PIC16ISD::CALL", SDT_PIC16call,
+                              [SDNPHasChain , SDNPOptInFlag, SDNPOutFlag]>;
+def PIC16callw : SDNode<"PIC16ISD::CALLW", SDT_PIC16callw,
                               [SDNPHasChain , SDNPOptInFlag, SDNPOutFlag]>;
 
 // Node to match a comparison instruction.
@@ -212,6 +220,12 @@ def set_fsrhi:
              (ins FSR16:$src, GPR:$val),
              "movwf ${dst}H",
              []>;
+
+def set_pclath:
+  ByteFormat<0, (outs PCLATHR:$dst), 
+             (ins GPR:$val),
+             "movwf ${dst}",
+             [(set PCLATHR:$dst , (MTPCLATH GPR:$val))]>;
 
 //----------------------------
 // copyRegToReg 
@@ -392,8 +406,21 @@ def sublw_cc : SUBLW<0, PIC16Subcc>;
 // Call instruction.
 let isCall = 1 in {
     def CALL: LiteralFormat<0x1, (outs), (ins i8imm:$func),
-            "call ${func}",
+            "call ${func} + 2",
             [(PIC16call diraddr:$func)]>;
+}
+
+let isCall = 1 in {
+    def CALL_1: LiteralFormat<0x1, (outs), (ins GPR:$func, PCLATHR:$pc),
+            "callw",
+            [(PIC16call (PIC16Connect GPR:$func, PCLATHR:$pc))]>;
+}
+
+let isCall = 1  in {
+    def CALLW: LiteralFormat<0x1, (outs GPR:$dest), 
+                                  (ins GPR:$func, PCLATHR:$pc),
+            "callw",
+            [(set GPR:$dest, (PIC16callw (PIC16Connect GPR:$func, PCLATHR:$pc)))]>;
 }
 
 let Uses = [STATUS] in
@@ -429,7 +456,7 @@ def banksel :
 // Return insn.
 def Return : 
   ControlFormat<0, (outs), (ins), "return", [(ret)]>;
-                      
+
 //===----------------------------------------------------------------------===//
 // PIC16 Replacment Patterns.
 //===----------------------------------------------------------------------===//
@@ -441,8 +468,19 @@ def : Pat<(PIC16Store GPR:$val, (MTLO GPR:$loaddr), (MTHI GPR:$hiaddr),
            (set_fsrhi (set_fsrlo GPR:$loaddr), GPR:$hiaddr),
            imm:$offset)>;
 
+def : Pat<(PIC16StWF GPR:$val, (MTLO GPR:$loaddr), (MTHI GPR:$hiaddr), 
+           imm:$offset),
+          (store_indirect GPR:$val, 
+           (set_fsrhi (set_fsrlo GPR:$loaddr), GPR:$hiaddr),
+           imm:$offset)>;
+
 // Identify an indirect load and select insns for it.
 def : Pat<(PIC16Load (MTLO GPR:$loaddr), (MTHI GPR:$hiaddr), 
+           imm:$offset),
+          (load_indirect  (set_fsrhi (set_fsrlo GPR:$loaddr), GPR:$hiaddr),
+           imm:$offset)>;
+
+def : Pat<(PIC16LdWF (MTLO GPR:$loaddr), (MTHI GPR:$hiaddr), 
            imm:$offset),
           (load_indirect  (set_fsrhi (set_fsrlo GPR:$loaddr), GPR:$hiaddr),
            imm:$offset)>;

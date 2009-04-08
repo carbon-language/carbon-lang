@@ -255,6 +255,8 @@ const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PIC16ISD::Hi:               return "PIC16ISD::Hi";
   case PIC16ISD::MTLO:             return "PIC16ISD::MTLO";
   case PIC16ISD::MTHI:             return "PIC16ISD::MTHI";
+  case PIC16ISD::MTPCLATH:         return "PIC16ISD::MTPCLATH";
+  case PIC16ISD::PIC16Connect:     return "PIC16ISD::PIC16Connect";
   case PIC16ISD::Banksel:          return "PIC16ISD::Banksel";
   case PIC16ISD::PIC16Load:        return "PIC16ISD::PIC16Load";
   case PIC16ISD::PIC16LdArg:       return "PIC16ISD::PIC16LdArg";
@@ -267,6 +269,7 @@ const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PIC16ISD::RLF:              return "PIC16ISD::RLF";
   case PIC16ISD::RRF:              return "PIC16ISD::RRF";
   case PIC16ISD::CALL:             return "PIC16ISD::CALL";
+  case PIC16ISD::CALLW:            return "PIC16ISD::CALLW";
   case PIC16ISD::SUBCC:            return "PIC16ISD::SUBCC";
   case PIC16ISD::SELECT_ICC:       return "PIC16ISD::SELECT_ICC";
   case PIC16ISD::BRCOND:           return "PIC16ISD::BRCOND";
@@ -872,12 +875,44 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
     
   return Load.getValue(0);
 }
+
+SDValue PIC16TargetLowering::
+LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
+                           SDValue DataAddr_Lo, SDValue DataAddr_Hi,
+                           SelectionDAG &DAG) {
+  CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
+  unsigned NumOps = TheCall->getNumArgs();
+  DebugLoc dl = TheCall->getDebugLoc();
+
+  // If call has no arguments then do nothing and return.
+  if (NumOps == 0)
+    return Chain;
+
+  std::vector<SDValue> Ops;
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDValue Arg, StoreRet;
+  for (unsigned i=0; i<NumOps; i++) {
+    // Get the arguments
+    Arg = TheCall->getArg(i);
+    Ops.clear();
+    Ops.push_back(Chain);
+    Ops.push_back(Arg);
+    Ops.push_back(DataAddr_Lo);
+    Ops.push_back(DataAddr_Hi);
+    Ops.push_back(DAG.getConstant(i, MVT::i8));
+    Ops.push_back(InFlag);
+
+    StoreRet = DAG.getNode (PIC16ISD::PIC16StWF, dl, Tys, &Ops[0], Ops.size());
+
+    Chain = getChain(StoreRet);
+    InFlag = getOutFlag(StoreRet);
+  }
+  return Chain;
+}
           
-SDValue
-PIC16TargetLowering::LowerCallArguments(SDValue Op, SDValue Chain,
-                                        SDValue FrameAddress, 
-                                        SDValue InFlag,
-                                        SelectionDAG &DAG) {
+SDValue PIC16TargetLowering::
+LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue FrameAddress, 
+                         SDValue InFlag, SelectionDAG &DAG) {
   CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
   unsigned NumOps = TheCall->getNumArgs();
   DebugLoc dl = TheCall->getDebugLoc();
@@ -887,6 +922,9 @@ PIC16TargetLowering::LowerCallArguments(SDValue Op, SDValue Chain,
   unsigned Size=0;
   unsigned ArgCount=0;
 
+  // If call has no arguments then do nothing and return.
+  if (NumOps == 0)
+    return Chain; 
 
   // FIXME: This portion of code currently assumes only
   // primitive types being passed as arguments.
@@ -930,11 +968,40 @@ PIC16TargetLowering::LowerCallArguments(SDValue Op, SDValue Chain,
   return Chain;
 }
 
-SDValue
-PIC16TargetLowering::LowerCallReturn(SDValue Op, SDValue Chain,
-                                     SDValue FrameAddress,
-                                     SDValue InFlag,
-                                     SelectionDAG &DAG) {
+SDValue PIC16TargetLowering::
+LowerIndirectCallReturn (SDValue Op, SDValue Chain, SDValue InFlag,
+                         SDValue DataAddr_Lo, SDValue DataAddr_Hi,
+                         SelectionDAG &DAG) {
+  CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
+  DebugLoc dl = TheCall->getDebugLoc();
+  unsigned RetVals = TheCall->getNumRetVals();
+
+  // If call does not have anything to return
+  // then do nothing and go back.
+  if (RetVals == 0)
+    return Chain;
+
+  // Call has something to return
+  std::vector<SDValue> ResultVals;
+  SDValue LoadRet;
+
+  SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other, MVT::Flag);
+  for(unsigned i=0;i<RetVals;i++) {
+    LoadRet = DAG.getNode(PIC16ISD::PIC16LdWF, dl, Tys, Chain, DataAddr_Lo,
+                          DataAddr_Hi, DAG.getConstant(i, MVT::i8),
+                          InFlag);
+    InFlag = getOutFlag(LoadRet);
+    Chain = getChain(LoadRet);
+    ResultVals.push_back(LoadRet);
+  }
+  ResultVals.push_back(Chain);
+  SDValue Res = DAG.getMergeValues(&ResultVals[0], ResultVals.size(), dl);
+  return Res;
+}
+
+SDValue PIC16TargetLowering::
+LowerDirectCallReturn(SDValue Op, SDValue Chain, SDValue FrameAddress,
+                      SDValue InFlag, SelectionDAG &DAG) {
   CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
   DebugLoc dl = TheCall->getDebugLoc();
   // Currently handling primitive types only. They will come in
@@ -1014,46 +1081,147 @@ SDValue PIC16TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::RET, dl, MVT::Other, Chain);
 }
 
-SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
+// CALL node may have some operands non-legal to PIC16. Generate new CALL
+// node with all the operands legal.
+// Currently only Callee operand of the CALL node is non-legal. This function
+// legalizes the Callee operand and uses all other operands as are to generate
+// new CALL node.
+
+SDValue PIC16TargetLowering::LegalizeCALL(SDValue Op, SelectionDAG &DAG) {
     CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
     SDValue Chain = TheCall->getChain();
     SDValue Callee = TheCall->getCallee();
     DebugLoc dl = TheCall->getDebugLoc();
     unsigned i =0;
+
+    assert(Callee.getValueType() == MVT::i16 &&
+           "Don't know how to legalize this call node!!!");
+    assert(Callee.getOpcode() == ISD::BUILD_PAIR &&
+           "Don't know how to legalize this call node!!!");
+
+    if (isDirectAddress(Callee)) {
+       // Come here for direct calls
+       Callee = Callee.getOperand(0).getOperand(0);
+    } else {
+      // Come here for indirect calls
+      SDValue Lo, Hi;
+      // Indirect addresses. Get the hi and lo parts of ptr.
+      GetExpandedParts(Callee, DAG, Lo, Hi);
+      // Connect Lo and Hi parts of the callee with the PIC16Connect
+      Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Lo, Hi);
+    }
+    std::vector<SDValue> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+
+    // Add the call arguments and their flags
+    unsigned NumArgs = TheCall->getNumArgs();
+    for(i=0;i<NumArgs;i++) {
+       Ops.push_back(TheCall->getArg(i));
+       Ops.push_back(TheCall->getArgFlagsVal(i));
+    }
+    std::vector<MVT> NodeTys;
+    unsigned NumRets = TheCall->getNumRetVals();
+    for(i=0;i<NumRets;i++)
+       NodeTys.push_back(TheCall->getRetValType(i));
+
+   // Return a Chain as well
+   NodeTys.push_back(MVT::Other);
+   
+   SDVTList VTs = DAG.getVTList(&NodeTys[0], NodeTys.size());
+   // Generate new call with all the operands legal
+   return DAG.getCall(TheCall->getCallingConv(), dl,
+                      TheCall->isVarArg(), TheCall->isTailCall(),
+                      TheCall->isInreg(), VTs, &Ops[0], Ops.size());
+}
+
+void PIC16TargetLowering::
+GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain, 
+               SDValue &DataAddr_Lo, SDValue &DataAddr_Hi,
+               SelectionDAG &DAG) {
+   assert (Callee.getOpcode() == PIC16ISD::PIC16Connect
+           && "Don't know what to do of such callee!!");
+   SDValue ZeroOperand = DAG.getConstant(0, MVT::i8);
+   SDValue SeqStart  = DAG.getCALLSEQ_START(Chain, ZeroOperand);
+   Chain = getChain(SeqStart);
+   SDValue OperFlag = getOutFlag(SeqStart); // To manage the data dependency
+
+   // Get the Lo and Hi part of code address
+   SDValue Lo = Callee.getOperand(0);
+   SDValue Hi = Callee.getOperand(1);
+
+   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other, MVT::Flag);
+   Hi = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, Hi);
+   // Use the Lo part as is and make CALLW
+   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Lo, Hi);
+   SDValue Call = DAG.getNode(PIC16ISD::CALLW, dl, Tys, Chain, Callee,
+                              OperFlag);
+   Chain = getChain(Call);
+   OperFlag = getOutFlag(Call);
+   SDValue SeqEnd = DAG.getCALLSEQ_END(Chain, ZeroOperand, ZeroOperand,
+                                       OperFlag);
+   Chain = getChain(SeqEnd);
+   OperFlag = getOutFlag(SeqEnd);
+
+   // Low part of Data Address 
+   DataAddr_Lo = DAG.getNode(PIC16ISD::MTLO, dl, MVT::i8, Call, OperFlag);
+
+   // Make the second call.
+   SeqStart  = DAG.getCALLSEQ_START(Chain, ZeroOperand);
+   Chain = getChain(SeqStart);
+   OperFlag = getOutFlag(SeqStart); // To manage the data dependency
+
+   // Add 1 to Lo part for the second code word.
+   Lo = DAG.getNode(ISD::ADD, dl, MVT::i8, Lo, DAG.getConstant(1, MVT::i8));
+   // Use new Lo to make another CALLW
+   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Lo, Hi);
+   Call = DAG.getNode(PIC16ISD::CALLW, dl, Tys, Chain, Callee, OperFlag);
+   Chain = getChain(Call);
+   OperFlag = getOutFlag(Call);
+   SeqEnd = DAG.getCALLSEQ_END(Chain, ZeroOperand, ZeroOperand,
+                                        OperFlag);
+   Chain = getChain(SeqEnd);
+   OperFlag = getOutFlag(SeqEnd);
+   // Hi part of Data Address
+   DataAddr_Hi = DAG.getNode(PIC16ISD::MTHI, dl, MVT::i8, Call, OperFlag);
+}
+
+
+SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
+    CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
+    SDValue Chain = TheCall->getChain();
+    SDValue Callee = TheCall->getCallee();
+    DebugLoc dl = TheCall->getDebugLoc();
     if (Callee.getValueType() == MVT::i16 &&
       Callee.getOpcode() == ISD::BUILD_PAIR) {
-      // It has come from TypeLegalizer for lowering
-
-      Callee = Callee.getOperand(0).getOperand(0);
-
-      std::vector<SDValue> Ops;
-      Ops.push_back(Chain);
-      Ops.push_back(Callee);
-
-      // Add the call arguments and their flags
-      unsigned NumArgs = TheCall->getNumArgs();
-      for(i=0;i<NumArgs;i++) { 
-        Ops.push_back(TheCall->getArg(i));
-        Ops.push_back(TheCall->getArgFlagsVal(i));
-      }
-
-      std::vector<MVT> NodeTys;
-      unsigned NumRets = TheCall->getNumRetVals();
-      for(i=0;i<NumRets;i++)
-        NodeTys.push_back(TheCall->getRetValType(i));
-
-      // Return a Chain as well
-      NodeTys.push_back(MVT::Other);
-
-      SDVTList VTs = DAG.getVTList(&NodeTys[0], NodeTys.size());
-      SDValue NewCall = 
-              DAG.getCall(TheCall->getCallingConv(), dl,
-                          TheCall->isVarArg(), TheCall->isTailCall(), 
-                          TheCall->isInreg(), VTs, &Ops[0], Ops.size());
-
-      return NewCall;
+          // Control should come here only from TypeLegalizer for lowering
+          
+          // Legalize the non-legal arguments of call and return the
+          // new call with legal arguments.
+          return LegalizeCALL(Op, DAG);
     }
+    // Control should come here from Legalize DAG.
+    // Here all the operands of CALL node should be legal.
     
+    // If this is an indirect call then to pass the arguments
+    // and read the return value back, we need the data address
+    // of the function being called. 
+    // To get the data address two more calls need to be made.
+
+    // The flag to track if this is a direct or indirect call.
+    bool IsDirectCall = true;    
+    unsigned RetVals = TheCall->getNumRetVals();
+    unsigned NumArgs = TheCall->getNumArgs();
+
+    SDValue DataAddr_Lo, DataAddr_Hi; 
+    if (Callee.getOpcode() == PIC16ISD::PIC16Connect) { 
+       IsDirectCall = false;    // This is indirect call
+       // Read DataAddress only if we have to pass arguments or 
+       // read return value. 
+       if ((RetVals > 0) || (NumArgs > 0)) 
+         GetDataAddress(dl, Callee, Chain, DataAddr_Lo, DataAddr_Hi, DAG);
+    }
+
     SDValue ZeroOperand = DAG.getConstant(0, MVT::i8);
 
     // Start the call sequence.
@@ -1061,45 +1229,59 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     // because there is nothing else to carry.
     SDValue SeqStart  = DAG.getCALLSEQ_START(Chain, ZeroOperand);
     Chain = getChain(SeqStart);
+    SDValue OperFlag = getOutFlag(SeqStart); // To manage the data dependency
+    std::string Name;
 
     // For any direct call - callee will be GlobalAddressNode or
     // ExternalSymbol
+    SDValue ArgLabel, RetLabel;
+    if (IsDirectCall) { 
+       // Considering the GlobalAddressNode case here.
+       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+          GlobalValue *GV = G->getGlobal();
+          Callee = DAG.getTargetGlobalAddress(GV, MVT::i8);
+          Name = G->getGlobal()->getName();
+       } else {// Considering the ExternalSymbol case here
+          ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Callee);
+          Callee = DAG.getTargetExternalSymbol(ES->getSymbol(), MVT::i8); 
+          Name = ES->getSymbol();
+       }
 
-    // Considering the GlobalAddressNode case here.
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-      GlobalValue *GV = G->getGlobal();
-      Callee = DAG.getTargetGlobalAddress(GV, MVT::i8);
-    }
+       // Label for argument passing
+       char *argFrame = new char [strlen(Name.c_str()) +  8];
+       sprintf(argFrame, "%s.args", Name.c_str());
+       ArgLabel = DAG.getTargetExternalSymbol(argFrame, MVT::i8);
 
-    // Considering the ExternalSymbol case here
-    if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-      Callee = DAG.getTargetExternalSymbol(ES->getSymbol(), MVT::i8); 
-    }
+       // Label for reading return value
+       char *retName = new char [strlen(Name.c_str()) +  8];
+       sprintf(retName, "%s.retval", Name.c_str());
+       RetLabel = DAG.getTargetExternalSymbol(retName, MVT::i8);
+    } else {
+       // if indirect call
+       SDValue CodeAddr_Lo = Callee.getOperand(0);
+       SDValue CodeAddr_Hi = Callee.getOperand(1);
 
-    SDValue OperFlag = getOutFlag(Chain); // To manage the data dependency
+       CodeAddr_Lo = DAG.getNode(ISD::ADD, dl, MVT::i8, CodeAddr_Lo,
+                                 DAG.getConstant(2, MVT::i8));
 
-    std::string Name;
-
-    // Considering GlobalAddress here
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-       Name = G->getGlobal()->getName();
-
-    // Considering ExternalSymbol here
-    if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Callee))
-       Name = ES->getSymbol();
-
-    char *argFrame = new char [strlen(Name.c_str()) +  8];
-    sprintf(argFrame, "%s.args", Name.c_str());
-    SDValue ArgLabel = DAG.getTargetExternalSymbol(argFrame, MVT::i8);
-
-    char *retName = new char [strlen(Name.c_str()) +  8];
-    sprintf(retName, "%s.retval", Name.c_str());
-    SDValue RetLabel = DAG.getTargetExternalSymbol(retName, MVT::i8);
+       // move Hi part in PCLATH
+       CodeAddr_Hi = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, CodeAddr_Hi);
+       Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, CodeAddr_Lo,
+                            CodeAddr_Hi);
+    } 
 
     // Pass the argument to function before making the call.
-    SDValue CallArgs = LowerCallArguments(Op, Chain, ArgLabel, OperFlag, DAG);
-    Chain = getChain(CallArgs);
-    OperFlag = getOutFlag(CallArgs);
+    SDValue CallArgs;
+    if (IsDirectCall) {
+      CallArgs = LowerDirectCallArguments(Op, Chain, ArgLabel, OperFlag, DAG);
+      Chain = getChain(CallArgs);
+      OperFlag = getOutFlag(CallArgs);
+    } else {
+      CallArgs = LowerIndirectCallArguments(Op, Chain, OperFlag, DataAddr_Lo, 
+                                            DataAddr_Hi, DAG);
+      Chain = getChain(CallArgs);
+      OperFlag = getOutFlag(CallArgs);
+    }
 
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     SDValue PICCall = DAG.getNode(PIC16ISD::CALL, dl, Tys, Chain, Callee,
@@ -1116,7 +1298,11 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     OperFlag = getOutFlag(SeqEnd);
 
     // Lower the return value reading after the call.
-    return LowerCallReturn(Op, Chain, RetLabel, OperFlag, DAG);
+    if (IsDirectCall)
+      return LowerDirectCallReturn(Op, Chain, RetLabel, OperFlag, DAG);
+    else
+      return LowerIndirectCallReturn(Op, Chain, OperFlag, DataAddr_Lo,
+                                     DataAddr_Hi, DAG);
 }
 
 bool PIC16TargetLowering::isDirectLoad(const SDValue Op) {

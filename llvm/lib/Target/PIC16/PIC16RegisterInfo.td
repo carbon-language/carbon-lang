@@ -20,13 +20,14 @@ def W   : PIC16Reg<"W">;
 def FSR0   : PIC16Reg<"FSR0">;
 def FSR1   : PIC16Reg<"FSR1">;
 def BS     : PIC16Reg<"BS">;
+def PCLATH : PIC16Reg<"PCLATH">;
 
 def STATUS : PIC16Reg<"STATUS">;
 
 // PIC16 Register classes.
-def GPR    : RegisterClass<"PIC16", [i8], 8, [W]>;
-def FSR16  : RegisterClass<"PIC16", [i16], 8, [FSR0, FSR1]>;
-def BSR  : RegisterClass<"PIC16", [i8], 8, [BS]>;
-
-def STATUSR: RegisterClass<"PIC16", [i8], 8, [STATUS]>;
+def GPR     : RegisterClass<"PIC16", [i8],  8, [W]>;
+def FSR16   : RegisterClass<"PIC16", [i16], 8, [FSR0, FSR1]>;
+def BSR     : RegisterClass<"PIC16", [i8],  8, [BS]>;
+def PCLATHR : RegisterClass<"PIC16", [i8],  8, [PCLATH]>;
+def STATUSR : RegisterClass<"PIC16", [i8],  8, [STATUS]>;
 

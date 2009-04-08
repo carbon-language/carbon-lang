@@ -113,6 +113,10 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                                                SectionFlags::Code);
   O <<  "\n";
   SwitchToSection (fCodeSection);
+  O << CurrentFnName << ":\n";
+  O << "    retlw  low(" << CurrentFnName << ".frame)\n";
+  O << "    retlw  high(" << CurrentFnName << ".frame)\n"; 
+
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -122,8 +126,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }
-    else
-      O << CurrentFnName << ":\n";
     CurBank = "";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
