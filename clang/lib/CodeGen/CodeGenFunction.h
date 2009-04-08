@@ -798,6 +798,17 @@ private:
   /// current cleanup scope.
   void AddBranchFixup(llvm::BranchInst *BI);
 
+  /// EmitCallArg - Emit a single call argument.
+  RValue EmitCallArg(const Expr *E, QualType ArgType);
+  
+  /// EmitCallArgs - Emit call arguments for a function.
+  /// FIXME: It should be possible to generalize this and pass a generic
+  /// "argument type container" type instead of the FunctionProtoType. This way
+  /// it can work on Objective-C methods as well.
+  void EmitCallArgs(CallArgList& args, const FunctionProtoType *FPT,
+                    CallExpr::const_arg_iterator ArgBeg,
+                    CallExpr::const_arg_iterator ArgEnd);
+
 };
 }  // end namespace CodeGen
 }  // end namespace clang
