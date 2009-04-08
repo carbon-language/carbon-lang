@@ -127,8 +127,7 @@ enum MiscFlags {               // Miscellaneous flags to adjust argument
   CommaSeparated     = 0x200,  // Should this cl::list split between commas?
   PositionalEatsArgs = 0x400,  // Should this positional cl::list eat -args?
   Sink               = 0x800,  // Should this cl::list eat all unknown options?
-  AllowInverse	     = 0x1000, // Can this option take a -Xno- form?
-  MiscMask           = 0x1E00  // Union of the above flags.
+  MiscMask           = 0xE00   // Union of the above flags.
 };
 
 
@@ -538,17 +537,14 @@ struct basic_parser : public basic_parser_impl {
 //
 template<>
 class parser<bool> : public basic_parser<bool> {
-  bool IsInvertible;	// Should we synthesize a -xno- style option?
   const char *ArgStr;
 public:
-  void getExtraOptionNames(std::vector<const char*> &OptionNames);
   
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
 
   template <class Opt>
   void initialize(Opt &O) {
-    IsInvertible = (O.getMiscFlags() & llvm::cl::AllowInverse);
     ArgStr = O.ArgStr;
   }
 
