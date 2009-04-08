@@ -71,9 +71,6 @@ def PIC16callseq_start : SDNode<"ISD::CALLSEQ_START", SDTI8VoidOp,
 def PIC16callseq_end   : SDNode<"ISD::CALLSEQ_END", SDTI8VoidOp, 
                                 [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def PIC16StopPoint : SDNode<"PIC16ISD::PIC16StopPoint", SDTI8VoidOp,
-                             [SDNPHasChain]>;
-
 // Low 8-bits of GlobalAddress.
 def PIC16Lo : SDNode<"PIC16ISD::Lo", SDTI8UnaryOp>;  
 
@@ -170,10 +167,6 @@ class BinOpLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
 //===----------------------------------------------------------------------===//
 // PIC16 Instructions.
 //===----------------------------------------------------------------------===//
-
-def line_directive : ByteFormat<0, (outs), (ins i8imm:$src),
-                               ".line $src",
-                               [(PIC16StopPoint (i8 imm:$src))]>;
 
 // Pseudo-instructions.
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i8imm:$amt),

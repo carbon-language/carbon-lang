@@ -113,6 +113,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                                                SectionFlags::Code);
   O <<  "\n";
   SwitchToSection (fCodeSection);
+
+  // Emit the frame address of the function at the beginning of code.
   O << CurrentFnName << ":\n";
   O << "    retlw  low(" << CurrentFnName << ".frame)\n";
   O << "    retlw  high(" << CurrentFnName << ".frame)\n"; 
@@ -127,10 +129,23 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << '\n';
     }
     CurBank = "";
+    
+    // For emitting line directives, we need to keep track of the current
+    // source line. When it changes then only emit the line directive.
+    unsigned CurLine = 0;
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
+      // Emit the line directive if source line changed.
+      const DebugLoc DL = II->getDebugLoc();
+      if (!DL.isUnknown()) {
+        unsigned line = MF.getDebugLocTuple(DL).Line;
+        if (line != CurLine) {
+          O << "\t.line " << line << "\n";
+          CurLine = line;
+        }
+      }
       // Print the assembly for the instruction.
-        printMachineInstruction(II);
+      printMachineInstruction(II);
     }
   }
   return false;  // we didn't modify anything.

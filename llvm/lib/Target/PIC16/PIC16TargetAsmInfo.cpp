@@ -35,6 +35,9 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   ReadOnlySection = getNamedSection("romdata.# ROMDATA", SectionFlags::None);
   DataSection = getNamedSection("idata.# IDATA", SectionFlags::Writeable);
   SwitchToSectionDirective = "";
+  // Need because otherwise a .text symbol is emitted by DwarfWriter
+  // in BeginModule, and gpasm cribbs for that .text symbol.
+  TextSection = getUnnamedSection("", SectionFlags::Code);
 }
 
 const char *PIC16TargetAsmInfo::getRomDirective(unsigned size) const
