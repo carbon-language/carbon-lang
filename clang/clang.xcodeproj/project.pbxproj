@@ -648,6 +648,23 @@
 		DEF161610F65C81C0098507F /* PathDiagnosticClients.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathDiagnosticClients.h; path = clang/Frontend/PathDiagnosticClients.h; sourceTree = "<group>"; };
 		DEF161620F65C81C0098507F /* CompileOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompileOptions.h; path = clang/Frontend/CompileOptions.h; sourceTree = "<group>"; };
 		DEF161630F65C81C0098507F /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = clang/Frontend/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
+		DEF165140F8D46980098507F /* Tool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tool.h; path = clang/Driver/Tool.h; sourceTree = "<group>"; };
+		DEF165150F8D46980098507F /* Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Types.h; path = clang/Driver/Types.h; sourceTree = "<group>"; };
+		DEF165160F8D46980098507F /* Action.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Action.h; path = clang/Driver/Action.h; sourceTree = "<group>"; };
+		DEF165170F8D46980098507F /* Compilation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Compilation.h; path = clang/Driver/Compilation.h; sourceTree = "<group>"; };
+		DEF165180F8D46980098507F /* Options.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Options.def; path = clang/Driver/Options.def; sourceTree = "<group>"; };
+		DEF165190F8D46980098507F /* Option.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Option.h; path = clang/Driver/Option.h; sourceTree = "<group>"; };
+		DEF1651A0F8D46980098507F /* Types.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Types.def; path = clang/Driver/Types.def; sourceTree = "<group>"; };
+		DEF1651B0F8D46980098507F /* ToolChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ToolChain.h; path = clang/Driver/ToolChain.h; sourceTree = "<group>"; };
+		DEF1651C0F8D46980098507F /* Options.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Options.h; path = clang/Driver/Options.h; sourceTree = "<group>"; };
+		DEF1651D0F8D46980098507F /* ArgList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArgList.h; path = clang/Driver/ArgList.h; sourceTree = "<group>"; };
+		DEF1651E0F8D46980098507F /* Arg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Arg.h; path = clang/Driver/Arg.h; sourceTree = "<group>"; };
+		DEF1651F0F8D46980098507F /* HostInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostInfo.h; path = clang/Driver/HostInfo.h; sourceTree = "<group>"; };
+		DEF165200F8D46980098507F /* Driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Driver.h; path = clang/Driver/Driver.h; sourceTree = "<group>"; };
+		DEF165210F8D46980098507F /* Job.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Job.h; path = clang/Driver/Job.h; sourceTree = "<group>"; };
+		DEF165220F8D46980098507F /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Util.h; path = clang/Driver/Util.h; sourceTree = "<group>"; };
+		DEF165230F8D46980098507F /* Phases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Phases.h; path = clang/Driver/Phases.h; sourceTree = "<group>"; };
+		DEF165240F8D46980098507F /* DriverDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DriverDiagnostic.h; path = clang/Driver/DriverDiagnostic.h; sourceTree = "<group>"; };
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = lib/AST/StmtDumper.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprAgg.cpp; path = lib/CodeGen/CGExprAgg.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1129,6 +1146,7 @@
 				356EF9AF0C8F7DA4006650F5 /* Analysis */,
 				DEF7D9F40C9C8B020001F598 /* Rewrite */,
 				DEF1615D0F65C7FC0098507F /* Frontend */,
+				DEF165020F8D46810098507F /* Driver */,
 			);
 			path = include;
 			sourceTree = "<group>";
@@ -1313,6 +1331,30 @@
 				DEF161630F65C81C0098507F /* TextDiagnosticPrinter.h */,
 			);
 			name = Frontend;
+			sourceTree = "<group>";
+		};
+		DEF165020F8D46810098507F /* Driver */ = {
+			isa = PBXGroup;
+			children = (
+				DEF165140F8D46980098507F /* Tool.h */,
+				DEF165150F8D46980098507F /* Types.h */,
+				DEF165160F8D46980098507F /* Action.h */,
+				DEF165170F8D46980098507F /* Compilation.h */,
+				DEF165180F8D46980098507F /* Options.def */,
+				DEF165190F8D46980098507F /* Option.h */,
+				DEF1651A0F8D46980098507F /* Types.def */,
+				DEF1651B0F8D46980098507F /* ToolChain.h */,
+				DEF1651C0F8D46980098507F /* Options.h */,
+				DEF1651D0F8D46980098507F /* ArgList.h */,
+				DEF1651E0F8D46980098507F /* Arg.h */,
+				DEF1651F0F8D46980098507F /* HostInfo.h */,
+				DEF165200F8D46980098507F /* Driver.h */,
+				DEF165210F8D46980098507F /* Job.h */,
+				DEF165220F8D46980098507F /* Util.h */,
+				DEF165230F8D46980098507F /* Phases.h */,
+				DEF165240F8D46980098507F /* DriverDiagnostic.h */,
+			);
+			name = Driver;
 			sourceTree = "<group>";
 		};
 		DEF7D9F40C9C8B020001F598 /* Rewrite */ = {
