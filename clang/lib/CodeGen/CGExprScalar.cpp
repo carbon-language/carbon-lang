@@ -854,6 +854,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
     break;
   default:
     assert(false && "Unsupported operation for overflow detection");
+    IID = 0;
   }
   OpID <<= 1;
   OpID |= 1;
