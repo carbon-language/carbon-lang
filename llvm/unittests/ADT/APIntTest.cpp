@@ -39,11 +39,11 @@ TEST(APIntTest, ShiftLeftByZero) {
 }
 
 TEST(APIntTest, i128_NegativeCount) {
-  APInt Minus3(128, (uint64_t)-3, true);
+  APInt Minus3(128, static_cast<uint64_t>(-3), true);
   EXPECT_EQ(126u, Minus3.countLeadingOnes());
   EXPECT_EQ(-3, Minus3.getSExtValue());
 
-  APInt Minus1(128, (uint64_t)-1, true);
+  APInt Minus1(128, static_cast<uint64_t>(-1), true);
   EXPECT_EQ(0u, Minus1.countLeadingZeros());
   EXPECT_EQ(128u, Minus1.countLeadingOnes());
   EXPECT_EQ(128u, Minus1.getActiveBits());
@@ -54,7 +54,7 @@ TEST(APIntTest, i128_NegativeCount) {
 }
 
 TEST(APIntTest, i33_Count) {
-  APInt i33minus2(33, -2, true);
+  APInt i33minus2(33, static_cast<uint64_t>(-2), true);
   EXPECT_EQ(0u, i33minus2.countLeadingZeros());
   EXPECT_EQ(32u, i33minus2.countLeadingOnes());
   EXPECT_EQ(33u, i33minus2.getActiveBits());
@@ -83,7 +83,7 @@ TEST(APIntTest, i128_PositiveCount) {
   EXPECT_EQ(128u, u128max.countTrailingOnes());
   EXPECT_EQ(128u, u128max.countPopulation());
 
-  APInt u64max(128, (uint64_t)-1, false);
+  APInt u64max(128, static_cast<uint64_t>(-1), false);
   EXPECT_EQ(64u, u64max.countLeadingZeros());
   EXPECT_EQ(0u, u64max.countLeadingOnes());
   EXPECT_EQ(64u, u64max.getActiveBits());
@@ -114,8 +114,8 @@ TEST(APIntTest, i128_PositiveCount) {
 }
 
 TEST(APIntTest, i1) {
-  const APInt neg_two(1, -2, true);
-  const APInt neg_one(1, -1, true);
+  const APInt neg_two(1, static_cast<uint64_t>(-2), true);
+  const APInt neg_one(1, static_cast<uint64_t>(-1), true);
   const APInt zero(1, 0);
   const APInt one(1, 1);
   const APInt two(1, 2);
