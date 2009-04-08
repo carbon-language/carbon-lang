@@ -799,8 +799,11 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   QualType IdxTy  = E->getIdx()->getType();
   bool IdxSigned = IdxTy->isSignedIntegerType();
   unsigned IdxBitwidth = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-  if (IdxBitwidth != LLVMPointerWidth)
-    Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(LLVMPointerWidth),
+  
+  // If Pointer width is less than 32 than extend to 32.
+  unsigned IdxValidWidth = (LLVMPointerWidth < 32 ) ? 32 : LLVMPointerWidth;
+  if (IdxBitwidth != IdxValidWidth)
+    Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(IdxValidWidth),
                                 IdxSigned, "idxprom");
 
   // We know that the pointer points to a type of the correct size, unless the

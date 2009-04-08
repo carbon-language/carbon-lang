@@ -944,10 +944,14 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   }
 
   unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-  if (Width < CGF.LLVMPointerWidth) {
+  // Only 32 and 64 are valid index widths. So if a target has shorter 
+  // pointe width, extend to 32 at least.
+  unsigned IdxValidWidth 
+    = (CGF.LLVMPointerWidth < 32) ? 32 : CGF.LLVMPointerWidth;
+  if (Width < IdxValidWidth) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
-    const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+    const llvm::Type *IdxType = llvm::IntegerType::get(IdxValidWidth);
     if (IdxExp->getType()->isSignedIntegerType())
       Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
     else
@@ -990,10 +994,12 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // pointer - int
     Value *Idx = Ops.RHS;
     unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-    if (Width < CGF.LLVMPointerWidth) {
+    unsigned IdxValidWidth 
+      = (CGF.LLVMPointerWidth < 32) ? 32 : CGF.LLVMPointerWidth;
+    if (Width < IdxValidWidth) {
       // Zero or sign extend the pointer value based on whether the index is
       // signed or not.
-      const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+      const llvm::Type *IdxType = llvm::IntegerType::get(IdxValidWidth);
       if (Ops.E->getRHS()->getType()->isSignedIntegerType())
         Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
       else
