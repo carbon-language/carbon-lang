@@ -2,10 +2,7 @@
 
 #include <stddef.h>
 
-typedef struct objc_class *Class;
-typedef struct objc_object {
-    Class isa;
-} *id;
+typedef struct objc_object *id;
 id objc_getClass(const char *s);
 
 @interface Object 
@@ -42,17 +39,17 @@ id objc_getClass(const char *s);
 + (int) class_func2
 {
    int i = [(id <Func>)self class_func0];
-   i += [(id <Func>)super class_func0];    // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
+   i += [(id <Func>)super class_func0];    // expected-error {{cannot cast 'super' (it isn't an expression)}}
    i += [(Class <Func>)self class_func0];  // expected-error {{protocol qualified 'Class' is unsupported}}
-   return i + [(Class <Func>)super class_func0]; // expected-error {{protocol qualified 'Class' is unsupported}} // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
+   return i + [(Class <Func>)super class_func0]; // expected-error {{protocol qualified 'Class' is unsupported}} // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }
 + (int) class_func3
 {
-   return [(Object <Func> *)super class_func0];  // expected-warning {{casting 'super' is deprecated (it isn't an expression)}} // expected-warning {{method '-class_func0' not found (return type defaults to 'id')}} // expected-warning {{incompatible pointer to integer conversion returning 'id', expected 'int'}}
+   return [(Object <Func> *)super class_func0];  // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }
 + (int) class_func4
 {
-   return [(Derived <Func> *)super class_func0]; // expected-warning {{casting 'super' is deprecated (it isn't an expression)}} // expected-warning {{method '-class_func0' not found (return type defaults to 'id')}} // expected-warning {{incompatible pointer to integer conversion returning 'id', expected 'int'}}
+   return [(Derived <Func> *)super class_func0]; // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }   
 + (int) class_func5
 {
@@ -74,15 +71,15 @@ id objc_getClass(const char *s);
 }
 - (int) instance_func2
 {
-   return [(id <Func>)super instance_func0]; // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
+   return [(id <Func>)super instance_func0]; // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }
 - (int) instance_func3
 {
-   return [(Object <Func> *)super instance_func0]; // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
+   return [(Object <Func> *)super instance_func0]; // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }
 - (int) instance_func4
 {
-   return [(Derived <Func> *)super instance_func0]; // expected-warning {{casting 'super' is deprecated (it isn't an expression)}}
+   return [(Derived <Func> *)super instance_func0]; // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }   
 - (int) instance_func5
 {
