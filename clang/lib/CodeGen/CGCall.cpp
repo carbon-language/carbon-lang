@@ -53,19 +53,6 @@ CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
   return getFunctionInfo(FTP->getResultType(), ArgTys);
 }
 
-const 
-CGFunctionInfo &CodeGenTypes::getFunctionInfo(const BlockPointerType *BPT) {
-  llvm::SmallVector<QualType, 16> ArgTys;
-  const FunctionProtoType *FTP = 
-    BPT->getPointeeType()->getAsFunctionProtoType();
-  
-  // Add the block pointer.
-  ArgTys.push_back(Context.getPointerType(Context.VoidTy));
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys);
-}
-
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   llvm::SmallVector<QualType, 16> ArgTys;
   // Add the 'this' pointer.

@@ -444,13 +444,15 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   // Load the function.
   llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
 
-  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(BPT);
-  bool IsVariadic = 
-    BPT->getPointeeType()->getAsFunctionProtoType()->isVariadic();
+  QualType FnType = BPT->getPointeeType();
+  QualType ResultType = FnType->getAsFunctionType()->getResultType();
+
+  const CGFunctionInfo &FnInfo = 
+    CGM.getTypes().getFunctionInfo(ResultType, Args);
   
   // Cast the function pointer to the right type.
   const llvm::Type *BlockFTy = 
-    CGM.getTypes().GetFunctionType(FnInfo, IsVariadic);
+    CGM.getTypes().GetFunctionType(FnInfo, false);
   
   const llvm::Type *BlockFTyPtr = llvm::PointerType::getUnqual(BlockFTy);
   Func = Builder.CreateBitCast(Func, BlockFTyPtr);
