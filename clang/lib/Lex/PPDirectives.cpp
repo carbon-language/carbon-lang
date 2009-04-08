@@ -530,7 +530,7 @@ TryAgain:
     case tok::pp_include:
       return HandleIncludeDirective(Result);       // Handle #include.
     case tok::pp___include_macros:
-      return HandleIncludeDirective(Result);       // Handle #__include_macros.
+      return HandleIncludeMacrosDirective(Result); // Handle -imacros.
         
     // C99 6.10.3 - Macro Replacement.
     case tok::pp_define:
@@ -1124,6 +1124,25 @@ void Preprocessor::HandleImportDirective(Token &ImportTok) {
     Diag(ImportTok, diag::ext_pp_import_directive);
   
   return HandleIncludeDirective(ImportTok, 0, true);
+}
+
+/// HandleIncludeMacrosDirective - The -imacros command line option turns into a
+/// pseudo directive in the predefines buffer.  This handles it by sucking all
+/// tokens through the preprocessor and discarding them (only keeping the side
+/// effects on the preprocessor).
+void Preprocessor::HandleIncludeMacrosDirective(Token &IncludeMacrosTok) {
+  // This directive should only occur in the predefines buffer.  If not, emit an
+  // error and reject it.
+  SourceLocation Loc = IncludeMacrosTok.getLocation();
+  if (strcmp(SourceMgr.getBufferName(Loc), "<built-in>") != 0) {
+    Diag(IncludeMacrosTok.getLocation(),
+         diag::pp_include_macros_out_of_predefines);
+    DiscardUntilEndOfDirective();
+    return;
+  }
+  
+  // TODO: implement me :)
+  DiscardUntilEndOfDirective();
 }
 
 //===----------------------------------------------------------------------===//

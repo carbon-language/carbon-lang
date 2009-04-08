@@ -748,6 +748,7 @@ private:
                               const DirectoryLookup *LookupFrom = 0,
                               bool isImport = false);
   void HandleIncludeNextDirective(Token &Tok);
+  void HandleIncludeMacrosDirective(Token &Tok);
   void HandleImportDirective(Token &Tok);
   
   // Macro handling.

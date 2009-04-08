@@ -85,6 +85,8 @@ def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
 def pp_hash_warning : Warning<"#warning%0">;
 def pp_include_next_in_primary : Warning<
   "#include_next in primary source file">;
+def pp_include_macros_out_of_predefines : Error<
+  "the #__include_macros directive is only for internal use by -imacros">;
 def pp_include_next_absolute_path : Warning<"#include_next with absolute path">;
 def ext_c99_whitespace_required_after_macro_name : ExtWarn<
   "ISO C99 requires whitespace after the macro name">;
