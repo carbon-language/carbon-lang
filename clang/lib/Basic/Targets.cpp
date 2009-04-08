@@ -153,8 +153,6 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts,
   else
     Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
   
-  // FIXME: OBJC_ZEROCOST_EXCEPTIONS when using zero cost eh.
-  
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min;
   if (getDarwinNumber(Triple, Maj, Min)) {
