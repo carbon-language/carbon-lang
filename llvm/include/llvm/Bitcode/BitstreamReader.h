@@ -115,7 +115,7 @@ public:
 
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
-    return (NextChar-FirstChar)*CHAR_BIT + ((32-BitsInCurWord) & 31);
+    return (NextChar-FirstChar)*CHAR_BIT - BitsInCurWord;
   }
 
   /// JumpToBit - Reset the stream to the specified bit number.
@@ -131,7 +131,6 @@ public:
 
     // Skip over any bits that are already consumed.
     if (WordBitNo) {
-      NextChar -= 4;
       Read(static_cast<unsigned>(WordBitNo));
     }
   }
