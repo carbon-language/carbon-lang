@@ -1011,7 +1011,10 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
 static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
   const char *Inc = "#include \"";
   Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
-  Buf.insert(Buf.end(), File.begin(), File.end());
+  
+  // Escape double quotes etc.
+  std::string EscapedFile = Lexer::Stringify(File);
+  Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
   Buf.push_back('"');
   Buf.push_back('\n');
 }
@@ -1020,7 +1023,10 @@ static void AddImplicitIncludeMacros(std::vector<char> &Buf,
                                      const std::string &File) {
   const char *Inc = "#__include_macros \"";
   Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
-  Buf.insert(Buf.end(), File.begin(), File.end());
+
+  // Escape double quotes etc.
+  std::string EscapedFile = Lexer::Stringify(File);
+  Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
   Buf.push_back('"');
   Buf.push_back('\n');
 }
