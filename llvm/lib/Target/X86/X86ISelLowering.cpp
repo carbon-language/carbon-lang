@@ -7800,7 +7800,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       AM.Disp = Op.getImm();
     }
     addFullAddress(BuildMI(BB, dl, TII->get(Opc)), AM)
-                      .addReg(MI->getOperand(4).getReg());
+                      .addReg(MI->getOperand(X86AddrNumOperands).getReg());
 
     // Reload the original control word now.
     addFrameReference(BuildMI(BB, dl, TII->get(X86::FLDCW16m)), CWFrameIdx);
