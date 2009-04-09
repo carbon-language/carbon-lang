@@ -524,6 +524,12 @@ bool Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       return false;
   }
 
+  // __builtin_va_list gets redeclared in the built-in definitions
+  // buffer when using PCH. Don't complain about such redefinitions.
+  if (Context.getExternalSource() && 
+      strcmp(SourceMgr.getBufferName(New->getLocation()), "<built-in>") == 0)
+    return false;
+
   Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
   Diag(Old->getLocation(), diag::note_previous_definition);
   return true;

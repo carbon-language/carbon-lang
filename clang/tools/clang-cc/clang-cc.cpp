@@ -29,6 +29,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/InitHeaderSearch.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Analysis/PathDiagnostic.h"
@@ -194,6 +195,7 @@ enum ProgActions {
   DumpRawTokens,                // Dump out raw tokens.
   RunAnalysis,                  // Run one or more source code analyses. 
   GeneratePTH,                  // Generate pre-tokenized header.
+  GeneratePCH,                  // Generate pre-compiled header.
   InheritanceView               // View C++ inheritance for a specified class.
 };
 
@@ -229,6 +231,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Print DeclContexts and their Decls"),
              clEnumValN(GeneratePTH, "emit-pth",
                         "Generate pre-tokenized header file"),
+             clEnumValN(GeneratePCH, "emit-pch",
+                        "Generate pre-compiled header file"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
              clEnumValN(EmitAssembly, "S",
@@ -975,6 +979,10 @@ static llvm::cl::opt<std::string>
 ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
                    llvm::cl::desc("Include file before parsing"));
 
+static llvm::cl::opt<std::string>
+ImplicitIncludePCH("include-pch", llvm::cl::value_desc("file"),
+                   llvm::cl::desc("Include precompiled header file"));
+
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
@@ -1516,6 +1524,9 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
     // FIXME: Allow user to tailor where the file is written.
     return CreateASTSerializer(InFile, OutputFile, Diag);
     
+  case GeneratePCH:
+    return CreatePCHGenerator(Diag, LangOpts, InFile, OutputFile);    
+
   case RewriteObjC:
     return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
 
@@ -1683,6 +1694,18 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       PP.getSelectorTable(),
                                       /* FreeMemory = */ !DisableFree));
     
+    if (!ImplicitIncludePCH.empty()) {
+      // The user has asked us to include a precompiled header. Load
+      // the precompiled header into the AST context.
+      llvm::OwningPtr<PCHReader> Reader(
+                                   new clang::PCHReader(*ContextOwner.get()));
+      if (Reader->ReadPCH(ImplicitIncludePCH))
+        return;
+
+      llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
+      ContextOwner->setExternalSource(Source);
+    }
+
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats);
     
     if (FixItRewrite)

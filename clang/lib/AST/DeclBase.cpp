@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
@@ -439,11 +440,82 @@ DeclContext *DeclContext::getNextContext() {
   }
 }
 
+/// \brief Load the declarations within this lexical storage from an
+/// external source.
+void 
+DeclContext::LoadLexicalDeclsFromExternalStorage(ASTContext &Context) const {
+  ExternalASTSource *Source = Context.getExternalSource();
+  assert(hasExternalLexicalStorage() && Source && "No external storage?");
+
+  llvm::SmallVector<unsigned, 64> Decls;
+  if (Source->ReadDeclsLexicallyInContext(const_cast<DeclContext *>(this), 
+                                          Decls))
+    return;
+
+  // There is no longer any lexical storage in this context
+  ExternalLexicalStorage = false;
+
+  if (Decls.empty())
+    return;
+
+  // Resolve all of the declaration IDs into declarations, building up
+  // a chain of declarations via the Decl::NextDeclInContext field.
+  Decl *FirstNewDecl = 0;
+  Decl *PrevDecl = 0;
+  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    Decl *D = Source->GetDecl(Decls[I]);
+    if (PrevDecl)
+      PrevDecl->NextDeclInContext = D;
+    else
+      FirstNewDecl = D;
+
+    PrevDecl = D;
+  }
+
+  // Splice the newly-read declarations into the beginning of the list
+  // of declarations.
+  PrevDecl->NextDeclInContext = FirstDecl;
+  FirstDecl = FirstNewDecl;
+  if (!LastDecl)
+    LastDecl = PrevDecl;
+}
+
+void 
+DeclContext::LoadVisibleDeclsFromExternalStorage(ASTContext &Context) const {
+  DeclContext *This = const_cast<DeclContext *>(this);
+  ExternalASTSource *Source = Context.getExternalSource();
+  assert(hasExternalVisibleStorage() && Source && "No external storage?");
+
+  llvm::SmallVector<VisibleDeclaration, 64> Decls;
+  if (Source->ReadDeclsVisibleInContext(This, Decls))
+    return;
+
+  // There is no longer any visible storage in this context
+  ExternalVisibleStorage = false;
+
+  // Load the declaration IDs for all of the names visible in this
+  // context.
+  assert(!LookupPtr && "Have a lookup map before de-serialization?");
+  StoredDeclsMap *Map = new StoredDeclsMap;
+  LookupPtr = Map;
+  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+    (*Map)[Decls[I].Name].setFromDeclIDs(Decls[I].Declarations);
+  }
+}
+
 DeclContext::decl_iterator DeclContext::decls_begin(ASTContext &Context) const {
+  if (hasExternalLexicalStorage())
+    LoadLexicalDeclsFromExternalStorage(Context);
+
+  // FIXME: Check whether we need to load some declarations from
+  // external storage.
   return decl_iterator(FirstDecl); 
 }
 
 DeclContext::decl_iterator DeclContext::decls_end(ASTContext &Context) const {
+  if (hasExternalLexicalStorage())
+    LoadLexicalDeclsFromExternalStorage(Context);
+
   return decl_iterator(); 
 }
 
@@ -490,6 +562,9 @@ DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Context, Name);
+
+  if (hasExternalVisibleStorage())
+    LoadVisibleDeclsFromExternalStorage(Context);
 
   /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
@@ -594,4 +669,41 @@ DeclContext::getUsingDirectives(ASTContext &Context) const {
   lookup_const_result Result = lookup(Context, UsingDirectiveDecl::getName());
   return udir_iterator_range(reinterpret_cast<udir_iterator>(Result.first),
                              reinterpret_cast<udir_iterator>(Result.second));
+}
+
+void StoredDeclsList::materializeDecls(ASTContext &Context) {
+  if (isNull())
+    return;
+
+  switch ((DataKind)(Data & 0x03)) {
+  case DK_Decl:
+  case DK_Decl_Vector:
+    break;
+
+  case DK_DeclID: {
+    // Resolve this declaration ID to an actual declaration by
+    // querying the external AST source.
+    unsigned DeclID = Data >> 2;
+
+    ExternalASTSource *Source = Context.getExternalSource();
+    assert(Source && "No external AST source available!");
+
+    Data = reinterpret_cast<uintptr_t>(Source->GetDecl(DeclID));
+    break;
+  }
+
+  case DK_ID_Vector: {
+    // We have a vector of declaration IDs. Resolve all of them to
+    // actual declarations.
+    VectorTy &Vector = *getAsVector();
+    ExternalASTSource *Source = Context.getExternalSource();
+    assert(Source && "No external AST source available!");
+
+    for (unsigned I = 0, N = Vector.size(); I != N; ++I)
+      Vector[I] = reinterpret_cast<uintptr_t>(Source->GetDecl(Vector[I]));
+
+    Data = (Data & ~0x03) | DK_Decl_Vector;
+    break;
+  }
+  }
 }

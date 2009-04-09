@@ -24,6 +24,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
@@ -36,6 +37,7 @@ namespace clang {
   class FileManager;
   class ASTRecordLayout;
   class Expr;
+  class ExternalASTSource;
   class IdentifierTable;
   class SelectorTable;
   class SourceManager;
@@ -146,6 +148,7 @@ public:
   IdentifierTable &Idents;
   SelectorTable &Selectors;
   DeclarationNameTable DeclarationNames;
+  llvm::OwningPtr<ExternalASTSource> ExternalSource;
 
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }
@@ -189,6 +192,17 @@ public:
              bool FreeMemory = true, unsigned size_reserve=0);
 
   ~ASTContext();
+
+  /// \brief Attach an external AST source to the AST context.
+  ///
+  /// The external AST source provides the ability to load parts of
+  /// the abstract syntax tree as needed from some external storage,
+  /// e.g., a precompiled header.
+  void setExternalSource(llvm::OwningPtr<ExternalASTSource> &Source);
+
+  /// \brief Retrieve a pointer to the external AST source associated
+  /// with this AST context, if any.
+  ExternalASTSource *getExternalSource() const { return ExternalSource.get(); }
 
   void PrintStats() const;
   const std::vector<Type*>& getTypes() const { return Types; }

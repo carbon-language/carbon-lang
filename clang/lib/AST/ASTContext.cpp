@@ -16,6 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -36,7 +37,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        bool FreeMem, unsigned size_reserve) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
   ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
-  FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels) {  
+  FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels),
+  ExternalSource(0) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
   BuiltinInfo.InitializeBuiltins(idents, Target, LangOpts.NoBuiltin);
@@ -89,6 +91,11 @@ ASTContext::~ASTContext() {
     GlobalNestedNameSpecifier->Destroy(*this);
 
   TUDecl->Destroy(*this);
+}
+
+void 
+ASTContext::setExternalSource(llvm::OwningPtr<ExternalASTSource> &Source) {
+  ExternalSource.reset(Source.take());
 }
 
 void ASTContext::PrintStats() const {
@@ -195,6 +202,11 @@ void ASTContext::PrintStats() const {
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)+
     NumTypeOfTypes*sizeof(TypeOfType)+NumTypeOfExprTypes*sizeof(TypeOfExprType)+
     NumExtQual*sizeof(ExtQualType)));
+
+  if (ExternalSource.get()) {
+    fprintf(stderr, "\n");
+    ExternalSource->PrintStats();
+  }
 }
 
 
@@ -3359,3 +3371,7 @@ ASTContext* ASTContext::Create(llvm::Deserializer& D) {
   
   return A;
 }
+
+ExternalASTSource::~ExternalASTSource() { }
+
+void ExternalASTSource::PrintStats() { }

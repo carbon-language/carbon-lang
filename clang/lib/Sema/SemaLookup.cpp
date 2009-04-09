@@ -878,6 +878,17 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
         // We have a single lookup result.
         return LookupResult::CreateLookupResult(Context, *I);
       }
+
+    /// If the context has an external AST source attached, look at
+    /// translation unit scope.
+    if (Context.getExternalSource()) {
+      DeclContext::lookup_iterator I, E;
+      for (llvm::tie(I, E) 
+             = Context.getTranslationUnitDecl()->lookup(Context, Name); 
+           I != E; ++I)
+        if (isAcceptableLookupResult(*I, NameKind, IDNS))
+          return LookupResult::CreateLookupResult(Context, I, E);
+    }
   } else {
     // Perform C++ unqualified name lookup.
     std::pair<bool, LookupResult> MaybeResult =

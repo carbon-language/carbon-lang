@@ -349,24 +349,36 @@ class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
 
+  /// \brief Whether this declaration context also has some external
+  /// storage that contains additional declarations that are lexically
+  /// part of this context.
+  mutable bool ExternalLexicalStorage : 1;
+
+  /// \brief Whether this declaration context also has some external
+  /// storage that contains additional declarations that are visible
+  /// in this context.
+  mutable bool ExternalVisibleStorage : 1;
+
   /// \brief Pointer to the data structure used to lookup declarations
   /// within this context, which is a DenseMap<DeclarationName,
   /// StoredDeclsList>.
-  void* LookupPtr;
+  mutable void* LookupPtr;
 
   /// FirstDecl - The first declaration stored within this declaration
   /// context.
-  Decl *FirstDecl;
+  mutable Decl *FirstDecl;
 
   /// LastDecl - The last declaration stored within this declaration
   /// context. FIXME: We could probably cache this value somewhere
   /// outside of the DeclContext, to reduce the size of DeclContext by
   /// another pointer.
-  Decl *LastDecl;
+  mutable Decl *LastDecl;
 
 protected:
    DeclContext(Decl::Kind K) 
-     : DeclKind(K), LookupPtr(0), FirstDecl(0), LastDecl(0) { }
+     : DeclKind(K), ExternalLexicalStorage(false),
+       ExternalVisibleStorage(false), LookupPtr(0), FirstDecl(0), 
+       LastDecl(0) { }
 
   void DestroyDecls(ASTContext &C);
 
@@ -751,6 +763,26 @@ public:
   /// \brief Retrieve the internal representation of the lookup structure.
   void* getLookupPtr() const { return LookupPtr; }
 
+  /// \brief Whether this DeclContext has external storage containing
+  /// additional declarations that are lexically in this context.
+  bool hasExternalLexicalStorage() const { return ExternalLexicalStorage; }
+
+  /// \brief State whether this DeclContext has external storage for
+  /// declarations lexically in this context.
+  void setHasExternalLexicalStorage(bool ES = true) { 
+    ExternalLexicalStorage = ES; 
+  }
+
+  /// \brief Whether this DeclContext has external storage containing
+  /// additional declarations that are visible in this context.
+  bool hasExternalVisibleStorage() const { return ExternalVisibleStorage; }
+
+  /// \brief State whether this DeclContext has external storage for
+  /// declarations visible in this context.
+  void setHasExternalVisibleStorage(bool ES = true) { 
+    ExternalVisibleStorage = ES; 
+  }
+
   static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }
 #define DECL_CONTEXT(Name) \
@@ -758,6 +790,9 @@ public:
 #include "clang/AST/DeclNodes.def"
 
 private:
+  void LoadLexicalDeclsFromExternalStorage(ASTContext &Context) const;
+  void LoadVisibleDeclsFromExternalStorage(ASTContext &Context) const;
+
   void buildLookup(ASTContext &Context, DeclContext *DCtx);
   void makeDeclVisibleInContextImpl(ASTContext &Context, NamedDecl *D);
 
