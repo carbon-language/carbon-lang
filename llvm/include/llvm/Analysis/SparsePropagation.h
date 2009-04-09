@@ -163,6 +163,13 @@ public:
   /// lattice, not when querying it.
   bool isEdgeFeasible(BasicBlock *From, BasicBlock *To,
                       bool AggressiveUndef = false);
+
+  /// isBlockExecutable - Return true if there are any known feasible
+  /// edges into the basic block.  This is generally only useful when
+  /// querying the lattice.
+  bool isBlockExecutable(BasicBlock *BB) const {
+    return BBExecutable.count(BB);
+  }
   
 private:
   /// UpdateState - When the state for some instruction is potentially updated,
