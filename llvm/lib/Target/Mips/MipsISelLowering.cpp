@@ -475,16 +475,16 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
   if (!Subtarget->hasABICall()) {
-    const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
+    SDVTList VTs = DAG.getVTList(MVT::i32);
     SDValue Ops[] = { GA };
     // %gp_rel relocation
     if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
-      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, 1, Ops, 1);
+      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, Ops, 1);
       SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
     }
     // %hi/%lo relocation
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, 1, Ops, 1);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, Ops, 1);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
@@ -523,9 +523,9 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG)
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
-    const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
+    SDVTList VTs = DAG.getVTList(MVT::i32);
     SDValue Ops[] = { JTI };
-    HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, 1, Ops, 1);
+    HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, Ops, 1);
   } else // Emit Load from Global Pointer
     HiPart = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), JTI, NULL, 0);
 

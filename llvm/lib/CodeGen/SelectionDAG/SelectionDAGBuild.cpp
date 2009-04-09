@@ -2825,10 +2825,9 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
                           DAG.getIntPtrConstant(~(uint64_t)(StackAlign-1)));
 
   SDValue Ops[] = { getRoot(), AllocSize, DAG.getIntPtrConstant(Align) };
-  const MVT *VTs = DAG.getNodeValueTypes(AllocSize.getValueType(),
-                                                    MVT::Other);
+  SDVTList VTs = DAG.getVTList(AllocSize.getValueType(), MVT::Other);
   SDValue DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, getCurDebugLoc(),
-                            VTs, 2, Ops, 3);
+                            VTs, Ops, 3);
   setValue(&I, DSA);
   DAG.setRoot(DSA.getValue(1));
 
@@ -2965,7 +2964,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     Ops.push_back(Op);
   }
 
-  std::vector<MVT> VTs;
+  std::vector<MVT> VTArray;
   if (I.getType() != Type::VoidTy) {
     MVT VT = TLI.getValueType(I.getType());
     if (VT.isVector()) {
@@ -2977,36 +2976,32 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     }
 
     assert(TLI.isTypeLegal(VT) && "Intrinsic uses a non-legal type?");
-    VTs.push_back(VT);
+    VTArray.push_back(VT);
   }
   if (HasChain)
-    VTs.push_back(MVT::Other);
+    VTArray.push_back(MVT::Other);
 
-  const MVT *VTList = DAG.getNodeValueTypes(VTs);
+  SDVTList VTs = DAG.getVTList(&VTArray[0], VTArray.size());
 
   // Create the node.
   SDValue Result;
   if (IsTgtIntrinsic) {
     // This is target intrinsic that touches memory
     Result = DAG.getMemIntrinsicNode(Info.opc, getCurDebugLoc(),
-                                     VTList, VTs.size(),
-                                     &Ops[0], Ops.size(),
+                                     VTs, &Ops[0], Ops.size(),
                                      Info.memVT, Info.ptrVal, Info.offset,
                                      Info.align, Info.vol,
                                      Info.readMem, Info.writeMem);
   }
   else if (!HasChain)
     Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, getCurDebugLoc(),
-                         VTList, VTs.size(),
-                         &Ops[0], Ops.size());
+                         VTs, &Ops[0], Ops.size());
   else if (I.getType() != Type::VoidTy)
     Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, getCurDebugLoc(),
-                         VTList, VTs.size(),
-                         &Ops[0], Ops.size());
+                         VTs, &Ops[0], Ops.size());
   else
     Result = DAG.getNode(ISD::INTRINSIC_VOID, getCurDebugLoc(),
-                         VTList, VTs.size(),
-                         &Ops[0], Ops.size());
+                         VTs, &Ops[0], Ops.size());
 
   if (HasChain) {
     SDValue Chain = Result.getValue(Result.getNode()->getNumValues()-1);
@@ -3153,11 +3148,8 @@ SelectionDAGLowering::implVisitAluOverflow(CallInst &I, ISD::NodeType Op) {
   SDValue Op1 = getValue(I.getOperand(1));
   SDValue Op2 = getValue(I.getOperand(2));
 
-  MVT ValueVTs[] = { Op1.getValueType(), MVT::i1 };
-  SDValue Ops[] = { Op1, Op2 };
-
-  SDValue Result = DAG.getNode(Op, getCurDebugLoc(),
-                               DAG.getVTList(&ValueVTs[0], 2), &Ops[0], 2);
+  SDVTList VTs = DAG.getVTList(Op1.getValueType(), MVT::i1);
+  SDValue Result = DAG.getNode(Op, getCurDebugLoc(), VTs, Op1, Op2);
 
   setValue(&I, Result);
   return 0;
@@ -4211,8 +4203,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::readcyclecounter: {
     SDValue Op = getRoot();
     SDValue Tmp = DAG.getNode(ISD::READCYCLECOUNTER, dl,
-                                DAG.getNodeValueTypes(MVT::i64, MVT::Other), 2,
-                                &Op, 1);
+                              DAG.getVTList(MVT::i64, MVT::Other),
+                              &Op, 1);
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
     return 0;
@@ -4256,7 +4248,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::stacksave: {
     SDValue Op = getRoot();
     SDValue Tmp = DAG.getNode(ISD::STACKSAVE, dl,
-              DAG.getNodeValueTypes(TLI.getPointerTy(), MVT::Other), 2, &Op, 1);
+              DAG.getVTList(TLI.getPointerTy(), MVT::Other), &Op, 1);
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
     return 0;
@@ -4304,9 +4296,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     Ops[5] = DAG.getSrcValue(F);
 
     SDValue Tmp = DAG.getNode(ISD::TRAMPOLINE, dl,
-                                DAG.getNodeValueTypes(TLI.getPointerTy(),
-                                                      MVT::Other), 2,
-                                Ops, 6);
+                              DAG.getVTList(TLI.getPointerTy(), MVT::Other),
+                              Ops, 6);
 
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
@@ -5393,7 +5384,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   if (Flag.getNode()) AsmNodeOperands.push_back(Flag);
 
   Chain = DAG.getNode(ISD::INLINEASM, getCurDebugLoc(),
-                      DAG.getNodeValueTypes(MVT::Other, MVT::Flag), 2,
+                      DAG.getVTList(MVT::Other, MVT::Flag),
                       &AsmNodeOperands[0], AsmNodeOperands.size());
   Flag = Chain.getValue(1);
 

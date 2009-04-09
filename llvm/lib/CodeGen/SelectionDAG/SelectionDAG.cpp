@@ -2131,7 +2131,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT) {
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<SDNode>();
-  new (N) SDNode(Opcode, DL, SDNode::getSDVTList(VT));
+  new (N) SDNode(Opcode, DL, getVTList(VT));
   CSEMap.InsertNode(N, IP);
 
   AllNodes.push_back(N);
@@ -3724,7 +3724,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
                               const std::vector<MVT> &ResultTys,
                               const SDValue *Ops, unsigned NumOps) {
-  return getNode(Opcode, DL, getNodeValueTypes(ResultTys), ResultTys.size(),
+  return getNode(Opcode, DL, getVTList(&ResultTys[0], ResultTys.size()),
                  Ops, NumOps);
 }
 
@@ -4360,82 +4360,75 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT,
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SDValue Op;
-  return getNode(~Opcode, dl, VTs, 2, &Op, 0).getNode();
+  return getNode(~Opcode, dl, VTs, &Op, 0).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, SDValue Op1) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(~Opcode, dl, VTs, 2, &Op1, 1).getNode();
+  SDVTList VTs = getVTList(VT1, VT2);
+  return getNode(~Opcode, dl, VTs, &Op1, 1).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, SDValue Op1,
                                     SDValue Op2) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SDValue Ops[] = { Op1, Op2 };
-  return getNode(~Opcode, dl, VTs, 2, Ops, 2).getNode();
+  return getNode(~Opcode, dl, VTs, Ops, 2).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, SDValue Op1,
                                     SDValue Op2, SDValue Op3) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return getNode(~Opcode, dl, VTs, 2, Ops, 3).getNode();
+  return getNode(~Opcode, dl, VTs, Ops, 3).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2,
                                     const SDValue *Ops, unsigned NumOps) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(~Opcode, dl, VTs, 2, Ops, NumOps).getNode();
+  SDVTList VTs = getVTList(VT1, VT2);
+  return getNode(~Opcode, dl, VTs, Ops, NumOps).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     SDValue Op1, SDValue Op2) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
+  SDVTList VTs = getVTList(VT1, VT2, VT3);
   SDValue Ops[] = { Op1, Op2 };
-  return getNode(~Opcode, dl, VTs, 3, Ops, 2).getNode();
+  return getNode(~Opcode, dl, VTs, Ops, 2).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     SDValue Op1, SDValue Op2,
                                     SDValue Op3) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
+  SDVTList VTs = getVTList(VT1, VT2, VT3);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return getNode(~Opcode, dl, VTs, 3, Ops, 3).getNode();
+  return getNode(~Opcode, dl, VTs, Ops, 3).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     MVT VT1, MVT VT2, MVT VT3,
                                     const SDValue *Ops, unsigned NumOps) {
-  const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  return getNode(~Opcode, dl, VTs, 3, Ops, NumOps).getNode();
+  SDVTList VTs = getVTList(VT1, VT2, VT3);
+  return getNode(~Opcode, dl, VTs, Ops, NumOps).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl, MVT VT1,
                                     MVT VT2, MVT VT3, MVT VT4,
                                     const SDValue *Ops, unsigned NumOps) {
-  std::vector<MVT> VTList;
-  VTList.push_back(VT1);
-  VTList.push_back(VT2);
-  VTList.push_back(VT3);
-  VTList.push_back(VT4);
-  const MVT *VTs = getNodeValueTypes(VTList);
-  return getNode(~Opcode, dl, VTs, 4, Ops, NumOps).getNode();
+  SDVTList VTs = getVTList(VT1, VT2, VT3, VT4);
+  return getNode(~Opcode, dl, VTs, Ops, NumOps).getNode();
 }
 
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
                                     const std::vector<MVT> &ResultTys,
                                     const SDValue *Ops, unsigned NumOps) {
-  const MVT *VTs = getNodeValueTypes(ResultTys);
-  return getNode(~Opcode, dl, VTs, ResultTys.size(),
-                 Ops, NumOps).getNode();
+  return getNode(~Opcode, dl, ResultTys, Ops, NumOps).getNode();
 }
 
 /// getNodeIfExists - Get the specified node if it's already available, or

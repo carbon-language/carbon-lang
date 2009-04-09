@@ -1824,7 +1824,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
 
     SDValue Ops[] = { LHSL, LHSH, N->getOperand(1) };
     MVT VT = LHSL.getValueType();
-    Lo = DAG.getNode(PartsOpc, dl, DAG.getNodeValueTypes(VT, VT), 2, Ops, 3);
+    Lo = DAG.getNode(PartsOpc, dl, DAG.getVTList(VT, VT), Ops, 3);
     Hi = Lo.getValue(1);
     return;
   }

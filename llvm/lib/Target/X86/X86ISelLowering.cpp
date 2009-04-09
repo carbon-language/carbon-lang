@@ -5481,11 +5481,11 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
       break;
     }
     if (Opcode != 0) {
-      const MVT *VTs = DAG.getNodeValueTypes(Op.getValueType(), MVT::i32);
+      SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
       SmallVector<SDValue, 4> Ops;
       for (unsigned i = 0; i != NumOperands; ++i)
         Ops.push_back(Op.getOperand(i));
-      SDValue New = DAG.getNode(Opcode, dl, VTs, 2, &Ops[0], NumOperands);
+      SDValue New = DAG.getNode(Opcode, dl, VTs, &Ops[0], NumOperands);
       DAG.ReplaceAllUsesWith(Op, New);
       return SDValue(New.getNode(), 1);
     }
@@ -5740,8 +5740,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
     Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
 
-  const MVT *VTs = DAG.getNodeValueTypes(Op.getValueType(),
-                                                    MVT::Flag);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
   SmallVector<SDValue, 4> Ops;
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
   // condition is true.
@@ -5749,7 +5748,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
   Ops.push_back(Op.getOperand(1));
   Ops.push_back(CC);
   Ops.push_back(Cond);
-  return DAG.getNode(X86ISD::CMOV, dl, VTs, 2, &Ops[0], Ops.size());
+  return DAG.getNode(X86ISD::CMOV, dl, VTs, &Ops[0], Ops.size());
 }
 
 // isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or

@@ -5662,7 +5662,7 @@ void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
 
   SDValue Ops[] = { LHSL, LHSH, Amt };
   MVT VT = LHSL.getValueType();
-  Lo = DAG.getNode(NodeOp, dl, DAG.getNodeValueTypes(VT, VT), 2, Ops, 3);
+  Lo = DAG.getNode(NodeOp, dl, DAG.getVTList(VT, VT), Ops, 3);
   Hi = Lo.getValue(1);
 }
 
