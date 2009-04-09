@@ -78,6 +78,8 @@ public:
 
   static SVal GetConjuredSymbolVal(SymbolManager& SymMgr, MemRegionManager&,
                                    const Expr *E, unsigned Count);  
+  static SVal GetConjuredSymbolVal(SymbolManager &SymMgr, MemRegionManager&,
+                                   const Expr* E, QualType T, unsigned Count);
 
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;
