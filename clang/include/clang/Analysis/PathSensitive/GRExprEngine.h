@@ -457,6 +457,7 @@ public:
     return StateMgr.getConstraintManager();
   }
   
+  // FIXME: Remove when we migrate over to just using ValueManager.
   BasicValueFactory& getBasicVals() {
     return StateMgr.getBasicVals();
   }
@@ -464,6 +465,15 @@ public:
     return StateMgr.getBasicVals();
   }
   
+  ValueManager &getValueManager() {
+    return StateMgr.getValueManager();
+  }
+  
+  const ValueManager &getValueManager() const {
+    return StateMgr.getValueManager();
+  }
+  
+  // FIXME: Remove when we migrate over to just using ValueManager.
   SymbolManager& getSymbolManager() { return SymMgr; }
   const SymbolManager& getSymbolManager() const { return SymMgr; }
   

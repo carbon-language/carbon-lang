@@ -1884,14 +1884,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, Eng.getContext());      
-      state =
-        state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(), RetT));
-      MemRegionManager& MRMgr = Eng.getStoreManager().getRegionManager();
-      state = state.BindExpr(Ex, Loc::MakeVal(MRMgr.getSymbolicRegion(Sym)), 
-                             false);
-
+      ValueManager &ValMgr = Eng.getValueManager();      
+      SymbolRef Sym = ValMgr.getConjuredSymbol(Ex, Count);
+      QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
+      state = state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
+                                                            RetT));
+      state = state.BindExpr(Ex, ValMgr.makeRegionVal(Sym), false);
 
       // FIXME: Add a flag to the checker where allocations are assumed to
       // *not fail.
@@ -1908,14 +1906,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, Eng.getContext());
-      
-      state =
-        state.set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),RetT));
-      MemRegionManager& MRMgr = Eng.getStoreManager().getRegionManager();
-      state = state.BindExpr(Ex, Loc::MakeVal(MRMgr.getSymbolicRegion(Sym)), 
-                             false);
+      ValueManager &ValMgr = Eng.getValueManager();
+      SymbolRef Sym = ValMgr.getConjuredSymbol(Ex, Count);
+      QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
+      state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
+                                                               RetT));
+      state = state.BindExpr(Ex, ValMgr.makeRegionVal(Sym), false);
       break;
     }
   }

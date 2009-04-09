@@ -308,7 +308,7 @@ bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
 }
   
 bool GRStateManager::isEqual(const GRState* state, Expr* Ex, uint64_t x) {
-  return isEqual(state, Ex, BasicVals.getValue(x, Ex->getType()));
+  return isEqual(state, Ex, getBasicVals().getValue(x, Ex->getType()));
 }
 
 //===----------------------------------------------------------------------===//

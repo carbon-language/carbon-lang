@@ -19,15 +19,12 @@
 #include "clang/Analysis/PathSensitive/Environment.h"
 #include "clang/Analysis/PathSensitive/Store.h"
 #include "clang/Analysis/PathSensitive/ConstraintManager.h"
-#include "clang/Analysis/PathSensitive/MemRegion.h"
-#include "clang/Analysis/PathSensitive/SVals.h"
-#include "clang/Analysis/PathSensitive/BasicValueFactory.h"
+#include "clang/Analysis/PathSensitive/ValueManager.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/APSInt.h"
@@ -262,10 +259,7 @@ private:
   llvm::FoldingSet<GRState> StateSet;
 
   /// ValueMgr - Object that manages the data for all created SVals.
-  BasicValueFactory BasicVals;
-
-  /// SymMgr - Object that manages the symbol information.
-  SymbolManager SymMgr;
+  ValueManager ValueMgr;
 
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator& Alloc;
@@ -309,29 +303,55 @@ public:
   : EnvMgr(alloc),
     ISetFactory(alloc),
     GDMFactory(alloc),
-    BasicVals(Ctx, alloc),
-    SymMgr(Ctx, BasicVals, alloc),
+    ValueMgr(alloc, Ctx),
     Alloc(alloc),
     cfg(c),
     codedecl(cd),
     Liveness(L) {
       StoreMgr.reset((*CreateStoreManager)(*this));
       ConstraintMgr.reset((*CreateConstraintManager)(*this));
+      
+      // FIXME: Have ValueMgr own the MemRegionManager, not StoreManager.
+      ValueMgr.setRegionManager(StoreMgr->getRegionManager());
   }
   
   ~GRStateManager();
 
   const GRState* getInitialState();
         
-  ASTContext& getContext() { return BasicVals.getContext(); }
-  const Decl& getCodeDecl() { return codedecl; }
+  ASTContext &getContext() { return ValueMgr.getContext(); }
+  const ASTContext &getContext() const { return ValueMgr.getContext(); }               
+                 
+  const Decl &getCodeDecl() { return codedecl; }
   GRTransferFuncs& getTransferFuncs() { return *TF; }
-  BasicValueFactory& getBasicVals() { return BasicVals; }
-  const BasicValueFactory& getBasicVals() const { return BasicVals; }
-  SymbolManager& getSymbolManager() { return SymMgr; }
+
+  BasicValueFactory &getBasicVals() {
+    return ValueMgr.getBasicValueFactory();
+  }
+  const BasicValueFactory& getBasicVals() const {
+    return ValueMgr.getBasicValueFactory();
+  }
+                 
+  SymbolManager &getSymbolManager() {
+    return ValueMgr.getSymbolManager();
+  }
+  const SymbolManager &getSymbolManager() const {
+    return ValueMgr.getSymbolManager();
+  }
+  
+  ValueManager &getValueManager() { return ValueMgr; }
+  const ValueManager &getValueManager() const { return ValueMgr; }
+  
   LiveVariables& getLiveVariables() { return Liveness; }
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
-  MemRegionManager& getRegionManager() { return StoreMgr->getRegionManager(); }
+
+  MemRegionManager& getRegionManager() {
+    return ValueMgr.getRegionManager();
+  }
+  const MemRegionManager& getRegionManager() const {
+    return ValueMgr.getRegionManager();
+  }
+  
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
 
@@ -406,7 +426,7 @@ public:
   // Methods that query & manipulate the Environment.
   
   SVal GetSVal(const GRState* St, Stmt* Ex) {
-    return St->getEnvironment().GetSVal(Ex, BasicVals);
+    return St->getEnvironment().GetSVal(Ex, getBasicVals());
   }
   
   SVal GetSValAsScalarOrLoc(const GRState* state, const Stmt *S) {
@@ -421,11 +441,11 @@ public:
     
 
   SVal GetSVal(const GRState* St, const Stmt* Ex) {
-    return St->getEnvironment().GetSVal(const_cast<Stmt*>(Ex), BasicVals);
+    return St->getEnvironment().GetSVal(const_cast<Stmt*>(Ex), getBasicVals());
   }
   
   SVal GetBlkExprSVal(const GRState* St, Stmt* Ex) {
-    return St->getEnvironment().GetBlkExprSVal(Ex, BasicVals);
+    return St->getEnvironment().GetBlkExprSVal(Ex, getBasicVals());
   }
   
   
