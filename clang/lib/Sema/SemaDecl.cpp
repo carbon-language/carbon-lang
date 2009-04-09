@@ -934,6 +934,13 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
 Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
+  // FIXME: Error on auto/register at file scope
+  // FIXME: Error on inline/virtual/explicit
+  // FIXME: Error on invalid restrict
+  // FIXME: Warn on useless const/volatile
+  // FIXME: Warn on useless static/extern/typedef/private_extern/mutable
+  // FIXME: Warn on useless attributes
+
   TagDecl *Tag = 0;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
       DS.getTypeSpecType() == DeclSpec::TST_struct ||
