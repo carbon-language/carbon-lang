@@ -77,8 +77,9 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       // This is not true for external variables as section names for global
       // variables in all files are same at this time. For eg. initialized 
       // data in put in idata.# section in all files. 
-      if (((int)BS.getImm() == 1) &&
-          ((Op.isGlobal() && Op.getGlobal()->hasExternalLinkage()) ||
+      if ((BS.getType() == MachineOperand::MO_Immediate 
+           && (int)BS.getImm() == 1) 
+          && ((Op.isGlobal() && Op.getGlobal()->hasExternalLinkage()) ||
            (NewBank.compare(CurBank) != 0))) { 
         O << "\tbanksel ";
         printOperand(MI, BankSelVar);
