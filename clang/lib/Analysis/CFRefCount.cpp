@@ -1789,28 +1789,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                 if (Loc::IsLocType(FT) || 
                     (FT->isIntegerType() && FT->isScalarType())) {
                   
-                  // Tag the symbol with the field decl so that we generate
-                  // a unique symbol.
-                  SymbolRef NewSym =
-                    Eng.getSymbolManager().getConjuredSymbol(*I, FT, Count, FD);
-                  
-                  // Create a region.
-                  // FIXME: How do we handle 'typedefs' in TypeViewRegions?
-                  //  e.g.:
-                  //     typedef struct *s foo;
-                  //  
-                  //     ((foo) x)->f vs. x->f
-                  //
-                  //  The cast will add a ViewTypeRegion.  Probably RegionStore
-                  //  needs to reason about typedefs explicitly when binding
-                  //  fields and elements.
-                  //
                   const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
-                  
-                  state = state.BindLoc(Loc::MakeVal(FR),
-                                        Loc::IsLocType(FT)
-                                        ? cast<SVal>(loc::SymbolVal(NewSym))
-                                        : cast<SVal>(nonloc::SymbolVal(NewSym)));
+
+                  SVal V = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
+                       Eng.getStoreManager().getRegionManager(), *I, FT, Count);
+
+                  state = state.BindLoc(Loc::MakeVal(FR), V);
                 }                
               }
             }
