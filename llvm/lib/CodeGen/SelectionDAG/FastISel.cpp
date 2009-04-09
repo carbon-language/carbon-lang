@@ -370,17 +370,13 @@ bool FastISel::SelectCall(User *I) {
       unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(Dir),
                                                  CompileUnit.getFilename(FN));
 
-      // Record the source line but does not create a label for the normal
-      // function start. It will be emitted at asm emission time. However,
-      // create a label if this is a beginning of inlined function.
+      // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
       unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
 
-      if (DW->getRecordSourceLineCount() != 1) {
-        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        BuildMI(MBB, DL, II).addImm(LabelID);
-      }
+      // llvm.dbg.func_start also defines beginning of function scope.
+      DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
     }
 
     return true;
