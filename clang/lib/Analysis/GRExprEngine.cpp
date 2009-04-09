@@ -2758,11 +2758,9 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               && (Loc::IsLocType(T) || 
                   (T->isScalarType() && T->isIntegerType()))) {
             unsigned Count = Builder->getCurrentBlockCount();
-            SymbolRef Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
-            RightV = Loc::IsLocType(T) 
-                   ? cast<SVal>(loc::SymbolVal(Sym)) 
-                   : cast<SVal>(nonloc::SymbolVal(Sym));            
+            RightV = SVal::GetConjuredSymbolVal(SymMgr, 
+                      getStoreManager().getRegionManager(), B->getRHS(), Count);
           }
           
           // Simulate the effects of a "store":  bind the value of the RHS
