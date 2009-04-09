@@ -603,7 +603,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
 }
 
 void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                             llvm::SmallVectorImpl<FieldDecl*> &Fields) const {
+                             llvm::SmallVectorImpl<FieldDecl*> &Fields) {
   const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
   if (SuperClass)
     CollectObjCIvars(SuperClass, Fields);
@@ -614,8 +614,8 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
       Fields.push_back(cast<FieldDecl>(IVDecl));
   }
   // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
-       E = OI->prop_end(); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*this),
+       E = OI->prop_end(*this); I != E; ++I) {
     if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
       Fields.push_back(cast<FieldDecl>(IV));
   }
@@ -648,7 +648,8 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
-    RD->addDecl(FieldDecl::Create(*this, RD, 
+    RD->addDecl(*this,
+                FieldDecl::Create(*this, RD, 
                                   RecFields[i]->getLocation(), 
                                   RecFields[i]->getIdentifier(),
                                   RecFields[i]->getType(), 
@@ -682,7 +683,7 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
   // FIXME. Add actual count of synthesized ivars, instead of count
   // of properties which is the upper bound, but is safe.
   unsigned FieldCount = 
-    D->ivar_size() + std::distance(D->prop_begin(), D->prop_end());
+    D->ivar_size() + std::distance(D->prop_begin(*this), D->prop_end(*this));
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
     FieldCount++;
     const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
@@ -714,8 +715,8 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
     NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
   }
   // Also synthesized ivars
-  for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(),
-       E = D->prop_end(); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(*this),
+       E = D->prop_end(*this); I != E; ++I) {
     if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
       NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
   }
@@ -743,7 +744,8 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   Entry = NewEntry;
 
   // FIXME: Avoid linear walk through the fields, if possible.
-  NewEntry->InitializeLayout(std::distance(D->field_begin(), D->field_end()));
+  NewEntry->InitializeLayout(std::distance(D->field_begin(*this), 
+                                           D->field_end(*this)));
   bool IsUnion = D->isUnion();
 
   unsigned StructPacking = 0;
@@ -757,8 +759,8 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
   unsigned FieldIdx = 0;
-  for (RecordDecl::field_iterator Field = D->field_begin(),
-                               FieldEnd = D->field_end();
+  for (RecordDecl::field_iterator Field = D->field_begin(*this),
+                               FieldEnd = D->field_end(*this);
        Field != FieldEnd; (void)++Field, ++FieldIdx)
     NewEntry->LayoutField(*Field, FieldIdx, IsUnion, StructPacking, *this);
 
@@ -1962,7 +1964,7 @@ QualType ASTContext::getCFConstantStringType() {
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*BitWidth=*/0, 
                                            /*Mutable=*/false);
-      CFConstantStringTypeDecl->addDecl(Field);
+      CFConstantStringTypeDecl->addDecl(*this, Field);
     }
 
     CFConstantStringTypeDecl->completeDefinition(*this);
@@ -1992,7 +1994,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
                                            SourceLocation(), 0, 
                                            FieldTypes[i], /*BitWidth=*/0, 
                                            /*Mutable=*/false);
-      ObjCFastEnumerationStateTypeDecl->addDecl(Field);
+      ObjCFastEnumerationStateTypeDecl->addDecl(*this, Field);
     }
     
     ObjCFastEnumerationStateTypeDecl->completeDefinition(*this);
@@ -2204,7 +2206,7 @@ void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-                                        FieldDecl *Field) const {
+                                        FieldDecl *Field) {
   // We follow the behavior of gcc, expanding structures which are
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
@@ -2228,7 +2230,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandStructures,
                                             FieldDecl *FD,
                                             bool OutermostType,
-                                            bool EncodingProperty) const {
+                                            bool EncodingProperty) {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     if (FD && FD->isBitField()) {
       EncodeBitField(this, S, FD);
@@ -2409,8 +2411,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     if (ExpandStructures) {
       S += '=';
-      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
-                                   FieldEnd = RDecl->field_end();
+      for (RecordDecl::field_iterator Field = RDecl->field_begin(*this),
+                                   FieldEnd = RDecl->field_end(*this);
            Field != FieldEnd; ++Field) {
         if (FD) {
           S += '"';

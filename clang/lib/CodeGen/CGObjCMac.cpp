@@ -1100,8 +1100,9 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
   // Construct method lists.
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
-  for (ObjCProtocolDecl::instmeth_iterator i = PD->instmeth_begin(),
-         e = PD->instmeth_end(); i != e; ++i) {
+  for (ObjCProtocolDecl::instmeth_iterator 
+         i = PD->instmeth_begin(CGM.getContext()),
+         e = PD->instmeth_end(CGM.getContext()); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
@@ -1111,8 +1112,9 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
     }      
   }
 
-  for (ObjCProtocolDecl::classmeth_iterator i = PD->classmeth_begin(),
-         e = PD->classmeth_end(); i != e; ++i) {
+  for (ObjCProtocolDecl::classmeth_iterator 
+         i = PD->classmeth_begin(CGM.getContext()),
+         e = PD->classmeth_end(CGM.getContext()); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
@@ -1286,8 +1288,8 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
                                       const ObjCContainerDecl *OCD,
                                       const ObjCCommonTypesHelper &ObjCTypes) {
   std::vector<llvm::Constant*> Properties, Prop(2);
-  for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(), 
-       E = OCD->prop_end(); I != E; ++I) {
+  for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(CGM.getContext()), 
+       E = OCD->prop_end(CGM.getContext()); I != E; ++I) {
     const ObjCPropertyDecl *PD = *I;
     Prop[0] = GetPropertyName(PD->getIdentifier());
     Prop[1] = GetPropertyTypeString(PD, Container);
@@ -1691,19 +1693,20 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
 
 /// countInheritedIvars - count number of ivars in class and its super class(s)
 ///
-static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
+static int countInheritedIvars(const ObjCInterfaceDecl *OI, 
+                               ASTContext &Context) {
   int count = 0;
   if (!OI)
     return 0;
   const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
   if (SuperClass)
-    count += countInheritedIvars(SuperClass);
+    count += countInheritedIvars(SuperClass, Context);
   for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
        E = OI->ivar_end(); I != E; ++I)
     ++count;
   // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
-       E = OI->prop_end(); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
+       E = OI->prop_end(Context); I != E; ++I) {
     if ((*I)->getPropertyIvarDecl())
       ++count;
   }
@@ -1719,7 +1722,8 @@ static int countInheritedIvars(const ObjCInterfaceDecl *OI) {
 ///
 static const ObjCInterfaceDecl *getInterfaceDeclForIvar(
                                   const ObjCInterfaceDecl *OI,
-                                  const ObjCIvarDecl *IVD) {
+                                  const ObjCIvarDecl *IVD,
+                                  ASTContext &Context) {
   if (!OI)
     return 0;
   assert(isa<ObjCInterfaceDecl>(OI) && "OI is not an interface");
@@ -1728,14 +1732,14 @@ static const ObjCInterfaceDecl *getInterfaceDeclForIvar(
     if ((*I)->getIdentifier() == IVD->getIdentifier())
       return OI;
   // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
-       E = OI->prop_end(); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
+       E = OI->prop_end(Context); I != E; ++I) {
     ObjCPropertyDecl *PDecl = (*I);
     if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
       if (IV->getIdentifier() == IVD->getIdentifier())
         return OI;
   }
-  return getInterfaceDeclForIvar(OI->getSuperClass(), IVD);
+  return getInterfaceDeclForIvar(OI->getSuperClass(), IVD, Context);
 }
 
 /*
@@ -1768,7 +1772,8 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   
   RecordDecl::field_iterator ifield, pfield;
   const RecordDecl *RD = GetFirstIvarInRecord(OID, ifield, pfield);
-  for (RecordDecl::field_iterator e = RD->field_end(); ifield != e; ++ifield) {
+  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext());
+       ifield != e; ++ifield) {
     FieldDecl *Field = *ifield;
     uint64_t  Offset = GetIvarBaseOffset(Layout, Field);
     if (Field->getIdentifier())
@@ -2611,7 +2616,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       const RecordType *RT = FQT->getAsRecordType();
       const RecordDecl *RD = RT->getDecl();
       // FIXME - Find a more efficiant way of passing records down.
-      TmpRecFields.append(RD->field_begin(), RD->field_end());
+      TmpRecFields.append(RD->field_begin(CGM.getContext()),
+                          RD->field_end(CGM.getContext()));
       // FIXME - Is Layout correct?
       BuildAggrIvarLayout(OI, Layout, RD, TmpRecFields,
                           BytePos + GetFieldBaseOffset(OI, Layout, Field),
@@ -2643,7 +2649,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         const RecordType *RT = FQT->getAsRecordType();
         const RecordDecl *RD = RT->getDecl();
         // FIXME - Find a more efficiant way of passing records down.
-        TmpRecFields.append(RD->field_begin(), RD->field_end());
+        TmpRecFields.append(RD->field_begin(CGM.getContext()),
+                            RD->field_end(CGM.getContext()));
         
         BuildAggrIvarLayout(OI, Layout, RD,
                             TmpRecFields,
@@ -3075,10 +3082,11 @@ const RecordDecl *CGObjCCommonMac::GetFirstIvarInRecord(
                                           const ObjCInterfaceDecl *OID,
                                           RecordDecl::field_iterator &FIV,
                                           RecordDecl::field_iterator &PIV) {
-  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass());
+  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),
+                                                 CGM.getContext());
   const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  RecordDecl::field_iterator ifield = RD->field_begin();
-  RecordDecl::field_iterator pfield = RD->field_end();
+  RecordDecl::field_iterator ifield = RD->field_begin(CGM.getContext());
+  RecordDecl::field_iterator pfield = RD->field_end(CGM.getContext());
   while (countSuperClassIvars-- > 0) {
     pfield = ifield;
     ++ifield;
@@ -3194,10 +3202,10 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));  
-  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
-                                Ctx.getObjCIdType(), 0, false));
-  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
-                                Ctx.getObjCClassType(), 0, false));
+  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
+                                     Ctx.getObjCIdType(), 0, false));
+  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                     Ctx.getObjCClassType(), 0, false));
   RD->completeDefinition(Ctx);
   
   SuperCTy = Ctx.getTagDeclType(RD);
@@ -3819,10 +3827,10 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_message_ref_t"));
-  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
-                                Ctx.VoidPtrTy, 0, false));
-  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
-                                Ctx.getObjCSelType(), 0, false));
+  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                     Ctx.VoidPtrTy, 0, false));
+  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+                                     Ctx.getObjCSelType(), 0, false));
   RD->completeDefinition(Ctx);
   
   MessageRefCTy = Ctx.getTagDeclType(RD);
@@ -4273,17 +4281,17 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     RecordDecl::field_iterator firstField, lastField;
     const RecordDecl *RD = GetFirstIvarInRecord(OID, firstField, lastField);
     
-    for (RecordDecl::field_iterator e = RD->field_end(),
+    for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()),
          ifield = firstField; ifield != e; ++ifield)
       lastField = ifield;
     
-    if (lastField != RD->field_end()) {
+    if (lastField != RD->field_end(CGM.getContext())) {
       FieldDecl *Field = *lastField;
       const llvm::Type *FieldTy =
         CGM.getTypes().ConvertTypeForMem(Field->getType());
       unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
       InstanceSize = GetIvarBaseOffset(Layout, Field) + Size;
-      if (firstField == RD->field_end())
+      if (firstField == RD->field_end(CGM.getContext()))
         InstanceStart = InstanceSize;
       else {
         Field = *firstField;
@@ -4495,8 +4503,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
                               const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar) {
   Name += "\01_OBJC_IVAR_$_" + 
-          getInterfaceDeclForIvar(ID, Ivar)->getNameAsString() + '.'
-          + Ivar->getNameAsString();
+    getInterfaceDeclForIvar(ID, Ivar, CGM.getContext())->getNameAsString() + 
+    '.' + Ivar->getNameAsString();
   llvm::GlobalVariable *IvarOffsetGV = 
     CGM.getModule().getGlobalVariable(Name);
   if (!IvarOffsetGV)
@@ -4585,13 +4593,14 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
        E = OID->ivar_end(); I != E; ++I) 
      OIvars.push_back(*I);
-  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(),
-       E = OID->prop_end(); I != E; ++I)
+  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(CGM.getContext()),
+       E = OID->prop_end(CGM.getContext()); I != E; ++I)
     if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
       OIvars.push_back(IV);
     
   unsigned iv = 0;
-  for (RecordDecl::field_iterator e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()); 
+       i != e; ++i) {
     FieldDecl *Field = *i;
     uint64_t offset = GetIvarBaseOffset(Layout, Field);
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), OIvars[iv++], offset);
@@ -4693,8 +4702,10 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   // Construct method lists.
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
-  for (ObjCProtocolDecl::instmeth_iterator i = PD->instmeth_begin(),
-       e = PD->instmeth_end(); i != e; ++i) {
+  for (ObjCProtocolDecl::instmeth_iterator 
+         i = PD->instmeth_begin(CGM.getContext()),
+         e = PD->instmeth_end(CGM.getContext()); 
+       i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
@@ -4704,8 +4715,10 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     }      
   }
   
-  for (ObjCProtocolDecl::classmeth_iterator i = PD->classmeth_begin(),
-       e = PD->classmeth_end(); i != e; ++i) {
+  for (ObjCProtocolDecl::classmeth_iterator 
+         i = PD->classmeth_begin(CGM.getContext()),
+         e = PD->classmeth_end(CGM.getContext());
+       i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {

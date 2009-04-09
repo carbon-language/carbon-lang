@@ -1178,8 +1178,8 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
 
   // FIXME: This isn't supposed to be restricted to pointers, but otherwise
   // we might silently generate incorrect code; see following code
-  for (RecordDecl::field_iterator Field = RD->field_begin(),
-                               FieldEnd = RD->field_end();
+  for (RecordDecl::field_iterator Field = RD->field_begin(S.Context),
+                               FieldEnd = RD->field_end(S.Context);
        Field != FieldEnd; ++Field) {
     if (!Field->getType()->isPointerType()) {
       S.Diag(Attr.getLoc(), diag::warn_transparent_union_nonpointer);

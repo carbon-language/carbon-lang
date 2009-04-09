@@ -454,7 +454,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                   bool AllowMissing, FunctionDecl *&Operator)
 {
   DeclContext::lookup_iterator Alloc, AllocEnd;
-  llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Name);
+  llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Context, Name);
   if (Alloc == AllocEnd) {
     if (AllowMissing)
       return false;
@@ -561,7 +561,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   // Check if this function is already declared.
   {
     DeclContext::lookup_iterator Alloc, AllocEnd;
-    for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Name);
+    for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Context, Name);
          Alloc != AllocEnd; ++Alloc) {
       // FIXME: Do we need to check for default arguments here?
       FunctionDecl *Func = cast<FunctionDecl>(*Alloc);
@@ -584,7 +584,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   // FIXME: Also add this declaration to the IdentifierResolver, but
   // make sure it is at the end of the chain to coincide with the
   // global scope.
-  ((DeclContext *)TUScope->getEntity())->addDecl(Alloc);
+  ((DeclContext *)TUScope->getEntity())->addDecl(Context, Alloc);
 }
 
 /// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:

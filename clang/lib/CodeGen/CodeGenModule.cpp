@@ -1102,7 +1102,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     cast<llvm::StructType>(getTypes().ConvertType(CFTy));
 
   std::vector<llvm::Constant*> Fields;
-  RecordDecl::field_iterator Field = CFRD->field_begin();
+  RecordDecl::field_iterator Field = CFRD->field_begin(getContext());
 
   // Class pointer.
   FieldDecl *CurField = *Field++;
@@ -1297,7 +1297,8 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
 
 /// EmitNamespace - Emit all declarations in a namespace.
 void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
-  for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
+  for (RecordDecl::decl_iterator I = ND->decls_begin(getContext()),
+         E = ND->decls_end(getContext());
        I != E; ++I)
     EmitTopLevelDecl(*I);
 }
@@ -1309,7 +1310,8 @@ void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
     return;
   }
 
-  for (RecordDecl::decl_iterator I = LSD->decls_begin(), E = LSD->decls_end();
+  for (RecordDecl::decl_iterator I = LSD->decls_begin(getContext()),
+         E = LSD->decls_end(getContext());
        I != E; ++I)
     EmitTopLevelDecl(*I);
 }

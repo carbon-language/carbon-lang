@@ -618,8 +618,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     Protocols.push_back((*PI)->getNameAsString());
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodNames;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
-       E = PD->instmeth_end(); iter != E; iter++) {
+  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(Context),
+       E = PD->instmeth_end(Context); iter != E; iter++) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
     InstanceMethodNames.push_back(
@@ -629,8 +629,9 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   // Collect information about class methods:
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCProtocolDecl::classmeth_iterator iter = PD->classmeth_begin(),
-      endIter = PD->classmeth_end() ; iter != endIter ; iter++) {
+  for (ObjCProtocolDecl::classmeth_iterator 
+         iter = PD->classmeth_begin(Context),
+         endIter = PD->classmeth_end(Context) ; iter != endIter ; iter++) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
     ClassMethodNames.push_back(

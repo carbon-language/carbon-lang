@@ -141,7 +141,7 @@ class ASTContext {
   bool FreeMemory;
   llvm::MallocAllocator MallocAlloc;
   llvm::BumpPtrAllocator BumpAlloc;
-public:
+public:  
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
@@ -189,7 +189,7 @@ public:
              bool FreeMemory = true, unsigned size_reserve=0);
 
   ~ASTContext();
-  
+
   void PrintStats() const;
   const std::vector<Type*>& getTypes() const { return Types; }
   
@@ -364,7 +364,7 @@ public:
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.
   void getObjCEncodingForType(QualType t, std::string &S, 
-                              FieldDecl *Field=NULL) const;
+                              FieldDecl *Field=NULL);
 
   void getLegacyIntegralTypeEncoding(QualType &t) const;
   
@@ -492,7 +492,7 @@ public:
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
   const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
   void CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                        llvm::SmallVectorImpl<FieldDecl*> &Fields) const;
+                        llvm::SmallVectorImpl<FieldDecl*> &Fields);
   const FieldDecl *getFieldDecl(const ObjCIvarRefExpr *MRef) {
     llvm::DenseMap<const ObjCIvarRefExpr *, const FieldDecl*>::iterator I 
       = ASTFieldForIvarRef.find(MRef);
@@ -718,7 +718,7 @@ private:
                                   bool ExpandStructures,
                                   FieldDecl *Field,
                                   bool OutermostType = false,
-                                  bool EncodingProperty = false) const;
+                                  bool EncodingProperty = false);
                                   
 };
 

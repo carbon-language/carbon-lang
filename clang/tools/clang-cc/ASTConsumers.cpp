@@ -125,8 +125,10 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     Out << ";\n";
   } else if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
     Out << "enum " << ED->getNameAsString() << " {\n";
-    for (EnumDecl::enumerator_iterator E = ED->enumerator_begin(),
-                                    EEnd = ED->enumerator_end();
+    // FIXME: Shouldn't pass a NULL context
+    ASTContext *Context = 0;
+    for (EnumDecl::enumerator_iterator E = ED->enumerator_begin(*Context),
+                                    EEnd = ED->enumerator_end(*Context);
          E != EEnd; ++E)
       Out << "  " << (*E)->getNameAsString() << ",\n";
     Out << "};\n";
@@ -139,8 +141,10 @@ void DeclPrinter:: PrintDecl(Decl *D) {
 
     Out << " {\n";
     ChangeIndent(1);
-    for (DeclContext::decl_iterator i = TD->decls_begin();
-         i != TD->decls_end();
+    // FIXME: Shouldn't pass a NULL context
+    ASTContext *Context = 0;
+    for (DeclContext::decl_iterator i = TD->decls_begin(*Context);
+         i != TD->decls_end(*Context);
          ++i)
       PrintDecl(*i);    
     ChangeIndent(-1);
@@ -198,8 +202,10 @@ void DeclPrinter::Print(NamedDecl *ND) {
 void DeclPrinter::Print(NamespaceDecl *NS) {
   Out << "namespace " << NS->getNameAsString() << " {\n";
   ChangeIndent(1);
-  for (DeclContext::decl_iterator i = NS->decls_begin();
-       i != NS->decls_end();
+  // FIXME: Shouldn't pass a NULL context
+  ASTContext *Context = 0;
+  for (DeclContext::decl_iterator i = NS->decls_begin(*Context);
+       i != NS->decls_end(*Context);
        ++i)
     PrintDecl(*i);    
   ChangeIndent(-1);
@@ -278,8 +284,10 @@ void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
     ChangeIndent(1);
   }
 
-  for (LinkageSpecDecl::decl_iterator D = LS->decls_begin(), 
-                                   DEnd = LS->decls_end();
+  // FIXME: Should not use a NULL DeclContext!
+  ASTContext *Context = 0;
+  for (LinkageSpecDecl::decl_iterator D = LS->decls_begin(*Context), 
+                                   DEnd = LS->decls_end(*Context);
        D != DEnd; ++D)
     PrintDecl(*D);
 
@@ -389,16 +397,18 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Out << "}\n";
   }
   
-  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(),
-       E = OID->prop_end(); I != E; ++I)
+  // FIXME: Should not use a NULL DeclContext!
+  ASTContext *Context = 0;
+  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(*Context),
+       E = OID->prop_end(*Context); I != E; ++I)
     PrintObjCPropertyDecl(*I);
   bool eol_needed = false;
-  for (ObjCInterfaceDecl::classmeth_iterator I = OID->classmeth_begin(),
-       E = OID->classmeth_end(); I != E; ++I)
+  for (ObjCInterfaceDecl::classmeth_iterator I = OID->classmeth_begin(*Context),
+       E = OID->classmeth_end(*Context); I != E; ++I)
     eol_needed = true, PrintObjCMethodDecl(*I);
   
-  for (ObjCInterfaceDecl::instmeth_iterator I = OID->instmeth_begin(),
-       E = OID->instmeth_end(); I != E; ++I)
+  for (ObjCInterfaceDecl::instmeth_iterator I = OID->instmeth_begin(*Context),
+       E = OID->instmeth_end(*Context); I != E; ++I)
     eol_needed = true, PrintObjCMethodDecl(*I);
   
   Out << (eol_needed ? "\n@end\n" : "@end\n");
@@ -408,8 +418,10 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
 void DeclPrinter::PrintObjCProtocolDecl(ObjCProtocolDecl *PID) {
   Out << "@protocol " << PID->getNameAsString() << '\n';
   
-  for (ObjCProtocolDecl::prop_iterator I = PID->prop_begin(),
-       E = PID->prop_end(); I != E; ++I)
+  // FIXME: Should not use a NULL DeclContext!
+  ASTContext *Context = 0;
+  for (ObjCProtocolDecl::prop_iterator I = PID->prop_begin(*Context),
+       E = PID->prop_end(*Context); I != E; ++I)
     PrintObjCPropertyDecl(*I);
   Out << "@end\n";
   // FIXME: implement the rest...
@@ -427,12 +439,14 @@ void DeclPrinter::PrintObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
 }
 
 void DeclPrinter::PrintObjCCategoryDecl(ObjCCategoryDecl *PID) {
+  // FIXME: Should not use a NULL DeclContext!
+  ASTContext *Context = 0;
   Out << "@interface " 
       << PID->getClassInterface()->getNameAsString()
       << '(' << PID->getNameAsString() << ");\n";
   // Output property declarations.
-  for (ObjCCategoryDecl::prop_iterator I = PID->prop_begin(),
-       E = PID->prop_end(); I != E; ++I)
+  for (ObjCCategoryDecl::prop_iterator I = PID->prop_begin(*Context),
+       E = PID->prop_end(*Context); I != E; ++I)
     PrintObjCPropertyDecl(*I);
   Out << "@end\n";
   
@@ -867,7 +881,10 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   Out << "\n";
 
   // Print decls in the DeclContext.
-  for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
+  // FIXME: Should not use a NULL DeclContext!
+  ASTContext *Context = 0;
+  for (DeclContext::decl_iterator I = DC->decls_begin(*Context), 
+         E = DC->decls_end(*Context);
        I != E; ++I) {
     for (unsigned i = 0; i < Indentation; ++i)
       Out << "  ";

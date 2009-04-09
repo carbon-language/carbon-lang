@@ -238,7 +238,7 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
     // But only in the root. This matches gcc's behaviour and what the
     // runtime expects.
     if (!Method && !ClassDecl->getSuperClass()) {
-      Method = ClassDecl->lookupInstanceMethod(Sel);
+      Method = ClassDecl->lookupInstanceMethod(Context, Sel);
       // Look through local category implementations associated 
       // with the root class.
       if (!Method) 
@@ -282,7 +282,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
   // Search for a declared property first.
   
   Selector Sel = PP.getSelectorTable().getNullarySelector(&propertyName);
-  ObjCMethodDecl *Getter = IFace->lookupClassMethod(Sel);
+  ObjCMethodDecl *Getter = IFace->lookupClassMethod(Context, Sel);
 
   // If this reference is in an @implementation, check for 'private' methods.
   if (!Getter)
@@ -304,7 +304,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
     SelectorTable::constructSetterName(PP.getIdentifierTable(), 
                                        PP.getSelectorTable(), &propertyName);
     
-  ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
+  ObjCMethodDecl *Setter = IFace->lookupClassMethod(Context, SetterSel);
   if (!Setter) {
     // If this reference is in an @implementation, also check for 'private'
     // methods.
@@ -422,7 +422,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   assert(ClassDecl && "missing interface declaration");
   ObjCMethodDecl *Method = 0;
   QualType returnType;
-  Method = ClassDecl->lookupClassMethod(Sel);
+  Method = ClassDecl->lookupClassMethod(Context, Sel);
   
   // If we have an implementation in scope, check "private" methods.
   if (!Method)
@@ -473,7 +473,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       // If we have an interface in scope, check 'super' methods.
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass()) {
-          Method = SuperDecl->lookupInstanceMethod(Sel);
+          Method = SuperDecl->lookupInstanceMethod(Context, Sel);
           
           if (!Method) 
             // If we have implementations in scope, check "private" methods.
@@ -512,7 +512,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
         // First check the public methods in the class interface.
-        Method = ClassDecl->lookupClassMethod(Sel);
+        Method = ClassDecl->lookupClassMethod(Context, Sel);
         
         if (!Method)
           Method = LookupPrivateClassMethod(Sel, ClassDecl);
@@ -546,10 +546,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // Search protocols for instance methods.
     for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
       ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
-      if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+      if (PDecl && (Method = PDecl->lookupInstanceMethod(Context, Sel)))
         break;
       // Since we aren't supporting "Class<foo>", look for a class method.
-      if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
+      if (PDecl && (Method = PDecl->lookupClassMethod(Context, Sel)))
         break;
     }
   } else if (const ObjCInterfaceType *OCIType = 
@@ -560,13 +560,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
     // faster than the following method (which can do *many* linear searches). 
     // The idea is to add class info to InstanceMethodPool.
-    Method = ClassDecl->lookupInstanceMethod(Sel);
+    Method = ClassDecl->lookupInstanceMethod(Context, Sel);
     
     if (!Method) {
       // Search protocol qualifiers.
       for (ObjCQualifiedInterfaceType::qual_iterator QI = OCIType->qual_begin(),
            E = OCIType->qual_end(); QI != E; ++QI) {
-        if ((Method = (*QI)->lookupInstanceMethod(Sel)))
+        if ((Method = (*QI)->lookupInstanceMethod(Context, Sel)))
           break;
       }
     }

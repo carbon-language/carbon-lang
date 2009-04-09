@@ -133,7 +133,9 @@ void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   // GCC union extension
   if (E->getType()->isUnionType()) {
     RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *SD->field_begin(), true, 0);
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, 
+                                             *SD->field_begin(CGF.getContext()),
+                                             true, 0);
     EmitInitializationToLValue(E->getSubExpr(), FieldLoc);
     return;
   }
@@ -398,8 +400,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
-      for (RecordDecl::field_iterator Field = SD->field_begin(),
-                                   FieldEnd = SD->field_end();
+      for (RecordDecl::field_iterator Field = SD->field_begin(CGF.getContext()),
+                                   FieldEnd = SD->field_end(CGF.getContext());
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif
@@ -423,8 +425,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
-  for (RecordDecl::field_iterator Field = SD->field_begin(),
-                               FieldEnd = SD->field_end();
+  for (RecordDecl::field_iterator Field = SD->field_begin(CGF.getContext()),
+                               FieldEnd = SD->field_end(CGF.getContext());
        Field != FieldEnd; ++Field) {
     // We're done once we hit the flexible array member
     if (Field->getType()->isIncompleteArrayType())

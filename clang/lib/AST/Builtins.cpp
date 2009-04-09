@@ -201,7 +201,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   case 'P': {
     IdentifierInfo *II = &Context.Idents.get("FILE");
     DeclContext::lookup_result Lookup 
-      = Context.getTranslationUnitDecl()->lookup(II);
+      = Context.getTranslationUnitDecl()->lookup(Context, II);
     if (Lookup.first != Lookup.second && isa<TypeDecl>(*Lookup.first)) {
       Type = Context.getTypeDeclType(cast<TypeDecl>(*Lookup.first));
       break;

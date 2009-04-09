@@ -57,23 +57,25 @@ struct UsingDirAncestorCompare {
 /// AddNamespaceUsingDirectives - Adds all UsingDirectiveDecl's to heap UDirs
 /// (ordered by common ancestors), found in namespace NS,
 /// including all found (recursively) in their nominated namespaces.
-void AddNamespaceUsingDirectives(DeclContext *NS,
+void AddNamespaceUsingDirectives(ASTContext &Context, 
+                                 DeclContext *NS,
                                  UsingDirectivesTy &UDirs,
                                  NamespaceSet &Visited) {
   DeclContext::udir_iterator I, End;
 
-  for (llvm::tie(I, End) = NS->getUsingDirectives(); I !=End; ++I) {
+  for (llvm::tie(I, End) = NS->getUsingDirectives(Context); I !=End; ++I) {
     UDirs.push_back(*I);
     std::push_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
     NamespaceDecl *Nominated = (*I)->getNominatedNamespace();
     if (Visited.insert(Nominated).second)
-      AddNamespaceUsingDirectives(Nominated, UDirs, /*ref*/ Visited);
+      AddNamespaceUsingDirectives(Context, Nominated, UDirs, /*ref*/ Visited);
   }
 }
 
 /// AddScopeUsingDirectives - Adds all UsingDirectiveDecl's found in Scope S,
 /// including all found in the namespaces they nominate.
-static void AddScopeUsingDirectives(Scope *S, UsingDirectivesTy &UDirs) {
+static void AddScopeUsingDirectives(ASTContext &Context, Scope *S, 
+                                    UsingDirectivesTy &UDirs) {
   NamespaceSet VisitedNS;
 
   if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
@@ -81,7 +83,7 @@ static void AddScopeUsingDirectives(Scope *S, UsingDirectivesTy &UDirs) {
     if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(Ctx))
       VisitedNS.insert(NS);
 
-    AddNamespaceUsingDirectives(Ctx, UDirs, /*ref*/ VisitedNS);
+    AddNamespaceUsingDirectives(Context, Ctx, UDirs, /*ref*/ VisitedNS);
 
   } else {
     Scope::udir_iterator I = S->using_directives_begin(),
@@ -95,7 +97,8 @@ static void AddScopeUsingDirectives(Scope *S, UsingDirectivesTy &UDirs) {
       NamespaceDecl *Nominated = UD->getNominatedNamespace();
       if (!VisitedNS.count(Nominated)) {
         VisitedNS.insert(Nominated);
-        AddNamespaceUsingDirectives(Nominated, UDirs, /*ref*/ VisitedNS);
+        AddNamespaceUsingDirectives(Context, Nominated, UDirs, 
+                                    /*ref*/ VisitedNS);
       }
     }
   }
@@ -569,7 +572,7 @@ CppNamespaceLookup(ASTContext &Context, DeclContext *NS,
 
   // Perform qualified name lookup into the LookupCtx.
   DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I, E) = NS->lookup(Name); I != E; ++I)
+  for (llvm::tie(I, E) = NS->lookup(Context, Name); I != E; ++I)
     if (Sema::isAcceptableLookupResult(*I, NameKind, IDNS)) {
       Results.push_back(Sema::LookupResult::CreateLookupResult(Context, I, E));
       break;
@@ -682,7 +685,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   UsingDirectivesTy UDirs;
   for (Scope *SC = Initial; SC; SC = SC->getParent())
     if (SC->getFlags() & Scope::DeclScope)
-      AddScopeUsingDirectives(SC, UDirs);
+      AddScopeUsingDirectives(Context, SC, UDirs);
 
   // Sort heapified UsingDirectiveDecls.
   std::sort_heap(UDirs.begin(), UDirs.end());
@@ -967,7 +970,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 
   // Perform qualified name lookup into the LookupCtx.
   DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
+  for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
     if (isAcceptableLookupResult(*I, NameKind, IDNS))
       return LookupResult::CreateLookupResult(Context, I, E);
 
@@ -1544,7 +1547,7 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     //        namespaces even if they are not visible during an ordinary
     //        lookup (11.4).
     DeclContext::lookup_iterator I, E;
-    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
+    for (llvm::tie(I, E) = (*NS)->lookup(Context, Name); I != E; ++I) {
       FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
       if (!Func)
         break;

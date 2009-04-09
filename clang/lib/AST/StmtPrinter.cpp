@@ -148,7 +148,11 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
     if (RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
       OS << "{\n";
       IndentLevel += 1;
-      for (RecordDecl::field_iterator i = RD->field_begin(); i != RD->field_end(); ++i) {
+      // FIXME: The context passed to field_begin/field_end should
+      // never be NULL!
+      ASTContext *Context = 0;
+      for (RecordDecl::field_iterator i = RD->field_begin(*Context);
+           i != RD->field_end(*Context); ++i) {
         PrintFieldDecl(*i);
       IndentLevel -= 1;
       }

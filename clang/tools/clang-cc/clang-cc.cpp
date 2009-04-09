@@ -1597,7 +1597,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
     break;
   }      
-    
+
   case PrintPreprocessedInput: {      // -E mode.
     llvm::TimeRegion Timer(ClangFrontendTimer);
     DoPrintPreprocessedInput(PP, OutputFile);
@@ -1683,7 +1683,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       PP.getSelectorTable(),
                                       /* FreeMemory = */ !DisableFree));
     
-    
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats);
     
     if (FixItRewrite)
@@ -1763,7 +1762,8 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
 
   // FIXME: We need to inform Consumer about completed TagDecls as well.
   TranslationUnitDecl *TUD = Ctx->getTranslationUnitDecl();
-  for (DeclContext::decl_iterator I = TUD->decls_begin(), E = TUD->decls_end();
+  for (DeclContext::decl_iterator I = TUD->decls_begin(*Ctx), 
+                                  E = TUD->decls_end(*Ctx);
        I != E; ++I)
     Consumer->HandleTopLevelDecl(DeclGroupRef(*I));
 }

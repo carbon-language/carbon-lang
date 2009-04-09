@@ -64,7 +64,7 @@ public:
 
   /// getLookupResult - Return an array of all the decls that this list
   /// represents.
-  DeclContext::lookup_result getLookupResult() {
+  DeclContext::lookup_result getLookupResult(ASTContext &Context) {
     // If we have a single inline unit, return it.
     if (isInline()) {
       assert(!isNull() && "Empty list isn't allowed");
@@ -81,7 +81,7 @@ public:
   
   /// HandleRedeclaration - If this is a redeclaration of an existing decl,
   /// replace the old one with D and return true.  Otherwise return false.
-  bool HandleRedeclaration(NamedDecl *D) {
+  bool HandleRedeclaration(ASTContext &Context, NamedDecl *D) {
     // Most decls only have one entry in their list, special case it.
     if (isInline()) {
       if (!D->declarationReplaces(Data.get<NamedDecl*>()))

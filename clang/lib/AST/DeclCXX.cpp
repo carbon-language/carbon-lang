@@ -70,7 +70,7 @@ bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
                                            Context.getCanonicalType(ClassType));
   unsigned TypeQuals;
   DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = this->lookup(ConstructorName);
+  for (llvm::tie(Con, ConEnd) = this->lookup(Context, ConstructorName);
        Con != ConEnd; ++Con) {
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, TypeQuals) &&
         (TypeQuals & QualType::Const) != 0)
@@ -86,7 +86,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
   DeclarationName OpName =Context.DeclarationNames.getCXXOperatorName(OO_Equal);
 
   DeclContext::lookup_const_iterator Op, OpEnd;
-  for (llvm::tie(Op, OpEnd) = this->lookup(OpName);
+  for (llvm::tie(Op, OpEnd) = this->lookup(Context, OpName);
        Op != OpEnd; ++Op) {
     // C++ [class.copy]p9:
     //   A user-declared copy assignment operator is a non-static non-template

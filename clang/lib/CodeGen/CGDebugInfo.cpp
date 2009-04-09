@@ -269,8 +269,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   const ASTRecordLayout &RL = M->getContext().getASTRecordLayout(Decl);
 
   unsigned FieldNo = 0;
-  for (RecordDecl::field_iterator I = Decl->field_begin(),
-                                  E = Decl->field_end(); 
+  for (RecordDecl::field_iterator I = Decl->field_begin(M->getContext()),
+                                  E = Decl->field_end(M->getContext()); 
        I != E; ++I, ++FieldNo) {
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
@@ -450,8 +450,9 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   llvm::SmallVector<llvm::DIDescriptor, 32> Enumerators;
 
   // Create DIEnumerator elements for each enumerator.
-  for (EnumDecl::enumerator_iterator Enum = Decl->enumerator_begin(),
-                                  EnumEnd = Decl->enumerator_end();
+  for (EnumDecl::enumerator_iterator 
+         Enum = Decl->enumerator_begin(M->getContext()),
+         EnumEnd = Decl->enumerator_end(M->getContext());
        Enum != EnumEnd; ++Enum) {
     Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getNameAsString(),
                                             Enum->getInitVal().getZExtValue()));

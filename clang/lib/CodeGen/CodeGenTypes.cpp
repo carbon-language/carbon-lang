@@ -482,7 +482,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   } else if (TD->isUnion()) {
     // Just use the largest element of the union, breaking ties with the
     // highest aligned member.
-    if (!RD->field_empty()) {
+    if (!RD->field_empty(getContext())) {
       RecordOrganizer RO(*this, *RD);
       
       RO.layoutUnionFields(Context.getASTRecordLayout(RD));
@@ -563,8 +563,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   std::vector<const llvm::Type*> LLVMFields;
 
   unsigned curField = 0;
-  for (RecordDecl::field_iterator Field = RD.field_begin(),
-                               FieldEnd = RD.field_end();
+  for (RecordDecl::field_iterator Field = RD.field_begin(CGT.getContext()),
+                               FieldEnd = RD.field_end(CGT.getContext());
        Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeForMemRecursive(Field->getType());
@@ -614,8 +614,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
 /// all fields are added.
 void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
   unsigned curField = 0;
-  for (RecordDecl::field_iterator Field = RD.field_begin(),
-                               FieldEnd = RD.field_end();
+  for (RecordDecl::field_iterator Field = RD.field_begin(CGT.getContext()),
+                               FieldEnd = RD.field_end(CGT.getContext());
        Field != FieldEnd; ++Field) {
     // The offset should usually be zero, but bitfields could be strange
     uint64_t offset = RL.getFieldOffset(curField);

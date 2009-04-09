@@ -633,7 +633,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   //   using a qualified name. ]
   // Look for a member, first.
   FieldDecl *Member = 0;
-  DeclContext::lookup_result Result = ClassDecl->lookup(MemberOrBase);
+  DeclContext::lookup_result Result 
+    = ClassDecl->lookup(Context, MemberOrBase);
   if (Result.first != Result.second)
     Member = dyn_cast<FieldDecl>(*Result.first);
 
@@ -772,7 +773,8 @@ namespace {
         continue;
       
       DeclContext::lookup_const_iterator I, E;
-      for (llvm::tie(I, E) = RD->lookup(VMD->getDeclName()); I != E; ++I) {
+      for (llvm::tie(I, E) = RD->lookup(Context, VMD->getDeclName()); 
+           I != E; ++I) {
         if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*I)) {
           if (Context.getCanonicalType(MD->getType()) == 
               Context.getCanonicalType(VMD->getType())) {
@@ -785,7 +787,8 @@ namespace {
     }
     
     // Finally, add pure virtual methods from this class.
-    for (RecordDecl::decl_iterator i = RD->decls_begin(), e = RD->decls_end(); 
+    for (RecordDecl::decl_iterator i = RD->decls_begin(Context), 
+                                   e = RD->decls_end(Context); 
          i != e; ++i) {
       if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
         if (MD->isPure())
@@ -863,8 +866,8 @@ namespace {
     bool VisitDeclContext(const DeclContext *DC) {
       bool Invalid = false;
 
-      for (CXXRecordDecl::decl_iterator I = DC->decls_begin(),
-           E = DC->decls_end(); I != E; ++I)
+      for (CXXRecordDecl::decl_iterator I = DC->decls_begin(SemaRef.Context),
+           E = DC->decls_end(SemaRef.Context); I != E; ++I)
         Invalid |= Visit(*I);
 
       return Invalid;
@@ -968,7 +971,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  /*isImplicitlyDeclared=*/true);
     DefaultCon->setAccess(AS_public);
     DefaultCon->setImplicit();
-    ClassDecl->addDecl(DefaultCon);
+    ClassDecl->addDecl(Context, DefaultCon);
 
     // Notify the class that we've added a constructor.
     ClassDecl->addedConstructor(Context, DefaultCon);
@@ -1003,8 +1006,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //        class type M (or array thereof), each such class type
     //        has a copy constructor whose first parameter is of type
     //        const M& or const volatile M&.
-    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-         HasConstCopyConstructor && Field != ClassDecl->field_end(); ++Field) {
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
+         HasConstCopyConstructor && Field != ClassDecl->field_end(Context);
+         ++Field) {
       QualType FieldType = (*Field)->getType();
       if (const ArrayType *Array = Context.getAsArrayType(FieldType))
         FieldType = Array->getElementType();
@@ -1049,7 +1053,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     CopyConstructor->setParams(Context, &FromParam, 1);
 
     ClassDecl->addedConstructor(Context, CopyConstructor);
-    ClassDecl->addDecl(CopyConstructor);
+    ClassDecl->addDecl(Context, CopyConstructor);
   }
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
@@ -1083,8 +1087,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //          type M (or array thereof), each such class type has a copy
     //          assignment operator whose parameter is of type const M&,
     //          const volatile M& or M.
-    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-         HasConstCopyAssignment && Field != ClassDecl->field_end(); ++Field) {
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
+         HasConstCopyAssignment && Field != ClassDecl->field_end(Context);
+         ++Field) {
       QualType FieldType = (*Field)->getType();
       if (const ArrayType *Array = Context.getAsArrayType(FieldType))
         FieldType = Array->getElementType();
@@ -1127,7 +1132,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
     // implicit from an explicit assignment operator.
-    ClassDecl->addDecl(CopyAssignment);
+    ClassDecl->addDecl(Context, CopyAssignment);
   }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
@@ -1146,7 +1151,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
     Destructor->setImplicit();
-    ClassDecl->addDecl(Destructor);
+    ClassDecl->addDecl(Context, Destructor);
   }
 }
 
@@ -1668,7 +1673,7 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
   // or translation unit scope. We add UsingDirectiveDecls, into
   // it's lookup structure.
   if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity()))
-    Ctx->addDecl(UDir);
+    Ctx->addDecl(Context, UDir);
   else
     // Otherwise it is block-sope. using-directives will affect lookup
     // only to the end of scope.
@@ -1724,7 +1729,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc, Alias, 
                                IdentLoc, R);
   
-  CurContext->addDecl(AliasDecl);
+  CurContext->addDecl(Context, AliasDecl);
   return DeclPtrTy::make(AliasDecl);
 }
 
@@ -1861,7 +1866,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     = Context.DeclarationNames.getCXXConstructorName(
                        Context.getCanonicalType(ClassType.getUnqualifiedType()));
   DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
+  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(Context, ConstructorName);
        Con != ConEnd; ++Con) {
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
     if ((Kind == IK_Direct) ||
@@ -2467,7 +2472,7 @@ Sema::DeclPtrTy Sema::ActOnStartLinkageSpecification(Scope *S,
   LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext,
                                                LangLoc, Language, 
                                                LBraceLoc.isValid());
-  CurContext->addDecl(D);
+  CurContext->addDecl(Context, D);
   PushDeclContext(S, D);
   return DeclPtrTy::make(D);
 }
@@ -2586,7 +2591,7 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   Decl *Decl = StaticAssertDecl::Create(Context, CurContext, AssertLoc, 
                                         AssertExpr, AssertMessage);
   
-  CurContext->addDecl(Decl);
+  CurContext->addDecl(Context, Decl);
   return DeclPtrTy::make(Decl);
 }
 

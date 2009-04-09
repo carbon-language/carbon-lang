@@ -85,6 +85,9 @@ public:
   /// which may be a special name.
   DeclarationName getDeclName() const { return Name; }
 
+  /// \brief Set the name of this declaration.
+  void setDeclName(DeclarationName N) { Name = N; }
+
   /// getNameAsString - Get a human-readable name for the declaration, even if
   /// it is one of the special kinds of names (C++ constructor, Objective-C
   /// selector, etc).  Creating this name requires expensive string
@@ -257,6 +260,9 @@ public:
   void setStorageClass(StorageClass SC) { SClass = SC; }
 
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
+  void setTypeSpecStartLoc(SourceLocation SL) {
+    TypeSpecStartLoc = SL;
+  }
 
   const Expr *getInit() const { return (const Expr*) Init; }
   Expr *getInit() { return (Expr*) Init; }
@@ -872,6 +878,7 @@ protected:
 public:
   // Low-level accessor
   Type *getTypeForDecl() const { return TypeForDecl; }
+  void setTypeForDecl(Type *TD) { TypeForDecl = TD; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -1041,12 +1048,12 @@ public:
   // enumeration.
   typedef specific_decl_iterator<EnumConstantDecl> enumerator_iterator;
 
-  enumerator_iterator enumerator_begin() const { 
-    return enumerator_iterator(this->decls_begin());
+  enumerator_iterator enumerator_begin(ASTContext &Context) const { 
+    return enumerator_iterator(this->decls_begin(Context));
   }
 
-  enumerator_iterator enumerator_end() const { 
-    return enumerator_iterator(this->decls_end());
+  enumerator_iterator enumerator_end(ASTContext &Context) const { 
+    return enumerator_iterator(this->decls_end(Context));
   }
 
   /// getIntegerType - Return the integer type this enum decl corresponds to.
@@ -1146,16 +1153,18 @@ public:
   // data members, functions, constructors, destructors, etc.
   typedef specific_decl_iterator<FieldDecl> field_iterator;
 
-  field_iterator field_begin() const {
-    return field_iterator(decls_begin());
+  field_iterator field_begin(ASTContext &Context) const {
+    return field_iterator(decls_begin(Context));
   }
-  field_iterator field_end() const {
-    return field_iterator(decls_end());
+  field_iterator field_end(ASTContext &Context) const {
+    return field_iterator(decls_end(Context));
   }
 
   // field_empty - Whether there are any fields (non-static data
   // members) in this record.
-  bool field_empty() const { return field_begin() == field_end(); }
+  bool field_empty(ASTContext &Context) const { 
+    return field_begin(Context) == field_end(Context);
+  }
 
   /// completeDefinition - Notes that the definition of this type is
   /// now complete.

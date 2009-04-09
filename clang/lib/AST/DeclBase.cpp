@@ -369,7 +369,7 @@ DeclContext::~DeclContext() {
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
-  for (decl_iterator D = decls_begin(); D != decls_end(); )
+  for (decl_iterator D = decls_begin(C); D != decls_end(C); )
     (*D++)->Destroy(C);
 }
 
@@ -439,7 +439,15 @@ DeclContext *DeclContext::getNextContext() {
   }
 }
 
-void DeclContext::addDecl(Decl *D) {
+DeclContext::decl_iterator DeclContext::decls_begin(ASTContext &Context) const {
+  return decl_iterator(FirstDecl); 
+}
+
+DeclContext::decl_iterator DeclContext::decls_end(ASTContext &Context) const {
+  return decl_iterator(); 
+}
+
+void DeclContext::addDecl(ASTContext &Context, Decl *D) {
   assert(D->getLexicalDeclContext() == this &&
          "Decl inserted into wrong lexical context");
   assert(!D->getNextDeclInContext() && D != LastDecl && 
@@ -453,40 +461,41 @@ void DeclContext::addDecl(Decl *D) {
   }
 
   if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
-    ND->getDeclContext()->makeDeclVisibleInContext(ND);
+    ND->getDeclContext()->makeDeclVisibleInContext(Context, ND);
 }
 
 /// buildLookup - Build the lookup data structure with all of the
 /// declarations in DCtx (and any other contexts linked to it or
 /// transparent contexts nested within it).
-void DeclContext::buildLookup(DeclContext *DCtx) {
+void DeclContext::buildLookup(ASTContext &Context, DeclContext *DCtx) {
   for (; DCtx; DCtx = DCtx->getNextContext()) {
-    for (decl_iterator D = DCtx->decls_begin(), DEnd = DCtx->decls_end(); 
+    for (decl_iterator D = DCtx->decls_begin(Context), 
+                    DEnd = DCtx->decls_end(Context); 
          D != DEnd; ++D) {
       // Insert this declaration into the lookup structure
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        makeDeclVisibleInContextImpl(ND);
+        makeDeclVisibleInContextImpl(Context, ND);
 
       // If this declaration is itself a transparent declaration context,
       // add its members (recursively).
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D))
         if (InnerCtx->isTransparentContext())
-          buildLookup(InnerCtx->getPrimaryContext());
+          buildLookup(Context, InnerCtx->getPrimaryContext());
     }
   }
 }
 
 DeclContext::lookup_result 
-DeclContext::lookup(DeclarationName Name) {
+DeclContext::lookup(ASTContext &Context, DeclarationName Name) {
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
-    return PrimaryContext->lookup(Name);
+    return PrimaryContext->lookup(Context, Name);
 
   /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
   /// inserting their values.
   if (!LookupPtr) {
-    buildLookup(this);
+    buildLookup(Context, this);
 
     if (!LookupPtr)
       return lookup_result(0, 0);
@@ -496,12 +505,12 @@ DeclContext::lookup(DeclarationName Name) {
   StoredDeclsMap::iterator Pos = Map->find(Name);
   if (Pos == Map->end())
     return lookup_result(0, 0);
-  return Pos->second.getLookupResult();
+  return Pos->second.getLookupResult(Context);
 }
 
 DeclContext::lookup_const_result 
-DeclContext::lookup(DeclarationName Name) const {
-  return const_cast<DeclContext*>(this)->lookup(Name);
+DeclContext::lookup(ASTContext &Context, DeclarationName Name) const {
+  return const_cast<DeclContext*>(this)->lookup(Context, Name);
 }
 
 DeclContext *DeclContext::getLookupContext() {
@@ -520,7 +529,7 @@ DeclContext *DeclContext::getEnclosingNamespaceContext() {
   return Ctx->getPrimaryContext();
 }
 
-void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
+void DeclContext::makeDeclVisibleInContext(ASTContext &Context, NamedDecl *D) {
   // FIXME: This feels like a hack. Should DeclarationName support
   // template-ids, or is there a better way to keep specializations
   // from being visible?
@@ -529,7 +538,7 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
 
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
-    PrimaryContext->makeDeclVisibleInContext(D);
+    PrimaryContext->makeDeclVisibleInContext(Context, D);
     return;
   }
 
@@ -537,15 +546,16 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
   // into it. Otherwise, be lazy and don't build that structure until
   // someone asks for it.
   if (LookupPtr)
-    makeDeclVisibleInContextImpl(D);
+    makeDeclVisibleInContextImpl(Context, D);
 
   // If we are a transparent context, insert into our parent context,
   // too. This operation is recursive.
   if (isTransparentContext())
-    getParent()->makeDeclVisibleInContext(D);
+    getParent()->makeDeclVisibleInContext(Context, D);
 }
 
-void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
+void DeclContext::makeDeclVisibleInContextImpl(ASTContext &Context, 
+                                               NamedDecl *D) {
   // Skip unnamed declarations.
   if (!D->getDeclName())
     return;
@@ -570,7 +580,7 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // If it is possible that this is a redeclaration, check to see if there is
   // already a decl for which declarationReplaces returns true.  If there is
   // one, just replace it and return.
-  if (DeclNameEntries.HandleRedeclaration(D))
+  if (DeclNameEntries.HandleRedeclaration(Context, D))
     return;
   
   // Put this declaration into the appropriate slot.
@@ -579,9 +589,9 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
 
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
 /// this context.
-DeclContext::udir_iterator_range DeclContext::getUsingDirectives() const {
-  lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
+DeclContext::udir_iterator_range 
+DeclContext::getUsingDirectives(ASTContext &Context) const {
+  lookup_const_result Result = lookup(Context, UsingDirectiveDecl::getName());
   return udir_iterator_range(reinterpret_cast<udir_iterator>(Result.first),
                              reinterpret_cast<udir_iterator>(Result.second));
 }
-

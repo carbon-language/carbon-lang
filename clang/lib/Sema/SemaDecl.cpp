@@ -211,7 +211,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   // Add scoped declarations into their context, so that they can be
   // found later. Declarations without a context won't be inserted
   // into any context.
-  CurContext->addDecl(D);
+  CurContext->addDecl(Context, D);
 
   // C++ [basic.scope]p4:
   //   -- exactly one declaration shall declare a class name or
@@ -1004,8 +1004,8 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                                RecordDecl *AnonRecord) {
   bool Invalid = false;
-  for (RecordDecl::field_iterator F = AnonRecord->field_begin(),
-                               FEnd = AnonRecord->field_end();
+  for (RecordDecl::field_iterator F = AnonRecord->field_begin(Context),
+                               FEnd = AnonRecord->field_end(Context);
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
       NamedDecl *PrevDecl = LookupQualifiedName(Owner, (*F)->getDeclName(),
@@ -1028,7 +1028,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
         //   definition, the members of the anonymous union are
         //   considered to have been defined in the scope in which the
         //   anonymous union is declared.
-        Owner->makeDeclVisibleInContext(*F);
+        Owner->makeDeclVisibleInContext(Context, *F);
         S->AddDecl(DeclPtrTy::make(*F));
         IdResolver.AddDecl(*F);
       }
@@ -1094,8 +1094,8 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     //   The member-specification of an anonymous union shall only
     //   define non-static data members. [Note: nested types and
     //   functions cannot be declared within an anonymous union. ]
-    for (DeclContext::decl_iterator Mem = Record->decls_begin(),
-                                 MemEnd = Record->decls_end();
+    for (DeclContext::decl_iterator Mem = Record->decls_begin(Context),
+                                 MemEnd = Record->decls_end(Context);
          Mem != MemEnd; ++Mem) {
       if (FieldDecl *FD = dyn_cast<FieldDecl>(*Mem)) {
         // C++ [class.union]p3:
@@ -1183,7 +1183,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Add the anonymous struct/union object to the current
   // context. We'll be referencing this object when we refer to one of
   // its members.
-  Owner->addDecl(Anon);
+  Owner->addDecl(Context, Anon);
 
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
@@ -3473,7 +3473,7 @@ CreateNewDecl:
     S = getNonFieldDeclScope(S);
     PushOnScopeChains(New, S);
   } else {
-    CurContext->addDecl(New);
+    CurContext->addDecl(Context, New);
   }
 
   return DeclPtrTy::make(New);
@@ -3607,7 +3607,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   } else if (II) {
     PushOnScopeChains(NewFD, S);
   } else
-    Record->addDecl(NewFD);
+    Record->addDecl(Context, NewFD);
 
   return NewFD;
 }
@@ -3921,7 +3921,7 @@ void Sema::ActOnFields(Scope* S,
           ObjCIvarDecl* Ivar = (*IVI);
           IdentifierInfo *II = Ivar->getIdentifier();
           ObjCIvarDecl* prevIvar =
-            ID->getSuperClass()->lookupInstanceVariable(II);
+            ID->getSuperClass()->lookupInstanceVariable(Context, II);
           if (prevIvar) {
             Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
             Diag(prevIvar->getLocation(), diag::note_previous_declaration);

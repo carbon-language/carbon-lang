@@ -814,7 +814,8 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
 
   llvm::ImmutableList<SVal> StructVal = getBasicVals().getEmptySValList();
 
-  std::vector<FieldDecl *> Fields(RD->field_begin(), RD->field_end());
+  std::vector<FieldDecl *> Fields(RD->field_begin(getContext()), 
+                                  RD->field_end(getContext()));
 
   for (std::vector<FieldDecl *>::reverse_iterator Field = Fields.rbegin(),
                                                FieldEnd = Fields.rend();
@@ -1166,7 +1167,8 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
-  RecordDecl::field_iterator FI = RD->field_begin(), FE = RD->field_end();
+  RecordDecl::field_iterator FI = RD->field_begin(getContext()), 
+                             FE = RD->field_end(getContext());
 
   for (; FI != FE; ++FI, ++VI) {
 

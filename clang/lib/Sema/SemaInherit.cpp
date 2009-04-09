@@ -179,7 +179,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
       FoundPathToThisBase 
         = (Context.getCanonicalType(BaseSpec->getType()) == Criteria.Base);
     } else {
-      Paths.ScratchPath.Decls = BaseRecord->lookup(Criteria.Name);
+      Paths.ScratchPath.Decls = BaseRecord->lookup(Context, Criteria.Name);
       while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
         if (isAcceptableLookupResult(*Paths.ScratchPath.Decls.first,
                                      Criteria.NameKind, Criteria.IDNS)) {

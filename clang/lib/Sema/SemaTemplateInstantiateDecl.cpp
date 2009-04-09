@@ -99,7 +99,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   if (Invalid)
     Typedef->setInvalidDecl();
 
-  Owner->addDecl(Typedef);
+  Owner->addDecl(SemaRef.Context, Typedef);
   return Typedef;
 }
 
@@ -127,7 +127,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   if (SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration))
     Var->setInvalidDecl();
 
-  Owner->addDecl(Var);
+  Owner->addDecl(SemaRef.Context, Var);
 
   if (D->getInit()) {
     OwningExprResult Init 
@@ -187,7 +187,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     if (Invalid)
       Field->setInvalidDecl();
     
-    Owner->addDecl(Field);
+    Owner->addDecl(SemaRef.Context, Field);
   }
 
   return Field;
@@ -214,14 +214,14 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
                                     D->getLocation(), D->getIdentifier(),
                                     /*PrevDecl=*/0);
   Enum->setAccess(D->getAccess());
-  Owner->addDecl(Enum);
+  Owner->addDecl(SemaRef.Context, Enum);
   Enum->startDefinition();
 
   llvm::SmallVector<Sema::DeclPtrTy, 16> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
-  for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(),
-         ECEnd = D->enumerator_end();
+  for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(SemaRef.Context),
+         ECEnd = D->enumerator_end(SemaRef.Context);
        EC != ECEnd; ++EC) {
     // The specified value for the enumerator.
     OwningExprResult Value = SemaRef.Owned((Expr *)0);
@@ -248,7 +248,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     }
 
     if (EnumConst) {
-      Enum->addDecl(EnumConst);
+      Enum->addDecl(SemaRef.Context, EnumConst);
       Enumerators.push_back(Sema::DeclPtrTy::make(EnumConst));
       LastEnumConst = EnumConst;
     }
@@ -281,7 +281,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   else
     Record->setDescribedClassTemplate(D->getDescribedClassTemplate());
 
-  Owner->addDecl(Record);
+  Owner->addDecl(SemaRef.Context, Record);
   return Record;
 }
 
@@ -327,7 +327,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     Method->setInvalidDecl();
 
   if (!Method->isInvalidDecl() || !PrevDecl)
-    Owner->addDecl(Method);
+    Owner->addDecl(SemaRef.Context, Method);
   return Method;
 }
 
@@ -371,7 +371,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
     Constructor->setInvalidDecl();
 
   if (!Constructor->isInvalidDecl())
-    Owner->addDecl(Constructor);
+    Owner->addDecl(SemaRef.Context, Constructor);
   return Constructor;
 }
 
@@ -399,7 +399,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   if (SemaRef.CheckFunctionDeclaration(Destructor, PrevDecl, Redeclaration,
                                        /*FIXME:*/OverloadableAttrRequired))
     Destructor->setInvalidDecl();
-  Owner->addDecl(Destructor);
+  Owner->addDecl(SemaRef.Context, Destructor);
   return Destructor;
 }
 
@@ -429,7 +429,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   if (SemaRef.CheckFunctionDeclaration(Conversion, PrevDecl, Redeclaration,
                                        /*FIXME:*/OverloadableAttrRequired))
     Conversion->setInvalidDecl();
-  Owner->addDecl(Conversion);
+  Owner->addDecl(SemaRef.Context, Conversion);
   return Conversion;  
 }
 

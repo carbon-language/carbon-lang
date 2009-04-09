@@ -324,8 +324,9 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
   
   if (const RecordType *RType = ILE->getType()->getAsRecordType()) {
     unsigned Init = 0, NumInits = ILE->getNumInits();
-    for (RecordDecl::field_iterator Field = RType->getDecl()->field_begin(),
-                                 FieldEnd = RType->getDecl()->field_end();
+    for (RecordDecl::field_iterator 
+           Field = RType->getDecl()->field_begin(SemaRef.Context),
+           FieldEnd = RType->getDecl()->field_end(SemaRef.Context);
          Field != FieldEnd; ++Field) {
       if (Field->isUnnamedBitfield())
         continue;
@@ -431,8 +432,9 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 int InitListChecker::numStructUnionElements(QualType DeclType) {
   RecordDecl *structDecl = DeclType->getAsRecordType()->getDecl();
   int InitializableMembers = 0;
-  for (RecordDecl::field_iterator Field = structDecl->field_begin(),
-                               FieldEnd = structDecl->field_end();
+  for (RecordDecl::field_iterator 
+         Field = structDecl->field_begin(SemaRef.Context),
+         FieldEnd = structDecl->field_end(SemaRef.Context);
        Field != FieldEnd; ++Field) {
     if ((*Field)->getIdentifier() || !(*Field)->isBitField())
       ++InitializableMembers;
@@ -559,7 +561,7 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
   } else if (DeclType->isAggregateType()) {
     if (DeclType->isRecordType()) {
       RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
-      CheckStructUnionTypes(IList, DeclType, RD->field_begin(), 
+      CheckStructUnionTypes(IList, DeclType, RD->field_begin(SemaRef.Context), 
                             SubobjectIsDesignatorContext, Index,
                             StructuredList, StructuredIndex,
                             TopLevelObject);
@@ -927,7 +929,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   if (DeclType->isUnionType() && IList->getNumInits() == 0) {
     // Value-initialize the first named member of the union.
     RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
-    for (RecordDecl::field_iterator FieldEnd = RD->field_end();
+    for (RecordDecl::field_iterator FieldEnd = RD->field_end(SemaRef.Context);
          Field != FieldEnd; ++Field) {
       if (Field->getDeclName()) {
         StructuredList->setInitializedFieldInUnion(*Field);
@@ -942,7 +944,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   // because an error should get printed out elsewhere. It might be
   // worthwhile to skip over the rest of the initializer, though.
   RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
-  RecordDecl::field_iterator FieldEnd = RD->field_end();
+  RecordDecl::field_iterator FieldEnd = RD->field_end(SemaRef.Context);
   bool InitializedSomething = false;
   while (Index < IList->getNumInits()) {
     Expr *Init = IList->getInit(Index);
@@ -1136,8 +1138,9 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     // need to compute the field's index.
     IdentifierInfo *FieldName = D->getFieldName();
     unsigned FieldIndex = 0;
-    RecordDecl::field_iterator Field = RT->getDecl()->field_begin(),
-                            FieldEnd = RT->getDecl()->field_end();
+    RecordDecl::field_iterator 
+      Field = RT->getDecl()->field_begin(SemaRef.Context),
+      FieldEnd = RT->getDecl()->field_end(SemaRef.Context);
     for (; Field != FieldEnd; ++Field) {
       if (Field->isUnnamedBitfield())
         continue;
@@ -1151,7 +1154,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     if (Field == FieldEnd) {
       // We did not find the field we're looking for. Produce a
       // suitable diagnostic and return a failure.
-      DeclContext::lookup_result Lookup = RT->getDecl()->lookup(FieldName);
+      DeclContext::lookup_result Lookup 
+        = RT->getDecl()->lookup(SemaRef.Context, FieldName);
       if (Lookup.first == Lookup.second) {
         // Name lookup didn't find anything.
         SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
@@ -1478,7 +1482,8 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     if (RDecl->isUnion())
       NumElements = 1;
     else
-      NumElements = std::distance(RDecl->field_begin(), RDecl->field_end());
+      NumElements = std::distance(RDecl->field_begin(SemaRef.Context), 
+                                  RDecl->field_end(SemaRef.Context));
   }
 
   if (NumElements < NumInits)

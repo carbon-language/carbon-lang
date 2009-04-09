@@ -58,7 +58,8 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
         if (ObjCImplementationDecl *Impl
               = dyn_cast<ObjCImplementationDecl>(MD->getParent())) {
           
-          MD = Impl->getClassInterface()->getMethod(MD->getSelector(),
+          MD = Impl->getClassInterface()->getMethod(Context, 
+                                                    MD->getSelector(),
                                                     MD->isInstanceMethod());
           isSilenced |= MD && MD->getAttr<DeprecatedAttr>();
         }
@@ -449,7 +450,8 @@ Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
 /// variable corresponding to the anonymous union or struct whose type
 /// is Record.
-static Decl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
+static Decl *getObjectForAnonymousRecordDecl(ASTContext &Context,
+                                             RecordDecl *Record) {
   assert(Record->isAnonymousStructOrUnion() && 
          "Record must be an anonymous struct or union!");
   
@@ -458,8 +460,8 @@ static Decl *getObjectForAnonymousRecordDecl(RecordDecl *Record) {
   // vector (which itself will be eliminated). DeclGroups might make
   // this even better.
   DeclContext *Ctx = Record->getDeclContext();
-  for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
-                               DEnd = Ctx->decls_end();
+  for (DeclContext::decl_iterator D = Ctx->decls_begin(Context), 
+                               DEnd = Ctx->decls_end(Context);
        D != DEnd; ++D) {
     if (*D == Record) {
       // The object for the anonymous struct/union directly
@@ -495,7 +497,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   DeclContext *Ctx = Field->getDeclContext();
   do {
     RecordDecl *Record = cast<RecordDecl>(Ctx);
-    Decl *AnonObject = getObjectForAnonymousRecordDecl(Record);
+    Decl *AnonObject = getObjectForAnonymousRecordDecl(Context, Record);
     if (FieldDecl *AnonField = dyn_cast<FieldDecl>(AnonObject))
       AnonFields.push_back(AnonField);
     else {
@@ -643,7 +645,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       ObjCInterfaceDecl *ClassDeclared;
-      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(Context, II, 
+                                                           ClassDeclared)) {
         // Check if referencing a field with __attribute__((deprecated)).
         if (DiagnoseUseOfDecl(IV, Loc))
           return ExprError();
@@ -675,7 +678,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       // We should warn if a local variable hides an ivar.
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       ObjCInterfaceDecl *ClassDeclared;
-      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(Context, II, 
+                                                           ClassDeclared)) {
         if (IV->getAccessControl() != ObjCIvarDecl::Private ||
             IFace == ClassDeclared)
           Diag(Loc, diag::warn_ivar_use_hidden)<<IV->getDeclName();
@@ -1695,16 +1699,18 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
 
 static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
                                                 IdentifierInfo &Member,
-                                                const Selector &Sel) {
+                                                const Selector &Sel,
+                                                ASTContext &Context) {
   
-  if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(&Member))
+  if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(Context, &Member))
     return PD;
-  if (ObjCMethodDecl *OMD = PDecl->getInstanceMethod(Sel))
+  if (ObjCMethodDecl *OMD = PDecl->getInstanceMethod(Context, Sel))
     return OMD;
   
   for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
        E = PDecl->protocol_end(); I != E; ++I) {
-    if (Decl *D = FindGetterNameDeclFromProtocolList(*I, Member, Sel))
+    if (Decl *D = FindGetterNameDeclFromProtocolList(*I, Member, Sel, 
+                                                     Context))
       return D;
   }
   return 0;
@@ -1712,17 +1718,18 @@ static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
 
 static Decl *FindGetterNameDecl(const ObjCQualifiedIdType *QIdTy,
                                 IdentifierInfo &Member,
-                                const Selector &Sel) {
+                                const Selector &Sel,
+                                ASTContext &Context) {
   // Check protocols on qualified interfaces.
   Decl *GDecl = 0;
   for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
        E = QIdTy->qual_end(); I != E; ++I) {
-    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Context, &Member)) {
       GDecl = PD;
       break;
     }
     // Also must look for a getter name which uses property syntax.
-    if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Sel)) {
+    if (ObjCMethodDecl *OMD = (*I)->getInstanceMethod(Context, Sel)) {
       GDecl = OMD;
       break;
     }
@@ -1731,7 +1738,7 @@ static Decl *FindGetterNameDecl(const ObjCQualifiedIdType *QIdTy,
     for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
       // Search in the protocol-qualifier list of current protocol.
-      GDecl = FindGetterNameDeclFromProtocolList(*I, Member, Sel);
+      GDecl = FindGetterNameDeclFromProtocolList(*I, Member, Sel, Context);
       if (GDecl)
         return GDecl;
     }
@@ -1875,7 +1882,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // (*Obj).ivar.
   if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
     ObjCInterfaceDecl *ClassDeclared;
-    if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member, 
+    if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(Context,
+                                                                   &Member, 
                                                              ClassDeclared)) {
       // If the decl being referenced had an error, return an error for this
       // sub-expr without emitting another error, in order to avoid cascading
@@ -1937,7 +1945,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     ObjCInterfaceDecl *IFace = IFTy->getDecl();
 
     // Search for a declared property first.
-    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member)) {
+    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Context, 
+                                                              &Member)) {
       // Check whether we can reference this property.
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
@@ -1949,7 +1958,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // Check protocols on qualified interfaces.
     for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
          E = IFTy->qual_end(); I != E; ++I)
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Context,
+                                                               &Member)) {
         // Check whether we can reference this property.
         if (DiagnoseUseOfDecl(PD, MemberLoc))
           return ExprError();
@@ -1965,7 +1975,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // shared with the code in ActOnInstanceMessage.
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-    ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
+    ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Context, Sel);
 
     // If this reference is in an @implementation, check for 'private' methods.
     if (!Getter)
@@ -1988,7 +1998,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     Selector SetterSel = 
       SelectorTable::constructSetterName(PP.getIdentifierTable(), 
                                          PP.getSelectorTable(), &Member);
-    ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
+    ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(Context, SetterSel);
     if (!Setter) {
       // If this reference is in an @implementation, also check for 'private'
       // methods.
@@ -2027,7 +2037,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
     // Check protocols on qualified interfaces.
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-    if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel)) {
+    if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel, Context)) {
       if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
         // Check the use of this declaration
         if (DiagnoseUseOfDecl(PD, MemberLoc))
@@ -2059,7 +2069,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       ObjCInterfaceDecl *IFace = MD->getClassInterface();
       ObjCMethodDecl *Getter;
       // FIXME: need to also look locally in the implementation.
-      if ((Getter = IFace->lookupClassMethod(Sel))) {
+      if ((Getter = IFace->lookupClassMethod(Context, Sel))) {
         // Check the use of this method.
         if (DiagnoseUseOfDecl(Getter, MemberLoc))
           return ExprError();
@@ -2069,7 +2079,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       Selector SetterSel = 
         SelectorTable::constructSetterName(PP.getIdentifierTable(), 
                                            PP.getSelectorTable(), &Member);
-      ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
+      ObjCMethodDecl *Setter = IFace->lookupClassMethod(Context, SetterSel);
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
         // methods.
@@ -2481,7 +2491,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
       // GCC cast to union extension
       RecordDecl *RD = castType->getAsRecordType()->getDecl();
       RecordDecl::field_iterator Field, FieldEnd;
-      for (Field = RD->field_begin(), FieldEnd = RD->field_end();
+      for (Field = RD->field_begin(Context), FieldEnd = RD->field_end(Context);
            Field != FieldEnd; ++Field) {
         if (Context.getCanonicalType(Field->getType()).getUnqualifiedType() ==
             Context.getCanonicalType(castExpr->getType()).getUnqualifiedType()) {

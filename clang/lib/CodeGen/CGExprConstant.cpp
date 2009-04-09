@@ -196,8 +196,8 @@ public:
     unsigned EltNo = 0;  // Element no in ILE
     int FieldNo = 0; // Field no in RecordDecl
     bool RewriteType = false;
-    for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                 FieldEnd = RD->field_end();
+    for (RecordDecl::field_iterator Field = RD->field_begin(CGM.getContext()),
+                                 FieldEnd = RD->field_end(CGM.getContext());
          EltNo < ILE->getNumInits() && Field != FieldEnd; ++Field) {
       FieldNo++;
       if (!Field->getIdentifier())
@@ -267,8 +267,8 @@ public:
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
       RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
-      for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                   FieldEnd = RD->field_end();
+      for (RecordDecl::field_iterator Field = RD->field_begin(CGM.getContext()),
+                                   FieldEnd = RD->field_end(CGM.getContext());
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif

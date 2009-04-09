@@ -72,7 +72,8 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
     TranslationUnitDecl *TUD = Ctx.getTranslationUnitDecl();
-    for (DeclContext::decl_iterator I = TUD->decls_begin(), E =TUD->decls_end();
+    for (DeclContext::decl_iterator I = TUD->decls_begin(Ctx), 
+                                    E = TUD->decls_end(Ctx);
          I != E; ++I)
       FilePrinter->HandleTopLevelDecl(DeclGroupRef(*I));
   }
@@ -123,7 +124,8 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
     TranslationUnitDecl *TUD = NewCtx->getTranslationUnitDecl();
-    for (DeclContext::decl_iterator I = TUD->decls_begin(), E = TUD->decls_end();
+    for (DeclContext::decl_iterator I = TUD->decls_begin(*NewCtx), 
+                                    E = TUD->decls_end(*NewCtx);
          I != E; ++I)
       FilePrinter->HandleTopLevelDecl(DeclGroupRef(*I));
   }

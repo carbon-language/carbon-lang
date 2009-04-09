@@ -459,7 +459,8 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   if (!ObjCImplementationActions.empty()) {
     TranslationUnitDecl *TUD = C.getTranslationUnitDecl();
     
-    for (DeclContext::decl_iterator I = TUD->decls_begin(),E = TUD->decls_end();
+    for (DeclContext::decl_iterator I = TUD->decls_begin(C),
+                                    E = TUD->decls_end(C);
          I != E; ++I)
       if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
         HandleCode(ID, 0, ObjCImplementationActions);

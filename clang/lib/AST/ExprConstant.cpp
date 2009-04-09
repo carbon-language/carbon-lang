@@ -213,8 +213,8 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
     
   // FIXME: This is linear time.
   unsigned i = 0;
-  for (RecordDecl::field_iterator Field = RD->field_begin(),
-                               FieldEnd = RD->field_end();
+  for (RecordDecl::field_iterator Field = RD->field_begin(Info.Ctx),
+                               FieldEnd = RD->field_end(Info.Ctx);
        Field != FieldEnd; (void)++Field, ++i) {
     if (*Field == FD)
       break;

@@ -2097,7 +2097,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // Add the specialization into its lexical context, so that it can
   // be seen when iterating through the list of declarations in that
   // context. However, specializations are not found by name lookup.
-  CurContext->addDecl(Specialization);
+  CurContext->addDecl(Context, Specialization);
   return DeclPtrTy::make(Specialization);
 }
 

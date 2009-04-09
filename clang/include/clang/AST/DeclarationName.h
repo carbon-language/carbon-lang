@@ -133,11 +133,7 @@ private:
   /// Construct a declaration name from a raw pointer.
   DeclarationName(uintptr_t Ptr) : Ptr(Ptr) { }
 
-  /// getUsingDirectiveName - Return name for all using-directives.
-  static DeclarationName getUsingDirectiveName();
-
   friend class DeclarationNameTable;
-  friend class UsingDirectiveDecl;
   friend class NamedDecl;
 
   /// getFETokenInfoAsVoid - Retrieves the front end-specified pointer
@@ -156,6 +152,9 @@ public:
 
   // Construct a declaration name from an Objective-C selector.
   DeclarationName(Selector Sel);
+
+  /// getUsingDirectiveName - Return name for all using-directives.
+  static DeclarationName getUsingDirectiveName();
 
   // operator bool() - Evaluates true when this declaration name is
   // non-empty.

@@ -1779,8 +1779,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
               MemRegionManager &MRMgr = state.getManager().getRegionManager();
               
               // Iterate through the fields and construct new symbols.
-              for (RecordDecl::field_iterator FI=RD->field_begin(),
-                   FE=RD->field_end(); FI!=FE; ++FI) {
+              for (RecordDecl::field_iterator FI=RD->field_begin(Ctx),
+                   FE=RD->field_end(Ctx); FI!=FE; ++FI) {
                 
                 // For now just handle scalar fields.
                 FieldDecl *FD = *FI;

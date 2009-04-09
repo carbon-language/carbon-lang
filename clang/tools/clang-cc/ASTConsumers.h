@@ -67,7 +67,7 @@ ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
 ASTConsumer *CreateASTSerializer(const std::string& InFile,
                                  const std::string& EmitDir,
                                  Diagnostic &Diags);
-
+  
 ASTConsumer *CreateBlockRewriter(const std::string& InFile,
                                  const std::string& OutFile,
                                  Diagnostic &Diags,

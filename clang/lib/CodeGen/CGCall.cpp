@@ -160,17 +160,17 @@ void ABIArgInfo::dump() const {
 /// isEmptyRecord - Return true iff a structure has no non-empty
 /// members. Note that a structure with a flexible array member is not
 /// considered empty.
-static bool isEmptyRecord(QualType T) {
+static bool isEmptyRecord(ASTContext &Context, QualType T) {
   const RecordType *RT = T->getAsRecordType();
   if (!RT)
     return 0;
   const RecordDecl *RD = RT->getDecl();
   if (RD->hasFlexibleArrayMember())
     return false;
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-         e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(Context), 
+         e = RD->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
-    if (!isEmptyRecord(FD->getType()))
+    if (!isEmptyRecord(Context, FD->getType()))
       return false;
   }
   return true;
@@ -194,8 +194,8 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     return 0;
 
   const Type *Found = 0;
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-         e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(Context), 
+         e = RD->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
     QualType FT = FD->getType();
 
@@ -204,7 +204,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
       if (AT->getSize().getZExtValue() == 1)
         FT = AT->getElementType();
 
-    if (isEmptyRecord(FT)) {
+    if (isEmptyRecord(Context, FT)) {
       // Ignore
     } else if (Found) {
       return 0;
@@ -230,8 +230,8 @@ static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
 
 static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
                                            ASTContext &Context) {
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-         e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(Context), 
+         e = RD->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
 
     if (!is32Or64BitBasicType(FD->getType(), Context))
@@ -273,6 +273,7 @@ class DefaultABIInfo : public ABIInfo {
 
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
+  ASTContext &Context;
   bool IsDarwin;
 
   static bool isRegisterSize(unsigned Size) {
@@ -298,7 +299,8 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(bool d) : ABIInfo(), IsDarwin(d) {}
+  X86_32ABIInfo(ASTContext &Context, bool d) 
+    : ABIInfo(), Context(Context), IsDarwin(d) {}
 };
 }
 
@@ -336,8 +338,8 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
 
   // Structure types are passed in register if all fields would be
   // passed in a register.
-  for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(), 
-         e = RT->getDecl()->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(Context), 
+         e = RT->getDecl()->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
     
     // FIXME: Reject bitfields wholesale for now; this is incorrect.
@@ -345,7 +347,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
       return false;
 
     // Empty structures are ignored.
-    if (isEmptyRecord(FD->getType()))
+    if (isEmptyRecord(Context, FD->getType()))
       continue;
 
     // Check fields recursively.
@@ -756,8 +758,8 @@ void X86_64ABIInfo::classify(QualType Ty,
     // Reset Lo class, this will be recomputed.
     Current = NoClass;
     unsigned idx = 0;
-    for (RecordDecl::field_iterator i = RD->field_begin(), 
-           e = RD->field_end(); i != e; ++i, ++idx) {
+    for (RecordDecl::field_iterator i = RD->field_begin(Context), 
+           e = RD->field_end(Context); i != e; ++i, ++idx) {
       uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
       bool BitField = i->isBitField();
 
@@ -1391,7 +1393,7 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     bool IsDarwin = strstr(getContext().Target.getTargetTriple(), "darwin");
     switch (getContext().Target.getPointerWidth(0)) {
     case 32:
-      return *(TheABIInfo = new X86_32ABIInfo(IsDarwin));
+      return *(TheABIInfo = new X86_32ABIInfo(Context, IsDarwin));
     case 64:
       return *(TheABIInfo = new X86_64ABIInfo());
     }
@@ -1424,8 +1426,8 @@ void CodeGenTypes::GetExpandedTypes(QualType Ty,
   assert(!RD->hasFlexibleArrayMember() && 
          "Cannot expand structure with flexible array.");
   
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-         e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(Context), 
+         e = RD->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
     assert(!FD->isBitField() && 
            "Cannot expand structure with bit-field members.");
@@ -1449,8 +1451,8 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
   assert(LV.isSimple() && 
          "Unexpected non-simple lvalue during struct expansion.");  
   llvm::Value *Addr = LV.getAddress();
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-         e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(getContext()), 
+         e = RD->field_end(getContext()); i != e; ++i) {
     FieldDecl *FD = *i;    
     QualType FT = FD->getType();
 
@@ -1476,8 +1478,8 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
   RecordDecl *RD = RT->getDecl();
   assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
   llvm::Value *Addr = RV.getAggregateAddr();
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-         e = RD->field_end(); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(getContext()), 
+         e = RD->field_end(getContext()); i != e; ++i) {
     FieldDecl *FD = *i;    
     QualType FT = FD->getType();
     

@@ -728,8 +728,9 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     Invalid = true;
 
   llvm::SmallVector<DeclPtrTy, 32> Fields;
-  for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
-       MemberEnd = Pattern->decls_end(); Member != MemberEnd; ++Member) {
+  for (RecordDecl::decl_iterator Member = Pattern->decls_begin(Context),
+         MemberEnd = Pattern->decls_end(Context); 
+       Member != MemberEnd; ++Member) {
     Decl *NewMember = InstantiateDecl(*Member, Instantiation,
                                       TemplateArgs, NumTemplateArgs);
     if (NewMember) {
