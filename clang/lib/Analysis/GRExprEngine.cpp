@@ -2931,10 +2931,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // The symbolic value is actually for the type of the left-hand side
           // expression, not the computation type, as this is the value the
           // LValue on the LHS will bind to.
-          SymbolRef Sym = SymMgr.getConjuredSymbol(B->getRHS(), LTy, Count);
-          LHSVal = Loc::IsLocType(LTy) 
-                 ? cast<SVal>(loc::SymbolVal(Sym)) 
-                 : cast<SVal>(nonloc::SymbolVal(Sym));
+          LHSVal = SVal::GetConjuredSymbolVal(SymMgr, 
+                getStoreManager().getRegionManager(), B->getRHS(), LTy, Count);
           
           // However, we need to convert the symbol to the computation type.
           Result = (LTy == CTy) ? LHSVal : EvalCast(LHSVal,CTy);
