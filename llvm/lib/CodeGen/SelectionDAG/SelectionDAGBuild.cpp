@@ -243,9 +243,7 @@ static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
   if (isa<PHINode>(I)) return true;
   BasicBlock *BB = I->getParent();
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E; ++UI)
-    if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI) ||
-        // FIXME: Remove switchinst special case.
-        isa<SwitchInst>(*UI))
+    if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI))
       return true;
   return false;
 }
@@ -1640,6 +1638,9 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
     if (I != E-1) {
       FallThrough = CurMF->CreateMachineBasicBlock(CurBlock->getBasicBlock());
       CurMF->insert(BBI, FallThrough);
+
+      // Put SV in a virtual register to make it available from the new blocks.
+      ExportFromCurrentBlock(SV);
     } else {
       // If the last case doesn't match, go to the default block.
       FallThrough = Default;
@@ -1874,6 +1875,9 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     TrueBB = CurMF->CreateMachineBasicBlock(LLVMBB);
     CurMF->insert(BBI, TrueBB);
     WorkList.push_back(CaseRec(TrueBB, C, CR.GE, LHSR));
+
+    // Put SV in a virtual register to make it available from the new blocks.
+    ExportFromCurrentBlock(SV);
   }
 
   // Similar to the optimization above, if the Value being switched on is
@@ -1888,6 +1892,9 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     FalseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
     CurMF->insert(BBI, FalseBB);
     WorkList.push_back(CaseRec(FalseBB,CR.LT,C,RHSR));
+
+    // Put SV in a virtual register to make it available from the new blocks.
+    ExportFromCurrentBlock(SV);
   }
 
   // Create a CaseBlock record representing a conditional branch to
@@ -2013,6 +2020,9 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
     BTC.push_back(BitTestCase(CasesBits[i].Mask,
                               CaseBB,
                               CasesBits[i].BB));
+
+    // Put SV in a virtual register to make it available from the new blocks.
+    ExportFromCurrentBlock(SV);
   }
 
   BitTestBlock BTB(lowBound, cmpRange, SV,
