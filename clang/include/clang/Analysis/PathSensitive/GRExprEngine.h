@@ -63,6 +63,9 @@ protected:
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
   
+  /// ValMgr - Object that manages/creates SVals.
+  ValueManager &ValMgr;
+  
   /// EntryNode - The immediate predecessor node.
   NodeTy* EntryNode;
 
@@ -465,13 +468,8 @@ public:
     return StateMgr.getBasicVals();
   }
   
-  ValueManager &getValueManager() {
-    return StateMgr.getValueManager();
-  }
-  
-  const ValueManager &getValueManager() const {
-    return StateMgr.getValueManager();
-  }
+  ValueManager &getValueManager() { return ValMgr; }  
+  const ValueManager &getValueManager() const { return ValMgr; }
   
   // FIXME: Remove when we migrate over to just using ValueManager.
   SymbolManager& getSymbolManager() { return SymMgr; }

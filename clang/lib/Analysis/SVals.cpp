@@ -205,7 +205,7 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
 // Utility methods for constructing SVals.
 //===----------------------------------------------------------------------===//
 
-SVal SVal::MakeZero(BasicValueFactory &BasicVals, QualType T) {
+SVal ValueManager::makeZeroVal(QualType T) {
   if (Loc::IsLocType(T))
     return Loc::MakeNull(BasicVals);
 

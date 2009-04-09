@@ -97,8 +97,6 @@ public:
     return getRawKind() > UnknownKind;
   }
   
-  static SVal MakeZero(BasicValueFactory &BasicVals, QualType T);
-  
   bool isZeroConstant() const;
   
   /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 

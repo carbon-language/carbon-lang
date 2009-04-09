@@ -122,6 +122,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     Builder(NULL),
     StateMgr(G.getContext(), SMC, CMC, G.getAllocator(), cfg, CD, L),
     SymMgr(StateMgr.getSymbolManager()),
+    ValMgr(StateMgr.getValueManager()),
     CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())), 
@@ -1742,7 +1743,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
               // it most likely isn't nil.  We should assume the semantics
               // of this case unless we have *a lot* more knowledge.
               //
-              SVal V = SVal::MakeZero(getBasicVals(), ME->getType());
+              SVal V = ValMgr.makeZeroVal(ME->getType());
               MakeNode(Dst, ME, Pred, BindExpr(StNull, ME, V));
               return;
             }

@@ -77,6 +77,9 @@ public:
   Loc makeRegionVal(SymbolRef Sym) {
     return Loc::MakeVal(MemMgr->getSymbolicRegion(Sym));
   }
+  
+  /// makeZeroVal - Construct an SVal representing '0' for the specified type.
+  SVal makeZeroVal(QualType T);
 };
 } // end clang namespace
 #endif
