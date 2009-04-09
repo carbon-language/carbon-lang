@@ -226,6 +226,8 @@ protected:
   const unsigned SubregHashSize;
   const unsigned* SuperregHash;
   const unsigned SuperregHashSize;
+  const unsigned* AliasesHash;
+  const unsigned AliasesHashSize;
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
@@ -244,7 +246,9 @@ protected:
                      const unsigned* subregs = 0,
                      const unsigned subregsize = 0,
 		     const unsigned* superregs = 0,
-		     const unsigned superregsize = 0);
+		     const unsigned superregsize = 0,
+		     const unsigned* aliases = 0,
+		     const unsigned aliasessize = 0);
   virtual ~TargetRegisterInfo();
 public:
 
@@ -346,8 +350,17 @@ public:
   /// areAliases - Returns true if the two registers alias each other, false
   /// otherwise
   bool areAliases(unsigned regA, unsigned regB) const {
-    for (const unsigned *Alias = getAliasSet(regA); *Alias; ++Alias)
-      if (*Alias == regB) return true;
+    size_t index = (regA + regB * 37) & (AliasesHashSize-1);
+    unsigned ProbeAmt = 0;
+    while (AliasesHash[index*2] != 0 &&
+	   AliasesHash[index*2+1] != 0) {
+      if (AliasesHash[index*2] == regA && AliasesHash[index*2+1] == regB)
+	return true;
+
+      index = (index + ProbeAmt) & (AliasesHashSize-1);
+      ProbeAmt += 2;
+    }
+
     return false;
   }
 
