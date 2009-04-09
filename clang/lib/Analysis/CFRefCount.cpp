@@ -1887,8 +1887,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());      
       state =
-        state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(), RetT));      
-      state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
+        state.set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(), RetT));
+      MemRegionManager& MRMgr = Eng.getStoreManager().getRegionManager();
+      state = state.BindExpr(Ex, Loc::MakeVal(MRMgr.getSymbolicRegion(Sym)), 
+                             false);
 
 
       // FIXME: Add a flag to the checker where allocations are assumed to
