@@ -1702,10 +1702,10 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
             N->markAsSink();
             if (isFeasibleNotNull)
               NilReceiverStructRetImplicit.insert(N);
-            else
-              NilReceiverStructRetExplicit.insert(N);
-            
-            return;
+            else {
+              NilReceiverStructRetExplicit.insert(N);            
+              return;
+            }
           }
         }
       }
@@ -1721,21 +1721,22 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
             N->markAsSink();
             if(isFeasibleNotNull)
               NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
-            else
-              NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
-            
-            return;
+            else {
+              NilReceiverLargerThanVoidPtrRetExplicit.insert(N);            
+              return;
+            }
           }
         }
         else if (!isFeasibleNotNull) {
           // FIXME: For now take the conservative approach that we only
           // return null values if we *know* that the receiver is nil.
-          // This is because we can have suprises like:
+          // This is because we can have surprises like:
           //
-          // if ([[NSScreens screens]count]) {
+          // if ([[NSScreens screens] count]) {
           //   ... = [[NSScreens screens] objectAtIndex:0];
           //
-          // In this case 'objectAtIndex:0' is guaranteed to not be zero.
+          // What can happen is that [... screens] should return the same
+          // value, but we won't necessarily catch that (yet).
           //
           
           // Handle the safe cases where the return value is 0 if the receiver
