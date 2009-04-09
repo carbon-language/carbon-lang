@@ -727,7 +727,7 @@ class CompileUnit {
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
-  std::map<std::string, DIE *> Globals;
+  StringMap<DIE*> Globals;
 
   /// DiesSet - Used to uniquely define dies within the compile unit.
   ///
@@ -745,7 +745,7 @@ public:
   // Accessors.
   unsigned getID()           const { return ID; }
   DIE* getDie()              const { return Die; }
-  std::map<std::string, DIE *> &getGlobals() { return Globals; }
+  StringMap<DIE*> &getGlobals() { return Globals; }
 
   /// hasContent - Return true if this compile unit has something to write out.
   ///
@@ -2103,8 +2103,8 @@ private:
   void ConstructDefaultDbgScope(MachineFunction *MF) {
     const char *FnName = MF->getFunction()->getNameStart();
     if (MainCU) {
-      std::map<std::string, DIE*> &Globals = MainCU->getGlobals();
-      std::map<std::string, DIE*>::iterator GI = Globals.find(FnName);
+      StringMap<DIE*> &Globals = MainCU->getGlobals();
+      StringMap<DIE*>::iterator GI = Globals.find(FnName);
       if (GI != Globals.end()) {
         DIE *SPDie = GI->second;
 
@@ -2121,8 +2121,8 @@ private:
     } else {
       for (unsigned i = 0, e = CompileUnits.size(); i != e; ++i) {
         CompileUnit *Unit = CompileUnits[i];
-        std::map<std::string, DIE*> &Globals = Unit->getGlobals();
-        std::map<std::string, DIE*>::iterator GI = Globals.find(FnName);
+        StringMap<DIE*> &Globals = Unit->getGlobals();
+        StringMap<DIE*>::iterator GI = Globals.find(FnName);
         if (GI != Globals.end()) {
           DIE *SPDie = GI->second;
 
@@ -2663,10 +2663,10 @@ private:
                    true);
     Asm->EOL("Compilation Unit Length");
       
-    std::map<std::string, DIE *> &Globals = Unit->getGlobals();
-    for (std::map<std::string, DIE *>::iterator GI = Globals.begin(),
-           GE = Globals.end(); GI != GE; ++GI) {
-      const std::string &Name = GI->first;
+    StringMap<DIE*> &Globals = Unit->getGlobals();
+    for (StringMap<DIE*>::iterator
+           GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
+      const std::string &Name = GI->first();
       DIE * Entity = GI->second;
         
       Asm->EmitInt32(Entity->getOffset()); Asm->EOL("DIE offset");
