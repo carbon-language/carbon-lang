@@ -633,7 +633,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
           // Check if this is a two address instruction.  If so, then
           // the def does not kill the use.
           if (last->second.first == I &&
-              I->isRegReDefinedByTwoAddr(i))
+              I->isRegTiedToUseOperand(i))
             continue;
           
           MachineOperand& lastUD =

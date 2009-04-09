@@ -1589,8 +1589,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       // If this def is part of a two-address operand, make sure to execute
       // the store from the correct physical register.
       unsigned PhysReg;
-      int TiedOp = MI.getDesc().findTiedToSrcOperand(i);
-      if (TiedOp != -1) {
+      unsigned TiedOp;
+      if (MI.isRegTiedToUseOperand(i, &TiedOp)) {
         PhysReg = MI.getOperand(TiedOp).getReg();
         if (SubIdx) {
           unsigned SuperReg = findSuperReg(RC, PhysReg, SubIdx, TRI);

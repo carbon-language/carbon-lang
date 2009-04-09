@@ -690,12 +690,14 @@ int MachineInstr::findFirstPredOperandIdx() const {
   return -1;
 }
   
-/// isRegReDefinedByTwoAddr - Given the index of a register operand,
-/// check if the register def is a re-definition due to two addr elimination.
-bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
+/// isRegTiedToUseOperand - Given the index of a register def operand,
+/// check if the register def is tied to a source operand, due to either
+/// two-address elimination or inline assembly constraints. Returns the
+/// first tied use operand index by reference is UseOpIdx is not null.
+bool MachineInstr::isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx){
   if (getOpcode() == TargetInstrInfo::INLINEASM) {
-    assert(DefIdx >= 2);
-    const MachineOperand &MO = getOperand(DefIdx);
+    assert(DefOpIdx >= 2);
+    const MachineOperand &MO = getOperand(DefOpIdx);
     if (!MO.isReg() || !MO.isDef())
       return false;
     // Determine the actual operand no corresponding to this index.
@@ -705,7 +707,7 @@ bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
       assert(FMO.isImm());
       // Skip over this def.
       i += InlineAsm::getNumOperandRegisters(FMO.getImm()) + 1;
-      if (i > DefIdx)
+      if (i > DefOpIdx)
         break;
       ++DefNo;
     }
@@ -717,18 +719,24 @@ bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
         continue;
       unsigned Idx;
       if (InlineAsm::isUseOperandTiedToDef(FMO.getImm(), Idx) && 
-          Idx == DefNo)
+          Idx == DefNo) {
+        if (UseOpIdx)
+          *UseOpIdx = (unsigned)i + 1;
         return true;
+      }
     }
   }
 
-  assert(getOperand(DefIdx).isDef() && "DefIdx is not a def!");
+  assert(getOperand(DefOpIdx).isDef() && "DefOpIdx is not a def!");
   const TargetInstrDesc &TID = getDesc();
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
     if (MO.isReg() && MO.isUse() &&
-        TID.getOperandConstraint(i, TOI::TIED_TO) == (int)DefIdx)
+        TID.getOperandConstraint(i, TOI::TIED_TO) == (int)DefOpIdx) {
+      if (UseOpIdx)
+        *UseOpIdx = (unsigned)i;
       return true;
+    }
   }
   return false;
 }

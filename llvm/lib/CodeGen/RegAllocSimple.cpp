@@ -204,8 +204,8 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
           if (MO.isDef()) {
-            int TiedOp = Desc.findTiedToSrcOperand(i);
-            if (TiedOp == -1) {
+            unsigned TiedOp;
+            if (!MI->isRegTiedToUseOperand(i, &TiedOp)) {
               physReg = getFreeReg(virtualReg);
             } else {
               // must be same register number as the source operand that is 

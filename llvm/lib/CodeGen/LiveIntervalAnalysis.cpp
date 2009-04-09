@@ -469,7 +469,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // must be due to phi elimination or two addr elimination.  If this is
     // the result of two address elimination, then the vreg is one of the
     // def-and-use register operand.
-    if (mi->isRegReDefinedByTwoAddr(MOIdx)) {
+    if (mi->isRegTiedToUseOperand(MOIdx)) {
       // If this is a two-address definition, then we have already processed
       // the live range.  The only problem is that we didn't realize there
       // are actually two values in the live interval.  Because of this we

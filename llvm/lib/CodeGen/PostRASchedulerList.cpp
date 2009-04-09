@@ -500,7 +500,7 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
     if (Reg == 0) continue;
     if (!MO.isDef()) continue;
     // Ignore two-addr defs.
-    if (MI->isRegReDefinedByTwoAddr(i)) continue;
+    if (MI->isRegTiedToUseOperand(i)) continue;
 
     DefIndices[Reg] = Count;
     KillIndices[Reg] = ~0u;

@@ -131,10 +131,6 @@ public:
     return -1;
   }
 
-  /// findTiedToSrcOperand - Returns the operand that is tied to the specified
-  /// dest operand. Returns -1 if there isn't one.
-  int findTiedToSrcOperand(unsigned OpNum) const;
-  
   /// getOpcode - Return the opcode number for this descriptor.
   unsigned getOpcode() const {
     return Opcode;

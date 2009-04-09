@@ -188,7 +188,6 @@ void RegScavenger::forward() {
 
   MachineInstr *MI = MBBI;
   DistanceMap.insert(std::make_pair(MI, CurrDist++));
-  const TargetInstrDesc &TID = MI->getDesc();
 
   if (MI == ScavengeRestore) {
     ScavengedReg = 0;
@@ -256,7 +255,7 @@ void RegScavenger::forward() {
     }
 
     // Skip two-address destination operand.
-    if (TID.findTiedToSrcOperand(Idx) != -1) {
+    if (MI->isRegTiedToUseOperand(Idx)) {
       assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
@@ -284,7 +283,6 @@ void RegScavenger::backward() {
   MachineInstr *MI = MBBI;
   DistanceMap.erase(MI);
   --CurrDist;
-  const TargetInstrDesc &TID = MI->getDesc();
 
   // Separate register operands into 3 classes: uses, defs, earlyclobbers.
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> UseMOs;
@@ -313,7 +311,7 @@ void RegScavenger::backward() {
       ? DefMOs[i].second : EarlyClobberMOs[i-NumDefs].second;
 
     // Skip two-address destination operand.
-    if (TID.findTiedToSrcOperand(Idx) != -1)
+    if (MI->isRegTiedToUseOperand(Idx))
       continue;
 
     unsigned Reg = MO.getReg();

@@ -803,7 +803,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
       MachineInstr* MI = LIs->getInstructionFromIndex(*KI);
       unsigned DefIdx = MI->findRegisterDefOperandIdx(CurrLI->reg);
       if (DefIdx == ~0U) continue;
-      if (MI->isRegReDefinedByTwoAddr(DefIdx)) {
+      if (MI->isRegTiedToUseOperand(DefIdx)) {
         VNInfo* NextVN =
                      CurrLI->findDefinedVNInfo(LiveIntervals::getDefIndex(*KI));
         if (NextVN == OldVN) continue;
@@ -1214,7 +1214,7 @@ unsigned PreAllocSplitting::getNumberOfNonSpills(
       NonSpills++;
     
     int DefIdx = (*UI)->findRegisterDefOperandIdx(Reg);
-    if (DefIdx != -1 && (*UI)->isRegReDefinedByTwoAddr(DefIdx))
+    if (DefIdx != -1 && (*UI)->isRegTiedToUseOperand(DefIdx))
       FeedsTwoAddr = true;
   }
   
