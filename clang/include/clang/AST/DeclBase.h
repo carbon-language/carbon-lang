@@ -349,21 +349,10 @@ class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
 
-  /// LookupPtrKind - Describes what kind of pointer LookupPtr
-  /// actually is. 
-  enum LookupPtrKind {
-    /// LookupIsMap - Indicates that LookupPtr is actually a map.
-    LookupIsMap = 7
-  };
-
-  /// LookupPtr - Pointer to a data structure used to lookup
-  /// declarations within this context. If the context contains fewer
-  /// than seven declarations, the number of declarations is provided
-  /// in the 3 lowest-order bits and the upper bits are treated as a
-  /// pointer to an array of NamedDecl pointers. If the context
-  /// contains seven or more declarations, the upper bits are treated
-  /// as a pointer to a DenseMap<DeclarationName, StoredDeclsList>.
-  llvm::PointerIntPair<void*, 3> LookupPtr;
+  /// \brief Pointer to the data structure used to lookup declarations
+  /// within this context, which is a DenseMap<DeclarationName,
+  /// StoredDeclsList>.
+  void* LookupPtr;
 
   /// FirstDecl - The first declaration stored within this declaration
   /// context.
@@ -377,7 +366,7 @@ class DeclContext {
 
 protected:
    DeclContext(Decl::Kind K) 
-     : DeclKind(K), LookupPtr(), FirstDecl(0), LastDecl(0) { }
+     : DeclKind(K), LookupPtr(0), FirstDecl(0), LastDecl(0) { }
 
   void DestroyDecls(ASTContext &C);
 
@@ -759,12 +748,8 @@ public:
 
   // Low-level accessors
 
-  /// \brief Determine if the lookup structure is a
-  /// DenseMap. Othewise, it is an array.
-  bool isLookupMap() const { return LookupPtr.getInt() == LookupIsMap; }
-
   /// \brief Retrieve the internal representation of the lookup structure.
-  llvm::PointerIntPair<void*, 3> getLookupPtr() const { return LookupPtr; }
+  void* getLookupPtr() const { return LookupPtr; }
 
   static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }

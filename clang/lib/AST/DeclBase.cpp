@@ -365,10 +365,7 @@ bool DeclContext::classof(const Decl *D) {
 }
 
 DeclContext::~DeclContext() {
-  if (isLookupMap())
-    delete static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
-  else
-    delete [] static_cast<NamedDecl**>(LookupPtr.getPointer());
+  delete static_cast<StoredDeclsMap*>(LookupPtr);
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
@@ -488,29 +485,18 @@ DeclContext::lookup(DeclarationName Name) {
   /// If there is no lookup data structure, build one now by walking
   /// all of the linked DeclContexts (in declaration order!) and
   /// inserting their values.
-  if (LookupPtr.getPointer() == 0)
+  if (!LookupPtr) {
     buildLookup(this);
 
-  if (isLookupMap()) {
-    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
-    StoredDeclsMap::iterator Pos = Map->find(Name);
-    if (Pos == Map->end())
+    if (!LookupPtr)
       return lookup_result(0, 0);
-    return Pos->second.getLookupResult();
-  } 
+  }
 
-  // We have a small array. Look into it.
-  unsigned Size = LookupPtr.getInt();
-  NamedDecl **Array = static_cast<NamedDecl**>(LookupPtr.getPointer());
-  for (unsigned Idx = 0; Idx != Size; ++Idx)
-    if (Array[Idx]->getDeclName() == Name) {
-      unsigned Last = Idx + 1;
-      while (Last != Size && Array[Last]->getDeclName() == Name)
-        ++Last;
-      return lookup_result(&Array[Idx], &Array[Last]);
-    }
-
-  return lookup_result(0, 0);
+  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr);
+  StoredDeclsMap::iterator Pos = Map->find(Name);
+  if (Pos == Map->end())
+    return lookup_result(0, 0);
+  return Pos->second.getLookupResult();
 }
 
 DeclContext::lookup_const_result 
@@ -550,7 +536,7 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
   // If we already have a lookup data structure, perform the insertion
   // into it. Otherwise, be lazy and don't build that structure until
   // someone asks for it.
-  if (LookupPtr.getPointer())
+  if (LookupPtr)
     makeDeclVisibleInContextImpl(D);
 
   // If we are a transparent context, insert into our parent context,
@@ -570,86 +556,11 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   if (isa<ClassTemplateSpecializationDecl>(D))
     return;
 
-  bool MayBeRedeclaration = true;
-
-  if (!isLookupMap()) {
-    unsigned Size = LookupPtr.getInt();
-
-    // The lookup data is stored as an array. Search through the array
-    // to find the insertion location.
-    NamedDecl **Array;
-    if (Size == 0) {
-      Array = new NamedDecl*[LookupIsMap - 1];
-      LookupPtr.setPointer(Array);
-    } else {
-      Array = static_cast<NamedDecl **>(LookupPtr.getPointer());
-    }
-
-    // We always keep declarations of the same name next to each other
-    // in the array, so that it is easy to return multiple results
-    // from lookup(). 
-    unsigned FirstMatch;
-    for (FirstMatch = 0; FirstMatch != Size; ++FirstMatch)
-      if (Array[FirstMatch]->getDeclName() == D->getDeclName())
-        break;
-
-    unsigned InsertPos = FirstMatch;
-    if (FirstMatch != Size) {
-      // We found another declaration with the same name. First
-      // determine whether this is a redeclaration of an existing
-      // declaration in this scope, in which case we will replace the
-      // existing declaration.
-      unsigned LastMatch = FirstMatch;
-      for (; LastMatch != Size; ++LastMatch) {
-        if (Array[LastMatch]->getDeclName() != D->getDeclName())
-          break;
-
-        if (D->declarationReplaces(Array[LastMatch])) {
-          // D is a redeclaration of an existing element in the
-          // array. Replace that element with D.
-          Array[LastMatch] = D;
-          return;
-        }
-      }
-
-      // [FirstMatch, LastMatch) contains the set of declarations that
-      // have the same name as this declaration. Determine where the
-      // declaration D will be inserted into this range.
-      if (D->getKind() == Decl::UsingDirective ||
-          D->getIdentifierNamespace() == Decl::IDNS_Tag)
-        InsertPos = LastMatch;
-      else if (Array[LastMatch-1]->getIdentifierNamespace() == Decl::IDNS_Tag)
-        InsertPos = LastMatch - 1;
-      else
-        InsertPos = LastMatch;
-    }
-       
-    if (Size < LookupIsMap - 1) {
-      // The new declaration will fit in the array. Insert the new
-      // declaration at the position Match in the array. 
-      for (unsigned Idx = Size; Idx > InsertPos; --Idx)
-       Array[Idx] = Array[Idx-1];
-      
-      Array[InsertPos] = D;
-      LookupPtr.setInt(Size + 1);
-      return;
-    }
-
-    // We've reached capacity in this array. Create a map and copy in
-    // all of the declarations that were stored in the array.
-    StoredDeclsMap *Map = new StoredDeclsMap(16);
-    LookupPtr.setPointer(Map);
-    LookupPtr.setInt(LookupIsMap);
-    for (unsigned Idx = 0; Idx != LookupIsMap - 1; ++Idx) 
-      makeDeclVisibleInContextImpl(Array[Idx]);
-    delete [] Array;
-
-    // Fall through to perform insertion into the map.
-    MayBeRedeclaration = false;
-  }
+  if (!LookupPtr)
+    LookupPtr = new StoredDeclsMap;
 
   // Insert this declaration into the map.
-  StoredDeclsMap &Map = *static_cast<StoredDeclsMap*>(LookupPtr.getPointer());
+  StoredDeclsMap &Map = *static_cast<StoredDeclsMap*>(LookupPtr);
   StoredDeclsList &DeclNameEntries = Map[D->getDeclName()];
   if (DeclNameEntries.isNull()) {
     DeclNameEntries.setOnlyValue(D);
@@ -659,7 +570,7 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // If it is possible that this is a redeclaration, check to see if there is
   // already a decl for which declarationReplaces returns true.  If there is
   // one, just replace it and return.
-  if (MayBeRedeclaration && DeclNameEntries.HandleRedeclaration(D))
+  if (DeclNameEntries.HandleRedeclaration(D))
     return;
   
   // Put this declaration into the appropriate slot.
