@@ -1913,7 +1913,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
       state =
         state.set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),RetT));
-      state = state.BindExpr(Ex, loc::SymbolVal(Sym), false);
+      MemRegionManager& MRMgr = Eng.getStoreManager().getRegionManager();
+      state = state.BindExpr(Ex, Loc::MakeVal(MRMgr.getSymbolicRegion(Sym)), 
+                             false);
       break;
     }
   }
