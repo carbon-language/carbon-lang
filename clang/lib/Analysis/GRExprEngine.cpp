@@ -2138,14 +2138,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       // UnknownVal.
       if (InitVal.isUnknown() || 
           !getConstraintManager().canReasonAbout(InitVal)) {
-        if (Loc::IsLocType(T)) {
-          SymbolRef Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
-          InitVal = loc::SymbolVal(Sym);
-        }
-        else if (T->isIntegerType() && T->isScalarType()) {
-          SymbolRef Sym = SymMgr.getConjuredSymbol(InitEx, Count);        
-          InitVal = nonloc::SymbolVal(Sym);                    
-        }
+        InitVal = SVal::GetConjuredSymbolVal(SymMgr, 
+                          getStoreManager().getRegionManager(), InitEx, Count);
       }        
       
       state = StateMgr.BindDecl(state, VD, InitVal);
