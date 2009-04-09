@@ -207,6 +207,18 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
   return false;
 }
 
+void Path::makeAbsolute() {
+  if (isAbsolute())
+    return;
+
+  Path CWD = Path::GetCurrentDirectory();
+  assert(CWD.isAbsolute() && "GetCurrentDirectory returned relative path!");
+
+  CWD.appendComponent(path);
+
+  path = CWD.toString();
+}
+
 static void getPathList(const char*path, std::vector<Path>& Paths) {
   const char* at = path;
   const char* delim = strchr(at, PathSeparator);

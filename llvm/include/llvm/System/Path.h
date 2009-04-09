@@ -459,6 +459,10 @@ namespace sys {
       /// @brief Make the current path name unique in the file system.
       bool makeUnique( bool reuse_current /*= true*/, std::string* ErrMsg );
 
+      /// The current Path name is made absolute by prepending the
+      /// current working directory if necessary.
+      void makeAbsolute();
+
     /// @}
     /// @name Disk Mutators
     /// @{
