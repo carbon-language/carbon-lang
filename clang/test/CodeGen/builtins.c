@@ -81,6 +81,7 @@ int main() {
   int a, b, n = random(); // Avoid optimizing out.
   char s0[10], s1[] = "Hello";
   V(strcat, (s0, s1));
+  V(strcmp, (s0, s1));
   V(strncat, (s0, s1, n));
   V(strchr, (s0, s1[0]));
   V(strrchr, (s0, s1[0]));
