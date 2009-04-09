@@ -1599,8 +1599,9 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
       QualType T = R->getRValueType(getContext());
       assert (Loc::IsLocType(T));
       unsigned Count = Builder->getCurrentBlockCount();
-      loc::SymbolVal SymV(SymMgr.getConjuredSymbol(elem, T, Count));
-      hasElems = hasElems.BindLoc(ElementV, SymV);
+      SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
+      SVal V = Loc::MakeVal(getStoreManager().getRegionManager().getSymbolicRegion(Sym));
+      hasElems = hasElems.BindLoc(ElementV, V);
 
       // Bind the location to 'nil' on the false branch.
       SVal nilV = loc::ConcreteInt(getBasicVals().getValue(0, T));      
