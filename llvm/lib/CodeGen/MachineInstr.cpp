@@ -698,7 +698,7 @@ bool MachineInstr::isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx){
   if (getOpcode() == TargetInstrInfo::INLINEASM) {
     assert(DefOpIdx >= 2);
     const MachineOperand &MO = getOperand(DefOpIdx);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isReg() || !MO.isDef() || MO.getReg() == 0)
       return false;
     // Determine the actual operand no corresponding to this index.
     unsigned DefNo = 0;
