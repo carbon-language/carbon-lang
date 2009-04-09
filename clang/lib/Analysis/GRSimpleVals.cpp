@@ -460,11 +460,9 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   QualType T = CE->getType();  
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {    
     unsigned Count = Builder.getCurrentBlockCount();
-    SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         
-    SVal X = Loc::IsLocType(CE->getType())
-             ? cast<SVal>(loc::SymbolVal(Sym)) 
-             : cast<SVal>(nonloc::SymbolVal(Sym));
+    SVal X = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
+                          Eng.getStoreManager().getRegionManager(), CE, Count);
     
     St = StateMgr.BindExpr(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
