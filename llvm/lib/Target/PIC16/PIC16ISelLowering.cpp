@@ -877,7 +877,10 @@ LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
   std::vector<SDValue> Ops;
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Arg, StoreRet;
-  for (unsigned i=0; i<NumOps; i++) {
+
+  // For PIC16 ABI the arguments come after the return value. 
+  unsigned RetVals = TheCall->getNumRetVals();
+  for (unsigned i = 0, ArgOffset = RetVals; i < NumOps; i++) {
     // Get the arguments
     Arg = TheCall->getArg(i);
     Ops.clear();
@@ -885,13 +888,14 @@ LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
     Ops.push_back(Arg);
     Ops.push_back(DataAddr_Lo);
     Ops.push_back(DataAddr_Hi);
-    Ops.push_back(DAG.getConstant(i, MVT::i8));
+    Ops.push_back(DAG.getConstant(ArgOffset, MVT::i8));
     Ops.push_back(InFlag);
 
     StoreRet = DAG.getNode (PIC16ISD::PIC16StWF, dl, Tys, &Ops[0], Ops.size());
 
     Chain = getChain(StoreRet);
     InFlag = getOutFlag(StoreRet);
+    ArgOffset++;
   }
   return Chain;
 }
