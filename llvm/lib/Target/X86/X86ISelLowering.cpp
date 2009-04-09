@@ -7264,12 +7264,12 @@ bool X86TargetLowering::isTruncateFree(MVT VT1, MVT VT2) const {
 }
 
 bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
-  // x86-64 has implicitly zero-extends 32-bit results in 64-bit registers.
+  // x86-64 implicitly zero-extends 32-bit results in 64-bit registers.
   return Ty1 == Type::Int32Ty && Ty2 == Type::Int64Ty && Subtarget->is64Bit();
 }
 
 bool X86TargetLowering::isZExtFree(MVT VT1, MVT VT2) const {
-  // x86-64 has implicitly zero-extends 32-bit results in 64-bit registers.
+  // x86-64 implicitly zero-extends 32-bit results in 64-bit registers.
   return VT1 == MVT::i32 && VT2 == MVT::i64 && Subtarget->is64Bit();
 }
 
