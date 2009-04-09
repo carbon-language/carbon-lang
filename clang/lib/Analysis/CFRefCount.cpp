@@ -1760,8 +1760,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             QualType T = R->getRValueType(Ctx);
           
             if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
-              SVal V = SVal::GetRValueSymbolVal(Eng.getSymbolManager(),
-                                  Eng.getStoreManager().getRegionManager(), R);
+              SVal V = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
+                           Eng.getStoreManager().getRegionManager(), *I, Count);
               state = state.BindLoc(Loc::MakeVal(R), V);
             }
             else if (const RecordType *RT = T->getAsStructureType()) {
