@@ -1690,8 +1690,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     
     if (isFeasibleNull) {
       // Check if the receiver was nil and the return value a struct.
-      if (BR.getParentMap().isConsumedExpr(ME)) {
-        if(ME->getType()->isRecordType()) {
+      if(ME->getType()->isRecordType()) {
+        if (BR.getParentMap().isConsumedExpr(ME)) {
           // The [0 ...] expressions will return garbage.  Flag either an
           // explicit or implicit error.  Because of the structure of this
           // function we currently do not bifurfacte the state graph at
@@ -1704,40 +1704,50 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
               NilReceiverStructRetImplicit.insert(N);
             else
               NilReceiverStructRetExplicit.insert(N);
+            
+            return;
           }
         }
-        else {
-          ASTContext& Ctx = getContext();
-          
-          // sizeof(void *)
-          const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
-          
-          // sizeof(return type)
-          const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
-          
-          if(voidPtrSize < returnTypeSize) {
-            if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
-              N->markAsSink();
-              if(isFeasibleNotNull)
-                NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
-              else
-                NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
-            }
+      }
+      else if (BR.getParentMap().isConsumedExpr(ME)) {
+        ASTContext& Ctx = getContext();
+        // sizeof(void *)
+        const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
+        // sizeof(return type)
+        const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
+
+        if(voidPtrSize < returnTypeSize) {
+          if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
+            N->markAsSink();
+            if(isFeasibleNotNull)
+              NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
+            else
+              NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
+            
+            return;
           }
-          else {
-            // Handle the safe cases where the return value is 0 if the receiver
-            // is nil.
-            SVal V = SVal::MakeZero(getBasicVals(), ME->getType());
-            MakeNode(Dst, ME, Pred, BindExpr(StNull, ME, V));
-          }
+        }
+        else if (!isFeasibleNotNull) {
+          // FIXME: For now take the conservative approach that we only
+          // return null values if we *know* that the receiver is nil.
+          // This is because we can have suprises like:
+          //
+          // if ([[NSScreens screens]count]) {
+          //   ... = [[NSScreens screens] objectAtIndex:0];
+          //
+          // In this case 'objectAtIndex:0' is guaranteed to not be zero.
+          //
+          
+          // Handle the safe cases where the return value is 0 if the receiver
+          // is nil.
+          SVal V = SVal::MakeZero(getBasicVals(), ME->getType());
+          MakeNode(Dst, ME, Pred, BindExpr(StNull, ME, V));
+          return;
         }
       }
       
       // We have handled the cases where the receiver is nil.  The remainder
       // of this method should assume that the receiver is not nil.      
-      if (!isFeasibleNotNull)
-        return;
-
       state = StNotNull;
     }
     
