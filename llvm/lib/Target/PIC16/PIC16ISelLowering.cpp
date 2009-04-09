@@ -1359,21 +1359,26 @@ SDValue PIC16TargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) {
     // Put one value on stack.
     SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG, dl);
     
+    // ADDC and ADDE produces two results.
     SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
 
+    // ADDE has three operands, the last one is a flag.
     if (Op.getOpcode() == ISD::ADDE)
       return DAG.getNode(Op.getOpcode(), dl, Tys, Op.getOperand(MemOp ^ 1),
                          NewVal, Op.getOperand(2));
-    else
+    // ADDC has two operands.
+    else if (Op.getOpcode() == ISD::ADDC)
       return DAG.getNode(Op.getOpcode(), dl, Tys, Op.getOperand(MemOp ^ 1),
                          NewVal);
+    // ADD it is. It produces only one result.
+    else
+      return DAG.getNode(Op.getOpcode(), dl, MVT::i8, Op.getOperand(MemOp ^ 1),
+                         NewVal);
   }
-  else if (Op.getOpcode() == ISD::ADD) {
+  else if (Op.getOpcode() == ISD::ADD)
     return Op;
-  }
-  else {
+  else
     return SDValue();
-  }
 }
 
 SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
