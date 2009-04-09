@@ -131,11 +131,12 @@ of header files. The current implementation of PCH in Clang as pretokenized
 header files was motivated by the following factors:<p>
 
 <ul>
-<li><p><em>Language independence</em>: PTH files are (roughly) language
-independent. They work with any language that Clang's lexer can handle,
-including C, Objective-C, and (in the early stages) C++. This means development
-on language features at the parsing level or above (which is basically almost
-all interesting pieces) does not require PTH to be modified.</p></li>
+
+<li><p><em>Language independence</em>: PTH files work with any language that
+Clang's lexer can handle, including C, Objective-C, and (in the early stages)
+C++. This means development on language features at the parsing level or above
+(which is basically almost all interesting pieces) does not require PTH to be
+modified.</p></li>
 
 <li><em>Simple design</em>: Relatively speaking, PTH has a simple design and
 implementation, making it easy to test. Further, because the machinery for PTH
@@ -172,6 +173,12 @@ also modifies those pages in memory, incurring the copy-on-write costs. The
 read-only nature of PTH can greatly reduce memory pressure for builds involving
 multiple cores, thus improving overall scalability.</p></li>
 
+<li><p><em>Fast generation<em>: PTH files can be generated in a small fraction
+of the time needed to generate GCC's PCH files. Since PTH/PCH generation is a
+serial operation that typically blocks progress during a build, faster
+generation time leads to improved processor utilization with parallel builds on
+multicore machines.</p></li>
+
 </ul>
 
 <p>Despite these strengths, PTH's simple design suffers some algorithmic
@@ -188,11 +195,11 @@ strengths via the use of copy-on-write pages, the approach itself can
 fundamentally dominate at an algorithmic level, especially when one considers
 header files of arbitrary size.</p>
 
-<p>Consequently, as alluded earlier, there are plans to potentially implement an
-alternative PCH implementation for Clang based on the lazy deserialization of
-ASTs. This approach would theoretically have the same constant-time algorithmic
-advantages just mentioned but would also retain some of the strengths of PTH
-such as reduced memory pressure (ideal for multi-core builds).</p>
+<p>There are plans to potentially implement an complementary PCH implementation
+for Clang based on the lazy deserialization of ASTs. This approach would
+theoretically have the same constant-time algorithmic advantages just mentioned
+but would also retain some of the strengths of PTH such as reduced memory
+pressure (ideal for multi-core builds).</p>
 
 <h3>Internal PTH Optimizations</h3>
 
