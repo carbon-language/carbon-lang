@@ -2266,8 +2266,11 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     
       S += encoding;
     }
-  }
-  else if (T->isObjCQualifiedIdType()) {
+  } else if (const ComplexType *CT = T->getAsComplexType()) {
+    S += 'j';
+    getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, 0, false, 
+                               false);
+  } else if (T->isObjCQualifiedIdType()) {
     getObjCEncodingForTypeImpl(getObjCIdType(), S, 
                                ExpandPointedToStructures,
                                ExpandStructures, FD);
