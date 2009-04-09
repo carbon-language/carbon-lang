@@ -40,7 +40,7 @@ class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   
 public:
   BasicStoreManager(GRStateManager& mgr)
-    : StoreManager(mgr.getAllocator()),
+    : StoreManager(mgr.getValueManager()),
       VBFactory(mgr.getAllocator()), 
       StateMgr(mgr), 
       SelfRegion(0) {}
@@ -478,11 +478,8 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
       if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Base)) {
         if (DR->getDecl() == SelfDecl) {
           const MemRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
-                                                         SelfRegion);
-          
-          SVal X = SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(),
-                                            MRMgr, IVR);
-          
+                                                         SelfRegion);          
+          SVal X = ValMgr.getRValueSymbolVal(IVR);          
           St = BindInternal(St, Loc::MakeVal(IVR), X);
         }
       }
@@ -538,7 +535,7 @@ Store BasicStoreManager::getInitialStore() {
       const MemRegion *R = StateMgr.getRegion(VD);
       SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                 isa<ImplicitParamDecl>(VD))
-            ? SVal::GetRValueSymbolVal(StateMgr.getSymbolManager(), MRMgr,R)
+            ? ValMgr.getRValueSymbolVal(R)
             : UndefinedVal();
 
       St = BindInternal(St, Loc::MakeVal(R), X);

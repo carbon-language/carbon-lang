@@ -1760,8 +1760,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             QualType T = R->getRValueType(Ctx);
           
             if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
-              SVal V = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
-                        Eng.getStoreManager().getRegionManager(), *I, T, Count);
+              ValueManager &ValMgr = Eng.getValueManager();
+              SVal V = ValMgr.getConjuredSymbolVal(*I, T, Count);
               state = state.BindLoc(Loc::MakeVal(R), V);
             }
             else if (const RecordType *RT = T->getAsStructureType()) {
@@ -1787,13 +1787,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                 QualType FT = FD->getType();
                 
                 if (Loc::IsLocType(FT) || 
-                    (FT->isIntegerType() && FT->isScalarType())) {
-                  
+                    (FT->isIntegerType() && FT->isScalarType())) {                  
                   const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
-
-                  SVal V = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
-                       Eng.getStoreManager().getRegionManager(), *I, FT, Count);
-
+                  ValueManager &ValMgr = Eng.getValueManager();
+                  SVal V = ValMgr.getConjuredSymbolVal(*I, FT, Count);
                   state = state.BindLoc(Loc::MakeVal(FR), V);
                 }                
               }
@@ -1857,8 +1854,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
-        SVal X = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
-                       Eng.getStoreManager().getRegionManager(), Ex, T, Count);
+        ValueManager &ValMgr = Eng.getValueManager();
+        SVal X = ValMgr.getConjuredSymbolVal(Ex, T, Count);
         state = state.BindExpr(Ex, X, false);
       }      
       

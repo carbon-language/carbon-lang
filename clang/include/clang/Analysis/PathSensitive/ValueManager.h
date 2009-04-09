@@ -22,11 +22,9 @@
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
 
 namespace llvm { class BumpPtrAllocator; }
-namespace clang { class GRStateManager; }
 
 namespace clang {  
 class ValueManager {
-  friend class GRStateManager;
 
   ASTContext &Context;  
   BasicValueFactory BasicVals;
@@ -34,16 +32,14 @@ class ValueManager {
   /// SymMgr - Object that manages the symbol information.
   SymbolManager SymMgr;
 
-  // FIXME: Eventually ValueManager will own this object.
-  MemRegionManager *MemMgr;
 
-  void setRegionManager(MemRegionManager& mm) { MemMgr = &mm; }
+  MemRegionManager MemMgr;
   
 public:
   ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context)
                : Context(context), BasicVals(Context, alloc),
                  SymMgr(Context, BasicVals, alloc),
-                 MemMgr(0) {}
+                 MemMgr(alloc) {}
 
   // Accessors to submanagers.
   
@@ -56,8 +52,8 @@ public:
   SymbolManager &getSymbolManager() { return SymMgr; }
   const SymbolManager &getSymbolManager() const { return SymMgr; }
 
-  MemRegionManager &getRegionManager() { return *MemMgr; }
-  const MemRegionManager &getRegionManager() const { return *MemMgr; }
+  MemRegionManager &getRegionManager() { return MemMgr; }
+  const MemRegionManager &getRegionManager() const { return MemMgr; }
   
   // Forwarding methods to SymbolManager.
   
@@ -75,11 +71,17 @@ public:
   // Aggregation methods that use multiple submanagers.
   
   Loc makeRegionVal(SymbolRef Sym) {
-    return Loc::MakeVal(MemMgr->getSymbolicRegion(Sym));
+    return Loc::MakeVal(MemMgr.getSymbolicRegion(Sym));
   }
   
   /// makeZeroVal - Construct an SVal representing '0' for the specified type.
   SVal makeZeroVal(QualType T);
+  
+  /// GetRValueSymbolVal - make a unique symbol for value of R.
+  SVal getRValueSymbolVal(const MemRegion* R);
+  
+  SVal getConjuredSymbolVal(const Expr *E, unsigned Count);  
+  SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
 };
 } // end clang namespace
 #endif

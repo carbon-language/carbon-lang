@@ -2139,8 +2139,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       // UnknownVal.
       if (InitVal.isUnknown() || 
           !getConstraintManager().canReasonAbout(InitVal)) {
-        InitVal = SVal::GetConjuredSymbolVal(SymMgr, 
-                          getStoreManager().getRegionManager(), InitEx, Count);
+        InitVal = ValMgr.getConjuredSymbolVal(InitEx, Count);
       }        
       
       state = StateMgr.BindDecl(state, VD, InitVal);
@@ -2531,9 +2530,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       
       // Conjure a new symbol if necessary to recover precision.
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result))
-        Result = SVal::GetConjuredSymbolVal(SymMgr, 
-                                       getStoreManager().getRegionManager(),Ex,
-                                            Builder->getCurrentBlockCount());
+        Result = ValMgr.getConjuredSymbolVal(Ex,
+                                             Builder->getCurrentBlockCount());
       
       state = BindExpr(state, U, U->isPostfix() ? V2 : Result);
 
@@ -2758,10 +2756,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                !getConstraintManager().canReasonAbout(RightV))              
               && (Loc::IsLocType(T) || 
                   (T->isScalarType() && T->isIntegerType()))) {
-            unsigned Count = Builder->getCurrentBlockCount();
-            
-            RightV = SVal::GetConjuredSymbolVal(SymMgr, 
-                      getStoreManager().getRegionManager(), B->getRHS(), Count);
+            unsigned Count = Builder->getCurrentBlockCount();            
+            RightV = ValMgr.getConjuredSymbolVal(B->getRHS(), Count);
           }
           
           // Simulate the effects of a "store":  bind the value of the RHS
@@ -2932,8 +2928,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // The symbolic value is actually for the type of the left-hand side
           // expression, not the computation type, as this is the value the
           // LValue on the LHS will bind to.
-          LHSVal = SVal::GetConjuredSymbolVal(SymMgr, 
-                getStoreManager().getRegionManager(), B->getRHS(), LTy, Count);
+          LHSVal = ValMgr.getConjuredSymbolVal(B->getRHS(), LTy, Count);
           
           // However, we need to convert the symbol to the computation type.
           Result = (LTy == CTy) ? LHSVal : EvalCast(LHSVal,CTy);

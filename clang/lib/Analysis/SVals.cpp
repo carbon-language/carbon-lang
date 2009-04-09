@@ -280,15 +280,14 @@ NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
   return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
 }
 
-SVal SVal::GetRValueSymbolVal(SymbolManager& SymMgr, MemRegionManager& MRMgr,
-                              const MemRegion* R) {
+SVal ValueManager::getRValueSymbolVal(const MemRegion* R) {
   SymbolRef sym = SymMgr.getRegionRValueSymbol(R);
                                 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
     QualType T = TR->getRValueType(SymMgr.getContext());
     
     if (Loc::IsLocType(T))
-      return Loc::MakeVal(MRMgr.getSymbolicRegion(sym));
+      return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
   
     // Only handle integers for now.
     if (T->isIntegerType() && T->isScalarType())
@@ -298,13 +297,12 @@ SVal SVal::GetRValueSymbolVal(SymbolManager& SymMgr, MemRegionManager& MRMgr,
   return UnknownVal();
 }
 
-SVal SVal::GetConjuredSymbolVal(SymbolManager &SymMgr, MemRegionManager& MRMgr,
-                                const Expr* E, unsigned Count) {
+SVal ValueManager::getConjuredSymbolVal(const Expr* E, unsigned Count) {
   QualType T = E->getType();
   SymbolRef sym = SymMgr.getConjuredSymbol(E, Count);
 
   if (Loc::IsLocType(T))
-    return Loc::MakeVal(MRMgr.getSymbolicRegion(sym));
+    return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
 
   if (T->isIntegerType() && T->isScalarType())
     return NonLoc::MakeVal(sym);
@@ -312,12 +310,13 @@ SVal SVal::GetConjuredSymbolVal(SymbolManager &SymMgr, MemRegionManager& MRMgr,
   return UnknownVal();
 }
 
-SVal SVal::GetConjuredSymbolVal(SymbolManager &SymMgr, MemRegionManager& MRMgr,
-                                const Expr* E, QualType T, unsigned Count) {
+SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
+                                        unsigned Count) {
+
   SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count);
 
   if (Loc::IsLocType(T))
-    return Loc::MakeVal(MRMgr.getSymbolicRegion(sym));
+    return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
 
   if (T->isIntegerType() && T->isScalarType())
     return NonLoc::MakeVal(sym);

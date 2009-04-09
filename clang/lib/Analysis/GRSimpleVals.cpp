@@ -449,10 +449,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   QualType T = CE->getType();  
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {    
     unsigned Count = Builder.getCurrentBlockCount();
-        
-    SVal X = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
-                          Eng.getStoreManager().getRegionManager(), CE, Count);
-    
+    SVal X = Eng.getValueManager().getConjuredSymbolVal(CE, Count);
     St = StateMgr.BindExpr(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
     

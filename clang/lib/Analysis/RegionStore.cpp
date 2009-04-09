@@ -148,7 +148,7 @@ class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
 
 public:
   RegionStoreManager(GRStateManager& mgr) 
-    : StoreManager(mgr.getAllocator()),
+    : StoreManager(mgr.getValueManager()),
       RBFactory(mgr.getAllocator()),
       RVFactory(mgr.getAllocator()),
       StateMgr(mgr), SelfRegion(0), SelfDecl(0) {
@@ -159,8 +159,6 @@ public:
 
   virtual ~RegionStoreManager() {}
 
-  MemRegionManager& getRegionManager() { return MRMgr; }
-  
   SubRegionMap* getSubRegionMap(const GRState *state);
   
   const GRState* BindCompoundLiteral(const GRState* St, 
@@ -756,7 +754,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
     if (SR == SelfRegion) {
       // FIXME: Do we need to handle the case where the super region
       // has a view?  We want to canonicalize the bindings.
-      return SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, R);
+      return ValMgr.getRValueSymbolVal(R);
     }
     
     // Otherwise, we need a new symbol.  For now return Unknown.
@@ -778,7 +776,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
         VD->hasGlobalStorage()) {
       QualType VTy = VD->getType();
       if (Loc::IsLocType(VTy) || VTy->isIntegerType())
-        return SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, VR);
+        return ValMgr.getRValueSymbolVal(VR);
       else
         return UnknownVal();
     }
@@ -794,7 +792,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   // All other integer values are symbolic.
   if (Loc::IsLocType(RTy) || RTy->isIntegerType())
-    return SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, R);
+    return ValMgr.getRValueSymbolVal(R);
   else
     return UnknownVal();
 }
@@ -833,7 +831,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
       if (MRMgr.onStack(FR) || MRMgr.onHeap(FR))
         FieldValue = UndefinedVal();
       else
-        FieldValue = SVal::GetRValueSymbolVal(getSymbolManager(), MRMgr, FR);
+        FieldValue = ValMgr.getRValueSymbolVal(FR);
     }
 
     StructVal = getBasicVals().consVals(FieldValue, StructVal);

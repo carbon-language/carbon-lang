@@ -16,6 +16,7 @@
 
 #include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
+#include "clang/Analysis/PathSensitive/ValueManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
@@ -35,10 +36,13 @@ class SubRegionMap;
   
 class StoreManager {
 protected:
-  /// MRMgr - Manages region objects associated with this StoreManager.
-  MemRegionManager MRMgr;
+  ValueManager &ValMgr;
 
-  StoreManager(llvm::BumpPtrAllocator& Alloc) : MRMgr(Alloc) {}
+  /// MRMgr - Manages region objects associated with this StoreManager.
+  MemRegionManager &MRMgr;
+
+  StoreManager(ValueManager &valMgr)
+    : ValMgr(valMgr), MRMgr(ValMgr.getRegionManager()) {}
 
 public:  
   virtual ~StoreManager() {}

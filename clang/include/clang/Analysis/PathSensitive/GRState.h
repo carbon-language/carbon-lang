@@ -310,9 +310,6 @@ public:
     Liveness(L) {
       StoreMgr.reset((*CreateStoreManager)(*this));
       ConstraintMgr.reset((*CreateConstraintManager)(*this));
-      
-      // FIXME: Have ValueMgr own the MemRegionManager, not StoreManager.
-      ValueMgr.setRegionManager(StoreMgr->getRegionManager());
   }
   
   ~GRStateManager();
