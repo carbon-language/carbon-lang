@@ -1704,10 +1704,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
             N->markAsSink();
             if (isFeasibleNotNull)
               NilReceiverStructRetImplicit.insert(N);
-            else {
+            else
               NilReceiverStructRetExplicit.insert(N);            
-              return;
-            }
           }
         }
       }
@@ -1725,10 +1723,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
                 N->markAsSink();
                 if(isFeasibleNotNull)
                   NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
-                else {
+                else
                   NilReceiverLargerThanVoidPtrRetExplicit.insert(N);            
-                  return;
-                }
               }
             }
             else if (!isFeasibleNotNull) {
@@ -1753,7 +1749,10 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
         }
       }
       // We have handled the cases where the receiver is nil.  The remainder
-      // of this method should assume that the receiver is not nil.      
+      // of this method should assume that the receiver is not nil.
+      if (!StNotNull)
+        return;
+       
       state = StNotNull;
     }
     
