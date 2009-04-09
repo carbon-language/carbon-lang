@@ -76,8 +76,8 @@ public:
   static SVal GetRValueSymbolVal(SymbolManager& SymMgr, MemRegionManager& MRMgr,
                                  const MemRegion* R);
 
-  static SVal GetConjuredSymbolVal(SymbolManager& SymMgr, const Expr *E,
-                                   unsigned Count);  
+  static SVal GetConjuredSymbolVal(SymbolManager& SymMgr, MemRegionManager&,
+                                   const Expr *E, unsigned Count);  
 
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;

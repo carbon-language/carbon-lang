@@ -2536,7 +2536,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       
       // Conjure a new symbol if necessary to recover precision.
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result))
-        Result = SVal::GetConjuredSymbolVal(SymMgr, Ex,
+        Result = SVal::GetConjuredSymbolVal(SymMgr, 
+                                       getStoreManager().getRegionManager(),Ex,
                                             Builder->getCurrentBlockCount());
       
       state = BindExpr(state, U, U->isPostfix() ? V2 : Result);
