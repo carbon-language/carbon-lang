@@ -27,6 +27,11 @@ td {
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
   </ul>
 </li>
+<li><a href="#targetspecific">Target-Specific Extensions</a>
+  <ul>
+  <li><a href="#x86-specific">X86/X86-64 Language Extensions</a></li>
+  </ul>
+</li>
 </ul>
 
 
@@ -223,6 +228,45 @@ vec1 is a 4-element vector, index 5 would refer to the second element of vec2.
 with the same element type as vec1/vec2 but that has an element count equal to
 the number of indices specified.
 </p>
+
+<!-- ======================================================================= -->
+<h2 id="targetspecific">Target-Specific Extensions</h2>
+<!-- ======================================================================= -->
+
+<p>Clang supports some language features conditionally on some targets.</p>
+
+<!-- ======================================================================= -->
+<h3 id="x86-specific">X86/X86-64 Language Extensions</h3>
+<!-- ======================================================================= -->
+
+<p>The X86 backend has these language extensions:</p>
+
+<!-- ======================================================================= -->
+<h4 id="x86-gs-segment">Memory references off the GS segment</h4>
+<!-- ======================================================================= -->
+
+<p>Annotating a pointer with address space #256 causes it to  be code generated
+relative to the X86 GS segment register.  
+Note that this is a very very low-level feature that should only be used if you
+know what you're doing (for example in an OS kernel).</p>
+
+<p>Here is an example:</p>
+
+<pre>
+#define GS_RELATIVE __attribute__((address_space(256)))
+int foo(int GS_RELATIVE *P) {
+  return *P;
+}
+</pre>
+
+<p>Which compiles to (on X86-32):</p>
+
+<pre>
+_foo:
+	movl	4(%esp), %eax
+	movl	%gs:(%eax), %eax
+	ret
+</pre>
 
 </div>
 </body>
