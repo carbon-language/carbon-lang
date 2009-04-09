@@ -1759,14 +1759,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             unsigned Count = Builder.getCurrentBlockCount();
             QualType T = R->getRValueType(Ctx);
           
-            if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
-              SymbolRef NewSym =
-                Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
-              
-              state = state.BindLoc(Loc::MakeVal(R),
-                                    Loc::IsLocType(T)
-                                    ? cast<SVal>(loc::SymbolVal(NewSym))
-                                    : cast<SVal>(nonloc::SymbolVal(NewSym)));
+            if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
+              SVal V = SVal::GetRValueSymbolVal(Eng.getSymbolManager(),
+                                  Eng.getStoreManager().getRegionManager(), R);
+              state = state.BindLoc(Loc::MakeVal(R), V);
             }
             else if (const RecordType *RT = T->getAsStructureType()) {
               // Handle structs in a not so awesome way.  Here we just
