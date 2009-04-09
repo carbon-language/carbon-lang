@@ -285,7 +285,8 @@ namespace llvm {
     /// Special characters are emitted properly.
     /// @verbatim (Eg. '\t') @endverbatim
     void EmitString(const std::string &String) const;
-    
+    void EmitString(const char *String, unsigned Size) const;
+
     /// EmitFile - Emit a .file directive.
     void EmitFile(unsigned Number, const std::string &Name) const;
 

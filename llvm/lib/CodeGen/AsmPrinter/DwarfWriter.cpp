@@ -2664,13 +2664,13 @@ private:
     Asm->EOL("Compilation Unit Length");
       
     StringMap<DIE*> &Globals = Unit->getGlobals();
-    for (StringMap<DIE*>::iterator
+    for (StringMap<DIE*>::const_iterator
            GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
-      const std::string &Name = GI->first();
+      const char *Name = GI->getKeyData();
       DIE * Entity = GI->second;
         
       Asm->EmitInt32(Entity->getOffset()); Asm->EOL("DIE offset");
-      Asm->EmitString(Name); Asm->EOL("External Name");
+      Asm->EmitString(Name, strlen(Name)); Asm->EOL("External Name");
     }
       
     Asm->EmitInt32(0); Asm->EOL("End Mark");
