@@ -224,6 +224,8 @@ class TargetRegisterInfo {
 protected:
   const unsigned* SubregHash;
   const unsigned SubregHashSize;
+  const unsigned* SuperregHash;
+  const unsigned SuperregHashSize;
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
@@ -240,7 +242,9 @@ protected:
                      int CallFrameSetupOpcode = -1,
                      int CallFrameDestroyOpcode = -1,
                      const unsigned* subregs = 0,
-                     const unsigned subregsize = 0);
+                     const unsigned subregsize = 0,
+		     const unsigned* superregs = 0,
+		     const unsigned superregsize = 0);
   virtual ~TargetRegisterInfo();
 public:
 
@@ -379,8 +383,18 @@ public:
   /// isSuperRegister - Returns true if regB is a super-register of regA.
   ///
   bool isSuperRegister(unsigned regA, unsigned regB) const {
-    for (const unsigned *SR = getSuperRegisters(regA); *SR; ++SR)
-      if (*SR == regB) return true;
+    // SuperregHash is a simple quadratically probed hash table.
+    size_t index = (regA + regB * 37) & (SuperregHashSize-1);
+    unsigned ProbeAmt = 2;
+    while (SuperregHash[index*2] != 0 &&
+           SuperregHash[index*2+1] != 0) {
+      if (SuperregHash[index*2] == regA && SuperregHash[index*2+1] == regB)
+        return true;
+      
+      index = (index + ProbeAmt) & (SuperregHashSize-1);
+      ProbeAmt += 2;
+    }
+    
     return false;
   }
 
