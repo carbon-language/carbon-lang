@@ -38,17 +38,26 @@ interface for using PTH and then briefly elaborates on their design and
 implementation.</p>
 
 
-<h2>Using Pretokenized Headers (High-level Interface)</h2>
+<h2>Using Pretokenized Headers with <tt>clang</tt></h2>
 
-<p>The high-level interface to generate a PTH file is the same as GCC's:</p>
+<p>The high-level <tt>clang</tt> driver supports an interface to use PTH files
+that is similar to GCC's interface for precompiled headers.</p>
+
+<h3>Generating a PTH File</h3>
+
+<p>To generate a PTH file using <tt>clang</tt>, one invokes <tt>clang</tt> using
+the <tt>-x <b>lang-header</b></tt> option. This mirrors the interface in GCC for
+generating PCH files:</p>
 
 <pre>
   $ gcc -x c-header test.h -o test.h.gch
   $ clang -x c-header test.h -o test.h.pth
 </pre>
 
-<p>A PTH file can then be used as a prefix header when a <tt>-include</tt>
-option is passed to <tt>clang</tt>:</p>
+<h3>Using a PTH File</h3>
+
+<p>A PTH file can then be used as a prefix header when a
+<b><tt>-include</tt></b> option is passed to <tt>clang</tt>:</p>
 
 <pre>
   $ clang -include test.h test.c -o test
@@ -74,19 +83,19 @@ for headers that are directly included within a source file. For example:</p>
 <tt>test.h</tt> since <tt>test.h</tt> was included directly in the source file
 and not specified on the command line using <tt>-include</tt>.</p>
 
-<h2>Using Pretokenized Headers (Low-level Interface)</h2>
+<h2>Using Pretokenized Headers with <tt>clang-cc</tt> (Low-level Interface)</h2>
 
 <p>The low-level Clang compiler tool, <tt>clang-cc</tt>, supports three command
 line options for generating and using PTH files.<p>
 
-<p>To generate PTH files using <tt>clang-cc</tt>, use the option <tt>-emit-pth</tt>:
-  
-<pre>
-  $ clang-cc test.h -emit-pth -o test.h.pth
-</pre>
+<p>To generate PTH files using <tt>clang-cc</tt>, use the option
+<b><tt>-emit-pth</tt></b>:
+
+<pre> $ clang-cc test.h -emit-pth -o test.h.pth </pre>
 
 <p>This option is transparently used by <tt>clang</tt> when generating PTH
-files.  Similarly, PTH files can be used as prefix headers using the <tt>-include-pth</tt> option:</p>
+files. Similarly, PTH files can be used as prefix headers using the
+<b><tt>-include-pth</tt></b> option:</p>
 
 <pre>
   $ clang-cc -include-pth test.h.pth test.c -o test.s
@@ -96,7 +105,8 @@ files.  Similarly, PTH files can be used as prefix headers using the <tt>-includ
 (or &quot;content&quot; cache) of the source included by the original header
 file. This means that the contents of the PTH file are searched as substitutes
 for <em>any</em> source files that are used by <tt>clang-cc</tt> to process a
-source file. This is done by specifying the <tt>-token-cache</tt> option:</p>
+source file. This is done by specifying the <b><tt>-token-cache</tt></b>
+option:</p>
 
 <pre>
   $ cat test.h
@@ -173,7 +183,7 @@ also modifies those pages in memory, incurring the copy-on-write costs. The
 read-only nature of PTH can greatly reduce memory pressure for builds involving
 multiple cores, thus improving overall scalability.</p></li>
 
-<li><p><em>Fast generation<em>: PTH files can be generated in a small fraction
+<li><p><em>Fast generation</em>: PTH files can be generated in a small fraction
 of the time needed to generate GCC's PCH files. Since PTH/PCH generation is a
 serial operation that typically blocks progress during a build, faster
 generation time leads to improved processor utilization with parallel builds on
