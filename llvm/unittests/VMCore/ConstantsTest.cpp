@@ -18,7 +18,7 @@ TEST(ConstantsTest, Integer_i1) {
   const IntegerType* Int1 = IntegerType::get(1);
   Constant* One = ConstantInt::get(Int1, 1, true);
   Constant* Zero = ConstantInt::get(Int1, 0);
-  Constant* NegOne = ConstantInt::get(Int1, -1, true);
+  Constant* NegOne = ConstantInt::get(Int1, static_cast<uint64_t>(-1), true);
   Constant* Undef = UndefValue::get(Int1);
 
   // Input:  @b = constant i1 add(i1 1 , i1 1)
