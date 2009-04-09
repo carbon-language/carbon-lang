@@ -33,9 +33,8 @@ system headers (e.g., Mac OS/X).</p>
 <p>Clang supports an implementation of precompiled headers known as
 <em>pre-tokenized headers</em> (PTH). Clang's pre-tokenized headers support most
 of same interfaces as GCC's pre-compiled headers (as well as others) but are
-completely different in their implementation. This first describes the
-interface for using PTH and then briefly elaborates on their design and
-implementation.</p>
+completely different in their implementation. This first describes the interface
+for using PTH and then briefly elaborates on its design and implementation.</p>
 
 
 <h2>Using Pretokenized Headers with <tt>clang</tt></h2>
@@ -142,13 +141,13 @@ header files was motivated by the following factors:<p>
 
 <ul>
 
-<li><p><em>Language independence</em>: PTH files work with any language that
+<li><p><b>Language independence</b>: PTH files work with any language that
 Clang's lexer can handle, including C, Objective-C, and (in the early stages)
 C++. This means development on language features at the parsing level or above
 (which is basically almost all interesting pieces) does not require PTH to be
 modified.</p></li>
 
-<li><em>Simple design</em>: Relatively speaking, PTH has a simple design and
+<li><b>Simple design</b>: Relatively speaking, PTH has a simple design and
 implementation, making it easy to test. Further, because the machinery for PTH
 resides at the lower-levels of the Clang library stack it is fairly
 straightforward to profile and optimize.</li>
@@ -160,7 +159,7 @@ against) the PTH design in Clang yields several attractive features:</p>
 
 <ul>
 
-<li><p><em>Architecture independence</em>: In contrast to GCC's PCH files (and
+<li><p><b>Architecture independence</b>: In contrast to GCC's PCH files (and
 those of several other compilers), Clang's PTH files are architecture
 independent, requiring only a single PTH file when building an program for
 multiple architectures.</p>
@@ -174,7 +173,7 @@ cache of header files, a single PTH file can be safely used when compiling for
 multiple architectures. This can also reduce compile times because only a single
 PTH file needs to be generated during a build instead of several.</p></li>
 
-<li><p><em>Reduced memory pressure</em>: Similar to GCC,
+<li><p><b>Reduced memory pressure</b>: Similar to GCC,
 Clang reads PTH files via the use of memory mapping (i.e., <tt>mmap</tt>).
 Clang, however, memory maps PTH files as read-only, meaning that multiple
 invocations of <tt>clang-cc</tt> can share the same pages in memory from a
@@ -183,7 +182,7 @@ also modifies those pages in memory, incurring the copy-on-write costs. The
 read-only nature of PTH can greatly reduce memory pressure for builds involving
 multiple cores, thus improving overall scalability.</p></li>
 
-<li><p><em>Fast generation</em>: PTH files can be generated in a small fraction
+<li><p><b>Fast generation</b>: PTH files can be generated in a small fraction
 of the time needed to generate GCC's PCH files. Since PTH/PCH generation is a
 serial operation that typically blocks progress during a build, faster
 generation time leads to improved processor utilization with parallel builds on
