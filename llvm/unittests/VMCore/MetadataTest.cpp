@@ -73,7 +73,8 @@ TEST(MDNodeTest, Everything) {
   V.push_back(s2);
 
   MDNode *n1 = MDNode::get(&V[0], 3);
-  MDNode *n2 = MDNode::get((Constant**)&n1, 1);
+  Constant *const c1 = n1;
+  MDNode *n2 = MDNode::get(&c1, 1);
   MDNode *n3 = MDNode::get(&V[0], 3);
   EXPECT_NE(n1, n2);
   EXPECT_EQ(n1, n3);
