@@ -372,7 +372,7 @@ bool FastISel::SelectCall(User *I) {
 
       // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
-      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+      DW->RecordSourceLine(Line, 0, SrcFile);
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
 
       // llvm.dbg.func_start also defines beginning of function scope.
