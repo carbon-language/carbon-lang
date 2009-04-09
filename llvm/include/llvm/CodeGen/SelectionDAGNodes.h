@@ -52,7 +52,7 @@ template <typename T> struct ilist_traits;
 ///
 struct SDVTList {
   const MVT *VTs;
-  unsigned short NumVTs;
+  unsigned int NumVTs;
 };
 
 /// ISD namespace - This namespace contains an enum which represents all of the
