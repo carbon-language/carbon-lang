@@ -6,6 +6,7 @@
 - (long long)longlongM;
 - (double)doubleM;
 - (long double)longDoubleM;
+- (void)voidM;
 @end
 @implementation MyClass
 - (void *)voidPtrM { return (void *)0; }
@@ -13,6 +14,7 @@
 - (long long)longlongM { return 0; }
 - (double)doubleM { return 0.0; }
 - (long double)longDoubleM { return 0.0; }
+- (void)voidM {}
 @end
 
 void createFoo() {
@@ -56,4 +58,9 @@ void handleNilPruneLoop(MyClass *obj) {
   }
   
   long long j = [obj longlongM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
+}
+
+int handleVoidInComma() {
+  MyClass *obj = 0;
+  return [obj voidM], 0;
 }
