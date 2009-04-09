@@ -1547,7 +1547,7 @@ endif
 # CHECK: Running the test suite
 ###############################################################################
 
-check::
+check:: tools-only
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/test" ; then \
 	  if test -f "$(PROJ_OBJ_ROOT)/test/Makefile" ; then \
 	    $(EchoCmd) Running test suite ; \
@@ -1564,7 +1564,7 @@ check::
 # UNITTESTS: Running the unittests test suite
 ###############################################################################
 
-unittests::
+unittests:: libs-only
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/unittests" ; then \
 	  if test -f "$(PROJ_OBJ_ROOT)/unittests/Makefile" ; then \
 	    $(EchoCmd) Running unittests test suite ; \
