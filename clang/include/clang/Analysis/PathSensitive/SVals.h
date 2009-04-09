@@ -226,8 +226,6 @@ public:
     
   static Loc MakeVal(AddrLabelExpr* E);
 
-  static Loc MakeVal(SymbolRef sym);
-  
   static Loc MakeNull(BasicValueFactory &BasicVals);
   
   // Implement isa<T> support.

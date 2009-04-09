@@ -260,32 +260,20 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
   }
 }
 
-// Pointer arithmetic.
-static Loc StripViews(Loc X) {
-  if (isa<loc::MemRegionVal>(X)) {
-    const SymbolicRegion *Region =
-      cast<loc::MemRegionVal>(X).getRegion()->getAs<SymbolicRegion>();
-    
-    if (Region)
-      return Loc::MakeVal(Region->getSymbol());
-  }
-  
-  return X;
-}
-
 SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
                              Loc L, NonLoc R) {  
   // Delegate pointer arithmetic to store manager.
   return Eng.getStoreManager().EvalBinOp(Op, L, R);
 }
 
-// Equality operators for Locs.
+// Equality operators for Locs.  
+// FIXME: All this logic will be revamped when we have MemRegion::getLocation()
+// implemented.
 
 SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
 
-TryAgain:
   switch (L.getSubKind()) {
 
     default:
@@ -335,14 +323,15 @@ TryAgain:
     }
       
     case loc::MemRegionKind: {
-      // See if 'L' and 'R' both wrap symbols.
-      Loc LTmp = StripViews(L);
-      Loc RTmp = StripViews(R);
-      
-      if (LTmp != L || RTmp != R) {
-        L = LTmp;
-        R = RTmp;
-        goto TryAgain;
+      if (SymbolRef LSym = L.getAsLocSymbol()) {
+        if (isa<loc::ConcreteInt>(R)) {
+          const SymIntExpr *SE =
+            Eng.getSymbolManager().getSymIntExpr(LSym, BinaryOperator::EQ,
+                                           cast<loc::ConcreteInt>(R).getValue(),
+                                           Eng.getContext().IntTy);
+        
+          return nonloc::SymExprVal(SE);
+        }
       }
     }    
     
@@ -360,7 +349,6 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
 
-TryAgain:
   switch (L.getSubKind()) {
 
     default:
@@ -407,15 +395,16 @@ TryAgain:
     }
       
     case loc::MemRegionKind: {
-      // See if 'L' and 'R' both wrap symbols.
-      Loc LTmp = StripViews(L);
-      Loc RTmp = StripViews(R);
-      
-      if (LTmp != L || RTmp != R) {
-        L = LTmp;
-        R = RTmp;
-        goto TryAgain;
+      if (SymbolRef LSym = L.getAsLocSymbol()) {
+        if (isa<loc::ConcreteInt>(R)) {
+          const SymIntExpr* SE =
+            Eng.getSymbolManager().getSymIntExpr(LSym, BinaryOperator::NE,
+                                          cast<loc::ConcreteInt>(R).getValue(),
+                                                 Eng.getContext().IntTy);
+          return nonloc::SymExprVal(SE);
+        }
       }
+      // Fall through:
     }
       
     case loc::FuncValKind:

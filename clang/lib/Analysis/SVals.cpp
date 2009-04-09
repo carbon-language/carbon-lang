@@ -338,8 +338,6 @@ Loc Loc::MakeVal(const MemRegion* R) { return loc::MemRegionVal(R); }
 
 Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
 
-Loc Loc::MakeVal(SymbolRef sym) { return loc::SymbolVal(sym); }
-
 Loc Loc::MakeNull(BasicValueFactory &BasicVals) {
   return loc::ConcreteInt(BasicVals.getZeroWithPtrWidth());
 }
