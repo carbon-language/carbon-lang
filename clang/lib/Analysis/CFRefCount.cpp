@@ -1857,12 +1857,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
-        SymbolRef Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
-        
-        SVal X = Loc::IsLocType(T)
-               ? cast<SVal>(loc::SymbolVal(Sym)) 
-               : cast<SVal>(nonloc::SymbolVal(Sym));
-        
+        SVal X = SVal::GetConjuredSymbolVal(Eng.getSymbolManager(),
+                       Eng.getStoreManager().getRegionManager(), Ex, T, Count);
         state = state.BindExpr(Ex, X, false);
       }      
       
