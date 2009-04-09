@@ -739,7 +739,7 @@ bool MachineInstr::isRegReDefinedByTwoAddr(unsigned DefIdx) const{
 bool MachineInstr::isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx){
   if (getOpcode() == TargetInstrInfo::INLINEASM) {
     const MachineOperand &MO = getOperand(UseOpIdx);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse() || MO.getReg() == 0)
       return false;
     assert(UseOpIdx > 0);
     const MachineOperand &UFMO = getOperand(UseOpIdx-1);
