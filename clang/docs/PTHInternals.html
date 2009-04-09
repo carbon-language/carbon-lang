@@ -46,8 +46,8 @@ that is similar to GCC's interface for precompiled headers.</p>
 <h3>Generating a PTH File</h3>
 
 <p>To generate a PTH file using <tt>clang</tt>, one invokes <tt>clang</tt> using
-the <tt>-x <b>lang-header</b></tt> option. This mirrors the interface in GCC for
-generating PCH files:</p>
+the <b><tt>-x <i>&lt;language&gt;</i>-header</tt></b> option. This mirrors the
+interface in GCC for generating PCH files:</p>
 
 <pre>
   $ gcc -x c-header test.h -o test.h.gch
