@@ -2190,8 +2190,24 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned OpCode) {
 void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  if (!isa<VectorType>(I.getType())) {
-    if (TLI.getPointerTy().bitsLT(Op2.getValueType()))
+  if (!isa<VectorType>(I.getType()) &&
+      Op2.getValueType() != TLI.getShiftAmountTy()) {
+    // If the operand is smaller than the shift count type, promote it.
+    if (TLI.getShiftAmountTy().bitsGT(Op2.getValueType()))
+      Op2 = DAG.getNode(ISD::ANY_EXTEND, getCurDebugLoc(),
+                        TLI.getShiftAmountTy(), Op2);
+    // If the operand is larger than the shift count type but the shift
+    // count type has enough bits to represent any shift value, truncate
+    // it now. This is a common case and it exposes the truncate to
+    // optimization early.
+    else if (TLI.getShiftAmountTy().getSizeInBits() >=
+             Log2_32_Ceil(Op2.getValueType().getSizeInBits()))
+      Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
+                        TLI.getShiftAmountTy(), Op2);
+    // Otherwise we'll need to temporarily settle for some other
+    // convenient type; type legalization will make adjustments as
+    // needed.
+    else if (TLI.getPointerTy().bitsLT(Op2.getValueType()))
       Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
                         TLI.getPointerTy(), Op2);
     else if (TLI.getPointerTy().bitsGT(Op2.getValueType()))

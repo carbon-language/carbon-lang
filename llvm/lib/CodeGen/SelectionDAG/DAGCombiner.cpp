@@ -2874,7 +2874,7 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
 }
 
 // ExtendUsesToFormExtLoad - Trying to extend uses of a load to enable this:
-// "fold ({s|z}ext (load x)) -> ({s|z}ext (truncate ({s|z}extload x)))"
+// "fold ({s|z|a}ext (load x)) -> ({s|z|a}ext (truncate ({s|z|a}extload x)))"
 // transformation. Returns true if extension are possible and the above
 // mentioned transformation is profitable.
 static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
@@ -2889,8 +2889,10 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
     SDNode *User = *UI;
     if (User == N)
       continue;
+    if (UI.getUse().getResNo() != N0.getResNo())
+      continue;
     // FIXME: Only extend SETCC N, N and SETCC N, c for now.
-    if (User->getOpcode() == ISD::SETCC) {
+    if (ExtOpc != ISD::ANY_EXTEND && User->getOpcode() == ISD::SETCC) {
       ISD::CondCode CC = cast<CondCodeSDNode>(User->getOperand(2))->get();
       if (ExtOpc == ISD::ZERO_EXTEND && ISD::isSignedIntSetCC(CC))
         // Sign bits will be lost after a zext.
@@ -2906,32 +2908,25 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
       }
       if (Add)
         ExtendNodes.push_back(User);
-    } else {
-      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
-        SDValue UseOp = User->getOperand(i);
-        if (UseOp == N0) {
-          // If truncate from extended type to original load type is free
-          // on this target, then it's ok to extend a CopyToReg.
-          if (isTruncFree && User->getOpcode() == ISD::CopyToReg)
-            HasCopyToRegUses = true;
-          else
-            return false;
-        }
-      }
+      continue;
     }
+    // If truncates aren't free and there are users we can't
+    // extend, it isn't worthwhile.
+    if (!isTruncFree)
+      return false;
+    // Remember if this value is live-out.
+    if (User->getOpcode() == ISD::CopyToReg)
+      HasCopyToRegUses = true;
   }
 
   if (HasCopyToRegUses) {
     bool BothLiveOut = false;
     for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
          UI != UE; ++UI) {
-      SDNode *User = *UI;
-      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
-        SDValue UseOp = User->getOperand(i);
-        if (UseOp.getNode() == N && UseOp.getResNo() == 0) {
-          BothLiveOut = true;
-          break;
-        }
+      SDUse &Use = UI.getUse();
+      if (Use.getResNo() == 0 && Use.getUser()->getOpcode() == ISD::CopyToReg) {
+        BothLiveOut = true;
+        break;
       }
     }
     if (BothLiveOut)
@@ -3013,8 +3008,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       DoXform = ExtendUsesToFormExtLoad(N, N0, ISD::SIGN_EXTEND, SetCCs, TLI);
     if (DoXform) {
       LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-      SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, N->getDebugLoc(),
-                                       VT, LN0->getChain(),
+      SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, N->getDebugLoc(), VT,
+                                       LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(),
                                        N0.getValueType(),
@@ -3034,8 +3029,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
           if (SOp == Trunc)
             Ops.push_back(ExtLoad);
           else
-            Ops.push_back(DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(),
-                                      VT, SOp));
+            Ops.push_back(DAG.getNode(ISD::SIGN_EXTEND,
+                                      N->getDebugLoc(), VT, SOp));
         }
 
         Ops.push_back(SetCC->getOperand(2));
@@ -3278,26 +3273,48 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   }
 
   // fold (aext (load x)) -> (aext (truncate (extload x)))
-  if (ISD::isNON_EXTLoad(N0.getNode()) && N0.hasOneUse() &&
+  if (ISD::isNON_EXTLoad(N0.getNode()) &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
-    LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, N->getDebugLoc(), VT,
-                                     LN0->getChain(),
-                                     LN0->getBasePtr(), LN0->getSrcValue(),
-                                     LN0->getSrcValueOffset(),
-                                     N0.getValueType(),
-                                     LN0->isVolatile(), LN0->getAlignment());
-    CombineTo(N, ExtLoad);
-    // Redirect any chain users to the new load.
-    DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1),
-                                  SDValue(ExtLoad.getNode(), 1));
-    // If any node needs the original loaded value, recompute it.
-    if (!LN0->use_empty())
-      CombineTo(LN0, DAG.getNode(ISD::TRUNCATE, N0.getDebugLoc(),
-                                 N0.getValueType(), ExtLoad),
-                ExtLoad.getValue(1));
-    return SDValue(N, 0);   // Return N so it doesn't get rechecked!
+    bool DoXform = true;
+    SmallVector<SDNode*, 4> SetCCs;
+    if (!N0.hasOneUse())
+      DoXform = ExtendUsesToFormExtLoad(N, N0, ISD::ANY_EXTEND, SetCCs, TLI);
+    if (DoXform) {
+      LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+      SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, N->getDebugLoc(), VT,
+                                       LN0->getChain(),
+                                       LN0->getBasePtr(), LN0->getSrcValue(),
+                                       LN0->getSrcValueOffset(),
+                                       N0.getValueType(),
+                                       LN0->isVolatile(), LN0->getAlignment());
+      CombineTo(N, ExtLoad);
+      SDValue Trunc = DAG.getNode(ISD::TRUNCATE, N0.getDebugLoc(),
+                                  N0.getValueType(), ExtLoad);
+      CombineTo(N0.getNode(), Trunc, ExtLoad.getValue(1));
+
+      // Extend SetCC uses if necessary.
+      for (unsigned i = 0, e = SetCCs.size(); i != e; ++i) {
+        SDNode *SetCC = SetCCs[i];
+        SmallVector<SDValue, 4> Ops;
+
+        for (unsigned j = 0; j != 2; ++j) {
+          SDValue SOp = SetCC->getOperand(j);
+          if (SOp == Trunc)
+            Ops.push_back(ExtLoad);
+          else
+            Ops.push_back(DAG.getNode(ISD::ANY_EXTEND,
+                                      N->getDebugLoc(), VT, SOp));
+        }
+
+        Ops.push_back(SetCC->getOperand(2));
+        CombineTo(SetCC, DAG.getNode(ISD::SETCC, N->getDebugLoc(),
+                                     SetCC->getValueType(0),
+                                     &Ops[0], Ops.size()));
+      }
+
+      return SDValue(N, 0);   // Return N so it doesn't get rechecked!
+    }
   }
 
   // fold (aext (zextload x)) -> (aext (truncate (zextload x)))
