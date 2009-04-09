@@ -1006,28 +1006,37 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
   Buf.push_back('\n');
 }
 
-/// AddImplicitInclude - Add an implicit #include of the specified file to the
-/// predefines buffer.
-static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
-  const char *Inc = "#include \"";
-  Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
-  
+/// Add the quoted name of an implicit include file.
+static void AddQuotedIncludePath(std::vector<char> &Buf, 
+                                 const std::string &File) {
+  // Implicit include paths are relative to the current working
+  // directory; resolve them now instead of using the normal machinery
+  // (which would look relative to the input file).
+  llvm::sys::Path Path(File);
+  Path.makeAbsolute();
+    
   // Escape double quotes etc.
-  std::string EscapedFile = Lexer::Stringify(File);
+  Buf.push_back('"');
+  std::string EscapedFile = Lexer::Stringify(Path.toString());
   Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
   Buf.push_back('"');
+}
+
+/// AddImplicitInclude - Add an implicit #include of the specified file to the
+/// predefines buffer.
+static void AddImplicitInclude(std::vector<char> &Buf, 
+                               const std::string &File) {
+  const char *Inc = "#include ";
+  Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
+  AddQuotedIncludePath(Buf, File);
   Buf.push_back('\n');
 }
 
 static void AddImplicitIncludeMacros(std::vector<char> &Buf,
                                      const std::string &File) {
-  const char *Inc = "#__include_macros \"";
+  const char *Inc = "#__include_macros ";
   Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
-
-  // Escape double quotes etc.
-  std::string EscapedFile = Lexer::Stringify(File);
-  Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
-  Buf.push_back('"');
+  AddQuotedIncludePath(Buf, File);
   Buf.push_back('\n');
   // Marker token to stop the __include_macros fetch loop.
   const char *Marker = "##\n"; // ##?
