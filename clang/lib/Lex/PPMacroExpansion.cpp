@@ -25,14 +25,12 @@ using namespace clang;
 /// setMacroInfo - Specify a macro for this identifier.
 ///
 void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
-  if (MI == 0) {
-    if (II->hasMacroDefinition()) {
-      Macros.erase(II);
-      II->setHasMacroDefinition(false);
-    }
-  } else {
+  if (MI) {
     Macros[II] = MI;
     II->setHasMacroDefinition(true);
+  } else if (II->hasMacroDefinition()) {
+    Macros.erase(II);
+    II->setHasMacroDefinition(false);
   }
 }
 
