@@ -306,8 +306,11 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
 
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
-    // Incomplete or function types default to 1.
-    if (!T->isIncompleteType() && !T->isFunctionType()) {
+    if (const ReferenceType* RT = T->getAsReferenceType()) {
+      unsigned AS = RT->getPointeeType().getAddressSpace();
+      Align = Target.getPointerWidth(AS);
+    } else if (!T->isIncompleteType() && !T->isFunctionType()) {
+      // Incomplete or function types default to 1.
       while (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
         T = cast<ArrayType>(T)->getElementType();
 
