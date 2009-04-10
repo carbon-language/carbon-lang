@@ -505,6 +505,13 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
 
     IdentifierInfo *II = I->first;
     
+    // FIXME: Emit a PP_MACRO_NAME for testing.  This should be removed when we
+    // have identifierinfo id's.
+    for (unsigned i = 0, e = II->getLength(); i != e; ++i)
+      Record.push_back(II->getName()[i]);
+    S.EmitRecord(pch::PP_MACRO_NAME, Record);
+    Record.clear();
+    
     // FIXME: Output the identifier Info ID #!
     Record.push_back((intptr_t)II); 
     Record.push_back(MI->getDefinitionLoc().getRawEncoding());
