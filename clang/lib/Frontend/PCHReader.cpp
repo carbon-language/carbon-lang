@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Frontend/PCHReader.h"
-#include "clang/Frontend/PCHBitCodes.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
@@ -192,18 +192,22 @@ bool PCHReader::ReadSourceManagerBlock() {
   }
 }
 
-bool PCHReader::ReadPCHBlock() {
-  if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID))
-    return Error("Malformed block record");
+PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
+  if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
+    Error("Malformed block record");
+    return Failure;
+  }
 
   // Read all of the records and blocks for the PCH file.
   RecordData Record;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of module block");
-      return false;
+      if (Stream.ReadBlockEnd()) {
+        Error("Error at end of module block");
+        return Failure;
+      }
+      return Success;
     }
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
@@ -211,13 +215,17 @@ bool PCHReader::ReadPCHBlock() {
       case pch::DECLS_BLOCK_ID: // Skip decls block (lazily loaded)
       case pch::TYPES_BLOCK_ID: // Skip types block (lazily loaded)
       default:  // Skip unknown content.
-        if (Stream.SkipBlock())
-          return Error("Malformed block record");
+        if (Stream.SkipBlock()) {
+          Error("Malformed block record");
+          return Failure;
+        }
         break;
 
       case pch::SOURCE_MANAGER_BLOCK_ID:
-        if (ReadSourceManagerBlock())
-          return Error("Malformed source manager block");
+        if (ReadSourceManagerBlock()) {
+          Error("Malformed source manager block");
+          return Failure;
+        }
         break;
       }
       continue;
@@ -235,27 +243,40 @@ bool PCHReader::ReadPCHBlock() {
       break;
 
     case pch::TYPE_OFFSET:
-      if (!TypeOffsets.empty())
-        return Error("Duplicate TYPE_OFFSET record in PCH file");
+      if (!TypeOffsets.empty()) {
+        Error("Duplicate TYPE_OFFSET record in PCH file");
+        return Failure;
+      }
       TypeOffsets.swap(Record);
       TypeAlreadyLoaded.resize(TypeOffsets.size(), false);
       break;
 
     case pch::DECL_OFFSET:
-      if (!DeclOffsets.empty())
-        return Error("Duplicate DECL_OFFSET record in PCH file");
+      if (!DeclOffsets.empty()) {
+        Error("Duplicate DECL_OFFSET record in PCH file");
+        return Failure;
+      }
       DeclOffsets.swap(Record);
       DeclAlreadyLoaded.resize(DeclOffsets.size(), false);
+      break;
+
+    case pch::LANGUAGE_OPTIONS:
+      if (ParseLanguageOptions(Record))
+        return IgnorePCH;
       break;
     }
   }
 
-  return Error("Premature end of bitstream");
+  Error("Premature end of bitstream");
+  return Failure;
 }
 
 PCHReader::~PCHReader() { }
 
 bool PCHReader::ReadPCH(const std::string &FileName) {
+  // Set the PCH file name.
+  this->FileName = FileName;
+
   // Open the PCH file.
   std::string ErrStr;
   Buffer.reset(llvm::MemoryBuffer::getFile(FileName.c_str(), &ErrStr));
@@ -290,8 +311,20 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
         return Error("Malformed BlockInfoBlock");
       break;
     case pch::PCH_BLOCK_ID:
-      if (ReadPCHBlock())
+      switch (ReadPCHBlock()) {
+      case Success:
+        break;
+
+      case Failure:
         return true;
+
+      case IgnorePCH:
+        if (Stream.SkipBlock()) {
+          Error("Malformed block record");
+          return true;
+        }
+        return false;
+      }
       break;
     default:
       if (Stream.SkipBlock())
@@ -302,6 +335,95 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
 
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
+
+  return false;
+}
+
+/// \brief Parse the record that corresponds to a LangOptions data
+/// structure.
+///
+/// This routine compares the language options used to generate the
+/// PCH file against the language options set for the current
+/// compilation. For each option, we classify differences between the
+/// two compiler states as either "benign" or "important". Benign
+/// differences don't matter, and we accept them without complaint
+/// (and without modifying the language options). Differences between
+/// the states for important options cause the PCH file to be
+/// unusable, so we emit a warning and return true to indicate that
+/// there was an error.
+///
+/// \returns true if the PCH file is unacceptable, false otherwise.
+bool PCHReader::ParseLanguageOptions(
+                             const llvm::SmallVectorImpl<uint64_t> &Record) {
+  const LangOptions &LangOpts = Context.getLangOptions();
+#define PARSE_LANGOPT_BENIGN(Option) ++Idx
+#define PARSE_LANGOPT_IMPORTANT(Option, DiagID)                 \
+  if (Record[Idx] != LangOpts.Option) {                         \
+    Diag(DiagID) << (unsigned)Record[Idx] << LangOpts.Option;   \
+    Diag(diag::note_ignoring_pch) << FileName;                  \
+    return true;                                                \
+  }                                                             \
+  ++Idx
+
+  unsigned Idx = 0;
+  PARSE_LANGOPT_BENIGN(Trigraphs);
+  PARSE_LANGOPT_BENIGN(BCPLComment);
+  PARSE_LANGOPT_BENIGN(DollarIdents);
+  PARSE_LANGOPT_BENIGN(AsmPreprocessor);
+  PARSE_LANGOPT_IMPORTANT(GNUMode, diag::warn_pch_gnu_extensions);
+  PARSE_LANGOPT_BENIGN(ImplicitInt);
+  PARSE_LANGOPT_BENIGN(Digraphs);
+  PARSE_LANGOPT_BENIGN(HexFloats);
+  PARSE_LANGOPT_IMPORTANT(C99, diag::warn_pch_c99);
+  PARSE_LANGOPT_IMPORTANT(Microsoft, diag::warn_pch_microsoft_extensions);
+  PARSE_LANGOPT_IMPORTANT(CPlusPlus, diag::warn_pch_cplusplus);
+  PARSE_LANGOPT_IMPORTANT(CPlusPlus0x, diag::warn_pch_cplusplus0x);
+  PARSE_LANGOPT_IMPORTANT(NoExtensions, diag::warn_pch_extensions);
+  PARSE_LANGOPT_BENIGN(CXXOperatorName);
+  PARSE_LANGOPT_IMPORTANT(ObjC1, diag::warn_pch_objective_c);
+  PARSE_LANGOPT_IMPORTANT(ObjC2, diag::warn_pch_objective_c2);
+  PARSE_LANGOPT_IMPORTANT(ObjCNonFragileABI, diag::warn_pch_nonfragile_abi);
+  PARSE_LANGOPT_BENIGN(PascalStrings);
+  PARSE_LANGOPT_BENIGN(Boolean);
+  PARSE_LANGOPT_BENIGN(WritableStrings);
+  PARSE_LANGOPT_IMPORTANT(LaxVectorConversions, 
+                          diag::warn_pch_lax_vector_conversions);
+  PARSE_LANGOPT_IMPORTANT(Exceptions, diag::warn_pch_exceptions);
+  PARSE_LANGOPT_IMPORTANT(NeXTRuntime, diag::warn_pch_objc_runtime);
+  PARSE_LANGOPT_IMPORTANT(Freestanding, diag::warn_pch_freestanding);
+  PARSE_LANGOPT_IMPORTANT(NoBuiltin, diag::warn_pch_builtins);
+  PARSE_LANGOPT_IMPORTANT(ThreadsafeStatics, 
+                          diag::warn_pch_thread_safe_statics);
+  PARSE_LANGOPT_IMPORTANT(Blocks, diag::warn_pch_blocks);
+  PARSE_LANGOPT_BENIGN(EmitAllDecls);
+  PARSE_LANGOPT_IMPORTANT(MathErrno, diag::warn_pch_math_errno);
+  PARSE_LANGOPT_IMPORTANT(OverflowChecking, diag::warn_pch_overflow_checking);
+  PARSE_LANGOPT_IMPORTANT(HeinousExtensions, 
+                          diag::warn_pch_heinous_extensions);
+  // FIXME: Most of the options below are benign if the macro wasn't
+  // used. Unfortunately, this means that a PCH compiled without
+  // optimization can't be used with optimization turned on, even
+  // though the only thing that changes is whether __OPTIMIZE__ was
+  // defined... but if __OPTIMIZE__ never showed up in the header, it
+  // doesn't matter. We could consider making this some special kind
+  // of check.
+  PARSE_LANGOPT_IMPORTANT(Optimize, diag::warn_pch_optimize);
+  PARSE_LANGOPT_IMPORTANT(OptimizeSize, diag::warn_pch_optimize_size);
+  PARSE_LANGOPT_IMPORTANT(Static, diag::warn_pch_static);
+  PARSE_LANGOPT_IMPORTANT(PICLevel, diag::warn_pch_pic_level);
+  PARSE_LANGOPT_IMPORTANT(GNUInline, diag::warn_pch_gnu_inline);
+  PARSE_LANGOPT_IMPORTANT(NoInline, diag::warn_pch_no_inline);
+  if ((LangOpts.getGCMode() != 0) != (Record[Idx] != 0)) {
+    Diag(diag::warn_pch_gc_mode) 
+      << (unsigned)Record[Idx] << LangOpts.getGCMode();
+    Diag(diag::note_ignoring_pch) << FileName;
+    return true;
+  }
+  ++Idx;
+  PARSE_LANGOPT_BENIGN(getVisibilityMode());
+  PARSE_LANGOPT_BENIGN(InstantiationDepth);
+#undef PARSE_LANGOPT_IRRELEVANT
+#undef PARSE_LANGOPT_BENIGN
 
   return false;
 }
@@ -618,4 +740,10 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 
   // Required to silence GCC warning
   return DeclarationName();
+}
+
+DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {
+  return PP.getDiagnostics().Report(FullSourceLoc(SourceLocation(),
+                                                  Context.getSourceManager()),
+                                    DiagID);
 }

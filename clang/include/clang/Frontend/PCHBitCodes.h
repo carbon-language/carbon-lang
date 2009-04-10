@@ -48,10 +48,6 @@ namespace clang {
       /// full PCH block.
       PCH_BLOCK_ID = llvm::bitc::FIRST_APPLICATION_BLOCKID,
 
-      /// \brief The block containing information about the language
-      /// options used to build this precompiled header.
-      LANGUAGE_OPTIONS_BLOCK_ID,
-
       /// \brief The block containing information about the source
       /// manager.
       SOURCE_MANAGER_BLOCK_ID,
@@ -96,7 +92,15 @@ namespace clang {
       /// record, after subtracting one to account for the use of
       /// declaration ID 0 for a NULL declaration pointer. Index 0 is
       /// reserved for the translation unit declaration.
-      DECL_OFFSET = 2
+      DECL_OFFSET = 2,
+
+      /// \brief Record code for the language options table.
+      ///
+      /// The record with this code contains the contents of the
+      /// LangOptions structure. We serialize the entire contents of
+      /// the structure, and let the reader decide which options are
+      /// actually important to check.
+      LANGUAGE_OPTIONS = 3
     };
 
     /// \brief Record types used within a source manager block.

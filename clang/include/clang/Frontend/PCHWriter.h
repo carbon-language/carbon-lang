@@ -76,6 +76,7 @@ class PCHWriter {
   /// \brief The type ID that will be assigned to the next new type.
   pch::TypeID NextTypeID;
 
+  void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
   void WritePreprocessor(const Preprocessor &PP);
   void WriteType(const Type *T);

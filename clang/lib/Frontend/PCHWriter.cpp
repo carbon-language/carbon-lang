@@ -328,6 +328,67 @@ void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 // PCHWriter Implementation
 //===----------------------------------------------------------------------===//
 
+void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
+  RecordData Record;
+  Record.push_back(LangOpts.Trigraphs);
+  Record.push_back(LangOpts.BCPLComment);  // BCPL-style '//' comments.
+  Record.push_back(LangOpts.DollarIdents);  // '$' allowed in identifiers.
+  Record.push_back(LangOpts.AsmPreprocessor);  // Preprocessor in asm mode.
+  Record.push_back(LangOpts.GNUMode);  // True in gnu99 mode false in c99 mode (etc)
+  Record.push_back(LangOpts.ImplicitInt);  // C89 implicit 'int'.
+  Record.push_back(LangOpts.Digraphs);  // C94, C99 and C++
+  Record.push_back(LangOpts.HexFloats);  // C99 Hexadecimal float constants.
+  Record.push_back(LangOpts.C99);  // C99 Support
+  Record.push_back(LangOpts.Microsoft);  // Microsoft extensions.
+  Record.push_back(LangOpts.CPlusPlus);  // C++ Support
+  Record.push_back(LangOpts.CPlusPlus0x);  // C++0x Support
+  Record.push_back(LangOpts.NoExtensions);  // All extensions are disabled, strict mode.
+  Record.push_back(LangOpts.CXXOperatorNames);  // Treat C++ operator names as keywords.
+    
+  Record.push_back(LangOpts.ObjC1);  // Objective-C 1 support enabled.
+  Record.push_back(LangOpts.ObjC2);  // Objective-C 2 support enabled.
+  Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C modern abi enabled
+    
+  Record.push_back(LangOpts.PascalStrings);  // Allow Pascal strings
+  Record.push_back(LangOpts.Boolean);  // Allow bool/true/false
+  Record.push_back(LangOpts.WritableStrings);  // Allow writable strings
+  Record.push_back(LangOpts.LaxVectorConversions);
+  Record.push_back(LangOpts.Exceptions);  // Support exception handling.
+
+  Record.push_back(LangOpts.NeXTRuntime); // Use NeXT runtime.
+  Record.push_back(LangOpts.Freestanding); // Freestanding implementation
+  Record.push_back(LangOpts.NoBuiltin); // Do not use builtin functions (-fno-builtin)
+
+  Record.push_back(LangOpts.ThreadsafeStatics); // Whether static initializers are protected
+                                  // by locks.
+  Record.push_back(LangOpts.Blocks); // block extension to C
+  Record.push_back(LangOpts.EmitAllDecls); // Emit all declarations, even if
+                                  // they are unused.
+  Record.push_back(LangOpts.MathErrno); // Math functions must respect errno
+                                  // (modulo the platform support).
+
+  Record.push_back(LangOpts.OverflowChecking); // Extension to call a handler function when
+                                  // signed integer arithmetic overflows.
+
+  Record.push_back(LangOpts.HeinousExtensions); // Extensions that we really don't like and
+                                  // may be ripped out at any time.
+
+  Record.push_back(LangOpts.Optimize); // Whether __OPTIMIZE__ should be defined.
+  Record.push_back(LangOpts.OptimizeSize); // Whether __OPTIMIZE_SIZE__ should be 
+                                  // defined.
+  Record.push_back(LangOpts.Static); // Should __STATIC__ be defined (as
+                                  // opposed to __DYNAMIC__).
+  Record.push_back(LangOpts.PICLevel); // The value for __PIC__, if non-zero.
+
+  Record.push_back(LangOpts.GNUInline); // Should GNU inline semantics be
+                                  // used (instead of C99 semantics).
+  Record.push_back(LangOpts.NoInline); // Should __NO_INLINE__ be defined.
+  Record.push_back(LangOpts.getGCMode());
+  Record.push_back(LangOpts.getVisibilityMode());
+  Record.push_back(LangOpts.InstantiationDepth);
+  S.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
+}
+
 //===----------------------------------------------------------------------===//
 // Source Manager Serialization
 //===----------------------------------------------------------------------===//
@@ -625,9 +686,6 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
 
   // Exit the types block
   S.ExitBlock();
-
-  // Write the type offsets record
-  S.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
 }
 
 /// \brief Write the block containing all of the declaration IDs
@@ -740,9 +798,6 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 
   // Exit the declarations block
   S.ExitBlock();
-
-  // Write the declaration offsets record
-  S.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 
@@ -761,10 +816,13 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
 
   // Write the remaining PCH contents.
   S.EnterSubblock(pch::PCH_BLOCK_ID, 2);
+  WriteLanguageOptions(Context.getLangOptions());
   WriteSourceManagerBlock(Context.getSourceManager());
   WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
+  S.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
+  S.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
   S.ExitBlock();
 }
 

@@ -13,10 +13,11 @@
 #ifndef LLVM_CLANG_FRONTEND_PCH_READER_H
 #define LLVM_CLANG_FRONTEND_PCH_READER_H
 
+#include "clang/Frontend/PCHBitCodes.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Type.h"
-#include "clang/Frontend/PCHBitCodes.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -59,6 +60,9 @@ class PCHReader : public ExternalASTSource {
   /// \brief The bitstream reader from which we'll read the PCH file.
   llvm::BitstreamReader Stream;
 
+  /// \brief The file name of the PCH file.
+  std::string FileName;
+
   /// \brief The memory buffer that stores the data associated with
   /// this PCH file.
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
@@ -99,9 +103,12 @@ class PCHReader : public ExternalASTSource {
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
 
-  bool ReadPCHBlock();
+  enum PCHReadResult { Success, Failure, IgnorePCH };
+
+  PCHReadResult ReadPCHBlock();
   bool ReadSourceManagerBlock();
 
+  bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(uint64_t Offset, unsigned Index);
@@ -164,6 +171,9 @@ public:
 
   /// \brief Print some statistics about PCH usage.
   virtual void PrintStats();
+
+  /// \brief Report a diagnostic.
+  DiagnosticBuilder Diag(unsigned DiagID);
 
   const IdentifierInfo *GetIdentifierInfo(const RecordData &Record, 
                                           unsigned &Idx);
