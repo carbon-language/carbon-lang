@@ -231,10 +231,11 @@ SVal GRSimpleVals::DetermEvalBinOpNN(GRExprEngine& Eng,
         }
         
       case nonloc::SymbolValKind:
-        if (isa<nonloc::ConcreteInt>(R))
-          return NonLoc::MakeVal(Eng.getSymbolManager(),
-                                 cast<nonloc::SymbolVal>(L).getSymbol(), Op,
-                                 cast<nonloc::ConcreteInt>(R).getValue(), T);
+        if (isa<nonloc::ConcreteInt>(R)) {
+          ValueManager &ValMgr = Eng.getValueManager();
+          return ValMgr.makeNonLoc(cast<nonloc::SymbolVal>(L).getSymbol(), Op,
+                                   cast<nonloc::ConcreteInt>(R).getValue(), T);
+        }
         else
           return UnknownVal();
     }

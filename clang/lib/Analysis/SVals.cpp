@@ -218,12 +218,12 @@ SVal ValueManager::makeZeroVal(QualType T) {
 // Utility methods for constructing Non-Locs.
 //===----------------------------------------------------------------------===//
 
-NonLoc NonLoc::MakeVal(SymbolRef sym) {
+NonLoc ValueManager::makeNonLoc(SymbolRef sym) {
   return nonloc::SymbolVal(sym);
 }
 
-NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, const SymExpr *lhs, 
-                       BinaryOperator::Opcode op, const APSInt& v, QualType T) {
+NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
+                                const APSInt& v, QualType T) {
   // The Environment ensures we always get a persistent APSInt in
   // BasicValueFactory, so we don't need to get the APSInt from
   // BasicValueFactory again.
@@ -231,9 +231,8 @@ NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, const SymExpr *lhs,
   return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, v, T));
 }
 
-NonLoc NonLoc::MakeVal(SymbolManager& SymMgr, const SymExpr *lhs, 
-                       BinaryOperator::Opcode op, const SymExpr *rhs,
-QualType T) {
+NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
+                                const SymExpr *rhs, QualType T) {
   assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
   assert(!Loc::IsLocType(T));
   return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, T));
@@ -294,7 +293,7 @@ SVal ValueManager::getRValueSymbolVal(const MemRegion* R) {
   
     // Only handle integers for now.
     if (T->isIntegerType() && T->isScalarType())
-      return NonLoc::MakeVal(sym);
+      return makeNonLoc(sym);
   }
 
   return UnknownVal();
@@ -314,7 +313,7 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, unsigned Count) {
     return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
 
   if (T->isIntegerType() && T->isScalarType())
-    return NonLoc::MakeVal(sym);
+    return makeNonLoc(sym);
 
   return UnknownVal();
 }
@@ -334,7 +333,7 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
     return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
 
   if (T->isIntegerType() && T->isScalarType())
-    return NonLoc::MakeVal(sym);
+    return makeNonLoc(sym);
 
   return UnknownVal();
 }

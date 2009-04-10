@@ -84,6 +84,14 @@ public:
   SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
 
   SVal getFunctionPointer(const FunctionDecl* FD);
+  
+  NonLoc makeNonLoc(SymbolRef sym);
+  
+  NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
+                    const llvm::APSInt& rhs, QualType T);
+  
+  NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
+                    const SymExpr *rhs, QualType T);  
 };
 } // end clang namespace
 #endif

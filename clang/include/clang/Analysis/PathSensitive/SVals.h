@@ -164,15 +164,6 @@ public:
   void print(llvm::raw_ostream& Out) const;
   
   // Utility methods to create NonLocs.
-  static NonLoc MakeVal(SymbolRef sym);
-
-  static NonLoc MakeVal(SymbolManager& SymMgr, const SymExpr *lhs, 
-                        BinaryOperator::Opcode op, const llvm::APSInt& rhs,
-                        QualType T);
-  
-  static NonLoc MakeVal(SymbolManager& SymMgr, const SymExpr *lhs,
-                        BinaryOperator::Opcode op, const SymExpr *rhs,
-                        QualType T);
 
   static NonLoc MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
                            bool isUnsigned);
