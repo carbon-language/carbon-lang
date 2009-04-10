@@ -289,12 +289,13 @@ engine</a> that is part of Clang's Analysis library.</p>
 <h4 id="attr_analyzer_noreturn"><tt>analyzer_noreturn</tt></h4>
 
 <p>Clang's static analysis engine understands the standard <tt>noreturn</tt>
-attribute, which indicates that a call to a given function never returns.
-Function prototypes for common functions like <tt>exit</tt> are typically
-annotated with this attribute, as well as a variety of common assertion
-handlers. Users can educate the static analyzer about their own custom assertion
-handles (thus cutting down on false positives due to false paths) by marking
-their own &quot;panic&quot; functions with this attribute.</p>
+attribute. This attribute, which is typically affixed to a function prototype,
+indicates that a call to a given function never returns. Function prototypes for
+common functions like <tt>exit</tt> are typically annotated with this attribute,
+as well as a variety of common assertion handlers. Users can educate the static
+analyzer about their own custom assertion handles (thus cutting down on false
+positives due to false paths) by marking their own &quot;panic&quot; functions
+with this attribute.</p>
 
 <p>While useful, <tt>noreturn</tt> is not applicable in all cases. Sometimes
 there are special functions that for all intensive purposes should be considered
