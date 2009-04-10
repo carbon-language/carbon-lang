@@ -29,8 +29,9 @@ namespace llvm {
 
 namespace clang {
 
-class ASTContext;
 class SourceManager;
+class Preprocessor;
+class ASTContext;
 
 /// \brief Writes a precompiled header containing the contents of a
 /// translation unit.
@@ -76,6 +77,7 @@ class PCHWriter {
   unsigned NextTypeID;
 
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
+  void WritePreprocessor(Preprocessor &PP);
   void WriteType(const Type *T);
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
@@ -90,7 +92,7 @@ public:
   PCHWriter(llvm::BitstreamWriter &S);
   
   /// \brief Write a precompiled header for the given AST context.
-  void WritePCH(ASTContext &Context);
+  void WritePCH(ASTContext &Context, Preprocessor &PP);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);

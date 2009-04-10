@@ -55,35 +55,33 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,
                                    const LangOptions &Features,
                                    const CompileOptions &CompileOpts,
-                                   const std::string& InFile,
-                                   const std::string& OutFile);
+                                   const std::string &InFile,
+                                   const std::string &OutFile);
 
 ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
-                               Preprocessor *PP, PreprocessorFactory* PPF);
+                               Preprocessor *PP, PreprocessorFactory *PPF);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
-                                     FileManager& FMgr);
+                                     FileManager &FMgr);
   
-ASTConsumer *CreateASTSerializer(const std::string& InFile,
-                                 const std::string& EmitDir,
+ASTConsumer *CreateASTSerializer(const std::string &InFile,
+                                 const std::string &EmitDir,
                                  Diagnostic &Diags);
   
-ASTConsumer *CreatePCHGenerator(Diagnostic &Diags,
-                                const LangOptions &Features,
-                                const std::string& InFile,
-                                const std::string& OutFile);
+ASTConsumer *CreatePCHGenerator(Preprocessor &PP,
+                                const std::string &OutFile);
 
-ASTConsumer *CreateBlockRewriter(const std::string& InFile,
-                                 const std::string& OutFile,
+ASTConsumer *CreateBlockRewriter(const std::string &InFile,
+                                 const std::string &OutFile,
                                  Diagnostic &Diags,
                                  const LangOptions &LangOpts);
   
 ASTConsumer *CreateInheritanceViewer(const std::string& clsname);
 
-ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
-                                    PreprocessorFactory* ppf,
-                                    const LangOptions& lopts,
-                                    const std::string& output);
+ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor *pp,
+                                    PreprocessorFactory *ppf,
+                                    const LangOptions &lopts,
+                                    const std::string &output);
 
 } // end clang namespace
 

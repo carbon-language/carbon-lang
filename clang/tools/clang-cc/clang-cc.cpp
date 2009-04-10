@@ -1529,7 +1529,8 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
     return CreateASTSerializer(InFile, OutputFile, Diag);
     
   case GeneratePCH:
-    return CreatePCHGenerator(Diag, LangOpts, InFile, OutputFile);    
+    assert(PP && "Generate PCH doesn't work from serialized file yet");
+    return CreatePCHGenerator(*PP, OutputFile);    
 
   case RewriteObjC:
     return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);

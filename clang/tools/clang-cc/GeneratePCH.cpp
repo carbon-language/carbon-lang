@@ -12,9 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ASTConsumers.h"
 #include "clang/Frontend/PCHWriter.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Compiler.h"
@@ -27,19 +29,19 @@ using namespace llvm;
 
 namespace {
   class VISIBILITY_HIDDEN PCHGenerator : public ASTConsumer {
-    Diagnostic &Diags;
+    Preprocessor &PP;
     std::string OutFile;
 
   public:
-    explicit PCHGenerator(Diagnostic &Diags, const std::string &OutFile)
-      : Diags(Diags), OutFile(OutFile) { }
+    explicit PCHGenerator(Preprocessor &PP, const std::string &OutFile)
+      : PP(PP), OutFile(OutFile) { }
 
     virtual void HandleTranslationUnit(ASTContext &Ctx);
   };
 }
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
-  if (Diags.hasErrorOccurred())
+  if (PP.getDiagnostics().hasErrorOccurred())
     return;
 
  // Write the PCH contents into a buffer
@@ -48,7 +50,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   PCHWriter Writer(Stream);
 
   // Emit the PCH file
-  Writer.WritePCH(Ctx);
+  Writer.WritePCH(Ctx, PP);
 
   // Open up the PCH file.
   std::string ErrMsg;
@@ -66,13 +68,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   Out.flush();
 }
 
-namespace clang {
-
-ASTConsumer *CreatePCHGenerator(Diagnostic &Diags,
-                                const LangOptions &Features,
-                                const std::string& InFile,
-                                const std::string& OutFile) {
-  return new PCHGenerator(Diags, OutFile);
-}
-
+ASTConsumer *clang::CreatePCHGenerator(Preprocessor &PP,
+                                       const std::string &OutFile) {
+  return new PCHGenerator(PP, OutFile);
 }

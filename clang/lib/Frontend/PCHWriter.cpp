@@ -474,6 +474,13 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
   S.ExitBlock();
 }
 
+/// \brief Writes the block containing the serialized form of the
+/// preprocessor.
+///
+void PCHWriter::WritePreprocessor(Preprocessor &PP) {
+}
+
+
 /// \brief Write the representation of a type to the PCH stream.
 void PCHWriter::WriteType(const Type *T) {
   pch::ID &ID = TypeIDs[T];
@@ -659,7 +666,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 
   : S(S), NextTypeID(pch::NUM_PREDEF_TYPE_IDS) { }
 
-void PCHWriter::WritePCH(ASTContext &Context) {
+void PCHWriter::WritePCH(ASTContext &Context, Preprocessor &PP) {
   // Emit the file header.
   S.Emit((unsigned)'C', 8);
   S.Emit((unsigned)'P', 8);
@@ -673,6 +680,7 @@ void PCHWriter::WritePCH(ASTContext &Context) {
   // Write the remaining PCH contents.
   S.EnterSubblock(pch::PCH_BLOCK_ID, 2);
   WriteSourceManagerBlock(Context.getSourceManager());
+  WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
   S.ExitBlock();
