@@ -277,6 +277,10 @@ def i32immSExt8  : PatLeaf<(i32 imm), [{
 // known to be 32-bit aligned or better. Ditto for i8 to i16.
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (unindexedload node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (const Value *Src = LD->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
   ISD::LoadExtType ExtType = LD->getExtensionType();
   if (ExtType == ISD::NON_EXTLOAD)
     return true;
@@ -287,6 +291,10 @@ def loadi16 : PatFrag<(ops node:$ptr), (i16 (unindexedload node:$ptr)), [{
 
 def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (const Value *Src = LD->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
   ISD::LoadExtType ExtType = LD->getExtensionType();
   if (ExtType == ISD::EXTLOAD)
     return LD->getAlignment() >= 2 && !LD->isVolatile();
@@ -295,6 +303,10 @@ def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [
 
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (const Value *Src = LD->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
   ISD::LoadExtType ExtType = LD->getExtensionType();
   if (ExtType == ISD::NON_EXTLOAD)
     return true;
@@ -305,6 +317,10 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
 
 def nvloadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (const Value *Src = LD->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
   if (LD->isVolatile())
     return false;
   ISD::LoadExtType ExtType = LD->getExtensionType();
@@ -316,21 +332,48 @@ def nvloadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
 }]>;
 
 def gsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  const Value *Src = LD->getSrcValue();
-  if (!Src)
-    return false;
-  if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-    return PT->getAddressSpace() == 256;
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      return PT->getAddressSpace() == 256;
   return false;
 }]>;
 
-def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
-def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
+def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr)), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
+  return true;
+}]>;
+def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr)), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
+  return true;
+}]>;
 
-def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
-def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
-def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr))>;
+def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr)), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
+  return true;
+}]>;
+def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr)), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
+  return true;
+}]>;
+def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr)), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() != 0)
+        return false;
+  return true;
+}]>;
 
 def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextloadi8 node:$ptr))>;
 def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextloadi8 node:$ptr))>;
@@ -706,13 +749,13 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
 let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
-                [(set GR8:$dst, (load addr:$src))]>;
+                [(set GR8:$dst, (loadi8 addr:$src))]>;
 def MOV16rm : I<0x8B, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}",
-                [(set GR16:$dst, (load addr:$src))]>, OpSize;
+                [(set GR16:$dst, (loadi16 addr:$src))]>, OpSize;
 def MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
-                [(set GR32:$dst, (load addr:$src))]>;
+                [(set GR32:$dst, (loadi32 addr:$src))]>;
 }
 
 def MOV8mr  : I<0x88, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src),
@@ -1358,17 +1401,17 @@ def AND32rr  : I<0x21, MRMDestReg,
 def AND8rm   : I<0x22, MRMSrcMem, 
                  (outs GR8 :$dst), (ins GR8 :$src1, i8mem :$src2),
                  "and{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (and GR8:$src1, (load addr:$src2))),
+                [(set GR8:$dst, (and GR8:$src1, (loadi8 addr:$src2))),
                  (implicit EFLAGS)]>;
 def AND16rm  : I<0x23, MRMSrcMem, 
                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                  "and{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (and GR16:$src1, (load addr:$src2))),
+                [(set GR16:$dst, (and GR16:$src1, (loadi16 addr:$src2))),
                  (implicit EFLAGS)]>, OpSize;
 def AND32rm  : I<0x23, MRMSrcMem,
                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                  "and{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (and GR32:$src1, (load addr:$src2))),
+                [(set GR32:$dst, (and GR32:$src1, (loadi32 addr:$src2))),
                  (implicit EFLAGS)]>;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
