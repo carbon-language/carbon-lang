@@ -109,8 +109,6 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   // FIXME: What are we going to do with -V and -b?
 
-  // FIXME: Handle CCC_ADD_ARGS.
-
   // FIXME: This stuff needs to go into the Compilation, not the
   // driver.
   bool CCCPrintOptions = false, CCCPrintActions = false;

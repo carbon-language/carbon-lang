@@ -86,8 +86,8 @@ int main(int argc, const char **argv) {
   llvm::OwningPtr<Compilation> C;
 
   // Handle CCC_ADD_ARGS, a comma separated list of extra arguments.
+  std::set<std::string> SavedStrings;
   if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
-    std::set<std::string> SavedStrings;
     std::vector<const char*> StringPointers;
 
     // FIXME: Driver shouldn't take extra initial argument.
