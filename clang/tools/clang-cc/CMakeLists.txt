@@ -29,6 +29,7 @@ add_clang_executable(clang-cc
   clang-cc.cpp
   DependencyFile.cpp
   DiagChecker.cpp
+  GeneratePCH.cpp
   HTMLPrint.cpp
   PrintParserCallbacks.cpp
   PrintPreprocessedOutput.cpp

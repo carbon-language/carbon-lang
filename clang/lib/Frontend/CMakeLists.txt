@@ -6,6 +6,8 @@ add_clang_library(clangFrontend
   InitHeaderSearch.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
+  PCHReader.cpp
+  PCHWriter.cpp
   PlistDiagnostics.cpp
   ManagerRegistry.cpp
   )
