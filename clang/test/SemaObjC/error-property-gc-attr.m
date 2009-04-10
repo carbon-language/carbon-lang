@@ -1,4 +1,4 @@
-// RUN: clang-cc -fobjc-gc -fsyntax-only -verify %s
+// RUN: clang-cc -triple i386-apple-darwin9 -fobjc-gc -fsyntax-only -verify %s
 
 @interface INTF
 {
