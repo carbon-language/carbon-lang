@@ -235,8 +235,9 @@ cd $SYM_DIR || exit 1
 rm -rf * || exit 1
 
 # Generate .dSYM files
-find $DEST_DIR -perm -0111 -type f ! \( -name '*.la' -o -name gccas -o -name gccld -o -name llvm-config \) -print \
-    | xargs -n 1 -P ${SYSCTL} dsymutil
+find $DEST_DIR -perm -0111 -type f \
+    ! \( -name '*.la' -o -name gccas -o -name gccld -o -name llvm-config -o -name '*.a' \) \
+    -print | xargs -n 1 -P ${SYSCTL} dsymutil
 
 # Save .dSYM files and .a archives
 cd $DEST_DIR || exit 1
