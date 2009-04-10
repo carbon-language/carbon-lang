@@ -1362,7 +1362,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
           if (VDecl->getStorageClass() != VarDecl::Extern &&
               VDecl->getStorageClass() != VarDecl::PrivateExtern)
             Diag(VDecl->getLocation(), diag::err_objc_var_decl_inclass) 
-              << cast<NamedDecl>(ClassDecl)->getIdentifier();
+              << cast<NamedDecl>(ClassDecl)->getDeclName();
         }
     }
   }
