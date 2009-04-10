@@ -322,6 +322,8 @@ bool X86DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
     case ISD::AND:
     case ISD::OR:
     case ISD::XOR: {
+      SDValue Op1 = U->getOperand(1);
+
       // If the other operand is a 8-bit immediate we should fold the immediate
       // instead. This reduces code size.
       // e.g.
@@ -332,9 +334,25 @@ bool X86DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
       // addl 4(%esp), %eax
       // The former is 2 bytes shorter. In case where the increment is 1, then
       // the saving can be 4 bytes (by using incl %eax).
-      if (ConstantSDNode *Imm = dyn_cast<ConstantSDNode>(U->getOperand(1)))
+      if (ConstantSDNode *Imm = dyn_cast<ConstantSDNode>(Op1))
         if (Imm->getAPIntValue().isSignedIntN(8))
           return false;
+
+      // If the other operand is a TLS address, we should fold it instead.
+      // This produces
+      // movl    %gs:0, %eax
+      // leal    i@NTPOFF(%eax), %eax
+      // instead of
+      // movl    $i@NTPOFF, %eax
+      // addl    %gs:0, %eax
+      // if the block also has an access to a second TLS address this will save
+      // a load.
+      // FIXME: This is probably also true for non TLS addresses.
+      if (Op1.getOpcode() == X86ISD::Wrapper) {
+        SDValue Val = Op1.getOperand(0);
+        if (Val.getOpcode() == ISD::TargetGlobalTLSAddress)
+          return false;
+      }
     }
     }
 
@@ -1170,13 +1188,16 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
                                     SDValue &Base, SDValue &Scale,
                                     SDValue &Index, SDValue &Disp) {
   X86ISelAddressMode AM;
+
+  // Set AM.Segment to prevent MatchAddress from using one. LEA doesn't support
+  // segments.
+  SDValue Copy = AM.Segment;
+  SDValue T = CurDAG->getRegister(0, MVT::i32);
+  AM.Segment = T;
   if (MatchAddress(N, AM))
     return false;
-
-  //Is it better to set AM.Segment before calling MatchAddress to
-  //prevent it from adding a segment?
-  if (AM.Segment.getNode())
-    return false;
+  assert (T == AM.Segment);
+  AM.Segment = Copy;
 
   MVT VT = N.getValueType();
   unsigned Complexity = 0;
