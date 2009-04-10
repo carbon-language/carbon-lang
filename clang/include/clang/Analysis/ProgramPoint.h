@@ -46,19 +46,20 @@ private:
   enum { TwoPointers = 0x1, Custom = 0x2, Mask = 0x3 };
   
   std::pair<uintptr_t,uintptr_t> Data;
+  const void *Tag;
   
 protected:
-  ProgramPoint(const void* P, Kind k)
+  ProgramPoint(const void* P, Kind k, const void *tag = 0)
     : Data(reinterpret_cast<uintptr_t>(P),
-           (uintptr_t) k) {}
+           (uintptr_t) k), Tag(tag) {}
     
-  ProgramPoint(const void* P1, const void* P2)
+  ProgramPoint(const void* P1, const void* P2, const void *tag = 0)
     : Data(reinterpret_cast<uintptr_t>(P1) | TwoPointers,
-           reinterpret_cast<uintptr_t>(P2)) {}
+           reinterpret_cast<uintptr_t>(P2)), Tag(tag) {}
 
   ProgramPoint(const void* P1, const void* P2, bool)
     : Data(reinterpret_cast<uintptr_t>(P1) | Custom,
-           reinterpret_cast<uintptr_t>(P2)) {}
+           reinterpret_cast<uintptr_t>(P2)), Tag(0) {}
 
 protected:
   void* getData1NoMask() const {
@@ -78,6 +79,8 @@ protected:
     assert(k == BlockEdgeKind || k == PostStmtCustomKind);
     return reinterpret_cast<void*>(Data.second);
   }
+  
+  const void *getTag() const { return Tag; }
     
 public:    
   Kind getKind() const {
@@ -88,25 +91,27 @@ public:
     }
   }
 
-  // For use with DenseMap.
+  // For use with DenseMap.  This hash is probably slow.
   unsigned getHashValue() const {
-    std::pair<void*,void*> P(reinterpret_cast<void*>(Data.first),
-                             reinterpret_cast<void*>(Data.second));
-    return llvm::DenseMapInfo<std::pair<void*,void*> >::getHashValue(P);
+    llvm::FoldingSetNodeID ID;
+    ID.AddPointer(reinterpret_cast<void*>(Data.first));
+    ID.AddPointer(reinterpret_cast<void*>(Data.second));
+    ID.AddPointer(Tag);
+    return ID.ComputeHash();
   }
   
   static bool classof(const ProgramPoint*) { return true; }
 
   bool operator==(const ProgramPoint & RHS) const {
-    return Data == RHS.Data;
+    return Data == RHS.Data && Tag == RHS.Tag;
   }
 
   bool operator!=(const ProgramPoint& RHS) const {
-    return Data != RHS.Data;
+    return Data != RHS.Data || Tag != RHS.Tag;
   }
     
   bool operator<(const ProgramPoint& RHS) const {
-    return Data < RHS.Data;
+    return Data < RHS.Data && Tag < RHS.Tag;
   }
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
@@ -119,6 +124,7 @@ public:
       ID.AddPointer(P->first);
       ID.AddPointer(P->second);
     }
+    ID.AddPointer(Tag);
   }
 };
                
@@ -162,10 +168,11 @@ public:
   }
 };
 
-
 class PostStmt : public ProgramPoint {
 protected:
-  PostStmt(const Stmt* S, Kind k) : ProgramPoint(S, k) {}
+  PostStmt(const Stmt* S, Kind k,const void *tag = 0)
+    : ProgramPoint(S, k, tag) {}
+
   PostStmt(const Stmt* S, const void* data) : ProgramPoint(S, data, true) {}
   
 public:
@@ -181,8 +188,8 @@ public:
 
 class PostLocationChecksSucceed : public PostStmt {
 public:
-  PostLocationChecksSucceed(const Stmt* S)
-    : PostStmt(S, PostLocationChecksSucceedKind) {}
+  PostLocationChecksSucceed(const Stmt* S, const void *tag = 0)
+    : PostStmt(S, PostLocationChecksSucceedKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLocationChecksSucceedKind;
@@ -242,7 +249,8 @@ public:
   
 class PostLoad : public PostStmt {
 public:
-  PostLoad(const Stmt* S) : PostStmt(S, PostLoadKind) {}
+  PostLoad(const Stmt* S, const void *tag = 0)
+    : PostStmt(S, PostLoadKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLoadKind;
@@ -251,7 +259,8 @@ public:
   
 class PostStore : public PostStmt {
 public:
-  PostStore(const Stmt* S) : PostStmt(S, PostStoreKind) {}
+  PostStore(const Stmt* S, const void *tag = 0)
+    : PostStmt(S, PostStoreKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStoreKind;
