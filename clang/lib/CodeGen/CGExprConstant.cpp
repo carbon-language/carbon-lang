@@ -482,7 +482,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       assert(0 && "Constant expressions should be initialized.");
       return 0;
     case APValue::LValue: {
-      const llvm::Type *DestType = getTypes().ConvertTypeForMem(E->getType());
+      const llvm::Type *DestTy = getTypes().ConvertTypeForMem(E->getType());
       llvm::Constant *Offset = 
         llvm::ConstantInt::get(llvm::Type::Int64Ty, 
                                Result.Val.getLValueOffset());
@@ -502,21 +502,21 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 
         // Convert to the appropriate type; this could be an lvalue for
         // an integer.
-        if (isa<llvm::PointerType>(DestType))
-          return llvm::ConstantExpr::getBitCast(C, DestType);
+        if (isa<llvm::PointerType>(DestTy))
+          return llvm::ConstantExpr::getBitCast(C, DestTy);
 
-        return llvm::ConstantExpr::getPtrToInt(C, DestType);
+        return llvm::ConstantExpr::getPtrToInt(C, DestTy);
       } else {
         C = Offset;
 
         // Convert to the appropriate type; this could be an lvalue for
         // an integer.
-        if (isa<llvm::PointerType>(DestType))
-          return llvm::ConstantExpr::getIntToPtr(C, DestType);
+        if (isa<llvm::PointerType>(DestTy))
+          return llvm::ConstantExpr::getIntToPtr(C, DestTy);
 
         // If the types don't match this should only be a truncate.
-        if (C->getType() != DestType)
-          return llvm::ConstantExpr::getTrunc(C, DestType);
+        if (C->getType() != DestTy)
+          return llvm::ConstantExpr::getTrunc(C, DestTy);
 
         return C;
       }
