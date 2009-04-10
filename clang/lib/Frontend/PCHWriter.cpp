@@ -479,7 +479,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
 /// \brief Writes the block containing the serialized form of the
 /// preprocessor.
 ///
-void PCHWriter::WritePreprocessor(Preprocessor &PP) {
+void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   // Enter the preprocessor block.
   S.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 3);
   
@@ -527,7 +527,29 @@ void PCHWriter::WritePreprocessor(Preprocessor &PP) {
     S.EmitRecord(Code, Record);
     Record.clear();
 
-    // FIXME: Emit the tokens array.
+    // Emit the tokens array.
+    for (unsigned TokNo = 0, e = MI->getNumTokens(); TokNo != e; ++TokNo) {
+      // Note that we know that the preprocessor does not have any annotation
+      // tokens in it because they are created by the parser, and thus can't be
+      // in a macro definition.
+      const Token &Tok = MI->getReplacementToken(TokNo);
+      
+      Record.push_back(Tok.getLocation().getRawEncoding());
+      Record.push_back(Tok.getLength());
+
+      // FIXME: Output the identifier Info ID #!
+      // FIXME: When reading literal tokens, reconstruct the literal pointer if
+      // it is needed.
+      Record.push_back((intptr_t)Tok.getIdentifierInfo());
+      
+      // FIXME: Should translate token kind to a stable encoding.
+      Record.push_back(Tok.getKind());
+      // FIXME: Should translate token flags to a stable encoding.
+      Record.push_back(Tok.getFlags());
+      
+      S.EmitRecord(pch::PP_TOKEN, Record);
+      Record.clear();
+    }
     
   }
   
@@ -719,7 +741,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 
   : S(S), NextTypeID(pch::NUM_PREDEF_TYPE_IDS) { }
 
-void PCHWriter::WritePCH(ASTContext &Context, Preprocessor &PP) {
+void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   // Emit the file header.
   S.Emit((unsigned)'C', 8);
   S.Emit((unsigned)'P', 8);

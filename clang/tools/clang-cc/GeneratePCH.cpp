@@ -29,11 +29,11 @@ using namespace llvm;
 
 namespace {
   class VISIBILITY_HIDDEN PCHGenerator : public ASTConsumer {
-    Preprocessor &PP;
+    const Preprocessor &PP;
     std::string OutFile;
 
   public:
-    explicit PCHGenerator(Preprocessor &PP, const std::string &OutFile)
+    explicit PCHGenerator(const Preprocessor &PP, const std::string &OutFile)
       : PP(PP), OutFile(OutFile) { }
 
     virtual void HandleTranslationUnit(ASTContext &Ctx);
@@ -68,7 +68,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   Out.flush();
 }
 
-ASTConsumer *clang::CreatePCHGenerator(Preprocessor &PP,
+ASTConsumer *clang::CreatePCHGenerator(const Preprocessor &PP,
                                        const std::string &OutFile) {
   return new PCHGenerator(PP, OutFile);
 }

@@ -68,7 +68,7 @@ ASTConsumer *CreateASTSerializer(const std::string &InFile,
                                  const std::string &EmitDir,
                                  Diagnostic &Diags);
   
-ASTConsumer *CreatePCHGenerator(Preprocessor &PP,
+ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
                                 const std::string &OutFile);
 
 ASTConsumer *CreateBlockRewriter(const std::string &InFile,

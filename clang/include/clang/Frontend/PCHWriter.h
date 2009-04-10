@@ -77,7 +77,7 @@ class PCHWriter {
   pch::TypeID NextTypeID;
 
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
-  void WritePreprocessor(Preprocessor &PP);
+  void WritePreprocessor(const Preprocessor &PP);
   void WriteType(const Type *T);
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
@@ -92,7 +92,7 @@ public:
   PCHWriter(llvm::BitstreamWriter &S);
   
   /// \brief Write a precompiled header for the given AST context.
-  void WritePCH(ASTContext &Context, Preprocessor &PP);
+  void WritePCH(ASTContext &Context, const Preprocessor &PP);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);
