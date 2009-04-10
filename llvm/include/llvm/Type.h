@@ -364,6 +364,10 @@ public:
   ///
   void removeAbstractTypeUser(AbstractTypeUser *U) const;
 
+  /// getPointerTo - Return a pointer to the current type.  This is equivalent
+  /// to PointerType::get(Foo, AddrSpace).
+  PointerType *getPointerTo(unsigned AddrSpace = 0) const;
+
 private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
   /// iff all of the members of the type are sized as well.  Since asking for
