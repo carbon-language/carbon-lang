@@ -43,4 +43,8 @@ int f12(int arg) {
   return arg ? 0 : f10_t();
 }
 
+// RUN: grep 'define void @f13() nounwind readnone' %t &&
+void f13(void) __attribute__((pure)) __attribute__((const));
+void f13(void){}
+
 // RUN: true
