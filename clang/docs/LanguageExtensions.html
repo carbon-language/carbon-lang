@@ -303,11 +303,11 @@ panic functions (i.e., they are only called when an internal program error
 occurs) but may actually return so that the program can fail gracefully. The
 <tt>analyzer_noreturn</tt> attribute allows one to annotate such functions as
 being interpreted as &quot;no return&quot; functions by the analyzer (thus
-pruning bogus paths) but will not effect compilation (as in the case of
+pruning bogus paths) but will not affect compilation (as in the case of
 <tt>noreturn</tt>).</p>
 
 <p><b>Usage</b>: The <tt>analyzer_noreturn</tt> attribute can be placed in the
-sampe places where the <tt>noreturn</tt> attribute can be placed. It is commonly
+same places where the <tt>noreturn</tt> attribute can be placed. It is commonly
 placed at the end of function prototypes:</p>
 
 <pre>
