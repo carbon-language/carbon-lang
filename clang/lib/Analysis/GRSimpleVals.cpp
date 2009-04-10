@@ -288,39 +288,8 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
         
         return NonLoc::MakeIntTruthVal(BasicVals, b);
       }
-      else if (isa<loc::SymbolVal>(R)) {
-        
-        const SymIntExpr *SE =
-          Eng.getSymbolManager().getSymIntExpr(cast<loc::SymbolVal>(R).getSymbol(),
-                                               BinaryOperator::EQ,
-                                               cast<loc::ConcreteInt>(L).getValue(),
-                                               Eng.getContext().IntTy);
-        
-        return nonloc::SymExprVal(SE);
-      }
       
       break;
-      
-    case loc::SymbolValKind: {
-
-      if (isa<loc::ConcreteInt>(R)) {
-        const SymIntExpr *SE =
-          Eng.getSymbolManager().getSymIntExpr(
-                                            cast<loc::SymbolVal>(L).getSymbol(),
-                                            BinaryOperator::EQ,
-                                            cast<loc::ConcreteInt>(R).getValue(),
-                                            Eng.getContext().IntTy);
-        
-        return nonloc::SymExprVal(SE);
-      }
-      
-      // FIXME: Implement == for lval Symbols.  This is mainly useful
-      //  in iterator loops when traversing a buffer, e.g. while(z != zTerm).
-      //  Since this is not useful for many checkers we'll punt on this for 
-      //  now.
-       
-      return UnknownVal();      
-    }
       
     case loc::MemRegionKind: {
       if (SymbolRef LSym = L.getAsLocSymbol()) {
@@ -373,27 +342,6 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
       
       break;
 
-    case loc::SymbolValKind: {
-      if (isa<loc::ConcreteInt>(R)) {
-        const SymIntExpr *SE = 
-          Eng.getSymbolManager().getSymIntExpr(
-                                          cast<loc::SymbolVal>(L).getSymbol(),
-                                          BinaryOperator::NE,
-                                          cast<loc::ConcreteInt>(R).getValue(),
-                                          Eng.getContext().IntTy);
-        return nonloc::SymExprVal(SE);
-      }
-      
-      // FIXME: Implement != for lval Symbols.  This is mainly useful
-      //  in iterator loops when traversing a buffer, e.g. while(z != zTerm).
-      //  Since this is not useful for many checkers we'll punt on this for 
-      //  now.
-      
-      return UnknownVal();
-      
-      break;
-    }
-      
     case loc::MemRegionKind: {
       if (SymbolRef LSym = L.getAsLocSymbol()) {
         if (isa<loc::ConcreteInt>(R)) {

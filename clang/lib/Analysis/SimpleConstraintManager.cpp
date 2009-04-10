@@ -94,14 +94,6 @@ SimpleConstraintManager::AssumeAux(const GRState* St, Loc Cond, bool Assumption,
     assert (false && "'Assume' not implemented for this Loc.");
     return St;
 
-  case loc::SymbolValKind:
-    if (Assumption)
-      return AssumeSymNE(St, cast<loc::SymbolVal>(Cond).getSymbol(),
-                         BasicVals.getZeroWithPtrWidth(), isFeasible);
-    else
-      return AssumeSymEQ(St, cast<loc::SymbolVal>(Cond).getSymbol(),
-                         BasicVals.getZeroWithPtrWidth(), isFeasible);
-
   case loc::MemRegionKind: {
     // FIXME: Should this go into the storemanager?
     
@@ -110,9 +102,14 @@ SimpleConstraintManager::AssumeAux(const GRState* St, Loc Cond, bool Assumption,
 
     while (SubR) {
       // FIXME: now we only find the first symbolic region.
-      if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(SubR))
-        return AssumeAux(St, loc::SymbolVal(SymR->getSymbol()), Assumption,
-                                            isFeasible);
+      if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(SubR)) {
+        if (Assumption)
+          return AssumeSymNE(St, SymR->getSymbol(),
+                             BasicVals.getZeroWithPtrWidth(), isFeasible);
+        else
+          return AssumeSymEQ(St, SymR->getSymbol(),
+                             BasicVals.getZeroWithPtrWidth(), isFeasible);
+      }
       SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
     }
     

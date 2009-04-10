@@ -364,14 +364,6 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
     }
     break;
 
-  case loc::SymbolValKind: {
-    SymbolRef Sym = cast<loc::SymbolVal>(&BaseL)->getSymbol();
-    const SymbolicRegion* SR = MRMgr.getSymbolicRegion(Sym);
-    // Layer the type information.
-    BaseR = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-    break;
-  }
-  
   case loc::GotoLabelKind:
   case loc::FuncValKind:
     // These are anormal cases. Flag an undefined value.
@@ -413,21 +405,13 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 
   const TypedRegion* BaseRegion = 0;
 
-  if (isa<loc::SymbolVal>(Base)) {
-    // FIXME: This case will be removed.
-    SymbolRef Sym = cast<loc::SymbolVal>(Base).getSymbol();
-    SymbolicRegion* SR = MRMgr.getSymbolicRegion(Sym);
-    // Layer the type information.
+  const MemRegion* R = cast<loc::MemRegionVal>(Base).getRegion();
+  if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
+    SymbolRef Sym = SR->getSymbol();
     BaseRegion = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-  } else {
-    const MemRegion* R = cast<loc::MemRegionVal>(Base).getRegion();
-    if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
-      SymbolRef Sym = SR->getSymbol();
-      BaseRegion = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-    }
-    else
-      BaseRegion = cast<TypedRegion>(R);
   }
+  else
+    BaseRegion = cast<TypedRegion>(R);
 
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
@@ -673,18 +657,6 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
 
-  // FIXME: What does loc::SymbolVal represent?  It represents the value
-  //  of a location but that value is not known.  In the future we should
-  //  handle potential aliasing relationships; e.g. a loc::SymbolVal could
-  //  be an alias for a particular region.
-  // Example:
-  // void foo(char* buf) {
-  //   char c = *buf;
-  // }
-  if (isa<loc::SymbolVal>(L)) {
-    return UnknownVal();
-  }
-
   // FIXME: Is this even possible?  Shouldn't this be treated as a null
   //  dereference at a higher level?
   if (isa<loc::ConcreteInt>(L))
@@ -841,11 +813,6 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
 }
 
 const GRState* RegionStoreManager::Bind(const GRState* St, Loc L, SVal V) {
-  // Currently we don't bind value to symbolic location. But if the logic is
-  // made clear, we might change this decision.
-  if (isa<loc::SymbolVal>(L))
-    return St;
-
   // If we get here, the location should be a region.
   const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
   assert(R);
@@ -878,8 +845,6 @@ Store RegionStoreManager::Remove(Store store, Loc L) {
   
   if (isa<loc::MemRegionVal>(L))
     R = cast<loc::MemRegionVal>(L).getRegion();
-  else if (isa<loc::SymbolVal>(L))
-    R = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(L).getSymbol());
   
   if (R) {
     RegionBindingsTy B = GetRegionBindings(store);  

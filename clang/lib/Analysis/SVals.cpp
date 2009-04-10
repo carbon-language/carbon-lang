@@ -34,9 +34,6 @@ using llvm::APSInt;
 ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolRef
 ///  where 'isValid()' returns false.
 SymbolRef SVal::getAsLocSymbol() const {
-  if (const loc::SymbolVal *X = dyn_cast<loc::SymbolVal>(this))
-    return X->getSymbol();
-
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion *R = X->getRegion();
     
@@ -429,10 +426,6 @@ void Loc::print(llvm::raw_ostream& Out) const {
     case loc::ConcreteIntKind:
       Out << cast<loc::ConcreteInt>(this)->getValue().getZExtValue()
           << " (Loc)";
-      break;
-      
-    case loc::SymbolValKind:
-      Out << '$' << cast<loc::SymbolVal>(this)->getSymbol();
       break;
       
     case loc::GotoLabelKind:

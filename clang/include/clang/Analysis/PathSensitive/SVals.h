@@ -366,24 +366,7 @@ public:
 
 namespace loc {
   
-enum Kind { SymbolValKind, GotoLabelKind, MemRegionKind, FuncValKind,
-            ConcreteIntKind };
-
-class SymbolVal : public Loc {
-public:
-  SymbolVal(SymbolRef sym) : Loc(SymbolValKind, sym) {}
-  
-  SymbolRef getSymbol() const { return (SymbolRef) Data; }
-  
-  static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == LocKind &&
-           V->getSubKind() == SymbolValKind;
-  }
-  
-  static inline bool classof(const Loc* V) {
-    return V->getSubKind() == SymbolValKind;
-  }
-};
+enum Kind { GotoLabelKind, MemRegionKind, FuncValKind, ConcreteIntKind };
 
 class GotoLabel : public Loc {
 public:

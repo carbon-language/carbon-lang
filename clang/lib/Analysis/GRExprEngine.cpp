@@ -2027,43 +2027,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       MakeNode(Dst, CastE, N, BindExpr(Res.getState(), CastE, V));
       continue;
     }
-
-    // If we are casting a symbolic value, make a symbolic region and a
-    // TypedViewRegion subregion.
-    if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V)) {
-      SymbolRef Sym = SV->getSymbol();
-      QualType SymTy = getSymbolManager().getType(Sym);
-
-      // Just pass through symbols that are function or block pointers.
-      if (SymTy->isFunctionPointerType() || SymTy->isBlockPointerType())
-        goto PassThrough;
-      
-      // Are we casting to a function or block pointer?
-      if (T->isFunctionPointerType() || T->isBlockPointerType()) {
-        // FIXME: We should verify that the underlying type of the symbolic 
-        // pointer is a void* (or maybe char*).  Other things are an abuse
-        // of the type system.
-        goto PassThrough;        
-      }
-
-      StoreManager& StoreMgr = getStoreManager();
-      const MemRegion* R = StoreMgr.getRegionManager().getSymbolicRegion(Sym);
-      
-      // Delegate to store manager to get the result of casting a region
-      // to a different type.
-      const StoreManager::CastResult& Res = StoreMgr.CastRegion(state, R, T);
-      
-      // Inspect the result.  If the MemRegion* returned is NULL, this
-      // expression evaluates to UnknownVal.
-      R = Res.getRegion();
-      if (R) { V = loc::MemRegionVal(R); } else { V = UnknownVal(); }
-      
-      // Generate the new node in the ExplodedGraph.
-      MakeNode(Dst, CastE, N, BindExpr(Res.getState(), CastE, V));
-      continue;
-    }
-
-        // All other cases.
+    // All other cases.
     DispatchCast: {
       MakeNode(Dst, CastE, N, BindExpr(state, CastE,
                                        EvalCast(V, CastE->getType())));
