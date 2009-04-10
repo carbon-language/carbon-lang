@@ -16,6 +16,7 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Type.h"
+#include "clang/Frontend/PCHBitCodes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -100,8 +101,6 @@ class PCHReader : public ExternalASTSource {
 
   bool ReadPCHBlock();
   bool ReadSourceManagerBlock();
-  bool ReadTypeOffsets();
-  bool ReadDeclOffsets();
 
   QualType ReadTypeRecord(uint64_t Offset);
   void LoadedDecl(unsigned Index, Decl *D);
@@ -122,11 +121,11 @@ public:
 
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
-  virtual QualType GetType(unsigned ID);
+  virtual QualType GetType(pch::TypeID ID);
 
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
-  virtual Decl *GetDecl(unsigned ID);
+  virtual Decl *GetDecl(pch::DeclID ID);
 
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.

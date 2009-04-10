@@ -526,6 +526,16 @@ bool Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
 
   // __builtin_va_list gets redeclared in the built-in definitions
   // buffer when using PCH. Don't complain about such redefinitions.
+  //
+  // FIXME: The problem here is that the __builtin_va_list declaration
+  // comes in as target-specific text in the predefines buffer, both
+  // in the generation of the PCH file and in the source file. Thus,
+  // we end up with two typedefs for the same type, which is an error
+  // in C. Our hackish solution is to allow redundant typedefs *to the
+  // same type* if the types are defined in the predefined buffer. We
+  // would like to eliminate this ugliness, perhaps by making
+  // __builtin_va_list a real, Sema-supplied declaration rather than
+  // putting its text into the predefines buffer.
   if (Context.getExternalSource() && 
       strcmp(SourceMgr.getBufferName(New->getLocation()), "<built-in>") == 0)
     return false;

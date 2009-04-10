@@ -50,7 +50,7 @@ class PCHWriter {
   /// The ID numbers of declarations are consecutive (in order of
   /// discovery) and start at 2. 1 is reserved for the translation
   /// unit, while 0 is reserved for NULL.
-  llvm::DenseMap<const Decl *, pch::ID> DeclIDs;
+  llvm::DenseMap<const Decl *, pch::DeclID> DeclIDs;
 
   /// \brief Offset of each declaration in the bitstream, indexed by
   /// the declaration's ID.
@@ -67,14 +67,14 @@ class PCHWriter {
   /// and start at 1. 0 is reserved for NULL. When types are actually
   /// stored in the stream, the ID number is shifted by 3 bits to
   /// allow for the const/volatile/restrict qualifiers.
-  llvm::DenseMap<const Type *, pch::ID> TypeIDs;
+  llvm::DenseMap<const Type *, pch::TypeID> TypeIDs;
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.
   llvm::SmallVector<uint64_t, 16> TypeOffsets;
 
   /// \brief The type ID that will be assigned to the next new type.
-  unsigned NextTypeID;
+  pch::TypeID NextTypeID;
 
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
   void WritePreprocessor(Preprocessor &PP);

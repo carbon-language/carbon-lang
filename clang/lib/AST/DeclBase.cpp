@@ -519,6 +519,13 @@ DeclContext::decl_iterator DeclContext::decls_end(ASTContext &Context) const {
   return decl_iterator(); 
 }
 
+bool DeclContext::decls_empty(ASTContext &Context) const {
+  if (hasExternalLexicalStorage())
+    LoadLexicalDeclsFromExternalStorage(Context);
+
+  return !FirstDecl;
+}
+
 void DeclContext::addDecl(ASTContext &Context, Decl *D) {
   assert(D->getLexicalDeclContext() == this &&
          "Decl inserted into wrong lexical context");

@@ -549,6 +549,7 @@ public:
   /// this context. 
   decl_iterator decls_begin(ASTContext &Context) const;
   decl_iterator decls_end(ASTContext &Context) const;
+  bool decls_empty(ASTContext &Context) const;
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that

@@ -192,95 +192,12 @@ bool PCHReader::ReadSourceManagerBlock() {
   }
 }
 
-/// \brief Read the type-offsets block.
-bool PCHReader::ReadTypeOffsets() {
-  if (Stream.EnterSubBlock(pch::TYPE_OFFSETS_BLOCK_ID))
-    return Error("Malformed block record");
-
-  RecordData Record;
-  while (true) {
-    unsigned Code = Stream.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of TYPE_OFFSETS block");
-      return false;
-    }
-    
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock())
-        return Error("Malformed block record");
-      continue;
-    }
-    
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
-      continue;
-    }
-    
-    // Read a record.
-    Record.clear();
-    switch (Stream.ReadRecord(Code, Record)) {
-    default:  // Default behavior: ignore.
-      break;
-    case pch::TYPE_OFFSET:
-      if (!TypeOffsets.empty())
-        return Error("Duplicate TYPE_OFFSETS block");
-      TypeOffsets.swap(Record);
-      TypeAlreadyLoaded.resize(TypeOffsets.size(), false);
-      break;
-    }
-  }
-}
-
-/// \brief Read the decl-offsets block.
-bool PCHReader::ReadDeclOffsets() {
-  if (Stream.EnterSubBlock(pch::DECL_OFFSETS_BLOCK_ID))
-    return Error("Malformed block record");
-
-  RecordData Record;
-  while (true) {
-    unsigned Code = Stream.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of DECL_OFFSETS block");
-      return false;
-    }
-    
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock())
-        return Error("Malformed block record");
-      continue;
-    }
-    
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
-      continue;
-    }
-    
-    // Read a record.
-    Record.clear();
-    switch (Stream.ReadRecord(Code, Record)) {
-    default:  // Default behavior: ignore.
-      break;
-    case pch::DECL_OFFSET:
-      if (!DeclOffsets.empty())
-        return Error("Duplicate DECL_OFFSETS block");
-      DeclOffsets.swap(Record);
-      DeclAlreadyLoaded.resize(DeclOffsets.size(), false);
-      break;
-    }
-  }
-}
-
 bool PCHReader::ReadPCHBlock() {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID))
     return Error("Malformed block record");
 
   // Read all of the records and blocks for the PCH file.
+  RecordData Record;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
@@ -302,17 +219,34 @@ bool PCHReader::ReadPCHBlock() {
         if (ReadSourceManagerBlock())
           return Error("Malformed source manager block");
         break;
-
-      case pch::TYPE_OFFSETS_BLOCK_ID:
-        if (ReadTypeOffsets())
-          return Error("Malformed type-offsets block");
-        break;
-
-      case pch::DECL_OFFSETS_BLOCK_ID:
-        if (ReadDeclOffsets())
-          return Error("Malformed decl-offsets block");
-        break;
       }
+      continue;
+    }
+
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+
+    // Read and process a record.
+    Record.clear();
+    switch ((pch::PCHRecordTypes)Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: ignore.
+      break;
+
+    case pch::TYPE_OFFSET:
+      if (!TypeOffsets.empty())
+        return Error("Duplicate TYPE_OFFSET record in PCH file");
+      TypeOffsets.swap(Record);
+      TypeAlreadyLoaded.resize(TypeOffsets.size(), false);
+      break;
+
+    case pch::DECL_OFFSET:
+      if (!DeclOffsets.empty())
+        return Error("Duplicate DECL_OFFSET record in PCH file");
+      DeclOffsets.swap(Record);
+      DeclAlreadyLoaded.resize(DeclOffsets.size(), false);
+      break;
     }
   }
 
@@ -426,7 +360,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
     // FIXME: Several other kinds of types to deserialize here!
   default:
-    assert("Unable to deserialize this type");
+    assert(false && "Unable to deserialize this type");
     break;
   }
 
@@ -500,7 +434,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   return D;
 }
 
-QualType PCHReader::GetType(unsigned ID) {
+QualType PCHReader::GetType(pch::TypeID ID) {
   unsigned Quals = ID & 0x07; 
   unsigned Index = ID >> 3;
 
@@ -550,7 +484,7 @@ QualType PCHReader::GetType(unsigned ID) {
   return QualType(reinterpret_cast<Type *>(TypeOffsets[Index]), Quals);
 }
 
-Decl *PCHReader::GetDecl(unsigned ID) {
+Decl *PCHReader::GetDecl(pch::DeclID ID) {
   if (ID == 0)
     return 0;
 
@@ -563,7 +497,7 @@ Decl *PCHReader::GetDecl(unsigned ID) {
 }
 
 bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
-                                     llvm::SmallVectorImpl<unsigned> &Decls) {
+                                  llvm::SmallVectorImpl<pch::DeclID> &Decls) {
   assert(DC->hasExternalLexicalStorage() && 
          "DeclContext has no lexical decls in storage");
   uint64_t Offset = DeclContextOffsets[DC].first;

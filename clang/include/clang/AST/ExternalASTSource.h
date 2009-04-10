@@ -16,7 +16,6 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
-
 namespace clang {
 
 class Decl;

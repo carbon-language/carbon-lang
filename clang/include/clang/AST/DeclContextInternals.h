@@ -112,7 +112,7 @@ public:
     if (VectorTy *Vector = getAsVector())
       delete Vector;
 
-    if (Vec.size() == 0)
+    if (Vec.empty())
       Data = 0;
     else
       Data = (Vec[0] << 2) | DK_DeclID;

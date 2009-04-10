@@ -490,7 +490,7 @@ void PCHWriter::WritePreprocessor(Preprocessor &PP) {
 
 /// \brief Write the representation of a type to the PCH stream.
 void PCHWriter::WriteType(const Type *T) {
-  pch::ID &ID = TypeIDs[T];
+  pch::TypeID &ID = TypeIDs[T];
   if (ID == 0) // we haven't seen this type before.
     ID = NextTypeID++;
   
@@ -547,10 +547,8 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
   // Exit the types block
   S.ExitBlock();
 
-  // Write the type offsets block
-  S.EnterSubblock(pch::TYPE_OFFSETS_BLOCK_ID, 2);
+  // Write the type offsets record
   S.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
-  S.ExitBlock();
 }
 
 /// \brief Write the block containing all of the declaration IDs
@@ -560,7 +558,7 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
 /// bistream, or 0 if no block was written.
 uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context, 
                                                  DeclContext *DC) {
-  if (DC->decls_begin(Context) == DC->decls_end(Context))
+  if (DC->decls_empty(Context))
     return 0;
 
   uint64_t Offset = S.GetCurrentBitNo();
@@ -638,7 +636,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     }
 
     // Determine the ID for this declaration
-    pch::ID ID = DeclIDs[D];
+    pch::DeclID ID = DeclIDs[D];
     if (ID == 0)
       ID = DeclIDs.size();
 
@@ -664,10 +662,8 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   // Exit the declarations block
   S.ExitBlock();
 
-  // Write the declaration offsets block
-  S.EnterSubblock(pch::DECL_OFFSETS_BLOCK_ID, 2);
+  // Write the declaration offsets record
   S.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
-  S.ExitBlock();
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 
@@ -720,7 +716,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
   }
 
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr())) {
-    pch::ID ID;
+    pch::TypeID ID;
     switch (BT->getKind()) {
     case BuiltinType::Void:       ID = pch::PREDEF_TYPE_VOID_ID;       break;
     case BuiltinType::Bool:       ID = pch::PREDEF_TYPE_BOOL_ID;       break;
@@ -748,7 +744,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
-  pch::ID &ID = TypeIDs[T.getTypePtr()];
+  pch::TypeID &ID = TypeIDs[T.getTypePtr()];
   if (ID == 0) // we haven't seen this type before
     ID = NextTypeID++;
 
@@ -762,7 +758,7 @@ void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
     return;
   }
 
-  pch::ID &ID = DeclIDs[D];
+  pch::DeclID &ID = DeclIDs[D];
   if (ID == 0) { 
     // We haven't seen this declaration before. Give it a new ID and
     // enqueue it in the list of declarations to emit.

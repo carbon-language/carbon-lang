@@ -22,8 +22,24 @@
 
 namespace clang {
   namespace pch {
-    const int IDBits = 32;
-    typedef uint32_t ID;
+    /// \brief An ID number that refers to a declaration in a PCH file.
+    ///
+    /// The ID numbers of types are consecutive (in order of
+    /// discovery) and start at 2. 0 is reserved for NULL, and 1 is
+    /// reserved for the translation unit declaration.
+    typedef uint32_t DeclID;
+
+    /// \brief An ID number that refers to a type in a PCH file.
+    ///
+    /// The ID of a type is partitioned into two parts: the lower
+    /// three bits are used to store the const/volatile/restrict
+    /// qualifiers (as with QualType) and the upper bits provide a
+    /// type index. The type index values are partitioned into two
+    /// sets. The values below NUM_PREDEF_TYPE_IDs are predefined type
+    /// IDs (based on the PREDEF_TYPE_*_ID constants), with 0 as a
+    /// placeholder for "no type". Values from NUM_PREDEF_TYPE_IDs are
+    /// other types that have serialized representations.
+    typedef uint32_t TypeID;
 
     /// \brief Describes the various kinds of blocks that occur within
     /// a PCH file.
@@ -48,23 +64,39 @@ namespace clang {
       /// types used within the PCH file.
       TYPES_BLOCK_ID,
 
-      /// \brief The block containing the offsets of all of the types
-      /// used within the PCH.
-      ///
-      /// The offsets in this block point into the block identified by
-      /// TYPES_BLOCK_ID, and are indexed by the type ID.
-      TYPE_OFFSETS_BLOCK_ID,
-
       /// \brief The block containing the definitions of all of the
       /// declarations stored in the PCH file.
-      DECLS_BLOCK_ID,
+      DECLS_BLOCK_ID
+    };
 
-      /// \brief The block containing the offsets of all of the
-      /// declarations stored within the PCH file.
+    /// \brief Record types that occur within the PCH block itself.
+    enum PCHRecordTypes {
+      /// \brief Offset of each type within the types block.
       ///
-      /// The offsets in this block point into the block identified by
-      /// DECLS_BLOCK_ID, and are indexed by the decaration ID.
-      DECL_OFFSETS_BLOCK_ID
+      /// The TYPE_OFFSET constant describes the record that occurs
+      /// within the block identified by TYPE_OFFSETS_BLOCK_ID within
+      /// the PCH file. The record itself is an array of offsets that
+      /// point into the types block (identified by TYPES_BLOCK_ID in
+      /// the PCH file). The index into the array is based on the ID
+      /// of a type. For a given type ID @c T, the lower three bits of
+      /// @c T are its qualifiers (const, volatile, restrict), as in
+      /// the QualType class. The upper bits, after being shifted and
+      /// subtracting NUM_PREDEF_TYPE_IDS, are used to index into the
+      /// TYPE_OFFSET block to determine the offset of that type's
+      /// corresponding record within the TYPES_BLOCK_ID block.
+      TYPE_OFFSET = 1,
+      
+      /// \brief Record code for the offsets of each decl.
+      ///
+      /// The DECL_OFFSET constant describes the record that occurs
+      /// within the block identifier by DECL_OFFSETS_BLOCK_ID within
+      /// the PCH file. The record itself is an array of offsets that
+      /// point into the declarations block (identified by
+      /// DECLS_BLOCK_ID). The declaration ID is an index into this
+      /// record, after subtracting one to account for the use of
+      /// declaration ID 0 for a NULL declaration pointer. Index 0 is
+      /// reserved for the translation unit declaration.
+      DECL_OFFSET = 2
     };
 
     /// \brief Record types used within a source manager block.
@@ -209,20 +241,6 @@ namespace clang {
 
     /// \brief Record code for the offsets of each type.
     ///
-    /// The TYPE_OFFSET constant describes the record that occurs
-    /// within the block identified by TYPE_OFFSETS_BLOCK_ID within
-    /// the PCH file. The record itself is an array of offsets that
-    /// point into the types block (identified by TYPES_BLOCK_ID in
-    /// the PCH file). The index into the array is based on the ID of
-    /// a type. For a given type ID @c T, the lower three bits of @c T
-    /// are its qualifiers (const, volatile, restrict), as in the
-    /// QualType class. The upper bits, after being shifted and
-    /// subtracting NUM_PREDEF_TYPE_IDS, are used to index into the
-    /// TYPE_OFFSET block to determine the offset of that type's
-    /// corresponding record within the TYPES_BLOCK_ID block.
-    enum TypeOffsetCode {
-      TYPE_OFFSET = 1
-    };
 
     /// \brief Record codes for each kind of declaration.
     ///
@@ -255,21 +273,6 @@ namespace clang {
       /// into a DeclContext via DeclContext::lookup.
       DECL_CONTEXT_VISIBLE
     };
-
-    /// \brief Record code for the offsets of each decl.
-    ///
-    /// The DECL_OFFSET constant describes the record that occurs
-    /// within the block identifier by DECL_OFFSETS_BLOCK_ID within
-    /// the PCH file. The record itself is an array of offsets that
-    /// point into the declarations block (identified by
-    /// DECLS_BLOCK_ID). The declaration ID is an index into this
-    /// record, after subtracting one to account for the use of
-    /// declaration ID 0 for a NULL declaration pointer. Index 0 is
-    /// reserved for the translation unit declaration.
-    enum DeclOffsetCode {
-      DECL_OFFSET = 1
-    };
-
     /// @}
   }
 } // end namespace clang
