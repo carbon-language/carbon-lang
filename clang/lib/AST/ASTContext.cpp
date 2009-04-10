@@ -580,6 +580,10 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
       FieldSize = 0;
       const ArrayType* ATy = Context.getAsArrayType(FD->getType());
       FieldAlign = Context.getTypeAlign(ATy->getElementType());
+    } else if (const ReferenceType *RT = FD->getType()->getAsReferenceType()) {
+      unsigned AS = RT->getPointeeType().getAddressSpace();
+      FieldSize = Context.Target.getPointerWidth(AS);
+      FieldAlign = Context.Target.getPointerAlign(AS);
     } else {
       std::pair<uint64_t, unsigned> FieldInfo = 
         Context.getTypeInfo(FD->getType());
