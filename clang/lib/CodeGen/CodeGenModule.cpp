@@ -99,9 +99,11 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
 /// GlobalValue according to the given clang AST visibility value.
 static void setGlobalVisibility(llvm::GlobalValue *GV,
                                 VisibilityAttr::VisibilityTypes Vis) {
-  // Do not change the visibility of internal definitions.
-  if (GV->hasInternalLinkage())
+  // Internal definitions should always have default visibility.
+  if (GV->hasInternalLinkage()) {
+    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
+  }
 
   switch (Vis) {
   default: assert(0 && "Unknown visibility!");
@@ -119,9 +121,11 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 
 static void setGlobalOptionVisibility(llvm::GlobalValue *GV,
                                       LangOptions::VisibilityMode Vis) {
-  // Do not change the visibility of internal definitions.
-  if (GV->hasInternalLinkage())
+  // Internal definitions should always have default visibility.
+  if (GV->hasInternalLinkage()) {
+    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
+  }
 
   switch (Vis) {
   default: assert(0 && "Unknown visibility!");
@@ -780,11 +784,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setConstant(D->getType().isConstant(Context));
   GV->setAlignment(getContext().getDeclAlignInBytes(D));
 
-  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
-    setGlobalVisibility(GV, attr->getVisibility());
-  else
-    setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
-
   // Set the llvm linkage type as appropriate.
   if (D->getStorageClass() == VarDecl::Static)
     GV->setLinkage(llvm::Function::InternalLinkage);
@@ -818,6 +817,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       break;
     }
   }
+
+  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
+    setGlobalVisibility(GV, attr->getVisibility());
+  else
+    setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
