@@ -37,6 +37,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/GlobalValue.h"
@@ -114,6 +115,9 @@ private:
   // UsedFunctions - the functions in the llvm.used list in a more easily
   // searchable format.
   SmallPtrSet<const Function *, 32> UsedFunctions;
+
+  /// UsedDbgLabels - labels are used by debug info entries.
+  SmallSet<unsigned, 8> UsedDbgLabels;
 
   bool CallsEHReturn;
   bool CallsUnwindInit;
@@ -193,6 +197,19 @@ public:
   unsigned MappedLabel(unsigned LabelID) const {
     assert(LabelID <= LabelIDList.size() && "Debug label ID out of range.");
     return LabelID ? LabelIDList[LabelID - 1] : 0;
+  }
+
+  /// isDbgLabelUsed - Return true if label with LabelID is used by
+  /// DwarfWriter.
+  bool isDbgLabelUsed(unsigned LabelID) {
+    return UsedDbgLabels.count(LabelID);
+  }
+  
+  /// RecordUsedDbgLabel - Mark label with LabelID as used. This is used
+  /// by DwarfWriter to inform DebugLabelFolder that certain labels are
+  /// not to be deleted.
+  void RecordUsedDbgLabel(unsigned LabelID) {
+    UsedDbgLabels.insert(LabelID);
   }
 
   /// getFrameMoves - Returns a reference to a list of moves done in the current
