@@ -24,24 +24,27 @@ def warn_fixit_no_changes : Note<
     "FIX-IT detected errors it could not fix; no output will be generated">;
 
 // PCH reader
+def warn_pch_target_triple : Warning<
+    "PCH file was compiled for the target '%0' but the current translation "
+    "unit is being compiled for target '%1'">;
 def note_ignoring_pch : Note<
     "ignoring precompiled header '%0'">;
-def warn_pch_c99 : Error<
+def warn_pch_c99 : Warning<
     "C99 support was %select{disabled|enabled}0 in PCH file but is "
     "currently %select{disabled|enabled}1">;
-def warn_pch_cplusplus : Error<
+def warn_pch_cplusplus : Warning<
     "C++ support was %select{disabled|enabled}0 in PCH file but is "
     "currently %select{disabled|enabled}1">;
-def warn_pch_cplusplus0x : Error<
+def warn_pch_cplusplus0x : Warning<
     "C++0x support was %select{disabled|enabled}0 in PCH file but is "
     "currently %select{disabled|enabled}1">;
-def warn_pch_objective_c : Error<
+def warn_pch_objective_c : Warning<
     "Objective-C support was %select{disabled|enabled}0 in PCH file but is "
     "currently %select{disabled|enabled}1">;
-def warn_pch_objective_c2 : Error<
+def warn_pch_objective_c2 : Warning<
     "Objective-C 2.0 support was %select{disabled|enabled}0 in PCH file but "
     "is currently %select{disabled|enabled}1">;
-def warn_pch_nonfragile_abi : Error<
+def warn_pch_nonfragile_abi : Warning<
     "PCH file was compiled with the %select{32-bit|non-fragile}0 Objective-C "
     "ABI but the %select{32-bit|non-fragile}1 Objective-C ABI is selected">;
 def warn_pch_extensions : Warning<

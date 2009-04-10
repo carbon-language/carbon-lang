@@ -21,6 +21,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -328,6 +329,21 @@ void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 // PCHWriter Implementation
 //===----------------------------------------------------------------------===//
 
+/// \brief Write the target triple (e.g., i686-apple-darwin9).
+void PCHWriter::WriteTargetTriple(const TargetInfo &Target) {
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::TARGET_TRIPLE));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Triple name
+  unsigned TripleAbbrev = S.EmitAbbrev(Abbrev);
+
+  RecordData Record;
+  Record.push_back(pch::TARGET_TRIPLE);
+  const char *Triple = Target.getTargetTriple();
+  S.EmitRecordWithBlob(TripleAbbrev, Record, Triple, strlen(Triple));
+}
+
+/// \brief Write the LangOptions structure.
 void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   RecordData Record;
   Record.push_back(LangOpts.Trigraphs);
@@ -815,7 +831,8 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   DeclsToEmit.push(Context.getTranslationUnitDecl());
 
   // Write the remaining PCH contents.
-  S.EnterSubblock(pch::PCH_BLOCK_ID, 2);
+  S.EnterSubblock(pch::PCH_BLOCK_ID, 3);
+  WriteTargetTriple(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
   WriteSourceManagerBlock(Context.getSourceManager());
   WritePreprocessor(PP);

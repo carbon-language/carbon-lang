@@ -18,6 +18,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -238,7 +239,10 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
 
     // Read and process a record.
     Record.clear();
-    switch ((pch::PCHRecordTypes)Stream.ReadRecord(Code, Record)) {
+    const char *BlobStart = 0;
+    unsigned BlobLen = 0;
+    switch ((pch::PCHRecordTypes)Stream.ReadRecord(Code, Record, 
+                                                   &BlobStart, &BlobLen)) {
     default:  // Default behavior: ignore.
       break;
 
@@ -263,6 +267,16 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
     case pch::LANGUAGE_OPTIONS:
       if (ParseLanguageOptions(Record))
         return IgnorePCH;
+      break;
+
+    case pch::TARGET_TRIPLE:
+      std::string TargetTriple(BlobStart, BlobLen);
+      if (TargetTriple != Context.Target.getTargetTriple()) {
+        Diag(diag::warn_pch_target_triple)
+          << TargetTriple << Context.Target.getTargetTriple();
+        Diag(diag::note_ignoring_pch) << FileName;
+        return IgnorePCH;
+      }
       break;
     }
   }
@@ -319,10 +333,9 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
         return true;
 
       case IgnorePCH:
-        if (Stream.SkipBlock()) {
-          Error("Malformed block record");
-          return true;
-        }
+        // FIXME: We could consider reading through to the end of this
+        // PCH block, skipping subblocks, to see if there are other
+        // PCH blocks elsewhere.
         return false;
       }
       break;

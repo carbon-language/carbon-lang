@@ -29,9 +29,10 @@ namespace llvm {
 
 namespace clang {
 
-class SourceManager;
-class Preprocessor;
 class ASTContext;
+class Preprocessor;
+class SourceManager;
+class TargetInfo;
 
 /// \brief Writes a precompiled header containing the contents of a
 /// translation unit.
@@ -76,6 +77,7 @@ class PCHWriter {
   /// \brief The type ID that will be assigned to the next new type.
   pch::TypeID NextTypeID;
 
+  void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
   void WritePreprocessor(const Preprocessor &PP);

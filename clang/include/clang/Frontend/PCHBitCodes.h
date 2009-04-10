@@ -100,7 +100,11 @@ namespace clang {
       /// LangOptions structure. We serialize the entire contents of
       /// the structure, and let the reader decide which options are
       /// actually important to check.
-      LANGUAGE_OPTIONS = 3
+      LANGUAGE_OPTIONS = 3,
+
+      /// \brief Record code for the target triple used to build the
+      /// PCH file.
+      TARGET_TRIPLE = 4
     };
 
     /// \brief Record types used within a source manager block.
