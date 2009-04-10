@@ -908,6 +908,14 @@ static void HandleMacOSVersionMin(std::string &Triple) {
             MacOSVersionMin.c_str());
     exit(1);
   }
+  else if (VersionNum <= 4 && 
+           !strncmp(Triple.c_str(), "x86_64", strlen("x86_64"))) {
+    fprintf(stderr, 
+        "-mmacosx-version-min=%s is invalid with -arch x86_64.\n",
+            MacOSVersionMin.c_str());
+    exit(1);
+  }
+
 }
 
 static llvm::cl::opt<std::string>
