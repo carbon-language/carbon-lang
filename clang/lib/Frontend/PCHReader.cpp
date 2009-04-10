@@ -271,11 +271,7 @@ bool PCHReader::ReadPreprocessorBlock() {
       }
 
       // Finally, install the macro.
-      II = II;
-#if 0
-      // FIXME: Do this when predefines buffer is worked out.
       PP.setMacroInfo(II, MI);
-#endif
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
@@ -466,6 +462,12 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
 
+  // If everything looks like it will be ok, then the PCH file load succeeded.
+  // Since the PCH file contains everything that is in the preprocessor's
+  // predefines buffer (and we validated that they are the same) clear out the
+  // predefines buffer so that it doesn't get processed again.
+  PP.setPredefines("");
+  
   return false;
 }
 

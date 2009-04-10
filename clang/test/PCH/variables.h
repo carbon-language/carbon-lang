@@ -10,3 +10,4 @@ float z;
 #define MAKE_HAPPY(X) X##Happy
 int MAKE_HAPPY(Very);
 
+#define A_MACRO_IN_THE_PCH 492

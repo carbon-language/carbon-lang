@@ -1442,7 +1442,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 ///
 static bool InitializePreprocessor(Preprocessor &PP,
                                    bool InitializeSourceMgr, 
-                                   const std::string &InFile) {
+                                   const std::string &InFile, bool UsesPCH) {
   FileManager &FileMgr = PP.getFileManager();
   
   // Figure out where to get and map in the main file.
@@ -1476,6 +1476,11 @@ static bool InitializePreprocessor(Preprocessor &PP,
     }
   }
 
+  // If the file is using PCH, then the PCH will include all the predefines, no
+  // need to install them now.
+  if (UsesPCH)
+    return false;
+  
   std::vector<char> PredefineBuffer;
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
@@ -1765,10 +1770,9 @@ public:
     return PP.take();
   }
 
-  virtual bool FinishInitialization(Preprocessor *PP) {
-    if (InitializePreprocessor(*PP, InitializeSourceMgr, InFile)) {
+  virtual bool FinishInitialization(Preprocessor *PP, bool UsesPCH) {
+    if (InitializePreprocessor(*PP, InitializeSourceMgr, InFile, UsesPCH))
       return true;
-    }
     
     /// FIXME: PP can only handle one callback
     if (ProgAction != PrintPreprocessedInput) {
@@ -2097,7 +2101,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       // than earlier) because this initialization creates new source
       // location entries in the source manager, which must come after
       // the source location entries for the PCH file.
-      if (PPF.FinishInitialization(&PP))
+      if (PPF.FinishInitialization(&PP, true /*uses PCH*/))
         return;
     }
 
@@ -2308,7 +2312,7 @@ int main(int argc, char **argv) {
       continue;
 
     if (ImplicitIncludePCH.empty()
-        && PPFactory.FinishInitialization(PP.get()))
+        && PPFactory.FinishInitialization(PP.get(), false))
       continue;
 
     // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,

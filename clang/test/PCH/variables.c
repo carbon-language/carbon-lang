@@ -8,3 +8,6 @@ double z; // expected-error{{redefinition}}
 
 //double VeryHappy; // FIXME: xpected-error{{redefinition}}
 
+
+int Q = A_MACRO_IN_THE_PCH;
+

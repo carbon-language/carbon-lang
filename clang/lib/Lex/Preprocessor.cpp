@@ -45,7 +45,7 @@ using namespace clang;
 
 PreprocessorFactory::~PreprocessorFactory() {}
 
-bool PreprocessorFactory::FinishInitialization(Preprocessor *PP) {
+bool PreprocessorFactory::FinishInitialization(Preprocessor *PP, bool UsesPCH) {
   return false;
 }
 
