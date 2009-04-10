@@ -229,6 +229,9 @@ public:
   /// must be called on an expression that constant folds to an integer.
   llvm::APSInt EvaluateAsInt(ASTContext &Ctx) const;
 
+  /// EvaluateAsLValue - Evaluate an expression to see if it's a valid LValue.
+  bool EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const;
+
   /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
   /// integer constant expression with the value zero, or if this is one that is
   /// cast to void*.

@@ -1651,6 +1651,12 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
   return true;
 }
 
+bool Expr::EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result);
+
+  return EvaluateLValue(this, Result.Val, Info) && !Result.HasSideEffects;
+}
+
 /// isEvaluatable - Call Evaluate to see if this expression can be constant
 /// folded, but discard the result.
 bool Expr::isEvaluatable(ASTContext &Ctx) const {
