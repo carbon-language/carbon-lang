@@ -236,7 +236,8 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
-std::string AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) {
+std::string
+AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) const {
   assert(MF && "No machine function?");
   std::string Name = MF->getFunction()->getName();
   if (Name.empty())

@@ -162,7 +162,7 @@ namespace llvm {
     /// getCurrentFunctionEHName - Called to return (and cache) the
     /// CurrentFnEHName.
     /// 
-    std::string getCurrentFunctionEHName(const MachineFunction *MF);
+    std::string getCurrentFunctionEHName(const MachineFunction *MF) const;
 
   protected:
     /// getAnalysisUsage - Record analysis usage.

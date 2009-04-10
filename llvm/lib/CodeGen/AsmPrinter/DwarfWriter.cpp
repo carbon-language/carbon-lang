@@ -858,7 +858,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Accessors.
   //
-  AsmPrinter *getAsm() const { return Asm; }
+  const AsmPrinter *getAsm() const { return Asm; }
   MachineModuleInfo *getMMI() const { return MMI; }
   const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
   const TargetData *getTargetData() const { return TD; }
