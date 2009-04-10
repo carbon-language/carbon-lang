@@ -4327,7 +4327,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
 llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
                                             const ObjCProtocolDecl *PD) {
   
-  llvm::Constant *Init =  llvm::ConstantExpr::getBitCast(GetProtocolRef(PD),
+  // This routine is called for @protocol only. So, we must build definition
+  // of protocol's meta-data (not a reference to it!)
+  //
+  llvm::Constant *Init =  llvm::ConstantExpr::getBitCast(GetOrEmitProtocol(PD),
                                         ObjCTypes.ExternalProtocolPtrTy);
   
   std::string ProtocolName("\01l_OBJC_PROTOCOL_REFERENCE_$_");
