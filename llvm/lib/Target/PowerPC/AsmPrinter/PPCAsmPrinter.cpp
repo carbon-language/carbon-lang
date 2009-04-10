@@ -423,7 +423,8 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 /// EmitExternalGlobal - In this case we need to use the indirect symbol.
 ///
 void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
-  std::string Name = getGlobalLinkName(GV);
+  std::string Name;
+  getGlobalLinkName(GV, Name);
   if (TM.getRelocationModel() != Reloc::Static) {
     if (GV->hasHiddenVisibility())
       HiddenGVStubs.insert(Name);

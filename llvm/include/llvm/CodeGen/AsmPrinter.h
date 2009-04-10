@@ -153,7 +153,8 @@ namespace llvm {
     /// getGlobalLinkName - Returns the asm/link name of of the specified
     /// global variable.  Should be overridden by each target asm printer to
     /// generate the appropriate value.
-    virtual const std::string getGlobalLinkName(const GlobalVariable *GV) const;
+    virtual const std::string &getGlobalLinkName(const GlobalVariable *GV,
+                                                 std::string &LinkName) const;
 
     /// EmitExternalGlobal - Emit the external reference to a global variable.
     /// Should be overridden if an indirect reference should be used.
@@ -162,7 +163,8 @@ namespace llvm {
     /// getCurrentFunctionEHName - Called to return (and cache) the
     /// CurrentFnEHName.
     /// 
-    std::string getCurrentFunctionEHName(const MachineFunction *MF) const;
+    const std::string &getCurrentFunctionEHName(const MachineFunction *MF,
+                                                std::string &FuncEHName) const;
 
   protected:
     /// getAnalysisUsage - Record analysis usage.

@@ -186,11 +186,8 @@ bool AsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection("");
 
     for (std::set<const GlobalValue*>::iterator i = ExtWeakSymbols.begin(),
-         e = ExtWeakSymbols.end(); i != e; ++i) {
-      const GlobalValue *GV = *i;
-      std::string Name = Mang->getValueName(GV);
-      O << TAI->getWeakRefDirective() << Name << '\n';
-    }
+         e = ExtWeakSymbols.end(); i != e; ++i)
+      O << TAI->getWeakRefDirective() << Mang->getValueName(*i) << '\n';
   }
 
   if (TAI->getSetDirective()) {
@@ -236,14 +233,16 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
-std::string
-AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) const {
+const std::string &
+AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF,
+                                     std::string &Name) const {
   assert(MF && "No machine function?");
-  std::string Name = MF->getFunction()->getName();
+  Name = MF->getFunction()->getName();
   if (Name.empty())
     Name = Mang->getValueName(MF->getFunction());
-  return Mang->makeNameProper(TAI->getEHGlobalPrefix() +
+  Name = Mang->makeNameProper(TAI->getEHGlobalPrefix() +
                               Name + ".eh", TAI->getGlobalPrefix());
+  return Name;
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
@@ -536,9 +535,8 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 /// getGlobalLinkName - Returns the asm/link name of of the specified
 /// global variable.  Should be overridden by each target asm printer to
 /// generate the appropriate value.
-const std::string AsmPrinter::getGlobalLinkName(const GlobalVariable *GV) const{
-  std::string LinkName;
-  
+const std::string &AsmPrinter::getGlobalLinkName(const GlobalVariable *GV,
+                                                 std::string &LinkName) const {
   if (isa<Function>(GV)) {
     LinkName += TAI->getFunctionAddrPrefix();
     LinkName += Mang->getValueName(GV);
@@ -555,7 +553,8 @@ const std::string AsmPrinter::getGlobalLinkName(const GlobalVariable *GV) const{
 /// EmitExternalGlobal - Emit the external reference to a global variable.
 /// Should be overridden if an indirect reference should be used.
 void AsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
-  O << getGlobalLinkName(GV);
+  std::string GLN;
+  O << getGlobalLinkName(GV, GLN);
 }
 
 
