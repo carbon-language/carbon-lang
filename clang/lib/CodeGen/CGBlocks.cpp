@@ -48,10 +48,10 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
 
   if (BlockHasCopyDispose) {
     // copy_func_helper_decl
-    Elts.push_back(BuildCopyHelper(Ty, *NoteForHelper));
+    Elts.push_back(BuildCopyHelper(Ty, NoteForHelper));
 
     // destroy_func_decl
-    Elts.push_back(BuildDestroyHelper(Ty, *NoteForHelper));
+    Elts.push_back(BuildDestroyHelper(Ty, NoteForHelper));
   }
 
   C = llvm::ConstantStruct::get(Elts);
@@ -178,7 +178,6 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     if (subBlockDeclRefDecls.size() == 0) {
       // __descriptor
-      assert(subBlockHasCopyDispose == false);
       Elts[4] = BuildDescriptorBlockDecl(subBlockHasCopyDispose, subBlockSize, 0, 0);
 
       // Optimize to being a global block.
@@ -714,7 +713,7 @@ uint64_t BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
 
 llvm::Constant *BlockFunction::
 GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
-                           std::vector<HelperInfo> &NoteForHelper) {
+                           std::vector<HelperInfo> *NoteForHelperp) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -752,31 +751,36 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
 
   llvm::Value *SrcObj = CGF.GetAddrOfLocalVar(Src);
   llvm::Type *PtrPtrT;
-  PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
-  SrcObj = Builder.CreateBitCast(SrcObj, PtrPtrT);
-  SrcObj = Builder.CreateLoad(SrcObj);
 
-  llvm::Value *DstObj = CGF.GetAddrOfLocalVar(Dst);
-  DstObj = Builder.CreateBitCast(DstObj, llvm::PointerType::get(T, 0));
+  if (NoteForHelperp) {
+    std::vector<HelperInfo> &NoteForHelper = *NoteForHelperp;
 
-  for (unsigned i=0; i < NoteForHelper.size(); ++i) {
-    int flag = NoteForHelper[i].flag;
-    int index = NoteForHelper[i].index;
+    PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
+    SrcObj = Builder.CreateBitCast(SrcObj, PtrPtrT);
+    SrcObj = Builder.CreateLoad(SrcObj);
 
-    if ((NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF)
-        || NoteForHelper[i].RequiresCopying) {
-      llvm::Value *Srcv = SrcObj;
-      Srcv = Builder.CreateStructGEP(Srcv, index);
-      Srcv = Builder.CreateBitCast(Srcv,
-                                   llvm::PointerType::get(PtrToInt8Ty, 0));
-      Srcv = Builder.CreateLoad(Srcv);
+    llvm::Value *DstObj = CGF.GetAddrOfLocalVar(Dst);
+    DstObj = Builder.CreateBitCast(DstObj, llvm::PointerType::get(T, 0));
 
-      llvm::Value *Dstv = Builder.CreateStructGEP(DstObj, index);
-      Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
+    for (unsigned i=0; i < NoteForHelper.size(); ++i) {
+      int flag = NoteForHelper[i].flag;
+      int index = NoteForHelper[i].index;
 
-      llvm::Value *N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
-      llvm::Value *F = getBlockObjectAssign();
-      Builder.CreateCall3(F, Dstv, Srcv, N);
+      if ((NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF)
+          || NoteForHelper[i].RequiresCopying) {
+        llvm::Value *Srcv = SrcObj;
+        Srcv = Builder.CreateStructGEP(Srcv, index);
+        Srcv = Builder.CreateBitCast(Srcv,
+                                     llvm::PointerType::get(PtrToInt8Ty, 0));
+        Srcv = Builder.CreateLoad(Srcv);
+
+        llvm::Value *Dstv = Builder.CreateStructGEP(DstObj, index);
+        Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
+
+        llvm::Value *N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
+        llvm::Value *F = getBlockObjectAssign();
+        Builder.CreateCall3(F, Dstv, Srcv, N);
+      }
     }
   }
 
@@ -788,7 +792,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
 llvm::Constant *BlockFunction::
 GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
                               const llvm::StructType* T,
-                              std::vector<HelperInfo> &NoteForHelper) {
+                              std::vector<HelperInfo> *NoteForHelperp) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -821,25 +825,29 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
                                           true);
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
-  llvm::Value *SrcObj = CGF.GetAddrOfLocalVar(Src);
-  llvm::Type *PtrPtrT;
-  PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
-  SrcObj = Builder.CreateBitCast(SrcObj, PtrPtrT);
-  SrcObj = Builder.CreateLoad(SrcObj);
+  if (NoteForHelperp) {
+    std::vector<HelperInfo> &NoteForHelper = *NoteForHelperp;
 
-  for (unsigned i=0; i < NoteForHelper.size(); ++i) {
-    int flag = NoteForHelper[i].flag;
-    int index = NoteForHelper[i].index;
+    llvm::Value *SrcObj = CGF.GetAddrOfLocalVar(Src);
+    llvm::Type *PtrPtrT;
+    PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
+    SrcObj = Builder.CreateBitCast(SrcObj, PtrPtrT);
+    SrcObj = Builder.CreateLoad(SrcObj);
 
-    if ((NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF)
-        || NoteForHelper[i].RequiresCopying) {
-      llvm::Value *Srcv = SrcObj;
-      Srcv = Builder.CreateStructGEP(Srcv, index);
-      Srcv = Builder.CreateBitCast(Srcv,
-                                   llvm::PointerType::get(PtrToInt8Ty, 0));
-      Srcv = Builder.CreateLoad(Srcv);
+    for (unsigned i=0; i < NoteForHelper.size(); ++i) {
+      int flag = NoteForHelper[i].flag;
+      int index = NoteForHelper[i].index;
 
-      BuildBlockRelease(Srcv, flag);
+      if ((NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF)
+          || NoteForHelper[i].RequiresCopying) {
+        llvm::Value *Srcv = SrcObj;
+        Srcv = Builder.CreateStructGEP(Srcv, index);
+        Srcv = Builder.CreateBitCast(Srcv,
+                                     llvm::PointerType::get(PtrToInt8Ty, 0));
+        Srcv = Builder.CreateLoad(Srcv);
+
+        BuildBlockRelease(Srcv, flag);
+      }
     }
   }
 
@@ -849,15 +857,15 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
 }
 
 llvm::Constant *BlockFunction::BuildCopyHelper(const llvm::StructType *T,
-                                       std::vector<HelperInfo> &NoteForHelper) {
+                                       std::vector<HelperInfo> *NoteForHelper) {
   return CodeGenFunction(CGM).GenerateCopyHelperFunction(BlockHasCopyDispose,
                                                          T, NoteForHelper);
 }
 
 llvm::Constant *BlockFunction::BuildDestroyHelper(const llvm::StructType *T,
-                                       std::vector<HelperInfo> &NoteForHelper) {
+                                      std::vector<HelperInfo> *NoteForHelperp) {
   return CodeGenFunction(CGM).GenerateDestroyHelperFunction(BlockHasCopyDispose,
-                                                            T, NoteForHelper);
+                                                            T, NoteForHelperp);
 }
 
 llvm::Constant *BlockFunction::

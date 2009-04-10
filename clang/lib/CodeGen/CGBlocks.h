@@ -183,14 +183,14 @@ public:
   ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
 
   llvm::Constant *GenerateCopyHelperFunction(bool, const llvm::StructType *,
-                                             std::vector<HelperInfo> &);
+                                             std::vector<HelperInfo> *);
   llvm::Constant *GenerateDestroyHelperFunction(bool, const llvm::StructType *,
-                                                std::vector<HelperInfo> &);
+                                                std::vector<HelperInfo> *);
 
   llvm::Constant *BuildCopyHelper(const llvm::StructType *,
-                                  std::vector<HelperInfo> &);
+                                  std::vector<HelperInfo> *);
   llvm::Constant *BuildDestroyHelper(const llvm::StructType *,
-                                     std::vector<HelperInfo> &);
+                                     std::vector<HelperInfo> *);
 
   llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag);
   llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, int);
