@@ -109,11 +109,11 @@ static void getLinuxDefines(const LangOptions &Opts, std::vector<char> &Defs) {
 }
 
 /// getDarwinNumber - Parse the 'darwin number' out of the specific targe
-/// triple.  For example, if we have darwin8.5 return 8,5,4.  If any entry is
+/// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
 /// not defined, return 0's.  Return true if we have -darwin in the string or
 /// false otherwise.
-static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min) {
-  Maj = Min = 0;
+static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min, unsigned &Revision) {
+  Maj = Min = Revision = 0;
   const char *Darwin = strstr(Triple, "-darwin");
   if (Darwin == 0) return false;
   
@@ -126,20 +126,47 @@ static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min) {
     
   // Handle "darwin11".
   if (Maj == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
-    Maj = 10+Darwin[0]-'0';
+    Maj = Maj*10 + (Darwin[0] - '0');
     ++Darwin;
   }
     
   // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
-  if (Darwin[0] == '.' && Darwin[1] >= '0' && Darwin[1] <= '9' &&
-      Darwin[2] == '\0')
-    Min = Darwin[1]-'0';
+  if (Darwin[0] != '.')
+    return true;
+  
+  ++Darwin;
+  if (Darwin[0] < '0' || Darwin[0] > '9')
+    return true;
+  
+  Min = Darwin[0]-'0';
+  ++Darwin;
+
+  // Handle 10.4.11 -> darwin8.11
+  if (Min == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
+    Min = Min*10 + (Darwin[0] - '0');
+    ++Darwin;
+  }
+  
+  // Handle revision darwin8.9.1
+  if (Darwin[0] != '.')
+    return true;
+  
+  ++Darwin;
+  if (Darwin[0] < '0' || Darwin[0] > '9')
+    return true;
+  
+  Revision = Darwin[0]-'0';
+  ++Darwin;
+  
+  if (Revision == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
+    Revision = Revision*10 + (Darwin[0] - '0');
+    ++Darwin;
+  }
   
   return true;
 }
 
-static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts,
-                             const char *Triple) {
+static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
   Define(Defs, "OBJC_NEW_PROPERTIES");
@@ -152,19 +179,42 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts,
     Define(Defs, "__strong", "");
   else
     Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
-  
+}
+
+static void getDarwinOSXDefines(std::vector<char> &Defs, const char *Triple) {
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
-  unsigned Maj, Min;
-  if (getDarwinNumber(Triple, Maj, Min)) {
-    char DarwinStr[] = "1000";
+  unsigned Maj, Min, Rev;
+  if (getDarwinNumber(Triple, Maj, Min, Rev)) {
+    char MacOSXStr[] = "1000";
     if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
       // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
-      DarwinStr[2] = '0' + Maj-4;
+      MacOSXStr[2] = '0' + Maj-4;
+    }
+        
+    // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
+    // Cap 10.4.11 -> darwin8.11 -> "1049"
+    MacOSXStr[3] = std::min(Min, 9U)+'0';
+    Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", MacOSXStr);
+  }
+}
+
+static void getDarwinIPhoneOSDefines(std::vector<char> &Defs, 
+                                     const char *Triple) {
+  // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
+  unsigned Maj, Min, Rev;
+  if (getDarwinNumber(Triple, Maj, Min, Rev)) {
+    // When targetting iPhone OS, interpret the minor version and
+    // revision as the iPhone OS version
+    char iPhoneOSStr[] = "10000";
+    if (Min >= 2 && Min <= 9) { // iPhone OS 2.0-9.0
+      // darwin9.2.0 -> 20000, darwin9.3.0 -> 30000, etc.
+      iPhoneOSStr[0] = '0' + Min;
     }
       
-    // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
-    DarwinStr[3] = Min+'0';
-    Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", DarwinStr);
+    // Handle minor version: 2.2 -> darwin9.2.2 -> 20200
+    iPhoneOSStr[2] = std::min(Rev, 9U)+'0';
+    Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", 
+           iPhoneOSStr);
   }
 }
 
@@ -173,8 +223,8 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
                                      const char *Triple) {
   Opts.NeXTRuntime = true;
   
-  unsigned Maj, Min;
-  if (!getDarwinNumber(Triple, Maj, Min))
+  unsigned Maj, Min, Rev;
+  if (!getDarwinNumber(Triple, Maj, Min, Rev))
     return;
   
   // Blocks default to on for 10.6 (darwin10) and beyond.
@@ -383,7 +433,8 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     PPC32TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts, getTargetTriple());
+    getDarwinDefines(Defines, Opts);
+    getDarwinOSXDefines(Defines, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -402,7 +453,8 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     PPC64TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts, getTargetTriple());
+    getDarwinDefines(Defines, Opts);
+    getDarwinOSXDefines(Defines, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -682,7 +734,8 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts, getTargetTriple());
+    getDarwinDefines(Defines, Opts);
+    getDarwinOSXDefines(Defines, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -843,7 +896,8 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts, getTargetTriple());
+    getDarwinDefines(Defines, Opts);
+    getDarwinOSXDefines(Defines, getTargetTriple());
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
@@ -903,7 +957,6 @@ public:
       Define(Defs, "__SOFTFP__");
     }
     Define(Defs, "__ARMEL__");
-    Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
@@ -959,7 +1012,8 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     ARMTargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts, getTargetTriple());
+    getDarwinDefines(Defines, Opts);
+    getDarwinIPhoneOSDefines(Defines, getTargetTriple());
   }
 };
 } // end anonymous namespace.

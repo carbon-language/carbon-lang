@@ -857,7 +857,7 @@ Arch("arch", llvm::cl::desc("Specify target architecture (e.g. i686)"));
 
 static llvm::cl::opt<std::string>
 MacOSVersionMin("mmacosx-version-min", 
-                llvm::cl::desc("Specify target Mac OS/X version (e.g. 10.5)"));
+                llvm::cl::desc("Specify target Mac OS X version (e.g. 10.5)"));
 
 // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
 // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
@@ -867,7 +867,7 @@ static void HandleMacOSVersionMin(std::string &Triple) {
   std::string::size_type DarwinDashIdx = Triple.find("-darwin");
   if (DarwinDashIdx == std::string::npos) {
     fprintf(stderr, 
-            "-mmacosx-version-min only valid for darwin (Mac OS/X) targets\n");
+            "-mmacosx-version-min only valid for darwin (Mac OS X) targets\n");
     exit(1);
   }
   unsigned DarwinNumIdx = DarwinDashIdx + strlen("-darwin");
@@ -910,6 +910,62 @@ static void HandleMacOSVersionMin(std::string &Triple) {
   }
 }
 
+static llvm::cl::opt<std::string>
+IPhoneOSVersionMin("miphoneos-version-min", 
+                llvm::cl::desc("Specify target iPhone OS version (e.g. 2.0)"));
+
+// If -miphoneos-version-min=2.2 is specified, change the triple from being
+// something like armv6-apple-darwin10 to armv6-apple-darwin9.2.2. We use
+// 9 as the default major Darwin number, and encode the iPhone OS version
+// number in the minor version and revision.
+
+// FIXME: We should have the driver do this instead.
+static void HandleIPhoneOSVersionMin(std::string &Triple) {
+  std::string::size_type DarwinDashIdx = Triple.find("-darwin");
+  if (DarwinDashIdx == std::string::npos) {
+    fprintf(stderr, 
+            "-miphoneos-version-min only valid for darwin (Mac OS X) targets\n");
+    exit(1);
+  }
+  unsigned DarwinNumIdx = DarwinDashIdx + strlen("-darwin");
+  
+  // Remove the number.
+  Triple.resize(DarwinNumIdx);
+  
+  // Validate that IPhoneOSVersionMin is a 'version number', starting with [2-9].[0-9]
+  bool IPhoneOSVersionMinIsInvalid = false;
+  int VersionNum = 0;
+  if (IPhoneOSVersionMin.size() < 3 ||
+      !isdigit(IPhoneOSVersionMin[0])) {
+    IPhoneOSVersionMinIsInvalid = true;
+  } else {
+    const char *Start = IPhoneOSVersionMin.c_str();
+    char *End = 0;
+    VersionNum = (int)strtol(Start, &End, 10);
+    
+    // The version number must be in the range 0-9.
+    IPhoneOSVersionMinIsInvalid = (unsigned)VersionNum > 9;
+    
+    // Turn IPhoneOSVersionMin into a darwin number: e.g. 2.0 is 2 -> 9.2.
+    Triple += "9." + llvm::itostr(VersionNum);
+    
+    if (End[0] == '.' && isdigit(End[1]) && End[2] == '\0') {   // 2.2 is ok.
+      // Add the period piece (.2) to the end of the triple.  This gives us
+      // something like ...-darwin9.2.2
+      Triple += End;
+    } else if (End[0] != '\0') { // "2.2" is ok.  2x is not.
+      IPhoneOSVersionMinIsInvalid = true;
+    }
+  }
+  
+  if (IPhoneOSVersionMinIsInvalid) {
+    fprintf(stderr, 
+            "-miphoneos-version-min=%s is invalid, expected something like '2.0'.\n",
+            IPhoneOSVersionMin.c_str());
+    exit(1);
+  }
+}
+
 /// CreateTargetTriple - Process the various options that affect the target
 /// triple and build a final aggregate triple that we are compiling for.
 static std::string CreateTargetTriple() {
@@ -947,6 +1003,8 @@ static std::string CreateTargetTriple() {
   // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
   if (!MacOSVersionMin.empty())
     HandleMacOSVersionMin(Triple);
+  else if (!IPhoneOSVersionMin.empty())
+    HandleIPhoneOSVersionMin(Triple);;
   
   return Triple;
 }
