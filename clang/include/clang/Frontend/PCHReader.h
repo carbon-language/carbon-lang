@@ -51,6 +51,10 @@ class Preprocessor;
 /// required when traversing the AST. Only those AST nodes that are
 /// actually required will be de-serialized.
 class PCHReader : public ExternalASTSource {
+public:
+  enum PCHReadResult { Success, Failure, IgnorePCH };
+
+private:
   /// \brief The preprocessor that will be loading the source file.
   Preprocessor &PP;
 
@@ -103,10 +107,11 @@ class PCHReader : public ExternalASTSource {
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
 
-  enum PCHReadResult { Success, Failure, IgnorePCH };
-
   PCHReadResult ReadPCHBlock();
-  bool ReadSourceManagerBlock();
+  bool CheckPredefinesBuffer(const char *PCHPredef, 
+                             unsigned PCHPredefLen,
+                             FileID PCHBufferID);
+  PCHReadResult ReadSourceManagerBlock();
   bool ReadPreprocessorBlock();
 
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
@@ -125,7 +130,7 @@ public:
 
   ~PCHReader();
 
-  bool ReadPCH(const std::string &FileName);
+  PCHReadResult ReadPCH(const std::string &FileName);
 
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
@@ -175,6 +180,9 @@ public:
 
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(unsigned DiagID);
+
+  /// \brief Report a diagnostic.
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
   const IdentifierInfo *GetIdentifierInfo(const RecordData &Record, 
                                           unsigned &Idx);

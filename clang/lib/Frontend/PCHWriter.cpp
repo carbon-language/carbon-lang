@@ -872,7 +872,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
   }
 
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr())) {
-    pch::TypeID ID;
+    pch::TypeID ID = 0;
     switch (BT->getKind()) {
     case BuiltinType::Void:       ID = pch::PREDEF_TYPE_VOID_ID;       break;
     case BuiltinType::Bool:       ID = pch::PREDEF_TYPE_BOOL_ID;       break;

@@ -116,27 +116,109 @@ static bool Error(const char *Str) {
   return true;
 }
 
+/// \brief Check the contents of the predefines buffer against the
+/// contents of the predefines buffer used to build the PCH file.
+///
+/// The contents of the two predefines buffers should be the same. If
+/// not, then some command-line option changed the preprocessor state
+/// and we must reject the PCH file.
+///
+/// \param PCHPredef The start of the predefines buffer in the PCH
+/// file.
+///
+/// \param PCHPredefLen The length of the predefines buffer in the PCH
+/// file.
+///
+/// \param PCHBufferID The FileID for the PCH predefines buffer.
+///
+/// \returns true if there was a mismatch (in which case the PCH file
+/// should be ignored), or false otherwise.
+bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef, 
+                                      unsigned PCHPredefLen,
+                                      FileID PCHBufferID) {
+  const char *Predef = PP.getPredefines().c_str();
+  unsigned PredefLen = PP.getPredefines().size();
+
+  // If the two predefines buffers compare equal, we're done!.
+  if (PredefLen == PCHPredefLen && 
+      strncmp(Predef, PCHPredef, PCHPredefLen) == 0)
+    return false;
+  
+  // The predefines buffers are different. Produce a reasonable
+  // diagnostic showing where they are different.
+
+  // The source locations (potentially in the two different predefines
+  // buffers)
+  SourceLocation Loc1, Loc2;
+  SourceManager &SourceMgr = PP.getSourceManager();
+
+  // Create a source buffer for our predefines string, so
+  // that we can build a diagnostic that points into that
+  // source buffer.
+  FileID BufferID;
+  if (Predef && Predef[0]) {
+    llvm::MemoryBuffer *Buffer
+      = llvm::MemoryBuffer::getMemBuffer(Predef, Predef + PredefLen,
+                                         "<built-in>");
+    BufferID = SourceMgr.createFileIDForMemBuffer(Buffer);
+  }
+
+  unsigned MinLen = std::min(PredefLen, PCHPredefLen);
+  std::pair<const char *, const char *> Locations
+    = std::mismatch(Predef, Predef + MinLen, PCHPredef); 
+ 
+  if (Locations.first != Predef + MinLen) {
+    // We found the location in the two buffers where there is a
+    // difference. Form source locations to point there (in both
+    // buffers).
+    unsigned Offset = Locations.first - Predef;
+    Loc1 = SourceMgr.getLocForStartOfFile(BufferID)
+             .getFileLocWithOffset(Offset);
+    Loc2 = SourceMgr.getLocForStartOfFile(PCHBufferID)
+             .getFileLocWithOffset(Offset);
+  } else if (PredefLen > PCHPredefLen) {
+    Loc1 = SourceMgr.getLocForStartOfFile(BufferID)
+             .getFileLocWithOffset(MinLen);
+  } else {
+    Loc1 = SourceMgr.getLocForStartOfFile(PCHBufferID)
+             .getFileLocWithOffset(MinLen);
+  }
+  
+  Diag(Loc1, diag::warn_pch_preprocessor);
+  if (Loc2.isValid())
+    Diag(Loc2, diag::note_predef_in_pch);
+  Diag(diag::note_ignoring_pch) << FileName;
+  return true;
+}
+
 /// \brief Read the source manager block
-bool PCHReader::ReadSourceManagerBlock() {
+PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   using namespace SrcMgr;
-  if (Stream.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID))
-    return Error("Malformed source manager block record");
+  if (Stream.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID)) {
+    Error("Malformed source manager block record");
+    return Failure;
+  }
 
   SourceManager &SourceMgr = Context.getSourceManager();
   RecordData Record;
   while (true) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of Source Manager block");
-      return false;
+      if (Stream.ReadBlockEnd()) {
+        Error("Error at end of Source Manager block");
+        return Failure;
+      }
+
+      return Success;
     }
     
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
       Stream.ReadSubBlockID();
-      if (Stream.SkipBlock())
-        return Error("Malformed block record");
+      if (Stream.SkipBlock()) {
+        Error("Malformed block record");
+        return Failure;
+      }
       continue;
     }
     
@@ -172,9 +254,15 @@ bool PCHReader::ReadSourceManagerBlock() {
       Record.clear();
       unsigned RecCode = Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen);
       assert(RecCode == pch::SM_SLOC_BUFFER_BLOB && "Ill-formed PCH file");
-      SourceMgr.createFileIDForMemBuffer(
-          llvm::MemoryBuffer::getMemBuffer(BlobStart, BlobStart + BlobLen - 1,
-                                           Name));
+      llvm::MemoryBuffer *Buffer
+        = llvm::MemoryBuffer::getMemBuffer(BlobStart, 
+                                           BlobStart + BlobLen - 1,
+                                           Name);
+      FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer);
+
+      if (strcmp(Name, "<built-in>") == 0
+          && CheckPredefinesBuffer(BlobStart, BlobLen - 1, BufferID))
+        return IgnorePCH;
       break;
     }
 
@@ -329,9 +417,16 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
         break;
 
       case pch::SOURCE_MANAGER_BLOCK_ID:
-        if (ReadSourceManagerBlock()) {
+        switch (ReadSourceManagerBlock()) {
+        case Success:
+          break;
+
+        case Failure:
           Error("Malformed source manager block");
           return Failure;
+
+        case IgnorePCH:
+          return IgnorePCH;
         }
         break;
           
@@ -400,15 +495,17 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
 
 PCHReader::~PCHReader() { }
 
-bool PCHReader::ReadPCH(const std::string &FileName) {
+PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Set the PCH file name.
   this->FileName = FileName;
 
   // Open the PCH file.
   std::string ErrStr;
   Buffer.reset(llvm::MemoryBuffer::getFile(FileName.c_str(), &ErrStr));
-  if (!Buffer)
-    return Error(ErrStr.c_str());
+  if (!Buffer) {
+    Error(ErrStr.c_str());
+    return IgnorePCH;
+  }
 
   // Initialize the stream
   Stream.init((const unsigned char *)Buffer->getBufferStart(), 
@@ -418,24 +515,30 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
   if (Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'P' ||
       Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H')
-    return Error("Not a PCH file");
+      Stream.Read(8) != 'H') {
+    Error("Not a PCH file");
+    return IgnorePCH;
+  }
 
   // We expect a number of well-defined blocks, though we don't necessarily
   // need to understand them all.
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     
-    if (Code != llvm::bitc::ENTER_SUBBLOCK)
-      return Error("Invalid record at top-level");
+    if (Code != llvm::bitc::ENTER_SUBBLOCK) {
+      Error("Invalid record at top-level");
+      return Failure;
+    }
 
     unsigned BlockID = Stream.ReadSubBlockID();
     
     // We only know the PCH subblock ID.
     switch (BlockID) {
     case llvm::bitc::BLOCKINFO_BLOCK_ID:
-      if (Stream.ReadBlockInfoBlock())
-        return Error("Malformed BlockInfoBlock");
+      if (Stream.ReadBlockInfoBlock()) {
+        Error("Malformed BlockInfoBlock");
+        return Failure;
+      }
       break;
     case pch::PCH_BLOCK_ID:
       switch (ReadPCHBlock()) {
@@ -443,18 +546,20 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
         break;
 
       case Failure:
-        return true;
+        return Failure;
 
       case IgnorePCH:
         // FIXME: We could consider reading through to the end of this
         // PCH block, skipping subblocks, to see if there are other
         // PCH blocks elsewhere.
-        return false;
+        return IgnorePCH;
       }
       break;
     default:
-      if (Stream.SkipBlock())
-        return Error("Malformed block record");
+      if (Stream.SkipBlock()) {
+        Error("Malformed block record");
+        return Failure;
+      }
       break;
     }
   }  
@@ -462,13 +567,7 @@ bool PCHReader::ReadPCH(const std::string &FileName) {
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
 
-  // If everything looks like it will be ok, then the PCH file load succeeded.
-  // Since the PCH file contains everything that is in the preprocessor's
-  // predefines buffer (and we validated that they are the same) clear out the
-  // predefines buffer so that it doesn't get processed again.
-  PP.setPredefines("");
-  
-  return false;
+  return Success;
 }
 
 /// \brief Parse the record that corresponds to a LangOptions data
@@ -875,7 +974,11 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 }
 
 DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {
-  return PP.getDiagnostics().Report(FullSourceLoc(SourceLocation(),
+  return Diag(SourceLocation(), DiagID);
+}
+
+DiagnosticBuilder PCHReader::Diag(SourceLocation Loc, unsigned DiagID) {
+  return PP.getDiagnostics().Report(FullSourceLoc(Loc,
                                                   Context.getSourceManager()),
                                     DiagID);
 }

@@ -110,4 +110,9 @@ def warn_pch_gc_mode : Warning<
     "the PCH file was built with %select{no||hybrid}0 garbage collection but "
     "the current translation unit will compiled with %select{no||hybrid}1 "
     "garbage collection">;
+def warn_pch_preprocessor : Warning<
+    "the PCH file was built with different preprocessor definitions than the "
+    "current translation unit">;
+def note_predef_in_pch : Note<
+    "preprocessor definitions in PCH file">;
 }

@@ -788,7 +788,6 @@ class PreprocessorFactory {
 public:
   virtual ~PreprocessorFactory();
   virtual Preprocessor* CreatePreprocessor() = 0;  
-  virtual bool FinishInitialization(Preprocessor *PP, bool usesPCH);
 };
   
 }  // end namespace clang

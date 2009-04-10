@@ -1437,50 +1437,46 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   TI.getTargetDefines(LangOpts, Buf);
 }
 
+static bool InitializeSourceManager(Preprocessor &PP,
+                                    const std::string &InFile) {
+  // Figure out where to get and map in the main file.
+  SourceManager &SourceMgr = PP.getSourceManager();
+  FileManager &FileMgr = PP.getFileManager();
+  
+  if (InFile != "-") {
+    const FileEntry *File = FileMgr.getFile(InFile);
+    if (File) SourceMgr.createMainFileID(File, SourceLocation());
+    if (SourceMgr.getMainFileID().isInvalid()) {
+      PP.getDiagnostics().Report(FullSourceLoc(), diag::err_fe_error_reading) 
+        << InFile.c_str();
+      return true;
+    }
+  } else {
+    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
+
+    // If stdin was empty, SB is null.  Cons up an empty memory
+    // buffer now.
+    if (!SB) {
+      const char *EmptyStr = "";
+      SB = llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<stdin>");
+    }
+
+    SourceMgr.createMainFileIDForMemBuffer(SB);
+    if (SourceMgr.getMainFileID().isInvalid()) {
+      PP.getDiagnostics().Report(FullSourceLoc(), 
+                                 diag::err_fe_error_reading_stdin);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file. This returns true on error.
 ///
 static bool InitializePreprocessor(Preprocessor &PP,
-                                   bool InitializeSourceMgr, 
-                                   const std::string &InFile, bool UsesPCH) {
-  FileManager &FileMgr = PP.getFileManager();
-  
-  // Figure out where to get and map in the main file.
-  SourceManager &SourceMgr = PP.getSourceManager();
-
-  if (InitializeSourceMgr) {
-    if (InFile != "-") {
-      const FileEntry *File = FileMgr.getFile(InFile);
-      if (File) SourceMgr.createMainFileID(File, SourceLocation());
-      if (SourceMgr.getMainFileID().isInvalid()) {
-        PP.getDiagnostics().Report(FullSourceLoc(), diag::err_fe_error_reading) 
-          << InFile.c_str();
-        return true;
-      }
-    } else {
-      llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-
-      // If stdin was empty, SB is null.  Cons up an empty memory
-      // buffer now.
-      if (!SB) {
-        const char *EmptyStr = "";
-        SB = llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<stdin>");
-      }
-
-      SourceMgr.createMainFileIDForMemBuffer(SB);
-      if (SourceMgr.getMainFileID().isInvalid()) {
-        PP.getDiagnostics().Report(FullSourceLoc(), 
-                                   diag::err_fe_error_reading_stdin);
-        return true;
-      }
-    }
-  }
-
-  // If the file is using PCH, then the PCH will include all the predefines, no
-  // need to install them now.
-  if (UsesPCH)
-    return false;
-  
+                                   const std::string &InFile) {
   std::vector<char> PredefineBuffer;
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
@@ -1721,7 +1717,6 @@ class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
   TargetInfo        &Target;
   SourceManager     &SourceMgr;
   HeaderSearch      &HeaderInfo;
-  bool              InitializeSourceMgr;
   
 public:
   DriverPreprocessorFactory(const std::string &infile,
@@ -1729,7 +1724,7 @@ public:
                             TargetInfo &target, SourceManager &SM,
                             HeaderSearch &Headers)  
   : InFile(infile), Diags(diags), LangInfo(opts), Target(target),
-    SourceMgr(SM), HeaderInfo(Headers), InitializeSourceMgr(true) {}
+    SourceMgr(SM), HeaderInfo(Headers) {}
   
   
   virtual ~DriverPreprocessorFactory() {}
@@ -1766,26 +1761,21 @@ public:
       PTHMgr->setPreprocessor(PP.get());
       PP->setPTHManager(PTHMgr.take());
     }
-    
-    return PP.take();
-  }
 
-  virtual bool FinishInitialization(Preprocessor *PP, bool UsesPCH) {
-    if (InitializePreprocessor(*PP, InitializeSourceMgr, InFile, UsesPCH))
-      return true;
+    if (InitializePreprocessor(*PP, InFile))
+      return 0;
     
     /// FIXME: PP can only handle one callback
     if (ProgAction != PrintPreprocessedInput) {
       std::string ErrStr;
-      bool DFG = CreateDependencyFileGen(PP, ErrStr);
+      bool DFG = CreateDependencyFileGen(PP.get(), ErrStr);
       if (!DFG && !ErrStr.empty()) {
         fprintf(stderr, "%s", ErrStr.c_str());
-        return true;
+        return 0;
       }
     }
 
-    InitializeSourceMgr = false;
-    return false;
+    return PP.take();
   }
 };
 }
@@ -2089,19 +2079,37 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     if (!ImplicitIncludePCH.empty()) {
       // The user has asked us to include a precompiled header. Load
       // the precompiled header into the AST context.
-      llvm::OwningPtr<PCHReader> 
-        Reader(new clang::PCHReader(PP, *ContextOwner.get()));
-      if (Reader->ReadPCH(ImplicitIncludePCH))
+      llvm::OwningPtr<PCHReader> Reader(new PCHReader(PP, *ContextOwner.get()));
+      switch (Reader->ReadPCH(ImplicitIncludePCH)) {
+      case PCHReader::Success: {
+        // Attach the PCH reader to the AST context as an external AST
+        // source, so that declarations will be deserialized from the
+        // PCH file as needed.
+        llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
+        ContextOwner->setExternalSource(Source);
+
+        // Clear out the predefines buffer, because all of the
+        // predefines are already in the PCH file.
+        PP.setPredefines("");
+        break;
+      }
+
+      case PCHReader::Failure:
+        // Unrecoverable failure: don't even try to process the input
+        // file.
         return;
 
-      llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
-      ContextOwner->setExternalSource(Source);
+      case PCHReader::IgnorePCH:
+        // No suitable PCH file could be found. Just ignore the
+        // -include-pch option entirely.
+        break;
+      }
 
       // Finish preprocessor initialization. We do this now (rather
       // than earlier) because this initialization creates new source
       // location entries in the source manager, which must come after
       // the source location entries for the PCH file.
-      if (PPF.FinishInitialization(&PP, true /*uses PCH*/))
+      if (InitializeSourceManager(PP, InFile))
         return;
     }
 
@@ -2311,8 +2319,8 @@ int main(int argc, char **argv) {
     if (!PP)
       continue;
 
-    if (ImplicitIncludePCH.empty()
-        && PPFactory.FinishInitialization(PP.get(), false))
+    if (ImplicitIncludePCH.empty() && 
+        InitializeSourceManager(*PP.get(), InFile))
       continue;
 
     // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,
