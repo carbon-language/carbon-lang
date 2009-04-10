@@ -210,7 +210,7 @@ public:
   // Increment and decrement operators...
   ilist_iterator &operator--() {      // predecrement - Back up
     NodePtr = Traits::getPrev(NodePtr);
-    assert(Traits::getNext(NodePtr) && "--'d off the beginning of an ilist!");
+    assert(NodePtr && "--'d off the beginning of an ilist!");
     return *this;
   }
   ilist_iterator &operator++() {      // preincrement - Advance
