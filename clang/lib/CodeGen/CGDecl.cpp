@@ -65,7 +65,7 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   
   // We don't support __thread yet.
   if (D.isThreadSpecified())
-    CGM.ErrorUnsupported(&D, "__thread variable", true);
+    CGM.ErrorUnsupported(&D, "thread local ('__thread') variable", true);
   
   switch (D.getStorageClass()) {
   case VarDecl::Static:
