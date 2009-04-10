@@ -153,7 +153,7 @@ static SDValue getOutFlag(SDValue &Op) {
   return Flag;
 }
 // Get the TmpOffset for FrameIndex
-unsigned PIC16TargetLowering::GetTmpOffsetForFI(unsigned FI) {
+unsigned PIC16TargetLowering::GetTmpOffsetForFI(unsigned FI, unsigned size) {
   std::map<unsigned, unsigned>::iterator 
             MapIt = FiTmpOffsetMap.find(FI);
   if (MapIt != FiTmpOffsetMap.end())
@@ -161,7 +161,8 @@ unsigned PIC16TargetLowering::GetTmpOffsetForFI(unsigned FI) {
 
   // This FI (FrameIndex) is not yet mapped, so map it
   FiTmpOffsetMap[FI] = TmpSize; 
-  return TmpSize++;
+  TmpSize += size;
+  return FiTmpOffsetMap[FI];
 }
 
 // To extract chain value from the SDValue Nodes
@@ -849,14 +850,14 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
                                DAG.getEntryNode(),
                                Op, ES, 
                                DAG.getConstant (1, MVT::i8), // Banksel.
-                               DAG.getConstant (GetTmpOffsetForFI(FI), 
+                               DAG.getConstant (GetTmpOffsetForFI(FI, 1), 
                                                 MVT::i8));
 
   // Load the value from ES.
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other);
   SDValue Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Store,
                              ES, DAG.getConstant (1, MVT::i8),
-                             DAG.getConstant (GetTmpOffsetForFI(FI), 
+                             DAG.getConstant (GetTmpOffsetForFI(FI, 1), 
                              MVT::i8));
     
   return Load.getValue(0);

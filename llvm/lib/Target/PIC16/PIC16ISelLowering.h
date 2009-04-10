@@ -137,7 +137,7 @@ namespace llvm {
     // This function returns the Tmp Offset for FrameIndex. If any TmpOffset 
     // already exists for the FI then it returns the same else it creates the 
     // new offset and returns.
-    unsigned GetTmpOffsetForFI(unsigned FI); 
+    unsigned GetTmpOffsetForFI(unsigned FI, unsigned slot_size); 
     void ResetTmpOffsetMap() { FiTmpOffsetMap.clear(); SetTmpSize(0); }
 
     // Return the size of Tmp variable 

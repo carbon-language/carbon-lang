@@ -232,6 +232,24 @@ def copy_fsr:
 def copy_w:
   Pseudo<(outs GPR:$dst), (ins GPR:$src), "copy_w $dst, $src", []>;
 
+class SAVE_FSR<string OpcStr>:
+  Pseudo<(outs), 
+         (ins FSR16:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi), 
+         !strconcat(OpcStr, " $ptrlo, $offset"),
+         []>; 
+ 
+def save_fsr0: SAVE_FSR<"save_fsr0">;
+def save_fsr1: SAVE_FSR<"save_fsr1">;
+
+class RESTORE_FSR<string OpcStr>:
+  Pseudo<(outs FSR16:$dst), 
+         (ins i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi), 
+         !strconcat(OpcStr, " $ptrlo, $offset"),
+         []>; 
+
+def restore_fsr0: RESTORE_FSR<"restore_fsr0">;
+def restore_fsr1: RESTORE_FSR<"restore_fsr1">;
+
 //--------------------------
 // Store to memory
 //-------------------------
@@ -397,19 +415,22 @@ def sublw_cc : SUBLW<0, PIC16Subcc>;
 }
 
 // Call instruction.
-let isCall = 1 in {
+let isCall = 1,
+    Defs = [W, FSR0, FSR1] in {
     def CALL: LiteralFormat<0x1, (outs), (ins i8imm:$func),
             "call ${func} + 2",
             [(PIC16call diraddr:$func)]>;
 }
 
-let isCall = 1 in {
+let isCall = 1,
+    Defs = [W, FSR0, FSR1] in {
     def CALL_1: LiteralFormat<0x1, (outs), (ins GPR:$func, PCLATHR:$pc),
             "callw",
             [(PIC16call (PIC16Connect GPR:$func, PCLATHR:$pc))]>;
 }
 
-let isCall = 1  in {
+let isCall = 1,
+    Defs = [FSR0, FSR1] in {
     def CALLW: LiteralFormat<0x1, (outs GPR:$dest), 
                                   (ins GPR:$func, PCLATHR:$pc),
             "callw",

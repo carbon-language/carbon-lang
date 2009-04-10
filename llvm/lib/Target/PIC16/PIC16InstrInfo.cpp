@@ -85,12 +85,25 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     //MachineRegisterInfo &RI = MF.getRegInfo();
     BuildMI(MBB, I, DL, get(PIC16::movwf))
       .addReg(SrcReg, false, false, isKill)
-      .addImm(PTLI->GetTmpOffsetForFI(FI))
+      .addImm(PTLI->GetTmpOffsetForFI(FI, 1))
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.
   }
-  else if (RC == PIC16::FSR16RegisterClass)
-    assert(0 && "Don't know yet how to store a FSR16 to stack slot");
+  else if (RC == PIC16::FSR16RegisterClass) {
+    // This is a 16-bit register and the frameindex given by llvm is of
+    // size two here. Break this index N into two zero based indexes and 
+    // put one into the map. The second one is always obtained by adding 1
+    // to the first zero based index. In fact it is going to use 3 slots
+    // as saving FSRs corrupts W also and hence we need to save/restore W also.
+
+    unsigned opcode = (SrcReg == PIC16::FSR0) ? PIC16::save_fsr0 
+                                                 : PIC16::save_fsr1;
+    BuildMI(MBB, I, DL, get(opcode))
+      .addReg(SrcReg, false, false, isKill)
+      .addImm(PTLI->GetTmpOffsetForFI(FI, 3))
+      .addExternalSymbol(tmpName)
+      .addImm(1); // Emit banksel for it.
+  }
   else
     assert(0 && "Can't store this register to stack slot");
 }
@@ -114,12 +127,24 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     //MachineFunction &MF = *MBB.getParent();
     //MachineRegisterInfo &RI = MF.getRegInfo();
     BuildMI(MBB, I, DL, get(PIC16::movf), DestReg)
-      .addImm(PTLI->GetTmpOffsetForFI(FI))
+      .addImm(PTLI->GetTmpOffsetForFI(FI, 1))
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.
   }
-  else if (RC == PIC16::FSR16RegisterClass)
-    assert(0 && "Don't know yet how to load an FSR16 from stack slot");
+  else if (RC == PIC16::FSR16RegisterClass) {
+    // This is a 16-bit register and the frameindex given by llvm is of
+    // size two here. Break this index N into two zero based indexes and 
+    // put one into the map. The second one is always obtained by adding 1
+    // to the first zero based index. In fact it is going to use 3 slots
+    // as saving FSRs corrupts W also and hence we need to save/restore W also.
+
+    unsigned opcode = (DestReg == PIC16::FSR0) ? PIC16::restore_fsr0 
+                                                 : PIC16::restore_fsr1;
+    BuildMI(MBB, I, DL, get(opcode), DestReg)
+      .addImm(PTLI->GetTmpOffsetForFI(FI, 3))
+      .addExternalSymbol(tmpName)
+      .addImm(1); // Emit banksel for it.
+  }
   else
     assert(0 && "Can't load this register from stack slot");
 }
