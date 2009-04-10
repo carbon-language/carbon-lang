@@ -126,6 +126,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 17:
     if (!memcmp(Str, "transparent_union", 17)) return AT_transparent_union;
+    if (!memcmp(Str, "analyzer_noreturn", 17)) return AT_analyzer_noreturn;
     break;
   case 18:
     if (!memcmp(Str, "warn_unused_result", 18)) return AT_warn_unused_result;

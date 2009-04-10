@@ -1292,7 +1292,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
       
       FunctionDecl* FD = cast<loc::FuncVal>(L).getDecl();
       
-      if (FD->getAttr<NoReturnAttr>())
+      if (FD->getAttr<NoReturnAttr>() || FD->getAttr<AnalyzerNoReturnAttr>())
         Builder->BuildSinks = true;
       else {
         // HACK: Some functions are not marked noreturn, and don't return.

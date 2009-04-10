@@ -49,6 +49,7 @@ public:
     AT_alias,
     AT_aligned,
     AT_always_inline,
+    AT_analyzer_noreturn,
     AT_annotate,
     AT_blocks,
     AT_cleanup,

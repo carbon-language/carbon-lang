@@ -400,20 +400,32 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
   d->addAttr(::new (S.Context) AlwaysInlineAttr());
 }
 
-static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
+                                     Sema &S, const char *attrName) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
+    return false;
   }
 
   if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << "noreturn" << 0 /*function*/;
-    return;
+      << attrName << 0 /*function*/;
+    return false;
   }
   
-  d->addAttr(::new (S.Context) NoReturnAttr());
+  return true;
+}
+
+static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (HandleCommonNoReturnAttr(d, Attr, S, "noreturn"))  
+    d->addAttr(::new (S.Context) NoReturnAttr());
+}
+
+static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
+                                       Sema &S) {
+  if (HandleCommonNoReturnAttr(d, Attr, S, "analyzer_noreturn"))  
+    d->addAttr(::new (S.Context) AnalyzerNoReturnAttr());
 }
 
 static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1498,6 +1510,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
   case AttributeList::AT_always_inline: 
     HandleAlwaysInlineAttr  (D, Attr, S); break;
+  case AttributeList::AT_analyzer_noreturn:
+    HandleAnalyzerNoReturnAttr  (D, Attr, S); break;  
   case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr(D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;

@@ -225,3 +225,23 @@ void pr6708148_test(void) {
   pr6708148_use(x); // no-warning
 }
 
+// Handle both kinds of noreturn attributes for pruning paths.
+void rdar_6777003_noret() __attribute__((noreturn));
+void rdar_6777003_analyzer_noret() __attribute__((analyzer_noreturn));
+
+void rdar_6777003(int x) {
+  int *p = 0;
+  
+  if (x == 1) {
+    rdar_6777003_noret();
+    *p = 1; // no-warning;    
+  }
+  
+  if (x == 2) {
+    rdar_6777003_analyzer_noret();
+    *p = 1; // no-warning;
+  }
+  
+  *p = 1; // expected-warning{{Dereference of null pointer}}  
+}
+

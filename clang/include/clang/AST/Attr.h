@@ -29,6 +29,7 @@ public:
     Alias,
     Aligned,
     AlwaysInline,
+    AnalyzerNoReturn, // Clang-specific.
     Annotate,
     AsmLabel, // Represent GCC asm label extension.
     Blocks,
@@ -237,6 +238,17 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) { return A->getKind() == NoReturn; }  
   static bool classof(const NoReturnAttr *A) { return true; }
+};
+  
+class AnalyzerNoReturnAttr : public Attr {
+public:
+  AnalyzerNoReturnAttr() : Attr(AnalyzerNoReturn) {}
+    
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+      return A->getKind() == AnalyzerNoReturn;
+  }  
+  static bool classof(const AnalyzerNoReturnAttr *A) { return true; }
 };
 
 class DeprecatedAttr : public Attr {
