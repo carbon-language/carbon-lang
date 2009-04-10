@@ -207,6 +207,8 @@ public:
       return true;
     if (getContext().isObjCNSObjectType(Ty))
       return true;
+    if (getContext().isObjCObjectPointerType(Ty))
+      return true;
     return false;
   }
 };
