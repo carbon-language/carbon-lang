@@ -45,6 +45,10 @@ using namespace clang;
 
 PreprocessorFactory::~PreprocessorFactory() {}
 
+bool PreprocessorFactory::FinishInitialization(Preprocessor *PP) {
+  return false;
+}
+
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            TargetInfo &target, SourceManager &SM, 
                            HeaderSearch &Headers,

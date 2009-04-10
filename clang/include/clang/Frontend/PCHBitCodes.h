@@ -31,7 +31,19 @@ namespace clang {
       /// \brief The PCH block, which acts as a container around the
       /// full PCH block.
       PCH_BLOCK_ID = llvm::bitc::FIRST_APPLICATION_BLOCKID,
-      
+
+      /// \brief The block containing information about the language
+      /// options used to build this precompiled header.
+      LANGUAGE_OPTIONS_BLOCK_ID,
+
+      /// \brief The block containing information about the source
+      /// manager.
+      SOURCE_MANAGER_BLOCK_ID,
+
+      /// \brief The block containing information about the
+      /// preprocessor.
+      PREPROCESSOR_BLOCK_ID,
+
       /// \brief The block containing the definitions of all of the
       /// types used within the PCH file.
       TYPES_BLOCK_ID,
@@ -54,6 +66,30 @@ namespace clang {
       /// DECLS_BLOCK_ID, and are indexed by the decaration ID.
       DECL_OFFSETS_BLOCK_ID
     };
+
+    /// \brief Record types used within a source manager block.
+    enum SourceManagerRecordTypes {
+      /// \brief Describes a source location entry (SLocEntry) for a
+      /// file.
+      SM_SLOC_FILE_ENTRY = 1,
+      /// \brief Describes a source location entry (SLocEntry) for a
+      /// buffer.
+      SM_SLOC_BUFFER_ENTRY = 2,
+      /// \brief Describes a blob that contains the data for a buffer
+      /// entry. This kind of record always directly follows a
+      /// SM_SLOC_BUFFER_ENTRY record.
+      SM_SLOC_BUFFER_BLOB = 3,
+      /// \brief Describes a source location entry (SLocEntry) for a
+      /// macro instantiation.
+      SM_SLOC_INSTANTIATION_ENTRY = 4
+    };
+
+    /// \defgroup PCHAST Precompiled header AST constants
+    ///
+    /// The constants in this group describe various components of the
+    /// abstract syntax tree within a precompiled header.
+    ///
+    /// @{
 
     /// \brief Predefined type IDs.
     ///
@@ -233,6 +269,8 @@ namespace clang {
     enum DeclOffsetCode {
       DECL_OFFSET = 1
     };
+
+    /// @}
   }
 } // end namespace clang
 

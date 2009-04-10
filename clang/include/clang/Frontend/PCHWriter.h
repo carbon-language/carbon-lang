@@ -30,6 +30,7 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
+class SourceManager;
 
 /// \brief Writes a precompiled header containing the contents of a
 /// translation unit.
@@ -74,6 +75,7 @@ class PCHWriter {
   /// \brief The type ID that will be assigned to the next new type.
   unsigned NextTypeID;
 
+  void WriteSourceManagerBlock(SourceManager &SourceMgr);
   void WriteType(const Type *T);
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);

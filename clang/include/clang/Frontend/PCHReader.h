@@ -34,6 +34,7 @@ namespace clang {
 class ASTContext;
 class Decl;
 class DeclContext;
+class Preprocessor;
 
 /// \brief Reads a precompiled head containing the contents of a
 /// translation unit.
@@ -48,6 +49,9 @@ class DeclContext;
 /// required when traversing the AST. Only those AST nodes that are
 /// actually required will be de-serialized.
 class PCHReader : public ExternalASTSource {
+  /// \brief The preprocessor that will be loading the source file.
+  Preprocessor &PP;
+
   /// \brief The AST context into which we'll read the PCH file.
   ASTContext &Context;
 
@@ -95,6 +99,7 @@ class PCHReader : public ExternalASTSource {
   DeclContextOffsetsMap DeclContextOffsets;
 
   bool ReadPCHBlock();
+  bool ReadSourceManagerBlock();
   bool ReadTypeOffsets();
   bool ReadDeclOffsets();
 
@@ -108,7 +113,9 @@ class PCHReader : public ExternalASTSource {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  PCHReader(ASTContext &Context) : Context(Context), Buffer() { }
+  PCHReader(Preprocessor &PP, ASTContext &Context) 
+    : PP(PP), Context(Context), Buffer() { }
+
   ~PCHReader();
 
   bool ReadPCH(const std::string &FileName);

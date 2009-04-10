@@ -15,6 +15,9 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -109,6 +112,84 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
 static bool Error(const char *Str) {
   std::fprintf(stderr, "%s\n", Str);
   return true;
+}
+
+/// \brief Read the source manager block
+bool PCHReader::ReadSourceManagerBlock() {
+  using namespace SrcMgr;
+  if (Stream.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID))
+    return Error("Malformed source manager block record");
+
+  SourceManager &SourceMgr = Context.getSourceManager();
+  RecordData Record;
+  while (true) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of Source Manager block");
+      return false;
+    }
+    
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    }
+    
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    const char *BlobStart;
+    unsigned BlobLen;
+    Record.clear();
+    switch (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    default:  // Default behavior: ignore.
+      break;
+
+    case pch::SM_SLOC_FILE_ENTRY: {
+      // FIXME: We would really like to delay the creation of this
+      // FileEntry until it is actually required, e.g., when producing
+      // a diagnostic with a source location in this file.
+      const FileEntry *File 
+        = PP.getFileManager().getFile(BlobStart, BlobStart + BlobLen);
+      // FIXME: Error recovery if file cannot be found.
+      SourceMgr.createFileID(File,
+                             SourceLocation::getFromRawEncoding(Record[1]),
+                             (CharacteristicKind)Record[2]);
+      break;
+    }
+
+    case pch::SM_SLOC_BUFFER_ENTRY: {
+      const char *Name = BlobStart;
+      unsigned Code = Stream.ReadCode();
+      Record.clear();
+      unsigned RecCode = Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen);
+      assert(RecCode == pch::SM_SLOC_BUFFER_BLOB && "Ill-formed PCH file");
+      SourceMgr.createFileIDForMemBuffer(
+          llvm::MemoryBuffer::getMemBuffer(BlobStart, BlobStart + BlobLen - 1,
+                                           Name));
+      break;
+    }
+
+    case pch::SM_SLOC_INSTANTIATION_ENTRY: {
+      SourceLocation SpellingLoc 
+        = SourceLocation::getFromRawEncoding(Record[1]);
+      SourceMgr.createInstantiationLoc(
+                              SpellingLoc,
+                              SourceLocation::getFromRawEncoding(Record[2]),
+                              SourceLocation::getFromRawEncoding(Record[3]),
+                              Lexer::MeasureTokenLength(SpellingLoc, 
+                                                        SourceMgr));
+      break;
+    }
+
+    }
+  }
 }
 
 /// \brief Read the type-offsets block.
@@ -217,6 +298,10 @@ bool PCHReader::ReadPCHBlock() {
           return Error("Malformed block record");
         break;
 
+      case pch::SOURCE_MANAGER_BLOCK_ID:
+        if (ReadSourceManagerBlock())
+          return Error("Malformed source manager block");
+        break;
 
       case pch::TYPE_OFFSETS_BLOCK_ID:
         if (ReadTypeOffsets())

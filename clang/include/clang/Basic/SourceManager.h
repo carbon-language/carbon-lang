@@ -183,7 +183,7 @@ namespace SrcMgr {
     unsigned SpellingLoc;
     
     /// InstantiationLocStart/InstantiationLocEnd - In a macro expansion, these
-    /// indicate the start and end of the instantiation.  In object-line macros,
+    /// indicate the start and end of the instantiation.  In object-like macros,
     /// these will be the same.  In a function-like macro instantiation, the
     /// start will be the identifier and the end will be the ')'.
     unsigned InstantiationLocStart, InstantiationLocEnd;
@@ -610,7 +610,20 @@ public:
   /// Read - Reconstitute a SourceManager from Bitcode.
   static SourceManager* CreateAndRegister(llvm::Deserializer& S,
                                           FileManager &FMgr);
-  
+
+  // Iteration over the source location entry table.  
+  typedef std::vector<SrcMgr::SLocEntry>::const_iterator sloc_entry_iterator;
+
+  sloc_entry_iterator sloc_entry_begin() const { 
+    return SLocEntryTable.begin(); 
+  }
+
+  sloc_entry_iterator sloc_entry_end() const { 
+    return SLocEntryTable.end(); 
+  }
+
+  unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
+
 private:
   friend class SrcMgr::ContentCache; // Used for deserialization.
   

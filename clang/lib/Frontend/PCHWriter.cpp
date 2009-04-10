@@ -17,8 +17,11 @@
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace clang;
 
@@ -323,6 +326,154 @@ void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 // PCHWriter Implementation
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// Source Manager Serialization
+//===----------------------------------------------------------------------===//
+
+/// \brief Create an abbreviation for the SLocEntry that refers to a
+/// file.
+static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &S) {
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_FILE_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Include location
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
+  // FIXME: Need an actual encoding for the line directives; maybe
+  // this should be an array?
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
+  return S.EmitAbbrev(Abbrev);
+}
+
+/// \brief Create an abbreviation for the SLocEntry that refers to a
+/// buffer.
+static unsigned CreateSLocBufferAbbrev(llvm::BitstreamWriter &S) {
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_BUFFER_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Include location
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Buffer name blob
+  return S.EmitAbbrev(Abbrev);
+}
+
+/// \brief Create an abbreviation for the SLocEntry that refers to a
+/// buffer's blob.
+static unsigned CreateSLocBufferBlobAbbrev(llvm::BitstreamWriter &S) {
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_BUFFER_BLOB));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Blob
+  return S.EmitAbbrev(Abbrev);
+}
+
+/// \brief Create an abbreviation for the SLocEntry that refers to an
+/// buffer.
+static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &S) {
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_INSTANTIATION_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Spelling location
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Start location
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // End location
+  return S.EmitAbbrev(Abbrev);
+}
+
+/// \brief Writes the block containing the serialized form of the
+/// source manager.
+///
+/// TODO: We should probably use an on-disk hash table (stored in a
+/// blob), indexed based on the file name, so that we only create
+/// entries for files that we actually need. In the common case (no
+/// errors), we probably won't have to create file entries for any of
+/// the files in the AST.
+void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
+  // Enter the types block
+  S.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
+
+  // Abbreviations for the various kinds of source-location entries.
+  int SLocFileAbbrv = -1;
+  int SLocBufferAbbrv = -1;
+  int SLocBufferBlobAbbrv = -1;
+  int SLocInstantiationAbbrv = -1;
+
+  // Write out the source location entry table. We skip the first
+  // entry, which is always the same dummy entry.
+  RecordData Record;
+  for (SourceManager::sloc_entry_iterator 
+         SLoc = SourceMgr.sloc_entry_begin() + 1,
+         SLocEnd = SourceMgr.sloc_entry_end();
+       SLoc != SLocEnd; ++SLoc) {
+    // Figure out which record code to use.
+    unsigned Code;
+    if (SLoc->isFile()) {
+      if (SLoc->getFile().getContentCache()->Entry)
+        Code = pch::SM_SLOC_FILE_ENTRY;
+      else
+        Code = pch::SM_SLOC_BUFFER_ENTRY;
+    } else
+      Code = pch::SM_SLOC_INSTANTIATION_ENTRY;
+    Record.push_back(Code);
+
+    Record.push_back(SLoc->getOffset());
+    if (SLoc->isFile()) {
+      const SrcMgr::FileInfo &File = SLoc->getFile();
+      Record.push_back(File.getIncludeLoc().getRawEncoding());
+      Record.push_back(File.getFileCharacteristic()); // FIXME: stable encoding
+      Record.push_back(File.hasLineDirectives()); // FIXME: encode the
+                                                  // line directives?
+
+      const SrcMgr::ContentCache *Content = File.getContentCache();
+      if (Content->Entry) {
+        // The source location entry is a file. The blob associated
+        // with this entry is the file name.
+        if (SLocFileAbbrv == -1)
+          SLocFileAbbrv = CreateSLocFileAbbrev(S);
+        S.EmitRecordWithBlob(SLocFileAbbrv, Record,
+                             Content->Entry->getName(),
+                             strlen(Content->Entry->getName()));
+      } else {
+        // The source location entry is a buffer. The blob associated
+        // with this entry contains the contents of the buffer.
+        if (SLocBufferAbbrv == -1) {
+          SLocBufferAbbrv = CreateSLocBufferAbbrev(S);
+          SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(S);
+        }
+
+        // We add one to the size so that we capture the trailing NULL
+        // that is required by llvm::MemoryBuffer::getMemBuffer (on
+        // the reader side).
+        const llvm::MemoryBuffer *Buffer = Content->getBuffer();
+        const char *Name = Buffer->getBufferIdentifier();
+        S.EmitRecordWithBlob(SLocBufferAbbrv, Record, Name, strlen(Name) + 1);
+        Record.clear();
+        Record.push_back(pch::SM_SLOC_BUFFER_BLOB);
+        S.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
+                             Buffer->getBufferStart(),
+                             Buffer->getBufferSize() + 1);
+      }
+    } else {
+      // The source location entry is an instantiation.
+      const SrcMgr::InstantiationInfo &Inst = SLoc->getInstantiation();
+      Record.push_back(Inst.getSpellingLoc().getRawEncoding());
+      Record.push_back(Inst.getInstantiationLocStart().getRawEncoding());
+      Record.push_back(Inst.getInstantiationLocEnd().getRawEncoding());
+
+      if (SLocInstantiationAbbrv == -1)
+        SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(S);
+      S.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
+    }
+
+    Record.clear();
+  }
+
+  S.ExitBlock();
+}
+
 /// \brief Write the representation of a type to the PCH stream.
 void PCHWriter::WriteType(const Type *T) {
   pch::ID &ID = TypeIDs[T];
@@ -521,6 +672,7 @@ void PCHWriter::WritePCH(ASTContext &Context) {
 
   // Write the remaining PCH contents.
   S.EnterSubblock(pch::PCH_BLOCK_ID, 2);
+  WriteSourceManagerBlock(Context.getSourceManager());
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
   S.ExitBlock();

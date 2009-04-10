@@ -1379,22 +1379,26 @@ public:
       PP->setPTHManager(PTHMgr.take());
     }
     
+    return PP.take();
+  }
+
+  virtual bool FinishInitialization(Preprocessor *PP) {
     if (InitializePreprocessor(*PP, InitializeSourceMgr, InFile)) {
-      return NULL;
+      return true;
     }
     
     /// FIXME: PP can only handle one callback
     if (ProgAction != PrintPreprocessedInput) {
       std::string ErrStr;
-      bool DFG = CreateDependencyFileGen(PP.get(), ErrStr);
+      bool DFG = CreateDependencyFileGen(PP, ErrStr);
       if (!DFG && !ErrStr.empty()) {
         fprintf(stderr, "%s", ErrStr.c_str());
-        return NULL;
+        return true;
       }
     }
 
     InitializeSourceMgr = false;
-    return PP.take();
+    return false;
   }
 };
 }
@@ -1697,13 +1701,20 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     if (!ImplicitIncludePCH.empty()) {
       // The user has asked us to include a precompiled header. Load
       // the precompiled header into the AST context.
-      llvm::OwningPtr<PCHReader> Reader(
-                                   new clang::PCHReader(*ContextOwner.get()));
+      llvm::OwningPtr<PCHReader> 
+        Reader(new clang::PCHReader(PP, *ContextOwner.get()));
       if (Reader->ReadPCH(ImplicitIncludePCH))
         return;
 
       llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
       ContextOwner->setExternalSource(Source);
+
+      // Finish preprocessor initialization. We do this now (rather
+      // than earlier) because this initialization creates new source
+      // location entries in the source manager, which must come after
+      // the source location entries for the PCH file.
+      if (PPF.FinishInitialization(&PP))
+        return;
     }
 
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats);
@@ -1910,6 +1921,10 @@ int main(int argc, char **argv) {
     llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
           
     if (!PP)
+      continue;
+
+    if (ImplicitIncludePCH.empty()
+        && PPFactory.FinishInitialization(PP.get()))
       continue;
 
     // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,
