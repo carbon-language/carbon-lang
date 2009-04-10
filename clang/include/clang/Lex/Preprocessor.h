@@ -591,6 +591,10 @@ public:
     return DATELoc != SourceLocation() || TIMELoc != SourceLocation();
   }
   
+  /// AllocateMacroInfo - Allocate a new MacroInfo object with the provide
+  ///  SourceLocation.
+  MacroInfo* AllocateMacroInfo(SourceLocation L);
+  
 private:
   
   void PushIncludeMacroStack() {
@@ -610,10 +614,6 @@ private:
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
     IncludeMacroStack.pop_back();
   }
-  
-  /// AllocateMacroInfo - Allocate a new MacroInfo object with the provide
-  ///  SourceLocation.
-  MacroInfo* AllocateMacroInfo(SourceLocation L);
   
   /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
   ///  be reused for allocating new MacroInfo objects.
