@@ -217,11 +217,6 @@ private:
 
     explicit CleanupEntry(llvm::BasicBlock *cb)
       : CleanupBlock(cb) {}
-
-    ~CleanupEntry() {
-      assert(Blocks.empty() && "Did not empty blocks!");
-      assert(BranchFixups.empty() && "Did not empty branch fixups!");
-    }
   };
 
   /// CleanupEntries - Stack of cleanup entries.
