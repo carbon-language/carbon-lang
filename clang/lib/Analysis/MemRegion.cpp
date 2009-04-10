@@ -107,6 +107,17 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ElementRegion::ProfileRegion(ID, Index, superRegion);
 }
 
+void CodeTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const void* data,
+                                   QualType t) {
+  ID.AddInteger(MemRegion::CodeTextRegionKind);
+  ID.AddPointer(data);
+  ID.Add(t);
+}
+
+void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
+  CodeTextRegion::ProfileRegion(ID, Data, LocationType);
+}
+
 //===----------------------------------------------------------------------===//
 // getLValueType() and getRValueType()
 //===----------------------------------------------------------------------===//
@@ -209,6 +220,10 @@ MemSpaceRegion* MemRegionManager::getUnknownRegion() {
   return LazyAllocate(unknown);
 }
 
+MemSpaceRegion* MemRegionManager::getCodeRegion() {
+  return LazyAllocate(code);
+}
+
 bool MemRegionManager::onStack(const MemRegion* R) {
   while (const SubRegion* SR = dyn_cast<SubRegion>(R))
     R = SR->getSuperRegion();
@@ -300,6 +315,39 @@ MemRegionManager::getElementRegion(SVal Idx, const TypedRegion* superRegion){
   if (!R) {
     R = (ElementRegion*) A.Allocate<ElementRegion>();
     new (R) ElementRegion(Idx, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+
+  return R;
+}
+
+CodeTextRegion* MemRegionManager::getCodeTextRegion(const FunctionDecl* fd,
+                                                    QualType t) {
+  llvm::FoldingSetNodeID ID;
+  CodeTextRegion::ProfileRegion(ID, fd, t);
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  CodeTextRegion* R = cast_or_null<CodeTextRegion>(data);
+
+  if (!R) {
+    R = (CodeTextRegion*) A.Allocate<CodeTextRegion>();
+    new (R) CodeTextRegion(fd, t, getCodeRegion());
+    Regions.InsertNode(R, InsertPos);
+  }
+
+  return R;
+}
+
+CodeTextRegion* MemRegionManager::getCodeTextRegion(SymbolRef sym, QualType t) {
+  llvm::FoldingSetNodeID ID;
+  CodeTextRegion::ProfileRegion(ID, sym, t);
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  CodeTextRegion* R = cast_or_null<CodeTextRegion>(data);
+
+  if (!R) {
+    R = (CodeTextRegion*) A.Allocate<CodeTextRegion>();
+    new (R) CodeTextRegion(sym, t, getCodeRegion());
     Regions.InsertNode(R, InsertPos);
   }
 

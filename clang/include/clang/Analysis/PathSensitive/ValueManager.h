@@ -82,6 +82,8 @@ public:
   
   SVal getConjuredSymbolVal(const Expr *E, unsigned Count);  
   SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
+
+  SVal getFunctionPointer(const FunctionDecl* FD);
 };
 } // end clang namespace
 #endif

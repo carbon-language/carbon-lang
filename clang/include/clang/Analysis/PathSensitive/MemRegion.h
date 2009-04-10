@@ -39,6 +39,7 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind,
+              CodeTextRegionKind,
               SymbolicRegionKind,
               AllocaRegionKind,
               // Typed regions.
@@ -113,7 +114,7 @@ public:
     return R->getKind() > MemSpaceRegionKind;
   }
 };
-  
+
 /// AllocaRegion - A region that represents an untyped blob of bytes created
 ///  by a call to 'alloca'.
 class AllocaRegion : public SubRegion {
@@ -171,6 +172,58 @@ public:
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
     return k > BEG_TYPED_REGIONS && k < END_TYPED_REGIONS;
+  }
+};
+
+/// CodeTextRegion - A region that represents code texts of a function. It wraps
+/// two kinds of code texts: real function and symbolic function. Real function
+/// is a function declared in the program. Symbolic function is a function
+/// pointer that we don't know which function it points to.
+class CodeTextRegion : public TypedRegion {
+public:
+  enum CodeKind { Declared, Symbolic };
+
+private:
+  // The function pointer kind that this CodeTextRegion represents.
+  CodeKind codekind;
+
+  // Data may be a SymbolRef or FunctionDecl*.
+  const void* Data;
+
+  // Cached function pointer type.
+  QualType LocationType;
+
+public:
+
+  CodeTextRegion(const FunctionDecl* fd, QualType t, const MemRegion* sreg)
+    : TypedRegion(sreg, CodeTextRegionKind), 
+      codekind(Declared),
+      Data(fd),
+      LocationType(t) {}
+
+  CodeTextRegion(SymbolRef sym, QualType t, const MemRegion* sreg)
+    : TypedRegion(sreg, CodeTextRegionKind), 
+      codekind(Symbolic),
+      Data(sym),
+      LocationType(t) {}
+
+  QualType getRValueType(ASTContext &C) const {
+    // Do not get the object type of a CodeTextRegion.
+    assert(0);
+    return QualType();
+  }
+
+  QualType getLValueType(ASTContext &C) const {
+    return LocationType;
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, 
+                            const void* data, QualType t);
+
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == CodeTextRegionKind;
   }
 };
 
@@ -492,6 +545,7 @@ class MemRegionManager {
   MemSpaceRegion* stack;
   MemSpaceRegion* heap;
   MemSpaceRegion* unknown;
+  MemSpaceRegion* code;
 
 public:
   MemRegionManager(llvm::BumpPtrAllocator& a)
@@ -514,6 +568,8 @@ public:
   /// getUnknownRegion - Retrieve the memory region associated with unknown
   /// memory space.
   MemSpaceRegion* getUnknownRegion();
+
+  MemSpaceRegion* getCodeRegion();
 
   bool isGlobalsRegion(const MemRegion* R) { 
     assert(R);
@@ -566,6 +622,9 @@ public:
 
   TypedViewRegion* getTypedViewRegion(QualType LValueType,
                                       const MemRegion* superRegion);
+
+  CodeTextRegion* getCodeTextRegion(SymbolRef sym, QualType t);
+  CodeTextRegion* getCodeTextRegion(const FunctionDecl* fd, QualType t);
 
   bool hasStackStorage(const MemRegion* R);
 

@@ -282,6 +282,12 @@ SVal ValueManager::getRValueSymbolVal(const MemRegion* R) {
                                 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
     QualType T = TR->getRValueType(SymMgr.getContext());
+
+    // If T is of function pointer type, create a CodeTextRegion wrapping a
+    // symbol.
+    if (T->isFunctionPointerType()) {
+      return Loc::MakeVal(MemMgr.getCodeTextRegion(sym, T));
+    }
     
     if (Loc::IsLocType(T))
       return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
@@ -298,6 +304,12 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, unsigned Count) {
   QualType T = E->getType();
   SymbolRef sym = SymMgr.getConjuredSymbol(E, Count);
 
+  // If T is of function pointer type, create a CodeTextRegion wrapping a
+  // symbol.
+  if (T->isFunctionPointerType()) {
+    return Loc::MakeVal(MemMgr.getCodeTextRegion(sym, T));
+  }
+
   if (Loc::IsLocType(T))
     return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
 
@@ -312,6 +324,12 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
 
   SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count);
 
+  // If T is of function pointer type, create a CodeTextRegion wrapping a
+  // symbol.
+  if (T->isFunctionPointerType()) {
+    return Loc::MakeVal(MemMgr.getCodeTextRegion(sym, T));
+  }
+
   if (Loc::IsLocType(T))
     return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
 
@@ -319,6 +337,12 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
     return NonLoc::MakeVal(sym);
 
   return UnknownVal();
+}
+
+SVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
+  CodeTextRegion* R 
+    = MemMgr.getCodeTextRegion(FD, Context.getPointerType(FD->getType()));
+  return Loc::MakeVal(R);
 }
 
 nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
