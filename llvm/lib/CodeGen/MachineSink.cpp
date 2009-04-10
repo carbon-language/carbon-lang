@@ -111,20 +111,29 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
 }
 
 bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
-  bool MadeChange = false;
-  
   // Can't sink anything out of a block that has less than two successors.
-  if (MBB.succ_size() <= 1) return false;
-  
+  if (MBB.succ_size() <= 1 || MBB.empty()) return false;
+
+  bool MadeChange = false;
+
   // Walk the basic block bottom-up.  Remember if we saw a store.
-  bool SawStore = false;
-  for (MachineBasicBlock::iterator I = MBB.end(); I != MBB.begin(); ){
-    MachineBasicBlock::iterator LastIt = I;
-    if (SinkInstruction(--I, SawStore)) {
-      I = LastIt;
-      ++NumSunk;
-    }
-  }
+  MachineBasicBlock::iterator I = MBB.end();
+  --I;
+  bool ProcessedBegin, SawStore = false;
+  do {
+    MachineInstr *MI = I;  // The instruction to sink.
+    
+    // Predecrement I (if it's not begin) so that it isn't invalidated by
+    // sinking.
+    ProcessedBegin = I == MBB.begin();
+    if (!ProcessedBegin)
+      --I;
+    
+    if (SinkInstruction(MI, SawStore))
+      ++NumSunk, MadeChange = true;
+    
+    // If we just processed the first instruction in the block, we're done.
+  } while (!ProcessedBegin);
   
   return MadeChange;
 }
@@ -216,6 +225,11 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // It's not safe to sink instructions to EH landing pad. Control flow into
   // landing pad is implicitly defined.
   if (SuccToSinkTo->isLandingPad())
+    return false;
+  
+  // If is not possible to sink an instruction into its own block.  This can
+  // happen with loops.
+  if (MI->getParent() == SuccToSinkTo)
     return false;
   
   DEBUG(cerr << "Sink instr " << *MI);
