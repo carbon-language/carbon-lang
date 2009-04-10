@@ -681,6 +681,20 @@ public:
                         Name);
   }
 
+  /// CreatePtrDiff - Return the i64 difference between two pointer values,
+  /// dividing out the size of the pointed-to objects.  This is intended to
+  /// implement C-style pointer subtraction.
+  Value *CreatePtrDiff(Value *LHS, Value *RHS, const char *Name = "") {
+    assert(LHS->getType() == RHS->getType() &&
+           "Pointer subtraction operand types must match!");
+    const PointerType *ArgType = cast<PointerType>(LHS->getType());
+    Value *LHS_int = CreatePtrToInt(LHS, Type::Int64Ty);
+    Value *RHS_int = CreatePtrToInt(RHS, Type::Int64Ty);
+    Value *Difference = CreateSub(LHS_int, RHS_int);
+    return CreateSDiv(Difference,
+                      ConstantExpr::getSizeOf(ArgType->getElementType()),
+                      Name);
+  }
 };
 
 }
