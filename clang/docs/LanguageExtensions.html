@@ -32,8 +32,12 @@ td {
   <li><a href="#x86-specific">X86/X86-64 Language Extensions</a></li>
   </ul>
 </li>
+<li><a href="#analyzerspecific">Static Analysis-Specific Extensions</a>
+  <ul>
+    <li><a href="#analyzerattributes">Analyzer Attributes</a></li>
+  </ul>
+</li>
 </ul>
-
 
 <!-- ======================================================================= -->
 <h2 id="intro">Introduction</h2>
@@ -267,6 +271,47 @@ _foo:
 	movl	%gs:(%eax), %eax
 	ret
 </pre>
+
+<!-- ======================================================================= -->
+<h2 id="analyzerspecific">Static Analysis-Specific Extensions</h2>
+<!-- ======================================================================= -->
+
+<p>Clang supports additional attributes that are useful for documenting program
+invariants and rules for static analysis tools. The extensions documented here
+are used by the <a
+href="http://clang.llvm.org/StaticAnalysis.html">path-sensitive static analyzer
+engine</a> that is part of Clang's Analysis library.</p>
+
+<!-- ======================================================================= -->
+<h3 id="analyzerattributes">Analyzer Attributes</h3>
+<!-- ======================================================================= -->
+
+<h4 id="attr_analyzer_noreturn"><tt>analyzer_noreturn</tt></h4>
+
+<p>Clang's static analysis engine understands the standard <tt>noreturn</tt>
+attribute, which indicates that a call to a given function never returns.
+Function prototypes for common functions like <tt>exit</tt> are typically
+annotated with this attribute, as well as a variety of common assertion
+handlers. Users can educate the static analyzer about their own custom assertion
+handles (thus cutting down on false positives due to false paths) by marking
+their own &quot;panic&quot; functions with this attribute.</p>
+
+<p>While useful, <tt>noreturn</tt> is not applicable in all cases. Sometimes
+there are special functions that for all intensive purposes should be considered
+panic functions (i.e., they are only called when an internal program error
+occurs) but may actually return so that the program can fail gracefully. The
+<tt>analyzer_noreturn</tt> attribute allows one to annotate such functions as
+being interpreted as &quot;no return&quot; functions by the analyzer (thus
+pruning bogus paths) but will not effect compilation (as in the case of
+<tt>noreturn</tt>).</p>
+
+<p><b>Usage</b>: The <tt>analyzer_noreturn</tt> attribute can be placed in the
+sampe places where the <tt>noreturn</tt> attribute can be placed. It is commonly
+placed at the end of function prototypes:</p>
+
+<pre>
+  void foo() <b>__attribute__((analyzer_noreturn))</b>;
+</p>
 
 </div>
 </body>
