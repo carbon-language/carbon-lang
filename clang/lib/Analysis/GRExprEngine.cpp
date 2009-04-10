@@ -161,7 +161,31 @@ void GRExprEngine::AddCheck(GRSimpleAPICheck *A) {
 }
 
 const GRState* GRExprEngine::getInitialState() {
-  return StateMgr.getInitialState();
+  const GRState *state = StateMgr.getInitialState();
+  
+  // Precondition: the first argument of 'main' is an integer guaranteed
+  //  to be > 0.
+  // FIXME: It would be nice if we had a more general mechanism to add
+  // such preconditions.  Some day.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(&StateMgr.getCodeDecl()))
+    if (strcmp(FD->getIdentifier()->getName(), "main") == 0 &&
+        FD->getNumParams() > 0) {
+      const ParmVarDecl *PD = FD->getParamDecl(0);
+      QualType T = PD->getType();
+      if (T->isIntegerType())
+        if (const MemRegion *R = StateMgr.getRegion(PD)) {
+          SVal V = GetSVal(state, loc::MemRegionVal(R));
+          SVal Constraint = EvalBinOp(BinaryOperator::GT, V,
+                                      ValMgr.makeZeroVal(T),
+                                      getContext().IntTy);          
+          bool isFeasible = false;          
+          const GRState *newState = Assume(state, Constraint, true,
+                                           isFeasible);
+          if (newState) state = newState;
+        }
+    }
+  
+  return state;
 }
 
 //===----------------------------------------------------------------------===//
