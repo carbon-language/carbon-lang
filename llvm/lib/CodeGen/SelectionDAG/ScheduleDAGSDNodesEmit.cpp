@@ -268,9 +268,11 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
         cerr << "Op->Val = "; Op.getNode()->dump(DAG); cerr << "\n";
         cerr << "MI = "; MI->print(cerr);
         cerr << "VReg = " << VReg << "\n";
-        cerr << "VReg RegClass     size = " << VRC->getSize()
+        cerr << "VReg RegClass " << VRC->getName()
+             << "     size = " << VRC->getSize()
              << ", align = " << VRC->getAlignment() << "\n";
-        cerr << "Expected RegClass size = " << RC->getSize()
+        cerr << "Expected RegClass " << RC->getName()
+             << " size = " << RC->getSize()
              << ", align = " << RC->getAlignment() << "\n";
         cerr << "Fatal error, aborting.\n";
         abort();
