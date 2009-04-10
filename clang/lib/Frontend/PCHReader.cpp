@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
+#include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
@@ -193,6 +194,115 @@ bool PCHReader::ReadSourceManagerBlock() {
   }
 }
 
+bool PCHReader::ReadPreprocessorBlock() {
+  if (Stream.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID))
+    return Error("Malformed preprocessor block record");
+  
+  std::string CurName; // FIXME: HACK.
+  RecordData Record;
+  llvm::SmallVector<IdentifierInfo*, 16> MacroArgs;
+  MacroInfo *LastMacro = 0;
+  
+  while (true) {
+    unsigned Code = Stream.ReadCode();
+    switch (Code) {
+    case llvm::bitc::END_BLOCK:
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of preprocessor block");
+      return false;
+    
+    case llvm::bitc::ENTER_SUBBLOCK:
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    
+    case llvm::bitc::DEFINE_ABBREV:
+      Stream.ReadAbbrevRecord();
+      continue;
+    default: break;
+    }
+    
+    // Read a record.
+    Record.clear();
+    pch::PreprocessorRecordTypes RecType =
+      (pch::PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
+    switch (RecType) {
+    default:  // Default behavior: ignore unknown records.
+      break;
+        
+    case pch::PP_MACRO_NAME:
+      // Set CurName.  FIXME: This is a hack and should be removed when we have
+      // identifier id's.
+      CurName.clear();
+      for (unsigned i = 0, e = Record.size(); i != e; ++i)
+        CurName += (char)Record[i];
+      break;
+        
+    case pch::PP_MACRO_OBJECT_LIKE:
+    case pch::PP_MACRO_FUNCTION_LIKE: {
+      unsigned IdentInfo = Record[0];
+      IdentInfo = IdentInfo; // FIXME: Decode into identifier info*.
+      assert(!CurName.empty());
+      IdentifierInfo *II = PP.getIdentifierInfo(CurName.c_str());
+      
+      SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[1]);
+      bool isUsed = Record[2];
+      
+      MacroInfo *MI = PP.AllocateMacroInfo(Loc);
+      MI->setIsUsed(isUsed);
+      
+      if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {
+        // Decode function-like macro info.
+        bool isC99VarArgs = Record[3];
+        bool isGNUVarArgs = Record[4];
+        MacroArgs.clear();
+        unsigned NumArgs = Record[5];
+        for (unsigned i = 0; i != NumArgs; ++i)
+          ; // FIXME: Decode macro arg names: MacroArgs.push_back(Record[6+i]);
+
+        // Install function-like macro info.
+        MI->setIsFunctionLike();
+        if (isC99VarArgs) MI->setIsC99Varargs();
+        if (isGNUVarArgs) MI->setIsGNUVarargs();
+        MI->setArgumentList(&MacroArgs[0], MacroArgs.size(),
+                            PP.getPreprocessorAllocator());
+      }
+
+      // Finally, install the macro.
+      II = II;
+#if 0
+      // FIXME: Do this when predefines buffer is worked out.
+      PP.setMacroInfo(II, MI);
+#endif
+
+      // Remember that we saw this macro last so that we add the tokens that
+      // form its body to it.
+      LastMacro = MI;
+      break;
+    }
+        
+    case pch::PP_TOKEN: {
+      // If we see a TOKEN before a PP_MACRO_*, then the file is eroneous, just
+      // pretend we didn't see this.
+      if (LastMacro == 0) break;
+      
+      Token Tok;
+      Tok.startToken();
+      Tok.setLocation(SourceLocation::getFromRawEncoding(Record[0]));
+      Tok.setLength(Record[1]);
+      unsigned IdentInfo = Record[2];
+      IdentInfo = IdentInfo; // FIXME: Handle this right.
+      Tok.setKind((tok::TokenKind)Record[3]);
+      Tok.setFlag((Token::TokenFlags)Record[4]);
+      LastMacro->AddTokenToBody(Tok);
+      break;
+    }
+    }
+  }
+}
+
 PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
     Error("Malformed block record");
@@ -225,6 +335,13 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
       case pch::SOURCE_MANAGER_BLOCK_ID:
         if (ReadSourceManagerBlock()) {
           Error("Malformed source manager block");
+          return Failure;
+        }
+        break;
+          
+      case pch::PREPROCESSOR_BLOCK_ID:
+        if (ReadPreprocessorBlock()) {
+          Error("Malformed preprocessor block");
           return Failure;
         }
         break;

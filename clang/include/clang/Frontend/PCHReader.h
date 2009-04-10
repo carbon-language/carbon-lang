@@ -107,6 +107,7 @@ class PCHReader : public ExternalASTSource {
 
   PCHReadResult ReadPCHBlock();
   bool ReadSourceManagerBlock();
+  bool ReadPreprocessorBlock();
 
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);

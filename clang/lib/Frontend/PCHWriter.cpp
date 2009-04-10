@@ -573,6 +573,8 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   // macros.
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
+    // FIXME: This emits macros in hash table order, we should do it in a stable
+    // order so that output is reproducible.
     MacroInfo *MI = I->second;
 
     // Don't emit builtin macros like __LINE__ to the PCH file unless they have
