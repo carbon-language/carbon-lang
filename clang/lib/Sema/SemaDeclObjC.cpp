@@ -1840,7 +1840,8 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         return DeclPtrTy();
       }
       if ((Context.isObjCObjectPointerType(property->getType()) || 
-           PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak()) {
+           PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
+           getLangOptions().getGCMode() != LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_strong_property)
         << property->getDeclName() << Ivar->getDeclName();
         return DeclPtrTy();

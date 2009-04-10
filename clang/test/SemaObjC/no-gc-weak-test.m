@@ -12,3 +12,17 @@
 @end
 
  
+@interface PVSelectionOverlayView2 
+{
+ id __weak _selectionRect;
+}
+
+@property(assign) id selectionRect;
+
+@end
+
+@implementation PVSelectionOverlayView2
+
+@synthesize selectionRect = _selectionRect;
+@end
+
