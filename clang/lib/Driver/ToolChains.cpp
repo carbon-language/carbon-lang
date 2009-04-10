@@ -20,6 +20,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
+#include <cstdlib> // ::getenv
+
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
 
@@ -152,8 +154,14 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
     // Chose the default version based on the arch.
     //
     // FIXME: This will need to be fixed when we merge in arm support.
+
+    // Look for MACOSX_DEPLOYMENT_TARGET, otherwise use the version
+    // from the host.
+    const char *Version = ::getenv("MACOSX_DEPLOYMENT_TARGET");
+    if (!Version)
+      Version = MacosxVersionMin.c_str();
     const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-    DAL->append(DAL->MakeJoinedArg(0, O, MacosxVersionMin.c_str()));
+    DAL->append(DAL->MakeJoinedArg(0, O, Version));
   }
   
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
