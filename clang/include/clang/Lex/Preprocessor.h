@@ -585,6 +585,12 @@ public:
   /// current line until the tok::eom token is found.
   void DiscardUntilEndOfDirective();
   
+  /// SawDateOrTime - This returns true if the preprocessor has seen a use of
+  /// __DATE__ or __TIME__ in the file so far.
+  bool SawDateOrTime() const {
+    return DATELoc != SourceLocation() || TIMELoc != SourceLocation();
+  }
+  
 private:
   
   void PushIncludeMacroStack() {

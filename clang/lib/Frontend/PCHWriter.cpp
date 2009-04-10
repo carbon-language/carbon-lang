@@ -17,6 +17,8 @@
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Type.h"
+#include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -481,8 +483,56 @@ void PCHWriter::WritePreprocessor(Preprocessor &PP) {
   // Enter the preprocessor block.
   S.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 3);
   
+  // If the PCH file contains __DATE__ or __TIME__ emit a warning about this.
+  // FIXME: use diagnostics subsystem for localization etc.
+  if (PP.SawDateOrTime())
+    fprintf(stderr, "warning: precompiled header used __DATE__ or __TIME__.\n");
   
+  RecordData Record;
 
+  // Loop over all the macro definitions that are live at the end of the file,
+  // emitting each to the PP section.
+  // FIXME: Eventually we want to emit an index so that we can lazily load
+  // macros.
+  for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
+       I != E; ++I) {
+    MacroInfo *MI = I->second;
+
+    // Don't emit builtin macros like __LINE__ to the PCH file unless they have
+    // been redefined by the header (in which case they are not isBuiltinMacro).
+    if (MI->isBuiltinMacro())
+      continue;
+
+    IdentifierInfo *II = I->first;
+    
+    // FIXME: Output the identifier Info ID #!
+    Record.push_back((intptr_t)II); 
+    Record.push_back(MI->getDefinitionLoc().getRawEncoding());
+    Record.push_back(MI->isUsed());
+    
+    unsigned Code;
+    if (MI->isObjectLike()) {
+      Code = pch::PP_MACRO_OBJECT_LIKE;
+    } else {
+      Code = pch::PP_MACRO_FUNCTION_LIKE;
+      
+      Record.push_back(MI->isC99Varargs());
+      Record.push_back(MI->isGNUVarargs());
+      Record.push_back(MI->getNumArgs());
+      for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
+           I != E; ++I)
+        // FIXME: Output the identifier Info ID #!
+        Record.push_back((intptr_t)II); 
+    }
+    S.EmitRecord(Code, Record);
+    Record.clear();
+
+    // FIXME: Emit the tokens array.
+    
+  }
+  
+  // TODO: someday when PP supports __COUNTER__, emit a record for its value if
+  // non-zero.
   
   S.ExitBlock();
 }

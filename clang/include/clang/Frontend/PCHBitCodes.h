@@ -115,6 +115,26 @@ namespace clang {
       /// macro instantiation.
       SM_SLOC_INSTANTIATION_ENTRY = 4
     };
+    
+    /// \brief Record types used within a preprocessor block.
+    enum PreprocessorRecordTypes {
+      // The macros in the PP section are a PP_MACRO_* instance followed by a
+      // list of PP_TOKEN instances for each token in the definition.
+
+      /// \brief An object-like macro definition.
+      /// [PP_MACRO_OBJECT_LIKE, IdentInfoID, SLoc, IsUsed]
+      PP_MACRO_OBJECT_LIKE = 1,
+
+      /// \brief A function-like macro definition.
+      /// [PP_MACRO_FUNCTION_LIKE, <ObjectLikeStuff>, IsC99Varargs, IsGNUVarars,
+      ///  NumArgs, ArgIdentInfoID* ]
+      PP_MACRO_FUNCTION_LIKE = 2,
+      
+      /// \brief Describes one token.
+      /// [PPTOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
+      PP_TOKEN = 3
+    };
+    
 
     /// \defgroup PCHAST Precompiled header AST constants
     ///
