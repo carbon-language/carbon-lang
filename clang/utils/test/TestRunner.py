@@ -8,6 +8,7 @@
 #
 #     %s - Replaced with the input name of the program, or the program to
 #          execute, as appropriate.
+#     %S - Replaced with the directory where the input resides.
 #     %llvmgcc - llvm-gcc command
 #     %llvmgxx - llvm-g++ command
 #     %prcontext - prcontext.tcl script
@@ -103,6 +104,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG,
     TEMPOUTPUT = OUTPUT + '.tmp'
 
     substitutions = [('%s',SUBST),
+                     ('%S',os.path.dirname(SUBST)),
                      ('%llvmgcc','llvm-gcc -emit-llvm -w'),
                      ('%llvmgxx','llvm-g++ -emit-llvm -w'),
                      ('%prcontext','prcontext.tcl'),
