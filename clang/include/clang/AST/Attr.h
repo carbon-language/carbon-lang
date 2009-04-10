@@ -246,7 +246,7 @@ public:
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-      return A->getKind() == AnalyzerNoReturn;
+    return A->getKind() == AnalyzerNoReturn;
   }  
   static bool classof(const AnalyzerNoReturnAttr *A) { return true; }
 };
