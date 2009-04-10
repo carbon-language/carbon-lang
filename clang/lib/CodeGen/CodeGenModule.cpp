@@ -614,6 +614,10 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
     return llvm::ConstantExpr::getBitCast(Entry, Ty);
   }
   
+  // We don't support __thread yet.
+  if (D && D->isThreadSpecified())
+    ErrorUnsupported(D, "thread local ('__thread') variable", true);
+  
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
@@ -680,7 +684,7 @@ CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
-
+  
   if (D->getInit() == 0) {
     // This is a tentative definition; tentative definitions are
     // implicitly initialized with { 0 }

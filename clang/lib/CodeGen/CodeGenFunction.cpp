@@ -231,11 +231,10 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
   EmitStmt(FD->getBody());
   
   const CompoundStmt *S = dyn_cast<CompoundStmt>(FD->getBody());
-  if (S) {
+  if (S)
     FinishFunction(S->getRBracLoc());
-  } else {
+  else
     FinishFunction();
-  }
     
   // Destroy the 'this' declaration.
   if (CXXThisDecl)
