@@ -392,7 +392,7 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &S) {
 /// errors), we probably won't have to create file entries for any of
 /// the files in the AST.
 void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
-  // Enter the types block
+  // Enter the source manager block.
   S.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
 
   // Abbreviations for the various kinds of source-location entries.
@@ -478,13 +478,20 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
 /// preprocessor.
 ///
 void PCHWriter::WritePreprocessor(Preprocessor &PP) {
+  // Enter the preprocessor block.
+  S.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 3);
+  
+  
+
+  
+  S.ExitBlock();
 }
 
 
 /// \brief Write the representation of a type to the PCH stream.
 void PCHWriter::WriteType(const Type *T) {
   pch::ID &ID = TypeIDs[T];
-  if (ID == 0) // we haven't seen this type before
+  if (ID == 0) // we haven't seen this type before.
     ID = NextTypeID++;
   
   // Record the offset for this type.
@@ -523,7 +530,7 @@ void PCHWriter::WriteType(const Type *T) {
 
 /// \brief Write a block containing all of the types.
 void PCHWriter::WriteTypesBlock(ASTContext &Context) {
-  // Enter the types block
+  // Enter the types block.
   S.EnterSubblock(pch::TYPES_BLOCK_ID, 2);
 
   // Emit all of the types in the ASTContext
@@ -606,7 +613,7 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 
 /// \brief Write a block containing all of the declarations.
 void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
-  // Enter the declarations block
+  // Enter the declarations block.
   S.EnterSubblock(pch::DECLS_BLOCK_ID, 2);
 
   // Emit all of the declarations.
