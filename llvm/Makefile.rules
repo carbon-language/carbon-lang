@@ -439,7 +439,6 @@ ifeq ($(OS),Darwin)
   DARWIN_MAJVERS := $(shell echo $(DARWIN_VERSION)| sed -E 's/10.([0-9]).*/\1/')
 
   SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress \
-                    -compatibility_version 1 -current_version 1 \
                     -dynamiclib -mmacosx-version-min=$(DARWIN_VERSION)
   TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 else
