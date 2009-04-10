@@ -107,6 +107,24 @@ char *r = (char*) p;
 <p>Thus we need to canonicalize the MemRegion which is used in binding and
 retrieving.</p>
 
+<h3>Regions</h3>
+<p>Region is the entity used to model pointer values. A Region has the following
+properties:</p>
+
+<ul>
+<li>Kind</li>
+
+<li>ObjectType: the type of the object residing on the region.</li>
+
+<li>LocationType: the type of the pointer value that the region corresponds to.
+  Usually this is the pointer to the ObjectType. But sometimes we want to cache
+  this type explicitly, for example, for a CodeTextRegion.</li>
+
+<li>StartLocation</li>
+
+<li>EndLocation</li>
+</ul>
+
 <h3>Symbolic Regions</h3>
 
 <p>A symbolic region is a map of the concept of symbolic values into the domain
