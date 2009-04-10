@@ -140,7 +140,18 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
   // have something that works, we should reevaluate each translation
   // and try to push it down into tool specific logic.  
 
-  if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ, false)) {
+  Arg *OSXVersion = 
+    Args.getLastArg(options::OPT_mmacosx_version_min_EQ, false);
+  Arg *iPhoneVersion =
+    Args.getLastArg(options::OPT_miphoneos_version_min_EQ, false);  
+  if (OSXVersion && iPhoneVersion) {
+    getHost().getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
+          << OSXVersion->getAsString(Args)
+          << iPhoneVersion->getAsString(Args); 
+  } else if (!OSXVersion && !iPhoneVersion) {
+    // Chose the default version based on the arch.
+    //
+    // FIXME: This will need to be fixed when we merge in arm support.
     const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
     DAL->append(DAL->MakeJoinedArg(0, O, MacosxVersionMin.c_str()));
   }

@@ -362,6 +362,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_v);
   Args.AddLastArg(CmdArgs, options::OPT_P);
   Args.AddLastArg(CmdArgs, options::OPT_mmacosx_version_min_EQ);
+  Args.AddLastArg(CmdArgs, options::OPT_miphoneos_version_min_EQ);
 
   // Special case debug options to only pass -g to clang. This is
   // wrong.
