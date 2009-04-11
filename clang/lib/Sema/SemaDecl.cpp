@@ -1891,7 +1891,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              R->getAsFunctionType()->getResultType(),
                              diag::err_abstract_type_in_decl, 
                              AbstractReturnType))
-        InvalidDecl = true;
+    InvalidDecl = true;
+  
+  // Do not allow returning a objc interface by-value.
+  if (R->getAsFunctionType()->getResultType()->isObjCInterfaceType()) {
+    Diag(D.getIdentifierLoc(),
+         diag::err_object_cannot_be_passed_returned_by_value) << 0
+      << R->getAsFunctionType()->getResultType();
+    InvalidDecl = true;
+  }
   
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;

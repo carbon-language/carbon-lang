@@ -21,3 +21,4 @@
 @end
 
 void somefunc(foo x) {} // expected-error {{Objective-C interface type 'foo' cannot be passed by value}}
+foo somefunc2() {} // expected-error {{Objective-C interface type 'foo' cannot be returned by value}}

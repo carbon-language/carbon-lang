@@ -31,6 +31,13 @@ void foo6(id (^objectCreationBlock)()) {
     return bar6(objectCreationBlock); // expected-warning{{incompatible block pointer types passing 'id (^)()', expected 'id (^)(int)'}}
 }
 
-void foo67(id (^x)(int)) {
+void foo7(id (^x)(int)) {
   if (x) { }
+}
+
+@interface itf
+@end
+
+void foo8() {
+  ^(itf x) {};
 }
