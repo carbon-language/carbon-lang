@@ -27,7 +27,7 @@ struct whatever {
 }
 @end
 
-Super foo(Super parm1) { // expected-error{{Objective-C type cannot be passed by value}}
+Super foo(Super parm1) { // expected-error{{Objective-C interface type 'Super' cannot be passed by value}}
 	Super p1; // expected-error{{Objective-C type cannot be statically allocated}}
 	return p1;
 }

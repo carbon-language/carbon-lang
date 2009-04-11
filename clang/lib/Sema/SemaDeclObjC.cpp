@@ -1415,8 +1415,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     // Methods cannot return interface types. All ObjC objects are
     // passed by reference.
     if (resultDeclType->isObjCInterfaceType()) {
-      Diag(MethodLoc, diag::err_object_cannot_be_by_value)
-           << "returned";
+      Diag(MethodLoc, diag::err_object_cannot_be_passed_returned_by_value)
+        << 0 << resultDeclType;
       return DeclPtrTy();
     }
   } else // get the type for "id".
@@ -1435,38 +1435,37 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
-    QualType argType, originalArgType;
+    QualType ArgType, UnpromotedArgType;
     
     if (ArgInfo[i].Type == 0) {
-      argType = Context.getObjCIdType();
+      UnpromotedArgType = ArgType = Context.getObjCIdType();
     } else {
-      argType = QualType::getFromOpaquePtr(ArgInfo[i].Type);
+      UnpromotedArgType = ArgType = QualType::getFromOpaquePtr(ArgInfo[i].Type);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
-      if (argType->isArrayType())  { // (char *[]) -> (char **)
-        originalArgType = argType;
-        argType = Context.getArrayDecayedType(argType);
-      } else if (argType->isFunctionType())
-        argType = Context.getPointerType(argType);
-      else if (argType->isObjCInterfaceType()) {
-        // FIXME: improve message to include type!
-        Diag(MethodLoc, diag::err_object_cannot_be_by_value)
-             << "passed";
+      if (ArgType->isArrayType())  { // (char *[]) -> (char **)
+        ArgType = Context.getArrayDecayedType(ArgType);
+      } else if (ArgType->isFunctionType())
+        ArgType = Context.getPointerType(ArgType);
+      else if (ArgType->isObjCInterfaceType()) {
+        Diag(ArgInfo[i].NameLoc,
+             diag::err_object_cannot_be_passed_returned_by_value)
+           << 1 << ArgType;
         ObjCMethod->setInvalidDecl();
         return DeclPtrTy();
       }
     }
     
     ParmVarDecl* Param;
-    if (originalArgType.isNull())
+    if (ArgType == UnpromotedArgType)
       Param = ParmVarDecl::Create(Context, ObjCMethod,
                                   SourceLocation(/*FIXME*/),
-                                  ArgInfo[i].Name, argType,
+                                  ArgInfo[i].Name, ArgType,
                                   VarDecl::None, 0);
     else
       Param = OriginalParmVarDecl::Create(Context, ObjCMethod,
                                           SourceLocation(/*FIXME*/),
-                                          ArgInfo[i].Name, argType,
-                                          originalArgType,
+                                          ArgInfo[i].Name, ArgType,
+                                          UnpromotedArgType,
                                           VarDecl::None, 0);
     
     Param->setObjCDeclQualifier(

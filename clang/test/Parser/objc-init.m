@@ -14,7 +14,7 @@ void test1() {
 	id objects[] = {[NSNumber METH]};
 }
 
-void test2(NSNumber x) { // expected-error {{Objective-C type cannot be passed by value}}
+void test2(NSNumber x) { // expected-error {{Objective-C interface type 'NSNumber' cannot be passed by value}}
 	id objects[] = {[x METH]};
 }
 
