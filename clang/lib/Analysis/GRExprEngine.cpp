@@ -1377,9 +1377,10 @@ static bool EvalOSAtomic(ExplodedNodeSet<GRState>& Dst,
   const char *FName = FD->getNameAsCString();
   
   // Check for compare and swap.
-  if (strncmp(FName, "OSAtomicCompareAndSwap", 22) == 0)
+  if (strncmp(FName, "OSAtomicCompareAndSwap", 22) == 0 ||
+      strncmp(FName, "objc_atomicCompareAndSwap", 25) == 0)
     return EvalOSAtomicCompareAndSwap(Dst, Engine, Builder, CE, L, Pred);
-  
+
   // FIXME: Other atomics.
   return false;
 }

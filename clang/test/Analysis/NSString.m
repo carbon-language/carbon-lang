@@ -216,11 +216,21 @@ id testSharedClassFromFunction() {
 
 // Test OSCompareAndSwap
 _Bool OSAtomicCompareAndSwapPtr( void *__oldValue, void *__newValue, void * volatile *__theValue );
+extern BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation);
 
 void testOSCompareAndSwap() {
   NSString *old = 0;
-  NSString *s = [[NSString alloc] init];
+  NSString *s = [[NSString alloc] init]; // no-warning
   if (!OSAtomicCompareAndSwapPtr(0, s, (void**) &old))
+    [s release];
+  else    
+    [old release];
+}
+
+void test_objc_atomicCompareAndSwap() {
+  NSString *old = 0;
+  NSString *s = [[NSString alloc] init]; // no-warning
+  if (!objc_atomicCompareAndSwapPtr(0, s, &old))
     [s release];
   else    
     [old release];
