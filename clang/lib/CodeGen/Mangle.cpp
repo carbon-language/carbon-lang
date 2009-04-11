@@ -112,7 +112,8 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!Context.getLangOptions().CPlusPlus ||
-        isInCLinkageSpecification(D))
+        isInCLinkageSpecification(D) ||
+        D->getDeclContext()->isTranslationUnit())
       return false;
     
     Out << "_Z";
