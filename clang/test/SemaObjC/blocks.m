@@ -39,5 +39,5 @@ void foo7(id (^x)(int)) {
 @end
 
 void foo8() {
-  ^(itf x) {};
+  void *P = ^(itf x) {};  // expected-error {{Objective-C interface type 'itf' cannot be passed by value}}
 }
