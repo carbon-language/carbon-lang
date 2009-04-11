@@ -1400,8 +1400,6 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     bool isVariadic) {
   Decl *ClassDecl = classDecl.getAs<Decl>();
 
-  // FIXME: Param attributes.
-  
   // Make sure we can establish a context for the method.
   if (!ClassDecl) {
     Diag(MethodLoc, diag::error_missing_method_context);
@@ -1442,17 +1440,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     } else {
       UnpromotedArgType = ArgType = QualType::getFromOpaquePtr(ArgInfo[i].Type);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
-      if (ArgType->isArrayType())  { // (char *[]) -> (char **)
-        ArgType = Context.getArrayDecayedType(ArgType);
-      } else if (ArgType->isFunctionType())
-        ArgType = Context.getPointerType(ArgType);
-      else if (ArgType->isObjCInterfaceType()) {
-        Diag(ArgInfo[i].NameLoc,
-             diag::err_object_cannot_be_passed_returned_by_value)
-           << 1 << ArgType;
-        ObjCMethod->setInvalidDecl();
-        return DeclPtrTy();
-      }
+      ArgType = adjustParameterType(ArgType);
     }
     
     ParmVarDecl* Param;
@@ -1468,8 +1456,19 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
                                           UnpromotedArgType,
                                           VarDecl::None, 0);
     
+    if (ArgType->isObjCInterfaceType()) {
+      Diag(ArgInfo[i].NameLoc,
+           diag::err_object_cannot_be_passed_returned_by_value)
+        << 1 << ArgType;
+      Param->setInvalidDecl();
+    }
+    
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgInfo[i].DeclSpec.getObjCDeclQualifier()));
+    
+    // Apply the attributes to the parameter.
+    ProcessDeclAttributeList(Param, ArgInfo[i].ArgAttrs);
+    
     Params.push_back(Param);
   }
 
