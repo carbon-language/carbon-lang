@@ -216,6 +216,8 @@ public:
   QualType getLValueType(ASTContext &C) const {
     return LocationType;
   }
+  
+  virtual bool isBoundable(ASTContext&) const { return false; }
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
