@@ -477,7 +477,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
         return IgnorePCH;
       break;
 
-    case pch::TARGET_TRIPLE:
+    case pch::TARGET_TRIPLE: {
       std::string TargetTriple(BlobStart, BlobLen);
       if (TargetTriple != Context.Target.getTargetTriple()) {
         Diag(diag::warn_pch_target_triple)
@@ -485,6 +485,27 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
         Diag(diag::note_ignoring_pch) << FileName;
         return IgnorePCH;
       }
+      break;
+    }
+
+    case pch::IDENTIFIER_TABLE:
+      IdentifierTable = BlobStart;
+      break;
+
+    case pch::IDENTIFIER_OFFSET:
+      if (!IdentifierData.empty()) {
+        Error("Duplicate IDENTIFIER_OFFSET record in PCH file");
+        return Failure;
+      }
+      IdentifierData.swap(Record);
+#ifndef NDEBUG
+      for (unsigned I = 0, N = IdentifierData.size(); I != N; ++I) {
+        if ((IdentifierData[I] & 0x01) == 0) {
+          Error("Malformed identifier table in the precompiled header");
+          return Failure;
+        }
+      }
+#endif
       break;
     }
   }
@@ -927,13 +948,22 @@ void PCHReader::PrintStats() {
 
 const IdentifierInfo *PCHReader::GetIdentifierInfo(const RecordData &Record, 
                                                    unsigned &Idx) {
-  // FIXME: we need unique IDs for identifiers.
-  std::string Str;
-  unsigned Length = Record[Idx++];
-  Str.resize(Length);
-  for (unsigned I = 0; I != Length; ++I)
-    Str[I] = Record[Idx++];
-  return &Context.Idents.get(Str);
+  pch::IdentID ID = Record[Idx++];
+  if (ID == 0)
+    return 0;
+
+  if (!IdentifierTable || IdentifierData.empty()) {
+    Error("No identifier table in PCH file");
+    return 0;
+  }
+
+  if (IdentifierData[ID - 1] & 0x01) {
+    uint64_t Offset = IdentifierData[ID - 1];
+    IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(
+                               &Context.Idents.get(IdentifierTable + Offset));
+  }
+
+  return reinterpret_cast<const IdentifierInfo *>(IdentifierData[ID - 1]);
 }
 
 DeclarationName 

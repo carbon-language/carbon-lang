@@ -41,6 +41,10 @@ namespace clang {
     /// other types that have serialized representations.
     typedef uint32_t TypeID;
 
+    /// \brief An ID number that refers to an identifier in a PCH
+    /// file.
+    typedef uint32_t IdentID;
+
     /// \brief Describes the various kinds of blocks that occur within
     /// a PCH file.
     enum BlockIDs {
@@ -104,7 +108,29 @@ namespace clang {
 
       /// \brief Record code for the target triple used to build the
       /// PCH file.
-      TARGET_TRIPLE = 4
+      TARGET_TRIPLE = 4,
+
+      /// \brief Record code for the table of offsets of each
+      /// identifier ID.
+      ///
+      /// The offset table contains offsets into the blob stored in
+      /// the IDENTIFIER_TABLE record. Each offset points to the
+      /// NULL-terminated string that corresponds to that identifier.
+      IDENTIFIER_OFFSET = 5,
+
+      /// \brief Record code for the identifier table.
+      ///
+      /// The identifier table is a simple blob that contains
+      /// NULL-terminated strings for all of the identifiers
+      /// referenced by the PCH file. The IDENTIFIER_OFFSET table
+      /// contains the mapping from identifier IDs to the characters
+      /// in this blob. Note that the starting offsets of all of the
+      /// identifiers are odd, so that, when the identifier offset
+      /// table is loaded in, we can use the low bit to distinguish
+      /// between offsets (for unresolved identifier IDs) and
+      /// IdentifierInfo pointers (for already-resolved identifier
+      /// IDs).
+      IDENTIFIER_TABLE = 6
     };
 
     /// \brief Record types used within a source manager block.

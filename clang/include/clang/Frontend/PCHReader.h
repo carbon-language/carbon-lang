@@ -107,6 +107,17 @@ private:
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
 
+  /// \brief String data for the identifiers in the PCH file.
+  const char *IdentifierTable;
+
+  /// \brief String data for identifiers, indexed by the identifier ID
+  /// minus one.
+  ///
+  /// Each element in this array is either an offset into
+  /// IdentifierTable that contains the string data (if the lowest bit
+  /// is set) or is an IdentifierInfo* that has already been resolved.
+  llvm::SmallVector<uint64_t, 16> IdentifierData;
+
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,

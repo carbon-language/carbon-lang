@@ -77,6 +77,14 @@ class PCHWriter {
   /// \brief The type ID that will be assigned to the next new type.
   pch::TypeID NextTypeID;
 
+  /// \brief Map that provides the ID numbers of each identifier in
+  /// the output stream.
+  ///
+  /// The ID numbers for identifiers are consecutive (in order of
+  /// discovery), starting at 1. An ID of zero refers to a NULL
+  /// IdentifierInfo.
+  llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
+
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
@@ -86,6 +94,7 @@ class PCHWriter {
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
   void WriteDeclsBlock(ASTContext &Context);
+  void WriteIdentifierTable();
 
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;

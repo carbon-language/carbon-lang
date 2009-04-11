@@ -818,6 +818,55 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   S.ExitBlock();
 }
 
+/// \brief Write the identifier table into the PCH file.
+///
+/// The identifier table consists of a blob containing string data
+/// (the actual identifiers themselves) and a separate "offsets" index
+/// that maps identifier IDs to locations within the blob.
+void PCHWriter::WriteIdentifierTable() {
+  using namespace llvm;
+
+  // Create and write out the blob that contains the identifier
+  // strings.
+  RecordData IdentOffsets;
+  IdentOffsets.resize(IdentifierIDs.size());
+  {
+    // Create the identifier string data.
+    std::vector<char> Data;
+    Data.push_back(0); // Data must not be empty.
+    for (llvm::DenseMap<const IdentifierInfo *, pch::IdentID>::iterator
+           ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
+         ID != IDEnd; ++ID) {
+      assert(ID->first && "NULL identifier in identifier table");
+
+      // Make sure we're starting on an odd byte. The PCH reader
+      // expects the low bit to be set on all of the offsets.
+      if ((Data.size() & 0x01) == 0)
+        Data.push_back((char)0);
+
+      IdentOffsets[ID->second - 1] = Data.size();
+      Data.insert(Data.end(), 
+                  ID->first->getName(), 
+                  ID->first->getName() + ID->first->getLength());
+      Data.push_back((char)0);
+    }
+
+    // Create a blob abbreviation
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_TABLE));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Triple name
+    unsigned IDTableAbbrev = S.EmitAbbrev(Abbrev);
+
+    // Write the identifier table
+    RecordData Record;
+    Record.push_back(pch::IDENTIFIER_TABLE);
+    S.EmitRecordWithBlob(IDTableAbbrev, Record, &Data.front(), Data.size());
+  }
+
+  // Write the offsets table for identifier IDs.
+  S.EmitRecord(pch::IDENTIFIER_OFFSET, IdentOffsets);
+}
+
 PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 
   : S(S), NextTypeID(pch::NUM_PREDEF_TYPE_IDS) { }
 
@@ -842,6 +891,7 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   WriteDeclsBlock(Context);
   S.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
   S.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
+  WriteIdentifierTable();
   S.ExitBlock();
 }
 
@@ -858,11 +908,16 @@ void PCHWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
 }
 
 void PCHWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {
-  // FIXME: Emit an identifier ID, not the actual string!
-  const char *Name = II->getName();
-  unsigned Len = strlen(Name);
-  Record.push_back(Len);
-  Record.insert(Record.end(), Name, Name + Len);
+  if (II == 0) {
+    Record.push_back(0);
+    return;
+  }
+
+  pch::IdentID &ID = IdentifierIDs[II];
+  if (ID == 0)
+    ID = IdentifierIDs.size();
+  
+  Record.push_back(ID);
 }
 
 void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
