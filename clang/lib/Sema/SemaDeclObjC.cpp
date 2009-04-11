@@ -780,10 +780,7 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
     Diag((*IM)->getLocation(), diag::warn_conflicting_param_types) 
       << ImpMethodDecl->getDeclName() << (*IF)->getType()
       << (*IM)->getType();
-    SourceLocation Loc = (*IF)->getLocation();
-    // FIXME
-    if (Loc == SourceLocation()) Loc = IntfMethodDecl->getLocation();
-    Diag(Loc, diag::note_previous_definition);
+    Diag((*IF)->getLocation(), diag::note_previous_definition);
   }
 }
 
@@ -1212,7 +1209,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       // Invent the arguments for the setter. We don't bother making a
       // nice name for the argument.
       ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterMethod,
-                                                  SourceLocation(), 
+                                                  property->getLocation(), 
                                                   property->getIdentifier(),
                                                   property->getType(),
                                                   VarDecl::None,
@@ -1649,7 +1646,7 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                      true, false, true, 
                                      ObjCMethodDecl::Required);
             ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterDecl,
-                                                        SourceLocation(),
+                                                        FD.D.getIdentifierLoc(),
                                                         PropertyId,
                                                         T, VarDecl::None, 0);
             SetterDecl->setMethodParams(&Argument, 1, Context);
@@ -1671,15 +1668,17 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       } 
     }
 
-  Type *t = T.getTypePtr();
-  if (t->isArrayType() || t->isFunctionType())
-    Diag(AtLoc, diag::err_property_type) << T;
-  
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
   assert(DC && "ClassDecl is not a DeclContext");
-  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC, AtLoc, 
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
+                                                     FD.D.getIdentifierLoc(), 
                                                      FD.D.getIdentifier(), T);
   DC->addDecl(Context, PDecl);
+  
+  if (T->isArrayType() || T->isFunctionType()) {
+    Diag(AtLoc, diag::err_property_type) << T;
+    PDecl->setInvalidDecl();
+  }
   
   ProcessDeclAttributes(PDecl, FD.D);
 
