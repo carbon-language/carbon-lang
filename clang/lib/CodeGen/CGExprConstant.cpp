@@ -474,7 +474,26 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                 CodeGenFunction *CGF) {
   Expr::EvalResult Result;
   
-  if (E->Evaluate(Result, Context)) {
+  bool Success = false;
+  
+  if (DestType->isReferenceType()) {
+    // If the destination type is a reference type, we need to evaluate it
+    // as an lvalue.
+    if (E->EvaluateAsLValue(Result, Context)) {
+      if (const Expr *LVBase = Result.Val.getLValueBase()) {
+        if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVBase)) {
+          const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl());
+
+          // We can only initialize a reference with an lvalue if the lvalue
+          // is not a reference itself.
+          Success = !VD->getType()->isReferenceType();
+        }
+      }
+    }
+  } else 
+    Success = E->Evaluate(Result, Context);
+  
+  if (Success) {
     assert(!Result.HasSideEffects && 
            "Constant expr should not have any side effects!");
     switch (Result.Val.getKind()) {
@@ -482,7 +501,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       assert(0 && "Constant expressions should be initialized.");
       return 0;
     case APValue::LValue: {
-      const llvm::Type *DestTy = getTypes().ConvertTypeForMem(E->getType());
+      const llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset = 
         llvm::ConstantInt::get(llvm::Type::Int64Ty, 
                                Result.Val.getLValueOffset());
