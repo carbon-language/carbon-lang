@@ -1431,8 +1431,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   
-  for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
-    // FIXME: arg->AttrList must be stored too!
+  for (unsigned i = 0, e = Sel.getNumArgs(); i != e; ++i) {
     QualType ArgType, UnpromotedArgType;
     
     if (ArgInfo[i].Type == 0) {
@@ -1445,13 +1444,12 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     
     ParmVarDecl* Param;
     if (ArgType == UnpromotedArgType)
-      Param = ParmVarDecl::Create(Context, ObjCMethod,
-                                  SourceLocation(/*FIXME*/),
+      Param = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
                                   ArgInfo[i].Name, ArgType,
                                   VarDecl::None, 0);
     else
       Param = OriginalParmVarDecl::Create(Context, ObjCMethod,
-                                          SourceLocation(/*FIXME*/),
+                                          ArgInfo[i].NameLoc,
                                           ArgInfo[i].Name, ArgType,
                                           UnpromotedArgType,
                                           VarDecl::None, 0);
