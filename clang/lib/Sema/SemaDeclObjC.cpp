@@ -764,25 +764,22 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
   bool err = false;
-  QualType ImpMethodQType = 
-    Context.getCanonicalType(ImpMethodDecl->getResultType());
-  QualType IntfMethodQType = 
-    Context.getCanonicalType(IntfMethodDecl->getResultType());
-  if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType))
+  if (!Context.typesAreCompatible(IntfMethodDecl->getResultType(),
+                                  ImpMethodDecl->getResultType()))
     err = true;
-  else for (ObjCMethodDecl::param_iterator IM=ImpMethodDecl->param_begin(),
-            IF=IntfMethodDecl->param_begin(),
-            EM=ImpMethodDecl->param_end(); IM!=EM; ++IM, IF++) {
-    ImpMethodQType = Context.getCanonicalType((*IM)->getType());
-    IntfMethodQType = Context.getCanonicalType((*IF)->getType());
-    if (!Context.typesAreCompatible(IntfMethodQType, ImpMethodQType)) {
-      err = true;
-      break;
+  else
+    for (ObjCMethodDecl::param_iterator IM=ImpMethodDecl->param_begin(),
+         IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
+         IM != EM; ++IM, ++IF) {
+      if (!Context.typesAreCompatible((*IF)->getType(), (*IM)->getType())) {
+        err = true;
+        break;
+      }
     }
-  }
+  
   if (err) {
     Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_types) 
-    << ImpMethodDecl->getDeclName();
+      << ImpMethodDecl->getDeclName();
     Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
   }
 }
