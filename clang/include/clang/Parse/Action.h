@@ -19,6 +19,7 @@
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
 #include "clang/Parse/AccessSpecifier.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Ownership.h"
 #include "llvm/Support/PrettyStackTrace.h"
 
@@ -70,15 +71,6 @@ public:
   // what types are required to be identical for the actions.
   typedef ActionBase::ExprTy ExprTy;
   typedef ActionBase::StmtTy StmtTy;
-  typedef OpaquePtr<0> DeclPtrTy;
-  typedef OpaquePtr<1> DeclGroupPtrTy;
-  typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<N>.
-  typedef OpaquePtr<2> TemplateTy;
-  typedef void AttrTy;
-  typedef void BaseTy;
-  typedef void MemInitTy;
-  typedef void CXXScopeTy;
-  typedef void TemplateParamsTy;
 
   /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
   /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and

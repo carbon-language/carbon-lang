@@ -14,10 +14,13 @@
 #ifndef LLVM_CLANG_ATTRLIST_H
 #define LLVM_CLANG_ATTRLIST_H
 
-#include "clang/Parse/Action.h"
+#include "clang/Parse/Ownership.h"
+#include "clang/Basic/SourceLocation.h"
 #include <cassert>
 
 namespace clang {
+  class IdentifierInfo;
+  class Action;
   
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
 /// 4 forms of this construct...they are:
@@ -32,7 +35,7 @@ class AttributeList {
   SourceLocation AttrLoc;
   IdentifierInfo *ParmName;
   SourceLocation ParmLoc;
-  Action::ExprTy **Args;
+  ActionBase::ExprTy **Args;
   unsigned NumArgs;
   AttributeList *Next;
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
@@ -40,7 +43,8 @@ class AttributeList {
 public:
   AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
-                Action::ExprTy **args, unsigned numargs, AttributeList *Next);
+                ActionBase::ExprTy **args, unsigned numargs,
+                AttributeList *Next);
   ~AttributeList();
   
   enum Kind {              // Please keep this list alphabetized.
@@ -115,16 +119,16 @@ public:
   unsigned getNumArgs() const { return NumArgs; }
   
   /// getArg - Return the specified argument.
-  Action::ExprTy *getArg(unsigned Arg) const {
+  ActionBase::ExprTy *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
     return Args[Arg];
   }
   
   class arg_iterator {
-    Action::ExprTy** X;
+    ActionBase::ExprTy** X;
     unsigned Idx;
   public:
-    arg_iterator(Action::ExprTy** x, unsigned idx) : X(x), Idx(idx) {}    
+    arg_iterator(ActionBase::ExprTy** x, unsigned idx) : X(x), Idx(idx) {}    
 
     arg_iterator& operator++() {
       ++Idx;
@@ -141,7 +145,7 @@ public:
       return !operator==(I);
     }
     
-    Action::ExprTy* operator*() const {
+    ActionBase::ExprTy* operator*() const {
       return X[Idx];
     }
     

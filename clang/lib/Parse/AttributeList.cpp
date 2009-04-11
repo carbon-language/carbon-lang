@@ -12,11 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/AttributeList.h"
+#include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
-                             Action::ExprTy **ExprList, unsigned numArgs,
+                             ActionBase::ExprTy **ExprList, unsigned numArgs,
                              AttributeList *n)
   : AttrName(aName), AttrLoc(aLoc), ParmName(pName), ParmLoc(pLoc),
     NumArgs(numArgs), Next(n) {
@@ -24,7 +25,7 @@ AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
   if (numArgs == 0)
     Args = 0;
   else {
-    Args = new Action::ExprTy*[numArgs];
+    Args = new ActionBase::ExprTy*[numArgs];
     memcpy(Args, ExprList, numArgs*sizeof(Args[0]));
   }
 }
@@ -32,7 +33,7 @@ AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
 AttributeList::~AttributeList() {
   if (Args) {
     // FIXME: before we delete the vector, we need to make sure the Expr's 
-    // have been deleted. Since Action::ExprTy is "void", we are dependent
+    // have been deleted. Since ActionBase::ExprTy is "void", we are dependent
     // on the actions module for actually freeing the memory. The specific
     // hooks are ActOnDeclarator, ActOnTypeName, ActOnParamDeclaratorType, 
     // ParseField, ParseTag. Once these routines have freed the expression, 

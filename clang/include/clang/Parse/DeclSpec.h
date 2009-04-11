@@ -14,15 +14,17 @@
 #ifndef LLVM_CLANG_PARSE_DECLSPEC_H
 #define LLVM_CLANG_PARSE_DECLSPEC_H
 
-#include "clang/Parse/Action.h"
 #include "clang/Parse/AttributeList.h"
 #include "clang/Lex/Token.h"
+#include "clang/Basic/OperatorKinds.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
   class LangOptions;
   class Diagnostic;
   class IdentifierInfo;
+  class Preprocessor;
+  class Declarator;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
 /// which encompasses storage-class-specifiers, type-specifiers,
@@ -124,7 +126,7 @@ private:
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
   /// these.
-  Action::TypeTy *TypeRep;  
+  ActionBase::TypeTy *TypeRep;  
   
   // attributes.
   AttributeList *AttrList;
@@ -132,7 +134,7 @@ private:
   // List of protocol qualifiers for objective-c classes.  Used for 
   // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
   // "id<foo>".
-  const Action::DeclPtrTy *ProtocolQualifiers;
+  const ActionBase::DeclPtrTy *ProtocolQualifiers;
   unsigned NumProtocolQualifiers;
   
   // SourceLocation info.  These are null if the item wasn't specified or if
@@ -307,17 +309,17 @@ public:
     return AL;
   }
   
-  typedef const Action::DeclPtrTy *ProtocolQualifierListTy;
+  typedef const ActionBase::DeclPtrTy *ProtocolQualifierListTy;
   ProtocolQualifierListTy getProtocolQualifiers() const {
     return ProtocolQualifiers;
   }
   unsigned getNumProtocolQualifiers() const {
     return NumProtocolQualifiers;
   }
-  void setProtocolQualifiers(const Action::DeclPtrTy *Protos, unsigned NP) {
+  void setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos, unsigned NP) {
     if (NP == 0) return;
-    ProtocolQualifiers = new Action::DeclPtrTy[NP];
-    memcpy((void*)ProtocolQualifiers, Protos, sizeof(Action::DeclPtrTy)*NP);
+    ProtocolQualifiers = new ActionBase::DeclPtrTy[NP];
+    memcpy((void*)ProtocolQualifiers, Protos, sizeof(ActionBase::DeclPtrTy)*NP);
     NumProtocolQualifiers = NP;
   }
   
@@ -408,8 +410,8 @@ public:
   SourceLocation getBeginLoc() const { return Range.getBegin(); }
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
-  Action::CXXScopeTy *getScopeRep() const { return ScopeRep; }
-  void setScopeRep(Action::CXXScopeTy *S) { ScopeRep = S; }
+  ActionBase::CXXScopeTy *getScopeRep() const { return ScopeRep; }
+  void setScopeRep(ActionBase::CXXScopeTy *S) { ScopeRep = S; }
 
   bool isEmpty() const { return !Range.isValid(); }
   bool isNotEmpty() const { return !isEmpty(); }
@@ -475,7 +477,7 @@ struct DeclaratorChunk {
     /// This is the size of the array, or null if [] or [*] was specified.
     /// Since the parser is multi-purpose, and we don't want to impose a root
     /// expression class on all clients, NumElts is untyped.
-    Action::ExprTy *NumElts;
+    ActionBase::ExprTy *NumElts;
     void destroy() {}
   };
   
@@ -488,7 +490,7 @@ struct DeclaratorChunk {
   struct ParamInfo {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
-    Action::DeclPtrTy Param;
+    ActionBase::DeclPtrTy Param;
 
     /// DefaultArgTokens - When the parameter's default argument
     /// cannot be parsed immediately (because it occurs within the
@@ -499,7 +501,7 @@ struct DeclaratorChunk {
 
     ParamInfo() {}
     ParamInfo(IdentifierInfo *ident, SourceLocation iloc,
-              Action::DeclPtrTy param,
+              ActionBase::DeclPtrTy param,
               CachedTokens *DefArgTokens = 0)
       : Ident(ident), IdentLoc(iloc), Param(param), 
         DefaultArgTokens(DefArgTokens) {}
@@ -760,13 +762,13 @@ private:
   AttributeList *AttrList;
   
   /// AsmLabel - The asm label, if specified.
-  Action::ExprTy *AsmLabel;
+  ActionBase::ExprTy *AsmLabel;
 
   union {
     // When Kind is DK_Constructor, DK_Destructor, or DK_Conversion, the
     // type associated with the constructor, destructor, or conversion
     // operator.
-    Action::TypeTy *Type;
+    ActionBase::TypeTy *Type;
 
     /// When Kind is DK_Operator, this is the actual overloaded
     /// operator that this declarator names.
@@ -906,7 +908,7 @@ public:
   
   /// setConstructor - Set this declarator to be a C++ constructor
   /// declarator. Also extends the range.
-  void setConstructor(Action::TypeTy *Ty, SourceLocation Loc) {
+  void setConstructor(ActionBase::TypeTy *Ty, SourceLocation Loc) {
     IdentifierLoc = Loc;
     Kind = DK_Constructor;
     Type = Ty;
@@ -916,9 +918,8 @@ public:
   /// setDestructor - Set this declarator to be a C++ destructor
   /// declarator. Also extends the range to End, which should be the identifier
   /// token.
-  void setDestructor(Action::TypeTy *Ty, SourceLocation Loc,
-                     SourceLocation EndLoc)
-  {
+  void setDestructor(ActionBase::TypeTy *Ty, SourceLocation Loc,
+                     SourceLocation EndLoc) {
     IdentifierLoc = Loc;
     Kind = DK_Destructor;
     Type = Ty;
@@ -930,7 +931,7 @@ public:
   /// conversion function declarator (e.g., @c operator int const *).
   /// Also extends the range to EndLoc, which should be the last token of the
   /// type name.
-  void setConversionFunction(Action::TypeTy *Ty, SourceLocation Loc,
+  void setConversionFunction(ActionBase::TypeTy *Ty, SourceLocation Loc,
                              SourceLocation EndLoc) {
     Identifier = 0;
     IdentifierLoc = Loc;
@@ -1005,10 +1006,10 @@ public:
   const AttributeList *getAttributes() const { return AttrList; }
   AttributeList *getAttributes() { return AttrList; }
 
-  void setAsmLabel(Action::ExprTy *E) { AsmLabel = E; }
-  Action::ExprTy *getAsmLabel() const { return AsmLabel; }
+  void setAsmLabel(ActionBase::ExprTy *E) { AsmLabel = E; }
+  ActionBase::ExprTy *getAsmLabel() const { return AsmLabel; }
 
-  Action::TypeTy *getDeclaratorIdType() const { return Type; }
+  ActionBase::TypeTy *getDeclaratorIdType() const { return Type; }
 
   OverloadedOperatorKind getOverloadedOperator() const { return OperatorKind; }
 
@@ -1025,7 +1026,7 @@ public:
 /// structure field declarators, which is basically just a bitfield size.
 struct FieldDeclarator {
   Declarator D;
-  Action::ExprTy *BitfieldSize;
+  ActionBase::ExprTy *BitfieldSize;
   explicit FieldDeclarator(DeclSpec &DS) : D(DS, Declarator::MemberContext) {
     BitfieldSize = 0;
   }

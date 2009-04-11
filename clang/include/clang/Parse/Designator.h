@@ -18,7 +18,7 @@
 #include "clang/Parse/Action.h"
 
 namespace clang {
-
+  
 /// Designator - This class is a discriminated union which holds the various
 /// different sorts of designators possible.  A Designation is an array of
 /// these.  An example of a designator are things like this:
@@ -41,12 +41,12 @@ private:
     unsigned NameLoc;
   };
   struct ArrayDesignatorInfo {
-    Action::ExprTy *Index;
+    ActionBase::ExprTy *Index;
     unsigned LBracketLoc;
     mutable unsigned  RBracketLoc;
   };
   struct ArrayRangeDesignatorInfo {
-    Action::ExprTy *Start, *End;
+    ActionBase::ExprTy *Start, *End;
     unsigned LBracketLoc, EllipsisLoc;
     mutable unsigned RBracketLoc;
   };
@@ -79,16 +79,16 @@ public:
     return SourceLocation::getFromRawEncoding(FieldInfo.NameLoc);
   }
   
-  Action::ExprTy *getArrayIndex() const {
+  ActionBase::ExprTy *getArrayIndex() const {
     assert(isArrayDesignator() && "Invalid accessor");
     return ArrayInfo.Index;
   }
 
-  Action::ExprTy *getArrayRangeStart() const {
+  ActionBase::ExprTy *getArrayRangeStart() const {
     assert(isArrayRangeDesignator() && "Invalid accessor");
     return ArrayRangeInfo.Start;
   }
-  Action::ExprTy *getArrayRangeEnd() const {
+  ActionBase::ExprTy *getArrayRangeEnd() const {
     assert(isArrayRangeDesignator() && "Invalid accessor");
     return ArrayRangeInfo.End;
   }
@@ -126,7 +126,8 @@ public:
     return D;
   }
 
-  static Designator getArray(Action::ExprTy *Index, SourceLocation LBracketLoc) {
+  static Designator getArray(ActionBase::ExprTy *Index,
+                             SourceLocation LBracketLoc) {
     Designator D;
     D.Kind = ArrayDesignator;
     D.ArrayInfo.Index = Index;
@@ -135,7 +136,8 @@ public:
     return D;
   }
   
-  static Designator getArrayRange(Action::ExprTy *Start, Action::ExprTy *End,
+  static Designator getArrayRange(ActionBase::ExprTy *Start,
+                                  ActionBase::ExprTy *End,
                                   SourceLocation LBracketLoc, 
                                   SourceLocation EllipsisLoc) {
     Designator D;

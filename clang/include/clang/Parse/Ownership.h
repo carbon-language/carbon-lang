@@ -201,9 +201,17 @@ namespace clang {
 
     // Types - Though these don't actually enforce strong typing, they document
     // what types are required to be identical for the actions.
+    typedef OpaquePtr<0> DeclPtrTy;
+    typedef OpaquePtr<1> DeclGroupPtrTy;
+    typedef OpaquePtr<2> TemplateTy;
+    typedef void AttrTy;
+    typedef void BaseTy;
+    typedef void MemInitTy;
     typedef void ExprTy;
     typedef void StmtTy;
     typedef void TemplateParamsTy;
+    typedef void CXXScopeTy;
+    typedef void TypeTy;  // FIXME: Change TypeTy to use OpaquePtr<N>.
 
     /// ActionResult - This structure is used while parsing/acting on
     /// expressions, stmts, etc.  It encapsulates both the object returned by
