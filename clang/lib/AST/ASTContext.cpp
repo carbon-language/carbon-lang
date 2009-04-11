@@ -2694,6 +2694,10 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
       else if (Ty->isPointerType())
         return getObjCGCAttrKind(Ty->getAsPointerType()->getPointeeType());
     }
+    // Non-pointers have none gc'able attribute regardless of the attribute
+    // set on them.
+    else if (!isObjCObjectPointerType(Ty) && !Ty->isPointerType())
+      return QualType::GCNone;
   }
   return GCAttrs;
 }
