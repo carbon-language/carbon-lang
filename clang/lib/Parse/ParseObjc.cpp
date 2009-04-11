@@ -477,7 +477,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodPrototype(DeclPtrTy IDecl,
 ///       unsigned long const short volatile signed restrict _Complex
 ///       in out inout bycopy byref oneway int char float double void _Bool
 ///
-IdentifierInfo *Parser::ParseObjCSelector(SourceLocation &SelectorLoc) {
+IdentifierInfo *Parser::ParseObjCSelectorPiece(SourceLocation &SelectorLoc) {
   switch (Tok.getKind()) {
   default:
     return 0;
@@ -678,7 +678,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     ReturnType = ParseObjCTypeName(DSRet);
   
   SourceLocation selLoc;
-  IdentifierInfo *SelIdent = ParseObjCSelector(selLoc);
+  IdentifierInfo *SelIdent = ParseObjCSelectorPiece(selLoc);
 
   // An unnamed colon is valid.
   if (!SelIdent && Tok.isNot(tok::colon)) { // missing selector name.
@@ -739,7 +739,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     
     // Check for another keyword selector.
     SourceLocation Loc;
-    SelIdent = ParseObjCSelector(Loc);
+    SelIdent = ParseObjCSelectorPiece(Loc);
     if (!SelIdent && Tok.isNot(tok::colon))
       break;
     // We have a selector or a colon, continue parsing.
@@ -1494,7 +1494,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        ExprArg ReceiverExpr) {
   // Parse objc-selector
   SourceLocation Loc;
-  IdentifierInfo *selIdent = ParseObjCSelector(Loc);
+  IdentifierInfo *selIdent = ParseObjCSelectorPiece(Loc);
 
   SourceLocation SelectorLoc = Loc;
     
@@ -1530,7 +1530,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       KeyExprs.push_back(Res.release());
 
       // Check for another keyword selector.
-      selIdent = ParseObjCSelector(Loc);
+      selIdent = ParseObjCSelectorPiece(Loc);
       if (!selIdent && Tok.isNot(tok::colon))
         break;
       // We have a selector or a colon, continue parsing.
@@ -1677,7 +1677,7 @@ Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation sLoc;
-  IdentifierInfo *SelIdent = ParseObjCSelector(sLoc);
+  IdentifierInfo *SelIdent = ParseObjCSelectorPiece(sLoc);
   if (!SelIdent && Tok.isNot(tok::colon)) // missing selector name.
     return ExprError(Diag(Tok, diag::err_expected_ident));
 
@@ -1694,7 +1694,7 @@ Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
         break;
       // Check for another keyword selector.
       SourceLocation Loc;
-      SelIdent = ParseObjCSelector(Loc);
+      SelIdent = ParseObjCSelectorPiece(Loc);
       KeyIdents.push_back(SelIdent);
       if (!SelIdent && Tok.isNot(tok::colon))
         break;
