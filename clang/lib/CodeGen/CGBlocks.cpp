@@ -623,8 +623,19 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
       .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
   BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
 
-  const FunctionProtoType *FTy =
-    cast<FunctionProtoType>(BExpr->getFunctionType());
+  const FunctionType *BlockFunctionType = BExpr->getFunctionType();
+  QualType ResultType;
+  bool IsVariadic;
+  if (!isa<FunctionNoProtoType>(BlockFunctionType)) {
+    const FunctionProtoType *FTy = cast<FunctionProtoType>(BlockFunctionType);
+    ResultType = FTy->getResultType();
+    IsVariadic = FTy->isVariadic();
+  }
+  else {
+    // K&R style block.
+    ResultType = BlockFunctionType->getResultType();
+    IsVariadic = false;
+  }
 
   FunctionArgList Args;
 
@@ -644,18 +655,18 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
     Args.push_back(std::make_pair(*i, (*i)->getType()));
 
   const CGFunctionInfo &FI =
-    CGM.getTypes().getFunctionInfo(FTy->getResultType(), Args);
+    CGM.getTypes().getFunctionInfo(ResultType, Args);
 
   std::string Name = std::string("__") + Info.Name + "_block_invoke_";
   CodeGenTypes &Types = CGM.getTypes();
-  const llvm::FunctionType *LTy = Types.GetFunctionType(FI, FTy->isVariadic());
+  const llvm::FunctionType *LTy = Types.GetFunctionType(FI, IsVariadic);
 
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                            Name,
                            &CGM.getModule());
 
-  StartFunction(BD, FTy->getResultType(), Fn, Args,
+  StartFunction(BD, ResultType, Fn, Args,
                 BExpr->getBody()->getLocEnd());
   CurFuncDecl = OuterFuncDecl;
   EmitStmt(BExpr->getBody());
