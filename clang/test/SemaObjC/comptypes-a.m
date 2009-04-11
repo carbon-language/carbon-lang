@@ -23,7 +23,9 @@ NSInteger codeAssistantCaseCompareItems(id<PBXCompletionItem> a, id<PBXCompletio
 
 @implementation TedWantsToVerifyObjCDoesTheRightThing
 
-- compareThis:(id<PBXCompletionItem>)a withThat:(id<PBXCompletionItem>)b { // expected-warning {{conflicting types for 'compareThis:withThat:'}}
+- compareThis:(id<PBXCompletionItem>)
+    a // expected-warning {{conflicting parameter types in implementation of 'compareThis:withThat:': 'int' vs 'id<PBXCompletionItem>'}}
+     withThat:(id<PBXCompletionItem>)b {
   return self;
 }
 

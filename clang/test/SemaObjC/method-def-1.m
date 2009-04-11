@@ -17,5 +17,24 @@
 @implementation MyClass
 - (void)myMethod { }
 - (vid)myMethod2 { }	// expected-error {{expected a type}}
+
 @end
 
+
+@protocol proto;
+@protocol NSObject;
+
+//@protocol GrowlPluginHandler <NSObject> @end
+
+
+@interface SomeClass2
+- (int)myMethod1: (id<proto>)
+arg; // expected-note {{previous definition is here}}
+@end
+
+@implementation SomeClass2
+- (int)myMethod1: (id<NSObject>)
+  arg { // expected-warning {{conflicting parameter types in implementation of 'myMethod1:': 'id<proto>' vs 'id<NSObject>'}}
+  
+}
+@end

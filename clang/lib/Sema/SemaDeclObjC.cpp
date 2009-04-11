@@ -763,24 +763,27 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
 
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
-  bool err = false;
   if (!Context.typesAreCompatible(IntfMethodDecl->getResultType(),
-                                  ImpMethodDecl->getResultType()))
-    err = true;
-  else
-    for (ObjCMethodDecl::param_iterator IM=ImpMethodDecl->param_begin(),
-         IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
-         IM != EM; ++IM, ++IF) {
-      if (!Context.typesAreCompatible((*IF)->getType(), (*IM)->getType())) {
-        err = true;
-        break;
-      }
-    }
-  
-  if (err) {
-    Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_types) 
-      << ImpMethodDecl->getDeclName();
+                                  ImpMethodDecl->getResultType())) {
+    Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types) 
+      << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
+      << ImpMethodDecl->getResultType();
     Diag(IntfMethodDecl->getLocation(), diag::note_previous_definition);
+  }
+  
+  for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
+       IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
+       IM != EM; ++IM, ++IF) {
+    if (Context.typesAreCompatible((*IF)->getType(), (*IM)->getType()))
+      continue;
+    
+    Diag((*IM)->getLocation(), diag::warn_conflicting_param_types) 
+      << ImpMethodDecl->getDeclName() << (*IF)->getType()
+      << (*IM)->getType();
+    SourceLocation Loc = (*IF)->getLocation();
+    // FIXME
+    if (Loc == SourceLocation()) Loc = IntfMethodDecl->getLocation();
+    Diag(Loc, diag::note_previous_definition);
   }
 }
 

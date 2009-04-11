@@ -49,6 +49,6 @@ typedef NSUInteger XDSourceLanguage;
 {
 }
 // GCC doesn't currently warn about this.
-+ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { // expected-warning {{conflicting types for 'compartmentsForClassifier:withSpecification:'}}
++ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { // expected-warning {{conflicting parameter types in implementation of 'compartmentsForClassifier:withSpecification:': 'id<XDUMLClassifier>' vs 'id<XDSCClassifier>'}}
 }
 @end 
