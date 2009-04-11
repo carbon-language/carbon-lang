@@ -43,7 +43,7 @@ def err_drv_invalid_version_number : Error<
   "invalid version number in '%0'">;
 
 def warn_drv_input_file_unused : Warning<
-  "%0: '%1' input file unused when '%2' is present">;
+  "%0: '%1' input unused when '%2' is present">;
 def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">;
 def warn_drv_pipe_ignored_with_save_temps : Warning<
