@@ -372,23 +372,11 @@ bool FastISel::SelectCall(User *I) {
 
       // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
-      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+      DW->RecordSourceLine(Line, 0, SrcFile);
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
 
-      std::string SPName;
-      Subprogram.getLinkageName(SPName);
-      if (!SPName.empty() 
-          && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
-        // This is a beginning of inlined function.
-        DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()), 
-                              LabelID);
-        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        BuildMI(MBB, DL, II).addImm(LabelID);
-        DW->RecordInlineInfo(Subprogram.getGV(), LabelID);
-      } else {
-        // llvm.dbg.func_start also defines beginning of function scope.
-        DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
-      }
+      // llvm.dbg.func_start also defines beginning of function scope.
+      DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
     }
 
     return true;
