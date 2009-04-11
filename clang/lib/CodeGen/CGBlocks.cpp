@@ -626,8 +626,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();
   QualType ResultType;
   bool IsVariadic;
-  if (!isa<FunctionNoProtoType>(BlockFunctionType)) {
-    const FunctionProtoType *FTy = cast<FunctionProtoType>(BlockFunctionType);
+  if (const FunctionProtoType *FTy = 
+      dyn_cast<FunctionProtoType>(BlockFunctionType)) {
     ResultType = FTy->getResultType();
     IsVariadic = FTy->isVariadic();
   }
