@@ -286,7 +286,6 @@ bool PCHReader::ReadPreprocessorBlock() {
   if (Stream.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID))
     return Error("Malformed preprocessor block record");
   
-  std::string CurName; // FIXME: HACK.
   RecordData Record;
   llvm::SmallVector<IdentifierInfo*, 16> MacroArgs;
   MacroInfo *LastMacro = 0;
@@ -320,21 +319,11 @@ bool PCHReader::ReadPreprocessorBlock() {
     default:  // Default behavior: ignore unknown records.
       break;
         
-    case pch::PP_MACRO_NAME:
-      // Set CurName.  FIXME: This is a hack and should be removed when we have
-      // identifier id's.
-      CurName.clear();
-      for (unsigned i = 0, e = Record.size(); i != e; ++i)
-        CurName += (char)Record[i];
-      break;
-        
     case pch::PP_MACRO_OBJECT_LIKE:
     case pch::PP_MACRO_FUNCTION_LIKE: {
-      unsigned IdentInfo = Record[0];
-      IdentInfo = IdentInfo; // FIXME: Decode into identifier info*.
-      assert(!CurName.empty());
-      IdentifierInfo *II = PP.getIdentifierInfo(CurName.c_str());
-      
+      IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
+      if (II == 0)
+        return Error("Macro must have a name");
       SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[1]);
       bool isUsed = Record[2];
       
@@ -348,7 +337,7 @@ bool PCHReader::ReadPreprocessorBlock() {
         MacroArgs.clear();
         unsigned NumArgs = Record[5];
         for (unsigned i = 0; i != NumArgs; ++i)
-          ; // FIXME: Decode macro arg names: MacroArgs.push_back(Record[6+i]);
+          MacroArgs.push_back(DecodeIdentifierInfo(Record[6+i]));
 
         // Install function-like macro info.
         MI->setIsFunctionLike();
@@ -376,8 +365,8 @@ bool PCHReader::ReadPreprocessorBlock() {
       Tok.startToken();
       Tok.setLocation(SourceLocation::getFromRawEncoding(Record[0]));
       Tok.setLength(Record[1]);
-      unsigned IdentInfo = Record[2];
-      IdentInfo = IdentInfo; // FIXME: Handle this right.
+      if (IdentifierInfo *II = DecodeIdentifierInfo(Record[2]))
+        Tok.setIdentifierInfo(II);
       Tok.setKind((tok::TokenKind)Record[3]);
       Tok.setFlag((Token::TokenFlags)Record[4]);
       LastMacro->AddTokenToBody(Tok);
@@ -393,15 +382,29 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
     return Failure;
   }
 
+  uint64_t PreprocessorBlockBit = 0;
+  
   // Read all of the records and blocks for the PCH file.
   RecordData Record;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
+      // If we saw the preprocessor block, read it now.
+      if (PreprocessorBlockBit) {
+        uint64_t SavedPos = Stream.GetCurrentBitNo();
+        Stream.JumpToBit(PreprocessorBlockBit);
+        if (ReadPreprocessorBlock()) {
+          Error("Malformed preprocessor block");
+          return Failure;
+        }
+        Stream.JumpToBit(SavedPos);
+      }        
+      
       if (Stream.ReadBlockEnd()) {
         Error("Error at end of module block");
         return Failure;
       }
+
       return Success;
     }
 
@@ -416,6 +419,20 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
         }
         break;
 
+      case pch::PREPROCESSOR_BLOCK_ID:
+        // Skip the preprocessor block for now, but remember where it is.  We
+        // want to read it in after the identifier table.
+        if (PreprocessorBlockBit) {
+          Error("Multiple preprocessor blocks found.");
+          return Failure;
+        }
+        PreprocessorBlockBit = Stream.GetCurrentBitNo();
+        if (Stream.SkipBlock()) {
+          Error("Malformed block record");
+          return Failure;
+        }
+        break;
+          
       case pch::SOURCE_MANAGER_BLOCK_ID:
         switch (ReadSourceManagerBlock()) {
         case Success:
@@ -427,13 +444,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
 
         case IgnorePCH:
           return IgnorePCH;
-        }
-        break;
-          
-      case pch::PREPROCESSOR_BLOCK_ID:
-        if (ReadPreprocessorBlock()) {
-          Error("Malformed preprocessor block");
-          return Failure;
         }
         break;
       }
@@ -513,8 +523,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
   Error("Premature end of bitstream");
   return Failure;
 }
-
-PCHReader::~PCHReader() { }
 
 PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Set the PCH file name.
@@ -946,24 +954,22 @@ void PCHReader::PrintStats() {
   std::fprintf(stderr, "\n");
 }
 
-const IdentifierInfo *PCHReader::GetIdentifierInfo(const RecordData &Record, 
-                                                   unsigned &Idx) {
-  pch::IdentID ID = Record[Idx++];
+IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
-
+  
   if (!IdentifierTable || IdentifierData.empty()) {
     Error("No identifier table in PCH file");
     return 0;
   }
-
+  
   if (IdentifierData[ID - 1] & 0x01) {
     uint64_t Offset = IdentifierData[ID - 1];
     IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(
-                               &Context.Idents.get(IdentifierTable + Offset));
+                                                        &Context.Idents.get(IdentifierTable + Offset));
   }
-
-  return reinterpret_cast<const IdentifierInfo *>(IdentifierData[ID - 1]);
+  
+  return reinterpret_cast<IdentifierInfo *>(IdentifierData[ID - 1]);
 }
 
 DeclarationName 

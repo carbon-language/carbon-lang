@@ -155,9 +155,6 @@ namespace clang {
       // The macros in the PP section are a PP_MACRO_* instance followed by a
       // list of PP_TOKEN instances for each token in the definition.
 
-      // FIXME: TEMP HACK UNTIL WE HAVE IDENTIFIER INFO IDs.
-      PP_MACRO_NAME = 4,
-
       /// \brief An object-like macro definition.
       /// [PP_MACRO_OBJECT_LIKE, IdentInfoID, SLoc, IsUsed]
       PP_MACRO_OBJECT_LIKE = 1,

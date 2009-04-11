@@ -137,9 +137,9 @@ public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
   PCHReader(Preprocessor &PP, ASTContext &Context) 
-    : PP(PP), Context(Context), Buffer() { }
+    : PP(PP), Context(Context), IdentifierTable(0) { }
 
-  ~PCHReader();
+  ~PCHReader() {}
 
   PCHReadResult ReadPCH(const std::string &FileName);
 
@@ -195,8 +195,11 @@ public:
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
-  const IdentifierInfo *GetIdentifierInfo(const RecordData &Record, 
-                                          unsigned &Idx);
+  IdentifierInfo *DecodeIdentifierInfo(unsigned Idx);
+  
+  IdentifierInfo *GetIdentifierInfo(const RecordData &Record, unsigned &Idx) {
+    return DecodeIdentifierInfo(Record[Idx++]);
+  }
   DeclarationName ReadDeclarationName(const RecordData &Record, unsigned &Idx);
 };
 

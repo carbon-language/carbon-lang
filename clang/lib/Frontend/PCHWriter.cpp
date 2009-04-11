@@ -582,17 +582,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     if (MI->isBuiltinMacro())
       continue;
 
-    IdentifierInfo *II = I->first;
-    
-    // FIXME: Emit a PP_MACRO_NAME for testing.  This should be removed when we
-    // have identifierinfo id's.
-    for (unsigned i = 0, e = II->getLength(); i != e; ++i)
-      Record.push_back(II->getName()[i]);
-    S.EmitRecord(pch::PP_MACRO_NAME, Record);
-    Record.clear();
-    
-    // FIXME: Output the identifier Info ID #!
-    Record.push_back((intptr_t)II); 
+    AddIdentifierRef(I->first, Record);
     Record.push_back(MI->getDefinitionLoc().getRawEncoding());
     Record.push_back(MI->isUsed());
     
@@ -607,8 +597,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
       Record.push_back(MI->getNumArgs());
       for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
            I != E; ++I)
-        // FIXME: Output the identifier Info ID #!
-        Record.push_back((intptr_t)II); 
+        AddIdentifierRef(*I, Record);
     }
     S.EmitRecord(Code, Record);
     Record.clear();
@@ -623,10 +612,9 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
       Record.push_back(Tok.getLocation().getRawEncoding());
       Record.push_back(Tok.getLength());
 
-      // FIXME: Output the identifier Info ID #!
       // FIXME: When reading literal tokens, reconstruct the literal pointer if
       // it is needed.
-      Record.push_back((intptr_t)Tok.getIdentifierInfo());
+      AddIdentifierRef(Tok.getIdentifierInfo(), Record);
       
       // FIXME: Should translate token kind to a stable encoding.
       Record.push_back(Tok.getKind());
