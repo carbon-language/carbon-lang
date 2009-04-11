@@ -33,4 +33,5 @@ int f2();
 
 int f2(int x) { return x; }
 
+// rdar://6759522
 int main(void) { return 0; }
