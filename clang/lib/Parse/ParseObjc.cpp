@@ -699,18 +699,15 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
-                                          0, 0, 0, CargNames, 
+                                          0, CargNames, 
                                           MethodAttrs, MethodImplKind);
   }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
-  llvm::SmallVector<Action::TypeTy *, 12> KeyTypes;
-  llvm::SmallVector<ObjCDeclSpec, 12> ArgTypeQuals;
-  llvm::SmallVector<IdentifierInfo *, 12> ArgNames;
+  llvm::SmallVector<Action::ObjCArgInfo, 12> ArgInfos;
   
-  Action::TypeTy *TypeInfo;
   while (1) {
-    KeyIdents.push_back(SelIdent);
+    Action::ObjCArgInfo ArgInfo;
     
     // Each iteration parses a single keyword argument.
     if (Tok.isNot(tok::colon)) {
@@ -718,25 +715,28 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       break;
     }
     ConsumeToken(); // Eat the ':'.
-    ObjCDeclSpec DSType;
-    if (Tok.is(tok::l_paren)) // Parse the argument type.
-      TypeInfo = ParseObjCTypeName(DSType);
-    else
-      TypeInfo = 0;
-    KeyTypes.push_back(TypeInfo);
-    ArgTypeQuals.push_back(DSType);
     
+    ArgInfo.Type = 0;
+    if (Tok.is(tok::l_paren)) // Parse the argument type if present.
+      ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec);
+
     // If attributes exist before the argument name, parse them.
+    ArgInfo.ArgAttrs = 0;
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      ParseAttributes(); // FIXME: pass attributes through.
+      ArgInfo.ArgAttrs = ParseAttributes();
 
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident); // missing argument name.
       break;
     }
-    ArgNames.push_back(Tok.getIdentifierInfo());
+    
+    ArgInfo.Name = Tok.getIdentifierInfo();
+    ArgInfo.NameLoc = Tok.getLocation();
     ConsumeToken(); // Eat the identifier.
     
+    ArgInfos.push_back(ArgInfo);
+    KeyIdents.push_back(SelIdent);
+
     // Check for another keyword selector.
     SourceLocation Loc;
     SelIdent = ParseObjCSelectorPiece(Loc);
@@ -773,8 +773,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                                    &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel, 
-                                        &ArgTypeQuals[0], &KeyTypes[0], 
-                                        &ArgNames[0], CargNames, 
+                                        &ArgInfos[0], CargNames, 
                                         MethodAttrs,
                                         MethodImplKind, isVariadic);
 }

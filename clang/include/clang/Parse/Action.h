@@ -1405,6 +1405,18 @@ public:
    IdentifierInfo *propertyIvar) {    // name of the ivar
     return DeclPtrTy();
   }
+  
+  struct ObjCArgInfo {
+    IdentifierInfo *Name;
+    SourceLocation NameLoc;
+    // The Type is null if no type was specified, and the DeclSpec is invalid
+    // in this case.
+    TypeTy *Type;
+    ObjCDeclSpec DeclSpec;
+    
+    /// ArgAttrs - Attribute list for this argument.
+    AttributeList *ArgAttrs;
+  };
 
   // ActOnMethodDeclaration - called for all method declarations. 
   virtual DeclPtrTy ActOnMethodDeclaration(
@@ -1415,11 +1427,9 @@ public:
     ObjCDeclSpec &ReturnQT,    // for return type's in inout etc.
     TypeTy *ReturnType,        // the method return type.
     Selector Sel,              // a unique name for the method.
-    ObjCDeclSpec *ArgQT,       // for arguments' in inout etc.
-    TypeTy **ArgTypes,         // non-zero when Sel.getNumArgs() > 0
-    IdentifierInfo **ArgNames, // non-zero when Sel.getNumArgs() > 0
+    ObjCArgInfo *ArgInfo,      // ArgInfo: Has 'Sel.getNumArgs()' entries.
     llvm::SmallVectorImpl<Declarator> &Cdecls, // c-style args
-    AttributeList *AttrList,   // optional
+    AttributeList *MethodAttrList, // optional
     // tok::objc_not_keyword, tok::objc_optional, tok::objc_required    
     tok::ObjCKeywordKind impKind,
     bool isVariadic = false) {

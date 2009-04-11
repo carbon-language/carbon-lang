@@ -1394,12 +1394,14 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
-    ObjCDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    ObjCArgInfo *ArgInfo,
     llvm::SmallVectorImpl<Declarator> &Cdecls,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic) {
   Decl *ClassDecl = classDecl.getAs<Decl>();
 
+  // FIXME: Param attributes.
+  
   // Make sure we can establish a context for the method.
   if (!ClassDecl) {
     Diag(MethodLoc, diag::error_missing_method_context);
@@ -1435,38 +1437,40 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     // FIXME: arg->AttrList must be stored too!
     QualType argType, originalArgType;
     
-    if (ArgTypes[i]) {
-      argType = QualType::getFromOpaquePtr(ArgTypes[i]);
+    if (ArgInfo[i].Type == 0) {
+      argType = Context.getObjCIdType();
+    } else {
+      argType = QualType::getFromOpaquePtr(ArgInfo[i].Type);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
       if (argType->isArrayType())  { // (char *[]) -> (char **)
         originalArgType = argType;
         argType = Context.getArrayDecayedType(argType);
-      }
-      else if (argType->isFunctionType())
+      } else if (argType->isFunctionType())
         argType = Context.getPointerType(argType);
       else if (argType->isObjCInterfaceType()) {
-        // FIXME! provide more precise location for the parameter
+        // FIXME: improve message to include type!
         Diag(MethodLoc, diag::err_object_cannot_be_by_value)
              << "passed";
         ObjCMethod->setInvalidDecl();
         return DeclPtrTy();
       }
-    } else
-      argType = Context.getObjCIdType();
+    }
+    
     ParmVarDecl* Param;
     if (originalArgType.isNull())
       Param = ParmVarDecl::Create(Context, ObjCMethod,
                                   SourceLocation(/*FIXME*/),
-                                  ArgNames[i], argType,
+                                  ArgInfo[i].Name, argType,
                                   VarDecl::None, 0);
     else
       Param = OriginalParmVarDecl::Create(Context, ObjCMethod,
                                           SourceLocation(/*FIXME*/),
-                                          ArgNames[i], argType, originalArgType,
+                                          ArgInfo[i].Name, argType,
+                                          originalArgType,
                                           VarDecl::None, 0);
     
     Param->setObjCDeclQualifier(
-      CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
+      CvtQTToAstBitMask(ArgInfo[i].DeclSpec.getObjCDeclQualifier()));
     Params.push_back(Param);
   }
 
