@@ -25,7 +25,7 @@
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
-
+#include <cstdio>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

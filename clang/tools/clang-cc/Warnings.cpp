@@ -38,6 +38,7 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/Support/CommandLine.h"
+#include <cstdio>
 #include <utility>
 #include <algorithm>
 using namespace clang;
