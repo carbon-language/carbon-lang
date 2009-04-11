@@ -1252,6 +1252,10 @@ class DwarfDebug : public Dwarf {
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
 
+  /// InlineInfo - Keep track of inlined functions and their location.
+  /// This information is used to populate debug_inlined section.
+  DenseMap<GlobalVariable *, SmallVector<unsigned, 4> > InlineInfo;
+
   /// DebugTimer - Timer for the Dwarf debug writer.
   Timer *DebugTimer;
   
@@ -2027,15 +2031,18 @@ private:
     for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
       // Define the Scope debug information entry.
       DbgScope *Scope = Scopes[j];
-      // FIXME - Ignore inlined functions for the time being.
-      if (!Scope->getParent()) continue;
 
       unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
       unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
 
       // Ignore empty scopes.
       if (StartID == EndID && StartID != 0) continue;
-      if (Scope->getScopes().empty() && Scope->getVariables().empty()) continue;
+
+      // Do not ignore inlined scope even if it is empty. Inlined scope 
+      // does not have any parent.
+      if (Scope->getParent() 
+          && Scope->getScopes().empty() && Scope->getVariables().empty()) 
+        continue;
 
       if (StartID == ParentStartID && EndID == ParentEndID) {
         // Just add stuff to the parent scope.
@@ -2781,6 +2788,74 @@ private:
     }
   }
 
+  /// EmitDebugInlineInfo - Emit inline info using following format.
+  /// Section Header:
+  /// 1. length of section
+  /// 2. Dwarf version number
+  /// 3. address size.
+  ///
+  /// Entries (one "entry" for each function that was inlined):
+  ///
+  /// 1. offset into __debug_str section for MIPS linkage name, if exists; 
+  ///   otherwise offset into __debug_str for regular function name.
+  /// 2. offset into __debug_str section for regular function name.
+  /// 3. an unsigned LEB128 number indicating the number of distinct inlining 
+  /// instances for the function.
+  /// 
+  /// The rest of the entry consists of a {die_offset, low_pc}  pair for each 
+  /// inlined instance; the die_offset points to the inlined_subroutine die in
+  /// the __debug_info section, and the low_pc is the starting address  for the
+  ///  inlining instance.
+  void EmitDebugInlineInfo() {
+    if (!MainCU)
+      return;
+
+    Asm->SwitchToDataSection(TAI->getDwarfDebugInlineSection());
+    Asm->EOL();
+    EmitDifference("debug_inlined_end", 1,
+                   "debug_inlined_begin", 1, true);
+    Asm->EOL("Length of Debug Inlined Information Entry");
+
+    EmitLabel("debug_inlined_begin", 1);
+
+    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("Dwarf Version");
+    Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Address Size (in bytes)");
+
+    for (DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator 
+           I = InlineInfo.begin(), E = InlineInfo.end(); I != E; ++I) {
+      GlobalVariable *GV = I->first;
+      SmallVector<unsigned, 4> &Labels = I->second;
+      DISubprogram SP(GV);
+      std::string Name;
+      std::string LName;
+
+      SP.getLinkageName(LName);
+      SP.getName(Name);
+
+      Asm->EmitString(LName.empty() ? Name : LName);
+      Asm->EOL("MIPS linkage name");
+
+      Asm->EmitString(Name); Asm->EOL("Function name");
+
+      Asm->EmitULEB128Bytes(Labels.size()); Asm->EOL("Inline count");
+
+      for (SmallVector<unsigned, 4>::iterator LI = Labels.begin(),
+             LE = Labels.end(); LI != LE; ++LI) {
+        DIE *SP = MainCU->getDieMapSlotFor(GV);
+        Asm->EmitInt32(SP->getOffset()); Asm->EOL("DIE offset");
+
+        if (TD->getPointerSize() == sizeof(int32_t))
+          O << TAI->getData32bitsDirective();
+        else
+          O << TAI->getData64bitsDirective();
+        PrintLabelName("label", *LI); Asm->EOL("low_pc");
+      }
+    }
+
+    EmitLabel("debug_inlined_end", 1);
+    Asm->EOL();
+  }
+
   /// GetOrCreateSourceID - Look up the source id with the given directory and
   /// source file names. If none currently exists, create a new id and insert it
   /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
@@ -3131,6 +3206,9 @@ public:
     // Emit info into a debug macinfo section.
     EmitDebugMacInfo();
 
+    // Emit inline info.
+    EmitDebugInlineInfo();
+
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
   }
@@ -3337,6 +3415,20 @@ public:
     return ID;
   }
 
+  /// RecordRegionStart - Indicate the start of a region.
+  unsigned RecordRegionStart(GlobalVariable *V, unsigned ID) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
+    DbgScope *Scope = getOrCreateScope(V);
+    if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
+    return ID;
+  }
+
   /// RecordRegionEnd - Indicate the end of a region.
   unsigned RecordRegionEnd(GlobalVariable *V) {
     if (TimePassesIsEnabled)
@@ -3376,6 +3468,23 @@ public:
 
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
+  }
+
+  //// RecordInlineInfo - Global variable GV is inlined at the location marked
+  //// by LabelID label.
+  void RecordInlineInfo(GlobalVariable *GV, unsigned LabelID) {
+    MMI->RecordUsedDbgLabel(LabelID);
+    DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
+      I = InlineInfo.find(GV);
+    if (I == InlineInfo.end()) {
+      SmallVector<unsigned, 4> Labels;
+      Labels.push_back(LabelID);
+      InlineInfo[GV] = Labels;
+      return;
+    }
+
+    SmallVector<unsigned, 4> &Labels = I->second;
+    Labels.push_back(LabelID);
   }
 };
 
@@ -4532,6 +4641,11 @@ unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V) {
   return DD->RecordRegionStart(V);
 }
 
+/// RecordRegionStart - Indicate the start of a region.
+unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V, unsigned ID) {
+  return DD->RecordRegionStart(V, ID);
+}
+
 /// RecordRegionEnd - Indicate the end of a region.
 unsigned DwarfWriter::RecordRegionEnd(GlobalVariable *V) {
   return DD->RecordRegionEnd(V);
@@ -4553,3 +4667,10 @@ void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
 bool DwarfWriter::ShouldEmitDwarfDebug() const {
   return DD->ShouldEmitDwarfDebug();
 }
+
+//// RecordInlineInfo - Global variable GV is inlined at the location marked
+//// by LabelID label.
+void DwarfWriter::RecordInlineInfo(GlobalVariable *GV, unsigned LabelID) {
+  DD->RecordInlineInfo(GV, LabelID);
+}
+

@@ -112,6 +112,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
   DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
   DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
+  DwarfDebugInlineSection = ".section __DWARF,__debug_inlined,regular,debug";
   DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
   DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
   DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";

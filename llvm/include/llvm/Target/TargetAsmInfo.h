@@ -506,7 +506,11 @@ namespace llvm {
     /// DwarfPubTypesSection - Section directive for Dwarf info.
     ///
     const char *DwarfPubTypesSection; // Defaults to ".debug_pubtypes".
-    
+
+    /// DwarfDebugInlineSection - Section directive for inline info.
+    ///
+    const char *DwarfDebugInlineSection; // Defaults to ".debug_inlined"
+
     /// DwarfStrSection - Section directive for Dwarf info.
     ///
     const char *DwarfStrSection; // Defaults to ".debug_str".
@@ -879,6 +883,9 @@ namespace llvm {
     }
     const char *getDwarfPubTypesSection() const {
       return DwarfPubTypesSection;
+    }
+    const char *getDwarfDebugInlineSection() const {
+      return DwarfDebugInlineSection;
     }
     const char *getDwarfStrSection() const {
       return DwarfStrSection;
