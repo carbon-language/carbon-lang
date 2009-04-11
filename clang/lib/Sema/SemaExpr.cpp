@@ -4655,11 +4655,18 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
     CurBlock->hasPrototype = true;
     CurBlock->isVariadic = false;
-    Type *RetTy = T.getTypePtr()->getAsFunctionType()->getResultType()
-      .getTypePtr();
+    
+    QualType RetTy = T.getTypePtr()->getAsFunctionType()->getResultType();
+    
+    // Do not allow returning a objc interface by-value.
+    if (RetTy->isObjCInterfaceType()) {
+      Diag(ParamInfo.getSourceRange().getBegin(),
+           diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
+      return;
+    }
 
     if (!RetTy->isDependentType())
-      CurBlock->ReturnType = RetTy;
+      CurBlock->ReturnType = RetTy.getTypePtr();
     return;
   }
 
@@ -4683,22 +4690,26 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
       CurBlock->Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
     CurBlock->isVariadic = FTI.isVariadic;
-    QualType T = GetTypeForDeclarator (ParamInfo, CurScope);
-
-    Type* RetTy = T.getTypePtr()->getAsFunctionType()->getResultType()
-      .getTypePtr();
-
-    if (!RetTy->isDependentType())
-      CurBlock->ReturnType = RetTy;
   }
   CurBlock->TheDecl->setParams(Context, &CurBlock->Params[0], 
-                                        CurBlock->Params.size());
+                               CurBlock->Params.size());
 
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
        E = CurBlock->TheDecl->param_end(); AI != E; ++AI)
     // If this has an identifier, add it to the scope stack.
     if ((*AI)->getIdentifier())
       PushOnScopeChains(*AI, CurBlock->TheScope);
+
+  // Analyze the return type.
+  QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
+  QualType RetTy = T->getAsFunctionType()->getResultType();
+  
+  // Do not allow returning a objc interface by-value.
+  if (RetTy->isObjCInterfaceType()) {
+    Diag(ParamInfo.getSourceRange().getBegin(),
+         diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
+  } else if (!RetTy->isDependentType())
+    CurBlock->ReturnType = RetTy.getTypePtr();
 }
 
 /// ActOnBlockError - If there is an error parsing a block, this callback
