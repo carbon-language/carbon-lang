@@ -96,6 +96,8 @@ public:
   bool isValid() const {
     return SM != 0;
   }
+  
+  const SourceManager& getSourceManager() const { assert(isValid());return *SM;}
     
   FullSourceLoc asLocation() const;
   SourceRange asRange() const;

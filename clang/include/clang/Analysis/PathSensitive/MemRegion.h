@@ -320,6 +320,8 @@ public:
   static bool classof(const MemRegion* R) {
     return R->getKind() == TypedViewRegionKind;
   }
+  
+  const MemRegion *removeViews() const;
 };
   
 

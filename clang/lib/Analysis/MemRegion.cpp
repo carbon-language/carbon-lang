@@ -481,6 +481,21 @@ bool MemRegionManager::hasStackStorage(const MemRegion* R) {
     
     SR = dyn_cast<SubRegion>(R);    
   }
-  
+
   return false;
+}
+
+
+//===----------------------------------------------------------------------===//
+// View handling.
+//===----------------------------------------------------------------------===//
+
+const MemRegion *TypedViewRegion::removeViews() const {
+  const SubRegion *SR = this;
+  const MemRegion *R = SR;
+  while (SR && isa<TypedViewRegion>(SR)) {
+    R = SR->getSuperRegion();
+    SR = dyn_cast<SubRegion>(R);
+  }
+  return R;
 }

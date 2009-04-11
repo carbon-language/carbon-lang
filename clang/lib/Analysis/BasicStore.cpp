@@ -282,6 +282,23 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
     return UnknownVal();
 }
 
+static bool isHigherOrderVoidPtr(QualType T, ASTContext &C) {
+  bool foundPointer = false;
+  while (1) {  
+    const PointerType *PT = T->getAsPointerType();
+    if (!PT) {
+      if (!foundPointer)
+        return false;
+      
+      QualType X = C.getCanonicalType(T).getUnqualifiedType();
+      return X == C.VoidTy;
+    }
+    
+    foundPointer = true;
+    T = PT->getPointeeType();
+  }  
+}
+
 SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
   
   if (isa<UnknownVal>(loc))
@@ -293,6 +310,20 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
 
     case loc::MemRegionKind: {
       const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
+      
+      if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
+        // Just support void**, void***, etc., for now.  This is needed
+        // to handle OSCompareAndSwapPtr().
+        ASTContext &Ctx = StateMgr.getContext();
+        QualType T = TR->getLValueType(Ctx);
+
+        if (!isHigherOrderVoidPtr(T, Ctx))
+          return UnknownVal();
+        
+        // Otherwise, strip the views.
+        // FIXME: Should we layer a TypedView on the result?
+        R = TR->removeViews();
+      }
       
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
         return UnknownVal();

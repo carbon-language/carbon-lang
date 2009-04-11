@@ -57,9 +57,9 @@ protected:
     : Data(reinterpret_cast<uintptr_t>(P1) | TwoPointers,
            reinterpret_cast<uintptr_t>(P2)), Tag(tag) {}
 
-  ProgramPoint(const void* P1, const void* P2, bool)
+  ProgramPoint(const void* P1, const void* P2, bool, const void *tag = 0)
     : Data(reinterpret_cast<uintptr_t>(P1) | Custom,
-           reinterpret_cast<uintptr_t>(P2)), Tag(0) {}
+           reinterpret_cast<uintptr_t>(P2)), Tag(tag) {}
 
 protected:
   void* getData1NoMask() const {
@@ -173,10 +173,13 @@ protected:
   PostStmt(const Stmt* S, Kind k,const void *tag = 0)
     : ProgramPoint(S, k, tag) {}
 
-  PostStmt(const Stmt* S, const void* data) : ProgramPoint(S, data, true) {}
+  PostStmt(const Stmt* S, const void* data, bool, const void *tag =0)
+    : ProgramPoint(S, data, true, tag) {}
   
 public:
-  PostStmt(const Stmt* S) : ProgramPoint(S, PostStmtKind) {}
+  PostStmt(const Stmt* S, const void *tag = 0)
+    : ProgramPoint(S, PostStmtKind, tag) {}
+
       
   Stmt* getStmt() const { return (Stmt*) getData1(); }
 
@@ -200,7 +203,7 @@ class PostStmtCustom : public PostStmt {
 public:
   PostStmtCustom(const Stmt* S,
                  const std::pair<const void*, const void*>* TaggedData)
-    : PostStmt(S, TaggedData) {
+    : PostStmt(S, TaggedData, true) {
     assert(getKind() == PostStmtCustomKind);
   }
 
@@ -219,8 +222,8 @@ public:
   
 class PostOutOfBoundsCheckFailed : public PostStmt {
 public:
-  PostOutOfBoundsCheckFailed(const Stmt* S)
-  : PostStmt(S, PostOutOfBoundsCheckFailedKind) {}
+  PostOutOfBoundsCheckFailed(const Stmt* S, const void *tag = 0)
+  : PostStmt(S, PostOutOfBoundsCheckFailedKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostOutOfBoundsCheckFailedKind;
@@ -229,8 +232,8 @@ public:
 
 class PostUndefLocationCheckFailed : public PostStmt {
 public:
-  PostUndefLocationCheckFailed(const Stmt* S)
-  : PostStmt(S, PostUndefLocationCheckFailedKind) {}
+  PostUndefLocationCheckFailed(const Stmt* S, const void *tag = 0)
+  : PostStmt(S, PostUndefLocationCheckFailedKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostUndefLocationCheckFailedKind;
@@ -239,8 +242,8 @@ public:
   
 class PostNullCheckFailed : public PostStmt {
 public:
-  PostNullCheckFailed(const Stmt* S)
-  : PostStmt(S, PostNullCheckFailedKind) {}
+  PostNullCheckFailed(const Stmt* S, const void *tag = 0)
+  : PostStmt(S, PostNullCheckFailedKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostNullCheckFailedKind;
@@ -269,7 +272,8 @@ public:
   
 class PostPurgeDeadSymbols : public PostStmt {
 public:
-  PostPurgeDeadSymbols(const Stmt* S) : PostStmt(S, PostPurgeDeadSymbolsKind) {}
+  PostPurgeDeadSymbols(const Stmt* S, const void *tag = 0)
+    : PostStmt(S, PostPurgeDeadSymbolsKind, tag) {}
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostPurgeDeadSymbolsKind;

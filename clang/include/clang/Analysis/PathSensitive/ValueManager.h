@@ -91,7 +91,9 @@ public:
                     const llvm::APSInt& rhs, QualType T);
   
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
-                    const SymExpr *rhs, QualType T);  
+                    const SymExpr *rhs, QualType T);
+  
+  NonLoc makeTruthVal(bool b, QualType T);
 };
 } // end clang namespace
 #endif

@@ -146,14 +146,23 @@ public:
   
   ExplodedNodeImpl*
   generateNodeImpl(Stmt* S, const void* State, ExplodedNodeImpl* Pred,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind);
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                   const void *tag = 0);
 
   ExplodedNodeImpl*
   generateNodeImpl(Stmt* S, const void* State,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {    
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                   const void *tag = 0) {
     ExplodedNodeImpl* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
-    return generateNodeImpl(S, State, N, K);
+    return generateNodeImpl(S, State, N, K, tag);
+  }
+  
+  ExplodedNodeImpl*
+  generateNodeImpl(Stmt* S, const void* State, const void *tag = 0) {
+    ExplodedNodeImpl* N = getLastNode();
+    assert (N && "Predecessor of new node is infeasible.");
+    return generateNodeImpl(S, State, N, ProgramPoint::PostStmtKind, tag);
   }
   
   /// getStmt - Return the current block-level expression associated with
@@ -183,7 +192,7 @@ public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb, StateManagerTy& mgr) :
     NB(nb), Mgr(mgr), Auditor(0), PurgingDeadSymbols(false),
     BuildSinks(false), HasGeneratedNode(false),
-    PointKind(ProgramPoint::PostStmtKind) {
+    PointKind(ProgramPoint::PostStmtKind), Tag(0) {
       
     CleanedState = getLastNode()->getState();
   }
@@ -204,7 +213,7 @@ public:
                        ProgramPoint::Kind K) {
     HasGeneratedNode = true;
     if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, K));
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, K, Tag));
   }
   
   NodeTy* generateNode(Stmt* S, const StateTy* St, NodeTy* Pred) {
@@ -214,7 +223,7 @@ public:
   NodeTy* generateNode(Stmt* S, const StateTy* St, ProgramPoint::Kind K) {
     HasGeneratedNode = true;
     if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, K));
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, K, Tag));
   }
   
   NodeTy* generateNode(Stmt* S, const StateTy* St) {
@@ -286,6 +295,7 @@ public:
   bool BuildSinks;
   bool HasGeneratedNode;
   ProgramPoint::Kind PointKind;
+  const void *Tag;
 };
   
 class GRBranchNodeBuilderImpl {

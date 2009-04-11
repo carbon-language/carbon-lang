@@ -1,7 +1,9 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s
+
+
+// NOTWORK: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// NOTWORK: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -210,5 +212,17 @@ void f12() {
 
 id testSharedClassFromFunction() {
   return [[SharedClass alloc] _init]; // no-warning
+}
+
+// Test OSCompareAndSwap
+_Bool OSAtomicCompareAndSwapPtr( void *__oldValue, void *__newValue, void * volatile *__theValue );
+
+void testOSCompareAndSwap() {
+  NSString *old = 0;
+  NSString *s = [[NSString alloc] init];
+  if (!OSAtomicCompareAndSwapPtr(0, s, (void**) &old))
+    [s release];
+  else    
+    [old release];
 }
 

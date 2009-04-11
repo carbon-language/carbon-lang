@@ -126,8 +126,12 @@ public:
     return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy), isUnsigned);
   }
 
+  inline const llvm::APSInt& getTruthValue(bool b, QualType T) {
+    return getValue(b ? 1 : 0, Ctx.getTypeSize(T), false);
+  }
+  
   inline const llvm::APSInt& getTruthValue(bool b) {
-    return getValue(b ? 1 : 0, Ctx.getTypeSize(Ctx.IntTy), false);
+    return getTruthValue(b, Ctx.IntTy);
   }
   
   const CompoundValData* getCompoundValData(QualType T, 

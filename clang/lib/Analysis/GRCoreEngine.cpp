@@ -368,47 +368,49 @@ void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-static inline PostStmt GetPostLoc(Stmt* S, ProgramPoint::Kind K) {
+static inline PostStmt GetPostLoc(Stmt* S, ProgramPoint::Kind K,
+                                  const void *tag) {
   switch (K) {
     default:
       assert(false && "Invalid PostXXXKind.");
       
     case ProgramPoint::PostStmtKind:
-      return PostStmt(S);
+      return PostStmt(S, tag);
       
     case ProgramPoint::PostLoadKind:
-      return PostLoad(S);
+      return PostLoad(S, tag);
 
     case ProgramPoint::PostUndefLocationCheckFailedKind:
-      return PostUndefLocationCheckFailed(S);
+      return PostUndefLocationCheckFailed(S, tag);
 
     case ProgramPoint::PostLocationChecksSucceedKind:
-      return PostLocationChecksSucceed(S);
+      return PostLocationChecksSucceed(S, tag);
       
     case ProgramPoint::PostOutOfBoundsCheckFailedKind:
-      return PostOutOfBoundsCheckFailed(S);
+      return PostOutOfBoundsCheckFailed(S, tag);
       
     case ProgramPoint::PostNullCheckFailedKind:
-      return PostNullCheckFailed(S);
+      return PostNullCheckFailed(S, tag);
       
     case ProgramPoint::PostStoreKind:
-      return PostStore(S);
+      return PostStore(S, tag);
       
     case ProgramPoint::PostPurgeDeadSymbolsKind:
-      return PostPurgeDeadSymbols(S);
+      return PostPurgeDeadSymbols(S, tag);
   }
 }
 
 ExplodedNodeImpl*
 GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, const void* State,
                                         ExplodedNodeImpl* Pred,
-                                        ProgramPoint::Kind K) {
-  return generateNodeImpl(GetPostLoc(S, K), State, Pred); 
+                                        ProgramPoint::Kind K,
+                                        const void *tag) {
+  return generateNodeImpl(GetPostLoc(S, K, tag), State, Pred); 
 }
 
 ExplodedNodeImpl*
 GRStmtNodeBuilderImpl::generateNodeImpl(PostStmt Loc, const void* State,
-                                        ExplodedNodeImpl* Pred) {  
+                                        ExplodedNodeImpl* Pred) {
   bool IsNew;
   ExplodedNodeImpl* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
   N->addPredecessor(Pred);

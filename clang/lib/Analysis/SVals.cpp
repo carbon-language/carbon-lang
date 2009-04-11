@@ -271,6 +271,10 @@ NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
   return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
 }
 
+NonLoc ValueManager::makeTruthVal(bool b, QualType T) {
+  return nonloc::ConcreteInt(BasicVals.getTruthValue(b, T));
+}
+
 NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
                                BasicValueFactory& BasicVals) {
   return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));

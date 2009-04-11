@@ -52,6 +52,7 @@ class GRStmtNodeBuilderRef {
   const unsigned OldSize;
   const bool AutoCreateNode;
   SaveAndRestore<bool> OldSink;
+  SaveAndRestore<const void*> OldTag;
   SaveOr OldHasGen;
 
 private:
@@ -68,7 +69,7 @@ private:
                        const Stmt* s, bool auto_create_node)
   : Dst(dst), B(builder), Eng(eng), Pred(pred),
     state(st), stmt(s), OldSize(Dst.size()), AutoCreateNode(auto_create_node),
-    OldSink(B.BuildSinks), OldHasGen(B.HasGeneratedNode) {}
+    OldSink(B.BuildSinks), OldTag(B.Tag), OldHasGen(B.HasGeneratedNode) {}
   
 public:
 

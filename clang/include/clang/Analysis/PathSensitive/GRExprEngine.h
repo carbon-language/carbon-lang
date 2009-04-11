@@ -538,11 +538,11 @@ protected:
     return StateMgr.AssumeInBound(St, Idx, UpperBound, Assumption, isFeasible);
   }
 
+public:
   NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
-    assert (Builder && "GRStmtNodeBuilder not present.");
-    return Builder->MakeNode(Dst, S, Pred, St, K);
-  }
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                   const void *tag = 0);
+protected:
     
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
@@ -673,6 +673,8 @@ protected:
     return X.isValid() ? getTF().EvalComplement(*this, cast<NonLoc>(X)) : X;
   }
   
+public:
+  
   SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, NonLoc R, QualType T) {
     return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L, R, T)
                        : R;
@@ -692,40 +694,41 @@ protected:
   
   SVal EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R, QualType T);
   
-  void EvalCall(NodeSet& Dst, CallExpr* CE, SVal L, NodeTy* Pred) {
-    assert (Builder && "GRStmtNodeBuilder must be defined.");
-    getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
-  }
+protected:
+  
+  void EvalCall(NodeSet& Dst, CallExpr* CE, SVal L, NodeTy* Pred);
   
   void EvalObjCMessageExpr(NodeSet& Dst, ObjCMessageExpr* ME, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
     getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
+
+  void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
+  
+  const GRState* MarkBranch(const GRState* St, Stmt* Terminator, 
+                            bool branchTaken);
   
   /// EvalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by EvalStore, VisitDeclStmt, and others.
   void EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
                 const GRState* St, SVal location, SVal Val);
   
-  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const GRState* St,
-                 SVal TargetLV, SVal Val);
-  
-  void EvalStore(NodeSet& Dst, Expr* E, Expr* StoreE, NodeTy* Pred,
-                 const GRState* St, SVal TargetLV, SVal Val);
-  
-  // FIXME: The "CheckOnly" option exists only because Array and Field
-  //  loads aren't fully implemented.  Eventually this option will go away.
-  
+public:
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                const GRState* St, SVal location);
+                const GRState* St, SVal location, const void *tag = 0);
   
   NodeTy* EvalLocation(Stmt* Ex, NodeTy* Pred,
-                       const GRState* St, SVal location);
+                       const GRState* St, SVal location,
+                       const void *tag = 0);
+
   
-  void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
+  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const GRState* St,
+                 SVal TargetLV, SVal Val, const void *tag = 0);
   
-  const GRState* MarkBranch(const GRState* St, Stmt* Terminator, 
-                            bool branchTaken);
+  void EvalStore(NodeSet& Dst, Expr* E, Expr* StoreE, NodeTy* Pred,
+                 const GRState* St, SVal TargetLV, SVal Val,
+                 const void *tag = 0);
+  
 };
   
 } // end clang namespace

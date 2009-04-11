@@ -531,6 +531,22 @@ bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, const GRState*,
 }
 
 //===----------------------------------------------------------------------===//
+// Generic node creation.
+//===----------------------------------------------------------------------===//
+
+GRExprEngine::NodeTy* GRExprEngine::MakeNode(NodeSet& Dst, Stmt* S,
+                                             NodeTy* Pred,
+                                             const GRState* St,
+                                             ProgramPoint::Kind K,
+                                             const void *tag) {
+  
+  assert (Builder && "GRStmtNodeBuilder not present.");
+  SaveAndRestore<const void*> OldTag(Builder->Tag);
+  Builder->Tag = tag;
+  return Builder->MakeNode(Dst, S, Pred, St, K);
+}
+
+//===----------------------------------------------------------------------===//
 // Branch processing.
 //===----------------------------------------------------------------------===//
 
@@ -1069,12 +1085,13 @@ void GRExprEngine::EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
 ///  @param location The location to store the value
 ///  @param Val The value to be stored
 void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                             const GRState* state, SVal location, SVal Val) {
+                             const GRState* state, SVal location, SVal Val,
+                             const void *tag) {
   
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
   // Evaluate the location (checks for bad dereferences).
-  Pred = EvalLocation(Ex, Pred, state, location);
+  Pred = EvalLocation(Ex, Pred, state, location, tag);
   
   if (!Pred)
     return;
@@ -1084,15 +1101,18 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
 
   // Proceed with the store.  
   SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind);
-  Builder->PointKind = ProgramPoint::PostStoreKind;  
+  SaveAndRestore<const void*> OldTag(Builder->Tag);
+  Builder->PointKind = ProgramPoint::PostStoreKind;
+  Builder->Tag = tag;
   EvalBind(Dst, Ex, Pred, state, location, Val);
 }
 
 void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                            const GRState* state, SVal location) {
+                            const GRState* state, SVal location,
+                            const void *tag) {
 
   // Evaluate the location (checks for bad dereferences).  
-  Pred = EvalLocation(Ex, Pred, state, location);
+  Pred = EvalLocation(Ex, Pred, state, location, tag);
   
   if (!Pred)
     return;
@@ -1107,27 +1127,32 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
 
   if (location.isUnknown()) {
     // This is important.  We must nuke the old binding.
-    MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, UnknownVal()), K);
+    MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, UnknownVal()), K, tag);
   }
   else {
     SVal V = GetSVal(state, cast<Loc>(location), Ex->getType());
-    MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V), K);  
+    MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V), K, tag);
   }
 }
 
 void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, Expr* StoreE, NodeTy* Pred,
-                             const GRState* state, SVal location, SVal Val) {
+                             const GRState* state, SVal location, SVal Val,
+                             const void *tag) {
  
   NodeSet TmpDst;
-  EvalStore(TmpDst, StoreE, Pred, state, location, Val);
+  EvalStore(TmpDst, StoreE, Pred, state, location, Val, tag);
 
   for (NodeSet::iterator I=TmpDst.begin(), E=TmpDst.end(); I!=E; ++I)
-    MakeNode(Dst, Ex, *I, (*I)->getState());
+    MakeNode(Dst, Ex, *I, (*I)->getState(), ProgramPoint::PostStmtKind, tag);
 }
 
 GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
                                                  const GRState* state,
-                                                 SVal location) {
+                                                 SVal location,
+                                                 const void *tag) {
+  
+  SaveAndRestore<const void*> OldTag(Builder->Tag);
+  Builder->Tag = tag;
   
   // Check for loads/stores from/to undefined values.  
   if (location.isUndef()) {
@@ -1235,8 +1260,144 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
 }
 
 //===----------------------------------------------------------------------===//
+// Transfer function: OSAtomics.
+//
+// FIXME: Eventually refactor into a more "plugin" infrastructure.
+//===----------------------------------------------------------------------===//
+
+// Mac OS X:
+// http://developer.apple.com/documentation/Darwin/Reference/Manpages/man3
+// atomic.3.html
+//
+static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
+                                       GRExprEngine& Engine,
+                                       GRStmtNodeBuilder<GRState>& Builder,
+                                       CallExpr* CE, SVal L,                 
+                                       ExplodedNode<GRState>* Pred) {
+
+  // Not enough arguments to match OSAtomicCompareAndSwap?
+  if (CE->getNumArgs() != 3)
+    return false;
+  
+  ASTContext &C = Engine.getContext();
+  Expr *oldValueExpr = CE->getArg(0);
+  QualType oldValueType = C.getCanonicalType(oldValueExpr->getType());
+
+  Expr *newValueExpr = CE->getArg(1);
+  QualType newValueType = C.getCanonicalType(newValueExpr->getType());
+  
+  // Do the types of 'oldValue' and 'newValue' match?
+  if (oldValueType != newValueType)
+    return false;
+  
+  Expr *theValueExpr = CE->getArg(2);
+  const PointerType *theValueType = theValueExpr->getType()->getAsPointerType();
+  
+  // theValueType not a pointer?
+  if (!theValueType)
+    return false;
+  
+  QualType theValueTypePointee =
+    C.getCanonicalType(theValueType->getPointeeType()).getUnqualifiedType();
+  
+  // The pointee must match newValueType and oldValueType.
+  if (theValueTypePointee != newValueType)
+    return false;
+  
+  static unsigned magic_load = 0;
+  static unsigned magic_store = 0;
+
+  const void *OSAtomicLoadTag = &magic_load;
+  const void *OSAtomicStoreTag = &magic_store;
+  
+  // Load 'theValue'.
+  GRStateManager &StateMgr = Engine.getStateManager();
+  const GRState *state = Pred->getState();
+  ExplodedNodeSet<GRState> Tmp;
+  SVal location = StateMgr.GetSVal(state, theValueExpr);
+  Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag);
+
+  for (ExplodedNodeSet<GRState>::iterator I = Tmp.begin(), E = Tmp.end();
+       I != E; ++I) {
+  
+    ExplodedNode<GRState> *N = *I;
+    const GRState *stateLoad = N->getState();
+    SVal theValueVal = StateMgr.GetSVal(stateLoad, theValueExpr);
+    SVal oldValueVal = StateMgr.GetSVal(stateLoad, oldValueExpr);
+        
+    // Perform the comparison.
+    SVal Cmp = Engine.EvalBinOp(BinaryOperator::EQ, theValueVal, oldValueVal,
+                                Engine.getContext().IntTy);
+    bool isFeasible = false;
+    const GRState *stateEqual = StateMgr.Assume(stateLoad, Cmp, true,
+                                                isFeasible);
+    
+    // Were they equal?
+    if (isFeasible) {
+      // Perform the store.
+      ExplodedNodeSet<GRState> TmpStore;
+      Engine.EvalStore(TmpStore, theValueExpr, N, stateEqual, location, 
+                       StateMgr.GetSVal(stateEqual, newValueExpr),
+                       OSAtomicStoreTag);
+      
+      // Now bind the result of the comparison.
+      for (ExplodedNodeSet<GRState>::iterator I2 = TmpStore.begin(),
+           E2 = TmpStore.end(); I2 != E2; ++I2) {
+        ExplodedNode<GRState> *predNew = *I2;
+        const GRState *stateNew = predNew->getState();
+        SVal Res = Engine.getValueManager().makeTruthVal(true, CE->getType());
+        Engine.MakeNode(Dst, CE, predNew, Engine.BindExpr(stateNew, CE, Res));
+      }
+    }
+    
+    // Were they not equal?
+    isFeasible = false;
+    const GRState *stateNotEqual = StateMgr.Assume(stateLoad, Cmp, false,
+                                                   isFeasible);
+    
+    if (isFeasible) {
+      SVal Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
+      Engine.MakeNode(Dst, CE, N, Engine.BindExpr(stateNotEqual, CE, Res));
+    }
+  }
+      
+  return true;
+}
+
+static bool EvalOSAtomic(ExplodedNodeSet<GRState>& Dst,
+                         GRExprEngine& Engine,
+                         GRStmtNodeBuilder<GRState>& Builder,
+                         CallExpr* CE, SVal L,
+                         ExplodedNode<GRState>* Pred) {
+  
+  if (!isa<loc::FuncVal>(L))
+    return false;
+  
+  const FunctionDecl *FD = cast<loc::FuncVal>(L).getDecl();
+  const char *FName = FD->getNameAsCString();
+  
+  // Check for compare and swap.
+  if (strncmp(FName, "OSAtomicCompareAndSwap", 22) == 0)
+    return EvalOSAtomicCompareAndSwap(Dst, Engine, Builder, CE, L, Pred);
+  
+  // FIXME: Other atomics.
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
+
+void GRExprEngine::EvalCall(NodeSet& Dst, CallExpr* CE, SVal L, NodeTy* Pred) {
+  assert (Builder && "GRStmtNodeBuilder must be defined.");
+  
+  // FIXME: Allow us to chain together transfer functions.
+  if (EvalOSAtomic(Dst, *this, *Builder, CE, L, Pred))
+      return;
+      
+  getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
+}
+
 void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
