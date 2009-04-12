@@ -40,16 +40,26 @@ int (test5), ;  // expected-error {{expected identifier or '('}}
 
 // PR3963 & rdar://6759604 - test error recovery for mistyped "typenames".
 
-struct xyz { int y; };
-
-foo_t a = 4;   // expected-error {{unknown type name 'foo_t'}}
-xyz b;         // expected-error {{unknown type name 'xyz'}}
-
 foo_t *d;      // expected-error {{unknown type name 'foo_t'}}
+foo_t a = 4;   // expected-error {{unknown type name 'foo_t'}}
+int test6() { return a; }  // a should be declared.
 
+// Use of tagged type without tag. rdar://6783347
+struct xyz { int y; };
+enum myenum { ASDFAS };
+xyz b;         // expected-error {{use of tagged type 'xyz' without 'struct' tag}}
+myenum c;      // expected-error {{use of tagged type 'myenum' without 'enum' tag}}
+
+float *test7() {
+  // We should recover 'b' by parsing it with a valid type of "struct xyz", which
+  // allows us to diagnose other bad things done with y, such as this.
+  return &b.y;   // expected-warning {{incompatible pointer types returning 'int *', expected 'float *'}}
+}
+
+
+// Verify that implicit int still works.
 static f;      // expected-warning {{type specifier missing, defaults to 'int'}}
 static g = 4;  // expected-warning {{type specifier missing, defaults to 'int'}}
 static h        // expected-warning {{type specifier missing, defaults to 'int'}} 
       __asm__("foo"); // expected-warning {{extension used}}
 
-int bar() { return a; }

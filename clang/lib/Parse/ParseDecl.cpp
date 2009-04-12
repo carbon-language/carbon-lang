@@ -654,18 +654,38 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         }
 
         // Otherwise, if we don't consume this token, we are going to emit an
-        // error anyway.  Since this is almost certainly an invalid type name,
-        // emit a diagnostic that says it, eat the token, and pretend we saw an
-        // 'int'.
+        // error anyway.  Try to recover from various common problems.  Check
+        // to see if this was a reference to a tag name without a tag specified.
+        // This is a common problem in C (saying 'foo' insteat of 'struct foo').
+        const char *TagName = 0;
+        tok::TokenKind TagKind = tok::unknown;
+
+        switch (Actions.isTagName(*Tok.getIdentifierInfo(), CurScope)) {
+        default: break;
+        case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
+        case DeclSpec::TST_union: TagName="union" ;TagKind=tok::kw_union ;break;
+        case DeclSpec::TST_struct:TagName="struct";TagKind=tok::kw_struct;break;
+        case DeclSpec::TST_class: TagName="class" ;TagKind=tok::kw_class ;break;
+        }
+        if (TagName) {
+          Diag(Loc, diag::err_use_of_tag_name_without_tag)
+            << Tok.getIdentifierInfo() << TagName
+            << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
+          
+          // Parse this as a tag as if the missing tag were present.
+          if (TagKind == tok::kw_enum)
+            ParseEnumSpecifier(Loc, DS, AS);
+          else
+            ParseClassSpecifier(TagKind, Loc, DS, TemplateParams, AS);
+          continue;
+        }
+        
+        // Since this is almost certainly an invalid type name, emit a
+        // diagnostic that says it, eat the token, and pretend we saw an 'int'.
         Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo();
         DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
         DS.SetRangeEnd(Tok.getLocation());
         ConsumeToken();
-        
-        // TODO: in C, we could redo the lookup in the tag namespace to catch
-        // things like "foo x" where the user meant "struct foo x" etc, this
-        // would be much nicer for both error recovery, diagnostics, and we
-        // could even emit a fixit hint.
         
         // TODO: Could inject an invalid typedef decl in an enclosing scope to
         // avoid rippling error messages on subsequent uses of the same type,
@@ -780,8 +800,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___thread:
       isInvalid = DS.SetStorageClassSpecThread(Loc, PrevSpec)*2;
       break;
-      
-      continue;
           
     // function-specifier
     case tok::kw_inline:
@@ -851,13 +869,17 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     // class-specifier:
     case tok::kw_class:
     case tok::kw_struct:
-    case tok::kw_union:
-      ParseClassSpecifier(DS, TemplateParams, AS);
+    case tok::kw_union: {
+      tok::TokenKind Kind = Tok.getKind();
+      ConsumeToken();
+      ParseClassSpecifier(Kind, Loc, DS, TemplateParams, AS);
       continue;
+    }
 
     // enum-specifier:
     case tok::kw_enum:
-      ParseEnumSpecifier(DS, AS);
+      ConsumeToken();
+      ParseEnumSpecifier(Loc, DS, AS);
       continue;
 
     // cv-qualifier:
@@ -1069,13 +1091,17 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
   // class-specifier:
   case tok::kw_class:
   case tok::kw_struct:
-  case tok::kw_union:
-    ParseClassSpecifier(DS, TemplateParams);
+  case tok::kw_union: {
+    tok::TokenKind Kind = Tok.getKind();
+    ConsumeToken();
+    ParseClassSpecifier(Kind, Loc, DS, TemplateParams);
     return true;
+  }
 
   // enum-specifier:
   case tok::kw_enum:
-    ParseEnumSpecifier(DS);
+    ConsumeToken();
+    ParseEnumSpecifier(Loc, DS);
     return true;
 
   // cv-qualifier:
@@ -1325,10 +1351,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 /// [C++] elaborated-type-specifier:
 /// [C++]   'enum' '::'[opt] nested-name-specifier[opt] identifier
 ///
-void Parser::ParseEnumSpecifier(DeclSpec &DS, AccessSpecifier AS) {
-  assert(Tok.is(tok::kw_enum) && "Not an enum specifier");
-  SourceLocation StartLoc = ConsumeToken();
-  
+void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
+                                AccessSpecifier AS) {
   // Parse the tag portion of this.
 
   AttributeList *Attr = 0;

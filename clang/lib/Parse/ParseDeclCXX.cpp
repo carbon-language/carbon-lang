@@ -390,19 +390,19 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
 ///       struct-or-union:
 ///         'struct'
 ///         'union'
-void Parser::ParseClassSpecifier(DeclSpec &DS,
+void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
+                                 SourceLocation StartLoc, DeclSpec &DS,
                                  TemplateParameterLists *TemplateParams,
                                  AccessSpecifier AS) {
-  assert((Tok.is(tok::kw_class) || 
-          Tok.is(tok::kw_struct) || 
-          Tok.is(tok::kw_union)) &&
-         "Not a class specifier");
-  DeclSpec::TST TagType =
-    Tok.is(tok::kw_class) ? DeclSpec::TST_class : 
-    Tok.is(tok::kw_struct) ? DeclSpec::TST_struct : 
-    DeclSpec::TST_union;
-
-  SourceLocation StartLoc = ConsumeToken();
+  DeclSpec::TST TagType;
+  if (TagTokKind == tok::kw_struct)
+    TagType = DeclSpec::TST_struct;
+  else if (TagTokKind == tok::kw_class)
+    TagType = DeclSpec::TST_class;
+  else {
+    assert(TagTokKind == tok::kw_union && "Not a class specifier");
+    TagType = DeclSpec::TST_union;
+  }
 
   AttributeList *Attr = 0;
   // If attributes exist after tag, parse them.

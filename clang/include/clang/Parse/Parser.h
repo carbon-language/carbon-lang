@@ -825,7 +825,8 @@ private:
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
 
-  void ParseEnumSpecifier(DeclSpec &DS, AccessSpecifier AS = AS_none);
+  void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
+                          AccessSpecifier AS = AS_none);
   void ParseEnumBody(SourceLocation StartLoc, DeclPtrTy TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclPtrTy TagDecl);
@@ -1012,7 +1013,8 @@ private:
   // C++ 9: classes [class] and C structs/unions.
   TypeResult ParseClassName(SourceLocation &EndLocation, 
                             const CXXScopeSpec *SS = 0);
-  void ParseClassSpecifier(DeclSpec &DS, 
+  void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
+                           DeclSpec &DS, 
                            TemplateParameterLists *TemplateParams = 0,
                            AccessSpecifier AS = AS_none);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,

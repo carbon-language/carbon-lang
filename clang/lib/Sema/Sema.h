@@ -332,6 +332,8 @@ public:
 
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc, 
                               Scope *S, const CXXScopeSpec *SS);
+  virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
+  
   virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
     return ActOnDeclarator(S, D, false);
   }

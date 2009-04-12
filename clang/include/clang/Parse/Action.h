@@ -139,6 +139,15 @@ public:
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                               Scope *S, const CXXScopeSpec *SS = 0) = 0;
 
+  /// isTagName() - This method is called *for error recovery purposes only*
+  /// to determine if the specified name is a valid tag name ("struct foo").  If
+  /// so, this returns the TST for the tag corresponding to it (TST_enum,
+  /// TST_union, TST_struct, TST_class).  This is used to diagnose cases in C
+  /// where the user forgot to specify the tag.
+  virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S) {
+    return DeclSpec::TST_unspecified;
+  }
+  
   /// isCurrentClassName - Return true if the specified name is the
   /// name of the innermost C++ class type currently being defined.
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,

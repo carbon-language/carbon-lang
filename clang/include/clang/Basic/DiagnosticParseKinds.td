@@ -145,6 +145,8 @@ def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
 def err_unknown_typename : Error<
   "unknown type name %0">;
+def err_use_of_tag_name_without_tag : Error<
+  "use of tagged type %0 without '%1' tag">;
 
 
 /// Objective-C parser diagnostics

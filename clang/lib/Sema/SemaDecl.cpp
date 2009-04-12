@@ -139,6 +139,29 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   return 0;
 }
 
+/// isTagName() - This method is called *for error recovery purposes only*
+/// to determine if the specified name is a valid tag name ("struct foo").  If
+/// so, this returns the TST for the tag corresponding to it (TST_enum,
+/// TST_union, TST_struct, TST_class).  This is used to diagnose cases in C
+/// where the user forgot to specify the tag.
+DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
+  // Do a tag name lookup in this scope.
+  LookupResult R = LookupName(S, &II, LookupTagName, false, false);
+  if (R.getKind() == LookupResult::Found)
+    if (const TagDecl *TD = dyn_cast<TagDecl>(R.getAsDecl())) {
+      switch (TD->getTagKind()) {
+      case TagDecl::TK_struct: return DeclSpec::TST_struct;
+      case TagDecl::TK_union:  return DeclSpec::TST_union;
+      case TagDecl::TK_class:  return DeclSpec::TST_class;
+      case TagDecl::TK_enum:   return DeclSpec::TST_enum;
+      }
+    }
+  
+  return DeclSpec::TST_unspecified;
+}
+
+
+
 DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
     // A C++ out-of-line method will return to the file declaration context.
