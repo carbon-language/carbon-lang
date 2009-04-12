@@ -162,6 +162,7 @@ namespace {
 
     bool MatchSegmentBaseAddress(SDValue N, X86ISelAddressMode &AM);
     bool MatchLoad(SDValue N, X86ISelAddressMode &AM);
+    bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM,
                       unsigned Depth = 0);
     bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
@@ -782,6 +783,53 @@ bool X86DAGToDAGISel::MatchLoad(SDValue N, X86ISelAddressMode &AM) {
   return true;
 }
 
+bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
+  bool is64Bit = Subtarget->is64Bit();
+  DOUT << "Wrapper: 64bit " << is64Bit;
+  DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
+  // Under X86-64 non-small code model, GV (and friends) are 64-bits.
+  // Also, base and index reg must be 0 in order to use rip as base.
+  if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
+                  AM.Base.Reg.getNode() || AM.IndexReg.getNode()))
+    return true;
+  if (AM.hasSymbolicDisplacement())
+    return true;
+  // If value is available in a register both base and index components have
+  // been picked, we can't fit the result available in the register in the
+  // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
+
+  SDValue N0 = N.getOperand(0);
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+    uint64_t Offset = G->getOffset();
+    if (!is64Bit || isInt32(AM.Disp + Offset)) {
+      GlobalValue *GV = G->getGlobal();
+      AM.GV = GV;
+      AM.Disp += Offset;
+      AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+      return false;
+    }
+  } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
+    uint64_t Offset = CP->getOffset();
+    if (!is64Bit || isInt32(AM.Disp + Offset)) {
+      AM.CP = CP->getConstVal();
+      AM.Align = CP->getAlignment();
+      AM.Disp += Offset;
+      AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+      return false;
+    }
+  } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
+    AM.ES = S->getSymbol();
+    AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+    return false;
+  } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
+    AM.JT = J->getIndex();
+    AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+    return false;
+  }
+
+  return true;
+}
+
 /// MatchAddress - Add the specified node to the specified addressing mode,
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode.
@@ -822,51 +870,10 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
       return false;
     break;
 
-  case X86ISD::Wrapper: {
-    DOUT << "Wrapper: 64bit " << is64Bit;
-    DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
-    // Under X86-64 non-small code model, GV (and friends) are 64-bits.
-    // Also, base and index reg must be 0 in order to use rip as base.
-    if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
-                    AM.Base.Reg.getNode() || AM.IndexReg.getNode()))
-      break;
-    if (AM.hasSymbolicDisplacement())
-      break;
-    // If value is available in a register both base and index components have
-    // been picked, we can't fit the result available in the register in the
-    // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
-    {
-      SDValue N0 = N.getOperand(0);
-      if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-        uint64_t Offset = G->getOffset();
-        if (!is64Bit || isInt32(AM.Disp + Offset)) {
-          GlobalValue *GV = G->getGlobal();
-          AM.GV = GV;
-          AM.Disp += Offset;
-          AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
-          return false;
-        }
-      } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
-        uint64_t Offset = CP->getOffset();
-        if (!is64Bit || isInt32(AM.Disp + Offset)) {
-          AM.CP = CP->getConstVal();
-          AM.Align = CP->getAlignment();
-          AM.Disp += Offset;
-          AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
-          return false;
-        }
-      } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
-        AM.ES = S->getSymbol();
-        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
-        return false;
-      } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
-        AM.JT = J->getIndex();
-        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
-        return false;
-      }
-    }
+  case X86ISD::Wrapper:
+    if (!MatchWrapper(N, AM))
+      return false;
     break;
-  }
 
   case ISD::LOAD:
     if (!MatchLoad(N, AM))
