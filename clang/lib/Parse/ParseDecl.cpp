@@ -380,15 +380,12 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       ExprVector Exprs(Actions);
       CommaLocsTy CommaLocs;
 
-      bool InvalidExpr = false;
       if (ParseExpressionList(Exprs, CommaLocs)) {
         SkipUntil(tok::r_paren);
-        InvalidExpr = true;
-      }
-      // Match the ')'.
-      SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+      } else {
+        // Match the ')'.
+        SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-      if (!InvalidExpr) {
         assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
                "Unexpected number of commas!");
         Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
