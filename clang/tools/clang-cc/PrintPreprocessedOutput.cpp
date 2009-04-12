@@ -30,6 +30,53 @@
 #include <cstdio>
 using namespace clang;
 
+/// PrintMacroDefinition - Print a macro definition in a form that will be
+/// properly accepted back as a definition.
+static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
+                                 Preprocessor &PP, llvm::raw_ostream &OS) {
+  OS << "#define " << II.getName();
+  
+  if (MI.isFunctionLike()) {
+    OS << '(';
+    if (MI.arg_empty())
+      ;
+    else if (MI.getNumArgs() == 1) 
+      OS << (*MI.arg_begin())->getName();
+    else {
+      MacroInfo::arg_iterator AI = MI.arg_begin(), E = MI.arg_end();
+      OS << (*AI++)->getName();
+      while (AI != E)
+        OS << ',' << (*AI++)->getName();
+    }
+    
+    if (MI.isVariadic()) {
+      if (!MI.arg_empty())
+        OS << ',';
+      OS << "...";
+    }
+    OS << ')';
+  }
+  
+  // GCC always emits a space, even if the macro body is empty.  However, do not
+  // want to emit two spaces if the first token has a leading space.
+  if (MI.tokens_empty() || !MI.tokens_begin()->hasLeadingSpace())
+    OS << ' ';
+  
+  llvm::SmallVector<char, 128> SpellingBuffer;
+  for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
+       I != E; ++I) {
+    if (I->hasLeadingSpace())
+      OS << ' ';
+    
+    // Make sure we have enough space in the spelling buffer.
+    if (I->getLength() < SpellingBuffer.size())
+      SpellingBuffer.resize(I->getLength());
+    const char *Buffer = &SpellingBuffer[0];
+    unsigned SpellingLen = PP.getSpelling(*I, Buffer);
+    OS.write(Buffer, SpellingLen);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Preprocessed token printer
 //===----------------------------------------------------------------------===//
@@ -46,6 +93,9 @@ static llvm::cl::opt<bool>
 DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
                                 " normal output"));
 
+static llvm::cl::opt<bool>
+DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
+                                "addition to normal output"));
 
 namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
@@ -85,6 +135,10 @@ public:
     return ConcatInfo.AvoidConcat(PrevTok, Tok);
   }
   void WriteLineInfo(unsigned LineNo, const char *Extra=0, unsigned ExtraLen=0);
+  
+  /// MacroDefined - This hook is called whenever a macro definition is seen.
+  void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
+  
 };
 }  // end anonymous namespace
 
@@ -210,6 +264,19 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   OS.write(&S[0], S.size());
   EmittedTokensOnThisLine = true;
 }
+
+/// MacroDefined - This hook is called whenever a macro definition is seen.
+void PrintPPOutputPPCallbacks::MacroDefined(const IdentifierInfo *II,
+                                            const MacroInfo *MI) {
+  // Only print out macro definitions in -dD mode.
+  if (!DumpDefines ||
+      // Ignore __FILE__ etc.
+      MI->isBuiltinMacro()) return;
+  
+  MoveToLine(MI->getDefinitionLoc());
+  PrintMacroDefinition(*II, *MI, PP, OS);
+}
+
 
 void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
                                              const IdentifierInfo *Kind, 
@@ -338,56 +405,6 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
   }
 }
 
-/// PrintMacroDefinition - Print a macro definition in a form that will be
-/// properly accepted back as a definition.
-static void PrintMacroDefinition(IdentifierInfo &II, const MacroInfo &MI,
-                                 Preprocessor &PP, llvm::raw_ostream &OS) {
-  // Ignore computed macros like __LINE__ and friends. 
-  if (MI.isBuiltinMacro()) return;
-  OS << "#define " << II.getName();
-
-  if (MI.isFunctionLike()) {
-    OS << '(';
-    if (MI.arg_empty())
-      ;
-    else if (MI.getNumArgs() == 1) 
-      OS << (*MI.arg_begin())->getName();
-    else {
-      MacroInfo::arg_iterator AI = MI.arg_begin(), E = MI.arg_end();
-      OS << (*AI++)->getName();
-      while (AI != E)
-        OS << ',' << (*AI++)->getName();
-    }
-    
-    if (MI.isVariadic()) {
-      if (!MI.arg_empty())
-        OS << ',';
-      OS << "...";
-    }
-    OS << ')';
-  }
-  
-  // GCC always emits a space, even if the macro body is empty.  However, do not
-  // want to emit two spaces if the first token has a leading space.
-  if (MI.tokens_empty() || !MI.tokens_begin()->hasLeadingSpace())
-    OS << ' ';
-  
-  llvm::SmallVector<char, 128> SpellingBuffer;
-  for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
-       I != E; ++I) {
-    if (I->hasLeadingSpace())
-      OS << ' ';
-    
-    // Make sure we have enough space in the spelling buffer.
-    if (I->getLength() < SpellingBuffer.size())
-      SpellingBuffer.resize(I->getLength());
-    const char *Buffer = &SpellingBuffer[0];
-    unsigned SpellingLen = PP.getSpelling(*I, Buffer);
-    OS.write(Buffer, SpellingLen);
-  }
-  OS << "\n";
-}
-
 namespace {
   struct SortMacrosByID {
     typedef std::pair<IdentifierInfo*, MacroInfo*> id_macro_pair;
@@ -430,12 +447,17 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
       MacrosByID.push_back(*I);
     std::sort(MacrosByID.begin(), MacrosByID.end(), SortMacrosByID());
     
-    for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i)
-      PrintMacroDefinition(*MacrosByID[i].first, *MacrosByID[i].second, PP, OS);
+    for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i) {
+      MacroInfo &MI = *MacrosByID[i].second;
+      // Ignore computed macros like __LINE__ and friends. 
+      if (MI.isBuiltinMacro()) continue;
+
+      PrintMacroDefinition(*MacrosByID[i].first, MI, PP, OS);
+      OS << "\n";
+    }
     
   } else {
-    PrintPPOutputPPCallbacks *Callbacks
-      = new PrintPPOutputPPCallbacks(PP, OS);
+    PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
     PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
     PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                         Callbacks));

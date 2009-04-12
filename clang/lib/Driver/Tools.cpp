@@ -474,6 +474,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-common");
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
+  Args.AddLastArg(CmdArgs, options::OPT_dD);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
 

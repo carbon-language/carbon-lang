@@ -400,6 +400,7 @@ OPTION("-current_version", current__version, JoinedOrSeparate, INVALID, INVALID,
 OPTION("-c", c, Flag, INVALID, INVALID, "d", 0, 
        "Only run preprocess, compile, and assemble steps", 0)
 OPTION("-dA", dA, Flag, d_Group, INVALID, "", 0, 0, 0)
+OPTION("-dD", dD, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-dM", dM, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-dead_strip", dead__strip, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-dependency-file", dependency_file, Separate, INVALID, INVALID, "", 0, 0, 0)
