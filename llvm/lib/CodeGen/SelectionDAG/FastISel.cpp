@@ -158,7 +158,7 @@ unsigned FastISel::UpdateValueMap(Value* I, unsigned Reg) {
   unsigned &AssignedReg = ValueMap[I];
   if (AssignedReg == 0)
     AssignedReg = Reg;
-  else {
+  else if (Reg != AssignedReg) {
     const TargetRegisterClass *RegClass = MRI.getRegClass(Reg);
     TII.copyRegToReg(*MBB, MBB->end(), AssignedReg,
                      Reg, RegClass, RegClass);
