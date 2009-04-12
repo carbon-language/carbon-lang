@@ -44,7 +44,7 @@ int main()
   obj_p = obj;    /* Ok */
   obj_p = obj_c;  // expected-warning {{incompatible type assigning 'MyClass *', expected 'id<MyProtocol>'}}
   obj_p = obj_cp; /* Ok  */
-  obj_p = obj_C;  // expected-warning {{incompatible type assigning 'Class', expected 'id<MyProtocol>'}}
+  obj_p = obj_C;  // Ok
 
   /* Assigning to a 'MyOtherClass *' variable should always generate
      a warning, unless done from an 'id' or an 'id<MyProtocol>' (since

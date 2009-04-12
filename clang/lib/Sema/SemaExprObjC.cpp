@@ -681,11 +681,15 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
   // Allow id<P..> and an 'id' or void* type in all cases.
   if (const PointerType *PT = lhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (Context.isObjCIdStructType(PointeeTy) || PointeeTy->isVoidType())
+    if (PointeeTy->isVoidType() ||
+        Context.isObjCIdStructType(PointeeTy) || 
+        Context.isObjCClassStructType(PointeeTy))
       return true;
   } else if (const PointerType *PT = rhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (Context.isObjCIdStructType(PointeeTy) || PointeeTy->isVoidType())
+    if (PointeeTy->isVoidType() ||
+        Context.isObjCIdStructType(PointeeTy) || 
+        Context.isObjCClassStructType(PointeeTy))
       return true;
   }
   

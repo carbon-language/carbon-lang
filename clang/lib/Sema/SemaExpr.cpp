@@ -3060,8 +3060,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
       if (PerformImplicitConversion(rExpr, lhsType.getUnqualifiedType(),
                                     "assigning"))
         return Incompatible;
-      else
-        return Compatible;
+      return Compatible;
     }
 
     // FIXME: Currently, we fall through and treat C++ classes like C
