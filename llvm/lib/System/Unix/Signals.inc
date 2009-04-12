@@ -126,7 +126,8 @@ static RETSIGTYPE SignalHandler(int Sig) {
       IF();        // run the interrupt function.
       return;
     }
-    exit(1);   // If this is an interrupt signal, exit the program
+    raise(Sig);   // Execute the default handler.
+    return;
   }
 
   // Otherwise if it is a fault (like SEGV) run any handler.
