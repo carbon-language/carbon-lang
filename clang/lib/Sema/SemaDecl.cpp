@@ -2678,9 +2678,11 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
   // though it will not reflect the user specified type.
   QualType parmDeclType = GetTypeForDeclarator(D, S);
+  if (parmDeclType.isNull()) {
+    D.setInvalidType(true);
+    parmDeclType = Context.IntTy;
+  }
   
-  assert(!parmDeclType.isNull() && "GetTypeForDeclarator() returned null type");
-
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
