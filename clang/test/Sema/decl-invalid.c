@@ -8,6 +8,10 @@ typedef union <anonymous> __mbstate_t;  // expected-error {{declaration of anony
 void x(); 
 int a() {
   int r[x()];  // expected-error {{size of array has non-integer type 'void'}}
+
+  static y ?; // expected-error{{unknown type name 'y'}} \
+                 expected-error{{expected identifier or '('}} \
+                 expected-error{{expected ';' at end of declaration}}
 }
 
 int; // expected-error {{declaration does not declare anything}}

@@ -2620,7 +2620,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
     }
   }
   return DeclGroupPtrTy::make(DeclGroupRef::Create(Context,
-                                                   &Decls[0], NumDecls));
+                                                   &Decls[0], Decls.size()));
 }
 
 
