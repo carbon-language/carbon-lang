@@ -2865,21 +2865,24 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
 }
 
 static bool StatementCreatesScope(Stmt* S) {
-  bool result = false;
-  if (DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
-    for (DeclStmt::decl_iterator i = DS->decl_begin();
-         i != DS->decl_end(); ++i) {
-      if (VarDecl* D = dyn_cast<VarDecl>(*i)) {
-        result |= D->getType()->isVariablyModifiedType();
-        result |= !!D->getAttr<CleanupAttr>();
-      } else if (TypedefDecl* D = dyn_cast<TypedefDecl>(*i)) {
-        result |= D->getUnderlyingType()->isVariablyModifiedType();
-      }
+  DeclStmt *DS = dyn_cast<DeclStmt>(S);
+  if (DS == 0) return false;
+  
+  for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+       I != E; ++I) {
+    if (VarDecl *D = dyn_cast<VarDecl>(*I)) {
+      if (D->getType()->isVariablyModifiedType() ||
+          D->hasAttr<CleanupAttr>())
+        return true;
+    } else if (TypedefDecl *D = dyn_cast<TypedefDecl>(*I)) {
+      if (D->getUnderlyingType()->isVariablyModifiedType())
+        return true;
     }
   }
-
-  return result;
+  
+  return false;
 }
+
 
 void Sema::RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
                                     llvm::DenseMap<void*, Stmt*>& PopScopeMap,
