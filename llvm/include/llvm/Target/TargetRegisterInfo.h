@@ -18,6 +18,7 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/ADT/DenseSet.h"
 #include <cassert>
 #include <functional>
 
@@ -64,6 +65,7 @@ private:
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const int CopyCost;
   const iterator RegsBegin, RegsEnd;
+  DenseSet<unsigned> RegSet;
 public:
   TargetRegisterClass(unsigned id,
                       const char *name,
@@ -73,7 +75,10 @@ public:
                       unsigned RS, unsigned Al, int CC,
                       iterator RB, iterator RE)
     : ID(id), Name(name), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
-    RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {}
+    RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {
+      for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
+        RegSet.insert(*I);
+    }
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
   /// getID() - Return the register class ID number.
@@ -103,9 +108,7 @@ public:
   /// contains - Return true if the specified register is included in this
   /// register class.
   bool contains(unsigned Reg) const {
-    for (iterator I = begin(), E = end(); I != E; ++I)
-      if (*I == Reg) return true;
-    return false;
+    return RegSet.count(Reg);
   }
 
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
