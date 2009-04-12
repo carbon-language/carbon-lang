@@ -982,7 +982,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
 
   llvm::SmallVector<DeclPtrTy, 8> ProtocolRefs;
   if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, true, EndProtoLoc))
+      ParseObjCProtocolReferences(ProtocolRefs, false, EndProtoLoc))
     return DeclPtrTy();
   
   DeclPtrTy ProtoType =

@@ -21,8 +21,8 @@ typedef NSObject <OzzyAnchorP> OzzyAnchor;
 - (BOOL)anchor:(OzzyAnchor *)anchor confirmRepresentedObject:(id)newObject;
 @end
 typedef NSObject <OzzyAnchorDelegateP> OzzyAnchorDelegate;
-// GCC doesn't warn about the following (which is inconsistent with it's handling of @interface below).
-@protocol OzzyAnchorP <OzzyP> // expected-warning{{cannot find protocol definition for 'OzzyP'}}
+
+@protocol OzzyAnchorP <OzzyP>
   @property(nonatomic,retain) id representedObject;
   @property(nonatomic,retain) Ozzy * contentGroup;
 @end

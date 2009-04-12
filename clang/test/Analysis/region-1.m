@@ -19,14 +19,14 @@ typedef unsigned int NSUInteger;
 @end  @class NSAttributedString, NSEvent, NSFont, NSFormatter, NSImage, NSMenu, NSText, NSView;
 @class JabasectItem;
 @protocol EcoClassifier;
-@protocol EcoClassInterfaceCommons <EcoClassifier>    @end  @protocol EcoImplementation;  // expected-warning{{cannot find protocol}}
+@protocol EcoClassInterfaceCommons <EcoClassifier>    @end  @protocol EcoImplementation;
 @protocol EcoBehavioredClassifier <EcoClassInterfaceCommons>      - (NSArray *) implementations;
 @end enum {
 CK_UNRESTRICTED= 0,     CK_READ_ONLY,     CK_ADD_ONLY,     CK_REMOVE_ONLY };
 @protocol EcoClass <EcoBehavioredClassifier>      - (NSArray *) ownedAttributes;
 @end @protocol EcoNamespace;
 @protocol EcoType;
-@protocol EcoClassifier <EcoNamespace,EcoType>    - (NSArray *) features; // expected-warning 2 {{cannot find protocol}}
+@protocol EcoClassifier <EcoNamespace,EcoType>    - (NSArray *) features; 
 @end @protocol EcoComment;
 @protocol EcoElement <NSObject> - (NSArray *) ownedElements;
 @end @protocol EcoDirectedRelationship;

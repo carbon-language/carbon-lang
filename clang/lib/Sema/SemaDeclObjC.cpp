@@ -503,7 +503,7 @@ void Sema::DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
   }
 }
 
-/// ActOnForwardProtocolDeclaration - 
+/// ActOnForwardProtocolDeclaration - Handle @protocol foo;
 Action::DeclPtrTy
 Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                       const IdentifierLocPair *IdentList,

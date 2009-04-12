@@ -25,7 +25,7 @@ typedef struct _NSRange {
 }
   CSSM_FIELDGROUP, *CSSM_FIELDGROUP_PTR;
 @protocol XDUMLClassifier;
-@protocol XDUMLClassInterfaceCommons <XDUMLClassifier>  // expected-warning {{cannot find protocol definition for 'XDUMLClassifier'}}
+@protocol XDUMLClassInterfaceCommons <XDUMLClassifier> 
 @end  @protocol XDUMLImplementation;
 @protocol XDUMLElement <NSObject> - (NSArray *) ownedElements;
 @end @protocol XDUMLDataType;
