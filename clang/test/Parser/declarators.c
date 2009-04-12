@@ -12,7 +12,7 @@ char ((((*X))));
 
 void (*signal(int, void (*)(int)))(int);
 
-int a, ***C, * const D, B(int);
+int aaaa, ***C, * const D, B(int);
 
 int *A;
 
@@ -41,7 +41,7 @@ int (test5), ;  // expected-error {{expected identifier or '('}}
 // PR3963 & rdar://6759604 - test error recovery for mistyped "typenames".
 
 foo_t *d;      // expected-error {{unknown type name 'foo_t'}}
-foo_t a = 4;   // expected-error {{unknown type name 'foo_t'}}
+foo_t a;   // expected-error {{unknown type name 'foo_t'}}
 int test6() { return a; }  // a should be declared.
 
 // Use of tagged type without tag. rdar://6783347
@@ -55,6 +55,8 @@ float *test7() {
   // allows us to diagnose other bad things done with y, such as this.
   return &b.y;   // expected-warning {{incompatible pointer types returning 'int *', expected 'float *'}}
 }
+
+struct xyz test8() { return a; }  // a should be be marked invalid, no diag.
 
 
 // Verify that implicit int still works.

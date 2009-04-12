@@ -681,9 +681,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         }
         
         // Since this is almost certainly an invalid type name, emit a
-        // diagnostic that says it, eat the token, and pretend we saw an 'int'.
+        // diagnostic that says it, eat the token, and mark the declspec as
+        // invalid.
         Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo();
-        DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
+        DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec);
         DS.SetRangeEnd(Tok.getLocation());
         ConsumeToken();
         
@@ -691,7 +692,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         // avoid rippling error messages on subsequent uses of the same type,
         // could be useful if #include was forgotten.
         
-        // FIXME: Mark DeclSpec as invalid.
         goto DoneWithDeclSpec;
       }
 
