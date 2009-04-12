@@ -3623,10 +3623,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   if (II) Loc = D.getIdentifierLoc();
  
   QualType T = GetTypeForDeclarator(D, S);
-
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
-  }
 
   DiagnoseFunctionSpecifiers(D);
 
@@ -3774,8 +3772,11 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   // example, unnamed unions inject all members into the struct namespace!
   
   QualType T = GetTypeForDeclarator(D, S);
-  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   bool InvalidDecl = false;
+  if (T.isNull()) {
+    InvalidDecl = true;
+    T = Context.IntTy;
+  }
   
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4
