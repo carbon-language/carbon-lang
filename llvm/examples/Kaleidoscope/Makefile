@@ -1,4 +1,4 @@
-##===- examples/Makefile -----------------------------------*- Makefile -*-===##
+##===- examples/Kaleidoscope/Makefile ----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,14 +6,10 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL=..
+LEVEL = ../..
+TOOLNAME = Kaleidoscope
+EXAMPLE_TOOL = 1
 
-include $(LEVEL)/Makefile.config
-
-PARALLEL_DIRS:= BrainF Fibonacci HowToUseJIT Kaleidoscope ModuleMaker
-
-ifeq ($(HAVE_PTHREAD),1)
-PARALLEL_DIRS += ParallelJIT 
-endif
+LINK_COMPONENTS := core jit native
 
 include $(LEVEL)/Makefile.common
