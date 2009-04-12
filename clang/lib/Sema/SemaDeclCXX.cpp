@@ -469,8 +469,7 @@ void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if
-/// any. 'LastInGroup' is non-null for cases where one declspec has multiple
-/// declarators on it.
+/// any.
 Sema::DeclPtrTy
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                ExprTy *BW, ExprTy *InitExpr, bool Deleted) {

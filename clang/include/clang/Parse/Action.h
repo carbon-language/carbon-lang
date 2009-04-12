@@ -1046,8 +1046,7 @@ public:
   /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
   /// declarator is parsed. 'AS' is the access specifier, 'BitfieldWidth'
   /// specifies the bitfield width if there is one and 'Init' specifies the
-  /// initializer if any. 'LastInGroup' is non-null for cases where one declspec
-  /// has multiple declarators on it. 'Deleted' is true if there's a =delete
+  /// initializer if any.  'Deleted' is true if there's a =delete
   /// specifier on the function.
   virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
