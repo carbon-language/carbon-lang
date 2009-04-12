@@ -1031,6 +1031,10 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
   
   // PVD == 0 implies @catch(...).
   if (PVD) {
+    // If we already know the decl is invalid, reject it.
+    if (PVD->isInvalidDecl())
+      return StmtError();
+    
     if (!Context.isObjCObjectPointerType(PVD->getType()))
       return StmtError(Diag(PVD->getLocation(), 
                        diag::err_catch_param_not_objc_type));
@@ -1038,7 +1042,7 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
       return StmtError(Diag(PVD->getLocation(), 
                        diag::err_illegal_qualifiers_on_catch_parm));
   }
-    
+
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
     PVD, static_cast<Stmt*>(Body.release()), CatchList);
   return Owned(CatchList ? CatchList : CS);
