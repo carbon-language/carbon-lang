@@ -39,9 +39,17 @@
 @property double bar;
 @end
 
-int main() {
+int func1() {
    id foo;
    double bar = [foo bar];
    return 0;
 }
+
+// PR3932
+typedef id BYObjectIdentifier;
+@interface Foo1  {
+  void *isa;
+}
+@property(copy) BYObjectIdentifier identifier;
+@end
 

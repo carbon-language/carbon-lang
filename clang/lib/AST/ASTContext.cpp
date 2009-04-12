@@ -2659,22 +2659,29 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
     return true;
     
   // All other object types are pointers.
-  if (!Ty->isPointerType())
+  const PointerType *PT = Ty->getAsPointerType();
+  if (PT == 0)
     return false;
+  
+  // If this a pointer to an interface (e.g. NSString*), it is ok.
+  if (PT->getPointeeType()->isObjCInterfaceType() ||
+      // If is has NSObject attribute, OK as well.
+      isObjCNSObjectType(Ty))
+    return true;
   
   // Check to see if this is 'id' or 'Class', both of which are typedefs for
   // pointer types.  This looks for the typedef specifically, not for the
-  // underlying type.
-  if (Ty.getUnqualifiedType() == getObjCIdType() ||
-      Ty.getUnqualifiedType() == getObjCClassType())
-    return true;
+  // underlying type.  Iteratively strip off typedefs so that we can handle
+  // typedefs of typedefs.
+  while (TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
+    if (Ty.getUnqualifiedType() == getObjCIdType() ||
+        Ty.getUnqualifiedType() == getObjCClassType())
+      return true;
+    
+    Ty = TDT->getDecl()->getUnderlyingType();
+  }
   
-  // If this a pointer to an interface (e.g. NSString*), it is ok.
-  if (Ty->getAsPointerType()->getPointeeType()->isObjCInterfaceType())
-    return true;
-  
-  // If is has NSObject attribute, OK as well.
-  return isObjCNSObjectType(Ty);
+  return false;
 }
 
 /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
