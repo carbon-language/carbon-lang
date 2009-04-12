@@ -106,9 +106,9 @@ def err_builtin_definition : Error<"definition of builtin function %0">;
 /// parser diagnostics
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">;
 def err_statically_allocated_object : Error<
-  "Objective-C type cannot be statically allocated">;
+  "interface type cannot be statically allocated">;
 def err_object_cannot_be_passed_returned_by_value : Error<
-  "Objective-C interface type %1 cannot be %select{returned|passed}0 by value">;
+  "interface type %1 cannot be %select{returned|passed}0 by value">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
 def warn_pragma_pack_invalid_alignment : Warning<
   "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">;
@@ -1017,7 +1017,7 @@ def error_no_super_class : Error<
 def err_invalid_receiver_to_message : Error<
   "invalid receiver to message expression">;
 def warn_bad_receiver_type : Warning<
-  "receiver type %0 is not 'id' or Objective-C interface pointer, consider "
+  "receiver type %0 is not 'id' or interface pointer, consider "
   "casting it to 'id'">;
 def err_bad_receiver_type : Error<"bad receiver type %0">;
 def error_objc_throw_expects_object : Error<
@@ -1027,7 +1027,7 @@ def error_rethrow_used_outside_catch : Error<
 def err_attribute_multiple_objc_gc : Error<
   "multiple garbage collection attributes specified for type">;
 def err_catch_param_not_objc_type : Error<
-  "@catch parameter is not an Objective-C class type">;
+  "@catch parameter is not a pointer to an interface type">;
 def err_illegal_qualifiers_on_catch_parm : Error<
   "illegal qualifiers on @catch parameter">;
 def err_illegal_super_cast : Error<
