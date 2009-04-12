@@ -52,3 +52,40 @@ void f() {
   } catch(int&&) { // expected-error {{cannot catch exceptions by rvalue reference}}
   }
 }
+
+int&& should_warn(int i) {
+  // FIXME: The stack address return test doesn't reason about casts.
+  return static_cast<int&&>(i); // xpected-warning {{returning reference to temporary}}
+}
+int&& should_not_warn(int&& i) { // But GCC 4.4 does
+  return static_cast<int&&>(i);
+}
+
+
+// Test the return dance. This also tests IsReturnCopyElidable.
+struct MoveOnly {
+  MoveOnly();
+  MoveOnly(const MoveOnly&) = delete;
+  MoveOnly(MoveOnly&&);
+  MoveOnly(int&&);
+};
+
+MoveOnly returning() {
+  MoveOnly mo;
+  return mo;
+}
+
+MoveOnly gmo;
+MoveOnly returningNonEligible() {
+  int i;
+  static MoveOnly mo;
+  MoveOnly &r = mo;
+  if (0) // Copy from global can't be elided
+    return gmo; // expected-error {{incompatible type returning}}
+  else if (0) // Copy from local static can't be elided
+    return mo; // expected-error {{incompatible type returning}}
+  else if (0) // Copy from reference can't be elided
+    return r; // expected-error {{incompatible type returning}}
+  else // Construction from different type can't be elided
+    return i; // expected-error {{incompatible type returning}}
+}

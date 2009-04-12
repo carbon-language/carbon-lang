@@ -754,6 +754,32 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
 }
 
+/// IsReturnCopyElidable - Whether returning @p RetExpr from a function that
+/// returns a @p RetType fulfills the criteria for copy elision (C++0x 12.8p15).
+static bool IsReturnCopyElidable(ASTContext &Ctx, QualType RetType,
+                                 Expr *RetExpr) {
+  QualType ExprType = RetExpr->getType();
+  // - in a return statement in a function with ...
+  // ... a class return type ...
+  if (!RetType->isRecordType())
+    return false;
+  // ... the same cv-unqualified type as the function return type ...
+  if (Ctx.getCanonicalType(RetType).getUnqualifiedType() !=
+      Ctx.getCanonicalType(ExprType).getUnqualifiedType())
+    return false;
+  // ... the expression is the name of a non-volatile automatic object ...
+  // We ignore parentheses here.
+  // FIXME: Is this compliant?
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetExpr->IgnoreParens());
+  if (!DR)
+    return false;
+  const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+  if (!VD)
+    return false;
+  return VD->hasLocalStorage() && !VD->getType()->isReferenceType()
+    && !VD->getType().isVolatileQualified();
+}
+
 Action::OwningStmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
   Expr *RetValExp = static_cast<Expr *>(rex.release());
@@ -800,16 +826,31 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
 
   if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
     // we have a non-void function with an expression, continue checking
-    QualType RetValType = RetValExp->getType();
 
     // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
     // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
     // function return.
 
+    // C++0x 12.8p15: When certain criteria are met, an implementation is
+    //   allowed to omit the copy construction of a class object, [...]
+    //   - in a return statement in a function with a class return type, when
+    //     the expression is the name of a non-volatile automatic object with
+    //     the same cv-unqualified type as the function return type, the copy
+    //     operation can be omitted [...]
+    // C++0x 12.8p16: When the criteria for elision of a copy operation are met
+    //   and the object to be copied is designated by an lvalue, overload
+    //   resolution to select the constructor for the copy is first performed
+    //   as if the object were designated by an rvalue.
+    // Note that we only compute Elidable if we're in C++0x, since we don't
+    // care otherwise.
+    bool Elidable = getLangOptions().CPlusPlus0x ?
+                      IsReturnCopyElidable(Context, FnRetType, RetValExp) :
+                      false;
+
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
-    // FIXME: Leaks RetValExp.
-    if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
+    // FIXME: Leaks RetValExp on error.
+    if (PerformCopyInitialization(RetValExp, FnRetType, "returning", Elidable))
       return StmtError();
 
     if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);

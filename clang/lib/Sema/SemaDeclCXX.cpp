@@ -473,7 +473,7 @@ void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
 /// declarators on it.
 Sema::DeclPtrTy
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
-                               ExprTy *BW, ExprTy *InitExpr) {
+                               ExprTy *BW, ExprTy *InitExpr, bool Deleted) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationName Name = GetNameForDeclarator(D);
   Expr *BitWidth = static_cast<Expr*>(BW);
@@ -591,6 +591,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   if (Init)
     AddInitializerToDecl(DeclPtrTy::make(Member), ExprArg(*this, Init), false);
+  if (Deleted) // FIXME: Source location is not very good.
+    SetDeclDeleted(DeclPtrTy::make(Member), D.getSourceRange().getBegin());
 
   if (isInstField) {
     FieldCollector->Add(cast<FieldDecl>(Member));
@@ -1981,11 +1983,12 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 /// suppressed.
 /// When @p AllowExplicit, we also permit explicit user-defined
 /// conversion functions.
+/// When @p ForceRValue, we unconditionally treat the initializer as an rvalue.
 bool 
 Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, 
                          ImplicitConversionSequence *ICS,
                          bool SuppressUserConversions,
-                         bool AllowExplicit) {
+                         bool AllowExplicit, bool ForceRValue) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
@@ -2014,7 +2017,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
   // Compute some basic properties of the types and the initializer.
   bool isRValRef = DeclType->isRValueReferenceType();
   bool DerivedToBase = false;
-  Expr::isLvalueResult InitLvalue = Init->isLvalue(Context);
+  Expr::isLvalueResult InitLvalue = ForceRValue ? Expr::LV_InvalidExpression :
+                                                  Init->isLvalue(Context);
   ReferenceCompareResult RefRelationship 
     = CompareReferenceRelationship(T1, T2, DerivedToBase);
 

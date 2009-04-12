@@ -376,17 +376,20 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 /// not permitted.
 /// If @p AllowExplicit, then explicit user-defined conversions are
 /// permitted.
+/// If @p ForceRValue, then overloading is performed as if From was an rvalue,
+/// no matter its actual lvalueness.
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool SuppressUserConversions,
-                            bool AllowExplicit)
+                            bool AllowExplicit, bool ForceRValue)
 {
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
   else if (getLangOptions().CPlusPlus &&
            IsUserDefinedConversion(From, ToType, ICS.UserDefined, 
-                                   !SuppressUserConversions, AllowExplicit)) {
+                                   !SuppressUserConversions, AllowExplicit,
+                                   ForceRValue)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -1313,10 +1316,13 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
 /// \param AllowExplicit  true if the conversion should consider C++0x
 /// "explicit" conversion functions as well as non-explicit conversion
 /// functions (C++0x [class.conv.fct]p2).
+///
+/// \param ForceRValue  true if the expression should be treated as an rvalue
+/// for overload resolution.
 bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType, 
                                    UserDefinedConversionSequence& User,
                                    bool AllowConversionFunctions,
-                                   bool AllowExplicit)
+                                   bool AllowExplicit, bool ForceRValue)
 {
   OverloadCandidateSet CandidateSet;
   if (const RecordType *ToRecordType = ToType->getAsRecordType()) {
@@ -1340,7 +1346,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
         if (Constructor->isConvertingConstructor())
           AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
-                               /*SuppressUserConversions=*/true);
+                               /*SuppressUserConversions=*/true, ForceRValue);
       }
     }
   }
@@ -1856,24 +1862,29 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 /// sequence required to pass this argument, which may be a bad
 /// conversion sequence (meaning that the argument cannot be passed to
 /// a parameter of this type). If @p SuppressUserConversions, then we
-/// do not permit any user-defined conversion sequences.
+/// do not permit any user-defined conversion sequences. If @p ForceRValue,
+/// then we treat @p From as an rvalue, even if it is an lvalue.
 ImplicitConversionSequence 
 Sema::TryCopyInitialization(Expr *From, QualType ToType, 
-                            bool SuppressUserConversions) {
+                            bool SuppressUserConversions, bool ForceRValue) {
   if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
-    CheckReferenceInit(From, ToType, &ICS, SuppressUserConversions);
+    CheckReferenceInit(From, ToType, &ICS, SuppressUserConversions,
+                       /*AllowExplicit=*/false, ForceRValue);
     return ICS;
   } else {
-    return TryImplicitConversion(From, ToType, SuppressUserConversions);
+    return TryImplicitConversion(From, ToType, SuppressUserConversions,
+                                 ForceRValue);
   }
 }
 
-/// PerformArgumentPassing - Pass the argument Arg into a parameter of
-/// type ToType. Returns true (and emits a diagnostic) if there was
-/// an error, returns false if the initialization succeeded.
+/// PerformCopyInitialization - Copy-initialize an object of type @p ToType with
+/// the expression @p From. Returns true (and emits a diagnostic) if there was
+/// an error, returns false if the initialization succeeded. Elidable should
+/// be true when the copy may be elided (C++ 12.8p15). Overload resolution works
+/// differently in C++0x for this case.
 bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType, 
-                                     const char* Flavor) {
+                                     const char* Flavor, bool Elidable) {
   if (!getLangOptions().CPlusPlus) {
     // In C, argument passing is the same as performing an assignment.
     QualType FromType = From->getType();
@@ -1883,13 +1894,14 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
     return DiagnoseAssignmentResult(ConvTy, From->getLocStart(), ToType,
                                     FromType, From, Flavor);
   }
-  
+
   if (ToType->isReferenceType())
     return CheckReferenceInit(From, ToType);
 
-  if (!PerformImplicitConversion(From, ToType, Flavor))
+  if (!PerformImplicitConversion(From, ToType, Flavor,
+                                 /*AllowExplicit=*/false, Elidable))
     return false;
-  
+
   return Diag(From->getSourceRange().getBegin(),
               diag::err_typecheck_convert_incompatible)
     << ToType << From->getType() << Flavor << From->getSourceRange();
@@ -1997,11 +2009,15 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
 /// candidate functions, using the given function call arguments.  If
 /// @p SuppressUserConversions, then don't allow user-defined
 /// conversions via constructors or conversion operators.
+/// If @p ForceRValue, treat all arguments as rvalues. This is a slightly
+/// hacky way to implement the overloading rules for elidable copy
+/// initialization in C++0x (C++0x 12.8p15).
 void 
 Sema::AddOverloadCandidate(FunctionDecl *Function, 
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
-                           bool SuppressUserConversions)
+                           bool SuppressUserConversions,
+                           bool ForceRValue)
 {
   const FunctionProtoType* Proto 
     = dyn_cast<FunctionProtoType>(Function->getType()->getAsFunctionType());
@@ -2017,7 +2033,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     // function, e.g., X::f(). We use a NULL object as the implied
     // object argument (C++ [over.call.func]p3).
     AddMethodCandidate(Method, 0, Args, NumArgs, CandidateSet, 
-                       SuppressUserConversions);
+                       SuppressUserConversions, ForceRValue);
     return;
   }
 
@@ -2064,7 +2080,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
-                                SuppressUserConversions);
+                                SuppressUserConversions, ForceRValue);
       if (Candidate.Conversions[ArgIdx].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
@@ -2099,12 +2115,14 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
 /// @c o.f(a1,a2), @c Object will contain @c o and @c Args will contain
 /// both @c a1 and @c a2. If @p SuppressUserConversions, then don't
 /// allow user-defined conversions via constructors or conversion
-/// operators.
+/// operators. If @p ForceRValue, treat all arguments as rvalues. This is
+/// a slightly hacky way to implement the overloading rules for elidable copy
+/// initialization in C++0x (C++0x 12.8p15).
 void 
 Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
                          Expr **Args, unsigned NumArgs,
                          OverloadCandidateSet& CandidateSet,
-                         bool SuppressUserConversions)
+                         bool SuppressUserConversions, bool ForceRValue)
 {
   const FunctionProtoType* Proto 
     = dyn_cast<FunctionProtoType>(Method->getType()->getAsFunctionType());
@@ -2169,7 +2187,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx + 1] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
-                                SuppressUserConversions);
+                                SuppressUserConversions, ForceRValue);
       if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;

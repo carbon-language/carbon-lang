@@ -668,7 +668,7 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 ///         declarator constant-initializer[opt]
 ///         identifier[opt] ':' constant-expression
 ///
-///       pure-specifier:   [TODO]
+///       pure-specifier:
 ///         '= 0'
 ///
 ///       constant-initializer:
@@ -767,6 +767,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
   OwningExprResult BitfieldSize(Actions);
   OwningExprResult Init(Actions);
+  bool Deleted = false;
 
   while (1) {
 
@@ -787,12 +788,21 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     //
     // constant-initializer:
     //   '=' constant-expression
+    //
+    // defaulted/deleted function-definition:
+    //   '=' 'default'                          [TODO]
+    //   '=' 'delete'
 
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      Init = ParseInitializer();
-      if (Init.isInvalid())
-        SkipUntil(tok::comma, true, true);
+      if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
+        ConsumeToken();
+        Deleted = true;
+      } else {
+        Init = ParseInitializer();
+        if (Init.isInvalid())
+          SkipUntil(tok::comma, true, true);
+      }
     }
 
     // If attributes exist after the declarator, parse them.
@@ -808,7 +818,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     DeclPtrTy ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                           DeclaratorInfo,
                                                           BitfieldSize.release(),
-                                                          Init.release());
+                                                          Init.release(),
+                                                          Deleted);
     if (ThisDecl)
       DeclsInGroup.push_back(ThisDecl);
 
@@ -858,6 +869,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     DeclaratorInfo.clear();
     BitfieldSize = 0;
     Init = 0;
+    Deleted = false;
     
     // Attributes are only allowed on the second declarator.
     if (Tok.is(tok::kw___attribute)) {

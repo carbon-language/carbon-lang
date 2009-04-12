@@ -737,13 +737,23 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 /// error, false otherwise. The expression From is replaced with the
 /// converted expression. Flavor is the kind of conversion we're
 /// performing, used in the error message. If @p AllowExplicit,
-/// explicit user-defined conversions are permitted.
-bool 
+/// explicit user-defined conversions are permitted. @p Elidable should be true
+/// when called for copies which may be elided (C++ 12.8p15). C++0x overload
+/// resolution works differently in that case.
+bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                const char *Flavor, bool AllowExplicit)
+                                const char *Flavor, bool AllowExplicit,
+                                bool Elidable)
 {
-  ImplicitConversionSequence ICS = TryImplicitConversion(From, ToType, false,
-                                                         AllowExplicit);
+  ImplicitConversionSequence ICS;
+  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  if (Elidable && getLangOptions().CPlusPlus0x) {
+    ICS = TryImplicitConversion(From, ToType, /*SuppressUserConversions*/false,
+                                AllowExplicit, /*ForceRValue*/true);
+  }
+  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
+    ICS = TryImplicitConversion(From, ToType, false, AllowExplicit);
+  }
   return PerformImplicitConversion(From, ToType, ICS, Flavor);
 }
 

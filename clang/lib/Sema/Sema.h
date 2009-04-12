@@ -504,7 +504,8 @@ public:
   ImplicitConversionSequence 
   TryImplicitConversion(Expr* From, QualType ToType,
                         bool SuppressUserConversions = false,
-                        bool AllowExplicit = false);
+                        bool AllowExplicit = false,
+                        bool ForceRValue = false);
   bool IsStandardConversion(Expr *From, QualType ToType, 
                             StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
@@ -522,7 +523,7 @@ public:
   bool IsUserDefinedConversion(Expr *From, QualType ToType, 
                                UserDefinedConversionSequence& User,
                                bool AllowConversionFunctions,
-                               bool AllowExplicit);
+                               bool AllowExplicit, bool ForceRValue);
 
   ImplicitConversionSequence::CompareKind 
   CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
@@ -542,9 +543,10 @@ public:
 
   ImplicitConversionSequence 
   TryCopyInitialization(Expr* From, QualType ToType,
-                        bool SuppressUserConversions = false);
+                        bool SuppressUserConversions = false,
+                        bool ForceRValue = false);
   bool PerformCopyInitialization(Expr *&From, QualType ToType, 
-                                 const char *Flavor);
+                                 const char *Flavor, bool Elidable = false);
 
   ImplicitConversionSequence
   TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method);
@@ -569,7 +571,8 @@ public:
   void AddOverloadCandidate(FunctionDecl *Function, 
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
-                            bool SuppressUserConversions = false);
+                            bool SuppressUserConversions = false,
+                            bool ForceRValue = false);
   void AddFunctionCandidates(const FunctionSet &Functions,
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
@@ -577,7 +580,8 @@ public:
   void AddMethodCandidate(CXXMethodDecl *Method,
                           Expr *Object, Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
-                          bool SuppressUserConversions = false);
+                          bool SuppressUserConversions = false,
+                          bool ForceRValue = false);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
@@ -1590,11 +1594,12 @@ public:
   //
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS);
-  
+
   virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
                                              ExprTy *BitfieldWidth,
-                                             ExprTy *Init);
+                                             ExprTy *Init,
+                                             bool Deleted = false);
 
   virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorD,
                                             Scope *S,
@@ -2319,7 +2324,9 @@ public:
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
 
   bool PerformImplicitConversion(Expr *&From, QualType ToType, 
-                                 const char *Flavor, bool AllowExplicit = false);
+                                 const char *Flavor,
+                                 bool AllowExplicit = false,
+                                 bool Elidable = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType, 
                                  const ImplicitConversionSequence& ICS,
                                  const char *Flavor);
@@ -2415,7 +2422,8 @@ public:
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType &declType,
                           ImplicitConversionSequence *ICS = 0,
                           bool SuppressUserConversions = false,
-                          bool AllowExplicit = false);
+                          bool AllowExplicit = false,
+                          bool ForceRValue = false);
 
   /// CheckCastTypes - Check type constraints for casting between types.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);
