@@ -653,7 +653,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         // Otherwise, if we don't consume this token, we are going to emit an
         // error anyway.  Try to recover from various common problems.  Check
         // to see if this was a reference to a tag name without a tag specified.
-        // This is a common problem in C (saying 'foo' insteat of 'struct foo').
+        // This is a common problem in C (saying 'foo' instead of 'struct foo').
         const char *TagName = 0;
         tok::TokenKind TagKind = tok::unknown;
 
