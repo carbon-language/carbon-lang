@@ -143,6 +143,9 @@ def err_typename_invalid_functionspec : Error<
   "type name does not allow function specifier to be specified">;
 def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
+def err_unknown_typename : Error<
+  "unknown type name %0">;
+
 
 /// Objective-C parser diagnostics
 def err_objc_no_attributes_on_category : Error<

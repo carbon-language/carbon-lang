@@ -467,6 +467,29 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   }
 }
 
+/// isValidAfterIdentifierInDeclaratorAfterDeclSpec - Return true if the
+/// specified token is valid after the identifier in a declarator which
+/// immediately follows the declspec.  For example, these things are valid:
+///
+///      int x   [             4];         // direct-declarator
+///      int x   (             int y);     // direct-declarator
+///  int(int x   )                         // direct-declarator
+///      int x   ;                         // simple-declaration
+///      int x   =             17;         // init-declarator-list
+///      int x   ,             y;          // init-declarator-list
+///      int x   __asm__       ("foo");    // init-declarator-list
+///
+/// This is not, because 'x' does not immediately follow the declspec (though
+/// ')' happens to be valid anyway).
+///    int (x)
+///
+static bool isValidAfterIdentifierInDeclarator(const Token &T) {
+  return T.is(tok::l_square) || T.is(tok::l_paren) || T.is(tok::r_paren) ||
+         T.is(tok::semi) || T.is(tok::comma) || T.is(tok::equal) ||
+         T.is(tok::kw_asm);
+    
+}
+
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers[opt]
@@ -489,7 +512,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         TemplateParameterLists *TemplateParams,
-                                        AccessSpecifier AS){
+                                        AccessSpecifier AS) {
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     int isInvalid = false;
@@ -604,15 +627,59 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(), 
                                             Tok.getLocation(), CurScope);
 
-      if (TypeRep == 0)
+      // If this is not a typedef name, don't parse it as part of the declspec,
+      // it must be an implicit int or an error.
+      if (TypeRep == 0) {
+        // If we see an identifier that is not a type name, we normally would
+        // parse it as the identifer being declared.  However, when a typename
+        // is typo'd or the definition is not included, this will incorrectly
+        // parse the typename as the identifier name and fall over misparsing
+        // later parts of the diagnostic.
+        //
+        // As such, we try to do some look-ahead in cases where this would
+        // otherwise be an "implicit-int" case to see if this is invalid.  For
+        // example: "static foo_t x = 4;"  In this case, if we parsed foo_t as
+        // an identifier with implicit int, we'd get a parse error because the
+        // next token is obviously invalid for a type.  Parse these as a case
+        // with an invalid type specifier.
+        assert(!DS.hasTypeSpecifier() && "Type specifier checked above");
+        
+        // Since we know that this either implicit int (which is rare) or an
+        // error, we'd do lookahead to try to do better recovery.
+        if (isValidAfterIdentifierInDeclarator(NextToken())) {
+          // If this token is valid for implicit int, e.g. "static x = 4", then
+          // we just avoid eating the identifier, so it will be parsed as the
+          // identifier in the declarator.
+          goto DoneWithDeclSpec;
+        }
+
+        // Otherwise, if we don't consume this token, we are going to emit an
+        // error anyway.  Since this is almost certainly an invalid type name,
+        // emit a diagnostic that says it, eat the token, and pretend we saw an
+        // 'int'.
+        Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo();
+        DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
+        DS.SetRangeEnd(Tok.getLocation());
+        ConsumeToken();
+        
+        // TODO: in C, we could redo the lookup in the tag namespace to catch
+        // things like "foo x" where the user meant "struct foo x" etc, this
+        // would be much nicer for both error recovery, diagnostics, and we
+        // could even emit a fixit hint.
+        
+        // TODO: Could inject an invalid typedef decl in an enclosing scope to
+        // avoid rippling error messages on subsequent uses of the same type,
+        // could be useful if #include was forgotten.
+        
+        // FIXME: Mark DeclSpec as invalid.
         goto DoneWithDeclSpec;
+      }
 
       // C++: If the identifier is actually the name of the class type
       // being defined and the next token is a '(', then this is a
       // constructor declaration. We're done with the decl-specifiers
       // and will treat this token as an identifier.
-      if (getLang().CPlusPlus && 
-          CurScope->isClassScope() &&
+      if (getLang().CPlusPlus && CurScope->isClassScope() &&
           Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) && 
           NextToken().getKind() == tok::l_paren)
         goto DoneWithDeclSpec;

@@ -1,10 +1,8 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-ce MyList // expected-error {{invalid token after top level declarator}}
-@end
 
 
-@implementation MyList
+@implementation MyList // expected-warning {{cannot find interface declaration for 'MyList'}}
 - (unsigned int)countByEnumeratingWithState:  (struct __objcFastEnumerationState *)state objects:  (id *)items count:(unsigned int)stackcount
 {
      return 0;
@@ -14,10 +12,10 @@ ce MyList // expected-error {{invalid token after top level declarator}}
 
 int LOOP();
 
-@implementation MyList (BasicTest)  // expected-error {{cannot find interface declaration for 'MyList'}}
+@implementation MyList (BasicTest) 
 - (void)compilerTestAgainst {
-MyList * el;  // expected-error {{use of undeclared identifier 'MyList'}}
-     for (el in @"foo")    // expected-error {{use of undeclared identifier 'el'}}
+MyList * el; 
+     for (el in @"foo") 
 	  { LOOP(); }
 }
 @end

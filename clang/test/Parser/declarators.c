@@ -12,7 +12,7 @@ char ((((*X))));
 
 void (*signal(int, void (*)(int)))(int);
 
-int a, ***C, * const D, b(int);
+int a, ***C, * const D, B(int);
 
 int *A;
 
@@ -36,3 +36,20 @@ int test4(x, x) int x; {} /* expected-error {{redefinition of parameter 'x'}} */
 // PR3031
 int (test5), ;  // expected-error {{expected identifier or '('}}
 
+
+
+// PR3963 & rdar://6759604 - test error recovery for mistyped "typenames".
+
+struct xyz { int y; };
+
+foo_t a = 4;   // expected-error {{unknown type name 'foo_t'}}
+xyz b;         // expected-error {{unknown type name 'xyz'}}
+
+foo_t *d;      // expected-error {{unknown type name 'foo_t'}}
+
+static f;      // expected-warning {{type specifier missing, defaults to 'int'}}
+static g = 4;  // expected-warning {{type specifier missing, defaults to 'int'}}
+static h        // expected-warning {{type specifier missing, defaults to 'int'}} 
+      __asm__("foo"); // expected-warning {{extension used}}
+
+int bar() { return a; }
