@@ -475,6 +475,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///      int x   =             17;         // init-declarator-list
 ///      int x   ,             y;          // init-declarator-list
 ///      int x   __asm__       ("foo");    // init-declarator-list
+///      int x   {             5};         // C++'0x unified initializers
 ///
 /// This is not, because 'x' does not immediately follow the declspec (though
 /// ')' happens to be valid anyway).
@@ -483,8 +484,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 static bool isValidAfterIdentifierInDeclarator(const Token &T) {
   return T.is(tok::l_square) || T.is(tok::l_paren) || T.is(tok::r_paren) ||
          T.is(tok::semi) || T.is(tok::comma) || T.is(tok::equal) ||
-         T.is(tok::kw_asm);
-    
+         T.is(tok::kw_asm) || T.is(tok::l_brace);
 }
 
 /// ParseDeclarationSpecifiers
