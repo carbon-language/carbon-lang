@@ -2,8 +2,6 @@
 // RUN: grep 'ret i32' %t | count 1 &&
 // RUN: grep 'ret i32 1' %t | count 1
 
-#include <stdio.h>
-
 @interface MyClass
 {
 }
@@ -16,7 +14,6 @@
 {
 	@synchronized(self)
 	{
-		NSLog(@"sync");
 	}
 }
 
@@ -24,7 +21,6 @@
 
 void foo(id a) {
   @synchronized(a) {
-    printf("Swimming? No.");
     return;
   }
 }
