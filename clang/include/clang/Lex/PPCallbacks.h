@@ -55,9 +55,14 @@ public:
                              const std::string &Str) {
   }
   
-  /// MacroExpands - This is called Preprocessor::HandleMacroExpandedIdentifier
-  /// when a macro invocation is found.
+  /// MacroExpands - This is called by
+  /// Preprocessor::HandleMacroExpandedIdentifier when a macro invocation is
+  /// found.
   virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
+  }
+  
+  /// MacroDefined - This hook is called whenever a macro definition is seen.
+  virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
   }
 };
 

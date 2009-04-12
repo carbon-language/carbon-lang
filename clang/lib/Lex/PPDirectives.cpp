@@ -1402,6 +1402,10 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   }
   
   setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
+  
+  // If the callbacks want to know, tell them about the macro definition.
+  if (Callbacks)
+    Callbacks->MacroDefined(MacroNameTok.getIdentifierInfo(), MI);
 }
 
 /// HandleUndefDirective - Implements #undef.
