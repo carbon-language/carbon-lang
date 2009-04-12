@@ -223,6 +223,10 @@ public:
     return 0;
   }
     
+  template<typename T> bool hasAttr() const {
+    return getAttr<T>() != 0;
+  }
+  
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
   void setInvalidDecl(bool Invalid = true) { InvalidDecl = Invalid; }
