@@ -84,6 +84,7 @@ public:
   typedef Decl** iterator;
   typedef Decl* const * const_iterator;
   
+  bool isNull() const { return D == 0; }
   bool isSingleDecl() const { return getKind() == SingleDeclKind; }
   bool isDeclGroup() const { return getKind() == DeclGroupKind; }
 

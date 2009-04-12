@@ -40,10 +40,11 @@ Sema::OwningStmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
 Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
-  // If we have an invalid decl, just return an error.
-  if (!dg) return StmtError();
-  
   DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
+  
+  // If we have an invalid decl, just return an error.
+  if (DG.isNull()) return StmtError();
+  
   return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
 }
 
