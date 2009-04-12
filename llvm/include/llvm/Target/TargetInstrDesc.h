@@ -199,6 +199,24 @@ public:
   const unsigned *getImplicitDefs() const {
     return ImplicitDefs;
   }
+  
+  /// hasImplicitUseOfPhysReg - Return true if this instruction implicitly
+  /// uses the specified physical register.
+  bool hasImplicitUseOfPhysReg(unsigned Reg) const {
+    if (const unsigned *ImpUses = ImplicitUses)
+      for (; *ImpUses; ++ImpUses)
+        if (*ImpUses == Reg) return true;
+    return false;
+  }
+  
+  /// hasImplicitDefOfPhysReg - Return true if this instruction implicitly
+  /// defines the specified physical register.
+  bool hasImplicitDefOfPhysReg(unsigned Reg) const {
+    if (const unsigned *ImpDefs = ImplicitDefs)
+      for (; *ImpDefs; ++ImpDefs)
+        if (*ImpDefs == Reg) return true;
+    return false;
+  }
 
   /// getRegClassBarriers - Return a list of register classes that are
   /// completely clobbered by this machine instruction. For example, on X86

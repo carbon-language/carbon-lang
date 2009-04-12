@@ -808,21 +808,9 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
             }
 
             const TargetInstrDesc &TID = MI.getDesc();
-            const unsigned *ImpDefs = TID.getImplicitDefs();
-
-            if (TID.hasUnmodeledSideEffects()) break;
-
-            bool ModifiesEFlags = false;
-
-            if (ImpDefs) {
-              for (unsigned u = 0; ImpDefs[u]; ++u)
-                if (ImpDefs[u] == X86::EFLAGS) {
-                  ModifiesEFlags = true;
-                  break;
-                }
-            }
-
-            if (ModifiesEFlags) break;
+            if (TID.hasUnmodeledSideEffects() ||
+                TID.hasImplicitDefOfPhysReg(X86::EFLAGS))
+              break;
           }
 
           if (SetMI) {
