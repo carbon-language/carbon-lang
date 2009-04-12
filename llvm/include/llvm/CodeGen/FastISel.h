@@ -279,7 +279,7 @@ protected:
   /// the CFG.
   void FastEmitBranch(MachineBasicBlock *MBB);
 
-  void UpdateValueMap(Value* I, unsigned Reg);
+  unsigned UpdateValueMap(Value* I, unsigned Reg);
 
   unsigned createResultReg(const TargetRegisterClass *RC);
   

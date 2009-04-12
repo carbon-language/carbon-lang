@@ -149,16 +149,21 @@ unsigned FastISel::lookUpRegForValue(Value *V) {
 /// NOTE: This is only necessary because we might select a block that uses
 /// a value before we select the block that defines the value.  It might be
 /// possible to fix this by selecting blocks in reverse postorder.
-void FastISel::UpdateValueMap(Value* I, unsigned Reg) {
+unsigned FastISel::UpdateValueMap(Value* I, unsigned Reg) {
   if (!isa<Instruction>(I)) {
     LocalValueMap[I] = Reg;
-    return;
+    return Reg;
   }
-  if (!ValueMap.count(I))
-    ValueMap[I] = Reg;
-  else
-    TII.copyRegToReg(*MBB, MBB->end(), ValueMap[I],
-                     Reg, MRI.getRegClass(Reg), MRI.getRegClass(Reg));
+  
+  unsigned &AssignedReg = ValueMap[I];
+  if (AssignedReg == 0)
+    AssignedReg = Reg;
+  else {
+    const TargetRegisterClass *RegClass = MRI.getRegClass(Reg);
+    TII.copyRegToReg(*MBB, MBB->end(), AssignedReg,
+                     Reg, RegClass, RegClass);
+  }
+  return AssignedReg;
 }
 
 unsigned FastISel::getRegForGEPIndex(Value *Idx) {
