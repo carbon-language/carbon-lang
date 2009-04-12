@@ -1,14 +1,28 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-@interface INTF1 @end
+@interface INTF1
+@required  // expected-error {{directive may only be specified in protocols only}}
+- (int) FooBar;
+- (int) FooBar1;
+- (int) FooBar2;
+@optional  // expected-error {{directive may only be specified in protocols only}}
++ (int) C;
+
+- (int)I;
+@end
 
 @protocol p1,p2,p3;
 
 @protocol p1;
 
 @protocol PROTO1
-- (INTF1<p1>*) meth;
+@required 
+- (int) FooBar;
+@optional
+- (void) MyMethod1;
++ (int) S;
 @end
+
 
 @protocol PROTO2<p1>
 @end
