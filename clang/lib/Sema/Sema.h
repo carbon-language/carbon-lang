@@ -2210,7 +2210,7 @@ public:
   
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
   // will warn if the resulting type is not a POD type.
-  void DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT);
+  bool DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT);
   
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary

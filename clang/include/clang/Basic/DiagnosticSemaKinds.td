@@ -1190,6 +1190,11 @@ def err_typecheck_call_too_many_args : Error<
 def warn_call_wrong_number_of_arguments : Warning<
   "too %select{few|many}0 arguments in call to %1">;
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
+
+def err_cannot_pass_objc_interface_to_vararg : Error<
+  "cannot pass object with interface type %0 by-value through variadic "
+  "%select{function|block|method}1">;
+
 def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
   "cannot pass object of non-POD type %0 through variadic "
   "%select{function|block|method}1; call will abort at runtime">;

@@ -154,16 +154,25 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   UsualUnaryConversions(Expr);
 }
 
-// DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
-// will warn if the resulting type is not a POD type.
-void Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
+/// DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
+/// will warn if the resulting type is not a POD type, and rejects ObjC
+/// interfaces passed by value.  This returns true if the argument type is
+/// completely illegal.
+bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
   DefaultArgumentPromotion(Expr);
   
-  if (!Expr->getType()->isPODType()) {
-    Diag(Expr->getLocStart(), 
-         diag::warn_cannot_pass_non_pod_arg_to_vararg) << 
-    Expr->getType() << CT;
+  if (Expr->getType()->isObjCInterfaceType()) {
+    Diag(Expr->getLocStart(),
+         diag::err_cannot_pass_objc_interface_to_vararg)
+      << Expr->getType() << CT;
+    return true;
   }
+  
+  if (!Expr->getType()->isPODType())
+    Diag(Expr->getLocStart(), diag::warn_cannot_pass_non_pod_arg_to_vararg)
+      << Expr->getType() << CT;
+
+  return false;
 }
 
 
@@ -2223,7 +2232,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     // Promote the arguments (C99 6.5.2.2p7).
     for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
       Expr *Arg = Args[i];
-      DefaultVariadicArgumentPromotion(Arg, CallType);
+      Invalid |= DefaultVariadicArgumentPromotion(Arg, CallType);
       Call->setArg(i, Arg);
     }
   }

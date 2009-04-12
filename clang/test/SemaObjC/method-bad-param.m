@@ -22,3 +22,9 @@
 
 void somefunc(foo x) {} // expected-error {{Objective-C interface type 'foo' cannot be passed by value}}
 foo somefunc2() {} // expected-error {{Objective-C interface type 'foo' cannot be returned by value}}
+
+// rdar://6780761
+void f0(foo *a0) {
+  extern void g0(int x, ...);
+  g0(1, *(foo*)0);  // expected-error {{cannot pass object with interface type 'foo' by-value through variadic function}}
+}

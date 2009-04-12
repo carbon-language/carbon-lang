@@ -4178,10 +4178,12 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   else if (NumArgs > NumArgsInProto)
     NumArgsToCheck = NumArgsInProto;
 
+  bool IsError = false;
+
   // Initialize the implicit object parameter.
-  if (PerformObjectArgumentInitialization(Object, Method))
-    return true;
+  IsError |= PerformObjectArgumentInitialization(Object, Method);
   TheCall->setArg(0, Object);
+
 
   // Check the argument types.
   for (unsigned i = 0; i != NumArgsToCheck; i++) {
@@ -4191,8 +4193,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       
       // Pass the argument.
       QualType ProtoArgType = Proto->getArgType(i);
-      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
-        return true;
+      IsError |= PerformCopyInitialization(Arg, ProtoArgType, "passing");
     } else {
       Arg = new (Context) CXXDefaultArgExpr(Method->getParamDecl(i));
     }
@@ -4205,11 +4206,12 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // Promote the arguments (C99 6.5.2.2p7).
     for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
       Expr *Arg = Args[i];
-
-      DefaultVariadicArgumentPromotion(Arg, VariadicMethod);
+      IsError |= DefaultVariadicArgumentPromotion(Arg, VariadicMethod);
       TheCall->setArg(i + 1, Arg);
     }
   }
+
+  if (IsError) return true;
 
   return CheckFunctionCall(Method, TheCall.take()).release();
 }

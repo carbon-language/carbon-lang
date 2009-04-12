@@ -164,7 +164,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
   unsigned NumNamedArgs = Sel.getNumArgs();
   assert(NumArgs >= NumNamedArgs && "Too few arguments for selector!");
 
-  bool anyIncompatibleArgs = false;
+  bool IsError = false;
   for (unsigned i = 0; i < NumNamedArgs; i++) {
     Expr *argExpr = Args[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
@@ -183,7 +183,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     if (Args[i] != argExpr) // The expression was converted.
       Args[i] = argExpr; // Make sure we store the converted expression.
     
-    anyIncompatibleArgs |= 
+    IsError |= 
       DiagnoseAssignmentResult(Result, argExpr->getLocStart(), lhsType, rhsType,
                                argExpr, "sending");
   }
@@ -191,7 +191,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
   // Promote additional arguments to variadic methods.
   if (Method->isVariadic()) {
     for (unsigned i = NumNamedArgs; i < NumArgs; ++i)
-      DefaultVariadicArgumentPromotion(Args[i], VariadicMethod);
+      IsError |= DefaultVariadicArgumentPromotion(Args[i], VariadicMethod);
   } else {
     // Check for extra arguments to non-variadic methods.
     if (NumArgs != NumNamedArgs) {
@@ -203,7 +203,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     }
   }
 
-  return anyIncompatibleArgs;
+  return IsError;
 }
 
 bool Sema::isSelfExpr(Expr *RExpr) {
