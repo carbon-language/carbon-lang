@@ -582,7 +582,7 @@ struct VISIBILITY_HIDDEN StrNCatOpt : public StrCatOpt {
 
     // strncat(x, s, c) -> strcat(x, s)
     // s is constant so the strcat can be optimized further
-    EmitStrLenMemCpy(Src, Dst, Len, B);
+    EmitStrLenMemCpy(Src, Dst, SrcLen, B);
     return Dst;
   }
 };
