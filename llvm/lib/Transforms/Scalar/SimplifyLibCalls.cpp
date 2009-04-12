@@ -85,6 +85,9 @@ public:
   /// EmitMemCmp - Emit a call to the memcmp function.
   Value *EmitMemCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B);
 
+  /// EmitMemSet - Emit a call to the memset function
+  Value *EmitMemSet(Value *Dst, Value *Val, Value *Len, IRBuilder<> &B);
+
   /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
   /// 'floor').  This function is known to take a single of type matching 'Op'
   /// and returns one value with the same type.  If 'Op' is a long double, 'l'
@@ -181,6 +184,18 @@ Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                                          TD->getIntPtrType(), NULL);
   return B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
                        Len, "memcmp");
+}
+
+/// EmitMemSet - Emit a call to the memset function
+Value *LibCallOptimization::EmitMemSet(Value *Dst, Value *Val,
+                                       Value *Len, IRBuilder<> &B) {
+ Module *M = Caller->getParent();
+ Intrinsic::ID IID = Intrinsic::memset;
+ const Type *Tys[1];
+ Tys[0] = Len->getType();
+ Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 1);
+ Value *Align = ConstantInt::get(Type::Int32Ty, 1);
+ return B.CreateCall4(MemSet, CastToCStr(Dst, B), Val, Len, Align);
 }
 
 /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
@@ -507,6 +522,11 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
     if (Len == 0)
       return Dst;
     
+    EmitStrLenMemCpy(Src, Dst, Len, B);
+    return Dst;
+  }
+
+  void EmitStrLenMemCpy(Value *Src, Value *Dst, uint64_t Len, IRBuilder<> &B) {
     // We need to find the end of the destination string.  That's where the
     // memory is to be moved to. We just generate a call to strlen.
     Value *DstLen = EmitStrLen(Dst, B);
@@ -519,6 +539,50 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     EmitMemCpy(CpyDst, Src, ConstantInt::get(TD->getIntPtrType(), Len+1), 1, B);
+  }
+};
+
+//===---------------------------------------===//
+// 'strncat' Optimizations
+
+struct VISIBILITY_HIDDEN StrNCatOpt : public StrCatOpt {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "strncat" function prototype.
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 ||
+        FT->getReturnType() != PointerType::getUnqual(Type::Int8Ty) ||
+        FT->getParamType(0) != FT->getReturnType() ||
+        FT->getParamType(1) != FT->getReturnType() ||
+        !isa<IntegerType>(FT->getParamType(2)))
+      return 0;
+
+    // Extract some information from the instruction
+    Value *Dst = CI->getOperand(1);
+    Value *Src = CI->getOperand(2);
+    uint64_t Len;
+
+    // We don't do anything if length is not constant
+    if (ConstantInt *LengthArg = dyn_cast<ConstantInt>(CI->getOperand(3)))
+      Len = LengthArg->getZExtValue();
+    else
+      return 0;
+
+    // See if we can get the length of the input string.
+    uint64_t SrcLen = GetStringLength(Src);
+    if (SrcLen == 0) return 0;
+    --SrcLen;  // Unbias length.
+
+    // Handle the simple, do-nothing cases:
+    // strncat(x, "", c) -> x
+    // strncat(x,  c, 0) -> x
+    if (SrcLen == 0 || Len == 0) return Dst;
+
+    // We don't optimize this case
+    if (Len < SrcLen) return 0;
+
+    // strncat(x, s, c) -> strcat(x, s)
+    // s is constant so the strcat can be optimized further
+    EmitStrLenMemCpy(Src, Dst, Len, B);
     return Dst;
   }
 };
@@ -694,7 +758,50 @@ struct VISIBILITY_HIDDEN StrCpyOpt : public LibCallOptimization {
   }
 };
 
+//===---------------------------------------===//
+// 'strncpy' Optimizations
 
+struct VISIBILITY_HIDDEN StrNCpyOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != PointerType::getUnqual(Type::Int8Ty) ||
+        !isa<IntegerType>(FT->getParamType(2)))
+      return 0;
+
+    Value *Dst = CI->getOperand(1);
+    Value *Src = CI->getOperand(2);
+    Value *LenOp = CI->getOperand(3);
+
+    // See if we can get the length of the input string.
+    uint64_t SrcLen = GetStringLength(Src);
+    if (SrcLen == 0) return 0;
+    --SrcLen;
+
+    if (SrcLen == 0) {
+      // strncpy(x, "", y) -> memset(x, '\0', y, 1)
+      EmitMemSet(Dst, ConstantInt::get(Type::Int8Ty, '\0'), LenOp, B);
+      return Dst;
+    }
+
+    uint64_t Len;
+    if (ConstantInt *LengthArg = dyn_cast<ConstantInt>(LenOp))
+      Len = LengthArg->getZExtValue();
+    else
+      return 0;
+
+    if (Len == 0) return Dst; // strncpy(x, y, 0) -> x
+
+    // Let strncpy handle the zero padding
+    if (Len > SrcLen+1) return 0;
+
+    // strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant]
+    EmitMemCpy(Dst, Src, ConstantInt::get(TD->getIntPtrType(), Len), 1, B);
+
+    return Dst;
+  }
+};
 
 //===---------------------------------------===//
 // 'strlen' Optimizations
@@ -849,16 +956,8 @@ struct VISIBILITY_HIDDEN MemSetOpt : public LibCallOptimization {
       return 0;
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
-    Module *M = Caller->getParent();
-    Intrinsic::ID IID = Intrinsic::memset;
-    const Type *Tys[1];
-    Tys[0] = TD->getIntPtrType();
-    Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 1);
-    Value *Dst = CastToCStr(CI->getOperand(1), B);
     Value *Val = B.CreateTrunc(CI->getOperand(2), Type::Int8Ty);
-    Value *Size = CI->getOperand(3);
-    Value *Align = ConstantInt::get(Type::Int32Ty, 1);
-    B.CreateCall4(MemSet, Dst, Val, Size, Align);
+    EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
     return CI->getOperand(1);
   }
 };
@@ -1351,9 +1450,10 @@ namespace {
     // Miscellaneous LibCall Optimizations
     ExitOpt Exit; 
     // String and Memory LibCall Optimizations
-    StrCatOpt StrCat; StrChrOpt StrChr; StrCmpOpt StrCmp; StrNCmpOpt StrNCmp;
-    StrCpyOpt StrCpy; StrLenOpt StrLen; StrToOpt StrTo; MemCmpOpt MemCmp;
-    MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
+    StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrCmpOpt StrCmp;
+    StrNCmpOpt StrNCmp; StrCpyOpt StrCpy; StrNCpyOpt StrNCpy; StrLenOpt StrLen;
+    StrToOpt StrTo; MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove;
+    MemSetOpt MemSet;
     // Math Library Optimizations
     PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
     // Integer Optimizations
@@ -1401,10 +1501,12 @@ void SimplifyLibCalls::InitOptimizations() {
   
   // String and Memory LibCall Optimizations
   Optimizations["strcat"] = &StrCat;
+  Optimizations["strncat"] = &StrNCat;
   Optimizations["strchr"] = &StrChr;
   Optimizations["strcmp"] = &StrCmp;
   Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
+  Optimizations["strncpy"] = &StrNCpy;
   Optimizations["strlen"] = &StrLen;
   Optimizations["strtol"] = &StrTo;
   Optimizations["strtod"] = &StrTo;
@@ -2298,16 +2400,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * strrchr(s,c) -> reverse_offset_of_in(c,s)
 //      (if c is a constant integer and s is a constant string)
 //   * strrchr(s1,0) -> strchr(s1,0)
-//
-// strncat:
-//   * strncat(x,y,0) -> x
-//   * strncat(x,y,0) -> x (if strlen(y) = 0)
-//   * strncat(x,y,l) -> strcat(x,y) (if y and l are constants an l > strlen(y))
-//
-// strncpy:
-//   * strncpy(d,s,0) -> d
-//   * strncpy(d,s,l) -> memcpy(d,s,l,1)
-//      (if s and l are constants)
 //
 // strpbrk:
 //   * strpbrk(s,a) -> offset_in_for(s,a)
