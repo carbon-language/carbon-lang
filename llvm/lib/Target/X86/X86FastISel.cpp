@@ -809,8 +809,8 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
           unsigned OpCode = SetMI->getOpcode();
 
           if (OpCode == X86::SETOr || OpCode == X86::SETBr) {
-            BuildMI(MBB, DL, TII.get((OpCode == X86::SETOr) ? 
-                                 X86::JO : X86::JB)).addMBB(TrueMBB);
+            BuildMI(MBB, DL, TII.get(OpCode == X86::SETOr ? X86::JO : X86::JB))
+              .addMBB(TrueMBB);
             FastEmitBranch(FalseMBB);
             MBB->addSuccessor(TrueMBB);
             return true;
@@ -1072,9 +1072,20 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
 
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, DL, TII.get(OpC), ResultReg).addReg(Reg1).addReg(Reg2);
-    UpdateValueMap(&I, ResultReg);
+    unsigned DestReg1 = UpdateValueMap(&I, ResultReg);
 
-    ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
+    // If the add with overflow is an intra-block value then we just want to
+    // create temporaries for it like normal.  If it is a cross-block value then
+    // UpdateValueMap will return the cross-block register used.  Since we
+    // *really* want the value to be live in the register pair known by
+    // UpdateValueMap, we have to use DestReg1+1 as the destination register in
+    // the cross block case.  In the non-cross-block case, we should just make
+    // another register for the value.
+    if (DestReg1 != ResultReg)
+      ResultReg = DestReg1+1;
+    else
+      ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
+    
     unsigned Opc = X86::SETBr;
     if (I.getIntrinsicID() == Intrinsic::sadd_with_overflow)
       Opc = X86::SETOr;
