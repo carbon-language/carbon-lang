@@ -787,11 +787,16 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
   bool is64Bit = Subtarget->is64Bit();
   DOUT << "Wrapper: 64bit " << is64Bit;
   DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
+
   // Under X86-64 non-small code model, GV (and friends) are 64-bits.
-  // Also, base and index reg must be 0 in order to use rip as base.
-  if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
-                  AM.Base.Reg.getNode() || AM.IndexReg.getNode()))
+  if (is64Bit && (TM.getCodeModel() != CodeModel::Small))
     return true;
+
+  // Base and index reg must be 0 in order to use rip as base.
+  bool canUsePICRel = !AM.Base.Reg.getNode() && !AM.IndexReg.getNode();
+  if (is64Bit && !canUsePICRel && TM.symbolicAddressesAreRIPRel())
+    return true;
+
   if (AM.hasSymbolicDisplacement())
     return true;
   // If value is available in a register both base and index components have
