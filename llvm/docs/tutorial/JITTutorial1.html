@@ -78,7 +78,7 @@ int main(int argc, char**argv) {
   verifyModule(*Mod, PrintMessageAction);
 
   PassManager PM;
-  PM.add(new PrintModulePass(&amp;llvm::cout));
+  PM.add(createPrintModulePass(&amp;llvm::cout));
   PM.run(*Mod);
 
   delete Mod;
