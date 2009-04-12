@@ -20,6 +20,8 @@ struct WithDel {
   void fn() = delete; // expected-note {{function has been explicitly marked deleted here}}
   operator int() = delete;
   void operator +(int) = delete;
+
+  int i = delete; // expected-error {{only functions can have deleted definitions}}
 };
 
 void test() {
