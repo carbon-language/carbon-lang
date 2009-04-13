@@ -278,6 +278,9 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   MVT NewVT = TLI.getTypeToTransformTo(OldVT);
   DebugLoc dl = N->getDebugLoc();
 
+  assert(OldVT == VecVT.getVectorElementType() &&
+         "BUILD_VECTOR operand type doesn't match vector element type!");
+
   // Build a vector of twice the length out of the expanded elements.
   // For example <3 x i64> -> <6 x i32>.
   std::vector<SDValue> NewElts;

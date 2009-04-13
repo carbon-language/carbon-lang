@@ -3795,7 +3795,7 @@ SDValue DAGCombiner::visitBUILD_PAIR(SDNode *N) {
 /// destination element value type.
 SDValue DAGCombiner::
 ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
-  MVT SrcEltVT = BV->getOperand(0).getValueType();
+  MVT SrcEltVT = BV->getValueType(0).getVectorElementType();
 
   // If this is already the right type, we're done.
   if (SrcEltVT == DstEltVT) return SDValue(BV, 0);
@@ -3808,8 +3808,17 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
   if (SrcBitSize == DstBitSize) {
     SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
+      SDValue Op = BV->getOperand(i);
+      // If the vector element type is not legal, the BUILD_VECTOR operands
+      // are promoted and implicitly truncated.  Make that explicit here.
+      if (Op.getValueType() != SrcEltVT) {
+        if (Op.getOpcode() == ISD::UNDEF)
+          Op = DAG.getUNDEF(SrcEltVT);
+        else
+          Op = DAG.getNode(ISD::TRUNCATE, BV->getDebugLoc(), SrcEltVT, Op);
+      }
       Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, BV->getDebugLoc(),
-                                DstEltVT, BV->getOperand(i)));
+                                DstEltVT, Op));
       AddToWorkList(Ops.back().getNode());
     }
     MVT VT = MVT::getVectorVT(DstEltVT,
@@ -3860,8 +3869,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
         if (Op.getOpcode() == ISD::UNDEF) continue;
         EltIsUndef = false;
 
-        NewBits |=
-          APInt(cast<ConstantSDNode>(Op)->getAPIntValue()).zext(DstBitSize);
+        NewBits |= (APInt(cast<ConstantSDNode>(Op)->getAPIntValue()).
+                    zextOrTrunc(SrcBitSize).zext(DstBitSize));
       }
 
       if (EltIsUndef)
@@ -3889,7 +3898,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
       continue;
     }
 
-    APInt OpVal = cast<ConstantSDNode>(BV->getOperand(i))->getAPIntValue();
+    APInt OpVal = APInt(cast<ConstantSDNode>(BV->getOperand(i))->
+                        getAPIntValue()).zextOrTrunc(SrcBitSize);
 
     for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
       APInt ThisVal = APInt(OpVal).trunc(DstBitSize);

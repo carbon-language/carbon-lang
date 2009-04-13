@@ -799,32 +799,20 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
   MVT VecVT = N->getValueType(0);
   unsigned NumElts = VecVT.getVectorNumElements();
   assert(!(NumElts & 1) && "Legal vector of one illegal element?");
-  DebugLoc dl = N->getDebugLoc();
 
-  // Build a vector of half the length out of elements of twice the bitwidth.
-  // For example <4 x i16> -> <2 x i32>.
-  MVT OldVT = N->getOperand(0).getValueType();
-  MVT NewVT = MVT::getIntegerVT(2 * OldVT.getSizeInBits());
-  assert(OldVT.isSimple() && NewVT.isSimple());
+  // Promote the inserted value.  The type does not need to match the
+  // vector element type.  Check that any extra bits introduced will be
+  // truncated away.
+  assert(N->getOperand(0).getValueType().getSizeInBits() >=
+         N->getValueType(0).getVectorElementType().getSizeInBits() &&
+         "Type of inserted value narrower than vector element type!");
 
-  std::vector<SDValue> NewElts;
-  NewElts.reserve(NumElts/2);
-
-  for (unsigned i = 0; i < NumElts; i += 2) {
-    // Combine two successive elements into one promoted element.
-    SDValue Lo = N->getOperand(i);
-    SDValue Hi = N->getOperand(i+1);
-    if (TLI.isBigEndian())
-      std::swap(Lo, Hi);
-    NewElts.push_back(JoinIntegers(Lo, Hi));
+  SmallVector<SDValue, 16> NewOps;
+  for (unsigned i = 0; i < NumElts; ++i) {
+    NewOps.push_back(GetPromotedInteger(N->getOperand(i)));
   }
 
-  SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                 MVT::getVectorVT(NewVT, NewElts.size()),
-                                 &NewElts[0], NewElts.size());
-
-  // Convert the new vector to the old vector type.
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, NewVec);
+  return DAG.UpdateNodeOperands(SDValue(N, 0), &NewOps[0], NumElts);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_CONVERT_RNDSAT(SDNode *N) {

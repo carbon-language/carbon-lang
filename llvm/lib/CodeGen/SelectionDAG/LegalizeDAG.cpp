@@ -5483,6 +5483,41 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   MVT OpVT = SplatValue.getValueType();
   MVT EltVT = VT.getVectorElementType();
 
+  // Check if the BUILD_VECTOR operands were promoted to legalize their types.
+  if (OpVT != EltVT) {
+    // Now that the DAG combiner and target-specific lowering have had a
+    // chance to optimize/recognize the BUILD_VECTOR with promoted operands,
+    // transform it so the operand types match the vector.  Build a vector of
+    // half the length out of elements of twice the bitwidth.
+    // For example <4 x i16> -> <2 x i32>.
+    MVT NewVT = MVT::getIntegerVT(2 * EltVT.getSizeInBits());
+    assert(OpVT.isSimple() && NewVT.isSimple());
+    SmallVector<SDValue, 16> NewElts;
+
+    for (unsigned i = 0; i < NumElems; i += 2) {
+      // Combine two successive elements into one promoted element.
+      SDValue Lo = Node->getOperand(i);
+      SDValue Hi = Node->getOperand(i+1);
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      Lo = DAG.getZeroExtendInReg(Lo, dl, EltVT);
+      Hi = DAG.getNode(ISD::SHL, dl, OpVT, Hi,
+                       DAG.getConstant(EltVT.getSizeInBits(),
+                                       TLI.getPointerTy()));
+      NewElts.push_back(DAG.getNode(ISD::OR, dl, OpVT, Lo, Hi));
+    }
+
+    SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
+                                 MVT::getVectorVT(NewVT, NewElts.size()),
+                                 &NewElts[0], NewElts.size());
+
+    // Recurse
+    NewVec = ExpandBUILD_VECTOR(NewVec.getNode());
+
+    // Convert the new vector to the old vector type.
+    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, NewVec);
+  }
+
   // If the only non-undef value is the low element, turn this into a
   // SCALAR_TO_VECTOR node.  If this is { X, X, X, X }, determine X.
   bool isOnlyLowElement = true;

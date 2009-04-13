@@ -768,7 +768,8 @@ void SelectionDAG::VerifyNode(SDNode *N) {
     // following checks at least makes it possible to legalize most of the time.
 //    MVT EltVT = N->getValueType(0).getVectorElementType();
 //    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
-//      assert(I->getValueType() == EltVT &&
+//      assert((I->getValueType() == EltVT ||
+//              I->getValueType() == TLI.getTypeToTransformTo(EltVT)) &&
 //             "Wrong operand type!");
     break;
   }
@@ -2550,8 +2551,17 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
 
     // EXTRACT_VECTOR_ELT of BUILD_VECTOR is often formed while lowering is
     // expanding large vector constants.
-    if (N2C && N1.getOpcode() == ISD::BUILD_VECTOR)
-      return N1.getOperand(N2C->getZExtValue());
+    if (N2C && N1.getOpcode() == ISD::BUILD_VECTOR) {
+      SDValue Elt = N1.getOperand(N2C->getZExtValue());
+      if (Elt.getValueType() != VT) {
+        // If the vector element type is not legal, the BUILD_VECTOR operands
+        // are promoted and implicitly truncated.  Make that explicit here.
+        assert(Elt.getValueType() == TLI.getTypeToTransformTo(VT) &&
+               "Bad type for BUILD_VECTOR operand");
+        Elt = getNode(ISD::TRUNCATE, DL, VT, Elt);
+      }
+      return Elt;
+    }
 
     // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
     // operations are lowered to scalars.
@@ -5569,7 +5579,8 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
     if (OpVal.getOpcode() == ISD::UNDEF)
       SplatUndef |= APInt::getBitsSet(sz, BitPos, BitPos +EltBitSize);
     else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal))
-      SplatValue |= APInt(CN->getAPIntValue()).zextOrTrunc(sz) << BitPos;
+      SplatValue |= (APInt(CN->getAPIntValue()).zextOrTrunc(EltBitSize).
+                     zextOrTrunc(sz) << BitPos);
     else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal))
       SplatValue |= CN->getValueAPF().bitcastToAPInt().zextOrTrunc(sz) <<BitPos;
      else

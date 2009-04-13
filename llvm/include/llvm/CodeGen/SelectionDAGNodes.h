@@ -290,7 +290,11 @@ namespace ISD {
 
     /// BUILD_VECTOR(ELT0, ELT1, ELT2, ELT3,...) - Return a vector
     /// with the specified, possibly variable, elements.  The number of elements
-    /// is required to be a power of two.
+    /// is required to be a power of two.  The types of the operands must
+    /// all be the same.  They must match the vector element type, except if an 
+    /// integer element type is not legal for the target, the operands may 
+    /// be promoted to a legal type, in which case the operands are implicitly
+    /// truncated to the vector element types.
     BUILD_VECTOR,
 
     /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR with the element
