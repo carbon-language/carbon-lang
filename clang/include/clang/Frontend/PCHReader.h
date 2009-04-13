@@ -18,6 +18,8 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -201,6 +203,12 @@ public:
     return DecodeIdentifierInfo(Record[Idx++]);
   }
   DeclarationName ReadDeclarationName(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Read an integral value
+  llvm::APInt ReadAPInt(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Read a signed integral value
+  llvm::APSInt ReadAPSInt(const RecordData &Record, unsigned &Idx);
 };
 
 } // end namespace clang

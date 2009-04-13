@@ -252,9 +252,11 @@ namespace {
     void VisitNamedDecl(NamedDecl *D);
     void VisitTypeDecl(TypeDecl *D);
     void VisitTypedefDecl(TypedefDecl *D);
+    void VisitTagDecl(TagDecl *D);
+    void VisitEnumDecl(EnumDecl *D);
     void VisitValueDecl(ValueDecl *D);
+    void VisitEnumConstantDecl(EnumConstantDecl *D);
     void VisitVarDecl(VarDecl *D);
-
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset, 
                           uint64_t VisibleOffset);
   };
@@ -291,9 +293,29 @@ void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   Code = pch::DECL_TYPEDEF;
 }
 
+void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
+  VisitTypeDecl(D);
+  Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
+  Record.push_back(D->isDefinition());
+  Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
+}
+
+void PCHDeclWriter::VisitEnumDecl(EnumDecl *D) {
+  VisitTagDecl(D);
+  Writer.AddTypeRef(D->getIntegerType(), Record);
+  Code = pch::DECL_ENUM;
+}
+
 void PCHDeclWriter::VisitValueDecl(ValueDecl *D) {
   VisitNamedDecl(D);
   Writer.AddTypeRef(D->getType(), Record);
+}
+
+void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
+  VisitValueDecl(D);
+  // FIXME: Writer.AddExprRef(D->getInitExpr());
+  Writer.AddAPSInt(D->getInitVal(), Record);
+  Code = pch::DECL_ENUM_CONSTANT;
 }
 
 void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
@@ -933,6 +955,11 @@ void PCHWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
   const uint64_t* Words = Value.getRawData();
   for (unsigned I = 0; I != N; ++I)
     Record.push_back(Words[I]);
+}
+
+void PCHWriter::AddAPSInt(const llvm::APSInt &Value, RecordData &Record) {
+  Record.push_back(Value.isUnsigned());
+  AddAPInt(Value, Record);
 }
 
 void PCHWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {

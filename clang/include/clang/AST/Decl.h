@@ -992,6 +992,8 @@ public:
     return TagKind(TagDeclKind);
   }
 
+  void setTagKind(TagKind TK) { TagDeclKind = TK; }
+
   bool isStruct() const { return getTagKind() == TK_struct; }
   bool isClass()  const { return getTagKind() == TK_class; }
   bool isUnion()  const { return getTagKind() == TK_union; }
@@ -1013,7 +1015,6 @@ public:
     return static_cast<TagDecl *>(const_cast<DeclContext*>(DC));
   }
 
-protected:
   void setDefinition(bool V) { IsDefinition = V; }
 };
 
@@ -1059,7 +1060,10 @@ public:
   /// getIntegerType - Return the integer type this enum decl corresponds to.
   /// This returns a null qualtype for an enum forward definition.
   QualType getIntegerType() const { return IntegerType; }
-    
+
+  /// \brief Set the underlying integer type.
+  void setIntegerType(QualType T) { IntegerType = T; }
+
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
   

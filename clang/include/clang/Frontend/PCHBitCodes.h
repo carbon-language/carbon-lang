@@ -314,6 +314,10 @@ namespace clang {
       DECL_TRANSLATION_UNIT = 1,
       /// \brief A TypedefDecl record.
       DECL_TYPEDEF,
+      /// \brief An EnumDecl record.
+      DECL_ENUM,
+      /// \brief An EnumConstantDecl record.
+      DECL_ENUM_CONSTANT,
       /// \brief A VarDecl record.
       DECL_VAR,
       /// \brief A record that stores the set of declarations that are

@@ -48,7 +48,10 @@ namespace {
     void VisitNamedDecl(NamedDecl *ND);
     void VisitTypeDecl(TypeDecl *TD);
     void VisitTypedefDecl(TypedefDecl *TD);
+    void VisitTagDecl(TagDecl *TD);
+    void VisitEnumDecl(EnumDecl *ED);
     void VisitValueDecl(ValueDecl *VD);
+    void VisitEnumConstantDecl(EnumConstantDecl *ECD);
     void VisitVarDecl(VarDecl *VD);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
@@ -86,9 +89,28 @@ void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
   TD->setUnderlyingType(Reader.GetType(Record[Idx++]));
 }
 
+void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
+  VisitTypeDecl(TD);
+  TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
+  TD->setDefinition(Record[Idx++]);
+  TD->setTypedefForAnonDecl(
+                    cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
+  VisitTagDecl(ED);
+  ED->setIntegerType(Reader.GetType(Record[Idx++]));
+}
+
 void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
   VisitNamedDecl(VD);
   VD->setType(Reader.GetType(Record[Idx++]));
+}
+
+void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
+  VisitValueDecl(ECD);
+  // FIXME: initialization expression
+  ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -795,6 +817,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context.getMemberPointerType(PointeeType, ClassType.getTypePtr());
   }
 
+  case pch::TYPE_ENUM:
+    assert(Record.size() == 1 && "Incorrect encoding of enum type");
+    return Context.getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
+
     // FIXME: Several other kinds of types to deserialize here!
   default:
     assert(false && "Unable to deserialize this type");
@@ -839,6 +865,25 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     LoadedDecl(Index, Typedef);
     Reader.VisitTypedefDecl(Typedef);
     D = Typedef;
+    break;
+  }
+
+  case pch::DECL_ENUM: {
+    EnumDecl *Enum = EnumDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    LoadedDecl(Index, Enum);
+    Reader.VisitEnumDecl(Enum);
+    D = Enum;
+    break;
+  }
+
+  case pch::DECL_ENUM_CONSTANT: {
+    EnumConstantDecl *ECD = EnumConstantDecl::Create(Context, 0, 
+                                                     SourceLocation(), 0,
+                                                     QualType(), 0,
+                                                     llvm::APSInt());
+    LoadedDecl(Index, ECD);
+    Reader.VisitEnumConstantDecl(ECD);
+    D = ECD;
     break;
   }
 
@@ -1062,6 +1107,21 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 
   // Required to silence GCC warning
   return DeclarationName();
+}
+
+/// \brief Read an integral value
+llvm::APInt PCHReader::ReadAPInt(const RecordData &Record, unsigned &Idx) {
+  unsigned BitWidth = Record[Idx++];
+  unsigned NumWords = llvm::APInt::getNumWords(BitWidth);
+  llvm::APInt Result(BitWidth, NumWords, &Record[Idx]);
+  Idx += NumWords;
+  return Result;
+}
+
+/// \brief Read a signed integral value
+llvm::APSInt PCHReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
+  bool isUnsigned = Record[Idx++];
+  return llvm::APSInt(ReadAPInt(Record, Idx), isUnsigned);
 }
 
 DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {

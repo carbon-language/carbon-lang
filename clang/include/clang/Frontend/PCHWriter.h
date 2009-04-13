@@ -112,6 +112,9 @@ public:
   /// \brief Emit an integral value.
   void AddAPInt(const llvm::APInt &Value, RecordData &Record);
 
+  /// \brief Emit a signed integral value.
+  void AddAPSInt(const llvm::APSInt &Value, RecordData &Record);
+
   /// \brief Emit a reference to an identifier
   void AddIdentifierRef(const IdentifierInfo *II, RecordData &Record);
 
