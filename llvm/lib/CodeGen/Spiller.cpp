@@ -104,6 +104,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
             }
             MF.getRegInfo().setPhysRegUsed(RReg);
             MI.getOperand(i).setReg(RReg);
+            MI.getOperand(i).setSubReg(0);
           } else {
             MF.getRegInfo().setPhysRegUsed(MO.getReg());
           }
@@ -280,6 +281,7 @@ static void ReMaterialize(MachineBasicBlock &MBB,
     assert(Phys);
     unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
     MO.setReg(RReg);
+    MO.setSubReg(0);
   }
   ++NumReMats;
 }
@@ -496,7 +498,8 @@ unsigned ReuseInfo::GetRegForReload(unsigned PhysReg, MachineInstr *MI,
         unsigned SubIdx = MI->getOperand(NewOp.Operand).getSubReg();
         unsigned RReg = SubIdx ? TRI->getSubReg(NewPhysReg, SubIdx) : NewPhysReg;
         MI->getOperand(NewOp.Operand).setReg(RReg);
-        
+        MI->getOperand(NewOp.Operand).setSubReg(0);
+
         Spills.addAvailable(NewOp.StackSlotOrReMat, NewPhysReg);
         --MII;
         UpdateKills(*MII, RegKills, KillOps, TRI);
@@ -1122,6 +1125,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           ReusedOperands.markClobbered(Phys);
         unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
         MI.getOperand(i).setReg(RReg);
+        MI.getOperand(i).setSubReg(0);
         if (VRM.isImplicitlyDefined(VirtReg))
           BuildMI(MBB, &MI, MI.getDebugLoc(),
                   TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
@@ -1185,6 +1189,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                << TRI->getName(VRM.getPhys(VirtReg)) << "\n";
           unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
           MI.getOperand(i).setReg(RReg);
+          MI.getOperand(i).setSubReg(0);
 
           // The only technical detail we have is that we don't know that
           // PhysReg won't be clobbered by a reloaded stack slot that occurs
@@ -1264,6 +1269,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                << " instead of reloading into same physreg.\n";
           unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
           MI.getOperand(i).setReg(RReg);
+          MI.getOperand(i).setSubReg(0);
           ReusedOperands.markClobbered(RReg);
           ++NumReused;
           continue;
@@ -1284,6 +1290,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         unsigned RReg =
           SubIdx ? TRI->getSubReg(DesignatedReg, SubIdx) : DesignatedReg;
         MI.getOperand(i).setReg(RReg);
+        MI.getOperand(i).setSubReg(0);
         DOUT << '\t' << *prior(MII);
         ++NumReused;
         continue;
@@ -1328,6 +1335,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       }
       unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       MI.getOperand(i).setReg(RReg);
+      MI.getOperand(i).setSubReg(0);
       UpdateKills(*prior(MII), RegKills, KillOps, TRI);
       DOUT << '\t' << *prior(MII);
     }
@@ -1613,6 +1621,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       ReusedOperands.markClobbered(RReg);
       MI.getOperand(i).setReg(RReg);
+      MI.getOperand(i).setSubReg(0);
 
       if (!MO.isDead()) {
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
