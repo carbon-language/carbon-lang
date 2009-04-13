@@ -159,6 +159,11 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
 
 /// CheckObjCString - Checks that the argument to the builtin
 /// CFString constructor is correct
+/// FIXME: GCC currently emits the following warning:
+/// "warning: input conversion stopped due to an input byte that does not 
+///           belong to the input codeset UTF-8"
+/// Note: It might also make sense to do the UTF-16 conversion here (would
+/// simplify the backend).
 bool Sema::CheckObjCString(Expr *Arg) {
   Arg = Arg->IgnoreParenCasts();
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);

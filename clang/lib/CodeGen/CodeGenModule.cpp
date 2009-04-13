@@ -1070,10 +1070,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
       str.assign((char *)&ToBuf[0], StringLength*2);// Twice as many UTF8 chars.
       isUTF16 = true;
     } else if (Result == sourceIllegal) {
-      // FIXME: GCC currently emits the following warning (in the backend):
-      // "warning: input conversion stopped due to an input byte that does not 
-      //           belong to the input codeset UTF-8"
-      // The clang backend doesn't currently emit any warnings.
+      // FIXME: Have Sema::CheckObjCString() validate the UTF-8 string.
       str.assign(Literal->getStrData(), Literal->getByteLength());
       StringLength = str.length();
     } else
