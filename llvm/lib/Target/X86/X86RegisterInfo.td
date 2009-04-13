@@ -56,10 +56,10 @@ let Namespace = "X86" in {
   def BH : Register<"bh">, DwarfRegNum<[3, 3, 3]>;
 
   // 16-bit registers
-  def AX : RegisterWithSubRegs<"ax", [AH,AL]>, DwarfRegNum<[0, 0, 0]>;
-  def DX : RegisterWithSubRegs<"dx", [DH,DL]>, DwarfRegNum<[1, 2, 2]>;
-  def CX : RegisterWithSubRegs<"cx", [CH,CL]>, DwarfRegNum<[2, 1, 1]>;
-  def BX : RegisterWithSubRegs<"bx", [BH,BL]>, DwarfRegNum<[3, 3, 3]>;
+  def AX : RegisterWithSubRegs<"ax", [AL,AH]>, DwarfRegNum<[0, 0, 0]>;
+  def DX : RegisterWithSubRegs<"dx", [DL,DH]>, DwarfRegNum<[1, 2, 2]>;
+  def CX : RegisterWithSubRegs<"cx", [CL,CH]>, DwarfRegNum<[2, 1, 1]>;
+  def BX : RegisterWithSubRegs<"bx", [BL,BH]>, DwarfRegNum<[3, 3, 3]>;
   def SI : RegisterWithSubRegs<"si", [SIL]>, DwarfRegNum<[4, 6, 6]>;
   def DI : RegisterWithSubRegs<"di", [DIL]>, DwarfRegNum<[5, 7, 7]>;
   def BP : RegisterWithSubRegs<"bp", [BPL]>, DwarfRegNum<[6, 4, 5]>;
