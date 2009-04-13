@@ -5145,8 +5145,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
              Input.ConstraintVT.isInteger()) ||
             (OpInfo.ConstraintVT.getSizeInBits() !=
              Input.ConstraintVT.getSizeInBits())) {
-          cerr << "Unsupported asm: input constraint with a matching output "
-               << "constraint of incompatible type!\n";
+          cerr << "llvm: error: Unsupported asm: input constraint with a "
+               << "matching output constraint of incompatible type!\n";
           exit(1);
         }
         Input.ConstraintVT = OpInfo.ConstraintVT;
@@ -5250,7 +5250,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        cerr << "Couldn't allocate output reg for constraint '"
+        cerr << "llvm: error: Couldn't allocate output reg for constraint '"
              << OpInfo.ConstraintCode << "'!\n";
         exit(1);
       }
@@ -5344,7 +5344,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          hasMemory, Ops, DAG);
         if (Ops.empty()) {
-          cerr << "Invalid operand for inline asm constraint '"
+          cerr << "llvm: error: Invalid operand for inline asm constraint '"
                << OpInfo.ConstraintCode << "'!\n";
           exit(1);
         }
@@ -5376,7 +5376,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        cerr << "Couldn't allocate output reg for constraint '"
+        cerr << "llvm: error: Couldn't allocate output reg for constraint '"
              << OpInfo.ConstraintCode << "'!\n";
         exit(1);
       }
