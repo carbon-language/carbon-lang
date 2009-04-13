@@ -50,9 +50,29 @@ public:
     EH_LABEL = 3,
     GC_LABEL = 4,
     DECLARE = 5,
+
+    /// EXTRACT_SUBREG - This instruction takes two operands: a register
+    /// that has subregisters, and a subregister index. It returns the
+    /// extracted subregister value. This is commonly used to implement
+    /// truncation operations on target architectures which support it.
     EXTRACT_SUBREG = 6,
+
+    /// INSERT_SUBREG - This instruction takes three operands: a register
+    /// that has subregisters, a register providing an insert value, and a
+    /// subregister index. It returns the value of the first register with
+    /// the value of the second register inserted. The first register is
+    /// often defined by an IMPLICIT_DEF, as is commonly used to implement
+    /// anyext operations on target architectures which support it.
     INSERT_SUBREG = 7,
+
+    /// IMPLICIT_DEF - This is the MachineInstr-level equivalent of undef.
     IMPLICIT_DEF = 8,
+
+    /// SUBREG_TO_REG - This instruction is similar to INSERT_SUBREG except
+    /// that the first operand is an immediate integer constant. This constant
+    /// is often zero, as is commonly used to implement zext operations on
+    /// target architectures which support it, such as with x86-64 (with
+    /// zext from i32 to i64 via implicit zero-extension).
     SUBREG_TO_REG = 9
   };
 
