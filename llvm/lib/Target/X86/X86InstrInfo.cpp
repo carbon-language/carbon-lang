@@ -258,10 +258,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::JMP64r,      X86::JMP64m, 1 },
     { X86::MOV16ri,     X86::MOV16mi, 0 },
     { X86::MOV16rr,     X86::MOV16mr, 0 },
-    { X86::MOV16to16_,  X86::MOV16_mr, 0 },
     { X86::MOV32ri,     X86::MOV32mi, 0 },
     { X86::MOV32rr,     X86::MOV32mr, 0 },
-    { X86::MOV32to32_,  X86::MOV32_mr, 0 },
     { X86::MOV64ri32,   X86::MOV64mi32, 0 },
     { X86::MOV64rr,     X86::MOV64mr, 0 },
     { X86::MOV8ri,      X86::MOV8mi, 0 },
@@ -372,9 +370,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::Int_UCOMISDrr,   X86::Int_UCOMISDrm },
     { X86::Int_UCOMISSrr,   X86::Int_UCOMISSrm },
     { X86::MOV16rr,         X86::MOV16rm },
-    { X86::MOV16to16_,      X86::MOV16_rm },
     { X86::MOV32rr,         X86::MOV32rm },
-    { X86::MOV32to32_,      X86::MOV32_rm },
     { X86::MOV64rr,         X86::MOV64rm },
     { X86::MOV64toPQIrr,    X86::MOVQI2PQIrm },
     { X86::MOV64toSDrr,     X86::MOV64toSDrm },
@@ -404,6 +400,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOVZPQILo2PQIrr, X86::MOVZPQILo2PQIrm },
     { X86::MOVZX16rr8,      X86::MOVZX16rm8 },
     { X86::MOVZX32rr16,     X86::MOVZX32rm16 },
+    { X86::MOVZX32_NOREXrr8, X86::MOVZX32_NOREXrm8 },
     { X86::MOVZX32rr8,      X86::MOVZX32rm8 },
     { X86::MOVZX64rr16,     X86::MOVZX64rm16 },
     { X86::MOVZX64rr32,     X86::MOVZX64rm32 },
@@ -672,8 +669,6 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   case X86::MOV16rr:
   case X86::MOV32rr: 
   case X86::MOV64rr:
-  case X86::MOV16to16_:
-  case X86::MOV32to32_:
   case X86::MOVSSrr:
   case X86::MOVSDrr:
 
@@ -710,9 +705,7 @@ unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   default: break;
   case X86::MOV8rm:
   case X86::MOV16rm:
-  case X86::MOV16_rm:
   case X86::MOV32rm:
-  case X86::MOV32_rm:
   case X86::MOV64rm:
   case X86::LD_Fp64m:
   case X86::MOVSSrm:
@@ -741,9 +734,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   default: break;
   case X86::MOV8mr:
   case X86::MOV16mr:
-  case X86::MOV16_mr:
   case X86::MOV32mr:
-  case X86::MOV32_mr:
   case X86::MOV64mr:
   case X86::ST_FpP64m:
   case X86::MOVSSmr:
@@ -795,9 +786,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
   default: break;
     case X86::MOV8rm:
     case X86::MOV16rm:
-    case X86::MOV16_rm:
     case X86::MOV32rm:
-    case X86::MOV32_rm:
     case X86::MOV64rm:
     case X86::LD_Fp64m:
     case X86::MOVSSrm:
@@ -1670,10 +1659,22 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = X86::MOV16rr;
     } else if (DestRC == &X86::GR8RegClass) {
       Opc = X86::MOV8rr;
+    } else if (DestRC == &X86::GR64_RegClass) {
+      Opc = X86::MOV64rr;
     } else if (DestRC == &X86::GR32_RegClass) {
-      Opc = X86::MOV32_rr;
+      Opc = X86::MOV32rr;
     } else if (DestRC == &X86::GR16_RegClass) {
-      Opc = X86::MOV16_rr;
+      Opc = X86::MOV16rr;
+    } else if (DestRC == &X86::GR8_RegClass) {
+      Opc = X86::MOV8rr;
+    } else if (DestRC == &X86::GR64_NOREXRegClass) {
+      Opc = X86::MOV64rr;
+    } else if (DestRC == &X86::GR32_NOREXRegClass) {
+      Opc = X86::MOV32rr;
+    } else if (DestRC == &X86::GR16_NOREXRegClass) {
+      Opc = X86::MOV16rr;
+    } else if (DestRC == &X86::GR8_NOREXRegClass) {
+      Opc = X86::MOV8rr;
     } else if (DestRC == &X86::RFP32RegClass) {
       Opc = X86::MOV_Fp3232;
     } else if (DestRC == &X86::RFP64RegClass || DestRC == &X86::RSTRegClass) {
@@ -1721,7 +1722,7 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       return true;
     }
   }
-  
+
   // Moving from ST(0) turns into FpGET_ST0_32 etc.
   if (SrcRC == &X86::RSTRegClass) {
     // Copying from ST(0)/ST(1).
@@ -1779,10 +1780,22 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
     Opc = X86::MOV16mr;
   } else if (RC == &X86::GR8RegClass) {
     Opc = X86::MOV8mr;
+  } else if (RC == &X86::GR64_RegClass) {
+    Opc = X86::MOV64mr;
   } else if (RC == &X86::GR32_RegClass) {
-    Opc = X86::MOV32_mr;
+    Opc = X86::MOV32mr;
   } else if (RC == &X86::GR16_RegClass) {
-    Opc = X86::MOV16_mr;
+    Opc = X86::MOV16mr;
+  } else if (RC == &X86::GR8_RegClass) {
+    Opc = X86::MOV8mr;
+  } else if (RC == &X86::GR64_NOREXRegClass) {
+    Opc = X86::MOV64mr;
+  } else if (RC == &X86::GR32_NOREXRegClass) {
+    Opc = X86::MOV32mr;
+  } else if (RC == &X86::GR16_NOREXRegClass) {
+    Opc = X86::MOV16mr;
+  } else if (RC == &X86::GR8_NOREXRegClass) {
+    Opc = X86::MOV8mr;
   } else if (RC == &X86::RFP80RegClass) {
     Opc = X86::ST_FpP80m;   // pops
   } else if (RC == &X86::RFP64RegClass) {
@@ -1847,10 +1860,22 @@ static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
     Opc = X86::MOV16rm;
   } else if (RC == &X86::GR8RegClass) {
     Opc = X86::MOV8rm;
+  } else if (RC == &X86::GR64_RegClass) {
+    Opc = X86::MOV64rm;
   } else if (RC == &X86::GR32_RegClass) {
-    Opc = X86::MOV32_rm;
+    Opc = X86::MOV32rm;
   } else if (RC == &X86::GR16_RegClass) {
-    Opc = X86::MOV16_rm;
+    Opc = X86::MOV16rm;
+  } else if (RC == &X86::GR8_RegClass) {
+    Opc = X86::MOV8rm;
+  } else if (RC == &X86::GR64_NOREXRegClass) {
+    Opc = X86::MOV64rm;
+  } else if (RC == &X86::GR32_NOREXRegClass) {
+    Opc = X86::MOV32rm;
+  } else if (RC == &X86::GR16_NOREXRegClass) {
+    Opc = X86::MOV16rm;
+  } else if (RC == &X86::GR8_NOREXRegClass) {
+    Opc = X86::MOV8rm;
   } else if (RC == &X86::RFP80RegClass) {
     Opc = X86::LD_Fp80m;
   } else if (RC == &X86::RFP64RegClass) {

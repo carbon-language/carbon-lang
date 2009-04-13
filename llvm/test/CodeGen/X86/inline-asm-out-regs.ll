@@ -1,6 +1,4 @@
 ; RUN: llvm-as < %s | llc -mtriple=i386-unknown-linux-gnu
-; XFAIL: *
-; Expected to run out of registers during allocation.
 ; PR3391
 
 @pci_indirect = external global { }             ; <{ }*> [#uses=1]

@@ -1019,20 +1019,68 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     break;
       
   case ISD::AND: {
-    // Handle "(x << C1) & C2" as "(X & (C2>>C1)) << C1" if safe and if this
-    // allows us to fold the shift into this addressing mode.
+    // Perform some heroic transforms on an and of a constant-count shift
+    // with a constant to enable use of the scaled offset field.
+
     SDValue Shift = N.getOperand(0);
-    if (Shift.getOpcode() != ISD::SHL) break;
+    if (Shift.getNumOperands() != 2) break;
 
     // Scale must not be used already.
     if (AM.IndexReg.getNode() != 0 || AM.Scale != 1) break;
 
     // Not when RIP is used as the base.
     if (AM.isRIPRel) break;
-      
+
+    SDValue X = Shift.getOperand(0);
     ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N.getOperand(1));
     ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(Shift.getOperand(1));
     if (!C1 || !C2) break;
+
+    // Handle "(X >> (8-C1)) & C2" as "(X >> 8) & 0xff)" if safe. This
+    // allows us to convert the shift and and into an h-register extract and
+    // a scaled index.
+    if (Shift.getOpcode() == ISD::SRL && Shift.hasOneUse()) {
+      unsigned ScaleLog = 8 - C1->getZExtValue();
+      if (ScaleLog > 0 && ScaleLog < 64 &&
+          C2->getZExtValue() == (UINT64_C(0xff) << ScaleLog)) {
+        SDValue Eight = CurDAG->getConstant(8, MVT::i8);
+        SDValue Mask = CurDAG->getConstant(0xff, N.getValueType());
+        SDValue Srl = CurDAG->getNode(ISD::SRL, dl, N.getValueType(),
+                                      X, Eight);
+        SDValue And = CurDAG->getNode(ISD::AND, dl, N.getValueType(),
+                                      Srl, Mask);
+
+        // Insert the new nodes into the topological ordering.
+        if (Eight.getNode()->getNodeId() == -1 ||
+            Eight.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+          CurDAG->RepositionNode(X.getNode(), Eight.getNode());
+          Eight.getNode()->setNodeId(X.getNode()->getNodeId());
+        }
+        if (Mask.getNode()->getNodeId() == -1 ||
+            Mask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+          CurDAG->RepositionNode(X.getNode(), Mask.getNode());
+          Mask.getNode()->setNodeId(X.getNode()->getNodeId());
+        }
+        if (Srl.getNode()->getNodeId() == -1 ||
+            Srl.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
+          CurDAG->RepositionNode(Shift.getNode(), Srl.getNode());
+          Srl.getNode()->setNodeId(Shift.getNode()->getNodeId());
+        }
+        if (And.getNode()->getNodeId() == -1 ||
+            And.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+          CurDAG->RepositionNode(N.getNode(), And.getNode());
+          And.getNode()->setNodeId(N.getNode()->getNodeId());
+        }
+        CurDAG->ReplaceAllUsesWith(N, And);
+        AM.IndexReg = And;
+        AM.Scale = (1 << ScaleLog);
+        return false;
+      }
+    }
+
+    // Handle "(X << C1) & C2" as "(X & (C2>>C1)) << C1" if safe and if this
+    // allows us to fold the shift into this addressing mode.
+    if (Shift.getOpcode() != ISD::SHL) break;
 
     // Not likely to be profitable if either the AND or SHIFT node has more
     // than one use (unless all uses are for address computation). Besides,
@@ -1046,7 +1094,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
       break;
     
     // Get the new AND mask, this folds to a constant.
-    SDValue X = Shift.getOperand(0);
     SDValue NewANDMask = CurDAG->getNode(ISD::SRL, dl, N.getValueType(),
                                          SDValue(C2, 0), SDValue(C1, 0));
     SDValue NewAND = CurDAG->getNode(ISD::AND, dl, N.getValueType(), X, 

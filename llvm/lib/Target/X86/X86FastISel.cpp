@@ -997,7 +997,7 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
     return false;
 
   // First issue a copy to GR16_ or GR32_.
-  unsigned CopyOpc = (SrcVT == MVT::i16) ? X86::MOV16to16_ : X86::MOV32to32_;
+  unsigned CopyOpc = (SrcVT == MVT::i16) ? X86::MOV16rr : X86::MOV32rr;
   const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
     ? X86::GR16_RegisterClass : X86::GR32_RegisterClass;
   unsigned CopyReg = createResultReg(CopyRC);

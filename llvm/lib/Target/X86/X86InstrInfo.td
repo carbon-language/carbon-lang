@@ -181,6 +181,13 @@ def f64mem  : X86MemOperand<"printf64mem">;
 def f80mem  : X86MemOperand<"printf80mem">;
 def f128mem : X86MemOperand<"printf128mem">;
 
+// A version of i8mem for use on x86-64 that uses GR64_NOREX instead of
+// plain GR64, so that it doesn't potentially require a REX prefix.
+def i8mem_NOREX : Operand<i64> {
+  let PrintMethod = "printi8mem";
+  let MIOperandInfo = (ops GR64_NOREX, i8imm, GR64_NOREX, i32imm, i8imm);
+}
+
 def lea32mem : Operand<i32> {
   let PrintMethod = "printlea32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
@@ -396,6 +403,14 @@ def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
 
 // An 'and' node with a single use.
 def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
+  return N->hasOneUse();
+}]>;
+// An 'srl' node with a single use.
+def srl_su : PatFrag<(ops node:$lhs, node:$rhs), (srl node:$lhs, node:$rhs), [{
+  return N->hasOneUse();
+}]>;
+// An 'trunc' node with a single use.
+def trunc_su : PatFrag<(ops node:$src), (trunc node:$src), [{
   return N->hasOneUse();
 }]>;
 
@@ -767,7 +782,12 @@ def MOV16mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
 def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 [(store GR32:$src, addr:$dst)]>;
-                
+
+// A version of MOV8mr that uses i8mem_NOREX so that it can be used for
+// storing h registers, which can't be encoded when a REX prefix is present.
+def MOV8mr_NOREX : I<0x88, MRMDestMem, (outs), (ins i8mem_NOREX:$dst, GR8:$src),
+                   "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;
+
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
 //
@@ -2899,6 +2919,18 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
                    "movz{wl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zextloadi32i16 addr:$src))]>, TB;
 
+// These are the same as the regular regular MOVZX32rr8 and MOVZX32rm8
+// except that they use GR32_NOREX for the output operand register class
+// instead of GR32. This allows them to operate on h registers on x86-64.
+def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
+                         (outs GR32_NOREX:$dst), (ins GR8:$src),
+                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
+                         []>, TB;
+def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
+                         (outs GR32_NOREX:$dst), (ins i8mem:$src),
+                         "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
+                         []>, TB;
+
 let neverHasSideEffects = 1 in {
   let Defs = [AX], Uses = [AL] in
   def CBW : I<0x98, RawFrm, (outs), (ins),
@@ -2933,33 +2965,6 @@ def MOV16r0  : I<0x31, MRMInitReg,  (outs GR16:$dst), (ins),
 def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
                  "xor{l}\t$dst, $dst",
                  [(set GR32:$dst, 0)]>;
-}
-
-// Basic operations on GR16 / GR32 subclasses GR16_ and GR32_ which contains only
-// those registers that have GR8 sub-registers (i.e. AX - DX, EAX - EDX).
-let neverHasSideEffects = 1, isAsCheapAsAMove = 1 in {
-def MOV16to16_ : I<0x89, MRMDestReg, (outs GR16_:$dst), (ins GR16:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
-def MOV32to32_ : I<0x89, MRMDestReg, (outs GR32_:$dst), (ins GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>;
-                
-def MOV16_rr : I<0x89, MRMDestReg, (outs GR16_:$dst), (ins GR16_:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
-def MOV32_rr : I<0x89, MRMDestReg, (outs GR32_:$dst), (ins GR32_:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>;
-} // neverHasSideEffects
-
-let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
-def MOV16_rm : I<0x8B, MRMSrcMem, (outs GR16_:$dst), (ins i16mem:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
-def MOV32_rm : I<0x8B, MRMSrcMem, (outs GR32_:$dst), (ins i32mem:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>;
-}
-let mayStore = 1, neverHasSideEffects = 1 in {
-def MOV16_mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16_:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
-def MOV32_mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32_:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3341,38 +3346,61 @@ def : Pat<(store (add (loadi32 addr:$dst), 128), addr:$dst),
 
 // r & (2^16-1) ==> movz
 def : Pat<(and GR32:$src1, 0xffff),
-          (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR32:$src1, x86_subreg_16bit)))>;
+          (MOVZX32rr16 (EXTRACT_SUBREG GR32:$src1, x86_subreg_16bit))>;
 // r & (2^8-1) ==> movz
 def : Pat<(and GR32:$src1, 0xff),
-          (MOVZX32rr8 (i8 (EXTRACT_SUBREG (MOV32to32_ GR32:$src1),
-                                          x86_subreg_8bit)))>,
+          (MOVZX32rr8 (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR32:$src1, GR32_),
+                                      x86_subreg_8bit))>,
       Requires<[In32BitMode]>;
 // r & (2^8-1) ==> movz
 def : Pat<(and GR16:$src1, 0xff),
-          (MOVZX16rr8 (i8 (EXTRACT_SUBREG (MOV16to16_ GR16:$src1),
-                                          x86_subreg_8bit)))>,
+          (MOVZX16rr8 (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR16:$src1, GR16_),
+                                      x86_subreg_8bit))>,
       Requires<[In32BitMode]>;
 
 // sext_inreg patterns
 def : Pat<(sext_inreg GR32:$src, i16),
-          (MOVSX32rr16 (i16 (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit)))>;
+          (MOVSX32rr16 (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit))>;
 def : Pat<(sext_inreg GR32:$src, i8),
-          (MOVSX32rr8 (i8 (EXTRACT_SUBREG (MOV32to32_ GR32:$src),
-                                          x86_subreg_8bit)))>,
+          (MOVSX32rr8 (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR32:$src, GR32_),
+                                      x86_subreg_8bit))>,
       Requires<[In32BitMode]>;
 def : Pat<(sext_inreg GR16:$src, i8),
-          (MOVSX16rr8 (i8 (EXTRACT_SUBREG (MOV16to16_ GR16:$src),
-                                          x86_subreg_8bit)))>,
+          (MOVSX16rr8 (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR16:$src, GR16_),
+                                      x86_subreg_8bit))>,
       Requires<[In32BitMode]>;
 
 // trunc patterns
 def : Pat<(i16 (trunc GR32:$src)),
-          (i16 (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit))>;
+          (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit)>;
 def : Pat<(i8 (trunc GR32:$src)),
-          (i8 (EXTRACT_SUBREG (MOV32to32_ GR32:$src), x86_subreg_8bit))>,
+          (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR32:$src, GR32_),
+                          x86_subreg_8bit)>,
       Requires<[In32BitMode]>;
 def : Pat<(i8 (trunc GR16:$src)),
-          (i8 (EXTRACT_SUBREG (MOV16to16_ GR16:$src), x86_subreg_8bit))>,
+          (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR16:$src, GR16_),
+                          x86_subreg_8bit)>,
+      Requires<[In32BitMode]>;
+
+// h-register tricks
+def : Pat<(i8 (trunc (srl_su GR16:$src, (i8 8)))),
+          (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR16:$src, GR16_),
+                          x86_subreg_8bit_hi)>,
+      Requires<[In32BitMode]>;
+def : Pat<(i8 (trunc (srl_su GR32:$src, (i8 8)))),
+          (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR32:$src, GR32_),
+                          x86_subreg_8bit_hi)>,
+      Requires<[In32BitMode]>;
+def : Pat<(srl_su GR16:$src, (i8 8)),
+          (EXTRACT_SUBREG
+            (MOVZX32rr8
+              (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR16:$src, GR16_),
+                              x86_subreg_8bit_hi)),
+            x86_subreg_16bit)>,
+      Requires<[In32BitMode]>;
+def : Pat<(and (srl_su GR32:$src, (i8 8)), (i32 255)),
+          (MOVZX32rr8 (EXTRACT_SUBREG (COPY_TO_SUBCLASS GR32:$src, GR32_),
+                                      x86_subreg_8bit_hi))>,
       Requires<[In32BitMode]>;
 
 // (shl x, 1) ==> (add x, x)
