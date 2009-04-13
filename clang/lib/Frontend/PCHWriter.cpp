@@ -262,6 +262,8 @@ namespace {
     void VisitVarDecl(VarDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
     void VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
+    void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
+    void VisitBlockDecl(BlockDecl *D);
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset, 
                           uint64_t VisibleOffset);
   };
@@ -381,6 +383,22 @@ void PCHDeclWriter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
   VisitParmVarDecl(D);
   Writer.AddTypeRef(D->getOriginalType(), Record);
   Code = pch::DECL_ORIGINAL_PARM_VAR;
+}
+
+void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
+  VisitDecl(D);
+  // FIXME: Emit the string literal
+  Code = pch::DECL_FILE_SCOPE_ASM;
+}
+
+void PCHDeclWriter::VisitBlockDecl(BlockDecl *D) {
+  VisitDecl(D);
+  // FIXME: emit block body
+  Record.push_back(D->param_size());
+  for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
+       P != PEnd; ++P)
+    Writer.AddDeclRef(*P, Record);
+  Code = pch::DECL_BLOCK;
 }
 
 /// \brief Emit the DeclContext part of a declaration context decl.

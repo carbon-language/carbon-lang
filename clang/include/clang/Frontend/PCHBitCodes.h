@@ -330,6 +330,10 @@ namespace clang {
       DECL_PARM_VAR,
       /// \brief An OriginalParmVarDecl record.
       DECL_ORIGINAL_PARM_VAR,
+      /// \brief A FileScopeAsmDecl record.
+      DECL_FILE_SCOPE_ASM,
+      /// \brief A BlockDecl record.
+      DECL_BLOCK,
       /// \brief A record that stores the set of declarations that are
       /// lexically stored within a given DeclContext.
       ///

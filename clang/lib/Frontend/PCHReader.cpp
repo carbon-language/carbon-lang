@@ -58,7 +58,8 @@ namespace {
     void VisitVarDecl(VarDecl *VD);
     void VisitParmVarDecl(ParmVarDecl *PD);
     void VisitOriginalParmVarDecl(OriginalParmVarDecl *PD);
-
+    void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
+    void VisitBlockDecl(BlockDecl *BD);
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
   };
 }
@@ -175,6 +176,21 @@ void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
 void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {
   VisitParmVarDecl(PD);
   PD->setOriginalType(Reader.GetType(Record[Idx++]));
+}
+
+void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
+  VisitDecl(AD);
+  // FIXME: read asm string
+}
+
+void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
+  VisitDecl(BD);
+  unsigned NumParams = Record[Idx++];
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  Params.reserve(NumParams);
+  for (unsigned I = 0; I != NumParams; ++I)
+    Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  BD->setParams(Reader.getContext(), &Params[0], NumParams);  
 }
 
 std::pair<uint64_t, uint64_t> 
@@ -1102,6 +1118,23 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     LoadedDecl(Index, Parm);
     Reader.VisitOriginalParmVarDecl(Parm);
     D = Parm;
+    break;
+  }
+
+  case pch::DECL_FILE_SCOPE_ASM: {
+    FileScopeAsmDecl *Asm = FileScopeAsmDecl::Create(Context, 0,
+                                                     SourceLocation(), 0);
+    LoadedDecl(Index, Asm);
+    Reader.VisitFileScopeAsmDecl(Asm);
+    D = Asm;
+    break;
+  }
+
+  case pch::DECL_BLOCK: {
+    BlockDecl *Block = BlockDecl::Create(Context, 0, SourceLocation());
+    LoadedDecl(Index, Block);
+    Reader.VisitBlockDecl(Block);
+    D = Block;
     break;
   }
 

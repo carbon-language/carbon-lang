@@ -1206,6 +1206,8 @@ public:
 
   const StringLiteral *getAsmString() const { return AsmString; }
   StringLiteral *getAsmString() { return AsmString; }
+  void setAsmString(StringLiteral *Asm) { AsmString = Asm; }
+
   static bool classof(const Decl *D) {
     return D->getKind() == FileScopeAsm;
   }
