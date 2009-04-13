@@ -85,8 +85,10 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     for (LookupResult::iterator Res = Result.begin(), ResEnd = Result.end();
          Res != ResEnd; ++Res) {
       if (isa<TypeDecl>(*Res) || isa<ObjCInterfaceDecl>(*Res)) {
-        IIDecl = *Res;
-        break;
+        if (!IIDecl || 
+            (*Res)->getLocation().getRawEncoding() < 
+              IIDecl->getLocation().getRawEncoding())
+          IIDecl = *Res;
       }
     }
 

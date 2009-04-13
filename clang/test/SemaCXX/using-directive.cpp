@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL
 
 namespace A {
   short i; // expected-note 2{{candidate found by name lookup is 'A::i'}}
@@ -95,8 +94,7 @@ namespace OneFunction {
 }
 
 namespace TwoTag {
-  struct X; // expected-note{{candidate found by name lookup is 'TwoTag::X'}} \
-  // expected-note{{forward declaration}}
+  struct X; // expected-note{{candidate found by name lookup is 'TwoTag::X'}}
 }
 
 namespace FuncHidesTagAmbiguity {
@@ -105,7 +103,6 @@ namespace FuncHidesTagAmbiguity {
   using namespace TwoTag;
 
   void test() {
-    (void)X(); // expected-error{{reference to 'X' is ambiguous}} \
-      // FIXME: expected-error{{invalid use of incomplete type}}
+    (void)X(); // expected-error{{reference to 'X' is ambiguous}}
   }
 }
