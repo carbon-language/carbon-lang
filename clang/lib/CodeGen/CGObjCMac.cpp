@@ -895,7 +895,7 @@ static llvm::Constant *getConstantGEP(llvm::Constant *C,
 /// hasObjCExceptionAttribute - Return true if this class or any super
 /// class has the __objc_exception__ attribute.
 static bool hasObjCExceptionAttribute(const ObjCInterfaceDecl *OID) {
-  if (OID->getAttr<ObjCExceptionAttr>())
+  if (OID->hasAttr<ObjCExceptionAttr>())
     return true;
   if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
     return hasObjCExceptionAttribute(Super);

@@ -74,7 +74,7 @@ static bool isInCLinkageSpecification(const Decl *D) {
 bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
   // Clang's "overloadable" attribute extension to C/C++ implies
   // name mangling (always).
-  if (FD->getAttr<OverloadableAttr>()) {
+  if (FD->hasAttr<OverloadableAttr>()) {
     ; // fall into mangling code unconditionally.
   } else if (// C functions are not mangled
              !Context.getLangOptions().CPlusPlus ||

@@ -1650,13 +1650,13 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   // FIXME: handle sseregparm someday...
   if (TargetDecl) {
-    if (TargetDecl->getAttr<NoThrowAttr>())
+    if (TargetDecl->hasAttr<NoThrowAttr>())
       FuncAttrs |= llvm::Attribute::NoUnwind;
-    if (TargetDecl->getAttr<NoReturnAttr>())
+    if (TargetDecl->hasAttr<NoReturnAttr>())
       FuncAttrs |= llvm::Attribute::NoReturn;
-    if (TargetDecl->getAttr<ConstAttr>())
+    if (TargetDecl->hasAttr<ConstAttr>())
       FuncAttrs |= llvm::Attribute::ReadNone;
-    else if (TargetDecl->getAttr<PureAttr>())
+    else if (TargetDecl->hasAttr<PureAttr>())
       FuncAttrs |= llvm::Attribute::ReadOnly;
   }
 

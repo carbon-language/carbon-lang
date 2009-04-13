@@ -60,7 +60,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 /// EmitBlockVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
 void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
-  if (D.getAttr<AsmLabelAttr>())
+  if (D.hasAttr<AsmLabelAttr>())
     CGM.ErrorUnsupported(&D, "__asm__");
   
   // We don't support __thread yet.
@@ -175,7 +175,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (const SectionAttr *SA = D.getAttr<SectionAttr>())
     GV->setSection(SA->getName());
   
-  if (D.getAttr<UsedAttr>())
+  if (D.hasAttr<UsedAttr>())
     CGM.AddUsedGlobal(GV);
 
   // We may have to cast the constant because of the initializer
@@ -235,7 +235,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
 /// These turn into simple stack objects, or GlobalValues depending on target.
 void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
-  bool isByRef = D.getAttr<BlocksAttr>();
+  bool isByRef = D.hasAttr<BlocksAttr>();
   bool needsDispose = false;
 
   llvm::Value *DeclPtr;

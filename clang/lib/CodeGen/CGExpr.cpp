@@ -644,7 +644,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // local static?
       if (!VD->hasLocalStorage())
         attr = getContext().getObjCGCAttrKind(E->getType());
-      if (VD->getAttr<BlocksAttr>()) {
+      if (VD->hasAttr<BlocksAttr>()) {
         bool needsCopyDispose = BlockRequiresCopying(VD->getType());
         const llvm::Type *PtrStructTy = V->getType();
         const llvm::Type *Ty = PtrStructTy;
