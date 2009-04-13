@@ -212,6 +212,8 @@ def error_synthesized_ivar_yet_not_supported : Error<
 
 def error_property_ivar_type : Error<
   "type of property %0 does not match type of ivar %1">;
+def error_ivar_in_superclass_use : Error<
+  "property %0 attempting to use ivar %1 declared in in super class %2">;
 def error_weak_property : Error<
   "existing ivar %1 for __weak property %0 must be __weak">;
 def error_strong_property : Error<

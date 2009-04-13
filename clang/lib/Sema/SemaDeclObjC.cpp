@@ -1791,11 +1791,13 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   // Check that we have a valid, previously declared ivar for @synthesize
   if (Synthesize) {
     // @synthesize
+    bool NoExplicitPropertyIvar = (!PropertyIvar);
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
     QualType PropType = Context.getCanonicalType(property->getType());
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    Ivar = IDecl->lookupInstanceVariable(Context, PropertyIvar);
+    ObjCInterfaceDecl *ClassDeclared;
+    Ivar = IDecl->lookupInstanceVariable(Context, PropertyIvar, ClassDeclared);
     if (!Ivar) {
       if (getLangOptions().ObjCNonFragileABI) {
         Ivar = ObjCIvarDecl::Create(Context, CurContext, PropertyLoc, 
@@ -1808,6 +1810,15 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
         return DeclPtrTy();
       }
+    }
+    else if (getLangOptions().ObjCNonFragileABI &&
+             NoExplicitPropertyIvar && ClassDeclared != IDecl) {
+      Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
+        << property->getDeclName() << Ivar->getDeclName() 
+        << ClassDeclared->getDeclName();
+      Diag(Ivar->getLocation(), diag::note_previous_access_declaration)
+        << Ivar << Ivar->getNameAsCString();
+      // Note! I deliberately want it to fall thru so more errors are caught.
     }
     QualType IvarType = Context.getCanonicalType(Ivar->getType());
     
