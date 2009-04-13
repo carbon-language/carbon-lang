@@ -480,9 +480,10 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   } else if (Src->isWeakForLinker()) {
     // At this point we know that Dest has LinkOnce, External*, Weak, Common,
     // or DLL* linkage.
-    if ((Dest->hasLinkOnceLinkage() &&
-          (Src->hasWeakLinkage() || Src->hasCommonLinkage())) ||
-        Dest->hasExternalWeakLinkage()) {
+    if (Dest->hasExternalWeakLinkage() ||
+        Dest->hasAvailableExternallyLinkage() ||
+        (Dest->hasLinkOnceLinkage() &&
+         (Src->hasWeakLinkage() || Src->hasCommonLinkage()))) {
       LinkFromSrc = true;
       LT = Src->getLinkage();
     } else {

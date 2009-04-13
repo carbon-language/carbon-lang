@@ -443,7 +443,9 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   }
 
   // Ignore debug and non-emitted data.
-  if (GV->getSection() == "llvm.metadata") return true;
+  if (GV->getSection() == "llvm.metadata" ||
+      GV->hasAvailableExternallyLinkage())
+    return true;
   
   if (!GV->hasAppendingLinkage()) return false;
 

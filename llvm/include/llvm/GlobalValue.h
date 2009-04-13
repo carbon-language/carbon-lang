@@ -31,6 +31,7 @@ public:
   /// @brief An enumeration for the kinds of linkage for global values.
   enum LinkageTypes {
     ExternalLinkage = 0,///< Externally visible function
+    AvailableExternallyLinkage, ///< Available for inspection, not emission.
     LinkOnceAnyLinkage, ///< Keep one copy of function when linking (inline)
     LinkOnceODRLinkage, ///< Same, but only replaced by something equivalent.
     WeakAnyLinkage,     ///< Keep one copy of named function when linking (weak)
@@ -109,6 +110,9 @@ public:
   }
 
   bool hasExternalLinkage() const { return Linkage == ExternalLinkage; }
+  bool hasAvailableExternallyLinkage() const {
+    return Linkage == AvailableExternallyLinkage;
+  }
   bool hasLinkOnceLinkage() const {
     return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
   }
@@ -119,7 +123,8 @@ public:
   bool hasInternalLinkage() const { return Linkage == InternalLinkage; }
   bool hasPrivateLinkage() const { return Linkage == PrivateLinkage; }
   bool hasLocalLinkage() const {
-    return Linkage == InternalLinkage || Linkage == PrivateLinkage;
+    return Linkage == InternalLinkage || Linkage == PrivateLinkage ||
+           Linkage == AvailableExternallyLinkage;
   }
   bool hasDLLImportLinkage() const { return Linkage == DLLImportLinkage; }
   bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }
@@ -141,9 +146,10 @@ public:
   }
 
   /// isWeakForLinker - Whether the definition of this global may be replaced at
-  /// link time, whether the replacement is equivalent to the original or not.
+  /// link time.
   bool isWeakForLinker() const {
-    return (Linkage == WeakAnyLinkage ||
+    return (Linkage == AvailableExternallyLinkage ||
+            Linkage == WeakAnyLinkage ||
             Linkage == WeakODRLinkage ||
             Linkage == LinkOnceAnyLinkage ||
             Linkage == LinkOnceODRLinkage ||

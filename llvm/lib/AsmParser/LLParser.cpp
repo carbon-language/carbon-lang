@@ -764,6 +764,9 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_weak_odr:     Res = GlobalValue::WeakODRLinkage; break;
   case lltok::kw_linkonce:     Res = GlobalValue::LinkOnceAnyLinkage; break;
   case lltok::kw_linkonce_odr: Res = GlobalValue::LinkOnceODRLinkage; break;
+  case lltok::kw_available_externally:
+    Res = GlobalValue::AvailableExternallyLinkage;
+    break;
   case lltok::kw_appending:    Res = GlobalValue::AppendingLinkage; break;
   case lltok::kw_dllexport:    Res = GlobalValue::DLLExportLinkage; break;
   case lltok::kw_common:       Res = GlobalValue::CommonLinkage; break;

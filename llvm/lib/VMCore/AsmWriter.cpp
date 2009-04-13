@@ -1225,6 +1225,9 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   switch (LT) {
   case GlobalValue::PrivateLinkage:     Out << "private "; break;
   case GlobalValue::InternalLinkage:    Out << "internal "; break;
+  case GlobalValue::AvailableExternallyLinkage:
+    Out << "available_externally ";
+    break;
   case GlobalValue::LinkOnceAnyLinkage: Out << "linkonce "; break;
   case GlobalValue::LinkOnceODRLinkage: Out << "linkonce_odr "; break;
   case GlobalValue::WeakAnyLinkage:     Out << "weak "; break;

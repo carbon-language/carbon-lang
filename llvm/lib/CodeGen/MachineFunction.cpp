@@ -38,8 +38,14 @@ using namespace llvm;
 static AnnotationID MF_AID(
   AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
 
-// Out of line virtual function to home classes.
-void MachineFunctionPass::virtfn() {}
+bool MachineFunctionPass::runOnFunction(Function &F) {
+  // Do not codegen any 'available_externally' functions at all, they have
+  // definitions outside the translation unit.
+  if (F.hasAvailableExternallyLinkage())
+    return false;
+  
+  return runOnMachineFunction(MachineFunction::get(&F));
+}
 
 namespace {
   struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {

@@ -509,6 +509,17 @@ All Global Variables and Functions have one of the following types of linkage:
   '<tt>static</tt>' keyword in C.
   </dd>
 
+  <dt><tt><b><a name="available_externally">available_externally</a></b></tt>:
+  </dt>
+
+  <dd>Globals with "<tt>available_externally</tt>" linkage are never emitted
+  into the object file corresponding to the LLVM module.  They exist to
+  allow inlining and other optimizations to take place given knowledge of the
+  definition of the global, which is known to be somewhere outside the module.
+  Globals with <tt>available_externally</tt> linkage are allowed to be discarded
+  at will, and are otherwise the same as <tt>linkonce_odr</tt>.  This linkage
+  type is only allowed on definitions, not declarations.</dd>
+
   <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
 
   <dd>Globals with "<tt>linkonce</tt>" linkage are merged with other globals of
@@ -554,10 +565,10 @@ All Global Variables and Functions have one of the following types of linkage:
 
   <dt><tt><b><a name="linkage_linkonce">linkonce_odr</a></b></tt>: </dt>
   <dt><tt><b><a name="linkage_weak">weak_odr</a></b></tt>: </dt>
-  <dd>Some languages allow inequivalent globals to be merged, such as two
+  <dd>Some languages allow differing globals to be merged, such as two
     functions with different semantics.  Other languages, such as <tt>C++</tt>,
     ensure that only equivalent globals are ever merged (the "one definition
-    rule" - <tt>odr</tt>).  Such languages can use the <tt>linkonce_odr</tt>
+    rule" - "ODR").  Such languages can use the <tt>linkonce_odr</tt>
     and <tt>weak_odr</tt> linkage types to indicate that the global will only
     be merged with equivalent globals.  These linkage types are otherwise the
     same as their non-<tt>odr</tt> versions.

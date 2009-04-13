@@ -487,6 +487,7 @@ lltok::Kind LLLexer::LexIdentifier() {
 
   KEYWORD(private);
   KEYWORD(internal);
+  KEYWORD(available_externally);
   KEYWORD(linkonce);
   KEYWORD(linkonce_odr);
   KEYWORD(weak);

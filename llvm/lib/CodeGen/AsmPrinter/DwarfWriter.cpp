@@ -3519,6 +3519,9 @@ class DwarfException : public Dwarf  {
   ///
   void EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
     Function::LinkageTypes linkage = EHFrameInfo.function->getLinkage();
+    
+    assert(!EHFrameInfo.function->hasAvailableExternallyLinkage() && 
+           "Should not emit 'available externally' functions at all");
 
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 

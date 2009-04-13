@@ -24,8 +24,9 @@
 
 namespace llvm {
 
+  // FIXME: This pass should declare that the pass does not invalidate any LLVM
+  // passes.
 struct MachineFunctionPass : public FunctionPass {
-
   explicit MachineFunctionPass(intptr_t ID) : FunctionPass(ID) {}
   explicit MachineFunctionPass(void *ID) : FunctionPass(ID) {}
 
@@ -36,14 +37,7 @@ protected:
   virtual bool runOnMachineFunction(MachineFunction &MF) = 0;
 
 public:
-  // FIXME: This pass should declare that the pass does not invalidate any LLVM
-  // passes.
-  bool runOnFunction(Function &F) {
-    return runOnMachineFunction(MachineFunction::get(&F));
-  }
-  
-private:
-  virtual void virtfn();  // out of line virtual fn to give class a home.
+  bool runOnFunction(Function &F);
 };
 
 } // End llvm namespace
