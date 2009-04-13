@@ -332,7 +332,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
             DwarfWriter *DW = DAG.getDwarfWriter();
             DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
 
-            if (DW && DW->ValidDebugInfo(SPI->getContext())) {
+            if (DW && DW->ValidDebugInfo(SPI->getContext(), false)) {
               DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
               std::string Dir, FN;
               unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
@@ -351,7 +351,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
               DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
               Value *SP = FSI->getSubprogram();
 
-              if (DW->ValidDebugInfo(SP)) {
+              if (DW->ValidDebugInfo(SP, false)) {
                 DISubprogram Subprogram(cast<GlobalVariable>(SP));
                 DICompileUnit CU(Subprogram.getCompileUnit());
                 std::string Dir, FN;
@@ -3921,7 +3921,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_stoppoint: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (DW && DW->ValidDebugInfo(SPI.getContext())) {
+    if (DW && DW->ValidDebugInfo(SPI.getContext(), Fast)) {
       MachineFunction &MF = DAG.getMachineFunction();
       if (Fast)
         DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
@@ -3941,12 +3941,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-    if (DW && DW->ValidDebugInfo(RSI.getContext())) {
+    if (DW && DW->ValidDebugInfo(RSI.getContext(), Fast)) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
-      if (Fast)
-        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                                 getRoot(), LabelID));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
     }
 
     return 0;
@@ -3954,7 +3953,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_end: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-    if (DW && DW->ValidDebugInfo(REI.getContext())) {
+    if (DW && DW->ValidDebugInfo(REI.getContext(), Fast)) {
 
       MachineFunction &MF = DAG.getMachineFunction();
       DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
@@ -3969,9 +3968,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
       unsigned LabelID =
         DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
-      if (Fast)
-        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                                 getRoot(), LabelID));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
     }
 
     return 0;
@@ -3981,7 +3979,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (!DW) return 0;
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
     Value *SP = FSI.getSubprogram();
-    if (SP && DW->ValidDebugInfo(SP)) {
+    if (SP && DW->ValidDebugInfo(SP, Fast)) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
       // what (most?) gdb expects.
       MachineFunction &MF = DAG.getMachineFunction();
@@ -4023,7 +4021,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       DwarfWriter *DW = DAG.getDwarfWriter();
       DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
       Value *Variable = DI.getVariable();
-      if (DW && DW->ValidDebugInfo(Variable))
+      if (DW && DW->ValidDebugInfo(Variable, Fast))
         DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
                                 getValue(DI.getAddress()), getValue(Variable)));
     } else {

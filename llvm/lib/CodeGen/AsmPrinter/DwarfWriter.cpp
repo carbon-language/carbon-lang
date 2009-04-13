@@ -3296,7 +3296,7 @@ public:
   }
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
-  bool ValidDebugInfo(Value *V) {
+  bool ValidDebugInfo(Value *V, bool FastISel) {
     if (!V)
       return false;
 
@@ -3335,6 +3335,11 @@ public:
     case DW_TAG_subprogram:
       assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
       break;
+    case DW_TAG_lexical_block:
+      /// FIXME. This interfers with the qualitfy of generated code when 
+      /// during optimization.
+      if (FastISel == false)
+        return false;
     default:
       break;
     }
@@ -4621,8 +4626,8 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
 }
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
-bool DwarfWriter::ValidDebugInfo(Value *V) {
-  return DD && DD->ValidDebugInfo(V);
+bool DwarfWriter::ValidDebugInfo(Value *V, bool FastISel) {
+  return DD && DD->ValidDebugInfo(V, FastISel);
 }
 
 /// RecordSourceLine - Records location information and associates it with a 
