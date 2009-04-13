@@ -1,9 +1,9 @@
 // Test this without pch.
-// RUN: clang-cc -triple=i686-apple-darwin9 -fblocks -include %S/types.h -fsyntax-only -verify %s
+// RUN: clang-cc -fblocks -include %S/types.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang-cc -emit-pch -triple=i686-apple-darwin9 -fblocks -o %t %S/types.h &&
-// RUN: clang-cc -triple=i686-apple-darwin9 -fblocks -include-pch %t -fsyntax-only -verify %s 
+// RUN: clang-cc -emit-pch -fblocks -o %t %S/types.h &&
+// RUN: clang-cc -fblocks -include-pch %t -fsyntax-only -verify %s 
 
 // FIXME: TYPE_EXT_QUAL
 // FIXME: TYPE_FIXED_WIDTH_INT

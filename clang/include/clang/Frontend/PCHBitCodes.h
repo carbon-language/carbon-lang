@@ -316,8 +316,12 @@ namespace clang {
       DECL_TYPEDEF,
       /// \brief An EnumDecl record.
       DECL_ENUM,
+      /// \brief A RecordDecl record.
+      DECL_RECORD,
       /// \brief An EnumConstantDecl record.
       DECL_ENUM_CONSTANT,
+      /// \brief A FieldDecl record.
+      DECL_FIELD,
       /// \brief A VarDecl record.
       DECL_VAR,
       /// \brief A record that stores the set of declarations that are

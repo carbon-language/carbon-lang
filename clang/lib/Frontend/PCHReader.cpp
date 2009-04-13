@@ -50,8 +50,10 @@ namespace {
     void VisitTypedefDecl(TypedefDecl *TD);
     void VisitTagDecl(TagDecl *TD);
     void VisitEnumDecl(EnumDecl *ED);
+    void VisitRecordDecl(RecordDecl *RD);
     void VisitValueDecl(ValueDecl *VD);
     void VisitEnumConstantDecl(EnumConstantDecl *ECD);
+    void VisitFieldDecl(FieldDecl *FD);
     void VisitVarDecl(VarDecl *VD);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
@@ -106,6 +108,12 @@ void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
   ED->setIntegerType(Reader.GetType(Record[Idx++]));
 }
 
+void PCHDeclReader::VisitRecordDecl(RecordDecl *RD) {
+  VisitTagDecl(RD);
+  RD->setHasFlexibleArrayMember(Record[Idx++]);
+  RD->setAnonymousStructOrUnion(Record[Idx++]);
+}
+
 void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
   VisitNamedDecl(VD);
   VD->setType(Reader.GetType(Record[Idx++]));
@@ -113,8 +121,14 @@ void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
 
 void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   VisitValueDecl(ECD);
-  // FIXME: initialization expression
+  // FIXME: read the initialization expression
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
+}
+
+void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
+  VisitValueDecl(FD);
+  FD->setMutable(Record[Idx++]);
+  // FIXME: Read the bit width.
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -911,9 +925,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
     
   case pch::TYPE_RECORD:
-    // FIXME: Deserialize RecordType
-    assert(false && "Cannot de-serialize record types yet");
-    return QualType();
+    assert(Record.size() == 1 && "Incorrect encoding of record type");
+    return Context.getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ENUM:
     assert(Record.size() == 1 && "Incorrect encoding of enum type");
@@ -989,6 +1002,15 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   }
 
+  case pch::DECL_RECORD: {
+    RecordDecl *Record = RecordDecl::Create(Context, TagDecl::TK_struct, 
+                                            0, SourceLocation(), 0, 0);
+    LoadedDecl(Index, Record);
+    Reader.VisitRecordDecl(Record);
+    D = Record;
+    break;
+  }
+
   case pch::DECL_ENUM_CONSTANT: {
     EnumConstantDecl *ECD = EnumConstantDecl::Create(Context, 0, 
                                                      SourceLocation(), 0,
@@ -997,6 +1019,15 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     LoadedDecl(Index, ECD);
     Reader.VisitEnumConstantDecl(ECD);
     D = ECD;
+    break;
+  }
+
+  case pch::DECL_FIELD: {
+    FieldDecl *Field = FieldDecl::Create(Context, 0, SourceLocation(), 0,
+                                         QualType(), 0, false);
+    LoadedDecl(Index, Field);
+    Reader.VisitFieldDecl(Field);
+    D = Field;
     break;
   }
 
@@ -1132,12 +1163,10 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   Decls.clear();
 
   unsigned Idx = 0;
-  //  llvm::SmallVector<uintptr_t, 16> DeclIDs;
   while (Idx < Record.size()) {
     Decls.push_back(VisibleDeclaration());
     Decls.back().Name = ReadDeclarationName(Record, Idx);
 
-    // FIXME: Don't actually read anything here!
     unsigned Size = Record[Idx++];
     llvm::SmallVector<unsigned, 4> & LoadedDecls
       = Decls.back().Declarations;

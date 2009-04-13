@@ -779,6 +779,9 @@ public:
   /// isMutable - Determines whether this field is mutable (C++ only).
   bool isMutable() const { return Mutable; }
 
+  /// \brief Set whether this field is mutable (C++ only).
+  void setMutable(bool M) { Mutable = M; }
+
   /// isBitfield - Determines whether this field is a bitfield.
   bool isBitField() const { return BitWidth != NULL; }
 
