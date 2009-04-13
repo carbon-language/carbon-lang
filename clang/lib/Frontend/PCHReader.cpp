@@ -200,21 +200,20 @@ static bool ParseLineTable(SourceManager &SourceMgr,
   LineTableInfo &LineTable = SourceMgr.getLineTable();
 
   // Parse the file names
-  for (unsigned I = 0, N = Record[Idx++]; I != N; ++I) {
+  std::map<int, int> FileIDs;
+  for (int I = 0, N = Record[Idx++]; I != N; ++I) {
     // Extract the file name
     unsigned FilenameLen = Record[Idx++];
     std::string Filename(&Record[Idx], &Record[Idx] + FilenameLen);
     Idx += FilenameLen;
-    unsigned ID = LineTable.getLineTableFilenameID(Filename.c_str(), 
-                                                   Filename.size());
-    if (ID != I)
-      return Error("Filename ID mismatch in PCH line table");
+    FileIDs[I] = LineTable.getLineTableFilenameID(Filename.c_str(), 
+                                                  Filename.size());
   }
 
   // Parse the line entries
   std::vector<LineEntry> Entries;
   while (Idx < Record.size()) {
-    unsigned FID = Record[Idx++];
+    int FID = FileIDs[Record[Idx++]];
 
     // Extract the line entries
     unsigned NumEntries = Record[Idx++];
