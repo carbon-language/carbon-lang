@@ -109,6 +109,9 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define if libffi is available on this platform. */
+#undef HAVE_FFI_CALL
+
 /* Define to 1 if you have the <ffi/ffi.h> header file. */
 #undef HAVE_FFI_FFI_H
 
