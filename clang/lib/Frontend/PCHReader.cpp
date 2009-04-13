@@ -1158,12 +1158,21 @@ void PCHReader::PrintStats() {
   unsigned NumDeclsLoaded = std::count(DeclAlreadyLoaded.begin(),
                                        DeclAlreadyLoaded.end(),
                                        true);
+  unsigned NumIdentifiersLoaded = 0;
+  for (unsigned I = 0; I < IdentifierData.size(); ++I) {
+    if ((IdentifierData[I] & 0x01) == 0)
+      ++NumIdentifiersLoaded;
+  }
+
   std::fprintf(stderr, "  %u/%u types read (%f%%)\n",
                NumTypesLoaded, (unsigned)TypeAlreadyLoaded.size(),
-               ((float)NumTypesLoaded/(float)TypeAlreadyLoaded.size() * 100));
+               ((float)NumTypesLoaded/TypeAlreadyLoaded.size() * 100));
   std::fprintf(stderr, "  %u/%u declarations read (%f%%)\n",
                NumDeclsLoaded, (unsigned)DeclAlreadyLoaded.size(),
-               ((float)NumDeclsLoaded/(float)DeclAlreadyLoaded.size() * 100));
+               ((float)NumDeclsLoaded/DeclAlreadyLoaded.size() * 100));
+  std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
+               NumIdentifiersLoaded, (unsigned)IdentifierData.size(),
+               ((float)NumIdentifiersLoaded/IdentifierData.size() * 100));
   std::fprintf(stderr, "\n");
 }
 
