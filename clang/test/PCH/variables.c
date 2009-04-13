@@ -16,3 +16,7 @@ double z; // expected-error{{redefinition}}
 int Q = A_MACRO_IN_THE_PCH;
 
 int R = FUNCLIKE_MACRO(A_MACRO_, IN_THE_PCH);
+
+
+int UNIQUE(a);  // a2
+int *Arr[] = { &a0, &a1, &a2 };

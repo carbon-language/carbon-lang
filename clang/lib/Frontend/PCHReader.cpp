@@ -318,7 +318,11 @@ bool PCHReader::ReadPreprocessorBlock() {
     switch (RecType) {
     default:  // Default behavior: ignore unknown records.
       break;
-        
+    case pch::PP_COUNTER_VALUE:
+      if (!Record.empty())
+        PP.setCounterValue(Record[0]);
+      break;
+
     case pch::PP_MACRO_OBJECT_LIKE:
     case pch::PP_MACRO_FUNCTION_LIKE: {
       IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);

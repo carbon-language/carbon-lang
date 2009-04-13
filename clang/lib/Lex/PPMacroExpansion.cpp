@@ -55,6 +55,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__FILE__ = RegisterBuiltinMacro("__FILE__");
   Ident__DATE__ = RegisterBuiltinMacro("__DATE__");
   Ident__TIME__ = RegisterBuiltinMacro("__TIME__");
+  Ident__COUNTER__ = RegisterBuiltinMacro("__COUNTER__");
   Ident_Pragma  = RegisterBuiltinMacro("_Pragma");
   
   // GCC Extensions.
@@ -557,6 +558,13 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     TmpBuffer[Len] = '"';  // Replace the newline with a quote.
     Tok.setKind(tok::string_literal);
     CreateString(TmpBuffer, Len+1, Tok, Tok.getLocation());
+  } else if (II == Ident__COUNTER__) {
+    Diag(Tok, diag::ext_pp_counter);
+    
+    // __COUNTER__ expands to a simple numeric value.
+    sprintf(TmpBuffer, "%u", CounterValue++);
+    Tok.setKind(tok::numeric_constant);
+    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else {
     assert(0 && "Unknown identifier!");
   }

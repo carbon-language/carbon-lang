@@ -67,9 +67,11 @@ class Preprocessor {
   IdentifierInfo *Ident__INCLUDE_LEVEL__;          // __INCLUDE_LEVEL__
   IdentifierInfo *Ident__BASE_FILE__;              // __BASE_FILE__
   IdentifierInfo *Ident__TIMESTAMP__;              // __TIMESTAMP__
+  IdentifierInfo *Ident__COUNTER__;                // __COUNTER__
   IdentifierInfo *Ident_Pragma, *Ident__VA_ARGS__; // _Pragma, __VA_ARGS__
   
   SourceLocation DATELoc, TIMELoc;
+  unsigned CounterValue;  // Next __COUNTER__ value.
 
   enum {
     /// MaxIncludeStackDepth - Maximum depth of #includes.
@@ -590,6 +592,8 @@ public:
   bool SawDateOrTime() const {
     return DATELoc != SourceLocation() || TIMELoc != SourceLocation();
   }
+  unsigned getCounterValue() const { return CounterValue; }
+  void setCounterValue(unsigned V) { CounterValue = V; }
   
   /// AllocateMacroInfo - Allocate a new MacroInfo object with the provide
   ///  SourceLocation.

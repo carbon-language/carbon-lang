@@ -165,8 +165,12 @@ namespace clang {
       PP_MACRO_FUNCTION_LIKE = 2,
       
       /// \brief Describes one token.
-      /// [PPTOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
-      PP_TOKEN = 3
+      /// [PP_TOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
+      PP_TOKEN = 3,
+      
+      /// \brief The value of the next __COUNTER__ to dispense.
+      /// [PP_COUNTER_VALUE, Val]
+      PP_COUNTER_VALUE = 4
     };
     
 

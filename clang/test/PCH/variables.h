@@ -16,3 +16,11 @@ int MAKE_HAPPY(Very);
 
 #define A_MACRO_IN_THE_PCH 492
 #define FUNCLIKE_MACRO(X, Y) X ## Y
+
+#define PASTE2(x,y) x##y
+#define PASTE1(x,y) PASTE2(x,y)
+#define UNIQUE(x) PASTE1(x,__COUNTER__)
+
+int UNIQUE(a);  // a0
+int UNIQUE(a);  // a1
+

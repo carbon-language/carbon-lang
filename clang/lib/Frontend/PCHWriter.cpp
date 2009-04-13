@@ -567,6 +567,13 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   
   RecordData Record;
 
+  // If the preprocessor __COUNTER__ value has been bumped, remember it.
+  if (PP.getCounterValue() != 0) {
+    Record.push_back(PP.getCounterValue());
+    S.EmitRecord(pch::PP_COUNTER_VALUE, Record);
+    Record.clear();
+  }  
+  
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
   // FIXME: Eventually we want to emit an index so that we can lazily load
@@ -626,9 +633,6 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     }
     
   }
-  
-  // TODO: someday when PP supports __COUNTER__, emit a record for its value if
-  // non-zero.
   
   S.ExitBlock();
 }

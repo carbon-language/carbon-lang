@@ -53,7 +53,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts, IILookup),
     CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
-
+  CounterValue = 0; // __COUNTER__ starts at 0.
+      
   // Clear stats.
   NumDirectives = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
