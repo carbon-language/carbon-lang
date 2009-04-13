@@ -75,6 +75,7 @@ end
 module Linkage : sig
   type t =
     External
+  | Available_externally
   | Link_once
   | Weak
   | Appending

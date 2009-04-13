@@ -38,6 +38,7 @@ end
 module Linkage = struct
   type t =
   | External
+  | Available_externally
   | Link_once
   | Weak
   | Appending
