@@ -115,6 +115,7 @@ typedef enum {
 
 typedef enum {
   LLVMExternalLinkage,    /**< Externally visible function */
+  LLVMAvailableExternallyLinkage,
   LLVMLinkOnceAnyLinkage, /**< Keep one copy of function when linking (inline)*/
   LLVMLinkOnceODRLinkage, /**< Same, but only replaced by something
                             equivalent. */
