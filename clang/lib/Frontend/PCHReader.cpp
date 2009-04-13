@@ -53,8 +53,11 @@ namespace {
     void VisitRecordDecl(RecordDecl *RD);
     void VisitValueDecl(ValueDecl *VD);
     void VisitEnumConstantDecl(EnumConstantDecl *ECD);
+    void VisitFunctionDecl(FunctionDecl *FD);
     void VisitFieldDecl(FieldDecl *FD);
     void VisitVarDecl(VarDecl *VD);
+    void VisitParmVarDecl(ParmVarDecl *PD);
+    void VisitOriginalParmVarDecl(OriginalParmVarDecl *PD);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
   };
@@ -125,6 +128,27 @@ void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
+void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
+  VisitValueDecl(FD);
+  // FIXME: function body
+  FD->setPreviousDeclaration(
+                   cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
+  FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
+  FD->setInline(Record[Idx++]);
+  FD->setVirtual(Record[Idx++]);
+  FD->setPure(Record[Idx++]);
+  FD->setInheritedPrototype(Record[Idx++]);
+  FD->setHasPrototype(Record[Idx++]);
+  FD->setDeleted(Record[Idx++]);
+  FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  unsigned NumParams = Record[Idx++];
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  Params.reserve(NumParams);
+  for (unsigned I = 0; I != NumParams; ++I)
+    Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  FD->setParams(Reader.getContext(), &Params[0], NumParams);
+}
+
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitValueDecl(FD);
   FD->setMutable(Record[Idx++]);
@@ -140,6 +164,17 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setPreviousDeclaration(
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   VD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+
+void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
+  VisitVarDecl(PD);
+  PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
+  // FIXME: default argument
+}
+
+void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {
+  VisitParmVarDecl(PD);
+  PD->setOriginalType(Reader.GetType(Record[Idx++]));
 }
 
 std::pair<uint64_t, uint64_t> 
@@ -1021,6 +1056,16 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = ECD;
     break;
   }
+  
+  case pch::DECL_FUNCTION: {
+    FunctionDecl *Function = FunctionDecl::Create(Context, 0, SourceLocation(),
+                                                  DeclarationName(), 
+                                                  QualType());
+    LoadedDecl(Index, Function);
+    Reader.VisitFunctionDecl(Function);
+    D = Function;
+    break;
+  }
 
   case pch::DECL_FIELD: {
     FieldDecl *Field = FieldDecl::Create(Context, 0, SourceLocation(), 0,
@@ -1037,6 +1082,26 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     LoadedDecl(Index, Var);
     Reader.VisitVarDecl(Var);
     D = Var;
+    break;
+  }
+
+  case pch::DECL_PARM_VAR: {
+    ParmVarDecl *Parm = ParmVarDecl::Create(Context, 0, SourceLocation(), 0,
+                                            QualType(), VarDecl::None, 0);
+    LoadedDecl(Index, Parm);
+    Reader.VisitParmVarDecl(Parm);
+    D = Parm;
+    break;
+  }
+
+  case pch::DECL_ORIGINAL_PARM_VAR: {
+    OriginalParmVarDecl *Parm 
+      = OriginalParmVarDecl::Create(Context, 0, SourceLocation(), 0,
+                                    QualType(), QualType(), VarDecl::None, 
+                                    0);
+    LoadedDecl(Index, Parm);
+    Reader.VisitOriginalParmVarDecl(Parm);
+    D = Parm;
     break;
   }
 

@@ -257,8 +257,11 @@ namespace {
     void VisitRecordDecl(RecordDecl *D);
     void VisitValueDecl(ValueDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
+    void VisitFunctionDecl(FunctionDecl *D);
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
+    void VisitParmVarDecl(ParmVarDecl *D);
+    void VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset, 
                           uint64_t VisibleOffset);
   };
@@ -327,6 +330,25 @@ void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   Code = pch::DECL_ENUM_CONSTANT;
 }
 
+void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
+  VisitValueDecl(D);
+  // FIXME: function body
+  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  Record.push_back(D->getStorageClass()); // FIXME: stable encoding
+  Record.push_back(D->isInline());
+  Record.push_back(D->isVirtual());
+  Record.push_back(D->isPure());
+  Record.push_back(D->inheritedPrototype());
+  Record.push_back(D->hasPrototype() && !D->inheritedPrototype());
+  Record.push_back(D->isDeleted());
+  Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
+  Record.push_back(D->param_size());
+  for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
+       P != PEnd; ++P)
+    Writer.AddDeclRef(*P, Record);
+  Code = pch::DECL_FUNCTION;
+}
+
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->isMutable());
@@ -336,7 +358,7 @@ void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
 
 void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   VisitValueDecl(D);
-  Record.push_back(D->getStorageClass());
+  Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->isThreadSpecified());
   Record.push_back(D->hasCXXDirectInitializer());
   Record.push_back(D->isDeclaredInCondition());
@@ -344,6 +366,21 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   // FIXME: emit initializer
   Code = pch::DECL_VAR;
+}
+
+void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
+  VisitVarDecl(D);
+  Record.push_back(D->getObjCDeclQualifier()); // FIXME: stable encoding
+  // FIXME: emit default argument
+  // FIXME: why isn't the "default argument" just stored as the initializer
+  // in VarDecl?
+  Code = pch::DECL_PARM_VAR;
+}
+
+void PCHDeclWriter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
+  VisitParmVarDecl(D);
+  Writer.AddTypeRef(D->getOriginalType(), Record);
+  Code = pch::DECL_ORIGINAL_PARM_VAR;
 }
 
 /// \brief Emit the DeclContext part of a declaration context decl.

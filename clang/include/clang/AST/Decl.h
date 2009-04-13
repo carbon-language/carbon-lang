@@ -510,10 +510,12 @@ private:
                               Expr *DefArg)
   : ParmVarDecl(OriginalParmVar, DC, L, Id, T, S, DefArg), OriginalType(OT) {}
 public:
-    static OriginalParmVarDecl *Create(ASTContext &C, DeclContext *DC,
-                               SourceLocation L,IdentifierInfo *Id,
-                               QualType T, QualType OT,
-                               StorageClass S, Expr *DefArg);
+  static OriginalParmVarDecl *Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation L,IdentifierInfo *Id,
+                                     QualType T, QualType OT,
+                                     StorageClass S, Expr *DefArg);
+
+  void setOriginalType(QualType T) { OriginalType = T; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
@@ -603,6 +605,7 @@ public:
                               SourceLocation TSStartLoc = SourceLocation());  
   
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
+  void setTypeSpecStartLoc(SourceLocation TS) { TypeSpecStartLoc = TS; }
 
   /// getBody - Retrieve the body (definition) of the function. The
   /// function body might be in any of the (re-)declarations of this
@@ -629,23 +632,24 @@ public:
   /// Whether this function is virtual, either by explicit marking, or by
   /// overriding a virtual function. Only valid on C++ member functions.
   bool isVirtual() { return IsVirtual; }
-  void setVirtual() { IsVirtual = true; }
+  void setVirtual(bool V = true) { IsVirtual = V; }
 
   /// Whether this virtual function is pure, i.e. makes the containing class
   /// abstract.
   bool isPure() const { return IsPure; }
-  void setPure() { IsPure = true; }
+  void setPure(bool P = true) { IsPure = P; }
 
   /// \brief Whether this function has a prototype, either because one
   /// was explicitly written or because it was "inherited" by merging
   /// a declaration without a prototype with a declaration that has a
   /// prototype.
   bool hasPrototype() const { return HasPrototype || InheritedPrototype; }
+  void setHasPrototype(bool P) { HasPrototype = P; }
 
   /// \brief Whether this function inherited its prototype from a
   /// previous declaration.
   bool inheritedPrototype() const { return InheritedPrototype; }
-  void setInheritedPrototype() { InheritedPrototype = true; }
+  void setInheritedPrototype(bool P = true) { InheritedPrototype = P; }
 
   /// \brief Whether this function has been deleted.
   ///
@@ -666,7 +670,7 @@ public:
   /// };
   /// @endcode
   bool isDeleted() const { return IsDeleted; }
-  void setDeleted() { IsDeleted = true; }
+  void setDeleted(bool D = true) { IsDeleted = D; }
 
   /// \brief Determines whether this is a function "main", which is
   /// the entry point into an executable program.
@@ -726,6 +730,7 @@ public:
   void setStorageClass(StorageClass SC) { SClass = SC; }
 
   bool isInline() const { return IsInline; }
+  void setInline(bool I) { IsInline = I; }
 
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".

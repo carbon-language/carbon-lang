@@ -320,10 +320,16 @@ namespace clang {
       DECL_RECORD,
       /// \brief An EnumConstantDecl record.
       DECL_ENUM_CONSTANT,
+      /// \brief A FunctionDecl record.
+      DECL_FUNCTION,
       /// \brief A FieldDecl record.
       DECL_FIELD,
       /// \brief A VarDecl record.
       DECL_VAR,
+      /// \brief A ParmVarDecl record.
+      DECL_PARM_VAR,
+      /// \brief An OriginalParmVarDecl record.
+      DECL_ORIGINAL_PARM_VAR,
       /// \brief A record that stores the set of declarations that are
       /// lexically stored within a given DeclContext.
       ///

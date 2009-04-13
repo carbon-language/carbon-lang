@@ -209,6 +209,10 @@ public:
 
   /// \brief Read a signed integral value
   llvm::APSInt ReadAPSInt(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Retrieve the AST context that this PCH reader
+  /// supplements.
+  ASTContext &getContext() { return Context; }
 };
 
 } // end namespace clang
