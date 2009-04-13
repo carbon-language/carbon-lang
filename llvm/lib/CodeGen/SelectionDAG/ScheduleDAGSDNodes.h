@@ -134,6 +134,12 @@ namespace llvm {
     void EmitSubregNode(SDNode *Node, 
                         DenseMap<SDValue, unsigned> &VRBaseMap);
 
+    /// EmitCopyToSubclassNode - Generate machine code for COPY_TO_SUBCLASS
+    /// nodes.
+    ///
+    void EmitCopyToSubclassNode(SDNode *Node,
+                                DenseMap<SDValue, unsigned> &VRBaseMap);
+
     /// getVR - Return the virtual register corresponding to the specified result
     /// of the specified node.
     unsigned getVR(SDValue Op, DenseMap<SDValue, unsigned> &VRBaseMap);
@@ -145,6 +151,13 @@ namespace llvm {
     void AddOperand(MachineInstr *MI, SDValue Op, unsigned IIOpNum,
                     const TargetInstrDesc *II,
                     DenseMap<SDValue, unsigned> &VRBaseMap);
+
+    /// AddRegisterOperand - Add the specified register as an operand to the
+    /// specified machine instr. Insert register copies if the register is
+    /// not in the required register class.
+    void AddRegisterOperand(MachineInstr *MI, SDValue Op,
+                            unsigned IIOpNum, const TargetInstrDesc *II,
+                            DenseMap<SDValue, unsigned> &VRBaseMap);
 
     /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
     /// implicit physical register output.

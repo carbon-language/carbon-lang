@@ -400,6 +400,14 @@ def SUBREG_TO_REG : Instruction {
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
 }
+def COPY_TO_SUBCLASS : Instruction {
+  let OutOperandList = (ops unknown:$dst);
+  let InOperandList = (ops unknown:$src, i32imm:$regclass);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+  let neverHasSideEffects = 1;
+  let isAsCheapAsAMove = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize

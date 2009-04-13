@@ -62,6 +62,8 @@ private:
   const vt_iterator VTs;
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
+  const sc_iterator SubRegClasses;
+  const sc_iterator SuperRegClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const int CopyCost;
   const iterator RegsBegin, RegsEnd;
@@ -72,9 +74,12 @@ public:
                       const MVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
+                      const TargetRegisterClass * const *subregcs,
+                      const TargetRegisterClass * const *superregcs,
                       unsigned RS, unsigned Al, int CC,
                       iterator RB, iterator RE)
     : ID(id), Name(name), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
+    SubRegClasses(subregcs), SuperRegClasses(superregcs),
     RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {
       for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
         RegSet.insert(*I);
@@ -132,8 +137,32 @@ public:
     return I;
   }
 
-  /// hasSubClass - return true if the specified TargetRegisterClass is a
-  /// sub-register class of this TargetRegisterClass.
+  /// subregclasses_begin / subregclasses_end - Loop over all of
+  /// the subreg register classes of this register class.
+  sc_iterator subregclasses_begin() const {
+    return SubRegClasses;
+  }
+
+  sc_iterator subregclasses_end() const {
+    sc_iterator I = SubRegClasses;
+    while (*I != NULL) ++I;
+    return I;
+  }
+
+  /// superregclasses_begin / superregclasses_end - Loop over all of
+  /// the superreg register classes of this register class.
+  sc_iterator superregclasses_begin() const {
+    return SuperRegClasses;
+  }
+
+  sc_iterator superregclasses_end() const {
+    sc_iterator I = SuperRegClasses;
+    while (*I != NULL) ++I;
+    return I;
+  }
+
+  /// hasSubClass - return true if the the specified TargetRegisterClass
+  /// is a proper subset of this TargetRegisterClass.
   bool hasSubClass(const TargetRegisterClass *cs) const {
     for (int i = 0; SubClasses[i] != NULL; ++i) 
       if (SubClasses[i] == cs)
@@ -141,8 +170,8 @@ public:
     return false;
   }
 
-  /// subclasses_begin / subclasses_end - Loop over all of the sub-classes of
-  /// this register class.
+  /// subclasses_begin / subclasses_end - Loop over all of the classes
+  /// that are proper subsets of this register class.
   sc_iterator subclasses_begin() const {
     return SubClasses;
   }
@@ -154,7 +183,7 @@ public:
   }
   
   /// hasSuperClass - return true if the specified TargetRegisterClass is a
-  /// super-register class of this TargetRegisterClass.
+  /// proper superset of this TargetRegisterClass.
   bool hasSuperClass(const TargetRegisterClass *cs) const {
     for (int i = 0; SuperClasses[i] != NULL; ++i) 
       if (SuperClasses[i] == cs)
@@ -162,8 +191,8 @@ public:
     return false;
   }
 
-  /// superclasses_begin / superclasses_end - Loop over all of the super-classes
-  /// of this register class.
+  /// superclasses_begin / superclasses_end - Loop over all of the classes
+  /// that are proper supersets of this register class.
   sc_iterator superclasses_begin() const {
     return SuperClasses;
   }
@@ -174,8 +203,8 @@ public:
     return I;
   }
 
-  /// isASubClass - return true if this TargetRegisterClass is a sub-class of at
-  /// least one other TargetRegisterClass.
+  /// isASubClass - return true if this TargetRegisterClass is a subset
+  /// class of at least one other TargetRegisterClass.
   bool isASubClass() const {
     return SuperClasses[0] != 0;
   }

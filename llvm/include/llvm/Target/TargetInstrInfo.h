@@ -73,7 +73,14 @@ public:
     /// is often zero, as is commonly used to implement zext operations on
     /// target architectures which support it, such as with x86-64 (with
     /// zext from i32 to i64 via implicit zero-extension).
-    SUBREG_TO_REG = 9
+    SUBREG_TO_REG = 9,
+
+    /// COPY_TO_SUBCLASS - This instruction is a placeholder for a plain
+    /// register-to-register copy into a specific register class. This is only
+    /// used between instruction selection and MachineInstr creation, before
+    /// virtual registers have been created for all the instructions. As with
+    /// normal copies, these may be optimized away by the coalescer.
+    COPY_TO_SUBCLASS = 10
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }

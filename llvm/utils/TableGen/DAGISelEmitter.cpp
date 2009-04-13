@@ -918,6 +918,15 @@ public:
                    getEnumName(N->getTypeNum(0)) + ");");
           NodeOps.push_back("Tmp" + utostr(ResNo));
           return NodeOps;
+        } else if (DI->getDef()->isSubClassOf("RegisterClass")) {
+          // Handle a reference to a register class. This is used
+          // in COPY_TO_SUBREG instructions.
+          emitCode("SDValue Tmp" + utostr(ResNo) +
+                   " = CurDAG->getTargetConstant(" +
+                   getQualifiedName(DI->getDef()) + "RegClassID, " +
+                   "MVT::i32);");
+          NodeOps.push_back("Tmp" + utostr(ResNo));
+          return NodeOps;
         }
       } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
