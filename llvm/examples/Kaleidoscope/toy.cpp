@@ -512,7 +512,7 @@ static ExprAST *ParseExpression() {
 static PrototypeAST *ParsePrototype() {
   std::string FnName;
   
-  int Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.
+  unsigned Kind = 0;            // 0 = identifier, 1 = unary, 2 = binary.
   unsigned BinaryPrecedence = 30;
   
   switch (CurTok) {
@@ -791,7 +791,6 @@ Value *ForExprAST::Codegen() {
   
   // Make the new basic block for the loop header, inserting after current
   // block.
-  BasicBlock *PreheaderBB = Builder.GetInsertBlock();
   BasicBlock *LoopBB = BasicBlock::Create("loop", TheFunction);
   
   // Insert an explicit fall through from the current block to the LoopBB.
@@ -837,7 +836,6 @@ Value *ForExprAST::Codegen() {
                                   "loopcond");
   
   // Create the "after loop" block and insert it.
-  BasicBlock *LoopEndBB = Builder.GetInsertBlock();
   BasicBlock *AfterBB = BasicBlock::Create("afterloop", TheFunction);
   
   // Insert the conditional branch into the end of LoopEndBB.
