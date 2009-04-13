@@ -25,9 +25,12 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class NamedDecl;
-
+  class VarDecl;
+  
   bool mangleName(const NamedDecl *D, ASTContext &Context, 
                   llvm::raw_ostream &os);
+  void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
+                           llvm::raw_ostream &os);
 }
 
 #endif 

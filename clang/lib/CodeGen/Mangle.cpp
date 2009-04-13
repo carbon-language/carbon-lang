@@ -34,6 +34,7 @@ namespace {
       : Context(C), Out(os) { }
 
     bool mangle(const NamedDecl *D);
+    void mangleGuardVariable(const VarDecl *D);
     
   private:
     bool mangleFunctionDecl(const FunctionDecl *FD);
@@ -122,6 +123,15 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   }
   
   return false;
+}
+
+void CXXNameMangler::mangleGuardVariable(const VarDecl *D)
+{
+  //  <special-name> ::= GV <object name>	# Guard variable for one-time 
+  //                                      # initialization
+
+  Out << "_ZGV";
+  mangleName(D);
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
@@ -585,6 +595,15 @@ namespace clang {
     
     os.flush();
     return true;
+  }
+  
+  /// mangleGuardVariable - Mangles the m
+  void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
+                           llvm::raw_ostream &os) {
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleGuardVariable(D);
+
+    os.flush();
   }
 }
 
