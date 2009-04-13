@@ -2131,6 +2131,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
+  case GlobalValue::AvailableExternallyLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
