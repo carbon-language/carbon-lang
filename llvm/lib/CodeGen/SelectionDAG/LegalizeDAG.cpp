@@ -5476,13 +5476,16 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 /// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
 /// support the operation, but do support the resultant vector type.
 SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
+  unsigned NumElems = Node->getNumOperands();
+  SDValue SplatValue = Node->getOperand(0);
+  DebugLoc dl = Node->getDebugLoc();
+  MVT VT = Node->getValueType(0);
+  MVT OpVT = SplatValue.getValueType();
+  MVT EltVT = VT.getVectorElementType();
 
   // If the only non-undef value is the low element, turn this into a
   // SCALAR_TO_VECTOR node.  If this is { X, X, X, X }, determine X.
-  unsigned NumElems = Node->getNumOperands();
   bool isOnlyLowElement = true;
-  SDValue SplatValue = Node->getOperand(0);
-  DebugLoc dl = Node->getDebugLoc();
 
   // FIXME: it would be far nicer to change this into map<SDValue,uint64_t>
   // and use a bitmask instead of a list of elements.
@@ -5511,15 +5514,13 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   if (isOnlyLowElement) {
     // If the low element is an undef too, then this whole things is an undef.
     if (Node->getOperand(0).getOpcode() == ISD::UNDEF)
-      return DAG.getUNDEF(Node->getValueType(0));
+      return DAG.getUNDEF(VT);
     // Otherwise, turn this into a scalar_to_vector node.
-    return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, Node->getValueType(0),
-                       Node->getOperand(0));
+    return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Node->getOperand(0));
   }
 
   // If all elements are constants, create a load from the constant pool.
   if (isConstant) {
-    MVT VT = Node->getValueType(0);
     std::vector<Constant*> CV;
     for (unsigned i = 0, e = NumElems; i != e; ++i) {
       if (ConstantFPSDNode *V =
@@ -5530,8 +5531,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-        const Type *OpNTy =
-          Node->getOperand(0).getValueType().getTypeForMVT();
+        const Type *OpNTy = OpVT.getTypeForMVT();
         CV.push_back(UndefValue::get(OpNTy));
       }
     }
@@ -5552,17 +5552,14 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
                                     &ZeroVec[0], ZeroVec.size());
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
-    if (isShuffleLegal(Node->getValueType(0), SplatMask)) {
+    if (isShuffleLegal(VT, SplatMask)) {
       // Get the splatted value into the low element of a vector register.
       SDValue LowValVec =
-        DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
-                    Node->getValueType(0), SplatValue);
+        DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, SplatValue);
 
       // Return shuffle(LowValVec, undef, <0,0,0,0>)
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl,
-                         Node->getValueType(0), LowValVec,
-                         DAG.getUNDEF(Node->getValueType(0)),
-                         SplatMask);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, LowValVec,
+                         DAG.getUNDEF(VT), SplatMask);
     }
   }
 
@@ -5605,22 +5602,20 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
                                       &MaskVec[0], MaskVec.size());
 
     // If the target supports SCALAR_TO_VECTOR and this shuffle mask, use it.
-    if (TLI.isOperationLegalOrCustom(ISD::SCALAR_TO_VECTOR,
-                                     Node->getValueType(0)) &&
-        isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
-      Val1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,Node->getValueType(0), Val1);
-      Val2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,Node->getValueType(0), Val2);
+    if (TLI.isOperationLegalOrCustom(ISD::SCALAR_TO_VECTOR, VT) &&
+        isShuffleLegal(VT, ShuffleMask)) {
+      Val1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Val1);
+      Val2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Val2);
       SDValue Ops[] = { Val1, Val2, ShuffleMask };
 
       // Return shuffle(LoValVec, HiValVec, <0,1,0,1>)
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl,Node->getValueType(0), Ops, 3);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, Ops, 3);
     }
   }
 
   // Otherwise, we can't handle this case efficiently.  Allocate a sufficiently
   // aligned object on the stack, store each element into it, then load
   // the result as a vector.
-  MVT VT = Node->getValueType(0);
   // Create the stack frame object.
   SDValue FIPtr = DAG.CreateStackTemporary(VT);
   int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
@@ -5628,7 +5623,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
-  unsigned TypeByteSize = Node->getOperand(0).getValueType().getSizeInBits()/8;
+  unsigned TypeByteSize = OpVT.getSizeInBits() / 8;
   // Store (in the right endianness) the elements to memory.
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     // Ignore undef elements.
