@@ -2235,7 +2235,7 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
     // If there are registers which alias PhysReg, but which are not a
     // sub-register of the chosen representative super register. Assert
     // since we can't handle it yet.
-    assert(*AS == SpillReg || !allocatableRegs_[*AS] ||
+    assert(*AS == SpillReg || !allocatableRegs_[*AS] || !hasInterval(*AS) ||
            tri_->isSuperRegister(*AS, SpillReg));
 
   bool Cut = false;
