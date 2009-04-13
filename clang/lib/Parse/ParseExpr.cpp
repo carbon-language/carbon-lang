@@ -851,15 +851,20 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       }
 
       // Match the ')'.
-      if (!LHS.isInvalid() && Tok.is(tok::r_paren)) {
+      if (Tok.isNot(tok::r_paren)) {
+        MatchRHSPunctuation(tok::r_paren, Loc);
+        return ExprError();
+      }
+      
+      if (!LHS.isInvalid()) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
         LHS = Actions.ActOnCallExpr(CurScope, move(LHS), Loc,
                                     move_arg(ArgExprs), &CommaLocs[0],
                                     Tok.getLocation());
       }
-
-      MatchRHSPunctuation(tok::r_paren, Loc);
+      
+      ConsumeParen();
       break;
     }
     case tok::arrow:       // postfix-expression: p-e '->' identifier

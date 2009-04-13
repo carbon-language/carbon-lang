@@ -1,4 +1,4 @@
-// RUN: clang-cc -parse-noop %s
+// RUN: clang-cc -parse-noop -verify %s
 
 void test1() {
   if (sizeof (int){ 1});   // sizeof compound literal
@@ -41,3 +41,10 @@ int test_leading_extension() {
   __extension__ (*(char*)0) = 1;
 }
 
+// PR3972
+int test5(int);
+int test6(void) { 
+  return test5(      // expected-note {{to match}}
+               test5(1)
+                 ; // expected-error {{expected ')'}}
+}
