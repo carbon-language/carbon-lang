@@ -22,3 +22,11 @@ struct _st {
  int x, y;
 } s __attribute ((address_space(1))) = {1, 1};
 
+
+// rdar://6774906
+__attribute__((address_space(256))) void * * const base = 0;
+void * get_0(void) {
+  return base[0];  // expected-error {{illegal implicit cast between two pointers with different address spaces}} \
+                      expected-warning {{returning 'void __attribute__((address_space(256)))*' discards qualifiers, expected 'void *'}}
+}
+

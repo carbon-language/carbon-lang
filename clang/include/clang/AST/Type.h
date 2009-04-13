@@ -1956,11 +1956,10 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
 /// "int". However, it is not more qualified than "const volatile
 /// int".
 inline bool QualType::isMoreQualifiedThan(QualType Other) const {
-  // FIXME: Handle address spaces
   unsigned MyQuals = this->getCVRQualifiers();
   unsigned OtherQuals = Other.getCVRQualifiers();
-  assert(this->getAddressSpace() == 0 && "Address space not checked");
-  assert(Other.getAddressSpace() == 0 && "Address space not checked");
+  if (getAddressSpace() != Other.getAddressSpace())
+    return false;
   return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
 }
 
@@ -1969,11 +1968,10 @@ inline bool QualType::isMoreQualifiedThan(QualType Other) const {
 /// int" is at least as qualified as "const int", "volatile int",
 /// "int", and "const volatile int".
 inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
-  // FIXME: Handle address spaces
   unsigned MyQuals = this->getCVRQualifiers();
   unsigned OtherQuals = Other.getCVRQualifiers();
-  assert(this->getAddressSpace() == 0 && "Address space not checked");
-  assert(Other.getAddressSpace() == 0 && "Address space not checked");
+  if (getAddressSpace() != Other.getAddressSpace())
+    return false;
   return (MyQuals | OtherQuals) == MyQuals;
 }
 
