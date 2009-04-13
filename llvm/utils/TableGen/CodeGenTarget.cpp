@@ -345,10 +345,10 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
     throw "Could not find 'SUBREG_TO_REG' instruction!";
   const CodeGenInstruction *SUBREG_TO_REG = &I->second;
 
-  I = getInstructions().find("COPY_TO_SUBCLASS");
+  I = getInstructions().find("COPY_TO_REGCLASS");
   if (I == Instructions.end())
-    throw "Could not find 'COPY_TO_SUBCLASS' instruction!";
-  const CodeGenInstruction *COPY_TO_SUBCLASS = &I->second;
+    throw "Could not find 'COPY_TO_REGCLASS' instruction!";
+  const CodeGenInstruction *COPY_TO_REGCLASS = &I->second;
 
   // Print out the rest of the instructions now.
   NumberedInstructions.push_back(PHI);
@@ -361,7 +361,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   NumberedInstructions.push_back(INSERT_SUBREG);
   NumberedInstructions.push_back(IMPLICIT_DEF);
   NumberedInstructions.push_back(SUBREG_TO_REG);
-  NumberedInstructions.push_back(COPY_TO_SUBCLASS);
+  NumberedInstructions.push_back(COPY_TO_REGCLASS);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
     if (&II->second != PHI &&
         &II->second != INLINEASM &&
@@ -373,7 +373,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
         &II->second != INSERT_SUBREG &&
         &II->second != IMPLICIT_DEF &&
         &II->second != SUBREG_TO_REG &&
-        &II->second != COPY_TO_SUBCLASS)
+        &II->second != COPY_TO_REGCLASS)
       NumberedInstructions.push_back(&II->second);
 }
 

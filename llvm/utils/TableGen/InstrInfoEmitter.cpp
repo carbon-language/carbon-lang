@@ -341,7 +341,7 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
         R->getName() != "INSERT_SUBREG" &&
         R->getName() != "IMPLICIT_DEF" &&
         R->getName() != "SUBREG_TO_REG" &&
-        R->getName() != "COPY_TO_SUBCLASS")
+        R->getName() != "COPY_TO_REGCLASS")
       throw R->getName() + " doesn't have a field named '" + 
             Val->getValue() + "'!";
     return;

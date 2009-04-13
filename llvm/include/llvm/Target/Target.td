@@ -400,7 +400,7 @@ def SUBREG_TO_REG : Instruction {
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
 }
-def COPY_TO_SUBCLASS : Instruction {
+def COPY_TO_REGCLASS : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops unknown:$src, i32imm:$regclass);
   let AsmString = "";

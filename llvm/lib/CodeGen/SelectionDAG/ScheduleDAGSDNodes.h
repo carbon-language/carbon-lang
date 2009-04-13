@@ -134,10 +134,10 @@ namespace llvm {
     void EmitSubregNode(SDNode *Node, 
                         DenseMap<SDValue, unsigned> &VRBaseMap);
 
-    /// EmitCopyToSubclassNode - Generate machine code for COPY_TO_SUBCLASS
+    /// EmitCopyToRegClassNode - Generate machine code for COPY_TO_REGCLASS
     /// nodes.
     ///
-    void EmitCopyToSubclassNode(SDNode *Node,
+    void EmitCopyToRegClassNode(SDNode *Node,
                                 DenseMap<SDValue, unsigned> &VRBaseMap);
 
     /// getVR - Return the virtual register corresponding to the specified result

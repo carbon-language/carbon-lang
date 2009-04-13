@@ -884,7 +884,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange = getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;
-  } else if (getOperator()->getName() == "COPY_TO_SUBCLASS") {
+  } else if (getOperator()->getName() == "COPY_TO_REGCLASS") {
     bool MadeChange = false;
     MadeChange |= getChild(0)->ApplyTypeConstraints(TP, NotRegisters);
     MadeChange |= getChild(1)->ApplyTypeConstraints(TP, NotRegisters);

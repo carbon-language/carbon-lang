@@ -75,12 +75,14 @@ public:
     /// zext from i32 to i64 via implicit zero-extension).
     SUBREG_TO_REG = 9,
 
-    /// COPY_TO_SUBCLASS - This instruction is a placeholder for a plain
+    /// COPY_TO_REGCLASS - This instruction is a placeholder for a plain
     /// register-to-register copy into a specific register class. This is only
     /// used between instruction selection and MachineInstr creation, before
-    /// virtual registers have been created for all the instructions. As with
-    /// normal copies, these may be optimized away by the coalescer.
-    COPY_TO_SUBCLASS = 10
+    /// virtual registers have been created for all the instructions, and it's
+    /// only needed in cases where the register classes implied by the
+    /// instructions are insufficient. The actual MachineInstrs to perform
+    /// the copy are emitted with the TargetInstrInfo::copyRegToReg hook.
+    COPY_TO_REGCLASS = 10
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }

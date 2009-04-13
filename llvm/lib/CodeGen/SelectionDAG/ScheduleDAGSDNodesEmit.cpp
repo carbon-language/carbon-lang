@@ -464,12 +464,12 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
   assert(isNew && "Node emitted out of order - early");
 }
 
-/// EmitCopyToSubclassNode - Generate machine code for COPY_TO_SUBCLASS nodes.
-/// COPY_TO_SUBCLASS is just a normal copy, except that the destination
+/// EmitCopyToRegClassNode - Generate machine code for COPY_TO_REGCLASS nodes.
+/// COPY_TO_REGCLASS is just a normal copy, except that the destination
 /// register is constrained to be in a particular register class.
 ///
 void
-ScheduleDAGSDNodes::EmitCopyToSubclassNode(SDNode *Node,
+ScheduleDAGSDNodes::EmitCopyToRegClassNode(SDNode *Node,
                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
   const TargetRegisterClass *SrcRC = MRI.getRegClass(VReg);
@@ -477,19 +477,18 @@ ScheduleDAGSDNodes::EmitCopyToSubclassNode(SDNode *Node,
   unsigned DstRCIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
   const TargetRegisterClass *DstRC = TRI->getRegClass(DstRCIdx);
 
-  assert(SrcRC->hasSubClass(DstRC) &&
-         "COPY_TO_SUBCLASS destination class is not a proper subclass!");
-
   // Create the new VReg in the destination class and emit a copy.
   unsigned NewVReg = MRI.createVirtualRegister(DstRC);
   bool Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
                                    DstRC, SrcRC);
-  // If the target didn't handle that, emit a plain copy.
-  if (!Emitted)
+  // If the target didn't handle the copy with different register
+  // classes and the destination is a subset of the source,
+  // try a normal same-RC copy.
+  if (!Emitted && SrcRC->hasSubClass(DstRC))
     Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
                                 SrcRC, SrcRC);
   assert(Emitted &&
-         "Unable to issue a copy instruction for a COPY_TO_SUBCLASS node!\n");
+         "Unable to issue a copy instruction for a COPY_TO_REGCLASS node!\n");
 
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
@@ -513,9 +512,9 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       return;
     }
 
-    // Handle COPY_TO_SUBCLASS specially.
-    if (Opc == TargetInstrInfo::COPY_TO_SUBCLASS) {
-      EmitCopyToSubclassNode(Node, VRBaseMap);
+    // Handle COPY_TO_REGCLASS specially.
+    if (Opc == TargetInstrInfo::COPY_TO_REGCLASS) {
+      EmitCopyToRegClassNode(Node, VRBaseMap);
       return;
     }
 
