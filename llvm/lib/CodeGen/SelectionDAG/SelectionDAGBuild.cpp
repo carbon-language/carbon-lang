@@ -3955,6 +3955,18 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
     if (DW && DW->ValidDebugInfo(REI.getContext())) {
+
+      MachineFunction &MF = DAG.getMachineFunction();
+      DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
+      std::string SPName;
+      Subprogram.getLinkageName(SPName);
+      if (!SPName.empty() 
+          && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
+        // This is end of inlined function. Debugging information for
+        // inlined function is not handled yet (only supported by FastISel).
+        return 0;
+      }
+
       unsigned LabelID =
         DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
       if (Fast)
@@ -3974,6 +3986,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // what (most?) gdb expects.
       MachineFunction &MF = DAG.getMachineFunction();
       DISubprogram Subprogram(cast<GlobalVariable>(SP));
+
+      std::string SPName;
+      Subprogram.getLinkageName(SPName);
+      if (!SPName.empty() 
+          && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
+        // This is beginning of inlined function. Debugging information for
+        // inlined function is not handled yet (only supported by FastISel).
+        return 0;
+      }
+
       DICompileUnit CompileUnit = Subprogram.getCompileUnit();
       std::string Dir, FN;
       unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(Dir),

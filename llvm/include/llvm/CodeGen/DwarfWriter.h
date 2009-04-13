@@ -94,6 +94,9 @@ public:
   /// RecordRegionStart - Indicate the start of a region.
   unsigned RecordRegionStart(GlobalVariable *V);
 
+  /// RecordRegionStart - Indicate the start of a region.
+  unsigned RecordRegionStart(GlobalVariable *V, unsigned ID);
+
   /// RecordRegionEnd - Indicate the end of a region.
   unsigned RecordRegionEnd(GlobalVariable *V);
 
@@ -107,6 +110,10 @@ public:
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.
   bool ShouldEmitDwarfDebug() const;
+
+  //// RecordInlineInfo - Global variable GV is inlined at the location marked
+  //// by LabelID label.
+  void RecordInlineInfo(GlobalVariable *GV, unsigned LabelID);
 };
 
 

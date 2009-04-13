@@ -463,6 +463,10 @@ namespace llvm {
     ///
     bool DwarfRequiresFrameSection; // Defaults to true.
 
+    /// DwarfUsesInlineInfoSection - True if DwarfDebugInlineSection is used to
+    /// encode inline subroutine information.
+    bool DwarfUsesInlineInfoSection; // Defaults to false.
+
     /// SupportsMacInfo - true if the Dwarf output supports macro information
     ///
     bool SupportsMacInfoSection;            // Defaults to true
@@ -506,7 +510,11 @@ namespace llvm {
     /// DwarfPubTypesSection - Section directive for Dwarf info.
     ///
     const char *DwarfPubTypesSection; // Defaults to ".debug_pubtypes".
-    
+
+    /// DwarfDebugInlineSection - Section directive for inline info.
+    ///
+    const char *DwarfDebugInlineSection; // Defaults to ".debug_inlined"
+
     /// DwarfStrSection - Section directive for Dwarf info.
     ///
     const char *DwarfStrSection; // Defaults to ".debug_str".
@@ -847,6 +855,9 @@ namespace llvm {
     bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;
     }
+    bool doesDwarfUsesInlineInfoSection() const {
+      return DwarfUsesInlineInfoSection;
+    }
     bool doesSupportMacInfoSection() const {
       return SupportsMacInfoSection;
     }
@@ -879,6 +890,9 @@ namespace llvm {
     }
     const char *getDwarfPubTypesSection() const {
       return DwarfPubTypesSection;
+    }
+    const char *getDwarfDebugInlineSection() const {
+      return DwarfDebugInlineSection;
     }
     const char *getDwarfStrSection() const {
       return DwarfStrSection;
