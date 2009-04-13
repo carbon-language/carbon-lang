@@ -15,6 +15,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "Mangle.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -22,67 +23,6 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace CodeGen;
-
-
-// FIXME: Name mangling should be moved to a separate class.
-
-static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
-{
-  // FIXME: Should ObjcMethodDecl have the TranslationUnitDecl as its parent?
-  assert((!D->getParent() || isa<TranslationUnitDecl>(D->getParent())) && 
-         "Only one level of decl context mangling is currently supported!");
-  
-  if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    S += llvm::utostr(FD->getIdentifier()->getLength());
-    S += FD->getIdentifier()->getName();
-    
-    if (FD->param_size() == 0)
-      S += 'v';
-    else
-      assert(0 && "mangling of types not supported yet!");
-  } else if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
-    
-    // FIXME: This should really use GetNameForMethod from CGObjCMac.
-    std::string Name;
-    Name += MD->isInstanceMethod() ? '-' : '+';
-    Name += '[';
-    Name += MD->getClassInterface()->getNameAsString();
-    Name += ' ';
-    Name += MD->getSelector().getAsString();
-    Name += ']';
-    S += llvm::utostr(Name.length());
-    S += Name;
-  } else 
-    assert(0 && "Unsupported decl type!");
-}
-
-static void mangleVarDeclInternal(const VarDecl &D, std::string &S)
-{
-  S += 'Z';
-  mangleDeclContextInternal(D.getDeclContext(), S);
-  S += 'E';
-  
-  S += llvm::utostr(D.getIdentifier()->getLength());
-  S += D.getIdentifier()->getName();
-}
-
-static std::string mangleVarDecl(const VarDecl& D)
-{
-  std::string S = "_Z";
-  
-  mangleVarDeclInternal(D, S);
-  
-  return S;
-}
-
-static std::string mangleGuardVariable(const VarDecl& D)
-{
-  std::string S = "_ZGV";
-
-  mangleVarDeclInternal(D, S);
-  
-  return S;
-}
 
 void 
 CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D, 
@@ -92,12 +32,16 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
   assert(!getContext().getLangOptions().ThreadsafeStatics &&
          "thread safe statics are currently not supported!");
 
+  llvm::SmallString<256> GuardVName;
+  llvm::raw_svector_ostream GuardVOut(GuardVName);
+  mangleGuardVariable(&D, getContext(), GuardVOut);
+  
   // Create the guard variable.
   llvm::GlobalValue *GuardV = 
     new llvm::GlobalVariable(llvm::Type::Int64Ty, false,
                              GV->getLinkage(),
                              llvm::Constant::getNullValue(llvm::Type::Int64Ty),
-                             mangleGuardVariable(D),
+                             GuardVName.c_str(),
                              &CGM.getModule());
   
   // Load the first byte of the guard variable.
@@ -117,9 +61,6 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
                          
   EmitBlock(InitBlock);
 
-  // Patch the name. FIXME: We shouldn't need to do this.
-  GV->setName(mangleVarDecl(D));
-    
   const Expr *Init = D.getInit();
   if (!hasAggregateLLVMType(Init->getType())) {
     llvm::Value *V = EmitScalarExpr(Init);
