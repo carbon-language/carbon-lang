@@ -4831,12 +4831,14 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 // Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
 // "local exec" model.
 static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
-                                   const MVT PtrVT, TLSModel::Model model) {
+                                   const MVT PtrVT, TLSModel::Model model,
+                                   bool is64Bit) {
   DebugLoc dl = GA->getDebugLoc();
   // Get the Thread Pointer
   SDValue Base = DAG.getNode(X86ISD::SegmentBaseAddress,
                              DebugLoc::getUnknownLoc(), PtrVT,
-                             DAG.getRegister(X86::GS, MVT::i32));
+                             DAG.getRegister(is64Bit? X86::FS : X86::GS,
+                                             MVT::i32));
 
   SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Base,
                                       NULL, 0);
@@ -4871,9 +4873,11 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
     switch (model) {
     case TLSModel::GeneralDynamic:
     case TLSModel::LocalDynamic: // not implemented
-    case TLSModel::InitialExec:  // not implemented
-    case TLSModel::LocalExec:    // not implemented
       return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
+
+    case TLSModel::InitialExec:
+    case TLSModel::LocalExec:
+      return LowerToTLSExecModel(GA, DAG, getPointerTy(), model, true);
     }
   } else {
     switch (model) {
@@ -4883,7 +4887,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
 
     case TLSModel::InitialExec:
     case TLSModel::LocalExec:
-      return LowerToTLSExecModel(GA, DAG, getPointerTy(), model);
+      return LowerToTLSExecModel(GA, DAG, getPointerTy(), model, false);
     }
   }
   assert(0 && "Unreachable");

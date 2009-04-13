@@ -454,14 +454,16 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 	O << "@TLSGD";
         break;
       case TLSModel::InitialExec:
-        if (Subtarget->is64Bit())
-          O << "@TLSGD"; // 64 bit intial exec not implemented
-        else
+        if (Subtarget->is64Bit()) {
+          assert (!NotRIPRel);
+          O << "@GOTTPOFF(%rip)";
+        } else {
           O << "@INDNTPOFF";
+        }
         break;
       case TLSModel::LocalExec:
         if (Subtarget->is64Bit())
-          O << "@TLSGD"; // 64 bit local exec not implemented
+          O << "@TPOFF";
         else
 	  O << "@NTPOFF";
         break;

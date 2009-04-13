@@ -808,9 +808,16 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     uint64_t Offset = G->getOffset();
     if (!is64Bit || isInt32(AM.Disp + Offset)) {
       GlobalValue *GV = G->getGlobal();
+      bool isRIPRel = TM.symbolicAddressesAreRIPRel();
+      if (N0.getOpcode() == llvm::ISD::TargetGlobalTLSAddress) {
+        TLSModel::Model model =
+          getTLSModel (GV, TM.getRelocationModel());
+        if (is64Bit && model == TLSModel::InitialExec)
+          isRIPRel = true;
+      }
       AM.GV = GV;
       AM.Disp += Offset;
-      AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+      AM.isRIPRel = isRIPRel;
       return false;
     }
   } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
