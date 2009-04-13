@@ -311,7 +311,7 @@ def GR16 : RegisterClass<"X86", [i16], 16,
     static const unsigned X86_GR16_AO_32_fp[] = {
       X86::AX, X86::CX, X86::DX, X86::SI, X86::DI, X86::BX
     };
-    // If not, just don't allocate SPL.
+    // If not, just don't allocate SP.
     static const unsigned X86_GR16_AO_64[] = {
       X86::AX,  X86::CX,   X86::DX,   X86::SI,   X86::DI,
       X86::R8W, X86::R9W,  X86::R10W, X86::R11W,
@@ -379,7 +379,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
     static const unsigned X86_GR32_AO_32_fp[] = {
       X86::EAX, X86::ECX, X86::EDX, X86::ESI, X86::EDI, X86::EBX
     };
-    // If not, just don't allocate SPL.
+    // If not, just don't allocate ESP.
     static const unsigned X86_GR32_AO_64[] = {
       X86::EAX, X86::ECX,  X86::EDX,  X86::ESI,  X86::EDI,
       X86::R8D, X86::R9D,  X86::R10D, X86::R11D,
