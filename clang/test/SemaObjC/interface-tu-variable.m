@@ -1,17 +1,22 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
 @interface XX
-int x;  // expected-error {{cannot declare variable inside a class, protocol or category}}
-int one=1;  // expected-error {{cannot declare variable inside a class, protocol or category}}
+int x;  // expected-error {{cannot declare variable inside @interface or @protocol}}
+int one=1;  // expected-error {{cannot declare variable inside @interface or @protocol}}
 @end
 
 @protocol PPP
-int ddd; // expected-error {{cannot declare variable inside a class, protocol or category}}
+int ddd; // expected-error {{cannot declare variable inside @interface or @protocol}}
 @end
 
 @interface XX(CAT)
-  char * III; // expected-error {{cannot declare variable inside a class, protocol or category}}
+  char * III; // expected-error {{cannot declare variable inside @interface or @protocol}}
   extern int OK;
+@end
+
+@interface XX()
+  char * III2; // expected-error {{cannot declare variable inside @interface or @protocol}}
+  extern int OK2;
 @end
 
 
