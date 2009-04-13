@@ -2602,7 +2602,7 @@ unsigned X86InstrInfo::determineREX(const MachineInstr &MI) {
     case X86II::MRM4m: case X86II::MRM5m:
     case X86II::MRM6m: case X86II::MRM7m:
     case X86II::MRMDestMem: {
-      unsigned e = isTwoAddr ? 5 : 4;
+      unsigned e = (isTwoAddr ? X86AddrNumOperands+1 : X86AddrNumOperands);
       i = isTwoAddr ? 1 : 0;
       if (NumOps > e && isX86_64ExtendedReg(MI.getOperand(e)))
         REX |= 1 << 2;
