@@ -1000,6 +1000,14 @@ public:
   /// @returns the number of words to hold the integer value of this APInt.
   /// @brief Get the number of words.
   unsigned getNumWords() const {
+    return getNumWords(BitWidth);
+  }
+
+  /// Here one word's bitwidth equals to that of uint64_t.
+  /// @returns the number of words to hold the integer value with a
+  /// given bit width.
+  /// @brief Get the number of words.
+  static unsigned getNumWords(unsigned BitWidth) {
     return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
