@@ -255,6 +255,10 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
 
 // Sign/Zero extenders
 
+// MOVSX64rr8 always has a REX prefix and it has an 8-bit register
+// operand, which makes it a rare instruction with an 8-bit register
+// operand that can never access an h register. If support for h registers
+// were generalized, this would require a special register class.
 def MOVSX64rr8 : RI<0xBE, MRMSrcReg, (outs GR64:$dst), (ins GR8 :$src),
                     "movs{bq|x}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (sext GR8:$src))]>, TB;
