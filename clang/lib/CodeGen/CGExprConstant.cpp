@@ -102,6 +102,7 @@ public:
     }
 
     // Initialize remaining array elements.
+    // FIXME: This doesn't handle member pointers correctly!
     for (; i < NumElements; ++i)
       Elts.push_back(llvm::Constant::getNullValue(ElemTy));
 
@@ -187,6 +188,7 @@ public:
     std::vector<llvm::Constant*> Elts;
 
     // Initialize the whole structure to zero.
+    // FIXME: This doesn't handle member pointers correctly!
     for (unsigned i = 0; i < SType->getNumElements(); ++i) {
       const llvm::Type *FieldTy = SType->getElementType(i);
       Elts.push_back(llvm::Constant::getNullValue(FieldTy));
@@ -255,11 +257,6 @@ public:
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
     const llvm::Type *Ty = ConvertType(ILE->getType());
 
-    // If this is an empty initializer list, we value-initialize the
-    // union.
-    if (ILE->getNumInits() == 0)
-      return llvm::Constant::getNullValue(Ty);
-
     FieldDecl* curField = ILE->getInitializedFieldInUnion();
     if (!curField) {
       // There's no field to initialize, so value-initialize the union.
@@ -287,8 +284,14 @@ public:
       return llvm::ConstantArray::get(RetTy, Elts);
     }
 
-    Expr *Init = ILE->getInit(0);
-    return EmitUnion(CGM.EmitConstantExpr(Init, Init->getType(), CGF), Ty);
+    llvm::Constant *InitElem;
+    if (ILE->getNumInits() > 0) {
+      Expr *Init = ILE->getInit(0);
+      InitElem = CGM.EmitConstantExpr(Init, Init->getType(), CGF);
+    } else {
+      InitElem = CGM.EmitNullConstant(curField->getType());
+    }
+    return EmitUnion(InitElem, Ty);
   }
 
   llvm::Constant *EmitVectorInitialization(InitListExpr *ILE) {
@@ -318,8 +321,7 @@ public:
   }
   
   llvm::Constant *VisitImplicitValueInitExpr(ImplicitValueInitExpr* E) {
-    const llvm::Type* RetTy = CGM.getTypes().ConvertType(E->getType());
-    return llvm::Constant::getNullValue(RetTy);
+    return CGM.EmitNullConstant(E->getType());
   }
     
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
@@ -329,8 +331,7 @@ public:
         Expr *Init = ILE->getInit(0);
         return CGM.EmitConstantExpr(Init, Init->getType(), CGF);
       }
-      const llvm::Type* RetTy = CGM.getTypes().ConvertType(ILE->getType());
-      return llvm::Constant::getNullValue(RetTy);
+      return CGM.EmitNullConstant(ILE->getType());
     }
     
     if (ILE->getType()->isArrayType())
@@ -589,4 +590,10 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     C = llvm::ConstantExpr::getZExt(C, BoolTy);
   }
   return C;
+}
+
+llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
+  // Always return an LLVM null constant for now; this will change when we
+  // get support for IRGen of member pointers.
+  return llvm::Constant::getNullValue(getTypes().ConvertType(T));
 }

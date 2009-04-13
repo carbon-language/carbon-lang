@@ -259,6 +259,11 @@ public:
   llvm::Constant *EmitConstantExpr(const Expr *E, QualType DestType,
                                    CodeGenFunction *CGF = 0);
 
+  /// EmitNullConstant - Return the result of value-initializing the given
+  /// type, i.e. a null expression of the given type.  This is usually,
+  /// but not always, an LLVM null constant.
+  llvm::Constant *EmitNullConstant(QualType T);
+
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
                                    const AnnotateAttr *AA, unsigned LineNo);
 

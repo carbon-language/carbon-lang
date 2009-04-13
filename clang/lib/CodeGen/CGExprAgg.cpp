@@ -312,6 +312,7 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
     // Otherwise, just memset the whole thing to zero.  This is legal
     // because in LLVM, all default initializers are guaranteed to have a
     // bit pattern of all zeros.
+    // FIXME: That isn't true for member pointers!
     // There's a potential optimization opportunity in combining
     // memsets; that would be easy for arrays, but relatively
     // difficult for structures with the current code.
