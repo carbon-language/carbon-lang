@@ -1298,7 +1298,7 @@ static SDNode *FindCallStartFromCall(SDNode *Node) {
 SDNode *X86DAGToDAGISel::getTruncateTo8Bit(SDValue N0) {
   assert(!Subtarget->is64Bit() &&
          "getTruncateTo8Bit is only needed on x86-32!");
-  SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+  SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
   DebugLoc dl = N0.getDebugLoc();
 
   // Ensure that the source register has an 8-bit subreg on 32-bit targets
@@ -1463,7 +1463,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                                  Result,
                                      CurDAG->getTargetConstant(8, MVT::i8)), 0);
           // Then truncate it down to i8.
-          SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+          SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
           Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
                                                    MVT::i8, Result, SRIdx), 0);
         } else {
@@ -1616,7 +1616,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                         CurDAG->getTargetConstant(8, MVT::i8)), 
                            0);
           // Then truncate it down to i8.
-          SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+          SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
           Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
                                                    MVT::i8, Result, SRIdx), 0);
         } else {
