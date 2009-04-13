@@ -939,7 +939,7 @@ LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue FrameAddress,
 
     Ops.clear();
     Ops.push_back(Chain);
-    Ops.push_back(Arg.getValue(0));
+    Ops.push_back(Arg);
     Ops.push_back(PtrLo);
     Ops.push_back(PtrHi);
     Ops.push_back(DAG.getConstant(StoreOffset, MVT::i8));
