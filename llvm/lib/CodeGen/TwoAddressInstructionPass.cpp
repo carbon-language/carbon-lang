@@ -857,7 +857,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             ReMatRegs.set(regB);
             ++NumReMats;
           } else {
-            TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+            bool Emitted = TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+            assert(Emitted && "Unable to issue a copy instruction!\n");
           }
 
           MachineBasicBlock::iterator prevMI = prior(mi);
