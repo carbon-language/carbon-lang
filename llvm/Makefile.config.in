@@ -289,6 +289,3 @@ endif
 
 # Location of the plugin header file for gold.
 BINUTILS_INCDIR := @BINUTILS_INCDIR@
-
-# Can we use libFFI for the interpreter?
-HAVE_FFI := @HAVE_FFI@

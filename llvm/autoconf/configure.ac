@@ -737,8 +737,9 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
 dnl libffi is optional; used to call external functions from the interpreter
-AC_CHECK_LIB(ffi,ffi_call,[have_libffi=1],
-             AC_MSG_WARN([libffi not found - disabling external calls from interpreter]))
+AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
+               [Define if libffi is available on this platform.]),
+               AC_MSG_WARN([libffi not found - disabling external calls from interpreter]))
 
 dnl mallinfo is optional; the code can compile (minus features) without it
 AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
@@ -802,10 +803,8 @@ else
   AC_SUBST(HAVE_PTHREAD, 0)
 fi
 
-dnl Once we know we have libffi, try to find ffi.h.
-if test -n "$have_libffi" ; then
-  AC_CHECK_HEADERS([ffi.h ffi/ffi.h], [AC_SUBST(HAVE_FFI, 1)])
-fi  
+dnl Try to find ffi.h.
+AC_CHECK_HEADERS([ffi.h ffi/ffi.h])
 
 dnl===-----------------------------------------------------------------------===
 dnl===

@@ -33,13 +33,13 @@
 #include <cmath>
 #include <cstring>
 
-#ifdef HAVE_FFI
+#ifdef HAVE_FFI_CALL
 #ifdef HAVE_FFI_H
 #include <ffi.h>
+#define USE_LIBFFI
 #elif HAVE_FFI_FFI_H
 #include <ffi/ffi.h>
-#else
-#error "Not sure where configure found ffi.h!"
+#define USE_LIBFFI
 #endif
 #endif
 
@@ -50,7 +50,7 @@ typedef GenericValue (*ExFunc)(const FunctionType *,
 static ManagedStatic<std::map<const Function *, ExFunc> > ExportedFunctions;
 static std::map<std::string, ExFunc> FuncNames;
 
-#ifdef HAVE_FFI
+#ifdef USE_LIBFFI
 typedef void (*RawFunc)(void);
 static ManagedStatic<std::map<const Function *, RawFunc> > RawFunctions;
 #endif
@@ -105,7 +105,7 @@ static ExFunc lookupFunction(const Function *F) {
   return FnPtr;
 }
 
-#ifdef HAVE_FFI
+#ifdef USE_LIBFFI
 static ffi_type *ffiTypeFor(const Type *Ty) {
   switch (Ty->getTypeID()) {
     case Type::VoidTyID: return &ffi_type_void;
@@ -240,7 +240,7 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
 
   return false;
 }
-#endif // HAVE_FFI
+#endif // USE_LIBFFI
 
 GenericValue Interpreter::callExternalFunction(Function *F,
                                      const std::vector<GenericValue> &ArgVals) {
@@ -253,7 +253,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
                                                    : FI->second)
     return Fn(F->getFunctionType(), ArgVals);
 
-#ifdef HAVE_FFI
+#ifdef USE_LIBFFI
   std::map<const Function *, RawFunc>::iterator RF = RawFunctions->find(F);
   RawFunc RawFn;
   if (RF == RawFunctions->end()) {
@@ -268,7 +268,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   GenericValue Result;
   if (RawFn != 0 && ffiInvoke(RawFn, F, ArgVals, getTargetData(), Result))
     return Result;
-#endif // HAVE_FFI
+#endif // USE_LIBFFI
 
   cerr << "Tried to execute an unknown external function: "
        << F->getType()->getDescription() << " " << F->getName() << "\n";
