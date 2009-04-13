@@ -647,9 +647,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   // -mattr list is treated by the code generator as a diff against the -mcpu
   // setting, but the driver should pass all enabled options as "+" settings.
   // This means that the target should only look at + settings.
-  if (!TargetFeatures.empty()
-      // FIXME: The driver is not quite yet ready for this.
-      && 0) {
+  if (!TargetFeatures.empty()) {
     std::string ErrorStr;
     int Opt = Target->HandleTargetFeatures(&TargetFeatures[0],
                                            TargetFeatures.size(), ErrorStr);
