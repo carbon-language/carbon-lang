@@ -628,10 +628,10 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
   if (IsDstPhys && !IsSrcPhys)
     DstRegMap.insert(std::make_pair(SrcReg, DstReg));
   else if (!IsDstPhys && IsSrcPhys) {
-    bool isNew =
-      SrcRegMap.insert(std::make_pair(DstReg, SrcReg)).second;
-    isNew = isNew; // Silence compiler warning.
-    assert(isNew && "Can't map to two src physical registers!");
+    bool isNew = SrcRegMap.insert(std::make_pair(DstReg, SrcReg)).second;
+    if (!isNew)
+      assert(SrcRegMap[DstReg] == SrcReg &&
+             "Can't map to two src physical registers!");
 
     SmallVector<unsigned, 4> VirtRegPairs;
     bool isCopy = false;
@@ -653,8 +653,9 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
         break;
       }
       bool isNew = SrcRegMap.insert(std::make_pair(NewReg, DstReg)).second;
-      isNew = isNew; // Silence compiler warning.
-      assert(isNew && "Can't map to two src physical registers!");
+      if (!isNew)
+      assert(SrcRegMap[NewReg] == DstReg &&
+             "Can't map to two src physical registers!");
       VirtRegPairs.push_back(NewReg);
       DstReg = NewReg;
     }
@@ -666,8 +667,9 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
         unsigned FromReg = VirtRegPairs.back();
         VirtRegPairs.pop_back();
         bool isNew = DstRegMap.insert(std::make_pair(FromReg, ToReg)).second;
-        isNew = isNew; // Silence compiler warning.
-        assert(isNew && "Can't map to two dst physical registers!");
+        if (!isNew)
+          assert(DstRegMap[FromReg] == ToReg &&
+                 "Can't map to two dst physical registers!");
         ToReg = FromReg;
       }
     }
