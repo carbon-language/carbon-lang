@@ -23,3 +23,8 @@ void func() {
 int h[]; 
 int (*i)[] = &h+1; // expected-error {{arithmetic on pointer to incomplete type 'int (*)[]'}}
 
+struct bar j = {1}; // expected-error {{variable has incomplete type 'struct bar'}} \
+    expected-note {{forward declaration of 'struct bar'}}
+struct bar k;
+struct bar { int a; };
+

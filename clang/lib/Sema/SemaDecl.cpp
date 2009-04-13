@@ -2396,6 +2396,13 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     return;
   }
 
+  if (!VDecl->getType()->isArrayType() &&
+      RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
+                          diag::err_typecheck_decl_incomplete_type)) {
+    RealDecl->setInvalidDecl();
+    return;
+  }
+
   const VarDecl *Def = 0;
   if (VDecl->getDefinition(Def)) {
     Diag(VDecl->getLocation(), diag::err_redefinition) 
