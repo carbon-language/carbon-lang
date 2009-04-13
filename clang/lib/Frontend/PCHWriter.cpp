@@ -21,6 +21,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
@@ -503,8 +504,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
       const SrcMgr::FileInfo &File = SLoc->getFile();
       Record.push_back(File.getIncludeLoc().getRawEncoding());
       Record.push_back(File.getFileCharacteristic()); // FIXME: stable encoding
-      Record.push_back(File.hasLineDirectives()); // FIXME: encode the
-                                                  // line directives?
+      Record.push_back(File.hasLineDirectives());
 
       const SrcMgr::ContentCache *Content = File.getContentCache();
       if (Content->Entry) {
@@ -548,6 +548,42 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
     }
 
     Record.clear();
+  }
+
+  // Write the line table.
+  if (SourceMgr.hasLineTable()) {
+    LineTableInfo &LineTable = SourceMgr.getLineTable();
+
+    // Emit the file names
+    Record.push_back(LineTable.getNumFilenames());
+    for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I) {
+      // Emit the file name
+      const char *Filename = LineTable.getFilename(I);
+      unsigned FilenameLen = Filename? strlen(Filename) : 0;
+      Record.push_back(FilenameLen);
+      if (FilenameLen)
+        Record.insert(Record.end(), Filename, Filename + FilenameLen);
+    }
+    
+    // Emit the line entries
+    for (LineTableInfo::iterator L = LineTable.begin(), LEnd = LineTable.end();
+         L != LEnd; ++L) {
+      // Emit the file ID
+      Record.push_back(L->first);
+      
+      // Emit the line entries
+      Record.push_back(L->second.size());
+      for (std::vector<LineEntry>::iterator LE = L->second.begin(), 
+                                         LEEnd = L->second.end();
+           LE != LEEnd; ++LE) {
+        Record.push_back(LE->FileOffset);
+        Record.push_back(LE->LineNo);
+        Record.push_back(LE->FilenameID);
+        Record.push_back((unsigned)LE->FileKind);
+        Record.push_back(LE->IncludeOffset);
+      }
+      S.EmitRecord(pch::SM_LINE_TABLE, Record);
+    }
   }
 
   S.ExitBlock();

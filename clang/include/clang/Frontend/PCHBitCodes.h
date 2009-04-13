@@ -147,7 +147,10 @@ namespace clang {
       SM_SLOC_BUFFER_BLOB = 3,
       /// \brief Describes a source location entry (SLocEntry) for a
       /// macro instantiation.
-      SM_SLOC_INSTANTIATION_ENTRY = 4
+      SM_SLOC_INSTANTIATION_ENTRY = 4,
+      /// \brief Describes the SourceManager's line table, with
+      /// information about #line directives.
+      SM_LINE_TABLE = 5
     };
     
     /// \brief Record types used within a preprocessor block.

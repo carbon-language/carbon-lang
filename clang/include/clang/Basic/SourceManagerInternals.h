@@ -102,7 +102,8 @@ public:
     assert(ID < FilenamesByID.size() && "Invalid FilenameID");
     return FilenamesByID[ID]->getKeyData();
   }
-  
+  unsigned getNumFilenames() const { return FilenamesByID.size(); }
+
   void AddLineNote(unsigned FID, unsigned Offset,
                    unsigned LineNo, int FilenameID);
   void AddLineNote(unsigned FID, unsigned Offset,
@@ -113,6 +114,15 @@ public:
   /// FindNearestLineEntry - Find the line entry nearest to FID that is before
   /// it.  If there is no line entry before Offset in FID, return null.
   const LineEntry *FindNearestLineEntry(unsigned FID, unsigned Offset);
+
+  // Low-level access
+  typedef std::map<unsigned, std::vector<LineEntry> >::iterator iterator;
+  iterator begin() { return LineEntries.begin(); }
+  iterator end() { return LineEntries.end(); }
+
+  /// \brief Add a new line entry that has already been encoded into
+  /// the internal representation of the line table.
+  void AddEntry(unsigned FID, const std::vector<LineEntry> &Entries);
 };
 
 } // end namespace clang

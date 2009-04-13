@@ -589,7 +589,13 @@ public:
   void AddLineNote(SourceLocation Loc, unsigned LineNo, int FilenameID,
                    bool IsFileEntry, bool IsFileExit, 
                    bool IsSystemHeader, bool IsExternCHeader);
-  
+
+  /// \brief Determine if the source manager has a line table.
+  bool hasLineTable() const { return LineTable != 0; }
+
+  /// \brief Retrieve the stored line table.
+  LineTableInfo &getLineTable();
+
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
   //===--------------------------------------------------------------------===//
@@ -624,6 +630,11 @@ public:
 
   unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
 
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
+    assert(FID.ID < SLocEntryTable.size() && "Invalid id");
+    return SLocEntryTable[FID.ID];
+  }
+
 private:
   friend class SrcMgr::ContentCache; // Used for deserialization.
   
@@ -654,11 +665,6 @@ private:
   ///  memory buffer.
   const SrcMgr::ContentCache* 
   createMemBufferContentCache(const llvm::MemoryBuffer *Buf);
-
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
-    assert(FID.ID < SLocEntryTable.size() && "Invalid id");
-    return SLocEntryTable[FID.ID];
-  }
   
   FileID getFileIDSlow(unsigned SLocOffset) const;
 

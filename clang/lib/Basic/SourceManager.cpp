@@ -157,6 +157,12 @@ const LineEntry *LineTableInfo::FindNearestLineEntry(unsigned FID,
   return &*--I;
 }
 
+/// \brief Add a new line entry that has already been encoded into
+/// the internal representation of the line table.
+void LineTableInfo::AddEntry(unsigned FID, 
+                             const std::vector<LineEntry> &Entries) {
+  LineEntries[FID] = Entries;
+}
 
 /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
 /// 
@@ -224,6 +230,11 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
                          EntryExit, FileKind);
 }
 
+LineTableInfo &SourceManager::getLineTable() {
+  if (LineTable == 0)
+    LineTable = new LineTableInfo();
+  return *LineTable;
+}
 
 //===----------------------------------------------------------------------===//
 // Private 'Create' methods.

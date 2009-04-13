@@ -18,6 +18,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Bitcode/BitstreamReader.h"
@@ -191,6 +192,50 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
   return true;
 }
 
+/// \brief Read the line table in the source manager block.
+/// \returns true if ther was an error.
+static bool ParseLineTable(SourceManager &SourceMgr, 
+                           llvm::SmallVectorImpl<uint64_t> &Record) {
+  unsigned Idx = 0;
+  LineTableInfo &LineTable = SourceMgr.getLineTable();
+
+  // Parse the file names
+  for (unsigned I = 0, N = Record[Idx++]; I != N; ++I) {
+    // Extract the file name
+    unsigned FilenameLen = Record[Idx++];
+    std::string Filename(&Record[Idx], &Record[Idx] + FilenameLen);
+    Idx += FilenameLen;
+    unsigned ID = LineTable.getLineTableFilenameID(Filename.c_str(), 
+                                                   Filename.size());
+    if (ID != I)
+      return Error("Filename ID mismatch in PCH line table");
+  }
+
+  // Parse the line entries
+  std::vector<LineEntry> Entries;
+  while (Idx < Record.size()) {
+    unsigned FID = Record[Idx++];
+
+    // Extract the line entries
+    unsigned NumEntries = Record[Idx++];
+    Entries.clear();
+    Entries.reserve(NumEntries);
+    for (unsigned I = 0; I != NumEntries; ++I) {
+      unsigned FileOffset = Record[Idx++];
+      unsigned LineNo = Record[Idx++];
+      int FilenameID = Record[Idx++];
+      SrcMgr::CharacteristicKind FileKind 
+        = (SrcMgr::CharacteristicKind)Record[Idx++];
+      unsigned IncludeOffset = Record[Idx++];
+      Entries.push_back(LineEntry::get(FileOffset, LineNo, FilenameID,
+                                       FileKind, IncludeOffset));
+    }
+    LineTable.AddEntry(FID, Entries);
+  }
+
+  return false;
+}
+
 /// \brief Read the source manager block
 PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   using namespace SrcMgr;
@@ -242,9 +287,12 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       const FileEntry *File 
         = PP.getFileManager().getFile(BlobStart, BlobStart + BlobLen);
       // FIXME: Error recovery if file cannot be found.
-      SourceMgr.createFileID(File,
-                             SourceLocation::getFromRawEncoding(Record[1]),
-                             (CharacteristicKind)Record[2]);
+      FileID ID = SourceMgr.createFileID(File,
+                                SourceLocation::getFromRawEncoding(Record[1]),
+                                         (CharacteristicKind)Record[2]);
+      if (Record[3])
+        const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(ID).getFile())
+          .setHasLineDirectives();
       break;
     }
 
@@ -278,6 +326,10 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       break;
     }
 
+    case pch::SM_LINE_TABLE: {
+      if (ParseLineTable(SourceMgr, Record))
+        return Failure;
+    }
     }
   }
 }
