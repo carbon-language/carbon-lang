@@ -80,13 +80,17 @@ void PCHDeclReader::VisitNamedDecl(NamedDecl *ND) {
 
 void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
   VisitNamedDecl(TD);
-  // FIXME: circular dependencies here?
   TD->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
 }
 
 void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
-  VisitTypeDecl(TD);
-  TD->setUnderlyingType(Reader.GetType(Record[Idx++]));
+  // Note that we cannot use VisitTypeDecl here, because we need to
+  // set the underlying type of the typedef *before* we try to read
+  // the type associated with the TypedefDecl.
+  VisitNamedDecl(TD);
+  TD->setUnderlyingType(Reader.GetType(Record[Idx + 1]));
+  TD->setTypeForDecl(Reader.GetType(Record[Idx]).getTypePtr());
+  Idx += 2;
 }
 
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
@@ -775,6 +779,11 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   RecordData Record;
   unsigned Code = Stream.ReadCode();
   switch ((pch::TypeCode)Stream.ReadRecord(Code, Record)) {
+  case pch::TYPE_EXT_QUAL:
+    // FIXME: Deserialize ExtQualType
+    assert(false && "Cannot deserialize qualified types yet");
+    return QualType();
+
   case pch::TYPE_FIXED_WIDTH_INT: {
     assert(Record.size() == 2 && "Incorrect encoding of fixed-width int type");
     return Context.getFixedWidthIntType(Record[0], Record[1]);
@@ -817,14 +826,118 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context.getMemberPointerType(PointeeType, ClassType.getTypePtr());
   }
 
+  case pch::TYPE_CONSTANT_ARRAY: {
+    QualType ElementType = GetType(Record[0]);
+    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
+    unsigned IndexTypeQuals = Record[2];
+    unsigned Idx = 3;
+    llvm::APInt Size = ReadAPInt(Record, Idx);
+    return Context.getConstantArrayType(ElementType, Size, ASM, IndexTypeQuals);
+  }
+
+  case pch::TYPE_INCOMPLETE_ARRAY: {
+    QualType ElementType = GetType(Record[0]);
+    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
+    unsigned IndexTypeQuals = Record[2];
+    return Context.getIncompleteArrayType(ElementType, ASM, IndexTypeQuals);
+  }
+
+  case pch::TYPE_VARIABLE_ARRAY: {
+    // FIXME: implement this
+    assert(false && "Unable to de-serialize variable-length array type");
+    return QualType();
+  }
+
+  case pch::TYPE_VECTOR: {
+    if (Record.size() != 2) {
+      Error("Incorrect encoding of vector type in PCH file");
+      return QualType();
+    }
+
+    QualType ElementType = GetType(Record[0]);
+    unsigned NumElements = Record[1];
+    return Context.getVectorType(ElementType, NumElements);
+  }
+
+  case pch::TYPE_EXT_VECTOR: {
+    if (Record.size() != 2) {
+      Error("Incorrect encoding of extended vector type in PCH file");
+      return QualType();
+    }
+
+    QualType ElementType = GetType(Record[0]);
+    unsigned NumElements = Record[1];
+    return Context.getExtVectorType(ElementType, NumElements);
+  }
+
+  case pch::TYPE_FUNCTION_NO_PROTO: {
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of no-proto function type");
+      return QualType();
+    }
+    QualType ResultType = GetType(Record[0]);
+    return Context.getFunctionNoProtoType(ResultType);
+  }
+
+  case pch::TYPE_FUNCTION_PROTO: {
+    QualType ResultType = GetType(Record[0]);
+    unsigned Idx = 1;
+    unsigned NumParams = Record[Idx++];
+    llvm::SmallVector<QualType, 16> ParamTypes;
+    for (unsigned I = 0; I != NumParams; ++I)
+      ParamTypes.push_back(GetType(Record[Idx++]));
+    bool isVariadic = Record[Idx++];
+    unsigned Quals = Record[Idx++];
+    return Context.getFunctionType(ResultType, &ParamTypes[0], NumParams,
+                                   isVariadic, Quals);
+  }
+
+  case pch::TYPE_TYPEDEF:
+    assert(Record.size() == 1 && "Incorrect encoding of typedef type");
+    return Context.getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
+
+  case pch::TYPE_TYPEOF_EXPR:
+    // FIXME: Deserialize TypeOfExprType
+    assert(false && "Cannot de-serialize typeof(expr) from a PCH file");
+    return QualType();
+
+  case pch::TYPE_TYPEOF: {
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of typeof(type) in PCH file");
+      return QualType();
+    }
+    QualType UnderlyingType = GetType(Record[0]);
+    return Context.getTypeOfType(UnderlyingType);
+  }
+    
+  case pch::TYPE_RECORD:
+    // FIXME: Deserialize RecordType
+    assert(false && "Cannot de-serialize record types yet");
+    return QualType();
+
   case pch::TYPE_ENUM:
     assert(Record.size() == 1 && "Incorrect encoding of enum type");
     return Context.getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
-    // FIXME: Several other kinds of types to deserialize here!
-  default:
-    assert(false && "Unable to deserialize this type");
-    break;
+  case pch::TYPE_OBJC_INTERFACE:
+    // FIXME: Deserialize ObjCInterfaceType
+    assert(false && "Cannot de-serialize ObjC interface types yet");
+    return QualType();
+
+  case pch::TYPE_OBJC_QUALIFIED_INTERFACE:
+    // FIXME: Deserialize ObjCQualifiedInterfaceType
+    assert(false && "Cannot de-serialize ObjC qualified interface types yet");
+    return QualType();
+
+  case pch::TYPE_OBJC_QUALIFIED_ID:
+    // FIXME: Deserialize ObjCQualifiedIdType
+    assert(false && "Cannot de-serialize ObjC qualified id types yet");
+    return QualType();
+
+  case pch::TYPE_OBJC_QUALIFIED_CLASS:
+    // FIXME: Deserialize ObjCQualifiedClassType
+    assert(false && "Cannot de-serialize ObjC qualified class types yet");
+    return QualType();
   }
 
   // Suppress a GCC warning
