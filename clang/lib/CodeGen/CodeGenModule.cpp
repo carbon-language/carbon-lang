@@ -324,20 +324,21 @@ void CodeGenModule::SetFunctionAttributes(const Decl *D,
 
 static CodeGenModule::GVALinkage 
 GetLinkageForFunctionOrMethodDecl(const Decl *D) {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // "static" and attr(always_inline) functions get internal linkage.
-    if (FD->getStorageClass() == FunctionDecl::Static ||
-        FD->hasAttr<AlwaysInlineAttr>())
-      return CodeGenModule::GVA_Internal;
-    if (FD->isInline()) {
-      if (FD->getStorageClass() == FunctionDecl::Extern)
-        return CodeGenModule::GVA_ExternInline;
-      return CodeGenModule::GVA_Inline;
-    }
-  } else {
-    assert(isa<ObjCMethodDecl>(D));
+  if (isa<ObjCMethodDecl>(D))
     return CodeGenModule::GVA_Internal;
+
+  const FunctionDecl *FD = cast<FunctionDecl>(D);
+  // "static" and attr(always_inline) functions get internal linkage.
+  if (FD->getStorageClass() == FunctionDecl::Static ||
+      FD->hasAttr<AlwaysInlineAttr>())
+    return CodeGenModule::GVA_Internal;
+
+  if (FD->isInline()) {
+    if (FD->getStorageClass() == FunctionDecl::Extern)
+      return CodeGenModule::GVA_ExternInline;
+    return CodeGenModule::GVA_Inline;
   }
+
   return CodeGenModule::GVA_Normal;
 }
 
