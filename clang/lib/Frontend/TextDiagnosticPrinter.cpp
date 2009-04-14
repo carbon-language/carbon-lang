@@ -82,7 +82,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
       --EndColNo;  // Zero base the col #.
       
       // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += Lexer::MeasureTokenLength(End, SM);
+      EndColNo += Lexer::MeasureTokenLength(End, SM, *LangOpts);
     } else {
       EndColNo = CaretLine.size();
     }
@@ -281,7 +281,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
             continue;
           
           // Add in the length of the token, so that we cover multi-char tokens.
-          unsigned TokSize = Lexer::MeasureTokenLength(E, SM);
+          unsigned TokSize = Lexer::MeasureTokenLength(E, SM, *LangOpts);
           
           OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
              << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'

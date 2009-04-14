@@ -211,7 +211,8 @@ public:
   /// includes a trigraph or an escaped newline) then this count includes bytes
   /// that are part of that.
   static unsigned MeasureTokenLength(SourceLocation Loc,
-                                     const SourceManager &SM);
+                                     const SourceManager &SM,
+                                     const LangOptions &LangOpts);
   
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.

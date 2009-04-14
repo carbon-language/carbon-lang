@@ -22,8 +22,9 @@
 #include "llvm/System/Path.h"
 using namespace clang;
 
-FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr)
-  : Diags(Diags), Rewrite(SourceMgr), NumFailures(0) {
+FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
+                             const LangOptions &LangOpts)
+  : Diags(Diags), Rewrite(SourceMgr, LangOpts), NumFailures(0) {
   Client = Diags.getClient();
   Diags.setClient(this);
 }

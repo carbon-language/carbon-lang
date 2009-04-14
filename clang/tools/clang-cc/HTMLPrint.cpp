@@ -52,7 +52,7 @@ ASTConsumer* clang::CreateHTMLPrinter(const std::string &OutFile,
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {
-  R.setSourceMgr(context.getSourceManager());
+  R.setSourceMgr(context.getSourceManager(), context.getLangOptions());
 }
 
 HTMLPrinter::~HTMLPrinter() {

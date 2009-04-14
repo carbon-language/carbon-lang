@@ -41,7 +41,7 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   unsigned EOffset = SM.getFileOffset(E);
   
   // Include the whole end token in the range.
-  EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr());
+  EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr(), R.getLangOpts());
   
   HighlightRange(R.getEditBuffer(FID), BOffset, EOffset,
                  SM.getBufferData(FID).first, StartTag, EndTag);

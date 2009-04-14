@@ -57,7 +57,8 @@ class FixItRewriter : public DiagnosticClient {
 
 public:
   /// \brief Initialize a new fix-it rewriter.
-  FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr);
+  FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
+                const LangOptions &LangOpts);
 
   /// \brief Destroy the fix-it rewriter.
   ~FixItRewriter();

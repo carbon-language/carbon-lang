@@ -482,14 +482,15 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
                               SourceLocation::getFromRawEncoding(Record[2]),
                               SourceLocation::getFromRawEncoding(Record[3]),
                               Lexer::MeasureTokenLength(SpellingLoc, 
-                                                        SourceMgr));
+                                                        SourceMgr,
+                                                        PP.getLangOptions()));
       break;
     }
 
-    case pch::SM_LINE_TABLE: {
+    case pch::SM_LINE_TABLE:
       if (ParseLineTable(SourceMgr, Record))
         return Failure;
-    }
+      break;
     }
   }
 }

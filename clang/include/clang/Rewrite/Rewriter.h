@@ -25,6 +25,7 @@
 
 namespace clang {
   class SourceManager;
+  class LangOptions;
   class Rewriter;
   class Stmt;
   
@@ -117,14 +118,19 @@ private:  // Methods only usable by Rewriter.
 /// are involved.
 class Rewriter {
   SourceManager *SourceMgr;
-  
+  const LangOptions *LangOpts;
   std::map<FileID, RewriteBuffer> RewriteBuffers;
 public:
-  explicit Rewriter(SourceManager &SM) : SourceMgr(&SM) {}
-  explicit Rewriter() : SourceMgr(0) {}
+  explicit Rewriter(SourceManager &SM, const LangOptions &LO)
+    : SourceMgr(&SM), LangOpts(&LO) {}
+  explicit Rewriter() : SourceMgr(0), LangOpts(0) {}
   
-  void setSourceMgr(SourceManager &SM) { SourceMgr = &SM; }
-  SourceManager& getSourceMgr() { return *SourceMgr; }
+  void setSourceMgr(SourceManager &SM, const LangOptions &LO) {
+    SourceMgr = &SM;
+    LangOpts = &LO;
+  }
+  SourceManager &getSourceMgr() { return *SourceMgr; }
+  const LangOptions &getLangOpts() { return *LangOpts; }
   
   /// isRewritable - Return true if this location is a raw file location, which
   /// is rewritable.  Locations from macros, etc are not rewritable.

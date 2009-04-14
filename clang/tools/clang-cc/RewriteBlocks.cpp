@@ -198,7 +198,7 @@ void RewriteBlocks::Initialize(ASTContext &context) {
   MainFileStart = MainBuf->getBufferStart();
   MainFileEnd = MainBuf->getBufferEnd();
   
-  Rewrite.setSourceMgr(Context->getSourceManager());
+  Rewrite.setSourceMgr(Context->getSourceManager(), LangOpts);
   
   if (IsHeader)
     Preamble = "#pragma once\n";

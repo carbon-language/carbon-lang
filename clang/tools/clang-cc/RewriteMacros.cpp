@@ -90,7 +90,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
   SourceManager &SM = PP.getSourceManager();
   
   Rewriter Rewrite;
-  Rewrite.setSourceMgr(SM);
+  Rewrite.setSourceMgr(SM, PP.getLangOptions());
   RewriteBuffer &RB = Rewrite.getEditBuffer(SM.getMainFileID());
 
   std::vector<Token> RawTokens;

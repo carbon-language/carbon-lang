@@ -336,7 +336,7 @@ SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc) {
   if (Loc.isInvalid() || !Loc.isFileID())
     return SourceLocation();
 
-  unsigned Len = Lexer::MeasureTokenLength(Loc, getSourceManager());
+  unsigned Len = Lexer::MeasureTokenLength(Loc, getSourceManager(), Features);
   return AdvanceToTokenCharacter(Loc, Len);
 }
 

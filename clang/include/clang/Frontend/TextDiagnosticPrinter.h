@@ -24,28 +24,37 @@ namespace llvm {
 
 namespace clang {
 class SourceManager;
+class LangOptions;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
+  llvm::raw_ostream &OS;
+  const LangOptions *LangOpts;
   SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
   bool LastCaretDiagnosticWasNote;
-  llvm::raw_ostream &OS;
+
   bool ShowColumn;
   bool CaretDiagnostics;
   bool ShowLocation;
   bool PrintRangeInfo;
 public:
-  TextDiagnosticPrinter(llvm::raw_ostream &os, bool showColumn = true,
+  TextDiagnosticPrinter(llvm::raw_ostream &os,
+                        bool showColumn = true,
                         bool caretDiagnistics = true, bool showLocation = true,
                         bool printRangeInfo = true)
-    : LastCaretDiagnosticWasNote(false), OS(os), ShowColumn(showColumn), 
+    : OS(os), LangOpts(0),
+      LastCaretDiagnosticWasNote(false), ShowColumn(showColumn), 
       CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
       PrintRangeInfo(printRangeInfo) {}
 
+  void SetLangOpts(const LangOptions &LO) {
+    LangOpts = &LO;
+  }
+  
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 
   void HighlightRange(const SourceRange &R,
-                      const SourceManager& SrcMgr,
+                      const SourceManager &SrcMgr,
                       unsigned LineNo, FileID FID,
                       std::string &CaretLine,
                       const std::string &SourceLine);

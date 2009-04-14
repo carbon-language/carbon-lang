@@ -216,7 +216,8 @@ void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
 /// includes a trigraph or an escaped newline) then this count includes bytes
 /// that are part of that.
 unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
-                                   const SourceManager &SM) {
+                                   const SourceManager &SM,
+                                   const LangOptions &LangOpts) {
   // TODO: this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.  Just look at StrData[0] to handle
   // all obviously single-char tokens.  This could use 
@@ -230,11 +231,6 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first);
   const char *StrData = Buffer.first+LocInfo.second;
 
-  // Create a langops struct and enable trigraphs.  This is sufficient for
-  // measuring tokens.
-  LangOptions LangOpts;
-  LangOpts.Trigraphs = true;
-  
   // Create a lexer starting at the beginning of this token.
   Lexer TheLexer(Loc, LangOpts, Buffer.first, StrData, Buffer.second);
   Token TheTok;

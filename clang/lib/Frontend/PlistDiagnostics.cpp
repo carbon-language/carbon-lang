@@ -15,7 +15,7 @@
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
@@ -36,8 +36,9 @@ namespace {
   class VISIBILITY_HIDDEN PlistDiagnostics : public PathDiagnosticClient {
     std::vector<const PathDiagnostic*> BatchedDiags;
     const std::string OutputFile;
+    const LangOptions &LangOpts;
   public:
-    PlistDiagnostics(const std::string& prefix);
+    PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts);
     ~PlistDiagnostics();
     void HandlePathDiagnostic(const PathDiagnostic* D);
     
@@ -47,13 +48,14 @@ namespace {
   };  
 } // end anonymous namespace
 
-PlistDiagnostics::PlistDiagnostics(const std::string& output)
-  : OutputFile(output) {}
+PlistDiagnostics::PlistDiagnostics(const std::string& output,
+                                   const LangOptions &LO)
+  : OutputFile(output), LangOpts(LO) {}
 
 PathDiagnosticClient*
 clang::CreatePlistDiagnosticClient(const std::string& s,
-                                   Preprocessor*, PreprocessorFactory*) {
-  return new PlistDiagnostics(s);
+                                   Preprocessor *PP, PreprocessorFactory*) {
+  return new PlistDiagnostics(s, PP->getLangOptions());
 }
 
 static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
@@ -66,9 +68,9 @@ static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
   V.push_back(FID);
 }
 
-static unsigned GetFID(const FIDMap& FIDs, const SourceManager* SM,
+static unsigned GetFID(const FIDMap& FIDs, const SourceManager &SM,
                        SourceLocation L) {
-  FileID FID = SM->getFileID(SM->getInstantiationLoc(L));
+  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
   FIDMap::const_iterator I = FIDs.find(FID);
   assert(I != FIDs.end());
   return I->second;
@@ -79,14 +81,16 @@ static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
   return o;
 }
 
-static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
-                         SourceLocation L, const FIDMap& FM,
-                         const unsigned indent, bool extend = false) {
+static void EmitLocation(llvm::raw_ostream& o, const SourceManager &SM,
+                         const LangOptions &LangOpts,
+                         SourceLocation L, const FIDMap &FM,
+                         unsigned indent, bool extend = false) {
 
-  FullSourceLoc Loc(SM->getInstantiationLoc(L), const_cast<SourceManager&>(*SM));
+  FullSourceLoc Loc(SM.getInstantiationLoc(L), const_cast<SourceManager&>(SM));
 
   // Add in the length of the token, so that we cover multi-char tokens.
-  unsigned offset = extend ? Lexer::MeasureTokenLength(Loc, *SM) - 1 : 0;
+  unsigned offset =
+    extend ? Lexer::MeasureTokenLength(Loc, SM, LangOpts) - 1 : 0;
   
   Indent(o, indent) << "<dict>\n";
   Indent(o, indent) << " <key>line</key><integer>"
@@ -98,19 +102,20 @@ static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
   Indent(o, indent) << "</dict>\n";
 }
 
-static void EmitLocation(llvm::raw_ostream& o, const SourceManager* SM,
+static void EmitLocation(llvm::raw_ostream& o, const SourceManager &SM,
+                         const LangOptions &LangOpts,
                          const PathDiagnosticLocation &L, const FIDMap& FM,
-                         const unsigned indent, bool extend = false) {
-  EmitLocation(o, SM, L.asLocation(), FM, indent, extend);
+                         unsigned indent, bool extend = false) {
+  EmitLocation(o, SM, LangOpts, L.asLocation(), FM, indent, extend);
 }
 
-static void EmitRange(llvm::raw_ostream& o, const SourceManager* SM,
-                      SourceRange R, const FIDMap& FM,
-                      const unsigned indent) {
- 
+static void EmitRange(llvm::raw_ostream& o, const SourceManager &SM,
+                      const LangOptions &LangOpts,
+                      SourceRange R, const FIDMap &FM,
+                      unsigned indent) {
   Indent(o, indent) << "<array>\n";
-  EmitLocation(o, SM, R.getBegin(), FM, indent+1);  
-  EmitLocation(o, SM, R.getEnd(), FM, indent+1, true);
+  EmitLocation(o, SM, LangOpts, R.getBegin(), FM, indent+1);  
+  EmitLocation(o, SM, LangOpts, R.getEnd(), FM, indent+1, true);
   Indent(o, indent) << "</array>\n";
 }
 
@@ -134,7 +139,9 @@ static llvm::raw_ostream& EmitString(llvm::raw_ostream& o,
 
 static void ReportControlFlow(llvm::raw_ostream& o,
                               const PathDiagnosticControlFlowPiece& P,
-                              const FIDMap& FM, const SourceManager *SM,
+                              const FIDMap& FM,
+                              const SourceManager &SM,
+                              const LangOptions &LangOpts,
                               unsigned indent) {
   
   Indent(o, indent) << "<dict>\n";
@@ -145,9 +152,9 @@ static void ReportControlFlow(llvm::raw_ostream& o,
   // FIXME: Eventually remove (DEPRECATED)
   // Output the start and end locations.
   Indent(o, indent) << "<key>start</key>\n";
-  EmitLocation(o, SM, P.getStartLocation(), FM, indent);
+  EmitLocation(o, SM, LangOpts, P.getStartLocation(), FM, indent);
   Indent(o, indent) << "<key>end</key>\n";
-  EmitLocation(o, SM, P.getEndLocation(), FM, indent);
+  EmitLocation(o, SM, LangOpts, P.getEndLocation(), FM, indent);
   
   // Emit edges.
   Indent(o, indent) << "<key>edges</key>\n";
@@ -159,9 +166,9 @@ static void ReportControlFlow(llvm::raw_ostream& o,
     Indent(o, indent) << "<dict>\n";
     ++indent;
     Indent(o, indent) << "<key>start</key>\n";
-    EmitRange(o, SM, I->getStart().asRange(), FM, indent+1);
+    EmitRange(o, SM, LangOpts, I->getStart().asRange(), FM, indent+1);
     Indent(o, indent) << "<key>end</key>\n";
-    EmitRange(o, SM, I->getEnd().asRange(), FM, indent+1);
+    EmitRange(o, SM, LangOpts, I->getEnd().asRange(), FM, indent+1);
     --indent;
     Indent(o, indent) << "</dict>\n";
   }
@@ -181,7 +188,9 @@ static void ReportControlFlow(llvm::raw_ostream& o,
 }
 
 static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
-                        const FIDMap& FM, const SourceManager* SM,
+                        const FIDMap& FM,
+                        const SourceManager &SM,
+                        const LangOptions &LangOpts,
                         unsigned indent) {
   
   Indent(o, indent) << "<dict>\n";
@@ -193,7 +202,7 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   FullSourceLoc L = P.getLocation().asLocation();
   
   Indent(o, indent) << "<key>location</key>\n";
-  EmitLocation(o, SM, L, FM, indent);
+  EmitLocation(o, SM, LangOpts, L, FM, indent);
   
   // Output the ranges (if any).
   PathDiagnosticPiece::range_iterator RI = P.ranges_begin(),
@@ -203,7 +212,8 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
     Indent(o, indent) << "<key>ranges</key>\n";
     Indent(o, indent) << "<array>\n";
     ++indent;
-    for ( ; RI != RE; ++RI ) EmitRange(o, SM, *RI, FM, indent+1);
+    for (; RI != RE; ++RI)
+      EmitRange(o, SM, LangOpts, *RI, FM, indent+1);
     --indent;
     Indent(o, indent) << "</array>\n";
   }
@@ -226,7 +236,8 @@ static void ReportEvent(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
 
 static void ReportMacro(llvm::raw_ostream& o,
                         const PathDiagnosticMacroPiece& P,
-                        const FIDMap& FM, const SourceManager *SM,
+                        const FIDMap& FM, const SourceManager &SM,
+                        const LangOptions &LangOpts,
                         unsigned indent) {
   
   for (PathDiagnosticMacroPiece::const_iterator I=P.begin(), E=P.end();
@@ -236,30 +247,35 @@ static void ReportMacro(llvm::raw_ostream& o,
       default:
         break;
       case PathDiagnosticPiece::Event:
-        ReportEvent(o, cast<PathDiagnosticEventPiece>(**I), FM, SM, indent);
+        ReportEvent(o, cast<PathDiagnosticEventPiece>(**I), FM, SM, LangOpts,
+                    indent);
         break;
       case PathDiagnosticPiece::Macro:
-        ReportMacro(o, cast<PathDiagnosticMacroPiece>(**I), FM, SM, indent);
+        ReportMacro(o, cast<PathDiagnosticMacroPiece>(**I), FM, SM, LangOpts,
+                    indent);
         break;
     }      
   }    
 }
 
 static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P, 
-                       const FIDMap& FM, const SourceManager* SM) {
+                       const FIDMap& FM, const SourceManager &SM,
+                       const LangOptions &LangOpts) {
 
   unsigned indent = 4;
   
   switch (P.getKind()) {
     case PathDiagnosticPiece::ControlFlow:
       ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
-                        indent);
+                        LangOpts, indent);
       break;
     case PathDiagnosticPiece::Event:
-      ReportEvent(o, cast<PathDiagnosticEventPiece>(P), FM, SM, indent);
+      ReportEvent(o, cast<PathDiagnosticEventPiece>(P), FM, SM, LangOpts,
+                  indent);
       break;
     case PathDiagnosticPiece::Macro:
-      ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, indent);
+      ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, LangOpts,
+                  indent);
       break;
   }
 }
@@ -352,7 +368,7 @@ PlistDiagnostics::~PlistDiagnostics() {
     o << "   <array>\n";
   
     for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I)
-      ReportDiag(o, *I, FM, SM);
+      ReportDiag(o, *I, FM, *SM, LangOpts);
     
     o << "   </array>\n";
     
@@ -366,7 +382,7 @@ PlistDiagnostics::~PlistDiagnostics() {
     
     // Output the location of the bug.
     o << "  <key>location</key>\n";
-    EmitLocation(o, SM, D->getLocation(), FM, 2);
+    EmitLocation(o, *SM, LangOpts, D->getLocation(), FM, 2);
     
     // Close up the entry.
     o << "  </dict>\n";

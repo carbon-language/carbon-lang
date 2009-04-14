@@ -163,7 +163,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     return; // FIXME: Emit a warning?
   
   // Create a new rewriter to generate HTML.
-  Rewriter R(const_cast<SourceManager&>(SMgr));
+  Rewriter R(const_cast<SourceManager&>(SMgr), PP->getLangOptions());
   
   // Process the path.  
   unsigned n = D.size();
@@ -574,8 +574,8 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
                                      SourceRange Range,
                                      const char *HighlightStart,
                                      const char *HighlightEnd) {
-  
-  SourceManager& SM = R.getSourceMgr();
+  SourceManager &SM = R.getSourceMgr();
+  const LangOptions &LangOpts = R.getLangOpts();
   
   SourceLocation InstantiationStart = SM.getInstantiationLoc(Range.getBegin());
   unsigned StartLineNo = SM.getInstantiationLineNumber(InstantiationStart);
@@ -596,7 +596,7 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
 
   if (EndColNo) {
     // Add in the length of the token, so that we cover multi-char tokens.
-    EndColNo += Lexer::MeasureTokenLength(Range.getEnd(), SM) - 1;
+    EndColNo += Lexer::MeasureTokenLength(Range.getEnd(), SM, LangOpts)-1;
   }
   
   // Highlight the range.  Make the span tag the outermost tag for the

@@ -387,6 +387,33 @@ static llvm::cl::opt<bool>
 LangObjCXX("ObjC++", llvm::cl::desc("Set base language to Objective-C++"),
            llvm::cl::Hidden);
 
+static llvm::cl::opt<bool>
+ObjCExclusiveGC("fobjc-gc-only",
+                llvm::cl::desc("Use GC exclusively for Objective-C related "
+                               "memory management"));
+
+static llvm::cl::opt<bool>
+ObjCEnableGC("fobjc-gc",
+             llvm::cl::desc("Enable Objective-C garbage collection"));
+
+static llvm::cl::opt<LangOptions::VisibilityMode>
+SymbolVisibility("fvisibility",
+                 llvm::cl::desc("Set the default symbol visibility:"),
+                 llvm::cl::init(LangOptions::Default),
+                 llvm::cl::values(clEnumValN(LangOptions::Default, "default",
+                                             "Use default symbol visibility"),
+                                  clEnumValN(LangOptions::Hidden, "hidden",
+                                             "Use hidden symbol visibility"),
+                                  clEnumValN(LangOptions::Protected,"protected",
+                                             "Use protected symbol visibility"),
+                                  clEnumValEnd));
+
+static llvm::cl::opt<bool>
+OverflowChecking("ftrapv",
+                 llvm::cl::desc("Trap on integer overflow"),
+                 llvm::cl::init(false));
+
+
 /// InitializeBaseLanguage - Handle the -x foo options.
 static void InitializeBaseLanguage() {
   if (LangObjC)
@@ -481,6 +508,14 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
     Options.CPlusPlus = 1;
     break;
   }
+  
+  if (ObjCExclusiveGC)
+    Options.setGCMode(LangOptions::GCOnly);
+  else if (ObjCEnableGC)
+    Options.setGCMode(LangOptions::HybridGC);
+  
+  Options.setVisibilityMode(SymbolVisibility);
+  Options.OverflowChecking = OverflowChecking;
 }
 
 /// LangStds - Language standards we support.
@@ -795,39 +830,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
 }
-
-static llvm::cl::opt<bool>
-ObjCExclusiveGC("fobjc-gc-only",
-                llvm::cl::desc("Use GC exclusively for Objective-C related "
-                               "memory management"));
-
-static llvm::cl::opt<bool>
-ObjCEnableGC("fobjc-gc",
-             llvm::cl::desc("Enable Objective-C garbage collection"));
-
-void InitializeGCMode(LangOptions &Options) {
-  if (ObjCExclusiveGC)
-    Options.setGCMode(LangOptions::GCOnly);
-  else if (ObjCEnableGC)
-    Options.setGCMode(LangOptions::HybridGC);
-}
-
-static llvm::cl::opt<LangOptions::VisibilityMode>
-SymbolVisibility("fvisibility",
-                 llvm::cl::desc("Set the default symbol visibility:"),
-                 llvm::cl::init(LangOptions::Default),
-                 llvm::cl::values(clEnumValN(LangOptions::Default, "default",
-                                             "Use default symbol visibility"),
-                                  clEnumValN(LangOptions::Hidden, "hidden",
-                                             "Use hidden symbol visibility"),
-                                  clEnumValN(LangOptions::Protected,"protected",
-                                             "Use protected symbol visibility"),
-                                  clEnumValEnd));
-
-static llvm::cl::opt<bool>
-OverflowChecking("ftrapv",
-           llvm::cl::desc("Trap on integer overflow"),
-           llvm::cl::init(false));
 
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
@@ -2021,7 +2023,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     llvm::TimeRegion Timer(ClangFrontendTimer);
     Consumer.reset(new ASTConsumer());
     FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
-                                     PP.getSourceManager());
+                                     PP.getSourceManager(),
+                                     PP.getLangOptions());
     break;
   }
 
@@ -2034,7 +2037,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       // locations now.
       if (!FixItRewrite)
         FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
-                                         PP.getSourceManager());
+                                         PP.getSourceManager(),
+                                         PP.getLangOptions());
 
       bool AddedFixitLocation = false;
       for (unsigned Idx = 0, Last = FixItAtLocations.size(); 
@@ -2213,9 +2217,6 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
   
-  // Create a file manager object to provide access to and cache the filesystem.
-  FileManager FileMgr;
-  
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
   DiagnosticClient* TextDiagClient = 0;
@@ -2268,6 +2269,9 @@ int main(int argc, char **argv) {
     
   llvm::OwningPtr<SourceManager> SourceMgr;
   
+  // Create a file manager object to provide access to and cache the filesystem.
+  FileManager FileMgr;
+  
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     
@@ -2286,16 +2290,20 @@ int main(int argc, char **argv) {
     
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
+    
+    if (!VerifyDiagnostics)
+      static_cast<TextDiagnosticPrinter*>(TextDiagClient)
+        ->SetLangOpts(LangInfo);
+
+    
     InitializeBaseLanguage();
     LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
-    InitializeGCMode(LangInfo);
-    LangInfo.setVisibilityMode(SymbolVisibility);
-    LangInfo.OverflowChecking = OverflowChecking;
     InitializeLanguageStandard(LangInfo, LK, Target.get());
           
     // Process the -I options and set them in the HeaderInfo.
     HeaderSearch HeaderInfo(FileMgr);
+    
     
     InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
     

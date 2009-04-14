@@ -455,7 +455,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   MainFileStart = MainBuf->getBufferStart();
   MainFileEnd = MainBuf->getBufferEnd();
      
-  Rewrite.setSourceMgr(Context->getSourceManager());
+  Rewrite.setSourceMgr(Context->getSourceManager(), Context->getLangOptions());
   
   // declaring objc_selector outside the parameter list removes a silly
   // scope related warning...
@@ -2673,7 +2673,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
   if ((CDecl->isForwardDecl() || NumIvars == 0) &&
       (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
-    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
+    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
     ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
     return;
   }
@@ -2708,7 +2708,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       SourceLocation L = RCDecl ? CDecl->getSuperClassLoc() : 
                                   CDecl->getClassLoc();
       const char *endHeader = SM->getCharacterData(L);
-      endHeader += Lexer::MeasureTokenLength(L, *SM);
+      endHeader += Lexer::MeasureTokenLength(L, *SM, LangOpts);
 
       if (CDecl->protocol_begin() != CDecl->protocol_end()) {
         // advance to the end of the referenced protocols.
@@ -2770,7 +2770,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     // Don't forget to add a ';'!!
     InsertText(LocEnd.getFileLocWithOffset(1), ";", 1);
   } else { // we don't have any instance variables - insert super struct.
-    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
+    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
     Result += " {\n    struct ";
     Result += RCDecl->getNameAsString();
     Result += "_IMPL ";

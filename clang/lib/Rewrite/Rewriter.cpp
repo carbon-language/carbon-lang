@@ -93,7 +93,7 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   
   // Adjust the end offset to the end of the last token, instead of being the
   // start of the last token.
-  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
+  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr, *LangOpts);
   
   return EndOff-StartOff;
 }
@@ -127,7 +127,7 @@ std::string Rewriter::getRewritenText(SourceRange Range) const {
     
     // Adjust the end offset to the end of the last token, instead of being the
     // start of the last token.
-    EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
+    EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr, *LangOpts);
     return std::string(Ptr, Ptr+EndOff-StartOff);
   }
   
@@ -137,7 +137,7 @@ std::string Rewriter::getRewritenText(SourceRange Range) const {
   
   // Adjust the end offset to the end of the last token, instead of being the
   // start of the last token.
-  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
+  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr, *LangOpts);
 
   // Advance the iterators to the right spot, yay for linear time algorithms.
   RewriteBuffer::iterator Start = RB.begin();
