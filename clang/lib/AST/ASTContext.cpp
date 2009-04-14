@@ -2084,7 +2084,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
           dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {
       // Use array's original type only if it has known number of
       // elements.
-      if (!dyn_cast<ConstantArrayType>(AT))
+      if (!isa<ConstantArrayType>(AT))
         PType = PVDecl->getType();
     } else if (PType->isFunctionType())
       PType = PVDecl->getType();
