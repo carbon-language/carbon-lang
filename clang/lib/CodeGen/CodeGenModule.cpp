@@ -221,6 +221,11 @@ void CodeGenModule::EmitAnnotations() {
   gv->setSection("llvm.metadata");
 }
 
+/// SetGlobalValueAttributes - Set attributes for a global.
+///
+/// FIXME: This is currently only done for aliases and functions, but
+/// not for variables (these details are set in
+/// EmitGlobalVarDefinition for variables).
 void CodeGenModule::SetGlobalValueAttributes(const Decl *D, 
                                              GVALinkage Linkage,
                                              llvm::GlobalValue *GV,
@@ -265,8 +270,8 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     setGlobalVisibility(GV, D);
 
     // Only add to llvm.used when we see a definition, otherwise we
-    // might add multiple times or risk the value being replaced by a
-    // subsequent RAUW.
+    // might add it multiple times or risk the value being replaced by
+    // a subsequent RAUW.
     if (D->hasAttr<UsedAttr>())
       AddUsedGlobal(GV);
   }
