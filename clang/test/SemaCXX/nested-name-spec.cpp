@@ -13,8 +13,8 @@ namespace A {
 }
 
 A:: ; // expected-error {{expected unqualified-id}}
-::A::ax::undef ex3; // expected-error {{expected a class or namespace}} expected-error {{invalid token after top level declarator}}
-A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{invalid token after top level declarator}}
+::A::ax::undef ex3; // expected-error {{expected a class or namespace}} expected-error {{unknown type name 'undef'}}
+A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{unknown type name 'undef2'}}
 
 int A::C::Ag1() { return 0; }
 
@@ -166,7 +166,7 @@ void N::f() { } // okay
 
 struct Y;  // expected-note{{forward declaration of 'struct Y'}}
 Y::foo y; // expected-error{{incomplete type 'struct Y' named in nested name specifier}} \
-         // FIXME: ugly: expected-error{{invalid token after top level declarator}}
+         // expected-error{{unknown type name 'foo'}}
 
 X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}} \
       // expected-error{{C++ requires a type specifier for all declarations}} \

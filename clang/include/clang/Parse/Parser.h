@@ -816,7 +816,8 @@ private:
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
   
-  bool ParseImplicitInt(DeclSpec &DS, TemplateParameterLists *TemplateParams,
+  bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
+                        TemplateParameterLists *TemplateParams,
                         AccessSpecifier AS);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                                   TemplateParameterLists *TemplateParams = 0,

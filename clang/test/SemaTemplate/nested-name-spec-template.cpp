@@ -2,7 +2,7 @@
 
 namespace N { 
   namespace M {
-    template<typename T> struct Promote; // expected-note{{previous definition is here}}
+    template<typename T> struct Promote;
     
     template<> struct Promote<short> {
       typedef int type;
@@ -32,8 +32,7 @@ N::M::template; // expected-error{{expected template name after 'template' keywo
                // expected-error{{expected unqualified-id}}
 
 N::M::template Promote; // expected-error{{expected '<' after 'template Promote' in nested name specifier}} \
-// expected-error{{C++ requires a type specifier for all declarations}} \
-// expected-error{{redefinition of 'Promote' as different kind of symbol}}
+// expected-error{{C++ requires a type specifier for all declarations}}
 
 namespace N {
   template<typename T> struct A;

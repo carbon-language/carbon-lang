@@ -56,3 +56,14 @@ namespace S1 {
 }
 
 namespace B {} // expected-error {{redefinition of 'B' as different kind of symbol}}
+
+
+namespace foo {
+  enum x {
+    Y
+  };
+}
+
+static foo::x  test1;  // ok
+
+static foo::X  test2;  // typo: expected-error {{unknown type name 'X'}}

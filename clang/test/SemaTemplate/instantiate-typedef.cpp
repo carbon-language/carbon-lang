@@ -11,5 +11,5 @@ add_pointer<float>::type test2(int * ptr) {
   return ptr; // expected-error{{incompatible type returning 'int *', expected 'add_pointer<float>::type' (aka 'float *')}}
 }
 
-add_pointer<int&>::type // expected-note{{in instantiation of template class 'struct add_pointer<int &>' requested here}}
-test3(); // FIXME: expected-error{{invalid token after top level declarator}}
+add_pointer<int&>::type // expected-note{{in instantiation of template class 'struct add_pointer<int &>' requested here}} expected-error {{unknown type name 'type'}}
+test3(); 

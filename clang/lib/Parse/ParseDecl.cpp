@@ -499,9 +499,11 @@ static bool isValidAfterIdentifierInDeclarator(const Token &T) {
 /// declspec is done being processed.  If it recovers and thinks there may be
 /// other pieces of declspec after it, it returns true.
 ///
-bool Parser::ParseImplicitInt(DeclSpec &DS,
+bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                               TemplateParameterLists *TemplateParams,
                               AccessSpecifier AS) {
+  assert(Tok.is(tok::identifier) && "should have identifier");
+  
   SourceLocation Loc = Tok.getLocation();
   // If we see an identifier that is not a type name, we normally would
   // parse it as the identifer being declared.  However, when a typename
@@ -530,10 +532,12 @@ bool Parser::ParseImplicitInt(DeclSpec &DS,
   // error anyway.  Try to recover from various common problems.  Check
   // to see if this was a reference to a tag name without a tag specified.
   // This is a common problem in C (saying 'foo' instead of 'struct foo').
-  const char *TagName = 0;
-  tok::TokenKind TagKind = tok::unknown;
+  //
+  // C++ doesn't need this, and isTagName doesn't take SS.
+  if (SS == 0) {
+    const char *TagName = 0;
+    tok::TokenKind TagKind = tok::unknown;
   
-  if (Tok.is(tok::identifier)) {
     switch (Actions.isTagName(*Tok.getIdentifierInfo(), CurScope)) {
       default: break;
       case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
@@ -541,25 +545,28 @@ bool Parser::ParseImplicitInt(DeclSpec &DS,
       case DeclSpec::TST_struct:TagName="struct";TagKind=tok::kw_struct;break;
       case DeclSpec::TST_class: TagName="class" ;TagKind=tok::kw_class ;break;
     }
-  }
   
-  if (TagName) {
-    Diag(Loc, diag::err_use_of_tag_name_without_tag)
-      << Tok.getIdentifierInfo() << TagName
-      << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
-    
-    // Parse this as a tag as if the missing tag were present.
-    if (TagKind == tok::kw_enum)
-      ParseEnumSpecifier(Loc, DS, AS);
-    else
-      ParseClassSpecifier(TagKind, Loc, DS, TemplateParams, AS);
-    return true;
+    if (TagName) {
+      Diag(Loc, diag::err_use_of_tag_name_without_tag)
+        << Tok.getIdentifierInfo() << TagName
+        << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
+      
+      // Parse this as a tag as if the missing tag were present.
+      if (TagKind == tok::kw_enum)
+        ParseEnumSpecifier(Loc, DS, AS);
+      else
+        ParseClassSpecifier(TagKind, Loc, DS, TemplateParams, AS);
+      return true;
+    }
   }
   
   // Since this is almost certainly an invalid type name, emit a
   // diagnostic that says it, eat the token, and mark the declspec as
   // invalid.
-  Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo();
+  SourceRange R;
+  if (SS) R = SS->getRange();
+  
+  Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo() << R;
   const char *PrevSpec;
   DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec);
   DS.SetRangeEnd(Tok.getLocation());
@@ -642,7 +649,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If the next token is the name of the class type that the C++ scope
       // denotes, followed by a '(', then this is a constructor declaration.
       // We're done with the decl-specifiers.
-      if (Actions.isCurrentClassName(*NextToken().getIdentifierInfo(),
+      if (Actions.isCurrentClassName(*Next.getIdentifierInfo(),
                                      CurScope, &SS) &&
           GetLookAheadToken(2).is(tok::l_paren))
         goto DoneWithDeclSpec;
@@ -650,8 +657,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
                                             Next.getLocation(), CurScope, &SS);
 
-      if (TypeRep == 0)
+      // If the referenced identifier is not a type, then this declspec is
+      // erroneous: We already checked about that it has no type specifier, and
+      // C++ doesn't have implicit int.  Diagnose it as a typo w.r.t. to the
+      // typename.  
+      if (TypeRep == 0) {
+        ConsumeToken();   // Eat the scope spec so the identifier is current.
+        if (ParseImplicitInt(DS, &SS, TemplateParams, AS)) continue;
         goto DoneWithDeclSpec;
+      }
       
       ConsumeToken(); // The C++ scope.
 
@@ -711,7 +725,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
       if (TypeRep == 0) {
-        if (ParseImplicitInt(DS, TemplateParams, AS)) continue;
+        if (ParseImplicitInt(DS, 0, TemplateParams, AS)) continue;
         goto DoneWithDeclSpec;
       }
 
