@@ -215,61 +215,87 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
 //===----------------------------------------------------------------------===//
 namespace {
   class VISIBILITY_HIDDEN PCHStmtReader 
-    : public StmtVisitor<PCHStmtReader, void> {
+    : public StmtVisitor<PCHStmtReader, unsigned> {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
+    llvm::SmallVectorImpl<Expr *> &ExprStack;
 
   public:
     PCHStmtReader(PCHReader &Reader, const PCHReader::RecordData &Record,
-                  unsigned &Idx)
-      : Reader(Reader), Record(Record), Idx(Idx) { }
+                  unsigned &Idx, llvm::SmallVectorImpl<Expr *> &ExprStack)
+      : Reader(Reader), Record(Record), Idx(Idx), ExprStack(ExprStack) { }
 
-    void VisitExpr(Expr *E);
-    void VisitPredefinedExpr(PredefinedExpr *E);
-    void VisitDeclRefExpr(DeclRefExpr *E);
-    void VisitIntegerLiteral(IntegerLiteral *E);
-    void VisitFloatingLiteral(FloatingLiteral *E);
-    void VisitCharacterLiteral(CharacterLiteral *E);
+    // Each of the Visit* functions reads in part of the expression
+    // from the given record and the current expression stack, then
+    // return the total number of operands that it read from the
+    // expression stack.
+
+    unsigned VisitExpr(Expr *E);
+    unsigned VisitPredefinedExpr(PredefinedExpr *E);
+    unsigned VisitDeclRefExpr(DeclRefExpr *E);
+    unsigned VisitIntegerLiteral(IntegerLiteral *E);
+    unsigned VisitFloatingLiteral(FloatingLiteral *E);
+    unsigned VisitCharacterLiteral(CharacterLiteral *E);
+    unsigned VisitCastExpr(CastExpr *E);
+    unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
 }
 
-void PCHStmtReader::VisitExpr(Expr *E) {
+unsigned PCHStmtReader::VisitExpr(Expr *E) {
   E->setType(Reader.GetType(Record[Idx++]));
   E->setTypeDependent(Record[Idx++]);
   E->setValueDependent(Record[Idx++]);
+  return 0;
 }
 
-void PCHStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
+unsigned PCHStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
   VisitExpr(E);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setIdentType((PredefinedExpr::IdentType)Record[Idx++]);
+  return 0;
 }
 
-void PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
+unsigned PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
   E->setDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
 }
 
-void PCHStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
+unsigned PCHStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
   VisitExpr(E);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setValue(Reader.ReadAPInt(Record, Idx));
+  return 0;
 }
 
-void PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
+unsigned PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
   VisitExpr(E);
   E->setValue(Reader.ReadAPFloat(Record, Idx));
   E->setExact(Record[Idx++]);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
 }
 
-void PCHStmtReader::VisitCharacterLiteral(CharacterLiteral *E) {
+unsigned PCHStmtReader::VisitCharacterLiteral(CharacterLiteral *E) {
   VisitExpr(E);
   E->setValue(Record[Idx++]);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setWide(Record[Idx++]);
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
+  VisitExpr(E);
+  E->setSubExpr(ExprStack.back());
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
+  VisitCastExpr(E);
+  E->setLvalueCast(Record[Idx++]);
+  return 1;
 }
 
 // FIXME: use the diagnostics machinery
@@ -1507,46 +1533,100 @@ llvm::APFloat PCHReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
 }
 
 Expr *PCHReader::ReadExpr() {
+  // Within the bitstream, expressions are stored in Reverse Polish
+  // Notation, with each of the subexpressions preceding the
+  // expression they are stored in. To evaluate expressions, we
+  // continue reading expressions and placing them on the stack, with
+  // expressions having operands removing those operands from the
+  // stack. Evaluation terminates when we see a EXPR_STOP record, and
+  // the single remaining expression on the stack is our result.
   RecordData Record;
-  unsigned Code = Stream.ReadCode();
-  unsigned Idx = 0;
-  PCHStmtReader Reader(*this, Record, Idx);
+  unsigned Idx;
+  llvm::SmallVector<Expr *, 16> ExprStack;
+  PCHStmtReader Reader(*this, Record, Idx, ExprStack);
   Stmt::EmptyShell Empty;
 
-  Expr *E = 0;
-  switch ((pch::StmtCode)Stream.ReadRecord(Code, Record)) {
-  case pch::EXPR_NULL: 
-    E = 0; 
-    break;
+  while (true) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd()) {
+        Error("Error at end of Source Manager block");
+        return 0;
+      }
+      break;
+    }
 
-  case pch::EXPR_PREDEFINED:
-    // FIXME: untested (until we can serialize function bodies).
-    E = new (Context) PredefinedExpr(Empty);
-    break;
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock()) {
+        Error("Malformed block record");
+        return 0;
+      }
+      continue;
+    }
 
-  case pch::EXPR_DECL_REF: 
-    E = new (Context) DeclRefExpr(Empty); 
-    break;
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
 
-  case pch::EXPR_INTEGER_LITERAL: 
-    E = new (Context) IntegerLiteral(Empty);
-    break;
+    Expr *E = 0;
+    Idx = 0;
+    Record.clear();
+    bool Finished = false;
+    switch ((pch::StmtCode)Stream.ReadRecord(Code, Record)) {
+    case pch::EXPR_STOP:
+      Finished = true;
+      break;
 
-  case pch::EXPR_FLOATING_LITERAL:
-    E = new (Context) FloatingLiteral(Empty);
-    break;
+    case pch::EXPR_NULL: 
+      E = 0; 
+      break;
 
-  case pch::EXPR_CHARACTER_LITERAL:
-    E = new (Context) CharacterLiteral(Empty);
-    break;
+    case pch::EXPR_PREDEFINED:
+      // FIXME: untested (until we can serialize function bodies).
+      E = new (Context) PredefinedExpr(Empty);
+      break;
+      
+    case pch::EXPR_DECL_REF: 
+      E = new (Context) DeclRefExpr(Empty); 
+      break;
+      
+    case pch::EXPR_INTEGER_LITERAL: 
+      E = new (Context) IntegerLiteral(Empty);
+      break;
+      
+    case pch::EXPR_FLOATING_LITERAL:
+      E = new (Context) FloatingLiteral(Empty);
+      break;
+      
+    case pch::EXPR_CHARACTER_LITERAL:
+      E = new (Context) CharacterLiteral(Empty);
+      break;
+
+    case pch::EXPR_IMPLICIT_CAST:
+      E = new (Context) ImplicitCastExpr(Empty);
+      break;
+    }
+
+    // We hit an EXPR_STOP, so we're done with this expression.
+    if (Finished)
+      break;
+
+    if (E) {
+      unsigned NumSubExprs = Reader.Visit(E);
+      while (NumSubExprs > 0) {
+        ExprStack.pop_back();
+        --NumSubExprs;
+      }
+    }
+
+    assert(Idx == Record.size() && "Invalid deserialization of expression");
+    ExprStack.push_back(E);
   }
-
-  if (E)
-    Reader.Visit(E);
-
-  assert(Idx == Record.size() && "Invalid deserialization of expression");
-
-  return E;
+  assert(ExprStack.size() == 1 && "Extra expressions on stack!");
+  return ExprStack.back();
 }
 
 DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {

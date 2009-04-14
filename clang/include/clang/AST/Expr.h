@@ -1116,10 +1116,15 @@ protected:
          ty->isDependentType() || (op && op->isValueDependent())), 
     Op(op) {}
   
+  /// \brief Construct an empty cast.
+  CastExpr(StmtClass SC, EmptyShell Empty) 
+    : Expr(SC, Empty) { }
+  
 public:
   Expr *getSubExpr() { return cast<Expr>(Op); }
   const Expr *getSubExpr() const { return cast<Expr>(Op); }
-  
+  void setSubExpr(Expr *E) { Op = E; }
+
   static bool classof(const Stmt *T) { 
     StmtClass SC = T->getStmtClass();
     if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
@@ -1160,6 +1165,11 @@ class ImplicitCastExpr : public CastExpr {
 public:
   ImplicitCastExpr(QualType ty, Expr *op, bool Lvalue) : 
     CastExpr(ImplicitCastExprClass, ty, op), LvalueCast(Lvalue) { }
+
+  /// \brief Construct an empty implicit cast.
+  explicit ImplicitCastExpr(EmptyShell Shell) 
+    : CastExpr(ImplicitCastExprClass, Shell) { }
+
 
   virtual SourceRange getSourceRange() const {
     return getSubExpr()->getSourceRange();

@@ -449,6 +449,8 @@ namespace {
     void VisitIntegerLiteral(IntegerLiteral *E);
     void VisitFloatingLiteral(FloatingLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
+    void VisitCastExpr(CastExpr *E);
+    void VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
 }
 
@@ -493,6 +495,17 @@ void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
   Writer.AddSourceLocation(E->getLoc(), Record);
   Record.push_back(E->isWide());
   Code = pch::EXPR_CHARACTER_LITERAL;
+}
+
+void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getSubExpr());
+}
+
+void PCHStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
+  VisitCastExpr(E);
+  Record.push_back(E->isLvalueCast());
+  Code = pch::EXPR_IMPLICIT_CAST;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1245,16 +1258,32 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   }
 }
 
+/// \brief Write the given subexpression to the bitstream.
+void PCHWriter::WriteSubExpr(Expr *E) {
+  RecordData Record;
+  PCHStmtWriter Writer(*this, Record);
+
+  if (!E) {
+    S.EmitRecord(pch::EXPR_NULL, Record);
+    return;
+  }
+  
+  Writer.Code = pch::EXPR_NULL;
+  Writer.Visit(E);
+  assert(Writer.Code != pch::EXPR_NULL && 
+         "Unhandled expression writing PCH file");
+  S.EmitRecord(Writer.Code, Record);    
+}
+
 /// \brief Flush all of the expressions that have been added to the
 /// queue via AddExpr().
 void PCHWriter::FlushExprs() {
   RecordData Record;
   PCHStmtWriter Writer(*this, Record);
-  while (!ExprsToEmit.empty()) {
-    Expr *E = ExprsToEmit.front();
-    ExprsToEmit.pop();
 
-    Record.clear();
+  for (unsigned I = 0, N = ExprsToEmit.size(); I != N; ++I) {
+    Expr *E = ExprsToEmit[I];
+
     if (!E) {
       S.EmitRecord(pch::EXPR_NULL, Record);
       continue;
@@ -1265,5 +1294,16 @@ void PCHWriter::FlushExprs() {
     assert(Writer.Code != pch::EXPR_NULL && 
            "Unhandled expression writing PCH file");
     S.EmitRecord(Writer.Code, Record);  
+
+    assert(N == ExprsToEmit.size() && 
+           "Subexpression writen via AddExpr rather than WriteSubExpr!");
+
+    // Note that we are at the end of a full expression. Any
+    // expression records that follow this one are part of a different
+    // expression.
+    Record.clear();
+    S.EmitRecord(pch::EXPR_STOP, Record);
   }
+
+  ExprsToEmit.clear();
 }

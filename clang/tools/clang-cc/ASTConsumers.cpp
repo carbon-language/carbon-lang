@@ -190,7 +190,14 @@ void DeclPrinter::Print(NamedDecl *ND) {
     std::string Name = ND->getNameAsString();
     // This forms: "int a".
     dyn_cast<ValueDecl>(ND)->getType().getAsStringInternal(Name);
-    Out << Name << ";\n";
+    Out << Name;
+    if (VarDecl *Var = dyn_cast<VarDecl>(ND)) {
+      if (Var->getInit()) {
+        Out << " = ";
+        Var->getInit()->printPretty(Out);
+      }
+    }
+    Out << ";\n";
     break;
   }
   case Decl::Namespace:

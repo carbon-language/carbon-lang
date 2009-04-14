@@ -13,4 +13,4 @@ enum Shape {
   Circle
 };
 
-enum Shape aRoundShape;// FIXME: = Circle;
+enum Shape aRoundShape = Circle;

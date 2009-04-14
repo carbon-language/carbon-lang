@@ -106,10 +106,7 @@ private:
 
   /// \brief Expressions that we've encountered while serializing a
   /// declaration or type.
-  ///
-  /// The expressions in this queue will be emitted following the
-  /// declaration or type.
-  std::queue<Expr *> ExprsToEmit;
+  llvm::SmallVector<Expr *, 8> ExprsToEmit;
 
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
@@ -156,7 +153,16 @@ public:
 
   /// \brief Add the given expression to the queue of expressions to
   /// emit.
-  void AddExpr(Expr *E) { ExprsToEmit.push(E); }
+  ///
+  /// This routine should be used when emitting types and declarations
+  /// that have expressions as part of their formulation. Once the
+  /// type or declaration has been written, call FlushExprs() to write
+  /// the corresponding expressions just after the type or
+  /// declaration.
+  void AddExpr(Expr *E) { ExprsToEmit.push_back(E); }
+
+  /// \brief Write the given subexpression to the bitstream.
+  void WriteSubExpr(Expr *E);
 
   /// \brief Flush all of the expressions that have been added to the
   /// queue via AddExpr().

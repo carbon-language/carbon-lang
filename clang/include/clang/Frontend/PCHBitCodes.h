@@ -368,8 +368,11 @@ namespace clang {
     /// 100. Each constant describes a record for a specific
     /// statement or expression class in the AST.
     enum StmtCode {
+      /// \brief A marker record that indicates that we are at the end
+      /// of an expression.
+      EXPR_STOP,
       /// \brief A NULL expression.
-      EXPR_NULL = 100,
+      EXPR_NULL,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.
@@ -379,7 +382,9 @@ namespace clang {
       /// \brief A FloatingLiteral record.
       EXPR_FLOATING_LITERAL,
       /// \brief A CharacterLiteral record.
-      EXPR_CHARACTER_LITERAL
+      EXPR_CHARACTER_LITERAL,
+      /// \brief An ImplicitCastExpr record.
+      EXPR_IMPLICIT_CAST
     };
     /// @}
   }
