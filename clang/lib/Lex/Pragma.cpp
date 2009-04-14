@@ -461,7 +461,7 @@ namespace {
 struct PragmaOnceHandler : public PragmaHandler {
   PragmaOnceHandler(const IdentifierInfo *OnceID) : PragmaHandler(OnceID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &OnceTok) {
-    PP.CheckEndOfDirective("#pragma once");
+    PP.CheckEndOfDirective("pragma once");
     PP.HandlePragmaOnce(OnceTok);
   }
 };
@@ -489,7 +489,7 @@ struct PragmaSystemHeaderHandler : public PragmaHandler {
   PragmaSystemHeaderHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &SHToken) {
     PP.HandlePragmaSystemHeader(SHToken);
-    PP.CheckEndOfDirective("#pragma");
+    PP.CheckEndOfDirective("pragma");
   }
 };
 struct PragmaDependencyHandler : public PragmaHandler {

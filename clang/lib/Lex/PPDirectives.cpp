@@ -243,7 +243,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       }
     } else if (FirstChar == 'e') {
       if (IdLen == 5 && !strcmp(Directive+1, "ndif")) {  // "endif"
-        CheckEndOfDirective("#endif");
+        CheckEndOfDirective("endif");
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
         bool InCond = CurPPLexer->popConditionalLevel(CondInfo);
@@ -257,7 +257,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // #else directive in a skipping conditional.  If not in some other
         // skipping conditional, and if #else hasn't already been seen, enter it
         // as a non-skipping conditional.
-        CheckEndOfDirective("#else");
+        CheckEndOfDirective("else");
         PPConditionalInfo &CondInfo = CurPPLexer->peekConditionalLevel();
         
         // If this is a #else with a #else before it, report the error.
@@ -689,7 +689,7 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
                                                   Literal.GetStringLength());
     
     // Verify that there is nothing after the string, other than EOM.
-    CheckEndOfDirective("#line");
+    CheckEndOfDirective("line");
   }
   
   SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);
@@ -889,7 +889,7 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   }
   
   // Verify that there is nothing after the string, other than EOM.
-  CheckEndOfDirective("#ident");
+  CheckEndOfDirective("ident");
 
   if (Callbacks)
     Callbacks->Ident(Tok.getLocation(), getSpelling(StrTok));
@@ -1050,7 +1050,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   }
   
   // Verify that there is nothing after the filename, other than EOM.
-  CheckEndOfDirective("#include");
+  CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getName());
 
   // Check that we don't have infinite #include recursion.
   if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1) {
@@ -1420,7 +1420,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
     return;
   
   // Check to see if this is the last token on the #undef line.
-  CheckEndOfDirective("#undef");
+  CheckEndOfDirective("undef");
   
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
@@ -1464,7 +1464,7 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   }
   
   // Check to see if this is the last token on the #if[n]def line.
-  CheckEndOfDirective(isIfndef ? "#ifndef" : "#ifdef");
+  CheckEndOfDirective(isIfndef ? "ifndef" : "ifdef");
 
   if (CurPPLexer->getConditionalStackDepth() == 0) {
     // If the start of a top-level #ifdef, inform MIOpt.
@@ -1533,7 +1533,7 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
   ++NumEndif;
   
   // Check that this is the whole directive.
-  CheckEndOfDirective("#endif");
+  CheckEndOfDirective("endif");
   
   PPConditionalInfo CondInfo;
   if (CurPPLexer->popConditionalLevel(CondInfo)) {
@@ -1555,7 +1555,7 @@ void Preprocessor::HandleElseDirective(Token &Result) {
   ++NumElse;
   
   // #else directive in a non-skipping conditional... start skipping.
-  CheckEndOfDirective("#else");
+  CheckEndOfDirective("else");
   
   PPConditionalInfo CI;
   if (CurPPLexer->popConditionalLevel(CI)) {

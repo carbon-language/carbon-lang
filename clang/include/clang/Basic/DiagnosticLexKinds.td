@@ -113,7 +113,7 @@ def ext_pp_include_next_directive : Extension<
   "#include_next is a language extension">;
 def ext_pp_warning_directive : Extension<"#warning is a language extension">;
 def ext_pp_extra_tokens_at_eol : ExtWarn<
-  "extra tokens at end of %0 directive">;
+  "extra tokens at end of #%0 directive">;
 def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<
   "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro">;
