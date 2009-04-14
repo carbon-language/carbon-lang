@@ -422,7 +422,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // load of a __weak object. 
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
-    CGM.getObjCRuntime().EmitObjCWeakAssign(*this, src, LvalueDst);
+     CGM.getObjCRuntime().EmitObjCWeakAssign(*this, src, LvalueDst);
     return;
   }
   
@@ -631,6 +631,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
         isa<ImplicitParamDecl>(VD))) {
     LValue LV;
+    bool GCable = VD->hasLocalStorage() && ! VD->getAttr<BlocksAttr>();
     if (VD->getStorageClass() == VarDecl::Extern) {
       LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                             E->getType().getCVRQualifiers(),
@@ -642,7 +643,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // local variables do not get their gc attribute set.
       QualType::GCAttrTypes attr = QualType::GCNone;
       // local static?
-      if (!VD->hasLocalStorage())
+      if (!GCable)
         attr = getContext().getObjCGCAttrKind(E->getType());
       if (VD->hasAttr<BlocksAttr>()) {
         bool needsCopyDispose = BlockRequiresCopying(VD->getType());
@@ -657,7 +658,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       }
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
     }
-    LValue::SetObjCNonGC(LV, VD->hasLocalStorage());
+    LValue::SetObjCNonGC(LV, GCable);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),

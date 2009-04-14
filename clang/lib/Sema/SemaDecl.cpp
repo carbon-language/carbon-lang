@@ -1803,7 +1803,8 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
     Invalid = true;
   }
 
-  if (NewVD->hasLocalStorage() && T.isObjCGCWeak())
+  if (NewVD->hasLocalStorage() && T.isObjCGCWeak()
+      && !NewVD->getAttr<BlocksAttr>())
     Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
 
   bool isIllegalVLA = T->isVariableArrayType() && NewVD->hasGlobalStorage();
