@@ -934,8 +934,29 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     W.Code = (pch::DeclCode)0;
     W.Visit(D);
     if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
-    assert(W.Code && "Visitor did not set record code");
+    assert(W.Code && "Unhandled declaration kind while generating PCH");
     S.EmitRecord(W.Code, Record);
+
+    // Note external declarations so that we can add them to a record
+    // in the PCH file later.
+    if (isa<FileScopeAsmDecl>(D))
+      ExternalDefinitions.push_back(ID);
+    else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+      if (// Non-static file-scope variables with initializers or that
+          // are tentative definitions.
+          (Var->isFileVarDecl() &&
+           (Var->getInit() || Var->getStorageClass() == VarDecl::None)) ||
+          // Out-of-line definitions of static data members (C++).
+          (Var->getDeclContext()->isRecord() && 
+           !Var->getLexicalDeclContext()->isRecord() && 
+           Var->getStorageClass() == VarDecl::Static))
+        ExternalDefinitions.push_back(ID);
+    } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
+      if (Func->isThisDeclarationADefinition() &&
+          Func->getStorageClass() != FunctionDecl::Static &&
+          !Func->isInline())
+        ExternalDefinitions.push_back(ID);
+    }
   }
 
   // Exit the declarations block
@@ -1013,9 +1034,11 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
+  WriteIdentifierTable();
   S.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
   S.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
-  WriteIdentifierTable();
+  if (!ExternalDefinitions.empty())
+    S.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
   S.ExitBlock();
 }
 

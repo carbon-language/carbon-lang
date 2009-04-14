@@ -130,7 +130,17 @@ namespace clang {
       /// between offsets (for unresolved identifier IDs) and
       /// IdentifierInfo pointers (for already-resolved identifier
       /// IDs).
-      IDENTIFIER_TABLE = 6
+      IDENTIFIER_TABLE = 6,
+
+      /// \brief Record code for the array of external definitions.
+      ///
+      /// The PCH file contains a list of all of the external
+      /// definitions present within the parsed headers, stored as an
+      /// array of declaration IDs. These external definitions will be
+      /// reported to the AST consumer after the PCH file has been
+      /// read, since their presence can affect the semantics of the
+      /// program (e.g., for code generation).
+      EXTERNAL_DEFINITIONS = 7
     };
 
     /// \brief Record types used within a source manager block.
@@ -299,9 +309,6 @@ namespace clang {
       /// \brief An ObjCQualifiedClassType record.
       TYPE_OBJC_QUALIFIED_CLASS     = 24
     };
-
-    /// \brief Record code for the offsets of each type.
-    ///
 
     /// \brief Record codes for each kind of declaration.
     ///

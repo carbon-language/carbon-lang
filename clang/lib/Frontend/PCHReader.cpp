@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclGroup.h"
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -663,6 +665,14 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
       }
 #endif
       break;
+
+    case pch::EXTERNAL_DEFINITIONS:
+      if (!ExternalDefinitions.empty()) {
+        Error("Duplicate EXTERNAL_DEFINITIONS record in PCH file");
+        return Failure;
+      }
+      ExternalDefinitions.swap(Record);
+      break;
     }
   }
 
@@ -1274,6 +1284,17 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   }
 
   return false;
+}
+
+void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
+  if (!Consumer)
+    return;
+
+  for (unsigned I = 0, N = ExternalDefinitions.size(); I != N; ++I) {
+    Decl *D = GetDecl(ExternalDefinitions[I]);
+    DeclGroupRef DG(D);
+    Consumer->HandleTopLevelDecl(DG);
+  }
 }
 
 void PCHReader::PrintStats() {

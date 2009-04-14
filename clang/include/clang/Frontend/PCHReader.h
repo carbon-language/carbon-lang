@@ -120,6 +120,10 @@ private:
   /// is set) or is an IdentifierInfo* that has already been resolved.
   llvm::SmallVector<uint64_t, 16> IdentifierData;
 
+  /// \brief The set of external definitions stored in the the PCH
+  /// file.
+  llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
+
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
@@ -187,6 +191,13 @@ public:
   /// the StoredDeclsMap instead?
   virtual bool ReadDeclsVisibleInContext(DeclContext *DC,
                        llvm::SmallVectorImpl<VisibleDeclaration> & Decls);
+
+  /// \brief Function that will be invoked when we begin parsing a new
+  /// translation unit involving this external AST source.
+  ///
+  /// This function will provide all of the external definitions to
+  /// the ASTConsumer.
+  virtual void StartTranslationUnit(ASTConsumer *Consumer);
 
   /// \brief Print some statistics about PCH usage.
   virtual void PrintStats();

@@ -14,6 +14,7 @@
 #include <llvm/ADT/OwningPtr.h>
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
 #include "Sema.h"
 #include "clang/Parse/Parser.h"
@@ -44,6 +45,9 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
   
   Consumer->Initialize(Ctx);
   
+  if (Ctx.getExternalSource())
+    Ctx.getExternalSource()->StartTranslationUnit(Consumer);
+
   Parser::DeclGroupPtrTy ADecl;
   
   while (!P.ParseTopLevelDecl(ADecl)) {  // Not end of file.

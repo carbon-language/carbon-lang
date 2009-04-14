@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 namespace clang {
 
+class ASTConsumer;
 class Decl;
 class DeclContext;
 
@@ -82,6 +83,10 @@ public:
   /// declarations for this declaration context.
   virtual bool ReadDeclsVisibleInContext(DeclContext *DC,
                        llvm::SmallVectorImpl<VisibleDeclaration> & Decls) = 0;
+
+  /// \brief Function that will be invoked when we begin parsing a new
+  /// translation unit involving this external AST source.
+  virtual void StartTranslationUnit(ASTConsumer *Consumer);
 
   /// \brief Print any statistics that have been gathered regarding
   /// the external AST source.

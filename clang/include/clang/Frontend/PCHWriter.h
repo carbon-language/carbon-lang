@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <queue>
+#include <vector>
 
 namespace llvm {
   class APInt;
@@ -84,6 +85,20 @@ class PCHWriter {
   /// discovery), starting at 1. An ID of zero refers to a NULL
   /// IdentifierInfo.
   llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
+
+  /// \brief Declarations encountered that might be external
+  /// definitions.
+  ///
+  /// We keep track of external definitions (as well as tentative
+  /// definitions) as we are emitting declarations to the PCH
+  /// file. The PCH file contains a separate record for these external
+  /// definitions, which are provided to the AST consumer by the PCH
+  /// reader. This is behavior is required to properly cope with,
+  /// e.g., tentative variable definitions that occur within
+  /// headers. The declarations themselves are stored as declaration
+  /// IDs, since they will be written out to an EXTERNAL_DEFINITIONS
+  /// record.
+  llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
