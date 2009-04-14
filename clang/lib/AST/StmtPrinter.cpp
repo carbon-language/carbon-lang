@@ -117,15 +117,9 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-      switch (V->getStorageClass()) {
-        default: assert(0 && "Unknown storage class!");
-        case VarDecl::None:          break;
-        case VarDecl::Extern:        OS << "extern "; break;
-        case VarDecl::Static:        OS << "static "; break; 
-        case VarDecl::Auto:          OS << "auto "; break;
-        case VarDecl::Register:      OS << "register "; break;
-        case VarDecl::PrivateExtern: OS << "__private_extern "; break; 
-      }
+      if (V->getStorageClass() != VarDecl::None)
+        OS << VarDecl::getStorageClassSpecifierString(V->getStorageClass()) 
+           << ' ';
     }
     
     std::string Name = VD->getNameAsString();

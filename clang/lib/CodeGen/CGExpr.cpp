@@ -632,7 +632,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
         isa<ImplicitParamDecl>(VD))) {
     LValue LV;
     bool GCable = VD->hasLocalStorage() && ! VD->getAttr<BlocksAttr>();
-    if (VD->getStorageClass() == VarDecl::Extern) {
+    if (VD->hasExternalStorage()) {
       LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                             E->getType().getCVRQualifiers(),
                             getContext().getObjCGCAttrKind(E->getType()));

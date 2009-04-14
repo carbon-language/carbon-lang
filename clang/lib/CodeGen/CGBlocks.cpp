@@ -608,8 +608,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
        ++i) {
     const VarDecl *VD = dyn_cast<VarDecl>(i->first);
     
-    if (VD->getStorageClass() == VarDecl::Static
-        || VD->getStorageClass() == VarDecl::Extern)
+    if (VD->getStorageClass() == VarDecl::Static || VD->hasExternalStorage())
       LocalDeclMap[VD] = i->second;
   }
 

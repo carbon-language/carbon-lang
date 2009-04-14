@@ -1356,8 +1356,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
       DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         if (VarDecl *VDecl = dyn_cast<VarDecl>(*I)) {
-          if (VDecl->getStorageClass() != VarDecl::Extern &&
-              VDecl->getStorageClass() != VarDecl::PrivateExtern)
+          if (!VDecl->hasExternalStorage())
             Diag(VDecl->getLocation(), diag::err_objc_var_decl_inclass);
         }
     }

@@ -68,18 +68,19 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
     CGM.ErrorUnsupported(&D, "thread local ('__thread') variable", true);
   
   switch (D.getStorageClass()) {
+  case VarDecl::None:
+  case VarDecl::Auto:
+  case VarDecl::Register:
+    return EmitLocalBlockVarDecl(D);
   case VarDecl::Static:
     return EmitStaticBlockVarDecl(D);
   case VarDecl::Extern:
+  case VarDecl::PrivateExtern:
     // Don't emit it now, allow it to be emitted lazily on its first use.
     return;
-  default:
-    assert((D.getStorageClass() == VarDecl::None ||
-            D.getStorageClass() == VarDecl::Auto ||
-            D.getStorageClass() == VarDecl::Register) &&
-           "Unknown storage class");
-    return EmitLocalBlockVarDecl(D);
   }
+
+  assert(0 && "Unknown storage class");
 }
 
 llvm::GlobalVariable *

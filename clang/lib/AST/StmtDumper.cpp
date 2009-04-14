@@ -217,14 +217,9 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     fprintf(F, "\"");
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-      switch (V->getStorageClass()) {
-      default: assert(0 && "Unknown storage class!");
-      case VarDecl::None:     break;
-      case VarDecl::Extern:   fprintf(F, "extern "); break;
-      case VarDecl::Static:   fprintf(F, "static "); break; 
-      case VarDecl::Auto:     fprintf(F, "auto "); break;
-      case VarDecl::Register: fprintf(F, "register "); break;
-      }
+      if (V->getStorageClass() != VarDecl::None)
+        fprintf(F, "%s ", 
+                VarDecl::getStorageClassSpecifierString(V->getStorageClass()));
     }
     
     std::string Name = VD->getNameAsString();

@@ -884,8 +884,7 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
 
   // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
   if (New->getStorageClass() == VarDecl::Static &&
-      (Old->getStorageClass() == VarDecl::None ||
-       Old->getStorageClass() == VarDecl::Extern)) {
+      (Old->getStorageClass() == VarDecl::None || Old->hasExternalStorage())) {
     Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return true;
@@ -907,8 +906,12 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(Old->getLocation(), diag::note_previous_definition);
     return true;
   }
+
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
-  if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl() &&
+  
+  // FIXME: The test for external storage here seems wrong? We still
+  // need to check for mismatches.
+  if (!New->hasExternalStorage() && !New->isFileVarDecl() &&
       // Don't complain about out-of-line definitions of static members.
       !(Old->getLexicalDeclContext()->isRecord() &&
         !New->getLexicalDeclContext()->isRecord())) {
@@ -2422,8 +2425,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
   if (VDecl->isBlockVarDecl()) {
-    VarDecl::StorageClass SC = VDecl->getStorageClass();
-    if (SC == VarDecl::Extern) { // C99 6.7.8p5
+    if (VDecl->hasExternalStorage()) { // C99 6.7.8p5
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
@@ -2434,7 +2436,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
       // Don't check invalid declarations to avoid emitting useless diagnostics.
       if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
-        if (SC == VarDecl::Static) // C99 6.7.8p4.
+        if (VDecl->getStorageClass() == VarDecl::Static) // C99 6.7.8p4.
           CheckForConstantInitializer(Init, DclT);
       }
     }
@@ -2486,7 +2488,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       }
     }
   } else if (VDecl->isFileVarDecl()) {
-    if (VDecl->getStorageClass() == VarDecl::Extern)
+    if (VDecl->hasExternalStorage())
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl())
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
@@ -2529,9 +2531,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
     //   function return type, in the declaration of a class member
     //   within its class declaration (9.2), and where the extern
     //   specifier is explicitly used.
-    if (Type->isReferenceType() && 
-        Var->getStorageClass() != VarDecl::Extern &&
-        Var->getStorageClass() != VarDecl::PrivateExtern) {
+    if (Type->isReferenceType() && !Var->hasExternalStorage()) {
       Diag(Var->getLocation(), diag::err_reference_var_requires_init)
         << Var->getDeclName()
         << SourceRange(Var->getLocation(), Var->getLocation());
@@ -2550,9 +2550,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
       QualType InitType = Type;
       if (const ArrayType *Array = Context.getAsArrayType(Type))
         InitType = Array->getElementType();
-      if (Var->getStorageClass() != VarDecl::Extern &&
-          Var->getStorageClass() != VarDecl::PrivateExtern &&
-          InitType->isRecordType()) {
+      if (!Var->hasExternalStorage() && InitType->isRecordType()) {
         const CXXConstructorDecl *Constructor = 0;
         if (!RequireCompleteType(Var->getLocation(), InitType, 
                                     diag::err_invalid_incomplete_type_use))
@@ -2593,7 +2591,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
     // constructor check.
     if (getLangOptions().CPlusPlus &&
         Context.getCanonicalType(Type).isConstQualified() &&
-        Var->getStorageClass() != VarDecl::Extern)
+        !Var->hasExternalStorage())
       Diag(Var->getLocation(),  diag::err_const_var_requires_init)
         << Var->getName()
         << SourceRange(Var->getLocation(), Var->getLocation());
@@ -2619,8 +2617,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
     
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
-    if (IDecl->isBlockVarDecl() && 
-        IDecl->getStorageClass() != VarDecl::Extern) {
+    if (IDecl->isBlockVarDecl() && !IDecl->hasExternalStorage()) {
       if (!IDecl->isInvalidDecl() &&
           RequireCompleteType(IDecl->getLocation(), T, 
                               diag::err_typecheck_decl_incomplete_type))
