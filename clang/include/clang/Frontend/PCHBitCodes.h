@@ -370,10 +370,14 @@ namespace clang {
     enum StmtCode {
       /// \brief A NULL expression.
       EXPR_NULL = 100,
+      /// \brief A PredefinedExpr record.
+      EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.
       EXPR_DECL_REF,
       /// \brief An IntegerLiteral record.
       EXPR_INTEGER_LITERAL,
+      /// \brief A FloatingLiteral record.
+      EXPR_FLOATING_LITERAL,
       /// \brief A CharacterLiteral record.
       EXPR_CHARACTER_LITERAL
     };

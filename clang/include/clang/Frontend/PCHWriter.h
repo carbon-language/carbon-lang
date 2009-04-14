@@ -23,6 +23,7 @@
 #include <queue>
 
 namespace llvm {
+  class APFloat;
   class APInt;
   class BitstreamWriter;
 }
@@ -137,6 +138,9 @@ public:
 
   /// \brief Emit a signed integral value.
   void AddAPSInt(const llvm::APSInt &Value, RecordData &Record);
+
+  /// \brief Emit a floating-point value.
+  void AddAPFloat(const llvm::APFloat &Value, RecordData &Record);
 
   /// \brief Emit a reference to an identifier
   void AddIdentifierRef(const IdentifierInfo *II, RecordData &Record);

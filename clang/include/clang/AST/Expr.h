@@ -367,8 +367,16 @@ public:
   PredefinedExpr(SourceLocation l, QualType type, IdentType IT) 
     : Expr(PredefinedExprClass, type), Loc(l), Type(IT) {}
   
+  /// \brief Construct an empty predefined expression.
+  explicit PredefinedExpr(EmptyShell Empty) 
+    : Expr(PredefinedExprClass, Empty) { }
+
   IdentType getIdentType() const { return Type; }
-  
+  void setIdentType(IdentType IT) { Type = IT; }
+
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 
@@ -469,15 +477,24 @@ public:
                   QualType Type, SourceLocation L)
     : Expr(FloatingLiteralClass, Type), Value(V), IsExact(*isexact), Loc(L) {} 
 
+  /// \brief Construct an empty floating-point literal.
+  FloatingLiteral(EmptyShell Empty) 
+    : Expr(FloatingLiteralClass, Empty), Value(0.0) { }
+
   const llvm::APFloat &getValue() const { return Value; }
-  
+  void setValue(const llvm::APFloat &Val) { Value = Val; }
+
   bool isExact() const { return IsExact; }
+  void setExact(bool E) { IsExact = E; }
 
   /// getValueAsApproximateDouble - This returns the value as an inaccurate
   /// double.  Note that this may cause loss of precision, but is useful for
   /// debugging dumps, etc.
   double getValueAsApproximateDouble() const;
  
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 

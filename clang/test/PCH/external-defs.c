@@ -4,6 +4,7 @@
 
 // RUN: grep "@x = common global i32 0" %t | count 1 &&
 // RUN: grep "@y = global i32 17"  %t | count 1 &&
+// RUN: grep "@d = .*1.742"  %t | count 1 &&
 // RUN: grep "@z" %t | count 0 &&
 
 // RUN: grep "@x2 = global i32 19" %t | count 1 &&

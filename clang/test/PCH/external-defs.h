@@ -6,6 +6,7 @@ int x2;
 
 // Definitions
 int y = 17;
+double d = 17.42;
 
 // Should not show up
 static int z;

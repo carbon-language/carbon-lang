@@ -7,13 +7,18 @@
 
 int integer;
 long long_integer;
+double floating;
 
 // DeclRefExpr
 int_decl_ref *int_ptr1 = &integer;
 enum_decl_ref *enum_ptr1 = &integer;
-// IntegerLiteralExpr
+
+// IntegerLiteral
 integer_literal *int_ptr2 = &integer;
 long_literal *long_ptr1 = &long_integer;
 
-// CharacterLiteralExpr
+// FloatingLiteral
+floating_literal *double_ptr = &floating;
+
+// CharacterLiteral
 char_literal *int_ptr3 = &integer;

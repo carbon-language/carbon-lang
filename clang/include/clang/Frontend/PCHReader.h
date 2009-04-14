@@ -18,6 +18,7 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/DenseMap.h"
@@ -220,6 +221,9 @@ public:
 
   /// \brief Read a signed integral value
   llvm::APSInt ReadAPSInt(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Read a floating-point value
+  llvm::APFloat ReadAPFloat(const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads an expression from the current stream position.
   Expr *ReadExpr();

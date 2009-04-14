@@ -6,9 +6,13 @@ enum Enum { Enumerator = 18 };
 typedef typeof(i) int_decl_ref;
 typedef typeof(Enumerator) enum_decl_ref;
 
-// IntegerLiteralExpr
+// IntegerLiteral
 typedef typeof(17) integer_literal;
 typedef typeof(17l) long_literal;
 
-// CharacterLiteralExpr
+// FloatingLiteral
+typedef typeof(42.5) floating_literal;
+
+// CharacterLiteral
 typedef typeof('a') char_literal;
+

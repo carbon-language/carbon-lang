@@ -25,6 +25,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -442,8 +444,10 @@ namespace {
       : Writer(Writer), Record(Record) { }
 
     void VisitExpr(Expr *E);
+    void VisitPredefinedExpr(PredefinedExpr *E);
     void VisitDeclRefExpr(DeclRefExpr *E);
     void VisitIntegerLiteral(IntegerLiteral *E);
+    void VisitFloatingLiteral(FloatingLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
   };
 }
@@ -452,6 +456,13 @@ void PCHStmtWriter::VisitExpr(Expr *E) {
   Writer.AddTypeRef(E->getType(), Record);
   Record.push_back(E->isTypeDependent());
   Record.push_back(E->isValueDependent());
+}
+
+void PCHStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Record.push_back(E->getIdentType()); // FIXME: stable encoding
+  Code = pch::EXPR_PREDEFINED;
 }
 
 void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
@@ -466,6 +477,14 @@ void PCHStmtWriter::VisitIntegerLiteral(IntegerLiteral *E) {
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.AddAPInt(E->getValue(), Record);
   Code = pch::EXPR_INTEGER_LITERAL;
+}
+
+void PCHStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
+  VisitExpr(E);
+  Writer.AddAPFloat(E->getValue(), Record);
+  Record.push_back(E->isExact());
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Code = pch::EXPR_FLOATING_LITERAL;
 }
 
 void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
@@ -1118,6 +1137,10 @@ void PCHWriter::AddAPInt(const llvm::APInt &Value, RecordData &Record) {
 void PCHWriter::AddAPSInt(const llvm::APSInt &Value, RecordData &Record) {
   Record.push_back(Value.isUnsigned());
   AddAPInt(Value, Record);
+}
+
+void PCHWriter::AddAPFloat(const llvm::APFloat &Value, RecordData &Record) {
+  AddAPInt(Value.bitcastToAPInt(), Record);
 }
 
 void PCHWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {

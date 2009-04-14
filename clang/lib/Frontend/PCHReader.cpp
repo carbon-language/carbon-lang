@@ -226,8 +226,10 @@ namespace {
       : Reader(Reader), Record(Record), Idx(Idx) { }
 
     void VisitExpr(Expr *E);
+    void VisitPredefinedExpr(PredefinedExpr *E);
     void VisitDeclRefExpr(DeclRefExpr *E);
     void VisitIntegerLiteral(IntegerLiteral *E);
+    void VisitFloatingLiteral(FloatingLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
   };
 }
@@ -236,6 +238,12 @@ void PCHStmtReader::VisitExpr(Expr *E) {
   E->setType(Reader.GetType(Record[Idx++]));
   E->setTypeDependent(Record[Idx++]);
   E->setValueDependent(Record[Idx++]);
+}
+
+void PCHStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
+  VisitExpr(E);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setIdentType((PredefinedExpr::IdentType)Record[Idx++]);
 }
 
 void PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
@@ -248,6 +256,13 @@ void PCHStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
   VisitExpr(E);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setValue(Reader.ReadAPInt(Record, Idx));
+}
+
+void PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
+  VisitExpr(E);
+  E->setValue(Reader.ReadAPFloat(Record, Idx));
+  E->setExact(Record[Idx++]);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitCharacterLiteral(CharacterLiteral *E) {
@@ -1484,6 +1499,12 @@ llvm::APSInt PCHReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
   return llvm::APSInt(ReadAPInt(Record, Idx), isUnsigned);
 }
 
+/// \brief Read a floating-point value
+llvm::APFloat PCHReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
+  // FIXME: is this really correct?
+  return llvm::APFloat(ReadAPInt(Record, Idx));
+}
+
 Expr *PCHReader::ReadExpr() {
   RecordData Record;
   unsigned Code = Stream.ReadCode();
@@ -1497,6 +1518,11 @@ Expr *PCHReader::ReadExpr() {
     E = 0; 
     break;
 
+  case pch::EXPR_PREDEFINED:
+    // FIXME: untested (until we can serialize function bodies).
+    E = new (Context) PredefinedExpr(Empty);
+    break;
+
   case pch::EXPR_DECL_REF: 
     E = new (Context) DeclRefExpr(Empty); 
     break;
@@ -1505,12 +1531,12 @@ Expr *PCHReader::ReadExpr() {
     E = new (Context) IntegerLiteral(Empty);
     break;
 
-  case pch::EXPR_CHARACTER_LITERAL:
-    E = new (Context) CharacterLiteral(Empty);
+  case pch::EXPR_FLOATING_LITERAL:
+    E = new (Context) FloatingLiteral(Empty);
     break;
 
-  default:
-    assert(false && "Unhandled expression kind");
+  case pch::EXPR_CHARACTER_LITERAL:
+    E = new (Context) CharacterLiteral(Empty);
     break;
   }
 
