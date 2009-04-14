@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 > %t
-; grep {movzbl	%\[abcd\]h,} %t | count 1
-; grep {shll	\$3,} | count 1
+; RUN: grep {movzbl	%\[abcd\]h,} %t | count 1
+; RUN: grep {shll	\$3,} %t | count 1
 
 ; Use an h register, but don't omit the explicit shift for
 ; non-address use(s).
