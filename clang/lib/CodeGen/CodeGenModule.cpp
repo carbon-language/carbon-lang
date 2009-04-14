@@ -100,7 +100,7 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
 static void setGlobalVisibility(llvm::GlobalValue *GV,
                                 VisibilityAttr::VisibilityTypes Vis) {
   // Internal definitions should always have default visibility.
-  if (GV->hasInternalLinkage()) {
+  if (GV->hasLocalLinkage()) {
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
   }
@@ -122,7 +122,7 @@ static void setGlobalVisibility(llvm::GlobalValue *GV,
 static void setGlobalOptionVisibility(llvm::GlobalValue *GV,
                                       LangOptions::VisibilityMode Vis) {
   // Internal definitions should always have default visibility.
-  if (GV->hasInternalLinkage()) {
+  if (GV->hasLocalLinkage()) {
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
   }
