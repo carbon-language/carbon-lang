@@ -323,11 +323,14 @@ private:
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D);
   
-  /// SetGlobalValueAttributes - Set attributes for a global decl.
-  void SetGlobalValueAttributes(const Decl *D, 
-                                GVALinkage Linkage,
-                                llvm::GlobalValue *GV,
-                                bool ForDefinition);
+  /// SetGVDefinitionAttributes - Set attributes for a global definition.
+  void SetGVDefinitionAttributes(const Decl *D, 
+                                 GVALinkage Linkage,
+                                 llvm::GlobalValue *GV);
+
+  /// SetGVDeclarationAttributes - Set attributes for a global declaration.
+  void SetGVDeclarationAttributes(const Decl *D, 
+                                  llvm::GlobalValue *GV);
     
   /// SetFunctionAttributesForDefinition - Set function attributes specific to a
   /// function definition.

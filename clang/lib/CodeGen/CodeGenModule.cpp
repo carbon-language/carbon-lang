@@ -226,31 +226,10 @@ void CodeGenModule::EmitAnnotations() {
 /// FIXME: This is currently only done for aliases and functions, but
 /// not for variables (these details are set in
 /// EmitGlobalVarDefinition for variables).
-void CodeGenModule::SetGlobalValueAttributes(const Decl *D, 
-                                             GVALinkage Linkage,
-                                             llvm::GlobalValue *GV,
-                                             bool ForDefinition) {
-  // FIXME: Set up linkage and many other things.  Note, this is a simple 
-  // approximation of what we really want.
-  if (!ForDefinition) {
-    // Only a few attributes are set on declarations.
-    
-    // The dllimport attribute is overridden by a subsequent declaration as
-    // dllexport.
-    if (D->hasAttr<DLLImportAttr>() && !D->hasAttr<DLLExportAttr>()) {
-      // dllimport attribute can be applied only to function decls, not to
-      // definitions.
-      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        if (!FD->getBody())
-          GV->setLinkage(llvm::Function::DLLImportLinkage);
-      } else
-        GV->setLinkage(llvm::Function::DLLImportLinkage);
-    } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
-      // "extern_weak" is overloaded in LLVM; we probably should have
-      // separate linkage types for this. 
-      GV->setLinkage(llvm::Function::ExternalWeakLinkage);
-    }
-  } else if (Linkage == GVA_Internal) {
+void CodeGenModule::SetGVDefinitionAttributes(const Decl *D, 
+                                              GVALinkage Linkage,
+                                              llvm::GlobalValue *GV) {
+  if (Linkage == GVA_Internal) {
     GV->setLinkage(llvm::Function::InternalLinkage);
   } else if (D->hasAttr<DLLExportAttr>()) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -290,14 +269,37 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     }
   }
 
-  if (ForDefinition) {
-    setGlobalVisibility(GV, D);
+  setGlobalVisibility(GV, D);
 
-    // Only add to llvm.used when we see a definition, otherwise we
-    // might add it multiple times or risk the value being replaced by
-    // a subsequent RAUW.
-    if (D->hasAttr<UsedAttr>())
-      AddUsedGlobal(GV);
+  // Only add to llvm.used when we see a definition, otherwise we
+  // might add it multiple times or risk the value being replaced by
+  // a subsequent RAUW.
+  if (D->hasAttr<UsedAttr>())
+    AddUsedGlobal(GV);
+
+  if (const SectionAttr *SA = D->getAttr<SectionAttr>())
+    GV->setSection(SA->getName());
+}
+
+void CodeGenModule::SetGVDeclarationAttributes(const Decl *D, 
+                                               llvm::GlobalValue *GV) {
+  // Only a few attributes are set on declarations; these may later be
+  // overridden by a definition.
+  
+  // The dllimport attribute is overridden by a subsequent declaration as
+  // dllexport.
+  if (D->hasAttr<DLLImportAttr>() && !D->hasAttr<DLLExportAttr>()) {
+    // dllimport attribute can be applied only to function decls, not to
+    // definitions.
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      if (!FD->getBody())
+        GV->setLinkage(llvm::Function::DLLImportLinkage);
+    } else
+      GV->setLinkage(llvm::Function::DLLImportLinkage);
+  } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
+    // "extern_weak" is overloaded in LLVM; we probably should have
+    // separate linkage types for this. 
+    GV->setLinkage(llvm::Function::ExternalWeakLinkage);
   }
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
@@ -346,7 +348,7 @@ GetLinkageForFunctionOrMethodDecl(const Decl *D) {
 /// specific to a function definition.
 void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
                                                        llvm::Function *F) {
-  SetGlobalValueAttributes(D, GetLinkageForFunctionOrMethodDecl(D), F, true);
+  SetGVDefinitionAttributes(D, GetLinkageForFunctionOrMethodDecl(D), F);
                              
   if (!Features.Exceptions && !Features.ObjCNonFragileABI)
     F->addFnAttr(llvm::Attribute::NoUnwind);  
@@ -369,7 +371,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
   SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
   
-  SetGlobalValueAttributes(FD, GetLinkageForFunctionOrMethodDecl(FD), F, false);
+  SetGVDeclarationAttributes(FD, F);
 }
 
 void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
@@ -967,7 +969,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   GA->setName(MangledName);
 
   // Alias should never be internal or inline.
-  SetGlobalValueAttributes(D, GVA_Normal, GA, true);
+  SetGVDefinitionAttributes(D, GVA_Normal, GA);
 }
 
 /// getBuiltinLibFunction - Given a builtin id for a function like
