@@ -1039,6 +1039,11 @@ def err_illegal_qualifiers_on_catch_parm : Error<
   "illegal qualifiers on @catch parameter">;
 def err_illegal_super_cast : Error<
   "cannot cast 'super' (it isn't an expression)">;
+def warn_setter_getter_impl_required : Warning<
+  "property %0 requires method %1 to be defined - "
+  "use @synthesize, @dynamic or provide a method implementation">;
+def note_property_impl_required : Note<
+  "implementation is here">;
 
 
 // C++ casts

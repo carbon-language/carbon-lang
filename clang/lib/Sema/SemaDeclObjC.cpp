@@ -903,6 +903,42 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
          E = IMPDecl->instmeth_end(); I != E; ++I)
     InsMap.insert((*I)->getSelector());
   
+  // Check and see if properties declared in the interface have either 1)
+  // an implementation or 2) there is a @synthesize/@dynamic implementation
+  // of the property in the @implementation.
+  if (isa<ObjCInterfaceDecl>(CDecl))
+      for (ObjCContainerDecl::prop_iterator P = CDecl->prop_begin(Context),
+       E = CDecl->prop_end(Context); P != E; ++P) {
+        ObjCPropertyDecl *Prop = (*P);
+        if (Prop->isInvalidDecl())
+          continue;
+        ObjCPropertyImplDecl *PI = 0;
+        // Is there a matching propery synthesize/dynamic?
+        for (ObjCImplDecl::propimpl_iterator I = IMPDecl->propimpl_begin(),
+             EI = IMPDecl->propimpl_end(); I != EI; ++I)
+          if ((*I)->getPropertyDecl() == Prop) {
+            PI = (*I);
+            break;
+          }
+        if (PI)
+          continue;
+        if (!InsMap.count(Prop->getGetterName())) {
+          Diag(Prop->getLocation(), 
+               diag::warn_setter_getter_impl_required) 
+          << Prop->getDeclName() << Prop->getGetterName();
+          Diag(IMPDecl->getLocation(),
+               diag::note_property_impl_required);
+        }
+    
+        if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
+          Diag(Prop->getLocation(), 
+               diag::warn_setter_getter_impl_required) 
+          << Prop->getDeclName() << Prop->getSetterName();
+          Diag(IMPDecl->getLocation(),
+               diag::note_property_impl_required);
+        }
+      }
+  
   for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(Context),
        E = CDecl->instmeth_end(Context); I != E; ++I) {
     if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector())) {
@@ -1798,17 +1834,15 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(Context, PropertyIvar, ClassDeclared);
     if (!Ivar) {
-      if (getLangOptions().ObjCNonFragileABI) {
-        Ivar = ObjCIvarDecl::Create(Context, CurContext, PropertyLoc, 
-                                    PropertyIvar, PropType, 
-                                    ObjCIvarDecl::Public,
-                                    (Expr *)0);
-        property->setPropertyIvarDecl(Ivar);
-      }
-      else {
+      Ivar = ObjCIvarDecl::Create(Context, CurContext, PropertyLoc, 
+                                  PropertyIvar, PropType, 
+                                  ObjCIvarDecl::Public,
+                                  (Expr *)0);
+      property->setPropertyIvarDecl(Ivar);
+      if (!getLangOptions().ObjCNonFragileABI)
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
-        return DeclPtrTy();
-      }
+        // Note! I deliberately want it to fall thru so, we have a 
+        // a property implementation and to avoid future warnings.
     }
     else if (getLangOptions().ObjCNonFragileABI &&
              NoExplicitPropertyIvar && ClassDeclared != IDecl) {
@@ -1826,7 +1860,8 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
           << property->getDeclName() << Ivar->getDeclName();
-        return DeclPtrTy();
+        // Note! I deliberately want it to fall thru so, we have a 
+        // a property implementation and to avoid future warnings.
       }
       
       // FIXME! Rules for properties are somewhat different that those
@@ -1838,28 +1873,26 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
           lhsType->isArithmeticType()) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
         << property->getDeclName() << Ivar->getDeclName();
-        return DeclPtrTy();
+        // Fall thru - see previous comment
       }
       // __weak is explicit. So it works on Canonical type.
       if (PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak() &&
           getLangOptions().getGCMode() != LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_weak_property)
         << property->getDeclName() << Ivar->getDeclName();
-        return DeclPtrTy();
+        // Fall thru - see previous comment
       }
       if ((Context.isObjCObjectPointerType(property->getType()) || 
            PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
            getLangOptions().getGCMode() != LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_strong_property)
         << property->getDeclName() << Ivar->getDeclName();
-        return DeclPtrTy();
+        // Fall	thru - see previous comment
       }
     }
-  } else if (PropertyIvar) {
-    // @dynamic
-    Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
-    return DeclPtrTy();
-  }
+  } else if (PropertyIvar)
+      // @dynamic
+      Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
   assert (property && "ActOnPropertyImplDecl - property declaration missing");
   ObjCPropertyImplDecl *PIDecl = 
     ObjCPropertyImplDecl::Create(Context, CurContext, AtLoc, PropertyLoc, 

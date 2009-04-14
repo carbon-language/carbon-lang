@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 ///
 
 @interface I0
-@property(readonly) int p0;
+@property(readonly) int p0;	// expected-warning {{property 'p0' requires method 'p0' to be defined}}
 @end 
 
 @interface I0 (Cat0)
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 @interface I0 (Cat1)
 @end 
   
-@implementation I0
+@implementation I0	// expected-note {{implementation is here}}
 - (void) foo {
   self.p0 = 0; // expected-error {{assigning to property with 'readonly' attribute not allowed}}
 }
