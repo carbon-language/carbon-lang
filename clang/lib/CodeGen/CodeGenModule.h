@@ -314,8 +314,10 @@ public:
 
   enum GVALinkage {
     GVA_Internal,
-    GVA_Inline,
     GVA_ExternInline,
+    GVA_GNUCInline,
+    GVA_C99Inline,
+    GVA_CXXInline,
     GVA_Normal
   };
   

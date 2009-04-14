@@ -221,19 +221,34 @@ void CodeGenModule::EmitAnnotations() {
   gv->setSection("llvm.metadata");
 }
 
-static CodeGenModule::GVALinkage GetLinkageForFunction(const FunctionDecl *FD) {
+static CodeGenModule::GVALinkage
+GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   // "static" and attr(always_inline) functions get internal linkage.
   if (FD->getStorageClass() == FunctionDecl::Static ||
       FD->hasAttr<AlwaysInlineAttr>())
     return CodeGenModule::GVA_Internal;
 
-  if (FD->isInline()) {
-    if (FD->getStorageClass() == FunctionDecl::Extern)
-      return CodeGenModule::GVA_ExternInline;
-    return CodeGenModule::GVA_Inline;
-  }
+  if (!FD->isInline())
+    return CodeGenModule::GVA_Normal;
+  
+  if (FD->getStorageClass() == FunctionDecl::Extern)
+    return CodeGenModule::GVA_ExternInline;
 
-  return CodeGenModule::GVA_Normal;
+  // If the inline function explicitly has the GNU inline attribute on it, then
+  // force to GNUC semantics, regardless of language.
+  if (FD->hasAttr<GNUCInlineAttr>())
+    return CodeGenModule::GVA_GNUCInline;
+  
+  // The definition of inline changes based on the language.  Note that we
+  // have already handled "static inline" above, with the GVA_Internal case.
+  if (Features.CPlusPlus)
+    return CodeGenModule::GVA_CXXInline;
+  
+  if (Features.C99)
+    return CodeGenModule::GVA_C99Inline;
+  
+  // Otherwise, this is the GNU inline extension in K&R and GNU C89 mode.
+  return CodeGenModule::GVA_GNUCInline;
 }
 
 /// SetFunctionDefinitionAttributes - Set attributes for a global.
@@ -243,7 +258,7 @@ static CodeGenModule::GVALinkage GetLinkageForFunction(const FunctionDecl *FD) {
 /// EmitGlobalVarDefinition for variables).
 void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
                                                     llvm::GlobalValue *GV) {
-  GVALinkage Linkage = GetLinkageForFunction(D);
+  GVALinkage Linkage = GetLinkageForFunction(D, Features);
 
   if (Linkage == GVA_Internal) {
     GV->setLinkage(llvm::Function::InternalLinkage);
@@ -256,27 +271,23 @@ void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
     // strongest linkage type we can give an inline function: we don't have to
     // codegen the definition at all, yet we know that it is "ODR".
     GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
-  } else if (Linkage == GVA_Inline) {
-    // The definition of inline changes based on the language.  Note that we
-    // have already handled "static inline" above, with the GVA_Internal case.
-    if (Features.CPlusPlus) {
-      // In C++, the compiler has to emit a definition in every translation unit
-      // that references the function.  We should use linkonce_odr because
-      // a) if all references in this translation unit are optimized away, we
-      // don't need to codegen it.  b) if the function persists, it needs to be
-      // merged with other definitions. c) C++ has the ODR, so we know the
-      // definition is dependable.
-      GV->setLinkage(llvm::Function::LinkOnceODRLinkage);
-    } else if (Features.C99) {
-      // In C99 mode, 'inline' functions are guaranteed to have a strong
-      // definition somewhere else, so we can use available_externally linkage.
-      GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
-    } else {
-      // In C89 mode, an 'inline' function may only occur in one translation
-      // unit in the program, but may be extern'd in others.  Give it strong
-      // external linkage.
-      GV->setLinkage(llvm::Function::ExternalLinkage);
-    }
+  } else if (Linkage == GVA_CXXInline) {
+    // In C++, the compiler has to emit a definition in every translation unit
+    // that references the function.  We should use linkonce_odr because
+    // a) if all references in this translation unit are optimized away, we
+    // don't need to codegen it.  b) if the function persists, it needs to be
+    // merged with other definitions. c) C++ has the ODR, so we know the
+    // definition is dependable.
+    GV->setLinkage(llvm::Function::LinkOnceODRLinkage);
+  } else if (Linkage == GVA_C99Inline) {
+    // In C99 mode, 'inline' functions are guaranteed to have a strong
+    // definition somewhere else, so we can use available_externally linkage.
+    GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
+  } else if (Linkage == GVA_GNUCInline) {
+    // In C89 mode, an 'inline' function may only occur in one translation
+    // unit in the program, but may be extern'd in others.  Give it strong
+    // external linkage.
+    GV->setLinkage(llvm::Function::ExternalLinkage);
   } else {
     GV->setLinkage(llvm::Function::ExternalLinkage);
   }
@@ -466,17 +477,13 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
       return false;
 
-    GVALinkage Linkage = GetLinkageForFunction(FD);
+    GVALinkage Linkage = GetLinkageForFunction(FD, Features);
     
     // static, static inline, always_inline, and extern inline functions can
-    // always be deferred.
-    if (Linkage == GVA_Internal || Linkage == GVA_ExternInline)
+    // always be deferred.  Normal inline functions can be deferred in C99/C++.
+    if (Linkage == GVA_Internal || Linkage == GVA_ExternInline ||
+        Linkage == GVA_C99Inline || Linkage == GVA_CXXInline)
       return true;
-
-    // inline functions can be deferred unless we're in C89 mode.
-    if (Linkage == GVA_Inline && (Features.C99 || Features.CPlusPlus))
-      return true;
-    
     return false;
   }
   
