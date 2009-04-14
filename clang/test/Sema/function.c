@@ -61,3 +61,12 @@ void f1static() {
 
 struct incomplete_test a(void) {} // expected-error{{incomplete result type 'struct incomplete_test' in function definition}} \
     // expected-note{{forward declaration of 'struct incomplete_test'}}
+
+
+extern __inline
+__attribute__((__gnuc_inline__))  // expected-warning{{'gnuc_inline' attribute is overridden by 'extern inline', attribute ignored}} expected-warning{{extension used}}
+void gnu_inline1() {}
+
+void
+__attribute__((__gnuc_inline__)) // expected-warning {{'gnuc_inline' attribute requires function to be marked 'inline', attribute ignored}} expected-warning{{extension used}}
+gnu_inline2() {}

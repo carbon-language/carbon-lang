@@ -391,7 +391,7 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
     return;
   }
 
-  if (!isFunctionOrMethod(d)) {
+  if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
     << "always_inline" << 0 /*function*/;
     return;
@@ -485,8 +485,7 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     priority = Idx.getZExtValue();
   }
   
-  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
-  if (!Fn) {
+  if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << "constructor" << 0 /*function*/;
     return;
@@ -1447,7 +1446,7 @@ static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  if (!isFunctionOrMethod(d)) {
+  if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
     << "noinline" << 0 /*function*/;
     return;
@@ -1463,9 +1462,20 @@ static void HandleGNUCInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  if (!isFunctionOrMethod(d)) {
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
+  if (Fn == 0) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << "gnuc_inline" << 0 /*function*/;
+    return;
+  }
+  
+  if (!Fn->isInline()) {
+    S.Diag(Attr.getLoc(), diag::warn_gnuc_inline_attribute_requires_inline);
+    return;
+  }
+  
+  if (Fn->getStorageClass() == FunctionDecl::Extern) {
+    S.Diag(Attr.getLoc(), diag::warn_gnuc_inline_attribute_extern_inline);
     return;
   }
   
