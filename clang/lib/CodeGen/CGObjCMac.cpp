@@ -489,7 +489,7 @@ protected:
   /// \param Section - The section the variable should go into, or 0.
   /// \param Align - The alignment for the variable, or 0.
   /// \param AddToUsed - Whether the variable should be added to
-  /// llvm.
+  /// "llvm.used".
   llvm::GlobalVariable *CreateMetadataVar(const std::string &Name,
                                           llvm::Constant *Init,
                                           const char *Section,
