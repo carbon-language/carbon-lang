@@ -168,6 +168,8 @@ namespace llvm {
     void LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG, SDValue &ES, 
                             int &Offset);
 
+    SDValue LegalizeFrameArgument(SDValue Arg, DebugLoc dl, SelectionDAG &DAG);
+
     // CALL node should have all legal operands only. Legalize all non-legal
     // operands of CALL node and then return the new call will all operands
     // legal.

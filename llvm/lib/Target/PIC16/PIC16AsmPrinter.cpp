@@ -227,6 +227,11 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
     std::string Name = Mang->getValueName(I);
     if (Name.compare("abort") == 0)
       continue;
+    
+    // If it is llvm intrinsic call then don't emit
+    if (Name.find("llvm.") != std::string::npos)
+      continue;
+
     if (I->isDeclaration()) {
       O << "\textern " <<Name << "\n";
       O << "\textern " << Name << ".retval\n";
@@ -396,6 +401,11 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
    }
   O << CurrentFnName << ".args      RES  " << ArgSize << "\n";
 
+  // Emit temporary space
+  int TempSize = PTLI->GetTmpSize();
+  if (TempSize > 0 )
+    O << CurrentFnName << ".tmp       RES  " << TempSize <<"\n";
+
   // Emit the function variables. 
    
   // In PIC16 all the function arguments and local variables are global.
@@ -423,7 +433,4 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     O << VarName << "  RES  " << Size << "\n";
   }
 
-  int TempSize = PTLI->GetTmpSize();
-  if (TempSize > 0 )
-    O << CurrentFnName << ".tmp       RES  " << TempSize <<"\n";
 }

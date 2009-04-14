@@ -72,10 +72,10 @@ def PIC16callseq_end   : SDNode<"ISD::CALLSEQ_END", SDTI8VoidOp,
                                 [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 // Low 8-bits of GlobalAddress.
-def PIC16Lo : SDNode<"PIC16ISD::Lo", SDTI8UnaryOp>;  
+def PIC16Lo : SDNode<"PIC16ISD::Lo", SDTI8BinOp>;  
 
 // High 8-bits of GlobalAddress.
-def PIC16Hi : SDNode<"PIC16ISD::Hi", SDTI8UnaryOp>;
+def PIC16Hi : SDNode<"PIC16ISD::Hi", SDTI8BinOp>;
 
 // The MTHI and MTLO nodes are used only to match them in the incoming 
 // DAG for replacement by corresponding set_fsrhi, set_fsrlo insntructions.
@@ -187,14 +187,24 @@ def movlw : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
                       [(set GPR:$dst, (i8 imm:$src))]>;
 
 // Move a Lo(TGA) to W.
-def movlw_lo : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
-                      "movlw LOW(${src})",
-                      [(set GPR:$dst, (PIC16Lo tglobaladdr:$src))]>;
+def movlw_lo_1 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
+                      "movlw LOW(${src}) + ${src2}",
+                      [(set GPR:$dst, (PIC16Lo tglobaladdr:$src, imm:$src2 ))]>;
+
+// Move a Lo(TES) to W.
+def movlw_lo_2 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
+                      "movlw LOW(${src}) + ${src2}",
+                      [(set GPR:$dst, (PIC16Lo texternalsym:$src, imm:$src2 ))]>;
 
 // Move a Hi(TGA) to W.
-def movlw_hi : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
-                      "movlw HIGH(${src})",
-                      [(set GPR:$dst, (PIC16Hi tglobaladdr:$src))]>;
+def movlw_hi_1 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
+                      "movlw HIGH(${src}) + ${src2}",
+                      [(set GPR:$dst, (PIC16Hi tglobaladdr:$src, imm:$src2))]>;
+
+// Move a Hi(TES) to W.
+def movlw_hi_2 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
+                      "movlw HIGH(${src}) + ${src2}",
+                      [(set GPR:$dst, (PIC16Hi texternalsym:$src, imm:$src2))]>;
 }
 
 //-------------------

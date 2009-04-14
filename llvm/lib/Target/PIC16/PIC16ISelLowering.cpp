@@ -326,10 +326,14 @@ SDValue PIC16TargetLowering::ExpandFrameIndex(SDNode *N, SelectionDAG &DAG) {
   DebugLoc dl = FR->getDebugLoc();
   int Index = FR->getIndex();
 
-  SDValue FI[2];
-  FI[0] = DAG.getTargetFrameIndex(Index, MVT::i8);
-  FI[1] = DAG.getTargetFrameIndex(Index + 1, MVT::i8);
-  return DAG.getNode(ISD::BUILD_PAIR, dl, N->getValueType(0), FI[0], FI[1]);
+  // Expand FrameIndex like GlobalAddress and ExternalSymbol
+  // Also use Offset field for lo and hi parts. The default 
+  // offset is zero.
+  SDValue Offset = DAG.getConstant(0, MVT::i8);
+  SDValue FI = DAG.getTargetFrameIndex(Index, MVT::i8);
+  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, FI, Offset);
+  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, FI, Offset);
+  return DAG.getNode(ISD::BUILD_PAIR, dl, N->getValueType(0), Lo, Hi);
 }
 
 
@@ -433,9 +437,9 @@ SDValue PIC16TargetLowering::ExpandExternalSymbol(SDNode *N, SelectionDAG &DAG)
   DebugLoc dl = ES->getDebugLoc();
 
   SDValue TES = DAG.getTargetExternalSymbol(ES->getSymbol(), MVT::i8);
-
-  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, TES);
-  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, TES);
+  SDValue Offset = DAG.getConstant(0, MVT::i8);
+  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, TES, Offset);
+  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, TES, Offset);
 
   return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16, Lo, Hi);
 }
@@ -449,8 +453,9 @@ SDValue PIC16TargetLowering::ExpandGlobalAddress(SDNode *N, SelectionDAG &DAG) {
   SDValue TGA = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i8,
                                            G->getOffset());
 
-  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, TGA);
-  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, TGA);
+  SDValue Offset = DAG.getConstant(0, MVT::i8);
+  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, TGA, Offset);
+  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, TGA, Offset);
 
   return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16, Lo, Hi);
 }
@@ -587,14 +592,16 @@ void PIC16TargetLowering::LegalizeAddress(SDValue Ptr, SelectionDAG &DAG,
     }
   }
 
-  if (Ptr.getOpcode() == ISD::BUILD_PAIR && 
-      Ptr.getOperand(0).getOpcode() == ISD::TargetFrameIndex) {
-
-    int FrameOffset;
-    LegalizeFrameIndex(Ptr.getOperand(0), DAG, Lo, FrameOffset);
-    Hi = DAG.getConstant(1, MVT::i8);
-    Offset += FrameOffset; 
-    return;
+  // Expansion of FrameIndex has Lo/Hi parts
+  if (isDirectAddress(Ptr)) { 
+      SDValue TFI = Ptr.getOperand(0).getOperand(0); 
+      if (TFI.getOpcode() == ISD::TargetFrameIndex) {
+        int FrameOffset;
+        LegalizeFrameIndex(TFI, DAG, Lo, FrameOffset);
+        Hi = DAG.getConstant(1, MVT::i8);
+        Offset += FrameOffset; 
+        return;
+      }
   }
 
   if (isDirectAddress(Ptr) && !isRomAddress(Ptr)) {
@@ -884,6 +891,12 @@ LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
   for (unsigned i = 0, ArgOffset = RetVals; i < NumOps; i++) {
     // Get the arguments
     Arg = TheCall->getArg(i);
+    // If argument is FrameIndex then map it with temporary
+    if (Arg.getOpcode() == PIC16ISD::Lo || Arg.getOpcode() == PIC16ISD::Hi) {
+      if (Arg.getOperand(0).getOpcode() == ISD::TargetFrameIndex) {
+        Arg = LegalizeFrameArgument(Arg, dl, DAG);
+      }
+    } 
     Ops.clear();
     Ops.push_back(Chain);
     Ops.push_back(Arg);
@@ -900,9 +913,39 @@ LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
   }
   return Chain;
 }
-          
+
 SDValue PIC16TargetLowering::
-LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue FrameAddress, 
+LegalizeFrameArgument(SDValue Arg, DebugLoc dl, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  const Function *Func = MF.getFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const std::string Name = Func->getName();
+
+  // Caller creates the stack storage to pass the aggregate type
+  // as argument. So it should be relative to tmp variable.
+  SDValue FI = Arg.getOperand(0);
+  char *tmpName = new char [strlen(Name.c_str()) +  8];
+  sprintf(tmpName, "%s.tmp", Name.c_str());
+  SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
+  FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(FI);
+
+  unsigned FIndex = FR->getIndex();
+  // Reserve space in tmp variable for the aggregate type
+  int FrameOffset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
+
+  if (Arg.getOpcode() == PIC16ISD::Lo) {
+    // Lo part of frame index
+    SDValue FrameConst = DAG.getConstant(FrameOffset, MVT::i8);
+    return DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, ES, FrameConst);
+  } else { 
+    // Hi part of frame index
+    SDValue FrameConst = DAG.getConstant(FrameOffset + 1, MVT::i8);
+    return DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, ES, FrameConst);
+  }
+}
+
+SDValue PIC16TargetLowering::
+LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue ArgLabel, 
                          SDValue InFlag, SelectionDAG &DAG) {
   CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
   unsigned NumOps = TheCall->getNumArgs();
@@ -924,7 +967,7 @@ LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue FrameAddress,
   SDValue PtrLo, PtrHi;
   unsigned AddressOffset;
   int StoreOffset = 0;
-  LegalizeAddress(FrameAddress, DAG, PtrLo, PtrHi, AddressOffset, dl);
+  LegalizeAddress(ArgLabel, DAG, PtrLo, PtrHi, AddressOffset, dl);
   SDValue StoreRet;
 
   std::vector<SDValue> Ops;
@@ -932,7 +975,12 @@ LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue FrameAddress,
   for (unsigned i=ArgCount, Offset = 0; i<NumOps; i++) {
     // Get the argument
     Arg = TheCall->getArg(i);
-
+    // If argument is FrameIndex then map it with temporary
+    if (Arg.getOpcode() == PIC16ISD::Lo || Arg.getOpcode() == PIC16ISD::Hi) {
+      if (Arg.getOperand(0).getOpcode() == ISD::TargetFrameIndex) {
+        Arg = LegalizeFrameArgument(Arg, dl, DAG);
+      }
+    } 
     StoreOffset = (Offset + AddressOffset);
    
     // Store the argument on frame
@@ -991,7 +1039,7 @@ LowerIndirectCallReturn (SDValue Op, SDValue Chain, SDValue InFlag,
 }
 
 SDValue PIC16TargetLowering::
-LowerDirectCallReturn(SDValue Op, SDValue Chain, SDValue FrameAddress,
+LowerDirectCallReturn(SDValue Op, SDValue Chain, SDValue RetLabel,
                       SDValue InFlag, SelectionDAG &DAG) {
   CallSDNode *TheCall = dyn_cast<CallSDNode>(Op);
   DebugLoc dl = TheCall->getDebugLoc();
@@ -1010,7 +1058,7 @@ LowerDirectCallReturn(SDValue Op, SDValue Chain, SDValue FrameAddress,
   // Legalize the address before use
   SDValue LdLo, LdHi;
   unsigned LdOffset;
-  LegalizeAddress(FrameAddress, DAG, LdLo, LdHi, LdOffset, dl);
+  LegalizeAddress(RetLabel, DAG, LdLo, LdHi, LdOffset, dl);
 
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other, MVT::Flag);
   SDValue LoadRet;
@@ -1698,4 +1746,3 @@ SDValue PIC16TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
                      Cmp.getValue(1));
 }
 
-  
