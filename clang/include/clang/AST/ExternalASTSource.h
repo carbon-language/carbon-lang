@@ -86,7 +86,7 @@ public:
 
   /// \brief Function that will be invoked when we begin parsing a new
   /// translation unit involving this external AST source.
-  virtual void StartTranslationUnit(ASTConsumer *Consumer);
+  virtual void StartTranslationUnit(ASTConsumer *Consumer) { }
 
   /// \brief Print any statistics that have been gathered regarding
   /// the external AST source.
