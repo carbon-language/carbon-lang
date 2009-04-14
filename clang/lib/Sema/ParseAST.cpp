@@ -29,14 +29,15 @@ using namespace clang;
 /// held by Ctx.
 ///
 void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
-                     ASTContext &Ctx, bool PrintStats) {
+                     ASTContext &Ctx, bool PrintStats,
+                     bool CompleteTranslationUnit) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
     Stmt::CollectingStats(true);
   }
 
-  Sema S(PP, Ctx, *Consumer);
+  Sema S(PP, Ctx, *Consumer, CompleteTranslationUnit);
   Parser P(PP, S);
   PP.EnterMainSourceFile();
     

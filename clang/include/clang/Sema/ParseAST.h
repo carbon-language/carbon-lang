@@ -19,12 +19,18 @@ namespace clang {
   class ASTConsumer;
   class ASTContext;
 
-  /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-  /// the file is parsed.    This inserts the parsed decls into the translation unit
-  /// held by Ctx.
+  /// \brief Parse the entire file specified, notifying the ASTConsumer as
+  /// the file is parsed.
   ///
+  /// This operation inserts the parsed decls into the translation
+  /// unit held by Ctx.
+  ///
+  /// \param CompleteTranslationUnit When true, the parsed file is
+  /// considered to be a complete translation unit, and any
+  /// end-of-translation-unit wrapup will be performed.
   void ParseAST(Preprocessor &pp, ASTConsumer *C, 
-                ASTContext &Ctx, bool PrintStats = false);
+                ASTContext &Ctx, bool PrintStats = false,
+                bool CompleteTranslationUnit = true);
 
 }  // end namespace clang
 

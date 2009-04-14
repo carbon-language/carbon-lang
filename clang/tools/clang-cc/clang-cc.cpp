@@ -1912,6 +1912,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
   FixItRewriter *FixItRewrite = 0;
+  bool CompleteTranslationUnit = true;
 
   switch (PA) {
   default:
@@ -1925,6 +1926,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       return;
     }
 
+    if (ProgAction == GeneratePCH)
+      CompleteTranslationUnit = false;
     break;
       
   case DumpRawTokens: {
@@ -2098,7 +2101,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
         return;
     }
 
-    ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats);
+    ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats, 
+             CompleteTranslationUnit);
     
     if (FixItRewrite)
       FixItRewrite->WriteFixedFile(InFile, OutputFile);

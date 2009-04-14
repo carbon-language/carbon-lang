@@ -151,12 +151,14 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   Context.setObjCIdType(IdTypedef);
 }
 
-Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
+Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
+           bool CompleteTranslationUnit)
   : LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()),
     SourceMgr(PP.getSourceManager()), CurContext(0), PreDeclaratorDC(0),
     CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()),
-    GlobalNewDeleteDeclared(false) {
+    GlobalNewDeleteDeclared(false), 
+    CompleteTranslationUnit(CompleteTranslationUnit) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  
@@ -216,6 +218,9 @@ void Sema::DeleteStmt(StmtTy *S) {
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
 void Sema::ActOnEndOfTranslationUnit() {
+  if (!CompleteTranslationUnit)
+    return;
+
   // C99 6.9.2p2:
   //   A declaration of an identifier for an object that has file
   //   scope without an initializer, and without a storage-class

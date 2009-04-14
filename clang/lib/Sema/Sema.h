@@ -214,7 +214,18 @@ public:
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
   bool GlobalNewDeleteDeclared;
-  
+
+  /// \brief Whether the code handled by Sema should be considered a
+  /// complete translation unit or not.
+  ///
+  /// When true (which is generally the case), Sema will perform
+  /// end-of-translation-unit semantic tasks (such as creating
+  /// initializers for tentative definitions in C) once parsing has
+  /// completed. This flag will be false when building PCH files,
+  /// since a PCH file is by definition not a complete translation
+  /// unit.
+  bool CompleteTranslationUnit;
+
   /// ObjCMethodList - a linked list of methods with different signatures.
   struct ObjCMethodList {
     ObjCMethodDecl *Method;
@@ -239,7 +250,8 @@ public:
   /// Private Helper predicate to check for 'self'.
   bool isSelfExpr(Expr *RExpr);
 public:
-  Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer);
+  Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
+       bool CompleteTranslationUnit = true);
   ~Sema() {
     if (PackContext) FreePackedContext();
   }
