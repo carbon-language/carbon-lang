@@ -449,6 +449,7 @@ namespace {
     void VisitIntegerLiteral(IntegerLiteral *E);
     void VisitFloatingLiteral(FloatingLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
+    void VisitParenExpr(ParenExpr *E);
     void VisitCastExpr(CastExpr *E);
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
@@ -495,6 +496,14 @@ void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
   Writer.AddSourceLocation(E->getLoc(), Record);
   Record.push_back(E->isWide());
   Code = pch::EXPR_CHARACTER_LITERAL;
+}
+
+void PCHStmtWriter::VisitParenExpr(ParenExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getLParen(), Record);
+  Writer.AddSourceLocation(E->getRParen(), Record);
+  Writer.WriteSubExpr(E->getSubExpr());
+  Code = pch::EXPR_PAREN;
 }
 
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {

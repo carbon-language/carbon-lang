@@ -383,6 +383,8 @@ namespace clang {
       EXPR_FLOATING_LITERAL,
       /// \brief A CharacterLiteral record.
       EXPR_CHARACTER_LITERAL,
+      /// \brief A ParenExpr record.
+      EXPR_PAREN,
       /// \brief An ImplicitCastExpr record.
       EXPR_IMPLICIT_CAST
     };

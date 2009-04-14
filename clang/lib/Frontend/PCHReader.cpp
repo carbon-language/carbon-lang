@@ -237,6 +237,7 @@ namespace {
     unsigned VisitIntegerLiteral(IntegerLiteral *E);
     unsigned VisitFloatingLiteral(FloatingLiteral *E);
     unsigned VisitCharacterLiteral(CharacterLiteral *E);
+    unsigned VisitParenExpr(ParenExpr *E);
     unsigned VisitCastExpr(CastExpr *E);
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
@@ -284,6 +285,14 @@ unsigned PCHStmtReader::VisitCharacterLiteral(CharacterLiteral *E) {
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setWide(Record[Idx++]);
   return 0;
+}
+
+unsigned PCHStmtReader::VisitParenExpr(ParenExpr *E) {
+  VisitExpr(E);
+  E->setLParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setSubExpr(ExprStack.back());
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
@@ -1603,6 +1612,10 @@ Expr *PCHReader::ReadExpr() {
       
     case pch::EXPR_CHARACTER_LITERAL:
       E = new (Context) CharacterLiteral(Empty);
+      break;
+
+    case pch::EXPR_PAREN:
+      E = new (Context) ParenExpr(Empty);
       break;
 
     case pch::EXPR_IMPLICIT_CAST:

@@ -628,15 +628,23 @@ public:
            val->isTypeDependent(), val->isValueDependent()), 
       L(l), R(r), Val(val) {}
   
+  /// \brief Construct an empty parenthesized expression.
+  explicit ParenExpr(EmptyShell Empty) 
+    : Expr(ParenExprClass, Empty) { }
+
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
+  void setSubExpr(Expr *E) { Val = E; }
+
   virtual SourceRange getSourceRange() const { return SourceRange(L, R); }
 
   /// \brief Get the location of the left parentheses '('.
   SourceLocation getLParen() const { return L; }
+  void setLParen(SourceLocation Loc) { L = Loc; }
 
   /// \brief Get the location of the right parentheses ')'.
   SourceLocation getRParen() const { return R; }
+  void setRParen(SourceLocation Loc) { R = Loc; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ParenExprClass; 
