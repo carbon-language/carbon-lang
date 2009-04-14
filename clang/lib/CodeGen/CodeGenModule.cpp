@@ -95,54 +95,45 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;
 }
 
-/// setGlobalVisibility - Set the visibility for the given LLVM
-/// GlobalValue according to the given clang AST visibility value.
-static void setGlobalVisibility(llvm::GlobalValue *GV,
-                                VisibilityAttr::VisibilityTypes Vis) {
-  // Internal definitions should always have default visibility.
+LangOptions::VisibilityMode 
+CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    if (VD->getStorageClass() == VarDecl::PrivateExtern)
+      return LangOptions::Hidden;
+
+  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>()) {
+    switch (attr->getVisibility()) {
+    default: assert(0 && "Unknown visibility!");
+    case VisibilityAttr::DefaultVisibility: 
+      return LangOptions::Default;
+    case VisibilityAttr::HiddenVisibility:
+      return LangOptions::Hidden;
+    case VisibilityAttr::ProtectedVisibility:
+      return LangOptions::Protected;
+    }
+  }
+
+  return getLangOptions().getVisibilityMode();
+}
+
+void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV, 
+                                        const Decl *D) const {
+  // Internal definitions always have default visibility.
   if (GV->hasLocalLinkage()) {
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
     return;
   }
 
-  switch (Vis) {
+  switch (getDeclVisibilityMode(D)) {
   default: assert(0 && "Unknown visibility!");
-  case VisibilityAttr::DefaultVisibility:
-    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
-    break;
-  case VisibilityAttr::HiddenVisibility:
-    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    break;
-  case VisibilityAttr::ProtectedVisibility:
-    GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
-    break;
+  case LangOptions::Default:
+    return GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
+  case LangOptions::Hidden:
+    return GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  case LangOptions::Protected:
+    return GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
   }
 }
-
-static void setGlobalOptionVisibility(llvm::GlobalValue *GV,
-                                      LangOptions::VisibilityMode Vis) {
-  // Internal definitions should always have default visibility.
-  if (GV->hasLocalLinkage()) {
-    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
-    return;
-  }
-
-  switch (Vis) {
-  default: assert(0 && "Unknown visibility!");
-  case LangOptions::NonVisibility:
-    break;
-  case LangOptions::DefaultVisibility:
-    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
-    break;
-  case LangOptions::HiddenVisibility:
-    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    break;
-  case LangOptions::ProtectedVisibility:
-    GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
-    break;
-  }
-}
-                                      
 
 /// \brief Retrieves the mangled name for the given declaration.
 ///
@@ -270,25 +261,18 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     GV->setLinkage(llvm::Function::WeakAnyLinkage);
   }
 
-  // FIXME: Figure out the relative priority of the attribute,
-  // -fvisibility, and private_extern.
   if (ForDefinition) {
-    if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
-      setGlobalVisibility(GV, attr->getVisibility());
-    else
-      setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
+    setGlobalVisibility(GV, D);
+
+    // Only add to llvm.used when we see a definition, otherwise we
+    // might add multiple times or risk the value being replaced by a
+    // subsequent RAUW.
+    if (D->hasAttr<UsedAttr>())
+      AddUsedGlobal(GV);
   }
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
-
-  // Only add to llvm.used when we see a definition, otherwise we
-  // might add multiple times or risk the value being replaced by a
-  // subsequent RAUW.
-  if (ForDefinition) {
-    if (D->hasAttr<UsedAttr>())
-      AddUsedGlobal(GV);
-  }
 }
 
 void CodeGenModule::SetFunctionAttributes(const Decl *D,
@@ -645,7 +629,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
 
     // FIXME: Merge with other attribute handling code.
     if (D->getStorageClass() == VarDecl::PrivateExtern)
-      setGlobalVisibility(GV, VisibilityAttr::HiddenVisibility);
+      GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
     if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
       GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
@@ -746,10 +730,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // "extern int x[];") and then a definition of a different type (e.g.
   // "int x[10];"). This also happens when an initializer has a different type
   // from the type of the global (this happens with unions).
-  //
-  // FIXME: This also ends up happening if there's a definition followed by
-  // a tentative definition!  (Although Sema rejects that construct
-  // at the moment.)
   if (GV == 0 ||
       GV->getType()->getElementType() != InitType ||
       GV->getType()->getAddressSpace() != ASTTy.getAddressSpace()) {
@@ -789,41 +769,19 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setLinkage(llvm::Function::DLLExportLinkage);
   else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
-  else {
-    // FIXME: This isn't right.  This should handle common linkage and other
-    // stuff.
-    switch (D->getStorageClass()) {
-    case VarDecl::Static: assert(0 && "This case handled above");
-    case VarDecl::Auto:
-    case VarDecl::Register:
-      assert(0 && "Can't have auto or register globals");
-    case VarDecl::None:
-      if (!D->getInit() && !CompileOpts.NoCommon)
-        GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
-      else
-        GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
-      break;
-    case VarDecl::Extern:
-      // FIXME: common
-      break;
-      
-    case VarDecl::PrivateExtern:
-      GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-      // FIXME: common
-      break;
-    }
-  }
-
-  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
-    setGlobalVisibility(GV, attr->getVisibility());
+  else if (!CompileOpts.NoCommon &&
+           (!D->hasExternalStorage() && !D->getInit()))
+    GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
   else
-    setGlobalOptionVisibility(GV, getLangOptions().getVisibilityMode());
+    GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
 
-  if (const SectionAttr *SA = D->getAttr<SectionAttr>())
-    GV->setSection(SA->getName());
+  setGlobalVisibility(GV, D);
 
   if (D->hasAttr<UsedAttr>())
     AddUsedGlobal(GV);
+
+  if (const SectionAttr *SA = D->getAttr<SectionAttr>())
+    GV->setSection(SA->getName());
 
   // Emit global variable debug information.
   if (CGDebugInfo *DI = getDebugInfo()) {

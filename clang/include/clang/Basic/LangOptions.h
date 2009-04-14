@@ -91,8 +91,11 @@ public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
   enum GCMode { NonGC, GCOnly, HybridGC };
-  enum VisibilityMode {NonVisibility, DefaultVisibility, ProtectedVisibility, 
-                       HiddenVisibility, InternalVisibility };
+  enum VisibilityMode { 
+    Default, 
+    Protected, 
+    Hidden
+  };
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = AsmPreprocessor = 0;
@@ -105,7 +108,7 @@ public:
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
     
-    SymbolVisibility = 0;
+    SymbolVisibility = (unsigned) Default;
     
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;
@@ -135,7 +138,9 @@ public:
   const char *getMainFileName() const { return MainFileName; }
   void setMainFileName(const char *Name) { MainFileName = Name; }
 
-  VisibilityMode getVisibilityMode() const { return (VisibilityMode) SymbolVisibility; }
+  VisibilityMode getVisibilityMode() const { 
+    return (VisibilityMode) SymbolVisibility; 
+  }
   void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
   
   /// Emit - Emit this LangOptions object to bitcode.

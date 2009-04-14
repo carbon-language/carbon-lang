@@ -440,8 +440,6 @@ protected:
   llvm::Constant *BuildIvarLayout(const ObjCImplementationDecl *OI,
                                   bool ForStrongLayout);
   
-  bool IsClassHidden(const ObjCInterfaceDecl *ID);
-  
   void BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
@@ -1441,23 +1439,6 @@ enum ClassFlags {
   eClassFlags_ABI2_HasCXXStructors = 0x00004   // <rdr://4923634>
 };
 
-bool CGObjCCommonMac::IsClassHidden(const ObjCInterfaceDecl *ID) {
-  if (const VisibilityAttr *attr = ID->getAttr<VisibilityAttr>()) {
-    switch (attr->getVisibility()) {
-    default: 
-      assert(0 && "Unknown visibility");
-      return false;
-    case VisibilityAttr::DefaultVisibility:
-    case VisibilityAttr::ProtectedVisibility:  // FIXME: What do we do here?
-      return false;
-    case VisibilityAttr::HiddenVisibility:
-      return true;
-    }
-  } else
-      return (CGM.getLangOptions().getVisibilityMode() ==
-              LangOptions::HiddenVisibility);
-}
-
 /*
   struct _objc_class {
     Class isa;
@@ -1494,7 +1475,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
 
   // FIXME: Set CXX-structors flag.
-  if (IsClassHidden(ID->getClassInterface()))
+  if (CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden)
     Flags |= eClassFlags_Hidden;
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
@@ -1571,7 +1552,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   unsigned Flags = eClassFlags_Meta;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassTy);
 
-  if (IsClassHidden(ID->getClassInterface()))
+  if (CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden)
     Flags |= eClassFlags_Hidden;
  
   std::vector<llvm::Constant*> Values(12);
@@ -4226,7 +4207,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   
   llvm::GlobalVariable *SuperClassGV, *IsAGV;
   
-  bool classIsHidden = IsClassHidden(ID->getClassInterface());
+  bool classIsHidden = 
+    CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
   if (!ID->getClassInterface()->getSuperClass()) {
@@ -4547,13 +4529,10 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
   // @private and @package have hidden visibility.
   bool globalVisibility = (Ivar->getAccessControl() == ObjCIvarDecl::Public ||
-                           Ivar->getAccessControl() == ObjCIvarDecl::Protected);  
-  if (!globalVisibility)
+                           Ivar->getAccessControl() == ObjCIvarDecl::Protected);
+  if (!globalVisibility || CGM.getDeclVisibilityMode(ID) == LangOptions::Hidden)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  else if (IsClassHidden(ID))
-      IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  else if (CGM.getLangOptions().getVisibilityMode() == 
-           LangOptions::DefaultVisibility)
+  else
     IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
   IvarOffsetGV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(IvarOffsetGV);
@@ -5633,8 +5612,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                      &CGM.getModule());
   }
 
-  if (CGM.getLangOptions().getVisibilityMode() ==
-      LangOptions::HiddenVisibility)
+  if (CGM.getLangOptions().getVisibilityMode() == LangOptions::Hidden)
     Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
   Entry->setAlignment(8);
 

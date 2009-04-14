@@ -812,36 +812,23 @@ void InitializeGCMode(LangOptions &Options) {
     Options.setGCMode(LangOptions::HybridGC);
 }
 
-static llvm::cl::opt<std::string>
+static llvm::cl::opt<LangOptions::VisibilityMode>
 SymbolVisibility("fvisibility",
-  llvm::cl::desc("Set the default visibility to the specific option"));
-
-void InitializeSymbolVisibility(LangOptions &Options) {
-  if (SymbolVisibility.empty())
-    return;
-  std::string Visibility = SymbolVisibility;
-  const char *vkind = Visibility.c_str();
-  if (!strcmp(vkind, "default"))
-    Options.setVisibilityMode(LangOptions::DefaultVisibility);
-  else if (!strcmp(vkind, "protected"))
-    Options.setVisibilityMode(LangOptions::ProtectedVisibility);
-  else if (!strcmp(vkind, "hidden"))
-    Options.setVisibilityMode(LangOptions::HiddenVisibility);
-  else if (!strcmp(vkind, "internal"))
-    Options.setVisibilityMode(LangOptions::InternalVisibility);
-  else
-    fprintf(stderr,
-            "-fvisibility only valid for default|protected|hidden|internal\n");
-}
+                 llvm::cl::desc("Set the default symbol visibility:"),
+                 llvm::cl::init(LangOptions::Default),
+                 llvm::cl::values(clEnumValN(LangOptions::Default, "default",
+                                             "Use default symbol visibility"),
+                                  clEnumValN(LangOptions::Hidden, "hidden",
+                                             "Use hidden symbol visibility"),
+                                  clEnumValN(LangOptions::Protected,"protected",
+                                             "Use protected symbol visibility"),
+                                  clEnumValEnd));
 
 static llvm::cl::opt<bool>
 OverflowChecking("ftrapv",
            llvm::cl::desc("Trap on integer overflow"),
            llvm::cl::init(false));
 
-void InitializeOverflowChecking(LangOptions &Options) {
-  Options.OverflowChecking = OverflowChecking;
-}
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
 //===----------------------------------------------------------------------===//
@@ -2299,8 +2286,8 @@ int main(int argc, char **argv) {
     LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
     InitializeGCMode(LangInfo);
-    InitializeSymbolVisibility(LangInfo);
-    InitializeOverflowChecking(LangInfo);
+    LangInfo.setVisibilityMode(SymbolVisibility);
+    LangInfo.OverflowChecking = OverflowChecking;
     InitializeLanguageStandard(LangInfo, LK, Target.get());
           
     // Process the -I options and set them in the HeaderInfo.

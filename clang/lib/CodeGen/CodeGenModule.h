@@ -14,6 +14,7 @@
 #ifndef CLANG_CODEGEN_CODEGENMODULE_H
 #define CLANG_CODEGEN_CODEGENMODULE_H
 
+#include "clang/Basic/LangOptions.h"
 #include "clang/AST/Attr.h"
 #include "CGBlocks.h"
 #include "CGCall.h"
@@ -166,6 +167,13 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
+
+  /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
+  LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;
+
+  /// setGlobalVisibility - Set the visibility for the given LLVM
+  /// GlobalValue.
+  void setGlobalVisibility(llvm::GlobalValue *GV, const Decl *D) const;
 
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
   /// given global variable.  If Ty is non-null and if the global doesn't exist,
