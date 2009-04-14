@@ -298,6 +298,10 @@ public:
                                  const CGFunctionInfo &Info,
                                  llvm::Function *F);
 
+  /// SetLLVMFunctionAttributesForDefinition - Set the LLVM function attributes
+  /// which only apply to a function definintion.
+  void SetLLVMFunctionAttributesForDefinition(const Decl *D, llvm::Function *F);
+
   /// ReturnTypeUsesSret - Return true iff the given type uses 'sret' when used
   /// as a return type.
   bool ReturnTypeUsesSret(const CGFunctionInfo &FI);
@@ -323,22 +327,17 @@ private:
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D);
   
-  /// SetGVDefinitionAttributes - Set attributes for a global definition.
-  void SetGVDefinitionAttributes(const Decl *D, 
-                                 GVALinkage Linkage,
-                                 llvm::GlobalValue *GV);
-
-  /// SetGVDeclarationAttributes - Set attributes for a global declaration.
-  void SetGVDeclarationAttributes(const Decl *D, 
-                                  llvm::GlobalValue *GV);
-    
-  /// SetFunctionAttributesForDefinition - Set function attributes specific to a
-  /// function definition.
+  /// SetCommonAttributes - Set attributes which are common to any
+  /// form of a global definition (alias, Objective-C method,
+  /// function, global variable).
   ///
-  /// \param D - The ObjCMethodDecl or FunctionDecl defining \arg F.
-  void SetFunctionAttributesForDefinition(const Decl *D,
-                                          llvm::Function *F);
+  /// NOTE: This should only be called for definitions.
+  void SetCommonAttributes(const Decl *D, llvm::GlobalValue *GV);
 
+  /// SetFunctionDefinitionAttributes - Set attributes for a global definition.
+  void SetFunctionDefinitionAttributes(const FunctionDecl *D, 
+                                 llvm::GlobalValue *GV);
+    
   /// SetFunctionAttributes - Set function attributes for a function
   /// declaration.
   void SetFunctionAttributes(const FunctionDecl *FD,
