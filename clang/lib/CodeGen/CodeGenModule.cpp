@@ -229,26 +229,32 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
     return CodeGenModule::GVA_Internal;
 
   if (!FD->isInline())
-    return CodeGenModule::GVA_Normal;
+    return CodeGenModule::GVA_StrongExternal;
   
-  if (FD->getStorageClass() == FunctionDecl::Extern)
-    return CodeGenModule::GVA_ExternInline;
-
   // If the inline function explicitly has the GNU inline attribute on it, then
-  // force to GNUC semantics, regardless of language.
+  // force to GNUC semantics (which is strong external), regardless of language.
   if (FD->hasAttr<GNUCInlineAttr>())
-    return CodeGenModule::GVA_GNUCInline;
-  
+    return CodeGenModule::GVA_StrongExternal;
+
   // The definition of inline changes based on the language.  Note that we
   // have already handled "static inline" above, with the GVA_Internal case.
-  if (Features.CPlusPlus)
+  if (Features.CPlusPlus)  // inline and extern inline.
     return CodeGenModule::GVA_CXXInline;
+  
+  if (FD->getStorageClass() == FunctionDecl::Extern) {
+    // extern inline in C99 is a strong definition. In C89, it is extern inline.
+    if (Features.C99)
+      return CodeGenModule::GVA_StrongExternal;
+    
+    // In C89 mode, an 'extern inline' works like a C99 inline function.
+    return CodeGenModule::GVA_C99Inline;
+  }
   
   if (Features.C99)
     return CodeGenModule::GVA_C99Inline;
   
   // Otherwise, this is the GNU inline extension in K&R and GNU C89 mode.
-  return CodeGenModule::GVA_GNUCInline;
+  return CodeGenModule::GVA_StrongExternal;
 }
 
 /// SetFunctionDefinitionAttributes - Set attributes for a global.
@@ -266,10 +272,9 @@ void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
     GV->setLinkage(llvm::Function::DLLExportLinkage);
   } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
     GV->setLinkage(llvm::Function::WeakAnyLinkage);
-  } else if (Linkage == GVA_ExternInline) {
-    // "extern inline" always gets available_externally linkage, which is the
-    // strongest linkage type we can give an inline function: we don't have to
-    // codegen the definition at all, yet we know that it is "ODR".
+  } else if (Linkage == GVA_C99Inline) {
+    // In C99 mode, 'inline' functions are guaranteed to have a strong
+    // definition somewhere else, so we can use available_externally linkage.
     GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
   } else if (Linkage == GVA_CXXInline) {
     // In C++, the compiler has to emit a definition in every translation unit
@@ -279,16 +284,9 @@ void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
     // merged with other definitions. c) C++ has the ODR, so we know the
     // definition is dependable.
     GV->setLinkage(llvm::Function::LinkOnceODRLinkage);
-  } else if (Linkage == GVA_C99Inline) {
-    // In C99 mode, 'inline' functions are guaranteed to have a strong
-    // definition somewhere else, so we can use available_externally linkage.
-    GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
-  } else if (Linkage == GVA_GNUCInline) {
-    // In C89 mode, an 'inline' function may only occur in one translation
-    // unit in the program, but may be extern'd in others.  Give it strong
-    // external linkage.
-    GV->setLinkage(llvm::Function::ExternalLinkage);
   } else {
+    assert(Linkage == GVA_StrongExternal);
+    // Otherwise, we have strong external linkage.
     GV->setLinkage(llvm::Function::ExternalLinkage);
   }
 
@@ -481,8 +479,8 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     
     // static, static inline, always_inline, and extern inline functions can
     // always be deferred.  Normal inline functions can be deferred in C99/C++.
-    if (Linkage == GVA_Internal || Linkage == GVA_ExternInline ||
-        Linkage == GVA_C99Inline || Linkage == GVA_CXXInline)
+    if (Linkage == GVA_Internal || Linkage == GVA_C99Inline ||
+        Linkage == GVA_CXXInline)
       return true;
     return false;
   }
