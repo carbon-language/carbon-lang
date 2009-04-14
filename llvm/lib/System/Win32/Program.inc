@@ -1,10 +1,10 @@
 //===- Win32/Program.cpp - Win32 Program Implementation ------- -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides the Win32 specific implementation of the Program class.
@@ -18,7 +18,7 @@
 #include <fcntl.h>
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Win32 specific code 
+//=== WARNING: Implementation here must contain only Win32 specific code
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
@@ -77,7 +77,7 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
                     0, TRUE, DUPLICATE_SAME_ACCESS);
     return h;
   }
-  
+
   const char *fname;
   if (path->isEmpty())
     fname = "NUL";
@@ -108,9 +108,9 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
                                       LPVOID lpJobObjectInfo,
                                       DWORD cbJobObjectInfoLength);
 #endif
-  
-int 
-Program::ExecuteAndWait(const Path& path, 
+
+int
+Program::ExecuteAndWait(const Path& path,
                         const char** args,
                         const char** envp,
                         const Path** redirects,
@@ -156,7 +156,7 @@ Program::ExecuteAndWait(const Path& path,
 
   // The pointer to the environment block for the new process.
   char *envblock = 0;
-  
+
   if (envp) {
     // An environment block consists of a null-terminated block of
     // null-terminated strings. Convert the array of environment variables to
@@ -191,7 +191,7 @@ Program::ExecuteAndWait(const Path& path,
 
   if (redirects) {
     si.dwFlags = STARTF_USESTDHANDLES;
-    
+
     si.hStdInput = RedirectIO(redirects[0], 0, ErrMsg);
     if (si.hStdInput == INVALID_HANDLE_VALUE) {
       MakeErrMsg(ErrMsg, "can't redirect stdin");
@@ -220,7 +220,7 @@ Program::ExecuteAndWait(const Path& path,
       }
     }
   }
-  
+
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
 
@@ -240,7 +240,7 @@ Program::ExecuteAndWait(const Path& path,
   if (!rc)
   {
     SetLastError(err);
-    MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") + 
+    MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") +
                path.toString() + "'");
     return -1;
   }
@@ -287,7 +287,7 @@ Program::ExecuteAndWait(const Path& path,
     }
     WaitForSingleObject(pi.hProcess, INFINITE);
   }
-  
+
   // Get its exit status.
   DWORD status;
   rc = GetExitCodeProcess(pi.hProcess, &status);
@@ -295,7 +295,7 @@ Program::ExecuteAndWait(const Path& path,
 
   if (!rc) {
     SetLastError(err);
-    MakeErrMsg(ErrMsg, std::string("Failed getting status for program '") + 
+    MakeErrMsg(ErrMsg, std::string("Failed getting status for program '") +
                path.toString() + "'");
     return -1;
   }
