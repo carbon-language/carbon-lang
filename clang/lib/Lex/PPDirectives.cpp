@@ -114,7 +114,13 @@ void Preprocessor::CheckEndOfDirective(const char *DirType) {
     LexUnexpandedToken(Tmp);
   
   if (Tmp.isNot(tok::eom)) {
-    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol) << DirType;
+    // Add a fixit in GNU/C99/C++ mode.  Don't offer a fixit for strict-C89,
+    // because it is more trouble than it is worth to insert /**/ and check that
+    // there is no /**/ in the range also.
+    CodeModificationHint FixItHint;
+    if (Features.GNUMode || Features.C99 || Features.CPlusPlus)
+      FixItHint = CodeModificationHint::CreateInsertion(Tmp.getLocation(),"//");
+    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol) << DirType << FixItHint;
     DiscardUntilEndOfDirective();
   }
 }
