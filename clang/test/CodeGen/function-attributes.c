@@ -7,7 +7,6 @@
 // RUN: grep 'define zeroext i16 @f5(i32 %x) nounwind' %t &&
 // RUN: grep 'define void @f6(i16 signext %x) nounwind' %t &&
 // RUN: grep 'define void @f7(i16 zeroext %x) nounwind' %t &&
-// RUN: grep 'define void @f8() nounwind alwaysinline' %t &&
 
 signed char f0(int x) { return x; }
 
@@ -25,6 +24,8 @@ void f6(signed short x) { }
 
 void f7(unsigned short x) { }
 
+// F8 is dead so it should not be emitted.
+// RUN: not grep '@f8' %t &&
 void __attribute__((always_inline)) f8(void) { }
 
 // RUN: grep 'call void @f9_t() noreturn' %t &&

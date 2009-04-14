@@ -482,18 +482,23 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
       return false;
 
-    // FIXME: What about inline, and/or extern inline?
-    if (FD->getStorageClass() != FunctionDecl::Static)
-      return false;
-  } else {
-    const VarDecl *VD = cast<VarDecl>(Global);
-    assert(VD->isFileVarDecl() && "Invalid decl");
+    GVALinkage Linkage = GetLinkageForFunctionOrMethodDecl(FD);
+    
+    // static, static inline, always_inline, and extern inline functions can
+    // always be deferred.
+    if (Linkage == GVA_Internal || Linkage == GVA_ExternInline)
+      return true;
 
-    if (VD->getStorageClass() != VarDecl::Static)
-      return false;
+    // inline functions can be deferred unless we're in C89 mode.
+    if (Linkage == GVA_Inline && (Features.C99 || Features.CPlusPlus))
+      return true;
+    
+    return false;
   }
-
-  return true;
+  
+  const VarDecl *VD = cast<VarDecl>(Global);
+  assert(VD->isFileVarDecl() && "Invalid decl");
+  return VD->getStorageClass() == VarDecl::Static;
 }
 
 void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
