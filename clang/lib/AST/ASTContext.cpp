@@ -2081,11 +2081,13 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
     ParmVarDecl *PVDecl = *PI;
     QualType PType = PVDecl->getOriginalType(); 
     if (const ArrayType *AT =
-          dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) 
-        // Use array's original type only if it has known number of
-        // elements.
-        if (!dyn_cast<ConstantArrayType>(AT))
-          PType = PVDecl->getType();
+          dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {
+      // Use array's original type only if it has known number of
+      // elements.
+      if (!dyn_cast<ConstantArrayType>(AT))
+        PType = PVDecl->getType();
+    } else if (PType->isFunctionType())
+      PType = PVDecl->getType();
     // Process argument qualifiers for user supplied arguments; such as,
     // 'in', 'inout', etc.
     getObjCEncodingForTypeQualifier(PVDecl->getObjCDeclQualifier(), S);
