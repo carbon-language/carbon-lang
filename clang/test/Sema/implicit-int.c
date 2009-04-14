@@ -22,3 +22,11 @@ h19_insline(n)  // expected-warning {{parameter 'n' was not declared, defaulting
 	ILPAD();  // expected-warning {{type specifier missing, defaults to 'int'}}
 }
 
+struct foo {
+ __extension__ __attribute__((packed)) // expected-warning {{type specifier missing, defaults to 'int'}}
+   x : 4;
+};
+
+
+
+

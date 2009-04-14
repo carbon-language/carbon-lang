@@ -440,7 +440,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   
   // Validate declspec for type-name.
   unsigned Specs = DS.getParsedSpecifiers();
-  if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers())
+  if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers() &&
+      !DS.getAttributes())
     Diag(Tok, diag::err_typename_requires_specqual);
   
   // Issue diagnostic and remove storage class if present.
@@ -475,6 +476,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///      int x   =             17;         // init-declarator-list
 ///      int x   ,             y;          // init-declarator-list
 ///      int x   __asm__       ("foo");    // init-declarator-list
+///      int x   :             4;          // struct-declarator
 ///      int x   {             5};         // C++'0x unified initializers
 ///
 /// This is not, because 'x' does not immediately follow the declspec (though
@@ -484,7 +486,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 static bool isValidAfterIdentifierInDeclarator(const Token &T) {
   return T.is(tok::l_square) || T.is(tok::l_paren) || T.is(tok::r_paren) ||
          T.is(tok::semi) || T.is(tok::comma) || T.is(tok::equal) ||
-         T.is(tok::kw_asm) || T.is(tok::l_brace);
+         T.is(tok::kw_asm) || T.is(tok::l_brace) || T.is(tok::colon);
 }
 
 /// ParseDeclarationSpecifiers
