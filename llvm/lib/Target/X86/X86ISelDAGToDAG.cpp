@@ -1049,6 +1049,9 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
                                       X, Eight);
         SDValue And = CurDAG->getNode(ISD::AND, dl, N.getValueType(),
                                       Srl, Mask);
+        SDValue ShlCount = CurDAG->getConstant(ScaleLog, MVT::i8);
+        SDValue Shl = CurDAG->getNode(ISD::SHL, dl, N.getValueType(),
+                                      And, ShlCount);
 
         // Insert the new nodes into the topological ordering.
         if (Eight.getNode()->getNodeId() == -1 ||
@@ -1071,7 +1074,17 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
           CurDAG->RepositionNode(N.getNode(), And.getNode());
           And.getNode()->setNodeId(N.getNode()->getNodeId());
         }
-        CurDAG->ReplaceAllUsesWith(N, And);
+        if (ShlCount.getNode()->getNodeId() == -1 ||
+            ShlCount.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+          CurDAG->RepositionNode(X.getNode(), ShlCount.getNode());
+          ShlCount.getNode()->setNodeId(N.getNode()->getNodeId());
+        }
+        if (Shl.getNode()->getNodeId() == -1 ||
+            Shl.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+          CurDAG->RepositionNode(N.getNode(), Shl.getNode());
+          Shl.getNode()->setNodeId(N.getNode()->getNodeId());
+        }
+        CurDAG->ReplaceAllUsesWith(N, Shl);
         AM.IndexReg = And;
         AM.Scale = (1 << ScaleLog);
         return false;
