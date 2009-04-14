@@ -262,8 +262,32 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     }
   } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
     GV->setLinkage(llvm::Function::WeakAnyLinkage);
-  } else if (Linkage == GVA_Inline || Linkage == GVA_ExternInline) {
-    GV->setLinkage(llvm::Function::WeakAnyLinkage);
+  } else if (Linkage == GVA_ExternInline) {
+    // "extern inline" always gets available_externally linkage, which is the
+    // strongest linkage type we can give an inline function: we don't have to
+    // codegen the definition at all, yet we know that it is "ODR".
+    GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
+  } else if (Linkage == GVA_Inline) {
+    // The definition of inline changes based on the language.  Note that we
+    // have already handled "static inline" above, with the GVA_Internal case.
+    if (Features.CPlusPlus) {
+      // In C++, the compiler has to emit a definition in every translation unit
+      // that references the function.  We should use linkonce_odr because
+      // a) if all references in this translation unit are optimized away, we
+      // don't need to codegen it.  b) if the function persists, it needs to be
+      // merged with other definitions. c) C++ has the ODR, so we know the
+      // definition is dependable.
+      GV->setLinkage(llvm::Function::LinkOnceODRLinkage);
+    } else if (Features.C99) {
+      // In C99 mode, 'inline' functions are guaranteed to have a strong
+      // definition somewhere else, so we can use available_externally linkage.
+      GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
+    } else {
+      // In C89 mode, an 'inline' function may only occur in one translation
+      // unit in the program, but may be extern'd in others.  Give it strong
+      // external linkage.
+      GV->setLinkage(llvm::Function::ExternalLinkage);
+    }
   }
 
   if (ForDefinition) {
