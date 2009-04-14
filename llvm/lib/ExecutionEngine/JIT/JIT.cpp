@@ -86,7 +86,13 @@ namespace llvm {
 
 extern "C" void __register_frame(void*);
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED <= 1050
+# define USE_KEYMGR 1
+#else
+# define USE_KEYMGR 0
+#endif
+
+#if USE_KEYMGR
 
 namespace {
 
@@ -224,7 +230,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
   
   // Register routine for informing unwinding runtime about new EH frames
 #if defined(__GNUC__) && !defined(__ARM_EABI__)
-#if defined(__APPLE__)
+#if USE_KEYMGR
   struct LibgccObjectInfo* LOI = (struct LibgccObjectInfo*)
     _keymgr_get_and_lock_processwide_ptr(KEYMGR_GCC3_DW2_OBJ_LIST);
   
