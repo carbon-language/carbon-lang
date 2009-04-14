@@ -292,9 +292,11 @@ public:
   void SetMethodAttributes(const ObjCMethodDecl *MD,
                            llvm::Function *F);
 
-  void SetFunctionAttributes(const Decl *D,
-                             const CGFunctionInfo &Info,
-                             llvm::Function *F);
+  /// SetLLVMFunctionAttributes - Set the LLVM function attributes
+  /// (sext, zext, etc).
+  void SetLLVMFunctionAttributes(const Decl *D,
+                                 const CGFunctionInfo &Info,
+                                 llvm::Function *F);
 
   /// ReturnTypeUsesSret - Return true iff the given type uses 'sret' when used
   /// as a return type.
@@ -329,10 +331,13 @@ private:
     
   /// SetFunctionAttributesForDefinition - Set function attributes specific to a
   /// function definition.
+  ///
   /// \param D - The ObjCMethodDecl or FunctionDecl defining \arg F.
   void SetFunctionAttributesForDefinition(const Decl *D,
                                           llvm::Function *F);
 
+  /// SetFunctionAttributes - Set function attributes for a function
+  /// declaration.
   void SetFunctionAttributes(const FunctionDecl *FD,
                              llvm::Function *F);
 

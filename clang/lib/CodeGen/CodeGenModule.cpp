@@ -304,9 +304,9 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     GV->setSection(SA->getName());
 }
 
-void CodeGenModule::SetFunctionAttributes(const Decl *D,
-                                          const CGFunctionInfo &Info, 
-                                          llvm::Function *F) {
+void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
+                                              const CGFunctionInfo &Info, 
+                                              llvm::Function *F) {
   AttributeListType AttributeList;
   ConstructAttributeList(Info, D, AttributeList);
 
@@ -360,14 +360,14 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
                                         llvm::Function *F) {
-  SetFunctionAttributes(MD, getTypes().getFunctionInfo(MD), F);
+  SetLLVMFunctionAttributes(MD, getTypes().getFunctionInfo(MD), F);
   
   SetFunctionAttributesForDefinition(MD, F);
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
-  SetFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
+  SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
   
   SetGlobalValueAttributes(FD, GetLinkageForFunctionOrMethodDecl(FD), F, false);
 }
