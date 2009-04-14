@@ -10,7 +10,8 @@ entry:
 	%fh = alloca i32		; <i32*> [#uses=1]
 	%1 = load i32* %fh		; <i32> [#uses=1]
 	%2 = load i32* %ptr		; <i32> [#uses=1]
-	%3 = call i32* asm "mov r0, $2; mov r1, $3; swi ${1:a}; mov $0, r0", "=r,i,r,r,~{r0},~{r1}"(i32 107, i32 %1, i32 %2) nounwind		; <i32*> [#uses=0]
+	%3 = call i32 asm "mov r0, $2; mov r1, $3; swi ${1:a}; mov $0, r0", "=r,i,r,r,~{r0},~{r1}"(i32 107, i32 %1, i32 %2) nounwind		; <i32> [#uses=1]
+        store i32 %3, i32* %retval
 	br label %return
 
 return:		; preds = %entry
