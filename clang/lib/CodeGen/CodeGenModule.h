@@ -306,7 +306,13 @@ public:
 
   const char *getMangledName(const NamedDecl *ND);
 
-
+  enum GVALinkage {
+    GVA_Internal,
+    GVA_Inline,
+    GVA_ExternInline,
+    GVA_Normal
+  };
+  
 private:
   llvm::Constant *GetOrCreateLLVMFunction(const char *MangledName,
                                           const llvm::Type *Ty,
@@ -314,11 +320,10 @@ private:
   llvm::Constant *GetOrCreateLLVMGlobal(const char *MangledName,
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D);
-    
+  
   /// SetGlobalValueAttributes - Set attributes for a global decl.
   void SetGlobalValueAttributes(const Decl *D, 
-                                bool IsInternal,
-                                bool IsInline,
+                                GVALinkage Linkage,
                                 llvm::GlobalValue *GV,
                                 bool ForDefinition);
     

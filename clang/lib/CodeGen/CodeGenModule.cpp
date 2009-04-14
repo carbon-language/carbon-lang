@@ -222,8 +222,7 @@ void CodeGenModule::EmitAnnotations() {
 }
 
 void CodeGenModule::SetGlobalValueAttributes(const Decl *D, 
-                                             bool IsInternal,
-                                             bool IsInline,
+                                             GVALinkage Linkage,
                                              llvm::GlobalValue *GV,
                                              bool ForDefinition) {
   // FIXME: Set up linkage and many other things.  Note, this is a simple 
@@ -246,7 +245,7 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
       // separate linkage types for this. 
       GV->setLinkage(llvm::Function::ExternalWeakLinkage);
     }
-  } else if (IsInternal) {
+  } else if (Linkage == GVA_Internal) {
     GV->setLinkage(llvm::Function::InternalLinkage);
   } else if (D->hasAttr<DLLExportAttr>()) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -256,8 +255,9 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
     } else {
       GV->setLinkage(llvm::Function::DLLExportLinkage);
     }
-  } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>() ||
-             IsInline) {
+  } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
+    GV->setLinkage(llvm::Function::WeakAnyLinkage);
+  } else if (Linkage == GVA_Inline || Linkage == GVA_ExternInline) {
     GV->setLinkage(llvm::Function::WeakAnyLinkage);
   }
 
@@ -292,17 +292,29 @@ void CodeGenModule::SetFunctionAttributes(const Decl *D,
     F->setCallingConv(llvm::CallingConv::X86_StdCall);
 }
 
+
+static CodeGenModule::GVALinkage 
+GetLinkageForFunctionOrMethodDecl(const Decl *D) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->getStorageClass() == FunctionDecl::Static)
+      return CodeGenModule::GVA_Internal;
+    if (FD->isInline()) {
+      if (FD->getStorageClass() == FunctionDecl::Extern)
+        return CodeGenModule::GVA_ExternInline;
+      return CodeGenModule::GVA_Inline;
+    }
+  } else {
+    assert(isa<ObjCMethodDecl>(D));
+    return CodeGenModule::GVA_Internal;
+  }
+  return CodeGenModule::GVA_Normal;
+}
+
 /// SetFunctionAttributesForDefinition - Set function attributes
 /// specific to a function definition.
 void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
                                                        llvm::Function *F) {
-  if (isa<ObjCMethodDecl>(D)) {
-    SetGlobalValueAttributes(D, true, false, F, true);
-  } else {
-    const FunctionDecl *FD = cast<FunctionDecl>(D);
-    SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static,
-                             FD->isInline(), F, true);
-  }
+  SetGlobalValueAttributes(D, GetLinkageForFunctionOrMethodDecl(D), F, true);
                              
   if (!Features.Exceptions && !Features.ObjCNonFragileABI)
     F->addFnAttr(llvm::Attribute::NoUnwind);  
@@ -325,8 +337,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
   SetFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
   
-  SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static,
-                           FD->isInline(), F, false);
+  SetGlobalValueAttributes(FD, GetLinkageForFunctionOrMethodDecl(FD), F, false);
 }
 
 void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
@@ -919,7 +930,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   GA->setName(MangledName);
 
   // Alias should never be internal or inline.
-  SetGlobalValueAttributes(D, false, false, GA, true);
+  SetGlobalValueAttributes(D, GVA_Normal, GA, true);
 }
 
 /// getBuiltinLibFunction - Given a builtin id for a function like
