@@ -768,9 +768,8 @@ private:
 
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
-  llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
-                                       bool AddToUsed = true);
-  
+  llvm::GlobalVariable *GetClassGlobal(const std::string &Name);
+                                        
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class.
   llvm::Value *EmitClassRef(CGBuilderTy &Builder, 
@@ -4014,11 +4013,12 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   UsedGlobals.push_back(IMGV);
   
   std::vector<llvm::Constant*> Used;
+
   for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
        e = UsedGlobals.end(); i != e; ++i) {
     Used.push_back(llvm::ConstantExpr::getBitCast(*i, ObjCTypes.Int8PtrTy));
   }
-  
+
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.Int8PtrTy, Used.size());
   llvm::GlobalValue *GV = 
   new llvm::GlobalVariable(AT, false,
@@ -4215,17 +4215,17 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     // class is root
     flags |= CLS_ROOT;
     SuperClassGV = GetClassGlobal(ObjCClassName + ClassName);
-    IsAGV = GetClassGlobal(ObjCMetaClassName + ClassName, false);
+    IsAGV = GetClassGlobal(ObjCMetaClassName + ClassName);
   } else {
     // Has a root. Current class is not a root.
     const ObjCInterfaceDecl *Root = ID->getClassInterface();
     while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
       Root = Super;
-    IsAGV = GetClassGlobal(ObjCMetaClassName + Root->getNameAsString(), false);
+    IsAGV = GetClassGlobal(ObjCMetaClassName + Root->getNameAsString());
     // work on super class metadata symbol.
     std::string SuperClassName =  
       ObjCMetaClassName + ID->getClassInterface()->getSuperClass()->getNameAsString();
-    SuperClassGV = GetClassGlobal(SuperClassName, false);
+    SuperClassGV = GetClassGlobal(SuperClassName);
   }
   llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                                                InstanceStart,
@@ -4290,7 +4290,6 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *ClassMD = 
     BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV,
                        classIsHidden);
-  UsedGlobals.push_back(ClassMD);
   DefinedClasses.push_back(ClassMD);
 
   // Force the definition of the EHType if necessary.
@@ -4535,7 +4534,6 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
   else
     IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
   IvarOffsetGV->setSection("__DATA, __objc_const");
-  UsedGlobals.push_back(IvarOffsetGV);
   return IvarOffsetGV;
 }
 
@@ -5029,16 +5027,13 @@ CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
 }
 
 llvm::GlobalVariable *
-CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name,
-                                       bool AddToUsed) {
+CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name) {
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
 
   if (!GV) {
     GV = new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
                                   llvm::GlobalValue::ExternalLinkage,
                                   0, Name, &CGM.getModule());
-    if (AddToUsed)
-      UsedGlobals.push_back(GV);
   }
 
   return GV;
@@ -5084,7 +5079,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
     return Builder.CreateLoad(Entry, false, "tmp");
   
   std::string MetaClassName(getMetaclassSymbolPrefix() + ID->getNameAsString());
-  llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName, false);
+  llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName);
   Entry = 
     new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
                              llvm::GlobalValue::InternalLinkage,
@@ -5598,7 +5593,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, &VTableIdx, 1);
   Values[1] = GetClassName(ID->getIdentifier());
-  Values[2] = GetClassGlobal(ClassName, false);
+  Values[2] = GetClassGlobal(ClassName);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
 
   if (Entry) {
