@@ -454,7 +454,7 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
                            llvm::GlobalValue::InternalLinkage, unit, 
                            StringPrefix, M);
 
-  // Create the ConstantStruct that is the global annotion.
+  // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {
     llvm::ConstantExpr::getBitCast(GV, SBP),
     llvm::ConstantExpr::getBitCast(annoGV, SBP),
