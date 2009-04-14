@@ -405,7 +405,7 @@ static
 MachineInstr *findOnlyInterestingUse(unsigned Reg, MachineBasicBlock *MBB,
                                      MachineRegisterInfo *MRI,
                                      const TargetInstrInfo *TII,
-                                     bool &isCopy,
+                                     bool &IsCopy,
                                      unsigned &DstReg, bool &IsDstPhys) {
   MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg);
   if (UI == MRI->use_end())
@@ -418,11 +418,15 @@ MachineInstr *findOnlyInterestingUse(unsigned Reg, MachineBasicBlock *MBB,
     return 0;
   unsigned SrcReg;
   bool IsSrcPhys;
-  if (isCopyToReg(UseMI, TII, SrcReg, DstReg, IsSrcPhys, IsDstPhys))
+  if (isCopyToReg(UseMI, TII, SrcReg, DstReg, IsSrcPhys, IsDstPhys)) {
+    IsCopy = true;
     return &UseMI;
+  }
   IsDstPhys = false;
-  if (isTwoAddrUse(UseMI, Reg, DstReg))
+  if (isTwoAddrUse(UseMI, Reg, DstReg)) {
+    IsDstPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
     return &UseMI;
+  }
   return 0;
 }
 
@@ -634,12 +638,12 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
              "Can't map to two src physical registers!");
 
     SmallVector<unsigned, 4> VirtRegPairs;
-    bool isCopy = false;
+    bool IsCopy = false;
     unsigned NewReg = 0;
     while (MachineInstr *UseMI = findOnlyInterestingUse(DstReg, MBB, MRI,TII,
-                                                   isCopy, NewReg, IsDstPhys)) {
-      if (isCopy) {
-        if (Processed.insert(UseMI))
+                                                   IsCopy, NewReg, IsDstPhys)) {
+      if (IsCopy) {
+        if (!Processed.insert(UseMI))
           break;
       }
 
@@ -654,8 +658,8 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
       }
       bool isNew = SrcRegMap.insert(std::make_pair(NewReg, DstReg)).second;
       if (!isNew)
-      assert(SrcRegMap[NewReg] == DstReg &&
-             "Can't map to two src physical registers!");
+        assert(SrcRegMap[NewReg] == DstReg &&
+               "Can't map to two src physical registers!");
       VirtRegPairs.push_back(NewReg);
       DstReg = NewReg;
     }
