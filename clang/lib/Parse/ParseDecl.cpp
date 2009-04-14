@@ -489,6 +489,88 @@ static bool isValidAfterIdentifierInDeclarator(const Token &T) {
          T.is(tok::kw_asm) || T.is(tok::l_brace) || T.is(tok::colon);
 }
 
+
+/// ParseImplicitInt - This method is called when we have an non-typename
+/// identifier in a declspec (which normally terminates the decl spec) when
+/// the declspec has no type specifier.  In this case, the declspec is either
+/// malformed or is "implicit int" (in K&R and C89).
+///
+/// This method handles diagnosing this prettily and returns false if the
+/// declspec is done being processed.  If it recovers and thinks there may be
+/// other pieces of declspec after it, it returns true.
+///
+bool Parser::ParseImplicitInt(DeclSpec &DS,
+                              TemplateParameterLists *TemplateParams,
+                              AccessSpecifier AS) {
+  SourceLocation Loc = Tok.getLocation();
+  // If we see an identifier that is not a type name, we normally would
+  // parse it as the identifer being declared.  However, when a typename
+  // is typo'd or the definition is not included, this will incorrectly
+  // parse the typename as the identifier name and fall over misparsing
+  // later parts of the diagnostic.
+  //
+  // As such, we try to do some look-ahead in cases where this would
+  // otherwise be an "implicit-int" case to see if this is invalid.  For
+  // example: "static foo_t x = 4;"  In this case, if we parsed foo_t as
+  // an identifier with implicit int, we'd get a parse error because the
+  // next token is obviously invalid for a type.  Parse these as a case
+  // with an invalid type specifier.
+  assert(!DS.hasTypeSpecifier() && "Type specifier checked above");
+  
+  // Since we know that this either implicit int (which is rare) or an
+  // error, we'd do lookahead to try to do better recovery.
+  if (isValidAfterIdentifierInDeclarator(NextToken())) {
+    // If this token is valid for implicit int, e.g. "static x = 4", then
+    // we just avoid eating the identifier, so it will be parsed as the
+    // identifier in the declarator.
+    return false;
+  }
+  
+  // Otherwise, if we don't consume this token, we are going to emit an
+  // error anyway.  Try to recover from various common problems.  Check
+  // to see if this was a reference to a tag name without a tag specified.
+  // This is a common problem in C (saying 'foo' instead of 'struct foo').
+  const char *TagName = 0;
+  tok::TokenKind TagKind = tok::unknown;
+  
+  if (Tok.is(tok::identifier)) {
+    switch (Actions.isTagName(*Tok.getIdentifierInfo(), CurScope)) {
+      default: break;
+      case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
+      case DeclSpec::TST_union: TagName="union" ;TagKind=tok::kw_union ;break;
+      case DeclSpec::TST_struct:TagName="struct";TagKind=tok::kw_struct;break;
+      case DeclSpec::TST_class: TagName="class" ;TagKind=tok::kw_class ;break;
+    }
+  }
+  
+  if (TagName) {
+    Diag(Loc, diag::err_use_of_tag_name_without_tag)
+      << Tok.getIdentifierInfo() << TagName
+      << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
+    
+    // Parse this as a tag as if the missing tag were present.
+    if (TagKind == tok::kw_enum)
+      ParseEnumSpecifier(Loc, DS, AS);
+    else
+      ParseClassSpecifier(TagKind, Loc, DS, TemplateParams, AS);
+    return true;
+  }
+  
+  // Since this is almost certainly an invalid type name, emit a
+  // diagnostic that says it, eat the token, and mark the declspec as
+  // invalid.
+  Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo();
+  const char *PrevSpec;
+  DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec);
+  DS.SetRangeEnd(Tok.getLocation());
+  ConsumeToken();
+  
+  // TODO: Could inject an invalid typedef decl in an enclosing scope to
+  // avoid rippling error messages on subsequent uses of the same type,
+  // could be useful if #include was forgotten.
+  return false;
+}
+
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers[opt]
@@ -629,68 +711,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
       if (TypeRep == 0) {
-        // If we see an identifier that is not a type name, we normally would
-        // parse it as the identifer being declared.  However, when a typename
-        // is typo'd or the definition is not included, this will incorrectly
-        // parse the typename as the identifier name and fall over misparsing
-        // later parts of the diagnostic.
-        //
-        // As such, we try to do some look-ahead in cases where this would
-        // otherwise be an "implicit-int" case to see if this is invalid.  For
-        // example: "static foo_t x = 4;"  In this case, if we parsed foo_t as
-        // an identifier with implicit int, we'd get a parse error because the
-        // next token is obviously invalid for a type.  Parse these as a case
-        // with an invalid type specifier.
-        assert(!DS.hasTypeSpecifier() && "Type specifier checked above");
-        
-        // Since we know that this either implicit int (which is rare) or an
-        // error, we'd do lookahead to try to do better recovery.
-        if (isValidAfterIdentifierInDeclarator(NextToken())) {
-          // If this token is valid for implicit int, e.g. "static x = 4", then
-          // we just avoid eating the identifier, so it will be parsed as the
-          // identifier in the declarator.
-          goto DoneWithDeclSpec;
-        }
-
-        // Otherwise, if we don't consume this token, we are going to emit an
-        // error anyway.  Try to recover from various common problems.  Check
-        // to see if this was a reference to a tag name without a tag specified.
-        // This is a common problem in C (saying 'foo' instead of 'struct foo').
-        const char *TagName = 0;
-        tok::TokenKind TagKind = tok::unknown;
-
-        switch (Actions.isTagName(*Tok.getIdentifierInfo(), CurScope)) {
-        default: break;
-        case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
-        case DeclSpec::TST_union: TagName="union" ;TagKind=tok::kw_union ;break;
-        case DeclSpec::TST_struct:TagName="struct";TagKind=tok::kw_struct;break;
-        case DeclSpec::TST_class: TagName="class" ;TagKind=tok::kw_class ;break;
-        }
-        if (TagName) {
-          Diag(Loc, diag::err_use_of_tag_name_without_tag)
-            << Tok.getIdentifierInfo() << TagName
-            << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
-          
-          // Parse this as a tag as if the missing tag were present.
-          if (TagKind == tok::kw_enum)
-            ParseEnumSpecifier(Loc, DS, AS);
-          else
-            ParseClassSpecifier(TagKind, Loc, DS, TemplateParams, AS);
-          continue;
-        }
-        
-        // Since this is almost certainly an invalid type name, emit a
-        // diagnostic that says it, eat the token, and mark the declspec as
-        // invalid.
-        Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo();
-        DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec);
-        DS.SetRangeEnd(Tok.getLocation());
-        ConsumeToken();
-        
-        // TODO: Could inject an invalid typedef decl in an enclosing scope to
-        // avoid rippling error messages on subsequent uses of the same type,
-        // could be useful if #include was forgotten.
-        
+        if (ParseImplicitInt(DS, TemplateParams, AS)) continue;
         goto DoneWithDeclSpec;
       }
 

@@ -815,6 +815,9 @@ private:
                                         bool RequireSemi = true);
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
+  
+  bool ParseImplicitInt(DeclSpec &DS, TemplateParameterLists *TemplateParams,
+                        AccessSpecifier AS);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                                   TemplateParameterLists *TemplateParams = 0,
                                   AccessSpecifier AS = AS_none);
