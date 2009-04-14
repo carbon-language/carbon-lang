@@ -16,6 +16,8 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -122,8 +124,7 @@ void PCHTypeWriter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
 
 void PCHTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
   VisitArrayType(T);
-  // FIXME: Serialize array size expression.
-  assert(false && "Cannot serialize variable-length arrays");
+  Writer.AddExpr(T->getSizeExpr());
   Code = pch::TYPE_VARIABLE_ARRAY;
 }
 
@@ -163,8 +164,7 @@ void PCHTypeWriter::VisitTypedefType(const TypedefType *T) {
 }
 
 void PCHTypeWriter::VisitTypeOfExprType(const TypeOfExprType *T) {
-  // FIXME: serialize the typeof expression
-  assert(false && "Cannot serialize typeof(expr)");
+  Writer.AddExpr(T->getUnderlyingExpr());
   Code = pch::TYPE_TYPEOF_EXPR;
 }
 
@@ -327,7 +327,9 @@ void PCHDeclWriter::VisitValueDecl(ValueDecl *D) {
 
 void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   VisitValueDecl(D);
-  // FIXME: Writer.AddExprRef(D->getInitExpr());
+  Record.push_back(D->getInitExpr()? 1 : 0);
+  if (D->getInitExpr())
+    Writer.AddExpr(D->getInitExpr());
   Writer.AddAPSInt(D->getInitVal(), Record);
   Code = pch::DECL_ENUM_CONSTANT;
 }
@@ -354,7 +356,9 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->isMutable());
-  // FIXME: Writer.AddExprRef(D->getBitWidth());
+  Record.push_back(D->getBitWidth()? 1 : 0);
+  if (D->getBitWidth())
+    Writer.AddExpr(D->getBitWidth());
   Code = pch::DECL_FIELD;
 }
 
@@ -366,7 +370,9 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isDeclaredInCondition());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
-  // FIXME: emit initializer
+  Record.push_back(D->getInit()? 1 : 0);
+  if (D->getInit())
+    Writer.AddExpr(D->getInit());
   Code = pch::DECL_VAR;
 }
 
@@ -417,6 +423,57 @@ void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
   Record.push_back(LexicalOffset);
   if (DC->getPrimaryContext() == DC)
     Record.push_back(VisibleOffset);
+}
+
+//===----------------------------------------------------------------------===//
+// Statement/expression serialization
+//===----------------------------------------------------------------------===//
+namespace {
+  class VISIBILITY_HIDDEN PCHStmtWriter
+    : public StmtVisitor<PCHStmtWriter, void> {
+
+    PCHWriter &Writer;
+    PCHWriter::RecordData &Record;
+
+  public:
+    pch::StmtCode Code;
+
+    PCHStmtWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
+      : Writer(Writer), Record(Record) { }
+
+    void VisitExpr(Expr *E);
+    void VisitDeclRefExpr(DeclRefExpr *E);
+    void VisitIntegerLiteral(IntegerLiteral *E);
+    void VisitCharacterLiteral(CharacterLiteral *E);
+  };
+}
+
+void PCHStmtWriter::VisitExpr(Expr *E) {
+  Writer.AddTypeRef(E->getType(), Record);
+  Record.push_back(E->isTypeDependent());
+  Record.push_back(E->isValueDependent());
+}
+
+void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getDecl(), Record);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Code = pch::EXPR_DECL_REF;
+}
+
+void PCHStmtWriter::VisitIntegerLiteral(IntegerLiteral *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.AddAPInt(E->getValue(), Record);
+  Code = pch::EXPR_INTEGER_LITERAL;
+}
+
+void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
+  VisitExpr(E);
+  Record.push_back(E->getValue());
+  Writer.AddSourceLocation(E->getLoc(), Record);
+  Record.push_back(E->isWide());
+  Code = pch::EXPR_CHARACTER_LITERAL;
 }
 
 //===----------------------------------------------------------------------===//
@@ -513,8 +570,6 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &S) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Include location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
-  // FIXME: Need an actual encoding for the line directives; maybe
-  // this should be an array?
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   return S.EmitAbbrev(Abbrev);
 }
@@ -805,6 +860,9 @@ void PCHWriter::WriteType(const Type *T) {
 
   // Emit the serialized record.
   S.EmitRecord(W.Code, Record);
+
+  // Flush any expressions that were written as part of this type.
+  FlushExprs();
 }
 
 /// \brief Write a block containing all of the types.
@@ -937,6 +995,9 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     assert(W.Code && "Unhandled declaration kind while generating PCH");
     S.EmitRecord(W.Code, Record);
 
+    // Flush any expressions that were written as part of this declaration.
+    FlushExprs();
+    
     // Note external declarations so that we can add them to a record
     // in the PCH file later.
     if (isa<FileScopeAsmDecl>(D))
@@ -1158,5 +1219,28 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   case DeclarationName::CXXUsingDirective:
     // No extra data to emit
     break;
+  }
+}
+
+/// \brief Flush all of the expressions that have been added to the
+/// queue via AddExpr().
+void PCHWriter::FlushExprs() {
+  RecordData Record;
+  PCHStmtWriter Writer(*this, Record);
+  while (!ExprsToEmit.empty()) {
+    Expr *E = ExprsToEmit.front();
+    ExprsToEmit.pop();
+
+    Record.clear();
+    if (!E) {
+      S.EmitRecord(pch::EXPR_NULL, Record);
+      continue;
+    }
+
+    Writer.Code = pch::EXPR_NULL;
+    Writer.Visit(E);
+    assert(Writer.Code != pch::EXPR_NULL && 
+           "Unhandled expression writing PCH file");
+    S.EmitRecord(Writer.Code, Record);  
   }
 }

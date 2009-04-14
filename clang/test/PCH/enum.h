@@ -8,9 +8,9 @@ enum Color {
 
 enum Shape {
   Square,
-  Triangle,
+  Triangle = 17,
   Rhombus,
   Circle
 };
 
-enum Shape aRoundShape = Circle;
+enum Shape aRoundShape;// FIXME: = Circle;

@@ -3,8 +3,7 @@
 // RUN: clang-cc -triple x86_64-apple-darwin9 -include-pch %t.pch -emit-llvm -o %t %s &&
 
 // RUN: grep "@x = common global i32 0" %t | count 1 &&
-// FIXME below: should be i32 17, but we don't serialize y's value yet
-// RUN: grep "@y = common global i32 0"  %t | count 1 &&
+// RUN: grep "@y = global i32 17"  %t | count 1 &&
 // RUN: grep "@z" %t | count 0 &&
 
 // RUN: grep "@x2 = global i32 19" %t | count 1 &&

@@ -16,6 +16,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -127,7 +129,8 @@ void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
 
 void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   VisitValueDecl(ECD);
-  // FIXME: read the initialization expression
+  if (Record[Idx++])
+    ECD->setInitExpr(Reader.ReadExpr());
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
@@ -155,7 +158,8 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitValueDecl(FD);
   FD->setMutable(Record[Idx++]);
-  // FIXME: Read the bit width.
+  if (Record[Idx++])
+    FD->setBitWidth(Reader.ReadExpr());
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -167,6 +171,8 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setPreviousDeclaration(
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   VD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  if (Record[Idx++])
+    VD->setInit(Reader.ReadExpr());
 }
 
 void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
@@ -202,6 +208,53 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
   if (DC->getPrimaryContext() == DC)
     VisibleOffset = Record[Idx++];
   return std::make_pair(LexicalOffset, VisibleOffset);
+}
+
+//===----------------------------------------------------------------------===//
+// Statement/expression deserialization
+//===----------------------------------------------------------------------===//
+namespace {
+  class VISIBILITY_HIDDEN PCHStmtReader 
+    : public StmtVisitor<PCHStmtReader, void> {
+    PCHReader &Reader;
+    const PCHReader::RecordData &Record;
+    unsigned &Idx;
+
+  public:
+    PCHStmtReader(PCHReader &Reader, const PCHReader::RecordData &Record,
+                  unsigned &Idx)
+      : Reader(Reader), Record(Record), Idx(Idx) { }
+
+    void VisitExpr(Expr *E);
+    void VisitDeclRefExpr(DeclRefExpr *E);
+    void VisitIntegerLiteral(IntegerLiteral *E);
+    void VisitCharacterLiteral(CharacterLiteral *E);
+  };
+}
+
+void PCHStmtReader::VisitExpr(Expr *E) {
+  E->setType(Reader.GetType(Record[Idx++]));
+  E->setTypeDependent(Record[Idx++]);
+  E->setValueDependent(Record[Idx++]);
+}
+
+void PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
+  VisitExpr(E);
+  E->setDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+
+void PCHStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
+  VisitExpr(E);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setValue(Reader.ReadAPInt(Record, Idx));
+}
+
+void PCHStmtReader::VisitCharacterLiteral(CharacterLiteral *E) {
+  VisitExpr(E);
+  E->setValue(Record[Idx++]);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setWide(Record[Idx++]);
 }
 
 // FIXME: use the diagnostics machinery
@@ -755,6 +808,26 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   return Success;
 }
 
+namespace {
+  /// \brief Helper class that saves the current stream position and
+  /// then restores it when destroyed.
+  struct VISIBILITY_HIDDEN SavedStreamPosition {
+    explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
+      : Stream(Stream), Offset(Stream.GetCurrentBitNo()),
+        EndOfStream(Stream.AtEndOfStream()){ }
+
+    ~SavedStreamPosition() {
+      if (!EndOfStream) 
+        Stream.JumpToBit(Offset);
+    }
+
+  private:
+    llvm::BitstreamReader &Stream;
+    uint64_t Offset;
+    bool EndOfStream;
+  };
+}
+
 /// \brief Parse the record that corresponds to a LangOptions data
 /// structure.
 ///
@@ -850,6 +923,10 @@ bool PCHReader::ParseLanguageOptions(
 /// at the given offset in the bitstream. It is a helper routine for
 /// GetType, which deals with reading type IDs.
 QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
+  // Keep track of where we are in the stream, then jump back there
+  // after reading this type.
+  SavedStreamPosition SavedPosition(Stream);
+
   Stream.JumpToBit(Offset);
   RecordData Record;
   unsigned Code = Stream.ReadCode();
@@ -918,9 +995,11 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
 
   case pch::TYPE_VARIABLE_ARRAY: {
-    // FIXME: implement this
-    assert(false && "Unable to de-serialize variable-length array type");
-    return QualType();
+    QualType ElementType = GetType(Record[0]);
+    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
+    unsigned IndexTypeQuals = Record[2];
+    return Context.getVariableArrayType(ElementType, ReadExpr(),
+                                        ASM, IndexTypeQuals);
   }
 
   case pch::TYPE_VECTOR: {
@@ -972,9 +1051,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context.getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_TYPEOF_EXPR:
-    // FIXME: Deserialize TypeOfExprType
-    assert(false && "Cannot de-serialize typeof(expr) from a PCH file");
-    return QualType();
+    return Context.getTypeOfExprType(ReadExpr());
 
   case pch::TYPE_TYPEOF: {
     if (Record.size() != 1) {
@@ -1032,12 +1109,17 @@ inline void PCHReader::LoadedDecl(unsigned Index, Decl *D) {
 
 /// \brief Read the declaration at the given offset from the PCH file.
 Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
+  // Keep track of where we are in the stream, then jump back there
+  // after reading this declaration.
+  SavedStreamPosition SavedPosition(Stream);
+
   Decl *D = 0;
   Stream.JumpToBit(Offset);
   RecordData Record;
   unsigned Code = Stream.ReadCode();
   unsigned Idx = 0;
   PCHDeclReader Reader(*this, Record, Idx);
+
   switch ((pch::DeclCode)Stream.ReadRecord(Code, Record)) {
   case pch::DECL_TRANSLATION_UNIT:
     assert(Index == 0 && "Translation unit must be at index 0");
@@ -1237,6 +1319,10 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
   uint64_t Offset = DeclContextOffsets[DC].first;
   assert(Offset && "DeclContext has no lexical decls in storage");
 
+  // Keep track of where we are in the stream, then jump back there
+  // after reading this context.
+  SavedStreamPosition SavedPosition(Stream);
+
   // Load the record containing all of the declarations lexically in
   // this context.
   Stream.JumpToBit(Offset);
@@ -1257,6 +1343,10 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
          "DeclContext has no visible decls in storage");
   uint64_t Offset = DeclContextOffsets[DC].second;
   assert(Offset && "DeclContext has no visible decls in storage");
+
+  // Keep track of where we are in the stream, then jump back there
+  // after reading this context.
+  SavedStreamPosition SavedPosition(Stream);
 
   // Load the record containing all of the declarations visible in
   // this context.
@@ -1392,6 +1482,44 @@ llvm::APInt PCHReader::ReadAPInt(const RecordData &Record, unsigned &Idx) {
 llvm::APSInt PCHReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
   bool isUnsigned = Record[Idx++];
   return llvm::APSInt(ReadAPInt(Record, Idx), isUnsigned);
+}
+
+Expr *PCHReader::ReadExpr() {
+  RecordData Record;
+  unsigned Code = Stream.ReadCode();
+  unsigned Idx = 0;
+  PCHStmtReader Reader(*this, Record, Idx);
+  Stmt::EmptyShell Empty;
+
+  Expr *E = 0;
+  switch ((pch::StmtCode)Stream.ReadRecord(Code, Record)) {
+  case pch::EXPR_NULL: 
+    E = 0; 
+    break;
+
+  case pch::EXPR_DECL_REF: 
+    E = new (Context) DeclRefExpr(Empty); 
+    break;
+
+  case pch::EXPR_INTEGER_LITERAL: 
+    E = new (Context) IntegerLiteral(Empty);
+    break;
+
+  case pch::EXPR_CHARACTER_LITERAL:
+    E = new (Context) CharacterLiteral(Empty);
+    break;
+
+  default:
+    assert(false && "Unhandled expression kind");
+    break;
+  }
+
+  if (E)
+    Reader.Visit(E);
+
+  assert(Idx == Record.size() && "Invalid deserialization of expression");
+
+  return E;
 }
 
 DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {

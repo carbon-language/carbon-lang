@@ -63,6 +63,9 @@ protected:
     setType(T);
   }
 
+  /// \brief Construct an empty expression.
+  explicit Expr(StmtClass SC, EmptyShell) : Stmt(SC) { }
+
 public:  
   QualType getType() const { return TR; }
   void setType(QualType t) { 
@@ -88,6 +91,9 @@ public:
   /// @endcode
   bool isValueDependent() const { return ValueDependent; }
 
+  /// \brief Set whether this expression is value-dependent or not.
+  void setValueDependent(bool VD) { ValueDependent = VD; }
+
   /// isTypeDependent - Determines whether this expression is
   /// type-dependent (C++ [temp.dep.expr]), which means that its type
   /// could change from one template instantiation to the next. For
@@ -100,6 +106,9 @@ public:
   /// }
   /// @endcode
   bool isTypeDependent() const { return TypeDependent; }
+
+  /// \brief Set whether this expression is type-dependent or not.
+  void setTypeDependent(bool TD) { TypeDependent = TD; }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
@@ -315,11 +324,16 @@ public:
   DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, bool VD) : 
     Expr(DeclRefExprClass, t, TD, VD), D(d), Loc(l) {}
   
+  /// \brief Construct an empty declaration reference expression.
+  explicit DeclRefExpr(EmptyShell Empty) 
+    : Expr(DeclRefExprClass, Empty) { }
+
   NamedDecl *getDecl() { return D; }
   const NamedDecl *getDecl() const { return D; }
   void setDecl(NamedDecl *NewD) { D = NewD; }
 
   SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   static bool classof(const Stmt *T) { 
@@ -381,6 +395,10 @@ public:
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
 
+  /// \brief Construct an empty integer literal.
+  explicit IntegerLiteral(EmptyShell Empty) 
+    : Expr(IntegerLiteralClass, Empty) { }
+
   IntegerLiteral* Clone(ASTContext &C) const;
   
   const llvm::APInt &getValue() const { return Value; }
@@ -388,6 +406,9 @@ public:
 
   /// \brief Retrieve the location of the literal.
   SourceLocation getLocation() const { return Loc; }
+
+  void setValue(const llvm::APInt &Val) { Value = Val; }
+  void setLocation(SourceLocation Location) { Loc = Location; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IntegerLiteralClass; 
@@ -411,12 +432,20 @@ public:
   CharacterLiteral(unsigned value, bool iswide, QualType type, SourceLocation l)
     : Expr(CharacterLiteralClass, type), Value(value), Loc(l), IsWide(iswide) {
   }
+
+  /// \brief Construct an empty character literal.
+  CharacterLiteral(EmptyShell Empty) : Expr(CharacterLiteralClass, Empty) { }
+
   SourceLocation getLoc() const { return Loc; }
   bool isWide() const { return IsWide; }
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   unsigned getValue() const { return Value; }
+
+  void setLocation(SourceLocation Location) { Loc = Location; }
+  void setWide(bool W) { IsWide = W; }
+  void setValue(unsigned Val) { Value = Val; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CharacterLiteralClass; 

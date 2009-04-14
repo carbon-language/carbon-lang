@@ -210,7 +210,12 @@ public:
   const_child_iterator child_end() const {
     return const_child_iterator(const_cast<Stmt*>(this)->child_end());
   }
-  
+
+  /// \brief A placeholder type used to construct an empty shell of a
+  /// type, that will be filled in later (e.g., by some
+  /// de-serialization).
+  struct EmptyShell { };
+
   void Emit(llvm::Serializer& S) const;
   static Stmt* Create(llvm::Deserializer& D, ASTContext& C);
 

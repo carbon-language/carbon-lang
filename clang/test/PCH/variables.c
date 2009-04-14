@@ -9,7 +9,8 @@ int *ip2 = &x;
 float *fp = &ip; // expected-warning{{incompatible pointer types}}
 // FIXME:variables.h expected-note{{previous}}
 double z; // expected-error{{redefinition}}
-
+// FIXME:variables.h expected-note{{previous}}
+int z2 = 18; // expected-error{{redefinition}}
 //double VeryHappy; // FIXME: xpected-error{{redefinition}}
 
 

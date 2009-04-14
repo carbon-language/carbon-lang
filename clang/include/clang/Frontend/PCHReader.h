@@ -221,6 +221,9 @@ public:
   /// \brief Read a signed integral value
   llvm::APSInt ReadAPSInt(const RecordData &Record, unsigned &Idx);
 
+  /// \brief Reads an expression from the current stream position.
+  Expr *ReadExpr();
+
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.
   ASTContext &getContext() { return Context; }

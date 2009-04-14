@@ -359,6 +359,24 @@ namespace clang {
       /// into a DeclContext via DeclContext::lookup.
       DECL_CONTEXT_VISIBLE
     };
+
+    /// \brief Record codes for each kind of statement or expression.
+    ///
+    /// These constants describe the records that describe statements
+    /// or expressions. These records can occur within either the type
+    /// or declaration blocks, so they begin with record values of
+    /// 100. Each constant describes a record for a specific
+    /// statement or expression class in the AST.
+    enum StmtCode {
+      /// \brief A NULL expression.
+      EXPR_NULL = 100,
+      /// \brief A DeclRefExpr record.
+      EXPR_DECL_REF,
+      /// \brief An IntegerLiteral record.
+      EXPR_INTEGER_LITERAL,
+      /// \brief A CharacterLiteral record.
+      EXPR_CHARACTER_LITERAL
+    };
     /// @}
   }
 } // end namespace clang

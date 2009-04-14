@@ -9,7 +9,7 @@ extern int *ip, x;
 
 float z;
 
-
+int z2 = 17;
 
 #define MAKE_HAPPY(X) X##Happy
 int MAKE_HAPPY(Very);

@@ -56,7 +56,10 @@ proto *p2 = p1;
 // TYPE_TYPEDEF
 int_ptr_ptr ipp = &int_value_ptr;
 
-// FIXME: TYPE_TYPEOF_EXPR
+// TYPE_TYPEOF_EXPR
+typeof_17 *t17 = &int_value;
+struct S { int x, y; };
+typeof_17 t17_2 = (struct S){1, 2}; // expected-error{{incompatible type initializing}}
 
 // TYPE_TYPEOF
 int_ptr_ptr2 ipp2 = &int_value_ptr;

@@ -4,7 +4,7 @@
 int x;
 int x2;
 
-// FIXME: check this, once we actually serialize it
+// Definitions
 int y = 17;
 
 // Should not show up

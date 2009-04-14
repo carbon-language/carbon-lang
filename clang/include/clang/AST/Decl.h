@@ -807,6 +807,8 @@ public:
   bool isAnonymousStructOrUnion() const;
 
   Expr *getBitWidth() const { return BitWidth; }
+  void setBitWidth(Expr *BW) { BitWidth = BW; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;

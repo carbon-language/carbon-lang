@@ -21,7 +21,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <queue>
-#include <vector>
 
 namespace llvm {
   class APInt;
@@ -43,6 +42,10 @@ class TargetInfo;
 /// data structures. This bitstream can be de-serialized via an
 /// instance of the PCHReader class.
 class PCHWriter {
+public:
+  typedef llvm::SmallVector<uint64_t, 64> RecordData;
+
+private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &S;
 
@@ -100,6 +103,13 @@ class PCHWriter {
   /// record.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
+  /// \brief Expressions that we've encountered while serializing a
+  /// declaration or type.
+  ///
+  /// The expressions in this queue will be emitted following the
+  /// declaration or type.
+  std::queue<Expr *> ExprsToEmit;
+
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
@@ -112,8 +122,6 @@ class PCHWriter {
   void WriteIdentifierTable();
 
 public:
-  typedef llvm::SmallVector<uint64_t, 64> RecordData;
-
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
   PCHWriter(llvm::BitstreamWriter &S);
@@ -141,6 +149,14 @@ public:
 
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
+
+  /// \brief Add the given expression to the queue of expressions to
+  /// emit.
+  void AddExpr(Expr *E) { ExprsToEmit.push(E); }
+
+  /// \brief Flush all of the expressions that have been added to the
+  /// queue via AddExpr().
+  void FlushExprs();
 };
 
 } // end namespace clang

@@ -13,7 +13,7 @@ struct Fun;
 struct Fun *fun;
 
 struct Fun {
-  int is_ptr;
+  int is_ptr : 1;
 
   union {
     void *ptr;

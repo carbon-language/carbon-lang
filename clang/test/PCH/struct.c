@@ -23,6 +23,8 @@ int get_very_fun() {
   return fun2->very_fun;
 }
 
+int *int_ptr_fail = &fun->is_ptr; // expected-error{{address of bit-field requested}}
+
 /* FIXME: DeclContexts aren't yet able to find "struct Nested" nested
    within "struct S", so causing the following to fail. When not using
    PCH, this works because Sema puts the nested struct onto the

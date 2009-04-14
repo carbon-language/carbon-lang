@@ -35,7 +35,8 @@ typedef float proto(float, float, ...);
 // TYPE_TYPEDEF
 typedef int_ptr * int_ptr_ptr;
 
-// FIXME: TYPE_TYPEOF_EXPR
+// TYPE_TYPEOF_EXPR
+typedef typeof(17) typeof_17;
 
 // TYPE_TYPEOF
 typedef typeof(int_ptr *) int_ptr_ptr2;
