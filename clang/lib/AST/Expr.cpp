@@ -775,7 +775,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
     // lvalue, then this is probably a use of the old-school "cast as lvalue"
     // GCC extension.  We don't support it, but we want to produce good
     // diagnostics when it happens so that the user knows why.
-    if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(this))
+    if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(IgnoreParens()))
       if (CE->getSubExpr()->isLvalue(Ctx) == LV_Valid)
         return MLV_LValueCast;
     return MLV_InvalidExpression;
