@@ -226,7 +226,7 @@ Program::ExecuteAndWait(const Path& path,
 
   fflush(stdout);
   fflush(stderr);
-  BOOL rc = CreateProcess(path.c_str(), command, NULL, NULL, FALSE, 0,
+  BOOL rc = CreateProcess(path.c_str(), command, NULL, NULL, TRUE, 0,
                           envblock, NULL, &si, &pi);
   DWORD err = GetLastError();
 
