@@ -402,19 +402,16 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     const TargetRegisterClass *TRC = MRI.getRegClass(VReg);
     const TargetRegisterClass *SRC = getSubRegisterRegClass(TRC, SubIdx);
 
-    if (VRBase) {
-      // Grab the destination register
-#ifndef NDEBUG
-      const TargetRegisterClass *DRC = MRI.getRegClass(VRBase);
-      assert(SRC && DRC && (SRC == DRC || DRC->hasSubClass(SRC)) &&
-             "Source subregister and destination must have the same class");
-#endif
-    } else {
+    // Figure out the register class to create for the destreg.
+    // Note that if we're going to directly use an existing register,
+    // it must be precisely the required class, and not a subclass
+    // thereof.
+    if (VRBase == 0 || SRC != MRI.getRegClass(VRBase)) {
       // Create the reg
       assert(SRC && "Couldn't find source register class");
       VRBase = MRI.createVirtualRegister(SRC);
     }
-    
+
     // Add def, source, and subreg index
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
@@ -427,19 +424,21 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     SDValue N2 = Node->getOperand(2);
     unsigned SubReg = getVR(N1, VRBaseMap);
     unsigned SubIdx = cast<ConstantSDNode>(N2)->getZExtValue();
-    
-      
+    const TargetRegisterClass *TRC = MRI.getRegClass(SubReg);
+    const TargetRegisterClass *SRC =
+      getSuperRegisterRegClass(TRC, SubIdx,
+                               Node->getValueType(0));
+
     // Figure out the register class to create for the destreg.
-    const TargetRegisterClass *TRC = 0;
-    if (VRBase) {
-      TRC = MRI.getRegClass(VRBase);
-    } else {
-      TRC = getSuperRegisterRegClass(MRI.getRegClass(SubReg), SubIdx,
-                                     Node->getValueType(0));
-      assert(TRC && "Couldn't determine register class for insert_subreg");
-      VRBase = MRI.createVirtualRegister(TRC); // Create the reg
+    // Note that if we're going to directly use an existing register,
+    // it must be precisely the required class, and not a subclass
+    // thereof.
+    if (VRBase == 0 || SRC != MRI.getRegClass(VRBase)) {
+      // Create the reg
+      assert(SRC && "Couldn't find source register class");
+      VRBase = MRI.createVirtualRegister(SRC);
     }
-    
+
     // Create the insert_subreg or subreg_to_reg machine instruction.
     MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(), TII->get(Opc));
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
