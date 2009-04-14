@@ -42,6 +42,7 @@ public:
     Destructor,
     FastCall,    
     Format,
+    GNUCInline,
     IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
     NoReturn,
     NoThrow,
@@ -220,6 +221,16 @@ public:
   static bool classof(const DestructorAttr *A) { return true; }
 };  
     
+  
+class GNUCInlineAttr : public Attr {
+public:
+  GNUCInlineAttr() : Attr(GNUCInline) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == GNUCInline; }
+  static bool classof(const GNUCInlineAttr *A) { return true; }
+};
+
 class IBOutletAttr : public Attr {
 public:
   IBOutletAttr() : Attr(IBOutletKind) {}

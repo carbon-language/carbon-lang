@@ -1456,6 +1456,22 @@ static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) NoinlineAttr());
 }
 
+static void HandleGNUCInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  if (!isFunctionOrMethod(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << "gnuc_inline" << 0 /*function*/;
+    return;
+  }
+  
+  d->addAttr(::new (S.Context) GNUCInlineAttr());
+}
+
 static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -1523,6 +1539,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     break;
   case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
+  case AttributeList::AT_gnuc_inline: HandleGNUCInlineAttr(D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
