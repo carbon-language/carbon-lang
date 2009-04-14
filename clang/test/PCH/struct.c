@@ -22,3 +22,13 @@ struct Fun2 {
 int get_very_fun() {
   return fun2->very_fun;
 }
+
+/* FIXME: DeclContexts aren't yet able to find "struct Nested" nested
+   within "struct S", so causing the following to fail. When not using
+   PCH, this works because Sema puts the nested struct onto the
+   declaration chain for its identifier, where C/Objective-C always
+   look. To fix the problem, we either need to give DeclContexts a way
+   to keep track of declarations that are visible without having to
+   build a full lookup table, or we need PCH files to read the
+   declaration chains. */
+/* struct Nested nested = { 1, 2 }; */
