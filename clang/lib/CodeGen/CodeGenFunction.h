@@ -454,6 +454,10 @@ public:
   // of a variable length array type.
   llvm::Value *GetVLASize(const VariableArrayType *);
 
+  /// LoadCXXThis - Load the value of 'this'. This function is only valid while
+  /// generating code for an C++ member function.
+  llvm::Value *LoadCXXThis();
+  
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

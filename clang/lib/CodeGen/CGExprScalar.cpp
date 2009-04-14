@@ -256,9 +256,14 @@ public:
     return Visit(E->getSubExpr());
   }
   Value *VisitUnaryOffsetOf(const UnaryOperator *E);
+    
+  // C++
   Value *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     return Visit(DAE->getExpr());
   }
+  Value *VisitCXXThisExpr(CXXThisExpr *TE) {
+    return CGF.LoadCXXThis();
+  }      
     
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {

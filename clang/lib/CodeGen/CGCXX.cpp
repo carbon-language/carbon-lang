@@ -113,3 +113,14 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), 
                   Callee, Args, MD);
 }
+
+
+llvm::Value *CodeGenFunction::LoadCXXThis() {
+  assert(isa<CXXMethodDecl>(CurFuncDecl) && 
+         "Must be in a C++ member function decl to load 'this'");
+  assert(cast<CXXMethodDecl>(CurFuncDecl)->isInstance() &&
+         "Must be in a C++ member function decl to load 'this'");
+  
+  // FIXME: What if we're inside a block?
+  return Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
+}
