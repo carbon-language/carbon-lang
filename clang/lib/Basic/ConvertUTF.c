@@ -354,7 +354,7 @@ ConversionResult ConvertUTF8toUTF32 (
 	    result = sourceExhausted; break;
 	}
 	/* Do this check whether lenient or strict */
-	if (! isLegalUTF8(source, extraBytesToRead+1)) {
+	if (!isLegalUTF8(source, extraBytesToRead+1)) {
 	    result = sourceIllegal;
 	    break;
 	}
@@ -469,7 +469,7 @@ ConversionResult ConvertUTF8toUTF16 (
 	    result = sourceExhausted; break;
 	}
 	/* Do this check whether lenient or strict */
-	if (! isLegalUTF8(source, extraBytesToRead+1)) {
+	if (!isLegalUTF8(source, extraBytesToRead+1)) {
 	    result = sourceIllegal;
 	    break;
 	}

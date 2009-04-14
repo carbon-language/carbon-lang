@@ -1333,7 +1333,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     }
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, CurScope);
-  } else if (! Tok.is(tok::l_brace)) {
+  } else if (!Tok.is(tok::l_brace)) {
     ParseBlockId();
   } else {
     // Otherwise, pretend we saw (void).
