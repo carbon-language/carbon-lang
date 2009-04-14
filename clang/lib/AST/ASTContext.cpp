@@ -2964,17 +2964,17 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
     const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
 
-    // ID acts sort of like void* for ObjC interfaces
-    if (LHSIface && isObjCIdStructType(RHS))
+    // 'id' and 'Class' act sort of like void* for ObjC interfaces
+    if (LHSIface && (isObjCIdStructType(RHS) || isObjCClassStructType(RHS)))
       return LHS;
-    if (RHSIface && isObjCIdStructType(LHS))
+    if (RHSIface && (isObjCIdStructType(LHS) || isObjCClassStructType(LHS)))
       return RHS;
     
     // ID is compatible with all qualified id types.
     if (LHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = RHS->getAsPointerType()) {
         QualType pType = PT->getPointeeType();
-        if (isObjCIdStructType(pType))
+        if (isObjCIdStructType(pType) || isObjCClassStructType(pType))
           return LHS;
         // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
         // Unfortunately, this API is part of Sema (which we don't have access
@@ -2987,7 +2987,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     if (RHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = LHS->getAsPointerType()) {
         QualType pType = PT->getPointeeType();
-        if (isObjCIdStructType(pType))
+        if (isObjCIdStructType(pType) || isObjCClassStructType(pType))
           return RHS;
         // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
         // Unfortunately, this API is part of Sema (which we don't have access
