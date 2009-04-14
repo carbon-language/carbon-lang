@@ -2534,7 +2534,7 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
     Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_", 
                               llvm::ConstantArray::get(Ident->getName()), 
                               "__TEXT,__cstring,cstring_literals",
-                              0, true);
+                              1, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
@@ -2939,7 +2939,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   llvm::GlobalVariable * Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
                                       llvm::ConstantArray::get(BitMap.c_str()),
                                       "__TEXT,__cstring,cstring_literals",
-                                      0, true);
+                                      1, true);
   // FIXME. Need a commomand-line option for this eventually.
   if (ForStrongLayout)
     printf("\nstrong ivar layout: ");
@@ -2964,7 +2964,7 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_NAME_", 
                               llvm::ConstantArray::get(Sel.getAsString()),
                               "__TEXT,__cstring,cstring_literals",
-                              0, true);
+                              1, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
@@ -2989,7 +2989,7 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(FieldDecl *Field) {
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
                               llvm::ConstantArray::get(TypeStr),
                               "__TEXT,__cstring,cstring_literals",
-                              0, true);
+                              1, true);
     
   return getConstantGEP(Entry, 0, 0);
 }
@@ -3001,16 +3001,11 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
 
   llvm::GlobalVariable *&Entry = MethodVarTypes[TypeStr];
 
-  if (!Entry) {
-    llvm::Constant *C = llvm::ConstantArray::get(TypeStr);
-    Entry = 
-      new llvm::GlobalVariable(C->getType(), false, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, "\01L_OBJC_METH_VAR_TYPE_", 
-                               &CGM.getModule());
-    Entry->setSection("__TEXT,__cstring,cstring_literals");
-    UsedGlobals.push_back(Entry);
-  }
+  if (!Entry)
+    Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
+                              llvm::ConstantArray::get(TypeStr),
+                              "__TEXT,__cstring,cstring_literals",
+                              1, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
@@ -3023,7 +3018,7 @@ llvm::Constant *CGObjCCommonMac::GetPropertyName(IdentifierInfo *Ident) {
     Entry = CreateMetadataVar("\01L_OBJC_PROP_NAME_ATTR_", 
                               llvm::ConstantArray::get(Ident->getName()),
                               "__TEXT,__cstring,cstring_literals",
-                              0, true);
+                              1, true);
 
   return getConstantGEP(Entry, 0, 0);
 }
