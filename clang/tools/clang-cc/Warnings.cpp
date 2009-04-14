@@ -121,6 +121,7 @@ namespace {
 // First the table sets describing the diagnostics controlled by each option.
 static const diag::kind UnusedMacrosDiags[] = { diag::pp_macro_not_used };
 static const diag::kind FloatEqualDiags[] = { diag::warn_floatingpoint_eq };
+static const diag::kind ExtraTokens[] = { diag::ext_pp_extra_tokens_at_eol };
 static const diag::kind ReadOnlySetterAttrsDiags[] = {
   diag::warn_objc_property_attr_mutually_exclusive
 };
@@ -147,7 +148,8 @@ static const diag::kind TrigraphsDiags[] = {
 //static const diag::kind StrictSelectorMatchDiags[] = {  };
 // Second the table of options.  MUST be sorted by name! Binary lookup is done.
 static const WarningOption OptionTable[] = {
-  { "deprecated-declarations", DIAGS(DeprecatedDeclarations) },
+  { "deprecated-declarations",       DIAGS(DeprecatedDeclarations) },
+  { "extra-tokens",                  DIAGS(ExtraTokens) },
   { "float-equal",           DIAGS(FloatEqualDiags) },
   { "format-nonliteral",     DIAGS(FormatNonLiteralDiags) },
   { "implicit-function-declaration", DIAGS(ImplicitFunctionDeclarationDiags) },

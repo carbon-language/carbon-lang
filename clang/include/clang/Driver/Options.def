@@ -322,6 +322,7 @@ OPTION("-Wnewline-eof", Wnewline_eof, Flag, clang_ignored_W_Group, INVALID, "", 
 OPTION("-Wno-#warnings", Wno__HASHwarnings, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-comment", Wno_comment, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-deprecated-declarations", Wno_deprecated_declarations, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
+OPTION("-Wno-extra-tokens", Wno_extra_tokens, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-format-nonliteral", Wno_format_nonliteral, Flag, clang_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-format-y2k", Wno_format_y2k, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
 OPTION("-Wno-four-char-constants", Wno_four_char_constants, Flag, clang_ignored_W_Group, INVALID, "", 0, 0, 0)
