@@ -632,10 +632,10 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   assert(begin[0] == '\'' && "Invalid token lexed");
   ++begin;
 
-  // FIXME: This assumes that 'int' is 32-bits in overflow calculation, and the
-  // size of "value".
-  assert(PP.getTargetInfo().getIntWidth() == 32 &&
-         "Assumes sizeof(int) == 4 for now");
+  // FIXME: This assumes that 'int' is not more than 32-bits in overflow 
+  // calculation, and the size of "value".
+  assert(PP.getTargetInfo().getIntWidth() <= 32 &&
+         "Assumes sizeof(int) <= 4 for now");
   // FIXME: This assumes that wchar_t is 32-bits for now.
   assert(PP.getTargetInfo().getWCharWidth() == 32 && 
          "Assumes sizeof(wchar_t) == 4 for now");
