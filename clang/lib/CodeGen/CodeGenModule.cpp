@@ -325,7 +325,9 @@ void CodeGenModule::SetFunctionAttributes(const Decl *D,
 static CodeGenModule::GVALinkage 
 GetLinkageForFunctionOrMethodDecl(const Decl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (FD->getStorageClass() == FunctionDecl::Static)
+    // "static" and attr(always_inline) functions get internal linkage.
+    if (FD->getStorageClass() == FunctionDecl::Static ||
+        FD->hasAttr<AlwaysInlineAttr>())
       return CodeGenModule::GVA_Internal;
     if (FD->isInline()) {
       if (FD->getStorageClass() == FunctionDecl::Extern)
