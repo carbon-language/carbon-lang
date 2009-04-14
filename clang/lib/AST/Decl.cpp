@@ -60,6 +60,20 @@ ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
 }
 
+const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
+  switch (SC) {
+  case VarDecl::None:          break;
+  case VarDecl::Auto:          return "auto"; break;
+  case VarDecl::Extern:        return "extern"; break;
+  case VarDecl::PrivateExtern: return "__private_extern__"; break; 
+  case VarDecl::Register:      return "register"; break;
+  case VarDecl::Static:        return "static"; break; 
+  }
+
+  assert(0 && "Invalid storage class");
+  return 0;
+}
+
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,

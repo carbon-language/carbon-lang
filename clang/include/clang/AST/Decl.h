@@ -221,6 +221,13 @@ public:
   enum StorageClass {
     None, Auto, Register, Extern, Static, PrivateExtern
   };
+
+  /// getStorageClassSpecifierString - Return the string used to
+  /// specify the storage class \arg SC.
+  ///
+  /// It is illegal to call this function with SC == None.
+  static const char *getStorageClassSpecifierString(StorageClass SC);
+
 private:
   Stmt *Init;
   // FIXME: This can be packed into the bitfields in Decl.
