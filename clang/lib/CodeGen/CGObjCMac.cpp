@@ -4486,7 +4486,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
                               std::string &Name, 
                               const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar) {
-  Name += "\01_OBJC_IVAR_$_" + 
+  Name += "OBJC_IVAR_$_" + 
     getInterfaceDeclForIvar(ID, Ivar, CGM.getContext())->getNameAsString() + 
     '.' + Ivar->getNameAsString();
   llvm::GlobalVariable *IvarOffsetGV = 
