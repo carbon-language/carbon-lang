@@ -239,39 +239,35 @@ void CodeGenModule::SetGlobalValueAttributes(const Decl *D,
   // approximation of what we really want.
   if (!ForDefinition) {
     // Only a few attributes are set on declarations.
-    if (D->hasAttr<DLLImportAttr>()) {
-      // The dllimport attribute is overridden by a subsequent declaration as
-      // dllexport.
-      if (!D->hasAttr<DLLExportAttr>()) {
-        // dllimport attribute can be applied only to function decls, not to
-        // definitions.
-        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-          if (!FD->getBody())
-            GV->setLinkage(llvm::Function::DLLImportLinkage);
-        } else
+    
+    // The dllimport attribute is overridden by a subsequent declaration as
+    // dllexport.
+    if (D->hasAttr<DLLImportAttr>() && !D->hasAttr<DLLExportAttr>()) {
+      // dllimport attribute can be applied only to function decls, not to
+      // definitions.
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        if (!FD->getBody())
           GV->setLinkage(llvm::Function::DLLImportLinkage);
-      }
-    } else if (D->hasAttr<WeakAttr>() || 
-               D->hasAttr<WeakImportAttr>()) {
+      } else
+        GV->setLinkage(llvm::Function::DLLImportLinkage);
+    } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
       // "extern_weak" is overloaded in LLVM; we probably should have
       // separate linkage types for this. 
       GV->setLinkage(llvm::Function::ExternalWeakLinkage);
-   }
-  } else {
-    if (IsInternal) {
-      GV->setLinkage(llvm::Function::InternalLinkage);
-    } else {
-      if (D->hasAttr<DLLExportAttr>()) {
-        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-          // The dllexport attribute is ignored for undefined symbols.
-          if (FD->getBody())
-            GV->setLinkage(llvm::Function::DLLExportLinkage);
-        } else
-          GV->setLinkage(llvm::Function::DLLExportLinkage);
-      } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>() || 
-                 IsInline)
-        GV->setLinkage(llvm::Function::WeakAnyLinkage);
     }
+  } else if (IsInternal) {
+    GV->setLinkage(llvm::Function::InternalLinkage);
+  } else if (D->hasAttr<DLLExportAttr>()) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      // The dllexport attribute is ignored for undefined symbols.
+      if (FD->getBody())
+        GV->setLinkage(llvm::Function::DLLExportLinkage);
+    } else {
+      GV->setLinkage(llvm::Function::DLLExportLinkage);
+    }
+  } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>() ||
+             IsInline) {
+    GV->setLinkage(llvm::Function::WeakAnyLinkage);
   }
 
   // FIXME: Figure out the relative priority of the attribute,
