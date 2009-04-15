@@ -1140,7 +1140,7 @@ public:
   DbgScope(DbgScope *P, DIDescriptor D)
   : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), Scopes(), Variables()
   {}
-  ~DbgScope() {
+  virtual ~DbgScope() {
     for (unsigned i = 0, N = Scopes.size(); i < N; ++i) delete Scopes[i];
     for (unsigned j = 0, M = Variables.size(); j < M; ++j) delete Variables[j];
   }
@@ -1162,6 +1162,32 @@ public:
   /// AddVariable - Add a variable to the scope.
   ///
   void AddVariable(DbgVariable *V) { Variables.push_back(V); }
+
+  virtual bool isInlinedSubroutine() { return false; }
+  virtual unsigned getLine()   { assert ( 0 && "Unexpected scope!"); }
+  virtual unsigned getColumn() { assert ( 0 && "Unexpected scope!"); }
+  virtual unsigned getFile()   { assert ( 0 && "Unexpected scope!"); }
+};
+
+
+//===----------------------------------------------------------------------===//
+/// DbgInlinedSubroutineScope - This class is used to track inlined subroutine
+/// scope information.
+///
+class DbgInlinedSubroutineScope : public DbgScope {
+  unsigned Src;
+  unsigned Line;
+  unsigned Col;
+public:
+  DbgInlinedSubroutineScope(DbgScope *P, DIDescriptor D, 
+                            unsigned S, unsigned L, unsigned C)
+    : DbgScope(P, D), Src(S), Line(L), Col(C)
+  {}
+
+  unsigned getLine()         { return Line; }
+  unsigned getColumn()       { return Col; }
+  unsigned getFile()         { return Src; }
+  bool isInlinedSubroutine() { return true; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -1252,9 +1278,16 @@ class DwarfDebug : public Dwarf {
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
 
+  /// DbgInlinedScopeMap - Tracks inlined scopes in the current function.
+  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> > DbgInlinedScopeMap;
+
   /// InlineInfo - Keep track of inlined functions and their location.
   /// This information is used to populate debug_inlined section.
   DenseMap<GlobalVariable *, SmallVector<unsigned, 4> > InlineInfo;
+
+  /// InlinedVariableScopes - Scopes information for the inlined subroutine
+  /// variables.
+  DenseMap<const MachineInstr *, DbgScope *> InlinedVariableScopes;
 
   /// DebugTimer - Timer for the Dwarf debug writer.
   Timer *DebugTimer;
@@ -1469,7 +1502,7 @@ private:
   /// AddDelta - Add a label delta attribute data and value.
   ///
   void AddDelta(DIE *Die, unsigned Attribute, unsigned Form,
-                          const DWLabel &Hi, const DWLabel &Lo) {
+                const DWLabel &Hi, const DWLabel &Lo) {
     FoldingSetNodeID ID;
     DIEDelta::Profile(ID, Hi, Lo);
     void *Where;
@@ -1550,7 +1583,7 @@ private:
   /// AddAddress - Add an address attribute to a die based on the location
   /// provided.
   void AddAddress(DIE *Die, unsigned Attribute,
-                            const MachineLocation &Location) {
+                  const MachineLocation &Location) {
     unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
     DIEBlock *Block = new DIEBlock();
 
@@ -1933,6 +1966,10 @@ private:
 
     if (!SP.isLocalToUnit())
       AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);
+    
+    // DW_TAG_inlined_subroutine may refer to this DIE.
+    DIE *&Slot = DW_Unit->getDieMapSlotFor(SP.getGV());
+    Slot = SPDie;
     return SPDie;
   }
 
@@ -1987,31 +2024,37 @@ private:
     DbgScope *&Slot = DbgScopeMap[V];
     if (Slot) return Slot;
 
-    // FIXME - breaks down when the context is an inlined function.
-    DIDescriptor ParentDesc;
-    DIDescriptor Desc(V);
-
-    if (Desc.getTag() == dwarf::DW_TAG_lexical_block) {
-      DIBlock Block(V);
-      ParentDesc = Block.getContext();
+    DbgScope *Parent = NULL;
+    DIBlock Block(V);
+    if (!Block.isNull()) {
+      DIDescriptor ParentDesc = Block.getContext();
+      Parent = 
+        ParentDesc.isNull() ?  NULL : getOrCreateScope(ParentDesc.getGV());
     }
+    Slot = new DbgScope(Parent, DIDescriptor(V));
 
-    DbgScope *Parent = ParentDesc.isNull() ? 
-      NULL : getOrCreateScope(ParentDesc.getGV());
-    Slot = new DbgScope(Parent, Desc);
-
-    if (Parent) {
+    if (Parent)
       Parent->AddScope(Slot);
-    } else if (RootDbgScope) {
-      // FIXME - Add inlined function scopes to the root so we can delete them
-      // later.  Long term, handle inlined functions properly.
-      RootDbgScope->AddScope(Slot);
-    } else {
+    else
       // First function is top level function.
       RootDbgScope = Slot;
-    }
 
     return Slot;
+  }
+
+  /// createInlinedSubroutineScope - Returns the scope associated with the 
+  /// inlined subroutine.
+  ///
+  DbgScope *createInlinedSubroutineScope(DISubprogram SP, unsigned Src, 
+                                         unsigned Line, unsigned Col) {
+    DbgScope *Scope = 
+      new DbgInlinedSubroutineScope(NULL, SP, Src, Line, Col);
+
+    // FIXME - Add inlined function scopes to the root so we can delete them
+    // later.  
+    assert (RootDbgScope && "Function scope info missing!");
+    RootDbgScope->AddScope(Scope);
+    return Scope;
   }
 
   /// ConstructDbgScope - Construct the components of a scope.
@@ -2035,12 +2078,11 @@ private:
       unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
       unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
 
-      // Ignore empty scopes.
+      // Ignore empty scopes. 
+      // Do not ignore inlined scope even if it does not have any
+      // variables or scopes.
       if (StartID == EndID && StartID != 0) continue;
-
-      // Do not ignore inlined scope even if it is empty. Inlined scope 
-      // does not have any parent.
-      if (Scope->getParent() 
+      if (!Scope->isInlinedSubroutine()
           && Scope->getScopes().empty() && Scope->getVariables().empty()) 
         continue;
 
@@ -2048,27 +2090,37 @@ private:
         // Just add stuff to the parent scope.
         ConstructDbgScope(Scope, ParentStartID, ParentEndID, ParentDie, Unit);
       } else {
-        DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
-
-        // Add the scope bounds.
-        if (StartID) {
-          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                             DWLabel("label", StartID));
-        } else {
-          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                             DWLabel("func_begin", SubprogramCount));
+        DIE *ScopeDie = NULL;
+        if (MainCU && TAI->doesDwarfUsesInlineInfoSection()) {
+          ScopeDie = new DIE(DW_TAG_inlined_subroutine);
+          DIE *Origin = MainCU->getDieMapSlotFor(Scope->getDesc().getGV());
+          AddDIEntry(ScopeDie, DW_AT_abstract_origin, DW_FORM_ref4, Origin);
+          AddUInt(ScopeDie, DW_AT_call_file, 0, Scope->getFile());
+          AddUInt(ScopeDie, DW_AT_call_line, 0, Scope->getLine());
+          AddUInt(ScopeDie, DW_AT_call_column, 0, Scope->getColumn());
         }
-        if (EndID) {
-          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                             DWLabel("label", EndID));
-        } else {
-          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                             DWLabel("func_end", SubprogramCount));
-        }
-
-        // Add the scope contents.
-        ConstructDbgScope(Scope, StartID, EndID, ScopeDie, Unit);
-        ParentDie->AddChild(ScopeDie);
+        else
+          ScopeDie = new DIE(DW_TAG_lexical_block);
+          
+          // Add the scope bounds.
+          if (StartID) {
+            AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
+                     DWLabel("label", StartID));
+          } else {
+            AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
+                     DWLabel("func_begin", SubprogramCount));
+          }
+          if (EndID) {
+            AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
+                     DWLabel("label", EndID));
+          } else {
+            AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
+                     DWLabel("func_end", SubprogramCount));
+          }
+          
+          // Add the scope contents.
+          ConstructDbgScope(Scope, StartID, EndID, ScopeDie, Unit);
+          ParentDie->AddChild(ScopeDie);
       }
     }
   }
@@ -3286,6 +3338,8 @@ public:
     if (RootDbgScope) {
       delete RootDbgScope;
       DbgScopeMap.clear();
+      DbgInlinedScopeMap.clear();
+      InlinedVariableScopes.clear();
       RootDbgScope = NULL;
     }
 
@@ -3423,20 +3477,6 @@ public:
     return ID;
   }
 
-  /// RecordRegionStart - Indicate the start of a region.
-  unsigned RecordRegionStart(GlobalVariable *V, unsigned ID) {
-    if (TimePassesIsEnabled)
-      DebugTimer->startTimer();
-
-    DbgScope *Scope = getOrCreateScope(V);
-    if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
-
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return ID;
-  }
-
   /// RecordRegionEnd - Indicate the end of a region.
   unsigned RecordRegionEnd(GlobalVariable *V) {
     if (TimePassesIsEnabled)
@@ -3453,7 +3493,8 @@ public:
   }
 
   /// RecordVariable - Indicate the declaration of  a local variable.
-  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
+                      const MachineInstr *MI) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
 
@@ -3465,9 +3506,16 @@ public:
       DIGlobalVariable DG(GV);
       Scope = getOrCreateScope(DG.getContext().getGV());
     } else {
+      DenseMap<const MachineInstr *, DbgScope *>::iterator 
+        SI = InlinedVariableScopes.find(MI);
+      if (SI != InlinedVariableScopes.end())  {
+        // or GV is an inlined local variable.
+        Scope = SI->second;
+      } else {
       // or GV is a local variable.
-      DIVariable DV(GV);
-      Scope = getOrCreateScope(DV.getContext().getGV());
+        DIVariable DV(GV);
+        Scope = getOrCreateScope(DV.getContext().getGV());
+      }
     }
 
     assert(Scope && "Unable to find variable' scope");
@@ -3478,10 +3526,28 @@ public:
       DebugTimer->stopTimer();
   }
 
-  //// RecordInlineInfo - Global variable GV is inlined at the location marked
-  //// by LabelID label.
-  void RecordInlineInfo(GlobalVariable *GV, unsigned LabelID) {
+  //// RecordInlinedFnStart - Indicate the start of inlined subroutine.
+  void RecordInlinedFnStart(Instruction *FSI, DISubprogram &SP, unsigned LabelID,
+                            unsigned Src, unsigned Line, unsigned Col) {
+    if (!TAI->doesDwarfUsesInlineInfoSection())
+      return;
+
+    DbgScope *Scope = createInlinedSubroutineScope(SP, Src, Line, Col);
+    Scope->setStartLabelID(LabelID);
     MMI->RecordUsedDbgLabel(LabelID);
+    GlobalVariable *GV = SP.getGV();
+
+    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
+      SI = DbgInlinedScopeMap.find(GV);
+    if (SI == DbgInlinedScopeMap.end()) {
+      SmallVector<DbgScope *, 2> Scopes;
+      Scopes.push_back(Scope);
+      DbgInlinedScopeMap[GV] = Scopes;
+    } else {
+      SmallVector<DbgScope *, 2> &Scopes = SI->second;
+      Scopes.push_back(Scope);
+    }
+
     DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
       I = InlineInfo.find(GV);
     if (I == InlineInfo.end()) {
@@ -3494,6 +3560,43 @@ public:
     SmallVector<unsigned, 4> &Labels = I->second;
     Labels.push_back(LabelID);
   }
+
+  /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
+  unsigned RecordInlinedFnEnd(DISubprogram &SP) {
+    if (!TAI->doesDwarfUsesInlineInfoSection())
+      return 0;
+
+    GlobalVariable *GV = SP.getGV();
+    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
+      I = DbgInlinedScopeMap.find(GV);
+    if (I == DbgInlinedScopeMap.end()) 
+      return 0;
+
+    SmallVector<DbgScope *, 2> &Scopes = I->second;
+    DbgScope *Scope = Scopes.back(); Scopes.pop_back();
+    unsigned ID = MMI->NextLabelID();
+    MMI->RecordUsedDbgLabel(ID);
+    Scope->setEndLabelID(ID);
+    return ID;
+  }
+
+  /// RecordVariableScope - Record scope for the variable declared by
+  /// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE.
+  /// Record scopes for only inlined subroutine variables. Other
+  /// variables' scopes are determined during RecordVariable().
+  void RecordVariableScope(DIVariable &DV, const MachineInstr *DeclareMI) {
+    DISubprogram SP(DV.getContext().getGV());
+    if (SP.isNull())
+      return;
+    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
+      I = DbgInlinedScopeMap.find(SP.getGV());
+    if (I == DbgInlinedScopeMap.end())
+      return;
+
+    SmallVector<DbgScope *, 2> &Scopes = I->second;
+    InlinedVariableScopes[DeclareMI] = Scopes.back();
+  }
+
 };
 
 //===----------------------------------------------------------------------===//
@@ -4652,11 +4755,6 @@ unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V) {
   return DD->RecordRegionStart(V);
 }
 
-/// RecordRegionStart - Indicate the start of a region.
-unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V, unsigned ID) {
-  return DD->RecordRegionStart(V, ID);
-}
-
 /// RecordRegionEnd - Indicate the end of a region.
 unsigned DwarfWriter::RecordRegionEnd(GlobalVariable *V) {
   return DD->RecordRegionEnd(V);
@@ -4669,8 +4767,9 @@ unsigned DwarfWriter::getRecordSourceLineCount() {
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
-void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
-  DD->RecordVariable(GV, FrameIndex);
+void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
+                                 const MachineInstr *MI) {
+  DD->RecordVariable(GV, FrameIndex, MI);
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
@@ -4679,9 +4778,22 @@ bool DwarfWriter::ShouldEmitDwarfDebug() const {
   return DD->ShouldEmitDwarfDebug();
 }
 
-//// RecordInlineInfo - Global variable GV is inlined at the location marked
+//// RecordInlinedFnStart - Global variable GV is inlined at the location marked
 //// by LabelID label.
-void DwarfWriter::RecordInlineInfo(GlobalVariable *GV, unsigned LabelID) {
-  DD->RecordInlineInfo(GV, LabelID);
+void DwarfWriter::RecordInlinedFnStart(Instruction *I, DISubprogram &SP, 
+                                       unsigned LabelID, unsigned Src, 
+                                       unsigned Line, unsigned Col) {
+  DD->RecordInlinedFnStart(I, SP, LabelID, Src, Line, Col);
 }
 
+/// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
+unsigned DwarfWriter::RecordInlinedFnEnd(DISubprogram &SP) {
+  return DD->RecordInlinedFnEnd(SP);
+}
+
+/// RecordVariableScope - Record scope for the variable declared by
+/// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE.
+void DwarfWriter::RecordVariableScope(DIVariable &DV,
+                                      const MachineInstr *DeclareMI) {
+  DD->RecordVariableScope(DV, DeclareMI);
+}

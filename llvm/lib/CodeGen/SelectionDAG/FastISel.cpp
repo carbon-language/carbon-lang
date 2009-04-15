@@ -47,6 +47,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/DebugLoc.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -354,10 +355,18 @@ bool FastISel::SelectCall(User *I) {
   case Intrinsic::dbg_region_end: {
     DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
     if (DW && DW->ValidDebugInfo(REI->getContext(), true)) {
-      unsigned ID = 
-        DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, DL, II).addImm(ID);
+     unsigned ID = 0;
+     DISubprogram Subprogram(cast<GlobalVariable>(REI->getContext()));
+      if (!Subprogram.describes(MF.getFunction())) {
+        // This is end of an inlined function.
+        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+        ID = DW->RecordInlinedFnEnd(Subprogram);
+        BuildMI(MBB, DL, II).addImm(ID);
+      } else {
+        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+        ID =  DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
+        BuildMI(MBB, DL, II).addImm(ID);
+      }
     }
     return true;
   }
@@ -369,6 +378,7 @@ bool FastISel::SelectCall(User *I) {
     if (DW->ValidDebugInfo(SP, true)) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
       // (most?) gdb expects.
+      DebugLoc PrevLoc = DL;
       DISubprogram Subprogram(cast<GlobalVariable>(SP));
       DICompileUnit CompileUnit = Subprogram.getCompileUnit();
       std::string Dir, FN;
@@ -379,17 +389,15 @@ bool FastISel::SelectCall(User *I) {
       unsigned Line = Subprogram.getLineNumber();
       unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
-
-      std::string SPName;
-      Subprogram.getLinkageName(SPName);
-      if (!SPName.empty() 
-          && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
-        // This is a beginning of inlined function.
-        DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()), 
-                              LabelID);
+      if (!Subprogram.describes(MF.getFunction())) {
+        // This is a beginning of an inlined function.
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         BuildMI(MBB, DL, II).addImm(LabelID);
-        DW->RecordInlineInfo(Subprogram.getGV(), LabelID);
+        DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
+        DW->RecordInlinedFnStart(FSI, Subprogram, LabelID, 
+                                 PrevLocTpl.Src,
+                                 PrevLocTpl.Line,
+                                 PrevLocTpl.Col);
       } else {
         // llvm.dbg.func_start also defines beginning of function scope.
         DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
@@ -419,7 +427,13 @@ bool FastISel::SelectCall(User *I) {
 
       // Build the DECLARE instruction.
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DECLARE);
-      BuildMI(MBB, DL, II).addFrameIndex(FI).addGlobalAddress(GV);
+      MachineInstr *DeclareMI 
+        = BuildMI(MBB, DL, II).addFrameIndex(FI).addGlobalAddress(GV);
+      DIVariable DV(cast<GlobalVariable>(GV));
+      if (!DV.isNull()) {
+        // This is a local variable
+        DW->RecordVariableScope(DV, DeclareMI);
+      }
     }
     return true;
   }
