@@ -28,21 +28,15 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 typedef std::vector<Record*> RecordVector;
-typedef std::vector<Record*> SuperClassVector;
-typedef std::vector<RecordVal> RecordValVector;
 
 static const RecordVal* findRecordVal(const Record& R, const std::string &key) {  
+  typedef std::vector<RecordVal> RecordValVector;
   const RecordValVector &Vals = R.getValues();
   for (RecordValVector::const_iterator I=Vals.begin(), E=Vals.end(); I!=E; ++I)
     if ((*I).getName() == key)
       return &*I;
   
   return 0;
-}
-
-static void EmitAllCaps(std::ostream& OS, const std::string &s) {
-  for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I)
-    OS << char(toupper(*I));  
 }
 
 //===----------------------------------------------------------------------===//
@@ -68,15 +62,12 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
   
   // Write the #if guard
   if (!Component.empty()) {
-    OS << "#ifdef ";
-    EmitAllCaps(OS, Component);
-    OS << "START\n__";
-    EmitAllCaps(OS, Component);
-    OS << "START = DIAG_START_";
-    EmitAllCaps(OS, Component);
-    OS << ",\n#undef ";
-    EmitAllCaps(OS, Component);
-    OS << "START\n#endif\n";
+    std::string ComponentName = UppercaseString(Component);
+    OS << "#ifdef " << ComponentName << "START\n";
+    OS << "__" << ComponentName << "START = DIAG_START_" << ComponentName
+       << ",\n";
+    OS << "#undef " << ComponentName << "START\n";
+    OS << "#endif\n";
   }
   
   for (RecordVector::const_iterator I=Diags.begin(), E=Diags.end(); I!=E; ++I) {
