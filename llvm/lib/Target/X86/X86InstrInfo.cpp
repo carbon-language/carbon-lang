@@ -264,6 +264,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOV64rr,     X86::MOV64mr, 0 },
     { X86::MOV8ri,      X86::MOV8mi, 0 },
     { X86::MOV8rr,      X86::MOV8mr, 0 },
+    { X86::MOV8rr_NOREX, X86::MOV8mr_NOREX, 0 },
     { X86::MOVAPDrr,    X86::MOVAPDmr, 0 },
     { X86::MOVAPSrr,    X86::MOVAPSmr, 0 },
     { X86::MOVDQArr,    X86::MOVDQAmr, 0 },
