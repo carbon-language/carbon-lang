@@ -10,9 +10,15 @@ typedef typeof(Enumerator) enum_decl_ref;
 typedef typeof(17) integer_literal;
 typedef typeof(17l) long_literal;
 
-// FloatingLiteral
+// FloatingLiteral and ParenExpr
 typedef typeof((42.5)) floating_literal;
 
 // CharacterLiteral
 typedef typeof('a') char_literal;
+
+// BinaryOperator
+typedef typeof(i + Enumerator) add_result;
+
+// CStyleCastExpr
+typedef typeof((void *)0) void_ptr;
 

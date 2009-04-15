@@ -239,7 +239,10 @@ namespace {
     unsigned VisitCharacterLiteral(CharacterLiteral *E);
     unsigned VisitParenExpr(ParenExpr *E);
     unsigned VisitCastExpr(CastExpr *E);
+    unsigned VisitBinaryOperator(BinaryOperator *E);
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
+    unsigned VisitExplicitCastExpr(ExplicitCastExpr *E);
+    unsigned VisitCStyleCastExpr(CStyleCastExpr *E);
   };
 }
 
@@ -301,9 +304,31 @@ unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
   return 1;
 }
 
+unsigned PCHStmtReader::VisitBinaryOperator(BinaryOperator *E) {
+  VisitExpr(E);
+  E->setLHS(ExprStack.end()[-2]);
+  E->setRHS(ExprStack.end()[-1]);
+  E->setOpcode((BinaryOperator::Opcode)Record[Idx++]);
+  E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 2;
+}
+
 unsigned PCHStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
   E->setLvalueCast(Record[Idx++]);
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitExplicitCastExpr(ExplicitCastExpr *E) {
+  VisitCastExpr(E);
+  E->setTypeAsWritten(Reader.GetType(Record[Idx++]));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
+  VisitExplicitCastExpr(E);
+  E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
 }
 
@@ -1618,8 +1643,16 @@ Expr *PCHReader::ReadExpr() {
       E = new (Context) ParenExpr(Empty);
       break;
 
+    case pch::EXPR_BINARY_OPERATOR:
+      E = new (Context) BinaryOperator(Empty);
+      break;
+
     case pch::EXPR_IMPLICIT_CAST:
       E = new (Context) ImplicitCastExpr(Empty);
+      break;
+
+    case pch::EXPR_CSTYLE_CAST:
+      E = new (Context) CStyleCastExpr(Empty);
       break;
     }
 

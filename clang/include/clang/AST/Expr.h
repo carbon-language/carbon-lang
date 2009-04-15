@@ -1228,10 +1228,15 @@ protected:
   ExplicitCastExpr(StmtClass SC, QualType exprTy, Expr *op, QualType writtenTy) 
     : CastExpr(SC, exprTy, op), TypeAsWritten(writtenTy) {}
 
+  /// \brief Construct an empty explicit cast.
+  ExplicitCastExpr(StmtClass SC, EmptyShell Shell) 
+    : CastExpr(SC, Shell) { }
+
 public:
   /// getTypeAsWritten - Returns the type that this expression is
   /// casting to, as written in the source code.
   QualType getTypeAsWritten() const { return TypeAsWritten; }
+  void setTypeAsWritten(QualType T) { TypeAsWritten = T; }
 
   static bool classof(const Stmt *T) { 
     StmtClass SC = T->getStmtClass();
@@ -1257,9 +1262,16 @@ public:
     ExplicitCastExpr(CStyleCastExprClass, exprTy, op, writtenTy), 
     LPLoc(l), RPLoc(r) {}
 
+  /// \brief Construct an empty C-style explicit cast.
+  explicit CStyleCastExpr(EmptyShell Shell) 
+    : ExplicitCastExpr(CStyleCastExprClass, Shell) { }
+
   SourceLocation getLParenLoc() const { return LPLoc; }
+  void setLParenLoc(SourceLocation L) { LPLoc = L; }
+
   SourceLocation getRParenLoc() const { return RPLoc; }
-  
+  void setRParenLoc(SourceLocation L) { RPLoc = L; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(LPLoc, getSubExpr()->getSourceRange().getEnd());
   }
@@ -1333,10 +1345,21 @@ public:
            "Use ArithAssignBinaryOperator for compound assignments");
   }
 
+  /// \brief Construct an empty binary operator.
+  explicit BinaryOperator(EmptyShell Empty) 
+    : Expr(BinaryOperatorClass, Empty), Opc(Comma) { }
+
   SourceLocation getOperatorLoc() const { return OpLoc; }
+  void setOperatorLoc(SourceLocation L) { OpLoc = L; }
+
   Opcode getOpcode() const { return Opc; }
+  void setOpcode(Opcode O) { Opc = O; }
+
   Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
+  void setLHS(Expr *E) { SubExprs[LHS] = E; }
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
+  void setRHS(Expr *E) { SubExprs[RHS] = E; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLHS()->getLocStart(), getRHS()->getLocEnd());
   }

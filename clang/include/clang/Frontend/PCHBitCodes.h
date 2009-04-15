@@ -385,8 +385,12 @@ namespace clang {
       EXPR_CHARACTER_LITERAL,
       /// \brief A ParenExpr record.
       EXPR_PAREN,
+      /// \brief A BinaryOperator record.
+      EXPR_BINARY_OPERATOR,
       /// \brief An ImplicitCastExpr record.
-      EXPR_IMPLICIT_CAST
+      EXPR_IMPLICIT_CAST,
+      /// \brief A CStyleCastExpr record.
+      EXPR_CSTYLE_CAST
     };
     /// @}
   }

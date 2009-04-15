@@ -451,7 +451,10 @@ namespace {
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
     void VisitCastExpr(CastExpr *E);
+    void VisitBinaryOperator(BinaryOperator *E);
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
+    void VisitExplicitCastExpr(ExplicitCastExpr *E);
+    void VisitCStyleCastExpr(CStyleCastExpr *E);
   };
 }
 
@@ -511,10 +514,31 @@ void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
   Writer.WriteSubExpr(E->getSubExpr());
 }
 
+void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getLHS());
+  Writer.WriteSubExpr(E->getRHS());
+  Record.push_back(E->getOpcode()); // FIXME: stable encoding
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Code = pch::EXPR_BINARY_OPERATOR;
+}
+
 void PCHStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
   Record.push_back(E->isLvalueCast());
   Code = pch::EXPR_IMPLICIT_CAST;
+}
+
+void PCHStmtWriter::VisitExplicitCastExpr(ExplicitCastExpr *E) {
+  VisitCastExpr(E);
+  Writer.AddTypeRef(E->getTypeAsWritten(), Record);
+}
+
+void PCHStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
+  VisitExplicitCastExpr(E);
+  Writer.AddSourceLocation(E->getLParenLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_CSTYLE_CAST;
 }
 
 //===----------------------------------------------------------------------===//

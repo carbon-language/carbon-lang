@@ -17,8 +17,14 @@ enum_decl_ref *enum_ptr1 = &integer;
 integer_literal *int_ptr2 = &integer;
 long_literal *long_ptr1 = &long_integer;
 
-// FloatingLiteral
+// FloatingLiteral + ParenExpr
 floating_literal *double_ptr = &floating;
 
 // CharacterLiteral
 char_literal *int_ptr3 = &integer;
+
+// BinaryOperator
+add_result *int_ptr4 = &integer;
+
+// CStyleCastExpr
+void_ptr vp1 = &integer;
