@@ -489,8 +489,7 @@ static void HandleIntegerSModifier(unsigned ValNo,
 
 
 /// PluralNumber - Parse an unsigned integer and advance Start.
-static unsigned PluralNumber(const char *&Start, const char *End)
-{
+static unsigned PluralNumber(const char *&Start, const char *End) {
   // Programming 101: Parse a decimal number :-)
   unsigned Val = 0;
   while (Start != End && *Start >= '0' && *Start <= '9') {
@@ -502,8 +501,7 @@ static unsigned PluralNumber(const char *&Start, const char *End)
 }
 
 /// TestPluralRange - Test if Val is in the parsed range. Modifies Start.
-static bool TestPluralRange(unsigned Val, const char *&Start, const char *End)
-{
+static bool TestPluralRange(unsigned Val, const char *&Start, const char *End) {
   if (*Start != '[') {
     unsigned Ref = PluralNumber(Start, End);
     return Ref == Val;
@@ -520,8 +518,7 @@ static bool TestPluralRange(unsigned Val, const char *&Start, const char *End)
 }
 
 /// EvalPluralExpr - Actual expression evaluator for HandlePluralModifier.
-static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End)
-{
+static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End) {
   // Empty condition?
   if (*Start == ':')
     return true;
