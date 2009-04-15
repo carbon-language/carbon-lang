@@ -450,6 +450,8 @@ namespace {
     void VisitFloatingLiteral(FloatingLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
+    void VisitUnaryOperator(UnaryOperator *E);
+    void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     void VisitCastExpr(CastExpr *E);
     void VisitBinaryOperator(BinaryOperator *E);
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -507,6 +509,28 @@ void PCHStmtWriter::VisitParenExpr(ParenExpr *E) {
   Writer.AddSourceLocation(E->getRParen(), Record);
   Writer.WriteSubExpr(E->getSubExpr());
   Code = pch::EXPR_PAREN;
+}
+
+void PCHStmtWriter::VisitUnaryOperator(UnaryOperator *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getSubExpr());
+  Record.push_back(E->getOpcode()); // FIXME: stable encoding
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Code = pch::EXPR_UNARY_OPERATOR;
+}
+
+void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) { 
+  VisitExpr(E);
+  Record.push_back(E->isSizeOf());
+  if (E->isArgumentType())
+    Writer.AddTypeRef(E->getArgumentType(), Record);
+  else {
+    Record.push_back(0);
+    Writer.WriteSubExpr(E->getArgumentExpr());
+  }
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_SIZEOF_ALIGN_OF;
 }
 
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {

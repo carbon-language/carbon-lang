@@ -238,6 +238,8 @@ namespace {
     unsigned VisitFloatingLiteral(FloatingLiteral *E);
     unsigned VisitCharacterLiteral(CharacterLiteral *E);
     unsigned VisitParenExpr(ParenExpr *E);
+    unsigned VisitUnaryOperator(UnaryOperator *E);
+    unsigned VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     unsigned VisitCastExpr(CastExpr *E);
     unsigned VisitBinaryOperator(BinaryOperator *E);
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -296,6 +298,28 @@ unsigned PCHStmtReader::VisitParenExpr(ParenExpr *E) {
   E->setRParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setSubExpr(ExprStack.back());
   return 1;
+}
+
+unsigned PCHStmtReader::VisitUnaryOperator(UnaryOperator *E) {
+  VisitExpr(E);
+  E->setSubExpr(ExprStack.back());
+  E->setOpcode((UnaryOperator::Opcode)Record[Idx++]);
+  E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+  VisitExpr(E);
+  E->setSizeof(Record[Idx++]);
+  if (Record[Idx] == 0) {
+    E->setArgument(ExprStack.back());
+    ++Idx;
+  } else {
+    E->setArgument(Reader.GetType(Record[Idx++]));
+  }
+  E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return E->isArgumentType()? 0 : 1;
 }
 
 unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
@@ -1638,6 +1662,14 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_PAREN:
       E = new (Context) ParenExpr(Empty);
+      break;
+
+    case pch::EXPR_UNARY_OPERATOR:
+      E = new (Context) UnaryOperator(Empty);
+      break;
+
+    case pch::EXPR_SIZEOF_ALIGN_OF:
+      E = new (Context) SizeOfAlignOfExpr(Empty);
       break;
 
     case pch::EXPR_BINARY_OPERATOR:

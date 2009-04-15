@@ -16,6 +16,13 @@ typedef typeof((42.5)) floating_literal;
 // CharacterLiteral
 typedef typeof('a') char_literal;
 
+// UnaryOperator
+typedef typeof(-Enumerator) negate_enum;
+
+// SizeOfAlignOfExpr
+typedef typeof(sizeof(int)) typeof_sizeof;
+typedef typeof(sizeof(Enumerator)) typeof_sizeof2;
+
 // BinaryOperator
 typedef typeof(i + Enumerator) add_result;
 

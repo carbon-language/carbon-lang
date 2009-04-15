@@ -704,12 +704,20 @@ public:
            input->isValueDependent()), 
       Val(input), Opc(opc), Loc(l) {}
 
+  /// \brief Build an empty unary operator.
+  explicit UnaryOperator(EmptyShell Empty) 
+    : Expr(UnaryOperatorClass, Empty), Opc(AddrOf) { }
+
   Opcode getOpcode() const { return Opc; }
+  void setOpcode(Opcode O) { Opc = O; }
+
   Expr *getSubExpr() const { return cast<Expr>(Val); }
-  
+  void setSubExpr(Expr *E) { Val = E; }
+
   /// getOperatorLoc - Return the location of the operator.
   SourceLocation getOperatorLoc() const { return Loc; }
-  
+  void setOperatorLoc(SourceLocation L) { Loc = L; }
+
   /// isPostfix - Return true if this is a postfix operation, like x++.
   static bool isPostfix(Opcode Op) {
     return Op == PostInc || Op == PostDec;
@@ -793,9 +801,15 @@ public:
     Argument.Ex = E;
   }
 
+  /// \brief Construct an empty sizeof/alignof expression.
+  explicit SizeOfAlignOfExpr(EmptyShell Empty)
+    : Expr(SizeOfAlignOfExprClass, Empty) { }
+
   virtual void Destroy(ASTContext& C);
 
   bool isSizeOf() const { return isSizeof; }
+  void setSizeof(bool S) { isSizeof = S; }
+
   bool isArgumentType() const { return isType; }
   QualType getArgumentType() const {
     assert(isArgumentType() && "calling getArgumentType() when arg is expr");
@@ -808,7 +822,13 @@ public:
   const Expr *getArgumentExpr() const {
     return const_cast<SizeOfAlignOfExpr*>(this)->getArgumentExpr();
   }
-  
+
+  void setArgument(Expr *E) { Argument.Ex = E; isType = false; }
+  void setArgument(QualType T) { 
+    Argument.Ty = T.getAsOpaquePtr(); 
+    isType = true; 
+  }
+
   /// Gets the argument type, or the type of the argument expression, whichever
   /// is appropriate.
   QualType getTypeOfArgument() const {
@@ -816,6 +836,10 @@ public:
   }
 
   SourceLocation getOperatorLoc() const { return OpLoc; }
+  void setOperatorLoc(SourceLocation L) { OpLoc = L; }
+
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(OpLoc, RParenLoc);

@@ -23,8 +23,16 @@ floating_literal *double_ptr = &floating;
 // CharacterLiteral
 char_literal *int_ptr3 = &integer;
 
+// UnaryOperator
+negate_enum *int_ptr4 = &integer;
+
+// SizeOfAlignOfExpr
+typeof(sizeof(float)) size_t_value;
+typeof_sizeof *size_t_ptr = &size_t_value;
+typeof_sizeof2 *size_t_ptr2 = &size_t_value;
+
 // BinaryOperator
-add_result *int_ptr4 = &integer;
+add_result *int_ptr5 = &integer;
 
 // CStyleCastExpr
 void_ptr vp1 = &integer;
