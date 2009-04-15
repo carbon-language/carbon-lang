@@ -281,7 +281,7 @@ class InitListChecker {
                       InitListExpr *StructuredList,
                       unsigned &StructuredIndex);
   bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE, 
-                                  DesignatedInitExpr::designators_iterator D,
+                                  unsigned DesigIdx,
                                   QualType &CurrentObjectType, 
                                   RecordDecl::field_iterator *NextField,
                                   llvm::APSInt *NextElementIndex,
@@ -856,7 +856,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
 
       // Handle this designated initializer. elementIndex will be
       // updated to be the next array element we'll initialize.
-      if (CheckDesignatedInitializer(IList, DIE, DIE->designators_begin(), 
+      if (CheckDesignatedInitializer(IList, DIE, 0, 
                                      DeclType, 0, &elementIndex, Index,
                                      StructuredList, StructuredIndex, true,
                                      false)) {
@@ -958,7 +958,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 
       // Handle this designated initializer. Field will be updated to
       // the next field that we'll be initializing.
-      if (CheckDesignatedInitializer(IList, DIE, DIE->designators_begin(), 
+      if (CheckDesignatedInitializer(IList, DIE, 0, 
                                      DeclType, &Field, 0, Index,
                                      StructuredList, StructuredIndex,
                                      true, TopLevelObject))
@@ -1043,8 +1043,9 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 /// @param IList  The initializer list in which this designated
 /// initializer occurs.
 ///
-/// @param DIE  The designated initializer and its initialization
-/// expression.
+/// @param DIE The designated initializer expression.
+///
+/// @param DesigIdx  The index of the current designator.
 ///
 /// @param DeclType  The type of the "current object" (C99 6.7.8p17),
 /// into which the designation in @p DIE should refer.
@@ -1068,7 +1069,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 bool 
 InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
                                       DesignatedInitExpr *DIE, 
-                                     DesignatedInitExpr::designators_iterator D,
+                                      unsigned DesigIdx,
                                       QualType &CurrentObjectType,
                                       RecordDecl::field_iterator *NextField,
                                       llvm::APSInt *NextElementIndex,
@@ -1077,7 +1078,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
                                       unsigned &StructuredIndex,
                                             bool FinishSubobjectInit,
                                             bool TopLevelObject) {
-  if (D == DIE->designators_end()) {
+  if (DesigIdx == DIE->size()) {
     // Check the actual initialization for the designated object type.
     bool prevHadError = hadError;
 
@@ -1099,10 +1100,11 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     return hadError && !prevHadError;
   }
 
-  bool IsFirstDesignator = (D == DIE->designators_begin());
+  bool IsFirstDesignator = (DesigIdx == 0);
   assert((IsFirstDesignator || StructuredList) && 
          "Need a non-designated initializer list to start from");
 
+  DesignatedInitExpr::Designator *D = DIE->getDesignator(DesigIdx);
   // Determine the structural initializer list that corresponds to the
   // current subobject.
   StructuredList = IsFirstDesignator? SyntacticToSemantic[IList]
@@ -1199,11 +1201,11 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     // This designator names a flexible array member.
     if (Field->getType()->isIncompleteArrayType()) {
       bool Invalid = false;
-      DesignatedInitExpr::designators_iterator NextD = D;
-      ++NextD;
-      if (NextD != DIE->designators_end()) {
+      if ((DesigIdx + 1) != DIE->size()) {
         // We can't designate an object within the flexible array
         // member (because GCC doesn't allow it).
+        DesignatedInitExpr::Designator *NextD 
+          = DIE->getDesignator(DesigIdx + 1);
         SemaRef.Diag(NextD->getStartLocation(), 
                       diag::err_designator_into_flexible_array_member)
           << SourceRange(NextD->getStartLocation(), 
@@ -1259,8 +1261,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
       // Recurse to check later designated subobjects.
       QualType FieldType = (*Field)->getType();
       unsigned newStructuredIndex = FieldIndex;
-      if (CheckDesignatedInitializer(IList, DIE, ++D, FieldType, 0, 0, Index,
-                                     StructuredList, newStructuredIndex,
+      if (CheckDesignatedInitializer(IList, DIE, DesigIdx + 1, FieldType, 0, 0,
+                                     Index, StructuredList, newStructuredIndex,
                                      true, false))
         return true;
     }
@@ -1377,13 +1379,12 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   // Move to the next designator
   unsigned ElementIndex = DesignatedStartIndex.getZExtValue();
   unsigned OldIndex = Index;
-  ++D;
   while (DesignatedStartIndex <= DesignatedEndIndex) {
     // Recurse to check later designated subobjects.
     QualType ElementType = AT->getElementType();
     Index = OldIndex;
-    if (CheckDesignatedInitializer(IList, DIE, D, ElementType, 0, 0, Index,
-                                   StructuredList, ElementIndex,
+    if (CheckDesignatedInitializer(IList, DIE, DesigIdx + 1, ElementType, 0, 0,
+                                   Index, StructuredList, ElementIndex,
                                    (DesignatedStartIndex == DesignatedEndIndex),
                                    false))
       return true;

@@ -2139,6 +2139,8 @@ public:
   designators_iterator designators_begin();
   designators_iterator designators_end();
 
+  Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
+
   Expr *getArrayIndex(const Designator& D);
   Expr *getArrayRangeStart(const Designator& D);
   Expr *getArrayRangeEnd(const Designator& D);
