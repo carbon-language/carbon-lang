@@ -2937,8 +2937,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSCan.getCVRQualifiers() != RHSCan.getCVRQualifiers())
     return QualType();
 
-  Type::TypeClass LHSClass = LHSCan->getTypeClass();
-  Type::TypeClass RHSClass = RHSCan->getTypeClass();
+  Type::TypeClass LHSClass = LHSCan.getUnqualifiedType()->getTypeClass();
+  Type::TypeClass RHSClass = RHSCan.getUnqualifiedType()->getTypeClass();
 
   // We want to consider the two function types to be the same for these
   // comparisons, just force one to the other.
@@ -2963,7 +2963,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSClass != RHSClass) {
     const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
     const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
-
+    
     // 'id' and 'Class' act sort of like void* for ObjC interfaces
     if (LHSIface && (isObjCIdStructType(RHS) || isObjCClassStructType(RHS)))
       return LHS;
