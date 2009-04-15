@@ -124,7 +124,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   // FIXME: -fdiagnostics-show-option
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
-  /// ControlledOptions - Keep track of the options that the user explicitly
+  /// ControlledDiags - Keep track of the options that the user explicitly
   /// poked with -Wfoo, -Wno-foo, or -Werror=foo.
   llvm::SmallVector<unsigned short, 256> ControlledDiags;
   
@@ -189,7 +189,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
     for (const diag::kind *Member = Found->Members,
          *E = Found->Members+Found->NumMembers; Member != E; ++Member) {
       Diags.setDiagnosticMapping(*Member, Mapping);
-      assert(*Member < 65536 && "ControlledOptions element too small");
+      assert(*Member < 65536 && "ControlledDiags element too small");
       ControlledDiags.push_back(*Member);
     }
   }
@@ -210,7 +210,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
 
     // Loop over all of the extension diagnostics.  Unless they were explicitly
     // controlled, reset their mapping to Mapping.  We walk through the
-    // ControlledOptions in parallel with this walk, which is faster than
+    // ControlledDiags in parallel with this walk, which is faster than
     // repeatedly binary searching it.
     //
     llvm::SmallVectorImpl<unsigned short>::iterator ControlledDiagsIt =
