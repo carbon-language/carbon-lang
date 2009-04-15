@@ -32,10 +32,10 @@ public:
   void run(std::ostream &OS);
 };
 
-class ClangOptionsEmitter : public TableGenBackend {
+class ClangDiagGroupsEmitter : public TableGenBackend {
     RecordKeeper &Records;
 public:
-  explicit ClangOptionsEmitter(RecordKeeper &R) : Records(R) {}
+  explicit ClangDiagGroupsEmitter(RecordKeeper &R) : Records(R) {}
     
   void run(std::ostream &OS);
 };

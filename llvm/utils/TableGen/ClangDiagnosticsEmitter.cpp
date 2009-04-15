@@ -165,7 +165,7 @@ static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited,
 }
 
 
-void ClangOptionsEmitter::run(std::ostream &OS) {
+void ClangDiagGroupsEmitter::run(std::ostream &OS) {
   // Build up a map from options to controlled diagnostics.
   OptionMap OM;
        

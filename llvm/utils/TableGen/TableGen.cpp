@@ -48,7 +48,7 @@ enum ActionType {
   GenInstrEnums, GenInstrs, GenAsmWriter,
   GenCallingConv,
   GenClangDiagsDefs,
-  GenClangDiagsOptions,
+  GenClangDiagGroups,
   GenDAGISel,
   GenFastISel,
   GenSubtarget,
@@ -91,8 +91,8 @@ namespace {
                                "Generate target intrinsic information"),
                     clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
                                "Generate Clang diagnostics definitions"),
-                    clEnumValN(GenClangDiagsOptions, "gen-clang-diags-options",
-                               "Generate options for Clang diagnostics"),
+                    clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
+                               "Generate Clang diagnostic groups"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
                     clEnumValN(PrintEnums, "print-enums",
@@ -212,8 +212,8 @@ int main(int argc, char **argv) {
     case GenClangDiagsDefs:
       ClangDiagsDefsEmitter(Records, ClangComponent).run(*Out);
       break;
-    case GenClangDiagsOptions:
-      ClangOptionsEmitter(Records).run(*Out);
+    case GenClangDiagGroups:
+      ClangDiagGroupsEmitter(Records).run(*Out);
       break;        
     case GenDAGISel:
       DAGISelEmitter(Records).run(*Out);
