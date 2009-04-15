@@ -37,6 +37,7 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
+class Attr;
 class Decl;
 class DeclContext;
 class Preprocessor;
@@ -224,6 +225,12 @@ public:
 
   /// \brief Read a floating-point value
   llvm::APFloat ReadAPFloat(const RecordData &Record, unsigned &Idx);
+
+  // \brief Read a string
+  std::string ReadString(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Reads attributes from the current stream position.
+  Attr *ReadAttributes();
 
   /// \brief Reads an expression from the current stream position.
   Expr *ReadExpr();

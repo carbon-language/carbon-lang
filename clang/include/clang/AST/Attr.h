@@ -377,7 +377,12 @@ public:
   virtual ~NonNullAttr() {
     delete [] ArgNums;
   }
-  
+
+  typedef const unsigned *iterator;
+  iterator begin() const { return ArgNums; }
+  iterator end() const { return ArgNums + Size; }
+  unsigned size() const { return Size; }
+
   bool isNonNull(unsigned arg) const {
     return ArgNums ? std::binary_search(ArgNums, ArgNums+Size, arg) : true;
   }  

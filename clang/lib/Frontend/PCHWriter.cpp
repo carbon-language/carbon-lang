@@ -276,7 +276,7 @@ void PCHDeclWriter::VisitDecl(Decl *D) {
   Writer.AddDeclRef(cast_or_null<Decl>(D->getLexicalDeclContext()), Record);
   Writer.AddSourceLocation(D->getLocation(), Record);
   Record.push_back(D->isInvalidDecl());
-  // FIXME: hasAttrs
+  Record.push_back(D->hasAttrs());
   Record.push_back(D->isImplicit());
   Record.push_back(D->getAccess());
 }
@@ -1131,6 +1131,10 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     assert(W.Code && "Unhandled declaration kind while generating PCH");
     S.EmitRecord(W.Code, Record);
 
+    // If the declaration had any attributes, write them now.
+    if (D->hasAttrs())
+      WriteAttributeRecord(D->getAttrs());
+
     // Flush any expressions that were written as part of this declaration.
     FlushExprs();
     
@@ -1207,6 +1211,134 @@ void PCHWriter::WriteIdentifierTable() {
 
   // Write the offsets table for identifier IDs.
   S.EmitRecord(pch::IDENTIFIER_OFFSET, IdentOffsets);
+}
+
+/// \brief Write a record containing the given attributes.
+void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
+  RecordData Record;
+  for (; Attr; Attr = Attr->getNext()) {
+    Record.push_back(Attr->getKind()); // FIXME: stable encoding
+    Record.push_back(Attr->isInherited());
+    switch (Attr->getKind()) {
+    case Attr::Alias:
+      AddString(cast<AliasAttr>(Attr)->getAliasee(), Record);
+      break;
+
+    case Attr::Aligned:
+      Record.push_back(cast<AlignedAttr>(Attr)->getAlignment());
+      break;
+
+    case Attr::AlwaysInline:
+      break;
+     
+    case Attr::AnalyzerNoReturn:
+      break;
+
+    case Attr::Annotate:
+      AddString(cast<AnnotateAttr>(Attr)->getAnnotation(), Record);
+      break;
+
+    case Attr::AsmLabel:
+      AddString(cast<AsmLabelAttr>(Attr)->getLabel(), Record);
+      break;
+
+    case Attr::Blocks:
+      Record.push_back(cast<BlocksAttr>(Attr)->getType()); // FIXME: stable
+      break;
+
+    case Attr::Cleanup:
+      AddDeclRef(cast<CleanupAttr>(Attr)->getFunctionDecl(), Record);
+      break;
+
+    case Attr::Const:
+      break;
+
+    case Attr::Constructor:
+      Record.push_back(cast<ConstructorAttr>(Attr)->getPriority());
+      break;
+
+    case Attr::DLLExport:
+    case Attr::DLLImport:
+    case Attr::Deprecated:
+      break;
+
+    case Attr::Destructor:
+      Record.push_back(cast<DestructorAttr>(Attr)->getPriority());
+      break;
+
+    case Attr::FastCall:
+      break;
+
+    case Attr::Format: {
+      const FormatAttr *Format = cast<FormatAttr>(Attr);
+      AddString(Format->getType(), Record);
+      Record.push_back(Format->getFormatIdx());
+      Record.push_back(Format->getFirstArg());
+      break;
+    }
+
+    case Attr::GNUCInline:
+    case Attr::IBOutletKind:
+    case Attr::NoReturn:
+    case Attr::NoThrow:
+    case Attr::Nodebug:
+    case Attr::Noinline:
+      break;
+
+    case Attr::NonNull: {
+      const NonNullAttr *NonNull = cast<NonNullAttr>(Attr);
+      Record.push_back(NonNull->size());
+      Record.insert(Record.end(), NonNull->begin(), NonNull->end());
+      break;
+    }
+
+    case Attr::ObjCException:
+    case Attr::ObjCNSObject:
+    case Attr::Overloadable:
+      break;
+
+    case Attr::Packed:
+      Record.push_back(cast<PackedAttr>(Attr)->getAlignment());
+      break;
+
+    case Attr::Pure:
+      break;
+
+    case Attr::Regparm:
+      Record.push_back(cast<RegparmAttr>(Attr)->getNumParams());
+      break;
+
+    case Attr::Section:
+      AddString(cast<SectionAttr>(Attr)->getName(), Record);
+      break;
+
+    case Attr::StdCall:
+    case Attr::TransparentUnion:
+    case Attr::Unavailable:
+    case Attr::Unused:
+    case Attr::Used:
+      break;
+
+    case Attr::Visibility:
+      // FIXME: stable encoding
+      Record.push_back(cast<VisibilityAttr>(Attr)->getVisibility()); 
+      break;
+
+    case Attr::WarnUnusedResult:
+    case Attr::Weak:
+    case Attr::WeakImport:
+      break;
+    }
+  }
+
+  assert((int)pch::DECL_ATTR == (int)pch::TYPE_ATTR && 
+         "DECL_ATTR/TYPE_ATTR mismatch");
+  S.EmitRecord(pch::DECL_ATTR, Record);
+}
+
+void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
+  Record.push_back(Str.size());
+  Record.insert(Record.end(), Str.begin(), Str.end());
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 

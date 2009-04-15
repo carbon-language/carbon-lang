@@ -260,54 +260,59 @@ namespace clang {
     /// constant describes a record for a specific type class in the
     /// AST.
     enum TypeCode {
+      /// \brief Attributes attached to a type.
+      /// 
+      /// Note that this has the same value as DECL_ATTR, since
+      /// attribute blocks are used for both types and declarations.
+      TYPE_ATTR                     = 1,
       /// \brief An ExtQualType record.
-      TYPE_EXT_QUAL                 = 1,
+      TYPE_EXT_QUAL                 = 2,
       /// \brief A FixedWidthIntType record.
-      TYPE_FIXED_WIDTH_INT          = 2,
+      TYPE_FIXED_WIDTH_INT          = 3,
       /// \brief A ComplexType record.
-      TYPE_COMPLEX                  = 3,
+      TYPE_COMPLEX                  = 4,
       /// \brief A PointerType record.
-      TYPE_POINTER                  = 4,
+      TYPE_POINTER                  = 5,
       /// \brief A BlockPointerType record.
-      TYPE_BLOCK_POINTER            = 5,
+      TYPE_BLOCK_POINTER            = 6,
       /// \brief An LValueReferenceType record.
-      TYPE_LVALUE_REFERENCE         = 6,
+      TYPE_LVALUE_REFERENCE         = 7,
       /// \brief An RValueReferenceType record.
-      TYPE_RVALUE_REFERENCE         = 7,
+      TYPE_RVALUE_REFERENCE         = 8,
       /// \brief A MemberPointerType record.
-      TYPE_MEMBER_POINTER           = 8,
+      TYPE_MEMBER_POINTER           = 9,
       /// \brief A ConstantArrayType record.
-      TYPE_CONSTANT_ARRAY           = 9,
+      TYPE_CONSTANT_ARRAY           = 10,
       /// \brief An IncompleteArrayType record.
-      TYPE_INCOMPLETE_ARRAY         = 10,
+      TYPE_INCOMPLETE_ARRAY         = 11,
       /// \brief A VariableArrayType record.
-      TYPE_VARIABLE_ARRAY           = 11,
+      TYPE_VARIABLE_ARRAY           = 12,
       /// \brief A VectorType record.
-      TYPE_VECTOR                   = 12,
+      TYPE_VECTOR                   = 13,
       /// \brief An ExtVectorType record.
-      TYPE_EXT_VECTOR               = 13,
+      TYPE_EXT_VECTOR               = 14,
       /// \brief A FunctionNoProtoType record.
-      TYPE_FUNCTION_NO_PROTO        = 14,
+      TYPE_FUNCTION_NO_PROTO        = 15,
       /// \brief A FunctionProtoType record.
-      TYPE_FUNCTION_PROTO           = 15,
+      TYPE_FUNCTION_PROTO           = 16,
       /// \brief A TypedefType record.
-      TYPE_TYPEDEF                  = 16,
+      TYPE_TYPEDEF                  = 17,
       /// \brief A TypeOfExprType record.
-      TYPE_TYPEOF_EXPR              = 17,
+      TYPE_TYPEOF_EXPR              = 18,
       /// \brief A TypeOfType record.
-      TYPE_TYPEOF                   = 18,
+      TYPE_TYPEOF                   = 19,
       /// \brief A RecordType record.
-      TYPE_RECORD                   = 19,
+      TYPE_RECORD                   = 20,
       /// \brief An EnumType record.
-      TYPE_ENUM                     = 20,
+      TYPE_ENUM                     = 21,
       /// \brief An ObjCInterfaceType record.
-      TYPE_OBJC_INTERFACE           = 21,
+      TYPE_OBJC_INTERFACE           = 22,
       /// \brief An ObjCQualifiedInterfaceType record.
-      TYPE_OBJC_QUALIFIED_INTERFACE = 22,
+      TYPE_OBJC_QUALIFIED_INTERFACE = 23,
       /// \brief An ObjCQualifiedIdType record.
-      TYPE_OBJC_QUALIFIED_ID        = 23,
+      TYPE_OBJC_QUALIFIED_ID        = 24,
       /// \brief An ObjCQualifiedClassType record.
-      TYPE_OBJC_QUALIFIED_CLASS     = 24
+      TYPE_OBJC_QUALIFIED_CLASS     = 25
     };
 
     /// \brief Record codes for each kind of declaration.
@@ -317,8 +322,13 @@ namespace clang {
     /// constant describes a record for a specific declaration class
     /// in the AST.
     enum DeclCode {
+      /// \brief Attributes attached to a declaration.
+      /// 
+      /// Note that this has the same value as TYPE_ATTR, since
+      /// attribute blocks are used for both types and declarations.
+      DECL_ATTR = 1,
       /// \brief A TranslationUnitDecl record.
-      DECL_TRANSLATION_UNIT = 1,
+      DECL_TRANSLATION_UNIT,
       /// \brief A TypedefDecl record.
       DECL_TYPEDEF,
       /// \brief An EnumDecl record.

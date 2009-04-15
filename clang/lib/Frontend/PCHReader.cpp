@@ -74,7 +74,8 @@ void PCHDeclReader::VisitDecl(Decl *D) {
                      cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
   D->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   D->setInvalidDecl(Record[Idx++]);
-  // FIXME: hasAttrs
+  if (Record[Idx++])
+    D->addAttr(Reader.ReadAttributes());
   D->setImplicit(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
 }
@@ -1074,6 +1075,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   RecordData Record;
   unsigned Code = Stream.ReadCode();
   switch ((pch::TypeCode)Stream.ReadRecord(Code, Record)) {
+  case pch::TYPE_ATTR:
+    assert(false && "Should never jump to an attribute block");
+    return QualType();
+
   case pch::TYPE_EXT_QUAL:
     // FIXME: Deserialize ExtQualType
     assert(false && "Cannot deserialize qualified types yet");
@@ -1264,6 +1269,12 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   PCHDeclReader Reader(*this, Record, Idx);
 
   switch ((pch::DeclCode)Stream.ReadRecord(Code, Record)) {
+  case pch::DECL_ATTR:
+  case pch::DECL_CONTEXT_LEXICAL:
+  case pch::DECL_CONTEXT_VISIBLE:
+    assert(false && "Record cannot be de-serialized with ReadDeclRecord");
+    break;
+
   case pch::DECL_TRANSLATION_UNIT:
     assert(Index == 0 && "Translation unit must be at index 0");
     Reader.VisitTranslationUnitDecl(Context.getTranslationUnitDecl());
@@ -1372,10 +1383,6 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = Block;
     break;
   }
-
-  default:
-    assert(false && "Cannot de-serialize this kind of declaration");
-    break;
   }
 
   // If this declaration is also a declaration context, get the
@@ -1633,6 +1640,146 @@ llvm::APSInt PCHReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
 llvm::APFloat PCHReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
   // FIXME: is this really correct?
   return llvm::APFloat(ReadAPInt(Record, Idx));
+}
+
+// \brief Read a string
+std::string PCHReader::ReadString(const RecordData &Record, unsigned &Idx) {
+  unsigned Len = Record[Idx++];
+  std::string Result(&Record[Idx], &Record[Idx] + Len);
+  Idx += Len;
+  return Result;
+}
+
+/// \brief Reads attributes from the current stream position.
+Attr *PCHReader::ReadAttributes() {
+  unsigned Code = Stream.ReadCode();
+  assert(Code == llvm::bitc::UNABBREV_RECORD && 
+         "Expected unabbreviated record"); (void)Code;
+  
+  RecordData Record;
+  unsigned Idx = 0;
+  unsigned RecCode = Stream.ReadRecord(Code, Record);
+  assert(RecCode == pch::DECL_ATTR && "Expected attribute record"); 
+  (void)RecCode;
+
+#define SIMPLE_ATTR(Name)                       \
+ case Attr::Name:                               \
+   New = ::new (Context) Name##Attr();          \
+   break
+
+#define STRING_ATTR(Name)                                       \
+ case Attr::Name:                                               \
+   New = ::new (Context) Name##Attr(ReadString(Record, Idx));   \
+   break
+
+#define UNSIGNED_ATTR(Name)                             \
+ case Attr::Name:                                       \
+   New = ::new (Context) Name##Attr(Record[Idx++]);     \
+   break
+
+  Attr *Attrs = 0;
+  while (Idx < Record.size()) {
+    Attr *New = 0;
+    Attr::Kind Kind = (Attr::Kind)Record[Idx++];
+    bool IsInherited = Record[Idx++];
+
+    switch (Kind) {
+    STRING_ATTR(Alias);
+    UNSIGNED_ATTR(Aligned);
+    SIMPLE_ATTR(AlwaysInline);
+    SIMPLE_ATTR(AnalyzerNoReturn);
+    STRING_ATTR(Annotate);
+    STRING_ATTR(AsmLabel);
+    
+    case Attr::Blocks:
+      New = ::new (Context) BlocksAttr(
+                                  (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
+      break;
+      
+    case Attr::Cleanup:
+      New = ::new (Context) CleanupAttr(
+                                  cast<FunctionDecl>(GetDecl(Record[Idx++])));
+      break;
+
+    SIMPLE_ATTR(Const);
+    UNSIGNED_ATTR(Constructor);
+    SIMPLE_ATTR(DLLExport);
+    SIMPLE_ATTR(DLLImport);
+    SIMPLE_ATTR(Deprecated);
+    UNSIGNED_ATTR(Destructor);
+    SIMPLE_ATTR(FastCall);
+    
+    case Attr::Format: {
+      std::string Type = ReadString(Record, Idx);
+      unsigned FormatIdx = Record[Idx++];
+      unsigned FirstArg = Record[Idx++];
+      New = ::new (Context) FormatAttr(Type, FormatIdx, FirstArg);
+      break;
+    }
+
+    SIMPLE_ATTR(GNUCInline);
+    
+    case Attr::IBOutletKind:
+      New = ::new (Context) IBOutletAttr();
+      break;
+
+    SIMPLE_ATTR(NoReturn);
+    SIMPLE_ATTR(NoThrow);
+    SIMPLE_ATTR(Nodebug);
+    SIMPLE_ATTR(Noinline);
+    
+    case Attr::NonNull: {
+      unsigned Size = Record[Idx++];
+      llvm::SmallVector<unsigned, 16> ArgNums;
+      ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
+      Idx += Size;
+      New = ::new (Context) NonNullAttr(&ArgNums[0], Size);
+      break;
+    }
+
+    SIMPLE_ATTR(ObjCException);
+    SIMPLE_ATTR(ObjCNSObject);
+    SIMPLE_ATTR(Overloadable);
+    UNSIGNED_ATTR(Packed);
+    SIMPLE_ATTR(Pure);
+    UNSIGNED_ATTR(Regparm);
+    STRING_ATTR(Section);
+    SIMPLE_ATTR(StdCall);
+    SIMPLE_ATTR(TransparentUnion);
+    SIMPLE_ATTR(Unavailable);
+    SIMPLE_ATTR(Unused);
+    SIMPLE_ATTR(Used);
+    
+    case Attr::Visibility:
+      New = ::new (Context) VisibilityAttr(
+                              (VisibilityAttr::VisibilityTypes)Record[Idx++]);
+      break;
+
+    SIMPLE_ATTR(WarnUnusedResult);
+    SIMPLE_ATTR(Weak);
+    SIMPLE_ATTR(WeakImport);
+    }
+
+    assert(New && "Unable to decode attribute?");
+    New->setInherited(IsInherited);
+    New->setNext(Attrs);
+    Attrs = New;
+  }
+#undef UNSIGNED_ATTR
+#undef STRING_ATTR
+#undef SIMPLE_ATTR
+
+  // The list of attributes was built backwards. Reverse the list
+  // before returning it.
+  Attr *PrevAttr = 0, *NextAttr = 0;
+  while (Attrs) {
+    NextAttr = Attrs->getNext();
+    Attrs->setNext(PrevAttr);
+    PrevAttr = Attrs;
+    Attrs = NextAttr;
+  }
+
+  return PrevAttr;
 }
 
 Expr *PCHReader::ReadExpr() {

@@ -118,6 +118,9 @@ private:
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
   void WriteDeclsBlock(ASTContext &Context);
   void WriteIdentifierTable();
+  void WriteAttributeRecord(const Attr *Attr);
+
+  void AddString(const std::string &Str, RecordData &Record);
 
 public:
   /// \brief Create a new precompiled header writer that outputs to
