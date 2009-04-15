@@ -24,6 +24,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>
 using namespace llvm;
@@ -233,10 +234,13 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       continue;
     }
 
-    // Do not clone llvm.dbg.func.start and corresponding llvm.dbg.region.end.
+    // Do not clone llvm.dbg.region.end. It will be adjusted by the inliner.
     if (const DbgFuncStartInst *DFSI = dyn_cast<DbgFuncStartInst>(II)) {
-      DbgFnStart = DFSI->getSubprogram();
-      continue;
+      if (DbgFnStart == NULL) {
+        DISubprogram SP(cast<GlobalVariable>(DFSI->getSubprogram()));
+        if (SP.describes(BB->getParent()))
+          DbgFnStart = DFSI->getSubprogram();
+      }
     } 
     if (const DbgRegionEndInst *DREIS = dyn_cast<DbgRegionEndInst>(II)) {
       if (DREIS->getContext() == DbgFnStart)
