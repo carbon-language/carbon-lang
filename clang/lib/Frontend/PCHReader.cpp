@@ -889,18 +889,15 @@ namespace {
   /// then restores it when destroyed.
   struct VISIBILITY_HIDDEN SavedStreamPosition {
     explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
-      : Stream(Stream), Offset(Stream.GetCurrentBitNo()),
-        EndOfStream(Stream.AtEndOfStream()){ }
+      : Stream(Stream), Offset(Stream.GetCurrentBitNo()) { }
 
     ~SavedStreamPosition() {
-      if (!EndOfStream) 
-        Stream.JumpToBit(Offset);
+      Stream.JumpToBit(Offset);
     }
 
   private:
     llvm::BitstreamReader &Stream;
     uint64_t Offset;
-    bool EndOfStream;
   };
 }
 
