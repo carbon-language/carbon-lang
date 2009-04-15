@@ -22,3 +22,11 @@ int test3() {
   L:
   return a;
 }
+
+int test4(int x) {
+ goto L; // expected-error{{illegal jump}}
+ int a[x];
+ test4(x);
+ L:
+ return sizeof a;
+}

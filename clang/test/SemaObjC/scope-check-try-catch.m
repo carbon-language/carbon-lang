@@ -17,10 +17,12 @@ L3: ;
   }
 }
 
+#if 0
+// FIXME
 void f0(int a) {
   if (a) goto L0;
   @try {} @finally {}
  L0:
   return;
 }
-
+#endif

@@ -2935,11 +2935,10 @@ void Sema::RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
     Stmt* CurCompound = isa<CompoundStmt>(*i) ? *i : ParentCompoundStmt;
     RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack,
                              *i, CurCompound);
-    while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
-      ScopeStack.pop_back();
-    }
   }
-
+  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
+    ScopeStack.pop_back();
+  }
 }
 
 void Sema::RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
@@ -2970,9 +2969,9 @@ void Sema::RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
     if (isa<DeclStmt>(*i)) continue;
     RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
                             ScopeStack, *i);
-    while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
-      ScopeStack.pop_back();
-    }
+  }
+  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
+    ScopeStack.pop_back();
   }
 }
 
