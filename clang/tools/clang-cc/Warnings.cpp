@@ -43,54 +43,20 @@ static llvm::cl::opt<bool> OptPedantic("pedantic");
 static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
-namespace {
-  struct WarningOption {
-    const char *Name;
-    const diag::kind *Members;
-    unsigned NumMembers;
-  };
-}
-#define DIAGS(a) a, unsigned(sizeof(a) / sizeof(a[0]))
-// These tables will be TableGenerated later.
-// First the table sets describing the diagnostics controlled by each option.
-static const diag::kind UnusedMacrosDiags[] = { diag::pp_macro_not_used };
-static const diag::kind FloatEqualDiags[] = { diag::warn_floatingpoint_eq };
-static const diag::kind ExtraTokens[] = { diag::ext_pp_extra_tokens_at_eol };
-static const diag::kind ReadOnlySetterAttrsDiags[] = {
-  diag::warn_objc_property_attr_mutually_exclusive
-};
-static const diag::kind FormatNonLiteralDiags[] = {
-  diag::warn_printf_not_string_constant
-};
-static const diag::kind UndefDiags[] = { diag::warn_pp_undef_identifier };
-static const diag::kind ImplicitFunctionDeclarationDiags[] = {
-  diag::ext_implicit_function_decl, diag::warn_implicit_function_decl
-};
-static const diag::kind PointerSignDiags[] = {
-  diag::ext_typecheck_convert_incompatible_pointer_sign
-};
-static const diag::kind DeprecatedDeclarations[] = { diag::warn_deprecated };
-static const diag::kind MissingPrototypesDiags[] = { 
-  diag::warn_missing_prototype 
-};
-static const diag::kind TrigraphsDiags[] = {
-  diag::trigraph_ignored, diag::trigraph_ignored_block_comment,
-  diag::trigraph_ends_block_comment, diag::trigraph_converted
+struct WarningOption {
+  const char *Name;
+  const short *Members;
 };
 
-// Second the table of options.  MUST be sorted by name! Binary lookup is done.
+#define GET_DIAG_ARRAYS
+#include "clang/Basic/DiagnosticGroups.inc"
+#undef GET_DIAG_ARRAYS
+
+// Second the table of options, sorted by name for fast binary lookup.
 static const WarningOption OptionTable[] = {
-  { "deprecated-declarations",       DIAGS(DeprecatedDeclarations) },
-  { "extra-tokens",                  DIAGS(ExtraTokens) },
-  { "float-equal",           DIAGS(FloatEqualDiags) },
-  { "format-nonliteral",     DIAGS(FormatNonLiteralDiags) },
-  { "implicit-function-declaration", DIAGS(ImplicitFunctionDeclarationDiags) },
-  { "missing-prototypes", DIAGS(MissingPrototypesDiags) },
-  { "pointer-sign",          DIAGS(PointerSignDiags) },
-  { "readonly-setter-attrs", DIAGS(ReadOnlySetterAttrsDiags) },
-  { "trigraphs",             DIAGS(TrigraphsDiags) },
-  { "undef",                 DIAGS(UndefDiags) },
-  { "unused-macros",         DIAGS(UnusedMacrosDiags) },
+#define GET_DIAG_TABLE
+#include "clang/Basic/DiagnosticGroups.inc"
+#undef GET_DIAG_TABLE
 };
 static const size_t OptionTableSize =
   sizeof(OptionTable) / sizeof(OptionTable[0]);
@@ -158,7 +124,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       OptStart = Specifier;
     }
     
-    WarningOption Key = { OptStart, 0, 0 };
+    WarningOption Key = { OptStart, 0 };
     const WarningOption *Found =
       std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                        WarningOptionCompare);
@@ -169,10 +135,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
     }
     
     // Option exists, poke all the members of its diagnostic set.
-    for (const diag::kind *Member = Found->Members,
-         *E = Found->Members+Found->NumMembers; Member != E; ++Member) {
+    for (const short *Member = Found->Members; *Member != -1; ++Member) {
       Diags.setDiagnosticMapping(*Member, Mapping);
-      assert(*Member < 65536 && "ControlledDiags element too small");
       ControlledDiags.push_back(*Member);
     }
   }
