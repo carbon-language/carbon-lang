@@ -23,7 +23,6 @@
 // -Wno-foo      -> alias of -Wfoo=ignore
 // -Werror=foo   -> alias of -Wfoo=error
 //
-
 #include "clang-cc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
@@ -35,7 +34,8 @@
 using namespace clang;
 
 // This gets all -W options, including -Werror, -W[no-]system-headers, etc.  The
-// driver has stripped off -Wa,foo etc.
+// driver has stripped off -Wa,foo etc.  The driver has also translated -W to
+// -Wextra, so we don't need to worry about it.
 static llvm::cl::list<std::string>
 OptWarnings("W", llvm::cl::Prefix);
 
@@ -125,7 +125,6 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
                              diag::MAP_FATAL);
   Diags.setDiagnosticMapping(diag::warn_missing_prototype, diag::MAP_IGNORE);
   
-  // FIXME: -W -> -Wextra in driver.
   // -fdiagnostics-show-option
 
   for (unsigned i = 0, e = OptWarnings.size(); i != e; ++i) {
@@ -142,7 +141,12 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       OptStart += 3;
     }
 
-    // -Wsystem-headers is a special case, not driven by the option table.
+    // Figure out how this option affects the warning.  If -Wfoo, map the
+    // diagnostic to a warning, if -Wno-foo, map it to ignore.
+    diag::Mapping Mapping = isPositive ? diag::MAP_WARNING : diag::MAP_IGNORE;
+
+    // -Wsystem-headers is a special case, not driven by the option table.  It
+    // cannot be controlled with -Werror.
     if (OptEnd-OptStart == 14 && memcmp(OptStart, "system-headers", 14) == 0) {
       Diags.setSuppressSystemWarnings(!isPositive);
       continue;
@@ -165,9 +169,9 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
         continue;
       }
       
-      // FIXME: specifier not implemented yet
-      fprintf(stderr, "specifier in -W%s not supported yet\n", Opt.c_str());
-      return true;
+      // -Werror=foo maps foo to Error, -Wno-error=foo maps it to Warning.
+      Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING;
+      OptStart = Specifier;
     }
     
     WarningOption Key = { OptStart, 0, 0 };
@@ -175,12 +179,10 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                        WarningOptionCompare);
     if (Found == OptionTable + OptionTableSize ||
-        strcmp(Found->Name, Key.Name) != 0) {
+        strcmp(Found->Name, OptStart) != 0) {
       fprintf(stderr, "Unknown warning option: -W%s\n", Opt.c_str());
       return true;
     }
-
-    diag::Mapping Mapping = isPositive ? diag::MAP_WARNING : diag::MAP_IGNORE;
     
     // Option exists.
     for (unsigned i = 0, e = Found->NumMembers; i != e; ++i)
