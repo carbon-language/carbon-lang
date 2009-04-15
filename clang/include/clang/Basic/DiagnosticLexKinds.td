@@ -23,11 +23,13 @@ def backslash_newline_space : Warning<
   "backslash and newline separated by space">;
 
 // Trigraphs.
-def trigraph_ignored : Warning<"trigraph ignored">;
+def trigraph_ignored : Warning<"trigraph ignored">, InGroup<Trigraphs>;
 def trigraph_ignored_block_comment : Warning<
-  "ignored trigraph would end block comment">;
-def trigraph_ends_block_comment : Warning<"trigraph ends block comment">;
-def trigraph_converted : Warning<"trigraph converted to '%0' character">;
+  "ignored trigraph would end block comment">, InGroup<Trigraphs>;
+def trigraph_ends_block_comment : Warning<"trigraph ends block comment">,
+    InGroup<Trigraphs>;
+def trigraph_converted : Warning<"trigraph converted to '%0' character">,
+    InGroup<Trigraphs>;
 
 def ext_multi_line_bcpl_comment : Extension<"multi-line // comment">;
 def ext_bcpl_comment : Extension<
@@ -112,8 +114,10 @@ def ext_pp_ident_directive : Extension<"#ident is a language extension">;
 def ext_pp_include_next_directive : Extension<
   "#include_next is a language extension">;
 def ext_pp_warning_directive : Extension<"#warning is a language extension">;
+
 def ext_pp_extra_tokens_at_eol : ExtWarn<
-  "extra tokens at end of #%0 directive">;
+  "extra tokens at end of #%0 directive">, IsGroup<"extra-tokens">;
+  
 def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<
   "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro">;

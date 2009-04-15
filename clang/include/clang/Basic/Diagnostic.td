@@ -26,25 +26,25 @@ def CLASS_WARNING   : DiagClass;
 def CLASS_EXTENSION : DiagClass;
 def CLASS_ERROR     : DiagClass;
 
+// Diagnostic Groups.
+class DiagGroup<string name>;
+class InGroup<DiagGroup Group> { DiagGroup Group = Group; }
+class IsGroup<string Name> { DiagGroup Group = DiagGroup<Name>; }
 
-/*
-class Option<string name, list<OptionControlled> members> : OptionControlled {
-  string Name = name;
-  list<OptionControlled> Members = members;
-}
+def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
+def Trigraphs : DiagGroup<"trigraphs">;
 
-// Definitions for options ("warning groups").
-include "DiagnosticOptions.td"
 
-*/
+
 
 // All diagnostics emitted by the compiler are an indirect subclass of this.
 class Diagnostic<string text, DiagClass DC, DiagMapping defaultmapping> {
   /// Component is specified by the file with a big let directive.
-  string Component = ?;
-  string Text = text;
-  DiagClass Class = DC;
+  string      Component = ?;
+  string      Text = text;
+  DiagClass   Class = DC;
   DiagMapping DefaultMapping = defaultmapping;
+  DiagGroup   Group;
 }
 
 class Error<string str>     : Diagnostic<str, CLASS_ERROR, MAP_ERROR>;

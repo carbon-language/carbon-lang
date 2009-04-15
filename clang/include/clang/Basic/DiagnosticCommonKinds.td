@@ -52,12 +52,14 @@ def note_invalid_subexpr_in_ice : Note<
   "subexpression not valid in an integer constant expression">;
 
 // Driver
-def pp_macro_not_used : Warning<"macro is not used">, DefaultIgnore;
+def pp_macro_not_used : Warning<"macro is not used">, DefaultIgnore,
+    IsGroup<"unused-macros">;
 
 
 def err_pp_I_dash_not_supported : Error<
   "-I- not supported, please use -iquote instead">;
 def warn_pp_undef_identifier : Warning<
-  "%0 is not defined, evaluates to 0">, DefaultIgnore;
+  "%0 is not defined, evaluates to 0">,
+  IsGroup<"undef">, DefaultIgnore;
 
 }
