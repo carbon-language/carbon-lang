@@ -24,8 +24,8 @@ enum NameDecorationStyle {
   FastCall
 };
   
-/// X86MachineFunctionInfo - This class is derived from MachineFunction private
-/// X86 target-specific information for each MachineFunction.
+/// X86MachineFunctionInfo - This class is derived from MachineFunction and
+/// contains private X86 target-specific information for each MachineFunction.
 class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// ForceFramePointer - True if the function is required to use of frame
   /// pointer for reasons other than it containing dynamic allocation or 
@@ -106,6 +106,7 @@ public:
   unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
   void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
 };
+
 } // End llvm namespace
 
 #endif
