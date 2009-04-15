@@ -67,20 +67,8 @@ public:
   
   /// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
   /// the jump tables to branch to New instead.
-  bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
-    assert(Old != New && "Not making a change?");
-    bool MadeChange = false;
-    for (size_t i = 0, e = JumpTables.size(); i != e; ++i) {
-      MachineJumpTableEntry &JTE = JumpTables[i];
-      for (size_t j = 0, e = JTE.MBBs.size(); j != e; ++j)
-        if (JTE.MBBs[j] == Old) {
-          JTE.MBBs[j] = New;
-          MadeChange = true;
-        }
-    }
-    return MadeChange;
-  }
-  
+  bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New);
+
   /// getEntrySize - Returns the size of an individual field in a jump table. 
   ///
   unsigned getEntrySize() const { return EntrySize; }

@@ -486,6 +486,23 @@ unsigned MachineJumpTableInfo::getJumpTableIndex(
   return JumpTables.size()-1;
 }
 
+/// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
+/// the jump tables to branch to New instead.
+bool
+MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
+                                             MachineBasicBlock *New) {
+  assert(Old != New && "Not making a change?");
+  bool MadeChange = false;
+  for (size_t i = 0, e = JumpTables.size(); i != e; ++i) {
+    MachineJumpTableEntry &JTE = JumpTables[i];
+    for (size_t j = 0, e = JTE.MBBs.size(); j != e; ++j)
+      if (JTE.MBBs[j] == Old) {
+        JTE.MBBs[j] = New;
+        MadeChange = true;
+      }
+  }
+  return MadeChange;
+}
 
 void MachineJumpTableInfo::print(std::ostream &OS) const {
   // FIXME: this is lame, maybe we could print out the MBB numbers or something
