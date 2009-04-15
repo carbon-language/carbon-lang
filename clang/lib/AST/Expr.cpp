@@ -1372,8 +1372,8 @@ unsigned ExtVectorElementExpr::getNumElements() const {
 
 /// containsDuplicateElements - Return true if any element access is repeated.
 bool ExtVectorElementExpr::containsDuplicateElements() const {
-  const char *compStr = Accessor.getName();
-  unsigned length = Accessor.getLength();
+  const char *compStr = Accessor->getName();
+  unsigned length = Accessor->getLength();
 
   // Halving swizzles do not contain duplicate elements.
   if (!strcmp(compStr, "hi") || !strcmp(compStr, "lo") || 
@@ -1398,7 +1398,7 @@ bool ExtVectorElementExpr::containsDuplicateElements() const {
 /// getEncodedElementAccess - We encode the fields as a llvm ConstantArray.
 void ExtVectorElementExpr::getEncodedElementAccess(
                                   llvm::SmallVectorImpl<unsigned> &Elts) const {
-  const char *compStr = Accessor.getName();
+  const char *compStr = Accessor->getName();
   if (*compStr == 's')
     compStr++;
  

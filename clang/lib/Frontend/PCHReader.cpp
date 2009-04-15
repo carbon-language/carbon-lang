@@ -257,6 +257,8 @@ namespace {
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
     unsigned VisitExplicitCastExpr(ExplicitCastExpr *E);
     unsigned VisitCStyleCastExpr(CStyleCastExpr *E);
+    unsigned VisitExtVectorElementExpr(ExtVectorElementExpr *E);
+    unsigned VisitVAArgExpr(VAArgExpr *E);
   };
 }
 
@@ -436,6 +438,23 @@ unsigned PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
 }
+
+unsigned PCHStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
+  VisitExpr(E);
+  E->setBase(ExprStack.back());
+  E->setAccessor(Reader.GetIdentifierInfo(Record, Idx));
+  E->setAccessorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
+  VisitExpr(E);
+  E->setSubExpr(ExprStack.back());
+  E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
 
 // FIXME: use the diagnostics machinery
 static bool Error(const char *Str) {
@@ -1948,6 +1967,15 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_CSTYLE_CAST:
       E = new (Context) CStyleCastExpr(Empty);
+      break;
+
+    case pch::EXPR_EXT_VECTOR_ELEMENT:
+      E = new (Context) ExtVectorElementExpr(Empty);
+      break;
+
+    case pch::EXPR_VA_ARG:
+      // FIXME: untested; we need function bodies first
+      E = new (Context) VAArgExpr(Empty);
       break;
     }
 

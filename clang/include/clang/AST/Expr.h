@@ -1844,8 +1844,19 @@ public:
       BuiltinLoc(BLoc),
       RParenLoc(RPLoc) { }
   
+  /// \brief Create an empty __builtin_va_start expression.
+  explicit VAArgExpr(EmptyShell Empty) : Expr(VAArgExprClass, Empty) { }
+
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
+  void setSubExpr(Expr *E) { Val = E; }
+
+  SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
+  void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }  
@@ -2306,19 +2317,28 @@ public:
 ///
 class ExtVectorElementExpr : public Expr {
   Stmt *Base;
-  IdentifierInfo &Accessor;
+  IdentifierInfo *Accessor;
   SourceLocation AccessorLoc;
 public:
   ExtVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
                        SourceLocation loc)
     : Expr(ExtVectorElementExprClass, ty), 
-      Base(base), Accessor(accessor), AccessorLoc(loc) {}
+      Base(base), Accessor(&accessor), AccessorLoc(loc) {}
                      
+  /// \brief Build an empty vector element expression.
+  explicit ExtVectorElementExpr(EmptyShell Empty)
+    : Expr(ExtVectorElementExprClass, Empty) { }
+
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }
-  
-  IdentifierInfo &getAccessor() const { return Accessor; }
-  
+  void setBase(Expr *E) { Base = E; }
+
+  IdentifierInfo &getAccessor() const { return *Accessor; }
+  void setAccessor(IdentifierInfo *II) { Accessor = II; }
+
+  SourceLocation getAccessorLoc() const { return AccessorLoc; }
+  void setAccessorLoc(SourceLocation L) { AccessorLoc = L; }
+
   /// getNumElements - Get the number of components being selected.
   unsigned getNumElements() const;
   

@@ -60,3 +60,6 @@ conditional_operator *double_ptr4 = &floating;
 
 // CStyleCastExpr
 void_ptr vp1 = &integer;
+
+// ExtVectorElementExpr
+ext_vector_element *double_ptr5 = &floating;

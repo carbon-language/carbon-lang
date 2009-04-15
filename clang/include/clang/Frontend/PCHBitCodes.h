@@ -418,7 +418,15 @@ namespace clang {
       /// \brief An ImplicitCastExpr record.
       EXPR_IMPLICIT_CAST,
       /// \brief A CStyleCastExpr record.
-      EXPR_CSTYLE_CAST
+      EXPR_CSTYLE_CAST,
+      /// FIXME: CompoundLiteralExpr
+      /// \brief An ExtVectorElementExpr record.
+      EXPR_EXT_VECTOR_ELEMENT,
+      /// FIXME: InitListExpr
+      /// FIXME: DesignatedInitExpr
+      /// FIXME: ImplicitValueInitExpr
+      /// \brief A VAArgExpr record.
+      EXPR_VA_ARG
     };
     /// @}
   }

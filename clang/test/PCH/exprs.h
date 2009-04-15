@@ -56,3 +56,7 @@ typedef typeof(i? : d0) conditional_operator;
 // CStyleCastExpr
 typedef typeof((void *)0) void_ptr;
 
+// ExtVectorElementExpr
+typedef __attribute__(( ext_vector_type(2) )) double double2;
+double2 vec2;
+typedef typeof(vec2.x) ext_vector_element;
