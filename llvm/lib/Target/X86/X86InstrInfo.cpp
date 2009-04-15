@@ -1664,8 +1664,8 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     } else if (DestRC == &X86::GR16RegClass) {
       Opc = X86::MOV16rr;
     } else if (DestRC == &X86::GR8RegClass) {
-      // Copying two or from a physical H register requires a NOREX move. Otherwise
-      // use a normal move.
+      // Copying two or from a physical H register requires a NOREX move.
+      // Otherwise use a normal move.
       if (isHReg(DestReg) || isHReg(SrcReg))
         Opc = X86::MOV8rr_NOREX;
       else
