@@ -467,8 +467,12 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
 /// whether an induction variable in the same type that starts
 /// at 0 would undergo signed overflow.
 ///
-/// In addition to setting the NoSignedWrap, and NoUnsignedWrap,
-/// variables, return the PHI for this induction variable.
+/// In addition to setting the NoSignedWrap and NoUnsignedWrap
+/// variables to true when appropriate (they are not set to false here),
+/// return the PHI for this induction variable.  Also record the initial
+/// and final values and the increment; these are not meaningful unless
+/// either NoSignedWrap or NoUnsignedWrap is true, and are always meaningful
+/// in that case, although the final value may be 0 indicating a nonconstant.
 ///
 /// TODO: This duplicates a fair amount of ScalarEvolution logic.
 /// Perhaps this can be merged with
@@ -479,7 +483,10 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
                                         const BranchInst *BI,
                                         const Instruction *OrigCond,
                                         bool &NoSignedWrap,
-                                        bool &NoUnsignedWrap) {
+                                        bool &NoUnsignedWrap,
+                                        const ConstantInt* &InitialVal,
+                                        const ConstantInt* &IncrVal,
+                                        const ConstantInt* &LimitVal) {
   // Verify that the loop is sane and find the exit condition.
   const ICmpInst *Cmp = dyn_cast<ICmpInst>(OrigCond);
   if (!Cmp) return 0;
@@ -542,31 +549,31 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
   // Get the increment instruction. Look past casts if we will
   // be able to prove that the original induction variable doesn't
   // undergo signed or unsigned overflow, respectively.
-  const Value *IncrVal = CmpLHS;
+  const Value *IncrInst = CmpLHS;
   if (isSigned) {
     if (const SExtInst *SI = dyn_cast<SExtInst>(CmpLHS)) {
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
-            .isSignedIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
+            .isSignedIntN(IncrInst->getType()->getPrimitiveSizeInBits()))
         return 0;
-      IncrVal = SI->getOperand(0);
+      IncrInst = SI->getOperand(0);
     }
   } else {
     if (const ZExtInst *ZI = dyn_cast<ZExtInst>(CmpLHS)) {
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
-            .isIntN(IncrVal->getType()->getPrimitiveSizeInBits()))
+            .isIntN(IncrInst->getType()->getPrimitiveSizeInBits()))
         return 0;
-      IncrVal = ZI->getOperand(0);
+      IncrInst = ZI->getOperand(0);
     }
   }
 
   // For now, only analyze induction variables that have simple increments.
-  const BinaryOperator *IncrOp = dyn_cast<BinaryOperator>(IncrVal);
-  if (!IncrOp ||
-      IncrOp->getOpcode() != Instruction::Add ||
-      !isa<ConstantInt>(IncrOp->getOperand(1)) ||
-      !cast<ConstantInt>(IncrOp->getOperand(1))->equalsInt(1))
+  const BinaryOperator *IncrOp = dyn_cast<BinaryOperator>(IncrInst);
+  if (!IncrOp || IncrOp->getOpcode() != Instruction::Add)
+    return 0;
+  IncrVal = dyn_cast<ConstantInt>(IncrOp->getOperand(1));
+  if (!IncrVal)
     return 0;
 
   // Make sure the PHI looks like a normal IV.
@@ -584,19 +591,76 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
   // For now, only analyze loops with a constant start value, so that
   // we can easily determine if the start value is not a maximum value
   // which would wrap on the first iteration.
-  const ConstantInt *InitialVal =
-    dyn_cast<ConstantInt>(PN->getIncomingValue(IncomingEdge));
+  InitialVal = dyn_cast<ConstantInt>(PN->getIncomingValue(IncomingEdge));
   if (!InitialVal)
     return 0;
 
-  // The original induction variable will start at some non-max value,
-  // it counts up by one, and the loop iterates only while it remans
-  // less than some value in the same type. As such, it will never wrap.
+  // The upper limit need not be a constant; we'll check later.
+  LimitVal = dyn_cast<ConstantInt>(CmpRHS);
+
+  // We detect the impossibility of wrapping in two cases, both of
+  // which require starting with a non-max value:
+  // - The IV counts up by one, and the loop iterates only while it remains
+  // less than a limiting value (any) in the same type.
+  // - The IV counts up by a positive increment other than 1, and the
+  // constant limiting value + the increment is less than the max value
+  // (computed as max-increment to avoid overflow)
   if (isSigned && !InitialVal->getValue().isMaxSignedValue()) {
-    NoSignedWrap = true;
-  } else if (!isSigned && !InitialVal->getValue().isMaxValue())
-    NoUnsignedWrap = true;
+    if (IncrVal->equalsInt(1))
+      NoSignedWrap = true;    // LimitVal need not be constant
+    else if (LimitVal) {
+      uint64_t numBits = LimitVal->getValue().getBitWidth();
+      if (IncrVal->getValue().sgt(APInt::getNullValue(numBits)) &&
+          (APInt::getSignedMaxValue(numBits) - IncrVal->getValue())
+            .sgt(LimitVal->getValue()))
+        NoSignedWrap = true;
+    }
+  } else if (!isSigned && !InitialVal->getValue().isMaxValue()) {
+    if (IncrVal->equalsInt(1))
+      NoUnsignedWrap = true;  // LimitVal need not be constant
+    else if (LimitVal) {
+      uint64_t numBits = LimitVal->getValue().getBitWidth();
+      if (IncrVal->getValue().ugt(APInt::getNullValue(numBits)) &&
+          (APInt::getMaxValue(numBits) - IncrVal->getValue())
+            .ugt(LimitVal->getValue()))
+        NoUnsignedWrap = true;
+    }
+  }
   return PN;
+}
+
+static Value *getSignExtendedTruncVar(const SCEVAddRecExpr *AR,
+                                      ScalarEvolution *SE,
+                                      const Type *LargestType, Loop *L, 
+                                      const Type *myType,
+                                      SCEVExpander &Rewriter, 
+                                      BasicBlock::iterator InsertPt) {
+  SCEVHandle ExtendedStart =
+    SE->getSignExtendExpr(AR->getStart(), LargestType);
+  SCEVHandle ExtendedStep =
+    SE->getSignExtendExpr(AR->getStepRecurrence(*SE), LargestType);
+  SCEVHandle ExtendedAddRec =
+    SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
+  if (LargestType != myType)
+    ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, myType);
+  return Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
+}
+
+static Value *getZeroExtendedTruncVar(const SCEVAddRecExpr *AR,
+                                      ScalarEvolution *SE,
+                                      const Type *LargestType, Loop *L, 
+                                      const Type *myType,
+                                      SCEVExpander &Rewriter, 
+                                      BasicBlock::iterator InsertPt) {
+  SCEVHandle ExtendedStart =
+    SE->getZeroExtendExpr(AR->getStart(), LargestType);
+  SCEVHandle ExtendedStep =
+    SE->getZeroExtendExpr(AR->getStepRecurrence(*SE), LargestType);
+  SCEVHandle ExtendedAddRec =
+    SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
+  if (LargestType != myType)
+    ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, myType);
+  return Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -680,6 +744,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // using it.  We can currently only handle loops with a single exit.
   bool NoSignedWrap = false;
   bool NoUnsignedWrap = false;
+  const ConstantInt* InitialVal, * IncrVal, * LimitVal;
   const PHINode *OrigControllingPHI = 0;
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount) && ExitingBlock)
     // Can't rewrite non-branch yet.
@@ -688,7 +753,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // Determine if the OrigIV will ever undergo overflow.
         OrigControllingPHI =
           TestOrigIVForWrap(L, BI, OrigCond,
-                            NoSignedWrap, NoUnsignedWrap);
+                            NoSignedWrap, NoUnsignedWrap,
+                            InitialVal, IncrVal, LimitVal);
 
         // We'll be replacing the original condition, so it'll be dead.
         DeadInsts.insert(OrigCond);
@@ -733,29 +799,44 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
            UI != UE; ++UI) {
         if (isa<SExtInst>(UI) && NoSignedWrap) {
-          SCEVHandle ExtendedStart =
-            SE->getSignExtendExpr(AR->getStart(), LargestType);
-          SCEVHandle ExtendedStep =
-            SE->getSignExtendExpr(AR->getStepRecurrence(*SE), LargestType);
-          SCEVHandle ExtendedAddRec =
-            SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
-          if (LargestType != UI->getType())
-            ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, UI->getType());
-          Value *TruncIndVar = Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
+          Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType, L, 
+                                            UI->getType(), Rewriter, InsertPt);
           UI->replaceAllUsesWith(TruncIndVar);
           if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
             DeadInsts.insert(DeadUse);
         }
+        // See if we can figure out sext(i+constant) doesn't wrap, so we can
+        // use a larger add.  This is common in subscripting.
+        Instruction *UInst = dyn_cast<Instruction>(*UI);
+        if (UInst && UInst->getOpcode()==Instruction::Add &&
+            UInst->hasOneUse() &&
+            isa<ConstantInt>(UInst->getOperand(1)) &&
+            isa<SExtInst>(UInst->use_begin()) && NoSignedWrap && LimitVal) {
+          uint64_t numBits = LimitVal->getValue().getBitWidth();
+          ConstantInt* RHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
+          if (((APInt::getSignedMaxValue(numBits) - IncrVal->getValue()) -
+                RHS->getValue()).sgt(LimitVal->getValue())) {
+            SExtInst* oldSext = dyn_cast<SExtInst>(UInst->use_begin());
+            Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType, L,
+                                              oldSext->getType(), Rewriter,
+                                              InsertPt);
+            APInt APcopy = APInt(RHS->getValue());
+            ConstantInt* newRHS = 
+                  ConstantInt::get(APcopy.sext(oldSext->getType()->
+                                               getPrimitiveSizeInBits()));
+            Value *NewAdd = BinaryOperator::CreateAdd(TruncIndVar, newRHS,
+                                                      UInst->getName()+".nosex",
+                                                      UInst);
+            oldSext->replaceAllUsesWith(NewAdd);
+            if (Instruction *DeadUse = dyn_cast<Instruction>(oldSext))
+              DeadInsts.insert(DeadUse);
+            if (Instruction *DeadUse = dyn_cast<Instruction>(UInst))
+              DeadInsts.insert(DeadUse);
+          }
+        }
         if (isa<ZExtInst>(UI) && NoUnsignedWrap) {
-          SCEVHandle ExtendedStart =
-            SE->getZeroExtendExpr(AR->getStart(), LargestType);
-          SCEVHandle ExtendedStep =
-            SE->getZeroExtendExpr(AR->getStepRecurrence(*SE), LargestType);
-          SCEVHandle ExtendedAddRec =
-            SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
-          if (LargestType != UI->getType())
-            ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, UI->getType());
-          Value *TruncIndVar = Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
+          Value *TruncIndVar = getZeroExtendedTruncVar(AR, SE, LargestType, L, 
+                                            UI->getType(), Rewriter, InsertPt);
           UI->replaceAllUsesWith(TruncIndVar);
           if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
             DeadInsts.insert(DeadUse);
