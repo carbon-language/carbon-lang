@@ -612,9 +612,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
                               SpellingLoc,
                               SourceLocation::getFromRawEncoding(Record[2]),
                               SourceLocation::getFromRawEncoding(Record[3]),
-                              Lexer::MeasureTokenLength(SpellingLoc, 
-                                                        SourceMgr,
-                                                        PP.getLangOptions()));
+                              Record[4]);
       break;
     }
 

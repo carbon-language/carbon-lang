@@ -736,6 +736,7 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &S) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Spelling location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Start location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // End location
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Token length
   return S.EmitAbbrev(Abbrev);
 }
 
@@ -817,6 +818,13 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
       Record.push_back(Inst.getSpellingLoc().getRawEncoding());
       Record.push_back(Inst.getInstantiationLocStart().getRawEncoding());
       Record.push_back(Inst.getInstantiationLocEnd().getRawEncoding());
+
+      // Compute the token length for this macro expansion.
+      unsigned NextOffset = SourceMgr.getNextOffset();
+      SourceManager::sloc_entry_iterator NextSLoc = SLoc;
+      if (++NextSLoc != SLocEnd)
+        NextOffset = NextSLoc->getOffset();
+      Record.push_back(NextOffset - SLoc->getOffset() - 1);
 
       if (SLocInstantiationAbbrv == -1)
         SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(S);

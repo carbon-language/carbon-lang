@@ -635,6 +635,8 @@ public:
     return SLocEntryTable[FID.ID];
   }
 
+  unsigned getNextOffset() const { return NextOffset; }
+
 private:
   friend class SrcMgr::ContentCache; // Used for deserialization.
   
