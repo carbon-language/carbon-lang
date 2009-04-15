@@ -16,8 +16,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/VectorExtras.h"
 #include <set>
 #include <map>
 using namespace llvm;
@@ -39,15 +40,6 @@ static const RecordVal* findRecordVal(const Record& R, const std::string &key) {
   return 0;
 }
 
-static void EmitEscaped(std::ostream& OS, const std::string &s) {
-  for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I)
-    switch (*I) {
-      default: OS << *I; break;
-      case '\"': OS << "\\" << *I; break;
-      case '\\': OS << "\\\\"; break;
-    }
-}
-
 static void EmitAllCaps(std::ostream& OS, const std::string &s) {
   for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I)
     OS << char(toupper(*I));  
@@ -63,8 +55,9 @@ static void ProcessDiag(std::ostream &OS, const Record *DiagClass,
   OS << R.getValueAsDef("Class")->getName();
   OS << ", diag::" << R.getValueAsDef("DefaultMapping")->getName();
   OS << ", \"";
-  EmitEscaped(OS, R.getValueAsString("Text"));
-  OS << "\")\n";
+  std::string S = R.getValueAsString("Text");
+  EscapeString(S);
+  OS << S << "\")\n";
 }
 
 void ClangDiagsDefsEmitter::run(std::ostream &OS) {
@@ -168,7 +161,7 @@ static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited,
 void ClangDiagGroupsEmitter::run(std::ostream &OS) {
   // Build up a map from options to controlled diagnostics.
   OptionMap OM;
-       
+  
   const RecordVector &Opts = Records.getAllDerivedDefinitions("Option");
   for (RecordVector::const_iterator I=Opts.begin(), E=Opts.end(); I != E; ++I)
     if (const RecordVal* V = findRecordVal(**I, "Members"))
