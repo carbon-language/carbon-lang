@@ -5087,7 +5087,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
                       CGM.getTargetData().getPrefTypeAlignment(
                                                   ObjCTypes.ClassnfABIPtrTy));
     
-  Entry->setSection("__OBJC,__objc_superrefs,regular,no_dead_strip");
+  Entry->setSection("__DATA,__objc_superrefs,regular,no_dead_strip");
   UsedGlobals.push_back(Entry);
   
   return Builder.CreateLoad(Entry, false, "tmp");
