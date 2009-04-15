@@ -194,12 +194,12 @@ void PCHTypeWriter::VisitEnumType(const EnumType *T) {
 void 
 PCHTypeWriter::VisitTemplateSpecializationType(
                                        const TemplateSpecializationType *T) {
-  // FIXME: Serialize this type
+  // FIXME: Serialize this type (C++ only)
   assert(false && "Cannot serialize template specialization types");
 }
 
 void PCHTypeWriter::VisitQualifiedNameType(const QualifiedNameType *T) {
-  // FIXME: Serialize this type
+  // FIXME: Serialize this type (C++ only)
   assert(false && "Cannot serialize qualified name types");
 }
 
@@ -381,7 +381,7 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
 void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   VisitVarDecl(D);
   Record.push_back(D->getObjCDeclQualifier()); // FIXME: stable encoding
-  // FIXME: emit default argument
+  // FIXME: emit default argument (C++)
   // FIXME: why isn't the "default argument" just stored as the initializer
   // in VarDecl?
   Code = pch::DECL_PARM_VAR;
@@ -395,7 +395,7 @@ void PCHDeclWriter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
 
 void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   VisitDecl(D);
-  // FIXME: Emit the string literal
+  Writer.AddExpr(D->getAsmString());
   Code = pch::DECL_FILE_SCOPE_ASM;
 }
 

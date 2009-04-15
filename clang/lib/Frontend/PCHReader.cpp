@@ -188,7 +188,7 @@ void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {
 
 void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
   VisitDecl(AD);
-  // FIXME: read asm string
+  AD->setAsmString(cast<StringLiteral>(Reader.ReadExpr()));
 }
 
 void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
@@ -593,6 +593,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       Record.clear();
       unsigned RecCode = Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen);
       assert(RecCode == pch::SM_SLOC_BUFFER_BLOB && "Ill-formed PCH file");
+      (void)RecCode;
       llvm::MemoryBuffer *Buffer
         = llvm::MemoryBuffer::getMemBuffer(BlobStart, 
                                            BlobStart + BlobLen - 1,
@@ -1471,6 +1472,7 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
   RecordData Record;
   unsigned Code = Stream.ReadCode();
   unsigned RecCode = Stream.ReadRecord(Code, Record);
+  (void)RecCode;
   assert(RecCode == pch::DECL_CONTEXT_LEXICAL && "Expected lexical block");
 
   // Load all of the declaration IDs
@@ -1496,6 +1498,7 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   RecordData Record;
   unsigned Code = Stream.ReadCode();
   unsigned RecCode = Stream.ReadRecord(Code, Record);
+  (void)RecCode;
   assert(RecCode == pch::DECL_CONTEXT_VISIBLE && "Expected visible block");
   if (Record.size() == 0)
     return false;  
