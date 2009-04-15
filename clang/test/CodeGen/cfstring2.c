@@ -1,7 +1,8 @@
 // RUN: clang-cc -emit-llvm %s -o %t
 
-#ifdef __APPLE__
-#include <Carbon/Carbon.h>
+typedef const struct __CFString * CFStringRef;
+
+#define CFSTR(x) (CFStringRef) __builtin___CFStringMakeConstantString (x)
 
 void f() {
   CFSTR("Hello, World!");
@@ -10,4 +11,3 @@ void f() {
 // rdar://6151192
 void *G = CFSTR("yo joe");
 
-#endif
