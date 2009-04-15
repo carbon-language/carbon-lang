@@ -663,6 +663,23 @@ static Value *getZeroExtendedTruncVar(const SCEVAddRecExpr *AR,
   return Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
 }
 
+/// allUsesAreSameTyped - See whether all Uses of I are instructions
+/// with the same Opcode and the same type.
+static bool allUsesAreSameTyped(unsigned int Opcode, Instruction *I) {
+  const Type* firstType = NULL;
+  for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+       UI != UE; ++UI) {
+    Instruction *II = dyn_cast<Instruction>(*UI);
+    if (!II || II->getOpcode() != Opcode)
+      return false;
+    if (!firstType)
+      firstType = II->getType();
+    else if (firstType != II->getType())
+      return false;
+  }
+  return true;
+}
+
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
@@ -808,7 +825,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // See if we can figure out sext(i+constant) doesn't wrap, so we can
         // use a larger add.  This is common in subscripting.
         if (UInst && UInst->getOpcode()==Instruction::Add &&
-            UInst->hasOneUse() &&
+            allUsesAreSameTyped(Instruction::SExt, UInst) &&
             isa<ConstantInt>(UInst->getOperand(1)) &&
             NoSignedWrap && LimitVal) {
           uint64_t oldBitSize = LimitVal->getValue().getBitWidth();
@@ -827,27 +844,56 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
               Value *NewAdd = 
                     BinaryOperator::CreateAdd(TruncIndVar, newAddRHS,
                                               UInst->getName()+".nosex", UInst);
-              oldSext->replaceAllUsesWith(NewAdd);
-              if (Instruction *DeadUse = dyn_cast<Instruction>(oldSext))
-                DeadInsts.insert(DeadUse);
+              for (Value::use_iterator UI2 = UInst->use_begin(), 
+                    UE2 = UInst->use_end(); UI2 != UE2; ++UI2) {
+                Instruction *II = dyn_cast<Instruction>(UI2);
+                II->replaceAllUsesWith(NewAdd);
+                DeadInsts.insert(II);
+              }
               DeadInsts.insert(UInst);
             }
           }
         }
-        if (UInst && isa<ZExtInst>(UInst) && NoUnsignedWrap) {
+        // Try for sext(i | constant).  This is safe as long as the
+        // high bit of the constant is not set.
+        if (UInst && UInst->getOpcode()==Instruction::Or &&
+            allUsesAreSameTyped(Instruction::SExt, UInst) && NoSignedWrap &&
+            isa<ConstantInt>(UInst->getOperand(1))) {
+          ConstantInt* RHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
+          if (!RHS->getValue().isNegative()) {
+            uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
+            SExtInst* oldSext = dyn_cast<SExtInst>(UInst->use_begin());
+            Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
+                                              L, oldSext->getType(), Rewriter,
+                                              InsertPt);
+            APInt APcopy = APInt(RHS->getValue());
+            ConstantInt* newRHS =ConstantInt::get(APcopy.sext(newBitSize));
+            Value *NewAdd = 
+                  BinaryOperator::CreateOr(TruncIndVar, newRHS,
+                                            UInst->getName()+".nosex", UInst);
+            for (Value::use_iterator UI2 = UInst->use_begin(), 
+                  UE2 = UInst->use_end(); UI2 != UE2; ++UI2) {
+              Instruction *II = dyn_cast<Instruction>(UI2);
+              II->replaceAllUsesWith(NewAdd);
+              DeadInsts.insert(II);
+            }
+            DeadInsts.insert(UInst);
+          }
+        }
+        // A zext of a signed variable known not to overflow is still safe.
+        if (UInst && isa<ZExtInst>(UInst) && (NoUnsignedWrap || NoSignedWrap)) {
           Value *TruncIndVar = getZeroExtendedTruncVar(AR, SE, LargestType, L, 
                                          UInst->getType(), Rewriter, InsertPt);
           UInst->replaceAllUsesWith(TruncIndVar);
           DeadInsts.insert(UInst);
         }
-        // If we have zext(i&constant), we can use the larger variable.  This
-        // is not common but is a bottleneck in Openssl.
+        // If we have zext(i&constant), it's always safe to use the larger
+        // variable.  This is not common but is a bottleneck in Openssl.
         // (RHS doesn't have to be constant.  There should be a better approach
         // than bottom-up pattern matching for this...)
         if (UInst && UInst->getOpcode()==Instruction::And &&
-            UInst->hasOneUse() &&
-            isa<ConstantInt>(UInst->getOperand(1)) &&
-            isa<ZExtInst>(UInst->use_begin())) {
+            allUsesAreSameTyped(Instruction::ZExt, UInst) &&
+            isa<ConstantInt>(UInst->getOperand(1))) {
           uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
           ConstantInt* AndRHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
           ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst->use_begin());
@@ -858,9 +904,12 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
           Value *NewAnd = 
                 BinaryOperator::CreateAnd(TruncIndVar, newAndRHS,
                                           UInst->getName()+".nozex", UInst);
-          oldZext->replaceAllUsesWith(NewAnd);
-          if (Instruction *DeadUse = dyn_cast<Instruction>(oldZext))
-            DeadInsts.insert(DeadUse);
+          for (Value::use_iterator UI2 = UInst->use_begin(), 
+                UE2 = UInst->use_end(); UI2 != UE2; ++UI2) {
+            Instruction *II = dyn_cast<Instruction>(UI2);
+            II->replaceAllUsesWith(NewAnd);
+            DeadInsts.insert(II);
+          }
           DeadInsts.insert(UInst);
         }
         // If we have zext((i+constant)&constant), we can use the larger
@@ -868,33 +917,39 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // constant being ANDed is the same size as i, which it presumably is.
         // We don't need to restrict the expression being and'ed to i+const,
         // but we have to promote everything in it, so it's convenient.
-        if (UInst && UInst->getOpcode()==Instruction::Add &&
+        // zext((i | constant)&constant) is also valid and accepted here.
+        if (UInst && (UInst->getOpcode()==Instruction::Add ||
+                      UInst->getOpcode()==Instruction::Or) &&
             UInst->hasOneUse() &&
             isa<ConstantInt>(UInst->getOperand(1))) {
           uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
           ConstantInt* AddRHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
           Instruction *UInst2 = dyn_cast<Instruction>(UInst->use_begin());
           if (UInst2 && UInst2->getOpcode() == Instruction::And &&
-              UInst2->hasOneUse() &&
-              isa<ConstantInt>(UInst2->getOperand(1)) &&
-              isa<ZExtInst>(UInst2->use_begin())) {
+              allUsesAreSameTyped(Instruction::ZExt, UInst2) &&
+              isa<ConstantInt>(UInst2->getOperand(1))) {
             ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst2->use_begin());
             Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
                                     L, oldZext->getType(), Rewriter, InsertPt);
             ConstantInt* AndRHS = dyn_cast<ConstantInt>(UInst2->getOperand(1));
             APInt APcopy = APInt(AddRHS->getValue());
             ConstantInt* newAddRHS = ConstantInt::get(APcopy.zext(newBitSize));
-            Value *NewAdd = 
+            Value *NewAdd = ((UInst->getOpcode()==Instruction::Add) ?
                   BinaryOperator::CreateAdd(TruncIndVar, newAddRHS,
-                                            UInst->getName()+".nozex", UInst2);
+                                            UInst->getName()+".nozex", UInst2) :
+                  BinaryOperator::CreateOr(TruncIndVar, newAddRHS,
+                                            UInst->getName()+".nozex", UInst2));
             APInt APcopy2 = APInt(AndRHS->getValue());
             ConstantInt* newAndRHS = ConstantInt::get(APcopy2.zext(newBitSize));
             Value *NewAnd = 
                   BinaryOperator::CreateAnd(NewAdd, newAndRHS,
                                             UInst->getName()+".nozex", UInst2);
-            oldZext->replaceAllUsesWith(NewAnd);
-            if (Instruction *DeadUse = dyn_cast<Instruction>(oldZext))
-              DeadInsts.insert(DeadUse);
+            for (Value::use_iterator UI2 = UInst2->use_begin(), 
+                  UE2 = UInst2->use_end(); UI2 != UE2; ++UI2) {
+              Instruction *II = dyn_cast<Instruction>(UI2);
+              II->replaceAllUsesWith(NewAnd);
+              DeadInsts.insert(II);
+            }
             DeadInsts.insert(UInst);
             DeadInsts.insert(UInst2);
           }
