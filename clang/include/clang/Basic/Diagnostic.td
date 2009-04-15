@@ -27,7 +27,7 @@ def CLASS_EXTENSION : DiagClass;
 def CLASS_ERROR     : DiagClass;
 
 // Diagnostic Groups.
-class DiagGroup<string name>;
+class DiagGroup<string Name> { string GroupName = Name; }
 class InGroup<DiagGroup Group> { DiagGroup Group = Group; }
 class IsGroup<string Name> { DiagGroup Group = DiagGroup<Name>; }
 

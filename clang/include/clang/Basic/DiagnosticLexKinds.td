@@ -101,10 +101,10 @@ def pp_out_of_date_dependency : Warning<
 def pp_undef_builtin_macro : Warning<"undefining builtin macro">;
 def pp_redef_builtin_macro : Warning<"redefining builtin macro">;
 def pp_macro_not_used : Warning<"macro is not used">, DefaultIgnore,
-  IsGroup<"unused-macros">;
+  InGroup<DiagGroup<"unused-macros">>;
 def warn_pp_undef_identifier : Warning<
   "%0 is not defined, evaluates to 0">,
-  IsGroup<"undef">, DefaultIgnore;
+  InGroup<DiagGroup<"undef">>, DefaultIgnore;
 
 def pp_invalid_string_literal : Warning<
   "invalid string literal, ignoring final '\\'">;
@@ -122,7 +122,7 @@ def ext_pp_include_next_directive : Extension<
 def ext_pp_warning_directive : Extension<"#warning is a language extension">;
 
 def ext_pp_extra_tokens_at_eol : ExtWarn<
-  "extra tokens at end of #%0 directive">, IsGroup<"extra-tokens">;
+  "extra tokens at end of #%0 directive">, InGroup<DiagGroup<"extra-tokens">>;
   
 def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<

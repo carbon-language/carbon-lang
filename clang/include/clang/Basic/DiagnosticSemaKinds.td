@@ -228,7 +228,7 @@ def error_duplicate_ivar_use : Error<
 def error_property_implemented : Error<"property %0 is already implemented">;
 def warn_objc_property_attr_mutually_exclusive : Warning<
   "property attributes '%0' and '%1' are mutually exclusive">,
-  IsGroup<"readonly-setter-attrs">, DefaultIgnore;
+  InGroup<DiagGroup<"readonly-setter-attrs">>, DefaultIgnore;
 
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
@@ -726,13 +726,13 @@ def err_unexpected_namespace : Error<
 def err_undeclared_var_use : Error<"use of undeclared identifier %0">;
 def err_undeclared_use : Error<"use of undeclared '%0'">;
 def warn_deprecated : Warning<"%0 is deprecated">,
-    IsGroup<"deprecated-declarations">;
+    InGroup<DiagGroup<"deprecated-declarations">>;
 def warn_unavailable : Warning<"%0 is unavailable">;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;
 def warn_missing_prototype : Warning<
   "no previous prototype for function %0">,
-  IsGroup<"missing-prototypes">, DefaultIgnore;
+  InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;
 def err_redefinition : Error<"redefinition of %0">;
 def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
@@ -891,7 +891,7 @@ def ext_offsetof_extended_field_designator : Extension<
   "using extended field designator is an extension">;
 def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,
-  IsGroup<"float-equal">, DefaultIgnore;
+  InGroup<DiagGroup<"float-equal">>, DefaultIgnore;
 
 def err_typecheck_subscript_value : Error<
   "subscripted value is neither array nor pointer">;
@@ -996,7 +996,7 @@ def err_value_init_for_array_type : Error<
   "array types cannot be value-initialized">;
 def warn_printf_not_string_constant : Warning<
   "format string is not a string literal (potentially insecure)">,
-  IsGroup<"format-nonliteral">;
+  InGroup<DiagGroup<"format-nonliteral">>;
 
 def err_unexpected_interface : Error<
   "unexpected interface name %0: expected expression">;
@@ -1168,7 +1168,7 @@ def ext_typecheck_convert_pointer_void_func : Extension<
   "%2 %1 converts between void* and function pointer, expected %0">;
 def ext_typecheck_convert_incompatible_pointer_sign : ExtWarn<
  "pointer types point to integer types with different sign %2 %1, expected %0">,
-  IsGroup<"pointer-sign">;
+  InGroup<DiagGroup<"pointer-sign">>;
 def ext_typecheck_convert_incompatible_pointer : ExtWarn<
   "incompatible pointer types %2 %1, expected %0">;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
