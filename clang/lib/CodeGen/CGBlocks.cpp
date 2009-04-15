@@ -600,6 +600,11 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                        uint64_t &Align,
                        llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                        bool &subBlockHasCopyDispose) {
+
+  // Check if we should generate debug info for this block.
+  if (CGM.getDebugInfo())
+    DebugInfo = CGM.getDebugInfo();
+  
   // Arrange for local static and local extern declarations to appear
   // to be local to this function as well, as they are directly referenced
   // in a block.
