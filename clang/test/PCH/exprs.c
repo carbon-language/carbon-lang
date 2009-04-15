@@ -63,3 +63,12 @@ void_ptr vp1 = &integer;
 
 // ExtVectorElementExpr
 ext_vector_element *double_ptr5 = &floating;
+
+// TypesCompatibleExpr
+types_compatible *int_ptr7 = &integer;
+
+// ChooseExpr
+choose_expr *int_ptr8 = &integer;
+
+// GNUNullExpr FIXME: needs C++
+//null_type null = __null;

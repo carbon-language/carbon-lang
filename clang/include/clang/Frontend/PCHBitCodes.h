@@ -426,7 +426,15 @@ namespace clang {
       /// FIXME: DesignatedInitExpr
       /// FIXME: ImplicitValueInitExpr
       /// \brief A VAArgExpr record.
-      EXPR_VA_ARG
+      EXPR_VA_ARG,
+      // FIXME: AddrLabelExpr
+      // FIXME: StmtExpr
+      /// \brief A TypesCompatibleExpr record.
+      EXPR_TYPES_COMPATIBLE,
+      /// \brief A ChooseExpr record.
+      EXPR_CHOOSE,
+      /// \brief A GNUNullExpr record.
+      EXPR_GNU_NULL
     };
     /// @}
   }

@@ -466,6 +466,9 @@ namespace {
     void VisitCStyleCastExpr(CStyleCastExpr *E);
     void VisitExtVectorElementExpr(ExtVectorElementExpr *E);
     void VisitVAArgExpr(VAArgExpr *E);
+    void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
+    void VisitChooseExpr(ChooseExpr *E);
+    void VisitGNUNullExpr(GNUNullExpr *E);
   };
 }
 
@@ -653,6 +656,31 @@ void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_VA_ARG;
+}
+
+void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
+  VisitExpr(E);
+  Writer.AddTypeRef(E->getArgType1(), Record);
+  Writer.AddTypeRef(E->getArgType2(), Record);
+  Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_TYPES_COMPATIBLE;
+}
+
+void PCHStmtWriter::VisitChooseExpr(ChooseExpr *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getCond());
+  Writer.WriteSubExpr(E->getLHS());
+  Writer.WriteSubExpr(E->getRHS());
+  Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_CHOOSE;
+}
+
+void PCHStmtWriter::VisitGNUNullExpr(GNUNullExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getTokenLocation(), Record);
+  Code = pch::EXPR_GNU_NULL;
 }
 
 //===----------------------------------------------------------------------===//

@@ -259,6 +259,9 @@ namespace {
     unsigned VisitCStyleCastExpr(CStyleCastExpr *E);
     unsigned VisitExtVectorElementExpr(ExtVectorElementExpr *E);
     unsigned VisitVAArgExpr(VAArgExpr *E);
+    unsigned VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
+    unsigned VisitChooseExpr(ChooseExpr *E);
+    unsigned VisitGNUNullExpr(GNUNullExpr *E);
   };
 }
 
@@ -455,6 +458,30 @@ unsigned PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
   return 1;
 }
 
+unsigned PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
+  VisitExpr(E);
+  E->setArgType1(Reader.GetType(Record[Idx++]));
+  E->setArgType2(Reader.GetType(Record[Idx++]));
+  E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitChooseExpr(ChooseExpr *E) {
+  VisitExpr(E);
+  E->setCond(ExprStack[ExprStack.size() - 3]);
+  E->setLHS(ExprStack[ExprStack.size() - 2]);
+  E->setRHS(ExprStack[ExprStack.size() - 1]);
+  E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 3;
+}
+
+unsigned PCHStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {
+  VisitExpr(E);
+  E->setTokenLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
 
 // FIXME: use the diagnostics machinery
 static bool Error(const char *Str) {
@@ -1976,6 +2003,18 @@ Expr *PCHReader::ReadExpr() {
     case pch::EXPR_VA_ARG:
       // FIXME: untested; we need function bodies first
       E = new (Context) VAArgExpr(Empty);
+      break;
+
+    case pch::EXPR_TYPES_COMPATIBLE:
+      E = new (Context) TypesCompatibleExpr(Empty);
+      break;
+
+    case pch::EXPR_CHOOSE:
+      E = new (Context) ChooseExpr(Empty);
+      break;
+
+    case pch::EXPR_GNU_NULL:
+      E = new (Context) GNUNullExpr(Empty);
       break;
     }
 

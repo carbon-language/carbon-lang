@@ -1660,9 +1660,21 @@ public:
     Expr(TypesCompatibleExprClass, ReturnType), Type1(t1), Type2(t2),
     BuiltinLoc(BLoc), RParenLoc(RP) {}
 
+  /// \brief Build an empty __builtin_type_compatible_p expression.
+  explicit TypesCompatibleExpr(EmptyShell Empty)
+    : Expr(TypesCompatibleExprClass, Empty) { }
+
   QualType getArgType1() const { return Type1; }
+  void setArgType1(QualType T) { Type1 = T; }
   QualType getArgType2() const { return Type2; }
+  void setArgType2(QualType T) { Type2 = T; }
     
+  SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
+  void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
@@ -1770,6 +1782,9 @@ public:
       SubExprs[RHS] = rhs;
     }        
 
+  /// \brief Build an empty __builtin_choose_expr.
+  explicit ChooseExpr(EmptyShell Empty) : Expr(ChooseExprClass, Empty) { }
+
   /// isConditionTrue - Return whether the condition is true (i.e. not
   /// equal to zero).
   bool isConditionTrue(ASTContext &C) const;
@@ -1781,8 +1796,17 @@ public:
   }
 
   Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
+  void setCond(Expr *E) { SubExprs[COND] = E; }
   Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
+  void setLHS(Expr *E) { SubExprs[LHS] = E; }
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
+  void setRHS(Expr *E) { SubExprs[RHS] = E; }
+
+  SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
+  void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
@@ -1814,8 +1838,12 @@ public:
   GNUNullExpr(QualType Ty, SourceLocation Loc) 
     : Expr(GNUNullExprClass, Ty), TokenLoc(Loc) { }
 
+  /// \brief Build an empty GNU __null expression.
+  explicit GNUNullExpr(EmptyShell Empty) : Expr(GNUNullExprClass, Empty) { }
+
   /// getTokenLocation - The location of the __null token.
   SourceLocation getTokenLocation() const { return TokenLoc; }
+  void setTokenLocation(SourceLocation L) { TokenLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(TokenLoc);
