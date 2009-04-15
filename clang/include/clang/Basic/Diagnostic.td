@@ -28,7 +28,7 @@ def CLASS_ERROR     : DiagClass;
 
 // Diagnostic Groups.
 class DiagGroup<string Name> { string GroupName = Name; }
-class InGroup<DiagGroup Group> { DiagGroup Group = Group; }
+class InGroup<DiagGroup G> { DiagGroup Group = G; }
 class IsGroup<string Name> { DiagGroup Group = DiagGroup<Name>; }
 
 def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
