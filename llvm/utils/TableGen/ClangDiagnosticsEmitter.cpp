@@ -69,20 +69,15 @@ static void EmitAllCaps(std::ostream& OS, const std::string &s) {
 
 static void ProcessDiag(std::ostream &OS, const Record *DiagClass,
                         const Record &R) {
-
   const Record* DiagKind = getDiagKind(DiagClass, R);
   if (!DiagKind)
     return;
 
   OS << "DIAG(" << R.getName() << ", ";
   EmitAllCaps(OS, DiagKind->getName());
-  
-  const RecordVal* Text = findRecordVal(R, "Text");
-  assert(Text && "No 'Text' entry in Diagnostic.");
-  const StringInit* TextVal = dynamic_cast<const StringInit*>(Text->getValue());
-  assert(TextVal && "Value 'Text' must be a string.");
+  OS << ", diag::" << R.getValueAsDef("DefaultMapping")->getName();
   OS << ", \"";
-  EmitEscaped(OS, TextVal->getValue());
+  EmitEscaped(OS, R.getValueAsString("Text"));
   OS << "\")\n";
 }
 
