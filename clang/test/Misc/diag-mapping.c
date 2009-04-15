@@ -9,6 +9,9 @@
 // -Werror can map this one warning to error.
 // RUN: clang-cc %s -Werror=extra-tokens 2>&1 | grep "error:" &&
 
+// Mapping unrelated diags to errors doesn't affect this one.
+// RUN: clang-cc %s -Werror=trigraphs 2>&1 | grep "warning:" &&
+
 // This should stay a warning with -pedantic.
 // RUN: clang-cc %s -pedantic 2>&1 | grep "warning:" &&
 
