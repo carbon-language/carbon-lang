@@ -365,6 +365,7 @@ Value *Value::getUnderlyingObject() {
   if (!isa<PointerType>(getType()))
     return this;
   Value *V = this;
+  unsigned MaxLookup = 6;
   do {
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (!isa<BitCastInst>(I) && !isa<GetElementPtrInst>(I))
@@ -379,7 +380,8 @@ Value *Value::getUnderlyingObject() {
       return V;
     }
     assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
-  } while (1);
+  } while (--MaxLookup);
+  return V;
 }
 
 /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,
