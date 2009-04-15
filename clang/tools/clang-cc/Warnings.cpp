@@ -108,8 +108,9 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       const char *Specifier = 0;
       if (OptEnd-OptStart != 5) {  // Specifier must be present.
         if (OptStart[5] != '=' || OptEnd-OptStart == 6) {
-          fprintf(stderr, "error: unknown warning option: -W%s\n", Opt.c_str());
-          return true;
+          fprintf(stderr, "warning: unknown -Werror warning specifier: -W%s\n",
+                  Opt.c_str());
+          continue;
         }
         Specifier = OptStart+6;
       }
@@ -130,8 +131,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
                        WarningOptionCompare);
     if (Found == OptionTable + OptionTableSize ||
         strcmp(Found->Name, OptStart) != 0) {
-      fprintf(stderr, "error: unknown warning option: -W%s\n", Opt.c_str());
-      return true;
+      fprintf(stderr, "warning: unknown warning option: -W%s\n", Opt.c_str());
+      continue;
     }
     
     // Option exists, poke all the members of its diagnostic set.
