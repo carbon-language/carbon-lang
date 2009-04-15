@@ -13,6 +13,9 @@ typedef typeof(17l) long_literal;
 // FloatingLiteral and ParenExpr
 typedef typeof((42.5)) floating_literal;
 
+// StringLiteral
+const char *hello = "Hello" "PCH" "World";
+
 // CharacterLiteral
 typedef typeof('a') char_literal;
 

@@ -20,6 +20,11 @@ long_literal *long_ptr1 = &long_integer;
 // FloatingLiteral + ParenExpr
 floating_literal *double_ptr = &floating;
 
+// StringLiteral
+const char* printHello() {
+  return hello;
+}
+
 // CharacterLiteral
 char_literal *int_ptr3 = &integer;
 

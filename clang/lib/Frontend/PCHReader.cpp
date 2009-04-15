@@ -226,6 +226,10 @@ namespace {
                   unsigned &Idx, llvm::SmallVectorImpl<Expr *> &ExprStack)
       : Reader(Reader), Record(Record), Idx(Idx), ExprStack(ExprStack) { }
 
+    /// \brief The number of record fields required for the Expr class
+    /// itself.
+    static const unsigned NumExprFields = 3;
+
     // Each of the Visit* functions reads in part of the expression
     // from the given record and the current expression stack, then
     // return the total number of operands that it read from the
@@ -236,6 +240,7 @@ namespace {
     unsigned VisitDeclRefExpr(DeclRefExpr *E);
     unsigned VisitIntegerLiteral(IntegerLiteral *E);
     unsigned VisitFloatingLiteral(FloatingLiteral *E);
+    unsigned VisitStringLiteral(StringLiteral *E);
     unsigned VisitCharacterLiteral(CharacterLiteral *E);
     unsigned VisitParenExpr(ParenExpr *E);
     unsigned VisitUnaryOperator(UnaryOperator *E);
@@ -252,6 +257,7 @@ unsigned PCHStmtReader::VisitExpr(Expr *E) {
   E->setType(Reader.GetType(Record[Idx++]));
   E->setTypeDependent(Record[Idx++]);
   E->setValueDependent(Record[Idx++]);
+  assert(Idx == NumExprFields && "Incorrect expression field count");
   return 0;
 }
 
@@ -281,6 +287,26 @@ unsigned PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
   E->setValue(Reader.ReadAPFloat(Record, Idx));
   E->setExact(Record[Idx++]);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitStringLiteral(StringLiteral *E) {
+  VisitExpr(E);
+  unsigned Len = Record[Idx++];
+  assert(Record[Idx] == E->getNumConcatenated() && 
+         "Wrong number of concatenated tokens!");
+  ++Idx;
+  E->setWide(Record[Idx++]);
+
+  // Read string data  
+  llvm::SmallVector<char, 16> Str(&Record[Idx], &Record[Idx] + Len);
+  E->setStrData(Reader.getContext(), &Str[0], Len);
+  Idx += Len;
+
+  // Read source locations
+  for (unsigned I = 0, N = E->getNumConcatenated(); I != N; ++I)
+    E->setStrTokenLoc(I, SourceLocation::getFromRawEncoding(Record[Idx++]));
+
   return 0;
 }
 
@@ -1656,6 +1682,11 @@ Expr *PCHReader::ReadExpr() {
       E = new (Context) FloatingLiteral(Empty);
       break;
       
+    case pch::EXPR_STRING_LITERAL:
+      E = StringLiteral::CreateEmpty(Context, 
+                                     Record[PCHStmtReader::NumExprFields + 1]);
+      break;
+
     case pch::EXPR_CHARACTER_LITERAL:
       E = new (Context) CharacterLiteral(Empty);
       break;

@@ -581,12 +581,21 @@ public:
     return Create(C, StrData, ByteLength, Wide, Ty, &Loc, 1);
   }
 
+  /// \brief Construct an empty string literal.
+  static StringLiteral *CreateEmpty(ASTContext &C, unsigned NumStrs);
+
   StringLiteral* Clone(ASTContext &C) const;
   void Destroy(ASTContext &C);
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
+
+  /// \brief Sets the string data to the given string data.
+  void setStrData(ASTContext &C, const char *Str, unsigned Len);
+
   bool isWide() const { return IsWide; }
+  void setWide(bool W) { IsWide = W; }
+
   bool containsNonAsciiOrNull() const {
     for (unsigned i = 0; i < getByteLength(); ++i)
       if (!isascii(getStrData()[i]) || !getStrData()[i])
@@ -601,7 +610,11 @@ public:
     assert(TokNum < NumConcatenated && "Invalid tok number");
     return TokLocs[TokNum];
   }
-  
+  void setStrTokenLoc(unsigned TokNum, SourceLocation L) { 
+    assert(TokNum < NumConcatenated && "Invalid tok number");
+    TokLocs[TokNum] = L;
+  }
+
   typedef const SourceLocation *tokloc_iterator;
   tokloc_iterator tokloc_begin() const { return TokLocs; }
   tokloc_iterator tokloc_end() const { return TokLocs+NumConcatenated; }

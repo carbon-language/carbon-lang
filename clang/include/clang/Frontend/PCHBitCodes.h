@@ -381,6 +381,8 @@ namespace clang {
       EXPR_INTEGER_LITERAL,
       /// \brief A FloatingLiteral record.
       EXPR_FLOATING_LITERAL,
+      /// \brief A StringLiteral record.
+      EXPR_STRING_LITERAL,
       /// \brief A CharacterLiteral record.
       EXPR_CHARACTER_LITERAL,
       /// \brief A ParenExpr record.

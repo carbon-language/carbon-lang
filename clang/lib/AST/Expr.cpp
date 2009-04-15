@@ -68,6 +68,17 @@ StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
   return SL;
 }
 
+StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
+  void *Mem = C.Allocate(sizeof(StringLiteral)+
+                         sizeof(SourceLocation)*(NumStrs-1),
+                         llvm::alignof<StringLiteral>());
+  StringLiteral *SL = new (Mem) StringLiteral(QualType());
+  SL->StrData = 0;
+  SL->ByteLength = 0;
+  SL->NumConcatenated = NumStrs;
+  return SL;
+}
+
 StringLiteral* StringLiteral::Clone(ASTContext &C) const {
   return Create(C, StrData, ByteLength, IsWide, getType(),
                 TokLocs, NumConcatenated);
@@ -77,6 +88,16 @@ void StringLiteral::Destroy(ASTContext &C) {
   C.Deallocate(const_cast<char*>(StrData));
   this->~StringLiteral();
   C.Deallocate(this);
+}
+
+void StringLiteral::setStrData(ASTContext &C, const char *Str, unsigned Len) {
+  if (StrData)
+    C.Deallocate(const_cast<char*>(StrData));
+
+  char *AStrData = new (C, 1) char[Len];
+  memcpy(AStrData, Str, Len);
+  StrData = AStrData;
+  ByteLength = Len;
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it

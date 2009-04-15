@@ -448,6 +448,7 @@ namespace {
     void VisitDeclRefExpr(DeclRefExpr *E);
     void VisitIntegerLiteral(IntegerLiteral *E);
     void VisitFloatingLiteral(FloatingLiteral *E);
+    void VisitStringLiteral(StringLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
@@ -493,6 +494,22 @@ void PCHStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
   Record.push_back(E->isExact());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = pch::EXPR_FLOATING_LITERAL;
+}
+
+void PCHStmtWriter::VisitStringLiteral(StringLiteral *E) {
+  VisitExpr(E);
+  Record.push_back(E->getByteLength());
+  Record.push_back(E->getNumConcatenated());
+  Record.push_back(E->isWide());
+  // FIXME: String data should be stored as a blob at the end of the
+  // StringLiteral. However, we can't do so now because we have no
+  // provision for coping with abbreviations when we're jumping around
+  // the PCH file during deserialization.
+  Record.insert(Record.end(), 
+                E->getStrData(), E->getStrData() + E->getByteLength());
+  for (unsigned I = 0, N = E->getNumConcatenated(); I != N; ++I)
+    Writer.AddSourceLocation(E->getStrTokenLoc(I), Record);
+  Code = pch::EXPR_STRING_LITERAL;
 }
 
 void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
