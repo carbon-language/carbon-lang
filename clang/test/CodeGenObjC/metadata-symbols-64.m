@@ -35,6 +35,7 @@
 // RUN: grep '@"\\01l_OBJC_LABEL_PROTOCOL_$_P" = weak hidden global .* section "__DATA, __objc_protolist, coalesced, no_dead_strip", align 8' %t &&
 // RUN: grep '@"\\01l_OBJC_METACLASS_RO_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep '@"\\01l_OBJC_PROTOCOL_$_P" = weak hidden global .* section "__DATA,__datacoal_nt,coalesced", align 8' %t &&
+// RUN: grep '@"\\01l_objc_msgSend_fixup_alloc" = weak hidden global .* section "__DATA, __objc_msgrefs, coalesced", align 16' %t &&
 // RUN: grep '@_objc_empty_cache = external global' %t &&
 // RUN: grep '@_objc_empty_vtable = external global' %t &&
 

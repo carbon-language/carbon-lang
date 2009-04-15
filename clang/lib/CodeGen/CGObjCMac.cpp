@@ -4989,8 +4989,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
                                    Name,
                                    &CGM.getModule());
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    GV->setAlignment(
-            CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.MessageRefTy));
+    GV->setAlignment(16);
     GV->setSection("__DATA, __objc_msgrefs, coalesced");
     UsedGlobals.push_back(GV);
   }
