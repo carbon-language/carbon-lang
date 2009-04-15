@@ -37,7 +37,7 @@ using namespace clang;
 // driver has stripped off -Wa,foo etc.  The driver has also translated -W to
 // -Wextra, so we don't need to worry about it.
 static llvm::cl::list<std::string>
-OptWarnings("W", llvm::cl::Prefix);
+OptWarnings("W", llvm::cl::Prefix, llvm::cl::ValueOptional);
 
 static llvm::cl::opt<bool> OptPedantic("pedantic");
 static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");

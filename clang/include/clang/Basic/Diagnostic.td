@@ -34,6 +34,12 @@ class InGroup<DiagGroup G> { DiagGroup Group = G; }
 def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
 def Trigraphs : DiagGroup<"trigraphs">;
 
+// Empty DiagGroups: these are recognized by clang but ignored.
+def : DiagGroup<"extra">;
+def : DiagGroup<"">;  // -W
+
+
+
 
 
 
