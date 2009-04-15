@@ -267,11 +267,21 @@ bool CondProp::RevectorBlockTo(BasicBlock *FromBB, Value *Cond, BranchInst *BI){
     // Change FromBr to branch to the new destination.
     FromBr->setSuccessor(0, ToBB);
   } else {
-    // Insert the new conditional branch.
-    BranchInst::Create(BI->getSuccessor(0), BI->getSuccessor(1), Cond, FromBr);
+    BasicBlock *Succ0 = BI->getSuccessor(0);
+    // Do not perform transform if the new destination has PHI nodes. The
+    // transform will add new preds to the PHI's.
+    if (isa<PHINode>(Succ0->begin()))
+      return false;
 
-    FoldSingleEntryPHINodes(BI->getSuccessor(0));
-    FoldSingleEntryPHINodes(BI->getSuccessor(1));
+    BasicBlock *Succ1 = BI->getSuccessor(1);
+    if (isa<PHINode>(Succ1->begin()))
+      return false;
+
+    // Insert the new conditional branch.
+    BranchInst::Create(Succ0, Succ1, Cond, FromBr);
+
+    FoldSingleEntryPHINodes(Succ0);
+    FoldSingleEntryPHINodes(Succ1);
 
     // Update PHI nodes in OldSucc to know that FromBB no longer branches to it.
     OldSucc->removePredecessor(FromBB);
