@@ -112,7 +112,7 @@ namespace llvm {
     }
 
     /// needsGOT - Allows a target to specify that it would like the
-    // JIT to manage a GOT for it.
+    /// JIT to manage a GOT for it.
     bool needsGOT() const { return useGOT; }
 
     /// hasCustomConstantPool - Allows a target to specify that constant
