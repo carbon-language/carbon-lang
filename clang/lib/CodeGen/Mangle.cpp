@@ -29,13 +29,17 @@ namespace {
     ASTContext &Context;
     llvm::raw_ostream &Out;
 
+    const CXXConstructorDecl *Ctor;
+    CXXCtorType CtorType;
+    
   public:
     CXXNameMangler(ASTContext &C, llvm::raw_ostream &os)
-      : Context(C), Out(os) { }
+      : Context(C), Out(os), Ctor(0), CtorType(Ctor_Complete) { }
 
     bool mangle(const NamedDecl *D);
     void mangleGuardVariable(const VarDecl *D);
-    
+    void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type);
+
   private:
     bool mangleFunctionDecl(const FunctionDecl *FD);
     
@@ -58,6 +62,7 @@ namespace {
     void mangleType(const TemplateTypeParmType *T);
     void mangleType(const ObjCInterfaceType *T);
     void mangleExpression(Expr *E);
+    void mangleCXXCtorType(CXXCtorType T);
   };
 }
 
@@ -125,6 +130,15 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   return false;
 }
 
+void CXXNameMangler::mangleCXXCtor(const CXXConstructorDecl *D, 
+                                   CXXCtorType Type) {
+  assert(!Ctor && "Ctor already set!");
+  Ctor = D;
+  CtorType = Type;
+  
+  mangle(D);
+}
+
 void CXXNameMangler::mangleGuardVariable(const VarDecl *D)
 {
   //  <special-name> ::= GV <object name>	# Guard variable for one-time 
@@ -184,13 +198,14 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     break;
 
   case DeclarationName::CXXConstructorName:
-    // <ctor-dtor-name> ::= C1  # complete object constructor
-    //                  ::= C2  # base object constructor
-    //                  ::= C3  # complete object allocating constructor
-    //
-    // FIXME: We don't even have all of these constructors
-    // in the AST yet.
-    Out << "C1";
+    if (ND == Ctor)
+      // If the named decl is the C++ constructor we're mangling, use the 
+      // type we were given.
+      mangleCXXCtorType(CtorType);
+    else
+      // Otherwise, use the complete constructor name. This is relevant if a
+      // class with a constructor is declared within a constructor.
+      mangleCXXCtorType(Ctor_Complete);
     break;
 
   case DeclarationName::CXXDestructorName:
@@ -578,6 +593,24 @@ void CXXNameMangler::mangleExpression(Expr *E) {
   assert(false && "Cannot mangle expressions yet");
 }
 
+void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
+  // <ctor-dtor-name> ::= C1  # complete object constructor
+  //                  ::= C2  # base object constructor
+  //                  ::= C3  # complete object allocating constructor
+  //
+  switch (T) {
+  case Ctor_Complete:
+    Out << "C1";
+    break;
+  case Ctor_Base:
+    Out << "C2";
+    break;
+  case Ctor_CompleteAllocating:
+    Out << "C3";
+    break;
+  }
+}
+
 namespace clang {
   /// \brief Mangles the name of the declaration D and emits that name
   /// to the given output stream.
@@ -597,12 +630,21 @@ namespace clang {
     return true;
   }
   
-  /// mangleGuardVariable - Mangles the m
+  /// mangleGuardVariable - Returns the mangled name for a guard variable
+  /// for the passed in VarDecl.
   void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
                            llvm::raw_ostream &os) {
     CXXNameMangler Mangler(Context, os);
     Mangler.mangleGuardVariable(D);
 
+    os.flush();
+  }
+  
+  void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
+                     ASTContext &Context, llvm::raw_ostream &os) {
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleCXXCtor(D, Type);
+    
     os.flush();
   }
 }

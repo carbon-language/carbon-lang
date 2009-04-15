@@ -18,12 +18,15 @@
 #ifndef LLVM_CLANG_CODEGEN_MANGLE_H
 #define LLVM_CLANG_CODEGEN_MANGLE_H
 
+#include "CGCXX.h"
+
 namespace llvm {
   class raw_ostream;
 }
 
 namespace clang {
   class ASTContext;
+  class CXXConstructorDecl;
   class NamedDecl;
   class VarDecl;
   
@@ -31,6 +34,8 @@ namespace clang {
                   llvm::raw_ostream &os);
   void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
                            llvm::raw_ostream &os);
+  void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
+                     ASTContext &Context, llvm::raw_ostream &os);
 }
 
 #endif 
