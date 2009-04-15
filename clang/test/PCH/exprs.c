@@ -52,5 +52,11 @@ member_ref_double *double_ptr3 = &floating;
 // BinaryOperator
 add_result *int_ptr5 = &integer;
 
+// CompoundAssignOperator
+addeq_result *int_ptr6 = &integer;
+
+// ConditionalOperator
+conditional_operator *double_ptr4 = &floating;
+
 // CStyleCastExpr
 void_ptr vp1 = &integer;

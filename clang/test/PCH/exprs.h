@@ -47,6 +47,12 @@ typedef typeof(((struct S*)0)->x) member_ref_double;
 // BinaryOperator
 typedef typeof(i + Enumerator) add_result;
 
+// CompoundAssignOperator
+typedef typeof(i += Enumerator) addeq_result;
+
+// ConditionalOperator
+typedef typeof(i? : d0) conditional_operator;
+
 // CStyleCastExpr
 typedef typeof((void *)0) void_ptr;
 

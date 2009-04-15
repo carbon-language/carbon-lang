@@ -1469,6 +1469,9 @@ protected:
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
   }
+
+  BinaryOperator(StmtClass SC, EmptyShell Empty) 
+    : Expr(SC, Empty), Opc(MulAssign) { }
 };
 
 /// CompoundAssignOperator - For compound assignments (e.g. +=), we keep
@@ -1492,12 +1495,19 @@ public:
            "Only should be used for compound assignments");
   }
 
+  /// \brief Build an empty compound assignment operator expression.
+  explicit CompoundAssignOperator(EmptyShell Empty)
+    : BinaryOperator(CompoundAssignOperatorClass, Empty) { }
+
   // The two computation types are the type the LHS is converted
   // to for the computation and the type of the result; the two are
   // distinct in a few cases (specifically, int+=ptr and ptr-=ptr).
   QualType getComputationLHSType() const { return ComputationLHSType; }
+  void setComputationLHSType(QualType T) { ComputationLHSType = T; }
+
   QualType getComputationResultType() const { return ComputationResultType; }
-  
+  void setComputationResultType(QualType T) { ComputationResultType = T; }
+
   static bool classof(const CompoundAssignOperator *) { return true; }
   static bool classof(const Stmt *S) { 
     return S->getStmtClass() == CompoundAssignOperatorClass; 
@@ -1529,9 +1539,14 @@ public:
     SubExprs[RHS] = rhs;
   }
 
+  /// \brief Build an empty conditional operator.
+  explicit ConditionalOperator(EmptyShell Empty)
+    : Expr(ConditionalOperatorClass, Empty) { }
+
   // getCond - Return the expression representing the condition for
   //  the ?: operator.
   Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
+  void setCond(Expr *E) { SubExprs[COND] = E; }
 
   // getTrueExpr - Return the subexpression representing the value of the ?:
   //  expression if the condition evaluates to true.  In most cases this value
@@ -1548,7 +1563,10 @@ public:
   Expr *getFalseExpr() const { return cast<Expr>(SubExprs[RHS]); }
   
   Expr *getLHS() const { return cast_or_null<Expr>(SubExprs[LHS]); }
+  void setLHS(Expr *E) { SubExprs[LHS] = E; }
+
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
+  void setRHS(Expr *E) { SubExprs[RHS] = E; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());

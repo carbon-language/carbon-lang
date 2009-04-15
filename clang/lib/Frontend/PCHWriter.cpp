@@ -459,6 +459,8 @@ namespace {
     void VisitMemberExpr(MemberExpr *E);
     void VisitCastExpr(CastExpr *E);
     void VisitBinaryOperator(BinaryOperator *E);
+    void VisitCompoundAssignOperator(CompoundAssignOperator *E);
+    void VisitConditionalOperator(ConditionalOperator *E);
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
     void VisitExplicitCastExpr(ExplicitCastExpr *E);
     void VisitCStyleCastExpr(CStyleCastExpr *E);
@@ -600,6 +602,21 @@ void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {
   Record.push_back(E->getOpcode()); // FIXME: stable encoding
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Code = pch::EXPR_BINARY_OPERATOR;
+}
+
+void PCHStmtWriter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
+  VisitBinaryOperator(E);
+  Writer.AddTypeRef(E->getComputationLHSType(), Record);
+  Writer.AddTypeRef(E->getComputationResultType(), Record);
+  Code = pch::EXPR_COMPOUND_ASSIGN_OPERATOR;
+}
+
+void PCHStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getCond());
+  Writer.WriteSubExpr(E->getLHS());
+  Writer.WriteSubExpr(E->getRHS());
+  Code = pch::EXPR_CONDITIONAL_OPERATOR;
 }
 
 void PCHStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {

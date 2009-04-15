@@ -411,6 +411,10 @@ namespace clang {
       EXPR_MEMBER,
       /// \brief A BinaryOperator record.
       EXPR_BINARY_OPERATOR,
+      /// \brief A CompoundAssignOperator record.
+      EXPR_COMPOUND_ASSIGN_OPERATOR,
+      /// \brief A ConditionOperator record.
+      EXPR_CONDITIONAL_OPERATOR,
       /// \brief An ImplicitCastExpr record.
       EXPR_IMPLICIT_CAST,
       /// \brief A CStyleCastExpr record.

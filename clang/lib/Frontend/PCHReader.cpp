@@ -252,6 +252,8 @@ namespace {
     unsigned VisitMemberExpr(MemberExpr *E);
     unsigned VisitCastExpr(CastExpr *E);
     unsigned VisitBinaryOperator(BinaryOperator *E);
+    unsigned VisitCompoundAssignOperator(CompoundAssignOperator *E);
+    unsigned VisitConditionalOperator(ConditionalOperator *E);
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
     unsigned VisitExplicitCastExpr(ExplicitCastExpr *E);
     unsigned VisitCStyleCastExpr(CStyleCastExpr *E);
@@ -399,6 +401,21 @@ unsigned PCHStmtReader::VisitBinaryOperator(BinaryOperator *E) {
   E->setOpcode((BinaryOperator::Opcode)Record[Idx++]);
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 2;
+}
+
+unsigned PCHStmtReader::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
+  VisitBinaryOperator(E);
+  E->setComputationLHSType(Reader.GetType(Record[Idx++]));
+  E->setComputationResultType(Reader.GetType(Record[Idx++]));
+  return 2;
+}
+
+unsigned PCHStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
+  VisitExpr(E);
+  E->setCond(ExprStack[ExprStack.size() - 3]);
+  E->setLHS(ExprStack[ExprStack.size() - 2]);
+  E->setRHS(ExprStack[ExprStack.size() - 1]);
+  return 3;
 }
 
 unsigned PCHStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
@@ -1915,6 +1932,14 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_BINARY_OPERATOR:
       E = new (Context) BinaryOperator(Empty);
+      break;
+
+    case pch::EXPR_COMPOUND_ASSIGN_OPERATOR:
+      E = new (Context) CompoundAssignOperator(Empty);
+      break;
+
+    case pch::EXPR_CONDITIONAL_OPERATOR:
+      E = new (Context) ConditionalOperator(Empty);
       break;
 
     case pch::EXPR_IMPLICIT_CAST:
