@@ -783,10 +783,15 @@ def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 [(store GR32:$src, addr:$dst)]>;
 
-// A version of MOV8mr that uses i8mem_NOREX so that it can be used for
-// storing h registers, which can't be encoded when a REX prefix is present.
-def MOV8mr_NOREX : I<0x88, MRMDestMem, (outs), (ins i8mem_NOREX:$dst, GR8:$src),
-                   "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;
+// Versions of MOV8rr and MOV8mr that use i8mem_NOREX and GR8_NOREX so that they
+// can be used for copying and storing h registers, which can't be encoded when
+// a REX prefix is present.
+let neverHasSideEffects = 1 in
+def MOV8rr_NOREX : I<0x88, MRMDestReg, (outs GR8_NOREX:$dst), (ins GR8_NOREX:$src),
+                     "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;
+def MOV8mr_NOREX : I<0x88, MRMDestMem,
+                     (outs), (ins i8mem_NOREX:$dst, GR8_NOREX:$src),
+                     "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;
 
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...

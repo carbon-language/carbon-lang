@@ -1641,6 +1641,11 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return Count;
 }
 
+/// isHReg - Test if the given register is a physical h register.
+static bool isHReg(unsigned Reg) {
+  return Reg == X86::AH || Reg == X86::BH || Reg == X86::CH || Reg == X86::DH;
+}
+
 bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI,
                                 unsigned DestReg, unsigned SrcReg,
@@ -1658,7 +1663,12 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     } else if (DestRC == &X86::GR16RegClass) {
       Opc = X86::MOV16rr;
     } else if (DestRC == &X86::GR8RegClass) {
-      Opc = X86::MOV8rr;
+      // Copying two or from a physical H register requires a NOREX move. Otherwise
+      // use a normal move.
+      if (isHReg(DestReg) || isHReg(SrcReg))
+        Opc = X86::MOV8rr_NOREX;
+      else
+        Opc = X86::MOV8rr;
     } else if (DestRC == &X86::GR64_RegClass) {
       Opc = X86::MOV64rr;
     } else if (DestRC == &X86::GR32_RegClass) {
