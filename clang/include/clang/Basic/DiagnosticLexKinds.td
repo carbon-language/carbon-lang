@@ -100,6 +100,12 @@ def pp_out_of_date_dependency : Warning<
   "current file is older than dependency %0">;
 def pp_undef_builtin_macro : Warning<"undefining builtin macro">;
 def pp_redef_builtin_macro : Warning<"redefining builtin macro">;
+def pp_macro_not_used : Warning<"macro is not used">, DefaultIgnore,
+  IsGroup<"unused-macros">;
+def warn_pp_undef_identifier : Warning<
+  "%0 is not defined, evaluates to 0">,
+  IsGroup<"undef">, DefaultIgnore;
+
 def pp_invalid_string_literal : Warning<
   "invalid string literal, ignoring final '\\'">;
 def warn_pp_expr_overflow : Warning<
