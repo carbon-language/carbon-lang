@@ -309,6 +309,10 @@ namespace llvm {
 
     /// dump - print subprogram.
     void dump() const;
+
+    /// describes - Return true if this subprogram provides debugging
+    /// information for the function F.
+    bool describes(const Function *F);
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.

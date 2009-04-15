@@ -291,6 +291,19 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
   return BT.getSizeInBits();
 }
 
+/// describes - Return true if this subprogram provides debugging
+/// information for the function F.
+bool DISubprogram::describes(const Function *F) {
+  assert (F && "Invalid function");
+  std::string Name;
+  getLinkageName(Name);
+  if (Name.empty())
+    getName(Name);
+  if (!Name.empty() && (strcmp(Name.c_str(), F->getNameStart()) == false))
+    return true;
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // DIFactory: Basic Helpers
 //===----------------------------------------------------------------------===//
