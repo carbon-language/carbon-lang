@@ -12,30 +12,37 @@
 //
 //===----------------------------------------------------------------------===//
 
-// All diagnostics emitted by the compiler are an indirect subclass of this.
-class Diagnostic<string text> {
-  string Component = ?;
-  string Text = text;
-}
+// Define the diagnostic mappings.
+class DiagMapping;
+def MAP_IGNORE  : DiagMapping;
+def MAP_WARNING : DiagMapping;
+def MAP_ERROR   : DiagMapping;
+def MAP_FATAL   : DiagMapping;
 
-class Error<string text> : Diagnostic<text>;
-class Note<string text> : Diagnostic<text>;
-
-// Anything that can be controlled by an option subclasses this.
-class OptionControlled;
-
-class DiagnosticControlled<string text, string defaultMapping>
-  : Diagnostic<text>, OptionControlled {
-  string DefaultMapping = defaultMapping;
-}
-class Warning<string text> : DiagnosticControlled<text, "warning"> {}
-class Extension<string text> : DiagnosticControlled<text, "ignore"> {}
-class ExtWarn<string text> : DiagnosticControlled<text, "warning"> {}
-
+/*
 class Option<string name, list<OptionControlled> members> : OptionControlled {
   string Name = name;
   list<OptionControlled> Members = members;
 }
+
+// Definitions for options ("warning groups").
+include "DiagnosticOptions.td"
+
+*/
+
+// All diagnostics emitted by the compiler are an indirect subclass of this.
+class Diagnostic<string text, DiagMapping defaultmapping> {
+  /// Component is specified by the file with a big let directive.
+  string Component = ?;
+  string Text = text;
+  DiagMapping DefaultMapping = defaultmapping;
+}
+
+class Error<string text>     : Diagnostic<text, MAP_ERROR>;
+class Warning<string text>   : Diagnostic<text, MAP_WARNING>;
+class Extension<string text> : Diagnostic<text, MAP_IGNORE>;
+class ExtWarn<string text>   : Diagnostic<text, MAP_WARNING>;
+class Note<string text>      : Diagnostic<text, MAP_FATAL /*ignored*/>;
 
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"
@@ -47,5 +54,3 @@ include "DiagnosticLexKinds.td"
 include "DiagnosticParseKinds.td"
 include "DiagnosticSemaKinds.td"
 
-// Definitions for options ("warning groups").
-include "DiagnosticOptions.td"
