@@ -225,16 +225,11 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                     FProto->getArgType(i)));
   }
 
-  StartFunction(FD, FD->getResultType(), Fn, Args,
-                cast<CompoundStmt>(FD->getBody())->getLBracLoc());
+  const CompoundStmt *S = FD->getBody();
 
-  EmitStmt(FD->getBody());
-  
-  const CompoundStmt *S = dyn_cast<CompoundStmt>(FD->getBody());
-  if (S)
-    FinishFunction(S->getRBracLoc());
-  else
-    FinishFunction();
+  StartFunction(FD, FD->getResultType(), Fn, Args, S->getLBracLoc());
+  EmitStmt(S);
+  FinishFunction(S->getRBracLoc());
     
   // Destroy the 'this' declaration.
   if (CXXThisDecl)
