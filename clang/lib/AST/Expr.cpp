@@ -756,7 +756,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
 /// if it is a structure or union, does not have any member (including, 
 /// recursively, any member or element of all contained aggregates or unions)
 /// with a const-qualified type.
-Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
+Expr::isModifiableLvalueResult 
+Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   isLvalueResult lvalResult = isLvalue(Ctx);
     
   switch (lvalResult) {
@@ -775,9 +776,13 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
     // lvalue, then this is probably a use of the old-school "cast as lvalue"
     // GCC extension.  We don't support it, but we want to produce good
     // diagnostics when it happens so that the user knows why.
-    if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(IgnoreParens()))
-      if (CE->getSubExpr()->isLvalue(Ctx) == LV_Valid)
+    if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(IgnoreParens())) {
+      if (CE->getSubExpr()->isLvalue(Ctx) == LV_Valid) {
+        if (Loc)
+          *Loc = CE->getLParenLoc();
         return MLV_LValueCast;
+      }
+    }
     return MLV_InvalidExpression;
   case LV_MemberFunction: return MLV_MemberFunction;
   }

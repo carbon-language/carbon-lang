@@ -152,6 +152,10 @@ public:
   /// and if it is a structure or union, does not have any member (including, 
   /// recursively, any member or element of all contained aggregates or unions)
   /// with a const-qualified type.
+  ///
+  /// \param Loc [in] [out] - A source location which *may* be filled
+  /// in with the location of the expression making this a
+  /// non-modifiable lvalue, if specified.
   enum isModifiableLvalueResult {
     MLV_Valid,
     MLV_NotObjectType,
@@ -167,7 +171,8 @@ public:
     MLV_NoSetterProperty,
     MLV_MemberFunction
   };
-  isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
+  isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
+                                              SourceLocation *Loc = 0) const;
   
   bool isBitField();
 

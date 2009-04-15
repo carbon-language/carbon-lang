@@ -34,7 +34,8 @@ void test4() {
 // rdar://6319320
 void test5(int *X, float *P) {
   (float*)X = P;   // expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
-  ((float*)X) = P;   // expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
+#define FOO ((float*) X)
+  FOO = P;   // expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
 }
 
 void test6() {

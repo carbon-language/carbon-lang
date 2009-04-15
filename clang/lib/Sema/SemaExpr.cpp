@@ -3725,7 +3725,9 @@ static bool IsReadonlyProperty(Expr *E, Sema &S)
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
 /// emit an error and return true.  If so, return false.
 static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
-  Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context);
+  SourceLocation OrigLoc = Loc;
+  Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context, 
+                                                              &Loc);
   if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
     IsLV = Expr::MLV_ReadonlyProperty;
   if (IsLV == Expr::MLV_Valid)
@@ -3769,10 +3771,13 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   }
 
+  SourceRange Assign;
+  if (Loc != OrigLoc)
+    Assign = SourceRange(OrigLoc, OrigLoc);
   if (NeedType)
-    S.Diag(Loc, Diag) << E->getType() << E->getSourceRange();
+    S.Diag(Loc, Diag) << E->getType() << E->getSourceRange() << Assign;
   else
-    S.Diag(Loc, Diag) << E->getSourceRange();
+    S.Diag(Loc, Diag) << E->getSourceRange() << Assign; 
   return true;
 }
 
