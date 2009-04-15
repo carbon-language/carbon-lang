@@ -4505,7 +4505,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                                               unsigned long int Offset) {
   
   assert(ID && "EmitIvarOffsetVar - null interface decl.");
-  std::string ExternalName("\01_OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
+  std::string ExternalName("OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
                            + Ivar->getNameAsString());
   llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.LongTy, Offset);
   llvm::GlobalVariable *IvarOffsetGV = 

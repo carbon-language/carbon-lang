@@ -1,5 +1,5 @@
 // RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm -o %t %s &&
-// RUN: grep '_OBJC_IVAR_$_XCOrganizerDeviceNodeInfo.viewController' %t
+// RUN: grep '@"OBJC_IVAR_$_XCOrganizerDeviceNodeInfo.viewController"' %t
 
 @interface XCOrganizerNodeInfo
 @property (readonly, retain) id viewController;
