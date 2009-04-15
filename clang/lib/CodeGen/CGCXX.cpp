@@ -149,8 +149,29 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
   SetLLVMFunctionAttributesForDefinition(D, Fn);
 }
 
+static bool canGenerateCXXConstructor(const CXXConstructorDecl *D, 
+                                      ASTContext &Context) {
+  const CXXRecordDecl *RD = D->getParent();
+  
+  // The class has base classes - we don't support that right now.
+  if (RD->getNumBases() > 0)
+    return false;
+  
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(Context), 
+       E = RD->field_end(Context); I != E; ++I) {
+    // We don't support ctors for fields that aren't POD.
+    if (!I->getType()->isPODType())
+      return false;
+  }
+  
+  return true;
+}
+
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
-  ErrorUnsupported(D, "C++ constructor", true);
+  if (!canGenerateCXXConstructor(D, getContext())) {
+    ErrorUnsupported(D, "C++ constructor", true);
+    return;
+  }
 
   EmitCXXConstructor(D, Ctor_Complete);
   EmitCXXConstructor(D, Ctor_Base);
