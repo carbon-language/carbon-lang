@@ -2910,9 +2910,7 @@ static bool StatementCreatesScope(Stmt* S) {
           return true;
       }
     }
-  } else if (isa<ObjCAtTryStmt>(S)) {
-    return true;
-  }
+  } 
   return false;
 }
 
@@ -2928,6 +2926,15 @@ void Sema::RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
     if (StatementCreatesScope(*i))  {
       ScopeStack.push_back(*i);
       PopScopeMap[*i] = ParentCompoundStmt;
+    } else if (ObjCAtTryStmt *AT = dyn_cast<ObjCAtTryStmt>(*i)) {
+      ScopeStack.push_back(*i);
+      PopScopeMap[*i] = AT->getTryBody();
+    } else if (ObjCAtCatchStmt *AC = dyn_cast<ObjCAtCatchStmt>(*i)) {
+      ScopeStack.push_back(*i);
+      PopScopeMap[*i] = AC->getCatchBody();
+    } else if (ObjCAtFinallyStmt *AF = dyn_cast<ObjCAtFinallyStmt>(*i)) {
+      ScopeStack.push_back(*i);
+      PopScopeMap[*i] = AF->getFinallyBody();
     } else if (isa<LabelStmt>(CurStmt)) {
       LabelScopeMap[CurStmt] = ScopeStack.size() ? ScopeStack.back() : 0;
     }
