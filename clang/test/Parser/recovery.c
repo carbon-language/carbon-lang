@@ -1,7 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify -pedantic -fblocks %s
 
 // PR2241
-float test2241[] = { 
+float test2241[2] = { 
   1e,            // expected-error {{exponent}}
   1ee0           // expected-error {{exponent}}
 };

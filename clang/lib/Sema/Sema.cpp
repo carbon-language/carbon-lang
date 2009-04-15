@@ -253,8 +253,9 @@ void Sema::ActOnEndOfTranslationUnit() {
               VD->setInvalidDecl();
             else {
               // Set the length of the array to 1 (C99 6.9.2p5).
-              llvm::APSInt One(Context.getTypeSize(Context.getSizeType()), 
-                               true);
+              Diag(VD->getLocation(),  diag::warn_tentative_incomplete_array);
+              llvm::APInt One(Context.getTypeSize(Context.getSizeType()), 
+                              true);
               QualType T 
                 = Context.getConstantArrayType(ArrayT->getElementType(),
                                                One, ArrayType::Normal, 0);
