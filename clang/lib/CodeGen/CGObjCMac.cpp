@@ -1308,10 +1308,12 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
   Values[2] = llvm::ConstantArray::get(AT, Properties);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  // No special section on property lists?
   llvm::GlobalVariable *GV = 
-    CreateMetadataVar(Name, Init, (ObjCABI == 2) ? "__DATA, __objc_const" : 0,
-                      0, true);
+    CreateMetadataVar(Name, Init, 
+                      (ObjCABI == 2) ? "__DATA, __objc_const" : 
+                      "__OBJC,__property,regular,no_dead_strip",
+                      (ObjCABI == 2) ? 8 : 4, 
+                      true);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.PropertyListPtrTy);
 }
 
@@ -1345,7 +1347,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   Values[1] = llvm::ConstantArray::get(AT, Methods);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 0, true);
+  llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
   return llvm::ConstantExpr::getBitCast(GV, 
                                         ObjCTypes.MethodDescriptionListPtrTy);
 }
@@ -1397,7 +1399,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                    InstanceMethods);
   Values[3] = 
     EmitMethodList(std::string("\01L_OBJC_CATEGORY_CLASS_METHODS_") + ExtName,
-                   "__OBJC,__cat_class_meth,regular,no_dead_strip",
+                   "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                    ClassMethods);
   if (Category) {
     Values[4] = 
@@ -1411,7 +1413,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 
   // If there is no category @interface then there can be no properties.
   if (Category) {
-    Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
+    Values[6] = EmitPropertyList(std::string("\01l_OBJC_$_PROP_LIST_") + ExtName,
                                  OCD, Category, ObjCTypes);
   } else {
     Values[6] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
@@ -1580,7 +1582,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   Values[ 6] = EmitIvarList(ID, true);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_CLASS_METHODS_" + ID->getNameAsString(),
-                   "__OBJC,__inst_meth,regular,no_dead_strip",
+                   "__OBJC,__cls_meth,regular,no_dead_strip",
                    Methods);
   // cache is always NULL.
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
@@ -1658,7 +1660,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   // FIXME: Output weak_ivar_layout string.
   // Values[1] = BuildIvarLayout(ID, false);
   Values[1] = GetIvarLayoutName(0, ObjCTypes);
-  Values[2] = EmitPropertyList("\01L_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
+  Values[2] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
 
   // Return null if no extension bits are used.
@@ -1668,7 +1670,8 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   llvm::Constant *Init = 
     llvm::ConstantStruct::get(ObjCTypes.ClassExtensionTy, Values);
   return CreateMetadataVar("\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
-                           Init, 0, 0, true);
+                           Init, "__OBJC,__class_ext,regular,no_dead_strip", 
+                           4, true);
 }
 
 /// countInheritedIvars - count number of ivars in class and its super class(s)
@@ -1785,9 +1788,8 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     GV = CreateMetadataVar("\01L_OBJC_INSTANCE_VARIABLES_"
                            + ID->getNameAsString(),
                            Init, "__OBJC,__instance_vars,regular,no_dead_strip",
-                           0, true);
-  return llvm::ConstantExpr::getBitCast(GV,
-                                        ObjCTypes.IvarListPtrTy);
+                           4, true);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.IvarListPtrTy);
 }
 
 /*
@@ -1837,7 +1839,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
   Values[2] = llvm::ConstantArray::get(AT, Methods);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 0, true);
+  llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
   return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.MethodListPtrTy);
 }
@@ -2488,7 +2490,7 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   llvm::GlobalVariable *GV =
     CreateMetadataVar("\01L_OBJC_SYMBOLS", Init,
                       "__OBJC,__symbols,regular,no_dead_strip",
-                      0, true);
+                      4, true);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.SymtabPtrTy);
 }
 
@@ -2505,7 +2507,7 @@ llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
     Entry = 
       CreateMetadataVar("\01L_OBJC_CLASS_REFERENCES_", Casted,
                         "__OBJC,__cls_refs,literal_pointers,no_dead_strip",
-                        0, true);
+                        4, true);
   }
 
   return Builder.CreateLoad(Entry, false, "tmp");
@@ -2521,7 +2523,7 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
     Entry = 
       CreateMetadataVar("\01L_OBJC_SELECTOR_REFERENCES_", Casted,
                         "__OBJC,__message_refs,literal_pointers,no_dead_strip",
-                        0, true);
+                        4, true);
   }
 
   return Builder.CreateLoad(Entry, false, "tmp");
@@ -4765,7 +4767,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                       &CGM.getModule());
   PTGV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ProtocolnfABIPtrTy));
-  PTGV->setSection("__DATA, __objc_protolist");
+  PTGV->setSection("__DATA, __objc_protolist, coalesced, no_dead_strip");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   UsedGlobals.push_back(PTGV);
   return Entry;
@@ -5055,9 +5057,9 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
                                                   ObjCTypes.ClassnfABIPtrTy));
 
     if (IsSuper)
-      Entry->setSection("__DATA,__objc_superrefs,regular,no_dead_strip");
+      Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
     else
-      Entry->setSection("__DATA,__objc_classrefs,regular,no_dead_strip");
+      Entry->setSection("__DATA, __objc_classrefs, regular, no_dead_strip");
     UsedGlobals.push_back(Entry);
   }
   
