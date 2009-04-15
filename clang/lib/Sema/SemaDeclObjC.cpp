@@ -1672,24 +1672,14 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
             if (Attributes & ObjCDeclSpec::DQ_PR_copy)
               PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
             PIDecl->setSetterName(SetterSel);
-            // FIXME: use a common routine with addPropertyMethods.
-            ObjCMethodDecl *SetterDecl =
-              ObjCMethodDecl::Create(Context, AtLoc, AtLoc, SetterSel,
-                                     Context.VoidTy,
-                                     CCPrimary,
-                                     true, false, true, 
-                                     ObjCMethodDecl::Required);
-            ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterDecl,
-                                                        FD.D.getIdentifierLoc(),
-                                                        PropertyId,
-                                                        T, VarDecl::None, 0);
-            SetterDecl->setMethodParams(&Argument, 1, Context);
-            PIDecl->setSetterMethodDecl(SetterDecl);
           }
           else
             Diag(AtLoc, diag::err_use_continuation_class) 
               << CCPrimary->getDeclName();
           *isOverridingProperty = true;
+          // Make sure setter decl is synthesized, and added to primary 
+          // class's list.
+          ProcessPropertyDecl(PIDecl, CCPrimary);
           return DeclPtrTy();
         }
         // No matching property found in the primary class. Just fall thru
