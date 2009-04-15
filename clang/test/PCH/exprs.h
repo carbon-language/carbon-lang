@@ -13,6 +13,9 @@ typedef typeof(17l) long_literal;
 // FloatingLiteral and ParenExpr
 typedef typeof((42.5)) floating_literal;
 
+// ImaginaryLiteral
+typedef typeof(17.0i) imaginary_literal;
+
 // StringLiteral
 const char *hello = "Hello" "PCH" "World";
 
@@ -25,6 +28,10 @@ typedef typeof(-Enumerator) negate_enum;
 // SizeOfAlignOfExpr
 typedef typeof(sizeof(int)) typeof_sizeof;
 typedef typeof(sizeof(Enumerator)) typeof_sizeof2;
+
+// ArraySubscriptExpr
+extern double values[];
+typedef typeof(values[2]) array_subscript;
 
 // CallExpr
 double dplus(double x, double y);

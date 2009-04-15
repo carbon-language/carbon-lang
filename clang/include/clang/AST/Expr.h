@@ -526,9 +526,14 @@ public:
   ImaginaryLiteral(Expr *val, QualType Ty)
     : Expr(ImaginaryLiteralClass, Ty), Val(val) {}
   
+  /// \brief Build an empty imaginary literal.
+  explicit ImaginaryLiteral(EmptyShell Empty) 
+    : Expr(ImaginaryLiteralClass, Empty) { }
+
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
-  
+  void setSubExpr(Expr *E) { Val = E; }
+
   virtual SourceRange getSourceRange() const { return Val->getSourceRange(); }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImaginaryLiteralClass; 
@@ -891,6 +896,10 @@ public:
     SubExprs[RHS] = rhs;
   }
   
+  /// \brief Create an empty array subscript expression.
+  explicit ArraySubscriptExpr(EmptyShell Shell)
+    : Expr(ArraySubscriptExprClass, Shell) { }
+
   /// An array access can be written A[4] or 4[A] (both are equivalent).
   /// - getBase() and getIdx() always present the normalized view: A[4].
   ///    In this case getBase() returns "A" and getIdx() returns "4".
@@ -902,9 +911,11 @@ public:
   /// integer type
   Expr *getLHS() { return cast<Expr>(SubExprs[LHS]); }
   const Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
-  
+  void setLHS(Expr *E) { SubExprs[LHS] = E; }
+
   Expr *getRHS() { return cast<Expr>(SubExprs[RHS]); }
   const Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
+  void setRHS(Expr *E) { SubExprs[RHS] = E; }
   
   Expr *getBase() { 
     return cast<Expr>(getRHS()->getType()->isIntegerType() ? getLHS():getRHS());
@@ -927,6 +938,8 @@ public:
   }
   
   SourceLocation getRBracketLoc() const { return RBracketLoc; }
+  void setRBracketLoc(SourceLocation L) { RBracketLoc = L; }
+
   virtual SourceLocation getExprLoc() const { return getBase()->getExprLoc(); }
 
   static bool classof(const Stmt *T) { 

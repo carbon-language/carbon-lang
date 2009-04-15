@@ -179,7 +179,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
 void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
-  // FIXME: default argument
+  // FIXME: default argument (C++ only)
 }
 
 void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {
@@ -241,11 +241,13 @@ namespace {
     unsigned VisitDeclRefExpr(DeclRefExpr *E);
     unsigned VisitIntegerLiteral(IntegerLiteral *E);
     unsigned VisitFloatingLiteral(FloatingLiteral *E);
+    unsigned VisitImaginaryLiteral(ImaginaryLiteral *E);
     unsigned VisitStringLiteral(StringLiteral *E);
     unsigned VisitCharacterLiteral(CharacterLiteral *E);
     unsigned VisitParenExpr(ParenExpr *E);
     unsigned VisitUnaryOperator(UnaryOperator *E);
     unsigned VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    unsigned VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     unsigned VisitCallExpr(CallExpr *E);
     unsigned VisitMemberExpr(MemberExpr *E);
     unsigned VisitCastExpr(CastExpr *E);
@@ -291,6 +293,12 @@ unsigned PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
   E->setExact(Record[Idx++]);
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
+}
+
+unsigned PCHStmtReader::VisitImaginaryLiteral(ImaginaryLiteral *E) {
+  VisitExpr(E);
+  E->setSubExpr(ExprStack.back());
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitStringLiteral(StringLiteral *E) {
@@ -349,6 +357,14 @@ unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return E->isArgumentType()? 0 : 1;
+}
+
+unsigned PCHStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
+  VisitExpr(E);
+  E->setLHS(ExprStack[ExprStack.size() - 2]);
+  E->setRHS(ExprStack[ExprStack.size() - 2]);
+  E->setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 2;
 }
 
 unsigned PCHStmtReader::VisitCallExpr(CallExpr *E) {
@@ -1648,7 +1664,6 @@ llvm::APSInt PCHReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
 
 /// \brief Read a floating-point value
 llvm::APFloat PCHReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
-  // FIXME: is this really correct?
   return llvm::APFloat(ReadAPInt(Record, Idx));
 }
 
@@ -1861,6 +1876,10 @@ Expr *PCHReader::ReadExpr() {
       E = new (Context) FloatingLiteral(Empty);
       break;
       
+    case pch::EXPR_IMAGINARY_LITERAL:
+      E = new (Context) ImaginaryLiteral(Empty);
+      break;
+
     case pch::EXPR_STRING_LITERAL:
       E = StringLiteral::CreateEmpty(Context, 
                                      Record[PCHStmtReader::NumExprFields + 1]);
@@ -1880,6 +1899,10 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_SIZEOF_ALIGN_OF:
       E = new (Context) SizeOfAlignOfExpr(Empty);
+      break;
+
+    case pch::EXPR_ARRAY_SUBSCRIPT:
+      E = new (Context) ArraySubscriptExpr(Empty);
       break;
 
     case pch::EXPR_CALL:

@@ -448,11 +448,13 @@ namespace {
     void VisitDeclRefExpr(DeclRefExpr *E);
     void VisitIntegerLiteral(IntegerLiteral *E);
     void VisitFloatingLiteral(FloatingLiteral *E);
+    void VisitImaginaryLiteral(ImaginaryLiteral *E);
     void VisitStringLiteral(StringLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
     void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    void VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     void VisitCallExpr(CallExpr *E);
     void VisitMemberExpr(MemberExpr *E);
     void VisitCastExpr(CastExpr *E);
@@ -496,6 +498,12 @@ void PCHStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
   Record.push_back(E->isExact());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = pch::EXPR_FLOATING_LITERAL;
+}
+
+void PCHStmtWriter::VisitImaginaryLiteral(ImaginaryLiteral *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getSubExpr());
+  Code = pch::EXPR_IMAGINARY_LITERAL;
 }
 
 void PCHStmtWriter::VisitStringLiteral(StringLiteral *E) {
@@ -550,6 +558,14 @@ void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_SIZEOF_ALIGN_OF;
+}
+
+void PCHStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getLHS());
+  Writer.WriteSubExpr(E->getRHS());
+  Writer.AddSourceLocation(E->getRBracketLoc(), Record);
+  Code = pch::EXPR_ARRAY_SUBSCRIPT;
 }
 
 void PCHStmtWriter::VisitCallExpr(CallExpr *E) {

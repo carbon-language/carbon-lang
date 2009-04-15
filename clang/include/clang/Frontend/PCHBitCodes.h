@@ -391,6 +391,8 @@ namespace clang {
       EXPR_INTEGER_LITERAL,
       /// \brief A FloatingLiteral record.
       EXPR_FLOATING_LITERAL,
+      /// \brief An ImaginaryLiteral record.
+      EXPR_IMAGINARY_LITERAL,
       /// \brief A StringLiteral record.
       EXPR_STRING_LITERAL,
       /// \brief A CharacterLiteral record.
@@ -401,6 +403,8 @@ namespace clang {
       EXPR_UNARY_OPERATOR,
       /// \brief A SizefAlignOfExpr record.
       EXPR_SIZEOF_ALIGN_OF,
+      /// \brief An ArraySubscriptExpr record.
+      EXPR_ARRAY_SUBSCRIPT,
       /// \brief A CallExpr record.
       EXPR_CALL,
       /// \brief A MemberExpr record.

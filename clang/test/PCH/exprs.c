@@ -8,6 +8,7 @@
 int integer;
 long long_integer;
 double floating;
+_Complex double floating_complex;
 
 // DeclRefExpr
 int_decl_ref *int_ptr1 = &integer;
@@ -19,6 +20,9 @@ long_literal *long_ptr1 = &long_integer;
 
 // FloatingLiteral + ParenExpr
 floating_literal *double_ptr = &floating;
+
+// ImaginaryLiteral
+imaginary_literal *cdouble_ptr = &floating_complex;
 
 // StringLiteral
 const char* printHello() {
@@ -35,6 +39,9 @@ negate_enum *int_ptr4 = &integer;
 typeof(sizeof(float)) size_t_value;
 typeof_sizeof *size_t_ptr = &size_t_value;
 typeof_sizeof2 *size_t_ptr2 = &size_t_value;
+
+// ArraySubscriptExpr
+array_subscript *double_ptr1_5 = &floating;
 
 // CallExpr
 call_returning_double *double_ptr2 = &floating;
