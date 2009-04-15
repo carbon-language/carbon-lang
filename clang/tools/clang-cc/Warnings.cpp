@@ -16,22 +16,13 @@
 // generated data, and the special cases -pedantic, -pedantic-errors, -w and
 // -Werror.
 //
-// Warning options control the handling of the warnings that Clang emits. There
-// are three possible reactions to any given warning:
-// ignore: Do nothing
-// warn:   Emit a message, but don't fail the compilation
-// error:  Emit a message and fail the compilation
-//
 // Each warning option controls any number of actual warnings.
 // Given a warning option 'foo', the following are valid:
-// -Wfoo=ignore  -> Ignore the controlled warnings.
-// -Wfoo=warn    -> Warn about the controlled warnings.
-// -Wfoo=error   -> Fail on the controlled warnings.
+//
 // -Wfoo         -> alias of -Wfoo=warn
 // -Wno-foo      -> alias of -Wfoo=ignore
 // -Werror=foo   -> alias of -Wfoo=error
 //
-// Because of this complex handling of options, the default parser is replaced.
 
 #include "clang-cc.h"
 #include "clang/Basic/Diagnostic.h"
@@ -43,80 +34,23 @@
 #include <algorithm>
 using namespace clang;
 
-namespace {
-  struct ParsedOption {
-    std::string Name;
-    diag::Mapping Mapping;
-
-    ParsedOption() {}
-    // Used by -Werror, implicitly.
-    ParsedOption(const std::string& name) : Name(name), Mapping(diag::MAP_ERROR)
-    {}
-  };
-
-  typedef std::vector<ParsedOption> OptionsList;
-
-  OptionsList Options;
-
-  struct WarningParser : public llvm::cl::basic_parser<ParsedOption> {
-    diag::Mapping StrToMapping(const std::string &S) {
-      if (S == "ignore")
-        return diag::MAP_IGNORE;
-      if (S == "warn")
-        return diag::MAP_WARNING;
-      if (S == "error")
-        return diag::MAP_ERROR;
-      return diag::MAP_DEFAULT;
-    }
-    bool parse(llvm::cl::Option &O, const char *ArgName,
-               const std::string &ArgValue, ParsedOption &Val)
-    {
-      size_t Eq = ArgValue.find("=");
-      if (Eq == std::string::npos) {
-        // Could be -Wfoo or -Wno-foo
-        if (ArgValue.compare(0, 3, "no-") == 0) {
-          Val.Name = ArgValue.substr(3);
-          Val.Mapping = diag::MAP_IGNORE;
-        } else {
-          Val.Name = ArgValue;
-          Val.Mapping = diag::MAP_WARNING;
-        }
-      } else {
-        Val.Name = ArgValue.substr(0, Eq);
-        Val.Mapping = StrToMapping(ArgValue.substr(Eq+1));
-        if (Val.Mapping == diag::MAP_DEFAULT) {
-          fprintf(stderr, "Illegal warning option value: %s\n",
-                  ArgValue.substr(Eq+1).c_str());
-          return true;
-        }
-      }
-      return false;
-    }
-  };
-}
-
-static llvm::cl::list<ParsedOption, OptionsList, WarningParser>
-OptWarnings("W", llvm::cl::location(Options), llvm::cl::Prefix);
-
-static llvm::cl::list<ParsedOption, OptionsList, llvm::cl::parser<std::string> >
-OptWError("Werror", llvm::cl::location(Options), llvm::cl::CommaSeparated,
-          llvm::cl::ValueOptional);
+// This gets all -W options, including -Werror, -W[no-]system-headers, etc.  The
+// driver has stripped off -Wa,foo etc.
+static llvm::cl::list<std::string>
+OptWarnings("W", llvm::cl::Prefix);
 
 static llvm::cl::opt<bool> OptPedantic("pedantic");
 static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
-static llvm::cl::opt<bool>
-OptWarnInSystemHeaders("Wsystem-headers",
-           llvm::cl::desc("Do not suppress warnings issued in system headers"));
 
 namespace {
   struct WarningOption {
     const char *Name;
     const diag::kind *Members;
-    size_t NumMembers;
+    unsigned NumMembers;
   };
 }
-#define DIAGS(a) a, (sizeof(a) / sizeof(a[0]))
+#define DIAGS(a) a, unsigned(sizeof(a) / sizeof(a[0]))
 // These tables will be TableGenerated later.
 // First the table sets describing the diagnostics controlled by each option.
 static const diag::kind UnusedMacrosDiags[] = { diag::pp_macro_not_used };
@@ -174,6 +108,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   Diags.setIgnoreAllWarnings(OptNoWarnings);
   Diags.setWarnOnExtensions(OptPedantic);
   Diags.setErrorOnExtensions(OptPedanticErrors);
+  Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
 
   // Set some defaults that are currently set manually. This, too, should
   // be in the tablegen stuff later.
@@ -189,48 +124,67 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   Diags.setDiagnosticMapping(diag::err_template_recursion_depth_exceeded, 
                              diag::MAP_FATAL);
   Diags.setDiagnosticMapping(diag::warn_missing_prototype, diag::MAP_IGNORE);
-  Diags.setSuppressSystemWarnings(!OptWarnInSystemHeaders);
+  
+  // FIXME: -W -> -Wextra in driver.
+  // -fdiagnostics-show-option
 
-  for (OptionsList::iterator it = Options.begin(), e = Options.end();
-      it != e; ++it) {
-    if (it->Name.empty()) {
-      // Empty string is "everything". This way, -Werror does the right thing.
-      // FIXME: These flags do not participate in proper option overriding.
-      switch(it->Mapping) {
-      default:
-        assert(false && "Illegal mapping");
-        break;
+  for (unsigned i = 0, e = OptWarnings.size(); i != e; ++i) {
+    const std::string &Opt = OptWarnings[i];
+    const char *OptStart = &Opt[0];
+    const char *OptEnd = OptStart+Opt.size();
+    assert(*OptEnd == 0 && "Expect null termination for lower-bound search");
+    
+    // Check to see if this warning starts with "no-", if so, this is a negative
+    // form of the option.
+    bool isPositive = true;
+    if (OptEnd-OptStart > 3 && memcmp(OptStart, "no-", 3) == 0) {
+      isPositive = false;
+      OptStart += 3;
+    }
 
-      case diag::MAP_IGNORE:
-        Diags.setIgnoreAllWarnings(true);
-        Diags.setWarningsAsErrors(false);
-        break;
-
-      case diag::MAP_WARNING:
-        Diags.setIgnoreAllWarnings(false);
-        Diags.setWarningsAsErrors(false);
-        break;
-
-      case diag::MAP_ERROR:
-        Diags.setIgnoreAllWarnings(false);
-        Diags.setWarningsAsErrors(true);
-        break;
-      }
+    // -Wsystem-headers is a special case, not driven by the option table.
+    if (OptEnd-OptStart == 14 && memcmp(OptStart, "system-headers", 14) == 0) {
+      Diags.setSuppressSystemWarnings(!isPositive);
       continue;
     }
-    WarningOption Key = { it->Name.c_str(), 0, 0 };
+    
+    // -Werror/-Wno-error is a special case, not controlled by the option table.
+    // It also has the "specifier" form of -Werror=foo.
+    if (OptEnd-OptStart >= 5 && memcmp(OptStart, "error", 5) == 0) {
+      const char *Specifier = 0;
+      if (OptEnd-OptStart != 5) {  // Specifier must be present.
+        if (OptStart[5] != '=' || OptEnd-OptStart == 6) {
+          fprintf(stderr, "Unknown warning option: -W%s\n", Opt.c_str());
+          return true;
+        }
+        Specifier = OptStart+6;
+      }
+      
+      if (Specifier == 0) {
+        Diags.setWarningsAsErrors(true);
+        continue;
+      }
+      
+      // FIXME: specifier not implemented yet
+      fprintf(stderr, "specifier in -W%s not supported yet\n", Opt.c_str());
+      return true;
+    }
+    
+    WarningOption Key = { OptStart, 0, 0 };
     const WarningOption *Found =
       std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                        WarningOptionCompare);
     if (Found == OptionTable + OptionTableSize ||
         strcmp(Found->Name, Key.Name) != 0) {
-      fprintf(stderr, "Unknown warning option: -W%s\n", Key.Name);
+      fprintf(stderr, "Unknown warning option: -W%s\n", Opt.c_str());
       return true;
     }
 
+    diag::Mapping Mapping = isPositive ? diag::MAP_WARNING : diag::MAP_IGNORE;
+    
     // Option exists.
-    for (size_t i = 0, e = Found->NumMembers; i != e; ++i)
-      Diags.setDiagnosticMapping(Found->Members[i], it->Mapping);
+    for (unsigned i = 0, e = Found->NumMembers; i != e; ++i)
+      Diags.setDiagnosticMapping(Found->Members[i], Mapping);
   }
   return false;
 }
