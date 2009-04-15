@@ -39,16 +39,6 @@ static const RecordVal* findRecordVal(const Record& R, const std::string &key) {
   return 0;
 }
 
-static const Record* getDiagKind(const Record* DiagClass, const Record &R) {  
-  const SuperClassVector &SC = R.getSuperClasses();
-  for (SuperClassVector::const_iterator I=SC.begin(), E=SC.end(); I!=E; ++I)
-    if ((*I)->isSubClassOf(DiagClass) && 
-        (*I)->getName() != "DiagnosticControlled")
-      return *I;
-  
-  return 0;
-}
-
 static void EmitEscaped(std::ostream& OS, const std::string &s) {
   for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I)
     switch (*I) {
@@ -69,12 +59,8 @@ static void EmitAllCaps(std::ostream& OS, const std::string &s) {
 
 static void ProcessDiag(std::ostream &OS, const Record *DiagClass,
                         const Record &R) {
-  const Record* DiagKind = getDiagKind(DiagClass, R);
-  if (!DiagKind)
-    return;
-
   OS << "DIAG(" << R.getName() << ", ";
-  EmitAllCaps(OS, DiagKind->getName());
+  OS << R.getValueAsDef("Class")->getName();
   OS << ", diag::" << R.getValueAsDef("DefaultMapping")->getName();
   OS << ", \"";
   EmitEscaped(OS, R.getValueAsString("Text"));
