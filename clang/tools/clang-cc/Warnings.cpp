@@ -78,8 +78,6 @@ static const diag::kind TrigraphsDiags[] = {
   diag::trigraph_ends_block_comment, diag::trigraph_converted
 };
 
-// Hmm ... this option is currently actually completely ignored.
-//static const diag::kind StrictSelectorMatchDiags[] = {  };
 // Second the table of options.  MUST be sorted by name! Binary lookup is done.
 static const WarningOption OptionTable[] = {
   { "deprecated-declarations",       DIAGS(DeprecatedDeclarations) },
@@ -93,7 +91,6 @@ static const WarningOption OptionTable[] = {
   { "trigraphs",             DIAGS(TrigraphsDiags) },
   { "undef",                 DIAGS(UndefDiags) },
   { "unused-macros",         DIAGS(UnusedMacrosDiags) },
-//  { "strict-selector-match", DIAGS(StrictSelectorMatchDiags) }
 };
 static const size_t OptionTableSize =
   sizeof(OptionTable) / sizeof(OptionTable[0]);
