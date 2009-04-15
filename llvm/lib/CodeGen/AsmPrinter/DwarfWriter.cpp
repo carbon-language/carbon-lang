@@ -1271,9 +1271,9 @@ class DwarfDebug : public Dwarf {
   ///
   bool shouldEmit;
 
-  // RootDbgScope - Top level scope for the current function.
+  // FunctionDbgScope - Top level scope for the current function.
   //
-  DbgScope *RootDbgScope;
+  DbgScope *FunctionDbgScope;
   
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
@@ -2037,7 +2037,7 @@ private:
       Parent->AddScope(Slot);
     else
       // First function is top level function.
-      RootDbgScope = Slot;
+      FunctionDbgScope = Slot;
 
     return Slot;
   }
@@ -2052,8 +2052,8 @@ private:
 
     // FIXME - Add inlined function scopes to the root so we can delete them
     // later.  
-    assert (RootDbgScope && "Function scope info missing!");
-    RootDbgScope->AddScope(Scope);
+    assert (FunctionDbgScope && "Function scope info missing!");
+    FunctionDbgScope->AddScope(Scope);
     return Scope;
   }
 
@@ -2126,9 +2126,9 @@ private:
     }
   }
 
-  /// ConstructRootDbgScope - Construct the scope for the subprogram.
+  /// ConstructFunctionDbgScope - Construct the scope for the subprogram.
   ///
-  void ConstructRootDbgScope(DbgScope *RootScope) {
+  void ConstructFunctionDbgScope(DbgScope *RootScope) {
     // Exit if there is no root scope.
     if (!RootScope) return;
     DIDescriptor Desc = RootScope->getDesc();
@@ -3120,7 +3120,7 @@ public:
       AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
       ValuesSet(InitValuesSetSize), Values(), StringPool(), SectionMap(),
       SectionSourceLines(), didInitial(false), shouldEmit(false),
-      RootDbgScope(0), DebugTimer(0) {
+      FunctionDbgScope(0), DebugTimer(0) {
     if (TimePassesIsEnabled)
       DebugTimer = new Timer("Dwarf Debug Writer",
                              getDwarfTimerGroup());
@@ -3319,8 +3319,8 @@ public:
     }
 
     // Construct scopes for subprogram.
-    if (RootDbgScope)
-      ConstructRootDbgScope(RootDbgScope);
+    if (FunctionDbgScope)
+      ConstructFunctionDbgScope(FunctionDbgScope);
     else
       // FIXME: This is wrong. We are essentially getting past a problem with
       // debug information not being able to handle unreachable blocks that have
@@ -3336,12 +3336,12 @@ public:
                                                  MMI->getFrameMoves()));
 
     // Clear debug info
-    if (RootDbgScope) {
-      delete RootDbgScope;
+    if (FunctionDbgScope) {
+      delete FunctionDbgScope;
       DbgScopeMap.clear();
       DbgInlinedScopeMap.clear();
       InlinedVariableScopes.clear();
-      RootDbgScope = NULL;
+      FunctionDbgScope = NULL;
     }
 
     Lines.clear();
