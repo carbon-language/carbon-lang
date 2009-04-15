@@ -125,7 +125,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
                              diag::MAP_FATAL);
   Diags.setDiagnosticMapping(diag::warn_missing_prototype, diag::MAP_IGNORE);
   
-  // -fdiagnostics-show-option
+  // FIXME: -fdiagnostics-show-option
+  // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
   for (unsigned i = 0, e = OptWarnings.size(); i != e; ++i) {
     const std::string &Opt = OptWarnings[i];
@@ -158,7 +159,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       const char *Specifier = 0;
       if (OptEnd-OptStart != 5) {  // Specifier must be present.
         if (OptStart[5] != '=' || OptEnd-OptStart == 6) {
-          fprintf(stderr, "Unknown warning option: -W%s\n", Opt.c_str());
+          fprintf(stderr, "error: unknown warning option: -W%s\n", Opt.c_str());
           return true;
         }
         Specifier = OptStart+6;
@@ -180,11 +181,11 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
                        WarningOptionCompare);
     if (Found == OptionTable + OptionTableSize ||
         strcmp(Found->Name, OptStart) != 0) {
-      fprintf(stderr, "Unknown warning option: -W%s\n", Opt.c_str());
+      fprintf(stderr, "error: unknown warning option: -W%s\n", Opt.c_str());
       return true;
     }
     
-    // Option exists.
+    // Option exists, poke all the members of its diagnostic set.
     for (unsigned i = 0, e = Found->NumMembers; i != e; ++i)
       Diags.setDiagnosticMapping(Found->Members[i], Mapping);
   }
