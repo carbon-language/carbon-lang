@@ -227,12 +227,6 @@ public:
            "Cannot map errors!");
     setDiagnosticMappingInternal(Diag, Map);
   }
-  void setDiagnosticMappingInternal(unsigned Diag, unsigned Map) {
-    unsigned char &Slot = DiagMappings[Diag/4];
-    unsigned Bits = (Diag & 3)*2;
-    Slot &= ~(3 << Bits);
-    Slot |= Map << Bits;
-  }
 
   /// getDiagnosticMapping - Return the mapping currently set for the specified
   /// diagnostic.
@@ -307,6 +301,13 @@ public:
   void Clear() { CurDiagID = ~0U; }
   
 private:
+  void setDiagnosticMappingInternal(unsigned Diag, unsigned Map) {
+    unsigned char &Slot = DiagMappings[Diag/4];
+    unsigned Bits = (Diag & 3)*2;
+    Slot &= ~(3 << Bits);
+    Slot |= Map << Bits;
+  }
+  
   /// getDiagnosticLevel - This is an internal implementation helper used when
   /// DiagClass is already known.
   Level getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const;
