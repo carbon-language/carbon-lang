@@ -486,29 +486,33 @@ static Decl *getObjectForAnonymousRecordDecl(ASTContext &Context,
   return 0;
 }
 
-Sema::OwningExprResult
-Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
-                                               FieldDecl *Field,
-                                               Expr *BaseObjectExpr,
-                                               SourceLocation OpLoc) {
+/// \brief Given a field that represents a member of an anonymous
+/// struct/union, build the path from that field's context to the
+/// actual member.
+///
+/// Construct the sequence of field member references we'll have to
+/// perform to get to the field in the anonymous union/struct. The
+/// list of members is built from the field outward, so traverse it
+/// backwards to go from an object in the current context to the field
+/// we found.
+///
+/// \returns The variable from which the field access should begin,
+/// for an anonymous struct/union that is not a member of another
+/// class. Otherwise, returns NULL.
+VarDecl *Sema::BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
+                                   llvm::SmallVectorImpl<FieldDecl *> &Path) {
   assert(Field->getDeclContext()->isRecord() &&
          cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion()
          && "Field must be stored inside an anonymous struct or union");
 
-  // Construct the sequence of field member references
-  // we'll have to perform to get to the field in the anonymous
-  // union/struct. The list of members is built from the field
-  // outward, so traverse it backwards to go from an object in
-  // the current context to the field we found.
-  llvm::SmallVector<FieldDecl *, 4> AnonFields;
-  AnonFields.push_back(Field);
+  Path.push_back(Field);
   VarDecl *BaseObject = 0;
   DeclContext *Ctx = Field->getDeclContext();
   do {
     RecordDecl *Record = cast<RecordDecl>(Ctx);
     Decl *AnonObject = getObjectForAnonymousRecordDecl(Context, Record);
     if (FieldDecl *AnonField = dyn_cast<FieldDecl>(AnonObject))
-      AnonFields.push_back(AnonField);
+      Path.push_back(AnonField);
     else {
       BaseObject = cast<VarDecl>(AnonObject);
       break;
@@ -516,7 +520,19 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     Ctx = Ctx->getParent();
   } while (Ctx->isRecord() && 
            cast<RecordDecl>(Ctx)->isAnonymousStructOrUnion());
-  
+
+  return BaseObject;
+}
+
+Sema::OwningExprResult
+Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
+                                               FieldDecl *Field,
+                                               Expr *BaseObjectExpr,
+                                               SourceLocation OpLoc) {
+  llvm::SmallVector<FieldDecl *, 4> AnonFields;
+  VarDecl *BaseObject = BuildAnonymousStructUnionMemberPath(Field, 
+                                                            AnonFields);
+
   // Build the expression that refers to the base object, from
   // which we will build a sequence of member references to each
   // of the anonymous union objects and, eventually, the field we

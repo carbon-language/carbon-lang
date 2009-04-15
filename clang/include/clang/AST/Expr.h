@@ -1963,6 +1963,11 @@ private:
 /// designators, one array designator for @c [2] followed by one field
 /// designator for @c .y. The initalization expression will be 1.0.
 class DesignatedInitExpr : public Expr {
+public:
+  /// \brief Forward declaration of the Designator class.
+  class Designator;
+
+private:
   /// The location of the '=' or ':' prior to the actual initializer
   /// expression.
   SourceLocation EqualOrColonLoc;
@@ -1974,17 +1979,20 @@ class DesignatedInitExpr : public Expr {
   /// The number of designators in this initializer expression.
   unsigned NumDesignators : 15;
 
+  /// \brief The designators in this designated initialization
+  /// expression.
+  Designator *Designators;
+
   /// The number of subexpressions of this initializer expression,
   /// which contains both the initializer and any additional
   /// expressions used by array and array-range designators.
   unsigned NumSubExprs : 16;
 
+
   DesignatedInitExpr(QualType Ty, unsigned NumDesignators, 
+                     const Designator *Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
-                     unsigned NumSubExprs)
-    : Expr(DesignatedInitExprClass, Ty), 
-      EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax), 
-      NumDesignators(NumDesignators), NumSubExprs(NumSubExprs) { }
+                     unsigned NumSubExprs);
 
 public:
   /// A field designator, e.g., ".x".
@@ -2041,6 +2049,8 @@ public:
     friend class DesignatedInitExpr;
 
   public:
+    Designator() {}
+
     /// @brief Initializes a field designator.
     Designator(const IdentifierInfo *FieldName, SourceLocation DotLoc, 
                SourceLocation FieldLoc) 
@@ -2136,8 +2146,10 @@ public:
 
   // Iterator access to the designators.
   typedef Designator* designators_iterator;
-  designators_iterator designators_begin();
-  designators_iterator designators_end();
+  designators_iterator designators_begin() { return Designators; }
+  designators_iterator designators_end() { 
+    return Designators + NumDesignators; 
+  }
 
   Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
 
@@ -2162,7 +2174,14 @@ public:
     *child_begin() = init;
   }
 
+  /// \brief Replaces the designator at index @p Idx with the series
+  /// of designators in [First, Last).
+  void ExpandDesignator(unsigned Idx, const Designator *First, 
+                        const Designator *Last);
+
   virtual SourceRange getSourceRange() const;
+
+  virtual void Destroy(ASTContext &C);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DesignatedInitExprClass; 

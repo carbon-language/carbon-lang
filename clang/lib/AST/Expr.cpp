@@ -20,6 +20,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
+#include <algorithm>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1499,6 +1500,19 @@ IdentifierInfo *DesignatedInitExpr::Designator::getFieldName() {
     return getField()->getIdentifier();
 }
 
+DesignatedInitExpr::DesignatedInitExpr(QualType Ty, unsigned NumDesignators, 
+                                       const Designator *Designators,
+                                       SourceLocation EqualOrColonLoc, 
+                                       bool GNUSyntax,
+                                       unsigned NumSubExprs)
+  : Expr(DesignatedInitExprClass, Ty), 
+    EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax), 
+    NumDesignators(NumDesignators), NumSubExprs(NumSubExprs) { 
+  this->Designators = new Designator[NumDesignators];
+  for (unsigned I = 0; I != NumDesignators; ++I)
+    this->Designators[I] = Designators[I];
+}
+
 DesignatedInitExpr *
 DesignatedInitExpr::Create(ASTContext &C, Designator *Designators, 
                            unsigned NumDesignators,
@@ -1506,10 +1520,9 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
                            SourceLocation ColonOrEqualLoc,
                            bool UsesColonSyntax, Expr *Init) {
   void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
-                         sizeof(Designator) * NumDesignators +
                          sizeof(Stmt *) * (NumIndexExprs + 1), 8);
   DesignatedInitExpr *DIE 
-    = new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators,
+    = new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators, Designators,
                                    ColonOrEqualLoc, UsesColonSyntax,
                                    NumIndexExprs + 1);
 
@@ -1517,7 +1530,6 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
   unsigned ExpectedNumSubExprs = 0;
   designators_iterator Desig = DIE->designators_begin();
   for (unsigned Idx = 0; Idx < NumDesignators; ++Idx, ++Desig) {
-    new (static_cast<void*>(Desig)) Designator(Designators[Idx]);
     if (Designators[Idx].isArrayDesignator())
       ++ExpectedNumSubExprs;
     else if (Designators[Idx].isArrayRangeDesignator())
@@ -1549,22 +1561,10 @@ SourceRange DesignatedInitExpr::getSourceRange() const {
   return SourceRange(StartLoc, getInit()->getSourceRange().getEnd());
 }
 
-DesignatedInitExpr::designators_iterator
-DesignatedInitExpr::designators_begin() {
-  char* Ptr = static_cast<char*>(static_cast<void *>(this));
-  Ptr += sizeof(DesignatedInitExpr);
-  return static_cast<Designator*>(static_cast<void*>(Ptr));
-}
-
-DesignatedInitExpr::designators_iterator DesignatedInitExpr::designators_end() {
-  return designators_begin() + NumDesignators;
-}
-
 Expr *DesignatedInitExpr::getArrayIndex(const Designator& D) {
   assert(D.Kind == Designator::ArrayDesignator && "Requires array designator");
   char* Ptr = static_cast<char*>(static_cast<void *>(this));
   Ptr += sizeof(DesignatedInitExpr);
-  Ptr += sizeof(Designator) * NumDesignators;
   Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
 }
@@ -1574,7 +1574,6 @@ Expr *DesignatedInitExpr::getArrayRangeStart(const Designator& D) {
          "Requires array range designator");
   char* Ptr = static_cast<char*>(static_cast<void *>(this));
   Ptr += sizeof(DesignatedInitExpr);
-  Ptr += sizeof(Designator) * NumDesignators;
   Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
 }
@@ -1584,9 +1583,41 @@ Expr *DesignatedInitExpr::getArrayRangeEnd(const Designator& D) {
          "Requires array range designator");
   char* Ptr = static_cast<char*>(static_cast<void *>(this));
   Ptr += sizeof(DesignatedInitExpr);
-  Ptr += sizeof(Designator) * NumDesignators;
   Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 2));
+}
+
+/// \brief Replaces the designator at index @p Idx with the series
+/// of designators in [First, Last).
+void DesignatedInitExpr::ExpandDesignator(unsigned Idx, 
+                                          const Designator *First, 
+                                          const Designator *Last) {
+  unsigned NumNewDesignators = Last - First;
+  if (NumNewDesignators == 0) {
+    std::copy_backward(Designators + Idx + 1,
+                       Designators + NumDesignators,
+                       Designators + Idx);
+    --NumNewDesignators;
+    return;
+  } else if (NumNewDesignators == 1) {
+    Designators[Idx] = *First;
+    return;
+  }
+
+  Designator *NewDesignators 
+    = new Designator[NumDesignators - 1 + NumNewDesignators];
+  std::copy(Designators, Designators + Idx, NewDesignators);
+  std::copy(First, Last, NewDesignators + Idx);
+  std::copy(Designators + Idx + 1, Designators + NumDesignators,
+            NewDesignators + Idx + NumNewDesignators);
+  delete [] Designators;
+  Designators = NewDesignators;
+  NumDesignators = NumDesignators - 1 + NumNewDesignators;
+}
+
+void DesignatedInitExpr::Destroy(ASTContext &C) {
+  delete [] Designators;
+  Expr::Destroy(C);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1774,7 +1805,6 @@ Stmt::child_iterator InitListExpr::child_end() {
 Stmt::child_iterator DesignatedInitExpr::child_begin() {
   char* Ptr = static_cast<char*>(static_cast<void *>(this));
   Ptr += sizeof(DesignatedInitExpr);
-  Ptr += sizeof(Designator) * NumDesignators;
   return reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
 }
 Stmt::child_iterator DesignatedInitExpr::child_end() {

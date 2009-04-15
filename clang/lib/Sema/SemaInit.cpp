@@ -1031,6 +1031,64 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
                           StructuredIndex);
 }
 
+/// \brief Expand a field designator that refers to a member of an
+/// anonymous struct or union into a series of field designators that
+/// refers to the field within the appropriate subobject.
+///
+/// Field/FieldIndex will be updated to point to the (new)
+/// currently-designated field.
+static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
+                                           DesignatedInitExpr *DIE, 
+                                           unsigned DesigIdx, 
+                                           FieldDecl *Field,
+                                        RecordDecl::field_iterator &FieldIter,
+                                           unsigned &FieldIndex) {
+  typedef DesignatedInitExpr::Designator Designator;
+
+  // Build the path from the current object to the member of the
+  // anonymous struct/union (backwards).
+  llvm::SmallVector<FieldDecl *, 4> Path;
+  SemaRef.BuildAnonymousStructUnionMemberPath(Field, Path);
+  
+  // Build the replacement designators.
+  llvm::SmallVector<Designator, 4> Replacements;
+  for (llvm::SmallVector<FieldDecl *, 4>::reverse_iterator
+         FI = Path.rbegin(), FIEnd = Path.rend();
+       FI != FIEnd; ++FI) {
+    if (FI + 1 == FIEnd)
+      Replacements.push_back(Designator((IdentifierInfo *)0, 
+                                    DIE->getDesignator(DesigIdx)->getDotLoc(),
+                                DIE->getDesignator(DesigIdx)->getFieldLoc()));
+    else
+      Replacements.push_back(Designator((IdentifierInfo *)0, SourceLocation(),
+                                        SourceLocation()));
+    Replacements.back().setField(*FI);
+  }
+
+  // Expand the current designator into the set of replacement
+  // designators, so we have a full subobject path down to where the
+  // member of the anonymous struct/union is actually stored.
+  DIE->ExpandDesignator(DesigIdx, &Replacements[0], 
+                        &Replacements[0] + Replacements.size());
+  
+  // Update FieldIter/FieldIndex;
+  RecordDecl *Record = cast<RecordDecl>(Path.back()->getDeclContext());
+  FieldIter = Record->field_begin(SemaRef.Context);
+  FieldIndex = 0;
+  for (RecordDecl::field_iterator FEnd = Record->field_end(SemaRef.Context);
+       FieldIter != FEnd; ++FieldIter) {
+    if (FieldIter->isUnnamedBitfield())
+        continue;
+
+    if (*FieldIter == Path.back())
+      return;
+
+    ++FieldIndex;
+  }
+
+  assert(false && "Unable to find anonymous struct/union field");
+}
+
 /// @brief Check the well-formedness of a C99 designated initializer.
 ///
 /// Determines whether the designated initializer @p DIE, which
@@ -1138,6 +1196,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     // Note: we perform a linear search of the fields here, despite
     // the fact that we have a faster lookup method, because we always
     // need to compute the field's index.
+    FieldDecl *KnownField = D->getField();
     IdentifierInfo *FieldName = D->getFieldName();
     unsigned FieldIndex = 0;
     RecordDecl::field_iterator 
@@ -1147,40 +1206,50 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
       if (Field->isUnnamedBitfield())
         continue;
 
-      if (Field->getIdentifier() == FieldName)
+      if (KnownField == *Field || Field->getIdentifier() == FieldName)
         break;
 
       ++FieldIndex;
     }
 
     if (Field == FieldEnd) {
-      // We did not find the field we're looking for. Produce a
-      // suitable diagnostic and return a failure.
+      // There was no normal field in the struct with the designated
+      // name. Perform another lookup for this name, which may find
+      // something that we can't designate (e.g., a member function),
+      // may find nothing, or may find a member of an anonymous
+      // struct/union. 
       DeclContext::lookup_result Lookup 
         = RT->getDecl()->lookup(SemaRef.Context, FieldName);
       if (Lookup.first == Lookup.second) {
         // Name lookup didn't find anything.
         SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
           << FieldName << CurrentObjectType;
+        ++Index;
+        return true;
+      } else if (!KnownField && isa<FieldDecl>(*Lookup.first) &&
+                 cast<RecordDecl>((*Lookup.first)->getDeclContext())
+                   ->isAnonymousStructOrUnion()) {
+        // Handle an field designator that refers to a member of an
+        // anonymous struct or union.
+        ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, 
+                                       cast<FieldDecl>(*Lookup.first),
+                                       Field, FieldIndex);
       } else {
         // Name lookup found something, but it wasn't a field.
         SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
           << FieldName;
         SemaRef.Diag((*Lookup.first)->getLocation(), 
                       diag::note_field_designator_found);
-      }
 
       ++Index;
       return true;
-    } else if (cast<RecordDecl>((*Field)->getDeclContext())
+      }
+    } else if (!KnownField &&
+               cast<RecordDecl>((*Field)->getDeclContext())
                  ->isAnonymousStructOrUnion()) {
-      SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_anon_class)
-        << FieldName
-        << (cast<RecordDecl>((*Field)->getDeclContext())->isUnion()? 2 : 
-            (int)SemaRef.getLangOptions().CPlusPlus);
-      SemaRef.Diag((*Field)->getLocation(), diag::note_field_designator_found);
-      ++Index;
-      return true;
+      ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, *Field,
+                                     Field, FieldIndex);
+      D = DIE->getDesignator(DesigIdx);
     }
 
     // All of the fields of a union are located at the same place in
@@ -1283,6 +1352,10 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
 
     if (!FinishSubobjectInit)
       return false;
+
+    // We've already initialized something in the union; we're done.
+    if (RT->getDecl()->isUnion())
+      return hadError;
 
     // Check the remaining fields within this class/struct/union subobject.
     bool prevHadError = hadError;

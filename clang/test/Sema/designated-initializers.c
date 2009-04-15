@@ -187,3 +187,37 @@ const union wibble wobble = { .arr2[0] = 0xffff,
                               .arr2[2] = 0xffff };
 
 const union wibble wobble2 = { .arr2 = {4, 5, 6}, 7 }; // expected-warning{{excess elements in union initializer}}
+
+// PR3778
+struct s {
+    union { int i; };
+};
+struct s si = {
+    { .i = 1 }
+};
+
+double d0;
+char c0;
+float f0;
+int i0;
+
+struct Enigma {
+  union {
+    struct {
+      struct {
+        double *double_ptr;
+        char *string;
+      };
+      float *float_ptr;
+    };
+    int *int_ptr;
+  };
+  char *string2;
+};
+
+struct Enigma enigma = { 
+  .double_ptr = &d0, &c0, 
+  &f0, // expected-note{{previous}}
+  &c0,
+  .float_ptr = &f0 // expected-warning{{overrides}}
+};

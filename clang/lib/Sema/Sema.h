@@ -1226,6 +1226,8 @@ public:
   DeclRefExpr *BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                                 bool TypeDependent, bool ValueDependent,
                                 const CXXScopeSpec *SS = 0);
+  VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
+                                    llvm::SmallVectorImpl<FieldDecl *> &Path);
   OwningExprResult
   BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                                            FieldDecl *Field,

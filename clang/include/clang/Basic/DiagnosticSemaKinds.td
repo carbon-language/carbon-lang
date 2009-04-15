@@ -49,9 +49,6 @@ def err_field_designator_unknown : Error<
 def err_field_designator_nonfield : Error<
   "field designator %0 does not refer to a non-static data member">;
 def note_field_designator_found : Note<"field designator refers here">;
-def err_field_designator_anon_class : Error<
-  "field designator %0 refers to a member of an anonymous "
-  "%select{struct|class|union}1">;
 def err_designator_for_scalar_init : Error<
   "designator in initializer for scalar type %0">;
 def warn_subobject_initializer_overrides : Warning<
