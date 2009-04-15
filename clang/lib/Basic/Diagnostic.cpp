@@ -54,15 +54,14 @@ static const DefaultMappingInfo DefaultMappings[] = {
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
 { 0, 0 }
 };
+#undef DIAG
 
 // Diagnostic classes.
 enum {
-  NOTE       = 0x01,
-  WARNING    = 0x02,
-  EXTENSION  = 0x03,
-  EXTWARN    = 0x04,
-  ERROR      = 0x05,
-  FATAL      = 0x06
+  CLASS_NOTE       = 0x01,
+  CLASS_WARNING    = 0x02,
+  CLASS_EXTENSION  = 0x03,
+  CLASS_ERROR      = 0x04
 };
 
 /// DiagnosticClasses - The class for each diagnostic.
@@ -272,24 +271,23 @@ unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
 /// This only works on builtin diagnostics, not custom ones, and is not legal to
 /// call on NOTEs.
 bool Diagnostic::isBuiltinWarningOrExtension(unsigned DiagID) {
-  return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) < ERROR;
+  return DiagID < diag::DIAG_UPPER_LIMIT &&
+         getBuiltinDiagClass(DiagID) != CLASS_ERROR;
 }
 
 /// \brief Determine whether the given built-in diagnostic ID is a
 /// Note.
 bool Diagnostic::isBuiltinNote(unsigned DiagID) {
-  return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) == NOTE;
+  return DiagID < diag::DIAG_UPPER_LIMIT &&
+    getBuiltinDiagClass(DiagID) == CLASS_NOTE;
 }
 
 /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
 /// ID is for an extension of some sort.
 ///
 bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID) {
-  if (DiagID < diag::DIAG_UPPER_LIMIT) {
-    unsigned Class = getBuiltinDiagClass(DiagID);
-    return Class == EXTENSION || Class == EXTWARN;
-  }
-  return false;
+  return DiagID < diag::DIAG_UPPER_LIMIT &&
+         getBuiltinDiagClass(DiagID) == CLASS_EXTENSION;
 }
 
 
@@ -324,7 +322,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
     return CustomDiagInfo->getLevel(DiagID);
   
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
-  assert(DiagClass != NOTE && "Cannot get the diagnostic level of a note!");
+  assert(DiagClass != CLASS_NOTE && "Cannot get diagnostic level of a note!");
   return getDiagnosticLevel(DiagID, DiagClass);
 }
 
@@ -386,7 +384,7 @@ void Diagnostic::ProcessDiag() {
     // the diagnostic level was for the previous diagnostic so that it is
     // filtered the same as the previous diagnostic.
     unsigned DiagClass = getBuiltinDiagClass(DiagID);
-    if (DiagClass == NOTE) {
+    if (DiagClass == CLASS_NOTE) {
       DiagLevel = Diagnostic::Note;
       ShouldEmitInSystemHeader = false;  // extra consideration is needed
     } else {
@@ -394,7 +392,7 @@ void Diagnostic::ProcessDiag() {
       // Check the original Diag ID here, because we also want to ignore
       // extensions and warnings in -Werror and -pedantic-errors modes, which
       // *map* warnings/extensions to errors.
-      ShouldEmitInSystemHeader = DiagClass == ERROR;
+      ShouldEmitInSystemHeader = DiagClass == CLASS_ERROR;
       
       DiagLevel = getDiagnosticLevel(DiagID, DiagClass);
     }
