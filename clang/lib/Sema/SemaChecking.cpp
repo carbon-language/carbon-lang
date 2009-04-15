@@ -209,7 +209,9 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
 
   // Determine whether the current function is variadic or not.
   bool isVariadic;
-  if (getCurFunctionDecl()) {
+  if (CurBlock)
+    isVariadic = CurBlock->isVariadic;
+  else if (getCurFunctionDecl()) {
     if (FunctionProtoType* FTP =
             dyn_cast<FunctionProtoType>(getCurFunctionDecl()->getType()))
       isVariadic = FTP->isVariadic();
@@ -234,7 +236,9 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
       // FIXME: This isn't correct for methods (results in bogus warning).
       // Get the last formal in the current function.
       const ParmVarDecl *LastArg;
-      if (FunctionDecl *FD = getCurFunctionDecl())
+      if (CurBlock)
+        LastArg = *(CurBlock->TheDecl->param_end()-1);
+      else if (FunctionDecl *FD = getCurFunctionDecl())
         LastArg = *(FD->param_end()-1);
       else
         LastArg = *(getCurMethodDecl()->param_end()-1);
