@@ -77,6 +77,7 @@ void llvm::UnescapeString(std::string &Str) {
       case 'r': Str[i] = '\r'; break;
       case 't': Str[i] = '\t'; break;
       case 'v': Str[i] = '\v'; break;
+      case '"': Str[i] = '\"'; break;
       case '\'': Str[i] = '\''; break;
       case '\\': Str[i] = '\\'; break;
       }
@@ -96,6 +97,8 @@ void llvm::EscapeString(std::string &Str) {
     } else if (Str[i] == '\t') {
       Str[i++] = '\\';
       Str.insert(Str.begin()+i, 't');
+    } else if (Str[i] == '"') {
+      Str.insert(Str.begin()+i++, '\\');
     } else if (Str[i] == '\n') {
       Str[i++] = '\\';
       Str.insert(Str.begin()+i, 'n');
