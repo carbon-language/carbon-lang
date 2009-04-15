@@ -10,6 +10,7 @@
 
 // RUN: grep '@"OBJC_METACLASS_$_A" = global .* section "__DATA, __objc_data", align 8' %t &&
 // RUN: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_[0-9]*" = internal global .* section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t &&
+// RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 2 &&
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
 // RUN: grep '@"\\01L_OBJC_LABEL_CATEGORY_$" = internal global .* section "__DATA, __objc_catlist, regular, no_dead_strip", align 8' %t &&
 // RUN: grep '@"\\01L_OBJC_LABEL_CLASS_$" = internal global .* section "__DATA, __objc_classlist, regular, no_dead_strip", align 8' %t &&
@@ -84,8 +85,21 @@ llvm-gcc -m64 -emit-llvm -S -o - metadata-symbols-64.m | \
 }
 @end
 
-void *f0() {
+@interface D : A
+@end
+
+@implementation D
++(void) fm2 {
+  [super fm1];
+}
+-(void) im2 {
+  [super im1];
+}
+@end
+
+void *f0(id x) {
    [B im0];
    [C im1];
+   [D alloc];
 }
 

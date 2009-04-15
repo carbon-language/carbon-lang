@@ -4978,7 +4978,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   Name += SelName;
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
   if (!GV) {
-    // Build messafe ref table entry.
+    // Build message ref table entry.
     std::vector<llvm::Constant*> Values(2);
     Values[0] = Fn;
     Values[1] = GetMethodVarName(Sel);
@@ -5087,7 +5087,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
                       CGM.getTargetData().getPrefTypeAlignment(
                                                   ObjCTypes.ClassnfABIPtrTy));
     
-  Entry->setSection("__DATA,__objc_superrefs,regular,no_dead_strip");
+  Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
   UsedGlobals.push_back(Entry);
   
   return Builder.CreateLoad(Entry, false, "tmp");
