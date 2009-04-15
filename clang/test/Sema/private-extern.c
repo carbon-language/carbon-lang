@@ -85,5 +85,4 @@ extern int g18 = 0; // expected-warning{{'extern' variable has an initializer}}
 __private_extern__ int g19;
 int g19 = 0;
 
-// FIXME: linkage specifier in warning.
-__private_extern__ int g20 = 0; // expected-warning{{'extern' variable has an initializer}}
+__private_extern__ int g20 = 0;

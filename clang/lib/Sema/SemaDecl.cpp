@@ -2488,7 +2488,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       }
     }
   } else if (VDecl->isFileVarDecl()) {
-    if (VDecl->hasExternalStorage())
+    if (VDecl->getStorageClass() == VarDecl::Extern)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl())
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
