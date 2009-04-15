@@ -473,6 +473,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common))
     CmdArgs.push_back("-fno-common");
 
+  // -fsigned-bitfields is default, and clang doesn't yet support
+  // --funsigned-bitfields.
+  if (!Args.hasFlag(options::OPT_fsigned_bitfields, 
+                    options::OPT_funsigned_bitfields))
+    D.Diag(clang::diag::warn_drv_clang_unsupported)
+      << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
+
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
 
