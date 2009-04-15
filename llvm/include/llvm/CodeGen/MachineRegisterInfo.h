@@ -152,23 +152,8 @@ public:
 
   /// setRegClass - Set the register class of the specified virtual register.
   ///
-  void setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
-    unsigned VR = Reg;
-    Reg -= TargetRegisterInfo::FirstVirtualRegister;
-    assert(Reg < VRegInfo.size() && "Invalid vreg!");
-    const TargetRegisterClass *OldRC = VRegInfo[Reg].first;
-    VRegInfo[Reg].first = RC;
+  void setRegClass(unsigned Reg, const TargetRegisterClass *RC);
 
-    // Remove from old register class's vregs list. This may be slow but
-    // fortunately this operation is rarely needed.
-    std::vector<unsigned> &VRegs = RegClass2VRegMap[OldRC->getID()];
-    std::vector<unsigned>::iterator I=std::find(VRegs.begin(), VRegs.end(), VR);
-    VRegs.erase(I);
-
-    // Add to new register class's vregs list.
-    RegClass2VRegMap[RC->getID()].push_back(VR);
-  }
-  
   /// createVirtualRegister - Create and return a new virtual register in the
   /// function with the specified register class.
   ///
