@@ -16,3 +16,11 @@ L2: ;
 L3: ;
   }
 }
+
+void f0(int a) {
+  if (a) goto L0;
+  @try {} @finally {}
+ L0:
+  return;
+}
+
