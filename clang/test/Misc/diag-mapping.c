@@ -1,7 +1,7 @@
 // This should warn by default.
 // RUN: clang-cc %s 2>&1 | grep "warning:" &&
 // This should not emit anything.
-// RUN: clang-cc %s -Wno-extra-tokens 2>&1 | not grep diagnostic
+// RUN: clang-cc %s -Wno-extra-tokens 2>&1 | not grep diagnostic &&
 
 // -Werror can map all warnings to error.
 // RUN: clang-cc %s -Werror 2>&1 | grep "error:" &&
