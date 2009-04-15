@@ -47,7 +47,6 @@ public:
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                TypedViewRegionKind,
-               AnonPointeeRegionKind,
                // Decl Regions.
                  BEG_DECL_REGIONS,
                   VarRegionKind, FieldRegionKind,
