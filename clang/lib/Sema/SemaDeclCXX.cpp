@@ -1796,15 +1796,19 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                                            IK_Direct);
     if (!Constructor)
       RealDecl->setInvalidDecl();
-    else
-      Exprs.release();
+    else {
+      // Let clients know that initialization was done with a direct
+      // initializer.
+      VDecl->setCXXDirectInitializer(true);
 
-    // Let clients know that initialization was done with a direct
-    // initializer.
-    VDecl->setCXXDirectInitializer(true);
-
-    // FIXME: Add ExprTys and Constructor to the RealDecl as part of
-    // the initializer.
+      Expr *Temp = 
+        new (Context) CXXTemporaryObjectExpr(Constructor, DeclInitType,
+                                             SourceLocation(), 
+                                             (Expr**)Exprs.release(), 
+                                             NumExprs,
+                                             SourceLocation());
+      AddInitializerToDecl(Dcl, ExprArg(*this, Temp), /*DirectInit=*/true);
+    }
     return;
   }
 
