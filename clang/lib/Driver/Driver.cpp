@@ -253,7 +253,7 @@ static std::string getOptionHelpName(const OptTable &Opts, options::ID Id) {
   return Name;
 }
 
-void Driver::PrintHelp() const {
+void Driver::PrintHelp(bool ShowHidden) const {
   llvm::raw_ostream &OS = llvm::outs();
 
   OS << "OVERVIEW: clang \"gcc-compatible\" driver\n";
@@ -272,9 +272,43 @@ void Driver::PrintHelp() const {
                                           Text));
   }
 
+  if (ShowHidden) {
+    OptionHelp.push_back(std::make_pair("\nDRIVER OPTIONS:",""));
+    OptionHelp.push_back(std::make_pair("-ccc-cxx",
+                                        "Act as a C++ driver"));
+    OptionHelp.push_back(std::make_pair("-ccc-gcc-name",
+                                        "Name for native GCC compiler"));
+    OptionHelp.push_back(std::make_pair("-ccc-clang-cxx",
+                                        "Use the clang compiler for C++"));
+    OptionHelp.push_back(std::make_pair("-ccc-no-clang",
+                                        "Never use the clang compiler"));
+    OptionHelp.push_back(std::make_pair("-ccc-no-clang-cpp",
+                                        "Never use the clang preprocessor"));
+    OptionHelp.push_back(std::make_pair("-ccc-clang-archs",
+                                        "Comma separate list of architectures "
+                                        "to use the clang compiler for"));
+
+    OptionHelp.push_back(std::make_pair("\nDEBUG/DEVELOPMENT OPTIONS:",""));
+    OptionHelp.push_back(std::make_pair("-ccc-host-triple",
+                                        "Simulate running on the given target"));
+    OptionHelp.push_back(std::make_pair("-ccc-print-options",
+                                        "Dump parsed command line arguments"));
+    OptionHelp.push_back(std::make_pair("-ccc-print-phases",
+                                        "Dump list of actions to perform"));
+    OptionHelp.push_back(std::make_pair("-ccc-print-bindings",
+                                        "Show bindings of tools to actions"));
+    OptionHelp.push_back(std::make_pair("CCC_ADD_ARGS",
+                               "(ENVIRONMENT VARIABLE) Comma separated list of "
+                               "arguments to prepend to the command line"));
+  }
+
   // Find the maximum option length. 
   unsigned OptionFieldWidth = 0;
   for (unsigned i = 0, e = OptionHelp.size(); i != e; ++i) {
+    // Skip titles.
+    if (!OptionHelp[i].second)
+      continue;
+
     // Limit the amount of padding we are willing to give up for
     // alignment.
     unsigned Length = OptionHelp[i].first.size();
@@ -329,8 +363,9 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     return false;
   }
 
-  if (C.getArgs().hasArg(options::OPT__help)) {
-    PrintHelp();
+  if (C.getArgs().hasArg(options::OPT__help) || 
+      C.getArgs().hasArg(options::OPT__help_hidden)) {
+    PrintHelp(C.getArgs().hasArg(options::OPT__help_hidden));
     return false;
   }
 

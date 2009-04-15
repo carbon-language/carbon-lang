@@ -163,8 +163,10 @@ public:
   /// PrintActions - Print the list of actions.
   void PrintActions(const Compilation &C) const;
 
-  /// PrintOptions - Print the help text.
-  void PrintHelp() const;
+  /// PrintHelp - Print the help text.
+  ///
+  /// \param ShowHidden - Show hidden options.
+  void PrintHelp(bool ShowHidden) const;
 
   /// PrintOptions - Print the list of arguments.
   void PrintOptions(const ArgList &Args) const;

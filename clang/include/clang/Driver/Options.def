@@ -161,6 +161,7 @@ OPTION("--for-linker=", _for_linker_EQ, Joined, INVALID, Xlinker, "liS", 0, 0, 0
 OPTION("--for-linker", _for_linker, Separate, INVALID, Xlinker, "li", 0, 0, 0)
 OPTION("--force-link=", _force_link_EQ, Joined, INVALID, u, "S", 0, 0, 0)
 OPTION("--force-link", _force_link, Separate, INVALID, u, "", 0, 0, 0)
+OPTION("--help-hidden", _help_hidden, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("--help", _help, Flag, INVALID, INVALID, "", 0, 
        "Display available options", 0)
 OPTION("--imacros=", _imacros_EQ, Joined, INVALID, imacros, "S", 0, 0, 0)
