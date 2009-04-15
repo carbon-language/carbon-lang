@@ -693,7 +693,8 @@ public:
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
   /// version if 'From' is known to have a single result, use the second
-  /// if you have two nodes with identical results, use the third otherwise.
+  /// if you have two nodes with identical results (or if 'To' has a superset
+  /// of the results of 'From'), use the third otherwise.
   ///
   /// These methods all take an optional UpdateListener, which (if not null) is
   /// informed about nodes that are deleted and modified due to recursive

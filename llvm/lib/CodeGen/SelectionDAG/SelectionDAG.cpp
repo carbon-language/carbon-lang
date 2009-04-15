@@ -4500,14 +4500,17 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
-/// This version assumes From/To have matching types and numbers of result
-/// values.
+/// This version assumes that for each value of From, there is a
+/// corresponding value in To in the same position with the same type.
 ///
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
                                       DAGUpdateListener *UpdateListener) {
-  assert(From->getVTList().VTs == To->getVTList().VTs &&
-         From->getNumValues() == To->getNumValues() &&
-         "Cannot use this version of ReplaceAllUsesWith!");
+#ifndef NDEBUG
+  for (unsigned i = 0, e = From->getNumValues(); i != e; ++i)
+    assert((!From->hasAnyUseOfValue(i) ||
+            From->getValueType(i) == To->getValueType(i)) &&
+           "Cannot use this version of ReplaceAllUsesWith!");
+#endif
 
   // Handle the trivial case.
   if (From == To)

@@ -80,15 +80,8 @@ void ReplaceUses(const SDValue *F, const SDValue *T,
 /// ReplaceUses - replace all uses of the old node F with the use
 /// of the new node T.
 void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
-  unsigned FNumVals = F->getNumValues();
-  unsigned TNumVals = T->getNumValues();
   ISelUpdater ISU(ISelPosition);
-  if (FNumVals != TNumVals) {
-    for (unsigned i = 0, e = std::min(FNumVals, TNumVals); i < e; ++i)
-     CurDAG->ReplaceAllUsesOfValueWith(SDValue(F, i), SDValue(T, i), &ISU);
-  } else {
-    CurDAG->ReplaceAllUsesWith(F, T, &ISU);
-  }
+  CurDAG->ReplaceAllUsesWith(F, T, &ISU);
 }
 
 /// SelectRoot - Top level entry to DAG instruction selector.
