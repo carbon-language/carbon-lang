@@ -1703,7 +1703,6 @@ public:
 
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
-protected:
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, const ConstantInt *val, MVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
@@ -1728,7 +1727,6 @@ public:
 
 class ConstantFPSDNode : public SDNode {
   const ConstantFP *Value;
-protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, const ConstantFP *val, MVT VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
@@ -1771,7 +1769,6 @@ public:
 class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
   int64_t Offset;
-protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT VT,
                       int64_t o = 0);
@@ -1791,7 +1788,6 @@ public:
 
 class FrameIndexSDNode : public SDNode {
   int FI;
-protected:
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, MVT VT, bool isTarg)
     : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex,
@@ -1810,7 +1806,6 @@ public:
 
 class JumpTableSDNode : public SDNode {
   int JTI;
-protected:
   friend class SelectionDAG;
   JumpTableSDNode(int jti, MVT VT, bool isTarg)
     : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable,
@@ -1834,7 +1829,6 @@ class ConstantPoolSDNode : public SDNode {
   } Val;
   int Offset;  // It's a MachineConstantPoolValue if top bit is set.
   unsigned Alignment;  // Minimum alignment requirement of CP (not log2 value).
-protected:
   friend class SelectionDAG;
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT VT, int o=0)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
@@ -1903,7 +1897,6 @@ public:
 
 class BasicBlockSDNode : public SDNode {
   MachineBasicBlock *MBB;
-protected:
   friend class SelectionDAG;
   /// Debug info is meaningful and potentially useful here, but we create
   /// blocks out of order when they're jumped to, which makes it a bit
@@ -1957,7 +1950,6 @@ public:
 ///
 class SrcValueSDNode : public SDNode {
   const Value *V;
-protected:
   friend class SelectionDAG;
   /// Create a SrcValue for a general value.
   explicit SrcValueSDNode(const Value *v)
@@ -1980,7 +1972,6 @@ public:
 /// and ISD::STORE have been lowered.
 ///
 class MemOperandSDNode : public SDNode {
-protected:
   friend class SelectionDAG;
   /// Create a MachineMemOperand node
   explicit MemOperandSDNode(const MachineMemOperand &mo)
@@ -2000,7 +1991,6 @@ public:
 
 class RegisterSDNode : public SDNode {
   unsigned Reg;
-protected:
   friend class SelectionDAG;
   RegisterSDNode(unsigned reg, MVT VT)
     : SDNode(ISD::Register, DebugLoc::getUnknownLoc(),
@@ -2021,7 +2011,6 @@ class DbgStopPointSDNode : public SDNode {
   unsigned Line;
   unsigned Column;
   Value *CU;
-protected:
   friend class SelectionDAG;
   DbgStopPointSDNode(SDValue ch, unsigned l, unsigned c,
                      Value *cu)
@@ -2043,7 +2032,6 @@ public:
 class LabelSDNode : public SDNode {
   SDUse Chain;
   unsigned LabelID;
-protected:
   friend class SelectionDAG;
 LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
     : SDNode(NodeTy, dl, getSDVTList(MVT::Other)), LabelID(id) {
@@ -2061,7 +2049,6 @@ public:
 
 class ExternalSymbolSDNode : public SDNode {
   const char *Symbol;
-protected:
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
@@ -2081,7 +2068,6 @@ public:
 
 class CondCodeSDNode : public SDNode {
   ISD::CondCode Condition;
-protected:
   friend class SelectionDAG;
   explicit CondCodeSDNode(ISD::CondCode Cond)
     : SDNode(ISD::CONDCODE, DebugLoc::getUnknownLoc(),
@@ -2101,7 +2087,6 @@ public:
 /// future and most targets don't support it.
 class CvtRndSatSDNode : public SDNode {
   ISD::CvtCode CvtCode;
-protected:
   friend class SelectionDAG;
   explicit CvtRndSatSDNode(MVT VT, DebugLoc dl, const SDValue *Ops,
                            unsigned NumOps, ISD::CvtCode Code)
@@ -2206,7 +2191,6 @@ namespace ISD {
 /// ARG_FLAGSSDNode - Leaf node holding parameter flags.
 class ARG_FLAGSSDNode : public SDNode {
   ISD::ArgFlagsTy TheFlags;
-protected:
   friend class SelectionDAG;
   explicit ARG_FLAGSSDNode(ISD::ArgFlagsTy Flags)
     : SDNode(ISD::ARG_FLAGS, DebugLoc::getUnknownLoc(),
@@ -2230,7 +2214,6 @@ class CallSDNode : public SDNode {
   // will expand the size of the representation.  At the moment we only
   // need Inreg.
   bool Inreg;
-protected:
   friend class SelectionDAG;
   CallSDNode(unsigned cc, DebugLoc dl, bool isvararg, bool istailcall,
              bool isinreg, SDVTList VTs, const SDValue *Operands,
@@ -2275,7 +2258,6 @@ public:
 /// to parameterize some operations.
 class VTSDNode : public SDNode {
   MVT ValueType;
-protected:
   friend class SelectionDAG;
   explicit VTSDNode(MVT VT)
     : SDNode(ISD::VALUETYPE, DebugLoc::getUnknownLoc(),
@@ -2294,7 +2276,6 @@ public:
 /// LSBaseSDNode - Base class for LoadSDNode and StoreSDNode
 ///
 class LSBaseSDNode : public MemSDNode {
-protected:
   //! Operand array for load and store
   /*!
     \note Moving this array to the base class captures more
@@ -2341,7 +2322,6 @@ public:
 /// LoadSDNode - This class is used to represent ISD::LOAD nodes.
 ///
 class LoadSDNode : public LSBaseSDNode {
-protected:
   friend class SelectionDAG;
   LoadSDNode(SDValue *ChainPtrOff, DebugLoc dl, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT LVT,
@@ -2371,7 +2351,6 @@ public:
 /// StoreSDNode - This class is used to represent ISD::STORE nodes.
 ///
 class StoreSDNode : public LSBaseSDNode {
-protected:
   friend class SelectionDAG;
   StoreSDNode(SDValue *ChainValuePtrOff, DebugLoc dl, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT SVT,
