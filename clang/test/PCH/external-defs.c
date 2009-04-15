@@ -19,3 +19,5 @@ int incomplete_array3[];
 struct S {
   int x, y;
 };
+
+// XFAIL

@@ -423,6 +423,11 @@ void CodeGenModule::EmitDeferred() {
     // Otherwise, emit the definition and move on to the next one.
     EmitGlobalDefinition(D);
   }
+
+  // Emit any tentative definitions.
+  for (std::vector<const VarDecl*>::iterator it = TentativeDefinitions.begin(),
+         ie = TentativeDefinitions.end(); it != ie; ++it)
+    EmitTentativeDefinition(*it);
 }
 
 /// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the 
@@ -512,9 +517,16 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
     const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
-    // Forward declarations are emitted lazily on first use.
-    if (!VD->getInit() && VD->hasExternalStorage())
+    // If this isn't a definition, defer code generation.
+    if (!VD->getInit()) {
+      // If this is a tentative definition, remember it so that we can
+      // emit the common definition if needed. It is important to
+      // defer tentative definitions, since they may have incomplete
+      // type.
+      if (!VD->hasExternalStorage())
+        TentativeDefinitions.push_back(VD);
       return;
+    }
   }
 
   // Defer code generation when possible if this is a static definition, inline
@@ -708,21 +720,35 @@ CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
   return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0);
 }
 
+void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
+  assert(!D->getInit() && "Cannot emit definite definitions here!");
+
+  // See if we have already defined this (as a variable), if so we do
+  // not need to do anything.
+  llvm::GlobalValue *GV = GlobalDeclMap[getMangledName(D)];
+  if (llvm::GlobalVariable *Var = dyn_cast_or_null<llvm::GlobalVariable>(GV))
+    if (Var->hasInitializer())
+      return;
+  
+  EmitGlobalVarDefinition(D);
+}
+
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
   
   if (D->getInit() == 0) {
     // This is a tentative definition; tentative definitions are
-    // implicitly initialized with { 0 }
-    const llvm::Type *InitTy = getTypes().ConvertTypeForMem(ASTTy);
-    if (ASTTy->isIncompleteArrayType()) {
-      // An incomplete array is normally [ TYPE x 0 ], but we need
-      // to fix it to [ TYPE x 1 ].
-      const llvm::ArrayType* ATy = cast<llvm::ArrayType>(InitTy);
-      InitTy = llvm::ArrayType::get(ATy->getElementType(), 1);
-    }
-    Init = llvm::Constant::getNullValue(InitTy);
+    // implicitly initialized with { 0 }.
+    //
+    // Note that tentative definitions are only emitted at the end of
+    // a translation unit, so they should never have incomplete
+    // type. In addition, EmitTentativeDefinition makes sure that we
+    // never attempt to emit a tentative definition if a real one
+    // exists. A use may still exists, however, so we still may need
+    // to do a RAUW.
+    assert(!ASTTy->isIncompleteType() && "Unexpected incomplete type");
+    Init = llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(ASTTy));
   } else {
     Init = EmitConstantExpr(D->getInit(), D->getType());
     if (!Init) {
@@ -743,26 +769,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   
   // Entry is now either a Function or GlobalVariable.
   llvm::GlobalVariable *GV = dyn_cast<llvm::GlobalVariable>(Entry);
-  
-  // If we already have this global and it has an initializer, then
-  // we are in the rare situation where we emitted the defining
-  // declaration of the global and are now being asked to emit a
-  // definition which would be common. This occurs, for example, in
-  // the following situation because statics can be emitted out of
-  // order:
-  //
-  //  static int x;
-  //  static int *y = &x;
-  //  static int x = 10;
-  //  int **z = &y;
-  //
-  // Bail here so we don't blow away the definition. Note that if we
-  // can't distinguish here if we emitted a definition with a null
-  // initializer, but this case is safe.
-  if (GV && GV->hasInitializer() && !GV->getInitializer()->isNullValue()) {
-    assert(!D->getInit() && "Emitting multiple definitions of a decl!");
-    return;
-  }
   
   // We have a definition after a declaration with the wrong type.
   // We must make a new GlobalVariable* and update everything that used OldGV
