@@ -680,6 +680,9 @@
 		DEF1658F0F8FB3FC0098507F /* GeneratePCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GeneratePCH.cpp; path = "tools/clang-cc/GeneratePCH.cpp"; sourceTree = "<group>"; };
 		DEF1683F0F9548DC0098507F /* FixItRewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FixItRewriter.cpp; path = lib/Frontend/FixItRewriter.cpp; sourceTree = "<group>"; };
 		DEF168620F9549250098507F /* FixItRewriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixItRewriter.h; path = clang/Frontend/FixItRewriter.h; sourceTree = "<group>"; };
+		DEF169050F9645580098507F /* DiagnosticOptions.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticOptions.td; sourceTree = "<group>"; };
+		DEF169220F9645960098507F /* FrontendDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FrontendDiagnostic.h; path = clang/Frontend/FrontendDiagnostic.h; sourceTree = "<group>"; };
+		DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisDiagnostic.h; path = clang/Analysis/AnalysisDiagnostic.h; sourceTree = "<group>"; };
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = lib/AST/StmtDumper.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprAgg.cpp; path = lib/CodeGen/CGExprAgg.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -850,6 +853,7 @@
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */,
 				35A8FCF60D9B4ADD001C2F97 /* ProgramPoint.h */,
 				35A8FCF70D9B4ADD001C2F97 /* PathDiagnostic.h */,
 				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
@@ -1183,6 +1187,7 @@
 				1A7019EC0F79BC1100FEC4D1 /* DiagnosticDriverKinds.td */,
 				1A7019ED0F79BC1100FEC4D1 /* DiagnosticFrontendKinds.td */,
 				1A7019EE0F79BC1100FEC4D1 /* DiagnosticLexKinds.td */,
+				DEF169050F9645580098507F /* DiagnosticOptions.td */,
 				1A7019EF0F79BC1100FEC4D1 /* DiagnosticParseKinds.td */,
 				1A701A250F79CE1C00FEC4D1 /* DiagnosticSemaKinds.td */,
 				DED7D7330A524295003AD0FB /* FileManager.h */,
@@ -1347,6 +1352,7 @@
 			children = (
 				DEF161620F65C81C0098507F /* CompileOptions.h */,
 				DEF168620F9549250098507F /* FixItRewriter.h */,
+				DEF169220F9645960098507F /* FrontendDiagnostic.h */,
 				DEF1615E0F65C81C0098507F /* InitHeaderSearch.h */,
 				DEF1615F0F65C81C0098507F /* ManagerRegistry.h */,
 				DEF1657E0F8FB3730098507F /* PCHBitCodes.h */,
@@ -1362,23 +1368,23 @@
 		DEF165020F8D46810098507F /* Driver */ = {
 			isa = PBXGroup;
 			children = (
-				DEF165140F8D46980098507F /* Tool.h */,
-				DEF165150F8D46980098507F /* Types.h */,
 				DEF165160F8D46980098507F /* Action.h */,
-				DEF165170F8D46980098507F /* Compilation.h */,
-				DEF165180F8D46980098507F /* Options.def */,
-				DEF165190F8D46980098507F /* Option.h */,
-				DEF1651A0F8D46980098507F /* Types.def */,
-				DEF1651B0F8D46980098507F /* ToolChain.h */,
-				DEF1651C0F8D46980098507F /* Options.h */,
 				DEF1651D0F8D46980098507F /* ArgList.h */,
 				DEF1651E0F8D46980098507F /* Arg.h */,
-				DEF1651F0F8D46980098507F /* HostInfo.h */,
-				DEF165200F8D46980098507F /* Driver.h */,
-				DEF165210F8D46980098507F /* Job.h */,
-				DEF165220F8D46980098507F /* Util.h */,
-				DEF165230F8D46980098507F /* Phases.h */,
+				DEF165170F8D46980098507F /* Compilation.h */,
 				DEF165240F8D46980098507F /* DriverDiagnostic.h */,
+				DEF165200F8D46980098507F /* Driver.h */,
+				DEF1651F0F8D46980098507F /* HostInfo.h */,
+				DEF165210F8D46980098507F /* Job.h */,
+				DEF165180F8D46980098507F /* Options.def */,
+				DEF165190F8D46980098507F /* Option.h */,
+				DEF1651C0F8D46980098507F /* Options.h */,
+				DEF165230F8D46980098507F /* Phases.h */,
+				DEF165140F8D46980098507F /* Tool.h */,
+				DEF165150F8D46980098507F /* Types.h */,
+				DEF1651A0F8D46980098507F /* Types.def */,
+				DEF1651B0F8D46980098507F /* ToolChain.h */,
+				DEF165220F8D46980098507F /* Util.h */,
 			);
 			name = Driver;
 			sourceTree = "<group>";
