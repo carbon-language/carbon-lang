@@ -391,6 +391,10 @@ namespace clang {
       EXPR_UNARY_OPERATOR,
       /// \brief A SizefAlignOfExpr record.
       EXPR_SIZEOF_ALIGN_OF,
+      /// \brief A CallExpr record.
+      EXPR_CALL,
+      /// \brief A MemberExpr record.
+      EXPR_MEMBER,
       /// \brief A BinaryOperator record.
       EXPR_BINARY_OPERATOR,
       /// \brief An ImplicitCastExpr record.

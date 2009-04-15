@@ -26,6 +26,17 @@ typedef typeof(-Enumerator) negate_enum;
 typedef typeof(sizeof(int)) typeof_sizeof;
 typedef typeof(sizeof(Enumerator)) typeof_sizeof2;
 
+// CallExpr
+double dplus(double x, double y);
+double d0, d1;
+typedef typeof((&dplus)(d0, d1)) call_returning_double;
+
+// MemberExpr
+struct S {
+  double x;
+};
+typedef typeof(((struct S*)0)->x) member_ref_double;
+
 // BinaryOperator
 typedef typeof(i + Enumerator) add_result;
 

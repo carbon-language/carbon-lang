@@ -36,6 +36,12 @@ typeof(sizeof(float)) size_t_value;
 typeof_sizeof *size_t_ptr = &size_t_value;
 typeof_sizeof2 *size_t_ptr2 = &size_t_value;
 
+// CallExpr
+call_returning_double *double_ptr2 = &floating;
+
+// MemberExpr
+member_ref_double *double_ptr3 = &floating;
+
 // BinaryOperator
 add_result *int_ptr5 = &integer;
 

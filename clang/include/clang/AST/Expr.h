@@ -970,6 +970,9 @@ public:
   CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs, QualType t, 
            SourceLocation rparenloc);
   
+  /// \brief Build an empty call expression.
+  CallExpr(ASTContext &C, EmptyShell Empty);
+
   ~CallExpr() {}
   
   void Destroy(ASTContext& C);
@@ -992,18 +995,12 @@ public:
     return cast<Expr>(SubExprs[Arg+ARGS_START]);
   }
   
-  // FIXME: Why is this needed?  Why not just create the CallExpr with the
-  // corect number of arguments?  It makes the ASTs less brittle.
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
     assert(Arg < NumArgs && "Arg access out of range!");
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
   
-  // FIXME: It would be great to just get rid of this.  There is only one
-  // callee of this method, and it probably could be refactored to not use
-  // this method and instead just create a CallExpr with the right number of
-  // arguments.
   /// setNumArgs - This changes the number of arguments present in this call.
   /// Any orphaned expressions are deleted by this, and any new operands are set
   /// to null.
@@ -1026,6 +1023,7 @@ public:
   unsigned isBuiltinCall(ASTContext &Context) const;
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(getCallee()->getLocStart(), RParenLoc);
@@ -1071,6 +1069,9 @@ public:
     : Expr(MemberExprClass, ty),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
 
+  /// \brief Build an empty member reference expression.
+  explicit MemberExpr(EmptyShell Empty) : Expr(MemberExprClass, Empty) { }
+
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
 
@@ -1080,11 +1081,14 @@ public:
   /// a CXXMethodDecl.
   NamedDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
+
   bool isArrow() const { return IsArrow; }
-  
+  void setArrow(bool A) { IsArrow = A; }
+
   /// getMemberLoc - Return the location of the "member", in X->F, it is the
   /// location of 'F'.
   SourceLocation getMemberLoc() const { return MemberLoc; }
+  void setMemberLoc(SourceLocation L) { MemberLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), MemberLoc);

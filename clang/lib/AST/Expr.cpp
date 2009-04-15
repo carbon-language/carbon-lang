@@ -186,6 +186,11 @@ CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
   RParenLoc = rparenloc;
 }
 
+CallExpr::CallExpr(ASTContext &C, EmptyShell Empty) 
+  : Expr(CallExprClass, Empty), SubExprs(0), NumArgs(0) { 
+  SubExprs = new (C) Stmt*[1];
+}
+
 void CallExpr::Destroy(ASTContext& C) {
   DestroyChildren(C);
   if (SubExprs) C.Deallocate(SubExprs);

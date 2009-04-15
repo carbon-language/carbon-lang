@@ -245,6 +245,8 @@ namespace {
     unsigned VisitParenExpr(ParenExpr *E);
     unsigned VisitUnaryOperator(UnaryOperator *E);
     unsigned VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    unsigned VisitCallExpr(CallExpr *E);
+    unsigned VisitMemberExpr(MemberExpr *E);
     unsigned VisitCastExpr(CastExpr *E);
     unsigned VisitBinaryOperator(BinaryOperator *E);
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -346,6 +348,25 @@ unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return E->isArgumentType()? 0 : 1;
+}
+
+unsigned PCHStmtReader::VisitCallExpr(CallExpr *E) {
+  VisitExpr(E);
+  E->setNumArgs(Reader.getContext(), Record[Idx++]);
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setCallee(ExprStack[ExprStack.size() - E->getNumArgs() - 1]);
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
+    E->setArg(I, ExprStack[ExprStack.size() - N + I]);
+  return E->getNumArgs() + 1;
+}
+
+unsigned PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
+  VisitExpr(E);
+  E->setBase(ExprStack.back());
+  E->setMemberDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setArrow(Record[Idx++]);
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
@@ -1701,6 +1722,14 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_SIZEOF_ALIGN_OF:
       E = new (Context) SizeOfAlignOfExpr(Empty);
+      break;
+
+    case pch::EXPR_CALL:
+      E = new (Context) CallExpr(Context, Empty);
+      break;
+
+    case pch::EXPR_MEMBER:
+      E = new (Context) MemberExpr(Empty);
       break;
 
     case pch::EXPR_BINARY_OPERATOR:

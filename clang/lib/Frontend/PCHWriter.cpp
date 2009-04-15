@@ -453,6 +453,8 @@ namespace {
     void VisitParenExpr(ParenExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
     void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    void VisitCallExpr(CallExpr *E);
+    void VisitMemberExpr(MemberExpr *E);
     void VisitCastExpr(CastExpr *E);
     void VisitBinaryOperator(BinaryOperator *E);
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -548,6 +550,26 @@ void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_SIZEOF_ALIGN_OF;
+}
+
+void PCHStmtWriter::VisitCallExpr(CallExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumArgs());
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Writer.WriteSubExpr(E->getCallee());
+  for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
+       Arg != ArgEnd; ++Arg)
+    Writer.WriteSubExpr(*Arg);
+  Code = pch::EXPR_CALL;
+}
+
+void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
+  VisitExpr(E);
+  Writer.WriteSubExpr(E->getBase());
+  Writer.AddDeclRef(E->getMemberDecl(), Record);
+  Writer.AddSourceLocation(E->getMemberLoc(), Record);
+  Record.push_back(E->isArrow());
+  Code = pch::EXPR_MEMBER;
 }
 
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
