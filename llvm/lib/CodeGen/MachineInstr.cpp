@@ -623,8 +623,8 @@ unsigned MachineInstr::getNumExplicitOperands() const {
   if (!TID->isVariadic())
     return NumOperands;
 
-  for (unsigned e = getNumOperands(); NumOperands != e; ++NumOperands) {
-    const MachineOperand &MO = getOperand(NumOperands);
+  for (unsigned i = NumOperands, e = getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = getOperand(i);
     if (!MO.isReg() || !MO.isImplicit())
       NumOperands++;
   }
