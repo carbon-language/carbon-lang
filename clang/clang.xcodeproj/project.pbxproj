@@ -323,6 +323,8 @@
 		1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprConstant.cpp; path = lib/CodeGen/CGExprConstant.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A471AB40F437BC500753CE8 /* CGBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBlocks.cpp; path = lib/CodeGen/CGBlocks.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A5D5E570E5E81010023C059 /* CGCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXX.cpp; path = lib/CodeGen/CGCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1A649E1D0F9599D9005B965E /* CGBlocks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGBlocks.h; path = lib/CodeGen/CGBlocks.h; sourceTree = "<group>"; };
+		1A649E1E0F9599DA005B965E /* CGCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGCXX.h; path = lib/CodeGen/CGCXX.h; sourceTree = "<group>"; };
 		1A68BC110D0CADDD001A28C8 /* PPCBuiltins.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = PPCBuiltins.def; path = clang/AST/PPCBuiltins.def; sourceTree = "<group>"; tabWidth = 2; };
 		1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TargetBuiltins.h; path = clang/AST/TargetBuiltins.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A68BC130D0CADDD001A28C8 /* X86Builtins.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = X86Builtins.def; path = clang/AST/X86Builtins.def; sourceTree = "<group>"; tabWidth = 2; };
@@ -1033,11 +1035,13 @@
 			children = (
 				1A2193CB0F45EEB700C0713D /* ABIInfo.h */,
 				1A471AB40F437BC500753CE8 /* CGBlocks.cpp */,
+				1A649E1D0F9599D9005B965E /* CGBlocks.h */,
 				DE8822350EC80C0A00CBC30A /* CGBuilder.h */,
 				1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */,
-				35475B220E7997680000BFE4 /* CGCall.h */,
 				35475B1F0E79973F0000BFE4 /* CGCall.cpp */,
+				35475B220E7997680000BFE4 /* CGCall.h */,
 				1A5D5E570E5E81010023C059 /* CGCXX.cpp */,
+				1A649E1E0F9599DA005B965E /* CGCXX.h */,
 				35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */,
 				35A3E7010DD3874400757F74 /* CGDebugInfo.h */,
 				DE4264FB0C113592005A861D /* CGDecl.cpp */,
