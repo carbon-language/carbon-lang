@@ -357,11 +357,13 @@ bool FastISel::SelectCall(User *I) {
     if (DW && DW->ValidDebugInfo(REI->getContext(), true)) {
      unsigned ID = 0;
      DISubprogram Subprogram(cast<GlobalVariable>(REI->getContext()));
-      if (!Subprogram.describes(MF.getFunction())) {
+     if (!Subprogram.isNull() && !Subprogram.describes(MF.getFunction())) {
         // This is end of an inlined function.
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         ID = DW->RecordInlinedFnEnd(Subprogram);
-        BuildMI(MBB, DL, II).addImm(ID);
+        if (ID)
+          // If ID is 0 then this was not an end of inlined region.
+          BuildMI(MBB, DL, II).addImm(ID);
       } else {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         ID =  DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
