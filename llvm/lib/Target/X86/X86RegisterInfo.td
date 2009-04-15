@@ -537,6 +537,41 @@ def GR8_NOREX : RegisterClass<"X86", [i8], 8,
 def GR16_NOREX : RegisterClass<"X86", [i16], 16,
                                [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let SubRegClassList = [GR8_NOREX, GR8_NOREX];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    // Does the function dedicate RBP / EBP to being a frame ptr?
+    // If so, don't allocate SP or BP.
+    static const unsigned X86_GR16_AO_fp[] = {
+      X86::AX, X86::CX, X86::DX, X86::SI, X86::DI, X86::BX
+    };
+    // If not, just don't allocate SP.
+    static const unsigned X86_GR16_AO[] = {
+      X86::AX, X86::CX, X86::DX, X86::SI, X86::DI, X86::BX, X86::BP
+    };
+
+    GR16_NOREXClass::iterator
+    GR16_NOREXClass::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return X86_GR16_AO_fp;
+      else
+        return X86_GR16_AO;
+    }
+
+    GR16_NOREXClass::iterator
+    GR16_NOREXClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return X86_GR16_AO_fp+(sizeof(X86_GR16_AO_fp)/sizeof(unsigned));
+      else
+        return X86_GR16_AO + (sizeof(X86_GR16_AO) / sizeof(unsigned));
+    }
+  }];
 }
 // GR32_NOREX - GR32 registers which do not require a REX prefix.
 def GR32_NOREX : RegisterClass<"X86", [i32], 32,
