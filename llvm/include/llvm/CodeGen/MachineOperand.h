@@ -427,18 +427,9 @@ private:
   /// explicitly nulled out.
   void AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo);
 
-  void RemoveRegOperandFromRegInfo() {
-    assert(isOnRegUseList() && "Reg operand is not on a use list");
-    // Unlink this from the doubly linked list of operands.
-    MachineOperand *NextOp = Contents.Reg.Next;
-    *Contents.Reg.Prev = NextOp; 
-    if (NextOp) {
-      assert(NextOp->getReg() == getReg() && "Corrupt reg use/def chain!");
-      NextOp->Contents.Reg.Prev = Contents.Reg.Prev;
-    }
-    Contents.Reg.Prev = 0;
-    Contents.Reg.Next = 0;
-  }
+  /// RemoveRegOperandFromRegInfo - Remove this register operand from the
+  /// MachineRegisterInfo it is linked with.
+  void RemoveRegOperandFromRegInfo();
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {

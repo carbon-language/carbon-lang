@@ -68,6 +68,21 @@ void MachineOperand::AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo) {
   *Head = this;
 }
 
+/// RemoveRegOperandFromRegInfo - Remove this register operand from the
+/// MachineRegisterInfo it is linked with.
+void MachineOperand::RemoveRegOperandFromRegInfo() {
+  assert(isOnRegUseList() && "Reg operand is not on a use list");
+  // Unlink this from the doubly linked list of operands.
+  MachineOperand *NextOp = Contents.Reg.Next;
+  *Contents.Reg.Prev = NextOp; 
+  if (NextOp) {
+    assert(NextOp->getReg() == getReg() && "Corrupt reg use/def chain!");
+    NextOp->Contents.Reg.Prev = Contents.Reg.Prev;
+  }
+  Contents.Reg.Prev = 0;
+  Contents.Reg.Next = 0;
+}
+
 void MachineOperand::setReg(unsigned Reg) {
   if (getReg() == Reg) return; // No change.
   
