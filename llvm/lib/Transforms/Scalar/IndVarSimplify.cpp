@@ -798,48 +798,106 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     if (PN == OrigControllingPHI && PN->getType() != LargestType)
       for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
            UI != UE; ++UI) {
-        if (isa<SExtInst>(UI) && NoSignedWrap) {
+        Instruction *UInst = dyn_cast<Instruction>(*UI);
+        if (UInst && isa<SExtInst>(UInst) && NoSignedWrap) {
           Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType, L, 
-                                            UI->getType(), Rewriter, InsertPt);
-          UI->replaceAllUsesWith(TruncIndVar);
-          if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
-            DeadInsts.insert(DeadUse);
+                                         UInst->getType(), Rewriter, InsertPt);
+          UInst->replaceAllUsesWith(TruncIndVar);
+          DeadInsts.insert(UInst);
         }
         // See if we can figure out sext(i+constant) doesn't wrap, so we can
         // use a larger add.  This is common in subscripting.
-        Instruction *UInst = dyn_cast<Instruction>(*UI);
         if (UInst && UInst->getOpcode()==Instruction::Add &&
             UInst->hasOneUse() &&
             isa<ConstantInt>(UInst->getOperand(1)) &&
-            isa<SExtInst>(UInst->use_begin()) && NoSignedWrap && LimitVal) {
-          uint64_t numBits = LimitVal->getValue().getBitWidth();
-          ConstantInt* RHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
-          if (((APInt::getSignedMaxValue(numBits) - IncrVal->getValue()) -
-                RHS->getValue()).sgt(LimitVal->getValue())) {
-            SExtInst* oldSext = dyn_cast<SExtInst>(UInst->use_begin());
-            Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType, L,
-                                              oldSext->getType(), Rewriter,
-                                              InsertPt);
-            APInt APcopy = APInt(RHS->getValue());
-            ConstantInt* newRHS = 
-                  ConstantInt::get(APcopy.sext(oldSext->getType()->
-                                               getPrimitiveSizeInBits()));
-            Value *NewAdd = BinaryOperator::CreateAdd(TruncIndVar, newRHS,
-                                                      UInst->getName()+".nosex",
-                                                      UInst);
-            oldSext->replaceAllUsesWith(NewAdd);
-            if (Instruction *DeadUse = dyn_cast<Instruction>(oldSext))
-              DeadInsts.insert(DeadUse);
-            if (Instruction *DeadUse = dyn_cast<Instruction>(UInst))
-              DeadInsts.insert(DeadUse);
+            NoSignedWrap && LimitVal) {
+          uint64_t oldBitSize = LimitVal->getValue().getBitWidth();
+          uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
+          ConstantInt* AddRHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
+          if (((APInt::getSignedMaxValue(oldBitSize) - IncrVal->getValue()) -
+                AddRHS->getValue()).sgt(LimitVal->getValue())) {
+            // We've determined this is (i+constant) and it won't overflow.
+            if (isa<SExtInst>(UInst->use_begin())) {
+              SExtInst* oldSext = dyn_cast<SExtInst>(UInst->use_begin());
+              Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
+                                                L, oldSext->getType(), Rewriter,
+                                                InsertPt);
+              APInt APcopy = APInt(AddRHS->getValue());
+              ConstantInt* newAddRHS =ConstantInt::get(APcopy.sext(newBitSize));
+              Value *NewAdd = 
+                    BinaryOperator::CreateAdd(TruncIndVar, newAddRHS,
+                                              UInst->getName()+".nosex", UInst);
+              oldSext->replaceAllUsesWith(NewAdd);
+              if (Instruction *DeadUse = dyn_cast<Instruction>(oldSext))
+                DeadInsts.insert(DeadUse);
+              DeadInsts.insert(UInst);
+            }
           }
         }
-        if (isa<ZExtInst>(UI) && NoUnsignedWrap) {
+        if (UInst && isa<ZExtInst>(UInst) && NoUnsignedWrap) {
           Value *TruncIndVar = getZeroExtendedTruncVar(AR, SE, LargestType, L, 
-                                            UI->getType(), Rewriter, InsertPt);
-          UI->replaceAllUsesWith(TruncIndVar);
-          if (Instruction *DeadUse = dyn_cast<Instruction>(*UI))
+                                         UInst->getType(), Rewriter, InsertPt);
+          UInst->replaceAllUsesWith(TruncIndVar);
+          DeadInsts.insert(UInst);
+        }
+        // If we have zext(i&constant), we can use the larger variable.  This
+        // is not common but is a bottleneck in Openssl.
+        // (RHS doesn't have to be constant.  There should be a better approach
+        // than bottom-up pattern matching for this...)
+        if (UInst && UInst->getOpcode()==Instruction::And &&
+            UInst->hasOneUse() &&
+            isa<ConstantInt>(UInst->getOperand(1)) &&
+            isa<ZExtInst>(UInst->use_begin())) {
+          uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
+          ConstantInt* AndRHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
+          ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst->use_begin());
+          Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
+                                  L, oldZext->getType(), Rewriter, InsertPt);
+          APInt APcopy = APInt(AndRHS->getValue());
+          ConstantInt* newAndRHS = ConstantInt::get(APcopy.zext(newBitSize));
+          Value *NewAnd = 
+                BinaryOperator::CreateAnd(TruncIndVar, newAndRHS,
+                                          UInst->getName()+".nozex", UInst);
+          oldZext->replaceAllUsesWith(NewAnd);
+          if (Instruction *DeadUse = dyn_cast<Instruction>(oldZext))
             DeadInsts.insert(DeadUse);
+          DeadInsts.insert(UInst);
+        }
+        // If we have zext((i+constant)&constant), we can use the larger
+        // variable even if the add does overflow.  This works whenever the
+        // constant being ANDed is the same size as i, which it presumably is.
+        // We don't need to restrict the expression being and'ed to i+const,
+        // but we have to promote everything in it, so it's convenient.
+        if (UInst && UInst->getOpcode()==Instruction::Add &&
+            UInst->hasOneUse() &&
+            isa<ConstantInt>(UInst->getOperand(1))) {
+          uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
+          ConstantInt* AddRHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
+          Instruction *UInst2 = dyn_cast<Instruction>(UInst->use_begin());
+          if (UInst2 && UInst2->getOpcode() == Instruction::And &&
+              UInst2->hasOneUse() &&
+              isa<ConstantInt>(UInst2->getOperand(1)) &&
+              isa<ZExtInst>(UInst2->use_begin())) {
+            ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst2->use_begin());
+            Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
+                                    L, oldZext->getType(), Rewriter, InsertPt);
+            ConstantInt* AndRHS = dyn_cast<ConstantInt>(UInst2->getOperand(1));
+            APInt APcopy = APInt(AddRHS->getValue());
+            ConstantInt* newAddRHS = ConstantInt::get(APcopy.zext(newBitSize));
+            Value *NewAdd = 
+                  BinaryOperator::CreateAdd(TruncIndVar, newAddRHS,
+                                            UInst->getName()+".nozex", UInst2);
+            APInt APcopy2 = APInt(AndRHS->getValue());
+            ConstantInt* newAndRHS = ConstantInt::get(APcopy2.zext(newBitSize));
+            Value *NewAnd = 
+                  BinaryOperator::CreateAnd(NewAdd, newAndRHS,
+                                            UInst->getName()+".nozex", UInst2);
+            oldZext->replaceAllUsesWith(NewAnd);
+            if (Instruction *DeadUse = dyn_cast<Instruction>(oldZext))
+              DeadInsts.insert(DeadUse);
+            DeadInsts.insert(UInst);
+            DeadInsts.insert(UInst2);
+          }
         }
       }
 
