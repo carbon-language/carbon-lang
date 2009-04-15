@@ -105,24 +105,43 @@ static unsigned char DiagnosticClassesAnalysis[] = {
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
   assert(DiagID < diag::DIAG_UPPER_LIMIT &&
          "Diagnostic ID out of range!");
-  unsigned res;
-  if (DiagID < diag::DIAG_START_DRIVER)
-    res = DiagnosticClassesCommon[DiagID];
-  else if (DiagID < diag::DIAG_START_FRONTEND)
-    res = DiagnosticClassesDriver[DiagID - diag::DIAG_START_DRIVER - 1];
-  else if (DiagID < diag::DIAG_START_LEX)
-    res = DiagnosticClassesFrontend[DiagID - diag::DIAG_START_FRONTEND - 1];
-  else if (DiagID < diag::DIAG_START_PARSE)
-    res = DiagnosticClassesLex[DiagID - diag::DIAG_START_LEX - 1];
-  else if (DiagID < diag::DIAG_START_AST)
-    res = DiagnosticClassesParse[DiagID - diag::DIAG_START_PARSE - 1];
-  else if (DiagID < diag::DIAG_START_SEMA)
-    res = DiagnosticClassesAST[DiagID - diag::DIAG_START_AST - 1];
-  else if (DiagID < diag::DIAG_START_ANALYSIS)
-    res = DiagnosticClassesSema[DiagID - diag::DIAG_START_SEMA - 1];
-  else
-    res = DiagnosticClassesAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
-  return res;
+  unsigned char *Arr;
+  unsigned ArrSize;
+  if (DiagID <= diag::DIAG_START_DRIVER) {
+    DiagID -= 0;
+    Arr = DiagnosticClassesCommon;
+    ArrSize = sizeof(DiagnosticClassesCommon);
+  } else if (DiagID <= diag::DIAG_START_FRONTEND) {
+    DiagID -= diag::DIAG_START_DRIVER + 1;
+    Arr = DiagnosticClassesDriver;
+    ArrSize = sizeof(DiagnosticClassesDriver);
+  } else if (DiagID <= diag::DIAG_START_LEX) {
+    DiagID -= diag::DIAG_START_FRONTEND + 1;
+    Arr = DiagnosticClassesFrontend;
+    ArrSize = sizeof(DiagnosticClassesFrontend);
+  } else if (DiagID <= diag::DIAG_START_PARSE) {
+    DiagID -= diag::DIAG_START_LEX + 1;
+    Arr = DiagnosticClassesLex;
+    ArrSize = sizeof(DiagnosticClassesLex);
+  } else if (DiagID <= diag::DIAG_START_AST) {
+    DiagID -= diag::DIAG_START_PARSE + 1;
+    Arr = DiagnosticClassesParse;
+    ArrSize = sizeof(DiagnosticClassesParse);
+  } else if (DiagID <= diag::DIAG_START_SEMA) {
+    DiagID -= diag::DIAG_START_AST + 1;
+    Arr = DiagnosticClassesAST;
+    ArrSize = sizeof(DiagnosticClassesAST);
+    
+  } else if (DiagID <= diag::DIAG_START_ANALYSIS) {
+    DiagID -= diag::DIAG_START_SEMA + 1;
+    Arr = DiagnosticClassesSema;
+    ArrSize = sizeof(DiagnosticClassesSema);
+  } else {
+    DiagID -= diag::DIAG_START_ANALYSIS + 1;
+    Arr = DiagnosticClassesAnalysis;
+    ArrSize = sizeof(DiagnosticClassesAnalysis);
+  }
+  return DiagID < ArrSize ? Arr[DiagID] : ~0U;
 }
 
 /// DiagnosticText - An english message to print for the diagnostic.  These
