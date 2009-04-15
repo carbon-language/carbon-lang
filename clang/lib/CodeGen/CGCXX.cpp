@@ -114,7 +114,6 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
                   Callee, Args, MD);
 }
 
-
 llvm::Value *CodeGenFunction::LoadCXXThis() {
   assert(isa<CXXMethodDecl>(CurFuncDecl) && 
          "Must be in a C++ member function decl to load 'this'");
@@ -123,4 +122,36 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
   
   // FIXME: What if we're inside a block?
   return Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
+}
+
+const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D, 
+                                                 CXXCtorType Type) {
+  llvm::SmallString<256> Name;
+  llvm::raw_svector_ostream Out(Name);
+  mangleCXXCtor(D, Type, Context, Out);
+
+  Name += '\0';
+  return UniqueMangledName(Name.begin(), Name.end());
+}
+
+void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D, 
+                                       CXXCtorType Type) {
+  const llvm::FunctionType *Ty =
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(D), false);
+  
+  const char *Name = getMangledCXXCtorName(D, Type);
+  llvm::Function *Fn = 
+    cast<llvm::Function>(GetOrCreateLLVMFunction(Name, Ty, D));
+ 
+  CodeGenFunction(*this).GenerateCode(D, Fn);
+  
+  SetFunctionDefinitionAttributes(D, Fn);
+  SetLLVMFunctionAttributesForDefinition(D, Fn);
+}
+
+void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
+  ErrorUnsupported(D, "C++ constructor", true);
+
+  EmitCXXConstructor(D, Ctor_Complete);
+  EmitCXXConstructor(D, Ctor_Base);
 }

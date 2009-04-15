@@ -18,6 +18,7 @@
 #include "clang/AST/Attr.h"
 #include "CGBlocks.h"
 #include "CGCall.h"
+#include "CGCXX.h"
 #include "CodeGenTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
@@ -311,7 +312,9 @@ public:
                               AttributeListType &PAL);
 
   const char *getMangledName(const NamedDecl *ND);
-
+  const char *getMangledCXXCtorName(const CXXConstructorDecl *D, 
+                                    CXXCtorType Type);
+  
   enum GVALinkage {
     GVA_Internal,
     GVA_C99Inline,
@@ -320,6 +323,10 @@ public:
   };
   
 private:
+  /// UniqueMangledName - Unique a name by (if necessary) inserting it into the
+  /// MangledNames string map.
+  const char *UniqueMangledName(const char *NameStart, const char *NameEnd);
+  
   llvm::Constant *GetOrCreateLLVMFunction(const char *MangledName,
                                           const llvm::Type *Ty,
                                           const FunctionDecl *D);
@@ -353,8 +360,19 @@ private:
   void EmitGlobalVarDefinition(const VarDecl *D);
   void EmitAliasDefinition(const ValueDecl *D);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
+
+  // C++ related functions.
+  
   void EmitNamespace(const NamespaceDecl *D);
   void EmitLinkageSpec(const LinkageSpecDecl *D);
+
+  /// EmitCXXConstructors - Emit constructors (base, complete) from a
+  /// C++ constructor Decl.
+  void EmitCXXConstructors(const CXXConstructorDecl *D);
+  
+  /// EmitCXXConstructor - Emit a single constructor with the given type from
+  /// a C++ constructor Decl.
+  void EmitCXXConstructor(const CXXConstructorDecl *D, CXXCtorType Type);
   
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function * Ctor, int Priority=65535);

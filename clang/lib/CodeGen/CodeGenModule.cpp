@@ -156,7 +156,14 @@ const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
   }
 
   Name += '\0';
-  return MangledNames.GetOrCreateValue(Name.begin(), Name.end()).getKeyData();
+  return UniqueMangledName(Name.begin(), Name.end());
+}
+
+const char *CodeGenModule::UniqueMangledName(const char *NameStart,
+                                             const char *NameEnd) {
+  assert(*(NameEnd - 1) == '\0' && "Mangled name must be null terminated!");
+  
+  return MangledNames.GetOrCreateValue(NameStart, NameEnd).getKeyData();
 }
 
 /// AddGlobalCtor - Add a function to the list that will be called before
@@ -1344,11 +1351,15 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     EmitGlobal(cast<ValueDecl>(D));
     break;
 
+  // C++ Decls
   case Decl::Namespace:
     EmitNamespace(cast<NamespaceDecl>(D));
     break;
-
-    // Objective-C Decls
+  case Decl::CXXConstructor:
+    EmitCXXConstructors(cast<CXXConstructorDecl>(D));
+    break;
+        
+  // Objective-C Decls
     
   // Forward declarations, no (immediate) code generation.
   case Decl::ObjCClass:
