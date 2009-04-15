@@ -2091,7 +2091,8 @@ private:
         ConstructDbgScope(Scope, ParentStartID, ParentEndID, ParentDie, Unit);
       } else {
         DIE *ScopeDie = NULL;
-        if (MainCU && TAI->doesDwarfUsesInlineInfoSection()) {
+        if (MainCU && TAI->doesDwarfUsesInlineInfoSection()
+            && Scope->isInlinedSubroutine()) {
           ScopeDie = new DIE(DW_TAG_inlined_subroutine);
           DIE *Origin = MainCU->getDieMapSlotFor(Scope->getDesc().getGV());
           AddDIEntry(ScopeDie, DW_AT_abstract_origin, DW_FORM_ref4, Origin);
