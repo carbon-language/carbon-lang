@@ -66,14 +66,20 @@ void ClangDiagGroupsEmitter::run(std::ostream &OS) {
   // groups to diags in the group.
   std::map<std::string, std::vector<const Record*> > DiagsInGroup;
   
-  const std::vector<Record*> &Diags =
+  std::vector<Record*> Diags =
     Records.getAllDerivedDefinitions("Diagnostic");
-  
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record *R = Diags[i];
     DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group"));
     if (DI == 0) continue;
     DiagsInGroup[DI->getDef()->getValueAsString("GroupName")].push_back(R);
+  }
+  
+  // Add all DiagGroup's to the DiagsInGroup list to make sure we pick up empty
+  // groups (these are warnings that GCC supports that clang never produces).
+  Diags = Records.getAllDerivedDefinitions("DiagGroup");
+  for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
+    DiagsInGroup[Diags[i]->getValueAsString("GroupName")];
   }
   
   // Walk through the groups emitting an array for each diagnostic of the diags
