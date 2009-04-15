@@ -483,7 +483,8 @@ def GR64_ : RegisterClass<"X86", [i64], 64, [RAX, RCX, RDX, RBX]> {
 // On x86-64, GR64_NOREX, GR32_NOREX and GR16_NOREX are the classes
 // of registers which do not by themselves require a REX prefix.
 def GR8_NOREX : RegisterClass<"X86", [i8], 8,
-                              [AL, CL, DL, SIL, DIL, BL, BPL, SPL]> {
+                              [AL, CL, DL, BL, AH, CH, DH, BH,
+                               SIL, DIL, BPL, SPL]> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -500,7 +501,7 @@ def GR8_NOREX : RegisterClass<"X86", [i8], 8,
     };
     // In 32-mode, none of the 8-bit registers aliases EBP or ESP.
     static const unsigned X86_GR8_NOREX_AO_32[] = {
-      X86::AL, X86::CL, X86::DL, X86::BL
+      X86::AL, X86::CL, X86::DL, X86::AH, X86::CH, X86::DH, X86::BL, X86::BH
     };
 
     GR8_NOREXClass::iterator
