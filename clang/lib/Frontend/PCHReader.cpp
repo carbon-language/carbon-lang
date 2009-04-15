@@ -1079,10 +1079,20 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     assert(false && "Should never jump to an attribute block");
     return QualType();
 
-  case pch::TYPE_EXT_QUAL:
-    // FIXME: Deserialize ExtQualType
-    assert(false && "Cannot deserialize qualified types yet");
-    return QualType();
+  case pch::TYPE_EXT_QUAL: {
+    assert(Record.size() == 3 && 
+           "Incorrect encoding of extended qualifier type");
+    QualType Base = GetType(Record[0]);
+    QualType::GCAttrTypes GCAttr = (QualType::GCAttrTypes)Record[1];
+    unsigned AddressSpace = Record[2];
+    
+    QualType T = Base;
+    if (GCAttr != QualType::GCNone)
+      T = Context.getObjCGCQualType(T, GCAttr);
+    if (AddressSpace)
+      T = Context.getAddrSpaceQualType(T, AddressSpace);
+    return T;
+  }
 
   case pch::TYPE_FIXED_WIDTH_INT: {
     assert(Record.size() == 2 && "Incorrect encoding of fixed-width int type");

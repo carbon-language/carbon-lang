@@ -5,7 +5,16 @@
 // RUN: clang-cc -emit-pch -fblocks -o %t %S/types.h &&
 // RUN: clang-cc -fblocks -include-pch %t -fsyntax-only -verify %s 
 
-// FIXME: TYPE_EXT_QUAL
+typedef int INT;
+INT int_value;
+
+__attribute__((address_space(1))) int int_as_one;
+
+// TYPE_EXT_QUAL
+ASInt *as_int_ptr1 = &int_value;  // expected-error{{different address spaces}} \
+                             // FIXME: expected-warning{{discards qualifiers}}
+ASInt *as_int_ptr2 = &int_as_one;
+
 // FIXME: TYPE_FIXED_WIDTH_INT
 
 // TYPE_COMPLEX
@@ -13,8 +22,6 @@ _Complex float Cfloat_val;
 Cfloat *Cfloat_ptr = &Cfloat_val;
 
 // TYPE_POINTER
-typedef int INT;
-INT int_value;
 int_ptr int_value_ptr = &int_value;
 
 // TYPE_BLOCK_POINTER

@@ -1,6 +1,8 @@
 /* Used with the types.c test */
 
-// FIXME: TYPE_EXT_QUAL
+// TYPE_EXT_QUAL
+typedef __attribute__((address_space(1))) int ASInt;
+
 // FIXME: TYPE_FIXED_WIDTH_INT
 
 // TYPE_COMPLEX
