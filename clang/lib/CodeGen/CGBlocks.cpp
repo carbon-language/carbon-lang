@@ -775,7 +775,10 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
     SrcObj = Builder.CreateLoad(SrcObj);
 
     llvm::Value *DstObj = CGF.GetAddrOfLocalVar(Dst);
-    DstObj = Builder.CreateBitCast(DstObj, llvm::PointerType::get(T, 0));
+    llvm::Type *PtrPtrT;
+    PtrPtrT = llvm::PointerType::get(llvm::PointerType::get(T, 0), 0);
+    DstObj = Builder.CreateBitCast(DstObj, PtrPtrT);
+    DstObj = Builder.CreateLoad(DstObj);
 
     for (unsigned i=0; i < NoteForHelper.size(); ++i) {
       int flag = NoteForHelper[i].flag;
@@ -924,7 +927,8 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
 
   // dst->x
   llvm::Value *V = CGF.GetAddrOfLocalVar(Dst);
-  V = Builder.CreateBitCast(V, T);
+  V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
+  V = Builder.CreateLoad(V);
   V = Builder.CreateStructGEP(V, 6, "x");
   llvm::Value *DstObj = Builder.CreateBitCast(V, PtrToInt8Ty);
 
@@ -983,9 +987,11 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   CGF.StartFunction(FD, R, Fn, Args, SourceLocation());
 
   llvm::Value *V = CGF.GetAddrOfLocalVar(Src);
-  V = Builder.CreateBitCast(V, T);
+  V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
+  V = Builder.CreateLoad(V);
   V = Builder.CreateStructGEP(V, 6, "x");
-  V = Builder.CreateBitCast(V, PtrToInt8Ty);
+  V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
+  V = Builder.CreateLoad(V);
 
   flag |= BLOCK_BYREF_CALLER;
   BuildBlockRelease(V, flag);
