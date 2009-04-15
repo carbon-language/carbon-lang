@@ -12,6 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/Diagnostic.h"
+
+#include "clang/Lex/LexDiagnostic.h"
+#include "clang/Parse/ParseDiagnostic.h"
+#include "clang/AST/ASTDiagnostic.h"
+#include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Analysis/AnalysisDiagnostic.h"
+#include "clang/Driver/DriverDiagnostic.h"
+
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
@@ -25,50 +34,85 @@ using namespace clang;
 // Builtin Diagnostic information
 //===----------------------------------------------------------------------===//
 
-/// Flag values for diagnostics.
+// DefaultDiagnosticMappings - This specifies the default mapping for each diag,
+// based on its kind.   Yay for macros?
+
+struct DefaultMappingInfo {
+  unsigned DiagID : 14;
+  unsigned Mapping : 2;
+};
+
+#define NOTE      diag::MAP_IGNORE
+#define WARNING   diag::MAP_WARNING
+#define EXTENSION diag::MAP_IGNORE
+#define EXTWARN   diag::MAP_WARNING
+#define ERROR     diag::MAP_ERROR
+#define FATAL     diag::MAP_FATAL
+
+static const DefaultMappingInfo DefaultMappings[] = {
+#define DIAG(ENUM,CLASS,DESC) { diag::ENUM, CLASS },
+#include "clang/Basic/DiagnosticCommonKinds.inc"
+#include "clang/Basic/DiagnosticDriverKinds.inc"
+#include "clang/Basic/DiagnosticFrontendKinds.inc"
+#include "clang/Basic/DiagnosticLexKinds.inc"
+#include "clang/Basic/DiagnosticParseKinds.inc"
+#include "clang/Basic/DiagnosticASTKinds.inc"
+#include "clang/Basic/DiagnosticSemaKinds.inc"
+#include "clang/Basic/DiagnosticAnalysisKinds.inc"
+{ 0, 0 }
+};
+
+#undef DIAG
+#undef NOTE
+#undef WARNING
+#undef EXTENSION
+#undef EXTWARN
+#undef ERROR
+#undef FATAL
+
+
+
+// Diagnostic classes.
 enum {
-  // Diagnostic classes.
   NOTE       = 0x01,
   WARNING    = 0x02,
   EXTENSION  = 0x03,
   EXTWARN    = 0x04,
   ERROR      = 0x05,
-  FATAL      = 0x06,
-  class_mask = 0x07
+  FATAL      = 0x06
 };
 
-/// DiagnosticFlags - A set of flags, or'd together, that describe the
-/// diagnostic.
-#define DIAG(ENUM,FLAGS,DESC) FLAGS,
-static unsigned char DiagnosticFlagsCommon[] = {
+/// DiagnosticClasses - The class for each diagnostic.
+#define DIAG(ENUM,CLASS,DESC) CLASS,
+static unsigned char DiagnosticClassesCommon[] = {
 #include "clang/Basic/DiagnosticCommonKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsDriver[] = {
+static unsigned char DiagnosticClassesDriver[] = {
 #include "clang/Basic/DiagnosticDriverKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsFrontend[] = {
+static unsigned char DiagnosticClassesFrontend[] = {
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsLex[] = {
+static unsigned char DiagnosticClassesLex[] = {
 #include "clang/Basic/DiagnosticLexKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsParse[] = {
+static unsigned char DiagnosticClassesParse[] = {
 #include "clang/Basic/DiagnosticParseKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsAST[] = {
+static unsigned char DiagnosticClassesAST[] = {
 #include "clang/Basic/DiagnosticASTKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsSema[] = {
+static unsigned char DiagnosticClassesSema[] = {
 #include "clang/Basic/DiagnosticSemaKinds.inc"
   0
 };
-static unsigned char DiagnosticFlagsAnalysis[] = {
+static unsigned char DiagnosticClassesAnalysis[] = {
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
   0
 };
@@ -81,27 +125,27 @@ static unsigned getBuiltinDiagClass(unsigned DiagID) {
          "Diagnostic ID out of range!");
   unsigned res;
   if (DiagID < diag::DIAG_START_DRIVER)
-    res = DiagnosticFlagsCommon[DiagID];
+    res = DiagnosticClassesCommon[DiagID];
   else if (DiagID < diag::DIAG_START_FRONTEND)
-    res = DiagnosticFlagsDriver[DiagID - diag::DIAG_START_DRIVER - 1];
+    res = DiagnosticClassesDriver[DiagID - diag::DIAG_START_DRIVER - 1];
   else if (DiagID < diag::DIAG_START_LEX)
-    res = DiagnosticFlagsFrontend[DiagID - diag::DIAG_START_FRONTEND - 1];
+    res = DiagnosticClassesFrontend[DiagID - diag::DIAG_START_FRONTEND - 1];
   else if (DiagID < diag::DIAG_START_PARSE)
-    res = DiagnosticFlagsLex[DiagID - diag::DIAG_START_LEX - 1];
+    res = DiagnosticClassesLex[DiagID - diag::DIAG_START_LEX - 1];
   else if (DiagID < diag::DIAG_START_AST)
-    res = DiagnosticFlagsParse[DiagID - diag::DIAG_START_PARSE - 1];
+    res = DiagnosticClassesParse[DiagID - diag::DIAG_START_PARSE - 1];
   else if (DiagID < diag::DIAG_START_SEMA)
-    res = DiagnosticFlagsAST[DiagID - diag::DIAG_START_AST - 1];
+    res = DiagnosticClassesAST[DiagID - diag::DIAG_START_AST - 1];
   else if (DiagID < diag::DIAG_START_ANALYSIS)
-    res = DiagnosticFlagsSema[DiagID - diag::DIAG_START_SEMA - 1];
+    res = DiagnosticClassesSema[DiagID - diag::DIAG_START_SEMA - 1];
   else
-    res = DiagnosticFlagsAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
-  return res & class_mask;
+    res = DiagnosticClassesAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
+  return res;
 }
 
 /// DiagnosticText - An english message to print for the diagnostic.  These
 /// should be localized.
-#define DIAG(ENUM,FLAGS,DESC) DESC,
+#define DIAG(ENUM,CLASS,DESC) DESC,
 static const char * const DiagnosticTextCommon[] = {
 #include "clang/Basic/DiagnosticCommonKinds.inc"
   0
@@ -203,13 +247,10 @@ static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
 
 
 Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
+  AllExtensionsSilenced = 0;
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
-  WarnOnExtensions = false;
-  ErrorOnExtensions = false;
   SuppressSystemWarnings = false;
-  // Clear all mappings, setting them to MAP_DEFAULT.
-  memset(DiagMappings, 0, sizeof(DiagMappings));
   
   ErrorOccurred = false;
   FatalErrorOccurred = false;
@@ -221,6 +262,12 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
+  
+  // Set all mappings to their default.
+  for (unsigned i = 0, e = sizeof(DefaultMappings)/sizeof(DefaultMappings[0]);
+       i != e; ++i)
+    setDiagnosticMappingInternal(DefaultMappings[i].DiagID,
+                                 DefaultMappings[i].Mapping);
 }
 
 Diagnostic::~Diagnostic() {
@@ -249,6 +296,17 @@ bool Diagnostic::isBuiltinWarningOrExtension(unsigned DiagID) {
 /// Note.
 bool Diagnostic::isBuiltinNote(unsigned DiagID) {
   return DiagID < diag::DIAG_UPPER_LIMIT && getBuiltinDiagClass(DiagID) == NOTE;
+}
+
+/// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
+/// ID is for an extension of some sort.
+///
+bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID) {
+  if (DiagID < diag::DIAG_UPPER_LIMIT) {
+    unsigned Class = getBuiltinDiagClass(DiagID);
+    return Class == EXTENSION || Class == EXTWARN;
+  }
+  return false;
 }
 
 
@@ -294,40 +352,31 @@ Diagnostic::Level
 Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
+  Diagnostic::Level Result = Diagnostic::Fatal;
   switch (getDiagnosticMapping((diag::kind)DiagID)) {
-  case diag::MAP_DEFAULT: break;
-  case diag::MAP_IGNORE:  return Diagnostic::Ignored;
-  case diag::MAP_WARNING: DiagClass = WARNING; break;
-  case diag::MAP_ERROR:   DiagClass = ERROR; break;
-  case diag::MAP_FATAL:   DiagClass = FATAL; break;
-  }
-  
-  // Map diagnostic classes based on command line argument settings.
-  if (DiagClass == EXTENSION) {
-    if (ErrorOnExtensions)
-      DiagClass = ERROR;
-    else if (WarnOnExtensions)
-      DiagClass = WARNING;
-    else
-      return Ignored;
-  } else if (DiagClass == EXTWARN) {
-    DiagClass = ErrorOnExtensions ? ERROR : WARNING;
-  }
-  
-  // If warnings are globally mapped to ignore or error, do it.
-  if (DiagClass == WARNING) {
+  case diag::MAP_IGNORE:
+    return Diagnostic::Ignored;
+  case diag::MAP_ERROR:
+    Result = Diagnostic::Error;
+    break;
+  case diag::MAP_FATAL:
+    Result = Diagnostic::Fatal;
+    break;
+  case diag::MAP_WARNING:
+    // If warnings are globally mapped to ignore or error, do it.
     if (IgnoreAllWarnings)
       return Diagnostic::Ignored;
-    if (WarningsAsErrors)
-      DiagClass = ERROR;
+    Result = WarningsAsErrors ? Diagnostic::Error : Diagnostic::Warning;
+    break;
   }
+
+  // Okay, we're about to return this as a "diagnostic to emit" one last check:
+  // if this is any sort of extension warning, and if we're in an __extension__
+  // block, silence it.
+  if (AllExtensionsSilenced && isBuiltinExtensionDiag(DiagID))
+    return Diagnostic::Ignored;
   
-  switch (DiagClass) {
-  default: assert(0 && "Unknown diagnostic class!");
-  case WARNING:     return Diagnostic::Warning;
-  case ERROR:       return Diagnostic::Error;
-  case FATAL:       return Diagnostic::Fatal;
-  }
+  return Result;
 }
 
 /// ProcessDiag - This is the method used to report a diagnostic that is

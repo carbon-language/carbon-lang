@@ -26,15 +26,13 @@ namespace clang {
     void operator=(const ExtensionRAIIObject &);     // DO NOT IMPLEMENT
     ExtensionRAIIObject(const ExtensionRAIIObject&); // DO NOT IMPLEMENT
     Diagnostic &Diags;
-    bool OldState;
   public:
     ExtensionRAIIObject(Diagnostic &diags) : Diags(diags) {
-      OldState = Diags.getWarnOnExtensions();
-      Diags.setWarnOnExtensions(false);
+      Diags.IncrementAllExtensionsSilenced();
     }
     
     ~ExtensionRAIIObject() {
-      Diags.setWarnOnExtensions(OldState);
+      Diags.DecrementAllExtensionsSilenced();
     }
   };
 }

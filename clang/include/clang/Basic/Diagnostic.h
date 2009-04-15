@@ -57,15 +57,14 @@ namespace clang {
       
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
     /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
-    /// (emit as an error), or MAP_DEFAULT (handle the default way).  It allows
-    /// clients to map errors to MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop
-    /// emitting diagnostics after this one).
+    /// (emit as an error).  It allows clients to map errors to
+    /// MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop emitting diagnostics after this
+    /// one).
     enum Mapping {
-      MAP_DEFAULT = 0,     //< Do not map this diagnostic.
-      MAP_IGNORE  = 1,     //< Map this diagnostic to nothing, ignore it.
-      MAP_WARNING = 2,     //< Map this diagnostic to a warning.
-      MAP_ERROR   = 3,     //< Map this diagnostic to an error.
-      MAP_FATAL   = 4      //< Map this diagnostic to a fatal error.
+      MAP_IGNORE  = 0,     //< Map this diagnostic to nothing, ignore it.
+      MAP_WARNING = 1,     //< Map this diagnostic to a warning.
+      MAP_ERROR   = 2,     //< Map this diagnostic to an error.
+      MAP_FATAL   = 3      //< Map this diagnostic to a fatal error.
     };
   }
   
@@ -147,17 +146,16 @@ public:
     ak_nameddecl        // NamedDecl *
   };
 
-private:  
+private: 
+  unsigned char AllExtensionsSilenced; // Used by __extension__
   bool IgnoreAllWarnings;     // Ignore all warnings: -w
   bool WarningsAsErrors;      // Treat warnings like errors: 
-  bool WarnOnExtensions;      // Enables warnings for gcc extensions: -pedantic.
-  bool ErrorOnExtensions;     // Error on extensions: -pedantic-errors.
   bool SuppressSystemWarnings;// Suppress warnings in system headers.
   DiagnosticClient *Client;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
-  /// packed into four bits per diagnostic.
-  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
+  /// packed into two bits per diagnostic.
+  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/4];
   
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
   /// fatal error is emitted, and is sticky.
@@ -209,21 +207,17 @@ public:
   void setWarningsAsErrors(bool Val) { WarningsAsErrors = Val; }
   bool getWarningsAsErrors() const { return WarningsAsErrors; }
   
-  /// setWarnOnExtensions - When set to true, issue warnings on GCC extensions,
-  /// the equivalent of GCC's -pedantic.
-  void setWarnOnExtensions(bool Val) { WarnOnExtensions = Val; }
-  bool getWarnOnExtensions() const { return WarnOnExtensions; }
-  
-  /// setErrorOnExtensions - When set to true issue errors for GCC extensions
-  /// instead of warnings.  This is the equivalent to GCC's -pedantic-errors.
-  void setErrorOnExtensions(bool Val) { ErrorOnExtensions = Val; }
-  bool getErrorOnExtensions() const { return ErrorOnExtensions; }
-
   /// setSuppressSystemWarnings - When set to true mask warnings that
   /// come from system headers.
   void setSuppressSystemWarnings(bool Val) { SuppressSystemWarnings = Val; }
   bool getSuppressSystemWarnings() const { return SuppressSystemWarnings; }
 
+  /// AllExtensionsSilenced - This is a counter bumped when an __extension__
+  /// block is encountered.  When non-zero, all extension diagnostics are
+  /// entirely silenced, no matter how they are mapped.
+  void IncrementAllExtensionsSilenced() { ++AllExtensionsSilenced; }
+  void DecrementAllExtensionsSilenced() { --AllExtensionsSilenced; }
+  
   /// setDiagnosticMapping - This allows the client to specify that certain
   /// warnings are ignored.  Only WARNINGs and EXTENSIONs can be mapped.
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
@@ -231,16 +225,19 @@ public:
            "Can only map builtin diagnostics");
     assert((isBuiltinWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
            "Cannot map errors!");
-    unsigned char &Slot = DiagMappings[Diag/2];
-    unsigned Bits = (Diag & 1)*4;
-    Slot &= ~(7 << Bits);
+    setDiagnosticMappingInternal(Diag, Map);
+  }
+  void setDiagnosticMappingInternal(unsigned Diag, unsigned Map) {
+    unsigned char &Slot = DiagMappings[Diag/4];
+    unsigned Bits = (Diag & 3)*2;
+    Slot &= ~(3 << Bits);
     Slot |= Map << Bits;
   }
 
   /// getDiagnosticMapping - Return the mapping currently set for the specified
   /// diagnostic.
   diag::Mapping getDiagnosticMapping(diag::kind Diag) const {
-    return (diag::Mapping)((DiagMappings[Diag/2] >> (Diag & 1)*4) & 7);
+    return (diag::Mapping)((DiagMappings[Diag/4] >> (Diag & 3)*2) & 3);
   }
   
   bool hasErrorOccurred() const { return ErrorOccurred; }
@@ -287,6 +284,12 @@ public:
   /// \brief Determine whether the given built-in diagnostic ID is a
   /// Note.
   static bool isBuiltinNote(unsigned DiagID);
+  
+  /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
+  /// ID is for an extension of some sort.
+  ///
+  static bool isBuiltinExtensionDiag(unsigned DiagID);
+  
 
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by

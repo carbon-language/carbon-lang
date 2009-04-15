@@ -101,11 +101,10 @@ static bool WarningOptionCompare(const WarningOption &LHS,
 }
 
 bool clang::ProcessWarningOptions(Diagnostic &Diags) {
+  Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
+  
   // FIXME: These should be mapped to group options.
   Diags.setIgnoreAllWarnings(OptNoWarnings);
-  Diags.setWarnOnExtensions(OptPedantic);
-  Diags.setErrorOnExtensions(OptPedanticErrors);
-  Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
 
   // Set some defaults that are currently set manually. This, too, should
   // be in the tablegen stuff later.
@@ -125,6 +124,10 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   // FIXME: -fdiagnostics-show-option
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
+  /// ControlledOptions - Keep track of the options that the user explicitly
+  /// poked with -Wfoo, -Wno-foo, or -Werror=foo.
+  llvm::SmallVector<unsigned short, 256> ControlledDiags;
+  
   for (unsigned i = 0, e = OptWarnings.size(); i != e; ++i) {
     const std::string &Opt = OptWarnings[i];
     const char *OptStart = &Opt[0];
@@ -183,8 +186,53 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
     }
     
     // Option exists, poke all the members of its diagnostic set.
-    for (unsigned i = 0, e = Found->NumMembers; i != e; ++i)
-      Diags.setDiagnosticMapping(Found->Members[i], Mapping);
+    for (const diag::kind *Member = Found->Members,
+         *E = Found->Members+Found->NumMembers; Member != E; ++Member) {
+      Diags.setDiagnosticMapping(*Member, Mapping);
+      assert(*Member < 65536 && "ControlledOptions element too small");
+      ControlledDiags.push_back(*Member);
+    }
   }
+
+  // If -pedantic or -pedantic-errors was specified, then we want to map all
+  // extension diagnostics onto WARNING or ERROR unless the user has futz'd
+  // around with them explicitly.
+  if (OptPedantic || OptPedanticErrors) {
+    // Sort the array of options that has been poked at directly so we can do
+    // efficient queries.
+    std::sort(ControlledDiags.begin(), ControlledDiags.end());
+    
+    // Don't worry about iteration off the end down below.
+    ControlledDiags.push_back(diag::DIAG_UPPER_LIMIT);
+    
+    diag::Mapping Mapping = 
+      OptPedanticErrors ? diag::MAP_ERROR : diag::MAP_WARNING;
+
+    // Loop over all of the extension diagnostics.  Unless they were explicitly
+    // controlled, reset their mapping to Mapping.  We walk through the
+    // ControlledOptions in parallel with this walk, which is faster than
+    // repeatedly binary searching it.
+    //
+    llvm::SmallVectorImpl<unsigned short>::iterator ControlledDiagsIt =
+      ControlledDiags.begin();
+    
+    // TODO: if it matters, we could make tblgen produce a list of just the
+    // extension diags to avoid skipping ones that don't matter.
+    for (unsigned short i = 0; i != diag::DIAG_UPPER_LIMIT; ++i) {
+      // If this diagnostic was controlled, ignore it.
+      if (i == *ControlledDiagsIt) {
+        ++ControlledDiagsIt;
+        while (i == *ControlledDiagsIt)  // ControlledDiags can have dupes.
+          ++ControlledDiagsIt;
+        // Do not map this diagnostic ID#.
+        continue;
+      }
+
+      // Okay, the user didn't control this ID.  If it is an example, map it.
+      if (Diagnostic::isBuiltinExtensionDiag(i))
+        Diags.setDiagnosticMapping(i, Mapping);
+    }
+  }
+  
   return false;
 }
