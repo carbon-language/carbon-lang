@@ -53,6 +53,12 @@ class Extension<string str> : Diagnostic<str, CLASS_EXTENSION, MAP_IGNORE>;
 class ExtWarn<string str>   : Diagnostic<str, CLASS_EXTENSION, MAP_WARNING>;
 class Note<string str>      : Diagnostic<str, CLASS_NOTE, MAP_FATAL/*ignored*/>;
 
+
+class DefaultIgnore { DiagMapping DefaultMapping = MAP_IGNORE; }
+class DefaultWarn   { DiagMapping DefaultMapping = MAP_WARNING; }
+class DefaultError  { DiagMapping DefaultMapping = MAP_ERROR; }
+class DefaultFatal  { DiagMapping DefaultMapping = MAP_FATAL; }
+
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"
 include "DiagnosticAnalysisKinds.td"

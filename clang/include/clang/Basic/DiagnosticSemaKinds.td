@@ -77,7 +77,7 @@ def err_parameter_name_omitted : Error<"parameter name omitted">;
 def warn_decl_in_param_list : Warning<
   "declaration of %0 will not be visible outside of this function">;
 def warn_implicit_function_decl : Warning<
-  "implicit declaration of function %0">;
+  "implicit declaration of function %0">, DefaultIgnore;
 def err_ellipsis_first_arg : Error<
   "ISO C requires a named argument before '...'">;
 def err_declarator_need_ident : Error<"declarator requires an identifier">;
@@ -221,7 +221,7 @@ def error_duplicate_ivar_use : Error<
   "synthesized properties %0 and %1 both claim ivar %2">;
 def error_property_implemented : Error<"property %0 is already implemented">;
 def warn_objc_property_attr_mutually_exclusive : Warning<
-  "property attributes '%0' and '%1' are mutually exclusive">;
+  "property attributes '%0' and '%1' are mutually exclusive">, DefaultIgnore;
 
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
@@ -679,7 +679,7 @@ def err_template_spec_redecl_global_scope : Error<
 
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
-  "recursive template instantiation exceeded maximum depth of %0">;
+  "recursive template instantiation exceeded maximum depth of %0">,DefaultFatal;
 def note_template_recursion_depth : Note<
   "use -ftemplate-depth-N to increase recursive template instantiation depth">;
 
@@ -722,7 +722,8 @@ def warn_deprecated : Warning<"%0 is deprecated">;
 def warn_unavailable : Warning<"%0 is unavailable">;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;
-def warn_missing_prototype : Warning<"no previous prototype for function %0">;
+def warn_missing_prototype : Warning<
+  "no previous prototype for function %0">, DefaultIgnore;
 def err_redefinition : Error<"redefinition of %0">;
 def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
@@ -882,7 +883,7 @@ def err_offsetof_array_type : Error<"offsetof requires array type, %0 invalid">;
 def ext_offsetof_extended_field_designator : Extension<
   "using extended field designator is an extension">;
 def warn_floatingpoint_eq : Warning<
-  "comparing floating point with == or != is unsafe">;
+  "comparing floating point with == or != is unsafe">, DefaultIgnore;
 
 def err_typecheck_subscript_value : Error<
   "subscripted value is neither array nor pointer">;

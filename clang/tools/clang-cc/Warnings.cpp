@@ -102,25 +102,8 @@ static bool WarningOptionCompare(const WarningOption &LHS,
 
 bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
-  
-  // FIXME: These should be mapped to group options.
   Diags.setIgnoreAllWarnings(OptNoWarnings);
 
-  // Set some defaults that are currently set manually. This, too, should
-  // be in the tablegen stuff later.
-  Diags.setDiagnosticMapping(diag::pp_macro_not_used, diag::MAP_IGNORE);
-  Diags.setDiagnosticMapping(diag::warn_floatingpoint_eq, diag::MAP_IGNORE);
-  Diags.setDiagnosticMapping(diag::warn_objc_property_attr_mutually_exclusive,
-                             diag::MAP_IGNORE);
-  Diags.setDiagnosticMapping(diag::warn_pp_undef_identifier, diag::MAP_IGNORE);
-  Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
-                             diag::MAP_IGNORE);
-
-  Diags.setDiagnosticMapping(diag::err_pp_file_not_found, diag::MAP_FATAL);
-  Diags.setDiagnosticMapping(diag::err_template_recursion_depth_exceeded, 
-                             diag::MAP_FATAL);
-  Diags.setDiagnosticMapping(diag::warn_missing_prototype, diag::MAP_IGNORE);
-  
   // FIXME: -fdiagnostics-show-option
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
