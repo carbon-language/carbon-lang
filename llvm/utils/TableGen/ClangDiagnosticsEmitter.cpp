@@ -20,7 +20,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include <set>
 #include <map>
-
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -68,8 +67,8 @@ static void EmitAllCaps(std::ostream& OS, const std::string &s) {
 // Warning Tables (.inc file) generation.
 //===----------------------------------------------------------------------===//
 
-static void ProcessDiag(std::ostream& OS, const Record* DiagClass,
-                        const Record& R) {
+static void ProcessDiag(std::ostream &OS, const Record *DiagClass,
+                        const Record &R) {
 
   const Record* DiagKind = getDiagKind(DiagClass, R);
   if (!DiagKind)
@@ -107,17 +106,12 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
   }
   
   for (RecordVector::const_iterator I=Diags.begin(), E=Diags.end(); I!=E; ++I) {
-    if (!Component.empty()) {
-      const RecordVal* V = findRecordVal(**I, "Component");
-      if (!V)
-        continue;
-
-      const StringInit* SV = dynamic_cast<const StringInit*>(V->getValue());
-      if (!SV || SV->getValue() != Component)
-        continue;
-    }
+    const Record &R = **I;
+    // Filter by component.
+    if (!Component.empty() && Component != R.getValueAsString("Component"))
+      continue;
     
-    ProcessDiag(OS, DiagClass, **I);
+    ProcessDiag(OS, DiagClass, R);
   }
 }
 
@@ -169,8 +163,8 @@ static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited,
   // If an Option includes another Option, inline the Diagnostics of the
   // included Option.
   if (Def->isSubClassOf("Option")) {
-    if (const RecordVal* V = findRecordVal(*Def, "Members"))
-      if (const ListInit* LV = dynamic_cast<const ListInit*>(V->getValue()))
+    if (const RecordVal *V = findRecordVal(*Def, "Members"))
+      if (const ListInit *LV = dynamic_cast<const ListInit*>(V->getValue()))
         BuildGroup(DS, Visited, LV);
 
     return;
@@ -192,10 +186,10 @@ static void BuildGroup(DiagnosticSet& DS, VisitedLists &Visited,
 
 void ClangOptionsEmitter::run(std::ostream &OS) {
   // Build up a map from options to controlled diagnostics.
-  OptionMap OM;  
+  OptionMap OM;
        
   const RecordVector &Opts = Records.getAllDerivedDefinitions("Option");
-  for (RecordVector::const_iterator I=Opts.begin(), E=Opts.end(); I!=E; ++I)
+  for (RecordVector::const_iterator I=Opts.begin(), E=Opts.end(); I != E; ++I)
     if (const RecordVal* V = findRecordVal(**I, "Members"))
       if (const ListInit* LV = dynamic_cast<const ListInit*>(V->getValue())) {        
         VisitedLists Visited;
