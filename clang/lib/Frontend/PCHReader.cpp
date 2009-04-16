@@ -258,6 +258,9 @@ namespace {
     unsigned VisitExplicitCastExpr(ExplicitCastExpr *E);
     unsigned VisitCStyleCastExpr(CStyleCastExpr *E);
     unsigned VisitExtVectorElementExpr(ExtVectorElementExpr *E);
+    unsigned VisitInitListExpr(InitListExpr *E);
+    unsigned VisitDesignatedInitExpr(DesignatedInitExpr *E);
+    unsigned VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     unsigned VisitVAArgExpr(VAArgExpr *E);
     unsigned VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     unsigned VisitChooseExpr(ChooseExpr *E);
@@ -450,6 +453,91 @@ unsigned PCHStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   E->setAccessor(Reader.GetIdentifierInfo(Record, Idx));
   E->setAccessorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
+}
+
+unsigned PCHStmtReader::VisitInitListExpr(InitListExpr *E) {
+  VisitExpr(E);
+  unsigned NumInits = Record[Idx++];
+  E->reserveInits(NumInits);
+  for (unsigned I = 0; I != NumInits; ++I)
+    E->updateInit(I, ExprStack[ExprStack.size() - NumInits - 1 + I]);
+  E->setSyntacticForm(cast_or_null<InitListExpr>(ExprStack.back()));
+  E->setLBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setInitializedFieldInUnion(
+                      cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++])));
+  E->sawArrayRangeDesignator(Record[Idx++]);
+  return NumInits + 1;
+}
+
+unsigned PCHStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+  typedef DesignatedInitExpr::Designator Designator;
+
+  VisitExpr(E);
+  unsigned NumSubExprs = Record[Idx++];
+  assert(NumSubExprs == E->getNumSubExprs() && "Wrong number of subexprs");
+  for (unsigned I = 0; I != NumSubExprs; ++I)
+    E->setSubExpr(I, ExprStack[ExprStack.size() - NumSubExprs + I]);
+  E->setEqualOrColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setGNUSyntax(Record[Idx++]);
+
+  llvm::SmallVector<Designator, 4> Designators;
+  while (Idx < Record.size()) {
+    switch ((pch::DesignatorTypes)Record[Idx++]) {
+    case pch::DESIG_FIELD_DECL: {
+      FieldDecl *Field = cast<FieldDecl>(Reader.GetDecl(Record[Idx++]));
+      SourceLocation DotLoc 
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      SourceLocation FieldLoc 
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      Designators.push_back(Designator(Field->getIdentifier(), DotLoc, 
+                                       FieldLoc));
+      Designators.back().setField(Field);
+      break;
+    }
+
+    case pch::DESIG_FIELD_NAME: {
+      const IdentifierInfo *Name = Reader.GetIdentifierInfo(Record, Idx);
+      SourceLocation DotLoc 
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      SourceLocation FieldLoc 
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      Designators.push_back(Designator(Name, DotLoc, FieldLoc));
+      break;
+    }
+      
+    case pch::DESIG_ARRAY: {
+      unsigned Index = Record[Idx++];
+      SourceLocation LBracketLoc
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      SourceLocation RBracketLoc
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      Designators.push_back(Designator(Index, LBracketLoc, RBracketLoc));
+      break;
+    }
+
+    case pch::DESIG_ARRAY_RANGE: {
+      unsigned Index = Record[Idx++];
+      SourceLocation LBracketLoc
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      SourceLocation EllipsisLoc
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      SourceLocation RBracketLoc
+        = SourceLocation::getFromRawEncoding(Record[Idx++]);
+      Designators.push_back(Designator(Index, LBracketLoc, EllipsisLoc,
+                                       RBracketLoc));
+      break;
+    }
+    }
+  }
+  E->setDesignators(&Designators[0], Designators.size());
+
+  return NumSubExprs;
+}
+
+unsigned PCHStmtReader::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
+  VisitExpr(E);
+  return 0;
 }
 
 unsigned PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
@@ -2017,6 +2105,20 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_EXT_VECTOR_ELEMENT:
       E = new (Context) ExtVectorElementExpr(Empty);
+      break;
+
+    case pch::EXPR_INIT_LIST:
+      E = new (Context) InitListExpr(Empty);
+      break;
+
+    case pch::EXPR_DESIGNATED_INIT:
+      E = DesignatedInitExpr::CreateEmpty(Context, 
+                                     Record[PCHStmtReader::NumExprFields] - 1);
+     
+      break;
+
+    case pch::EXPR_IMPLICIT_VALUE_INIT:
+      E = new (Context) ImplicitValueInitExpr(Empty);
       break;
 
     case pch::EXPR_VA_ARG:

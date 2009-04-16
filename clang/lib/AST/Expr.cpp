@@ -1581,6 +1581,24 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
   return DIE;
 }
 
+DesignatedInitExpr *DesignatedInitExpr::CreateEmpty(ASTContext &C, 
+                                                    unsigned NumIndexExprs) {
+  void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
+                         sizeof(Stmt *) * (NumIndexExprs + 1), 8);
+  return new (Mem) DesignatedInitExpr(NumIndexExprs + 1);
+}
+
+void DesignatedInitExpr::setDesignators(const Designator *Desigs, 
+                                        unsigned NumDesigs) {
+  if (Designators)
+    delete [] Designators;
+
+  Designators = new Designator[NumDesigs];
+  NumDesignators = NumDesigs;
+  for (unsigned I = 0; I != NumDesigs; ++I)
+    Designators[I] = Desigs[I];
+}
+
 SourceRange DesignatedInitExpr::getSourceRange() const {
   SourceLocation StartLoc;
   Designator &First =

@@ -1969,6 +1969,9 @@ class InitListExpr : public Expr {
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
                SourceLocation rbraceloc);
+
+  /// \brief Build an empty initializer list.
+  explicit InitListExpr(EmptyShell Empty) : Expr(InitListExprClass, Empty) { }
   
   unsigned getNumInits() const { return InitExprs.size(); }
   
@@ -2022,6 +2025,9 @@ public:
     return LBraceLoc.isValid() && RBraceLoc.isValid();
   }
   
+  SourceLocation getLBraceLoc() const { return LBraceLoc; }
+  void setLBraceLoc(SourceLocation Loc) { LBraceLoc = Loc; }
+  SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation Loc) { RBraceLoc = Loc; }
 
   /// @brief Retrieve the initializer list that describes the
@@ -2032,8 +2038,8 @@ public:
   void setSyntacticForm(InitListExpr *Init) { SyntacticForm = Init; }
 
   bool hadArrayRangeDesignator() const { return HadArrayRangeDesignator; }
-  void sawArrayRangeDesignator() { 
-    HadArrayRangeDesignator = true;
+  void sawArrayRangeDesignator(bool ARD = true) { 
+    HadArrayRangeDesignator = ARD;
   }
 
   virtual SourceRange getSourceRange() const {
@@ -2116,6 +2122,10 @@ private:
                      const Designator *Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
                      unsigned NumSubExprs);
+
+  explicit DesignatedInitExpr(unsigned NumSubExprs)
+    : Expr(DesignatedInitExprClass, EmptyShell()),
+      NumDesignators(0), Designators(0), NumSubExprs(NumSubExprs) { }
 
 public:
   /// A field designator, e.g., ".x".
@@ -2250,6 +2260,12 @@ public:
       return SourceLocation::getFromRawEncoding(ArrayOrRange.EllipsisLoc);
     }
 
+    unsigned getFirstExprIndex() const {
+      assert((Kind == ArrayDesignator || Kind == ArrayRangeDesignator) &&
+             "Only valid on an array or array-range designator");
+      return ArrayOrRange.Index;
+    }
+
     SourceLocation getStartLocation() const {
       if (Kind == FieldDesignator)
         return getDotLoc().isInvalid()? getFieldLoc() : getDotLoc();
@@ -2264,6 +2280,8 @@ public:
                                     SourceLocation EqualOrColonLoc,
                                     bool GNUSyntax, Expr *Init);
 
+  static DesignatedInitExpr *CreateEmpty(ASTContext &C, unsigned NumIndexExprs);
+
   /// @brief Returns the number of designators in this initializer.
   unsigned size() const { return NumDesignators; }
 
@@ -2276,6 +2294,8 @@ public:
 
   Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
 
+  void setDesignators(const Designator *Desigs, unsigned NumDesigs);
+
   Expr *getArrayIndex(const Designator& D);
   Expr *getArrayRangeStart(const Designator& D);
   Expr *getArrayRangeEnd(const Designator& D);
@@ -2283,10 +2303,12 @@ public:
   /// @brief Retrieve the location of the '=' that precedes the
   /// initializer value itself, if present.
   SourceLocation getEqualOrColonLoc() const { return EqualOrColonLoc; }
+  void setEqualOrColonLoc(SourceLocation L) { EqualOrColonLoc = L; }
 
   /// @brief Determines whether this designated initializer used the
   /// deprecated GNU syntax for designated initializers.
   bool usesGNUSyntax() const { return GNUSyntax; }
+  void setGNUSyntax(bool GNU) { GNUSyntax = GNU; }
 
   /// @brief Retrieve the initializer value.
   Expr *getInit() const { 
@@ -2295,6 +2317,26 @@ public:
 
   void setInit(Expr *init) {
     *child_begin() = init;
+  }
+
+  /// \brief Retrieve the total number of subexpressions in this
+  /// designated initializer expression, including the actual
+  /// initialized value and any expressions that occur within array
+  /// and array-range designators.
+  unsigned getNumSubExprs() const { return NumSubExprs; }
+
+  Expr *getSubExpr(unsigned Idx) {
+    assert(Idx < NumSubExprs && "Subscript out of range");
+    char* Ptr = static_cast<char*>(static_cast<void *>(this));
+    Ptr += sizeof(DesignatedInitExpr);
+    return reinterpret_cast<Expr**>(reinterpret_cast<void**>(Ptr))[Idx];
+  }
+
+  void setSubExpr(unsigned Idx, Expr *E) {
+    assert(Idx < NumSubExprs && "Subscript out of range");
+    char* Ptr = static_cast<char*>(static_cast<void *>(this));
+    Ptr += sizeof(DesignatedInitExpr);
+    reinterpret_cast<Expr**>(reinterpret_cast<void**>(Ptr))[Idx] = E;
   }
 
   /// \brief Replaces the designator at index @p Idx with the series
@@ -2328,6 +2370,10 @@ class ImplicitValueInitExpr : public Expr {
 public:
   explicit ImplicitValueInitExpr(QualType ty) 
     : Expr(ImplicitValueInitExprClass, ty) { }
+
+  /// \brief Construct an empty implicit value initialization.
+  explicit ImplicitValueInitExpr(EmptyShell Empty)
+    : Expr(ImplicitValueInitExprClass, Empty) { }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImplicitValueInitExprClass;

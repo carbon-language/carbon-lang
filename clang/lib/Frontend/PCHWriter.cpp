@@ -465,6 +465,9 @@ namespace {
     void VisitExplicitCastExpr(ExplicitCastExpr *E);
     void VisitCStyleCastExpr(CStyleCastExpr *E);
     void VisitExtVectorElementExpr(ExtVectorElementExpr *E);
+    void VisitInitListExpr(InitListExpr *E);
+    void VisitDesignatedInitExpr(DesignatedInitExpr *E);
+    void VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     void VisitVAArgExpr(VAArgExpr *E);
     void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     void VisitChooseExpr(ChooseExpr *E);
@@ -650,6 +653,61 @@ void PCHStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   Writer.AddIdentifierRef(&E->getAccessor(), Record);
   Writer.AddSourceLocation(E->getAccessorLoc(), Record);
   Code = pch::EXPR_EXT_VECTOR_ELEMENT;
+}
+
+void PCHStmtWriter::VisitInitListExpr(InitListExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumInits());
+  for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
+    Writer.WriteSubExpr(E->getInit(I));
+  Writer.WriteSubExpr(E->getSyntacticForm());
+  Writer.AddSourceLocation(E->getLBraceLoc(), Record);
+  Writer.AddSourceLocation(E->getRBraceLoc(), Record);
+  Writer.AddDeclRef(E->getInitializedFieldInUnion(), Record);
+  Record.push_back(E->hadArrayRangeDesignator());
+  Code = pch::EXPR_INIT_LIST;
+}
+
+void PCHStmtWriter::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumSubExprs());
+  for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I)
+    Writer.WriteSubExpr(E->getSubExpr(I));
+  Writer.AddSourceLocation(E->getEqualOrColonLoc(), Record);
+  Record.push_back(E->usesGNUSyntax());
+  for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
+                                             DEnd = E->designators_end();
+       D != DEnd; ++D) {
+    if (D->isFieldDesignator()) {
+      if (FieldDecl *Field = D->getField()) {
+        Record.push_back(pch::DESIG_FIELD_DECL);
+        Writer.AddDeclRef(Field, Record);
+      } else {
+        Record.push_back(pch::DESIG_FIELD_NAME);
+        Writer.AddIdentifierRef(D->getFieldName(), Record);
+      }
+      Writer.AddSourceLocation(D->getDotLoc(), Record);
+      Writer.AddSourceLocation(D->getFieldLoc(), Record);
+    } else if (D->isArrayDesignator()) {
+      Record.push_back(pch::DESIG_ARRAY);
+      Record.push_back(D->getFirstExprIndex());
+      Writer.AddSourceLocation(D->getLBracketLoc(), Record);
+      Writer.AddSourceLocation(D->getRBracketLoc(), Record);
+    } else {
+      assert(D->isArrayRangeDesignator() && "Unknown designator");
+      Record.push_back(pch::DESIG_ARRAY_RANGE);
+      Record.push_back(D->getFirstExprIndex());
+      Writer.AddSourceLocation(D->getLBracketLoc(), Record);
+      Writer.AddSourceLocation(D->getEllipsisLoc(), Record);
+      Writer.AddSourceLocation(D->getRBracketLoc(), Record);
+    }
+  }
+  Code = pch::EXPR_DESIGNATED_INIT;
+}
+
+void PCHStmtWriter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
+  VisitExpr(E);
+  Code = pch::EXPR_IMPLICIT_VALUE_INIT;
 }
 
 void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {

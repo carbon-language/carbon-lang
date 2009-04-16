@@ -64,6 +64,14 @@ void_ptr vp1 = &integer;
 // ExtVectorElementExpr
 ext_vector_element *double_ptr5 = &floating;
 
+// InitListExpr
+double get_from_double_array(unsigned Idx) { return double_array[Idx]; }
+
+/// DesignatedInitExpr
+float get_from_designated(unsigned Idx) {
+  return designated_inits[2].y;
+}
+
 // TypesCompatibleExpr
 types_compatible *int_ptr7 = &integer;
 

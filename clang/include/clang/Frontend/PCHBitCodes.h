@@ -422,9 +422,12 @@ namespace clang {
       /// FIXME: CompoundLiteralExpr
       /// \brief An ExtVectorElementExpr record.
       EXPR_EXT_VECTOR_ELEMENT,
-      /// FIXME: InitListExpr
-      /// FIXME: DesignatedInitExpr
-      /// FIXME: ImplicitValueInitExpr
+      /// \brief An InitListExpr record.
+      EXPR_INIT_LIST,
+      /// \brief A DesignatedInitExpr record.
+      EXPR_DESIGNATED_INIT,
+      /// \brief An ImplicitValueInitExpr record.
+      EXPR_IMPLICIT_VALUE_INIT,
       /// \brief A VAArgExpr record.
       EXPR_VA_ARG,
       // FIXME: AddrLabelExpr
@@ -440,6 +443,21 @@ namespace clang {
       /// FIXME: BlockExpr
       EXPR_BLOCK_DECL_REF
     };
+
+    /// \brief The kinds of designators that can occur in a
+    /// DesignatedInitExpr.
+    enum DesignatorTypes {
+      /// \brief Field designator where only the field name is known.
+      DESIG_FIELD_NAME  = 0,
+      /// \brief Field designator where the field has been resolved to
+      /// a declaration.
+      DESIG_FIELD_DECL  = 1,
+      /// \brief Array designator.
+      DESIG_ARRAY       = 2,
+      /// \brief GNU array range designator.
+      DESIG_ARRAY_RANGE = 3
+    };
+
     /// @}
   }
 } // end namespace clang

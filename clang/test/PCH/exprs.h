@@ -61,6 +61,15 @@ typedef __attribute__(( ext_vector_type(2) )) double double2;
 extern double2 vec2, vec2b;
 typedef typeof(vec2.x) ext_vector_element;
 
+// InitListExpr
+double double_array[3] = { 1.0, 2.0 };
+
+// DesignatedInitExpr
+struct {
+  int x;
+  float y;
+} designated_inits[3] = { [0].y = 17, [2].x = 12.3, 3.5 };
+
 // TypesCompatibleExpr
 typedef typeof(__builtin_types_compatible_p(float, double)) types_compatible;
 
