@@ -311,7 +311,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   
   if (PrintDiagnosticOption)
     if (const char *Option = Diagnostic::getWarningOptionForDiag(Info.getID()))
-      OS << " [-" << Option << ']';
+      OS << " [-W" << Option << ']';
   
   OS << '\n';
   

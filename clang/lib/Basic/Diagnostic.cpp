@@ -43,7 +43,8 @@ struct DefaultMappingInfo {
 };
 
 static const DefaultMappingInfo DefaultMappings[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC) { diag::ENUM, DEFAULT_MAPPING-1 },
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) \
+  { diag::ENUM, DEFAULT_MAPPING-1 },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -82,7 +83,7 @@ enum {
 };
 
 /// DiagnosticClasses - The class for each diagnostic.
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC) CLASS,
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) CLASS,
 static unsigned char DiagnosticClassesCommon[] = {
 #include "clang/Basic/DiagnosticCommonKinds.inc"
   0
@@ -163,7 +164,7 @@ static unsigned getBuiltinDiagClass(unsigned DiagID) {
 
 /// DiagnosticText - An english message to print for the diagnostic.  These
 /// should be localized.
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC) DESC,
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) DESC,
 static const char * const DiagnosticTextCommon[] = {
 #include "clang/Basic/DiagnosticCommonKinds.inc"
   0
