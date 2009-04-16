@@ -1836,16 +1836,16 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         if (L->contains(User.Inst->getParent()))
           User.Inst->moveBefore(LatchBlock->getTerminator());
       }
-      if (RewriteOp->getType() != ReplacedTy) {
-        Instruction::CastOps opcode =
-          CastInst::getCastOpcode(RewriteOp, false, ReplacedTy, false);
-        assert(opcode != Instruction::SExt &&
-               opcode != Instruction::ZExt &&
-               "Unexpected widening cast!");
-        RewriteOp = SCEVExpander::InsertCastOfTo(opcode, RewriteOp, ReplacedTy);
-      }
 
       SCEVHandle RewriteExpr = SE->getUnknown(RewriteOp);
+
+      if (TD->getTypeSizeInBits(RewriteOp->getType()) !=
+          TD->getTypeSizeInBits(ReplacedTy)) {
+        assert(TD->getTypeSizeInBits(RewriteOp->getType()) >
+               TD->getTypeSizeInBits(ReplacedTy) &&
+               "Unexpected widening cast!");
+        RewriteExpr = SE->getTruncateExpr(RewriteExpr, ReplacedTy);
+      }
 
       // If we had to insert new instructions for RewriteOp, we have to
       // consider that they may not have been able to end up immediately
