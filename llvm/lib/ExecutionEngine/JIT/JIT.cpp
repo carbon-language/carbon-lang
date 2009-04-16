@@ -237,11 +237,9 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
   // The key is created on demand, and libgcc creates it the first time an
   // exception occurs. Since we need the key to register frames, we create
   // it now.
-  if (!LOI) {
-    LOI = (LibgccObjectInfo*)malloc(sizeof(struct LibgccObjectInfo)); 
-    _keymgr_set_and_unlock_processwide_ptr(KEYMGR_GCC3_DW2_OBJ_LIST,
-                                           LOI);
-  }
+  if (!LOI)
+    LOI = (LibgccObjectInfo*)calloc(sizeof(struct LibgccObjectInfo), 1); 
+  _keymgr_set_and_unlock_processwide_ptr(KEYMGR_GCC3_DW2_OBJ_LIST, LOI);
   InstallExceptionTableRegister(DarwinRegisterFrame);
 #else
   InstallExceptionTableRegister(__register_frame);
