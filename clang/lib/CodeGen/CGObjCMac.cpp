@@ -3043,6 +3043,12 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
   NameOut += '[';
   assert (CD && "Missing container decl in GetNameForMethod");
   NameOut += CD->getNameAsString();
+  if (const ObjCCategoryImplDecl *CID = 
+      dyn_cast<ObjCCategoryImplDecl>(D->getDeclContext())) {
+    NameOut += '(';
+    NameOut += CID->getNameAsString();
+    NameOut+= ')';
+  }
   // FIXME. For a method in a category, (CAT_NAME) is inserted here.
   // Right now! there is not enough info. to do this.
   NameOut += ' ';

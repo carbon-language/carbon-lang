@@ -8,8 +8,7 @@
 // RUN: grep '@"OBJC_EHTYPE_$_EH3"' %t | count 3 &&
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_" =.*section "__TEXT,__cstring,cstring_literals", align 1' %t | count 1 &&
 // RUN: grep -F 'define internal void @"\01-[A im0]"' %t &&
-// FIXME: Should include category name.
-// RUN: grep -F 'define internal void @"\01-[A im1]"' %t &&
+// RUN: grep -F 'define internal void @"\01-[A(Cat) im1]"' %t &&
 
 // RUN: clang-cc -fvisibility=hidden -triple x86_64-apple-darwin9 -emit-llvm -o %t %s &&
 
@@ -19,8 +18,7 @@
 // RUN: grep '@"OBJC_EHTYPE_$_EH2" = external global' %t &&
 // RUN: grep '@"OBJC_EHTYPE_$_EH3" = hidden global .*section "__DATA,__objc_const", align 8' %t &&
 // RUN: grep -F 'define internal void @"\01-[A im0]"' %t &&
-// FIXME: Should include category name.
-// RUN: grep -F 'define internal void @"\01-[A im1]"' %t &&
+// RUN: grep -F 'define internal void @"\01-[A(Cat) im1]"' %t &&
 
 // RUN: true
 
