@@ -156,6 +156,7 @@ public:
 
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
   APValue VisitDeclRefExpr(DeclRefExpr *E);
+  APValue VisitBlockExpr(BlockExpr *E);
   APValue VisitPredefinedExpr(PredefinedExpr *E) { return APValue(E, 0); }
   APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   APValue VisitMemberExpr(MemberExpr *E);
@@ -182,6 +183,14 @@ APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E)
     return APValue();
   
   return APValue(E, 0); 
+}
+
+APValue LValueExprEvaluator::VisitBlockExpr(BlockExpr *E)
+{ 
+  if (E->hasBlockDeclRefExprs())
+    return APValue();
+    
+  return APValue(E, 0);
 }
 
 APValue LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
@@ -373,6 +382,7 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   }
 
   if (SubExpr->getType()->isFunctionType() ||
+      SubExpr->getType()->isBlockPointerType() ||
       SubExpr->getType()->isArrayType()) {
     APValue Result;
     if (EvaluateLValue(SubExpr, Result, Info))

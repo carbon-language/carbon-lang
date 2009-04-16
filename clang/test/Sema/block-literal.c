@@ -81,6 +81,12 @@ void test_arguments() {
 static int global_x = 10;
 void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); };
 
+typedef void (^void_block_t)(void);
+
+static const void_block_t myBlock = ^{ };
+
+static const void_block_t myBlock2 = ^ void(void) { }; 
+
 #if 0
 // Old syntax. FIXME: convert/test.
 void test_byref() {

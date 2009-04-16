@@ -854,6 +854,8 @@ bool Expr::hasGlobalStorage() const {
   switch (getStmtClass()) {
   default:
     return false;
+  case BlockExprClass:
+    return true;
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->hasGlobalStorage();
   case ImplicitCastExprClass:
