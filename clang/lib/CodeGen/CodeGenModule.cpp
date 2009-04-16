@@ -424,9 +424,11 @@ void CodeGenModule::EmitDeferred() {
     EmitGlobalDefinition(D);
   }
 
-  // Emit any tentative definitions.
-  for (std::vector<const VarDecl*>::iterator it = TentativeDefinitions.begin(),
-         ie = TentativeDefinitions.end(); it != ie; ++it)
+  // Emit any tentative definitions, in reverse order so the most
+  // important (merged) decl will be seen and emitted first.
+  for (std::vector<const VarDecl*>::reverse_iterator 
+         it = TentativeDefinitions.rbegin(), ie = TentativeDefinitions.rend(); 
+       it != ie; ++it)
     EmitTentativeDefinition(*it);
 }
 

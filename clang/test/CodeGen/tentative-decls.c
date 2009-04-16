@@ -25,4 +25,9 @@ int *f1() {
   return b;
 }
 
+// Check that the most recent tentative definition wins.
+// RUN: grep '@c = common global \[4 x .*\] zeroinitializer' %t &&
+int c[];
+int c[4];
+
 // RUN: true
