@@ -58,7 +58,7 @@ typedef typeof((void *)0) void_ptr;
 
 // ExtVectorElementExpr
 typedef __attribute__(( ext_vector_type(2) )) double double2;
-double2 vec2;
+extern double2 vec2, vec2b;
 typedef typeof(vec2.x) ext_vector_element;
 
 // TypesCompatibleExpr
@@ -69,3 +69,6 @@ typedef typeof(__builtin_choose_expr(17 > 19, d0, 1)) choose_expr;
 
 // GNUNullExpr FIXME: needs C++
 // typedef typeof(__null) null_type;
+
+// ShuffleVectorExpr
+typedef typeof(__builtin_shufflevector(vec2, vec2b, 2, 1)) shuffle_expr;

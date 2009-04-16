@@ -1718,7 +1718,17 @@ public:
     for (unsigned i = 0; i < nexpr; i++)
       SubExprs[i] = args[i];
   }
-    
+
+  /// \brief Build an empty vector-shuffle expression.
+  explicit ShuffleVectorExpr(EmptyShell Empty) 
+    : Expr(ShuffleVectorExprClass, Empty), SubExprs(0) { }
+
+  SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
+  void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
@@ -1745,6 +1755,8 @@ public:
     assert((Index < NumExprs) && "Arg access out of range!");
     return cast<Expr>(SubExprs[Index]);
   }
+
+  void setExprs(Expr ** Exprs, unsigned NumExprs);
 
   unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
@@ -2452,13 +2464,24 @@ class BlockDeclRefExpr : public Expr {
 public:
   BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef) : 
        Expr(BlockDeclRefExprClass, t), D(d), Loc(l), IsByRef(ByRef) {}
+
+  // \brief Build an empty reference to a declared variable in a
+  // block.
+  explicit BlockDeclRefExpr(EmptyShell Empty)
+    : Expr(BlockDeclRefExprClass, Empty) { }
   
   ValueDecl *getDecl() { return D; }
   const ValueDecl *getDecl() const { return D; }
+  void setDecl(ValueDecl *VD) { D = VD; }
+
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   bool isByRef() const { return IsByRef; }
-  
+  void setByRef(bool BR) { IsByRef = BR; }
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BlockDeclRefExprClass; 
   }

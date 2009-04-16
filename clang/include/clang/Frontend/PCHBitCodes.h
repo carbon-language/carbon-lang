@@ -434,7 +434,11 @@ namespace clang {
       /// \brief A ChooseExpr record.
       EXPR_CHOOSE,
       /// \brief A GNUNullExpr record.
-      EXPR_GNU_NULL
+      EXPR_GNU_NULL,
+      /// \brief A ShuffleVectorExpr record.
+      EXPR_SHUFFLE_VECTOR,
+      /// FIXME: BlockExpr
+      EXPR_BLOCK_DECL_REF
     };
     /// @}
   }

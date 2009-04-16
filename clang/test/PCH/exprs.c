@@ -72,3 +72,6 @@ choose_expr *int_ptr8 = &integer;
 
 // GNUNullExpr FIXME: needs C++
 //null_type null = __null;
+
+// ShuffleVectorExpr
+shuffle_expr *vec_ptr = &vec2;

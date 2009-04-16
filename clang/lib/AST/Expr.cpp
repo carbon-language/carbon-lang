@@ -1500,6 +1500,15 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->getIntegerConstantExprValue(C) != 0;
 }
 
+void ShuffleVectorExpr::setExprs(Expr ** Exprs, unsigned NumExprs) {
+  if (NumExprs)
+    delete [] SubExprs;
+  
+  SubExprs = new Stmt* [NumExprs];
+  this->NumExprs = NumExprs;
+  memcpy(SubExprs, Exprs, sizeof(Expr *) * NumExprs);
+}
+
 void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
   // Override default behavior of traversing children. If this has a type
   // operand and the type is a variable-length array, the child iteration

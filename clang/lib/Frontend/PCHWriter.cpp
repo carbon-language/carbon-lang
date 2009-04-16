@@ -469,6 +469,8 @@ namespace {
     void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     void VisitChooseExpr(ChooseExpr *E);
     void VisitGNUNullExpr(GNUNullExpr *E);
+    void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
+    void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
   };
 }
 
@@ -681,6 +683,24 @@ void PCHStmtWriter::VisitGNUNullExpr(GNUNullExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getTokenLocation(), Record);
   Code = pch::EXPR_GNU_NULL;
+}
+
+void PCHStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumSubExprs());
+  for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I)
+    Writer.WriteSubExpr(E->getExpr(I));
+  Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_SHUFFLE_VECTOR;
+}
+
+void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getDecl(), Record);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Record.push_back(E->isByRef());
+  Code = pch::EXPR_BLOCK_DECL_REF;
 }
 
 //===----------------------------------------------------------------------===//

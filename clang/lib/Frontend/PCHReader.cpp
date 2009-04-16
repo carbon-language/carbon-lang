@@ -262,6 +262,8 @@ namespace {
     unsigned VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     unsigned VisitChooseExpr(ChooseExpr *E);
     unsigned VisitGNUNullExpr(GNUNullExpr *E);
+    unsigned VisitShuffleVectorExpr(ShuffleVectorExpr *E);
+    unsigned VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
   };
 }
 
@@ -480,6 +482,23 @@ unsigned PCHStmtReader::VisitChooseExpr(ChooseExpr *E) {
 unsigned PCHStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {
   VisitExpr(E);
   E->setTokenLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
+  VisitExpr(E);
+  unsigned NumExprs = Record[Idx++];
+  E->setExprs(&ExprStack[ExprStack.size() - NumExprs], NumExprs);
+  E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return NumExprs;
+}
+
+unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+  VisitExpr(E);
+  E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setByRef(Record[Idx++]);
   return 0;
 }
 
@@ -2015,6 +2034,15 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_GNU_NULL:
       E = new (Context) GNUNullExpr(Empty);
+      break;
+
+    case pch::EXPR_SHUFFLE_VECTOR:
+      E = new (Context) ShuffleVectorExpr(Empty);
+      break;
+      
+    case pch::EXPR_BLOCK_DECL_REF:
+      // FIXME: untested until we have statement and block support
+      E = new (Context) BlockDeclRefExpr(Empty);
       break;
     }
 
