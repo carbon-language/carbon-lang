@@ -392,6 +392,7 @@ public:
   SDValue getControlRoot();
 
   DebugLoc getCurDebugLoc() const { return CurDebugLoc; }
+  void setCurDebugLoc(DebugLoc dl) { CurDebugLoc = dl; }
 
   void CopyValueToVirtualRegister(Value *V, unsigned Reg);
 
@@ -542,8 +543,6 @@ private:
   
   const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);
   const char *implVisitAluOverflow(CallInst &I, ISD::NodeType Op);
-
-  void setCurDebugLoc(DebugLoc dl) { CurDebugLoc = dl; }
 };
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector

@@ -824,6 +824,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
               R = FuncInfo->CreateRegForValue(BI);
           }
 
+          SDL->setCurDebugLoc(FastIS->getCurDebugLoc());
           SelectBasicBlock(LLVMBB, BI, next(BI));
           // If the instruction was codegen'd with multiple blocks,
           // inform the FastISel object where to resume inserting.
@@ -850,8 +851,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
     // Run SelectionDAG instruction selection on the remainder of the block
     // not handled by FastISel. If FastISel is not run, this is the entire
     // block.
-    if (BI != End)
+    if (BI != End) {
+      // If FastISel is run and it has known DebugLoc then use it.
+      if (FastIS && !FastIS->getCurDebugLoc().isUnknown())
+        SDL->setCurDebugLoc(FastIS->getCurDebugLoc());
       SelectBasicBlock(LLVMBB, BI, End);
+    }
 
     FinishBasicBlock();
   }

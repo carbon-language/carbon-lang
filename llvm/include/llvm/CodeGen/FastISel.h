@@ -83,6 +83,9 @@ public:
   ///
   void setCurDebugLoc(DebugLoc dl) { DL = dl; }
 
+  /// getCurDebugLoc() - Return current debug location information.
+  DebugLoc getCurDebugLoc() const { return DL; }
+
   /// SelectInstruction - Do "fast" instruction selection for the given
   /// LLVM IR instruction, and append generated machine instructions to
   /// the current block. Return true if selection was successful.
