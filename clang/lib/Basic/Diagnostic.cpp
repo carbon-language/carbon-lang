@@ -35,16 +35,17 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 // DefaultDiagnosticMappings - This specifies the default mapping for each diag,
-// based on its kind.   Yay for macros?
+// based on its kind.
 
-struct DefaultMappingInfo {
+struct StaticDiagInfoRec {
   unsigned DiagID : 14;
   unsigned Mapping : 2;
+  const char *OptionGroup;
 };
 
-static const DefaultMappingInfo DefaultMappings[] = {
+static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) \
-  { diag::ENUM, DEFAULT_MAPPING-1 },
+  { diag::ENUM, DEFAULT_MAPPING-1, GROUP },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -53,16 +54,22 @@ static const DefaultMappingInfo DefaultMappings[] = {
 #include "clang/Basic/DiagnosticASTKinds.inc"
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
-{ 0, 0 }
+{ 0, 0, 0 }
 };
 #undef DIAG
 
-static unsigned GetDefaultDiagMapping(unsigned DiagID) {
+static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
   // FIXME: Binary search.
-  for (unsigned i = 0, e = sizeof(DefaultMappings)/sizeof(DefaultMappings[0]);
+  for (unsigned i = 0, e = sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0]);
        i != e; ++i)
-    if (DefaultMappings[i].DiagID == DiagID)
-      return DefaultMappings[i].Mapping+1;
+    if (StaticDiagInfo[i].DiagID == DiagID)
+      return &StaticDiagInfo[i];
+  return 0;
+}
+
+static unsigned GetDefaultDiagMapping(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->Mapping+1;
   return diag::MAP_FATAL;
 }
 
@@ -70,7 +77,9 @@ static unsigned GetDefaultDiagMapping(unsigned DiagID) {
 /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
 /// the diagnostic, this returns null.
 const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
-  return 0; //"Wfoo";
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->OptionGroup;
+  return 0;
 }
 
 
