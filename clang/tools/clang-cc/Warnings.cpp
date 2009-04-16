@@ -18,10 +18,7 @@
 //
 // Each warning option controls any number of actual warnings.
 // Given a warning option 'foo', the following are valid:
-//
-// -Wfoo         -> alias of -Wfoo=warn
-// -Wno-foo      -> alias of -Wfoo=ignore
-// -Werror=foo   -> alias of -Wfoo=error
+//    -Wfoo, -Wno-foo, -Werror=foo
 //
 #include "clang-cc.h"
 #include "clang/Basic/Diagnostic.h"
@@ -44,8 +41,9 @@ static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
 struct WarningOption {
-  const char *Name;
+  const char  *Name;
   const short *Members;
+  const char  *SubGroups;
 };
 
 #define GET_DIAG_ARRAYS
@@ -64,6 +62,25 @@ static const size_t OptionTableSize =
 static bool WarningOptionCompare(const WarningOption &LHS,
                                  const WarningOption &RHS) {
   return strcmp(LHS.Name, RHS.Name) < 0;
+}
+
+static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
+                            Diagnostic &Diags,
+                       llvm::SmallVectorImpl<unsigned short> &ControlledDiags) {
+  // Option exists, poke all the members of its diagnostic set.
+  if (const short *Member = Group->Members) {
+    for (; *Member != -1; ++Member) {
+      Diags.setDiagnosticMapping(*Member, Mapping);
+      ControlledDiags.push_back(*Member);
+    }
+  }
+
+  // Enable/disable all subgroups along with this one.
+  if (const char *SubGroups = Group->SubGroups) {
+    for (; *SubGroups != (char)-1; ++SubGroups)
+      MapGroupMembers(&OptionTable[(unsigned char)*SubGroups], Mapping,
+                      Diags, ControlledDiags);
+  }
 }
 
 bool clang::ProcessWarningOptions(Diagnostic &Diags) {
@@ -125,7 +142,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       OptStart = Specifier;
     }
     
-    WarningOption Key = { OptStart, 0 };
+    WarningOption Key = { OptStart, 0, 0 };
     const WarningOption *Found =
       std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                        WarningOptionCompare);
@@ -135,11 +152,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       continue;
     }
     
-    // Option exists, poke all the members of its diagnostic set.
-    for (const short *Member = Found->Members; *Member != -1; ++Member) {
-      Diags.setDiagnosticMapping(*Member, Mapping);
-      ControlledDiags.push_back(*Member);
-    }
+    MapGroupMembers(Found, Mapping, Diags, ControlledDiags);
   }
 
   // If -pedantic or -pedantic-errors was specified, then we want to map all
