@@ -372,9 +372,9 @@ namespace clang {
     enum StmtCode {
       /// \brief A marker record that indicates that we are at the end
       /// of an expression.
-      EXPR_STOP,
+      STMT_STOP,
       /// \brief A NULL expression.
-      EXPR_NULL,
+      STMT_NULL_PTR,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.

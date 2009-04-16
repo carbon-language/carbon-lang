@@ -126,7 +126,7 @@ void PCHTypeWriter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
 
 void PCHTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
   VisitArrayType(T);
-  Writer.AddExpr(T->getSizeExpr());
+  Writer.AddStmt(T->getSizeExpr());
   Code = pch::TYPE_VARIABLE_ARRAY;
 }
 
@@ -166,7 +166,7 @@ void PCHTypeWriter::VisitTypedefType(const TypedefType *T) {
 }
 
 void PCHTypeWriter::VisitTypeOfExprType(const TypeOfExprType *T) {
-  Writer.AddExpr(T->getUnderlyingExpr());
+  Writer.AddStmt(T->getUnderlyingExpr());
   Code = pch::TYPE_TYPEOF_EXPR;
 }
 
@@ -331,7 +331,7 @@ void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->getInitExpr()? 1 : 0);
   if (D->getInitExpr())
-    Writer.AddExpr(D->getInitExpr());
+    Writer.AddStmt(D->getInitExpr());
   Writer.AddAPSInt(D->getInitVal(), Record);
   Code = pch::DECL_ENUM_CONSTANT;
 }
@@ -360,7 +360,7 @@ void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
   Record.push_back(D->isMutable());
   Record.push_back(D->getBitWidth()? 1 : 0);
   if (D->getBitWidth())
-    Writer.AddExpr(D->getBitWidth());
+    Writer.AddStmt(D->getBitWidth());
   Code = pch::DECL_FIELD;
 }
 
@@ -374,7 +374,7 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   Record.push_back(D->getInit()? 1 : 0);
   if (D->getInit())
-    Writer.AddExpr(D->getInit());
+    Writer.AddStmt(D->getInit());
   Code = pch::DECL_VAR;
 }
 
@@ -395,7 +395,7 @@ void PCHDeclWriter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
 
 void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   VisitDecl(D);
-  Writer.AddExpr(D->getAsmString());
+  Writer.AddStmt(D->getAsmString());
   Code = pch::DECL_FILE_SCOPE_ASM;
 }
 
@@ -515,7 +515,7 @@ void PCHStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
 
 void PCHStmtWriter::VisitImaginaryLiteral(ImaginaryLiteral *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getSubExpr());
+  Writer.WriteSubStmt(E->getSubExpr());
   Code = pch::EXPR_IMAGINARY_LITERAL;
 }
 
@@ -547,13 +547,13 @@ void PCHStmtWriter::VisitParenExpr(ParenExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLParen(), Record);
   Writer.AddSourceLocation(E->getRParen(), Record);
-  Writer.WriteSubExpr(E->getSubExpr());
+  Writer.WriteSubStmt(E->getSubExpr());
   Code = pch::EXPR_PAREN;
 }
 
 void PCHStmtWriter::VisitUnaryOperator(UnaryOperator *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getSubExpr());
+  Writer.WriteSubStmt(E->getSubExpr());
   Record.push_back(E->getOpcode()); // FIXME: stable encoding
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Code = pch::EXPR_UNARY_OPERATOR;
@@ -566,7 +566,7 @@ void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     Writer.AddTypeRef(E->getArgumentType(), Record);
   else {
     Record.push_back(0);
-    Writer.WriteSubExpr(E->getArgumentExpr());
+    Writer.WriteSubStmt(E->getArgumentExpr());
   }
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
@@ -575,8 +575,8 @@ void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 
 void PCHStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getLHS());
-  Writer.WriteSubExpr(E->getRHS());
+  Writer.WriteSubStmt(E->getLHS());
+  Writer.WriteSubStmt(E->getRHS());
   Writer.AddSourceLocation(E->getRBracketLoc(), Record);
   Code = pch::EXPR_ARRAY_SUBSCRIPT;
 }
@@ -585,16 +585,16 @@ void PCHStmtWriter::VisitCallExpr(CallExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
-  Writer.WriteSubExpr(E->getCallee());
+  Writer.WriteSubStmt(E->getCallee());
   for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg)
-    Writer.WriteSubExpr(*Arg);
+    Writer.WriteSubStmt(*Arg);
   Code = pch::EXPR_CALL;
 }
 
 void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getBase());
+  Writer.WriteSubStmt(E->getBase());
   Writer.AddDeclRef(E->getMemberDecl(), Record);
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
@@ -603,13 +603,13 @@ void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
 
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getSubExpr());
+  Writer.WriteSubStmt(E->getSubExpr());
 }
 
 void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getLHS());
-  Writer.WriteSubExpr(E->getRHS());
+  Writer.WriteSubStmt(E->getLHS());
+  Writer.WriteSubStmt(E->getRHS());
   Record.push_back(E->getOpcode()); // FIXME: stable encoding
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Code = pch::EXPR_BINARY_OPERATOR;
@@ -624,9 +624,9 @@ void PCHStmtWriter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
 
 void PCHStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getCond());
-  Writer.WriteSubExpr(E->getLHS());
-  Writer.WriteSubExpr(E->getRHS());
+  Writer.WriteSubStmt(E->getCond());
+  Writer.WriteSubStmt(E->getLHS());
+  Writer.WriteSubStmt(E->getRHS());
   Code = pch::EXPR_CONDITIONAL_OPERATOR;
 }
 
@@ -651,14 +651,14 @@ void PCHStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
 void PCHStmtWriter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
-  Writer.WriteSubExpr(E->getInitializer());
+  Writer.WriteSubStmt(E->getInitializer());
   Record.push_back(E->isFileScope());
   Code = pch::EXPR_COMPOUND_LITERAL;
 }
 
 void PCHStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getBase());
+  Writer.WriteSubStmt(E->getBase());
   Writer.AddIdentifierRef(&E->getAccessor(), Record);
   Writer.AddSourceLocation(E->getAccessorLoc(), Record);
   Code = pch::EXPR_EXT_VECTOR_ELEMENT;
@@ -668,8 +668,8 @@ void PCHStmtWriter::VisitInitListExpr(InitListExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumInits());
   for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
-    Writer.WriteSubExpr(E->getInit(I));
-  Writer.WriteSubExpr(E->getSyntacticForm());
+    Writer.WriteSubStmt(E->getInit(I));
+  Writer.WriteSubStmt(E->getSyntacticForm());
   Writer.AddSourceLocation(E->getLBraceLoc(), Record);
   Writer.AddSourceLocation(E->getRBraceLoc(), Record);
   Writer.AddDeclRef(E->getInitializedFieldInUnion(), Record);
@@ -681,7 +681,7 @@ void PCHStmtWriter::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumSubExprs());
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I)
-    Writer.WriteSubExpr(E->getSubExpr(I));
+    Writer.WriteSubStmt(E->getSubExpr(I));
   Writer.AddSourceLocation(E->getEqualOrColonLoc(), Record);
   Record.push_back(E->usesGNUSyntax());
   for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
@@ -721,7 +721,7 @@ void PCHStmtWriter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 
 void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getSubExpr());
+  Writer.WriteSubStmt(E->getSubExpr());
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_VA_ARG;
@@ -738,9 +738,9 @@ void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
 
 void PCHStmtWriter::VisitChooseExpr(ChooseExpr *E) {
   VisitExpr(E);
-  Writer.WriteSubExpr(E->getCond());
-  Writer.WriteSubExpr(E->getLHS());
-  Writer.WriteSubExpr(E->getRHS());
+  Writer.WriteSubStmt(E->getCond());
+  Writer.WriteSubStmt(E->getLHS());
+  Writer.WriteSubStmt(E->getRHS());
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CHOOSE;
@@ -756,7 +756,7 @@ void PCHStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumSubExprs());
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I)
-    Writer.WriteSubExpr(E->getExpr(I));
+    Writer.WriteSubStmt(E->getExpr(I));
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_SHUFFLE_VECTOR;
@@ -780,12 +780,12 @@ void PCHWriter::WriteTargetTriple(const TargetInfo &Target) {
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(pch::TARGET_TRIPLE));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Triple name
-  unsigned TripleAbbrev = S.EmitAbbrev(Abbrev);
+  unsigned TripleAbbrev = Stream.EmitAbbrev(Abbrev);
 
   RecordData Record;
   Record.push_back(pch::TARGET_TRIPLE);
   const char *Triple = Target.getTargetTriple();
-  S.EmitRecordWithBlob(TripleAbbrev, Record, Triple, strlen(Triple));
+  Stream.EmitRecordWithBlob(TripleAbbrev, Record, Triple, strlen(Triple));
 }
 
 /// \brief Write the LangOptions structure.
@@ -847,7 +847,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.getGCMode());
   Record.push_back(LangOpts.getVisibilityMode());
   Record.push_back(LangOpts.InstantiationDepth);
-  S.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
+  Stream.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -856,7 +856,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
 
 /// \brief Create an abbreviation for the SLocEntry that refers to a
 /// file.
-static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &S) {
+static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_FILE_ENTRY));
@@ -865,12 +865,12 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &S) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
-  return S.EmitAbbrev(Abbrev);
+  return Stream.EmitAbbrev(Abbrev);
 }
 
 /// \brief Create an abbreviation for the SLocEntry that refers to a
 /// buffer.
-static unsigned CreateSLocBufferAbbrev(llvm::BitstreamWriter &S) {
+static unsigned CreateSLocBufferAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_BUFFER_ENTRY));
@@ -879,22 +879,22 @@ static unsigned CreateSLocBufferAbbrev(llvm::BitstreamWriter &S) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Buffer name blob
-  return S.EmitAbbrev(Abbrev);
+  return Stream.EmitAbbrev(Abbrev);
 }
 
 /// \brief Create an abbreviation for the SLocEntry that refers to a
 /// buffer's blob.
-static unsigned CreateSLocBufferBlobAbbrev(llvm::BitstreamWriter &S) {
+static unsigned CreateSLocBufferBlobAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_BUFFER_BLOB));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Blob
-  return S.EmitAbbrev(Abbrev);
+  return Stream.EmitAbbrev(Abbrev);
 }
 
 /// \brief Create an abbreviation for the SLocEntry that refers to an
 /// buffer.
-static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &S) {
+static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(pch::SM_SLOC_INSTANTIATION_ENTRY));
@@ -903,7 +903,7 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &S) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Start location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // End location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Token length
-  return S.EmitAbbrev(Abbrev);
+  return Stream.EmitAbbrev(Abbrev);
 }
 
 /// \brief Writes the block containing the serialized form of the
@@ -916,7 +916,7 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &S) {
 /// the files in the AST.
 void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
   // Enter the source manager block.
-  S.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
+  Stream.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
 
   // Abbreviations for the various kinds of source-location entries.
   int SLocFileAbbrv = -1;
@@ -954,16 +954,16 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
         // The source location entry is a file. The blob associated
         // with this entry is the file name.
         if (SLocFileAbbrv == -1)
-          SLocFileAbbrv = CreateSLocFileAbbrev(S);
-        S.EmitRecordWithBlob(SLocFileAbbrv, Record,
+          SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
+        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record,
                              Content->Entry->getName(),
                              strlen(Content->Entry->getName()));
       } else {
         // The source location entry is a buffer. The blob associated
         // with this entry contains the contents of the buffer.
         if (SLocBufferAbbrv == -1) {
-          SLocBufferAbbrv = CreateSLocBufferAbbrev(S);
-          SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(S);
+          SLocBufferAbbrv = CreateSLocBufferAbbrev(Stream);
+          SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
         }
 
         // We add one to the size so that we capture the trailing NULL
@@ -971,10 +971,10 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
         // the reader side).
         const llvm::MemoryBuffer *Buffer = Content->getBuffer();
         const char *Name = Buffer->getBufferIdentifier();
-        S.EmitRecordWithBlob(SLocBufferAbbrv, Record, Name, strlen(Name) + 1);
+        Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record, Name, strlen(Name) + 1);
         Record.clear();
         Record.push_back(pch::SM_SLOC_BUFFER_BLOB);
-        S.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
+        Stream.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
                              Buffer->getBufferStart(),
                              Buffer->getBufferSize() + 1);
       }
@@ -993,8 +993,8 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
       Record.push_back(NextOffset - SLoc->getOffset() - 1);
 
       if (SLocInstantiationAbbrv == -1)
-        SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(S);
-      S.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
+        SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(Stream);
+      Stream.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
     }
 
     Record.clear();
@@ -1032,11 +1032,11 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
         Record.push_back((unsigned)LE->FileKind);
         Record.push_back(LE->IncludeOffset);
       }
-      S.EmitRecord(pch::SM_LINE_TABLE, Record);
+      Stream.EmitRecord(pch::SM_LINE_TABLE, Record);
     }
   }
 
-  S.ExitBlock();
+  Stream.ExitBlock();
 }
 
 /// \brief Writes the block containing the serialized form of the
@@ -1044,7 +1044,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
 ///
 void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   // Enter the preprocessor block.
-  S.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 3);
+  Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 3);
   
   // If the PCH file contains __DATE__ or __TIME__ emit a warning about this.
   // FIXME: use diagnostics subsystem for localization etc.
@@ -1056,7 +1056,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   // If the preprocessor __COUNTER__ value has been bumped, remember it.
   if (PP.getCounterValue() != 0) {
     Record.push_back(PP.getCounterValue());
-    S.EmitRecord(pch::PP_COUNTER_VALUE, Record);
+    Stream.EmitRecord(pch::PP_COUNTER_VALUE, Record);
     Record.clear();
   }  
   
@@ -1092,7 +1092,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
            I != E; ++I)
         AddIdentifierRef(*I, Record);
     }
-    S.EmitRecord(Code, Record);
+    Stream.EmitRecord(Code, Record);
     Record.clear();
 
     // Emit the tokens array.
@@ -1114,13 +1114,13 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
       // FIXME: Should translate token flags to a stable encoding.
       Record.push_back(Tok.getFlags());
       
-      S.EmitRecord(pch::PP_TOKEN, Record);
+      Stream.EmitRecord(pch::PP_TOKEN, Record);
       Record.clear();
     }
     
   }
   
-  S.ExitBlock();
+  Stream.ExitBlock();
 }
 
 
@@ -1132,10 +1132,10 @@ void PCHWriter::WriteType(const Type *T) {
   
   // Record the offset for this type.
   if (TypeOffsets.size() == ID - pch::NUM_PREDEF_TYPE_IDS)
-    TypeOffsets.push_back(S.GetCurrentBitNo());
+    TypeOffsets.push_back(Stream.GetCurrentBitNo());
   else if (TypeOffsets.size() < ID - pch::NUM_PREDEF_TYPE_IDS) {
     TypeOffsets.resize(ID + 1 - pch::NUM_PREDEF_TYPE_IDS);
-    TypeOffsets[ID - pch::NUM_PREDEF_TYPE_IDS] = S.GetCurrentBitNo();
+    TypeOffsets[ID - pch::NUM_PREDEF_TYPE_IDS] = Stream.GetCurrentBitNo();
   }
 
   RecordData Record;
@@ -1161,16 +1161,16 @@ void PCHWriter::WriteType(const Type *T) {
   }
 
   // Emit the serialized record.
-  S.EmitRecord(W.Code, Record);
+  Stream.EmitRecord(W.Code, Record);
 
   // Flush any expressions that were written as part of this type.
-  FlushExprs();
+  FlushStmts();
 }
 
 /// \brief Write a block containing all of the types.
 void PCHWriter::WriteTypesBlock(ASTContext &Context) {
   // Enter the types block.
-  S.EnterSubblock(pch::TYPES_BLOCK_ID, 2);
+  Stream.EnterSubblock(pch::TYPES_BLOCK_ID, 2);
 
   // Emit all of the types in the ASTContext
   for (std::vector<Type*>::const_iterator T = Context.getTypes().begin(),
@@ -1184,7 +1184,7 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
   }
 
   // Exit the types block
-  S.ExitBlock();
+  Stream.ExitBlock();
 }
 
 /// \brief Write the block containing all of the declaration IDs
@@ -1197,14 +1197,14 @@ uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
   if (DC->decls_empty(Context))
     return 0;
 
-  uint64_t Offset = S.GetCurrentBitNo();
+  uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
   for (DeclContext::decl_iterator D = DC->decls_begin(Context),
                                DEnd = DC->decls_end(Context);
        D != DEnd; ++D)
     AddDeclRef(*D, Record);
 
-  S.EmitRecord(pch::DECL_CONTEXT_LEXICAL, Record);
+  Stream.EmitRecord(pch::DECL_CONTEXT_LEXICAL, Record);
   return Offset;
 }
 
@@ -1226,7 +1226,7 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   // representation is the same for both cases: a declaration name,
   // followed by a size, followed by references to the visible
   // declarations that have that name.
-  uint64_t Offset = S.GetCurrentBitNo();
+  uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
   StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
   if (!Map)
@@ -1244,14 +1244,14 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (Record.size() == 0)
     return 0;
 
-  S.EmitRecord(pch::DECL_CONTEXT_VISIBLE, Record);
+  Stream.EmitRecord(pch::DECL_CONTEXT_VISIBLE, Record);
   return Offset;
 }
 
 /// \brief Write a block containing all of the declarations.
 void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   // Enter the declarations block.
-  S.EnterSubblock(pch::DECLS_BLOCK_ID, 2);
+  Stream.EnterSubblock(pch::DECLS_BLOCK_ID, 2);
 
   // Emit all of the declarations.
   RecordData Record;
@@ -1283,10 +1283,10 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 
     // Record the offset for this declaration
     if (DeclOffsets.size() == Index)
-      DeclOffsets.push_back(S.GetCurrentBitNo());
+      DeclOffsets.push_back(Stream.GetCurrentBitNo());
     else if (DeclOffsets.size() < Index) {
       DeclOffsets.resize(Index+1);
-      DeclOffsets[Index] = S.GetCurrentBitNo();
+      DeclOffsets[Index] = Stream.GetCurrentBitNo();
     }
 
     // Build and emit a record for this declaration
@@ -1295,14 +1295,14 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     W.Visit(D);
     if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
     assert(W.Code && "Unhandled declaration kind while generating PCH");
-    S.EmitRecord(W.Code, Record);
+    Stream.EmitRecord(W.Code, Record);
 
     // If the declaration had any attributes, write them now.
     if (D->hasAttrs())
       WriteAttributeRecord(D->getAttrs());
 
     // Flush any expressions that were written as part of this declaration.
-    FlushExprs();
+    FlushStmts();
     
     // Note external declarations so that we can add them to a record
     // in the PCH file later.
@@ -1327,7 +1327,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   }
 
   // Exit the declarations block
-  S.ExitBlock();
+  Stream.ExitBlock();
 }
 
 /// \brief Write the identifier table into the PCH file.
@@ -1367,16 +1367,16 @@ void PCHWriter::WriteIdentifierTable() {
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_TABLE));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Triple name
-    unsigned IDTableAbbrev = S.EmitAbbrev(Abbrev);
+    unsigned IDTableAbbrev = Stream.EmitAbbrev(Abbrev);
 
     // Write the identifier table
     RecordData Record;
     Record.push_back(pch::IDENTIFIER_TABLE);
-    S.EmitRecordWithBlob(IDTableAbbrev, Record, &Data.front(), Data.size());
+    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, &Data.front(), Data.size());
   }
 
   // Write the offsets table for identifier IDs.
-  S.EmitRecord(pch::IDENTIFIER_OFFSET, IdentOffsets);
+  Stream.EmitRecord(pch::IDENTIFIER_OFFSET, IdentOffsets);
 }
 
 /// \brief Write a record containing the given attributes.
@@ -1497,7 +1497,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     }
   }
 
-  S.EmitRecord(pch::DECL_ATTR, Record);
+  Stream.EmitRecord(pch::DECL_ATTR, Record);
 }
 
 void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
@@ -1505,22 +1505,22 @@ void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
   Record.insert(Record.end(), Str.begin(), Str.end());
 }
 
-PCHWriter::PCHWriter(llvm::BitstreamWriter &S) 
-  : S(S), NextTypeID(pch::NUM_PREDEF_TYPE_IDS) { }
+PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
+  : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS) { }
 
 void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   // Emit the file header.
-  S.Emit((unsigned)'C', 8);
-  S.Emit((unsigned)'P', 8);
-  S.Emit((unsigned)'C', 8);
-  S.Emit((unsigned)'H', 8);
+  Stream.Emit((unsigned)'C', 8);
+  Stream.Emit((unsigned)'P', 8);
+  Stream.Emit((unsigned)'C', 8);
+  Stream.Emit((unsigned)'H', 8);
 
   // The translation unit is the first declaration we'll emit.
   DeclIDs[Context.getTranslationUnitDecl()] = 1;
   DeclsToEmit.push(Context.getTranslationUnitDecl());
 
   // Write the remaining PCH contents.
-  S.EnterSubblock(pch::PCH_BLOCK_ID, 3);
+  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 3);
   WriteTargetTriple(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
   WriteSourceManagerBlock(Context.getSourceManager());
@@ -1528,11 +1528,11 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
   WriteIdentifierTable();
-  S.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
-  S.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
+  Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
+  Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
   if (!ExternalDefinitions.empty())
-    S.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
-  S.ExitBlock();
+    Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
+  Stream.ExitBlock();
 }
 
 void PCHWriter::AddSourceLocation(SourceLocation Loc, RecordData &Record) {
@@ -1658,52 +1658,53 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   }
 }
 
-/// \brief Write the given subexpression to the bitstream.
-void PCHWriter::WriteSubExpr(Expr *E) {
+/// \brief Write the given substatement or subexpression to the
+/// bitstream.
+void PCHWriter::WriteSubStmt(Stmt *S) {
   RecordData Record;
   PCHStmtWriter Writer(*this, Record);
 
-  if (!E) {
-    S.EmitRecord(pch::EXPR_NULL, Record);
+  if (!S) {
+    Stream.EmitRecord(pch::STMT_NULL_PTR, Record);
     return;
   }
   
-  Writer.Code = pch::EXPR_NULL;
-  Writer.Visit(E);
-  assert(Writer.Code != pch::EXPR_NULL && 
+  Writer.Code = pch::STMT_NULL_PTR;
+  Writer.Visit(S);
+  assert(Writer.Code != pch::STMT_NULL_PTR && 
          "Unhandled expression writing PCH file");
-  S.EmitRecord(Writer.Code, Record);    
+  Stream.EmitRecord(Writer.Code, Record);    
 }
 
-/// \brief Flush all of the expressions that have been added to the
-/// queue via AddExpr().
-void PCHWriter::FlushExprs() {
+/// \brief Flush all of the statements that have been added to the
+/// queue via AddStmt().
+void PCHWriter::FlushStmts() {
   RecordData Record;
   PCHStmtWriter Writer(*this, Record);
 
-  for (unsigned I = 0, N = ExprsToEmit.size(); I != N; ++I) {
-    Expr *E = ExprsToEmit[I];
+  for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {
+    Stmt *S = StmtsToEmit[I];
 
-    if (!E) {
-      S.EmitRecord(pch::EXPR_NULL, Record);
+    if (!S) {
+      Stream.EmitRecord(pch::STMT_NULL_PTR, Record);
       continue;
     }
 
-    Writer.Code = pch::EXPR_NULL;
-    Writer.Visit(E);
-    assert(Writer.Code != pch::EXPR_NULL && 
+    Writer.Code = pch::STMT_NULL_PTR;
+    Writer.Visit(S);
+    assert(Writer.Code != pch::STMT_NULL_PTR && 
            "Unhandled expression writing PCH file");
-    S.EmitRecord(Writer.Code, Record);  
+    Stream.EmitRecord(Writer.Code, Record);  
 
-    assert(N == ExprsToEmit.size() && 
-           "Subexpression writen via AddExpr rather than WriteSubExpr!");
+    assert(N == StmtsToEmit.size() && 
+           "Substatement writen via AddStmt rather than WriteSubStmt!");
 
     // Note that we are at the end of a full expression. Any
     // expression records that follow this one are part of a different
     // expression.
     Record.clear();
-    S.EmitRecord(pch::EXPR_STOP, Record);
+    Stream.EmitRecord(pch::STMT_STOP, Record);
   }
 
-  ExprsToEmit.clear();
+  StmtsToEmit.clear();
 }

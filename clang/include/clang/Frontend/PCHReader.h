@@ -235,6 +235,9 @@ public:
   /// \brief Reads an expression from the current stream position.
   Expr *ReadExpr();
 
+  /// \brief Reads a statement from the current stream position.
+  Stmt *ReadStmt();
+
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.
   ASTContext &getContext() { return Context; }

@@ -48,7 +48,7 @@ public:
 
 private:
   /// \brief The bitstream writer used to emit this precompiled header.
-  llvm::BitstreamWriter &S;
+  llvm::BitstreamWriter &Stream;
 
   /// \brief Map that provides the ID numbers of each declaration within
   /// the output stream.
@@ -104,9 +104,9 @@ private:
   /// record.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
-  /// \brief Expressions that we've encountered while serializing a
+  /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
-  llvm::SmallVector<Expr *, 8> ExprsToEmit;
+  llvm::SmallVector<Stmt *, 8> StmtsToEmit;
 
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
@@ -125,7 +125,7 @@ private:
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
-  PCHWriter(llvm::BitstreamWriter &S);
+  PCHWriter(llvm::BitstreamWriter &Stream);
   
   /// \brief Write a precompiled header for the given AST context.
   void WritePCH(ASTContext &Context, const Preprocessor &PP);
@@ -154,22 +154,22 @@ public:
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
 
-  /// \brief Add the given expression to the queue of expressions to
+  /// \brief Add the given statement or expression to the queue of statements to
   /// emit.
   ///
   /// This routine should be used when emitting types and declarations
   /// that have expressions as part of their formulation. Once the
-  /// type or declaration has been written, call FlushExprs() to write
-  /// the corresponding expressions just after the type or
+  /// type or declaration has been written, call FlushStmts() to write
+  /// the corresponding statements just after the type or
   /// declaration.
-  void AddExpr(Expr *E) { ExprsToEmit.push_back(E); }
+  void AddStmt(Stmt *S) { StmtsToEmit.push_back(S); }
 
   /// \brief Write the given subexpression to the bitstream.
-  void WriteSubExpr(Expr *E);
+  void WriteSubStmt(Stmt *S);
 
-  /// \brief Flush all of the expressions that have been added to the
-  /// queue via AddExpr().
-  void FlushExprs();
+  /// \brief Flush all of the statements and expressions that have
+  /// been added to the queue via AddStmt().
+  void FlushStmts();
 };
 
 } // end namespace clang

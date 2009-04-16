@@ -220,12 +220,12 @@ namespace {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
-    llvm::SmallVectorImpl<Expr *> &ExprStack;
+    llvm::SmallVectorImpl<Stmt *> &StmtStack;
 
   public:
     PCHStmtReader(PCHReader &Reader, const PCHReader::RecordData &Record,
-                  unsigned &Idx, llvm::SmallVectorImpl<Expr *> &ExprStack)
-      : Reader(Reader), Record(Record), Idx(Idx), ExprStack(ExprStack) { }
+                  unsigned &Idx, llvm::SmallVectorImpl<Stmt *> &StmtStack)
+      : Reader(Reader), Record(Record), Idx(Idx), StmtStack(StmtStack) { }
 
     /// \brief The number of record fields required for the Expr class
     /// itself.
@@ -310,7 +310,7 @@ unsigned PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
 
 unsigned PCHStmtReader::VisitImaginaryLiteral(ImaginaryLiteral *E) {
   VisitExpr(E);
-  E->setSubExpr(ExprStack.back());
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
   return 1;
 }
 
@@ -346,13 +346,13 @@ unsigned PCHStmtReader::VisitParenExpr(ParenExpr *E) {
   VisitExpr(E);
   E->setLParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setSubExpr(ExprStack.back());
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
   return 1;
 }
 
 unsigned PCHStmtReader::VisitUnaryOperator(UnaryOperator *E) {
   VisitExpr(E);
-  E->setSubExpr(ExprStack.back());
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
   E->setOpcode((UnaryOperator::Opcode)Record[Idx++]);
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
@@ -362,7 +362,7 @@ unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   VisitExpr(E);
   E->setSizeof(Record[Idx++]);
   if (Record[Idx] == 0) {
-    E->setArgument(ExprStack.back());
+    E->setArgument(cast<Expr>(StmtStack.back()));
     ++Idx;
   } else {
     E->setArgument(Reader.GetType(Record[Idx++]));
@@ -374,8 +374,8 @@ unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 
 unsigned PCHStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   VisitExpr(E);
-  E->setLHS(ExprStack[ExprStack.size() - 2]);
-  E->setRHS(ExprStack[ExprStack.size() - 2]);
+  E->setLHS(cast<Expr>(StmtStack[StmtStack.size() - 2]));
+  E->setRHS(cast<Expr>(StmtStack[StmtStack.size() - 2]));
   E->setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 2;
 }
@@ -384,15 +384,15 @@ unsigned PCHStmtReader::VisitCallExpr(CallExpr *E) {
   VisitExpr(E);
   E->setNumArgs(Reader.getContext(), Record[Idx++]);
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setCallee(ExprStack[ExprStack.size() - E->getNumArgs() - 1]);
+  E->setCallee(cast<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
-    E->setArg(I, ExprStack[ExprStack.size() - N + I]);
+    E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
   return E->getNumArgs() + 1;
 }
 
 unsigned PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
   VisitExpr(E);
-  E->setBase(ExprStack.back());
+  E->setBase(cast<Expr>(StmtStack.back()));
   E->setMemberDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
   E->setMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setArrow(Record[Idx++]);
@@ -401,14 +401,14 @@ unsigned PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
 
 unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
-  E->setSubExpr(ExprStack.back());
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
   return 1;
 }
 
 unsigned PCHStmtReader::VisitBinaryOperator(BinaryOperator *E) {
   VisitExpr(E);
-  E->setLHS(ExprStack.end()[-2]);
-  E->setRHS(ExprStack.end()[-1]);
+  E->setLHS(cast<Expr>(StmtStack.end()[-2]));
+  E->setRHS(cast<Expr>(StmtStack.end()[-1]));
   E->setOpcode((BinaryOperator::Opcode)Record[Idx++]);
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 2;
@@ -423,9 +423,9 @@ unsigned PCHStmtReader::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
 
 unsigned PCHStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
   VisitExpr(E);
-  E->setCond(ExprStack[ExprStack.size() - 3]);
-  E->setLHS(ExprStack[ExprStack.size() - 2]);
-  E->setRHS(ExprStack[ExprStack.size() - 1]);
+  E->setCond(cast<Expr>(StmtStack[StmtStack.size() - 3]));
+  E->setLHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  E->setRHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 1]));
   return 3;
 }
 
@@ -451,14 +451,14 @@ unsigned PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
 unsigned PCHStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setInitializer(ExprStack.back());
+  E->setInitializer(cast<Expr>(StmtStack.back()));
   E->setFileScope(Record[Idx++]);
   return 1;
 }
 
 unsigned PCHStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   VisitExpr(E);
-  E->setBase(ExprStack.back());
+  E->setBase(cast<Expr>(StmtStack.back()));
   E->setAccessor(Reader.GetIdentifierInfo(Record, Idx));
   E->setAccessorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
@@ -469,8 +469,9 @@ unsigned PCHStmtReader::VisitInitListExpr(InitListExpr *E) {
   unsigned NumInits = Record[Idx++];
   E->reserveInits(NumInits);
   for (unsigned I = 0; I != NumInits; ++I)
-    E->updateInit(I, ExprStack[ExprStack.size() - NumInits - 1 + I]);
-  E->setSyntacticForm(cast_or_null<InitListExpr>(ExprStack.back()));
+    E->updateInit(I, 
+                  cast<Expr>(StmtStack[StmtStack.size() - NumInits - 1 + I]));
+  E->setSyntacticForm(cast_or_null<InitListExpr>(StmtStack.back()));
   E->setLBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setInitializedFieldInUnion(
@@ -486,7 +487,7 @@ unsigned PCHStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   unsigned NumSubExprs = Record[Idx++];
   assert(NumSubExprs == E->getNumSubExprs() && "Wrong number of subexprs");
   for (unsigned I = 0; I != NumSubExprs; ++I)
-    E->setSubExpr(I, ExprStack[ExprStack.size() - NumSubExprs + I]);
+    E->setSubExpr(I, cast<Expr>(StmtStack[StmtStack.size() - NumSubExprs + I]));
   E->setEqualOrColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setGNUSyntax(Record[Idx++]);
 
@@ -551,7 +552,7 @@ unsigned PCHStmtReader::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 
 unsigned PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
   VisitExpr(E);
-  E->setSubExpr(ExprStack.back());
+  E->setSubExpr(cast<Expr>(StmtStack.back()));
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
@@ -568,9 +569,9 @@ unsigned PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
 
 unsigned PCHStmtReader::VisitChooseExpr(ChooseExpr *E) {
   VisitExpr(E);
-  E->setCond(ExprStack[ExprStack.size() - 3]);
-  E->setLHS(ExprStack[ExprStack.size() - 2]);
-  E->setRHS(ExprStack[ExprStack.size() - 1]);
+  E->setCond(cast<Expr>(StmtStack[StmtStack.size() - 3]));
+  E->setLHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  E->setRHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 1]));
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 3;
@@ -585,7 +586,7 @@ unsigned PCHStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {
 unsigned PCHStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
   unsigned NumExprs = Record[Idx++];
-  E->setExprs(&ExprStack[ExprStack.size() - NumExprs], NumExprs);
+  E->setExprs((Expr **)&StmtStack[StmtStack.size() - NumExprs], NumExprs);
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return NumExprs;
@@ -1982,18 +1983,18 @@ Attr *PCHReader::ReadAttributes() {
   return PrevAttr;
 }
 
-Expr *PCHReader::ReadExpr() {
+Stmt *PCHReader::ReadStmt() {
   // Within the bitstream, expressions are stored in Reverse Polish
   // Notation, with each of the subexpressions preceding the
   // expression they are stored in. To evaluate expressions, we
   // continue reading expressions and placing them on the stack, with
   // expressions having operands removing those operands from the
-  // stack. Evaluation terminates when we see a EXPR_STOP record, and
+  // stack. Evaluation terminates when we see a STMT_STOP record, and
   // the single remaining expression on the stack is our result.
   RecordData Record;
   unsigned Idx;
-  llvm::SmallVector<Expr *, 16> ExprStack;
-  PCHStmtReader Reader(*this, Record, Idx, ExprStack);
+  llvm::SmallVector<Stmt *, 16> StmtStack;
+  PCHStmtReader Reader(*this, Record, Idx, StmtStack);
   Stmt::EmptyShell Empty;
 
   while (true) {
@@ -2021,159 +2022,163 @@ Expr *PCHReader::ReadExpr() {
       continue;
     }
 
-    Expr *E = 0;
+    Stmt *S = 0;
     Idx = 0;
     Record.clear();
     bool Finished = false;
     switch ((pch::StmtCode)Stream.ReadRecord(Code, Record)) {
-    case pch::EXPR_STOP:
+    case pch::STMT_STOP:
       Finished = true;
       break;
 
-    case pch::EXPR_NULL: 
-      E = 0; 
+    case pch::STMT_NULL_PTR: 
+      S = 0; 
       break;
 
     case pch::EXPR_PREDEFINED:
       // FIXME: untested (until we can serialize function bodies).
-      E = new (Context) PredefinedExpr(Empty);
+      S = new (Context) PredefinedExpr(Empty);
       break;
       
     case pch::EXPR_DECL_REF: 
-      E = new (Context) DeclRefExpr(Empty); 
+      S = new (Context) DeclRefExpr(Empty); 
       break;
       
     case pch::EXPR_INTEGER_LITERAL: 
-      E = new (Context) IntegerLiteral(Empty);
+      S = new (Context) IntegerLiteral(Empty);
       break;
       
     case pch::EXPR_FLOATING_LITERAL:
-      E = new (Context) FloatingLiteral(Empty);
+      S = new (Context) FloatingLiteral(Empty);
       break;
       
     case pch::EXPR_IMAGINARY_LITERAL:
-      E = new (Context) ImaginaryLiteral(Empty);
+      S = new (Context) ImaginaryLiteral(Empty);
       break;
 
     case pch::EXPR_STRING_LITERAL:
-      E = StringLiteral::CreateEmpty(Context, 
+      S = StringLiteral::CreateEmpty(Context, 
                                      Record[PCHStmtReader::NumExprFields + 1]);
       break;
 
     case pch::EXPR_CHARACTER_LITERAL:
-      E = new (Context) CharacterLiteral(Empty);
+      S = new (Context) CharacterLiteral(Empty);
       break;
 
     case pch::EXPR_PAREN:
-      E = new (Context) ParenExpr(Empty);
+      S = new (Context) ParenExpr(Empty);
       break;
 
     case pch::EXPR_UNARY_OPERATOR:
-      E = new (Context) UnaryOperator(Empty);
+      S = new (Context) UnaryOperator(Empty);
       break;
 
     case pch::EXPR_SIZEOF_ALIGN_OF:
-      E = new (Context) SizeOfAlignOfExpr(Empty);
+      S = new (Context) SizeOfAlignOfExpr(Empty);
       break;
 
     case pch::EXPR_ARRAY_SUBSCRIPT:
-      E = new (Context) ArraySubscriptExpr(Empty);
+      S = new (Context) ArraySubscriptExpr(Empty);
       break;
 
     case pch::EXPR_CALL:
-      E = new (Context) CallExpr(Context, Empty);
+      S = new (Context) CallExpr(Context, Empty);
       break;
 
     case pch::EXPR_MEMBER:
-      E = new (Context) MemberExpr(Empty);
+      S = new (Context) MemberExpr(Empty);
       break;
 
     case pch::EXPR_BINARY_OPERATOR:
-      E = new (Context) BinaryOperator(Empty);
+      S = new (Context) BinaryOperator(Empty);
       break;
 
     case pch::EXPR_COMPOUND_ASSIGN_OPERATOR:
-      E = new (Context) CompoundAssignOperator(Empty);
+      S = new (Context) CompoundAssignOperator(Empty);
       break;
 
     case pch::EXPR_CONDITIONAL_OPERATOR:
-      E = new (Context) ConditionalOperator(Empty);
+      S = new (Context) ConditionalOperator(Empty);
       break;
 
     case pch::EXPR_IMPLICIT_CAST:
-      E = new (Context) ImplicitCastExpr(Empty);
+      S = new (Context) ImplicitCastExpr(Empty);
       break;
 
     case pch::EXPR_CSTYLE_CAST:
-      E = new (Context) CStyleCastExpr(Empty);
+      S = new (Context) CStyleCastExpr(Empty);
       break;
 
     case pch::EXPR_COMPOUND_LITERAL:
-      E = new (Context) CompoundLiteralExpr(Empty);
+      S = new (Context) CompoundLiteralExpr(Empty);
       break;
 
     case pch::EXPR_EXT_VECTOR_ELEMENT:
-      E = new (Context) ExtVectorElementExpr(Empty);
+      S = new (Context) ExtVectorElementExpr(Empty);
       break;
 
     case pch::EXPR_INIT_LIST:
-      E = new (Context) InitListExpr(Empty);
+      S = new (Context) InitListExpr(Empty);
       break;
 
     case pch::EXPR_DESIGNATED_INIT:
-      E = DesignatedInitExpr::CreateEmpty(Context, 
+      S = DesignatedInitExpr::CreateEmpty(Context, 
                                      Record[PCHStmtReader::NumExprFields] - 1);
      
       break;
 
     case pch::EXPR_IMPLICIT_VALUE_INIT:
-      E = new (Context) ImplicitValueInitExpr(Empty);
+      S = new (Context) ImplicitValueInitExpr(Empty);
       break;
 
     case pch::EXPR_VA_ARG:
       // FIXME: untested; we need function bodies first
-      E = new (Context) VAArgExpr(Empty);
+      S = new (Context) VAArgExpr(Empty);
       break;
 
     case pch::EXPR_TYPES_COMPATIBLE:
-      E = new (Context) TypesCompatibleExpr(Empty);
+      S = new (Context) TypesCompatibleExpr(Empty);
       break;
 
     case pch::EXPR_CHOOSE:
-      E = new (Context) ChooseExpr(Empty);
+      S = new (Context) ChooseExpr(Empty);
       break;
 
     case pch::EXPR_GNU_NULL:
-      E = new (Context) GNUNullExpr(Empty);
+      S = new (Context) GNUNullExpr(Empty);
       break;
 
     case pch::EXPR_SHUFFLE_VECTOR:
-      E = new (Context) ShuffleVectorExpr(Empty);
+      S = new (Context) ShuffleVectorExpr(Empty);
       break;
       
     case pch::EXPR_BLOCK_DECL_REF:
       // FIXME: untested until we have statement and block support
-      E = new (Context) BlockDeclRefExpr(Empty);
+      S = new (Context) BlockDeclRefExpr(Empty);
       break;
     }
 
-    // We hit an EXPR_STOP, so we're done with this expression.
+    // We hit a STMT_STOP, so we're done with this expression.
     if (Finished)
       break;
 
-    if (E) {
-      unsigned NumSubExprs = Reader.Visit(E);
-      while (NumSubExprs > 0) {
-        ExprStack.pop_back();
-        --NumSubExprs;
+    if (S) {
+      unsigned NumSubStmts = Reader.Visit(S);
+      while (NumSubStmts > 0) {
+        StmtStack.pop_back();
+        --NumSubStmts;
       }
     }
 
     assert(Idx == Record.size() && "Invalid deserialization of expression");
-    ExprStack.push_back(E);
+    StmtStack.push_back(S);
   }
-  assert(ExprStack.size() == 1 && "Extra expressions on stack!");
-  return ExprStack.back();
+  assert(StmtStack.size() == 1 && "Extra expressions on stack!");
+  return StmtStack.back();
+}
+
+Expr *PCHReader::ReadExpr() {
+  return dyn_cast_or_null<Expr>(ReadStmt());
 }
 
 DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {
