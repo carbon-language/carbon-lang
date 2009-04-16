@@ -392,8 +392,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
-  Args.AddAllArgs(CmdArgs, options::OPT_clang_W_Group,
-                  options::OPT_pedantic_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
 
   // Handle -{std, ansi, trigraphs} -- take the last of -{std, ansi}
@@ -542,8 +541,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
-    if (A->getOption().matches(options::OPT_clang_ignored_W_Group) ||
-        A->getOption().matches(options::OPT_clang_ignored_f_Group) ||
+    if (A->getOption().matches(options::OPT_clang_ignored_f_Group) ||
         A->getOption().matches(options::OPT_clang_ignored_m_Group))
       A->claim();
   }
