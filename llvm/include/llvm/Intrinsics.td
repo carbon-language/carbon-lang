@@ -73,6 +73,12 @@ class LLVMAnyPointerType<LLVMType elty>
   LLVMType ElTy = elty;
 } 
 
+// Match the type of another intrinsic parameter.  Number is an index into the
+// list of overloaded types for the intrinsic, excluding all the fixed types.
+// The Number value must refer to a previously listed type.  For example:
+//   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_anyfloat_ty, LLVMMatchType<0>]>
+// has two overloaded types, the 2nd and 3rd arguments.  LLVMMatchType<0>
+// refers to the first overloaded type, which is the 2nd argument.
 class LLVMMatchType<int num>
   : LLVMType<OtherVT>{
   int Number = num;
