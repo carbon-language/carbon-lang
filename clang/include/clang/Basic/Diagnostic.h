@@ -65,7 +65,16 @@ namespace clang {
       MAP_IGNORE  = 1,     //< Map this diagnostic to nothing, ignore it.
       MAP_WARNING = 2,     //< Map this diagnostic to a warning.
       MAP_ERROR   = 3,     //< Map this diagnostic to an error.
-      MAP_FATAL   = 4      //< Map this diagnostic to a fatal error.
+      MAP_FATAL   = 4,     //< Map this diagnostic to a fatal error.
+      
+      /// Map this diagnostic to "warning", but make it immune to
+      /// -pedantic-errors.  This happens when you specify -Wfoo for an
+      /// extension warning.
+      MAP_WARNING_NO_PEDANTIC_ERROR = 5,
+      
+      /// Map this diagnostic to "warning", but make it immune to -Werror and
+      /// -pedantic-errors.  This happens when you specify -Wno-error=foo.
+      MAP_WARNING_NO_WERROR = 6
     };
   }
   

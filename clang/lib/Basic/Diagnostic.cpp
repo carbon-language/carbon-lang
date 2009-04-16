@@ -382,7 +382,20 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
     // If warnings are globally mapped to ignore or error, do it.
     if (IgnoreAllWarnings)
       return Diagnostic::Ignored;
-    Result = WarningsAsErrors ? Diagnostic::Error : Diagnostic::Warning;
+      
+    Result = Diagnostic::Warning;
+    if (WarningsAsErrors)
+      Result = Diagnostic::Error;
+    break;
+  case diag::MAP_WARNING_NO_WERROR:
+    // Diagnostics specified with -Wno-error=foo should be set to warnings, but
+    // not be adjusted by -Werror or -pedantic-errors.
+    Result = Diagnostic::Warning;
+      
+    // If warnings are globally mapped to ignore or error, do it.
+    if (IgnoreAllWarnings)
+      return Diagnostic::Ignored;
+      
     break;
   }
 

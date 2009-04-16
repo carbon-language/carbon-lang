@@ -138,7 +138,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       }
       
       // -Werror=foo maps foo to Error, -Wno-error=foo maps it to Warning.
-      Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING;
+      Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
       OptStart = Specifier;
     }
     
