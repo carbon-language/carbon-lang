@@ -136,12 +136,8 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
 
 void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D, 
                                        CXXCtorType Type) {
-  const llvm::FunctionType *Ty =
-    getTypes().GetFunctionType(getTypes().getFunctionInfo(D), false);
   
-  const char *Name = getMangledCXXCtorName(D, Type);
-  llvm::Function *Fn = 
-    cast<llvm::Function>(GetOrCreateLLVMFunction(Name, Ty, D));
+  llvm::Function *Fn = GetAddrOfCXXConstructor(D, Type);
  
   CodeGenFunction(*this).GenerateCode(D, Fn);
   
@@ -175,4 +171,14 @@ void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
 
   EmitCXXConstructor(D, Ctor_Complete);
   EmitCXXConstructor(D, Ctor_Base);
+}
+
+llvm::Function *
+CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D, 
+                                       CXXCtorType Type) {
+  const llvm::FunctionType *FTy =
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(D), false);
+  
+  const char *Name = getMangledCXXCtorName(D, Type);
+  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, D));
 }

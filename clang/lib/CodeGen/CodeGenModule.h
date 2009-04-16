@@ -236,6 +236,11 @@ public:
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
                                            const char *GlobalName=0);
 
+  /// GetAddrOfCXXConstructor - Return the address of the constructor of the
+  /// given type.
+  llvm::Function *GetAddrOfCXXConstructor(const CXXConstructorDecl *D, 
+                                          CXXCtorType Type);
+  
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
   llvm::Value *getBuiltinLibFunction(unsigned BuiltinID);
