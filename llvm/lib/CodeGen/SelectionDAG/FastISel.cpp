@@ -387,12 +387,14 @@ bool FastISel::SelectCall(User *I) {
       unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(Dir),
                                                  CompileUnit.getFilename(FN));
 
-      // Record the source line.
-      unsigned Line = Subprogram.getLineNumber();
-      unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
-      setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
-      if (!Subprogram.describes(MF.getFunction())) {
+      if (!Subprogram.describes(MF.getFunction()) && !PrevLoc.isUnknown()) {
         // This is a beginning of an inlined function.
+        
+        // Record the source line.
+        unsigned Line = Subprogram.getLineNumber();
+        unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
+        setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
+
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         BuildMI(MBB, DL, II).addImm(LabelID);
         DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
@@ -401,6 +403,10 @@ bool FastISel::SelectCall(User *I) {
                                  PrevLocTpl.Line,
                                  PrevLocTpl.Col);
       } else {
+        // Record the source line.
+        unsigned Line = Subprogram.getLineNumber();
+        setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
+        
         // llvm.dbg.func_start also defines beginning of function scope.
         DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
       }
