@@ -56,6 +56,9 @@ typedef typeof(i? : d0) conditional_operator;
 // CStyleCastExpr
 typedef typeof((void *)0) void_ptr;
 
+// CompoundLiteral
+typedef typeof((struct S){.x = 3.5}) compound_literal;
+
 // ExtVectorElementExpr
 typedef __attribute__(( ext_vector_type(2) )) double double2;
 extern double2 vec2, vec2b;

@@ -61,6 +61,10 @@ conditional_operator *double_ptr4 = &floating;
 // CStyleCastExpr
 void_ptr vp1 = &integer;
 
+// CompoundLiteral
+struct S s;
+compound_literal *sptr = &s;
+
 // ExtVectorElementExpr
 ext_vector_element *double_ptr5 = &floating;
 

@@ -419,7 +419,8 @@ namespace clang {
       EXPR_IMPLICIT_CAST,
       /// \brief A CStyleCastExpr record.
       EXPR_CSTYLE_CAST,
-      /// FIXME: CompoundLiteralExpr
+      /// \brief A CompoundLiteralExpr record.
+      EXPR_COMPOUND_LITERAL,
       /// \brief An ExtVectorElementExpr record.
       EXPR_EXT_VECTOR_ELEMENT,
       /// \brief An InitListExpr record.

@@ -464,6 +464,7 @@ namespace {
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
     void VisitExplicitCastExpr(ExplicitCastExpr *E);
     void VisitCStyleCastExpr(CStyleCastExpr *E);
+    void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
     void VisitExtVectorElementExpr(ExtVectorElementExpr *E);
     void VisitInitListExpr(InitListExpr *E);
     void VisitDesignatedInitExpr(DesignatedInitExpr *E);
@@ -645,6 +646,14 @@ void PCHStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CSTYLE_CAST;
+}
+
+void PCHStmtWriter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getLParenLoc(), Record);
+  Writer.WriteSubExpr(E->getInitializer());
+  Record.push_back(E->isFileScope());
+  Code = pch::EXPR_COMPOUND_LITERAL;
 }
 
 void PCHStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {

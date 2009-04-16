@@ -1137,13 +1137,20 @@ public:
     : Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init),
       FileScope(fileScope) {}
   
+  /// \brief Construct an empty compound literal.
+  explicit CompoundLiteralExpr(EmptyShell Empty)
+    : Expr(CompoundLiteralExprClass, Empty) { }
+
   const Expr *getInitializer() const { return cast<Expr>(Init); }
   Expr *getInitializer() { return cast<Expr>(Init); }
+  void setInitializer(Expr *E) { Init = E; }
 
   bool isFileScope() const { return FileScope; }
-  
+  void setFileScope(bool FS) { FileScope = FS; }
+
   SourceLocation getLParenLoc() const { return LParenLoc; }
-  
+  void setLParenLoc(SourceLocation L) { LParenLoc = L; }
+
   virtual SourceRange getSourceRange() const {
     // FIXME: Init should never be null.
     if (!Init)

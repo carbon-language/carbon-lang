@@ -257,6 +257,7 @@ namespace {
     unsigned VisitImplicitCastExpr(ImplicitCastExpr *E);
     unsigned VisitExplicitCastExpr(ExplicitCastExpr *E);
     unsigned VisitCStyleCastExpr(CStyleCastExpr *E);
+    unsigned VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
     unsigned VisitExtVectorElementExpr(ExtVectorElementExpr *E);
     unsigned VisitInitListExpr(InitListExpr *E);
     unsigned VisitDesignatedInitExpr(DesignatedInitExpr *E);
@@ -444,6 +445,14 @@ unsigned PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
   VisitExplicitCastExpr(E);
   E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  VisitExpr(E);
+  E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setInitializer(ExprStack.back());
+  E->setFileScope(Record[Idx++]);
   return 1;
 }
 
@@ -2101,6 +2110,10 @@ Expr *PCHReader::ReadExpr() {
 
     case pch::EXPR_CSTYLE_CAST:
       E = new (Context) CStyleCastExpr(Empty);
+      break;
+
+    case pch::EXPR_COMPOUND_LITERAL:
+      E = new (Context) CompoundLiteralExpr(Empty);
       break;
 
     case pch::EXPR_EXT_VECTOR_ELEMENT:
