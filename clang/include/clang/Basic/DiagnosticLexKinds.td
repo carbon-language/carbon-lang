@@ -84,7 +84,7 @@ def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
 //===----------------------------------------------------------------------===//
 // Preprocessor Diagnostics
 //===----------------------------------------------------------------------===//
-def pp_hash_warning : Warning<"#warning%0">;
+def pp_hash_warning : Warning<"#warning%0">, InGroup<DiagGroup<"#warnings">>;
 def pp_include_next_in_primary : Warning<
   "#include_next in primary source file">;
 def pp_include_macros_out_of_predefines : Error<
