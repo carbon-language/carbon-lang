@@ -3966,6 +3966,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         if (Fast) {
           unsigned ID = DW->RecordInlinedFnEnd(Subprogram);
           if (ID != 0)
+            // Returned ID is 0 if this is unbalanced "end of inlined
+            // scope". This could happen if optimizer eats dbg intrinsics
+            // or "beginning of inlined scope" is not recoginized due to
+            // missing location info. In such cases, do ignore this region.end.
             DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(), 
                                      getRoot(), ID));
         }
@@ -3999,6 +4003,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         
         if (!Subprogram.describes(MF.getFunction())) {
           // This is a beginning of an inlined function.
+
+          // If llvm.dbg.func.start is seen in a new block before any
+          // llvm.dbg.stoppoint intrinsic then the location info is unknown.
+          // FIXME : Why DebugLoc is reset at the beginning of each block ?
+          if (PrevLoc.isUnknown())
+            return 0;
 
           // Record the source line.
           unsigned Line = Subprogram.getLineNumber();
