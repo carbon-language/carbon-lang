@@ -1187,6 +1187,12 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
     return false;
   }
 
+  // Always use clang for precompiling, regardless of archs. PTH is
+  // platform independent, and this allows the use of the static
+  // analyzer on platforms we don't have full IRgen support for.
+  if (isa<PrecompileJobAction>(JA))
+    return true;
+
   // Finally, don't use clang if this isn't one of the user specified
   // archs to build.
   if (!CCCClangArchs.empty() && !CCCClangArchs.count(ArchName)) {
