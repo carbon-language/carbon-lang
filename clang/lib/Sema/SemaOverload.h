@@ -169,7 +169,7 @@ namespace clang {
 
   /// ImplicitConversionSequence - Represents an implicit conversion
   /// sequence, which may be a standard conversion sequence 
-  // (C++ 13.3.3.1.1), user-defined conversion sequence (C++ 13.3.3.1.2),
+  /// (C++ 13.3.3.1.1), user-defined conversion sequence (C++ 13.3.3.1.2),
   /// or an ellipsis conversion sequence (C++ 13.3.3.1.3).
   struct ImplicitConversionSequence {
     /// Kind - The kind of implicit conversion sequence. BadConversion

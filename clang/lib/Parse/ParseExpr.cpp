@@ -186,6 +186,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         logical-OR-expression
 ///         logical-OR-expression '?' expression ':' conditional-expression
 /// [GNU]   logical-OR-expression '?' ':' conditional-expression
+/// [C++] the third operand is an assignment-expression
 ///
 ///       assignment-expression: [C99 6.5.16]
 ///         conditional-expression
@@ -332,7 +333,17 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
     }
 
     // Parse another leaf here for the RHS of the operator.
-    OwningExprResult RHS(ParseCastExpression(false));
+    // ParseCastExpression works here because all RHS expressions in C have it
+    // as a prefix, at least. However, in C++, an assignment-expression could
+    // be a throw-expression, which is not a valid cast-expression.
+    // Therefore we need some special-casing here.
+    // Also note that the third operand of the conditional operator is
+    // an assignment-expression in C++.
+    OwningExprResult RHS(Actions);
+    if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
+      RHS = ParseAssignmentExpression();
+    else
+      RHS = ParseCastExpression(false);
     if (RHS.isInvalid())
       return move(RHS);
 

@@ -2382,6 +2382,8 @@ public:
     Expr *lex, Expr *&rex, SourceLocation OpLoc);
   QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
+  QualType CXXCheckConditionalOperands( // C++ 5.16
+    Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
 
   /// type checking for vector binary operators.
   inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
@@ -2435,7 +2437,7 @@ public:
   ReferenceCompareResult CompareReferenceRelationship(QualType T1, QualType T2,
                                                       bool& DerivedToBase);
 
-  bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType &declType,
+  bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType declType,
                           ImplicitConversionSequence *ICS = 0,
                           bool SuppressUserConversions = false,
                           bool AllowExplicit = false,

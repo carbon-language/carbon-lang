@@ -2018,7 +2018,7 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 /// conversion functions.
 /// When @p ForceRValue, we unconditionally treat the initializer as an rvalue.
 bool 
-Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, 
+Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
                          ImplicitConversionSequence *ICS,
                          bool SuppressUserConversions,
                          bool AllowExplicit, bool ForceRValue) {

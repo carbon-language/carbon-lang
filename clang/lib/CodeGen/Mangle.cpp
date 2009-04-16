@@ -283,97 +283,98 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
 void 
 CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
   switch (OO) {
-  // <operator-name> ::= nw     # new           
+  // <operator-name> ::= nw     # new
   case OO_New: Out << "nw"; break;
   //              ::= na        # new[]
   case OO_Array_New: Out << "na"; break;
-  //              ::= dl        # delete     
+  //              ::= dl        # delete
   case OO_Delete: Out << "dl"; break;
-  //              ::= da        # delete[]      
+  //              ::= da        # delete[]
   case OO_Array_Delete: Out << "da"; break;
   //              ::= ps        # + (unary)
   //              ::= pl        # +
   case OO_Plus: Out << (Arity == 1? "ps" : "pl"); break;
-  //              ::= ng        # - (unary)     
-  //              ::= mi        # -             
+  //              ::= ng        # - (unary)
+  //              ::= mi        # -
   case OO_Minus: Out << (Arity == 1? "ng" : "mi"); break;
-  //              ::= ad        # & (unary)     
-  //              ::= an        # &             
+  //              ::= ad        # & (unary)
+  //              ::= an        # &
   case OO_Amp: Out << (Arity == 1? "ad" : "an"); break;
-  //              ::= de        # * (unary)     
-  //              ::= ml        # *             
+  //              ::= de        # * (unary)
+  //              ::= ml        # *
   case OO_Star: Out << (Arity == 1? "de" : "ml"); break;
-  //              ::= co        # ~             
+  //              ::= co        # ~
   case OO_Tilde: Out << "co"; break;
-  //              ::= dv        # /             
+  //              ::= dv        # /
   case OO_Slash: Out << "dv"; break;
-  //              ::= rm        # %             
+  //              ::= rm        # %
   case OO_Percent: Out << "rm"; break;
-  //              ::= or        # |   
-  case OO_Pipe: Out << "or"; break;          
-  //              ::= eo        # ^             
+  //              ::= or        # |
+  case OO_Pipe: Out << "or"; break;
+  //              ::= eo        # ^
   case OO_Caret: Out << "eo"; break;
-  //              ::= aS        # = 
+  //              ::= aS        # =
   case OO_Equal: Out << "aS"; break;
-  //              ::= pL        # +=            
+  //              ::= pL        # +=
   case OO_PlusEqual: Out << "pL"; break;
-  //              ::= mI        # -=   
+  //              ::= mI        # -=
   case OO_MinusEqual: Out << "mI"; break;
-  //              ::= mL        # *=     
+  //              ::= mL        # *=
   case OO_StarEqual: Out << "mL"; break;
-  //              ::= dV        # /=    
+  //              ::= dV        # /=
   case OO_SlashEqual: Out << "dV"; break;
-  //              ::= rM        # %=     
-  case OO_PercentEqual: Out << "rM"; break;       
-  //              ::= aN        # &=       
-  case OO_AmpEqual: Out << "aN"; break;     
-  //              ::= oR        # |=   
-  case OO_PipeEqual: Out << "oR"; break;         
-  //              ::= eO        # ^=      
-  case OO_CaretEqual: Out << "eO"; break;      
-  //              ::= ls        # <<     
+  //              ::= rM        # %=
+  case OO_PercentEqual: Out << "rM"; break;
+  //              ::= aN        # &=
+  case OO_AmpEqual: Out << "aN"; break;
+  //              ::= oR        # |=
+  case OO_PipeEqual: Out << "oR"; break;
+  //              ::= eO        # ^=
+  case OO_CaretEqual: Out << "eO"; break;
+  //              ::= ls        # <<
   case OO_LessLess: Out << "ls"; break;
-  //              ::= rs        # >>   
-  case OO_GreaterGreater: Out << "rs"; break;         
-  //              ::= lS        # <<=        
-  case OO_LessLessEqual: Out << "lS"; break;   
-  //              ::= rS        # >>=       
-  case OO_GreaterGreaterEqual: Out << "rS"; break;    
+  //              ::= rs        # >>
+  case OO_GreaterGreater: Out << "rs"; break;
+  //              ::= lS        # <<=
+  case OO_LessLessEqual: Out << "lS"; break;
+  //              ::= rS        # >>=
+  case OO_GreaterGreaterEqual: Out << "rS"; break;
   //              ::= eq        # ==
   case OO_EqualEqual: Out << "eq"; break;
-  //              ::= ne        # !=     
-  case OO_ExclaimEqual: Out << "ne"; break;       
-  //              ::= lt        # <        
+  //              ::= ne        # !=
+  case OO_ExclaimEqual: Out << "ne"; break;
+  //              ::= lt        # <
   case OO_Less: Out << "lt"; break;
-  //              ::= gt        # >             
+  //              ::= gt        # >
   case OO_Greater: Out << "gt"; break;
-  //              ::= le        # <=  
+  //              ::= le        # <=
   case OO_LessEqual: Out << "le"; break;
-  //              ::= ge        # >=    
+  //              ::= ge        # >=
   case OO_GreaterEqual: Out << "ge"; break;
-  //              ::= nt        # !        
+  //              ::= nt        # !
   case OO_Exclaim: Out << "nt"; break;
-  //              ::= aa        # &&  
+  //              ::= aa        # &&
   case OO_AmpAmp: Out << "aa"; break;
-  //              ::= oo        # || 
-  case OO_PipePipe: Out << "oo"; break;           
-  //              ::= pp        # ++   
-  case OO_PlusPlus: Out << "pp"; break;         
-  //              ::= mm        # --   
+  //              ::= oo        # ||
+  case OO_PipePipe: Out << "oo"; break;
+  //              ::= pp        # ++
+  case OO_PlusPlus: Out << "pp"; break;
+  //              ::= mm        # --
   case OO_MinusMinus: Out << "mm"; break;
-  //              ::= cm        # ,      
-  case OO_Comma: Out << "cm"; break;       
-  //              ::= pm        # ->*      
+  //              ::= cm        # ,
+  case OO_Comma: Out << "cm"; break;
+  //              ::= pm        # ->*
   case OO_ArrowStar: Out << "pm"; break;
-  //              ::= pt        # ->    
+  //              ::= pt        # ->
   case OO_Arrow: Out << "pt"; break;
-  //              ::= cl        # ()            
+  //              ::= cl        # ()
   case OO_Call: Out << "cl"; break;
-  //              ::= ix        # []            
+  //              ::= ix        # []
   case OO_Subscript: Out << "ix"; break;
   // UNSUPPORTED: ::= qu        # ?
 
-  case OO_None: 
+  case OO_None:
+  case OO_Conditional:
   case NUM_OVERLOADED_OPERATORS:
     assert(false && "Not an overloaded operator"); 
     break;

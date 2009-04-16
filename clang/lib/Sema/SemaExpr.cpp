@@ -2588,6 +2588,10 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 /// C99 6.5.15
 QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                         SourceLocation QuestionLoc) {
+  // C++ is sufficiently different to merit its own checker.
+  if (getLangOptions().CPlusPlus)
+    return CXXCheckConditionalOperands(Cond, LHS, RHS, QuestionLoc);
+
   UsualUnaryConversions(Cond);
   UsualUnaryConversions(LHS);
   UsualUnaryConversions(RHS);
@@ -2596,17 +2600,13 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   QualType RHSTy = RHS->getType();
 
   // first, check the condition.
-  if (!Cond->isTypeDependent()) {
-    if (!CondTy->isScalarType()) { // C99 6.5.15p2
-      Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
-        << CondTy;
-      return QualType();
-    }
+  if (!CondTy->isScalarType()) { // C99 6.5.15p2
+    Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+      << CondTy;
+    return QualType();
   }
 
   // Now check the two expressions.
-  if ((LHS && LHS->isTypeDependent()) || (RHS && RHS->isTypeDependent()))
-    return Context.DependentTy;
 
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.

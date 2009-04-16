@@ -2026,15 +2026,19 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
          "Use AddConversionCandidate for conversion functions");
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Function)) {
-    // If we get here, it's because we're calling a member function
-    // that is named without a member access expression (e.g.,
-    // "this->f") that was either written explicitly or created
-    // implicitly. This can happen with a qualified call to a member
-    // function, e.g., X::f(). We use a NULL object as the implied
-    // object argument (C++ [over.call.func]p3).
-    AddMethodCandidate(Method, 0, Args, NumArgs, CandidateSet, 
-                       SuppressUserConversions, ForceRValue);
-    return;
+    if (!isa<CXXConstructorDecl>(Method)) {
+      // If we get here, it's because we're calling a member function
+      // that is named without a member access expression (e.g.,
+      // "this->f") that was either written explicitly or created
+      // implicitly. This can happen with a qualified call to a member
+      // function, e.g., X::f(). We use a NULL object as the implied
+      // object argument (C++ [over.call.func]p3).
+      AddMethodCandidate(Method, 0, Args, NumArgs, CandidateSet, 
+                         SuppressUserConversions, ForceRValue);
+      return;
+    }
+    // We treat a constructor like a non-member function, since its object
+    // argument doesn't participate in overload resolution.
   }
 
 
@@ -2127,8 +2131,10 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   const FunctionProtoType* Proto 
     = dyn_cast<FunctionProtoType>(Method->getType()->getAsFunctionType());
   assert(Proto && "Methods without a prototype cannot be overloaded");
-  assert(!isa<CXXConversionDecl>(Method) && 
+  assert(!isa<CXXConversionDecl>(Method) &&
          "Use AddConversionCandidate for conversion functions");
+  assert(!isa<CXXConstructorDecl>(Method) &&
+         "Use AddOverloadCandidate for constructors");
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -2664,7 +2670,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       Op == OO_Plus || (Op == OO_Minus && NumArgs == 2) || Op == OO_Equal ||
       Op == OO_PlusEqual || Op == OO_MinusEqual || Op == OO_Subscript ||
       Op == OO_ArrowStar || Op == OO_PlusPlus || Op == OO_MinusMinus ||
-      (Op == OO_Star && NumArgs == 1)) {
+      (Op == OO_Star && NumArgs == 1) || Op == OO_Conditional) {
     for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
       CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
                                            true,
@@ -2939,6 +2945,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
   case OO_Slash:
   BinaryStar:
+  Conditional:
     // C++ [over.built]p12:
     //
     //   For every pair of promoted arithmetic types L and R, there
@@ -2957,6 +2964,17 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //
     //   where LR is the result of the usual arithmetic conversions
     //   between types L and R.
+    //
+    // C++ [over.built]p24:
+    //
+    //   For every pair of promoted arithmetic types L and R, there exist
+    //   candidate operator functions of the form
+    //
+    //        LR       operator?(bool, L, R);
+    //
+    //   where LR is the result of the usual arithmetic conversions
+    //   between types L and R.
+    // Our candidates ignore the first parameter.
     for (unsigned Left = FirstPromotedArithmeticType; 
          Left < LastPromotedArithmeticType; ++Left) {
       for (unsigned Right = FirstPromotedArithmeticType; 
@@ -3201,6 +3219,25 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_ArrowStar:
     // FIXME: No support for pointer-to-members yet.
     break;
+
+  case OO_Conditional:
+    // Note that we don't consider the first argument, since it has been
+    // contextually converted to bool long ago. The candidates below are
+    // therefore added as binary.
+    //
+    // C++ [over.built]p24:
+    //   For every type T, where T is a pointer or pointer-to-member type,
+    //   there exist candidate operator functions of the form
+    //
+    //        T        operator?(bool, T, T);
+    //
+    // FIXME: pointer-to-member
+    for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin(),
+         E = CandidateTypes.pointer_end(); Ptr != E; ++Ptr) {
+      QualType ParamTypes[2] = { *Ptr, *Ptr };
+      AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+    }
+    goto Conditional;
   }
 }
 
@@ -3852,7 +3889,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Best)) {
-  case OR_Success: {
+    case OR_Success: {
       // We found a built-in operator or an overloaded operator.
       FunctionDecl *FnDecl = Best->Function;
 

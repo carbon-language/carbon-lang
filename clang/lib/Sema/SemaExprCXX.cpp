@@ -1008,3 +1008,293 @@ QualType Sema::CheckPointerToMemberOperands(
     Result.addVolatile();
   return Result;
 }
+
+/// \brief Get the target type of a standard or user-defined conversion.
+static QualType TargetType(const ImplicitConversionSequence &ICS) {
+  assert((ICS.ConversionKind ==
+              ImplicitConversionSequence::StandardConversion ||
+          ICS.ConversionKind ==
+              ImplicitConversionSequence::UserDefinedConversion) &&
+         "function only valid for standard or user-defined conversions");
+  if (ICS.ConversionKind == ImplicitConversionSequence::StandardConversion)
+    return QualType::getFromOpaquePtr(ICS.Standard.ToTypePtr);
+  return QualType::getFromOpaquePtr(ICS.UserDefined.After.ToTypePtr);
+}
+
+/// \brief Try to convert a type to another according to C++0x 5.16p3.
+///
+/// This is part of the parameter validation for the ? operator. If either
+/// value operand is a class type, the two operands are attempted to be
+/// converted to each other. This function does the conversion in one direction.
+/// It emits a diagnostic and returns true only if it finds an ambiguous
+/// conversion.
+static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
+                                SourceLocation QuestionLoc,
+                                ImplicitConversionSequence &ICS)
+{
+  // C++0x 5.16p3
+  //   The process for determining whether an operand expression E1 of type T1
+  //   can be converted to match an operand expression E2 of type T2 is defined
+  //   as follows:
+  //   -- If E2 is an lvalue:
+  if (To->isLvalue(Self.Context) == Expr::LV_Valid) {
+    //   E1 can be converted to match E2 if E1 can be implicitly converted to
+    //   type "lvalue reference to T2", subject to the constraint that in the
+    //   conversion the reference must bind directly to E1.
+    if (!Self.CheckReferenceInit(From,
+                            Self.Context.getLValueReferenceType(To->getType()),
+                            &ICS))
+    {
+      assert((ICS.ConversionKind ==
+                  ImplicitConversionSequence::StandardConversion ||
+              ICS.ConversionKind ==
+                  ImplicitConversionSequence::UserDefinedConversion) &&
+             "expected a definite conversion");
+      bool DirectBinding =
+        ICS.ConversionKind == ImplicitConversionSequence::StandardConversion ?
+        ICS.Standard.DirectBinding : ICS.UserDefined.After.DirectBinding;
+      if (DirectBinding)
+        return false;
+    }
+  }
+  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  //   -- If E2 is an rvalue, or if the conversion above cannot be done:
+  //      -- if E1 and E2 have class type, and the underlying class types are
+  //         the same or one is a base class of the other:
+  QualType FTy = From->getType();
+  QualType TTy = To->getType();
+  const RecordType *FRec = FTy->getAsRecordType();
+  const RecordType *TRec = TTy->getAsRecordType();
+  bool FDerivedFromT = FRec && TRec && Self.IsDerivedFrom(FTy, TTy);
+  if (FRec && TRec && (FRec == TRec ||
+        FDerivedFromT || Self.IsDerivedFrom(TTy, FTy))) {
+    //         E1 can be converted to match E2 if the class of T2 is the
+    //         same type as, or a base class of, the class of T1, and
+    //         [cv2 > cv1].
+    if ((FRec == TRec || FDerivedFromT) && TTy.isAtLeastAsQualifiedAs(FTy)) {
+      // Could still fail if there's no copy constructor.
+      // FIXME: Is this a hard error then, or just a conversion failure? The
+      // standard doesn't say.
+      ICS = Self.TryCopyInitialization(From, TTy);
+    }
+  } else {
+    //     -- Otherwise: E1 can be converted to match E2 if E1 can be
+    //        implicitly converted to the type that expression E2 would have
+    //        if E2 were converted to an rvalue.
+    // First find the decayed type.
+    if (TTy->isFunctionType())
+      TTy = Self.Context.getPointerType(TTy);
+    else if(TTy->isArrayType())
+      TTy = Self.Context.getArrayDecayedType(TTy);
+
+    // Now try the implicit conversion.
+    // FIXME: This doesn't detect ambiguities.
+    ICS = Self.TryImplicitConversion(From, TTy);
+  }
+  return false;
+}
+
+/// \brief Try to find a common type for two according to C++0x 5.16p5.
+///
+/// This is part of the parameter validation for the ? operator. If either
+/// value operand is a class type, overload resolution is used to find a
+/// conversion to a common type.
+static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
+                                    SourceLocation Loc) {
+  Expr *Args[2] = { LHS, RHS };
+  OverloadCandidateSet CandidateSet;
+  Self.AddBuiltinOperatorCandidates(OO_Conditional, Args, 2, CandidateSet);
+
+  OverloadCandidateSet::iterator Best;
+  switch (Self.BestViableFunction(CandidateSet, Best)) {
+    case Sema::OR_Success:
+      // We found a match. Perform the conversions on the arguments and move on.
+      if (Self.PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],
+                                         Best->Conversions[0], "converting") ||
+          Self.PerformImplicitConversion(RHS, Best->BuiltinTypes.ParamTypes[1],
+                                         Best->Conversions[1], "converting"))
+        break;
+      return false;
+
+    case Sema::OR_No_Viable_Function:
+      Self.Diag(Loc, diag::err_typecheck_cond_incompatible_operands)
+        << LHS->getType() << RHS->getType()
+        << LHS->getSourceRange() << RHS->getSourceRange();
+      return true;
+
+    case Sema::OR_Ambiguous:
+      Self.Diag(Loc, diag::err_conditional_ambiguous_ovl)
+        << LHS->getType() << RHS->getType()
+        << LHS->getSourceRange() << RHS->getSourceRange();
+      // FIXME: Print the possible common types by printing the return types
+      // of the viable candidates.
+      break;
+
+    case Sema::OR_Deleted:
+      assert(false && "Conditional operator has only built-in overloads");
+      break;
+  }
+  return true;
+}
+
+/// \brief Check the operands of ?: under C++ semantics.
+///
+/// See C++ [expr.cond]. Note that LHS is never null, even for the GNU x ?: y
+/// extension. In this case, LHS == Cond. (But they're not aliases.)
+QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
+                                           SourceLocation QuestionLoc) {
+  // FIXME: Handle C99's complex types, vector types, block pointers and
+  // Obj-C++ interface pointers.
+
+  // C++0x 5.16p1
+  //   The first expression is contextually converted to bool.
+  if (!Cond->isTypeDependent()) {
+    if (CheckCXXBooleanCondition(Cond))
+      return QualType();
+  }
+
+  // Either of the arguments dependent?
+  if (LHS->isTypeDependent() || RHS->isTypeDependent())
+    return Context.DependentTy;
+
+  // C++0x 5.16p2
+  //   If either the second or the third operand has type (cv) void, ...
+  QualType LTy = LHS->getType();
+  QualType RTy = RHS->getType();
+  bool LVoid = LTy->isVoidType();
+  bool RVoid = RTy->isVoidType();
+  if (LVoid || RVoid) {
+    //   ... then the [l2r] conversions are performed on the second and third
+    //   operands ...
+    DefaultFunctionArrayConversion(LHS);
+    DefaultFunctionArrayConversion(RHS);
+    LTy = LHS->getType();
+    RTy = RHS->getType();
+
+    //   ... and one of the following shall hold:
+    //   -- The second or the third operand (but not both) is a throw-
+    //      expression; the result is of the type of the other and is an rvalue.
+    bool LThrow = isa<CXXThrowExpr>(LHS);
+    bool RThrow = isa<CXXThrowExpr>(RHS);
+    if (LThrow && !RThrow)
+      return RTy;
+    if (RThrow && !LThrow)
+      return LTy;
+
+    //   -- Both the second and third operands have type void; the result is of
+    //      type void and is an rvalue.
+    if (LVoid && RVoid)
+      return Context.VoidTy;
+
+    // Neither holds, error.
+    Diag(QuestionLoc, diag::err_conditional_void_nonvoid)
+      << (LVoid ? RTy : LTy) << (LVoid ? 0 : 1)
+      << LHS->getSourceRange() << RHS->getSourceRange();
+    return QualType();
+  }
+
+  // Neither is void.
+
+  // C++0x 5.16p3
+  //   Otherwise, if the second and third operand have different types, and
+  //   either has (cv) class type, and attempt is made to convert each of those
+  //   operands to the other.
+  if (Context.getCanonicalType(LTy) != Context.getCanonicalType(RTy) &&
+      (LTy->isRecordType() || RTy->isRecordType())) {
+    ImplicitConversionSequence ICSLeftToRight, ICSRightToLeft;
+    // These return true if a single direction is already ambiguous.
+    if (TryClassUnification(*this, LHS, RHS, QuestionLoc, ICSLeftToRight))
+      return QualType();
+    if (TryClassUnification(*this, RHS, LHS, QuestionLoc, ICSRightToLeft))
+      return QualType();
+
+    bool HaveL2R = ICSLeftToRight.ConversionKind !=
+      ImplicitConversionSequence::BadConversion;
+    bool HaveR2L = ICSRightToLeft.ConversionKind !=
+      ImplicitConversionSequence::BadConversion;
+    //   If both can be converted, [...] the program is ill-formed.
+    if (HaveL2R && HaveR2L) {
+      Diag(QuestionLoc, diag::err_conditional_ambiguous)
+        << LTy << RTy << LHS->getSourceRange() << RHS->getSourceRange();
+      return QualType();
+    }
+
+    //   If exactly one conversion is possible, that conversion is applied to
+    //   the chosen operand and the converted operands are used in place of the
+    //   original operands for the remainder of this section.
+    if (HaveL2R) {
+      if (PerformImplicitConversion(LHS, TargetType(ICSLeftToRight),
+                                    ICSLeftToRight, "converting"))
+        return QualType();
+      LTy = LHS->getType();
+    } else if (HaveR2L) {
+      if (PerformImplicitConversion(RHS, TargetType(ICSRightToLeft),
+                                    ICSRightToLeft, "converting"))
+        return QualType();
+      RTy = RHS->getType();
+    }
+  }
+
+  // C++0x 5.16p4
+  //   If the second and third operands are lvalues and have the same type,
+  //   the result is of that type [...]
+  bool Same = Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy);
+  if (Same && LHS->isLvalue(Context) == Expr::LV_Valid &&
+      RHS->isLvalue(Context) == Expr::LV_Valid)
+    return LTy;
+
+  // C++0x 5.16p5
+  //   Otherwise, the result is an rvalue. If the second and third operands
+  //   do not have the same type, and either has (cv) class type, ...
+  if (!Same && (LTy->isRecordType() || RTy->isRecordType())) {
+    //   ... overload resolution is used to determine the conversions (if any)
+    //   to be applied to the operands. If the overload resolution fails, the
+    //   program is ill-formed.
+    if (FindConditionalOverload(*this, LHS, RHS, QuestionLoc))
+      return QualType();
+  }
+
+  // C++0x 5.16p6
+  //   LValue-to-rvalue, array-to-pointer, and function-to-pointer standard
+  //   conversions are performed on the second and third operands.
+  DefaultFunctionArrayConversion(LHS);
+  DefaultFunctionArrayConversion(RHS);
+  LTy = LHS->getType();
+  RTy = RHS->getType();
+
+  //   After those conversions, one of the following shall hold:
+  //   -- The second and third operands have the same type; the result
+  //      is of that type.
+  if (Context.getCanonicalType(LTy) == Context.getCanonicalType(RTy))
+    return LTy;
+
+  //   -- The second and third operands have arithmetic or enumeration type;
+  //      the usual arithmetic conversions are performed to bring them to a
+  //      common type, and the result is of that type.
+  if (LTy->isArithmeticType() && RTy->isArithmeticType()) {
+    UsualArithmeticConversions(LHS, RHS);
+    return LHS->getType();
+  }
+
+  //   -- The second and third operands have pointer type, or one has pointer
+  //      type and the other is a null pointer constant; pointer conversions
+  //      and qualification conversions are performed to bring them to their
+  //      composite pointer type. The result is of the composite pointer type.
+  // Fourth bullet is same for pointers-to-member.
+  if ((LTy->isPointerType() || LTy->isMemberPointerType()) &&
+      RHS->isNullPointerConstant(Context)) {
+    ImpCastExprToType(RHS, LTy); // promote the null to a pointer.
+    return LTy;
+  }
+  if ((RTy->isPointerType() || RTy->isMemberPointerType()) &&
+      LHS->isNullPointerConstant(Context)) {
+    ImpCastExprToType(LHS, RTy); // promote the null to a pointer.
+    return RTy;
+  }
+
+  // FIXME: Handle the case where both are pointers.
+  Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
+    << LHS->getType() << RHS->getType()
+    << LHS->getSourceRange() << RHS->getSourceRange();
+  return QualType();
+}

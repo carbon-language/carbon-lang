@@ -98,6 +98,9 @@ OVERLOADED_OPERATOR(ArrowStar            , "->*" , arrowstar          , false, t
 OVERLOADED_OPERATOR(Arrow                , "->"  , arrow              , true , false, true)
 OVERLOADED_OPERATOR_MULTI(Call           , "()"                       , true , true , true)
 OVERLOADED_OPERATOR_MULTI(Subscript      , "[]"                       , false, true , true)
+// ?: can *not* be overloaded, but we need the overload
+// resolution machinery for it.
+OVERLOADED_OPERATOR_MULTI(Conditional    , "?"                        , false, true , false)
 
 #undef OVERLOADED_OPERATOR_MULTI
 #undef OVERLOADED_OPERATOR

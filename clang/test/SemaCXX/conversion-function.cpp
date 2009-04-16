@@ -50,3 +50,14 @@ public:
   operator const void() const; // expected-warning{{conversion function converting 'class B' to 'void const' will never be used}}
   operator const B(); // expected-warning{{conversion function converting 'class B' to itself will never be used}}
 };
+
+// This used to crash Clang.
+struct Flip;
+struct Flop {
+  Flop();
+  Flop(const Flip&);
+};
+struct Flip {
+  operator Flop() const;
+};
+Flop flop = Flip(); // expected-error {{cannot initialize 'flop' with an rvalue of type 'struct Flip'}}

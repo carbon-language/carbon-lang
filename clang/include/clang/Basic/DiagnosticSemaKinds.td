@@ -1123,11 +1123,19 @@ def err_bad_memptr_rhs : Error<
   "right hand operand to %0 has non pointer-to-member type %1">;
 def err_memptr_rhs_incomplete : Error<
   "right hand operand is a pointer to member of incomplete type %0">;
-
 def err_bad_memptr_lhs : Error<
   "left hand operand to %0 must be a %select{|pointer to }1class "
   "compatible with the right hand operand, but is %2">;
 
+def err_conditional_void_nonvoid : Error<
+  "%select{left|right}1 operand to ? is void, but %select{right|left}1 operand "
+  "is of type %0">;
+def err_conditional_ambiguous : Error<
+  "conditional expression is ambiguous; %0 can be converted to %1 "
+  "and vice versa">;
+def err_conditional_ambiguous_ovl : Error<
+  "conditional expression is ambiguous; %0 and %1 can be converted to several "
+  "common types">;
 
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
