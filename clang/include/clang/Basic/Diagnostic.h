@@ -155,7 +155,7 @@ private:
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into two bits per diagnostic.
-  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/4];
+  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
   
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
   /// fatal error is emitted, and is sticky.
@@ -231,7 +231,7 @@ public:
   /// getDiagnosticMapping - Return the mapping currently set for the specified
   /// diagnostic.
   diag::Mapping getDiagnosticMapping(diag::kind Diag) const {
-    return (diag::Mapping)((DiagMappings[Diag/4] >> (Diag & 3)*2) & 3);
+    return (diag::Mapping)((DiagMappings[Diag/2] >> (Diag & 1)*4) & 7);
   }
   
   bool hasErrorOccurred() const { return ErrorOccurred; }
@@ -302,9 +302,9 @@ public:
   
 private:
   void setDiagnosticMappingInternal(unsigned Diag, unsigned Map) {
-    unsigned char &Slot = DiagMappings[Diag/4];
-    unsigned Bits = (Diag & 3)*2;
-    Slot &= ~(3 << Bits);
+    unsigned char &Slot = DiagMappings[Diag/2];
+    unsigned Bits = (Diag & 1)*4;
+    Slot &= ~(7 << Bits);
     Slot |= Map << Bits;
   }
   
