@@ -48,6 +48,13 @@ struct StaticDiagInfoRec {
   unsigned Class : 3;
   const char *Description;
   const char *OptionGroup;
+  
+  bool operator<(const StaticDiagInfoRec &RHS) const {
+    return DiagID < RHS.DiagID;
+  }
+  bool operator>(const StaticDiagInfoRec &RHS) const {
+    return DiagID > RHS.DiagID;
+  }
 };
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
@@ -65,13 +72,32 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 };
 #undef DIAG
 
+/// GetDiagInfo - Return the StaticDiagInfoRec entry for the specified DiagID,
+/// or null if the ID is invalid.
 static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
-  // FIXME: Binary search.
-  for (unsigned i = 0, e = sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0]);
-       i != e; ++i)
-    if (StaticDiagInfo[i].DiagID == DiagID)
-      return &StaticDiagInfo[i];
-  return 0;
+  unsigned NumDiagEntries = sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0])-1;
+
+  // If assertions are enabled, verify that the StaticDiagInfo array is sorted.
+#ifndef NDEBUG
+  static bool IsFirst = true;
+  if (IsFirst) {
+    for (unsigned i = 1; i != NumDiagEntries; ++i)
+      assert(StaticDiagInfo[i-1] < StaticDiagInfo[i] &&
+             "Improperly sorted diag info");
+    IsFirst = false;
+  }
+#endif
+  
+  // Search the diagnostic table with a binary search.
+  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0 };
+  
+  const StaticDiagInfoRec *Found =
+    std::lower_bound(StaticDiagInfo, StaticDiagInfo + NumDiagEntries, Find);
+  if (Found == StaticDiagInfo + NumDiagEntries ||
+      Found->DiagID != DiagID)
+    return 0;
+    
+  return Found;
 }
 
 static unsigned GetDefaultDiagMapping(unsigned DiagID) {
