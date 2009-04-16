@@ -1041,7 +1041,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     // a scaled index.
     if (Shift.getOpcode() == ISD::SRL && Shift.hasOneUse()) {
       unsigned ScaleLog = 8 - C1->getZExtValue();
-      if (ScaleLog > 0 && ScaleLog < 64 &&
+      if (ScaleLog > 0 && ScaleLog < 4 &&
           C2->getZExtValue() == (UINT64_C(0xff) << ScaleLog)) {
         SDValue Eight = CurDAG->getConstant(8, MVT::i8);
         SDValue Mask = CurDAG->getConstant(0xff, N.getValueType());
