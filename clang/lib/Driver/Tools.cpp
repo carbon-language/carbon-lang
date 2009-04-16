@@ -479,6 +479,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     D.Diag(clang::diag::warn_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
 
+  // Enable -fdiagnostics-show-option by default.
+  if (Args.hasFlag(options::OPT_fdiagnostics_show_option, 
+                   options::OPT_fno_diagnostics_show_option))
+    CmdArgs.push_back("-fdiagnostics-show-option");
+
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
 
