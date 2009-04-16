@@ -1389,6 +1389,16 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         if (SuccSU->getHeight() < SU->getHeight() &&
             (SU->getHeight() - SuccSU->getHeight()) > 1)
           continue;
+        // Skip past COPY_TO_REGCLASS nodes, so that the pseudo edge
+        // constrains whatever is using the copy, instead of the copy
+        // itself. In the case that the copy is coalesced, this
+        // preserves the intent of the pseudo two-address heurietics.
+        while (SuccSU->Succs.size() == 1 &&
+               SuccSU->getNode()->isMachineOpcode() &&
+               SuccSU->getNode()->getMachineOpcode() ==
+                 TargetInstrInfo::COPY_TO_REGCLASS)
+          SuccSU = SuccSU->Succs.front().getSUnit();
+        // Don't constrain non-instruction nodes.
         if (!SuccSU->getNode() || !SuccSU->getNode()->isMachineOpcode())
           continue;
         // Don't constrain nodes with physical register defs if the
