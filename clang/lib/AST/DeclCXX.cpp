@@ -29,6 +29,7 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
+    HasTrivialConstructor(true),
     Bases(0), NumBases(0), Conversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
 
@@ -138,6 +139,11 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
     //   A POD-struct is an aggregate class [...]
     PlainOldData = false;
 
+    // C++ [class.ctor]p5:
+    //   A constructor is trivial if it is an implicitly-declared default
+    //   constructor.
+    HasTrivialConstructor = false;
+    
     // Note when we have a user-declared copy constructor, which will
     // suppress the implicit declaration of a copy constructor.
     if (ConDecl->isCopyConstructor(Context))

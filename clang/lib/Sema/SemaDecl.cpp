@@ -2049,6 +2049,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CurClass->setAggregate(false);
       CurClass->setPOD(false);
       CurClass->setPolymorphic(true);
+      CurClass->setHasTrivialConstructor(false);
     }
   }
 

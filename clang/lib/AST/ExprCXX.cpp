@@ -170,6 +170,10 @@ bool UnaryTypeTraitExpr::EvaluateTrait() const {
     if (const RecordType *RT = QueriedType->getAsRecordType())
       return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
     return false;
+  case UTT_HasTrivialConstructor:
+    if (const RecordType *RT = QueriedType->getAsRecordType())
+      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialConstructor();
+   return false;
   }
 }
 

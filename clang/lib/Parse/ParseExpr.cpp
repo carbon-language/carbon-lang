@@ -481,7 +481,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 ///                   '__has_nothrow_constructor'             [TODO]
 ///                   '__has_trivial_assign'                  [TODO]
 ///                   '__has_trivial_copy'                    [TODO]
-///                   '__has_trivial_constructor'             [TODO]
+///                   '__has_trivial_constructor'
 ///                   '__has_trivial_destructor'              [TODO]
 ///                   '__has_virtual_destructor'              [TODO]
 ///                   '__is_abstract'                         [TODO]
@@ -771,6 +771,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_union:
   case tok::kw___is_polymorphic:
   case tok::kw___is_abstract:
+  case tok::kw___has_trivial_constructor:
     return ParseUnaryTypeTrait();
 
   case tok::at: {

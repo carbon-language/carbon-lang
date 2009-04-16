@@ -369,6 +369,18 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   Class->setAggregate(false);
   Class->setPOD(false);
 
+  if (Virtual) {
+    // C++ [class.ctor]p5:
+    //   A constructor is trivial if its class has no virtual base classes.
+    Class->setHasTrivialConstructor(false);
+  } else {
+    // C++ [class.ctor]p5:
+    //   A constructor is trivial if all the direct base classes of its 
+    //   class have trivial constructors.
+    Class->setHasTrivialConstructor(cast<CXXRecordDecl>(BaseDecl)->
+                                    hasTrivialConstructor());
+  }
+  
   // Create the base specifier.
   // FIXME: Allocate via ASTContext?
   return new CXXBaseSpecifier(SpecifierRange, Virtual, 
@@ -940,6 +952,24 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
   if (RD->isAbstract()) 
     AbstractClassUsageDiagnoser(*this, RD);
     
+  if (RD->hasTrivialConstructor()) {
+    for (RecordDecl::field_iterator i = RD->field_begin(Context), 
+         e = RD->field_end(Context); i != e; ++i) {
+      // All the nonstatic data members must have trivial constructors.
+      QualType FTy = i->getType();
+      while (const ArrayType *AT = Context.getAsArrayType(FTy))
+        FTy = AT->getElementType();
+      
+      if (const RecordType *RT = FTy->getAsRecordType()) {
+        CXXRecordDecl *FieldRD = cast<CXXRecordDecl>(RT->getDecl());
+        if (!FieldRD->hasTrivialConstructor()) {
+          RD->setHasTrivialConstructor(false);
+          break;
+        }
+      }
+    }
+  }
+      
   if (!Template)
     AddImplicitlyDeclaredMembersToClass(RD);
 }

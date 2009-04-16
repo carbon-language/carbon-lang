@@ -225,6 +225,9 @@ class CXXRecordDecl : public RecordDecl {
   /// pure virtual function, (that can come from a base class).
   bool Abstract : 1;
   
+  /// HasTrivialConstructor - True when this class has a trivial constructor
+  bool HasTrivialConstructor : 1;
+  
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -374,6 +377,14 @@ public:
   
   /// setAbstract - Set whether this class is abstract (C++ [class.abstract])
   void setAbstract(bool Abs) { Abstract = Abs; }
+  
+  // hasTrivialConstructor - Whether this class has a trivial constructor
+  // (C++ [class.ctor]p5)
+  bool hasTrivialConstructor() const { return HasTrivialConstructor; }
+  
+  // setHasTrivialConstructor - Set whether this class has a trivial constructor
+  // (C++ [class.ctor]p5)
+  void setHasTrivialConstructor(bool TC) { HasTrivialConstructor = TC; }
   
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.
