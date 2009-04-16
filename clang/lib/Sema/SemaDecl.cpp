@@ -2552,7 +2552,9 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
       if (const ArrayType *Array = Context.getAsArrayType(Type))
         InitType = Array->getElementType();
       if (!Var->hasExternalStorage() && InitType->isRecordType()) {
-        const CXXConstructorDecl *Constructor = 0;
+        CXXRecordDecl *RD = 
+          cast<CXXRecordDecl>(InitType->getAsRecordType()->getDecl());
+        CXXConstructorDecl *Constructor = 0;
         if (!RequireCompleteType(Var->getLocation(), InitType, 
                                     diag::err_invalid_incomplete_type_use))
           Constructor
@@ -2564,6 +2566,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
                                                  IK_Default);
         if (!Constructor)
           Var->setInvalidDecl();
+        else if (!RD->hasTrivialConstructor()) 
+          InitializeVarWithConstructor(Var, Constructor, InitType, 0, 0);
       }
     }
 

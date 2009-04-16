@@ -1418,6 +1418,13 @@ public:
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc);
 
+  /// InitializeVarWithConstructor - Creates an implicit 
+  /// CXXTemporaryObjectExpr and sets it as the passed in VarDecl initializer.
+  void InitializeVarWithConstructor(VarDecl *VD, 
+                                    CXXConstructorDecl *Constructor,
+                                    QualType DeclInitType, 
+                                    Expr **Exprs, unsigned NumExprs);
+  
   /// InitializationKind - Represents which kind of C++ initialization
   /// [dcl.init] a routine is to perform.
   enum InitializationKind {

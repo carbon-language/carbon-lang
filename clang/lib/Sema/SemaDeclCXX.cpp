@@ -1764,6 +1764,18 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
   return DeclPtrTy::make(AliasDecl);
 }
 
+void Sema::InitializeVarWithConstructor(VarDecl *VD, 
+                                        CXXConstructorDecl *Constructor,
+                                        QualType DeclInitType, 
+                                        Expr **Exprs, unsigned NumExprs) {
+  Expr *Temp = 
+    new (Context) CXXTemporaryObjectExpr(Constructor, DeclInitType,
+                                         SourceLocation(), 
+                                         Exprs, NumExprs,
+                                         SourceLocation());
+  VD->setInit(Temp);
+}
+
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
 /// ActOnDeclarator, when a C++ direct initializer is present.
 /// e.g: "int x(1);"
@@ -1827,17 +1839,9 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
     if (!Constructor)
       RealDecl->setInvalidDecl();
     else {
-      // Let clients know that initialization was done with a direct
-      // initializer.
       VDecl->setCXXDirectInitializer(true);
-
-      Expr *Temp = 
-        new (Context) CXXTemporaryObjectExpr(Constructor, DeclInitType,
-                                             SourceLocation(), 
-                                             (Expr**)Exprs.release(), 
-                                             NumExprs,
-                                             SourceLocation());
-      VDecl->setInit(Temp);
+      InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
+                                   (Expr**)Exprs.release(), NumExprs);
     }
     return;
   }
