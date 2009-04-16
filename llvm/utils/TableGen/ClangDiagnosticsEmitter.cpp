@@ -61,10 +61,15 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
 // Warning Group Tables generation
 //===----------------------------------------------------------------------===//
 
+struct GroupInfo {
+  std::vector<const Record*> DiagsInGroup;
+  std::vector<std::string> SubGroups;
+};
+
 void ClangDiagGroupsEmitter::run(std::ostream &OS) {
   // Invert the 1-[0/1] mapping of diags to group into a one to many mapping of
   // groups to diags in the group.
-  std::map<std::string, std::vector<const Record*> > DiagsInGroup;
+  std::map<std::string, GroupInfo> DiagsInGroup;
   
   std::vector<Record*> Diags =
     Records.getAllDerivedDefinitions("Diagnostic");
@@ -72,14 +77,20 @@ void ClangDiagGroupsEmitter::run(std::ostream &OS) {
     const Record *R = Diags[i];
     DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group"));
     if (DI == 0) continue;
-    DiagsInGroup[DI->getDef()->getValueAsString("GroupName")].push_back(R);
+    std::string GroupName = DI->getDef()->getValueAsString("GroupName");
+    DiagsInGroup[GroupName].DiagsInGroup.push_back(R);
   }
   
   // Add all DiagGroup's to the DiagsInGroup list to make sure we pick up empty
   // groups (these are warnings that GCC supports that clang never produces).
   Diags = Records.getAllDerivedDefinitions("DiagGroup");
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
-    DiagsInGroup[Diags[i]->getValueAsString("GroupName")];
+    Record *Group = Diags[i];
+    GroupInfo &GI = DiagsInGroup[Group->getValueAsString("GroupName")];
+    
+    std::vector<Record*> SubGroups = Group->getValueAsListOfDefs("SubGroups");
+    for (unsigned j = 0, e = SubGroups.size(); j != e; ++j)
+      GI.SubGroups.push_back(SubGroups[j]->getValueAsString("GroupName"));
   }
   
   // Walk through the groups emitting an array for each diagnostic of the diags
@@ -87,13 +98,15 @@ void ClangDiagGroupsEmitter::run(std::ostream &OS) {
   OS << "\n#ifdef GET_DIAG_ARRAYS\n";
   unsigned IDNo = 0;
   unsigned MaxLen = 0;
-  for (std::map<std::string, std::vector<const Record*> >::iterator
+  for (std::map<std::string, GroupInfo>::iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     MaxLen = std::max(MaxLen, (unsigned)I->first.size());
     
+    std::vector<const Record*> &V = I->second.DiagsInGroup;
+    if (V.empty()) continue;
+    
     OS << "static const short DiagArray" << IDNo++
        << "[] = { ";
-    std::vector<const Record*> &V = I->second;
     for (unsigned i = 0, e = V.size(); i != e; ++i)
       OS << "diag::" << V[i]->getName() << ", ";
     OS << "-1 };\n";
@@ -103,13 +116,23 @@ void ClangDiagGroupsEmitter::run(std::ostream &OS) {
   // Emit the table now.
   OS << "\n#ifdef GET_DIAG_TABLE\n";
   IDNo = 0;
-  for (std::map<std::string, std::vector<const Record*> >::iterator
+  for (std::map<std::string, GroupInfo>::iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     std::string S = I->first;
     EscapeString(S);
+    // Group option string.
     OS << "  { \"" << S << "\","
-       << std::string(MaxLen-I->first.size()+1, ' ')
-       << "DiagArray" << IDNo++ << " },\n";
+      << std::string(MaxLen-I->first.size()+1, ' ');
+    
+    // Diagnostics in the group.
+    if (I->second.DiagsInGroup.empty())
+      OS << "0, ";
+    else
+      OS << "DiagArray" << IDNo++ << ", ";
+    
+    // FIXME: Subgroups.
+    OS << 0;
+    OS << " },\n";
   }
   OS << "#endif // GET_DIAG_TABLE\n\n";
 }
