@@ -93,7 +93,6 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   else
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
   
-  // FIXME: -fdiagnostics-show-option
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
   for (unsigned i = 0, e = OptWarnings.size(); i != e; ++i) {

@@ -37,15 +37,18 @@ class TextDiagnosticPrinter : public DiagnosticClient {
   bool CaretDiagnostics;
   bool ShowLocation;
   bool PrintRangeInfo;
+  bool PrintDiagnosticOption;
 public:
   TextDiagnosticPrinter(llvm::raw_ostream &os,
                         bool showColumn = true,
                         bool caretDiagnistics = true, bool showLocation = true,
-                        bool printRangeInfo = true)
+                        bool printRangeInfo = true,
+                        bool printDiagnosticOption = true)
     : OS(os), LangOpts(0),
       LastCaretDiagnosticWasNote(false), ShowColumn(showColumn), 
       CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
-      PrintRangeInfo(printRangeInfo) {}
+      PrintRangeInfo(printRangeInfo),
+      PrintDiagnosticOption(printDiagnosticOption) {}
 
   void SetLangOpts(const LangOptions &LO) {
     LangOpts = &LO;

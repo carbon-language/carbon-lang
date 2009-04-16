@@ -303,6 +303,9 @@ static llvm::cl::opt<bool>
 PrintSourceRangeInfo("fprint-source-range-info",
                     llvm::cl::desc("Print source range spans in numeric form"));
 
+static llvm::cl::opt<bool>
+PrintDiagnosticOption("fdiagnostics-show-option",
+             llvm::cl::desc("Print diagnostic name with mappable diagnostics"));
 
 //===----------------------------------------------------------------------===//
 // C++ Visualization.
@@ -2227,7 +2230,8 @@ int main(int argc, char **argv) {
                                                !NoShowColumn,
                                                !NoCaretDiagnostics,
                                                !NoShowLocation,
-                                               PrintSourceRangeInfo);
+                                               PrintSourceRangeInfo,
+                                               PrintDiagnosticOption);
   } else {
     // When checking diagnostics, just buffer them up.
     TextDiagClient = new TextDiagnosticBuffer();

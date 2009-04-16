@@ -65,6 +65,13 @@ static unsigned GetDefaultDiagMapping(unsigned DiagID) {
   return diag::MAP_FATAL;
 }
 
+/// getWarningOptionForDiag - Return the lowest-level warning option that
+/// enables the specified diagnostic.  If there is no -Wfoo flag that controls
+/// the diagnostic, this returns null.
+const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
+  return 0; //"Wfoo";
+}
+
 
 // Diagnostic classes.
 enum {

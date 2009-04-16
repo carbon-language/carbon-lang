@@ -302,6 +302,10 @@ public:
   ///
   static bool isBuiltinExtensionDiag(unsigned DiagID);
   
+  /// getWarningOptionForDiag - Return the lowest-level warning option that
+  /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
+  /// the diagnostic, this returns null.
+  static const char *getWarningOptionForDiag(unsigned DiagID);
 
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by

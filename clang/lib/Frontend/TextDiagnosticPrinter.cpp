@@ -308,6 +308,11 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
   OS.write(OutStr.begin(), OutStr.size());
+  
+  if (PrintDiagnosticOption)
+    if (const char *Option = Diagnostic::getWarningOptionForDiag(Info.getID()))
+      OS << " [-" << Option << ']';
+  
   OS << '\n';
   
   // If caret diagnostics are enabled and we have location, we want to
