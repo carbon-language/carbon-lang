@@ -469,6 +469,8 @@ public:
   
   unsigned getNumArgs() const { return NumArgs; }
 
+  const CXXConstructorDecl* getConstructor() const { return Constructor; }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(TyBeginLoc, RParenLoc);
   }
