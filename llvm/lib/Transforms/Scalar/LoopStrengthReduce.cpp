@@ -489,8 +489,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     return false;   // Void and FP expressions cannot be reduced.
 
   // LSR is not APInt clean, do not touch integers bigger than 64-bits.
-  if (I->getType()->isInteger() && 
-      I->getType()->getPrimitiveSizeInBits() > 64)
+  if (TD->getTypeSizeInBits(I->getType()) > 64)
     return false;
   
   if (!Processed.insert(I))
@@ -2075,16 +2074,11 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.
-        bool TruncOk = false;
-        if (NewCmpTy->isInteger()) {
-          unsigned Bits = NewTyBits;
-          if (ICmpInst::isSignedPredicate(Predicate))
-            --Bits;
-          uint64_t Mask = (1ULL << Bits) - 1;
-          if (((uint64_t)NewCmpVal & Mask) == (uint64_t)NewCmpVal)
-            TruncOk = true;
-        }
-        if (!TruncOk)
+        unsigned Bits = NewTyBits;
+        if (ICmpInst::isSignedPredicate(Predicate))
+          --Bits;
+        uint64_t Mask = (1ULL << Bits) - 1;
+        if (((uint64_t)NewCmpVal & Mask) != (uint64_t)NewCmpVal)
           continue;
       }
 
