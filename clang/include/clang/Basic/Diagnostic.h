@@ -67,14 +67,9 @@ namespace clang {
       MAP_ERROR   = 3,     //< Map this diagnostic to an error.
       MAP_FATAL   = 4,     //< Map this diagnostic to a fatal error.
       
-      /// Map this diagnostic to "warning", but make it immune to
-      /// -pedantic-errors.  This happens when you specify -Wfoo for an
-      /// extension warning.
-      MAP_WARNING_NO_PEDANTIC_ERROR = 5,
-      
-      /// Map this diagnostic to "warning", but make it immune to -Werror and
-      /// -pedantic-errors.  This happens when you specify -Wno-error=foo.
-      MAP_WARNING_NO_WERROR = 6
+      /// Map this diagnostic to "warning", but make it immune to -Werror.  This
+      /// happens when you specify -Wno-error=foo.
+      MAP_WARNING_NO_WERROR = 5
     };
   }
   
@@ -145,6 +140,12 @@ public:
     Ignored, Note, Warning, Error, Fatal
   };
   
+  /// ExtensionHandling - How do we handle otherwise-unmapped extension?  This
+  /// is controlled by -pedantic and -pedantic-errors.
+  enum ExtensionHandling {
+    Ext_Ignore, Ext_Warn, Ext_Error
+  };
+  
   enum ArgumentKind {
     ak_std_string,      // std::string
     ak_c_string,        // const char *
@@ -158,9 +159,10 @@ public:
 
 private: 
   unsigned char AllExtensionsSilenced; // Used by __extension__
-  bool IgnoreAllWarnings;     // Ignore all warnings: -w
-  bool WarningsAsErrors;      // Treat warnings like errors: 
-  bool SuppressSystemWarnings;// Suppress warnings in system headers.
+  bool IgnoreAllWarnings;        // Ignore all warnings: -w
+  bool WarningsAsErrors;         // Treat warnings like errors: 
+  bool SuppressSystemWarnings;   // Suppress warnings in system headers.
+  ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
@@ -226,6 +228,13 @@ public:
   void setSuppressSystemWarnings(bool Val) { SuppressSystemWarnings = Val; }
   bool getSuppressSystemWarnings() const { return SuppressSystemWarnings; }
 
+  /// setExtensionHandlingBehavior - This controls whether otherwise-unmapped
+  /// extension diagnostics are mapped onto ignore/warning/error.  This
+  /// corresponds to the GCC -pedantic and -pedantic-errors option.
+  void setExtensionHandlingBehavior(ExtensionHandling H) {
+    ExtBehavior = H;
+  }
+  
   /// AllExtensionsSilenced - This is a counter bumped when an __extension__
   /// block is encountered.  When non-zero, all extension diagnostics are
   /// entirely silenced, no matter how they are mapped.

@@ -262,6 +262,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
   SuppressSystemWarnings = false;
+  ExtBehavior = Ext_Ignore;
   
   ErrorOccurred = false;
   FatalErrorOccurred = false;
@@ -371,7 +372,15 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
   switch (MappingInfo & 7) {
   default: assert(0 && "Unknown mapping!");
   case diag::MAP_IGNORE:
-    return Diagnostic::Ignored;
+    // Ignore this, unless this is an extension diagnostic and we're mapping
+    // them onto warnings or errors.
+    if (!isBuiltinExtensionDiag(DiagID) ||  // Not an extension
+        ExtBehavior == Ext_Ignore ||        // Extensions ignored anyway
+        (MappingInfo & 8) != 0)             // User explicitly mapped it.
+      return Diagnostic::Ignored;
+    Result = Diagnostic::Warning;
+    if (ExtBehavior == Ext_Error) Result = Diagnostic::Error;
+    break;
   case diag::MAP_ERROR:
     Result = Diagnostic::Error;
     break;
@@ -384,9 +393,18 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
       return Diagnostic::Ignored;
       
     Result = Diagnostic::Warning;
+      
+    // If this is an extension diagnostic and we're in -pedantic-error mode, and
+    // if the user didn't explicitly map it, upgrade to an error.
+    if (ExtBehavior == Ext_Error &&
+        (MappingInfo & 8) == 0 &&
+        isBuiltinExtensionDiag(DiagID))
+      Result = Diagnostic::Error;
+      
     if (WarningsAsErrors)
       Result = Diagnostic::Error;
     break;
+      
   case diag::MAP_WARNING_NO_WERROR:
     // Diagnostics specified with -Wno-error=foo should be set to warnings, but
     // not be adjusted by -Werror or -pedantic-errors.
@@ -634,8 +652,7 @@ static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End) {
 /// {1:form0|%100=[10,20]:form2|%10=[2,4]:form1|:form2}
 static void HandlePluralModifier(unsigned ValNo,
                                  const char *Argument, unsigned ArgumentLen,
-                                 llvm::SmallVectorImpl<char> &OutStr)
-{
+                                 llvm::SmallVectorImpl<char> &OutStr) {
   const char *ArgumentEnd = Argument + ArgumentLen;
   while (1) {
     assert(Argument < ArgumentEnd && "Plural expression didn't match.");
