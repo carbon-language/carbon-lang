@@ -1019,9 +1019,10 @@ namespace {
         // avoid spilling.
         return 0;
       if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
+          Opc == TargetInstrInfo::SUBREG_TO_REG ||
           Opc == TargetInstrInfo::INSERT_SUBREG)
-        // EXTRACT_SUBREG / INSERT_SUBREG should be close to its use to
-        // facilitate coalescing.
+        // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
+        // close to their uses to facilitate coalescing.
         return 0;
       if (SU->NumSuccs == 0 && SU->NumPreds != 0)
         // If SU does not have a register use, i.e. it doesn't produce a value
@@ -1396,11 +1397,12 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           if (canClobberPhysRegDefs(SuccSU, SU, TII, TRI))
             continue;
         }
-        // Don't constrain extract_subreg / insert_subreg; these may be
-        // coalesced away. We want them close to their uses.
+        // Don't constrain EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG;
+        // these may be coalesced away. We want them close to their uses.
         unsigned SuccOpc = SuccSU->getNode()->getMachineOpcode();
         if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
-            SuccOpc == TargetInstrInfo::INSERT_SUBREG)
+            SuccOpc == TargetInstrInfo::INSERT_SUBREG ||
+            SuccOpc == TargetInstrInfo::SUBREG_TO_REG)
           continue;
         if ((!canClobber(SuccSU, DUSU) ||
              (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
