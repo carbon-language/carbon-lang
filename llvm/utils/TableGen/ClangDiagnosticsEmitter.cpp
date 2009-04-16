@@ -50,10 +50,22 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
     OS << "DIAG(" << R.getName() << ", ";
     OS << R.getValueAsDef("Class")->getName();
     OS << ", diag::" << R.getValueAsDef("DefaultMapping")->getName();
+    
+    // Description string.
     OS << ", \"";
     std::string S = R.getValueAsString("Text");
     EscapeString(S);
-    OS << S << "\")\n";
+    OS << S << "\"";
+    
+    // Warning associated with the diagnostic.
+    if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group"))) {
+      S = DI->getDef()->getValueAsString("GroupName");
+      EscapeString(S);
+      OS << ", \"" << S << "\"";
+    } else {
+      OS << ", 0";
+    }
+    OS << ")\n";
   }
 }
 
