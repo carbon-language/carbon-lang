@@ -1827,6 +1827,10 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
     if (!Constructor)
       RealDecl->setInvalidDecl();
     else {
+#if 0
+      // FIXME: Adding the initializer causes an error in 
+      // test/SemaCXX/default2.cpp so it's disabled for now.
+      
       // Let clients know that initialization was done with a direct
       // initializer.
       VDecl->setCXXDirectInitializer(true);
@@ -1838,6 +1842,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                                              NumExprs,
                                              SourceLocation());
       AddInitializerToDecl(Dcl, ExprArg(*this, Temp), /*DirectInit=*/true);
+#endif
     }
     return;
   }
