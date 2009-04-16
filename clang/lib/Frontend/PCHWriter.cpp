@@ -1497,8 +1497,6 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     }
   }
 
-  assert((int)pch::DECL_ATTR == (int)pch::TYPE_ATTR && 
-         "DECL_ATTR/TYPE_ATTR mismatch");
   S.EmitRecord(pch::DECL_ATTR, Record);
 }
 

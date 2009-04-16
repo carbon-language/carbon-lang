@@ -1270,10 +1270,6 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   RecordData Record;
   unsigned Code = Stream.ReadCode();
   switch ((pch::TypeCode)Stream.ReadRecord(Code, Record)) {
-  case pch::TYPE_ATTR:
-    assert(false && "Should never jump to an attribute block");
-    return QualType();
-
   case pch::TYPE_EXT_QUAL: {
     assert(Record.size() == 3 && 
            "Incorrect encoding of extended qualifier type");
