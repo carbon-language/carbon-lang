@@ -3049,8 +3049,6 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
     NameOut += CID->getNameAsString();
     NameOut+= ')';
   }
-  // FIXME. For a method in a category, (CAT_NAME) is inserted here.
-  // Right now! there is not enough info. to do this.
   NameOut += ' ';
   NameOut += D->getSelector().getAsString();
   NameOut += ']';
