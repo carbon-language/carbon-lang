@@ -890,22 +890,9 @@ NextIteration:
   // If we are inserting any phi nodes into this BB, they will already be in the
   // block.
   if (PHINode *APN = dyn_cast<PHINode>(BB->begin())) {
-    // Pred may have multiple edges to BB.  If so, we want to add N incoming
-    // values to each PHI we are inserting on the first time we see the edge.
-    // Check to see if APN already has incoming values from Pred.  This also
-    // prevents us from modifying PHI nodes that are not currently being
-    // inserted.
-    bool HasPredEntries = false;
-    for (unsigned i = 0, e = APN->getNumIncomingValues(); i != e; ++i) {
-      if (APN->getIncomingBlock(i) == Pred) {
-        HasPredEntries = true;
-        break;
-      }
-    }
-    
     // If we have PHI nodes to update, compute the number of edges from Pred to
     // BB.
-    if (!HasPredEntries) {
+    if (PhiToAllocaMap.count(APN)) {
       // We want to be able to distinguish between PHI nodes being inserted by
       // this invocation of mem2reg from those phi nodes that already existed in
       // the IR before mem2reg was run.  We determine that APN is being inserted
@@ -983,14 +970,19 @@ NextIteration:
   succ_iterator I = succ_begin(BB), E = succ_end(BB);
   if (I == E) return;
 
-  // Handle the last successor without using the worklist.  This allows us to
-  // handle unconditional branches directly, for example.
-  --E;
-  for (; I != E; ++I)
-    Worklist.push_back(RenamePassData(*I, BB, IncomingVals));
+  // Keep track of the successors so we don't visit the same successor twice
+  SmallPtrSet<BasicBlock*, 8> VisitedSuccs;
 
+  // Handle the first successor without using the worklist.
+  VisitedSuccs.insert(*I);
   Pred = BB;
   BB = *I;
+  ++I;
+
+  for (; I != E; ++I)
+    if (VisitedSuccs.insert(*I))
+      Worklist.push_back(RenamePassData(*I, Pred, IncomingVals));
+
   goto NextIteration;
 }
 
