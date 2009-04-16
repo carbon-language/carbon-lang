@@ -2118,9 +2118,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       if (!isa<PointerType>(NewCmpTy))
         NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
       else {
-        NewCmpRHS = ConstantInt::get(UIntPtrTy, NewCmpVal);
-        NewCmpRHS = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr,
-                                                 NewCmpRHS, NewCmpTy);
+        ConstantInt *CI = ConstantInt::get(UIntPtrTy, NewCmpVal);
+        NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->Offset,
