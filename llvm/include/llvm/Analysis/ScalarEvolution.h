@@ -32,6 +32,7 @@ namespace llvm {
   class Type;
   class SCEVHandle;
   class ScalarEvolution;
+  class TargetData;
 
   /// SCEV - This class represent an analyzed expression in the program.  These
   /// are reference counted opaque objects that the client is not allowed to
@@ -70,10 +71,6 @@ namespace llvm {
     /// getType - Return the LLVM type of this SCEV expression.
     ///
     virtual const Type *getType() const = 0;
-
-    /// getBitWidth - Get the bit width of the type, if it has one, 0 otherwise.
-    /// 
-    uint32_t getBitWidth() const;
 
     /// isZero - Return true if the expression is a constant zero.
     ///
@@ -198,6 +195,10 @@ namespace llvm {
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution() : FunctionPass(&ID), Impl(0) {}
+
+    // getTargetData - Return the TargetData object contained in this
+    // ScalarEvolution.
+    const TargetData &getTargetData() const;
 
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.

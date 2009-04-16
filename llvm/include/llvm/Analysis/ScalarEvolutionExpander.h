@@ -20,6 +20,8 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
 namespace llvm {
+  class TargetData;
+
   /// SCEVExpander - This class uses information about analyze scalars to
   /// rewrite expressions in canonical form.
   ///
@@ -29,6 +31,7 @@ namespace llvm {
   struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
     LoopInfo &LI;
+    const TargetData &TD;
     std::map<SCEVHandle, Value*> InsertedExpressions;
     std::set<Instruction*> InsertedInstructions;
 
@@ -36,7 +39,8 @@ namespace llvm {
 
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
-    SCEVExpander(ScalarEvolution &se, LoopInfo &li) : SE(se), LI(li) {}
+    SCEVExpander(ScalarEvolution &se, LoopInfo &li, const TargetData &td)
+      : SE(se), LI(li), TD(td) {}
 
     LoopInfo &getLoopInfo() const { return LI; }
 
@@ -75,7 +79,7 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(SCEVHandle SH, Instruction *IP);
+    Value *expandCodeFor(SCEVHandle SH, const Type *Ty, Instruction *IP);
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
     /// we can to share the casts.
@@ -87,7 +91,7 @@ namespace llvm {
                               Value *RHS, Instruction *InsertPt);
   protected:
     Value *expand(SCEV *S);
-    
+
     Value *visitConstant(SCEVConstant *S) {
       return S->getValue();
     }

@@ -50,6 +50,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
@@ -59,7 +60,6 @@
 using namespace llvm;
 
 STATISTIC(NumRemoved , "Number of aux indvars removed");
-STATISTIC(NumPointer , "Number of pointer indvars promoted");
 STATISTIC(NumInserted, "Number of canonical indvars added");
 STATISTIC(NumReplaced, "Number of exit values replaced");
 STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
@@ -67,6 +67,7 @@ STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
 namespace {
   class VISIBILITY_HIDDEN IndVarSimplify : public LoopPass {
     LoopInfo        *LI;
+    TargetData      *TD;
     ScalarEvolution *SE;
     bool Changed;
   public:
@@ -81,6 +82,7 @@ namespace {
      AU.addRequiredID(LCSSAID);
      AU.addRequiredID(LoopSimplifyID);
      AU.addRequired<LoopInfo>();
+     AU.addRequired<TargetData>();
      AU.addPreserved<ScalarEvolution>();
      AU.addPreservedID(LoopSimplifyID);
      AU.addPreservedID(LCSSAID);
@@ -91,8 +93,6 @@ namespace {
 
     void RewriteNonIntegerIVs(Loop *L);
 
-    void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
-                                    SmallPtrSet<Instruction*, 16> &DeadInsts);
     void LinearFunctionTestReplace(Loop *L, SCEVHandle BackedgeTakenCount,
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
@@ -133,97 +133,6 @@ DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts) {
       Changed = true;
     }
   }
-}
-
-
-/// EliminatePointerRecurrence - Check to see if this is a trivial GEP pointer
-/// recurrence.  If so, change it into an integer recurrence, permitting
-/// analysis by the SCEV routines.
-void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
-                                                BasicBlock *Preheader,
-                                     SmallPtrSet<Instruction*, 16> &DeadInsts) {
-  assert(PN->getNumIncomingValues() == 2 && "Noncanonicalized loop!");
-  unsigned PreheaderIdx = PN->getBasicBlockIndex(Preheader);
-  unsigned BackedgeIdx = PreheaderIdx^1;
-  if (GetElementPtrInst *GEPI =
-          dyn_cast<GetElementPtrInst>(PN->getIncomingValue(BackedgeIdx)))
-    if (GEPI->getOperand(0) == PN) {
-      assert(GEPI->getNumOperands() == 2 && "GEP types must match!");
-      DOUT << "INDVARS: Eliminating pointer recurrence: " << *GEPI;
-
-      // Okay, we found a pointer recurrence.  Transform this pointer
-      // recurrence into an integer recurrence.  Compute the value that gets
-      // added to the pointer at every iteration.
-      Value *AddedVal = GEPI->getOperand(1);
-
-      // Insert a new integer PHI node into the top of the block.
-      PHINode *NewPhi = PHINode::Create(AddedVal->getType(),
-                                        PN->getName()+".rec", PN);
-      NewPhi->addIncoming(Constant::getNullValue(NewPhi->getType()), Preheader);
-
-      // Create the new add instruction.
-      Value *NewAdd = BinaryOperator::CreateAdd(NewPhi, AddedVal,
-                                                GEPI->getName()+".rec", GEPI);
-      NewPhi->addIncoming(NewAdd, PN->getIncomingBlock(BackedgeIdx));
-
-      // Update the existing GEP to use the recurrence.
-      GEPI->setOperand(0, PN->getIncomingValue(PreheaderIdx));
-
-      // Update the GEP to use the new recurrence we just inserted.
-      GEPI->setOperand(1, NewAdd);
-
-      // If the incoming value is a constant expr GEP, try peeling out the array
-      // 0 index if possible to make things simpler.
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEPI->getOperand(0)))
-        if (CE->getOpcode() == Instruction::GetElementPtr) {
-          unsigned NumOps = CE->getNumOperands();
-          assert(NumOps > 1 && "CE folding didn't work!");
-          if (CE->getOperand(NumOps-1)->isNullValue()) {
-            // Check to make sure the last index really is an array index.
-            gep_type_iterator GTI = gep_type_begin(CE);
-            for (unsigned i = 1, e = CE->getNumOperands()-1;
-                 i != e; ++i, ++GTI)
-              /*empty*/;
-            if (isa<SequentialType>(*GTI)) {
-              // Pull the last index out of the constant expr GEP.
-              SmallVector<Value*, 8> CEIdxs(CE->op_begin()+1, CE->op_end()-1);
-              Constant *NCE = ConstantExpr::getGetElementPtr(CE->getOperand(0),
-                                                             &CEIdxs[0],
-                                                             CEIdxs.size());
-              Value *Idx[2];
-              Idx[0] = Constant::getNullValue(Type::Int32Ty);
-              Idx[1] = NewAdd;
-              GetElementPtrInst *NGEPI = GetElementPtrInst::Create(
-                  NCE, Idx, Idx + 2,
-                  GEPI->getName(), GEPI);
-              SE->deleteValueFromRecords(GEPI);
-              GEPI->replaceAllUsesWith(NGEPI);
-              GEPI->eraseFromParent();
-              GEPI = NGEPI;
-            }
-          }
-        }
-
-
-      // Finally, if there are any other users of the PHI node, we must
-      // insert a new GEP instruction that uses the pre-incremented version
-      // of the induction amount.
-      if (!PN->use_empty()) {
-        BasicBlock::iterator InsertPos = PN; ++InsertPos;
-        while (isa<PHINode>(InsertPos)) ++InsertPos;
-        Value *PreInc =
-          GetElementPtrInst::Create(PN->getIncomingValue(PreheaderIdx),
-                                    NewPhi, "", InsertPos);
-        PreInc->takeName(PN);
-        PN->replaceAllUsesWith(PreInc);
-      }
-
-      // Delete the old PHI for sure, and the GEP if its otherwise unused.
-      DeadInsts.insert(PN);
-
-      ++NumPointer;
-      Changed = true;
-    }
 }
 
 /// LinearFunctionTestReplace - This method rewrites the exit condition of the
@@ -275,7 +184,7 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = Rewriter.expandCodeFor(RHS,
+  Value *ExitCnt = Rewriter.expandCodeFor(RHS, IndVar->getType(),
                                           Preheader->getTerminator());
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
@@ -307,7 +216,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount) {
 
   // Scan all of the instructions in the loop, looking at those that have
   // extra-loop users and which are recurrences.
-  SCEVExpander Rewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE, *LI, *TD);
 
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
@@ -349,7 +258,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount) {
         Value *InVal = PN->getIncomingValue(i);
         if (!isa<Instruction>(InVal) ||
             // SCEV only supports integer expressions for now.
-            !isa<IntegerType>(InVal->getType()))
+            (!isa<IntegerType>(InVal->getType()) &&
+             !isa<PointerType>(InVal->getType())))
           continue;
 
         // If this pred is for a subloop, not L itself, skip it.
@@ -384,7 +294,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount) {
         // just reuse it.
         Value *&ExitVal = ExitValues[Inst];
         if (!ExitVal)
-          ExitVal = Rewriter.expandCodeFor(ExitValue, InsertPt);
+          ExitVal = Rewriter.expandCodeFor(ExitValue, PN->getType(), InsertPt);
 
         DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal
              << "  LoopVal = " << *Inst << "\n";
@@ -413,23 +323,19 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount) {
 }
 
 void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
-  // First step.  Check to see if there are any trivial GEP pointer recurrences.
+  // First step.  Check to see if there are any floating-point recurrences.
   // If there are, change them into integer recurrences, permitting analysis by
   // the SCEV routines.
   //
   BasicBlock *Header    = L->getHeader();
-  BasicBlock *Preheader = L->getLoopPreheader();
 
   SmallPtrSet<Instruction*, 16> DeadInsts;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
-    if (isa<PointerType>(PN->getType()))
-      EliminatePointerRecurrence(PN, Preheader, DeadInsts);
-    else
-      HandleFloatingPointIV(L, PN, DeadInsts);
+    HandleFloatingPointIV(L, PN, DeadInsts);
   }
 
-  // If the loop previously had a pointer or floating-point IV, ScalarEvolution
+  // If the loop previously had floating-point IV, ScalarEvolution
   // may not have been able to compute a trip count. Now that we've done some
   // re-writing, the trip count may be computable.
   if (Changed)
@@ -442,7 +348,8 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 /// getEffectiveIndvarType - Determine the widest type that the
 /// induction-variable PHINode Phi is cast to.
 ///
-static const Type *getEffectiveIndvarType(const PHINode *Phi) {
+static const Type *getEffectiveIndvarType(const PHINode *Phi,
+                                          const TargetData *TD) {
   const Type *Ty = Phi->getType();
 
   for (Value::use_const_iterator UI = Phi->use_begin(), UE = Phi->use_end();
@@ -453,8 +360,7 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
     else if (const SExtInst *SI = dyn_cast<SExtInst>(UI))
       CandidateType = SI->getDestTy();
     if (CandidateType &&
-        CandidateType->getPrimitiveSizeInBits() >
-          Ty->getPrimitiveSizeInBits())
+        TD->getTypeSizeInBits(CandidateType) > TD->getTypeSizeInBits(Ty))
       Ty = CandidateType;
   }
 
@@ -482,6 +388,7 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi) {
 static const PHINode *TestOrigIVForWrap(const Loop *L,
                                         const BranchInst *BI,
                                         const Instruction *OrigCond,
+                                        const TargetData *TD,
                                         bool &NoSignedWrap,
                                         bool &NoUnsignedWrap,
                                         const ConstantInt* &InitialVal,
@@ -554,7 +461,7 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
     if (const SExtInst *SI = dyn_cast<SExtInst>(CmpLHS)) {
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
-            .isSignedIntN(IncrInst->getType()->getPrimitiveSizeInBits()))
+            .isSignedIntN(TD->getTypeSizeInBits(IncrInst->getType())))
         return 0;
       IncrInst = SI->getOperand(0);
     }
@@ -562,7 +469,7 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
     if (const ZExtInst *ZI = dyn_cast<ZExtInst>(CmpLHS)) {
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
-            .isIntN(IncrInst->getType()->getPrimitiveSizeInBits()))
+            .isIntN(TD->getTypeSizeInBits(IncrInst->getType())))
         return 0;
       IncrInst = ZI->getOperand(0);
     }
@@ -643,7 +550,7 @@ static Value *getSignExtendedTruncVar(const SCEVAddRecExpr *AR,
     SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
   if (LargestType != myType)
     ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, myType);
-  return Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
+  return Rewriter.expandCodeFor(ExtendedAddRec, myType, InsertPt);
 }
 
 static Value *getZeroExtendedTruncVar(const SCEVAddRecExpr *AR,
@@ -660,7 +567,7 @@ static Value *getZeroExtendedTruncVar(const SCEVAddRecExpr *AR,
     SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
   if (LargestType != myType)
     ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, myType);
-  return Rewriter.expandCodeFor(ExtendedAddRec, InsertPt);
+  return Rewriter.expandCodeFor(ExtendedAddRec, myType, InsertPt);
 }
 
 /// allUsesAreSameTyped - See whether all Uses of I are instructions
@@ -682,10 +589,11 @@ static bool allUsesAreSameTyped(unsigned int Opcode, Instruction *I) {
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
+  TD = &getAnalysis<TargetData>();
   SE = &getAnalysis<ScalarEvolution>();
   Changed = false;
 
-  // If there are any floating-point or pointer recurrences, attempt to
+  // If there are any floating-point recurrences, attempt to
   // transform them to use integer recurrences.
   RewriteNonIntegerIVs(L);
 
@@ -712,7 +620,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
-    if (PN->getType()->isInteger()) { // FIXME: when we have fast-math, enable!
+    if (PN->getType()->isInteger() || isa<PointerType>(PN->getType())) {
       SCEVHandle SCEV = SE->getSCEV(PN);
       // FIXME: It is an extremely bad idea to indvar substitute anything more
       // complex than affine induction variables.  Doing so will put expensive
@@ -731,21 +639,26 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   SmallSetVector<const Type *, 4> SizesToInsert;
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount)) {
     LargestType = BackedgeTakenCount->getType();
-    SizesToInsert.insert(BackedgeTakenCount->getType());
+    if (isa<PointerType>(LargestType))
+      LargestType = TD->getIntPtrType();
+    SizesToInsert.insert(LargestType);
   }
   for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
     const PHINode *PN = IndVars[i].first;
-    SizesToInsert.insert(PN->getType());
-    const Type *EffTy = getEffectiveIndvarType(PN);
+    const Type *PNTy = PN->getType();
+    if (isa<PointerType>(PNTy)) PNTy = TD->getIntPtrType();
+    SizesToInsert.insert(PNTy);
+    const Type *EffTy = getEffectiveIndvarType(PN, TD);
+    if (isa<PointerType>(EffTy)) EffTy = TD->getIntPtrType();
     SizesToInsert.insert(EffTy);
     if (!LargestType ||
-        EffTy->getPrimitiveSizeInBits() >
-          LargestType->getPrimitiveSizeInBits())
+        TD->getTypeSizeInBits(EffTy) >
+          TD->getTypeSizeInBits(LargestType))
       LargestType = EffTy;
   }
 
   // Create a rewriter object which we'll use to transform the code with.
-  SCEVExpander Rewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE, *LI, *TD);
 
   // Now that we know the largest of of the induction variables in this loop,
   // insert a canonical induction variable of the largest size.
@@ -769,7 +682,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (Instruction *OrigCond = dyn_cast<Instruction>(BI->getCondition())) {
         // Determine if the OrigIV will ever undergo overflow.
         OrigControllingPHI =
-          TestOrigIVForWrap(L, BI, OrigCond,
+          TestOrigIVForWrap(L, BI, OrigCond, TD,
                             NoSignedWrap, NoUnsignedWrap,
                             InitialVal, IncrVal, LimitVal);
 
@@ -804,7 +717,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
     SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(IndVars.back().second);
-    Value *NewVal = Rewriter.expandCodeFor(AR, InsertPt);
+    Value *NewVal = Rewriter.expandCodeFor(AR, PN->getType(), InsertPt);
     DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *PN
          << "   into = " << *NewVal << "\n";
     NewVal->takeName(PN);

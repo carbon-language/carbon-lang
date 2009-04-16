@@ -1,4 +1,4 @@
-//===- LoopStrengthReduce.cpp - Strength Reduce GEPs in Loops -------------===//
+//===- LoopStrengthReduce.cpp - Strength Reduce IVs in Loops --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,10 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This pass performs a strength reduction on array references inside loops that
-// have as one or more of their components the loop induction variable.  This is
-// accomplished by creating a new Value to hold the initial value of the array
-// access for the first iteration, and then creating a new GEP instruction in
-// the loop to increment the value by the appropriate amount.
+// have as one or more of their components the loop induction variable.
 //
 //===----------------------------------------------------------------------===//
 
@@ -133,17 +130,6 @@ namespace {
     /// dependent on random ordering of pointers in the process.
     SmallVector<SCEVHandle, 16> StrideOrder;
 
-    /// GEPlist - A list of the GEP's that have been remembered in the SCEV
-    /// data structures.  SCEV does not know to update these when the operands
-    /// of the GEP are changed, which means we cannot leave them live across
-    /// loops.
-    SmallVector<GetElementPtrInst *, 16> GEPlist;
-
-    /// CastedValues - As we need to cast values to uintptr_t, this keeps track
-    /// of the casted version of each value.  This is accessed by
-    /// getCastedVersionOf.
-    DenseMap<Value*, Value*> CastedPointers;
-
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
     SmallVector<Instruction*, 16> DeadInsts;
@@ -175,14 +161,10 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
     }
-    
-    /// getCastedVersionOf - Return the specified value casted to uintptr_t.
-    ///
-    Value *getCastedVersionOf(Instruction::CastOps opcode, Value *V);
+
 private:
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
                                SmallPtrSet<Instruction*,16> &Processed);
-    SCEVHandle GetExpressionSCEV(Instruction *E);
     ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                   IVStrideUse* &CondUse,
                                   const SCEVHandle* &CondStride);
@@ -249,24 +231,6 @@ Pass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
   return new LoopStrengthReduce(TLI);
 }
 
-/// getCastedVersionOf - Return the specified value casted to uintptr_t. This
-/// assumes that the Value* V is of integer or pointer type only.
-///
-Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode, 
-                                              Value *V) {
-  if (V->getType() == UIntPtrTy) return V;
-  if (Constant *CB = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(opcode, CB, UIntPtrTy);
-
-  Value *&New = CastedPointers[V];
-  if (New) return New;
-  
-  New = SCEVExpander::InsertCastOfTo(opcode, V, UIntPtrTy);
-  DeadInsts.push_back(cast<Instruction>(New));
-  return New;
-}
-
-
 /// DeleteTriviallyDeadInstructions - If any of the instructions is the
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
@@ -306,74 +270,6 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
     I->eraseFromParent();
     Changed = true;
   }
-}
-
-
-/// GetExpressionSCEV - Compute and return the SCEV for the specified
-/// instruction.
-SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp) {
-  // Pointer to pointer bitcast instructions return the same value as their
-  // operand.
-  if (BitCastInst *BCI = dyn_cast<BitCastInst>(Exp)) {
-    if (SE->hasSCEV(BCI) || !isa<Instruction>(BCI->getOperand(0)))
-      return SE->getSCEV(BCI);
-    SCEVHandle R = GetExpressionSCEV(cast<Instruction>(BCI->getOperand(0)));
-    SE->setSCEV(BCI, R);
-    return R;
-  }
-
-  // Scalar Evolutions doesn't know how to compute SCEV's for GEP instructions.
-  // If this is a GEP that SE doesn't know about, compute it now and insert it.
-  // If this is not a GEP, or if we have already done this computation, just let
-  // SE figure it out.
-  GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Exp);
-  if (!GEP || SE->hasSCEV(GEP))
-    return SE->getSCEV(Exp);
-    
-  // Analyze all of the subscripts of this getelementptr instruction, looking
-  // for uses that are determined by the trip count of the loop.  First, skip
-  // all operands the are not dependent on the IV.
-
-  // Build up the base expression.  Insert an LLVM cast of the pointer to
-  // uintptr_t first.
-  SCEVHandle GEPVal = SE->getUnknown(
-      getCastedVersionOf(Instruction::PtrToInt, GEP->getOperand(0)));
-
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  
-  for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end();
-       i != e; ++i, ++GTI) {
-    // If this is a use of a recurrence that we can analyze, and it comes before
-    // Op does in the GEP operand list, we will handle this when we process this
-    // operand.
-    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-      const StructLayout *SL = TD->getStructLayout(STy);
-      unsigned Idx = cast<ConstantInt>(*i)->getZExtValue();
-      uint64_t Offset = SL->getElementOffset(Idx);
-      GEPVal = SE->getAddExpr(GEPVal,
-                             SE->getIntegerSCEV(Offset, UIntPtrTy));
-    } else {
-      unsigned GEPOpiBits = 
-        (*i)->getType()->getPrimitiveSizeInBits();
-      unsigned IntPtrBits = UIntPtrTy->getPrimitiveSizeInBits();
-      Instruction::CastOps opcode = (GEPOpiBits < IntPtrBits ? 
-          Instruction::SExt : (GEPOpiBits > IntPtrBits ? Instruction::Trunc :
-            Instruction::BitCast));
-      Value *OpVal = getCastedVersionOf(opcode, *i);
-      SCEVHandle Idx = SE->getSCEV(OpVal);
-
-      uint64_t TypeSize = TD->getTypePaddedSize(GTI.getIndexedType());
-      if (TypeSize != 1)
-        Idx = SE->getMulExpr(Idx,
-                            SE->getConstant(ConstantInt::get(UIntPtrTy,
-                                                             TypeSize)));
-      GEPVal = SE->getAddExpr(GEPVal, Idx);
-    }
-  }
-
-  SE->setSCEV(GEP, GEPVal);
-  GEPlist.push_back(GEP);
-  return GEPVal;
 }
 
 /// containsAddRecFromDifferentLoop - Determine whether expression S involves a 
@@ -602,7 +498,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     return true;    // Instruction already handled.
   
   // Get the symbolic expression for this instruction.
-  SCEVHandle ISE = GetExpressionSCEV(I);
+  SCEVHandle ISE = SE->getSCEV(I);
   if (isa<SCEVCouldNotCompute>(ISE)) return false;
   
   // Get the start and stride for this expression.
@@ -722,6 +618,7 @@ namespace {
                                       SmallVectorImpl<Instruction*> &DeadInsts);
     
     Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
+                                       const Type *Ty,
                                        SCEVExpander &Rewriter,
                                        Instruction *IP, Loop *L);
     void dump() const;
@@ -735,6 +632,7 @@ void BasedUser::dump() const {
 }
 
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
+                                              const Type *Ty,
                                               SCEVExpander &Rewriter,
                                               Instruction *IP, Loop *L) {
   // Figure out where we *really* want to insert this code.  In particular, if
@@ -755,7 +653,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
       InsertLoop = InsertLoop->getParentLoop();
     }
   
-  Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
+  Value *Base = Rewriter.expandCodeFor(NewBase, Ty, BaseInsertPt);
 
   // If there is no immediate value, skip the next part.
   if (Imm->isZero())
@@ -768,8 +666,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
   
   // Always emit the immediate (if non-zero) into the same block as the user.
   SCEVHandle NewValSCEV = SE->getAddExpr(SE->getUnknown(Base), Imm);
-  return Rewriter.expandCodeFor(NewValSCEV, IP);
-  
+  return Rewriter.expandCodeFor(NewValSCEV, Ty, IP);
 }
 
 
@@ -809,15 +706,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
         while (isa<PHINode>(InsertPt)) ++InsertPt;
       }
     }
-    Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
-    // Adjust the type back to match the Inst. Note that we can't use InsertPt
-    // here because the SCEVExpander may have inserted the instructions after
-    // that point, in its efforts to avoid inserting redundant expressions.
-    if (isa<PointerType>(OperandValToReplace->getType())) {
-      NewVal = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr,
-                                            NewVal,
-                                            OperandValToReplace->getType());
-    }
+    Value *NewVal = InsertCodeForBaseAtPosition(NewBase,
+                                                OperandValToReplace->getType(),
+                                                Rewriter, InsertPt, L);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
@@ -875,17 +766,8 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
         Instruction *InsertPt = (L->contains(OldLoc->getParent())) ?
                                 PN->getIncomingBlock(i)->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
-        Code = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
-
-        // Adjust the type back to match the PHI. Note that we can't use
-        // InsertPt here because the SCEVExpander may have inserted its
-        // instructions after that point, in its efforts to avoid inserting
-        // redundant expressions.
-        if (isa<PointerType>(PN->getType())) {
-          Code = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr,
-                                              Code,
-                                              PN->getType());
-        }
+        Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
+                                           Rewriter, InsertPt, L);
 
         DOUT << "      Changing PHI use to ";
         DEBUG(WriteAsOperand(*DOUT, Code, /*PrintType=*/false));
@@ -921,16 +803,13 @@ static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
   }
 
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(SU->getValue()))
-      if (TLI && CE->getOpcode() == Instruction::PtrToInt) {
-        Constant *Op0 = CE->getOperand(0);
-        if (GlobalValue *GV = dyn_cast<GlobalValue>(Op0)) {
-          TargetLowering::AddrMode AM;
-          AM.BaseGV = GV;
-          AM.HasBaseReg = HasBaseReg;
-          return TLI->isLegalAddressingMode(AM, UseTy);
-        }
-      }
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(SU->getValue())) {
+      TargetLowering::AddrMode AM;
+      AM.BaseGV = GV;
+      AM.HasBaseReg = HasBaseReg;
+      return TLI->isLegalAddressingMode(AM, UseTy);
+    }
+
   return false;
 }
 
@@ -1591,6 +1470,7 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
 ///
 static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
                                 const Loop *L,
+                                const TargetData *TD,
                                 SCEVExpander &Rewriter) {
   assert(Start->isLoopInvariant(L) && "New PHI start is not loop invariant!");
   assert(Step->isLoopInvariant(L) && "New PHI stride is not loop invariant!");
@@ -1598,9 +1478,11 @@ static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
   BasicBlock *Header = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *LatchBlock = L->getLoopLatch();
+  const Type *Ty = Start->getType();
+  if (isa<PointerType>(Ty)) Ty = TD->getIntPtrType();
 
-  PHINode *PN = PHINode::Create(Start->getType(), "lsr.iv", Header->begin());
-  PN->addIncoming(Rewriter.expandCodeFor(Start, Preheader->getTerminator()),
+  PHINode *PN = PHINode::Create(Ty, "lsr.iv", Header->begin());
+  PN->addIncoming(Rewriter.expandCodeFor(Start, Ty, Preheader->getTerminator()),
                   Preheader);
 
   // If the stride is negative, insert a sub instead of an add for the
@@ -1612,7 +1494,8 @@ static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
 
   // Insert an add instruction right before the terminator corresponding
   // to the back-edge.
-  Value *StepV = Rewriter.expandCodeFor(IncAmount, Preheader->getTerminator());
+  Value *StepV = Rewriter.expandCodeFor(IncAmount, Ty,
+                                        Preheader->getTerminator());
   Instruction *IncV;
   if (isNegative) {
     IncV = BinaryOperator::CreateSub(PN, StepV, "lsr.iv.next",
@@ -1683,7 +1566,7 @@ LoopStrengthReduce::PrepareToStrengthReduceFully(
     SCEVHandle Imm = UsersToProcess[i].Imm;
     SCEVHandle Base = UsersToProcess[i].Base;
     SCEVHandle Start = SE->getAddExpr(CommonExprs, Base, Imm);
-    PHINode *Phi = InsertAffinePhi(Start, Stride, L,
+    PHINode *Phi = InsertAffinePhi(Start, Stride, L, TD,
                                    PreheaderRewriter);
     // Loop over all the users with the same base.
     do {
@@ -1710,7 +1593,7 @@ LoopStrengthReduce::PrepareToStrengthReduceWithNewPhi(
   DOUT << "  Inserting new PHI:\n";
 
   PHINode *Phi = InsertAffinePhi(SE->getUnknown(CommonBaseV),
-                                 Stride, L,
+                                 Stride, L, TD,
                                  PreheaderRewriter);
 
   // Remember this in case a later stride is multiple of this.
@@ -1816,6 +1699,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   bool HaveCommonExprs = !CommonExprs->isZero();
 
   const Type *ReplacedTy = CommonExprs->getType();
+  if (isa<PointerType>(ReplacedTy)) ReplacedTy = TD->getIntPtrType();
 
   // If all uses are addresses, consider sinking the immediate part of the
   // common expression back into uses if they can fit in the immediate fields.
@@ -1829,11 +1713,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // If the immediate part of the common expression is a GV, check if it's
       // possible to fold it into the target addressing mode.
       GlobalValue *GV = 0;
-      if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(Imm)) {
-        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(SU->getValue()))
-          if (CE->getOpcode() == Instruction::PtrToInt)
-            GV = dyn_cast<GlobalValue>(CE->getOperand(0));
-      }
+      if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(Imm))
+        GV = dyn_cast<GlobalValue>(SU->getValue());
       int64_t Offset = 0;
       if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
         Offset = SC->getValue()->getSExtValue();
@@ -1860,8 +1741,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
        << *Stride << ":\n"
        << "  Common base: " << *CommonExprs << "\n";
 
-  SCEVExpander Rewriter(*SE, *LI);
-  SCEVExpander PreheaderRewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE, *LI, *TD);
+  SCEVExpander PreheaderRewriter(*SE, *LI, *TD);
 
   BasicBlock  *Preheader = L->getLoopPreheader();
   Instruction *PreInsertPt = Preheader->getTerminator();
@@ -1882,7 +1763,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                  PreheaderRewriter);
   } else {
     // Emit the initial base value into the loop preheader.
-    CommonBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt);
+    CommonBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, ReplacedTy,
+                                                  PreInsertPt);
 
     // If all uses are addresses, check if it is possible to reuse an IV with a
     // stride that is a factor of this stride. And that the multiple is a number
@@ -1910,19 +1792,21 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     Instruction *Inst = UsersToProcess.back().Inst;
 
     // Emit the code for Base into the preheader.
-    Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt);
+    Value *BaseV = 0;
+    if (!Base->isZero()) {
+      BaseV = PreheaderRewriter.expandCodeFor(Base, Base->getType(),
+                                              PreInsertPt);
 
-    DOUT << "  Examining uses with BASE ";
-    DEBUG(WriteAsOperand(*DOUT, BaseV, /*PrintType=*/false));
-    DOUT << ":\n";
+      DOUT << "  INSERTING code for BASE = " << *Base << ":";
+      if (BaseV->hasName())
+        DOUT << " Result value name = %" << BaseV->getNameStr();
+      DOUT << "\n";
 
-    // If BaseV is a constant other than 0, make sure that it gets inserted into
-    // the preheader, instead of being forward substituted into the uses.  We do
-    // this by forcing a BitCast (noop cast) to be inserted into the preheader 
-    // in this case.
-    if (Constant *C = dyn_cast<Constant>(BaseV)) {
-      if (!C->isNullValue() && !fitsInAddressMode(Base, getAccessType(Inst),
-                                                 TLI, false)) {
+      // If BaseV is a non-zero constant, make sure that it gets inserted into
+      // the preheader, instead of being forward substituted into the uses.  We
+      // do this by forcing a BitCast (noop cast) to be inserted into the
+      // preheader in this case.
+      if (!fitsInAddressMode(Base, getAccessType(Inst), TLI, false)) {
         // We want this constant emitted into the preheader! This is just
         // using cast as a copy so BitCast (no-op cast) is appropriate
         BaseV = new BitCastInst(BaseV, BaseV->getType(), "preheaderinsert",
@@ -1953,10 +1837,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
           User.Inst->moveBefore(LatchBlock->getTerminator());
       }
       if (RewriteOp->getType() != ReplacedTy) {
-        Instruction::CastOps opcode = Instruction::Trunc;
-        if (ReplacedTy->getPrimitiveSizeInBits() ==
-            RewriteOp->getType()->getPrimitiveSizeInBits())
-          opcode = Instruction::BitCast;
+        Instruction::CastOps opcode =
+          CastInst::getCastOpcode(RewriteOp, false, ReplacedTy, false);
+        assert(opcode != Instruction::SExt &&
+               opcode != Instruction::ZExt &&
+               "Unexpected widening cast!");
         RewriteOp = SCEVExpander::InsertCastOfTo(opcode, RewriteOp, ReplacedTy);
       }
 
@@ -1978,8 +1863,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       // If we are reusing the iv, then it must be multiplied by a constant
       // factor to take advantage of the addressing mode scale component.
-      if (!isa<SCEVConstant>(RewriteFactor) ||
-          !cast<SCEVConstant>(RewriteFactor)->isZero()) {
+      if (!RewriteFactor->isZero()) {
         // If we're reusing an IV with a nonzero base (currently this happens
         // only when all reuses are outside the loop) subtract that base here.
         // The base has been used to initialize the PHI node but we don't want
@@ -2010,8 +1894,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // When this use is outside the loop, we earlier subtracted the
         // common base, and are adding it back here.  Use the same expression
         // as before, rather than CommonBaseV, so DAGCombiner will zap it.
-        if (!isa<ConstantInt>(CommonBaseV) ||
-            !cast<ConstantInt>(CommonBaseV)->isZero()) {
+        if (!CommonExprs->isZero()) {
           if (L->contains(User.Inst->getParent()))
             RewriteExpr = SE->getAddExpr(RewriteExpr,
                                        SE->getUnknown(CommonBaseV));
@@ -2022,7 +1905,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       // Now that we know what we need to do, insert code before User for the
       // immediate and any loop-variant expressions.
-      if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isZero())
+      if (BaseV)
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
@@ -2078,6 +1961,9 @@ namespace {
   // e.g.
   // 4, -1, X, 1, 2 ==> 1, -1, 2, 4, X
   struct StrideCompare {
+    const TargetData *TD;
+    explicit StrideCompare(const TargetData *td) : TD(td) {}
+
     bool operator()(const SCEVHandle &LHS, const SCEVHandle &RHS) {
       SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
       SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
@@ -2096,7 +1982,8 @@ namespace {
         // If it's the same value but different type, sort by bit width so
         // that we emit larger induction variables before smaller
         // ones, letting the smaller be re-written in terms of larger ones.
-        return RHS->getBitWidth() < LHS->getBitWidth();
+        return TD->getTypeSizeInBits(RHS->getType()) <
+               TD->getTypeSizeInBits(LHS->getType());
       }
       return LHSC && !RHSC;
     }
@@ -2129,11 +2016,11 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
   ICmpInst::Predicate Predicate = Cond->getPredicate();
   int64_t CmpSSInt = SC->getValue()->getSExtValue();
-  unsigned BitWidth = (*CondStride)->getBitWidth();
+  unsigned BitWidth = TD->getTypeSizeInBits((*CondStride)->getType());
   uint64_t SignBit = 1ULL << (BitWidth-1);
   const Type *CmpTy = Cond->getOperand(0)->getType();
   const Type *NewCmpTy = NULL;
-  unsigned TyBits = CmpTy->getPrimitiveSizeInBits();
+  unsigned TyBits = TD->getTypeSizeInBits(CmpTy);
   unsigned NewTyBits = 0;
   SCEVHandle *NewStride = NULL;
   Value *NewCmpLHS = NULL;
@@ -2185,9 +2072,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         continue;
 
       NewCmpTy = NewCmpLHS->getType();
-      NewTyBits = isa<PointerType>(NewCmpTy)
-        ? UIntPtrTy->getPrimitiveSizeInBits()
-        : NewCmpTy->getPrimitiveSizeInBits();
+      NewTyBits = TD->getTypeSizeInBits(NewCmpTy);
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.
@@ -2604,7 +2489,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 #endif
 
     // Sort the StrideOrder so we process larger strides first.
-    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
+    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare(TD));
 
     // Optimize induction variables.  Some indvar uses can be transformed to use
     // strides that will be needed for other purposes.  A common example of this
@@ -2638,13 +2523,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // We're done analyzing this loop; release all the state we built up for it.
-  CastedPointers.clear();
   IVUsesByStride.clear();
   IVsByStride.clear();
   StrideOrder.clear();
-  for (unsigned i=0; i<GEPlist.size(); i++)
-    SE->deleteValueFromRecords(GEPlist[i]);
-  GEPlist.clear();  
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {

@@ -1,5 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of reloads omited}
-; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of available reloads turned into copies}
+; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of reloads omited} | grep 2
+; RUN: llvm-as < %s | llc -march=x86 -stats |& not grep {Number of available reloads turned into copies}
+; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of machine instrs printed} | grep 39
 ; PR3495
 
 target triple = "i386-pc-linux-gnu"

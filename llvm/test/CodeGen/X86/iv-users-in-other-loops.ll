@@ -1,7 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 -f -o %t
 ; RUN: grep inc %t | count 2
 ; RUN: grep addq %t | count 13
-; RUN: grep leaq %t | count 9
+; RUN: grep leaq %t | count 8
+; RUN: grep leal %t | count 4
 ; RUN: grep movq %t | count 5
 
 ; IV users in each of the loops from other loops shouldn't cause LSR
