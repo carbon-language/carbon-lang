@@ -1868,14 +1868,14 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // it here.
         if (!ReuseIV.Base->isZero()) {
           SCEVHandle typedBase = ReuseIV.Base;
-          if (RewriteExpr->getType()->getPrimitiveSizeInBits() !=
-              ReuseIV.Base->getType()->getPrimitiveSizeInBits()) {
+          if (TD->getTypeSizeInBits(RewriteExpr->getType()) !=
+              TD->getTypeSizeInBits(ReuseIV.Base->getType())) {
             // It's possible the original IV is a larger type than the new IV,
             // in which case we have to truncate the Base.  We checked in
             // RequiresTypeConversion that this is valid.
-            assert (RewriteExpr->getType()->getPrimitiveSizeInBits() <
-                    ReuseIV.Base->getType()->getPrimitiveSizeInBits() &&
-                    "Unexpected lengthening conversion!");
+            assert(TD->getTypeSizeInBits(RewriteExpr->getType()) <
+                   TD->getTypeSizeInBits(ReuseIV.Base->getType()) &&
+                   "Unexpected lengthening conversion!");
             typedBase = SE->getTruncateExpr(ReuseIV.Base, 
                                             RewriteExpr->getType());
           }
