@@ -4016,7 +4016,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
           // Record the source line.
           unsigned Line = Subprogram.getLineNumber();
           setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
-
+          DW->RecordSourceLine(Line, 0, SrcFile);
           // llvm.dbg.func_start also defines beginning of function scope.
           DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
         }
