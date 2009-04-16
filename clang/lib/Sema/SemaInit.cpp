@@ -1234,15 +1234,15 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
         ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, 
                                        cast<FieldDecl>(*Lookup.first),
                                        Field, FieldIndex);
+        D = DIE->getDesignator(DesigIdx);
       } else {
         // Name lookup found something, but it wasn't a field.
         SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
           << FieldName;
         SemaRef.Diag((*Lookup.first)->getLocation(), 
                       diag::note_field_designator_found);
-
-      ++Index;
-      return true;
+        ++Index;
+        return true;
       }
     } else if (!KnownField &&
                cast<RecordDecl>((*Field)->getDeclContext())
