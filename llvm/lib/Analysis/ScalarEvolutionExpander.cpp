@@ -295,9 +295,13 @@ Value *SCEVExpander::visitSignExtendExpr(SCEVSignExtendExpr *S) {
 }
 
 Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
+  const Type *Ty = S->getType();
   Value *LHS = expand(S->getOperand(0));
+  LHS = InsertCastOfTo(CastInst::getCastOpcode(LHS, false, Ty, false), LHS, Ty);
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
     Value *RHS = expand(S->getOperand(i));
+    RHS = InsertCastOfTo(CastInst::getCastOpcode(RHS, false, Ty, false),
+                         RHS, Ty);
     Value *ICmp = new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS, "tmp", InsertPt);
     LHS = SelectInst::Create(ICmp, LHS, RHS, "smax", InsertPt);
   }
@@ -305,9 +309,13 @@ Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
 }
 
 Value *SCEVExpander::visitUMaxExpr(SCEVUMaxExpr *S) {
+  const Type *Ty = S->getType();
   Value *LHS = expand(S->getOperand(0));
+  LHS = InsertCastOfTo(CastInst::getCastOpcode(LHS, false, Ty, false), LHS, Ty);
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
     Value *RHS = expand(S->getOperand(i));
+    RHS = InsertCastOfTo(CastInst::getCastOpcode(RHS, false, Ty, false),
+                         RHS, Ty);
     Value *ICmp = new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS, "tmp", InsertPt);
     LHS = SelectInst::Create(ICmp, LHS, RHS, "umax", InsertPt);
   }
