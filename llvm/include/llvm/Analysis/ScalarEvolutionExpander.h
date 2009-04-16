@@ -83,8 +83,8 @@ namespace llvm {
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
     /// we can to share the casts.
-    static Value *InsertCastOfTo(Instruction::CastOps opcode, Value *V, 
-                                 const Type *Ty);
+    Value *InsertCastOfTo(Instruction::CastOps opcode, Value *V,
+                          const Type *Ty);
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
