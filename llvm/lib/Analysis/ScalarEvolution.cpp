@@ -225,8 +225,6 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot zero extend non-integer value!");
-  assert(Op->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()
-         && "This is not an extending conversion!");
 }
 
 SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
@@ -674,7 +672,12 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty
   return Result;
 }
 
-SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op, const Type *Ty) {
+SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
+                                              const Type *Ty) {
+  assert(getTargetData().getTypeSizeInBits(Op->getType()) <
+         getTargetData().getTypeSizeInBits(Ty) &&
+         "This is not an extending conversion!");
+
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
     const Type *IntTy = Ty;
     if (isa<PointerType>(IntTy)) IntTy = getTargetData().getIntPtrType();

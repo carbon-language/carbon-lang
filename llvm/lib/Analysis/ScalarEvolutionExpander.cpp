@@ -281,17 +281,21 @@ Value *SCEVExpander::visitTruncateExpr(SCEVTruncateExpr *S) {
 }
 
 Value *SCEVExpander::visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
+  const Type *Ty = S->getType();
+  if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
   Value *V = expand(S->getOperand());
   if (isa<PointerType>(V->getType()))
     V = InsertCastOfTo(Instruction::PtrToInt, V, TD.getIntPtrType());
-  return CastInst::CreateZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+  return CastInst::CreateZExtOrBitCast(V, Ty, "tmp.", InsertPt);
 }
 
 Value *SCEVExpander::visitSignExtendExpr(SCEVSignExtendExpr *S) {
+  const Type *Ty = S->getType();
+  if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
   Value *V = expand(S->getOperand());
   if (isa<PointerType>(V->getType()))
     V = InsertCastOfTo(Instruction::PtrToInt, V, TD.getIntPtrType());
-  return CastInst::CreateSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+  return CastInst::CreateSExtOrBitCast(V, Ty, "tmp.", InsertPt);
 }
 
 Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
