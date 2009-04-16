@@ -34,18 +34,25 @@ using namespace clang;
 // Builtin Diagnostic information
 //===----------------------------------------------------------------------===//
 
-// DefaultDiagnosticMappings - This specifies the default mapping for each diag,
-// based on its kind.
+// Diagnostic classes.
+enum {
+  CLASS_NOTE       = 0x01,
+  CLASS_WARNING    = 0x02,
+  CLASS_EXTENSION  = 0x03,
+  CLASS_ERROR      = 0x04
+};
 
 struct StaticDiagInfoRec {
-  unsigned DiagID : 14;
-  unsigned Mapping : 2;
+  unsigned short DiagID;
+  unsigned Mapping : 3;
+  unsigned Class : 3;
+  const char *Description;
   const char *OptionGroup;
 };
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) \
-  { diag::ENUM, DEFAULT_MAPPING-1, GROUP },
+  { diag::ENUM, DEFAULT_MAPPING, CLASS, DESC, GROUP },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -54,7 +61,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticASTKinds.inc"
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
-{ 0, 0, 0 }
+{ 0, 0, 0, 0, 0 }
 };
 #undef DIAG
 
@@ -69,7 +76,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 
 static unsigned GetDefaultDiagMapping(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->Mapping+1;
+    return Info->Mapping;
   return diag::MAP_FATAL;
 }
 
@@ -82,131 +89,13 @@ const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
   return 0;
 }
 
-
-// Diagnostic classes.
-enum {
-  CLASS_NOTE       = 0x01,
-  CLASS_WARNING    = 0x02,
-  CLASS_EXTENSION  = 0x03,
-  CLASS_ERROR      = 0x04
-};
-
-/// DiagnosticClasses - The class for each diagnostic.
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) CLASS,
-static unsigned char DiagnosticClassesCommon[] = {
-#include "clang/Basic/DiagnosticCommonKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesDriver[] = {
-#include "clang/Basic/DiagnosticDriverKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesFrontend[] = {
-#include "clang/Basic/DiagnosticFrontendKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesLex[] = {
-#include "clang/Basic/DiagnosticLexKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesParse[] = {
-#include "clang/Basic/DiagnosticParseKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesAST[] = {
-#include "clang/Basic/DiagnosticASTKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesSema[] = {
-#include "clang/Basic/DiagnosticSemaKinds.inc"
-  0
-};
-static unsigned char DiagnosticClassesAnalysis[] = {
-#include "clang/Basic/DiagnosticAnalysisKinds.inc"
-  0
-};
-#undef DIAG
-
 /// getDiagClass - Return the class field of the diagnostic.
 ///
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
-  assert(DiagID < diag::DIAG_UPPER_LIMIT &&
-         "Diagnostic ID out of range!");
-  unsigned char *Arr;
-  unsigned ArrSize;
-  if (DiagID <= diag::DIAG_START_DRIVER) {
-    DiagID -= 0;
-    Arr = DiagnosticClassesCommon;
-    ArrSize = sizeof(DiagnosticClassesCommon);
-  } else if (DiagID <= diag::DIAG_START_FRONTEND) {
-    DiagID -= diag::DIAG_START_DRIVER + 1;
-    Arr = DiagnosticClassesDriver;
-    ArrSize = sizeof(DiagnosticClassesDriver);
-  } else if (DiagID <= diag::DIAG_START_LEX) {
-    DiagID -= diag::DIAG_START_FRONTEND + 1;
-    Arr = DiagnosticClassesFrontend;
-    ArrSize = sizeof(DiagnosticClassesFrontend);
-  } else if (DiagID <= diag::DIAG_START_PARSE) {
-    DiagID -= diag::DIAG_START_LEX + 1;
-    Arr = DiagnosticClassesLex;
-    ArrSize = sizeof(DiagnosticClassesLex);
-  } else if (DiagID <= diag::DIAG_START_AST) {
-    DiagID -= diag::DIAG_START_PARSE + 1;
-    Arr = DiagnosticClassesParse;
-    ArrSize = sizeof(DiagnosticClassesParse);
-  } else if (DiagID <= diag::DIAG_START_SEMA) {
-    DiagID -= diag::DIAG_START_AST + 1;
-    Arr = DiagnosticClassesAST;
-    ArrSize = sizeof(DiagnosticClassesAST);
-    
-  } else if (DiagID <= diag::DIAG_START_ANALYSIS) {
-    DiagID -= diag::DIAG_START_SEMA + 1;
-    Arr = DiagnosticClassesSema;
-    ArrSize = sizeof(DiagnosticClassesSema);
-  } else {
-    DiagID -= diag::DIAG_START_ANALYSIS + 1;
-    Arr = DiagnosticClassesAnalysis;
-    ArrSize = sizeof(DiagnosticClassesAnalysis);
-  }
-  return DiagID < ArrSize ? Arr[DiagID] : ~0U;
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->Class;
+  return ~0U;
 }
-
-/// DiagnosticText - An english message to print for the diagnostic.  These
-/// should be localized.
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) DESC,
-static const char * const DiagnosticTextCommon[] = {
-#include "clang/Basic/DiagnosticCommonKinds.inc"
-  0
-};
-static const char * const DiagnosticTextDriver[] = {
-#include "clang/Basic/DiagnosticDriverKinds.inc"
-  0
-};
-static const char * const DiagnosticTextFrontend[] = {
-#include "clang/Basic/DiagnosticFrontendKinds.inc"
-  0
-};
-static const char * const DiagnosticTextLex[] = {
-#include "clang/Basic/DiagnosticLexKinds.inc"
-  0
-};
-static const char * const DiagnosticTextParse[] = {
-#include "clang/Basic/DiagnosticParseKinds.inc"
-  0
-};
-static const char * const DiagnosticTextAST[] = {
-#include "clang/Basic/DiagnosticASTKinds.inc"
-  0
-};
-static const char * const DiagnosticTextSema[] = {
-#include "clang/Basic/DiagnosticSemaKinds.inc"
-  0
-};
-static const char * const DiagnosticTextAnalysis[] = {
-#include "clang/Basic/DiagnosticAnalysisKinds.inc"
-  0
-};
-#undef DIAG
 
 //===----------------------------------------------------------------------===//
 // Custom Diagnostic information
@@ -338,22 +227,8 @@ bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID) {
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 const char *Diagnostic::getDescription(unsigned DiagID) const {
-  if (DiagID < diag::DIAG_START_DRIVER)
-    return DiagnosticTextCommon[DiagID];
-  else if (DiagID < diag::DIAG_START_FRONTEND)
-    return DiagnosticTextDriver[DiagID - diag::DIAG_START_DRIVER - 1];
-  else if (DiagID < diag::DIAG_START_LEX)
-    return DiagnosticTextFrontend[DiagID - diag::DIAG_START_FRONTEND - 1];
-  else if (DiagID < diag::DIAG_START_PARSE)
-    return DiagnosticTextLex[DiagID - diag::DIAG_START_LEX - 1];
-  else if (DiagID < diag::DIAG_START_AST)
-    return DiagnosticTextParse[DiagID - diag::DIAG_START_PARSE - 1];
-  else if (DiagID < diag::DIAG_START_SEMA)
-    return DiagnosticTextAST[DiagID - diag::DIAG_START_AST - 1];
-  else if (DiagID < diag::DIAG_START_ANALYSIS)
-    return DiagnosticTextSema[DiagID - diag::DIAG_START_SEMA - 1];
-  else if (DiagID < diag::DIAG_UPPER_LIMIT)
-    return DiagnosticTextAnalysis[DiagID - diag::DIAG_START_ANALYSIS - 1];
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->Description;
   return CustomDiagInfo->getDescription(DiagID);
 }
 
