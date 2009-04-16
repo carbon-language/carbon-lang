@@ -313,7 +313,6 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
 
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
-        assert(Number < j && "Invalid matching number!");
         if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
           OS << "~(ExtendedElementVectorType | " << Number << ")";
         else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
@@ -336,7 +335,6 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
 
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
-        assert(Number < j + RetTys.size() && "Invalid matching number!");
         if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
           OS << "~(ExtendedElementVectorType | " << Number << ")";
         else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))

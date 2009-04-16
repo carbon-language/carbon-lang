@@ -490,22 +490,30 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   }
   
   // Parse the list of return types.
+  std::vector<MVT::SimpleValueType> OverloadedVTs;
   ListInit *TypeList = R->getValueAsListInit("RetTypes");
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     MVT::SimpleValueType VT;
     if (TyEl->isSubClassOf("LLVMMatchType")) {
-      VT = IS.RetVTs[TyEl->getValueAsInt("Number")];
+      unsigned MatchTy = TyEl->getValueAsInt("Number");
+      assert(MatchTy < OverloadedVTs.size() &&
+             "Invalid matching number!");
+      VT = OverloadedVTs[MatchTy];
       // It only makes sense to use the extended and truncated vector element
       // variants with iAny types; otherwise, if the intrinsic is not
       // overloaded, all the types can be specified directly.
       assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
                !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
               VT == MVT::iAny) && "Expected iAny type");
-    } else
+    } else {
       VT = getValueType(TyEl->getValueAsDef("VT"));
-    isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
+    }
+    if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny) {
+      OverloadedVTs.push_back(VT);
+      isOverloaded |= true;
+    }
     IS.RetVTs.push_back(VT);
     IS.RetTypeDefs.push_back(TyEl);
   }
@@ -521,10 +529,9 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     MVT::SimpleValueType VT;
     if (TyEl->isSubClassOf("LLVMMatchType")) {
       unsigned MatchTy = TyEl->getValueAsInt("Number");
-      if (MatchTy < IS.RetVTs.size())
-        VT = IS.RetVTs[MatchTy];
-      else
-        VT = IS.ParamVTs[MatchTy - IS.RetVTs.size()];
+      assert(MatchTy < OverloadedVTs.size() &&
+             "Invalid matching number!");
+      VT = OverloadedVTs[MatchTy];
       // It only makes sense to use the extended and truncated vector element
       // variants with iAny types; otherwise, if the intrinsic is not
       // overloaded, all the types can be specified directly.
@@ -533,7 +540,10 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
               VT == MVT::iAny) && "Expected iAny type");
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));
-    isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
+    if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny) {
+      OverloadedVTs.push_back(VT);
+      isOverloaded |= true;
+    }
     IS.ParamVTs.push_back(VT);
     IS.ParamTypeDefs.push_back(TyEl);
   }
