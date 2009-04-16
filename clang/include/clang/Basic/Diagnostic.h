@@ -61,10 +61,11 @@ namespace clang {
     /// MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop emitting diagnostics after this
     /// one).
     enum Mapping {
-      MAP_IGNORE  = 0,     //< Map this diagnostic to nothing, ignore it.
-      MAP_WARNING = 1,     //< Map this diagnostic to a warning.
-      MAP_ERROR   = 2,     //< Map this diagnostic to an error.
-      MAP_FATAL   = 3      //< Map this diagnostic to a fatal error.
+      // NOTE: 0 means "uncomputed".
+      MAP_IGNORE  = 1,     //< Map this diagnostic to nothing, ignore it.
+      MAP_WARNING = 2,     //< Map this diagnostic to a warning.
+      MAP_ERROR   = 3,     //< Map this diagnostic to an error.
+      MAP_FATAL   = 4      //< Map this diagnostic to a fatal error.
     };
   }
   
@@ -154,8 +155,12 @@ private:
   DiagnosticClient *Client;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
-  /// packed into two bits per diagnostic.
-  unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
+  /// packed into four bits per diagnostic.  The low three bits are the mapping
+  /// (an instance of diag::Mapping), or zero if unset.  The high bit is set
+  /// when the mapping was established as a user mapping.  If the high bit is
+  /// clear, then the low bits are set to the default value, and should be
+  /// mapped with -pedantic, -Werror, etc.
+  mutable unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
   
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
   /// fatal error is emitted, and is sticky.
@@ -219,21 +224,16 @@ public:
   void DecrementAllExtensionsSilenced() { --AllExtensionsSilenced; }
   
   /// setDiagnosticMapping - This allows the client to specify that certain
-  /// warnings are ignored.  Only WARNINGs and EXTENSIONs can be mapped.
+  /// warnings are ignored.  Notes can never be mapped, errors can only be
+  /// mapped to fatal, and WARNINGs and EXTENSIONs can be mapped arbitrarily.
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
     assert(Diag < diag::DIAG_UPPER_LIMIT &&
            "Can only map builtin diagnostics");
     assert((isBuiltinWarningOrExtension(Diag) || Map == diag::MAP_FATAL) &&
            "Cannot map errors!");
-    setDiagnosticMappingInternal(Diag, Map);
+    setDiagnosticMappingInternal(Diag, Map, true);
   }
 
-  /// getDiagnosticMapping - Return the mapping currently set for the specified
-  /// diagnostic.
-  diag::Mapping getDiagnosticMapping(diag::kind Diag) const {
-    return (diag::Mapping)((DiagMappings[Diag/2] >> (Diag & 1)*4) & 7);
-  }
-  
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
 
@@ -301,11 +301,20 @@ public:
   void Clear() { CurDiagID = ~0U; }
   
 private:
-  void setDiagnosticMappingInternal(unsigned Diag, unsigned Map) {
-    unsigned char &Slot = DiagMappings[Diag/2];
-    unsigned Bits = (Diag & 1)*4;
-    Slot &= ~(7 << Bits);
-    Slot |= Map << Bits;
+  /// getDiagnosticMappingInfo - Return the mapping info currently set for the
+  /// specified builtin diagnostic.  This returns the high bit encoding, or zero
+  /// if the field is completely uninitialized.
+  unsigned getDiagnosticMappingInfo(diag::kind Diag) const {
+    return (diag::Mapping)((DiagMappings[Diag/2] >> (Diag & 1)*4) & 15);
+  }
+  
+  void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
+                                    bool isUser) const {
+    if (isUser) Map |= 8;  // Set the high bit for user mappings.
+    unsigned char &Slot = DiagMappings[DiagId/2];
+    unsigned Shift = (DiagId & 1)*4;
+    Slot &= ~(15 << Shift);
+    Slot |= Map << Shift;
   }
   
   /// getDiagnosticLevel - This is an internal implementation helper used when

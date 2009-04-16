@@ -43,7 +43,7 @@ struct DefaultMappingInfo {
 };
 
 static const DefaultMappingInfo DefaultMappings[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC) { diag::ENUM, DEFAULT_MAPPING },
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC) { diag::ENUM, DEFAULT_MAPPING-1 },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -55,6 +55,16 @@ static const DefaultMappingInfo DefaultMappings[] = {
 { 0, 0 }
 };
 #undef DIAG
+
+static unsigned GetDefaultDiagMapping(unsigned DiagID) {
+  // FIXME: Binary search.
+  for (unsigned i = 0, e = sizeof(DefaultMappings)/sizeof(DefaultMappings[0]);
+       i != e; ++i)
+    if (DefaultMappings[i].DiagID == DiagID)
+      return DefaultMappings[i].Mapping+1;
+  return diag::MAP_FATAL;
+}
+
 
 // Diagnostic classes.
 enum {
@@ -264,11 +274,8 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
   
-  // Set all mappings to their default.
-  for (unsigned i = 0, e = sizeof(DefaultMappings)/sizeof(DefaultMappings[0]);
-       i != e; ++i)
-    setDiagnosticMappingInternal(DefaultMappings[i].DiagID,
-                                 DefaultMappings[i].Mapping);
+  // Set all mappings to 'unset'.
+  memset(DiagMappings, 0, sizeof(DiagMappings));
 }
 
 Diagnostic::~Diagnostic() {
@@ -353,7 +360,16 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
   Diagnostic::Level Result = Diagnostic::Fatal;
-  switch (getDiagnosticMapping((diag::kind)DiagID)) {
+  
+  // Get the mapping information, if unset, compute it lazily.
+  unsigned MappingInfo = getDiagnosticMappingInfo((diag::kind)DiagID);
+  if (MappingInfo == 0) {
+    MappingInfo = GetDefaultDiagMapping(DiagID);
+    setDiagnosticMappingInternal(DiagID, MappingInfo, false);
+  }
+  
+  switch (MappingInfo & 7) {
+  default: assert(0 && "Unknown mapping!");
   case diag::MAP_IGNORE:
     return Diagnostic::Ignored;
   case diag::MAP_ERROR:
