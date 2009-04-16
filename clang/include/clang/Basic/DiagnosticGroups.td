@@ -39,7 +39,7 @@ def : DiagGroup<"missing-field-initializers">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"old-style-definition">;
 def : DiagGroup<"packed">;
-def : DiagGroup<"parentheses">;
+def Parentheses : DiagGroup<"parentheses">;
 def : DiagGroup<"pointer-arith">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
@@ -63,12 +63,11 @@ def : DiagGroup<"variadic-macros">;
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
 
-def : DiagGroup<"extra">;
-def : DiagGroup<"">;  // -W
-def : DiagGroup<"most">;
+def Extra : DiagGroup<"extra">;
+def : DiagGroup<"", [Extra]>;  // -W = -Wextra
 
 // Aggregation warning settings.
-def : DiagGroup<"all", [
+def Most : DiagGroup<"most", [
     ImplicitFunctionDeclare,
     Switch,
     Trigraphs,
@@ -78,4 +77,7 @@ def : DiagGroup<"all", [
     UnusedVariable,
     VolatileRegisterVar
  ]>;
+
+// -Wall is -Wmost -Wparentheses
+def : DiagGroup<"all", [Most, Parentheses]>;
 
