@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
@@ -37,7 +38,8 @@ using namespace clang;
 // Declaration deserialization
 //===----------------------------------------------------------------------===//
 namespace {
-  class VISIBILITY_HIDDEN PCHDeclReader {
+  class VISIBILITY_HIDDEN PCHDeclReader 
+    : public DeclVisitor<PCHDeclReader, void> {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
@@ -1479,112 +1481,77 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
 
   case pch::DECL_TRANSLATION_UNIT:
     assert(Index == 0 && "Translation unit must be at index 0");
-    Reader.VisitTranslationUnitDecl(Context.getTranslationUnitDecl());
     D = Context.getTranslationUnitDecl();
-    LoadedDecl(Index, D);
     break;
 
   case pch::DECL_TYPEDEF: {
-    TypedefDecl *Typedef = TypedefDecl::Create(Context, 0, SourceLocation(),
-                                               0, QualType());
-    LoadedDecl(Index, Typedef);
-    Reader.VisitTypedefDecl(Typedef);
-    D = Typedef;
+    D = TypedefDecl::Create(Context, 0, SourceLocation(), 0, QualType());
     break;
   }
 
   case pch::DECL_ENUM: {
-    EnumDecl *Enum = EnumDecl::Create(Context, 0, SourceLocation(), 0, 0);
-    LoadedDecl(Index, Enum);
-    Reader.VisitEnumDecl(Enum);
-    D = Enum;
+    D = EnumDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
   }
 
   case pch::DECL_RECORD: {
-    RecordDecl *Record = RecordDecl::Create(Context, TagDecl::TK_struct, 
-                                            0, SourceLocation(), 0, 0);
-    LoadedDecl(Index, Record);
-    Reader.VisitRecordDecl(Record);
-    D = Record;
+    D = RecordDecl::Create(Context, TagDecl::TK_struct, 0, SourceLocation(), 
+                           0, 0);
     break;
   }
 
   case pch::DECL_ENUM_CONSTANT: {
-    EnumConstantDecl *ECD = EnumConstantDecl::Create(Context, 0, 
-                                                     SourceLocation(), 0,
-                                                     QualType(), 0,
-                                                     llvm::APSInt());
-    LoadedDecl(Index, ECD);
-    Reader.VisitEnumConstantDecl(ECD);
-    D = ECD;
+    D = EnumConstantDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
+                                 0, llvm::APSInt());
     break;
   }
   
   case pch::DECL_FUNCTION: {
-    FunctionDecl *Function = FunctionDecl::Create(Context, 0, SourceLocation(),
-                                                  DeclarationName(), 
-                                                  QualType());
-    LoadedDecl(Index, Function);
-    Reader.VisitFunctionDecl(Function);
-    D = Function;
+    D = FunctionDecl::Create(Context, 0, SourceLocation(), DeclarationName(), 
+                             QualType());
     break;
   }
 
   case pch::DECL_FIELD: {
-    FieldDecl *Field = FieldDecl::Create(Context, 0, SourceLocation(), 0,
-                                         QualType(), 0, false);
-    LoadedDecl(Index, Field);
-    Reader.VisitFieldDecl(Field);
-    D = Field;
+    D = FieldDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 0, 
+                          false);
     break;
   }
 
   case pch::DECL_VAR: {
-    VarDecl *Var = VarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
-                                   VarDecl::None, SourceLocation());
-    LoadedDecl(Index, Var);
-    Reader.VisitVarDecl(Var);
-    D = Var;
+    D = VarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
+                        VarDecl::None, SourceLocation());
     break;
   }
 
   case pch::DECL_PARM_VAR: {
-    ParmVarDecl *Parm = ParmVarDecl::Create(Context, 0, SourceLocation(), 0,
-                                            QualType(), VarDecl::None, 0);
-    LoadedDecl(Index, Parm);
-    Reader.VisitParmVarDecl(Parm);
-    D = Parm;
+    D = ParmVarDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 
+                            VarDecl::None, 0);
     break;
   }
 
   case pch::DECL_ORIGINAL_PARM_VAR: {
-    OriginalParmVarDecl *Parm 
-      = OriginalParmVarDecl::Create(Context, 0, SourceLocation(), 0,
+    D = OriginalParmVarDecl::Create(Context, 0, SourceLocation(), 0,
                                     QualType(), QualType(), VarDecl::None, 
                                     0);
-    LoadedDecl(Index, Parm);
-    Reader.VisitOriginalParmVarDecl(Parm);
-    D = Parm;
     break;
   }
 
   case pch::DECL_FILE_SCOPE_ASM: {
-    FileScopeAsmDecl *Asm = FileScopeAsmDecl::Create(Context, 0,
-                                                     SourceLocation(), 0);
-    LoadedDecl(Index, Asm);
-    Reader.VisitFileScopeAsmDecl(Asm);
-    D = Asm;
+    D = FileScopeAsmDecl::Create(Context, 0, SourceLocation(), 0);
     break;
   }
 
   case pch::DECL_BLOCK: {
-    BlockDecl *Block = BlockDecl::Create(Context, 0, SourceLocation());
-    LoadedDecl(Index, Block);
-    Reader.VisitBlockDecl(Block);
-    D = Block;
+    D = BlockDecl::Create(Context, 0, SourceLocation());
     break;
   }
+  }
+
+  assert(D && "Unknown declaration creating PCH file");
+  if (D) {
+    LoadedDecl(Index, D);
+    Reader.Visit(D);
   }
 
   // If this declaration is also a declaration context, get the
