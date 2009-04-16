@@ -27,7 +27,10 @@ def CLASS_EXTENSION : DiagClass;
 def CLASS_ERROR     : DiagClass;
 
 // Diagnostic Groups.
-class DiagGroup<string Name> { string GroupName = Name; }
+class DiagGroup<string Name, list<DiagGroup> subgroups = []> {
+  string GroupName = Name;
+  list<DiagGroup> SubGroups = subgroups;
+}
 class InGroup<DiagGroup G> { DiagGroup Group = G; }
 //class IsGroup<string Name> { DiagGroup Group = DiagGroup<Name>; }
 
@@ -35,11 +38,7 @@ def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
 def Trigraphs : DiagGroup<"trigraphs">;
 
 // Empty DiagGroups: these are recognized by clang but ignored.
-def : DiagGroup<"extra">;
-def : DiagGroup<"">;  // -W
-
 def : DiagGroup<"aggregate-return">;
-def : DiagGroup<"all">;
 def : DiagGroup<"bad-function-cast">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
@@ -47,7 +46,6 @@ def : DiagGroup<"char-align">;
 def : DiagGroup<"char-subscripts">;
 def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"error-implicit-function-declaration">;
-def : DiagGroup<"error">;
 def : DiagGroup<"format-security">;
 def : DiagGroup<"format=2">;
 def : DiagGroup<"format">;
@@ -58,7 +56,6 @@ def : DiagGroup<"int-to-pointer-cast">;
 def : DiagGroup<"missing-braces">;
 def : DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
-def : DiagGroup<"most">;
 def : DiagGroup<"nested-externs">;
 def : DiagGroup<"newline-eof">;
 def : DiagGroup<"no-#warnings">;
@@ -66,9 +63,6 @@ def : DiagGroup<"no-comment">;
 def : DiagGroup<"format-y2k">;
 def : DiagGroup<"long-long">;
 def : DiagGroup<"missing-field-initializers">;
-def : DiagGroup<"nonportable-cfstrings">;
-def : DiagGroup<"parentheses">;
-def : DiagGroup<"strict-selector-match">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"old-style-definition">;
 def : DiagGroup<"packed">;
@@ -83,16 +77,34 @@ def : DiagGroup<"sign-compare">;
 def : DiagGroup<"strict-overflow=">;
 def : DiagGroup<"strict-overflow">;
 def : DiagGroup<"strict-prototypes">;
-def : DiagGroup<"switch">;
-def : DiagGroup<"uninitialized">;
-def : DiagGroup<"unknown-pragmas">;
+def : DiagGroup<"strict-selector-match">;
+def Switch         : DiagGroup<"switch">;
+def Uninitialized  : DiagGroup<"uninitialized">;
+def UnknownPragmas : DiagGroup<"unknown-pragmas">;
 def : DiagGroup<"unused-function">;
 def : DiagGroup<"unused-label">;
 def : DiagGroup<"unused-parameter">;
-def : DiagGroup<"unused-value">;
-def : DiagGroup<"unused-variable">;
+def UnusedValue    : DiagGroup<"unused-value">;
+def UnusedVariable : DiagGroup<"unused-variable">;
 def : DiagGroup<"variadic-macros">;
+def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
+
+def : DiagGroup<"extra">;
+def : DiagGroup<"">;  // -W
+def : DiagGroup<"most">;
+
+// Aggregation warning settings.
+def : DiagGroup<"all", [
+    ImplicitFunctionDeclare,
+    Switch,
+    Trigraphs,
+    Uninitialized,
+    UnknownPragmas,
+    UnusedValue,
+    UnusedVariable,
+    VolatileRegisterVar
+ ]>;
 
 
 // All diagnostics emitted by the compiler are an indirect subclass of this.
