@@ -227,6 +227,8 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   // If this is a simple linear addrec, emit it now as a special case.
   if (S->isAffine()) {   // {0,+,F} --> i*F
     Value *F = expand(S->getOperand(1));
+    if (isa<PointerType>(F->getType()))
+      F = InsertCastOfTo(Instruction::PtrToInt, F, TD.getIntPtrType());
     
     // IF the step is by one, just return the inserted IV.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(F))
