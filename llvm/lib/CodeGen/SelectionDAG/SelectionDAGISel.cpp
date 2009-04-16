@@ -296,6 +296,12 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   assert((!EnableFastISelAbort || EnableFastISel) &&
          "-fast-isel-abort requires -fast-isel");
 
+  // Do not codegen any 'available_externally' functions at all, they have
+  // definitions outside the translation unit.
+  if (Fn.hasAvailableExternallyLinkage())
+    return false;
+
+
   // Get alias analysis for load/store combining.
   AA = &getAnalysis<AliasAnalysis>();
 
