@@ -194,7 +194,8 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
 
   SourceManager &SM = M->getContext().getSourceManager();
-  uint64_t Line = SM.getInstantiationLineNumber(DefLoc);
+  PresumedLoc PLoc = SM.getPresumedLoc(DefLoc);
+  unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
                                         TyName, DefUnit, Line, 0, 0, 0, 0, Src);
@@ -246,8 +247,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   std::string Name = Decl->getNameAsString();
 
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
-  unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
-  
+  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();  
   
   // Records and classes and unions can all be recursive.  To handle them, we
   // first generate a debug descriptor for the struct as a forward declaration.
@@ -284,7 +285,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
     llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
-    unsigned FieldLine = SM.getInstantiationLineNumber(FieldDefLoc);
+    PresumedLoc PLoc = SM.getPresumedLoc(FieldDefLoc);
+    unsigned FieldLine = PLoc.isInvalid() ? 0 : PLoc.getLine();
+
 
     QualType FType = Field->getType();
     uint64_t FieldSize = 0;
@@ -344,8 +347,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   std::string Name = Decl->getNameAsString();
 
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
-  unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
-  
+  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
+
   
   // To handle recursive interface, we
   // first generate a debug descriptor for the struct as a forward declaration.
@@ -392,7 +396,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
     llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
-    unsigned FieldLine = SM.getInstantiationLineNumber(FieldDefLoc);
+    PresumedLoc PLoc = SM.getPresumedLoc(FieldDefLoc);
+    unsigned FieldLine = PLoc.isInvalid() ? 0 : PLoc.getLine();
+
  
     QualType FType = Field->getType();
     uint64_t FieldSize = 0;
@@ -470,7 +476,9 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   SourceLocation DefLoc = Decl->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
   SourceManager &SM = M->getContext().getSourceManager();
-  unsigned Line = SM.getInstantiationLineNumber(DefLoc);
+  PresumedLoc PLoc = SM.getPresumedLoc(DefLoc);
+  unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
+
   
   // Size and align of the type.
   uint64_t Size = M->getContext().getTypeSize(Ty);
@@ -686,7 +694,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
 
   // Get location information.
   SourceManager &SM = M->getContext().getSourceManager();
-  unsigned Line = SM.getInstantiationLineNumber(Decl->getLocation());
+  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   
   // Create the descriptor for the variable.
@@ -727,7 +736,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   // Create global variable debug descriptor.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
-  unsigned LineNo = SM.getInstantiationLineNumber(Decl->getLocation());
+  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   std::string Name = Decl->getNameAsString();
 
@@ -756,7 +766,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   // Create global variable debug descriptor.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
-  unsigned LineNo = SM.getInstantiationLineNumber(Decl->getLocation());
+  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   std::string Name = Decl->getNameAsString();
 
