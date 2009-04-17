@@ -101,12 +101,17 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
 }
 
 /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
-/// not, emit a diagnostic and consume up until the eom.
-void Preprocessor::CheckEndOfDirective(const char *DirType) {
+/// not, emit a diagnostic and consume up until the eom.  If EnableMacros is
+/// true, then we consider macros that expand to zero tokens as being ok.
+void Preprocessor::CheckEndOfDirective(const char *DirType, bool EnableMacros) {
   Token Tmp;
-  // Lex unexpanded tokens: macros might expand to zero tokens, causing us to
-  // miss diagnosing invalid lines.
-  LexUnexpandedToken(Tmp);
+  // Lex unexpanded tokens for most directives: macros might expand to zero
+  // tokens, causing us to miss diagnosing invalid lines.  Some directives (like
+  // #line) allow empty macros.
+  if (EnableMacros)
+    Lex(Tmp);
+  else
+    LexUnexpandedToken(Tmp);
   
   // There should be no tokens after the directive, but we allow them as an
   // extension.
@@ -694,8 +699,9 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
     FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString(),
                                                   Literal.GetStringLength());
     
-    // Verify that there is nothing after the string, other than EOM.
-    CheckEndOfDirective("line");
+    // Verify that there is nothing after the string, other than EOM.  Because
+    // of C99 6.10.4p5, macros that expand to empty tokens are ok.
+    CheckEndOfDirective("line", true);
   }
   
   SourceMgr.AddLineNote(DigitTok.getLocation(), LineNo, FilenameID);

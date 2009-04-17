@@ -580,8 +580,9 @@ public:
   void HandleDirective(Token &Result);
 
   /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
-  /// not, emit a diagnostic and consume up until the eom.
-  void CheckEndOfDirective(const char *Directive);
+  /// not, emit a diagnostic and consume up until the eom.  If EnableMacros is
+  /// true, then we consider macros that expand to zero tokens as being ok.
+  void CheckEndOfDirective(const char *Directive, bool EnableMacros = false);
   
   /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
   /// current line until the tok::eom token is found.

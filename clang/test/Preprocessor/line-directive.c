@@ -60,3 +60,11 @@ typedef int z1;  // ok
 
 typedef int w;  // expected-note {{previous definition is here}}
 typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}}
+
+
+// This should not produce an "extra tokens at end of #line directive" warning,
+// because #line is allowed to contain expanded tokens.
+#define EMPTY()
+#line 2 "foo.c" EMPTY( )
+#line 2 "foo.c" NONEMPTY( )  // expected-warning{{extra tokens at end of #line directive}}
+
