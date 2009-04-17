@@ -4774,6 +4774,11 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   if (BSI->ReturnType)
     RetTy = QualType(BSI->ReturnType, 0);
 
+  // A reference in a nested block, winds up being a reference in the outer
+  // block.
+  if (CurBlock)
+    CurBlock->hasBlockDeclRefExprs |= BSI->hasBlockDeclRefExprs;
+
   llvm::SmallVector<QualType, 8> ArgTypes;
   for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)
     ArgTypes.push_back(BSI->Params[i]->getType());

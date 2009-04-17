@@ -21,7 +21,7 @@ T somefunction() {
 
 	I(^{ });
 
-	return ^{printf("\nClosure\n"); };  // expected-error {{returning block that lives on the local stack}}
+	return ^{printf("\nClosure\n"); };
 }
 void test2() {
 	int x = 4;
@@ -46,7 +46,7 @@ foo:
 
 
 void (^test3())(void) { 
-  return ^{};   // expected-error {{returning block that lives on the local stack}}
+  return ^{};
 }
 
 void test4() {

@@ -41,13 +41,13 @@ CL foo() {
       return 2; // expected-warning {{incompatible integer to pointer conversion returning 'int', expected 'char *'}}
   };
 
-  return ^{ return 1; }; // expected-warning {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}} expected-error {{returning block that lives on the local stack}}
+  return ^{ return 1; }; // expected-warning {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}}
 }
 
 typedef int (^CL2)(void);
 
 CL2 foo2() {
-  return ^{ return 1; }; // expected-error {{returning block that lives on the local stack}}
+  return ^{ return 1; };
 }
 
 typedef unsigned int * uintptr_t;
@@ -82,4 +82,13 @@ void foo4() {
   
   int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; }; // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
   // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
+}
+
+typedef void (^bptr)(void);
+
+bptr foo5(int j) {
+  __block int i;
+  if (j)
+    return ^{ ^{ i=0; }(); };  // expected-error {{returning block that lives on the local stack}}
+  return ^{ i=0; };  // expected-error {{returning block that lives on the local stack}}
 }

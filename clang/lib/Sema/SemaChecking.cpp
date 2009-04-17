@@ -872,8 +872,9 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
       RetValExp = IcExpr->getSubExpr();
 
     if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(RetValExp))
-      Diag(C->getLocStart(), diag::err_ret_local_block)
-        << C->getSourceRange();
+      if (C->hasBlockDeclRefExprs())
+        Diag(C->getLocStart(), diag::err_ret_local_block)
+          << C->getSourceRange();
   }
   // Perform checking for stack values returned by reference.
   else if (lhsType->isReferenceType()) {
