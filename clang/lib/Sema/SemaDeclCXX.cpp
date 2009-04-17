@@ -2120,6 +2120,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       ICS->Standard.ReferenceBinding = true;
       ICS->Standard.DirectBinding = true;
       ICS->Standard.RRefBinding = false;
+      ICS->Standard.CopyConstructor = 0;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
       // derived-to-base conversions is suppressed when we're
@@ -2273,6 +2274,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       ICS->Standard.ReferenceBinding = true;
       ICS->Standard.DirectBinding = false;
       ICS->Standard.RRefBinding = isRValRef;
+      ICS->Standard.CopyConstructor = 0;
     } else {
       // FIXME: Binding to a subobject of the rvalue is going to require
       // more AST annotation than this.

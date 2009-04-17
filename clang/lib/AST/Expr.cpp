@@ -772,6 +772,32 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case CXXTypeidExprClass:
     // C++ 5.2.8p1: The result of a typeid expression is an lvalue of ...
     return LV_Valid;
+  case ConditionalOperatorClass: {
+    // Complicated handling is only for C++.
+    if (!Ctx.getLangOptions().CPlusPlus)
+      return LV_InvalidExpression;
+
+    // Sema should have taken care to ensure that a CXXTemporaryObjectExpr is
+    // everywhere there's an object converted to an rvalue. Also, any other
+    // casts should be wrapped by ImplicitCastExprs. There's just the special
+    // case involving throws to work out.
+    const ConditionalOperator *Cond = cast<ConditionalOperator>(this);
+    Expr *LHS = Cond->getLHS();
+    Expr *RHS = Cond->getRHS();
+    // C++0x 5.16p2
+    //   If either the second or the third operand has type (cv) void, [...]
+    //   the result [...] is an rvalue.
+    if (LHS->getType()->isVoidType() || RHS->getType()->isVoidType())
+      return LV_InvalidExpression;
+
+    // Both sides must be lvalues for the result to be an lvalue.
+    if (LHS->isLvalue(Ctx) != LV_Valid || RHS->isLvalue(Ctx) != LV_Valid)
+      return LV_InvalidExpression;
+
+    // That's it.
+    return LV_Valid;
+  }
+
   default:
     break;
   }

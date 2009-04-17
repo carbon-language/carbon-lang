@@ -136,6 +136,7 @@ public:
   ///  - *e, the type of e cannot be a function type
   ///  - string-constant
   ///  - reference type [C++ [expr]]
+  ///  - b ? x : y, where x and y are lvalues of suitable types [C++]
   ///
   enum isLvalueResult {
     LV_Valid,

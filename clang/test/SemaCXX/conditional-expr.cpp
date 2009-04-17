@@ -19,12 +19,17 @@ struct G { operator vfn(); };
 struct Base {
   int trick();
   A trick() const;
+  void fn1();
 };
-struct Derived : Base {};
+struct Derived : Base {
+  void fn2();
+};
 struct Convertible { operator Base&(); };
 struct Priv : private Base {};
 struct Mid : Base {};
 struct Fin : Mid, Derived {};
+typedef void (Derived::*DFnPtr)();
+struct ToMemPtr { operator DFnPtr(); };
 
 struct BadDerived;
 struct BadBase { operator BadDerived&(); };
@@ -65,11 +70,10 @@ void test()
   Base base;
   Derived derived;
   Convertible conv;
-  // FIXME: lvalueness
-  /*Base &bar1 =*/(void)( i1 ? base : derived);
-  /*Base &bar2 =*/(void)( i1 ? derived : base);
-  /*Base &bar3 =*/(void)( i1 ? base : conv);
-  /*Base &bar4 =*/(void)( i1 ? conv : base);
+  Base &bar1 = i1 ? base : derived;
+  Base &bar2 = i1 ? derived : base;
+  Base &bar3 = i1 ? base : conv;
+  Base &bar4 = i1 ? conv : base;
   // these are ambiguous
   BadBase bb;
   BadDerived bd;
@@ -96,7 +100,7 @@ void test()
   // should fail: const lost
   (void)(i1 ? Base() : constder()); // expected-error {{incompatible operand types ('struct Base' and 'struct Derived const')}}
   (void)(i1 ? constder() : Base()); // expected-error {{incompatible operand types ('struct Derived const' and 'struct Base')}}
-  // should fail: private or ambiguous base
+  // FIXME: should fail: private or ambiguous base
   (void)(i1 ? Base() : Priv()); // xpected-error private base
   (void)(i1 ? Priv() : Base()); // xpected-error private base
   (void)(i1 ? Base() : Fin()); // xpected-error ambiguous base
@@ -115,19 +119,24 @@ void test()
   (void)(i1 ? B() : A()); // expected-error {{incompatible operand types}}
   (void)(i1 ? 1 : Ambig()); // expected-error {{incompatible operand types}}
   (void)(i1 ? Ambig() : 1); // expected-error {{incompatible operand types}}
+  // By the way, this isn't an lvalue:
+  &(i1 ? i1 : i2); // expected-error {{address expression must be an lvalue or a function designator}}
 
   // p4 (lvalue, same type)
-  //Fields flds;
-  int &ir1 = i1;
-  //int &ir1 = i1 ? flds.i1 : flds.i2;
-  //(i1 ? flds.b1 : flds.i2) = 0;
-  //(i1 ? flds.i1 : flds.b2) = 0;
-  //(i1 ? flds.b1 : flds.b2) = 0;
+  Fields flds;
+  int &ir1 = i1 ? flds.i1 : flds.i2;
+  (i1 ? flds.b1 : flds.i2) = 0;
+  (i1 ? flds.i1 : flds.b2) = 0;
+  (i1 ? flds.b1 : flds.b2) = 0;
 
   // p5 (conversion to built-in types)
   // GCC 4.3 fails these
   double d1 = i1 ? I() : K();
   pfn = i1 ? F() : G();
+  DFnPtr pfm;
+  // FIXME: Overload resolution won't choose the member pointer yet.
+  //pfm = i1 ? DFnPtr() : &Base::fn1;
+  //pfm = i1 ? &Base::fn1 : DFnPtr();
 
   // p6 (final conversions)
   i1 = i1 ? i1 : ir1;
@@ -137,6 +146,16 @@ void test()
   i1 = i1 ? EVal : i1;
   d1 = i1 ? 'c' : 4.0;
   d1 = i1 ? 4.0 : 'c';
+  pfm = i1 ? &Derived::fn2 : 0;
+  pfm = i1 ? 0 : &Derived::fn2;
+  // FIXME: pointer conversions don't work yet.
+  //Base *pb = i1 ? (Base*)0 : (Derived*)0;
+  //Base *pb = i1 ? (Derived*)0 : (Base*)0;
+  //pfm = i1 ? &Base::fn1 : &Derived::fn2;
+  //pfm = i1 ? &Derived::fn2 : &Base::fn1;
+  // Conversion of primitives does not result in an lvalue.
+  &(i1 ? i1 : d1); // expected-error {{address expression must be an lvalue or a function designator}}
+
 
   // Note the thing that this does not test: since DR446, various situations
   // *must* create a separate temporary copy of class objects. This can only

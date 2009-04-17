@@ -1137,6 +1137,35 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
   return true;
 }
 
+/// \brief Perform an "extended" implicit conversion as returned by
+/// TryClassUnification.
+///
+/// TryClassUnification generates ICSs that include reference bindings.
+/// PerformImplicitConversion is not suitable for this; it chokes if the
+/// second part of a standard conversion is ICK_DerivedToBase. This function
+/// handles the reference binding specially.
+static bool ConvertForConditional(Sema &Self, Expr *&E,
+                                  const ImplicitConversionSequence &ICS)
+{
+  if (ICS.ConversionKind == ImplicitConversionSequence::StandardConversion &&
+      ICS.Standard.ReferenceBinding) {
+    assert(ICS.Standard.DirectBinding &&
+           "TryClassUnification should never generate indirect ref bindings");
+    Self.ImpCastExprToType(E, TargetType(ICS), true);
+    return false;
+  }
+  if (ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion &&
+      ICS.UserDefined.After.ReferenceBinding) {
+    assert(ICS.UserDefined.After.DirectBinding &&
+           "TryClassUnification should never generate indirect ref bindings");
+    Self.ImpCastExprToType(E, TargetType(ICS), true);
+    return false;
+  }
+  if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, "converting"))
+    return true;
+  return false;
+}
+
 /// \brief Check the operands of ?: under C++ semantics.
 ///
 /// See C++ [expr.cond]. Note that LHS is never null, even for the GNU x ?: y
@@ -1223,13 +1252,11 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     //   the chosen operand and the converted operands are used in place of the
     //   original operands for the remainder of this section.
     if (HaveL2R) {
-      if (PerformImplicitConversion(LHS, TargetType(ICSLeftToRight),
-                                    ICSLeftToRight, "converting"))
+      if (ConvertForConditional(*this, LHS, ICSLeftToRight))
         return QualType();
       LTy = LHS->getType();
     } else if (HaveR2L) {
-      if (PerformImplicitConversion(RHS, TargetType(ICSRightToLeft),
-                                    ICSRightToLeft, "converting"))
+      if (ConvertForConditional(*this, RHS, ICSRightToLeft))
         return QualType();
       RTy = RHS->getType();
     }
