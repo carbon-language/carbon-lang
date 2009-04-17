@@ -29,6 +29,7 @@ STATISTIC(NumLoads   , "Number of loads added");
 STATISTIC(NumReused  , "Number of values reused");
 STATISTIC(NumDCE     , "Number of copies elided");
 STATISTIC(NumSUnfold , "Number of stores unfolded");
+STATISTIC(NumModRefUnfold, "Number of modref unfolded");
 
 namespace {
   enum SpillerName { simple, local };
@@ -524,6 +525,7 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
   RegInfo = &MF.getRegInfo(); 
   TRI = MF.getTarget().getRegisterInfo();
   TII = MF.getTarget().getInstrInfo();
+  AllocatableRegs = TRI->getAllocatableSet(MF);
   DOUT << "\n**** Local spiller rewriting function '"
        << MF.getFunction()->getName() << "':\n";
   DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!)"
@@ -595,7 +597,201 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
 }
 
 
-/// PrepForUnfoldOpti - Turn a store folding instruction into a load folding
+/// FoldsStackSlotModRef - Return true if the specified MI folds the specified
+/// stack slot mod/ref. It also checks if it's possible to unfold the
+/// instruction by having it define a specified physical register instead.
+static bool FoldsStackSlotModRef(MachineInstr &MI, int SS, unsigned PhysReg,
+                                 const TargetInstrInfo *TII,
+                                 const TargetRegisterInfo *TRI,
+                                 VirtRegMap &VRM) {
+  if (VRM.hasEmergencySpills(&MI) || VRM.isSpillPt(&MI))
+    return false;
+
+  bool Found = false;
+  VirtRegMap::MI2VirtMapTy::const_iterator I, End;
+  for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
+    unsigned VirtReg = I->second.first;
+    VirtRegMap::ModRef MR = I->second.second;
+    if (MR & VirtRegMap::isModRef)
+      if (VRM.getStackSlot(VirtReg) == SS) {
+        Found= TII->getOpcodeAfterMemoryUnfold(MI.getOpcode(), true, true) != 0;
+        break;
+      }
+  }
+  if (!Found)
+    return false;
+
+  // Does the instruction uses a register that overlaps the scratch register?
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || MO.getReg() == 0)
+      continue;
+    unsigned Reg = MO.getReg();
+    if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+      if (!VRM.hasPhys(Reg))
+        continue;
+      Reg = VRM.getPhys(Reg);
+    }
+    if (TRI->regsOverlap(PhysReg, Reg))
+      return false;
+  }
+  return true;
+}
+
+/// FindFreeRegister - Find a free register of a given register class by looking
+/// at (at most) the last two machine instructions.
+static unsigned FindFreeRegister(MachineBasicBlock::iterator MII,
+                                 MachineBasicBlock &MBB,
+                                 const TargetRegisterClass *RC,
+                                 const TargetRegisterInfo *TRI,
+                                 BitVector &AllocatableRegs) {
+  BitVector Defs(TRI->getNumRegs());
+  BitVector Uses(TRI->getNumRegs());
+  SmallVector<unsigned, 4> LocalUses;
+  SmallVector<unsigned, 4> Kills;
+
+  // Take a look at 2 instructions at most.
+  for (unsigned Count = 0; Count < 2; ++Count) {
+    if (MII == MBB.begin())
+      break;
+    MachineInstr *PrevMI = prior(MII);
+    for (unsigned i = 0, e = PrevMI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = PrevMI->getOperand(i);
+      if (!MO.isReg() || MO.getReg() == 0)
+        continue;
+      unsigned Reg = MO.getReg();
+      if (MO.isDef()) {
+        Defs.set(Reg);
+        for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+          Defs.set(*AS);
+      } else  {
+        LocalUses.push_back(Reg);
+        if (MO.isKill() && AllocatableRegs[Reg])
+          Kills.push_back(Reg);
+      }
+    }
+
+    for (unsigned i = 0, e = Kills.size(); i != e; ++i) {
+      unsigned Kill = Kills[i];
+      if (!Defs[Kill] && !Uses[Kill] &&
+          TRI->getPhysicalRegisterRegClass(Kill) == RC)
+        return Kill;
+    }
+    for (unsigned i = 0, e = LocalUses.size(); i != e; ++i) {
+      unsigned Reg = LocalUses[i];
+      Uses.set(Reg);
+      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+        Uses.set(*AS);
+    }
+
+    MII = PrevMI;
+  }
+
+  return 0;
+}
+
+static
+void AssignPhysToVirtReg(MachineInstr *MI, unsigned VirtReg, unsigned PhysReg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.getReg() == VirtReg)
+      MO.setReg(PhysReg);
+  }
+}
+
+/// OptimizeByUnfold2 - Unfold a series of load / store folding instructions if
+/// a scratch register is available.
+///     xorq  %r12<kill>, %r13
+///     addq  %rax, -184(%rbp)
+///     addq  %r13, -184(%rbp)
+/// ==>
+///     xorq  %r12<kill>, %r13
+///     movq  -184(%rbp), %r12
+///     addq  %rax, %r12
+///     addq  %r13, %r12
+///     movq  %r12, -184(%rbp)
+bool LocalSpiller::OptimizeByUnfold2(unsigned VirtReg, int SS,
+                                    MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator &MII,
+                                    std::vector<MachineInstr*> &MaybeDeadStores,
+                                    AvailableSpills &Spills,
+                                    BitVector &RegKills,
+                                    std::vector<MachineOperand*> &KillOps,
+                                    VirtRegMap &VRM) {
+  MachineBasicBlock::iterator NextMII = next(MII);
+  if (NextMII == MBB.end())
+    return false;
+
+  if (TII->getOpcodeAfterMemoryUnfold(MII->getOpcode(), true, true) == 0)
+    return false;
+
+  // Now let's see if the last couple of instructions happens to have freed up
+  // a register.
+  const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
+  unsigned PhysReg = FindFreeRegister(MII, MBB, RC, TRI, AllocatableRegs);
+  if (!PhysReg)
+    return false;
+
+  MachineFunction &MF = *MBB.getParent();
+  TRI = MF.getTarget().getRegisterInfo();
+  MachineInstr &MI = *MII;
+  if (!FoldsStackSlotModRef(MI, SS, PhysReg, TII, TRI, VRM))
+    return false;
+
+  // If the next instruction also folds the same SS modref and can be unfoled,
+  // then it's worthwhile to issue a load from SS into the free register and
+  // then unfold these instructions.
+  if (!FoldsStackSlotModRef(*NextMII, SS, PhysReg, TII, TRI, VRM))
+    return false;
+
+  // Load from SS to the spare physical register.
+  TII->loadRegFromStackSlot(MBB, MII, PhysReg, SS, RC);
+  // This invalidates Phys.
+  Spills.ClobberPhysReg(PhysReg);
+  // Remember it's available.
+  Spills.addAvailable(SS, PhysReg);
+  MaybeDeadStores[SS] = NULL;
+
+  // Unfold current MI.
+  SmallVector<MachineInstr*, 4> NewMIs;
+  if (!TII->unfoldMemoryOperand(MF, &MI, VirtReg, false, false, NewMIs))
+    assert(0 && "Unable unfold the load / store folding instruction!");
+  assert(NewMIs.size() == 1);
+  AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
+  VRM.transferRestorePts(&MI, NewMIs[0]);
+  MII = MBB.insert(MII, NewMIs[0]);
+  InvalidateKills(MI, RegKills, KillOps);
+  VRM.RemoveMachineInstrFromMaps(&MI);
+  MBB.erase(&MI);
+  ++NumModRefUnfold;
+
+  // Unfold next instructions that fold the same SS.
+  do {
+    MachineInstr &NextMI = *NextMII;
+    NextMII = next(NextMII);
+    NewMIs.clear();
+    if (!TII->unfoldMemoryOperand(MF, &NextMI, VirtReg, false, false, NewMIs))
+      assert(0 && "Unable unfold the load / store folding instruction!");
+    assert(NewMIs.size() == 1);
+    AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
+    VRM.transferRestorePts(&NextMI, NewMIs[0]);
+    MBB.insert(NextMII, NewMIs[0]);
+    InvalidateKills(NextMI, RegKills, KillOps);
+    VRM.RemoveMachineInstrFromMaps(&NextMI);
+    MBB.erase(&NextMI);
+    ++NumModRefUnfold;
+  } while (FoldsStackSlotModRef(*NextMII, SS, PhysReg, TII, TRI, VRM));
+
+  // Store the value back into SS.
+  TII->storeRegToStackSlot(MBB, NextMII, PhysReg, true, SS, RC);
+  MachineInstr *StoreMI = prior(NextMII);
+  VRM.addSpillSlotUse(SS, StoreMI);
+  VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
+
+  return true;
+}
+
+/// OptimizeByUnfold - Turn a store folding instruction into a load folding
 /// instruction. e.g.
 ///     xorl  %edi, %eax
 ///     movl  %eax, -32(%ebp)
@@ -607,7 +803,7 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
 ///     mov   %eax, -32(%ebp)
 /// This enables unfolding optimization for a subsequent instruction which will
 /// also eliminate the newly introduced store instruction.
-bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
+bool LocalSpiller::OptimizeByUnfold(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator &MII,
                                     std::vector<MachineInstr*> &MaybeDeadStores,
                                     AvailableSpills &Spills,
@@ -646,8 +842,14 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
     }
   }
 
-  if (!UnfoldedOpc)
-    return false;
+  if (!UnfoldedOpc) {
+    if (!UnfoldVR)
+      return false;
+
+    // Look for other unfolding opportunities.
+    return OptimizeByUnfold2(UnfoldVR, FoldedSS, MBB, MII,
+                             MaybeDeadStores, Spills, RegKills, KillOps, VRM);
+  }
 
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
@@ -705,6 +907,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       MF.DeleteMachineInstr(NewMI);
     }
   }
+
   return false;
 }
 
@@ -770,7 +973,7 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     VRM.addSpillSlotUse(SS, FoldedMI);
     VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
     // Insert new def MI and spill MI.
-    const TargetRegisterClass* RC = MF.getRegInfo().getRegClass(VirtReg);
+    const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
     TII->storeRegToStackSlot(MBB, &MI, NewReg, true, SS, RC);
     MII = prior(MII);
     MachineInstr *StoreMI = MII;
@@ -935,13 +1138,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
   DistanceMap.clear();
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
-    MachineBasicBlock::iterator NextMII = MII; ++NextMII;
+    MachineBasicBlock::iterator NextMII = next(MII);
 
     VirtRegMap::MI2VirtMapTy::const_iterator I, End;
     bool Erased = false;
     bool BackTracked = false;
-    if (PrepForUnfoldOpti(MBB, MII,
-                          MaybeDeadStores, Spills, RegKills, KillOps, VRM))
+    if (OptimizeByUnfold(MBB, MII,
+                         MaybeDeadStores, Spills, RegKills, KillOps, VRM))
       NextMII = next(MII);
 
     MachineInstr &MI = *MII;

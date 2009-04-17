@@ -97,7 +97,7 @@ namespace llvm {
     const TargetRegisterInfo *getRegInfo() const { return TRI; }
 
     /// getSpillSlotOrReMatPhysReg - If the specified stack slot or remat is
-    /// available in a  physical register, return that PhysReg, otherwise
+    /// available in a physical register, return that PhysReg, otherwise
     /// return 0.
     unsigned getSpillSlotOrReMatPhysReg(int Slot) const {
       std::map<int, unsigned>::const_iterator I =
@@ -284,6 +284,7 @@ namespace llvm {
     MachineRegisterInfo *RegInfo;
     const TargetRegisterInfo *TRI;
     const TargetInstrInfo *TII;
+    BitVector AllocatableRegs;
     DenseMap<MachineInstr*, unsigned> DistanceMap;
   public:
     bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM);
@@ -291,12 +292,22 @@ namespace llvm {
     void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
                           unsigned Reg, BitVector &RegKills,
                           std::vector<MachineOperand*> &KillOps);
-    bool PrepForUnfoldOpti(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &MII,
+
+    bool OptimizeByUnfold(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator &MII,
+                          std::vector<MachineInstr*> &MaybeDeadStores,
+                          AvailableSpills &Spills, BitVector &RegKills,
+                          std::vector<MachineOperand*> &KillOps,
+                          VirtRegMap &VRM);
+
+    bool OptimizeByUnfold2(unsigned VirtReg, int SS,
+                           MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &MII, 
                            std::vector<MachineInstr*> &MaybeDeadStores,
                            AvailableSpills &Spills, BitVector &RegKills,
                            std::vector<MachineOperand*> &KillOps,
                            VirtRegMap &VRM);
+
     bool CommuteToFoldReload(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator &MII,
                              unsigned VirtReg, unsigned SrcReg, int SS,
@@ -305,6 +316,7 @@ namespace llvm {
                              std::vector<MachineOperand*> &KillOps,
                              const TargetRegisterInfo *TRI,
                              VirtRegMap &VRM);
+
     void SpillRegToStackSlot(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator &MII,
                              int Idx, unsigned PhysReg, int StackSlot,
@@ -315,6 +327,7 @@ namespace llvm {
                              BitVector &RegKills,
                              std::vector<MachineOperand*> &KillOps,
                              VirtRegMap &VRM);
+
     void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                     AvailableSpills &Spills,
                     BitVector &RegKills, std::vector<MachineOperand*> &KillOps);
