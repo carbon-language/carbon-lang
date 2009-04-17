@@ -47,7 +47,6 @@ def ext_token_used : Extension<"extension used">;
 
 def err_unterminated_string : Error<"missing terminating '\"' character">;
 def err_unterminated_char : Error<"missing terminating ' character">;
-def err_unterminated_angled_string : Error<"missing terminating '>' character">;
 def err_empty_character : Error<"empty character constant">;
 def err_unterminated_block_comment : Error<"unterminated /* comment">;
 def err_invalid_character_to_charify : Error<
