@@ -92,7 +92,14 @@ public:
   llvm::Constant *GcReadWeakFn;
   
   /// GcAssignWeakFn -- LLVM objc_assign_weak function.
-  llvm::Constant *GcAssignWeakFn;
+  llvm::Constant *getGcAssignWeakFn() {
+    // id objc_assign_weak (id, id *)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    Args.push_back(ObjectPtrTy->getPointerTo());
+    llvm::FunctionType *FTy =
+      llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_assign_weak");
+  }
   
   /// GcAssignGlobalFn -- LLVM objc_assign_global function.
   llvm::Constant *GcAssignGlobalFn;
@@ -2282,7 +2289,7 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignWeakFn(),
                           src, dst, "weakassign");
   return;
 }
@@ -3278,13 +3285,12 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
   GcReadWeakFn = CGM.CreateRuntimeFunction(FTy, "objc_read_weak");
 
-  // id objc_assign_weak (id, id *)
+  // id objc_assign_global (id, id *)
   Params.clear();
   Params.push_back(IdType);
   Params.push_back(Ctx.getPointerType(IdType));
   
   FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
-  GcAssignWeakFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_weak");
   GcAssignGlobalFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_global");
   GcAssignIvarFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
   GcAssignStrongCastFn = 
@@ -5248,7 +5254,7 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignWeakFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignWeakFn(),
                           src, dst, "weakassign");
   return;
 }
