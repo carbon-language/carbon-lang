@@ -454,6 +454,8 @@ namespace {
     void VisitIfStmt(IfStmt *S);
     void VisitSwitchStmt(SwitchStmt *S);
     void VisitWhileStmt(WhileStmt *S);
+    void VisitDoStmt(DoStmt *S);
+    void VisitForStmt(ForStmt *S);
     void VisitContinueStmt(ContinueStmt *S);
     void VisitBreakStmt(BreakStmt *S);
     void VisitExpr(Expr *E);
@@ -558,6 +560,24 @@ void PCHStmtWriter::VisitWhileStmt(WhileStmt *S) {
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getWhileLoc(), Record);
   Code = pch::STMT_WHILE;
+}
+
+void PCHStmtWriter::VisitDoStmt(DoStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getCond());
+  Writer.WriteSubStmt(S->getBody());
+  Writer.AddSourceLocation(S->getDoLoc(), Record);
+  Code = pch::STMT_DO;
+}
+
+void PCHStmtWriter::VisitForStmt(ForStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getInit());
+  Writer.WriteSubStmt(S->getCond());
+  Writer.WriteSubStmt(S->getInc());
+  Writer.WriteSubStmt(S->getBody());
+  Writer.AddSourceLocation(S->getForLoc(), Record);
+  Code = pch::STMT_FOR;
 }
 
 void PCHStmtWriter::VisitContinueStmt(ContinueStmt *S) {

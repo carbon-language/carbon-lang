@@ -24,6 +24,13 @@ void f0(int x) {
     if (x > 30) {
       --x;
       continue;
-    }
+    } else if (x < 5)
+      break;
   }
+
+  do {
+    x++;
+  } while (x < 10);
+
+  for (; x < 20; ++x) ;
 }

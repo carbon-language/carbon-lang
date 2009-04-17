@@ -715,11 +715,19 @@ public:
     SubExprs[BODY] = body;
     DoLoc = DL;
   }  
+
+  /// \brief Build an empty do-while statement.
+  explicit DoStmt(EmptyShell Empty) : Stmt(DoStmtClass, Empty) { }
   
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt*>(E); }
   Stmt *getBody() { return SubExprs[BODY]; }
   const Stmt *getBody() const { return SubExprs[BODY]; }  
+  void setBody(Stmt *S) { SubExprs[BODY] = S; }
+
+  SourceLocation getDoLoc() const { return DoLoc; }
+  void setDoLoc(SourceLocation L) { DoLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(DoLoc, SubExprs[BODY]->getLocEnd()); 
@@ -756,6 +764,9 @@ public:
     ForLoc = FL;
   }
   
+  /// \brief Build an empty for statement.
+  explicit ForStmt(EmptyShell Empty) : Stmt(ForStmtClass, Empty) { }
+
   Stmt *getInit() { return SubExprs[INIT]; }
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Expr *getInc()  { return reinterpret_cast<Expr*>(SubExprs[INC]); }
@@ -765,6 +776,14 @@ public:
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   const Expr *getInc()  const { return reinterpret_cast<Expr*>(SubExprs[INC]); }
   const Stmt *getBody() const { return SubExprs[BODY]; }
+
+  void setInit(Stmt *S) { SubExprs[INIT] = S; }
+  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt*>(E); }
+  void setInc(Expr *E) { SubExprs[INC] = reinterpret_cast<Stmt*>(E); }
+  void setBody(Stmt *S) { SubExprs[BODY] = S; }
+
+  SourceLocation getForLoc() const { return ForLoc; }
+  void setForLoc(SourceLocation L) { ForLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 

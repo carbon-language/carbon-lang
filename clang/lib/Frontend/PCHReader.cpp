@@ -252,6 +252,8 @@ namespace {
     unsigned VisitIfStmt(IfStmt *S);
     unsigned VisitSwitchStmt(SwitchStmt *S);
     unsigned VisitWhileStmt(WhileStmt *S);
+    unsigned VisitDoStmt(DoStmt *S);
+    unsigned VisitForStmt(ForStmt *S);
     unsigned VisitContinueStmt(ContinueStmt *S);
     unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitExpr(Expr *E);
@@ -364,6 +366,24 @@ unsigned PCHStmtReader::VisitWhileStmt(WhileStmt *S) {
   S->setBody(StmtStack.back());
   S->setWhileLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 2;
+}
+
+unsigned PCHStmtReader::VisitDoStmt(DoStmt *S) {
+  VisitStmt(S);
+  S->setCond(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  S->setBody(StmtStack.back());
+  S->setDoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 2;
+}
+
+unsigned PCHStmtReader::VisitForStmt(ForStmt *S) {
+  VisitStmt(S);
+  S->setInit(StmtStack[StmtStack.size() - 4]);
+  S->setCond(cast_or_null<Expr>(StmtStack[StmtStack.size() - 3]));
+  S->setInc(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  S->setBody(StmtStack.back());
+  S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 4;
 }
 
 unsigned PCHStmtReader::VisitContinueStmt(ContinueStmt *S) {
@@ -2134,6 +2154,14 @@ Stmt *PCHReader::ReadStmt() {
 
     case pch::STMT_WHILE:
       S = new (Context) WhileStmt(Empty);
+      break;
+
+    case pch::STMT_DO:
+      S = new (Context) DoStmt(Empty);
+      break;
+      
+    case pch::STMT_FOR:
+      S = new (Context) ForStmt(Empty);
       break;
 
     case pch::STMT_CONTINUE:

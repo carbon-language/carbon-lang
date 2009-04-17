@@ -389,6 +389,10 @@ namespace clang {
       STMT_SWITCH,
       /// \brief A WhileStmt record.
       STMT_WHILE,
+      /// \brief A DoStmt record.
+      STMT_DO,
+      /// \brief A ForStmt record.
+      STMT_FOR,
       /// \brief A ContinueStmt record.
       STMT_CONTINUE,
       /// \brief A BreakStmt record.
