@@ -667,6 +667,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   default:
     return false;
   case X86::MOV8rr:
+  case X86::MOV8rr_NOREX:
   case X86::MOV16rr:
   case X86::MOV32rr: 
   case X86::MOV64rr:
