@@ -32,11 +32,14 @@ namespace clang {
 class PathDiagnostic;
 class Stmt;
 class Decl;
+class Preprocessor;
 
 class PathDiagnosticClient : public DiagnosticClient  {
 public:
   PathDiagnosticClient() {}
   virtual ~PathDiagnosticClient() {}
+  
+  virtual void SetPreprocessor(Preprocessor *PP) {}
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);

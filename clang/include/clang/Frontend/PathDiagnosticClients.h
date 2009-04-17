@@ -23,8 +23,8 @@ class Preprocessor;
 class PreprocessorFactory;
 
 PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix,
-                                                 Preprocessor* PP,
-                                                 PreprocessorFactory* PPF);
+                                                 Preprocessor* PP = 0,
+                                                 PreprocessorFactory* PPF = 0);
   
 PathDiagnosticClient* CreatePlistDiagnosticClient(const std::string& prefix,
                                                   Preprocessor* PP,

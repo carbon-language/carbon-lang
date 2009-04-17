@@ -39,13 +39,13 @@ class VISIBILITY_HIDDEN HTMLDiagnostics : public PathDiagnosticClient {
   llvm::sys::Path Directory, FilePrefix;
   bool createdDir, noDir;
   Preprocessor* PP;
-  PreprocessorFactory* PPF;
   std::vector<const PathDiagnostic*> BatchedDiags;  
 public:
-  HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
-                  PreprocessorFactory* ppf);
+  HTMLDiagnostics(const std::string& prefix, Preprocessor* pp);
 
   virtual ~HTMLDiagnostics();
+  
+  virtual void SetPreprocessor(Preprocessor *pp) { PP = pp; }
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
   
@@ -65,10 +65,9 @@ public:
   
 } // end anonymous namespace
 
-HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
-                                 PreprocessorFactory* ppf)
+HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp)
   : Directory(prefix), FilePrefix(prefix), createdDir(false), noDir(false),
-    PP(pp), PPF(ppf) {
+    PP(pp) {
   
   // All html files begin with "report" 
   FilePrefix.appendComponent("report");
@@ -76,9 +75,8 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
 
 PathDiagnosticClient*
 clang::CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP,
-                                  PreprocessorFactory* PPF) {
-  
-  return new HTMLDiagnostics(prefix, PP, PPF);
+                                  PreprocessorFactory*) {
+  return new HTMLDiagnostics(prefix, PP);
 }
 
 //===----------------------------------------------------------------------===//
@@ -99,7 +97,6 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
 }
 
 HTMLDiagnostics::~HTMLDiagnostics() {
-  
   while (!BatchedDiags.empty()) {
     const PathDiagnostic* D = BatchedDiags.back();
     BatchedDiags.pop_back();
@@ -109,9 +106,7 @@ HTMLDiagnostics::~HTMLDiagnostics() {
 }
 
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
-  
   // Create the HTML directory if it is missing.
-  
   if (!createdDir) {
     createdDir = true;
     std::string ErrorMsg;
@@ -170,10 +165,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   unsigned max = n;
   
   for (PathDiagnostic::const_reverse_iterator I=D.rbegin(), E=D.rend();
-        I!=E; ++I, --n) {
-    
+        I!=E; ++I, --n)
     HandlePiece(R, FID, *I, n, max);
-  }
   
   // Add line numbers, header, footer, etc.
   

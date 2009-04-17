@@ -2229,29 +2229,31 @@ int main(int argc, char **argv) {
   
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  DiagnosticClient* TextDiagClient = 0;
-  
-  if (!VerifyDiagnostics) {
+  llvm::OwningPtr<DiagnosticClient> DiagClient;
+  if (VerifyDiagnostics) {
+    // When checking diagnostics, just buffer them up.
+    DiagClient.reset(new TextDiagnosticBuffer());
+    if (InputFilenames.size() != 1) {
+      fprintf(stderr, "-verify only works on single input files for now.\n");
+      return 1;
+    }
+    if (!HTMLDiag.empty()) {
+      fprintf(stderr, "-verify and -html-diags don't work together\n");
+      return 1;
+    }
+  } else if (HTMLDiag.empty()) {
     // Print diagnostics to stderr by default.
-    TextDiagClient = new TextDiagnosticPrinter(llvm::errs(),
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
                                                !NoCaretDiagnostics,
                                                !NoShowLocation,
                                                PrintSourceRangeInfo,
-                                               PrintDiagnosticOption);
+                                               PrintDiagnosticOption));
   } else {
-    // When checking diagnostics, just buffer them up.
-    TextDiagClient = new TextDiagnosticBuffer();
-   
-    if (InputFilenames.size() != 1) {
-      fprintf(stderr,
-              "-verify only works on single input files for now.\n");
-      return 1;
-    }
+    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
   }
 
   // Configure our handling of diagnostics.
-  llvm::OwningPtr<DiagnosticClient> DiagClient(TextDiagClient);
   Diagnostic Diags(DiagClient.get());
   if (ProcessWarningOptions(Diags))
     return 1;
@@ -2287,7 +2289,6 @@ int main(int argc, char **argv) {
     const std::string &InFile = InputFilenames[i];
     
     if (isSerializedFile(InFile)) {
-      Diags.setClient(TextDiagClient);
       ProcessSerializedFile(InFile,Diags,FileMgr);
       continue;
     }
@@ -2301,7 +2302,7 @@ int main(int argc, char **argv) {
     
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
-    TextDiagClient->setLangOptions(&LangInfo);
+    DiagClient->setLangOptions(&LangInfo);
     
     InitializeBaseLanguage();
     LangKind LK = GetLanguage(InFile);
@@ -2327,23 +2328,14 @@ int main(int argc, char **argv) {
         InitializeSourceManager(*PP.get(), InFile))
       continue;
 
-    // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,
-    // always reset to using TextDiagClient.
-    llvm::OwningPtr<DiagnosticClient> TmpClient;
-    
-    if (!HTMLDiag.empty()) {
-      TmpClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, PP.get(),
-                                                 &PPFactory));
-      Diags.setClient(TmpClient.get());
-    }
-    else
-      Diags.setClient(TextDiagClient);
+    if (!HTMLDiag.empty())
+      ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());
 
     // Process the source file.
     ProcessInputFile(*PP, PPFactory, InFile, ProgAction);
     
     HeaderInfo.ClearFileInfo();
-    TextDiagClient->setLangOptions(0);
+    DiagClient->setLangOptions(0);
   }
 
   if (Verbose)
