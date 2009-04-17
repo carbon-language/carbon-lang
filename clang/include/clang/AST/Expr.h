@@ -1641,15 +1641,21 @@ public:
            SourceLocation lp, SourceLocation rp) :
     Expr(StmtExprClass, T), SubStmt(substmt),  LParenLoc(lp), RParenLoc(rp) { }
   
+  /// \brief Build an empty statement expression.
+  explicit StmtExpr(EmptyShell Empty) : Expr(StmtExprClass, Empty) { }
+
   CompoundStmt *getSubStmt() { return cast<CompoundStmt>(SubStmt); }
   const CompoundStmt *getSubStmt() const { return cast<CompoundStmt>(SubStmt); }
-  
+  void setSubStmt(CompoundStmt *S) { SubStmt = S; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(LParenLoc, RParenLoc);
   }
   
   SourceLocation getLParenLoc() const { return LParenLoc; }
+  void setLParenLoc(SourceLocation L) { LParenLoc = L; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == StmtExprClass; 

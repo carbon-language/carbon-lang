@@ -289,6 +289,7 @@ namespace {
     unsigned VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     unsigned VisitVAArgExpr(VAArgExpr *E);
     unsigned VisitAddrLabelExpr(AddrLabelExpr *E);
+    unsigned VisitStmtExpr(StmtExpr *E);
     unsigned VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     unsigned VisitChooseExpr(ChooseExpr *E);
     unsigned VisitGNUNullExpr(GNUNullExpr *E);
@@ -747,6 +748,14 @@ unsigned PCHStmtReader::VisitAddrLabelExpr(AddrLabelExpr *E) {
   E->setLabelLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   Reader.SetLabelOf(E, Record[Idx++]);
   return 0;
+}
+
+unsigned PCHStmtReader::VisitStmtExpr(StmtExpr *E) {
+  VisitExpr(E);
+  E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setSubStmt(cast_or_null<CompoundStmt>(StmtStack.back()));
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
@@ -2357,6 +2366,10 @@ Stmt *PCHReader::ReadStmt() {
 
     case pch::EXPR_ADDR_LABEL:
       S = new (Context) AddrLabelExpr(Empty);
+      break;
+
+    case pch::EXPR_STMT:
+      S = new (Context) StmtExpr(Empty);
       break;
 
     case pch::EXPR_TYPES_COMPATIBLE:

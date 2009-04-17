@@ -456,9 +456,10 @@ namespace clang {
       EXPR_IMPLICIT_VALUE_INIT,
       /// \brief A VAArgExpr record.
       EXPR_VA_ARG,
-      // An AddrLabelExpr record.
+      /// \brief An AddrLabelExpr record.
       EXPR_ADDR_LABEL,
-      // FIXME: StmtExpr
+      /// \brief A StmtExpr record.
+      EXPR_STMT,
       /// \brief A TypesCompatibleExpr record.
       EXPR_TYPES_COMPATIBLE,
       /// \brief A ChooseExpr record.

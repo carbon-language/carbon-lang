@@ -491,6 +491,7 @@ namespace {
     void VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     void VisitVAArgExpr(VAArgExpr *E);
     void VisitAddrLabelExpr(AddrLabelExpr *E);
+    void VisitStmtExpr(StmtExpr *E);
     void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     void VisitChooseExpr(ChooseExpr *E);
     void VisitGNUNullExpr(GNUNullExpr *E);
@@ -894,6 +895,14 @@ void PCHStmtWriter::VisitAddrLabelExpr(AddrLabelExpr *E) {
   Writer.AddSourceLocation(E->getLabelLoc(), Record);
   Record.push_back(Writer.GetLabelID(E->getLabel()));
   Code = pch::EXPR_ADDR_LABEL;
+}
+
+void PCHStmtWriter::VisitStmtExpr(StmtExpr *E) {
+  VisitExpr(E);
+  Writer.WriteSubStmt(E->getSubStmt());
+  Writer.AddSourceLocation(E->getLParenLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_STMT;
 }
 
 void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {

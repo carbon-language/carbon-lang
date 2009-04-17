@@ -86,3 +86,8 @@ int computed_goto(int x) {
   done:
   return 5;
 }
+
+#define maxint(a,b) ({int _a = (a), _b = (b); _a > _b ? _a : _b; })
+int weird_max(int x, int y) {
+  return maxint(++x, --y);
+}
