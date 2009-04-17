@@ -70,3 +70,10 @@ void gnu_inline1() {}
 void
 __attribute__((__gnuc_inline__)) // expected-warning {{'gnuc_inline' attribute requires function to be marked 'inline', attribute ignored}} expected-warning{{extension used}}
 gnu_inline2() {}
+
+
+// rdar://6802350
+inline foo_t invalid_type() {  // expected-error {{unknown type name 'foo_t'}}
+}
+
+

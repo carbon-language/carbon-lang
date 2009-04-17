@@ -1327,6 +1327,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition) {
   if (R.isNull()) {
     InvalidDecl = true;
     R = Context.IntTy;
+    if (IsFunctionDefinition) // int(...)
+      R = Context.getFunctionType(R, 0, 0, true, 0);
+      
   }
 
   // See if this is a redefinition of a variable in the same scope.
