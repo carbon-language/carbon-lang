@@ -116,6 +116,11 @@ namespace {
     virtual bool doInitialization(Module &M);
 
     bool runOnFunction(Function &F) {
+     // Do not codegen any 'available_externally' functions at all, they have
+     // definitions outside the translation unit.
+     if (F.hasAvailableExternallyLinkage())
+       return false;
+
       LI = &getAnalysis<LoopInfo>();
 
       // Get rid of intrinsics we can't handle.

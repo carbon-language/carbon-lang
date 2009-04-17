@@ -93,6 +93,12 @@ char MSILWriter::ID = 0;
 
 bool MSILWriter::runOnFunction(Function &F) {
   if (F.isDeclaration()) return false;
+
+  // Do not codegen any 'available_externally' functions at all, they have
+  // definitions outside the translation unit.
+  if (F.hasAvailableExternallyLinkage())
+    return false;
+
   LInfo = &getAnalysis<LoopInfo>();
   printFunction(F);
   return false;

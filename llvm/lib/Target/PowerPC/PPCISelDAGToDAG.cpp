@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Debug.h"
@@ -49,6 +50,11 @@ namespace {
         PPCSubTarget(*TM.getSubtargetImpl()) {}
     
     virtual bool runOnFunction(Function &Fn) {
+      // Do not codegen any 'available_externally' functions at all, they have
+      // definitions outside the translation unit.
+      if (Fn.hasAvailableExternallyLinkage())
+        return false;
+
       // Make sure we re-emit a set of the global base reg if necessary
       GlobalBaseReg = 0;
       SelectionDAGISel::runOnFunction(Fn);
