@@ -2117,7 +2117,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->Offset,
                          SE->getConstant(ConstantInt::get(CmpTy, Scale)))
-        : SE->getConstant(ConstantInt::get(NewCmpTy,
+        : SE->getConstant(ConstantInt::get(IntegerType::get(NewTyBits),
           cast<SCEVConstant>(CondUse->Offset)->getValue()->getSExtValue()*Scale));
       break;
     }
