@@ -303,8 +303,12 @@ public:
   void ErrorUnsupported(const Decl *D, const char *Type,
                         bool OmitOnError=false);
 
-  void SetMethodAttributes(const ObjCMethodDecl *MD,
-                           llvm::Function *F);
+  /// SetInternalFunctionAttributes - Set the attributes on the LLVM
+  /// function for the given decl and function info. This applies
+  /// attributes necessary for handling the ABI as well as user
+  /// specified attributes like section.
+  void SetInternalFunctionAttributes(const Decl *D, llvm::Function *F,
+                                     const CGFunctionInfo &FI);
 
   /// SetLLVMFunctionAttributes - Set the LLVM function attributes
   /// (sext, zext, etc).

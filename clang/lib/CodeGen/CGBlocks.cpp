@@ -670,6 +670,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                            Name,
                            &CGM.getModule());
 
+  CGM.SetInternalFunctionAttributes(BD, Fn, FI);
+
   StartFunction(BD, ResultType, Fn, Args,
                 BExpr->getBody()->getLocEnd());
   CurFuncDecl = OuterFuncDecl;

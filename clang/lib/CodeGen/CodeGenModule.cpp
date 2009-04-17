@@ -340,14 +340,15 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
     GV->setSection(SA->getName());
 }
 
-void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
-                                        llvm::Function *F) {
-  SetLLVMFunctionAttributes(MD, getTypes().getFunctionInfo(MD), F);
-  SetLLVMFunctionAttributesForDefinition(MD, F);
+void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
+                                                  llvm::Function *F,
+                                                  const CGFunctionInfo &FI) {
+  SetLLVMFunctionAttributes(D, FI, F);
+  SetLLVMFunctionAttributesForDefinition(D, F);
 
   F->setLinkage(llvm::Function::InternalLinkage);
 
-  SetCommonAttributes(MD, F);
+  SetCommonAttributes(D, F);
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,

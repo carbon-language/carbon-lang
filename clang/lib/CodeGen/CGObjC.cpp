@@ -109,7 +109,8 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
   FunctionArgList Args;
   llvm::Function *Fn = CGM.getObjCRuntime().GenerateMethod(OMD, CD);
 
-  CGM.SetMethodAttributes(OMD, Fn);
+  const CGFunctionInfo &FI = CGM.getTypes().getFunctionInfo(OMD);
+  CGM.SetInternalFunctionAttributes(OMD, Fn, FI);
 
   Args.push_back(std::make_pair(OMD->getSelfDecl(), 
                                 OMD->getSelfDecl()->getType()));
