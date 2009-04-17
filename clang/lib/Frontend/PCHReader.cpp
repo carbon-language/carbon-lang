@@ -2369,7 +2369,6 @@ Stmt *PCHReader::ReadStmt() {
       break;
 
     case pch::EXPR_VA_ARG:
-      // FIXME: untested; we need function bodies first
       S = new (Context) VAArgExpr(Empty);
       break;
 
@@ -2402,7 +2401,6 @@ Stmt *PCHReader::ReadStmt() {
       break;
 
     case pch::EXPR_BLOCK_DECL_REF:
-      // FIXME: untested until we have statement and block support
       S = new (Context) BlockDeclRefExpr(Empty);
       break;
     }
