@@ -60,6 +60,7 @@ def : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
 def UnusedVariable : DiagGroup<"unused-variable">;
 def : DiagGroup<"variadic-macros">;
+def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
 
@@ -75,6 +76,7 @@ def Most : DiagGroup<"most", [
     UnknownPragmas,
     UnusedValue,
     UnusedVariable,
+    VectorConversions,
     VolatileRegisterVar
  ]>;
 
