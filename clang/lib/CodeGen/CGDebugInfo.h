@@ -39,7 +39,7 @@ class CGDebugInfo {
   SourceLocation CurLoc, PrevLoc;
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
-  llvm::DenseMap<const FileEntry*, llvm::DICompileUnit> CompileUnitCache;
+  llvm::DenseMap<unsigned, llvm::DICompileUnit> CompileUnitCache;
 
   /// TypeCache - Cache of previously constructed Types.
   // FIXME: Eliminate this map.  Be careful of iterator invalidation.

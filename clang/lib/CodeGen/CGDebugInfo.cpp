@@ -28,6 +28,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/System/Path.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace clang;
 using namespace clang::CodeGen;
@@ -48,37 +49,39 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
 /// one if necessary. This returns null for invalid source locations.
 llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
-  // FIXME: Until we do a complete job of emitting debug information,
-  // we need to support making dummy compile units so that we generate
-  // "well formed" debug info.
-  const FileEntry *FE = 0;
-
+  // Get source file information.
+  const char *FileName =  "<unknown>";
   SourceManager &SM = M->getContext().getSourceManager();
-  bool isMain;
+  unsigned FID;
   if (Loc.isValid()) {
-    Loc = SM.getInstantiationLoc(Loc);
-    FE = SM.getFileEntryForID(SM.getFileID(Loc));
-    isMain = SM.getFileID(Loc) == SM.getMainFileID();
-  } else {
-    // If Loc is not valid then use main file id.
-    FE = SM.getFileEntryForID(SM.getMainFileID());
-    isMain = true;
+    PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+    FileName = PLoc.getFilename();
+    FID = PLoc.getIncludeLoc().getRawEncoding();
   }
    
   // See if this compile unit has been used before.
-  llvm::DICompileUnit &Unit = CompileUnitCache[FE];
+  llvm::DICompileUnit &Unit = CompileUnitCache[FID];
   if (!Unit.isNull()) return Unit;
-  
-  // Get source file information.
-  const char *FileName = FE ? FE->getName() : "<unknown>";
-  const char *DirName = FE ? FE->getDir()->getName() : "<unknown>";
-  
-  const LangOptions &LO = M->getLangOptions();
 
-  // If this is the main file, use the user provided main file name if
-  // specified.
-  if (isMain && LO.getMainFileName())
-    FileName = LO.getMainFileName();
+  // Get absolute path name.
+  llvm::sys::Path AbsFileName(FileName);
+  if (!AbsFileName.isAbsolute()) {
+    llvm::sys::Path tmp = llvm::sys::Path::GetCurrentDirectory();
+    tmp.appendComponent(FileName);
+    AbsFileName = tmp;
+  }
+
+  // See if thie compile unit is represnting main source file.
+  bool isMain = false;
+  const LangOptions &LO = M->getLangOptions();
+  const char *MainFileName = LO.getMainFileName();
+  if (MainFileName) {
+    if (!strcmp(AbsFileName.getLast().c_str(), MainFileName))
+      isMain = true;
+  } else {
+    if (Loc.isValid() && SM.isFromMainFile(Loc))
+      isMain = true;
+  }
 
   unsigned LangTag;
   if (LO.CPlusPlus) {
@@ -93,12 +96,13 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   } else {
     LangTag = llvm::dwarf::DW_LANG_C89;
   }
-    
+
   // Create new compile unit.
   // FIXME: Do not know how to get clang version yet.
   // FIXME: Encode command line options.
   // FIXME: Encode optimization level.
-  return Unit = DebugFactory.CreateCompileUnit(LangTag, FileName, DirName, 
+  return Unit = DebugFactory.CreateCompileUnit(LangTag, AbsFileName.getLast(),
+                                               AbsFileName.getDirname(), 
                                                "clang", isMain);
 }
 
