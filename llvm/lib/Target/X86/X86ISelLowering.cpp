@@ -4754,6 +4754,23 @@ X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   return LowerGlobalAddress(GV, Op.getDebugLoc(), Offset, DAG);
 }
 
+static SDValue
+GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
+           SDValue *InFlag) {
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  DebugLoc dl = GA->getDebugLoc();
+  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
+                                           GA->getValueType(0),
+                                           GA->getOffset());
+  if (InFlag) {
+    SDValue Ops[] = { Chain,  TGA, *InFlag };
+    return DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
+  } else {
+    SDValue Ops[]  = { Chain, TGA };
+    return DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
+  }
+}
+
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 32 bit
 static SDValue
 LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
@@ -4766,22 +4783,10 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                                  PtrVT), InFlag);
   InFlag = Chain.getValue(1);
 
-  // emit leal symbol@TLSGD(,%ebx,1), %eax
-  SDVTList NodeTys = DAG.getVTList(PtrVT, MVT::Other, MVT::Flag);
-  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
-                                             GA->getValueType(0),
-                                             GA->getOffset());
-  SDValue Ops[] = { Chain,  TGA, InFlag };
-  SDValue Result = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
-  InFlag = Result.getValue(2);
-  Chain = Result.getValue(1);
-
-  // call ___tls_get_addr. This function receives its argument in
-  // the register EAX.
-  Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Result, InFlag);
+  Chain = GetTLSADDR(DAG, Chain, GA, &InFlag);
   InFlag = Chain.getValue(1);
 
-  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops1[] = { Chain,
                       DAG.getTargetExternalSymbol("___tls_get_addr",
                                                   PtrVT),
@@ -4801,22 +4806,10 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   SDValue InFlag, Chain;
   DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
 
-  // emit leaq symbol@TLSGD(%rip), %rdi
-  SDVTList NodeTys = DAG.getVTList(PtrVT, MVT::Other, MVT::Flag);
-  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
-                                             GA->getValueType(0),
-                                             GA->getOffset());
-  SDValue Ops[]  = { DAG.getEntryNode(), TGA};
-  SDValue Result = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
-  Chain  = Result.getValue(1);
-  InFlag = Result.getValue(2);
-
-  // call __tls_get_addr. This function receives its argument in
-  // the register RDI.
-  Chain = DAG.getCopyToReg(Chain, dl, X86::RDI, Result, InFlag);
+  Chain = GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL);
   InFlag = Chain.getValue(1);
 
-  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops1[] = { Chain,
                       DAG.getTargetExternalSymbol("__tls_get_addr",
                                                   PtrVT),

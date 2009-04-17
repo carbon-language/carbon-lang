@@ -63,7 +63,7 @@ def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
 
 def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
-def SDT_X86TLSADDR : SDTypeProfile<1, 1, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
+def SDT_X86TLSADDR : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 def SDT_X86SegmentBaseAddress : SDTypeProfile<1, 1, [SDTCisPtrTy<0>]>;
 
@@ -2977,10 +2977,11 @@ def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
 // Thread Local Storage Instructions
 //
 
-let Uses = [EBX] in
-def TLS_addr32 : I<0, Pseudo, (outs GR32:$dst), (ins i32imm:$sym),
-                  "leal\t${sym:mem}(,%ebx,1), $dst",
-                  [(set GR32:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>;
+let hasSideEffects = 1, Uses = [EAX, EBX] in
+def TLS_addr32 : I<0, Pseudo, (outs), (ins i32imm:$sym),
+                  "leal\t${sym:mem}(,%ebx,1), %eax",
+                  [(X86tlsaddr tglobaltlsaddr:$sym)]>,
+                  Requires<[In32BitMode]>;
 
 let AddedComplexity = 5 in
 def GS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
