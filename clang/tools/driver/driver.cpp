@@ -68,6 +68,102 @@ llvm::sys::Path GetExecutablePath(const char *Argv0) {
   return llvm::sys::Path::GetMainExecutable(Argv0, P);
 }
 
+static const char *SaveStringInSet(std::set<std::string> &SavedStrings, 
+                                   const std::string &S) {
+  return SavedStrings.insert(S).first->c_str();
+}
+
+/// ApplyQAOverride - Apply a list of edits to the input argument lists.
+///
+/// The input string is a space separate list of edits to perform,
+/// they are applied in order to the input argument lists. Edits
+/// should be one of the following forms:
+///
+///  '^': Add FOO as a new argument at the beginning of the command line.
+///
+///  '+': Add FOO as a new argument at the end of the command line.
+///
+///  's/XXX/YYY/': Replace the literal argument XXX by YYY in the
+///  command line.
+///
+///  'xOPTION': Removes all instances of the literal argument OPTION.
+///
+///  'XOPTION': Removes all instances of the literal argument OPTION,
+///  and the following argument.
+///
+///  'Ox': Removes all flags matching 'O' or 'O[sz0-9]' and adds 'Ox'
+///  at the end of the command line.
+void ApplyOneQAOverride(std::vector<const char*> &Args, 
+                        const std::string &Edit,
+                        std::set<std::string> &SavedStrings) {
+  // This does not need to be efficient.
+
+   if (Edit[0] == '^') {
+     const char *Str = 
+       SaveStringInSet(SavedStrings, Edit.substr(1, std::string::npos));
+     llvm::errs() << "### Adding argument " << Str << " at beginning\n";
+     Args.insert(Args.begin() + 1, Str);
+   } else if (Edit[0] == '+') {
+     const char *Str = 
+       SaveStringInSet(SavedStrings, Edit.substr(1, std::string::npos));
+     llvm::errs() << "### Adding argument " << Str << " at end\n";
+     Args.push_back(Str);
+   } else if (Edit[0] == 'x' || Edit[0] == 'X') {
+     std::string Option = Edit.substr(1, std::string::npos);
+     for (unsigned i = 1; i < Args.size();) {
+       if (Option == Args[i]) {
+         llvm::errs() << "### Deleting argument " << Args[i] << '\n';
+         Args.erase(Args.begin() + i);
+         if (Edit[0] == 'X') {
+           if (i < Args.size()) {
+             llvm::errs() << "### Deleting argument " << Args[i] << '\n';
+             Args.erase(Args.begin() + i);
+           } else
+             llvm::errs() << "### Invalid X edit, end of command line!\n";
+         }
+       } else
+         ++i;
+     }
+   } else if (Edit[0] == 'O') {
+     for (unsigned i = 1; i < Args.size();) {
+       const char *A = Args[i];
+       if (A[0] == '-' && A[1] == 'O' && 
+           (A[2] == '\0' || 
+            (A[3] == '\0' && (A[2] == 's' || A[2] == 'z' ||
+                              ('0' <= A[2] && A[2] <= '9'))))) {
+         llvm::errs() << "### Deleting argument " << Args[i] << '\n';
+         Args.erase(Args.begin() + i);
+       } else
+         ++i;
+     }     
+     llvm::errs() << "### Adding argument " << Edit << " at end\n";
+     Args.push_back(SaveStringInSet(SavedStrings, '-' + Edit));
+   } else {
+     llvm::errs() << "### Unrecognized edit: " << Edit << "\n";
+   }
+}
+
+/// ApplyQAOverride - Apply a comma separate list of edits to the
+/// input argument lists. See ApplyOneQAOverride.
+void ApplyQAOverride(std::vector<const char*> &Args, const char *OverrideStr,
+                     std::set<std::string> &SavedStrings) {
+  llvm::errs() << "### QA_OVERRIDE_GCC3_OPTIONS: " << OverrideStr << "\n";
+
+  // This does not need to be efficient.
+
+  const char *S = OverrideStr;
+  while (*S) {
+    const char *End = ::strchr(S, ' ');
+    if (!End)
+      End = S + strlen(S);
+    if (End != S)
+      ApplyOneQAOverride(Args, std::string(S, End), SavedStrings);
+    S = End;
+    if (*S != '\0')
+      ++S;
+  }
+}
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -85,9 +181,18 @@ int main(int argc, const char **argv) {
 
   llvm::OwningPtr<Compilation> C;
 
-  // Handle CCC_ADD_ARGS, a comma separated list of extra arguments.
+  // Handle QA_OVERRIDE_GCC3_OPTIONS and CCC_ADD_ARGS, used for editing a
+  // command line behind the scenes.
   std::set<std::string> SavedStrings;
-  if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
+  if (const char *OverrideStr = ::getenv("QA_OVERRIDE_GCC3_OPTIONS")) {
+    // FIXME: Driver shouldn't take extra initial argument.
+    std::vector<const char*> StringPointers(argv, argv + argc);
+
+    ApplyQAOverride(StringPointers, OverrideStr, SavedStrings);
+
+    C.reset(TheDriver->BuildCompilation(StringPointers.size(), 
+                                        &StringPointers[0]));
+  } else if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
     std::vector<const char*> StringPointers;
 
     // FIXME: Driver shouldn't take extra initial argument.
@@ -97,16 +202,12 @@ int main(int argc, const char **argv) {
       const char *Next = strchr(Cur, ',');
       
       if (Next) {
-        const char *P = 
-          SavedStrings.insert(std::string(Cur, Next)).first->c_str();
-        StringPointers.push_back(P);
+        StringPointers.push_back(SaveStringInSet(SavedStrings,
+                                                 std::string(Cur, Next)));
         Cur = Next + 1;
       } else {
-        if (*Cur != '\0') {
-          const char *P = 
-            SavedStrings.insert(std::string(Cur)).first->c_str();
-          StringPointers.push_back(P);
-        }
+        if (*Cur != '\0')
+          StringPointers.push_back(SaveStringInSet(SavedStrings, Cur));
         break;
       }
     }
