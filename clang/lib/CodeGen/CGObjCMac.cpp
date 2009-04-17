@@ -4995,7 +4995,6 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
     GV->setAlignment(16);
     GV->setSection("__DATA, __objc_msgrefs, coalesced");
-    UsedGlobals.push_back(GV);
   }
   llvm::Value *Arg1 = CGF.Builder.CreateBitCast(GV, ObjCTypes.MessageRefPtrTy);
   
