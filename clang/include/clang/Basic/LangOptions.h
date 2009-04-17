@@ -76,6 +76,9 @@ public:
                                   // used (instead of C99 semantics).
   unsigned NoInline          : 1; // Should __NO_INLINE__ be defined.
 
+  unsigned ObjCGCBitmapPrint : 1; // Enable printing of gc's bitmap layout
+                                  // for __weak/__strong ivars.
+
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -117,6 +120,7 @@ public:
     MathErrno = 1;
 
     OverflowChecking = 0;
+    ObjCGCBitmapPrint = 0;
 
     InstantiationDepth = 99;
     

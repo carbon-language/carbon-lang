@@ -537,6 +537,7 @@ OPTION("-prebind", prebind, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-preload", preload, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-print-file-name=", print_file_name_EQ, Joined, INVALID, INVALID, "", 0,
        "Print the full library path of <file>", "<file>")
+OPTION("-print-ivar-layout", print_ivar_layout, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-print-libgcc-file-name", print_libgcc_file_name, Flag, INVALID, INVALID, "", 0, 
        "Print the library path for \"libgcc.a\"", 0)
 OPTION("-print-multi-directory", print_multi_directory, Flag, INVALID, INVALID, "u", 0, 0, 0)

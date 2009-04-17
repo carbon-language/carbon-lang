@@ -399,6 +399,10 @@ static llvm::cl::opt<bool>
 ObjCEnableGC("fobjc-gc",
              llvm::cl::desc("Enable Objective-C garbage collection"));
 
+static llvm::cl::opt<bool>
+ObjCEnableGCBitmapPrint("print-ivar-layout",
+             llvm::cl::desc("Enable Objective-C Ivar layout bitmap print trace"));
+
 static llvm::cl::opt<LangOptions::VisibilityMode>
 SymbolVisibility("fvisibility",
                  llvm::cl::desc("Set the default symbol visibility:"),
@@ -516,6 +520,9 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
     Options.setGCMode(LangOptions::GCOnly);
   else if (ObjCEnableGC)
     Options.setGCMode(LangOptions::HybridGC);
+  
+  if (ObjCEnableGCBitmapPrint)
+    Options.ObjCGCBitmapPrint = 1;
   
   Options.setVisibilityMode(SymbolVisibility);
   Options.OverflowChecking = OverflowChecking;
