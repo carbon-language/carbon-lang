@@ -405,25 +405,24 @@ static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                         ARM::R3,
                                         ARM::NoRegister };
 
-  if (unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 4)) {
-    unsigned i;
-    for (i = 0; i < 4; ++i)
-      if (HiRegList[i] == Reg)
-        break;
+  unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 4);
+  if (Reg == 0) 
+    return false; // we didn't handle it
 
-    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
+  unsigned i;
+  for (i = 0; i < 4; ++i)
+    if (HiRegList[i] == Reg)
+      break;
+
+  State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
+  if (LoRegList[i] != ARM::NoRegister)
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
                                            MVT::i32, LocInfo));
-    if (LoRegList[i] != ARM::NoRegister)
-      State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
-                                             MVT::i32, LocInfo));
-    else
-      State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
-                                             State.AllocateStack(4, 4),
-                                             MVT::i32, LocInfo));
-    return true;  // we handled it
-  }
-
-  return false; // we didn't handle it
+  else
+    State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
+                                           State.AllocateStack(4, 4),
+                                           MVT::i32, LocInfo));
+  return true;  // we handled it
 }
 
 // AAPCS f64 is in aligned register pairs
@@ -434,20 +433,19 @@ static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
   static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
 
-  if (unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2)) {
-    unsigned i;
-    for (i = 0; i < 2; ++i)
-      if (HiRegList[i] == Reg)
-        break;
+  unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2);
+  if (Reg == 0)
+    return false; // we didn't handle it
 
-    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
-                                           MVT::i32, LocInfo));
-    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
-                                           MVT::i32, LocInfo));
-    return true;  // we handled it
-  }
+  unsigned i;
+  for (i = 0; i < 2; ++i)
+    if (HiRegList[i] == Reg)
+      break;
 
-  return false; // we didn't handle it
+  State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
+  State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
+                                         MVT::i32, LocInfo));
+  return true;  // we handled it
 }
 
 static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
@@ -457,20 +455,19 @@ static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
   static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
 
-  if (unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2)) {
-    unsigned i;
-    for (i = 0; i < 2; ++i)
-      if (HiRegList[i] == Reg)
-        break;
+  unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2);
+  if (Reg == 0)
+    return false; // we didn't handle it
 
-    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
-                                           MVT::i32, LocInfo));
-    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
-                                           MVT::i32, LocInfo));
-    return true;  // we handled it
-  }
+  unsigned i;
+  for (i = 0; i < 2; ++i)
+    if (HiRegList[i] == Reg)
+      break;
 
-  return false; // we didn't handle it
+  State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
+  State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
+                                         MVT::i32, LocInfo));
+  return true;  // we handled it
 }
 
 static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
