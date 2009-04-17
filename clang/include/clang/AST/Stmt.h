@@ -244,6 +244,9 @@ public:
            SourceLocation endLoc) : Stmt(DeclStmtClass), DG(dg),
                                     StartLoc(startLoc), EndLoc(endLoc) {}
   
+  /// \brief Build an empty declaration statement.
+  explicit DeclStmt(EmptyShell Empty) : Stmt(DeclStmtClass, Empty) { }
+
   virtual void Destroy(ASTContext& Ctx);
 
   /// isSingleDecl - This method returns true if this DeclStmt refers
@@ -257,10 +260,13 @@ public:
   
   const DeclGroupRef getDeclGroup() const { return DG; }
   DeclGroupRef getDeclGroup() { return DG; }
+  void setDeclGroup(DeclGroupRef DGR) { DG = DGR; }
 
   SourceLocation getStartLoc() const { return StartLoc; }
+  void setStartLoc(SourceLocation L) { StartLoc = L; }
   SourceLocation getEndLoc() const { return EndLoc; }
-  
+  void setEndLoc(SourceLocation L) { EndLoc = L; }
+
   SourceRange getSourceRange() const {
     return SourceRange(StartLoc, EndLoc);
   }

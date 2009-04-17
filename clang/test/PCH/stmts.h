@@ -39,10 +39,12 @@ void f0(int x) {
     x++;
   } while (x < 10);
 
-  for (; x < 20; ++x) {
-    if (x == 12)
+  for (int y = x; y < 20; ++y) {
+    if (x + y == 12)
       return;
   }
+
+  int z = x, *y, j = 5;
 }
 
 int f1(int x) {
@@ -56,3 +58,5 @@ int f1(int x) {
 
   return x*2;
 }
+
+const char* what_is_my_name(void) { return __func__; }

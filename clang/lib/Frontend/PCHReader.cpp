@@ -257,6 +257,7 @@ namespace {
     unsigned VisitContinueStmt(ContinueStmt *S);
     unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitReturnStmt(ReturnStmt *S);
+    unsigned VisitDeclStmt(DeclStmt *S);
     unsigned VisitExpr(Expr *E);
     unsigned VisitPredefinedExpr(PredefinedExpr *E);
     unsigned VisitDeclRefExpr(DeclRefExpr *E);
@@ -404,6 +405,25 @@ unsigned PCHStmtReader::VisitReturnStmt(ReturnStmt *S) {
   S->setRetValue(cast_or_null<Expr>(StmtStack.back()));
   S->setReturnLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
+}
+
+unsigned PCHStmtReader::VisitDeclStmt(DeclStmt *S) {
+  VisitStmt(S);
+  S->setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+
+  if (Idx + 1 == Record.size()) {
+    // Single declaration
+    S->setDeclGroup(DeclGroupRef(Reader.GetDecl(Record[Idx++])));
+  } else {
+    llvm::SmallVector<Decl *, 16> Decls;
+    Decls.reserve(Record.size() - Idx);
+    for (unsigned N = Record.size(); Idx != N; ++Idx)
+      Decls.push_back(Reader.GetDecl(Record[Idx]));
+    S->setDeclGroup(DeclGroupRef(DeclGroup::Create(Reader.getContext(),
+                                                   &Decls[0], Decls.size())));
+  }
+  return 0;
 }
 
 unsigned PCHStmtReader::VisitExpr(Expr *E) {
@@ -2184,8 +2204,11 @@ Stmt *PCHReader::ReadStmt() {
       S = new (Context) ReturnStmt(Empty);
       break;
 
+    case pch::STMT_DECL:
+      S = new (Context) DeclStmt(Empty);
+      break;
+
     case pch::EXPR_PREDEFINED:
-      // FIXME: untested (until we can serialize function bodies).
       S = new (Context) PredefinedExpr(Empty);
       break;
       

@@ -459,6 +459,7 @@ namespace {
     void VisitContinueStmt(ContinueStmt *S);
     void VisitBreakStmt(BreakStmt *S);
     void VisitReturnStmt(ReturnStmt *S);
+    void VisitDeclStmt(DeclStmt *S);
     void VisitExpr(Expr *E);
     void VisitPredefinedExpr(PredefinedExpr *E);
     void VisitDeclRefExpr(DeclRefExpr *E);
@@ -598,6 +599,16 @@ void PCHStmtWriter::VisitReturnStmt(ReturnStmt *S) {
   Writer.WriteSubStmt(S->getRetValue());
   Writer.AddSourceLocation(S->getReturnLoc(), Record);
   Code = pch::STMT_RETURN;
+}
+
+void PCHStmtWriter::VisitDeclStmt(DeclStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getStartLoc(), Record);
+  Writer.AddSourceLocation(S->getEndLoc(), Record);
+  DeclGroupRef DG = S->getDeclGroup();
+  for (DeclGroupRef::iterator D = DG.begin(), DEnd = DG.end(); D != DEnd; ++D)
+    Writer.AddDeclRef(*D, Record);
+  Code = pch::STMT_DECL;
 }
 
 void PCHStmtWriter::VisitExpr(Expr *E) {
