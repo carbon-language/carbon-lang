@@ -533,25 +533,22 @@ bool Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   //   In a given non-class scope, a typedef specifier can be used to
   //   redefine the name of any type declared in that scope to refer
   //   to the type to which it already refers.
-  if (getLangOptions().CPlusPlus && !isa<CXXRecordDecl>(CurContext))
-    return false;
-
-  // In C, redeclaration of a type is a constraint violation (6.7.2.3p1).
-  // Apparently GCC, Intel, and Sun all silently ignore the redeclaration if
-  // *either* declaration is in a system header. The code below implements
-  // this adhoc compatibility rule. FIXME: The following code will not
-  // work properly when compiling ".i" files (containing preprocessed output).
-  if (PP.getDiagnostics().getSuppressSystemWarnings()) {
-    SourceManager &SrcMgr = Context.getSourceManager();
-    if (SrcMgr.isInSystemHeader(Old->getLocation()))
+  if (getLangOptions().CPlusPlus) {
+    if (!isa<CXXRecordDecl>(CurContext))
       return false;
-    if (SrcMgr.isInSystemHeader(New->getLocation()))
-      return false;
+    Diag(New->getLocation(), diag::err_redefinition)
+      << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_previous_definition);
+    return true;
   }
 
-  Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
+  // If we have a redefinition of a typedef in C, emit a warning.  This warning
+  // is normally mapped to an error, but can be controlled with
+  // -Wtypedef-redefinition.
+  Diag(New->getLocation(), diag::warn_redefinition_of_typedef)
+    << New->getDeclName();
   Diag(Old->getLocation(), diag::note_previous_definition);
-  return true;
+  return false;
 }
 
 /// DeclhasAttr - returns true if decl Declaration already has the target

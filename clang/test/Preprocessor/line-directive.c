@@ -40,7 +40,7 @@
 
 # 192 "glomp.h" // not a system header.
 typedef int x;  // expected-note {{previous definition is here}}
-typedef int x;  // expected-error {{redefinition of 'x'}}
+typedef int x;  // expected-error {{redefinition of typedef 'x' is invalid in C}}
 
 # 192 "glomp.h" 3 // System header.
 typedef int y;  // ok
@@ -59,4 +59,4 @@ typedef int z1;  // ok
 # 42 "blonk.h"  // DOES change system headerness.
 
 typedef int w;  // expected-note {{previous definition is here}}
-typedef int w;  // expected-error {{redefinition of 'w'}}
+typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}}

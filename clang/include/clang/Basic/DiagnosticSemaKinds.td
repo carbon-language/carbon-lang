@@ -734,6 +734,11 @@ def warn_missing_prototype : Warning<
   "no previous prototype for function %0">,
   InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;
 def err_redefinition : Error<"redefinition of %0">;
+
+def warn_redefinition_of_typedef : Warning<
+  "redefinition of typedef %0 is invalid in C">,
+  InGroup<DiagGroup<"typedef-redefinition"> >, DefaultError;
+
 def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
 def err_non_static_static : Error<

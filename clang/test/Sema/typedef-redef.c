@@ -1,11 +1,5 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-// size_t coming from a system header.
-#include <stddef.h>
-typedef __SIZE_TYPE__ size_t;
-
-
-
 typedef const int x; // expected-note {{previous definition is here}}
 extern x a;
 typedef int x;  // expected-error {{typedef redefinition with different types}}
