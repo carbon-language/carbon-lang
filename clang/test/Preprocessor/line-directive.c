@@ -68,3 +68,5 @@ typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}
 #line 2 "foo.c" EMPTY( )
 #line 2 "foo.c" NONEMPTY( )  // expected-warning{{extra tokens at end of #line directive}}
 
+// PR3940
+#line 0xf  // expected-warning {{#line directive requires decimal line number}}

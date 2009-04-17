@@ -223,6 +223,8 @@ def err_pp_line_requires_integer : Error<
   "#line directive requires a positive integer argument">;
 def err_pp_line_invalid_filename : Error<
   "invalid filename for #line directive">;
+def warn_pp_line_decimal : Warning<
+  "#line directive requires decimal line number">;
 def err_pp_linemarker_requires_integer : Error<
   "line marker directive requires a positive integer argument">;
 def err_pp_linemarker_invalid_filename : Error<

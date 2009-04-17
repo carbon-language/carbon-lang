@@ -650,6 +650,11 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
     return true;
   }
   
+  // Warn about hex and octal line numbers.  Do this after the check for 0,
+  // because it is octal.
+  if (Literal.getRadix() != 10) 
+    PP.Diag(DigitTok, diag::warn_pp_line_decimal);
+  
   return false;
 }
 
