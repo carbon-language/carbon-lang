@@ -41,6 +41,8 @@ class ASTContext;
 class Attr;
 class Decl;
 class DeclContext;
+class GotoStmt;
+class LabelStmt;
 class Preprocessor;
 class SwitchCase;
 
@@ -131,6 +133,15 @@ private:
   /// \brief Mapping from switch-case IDs in the PCH file to
   /// switch-case statements.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
+
+  /// \brief Mapping from label statement IDs in the PCH file to label
+  /// statements.
+  std::map<unsigned, LabelStmt *> LabelStmts;
+
+  /// \brief Mapping from label IDs to the set of "goto" statements
+  /// that point to that label before the label itself has been
+  /// de-serialized.
+  std::multimap<unsigned, GotoStmt *> UnresolvedGotoStmts;
 
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
@@ -254,6 +265,19 @@ public:
 
   /// \brief Retrieve the switch-case statement with the given ID.
   SwitchCase *getSwitchCaseWithID(unsigned ID);
+
+  /// \brief Record that the given label statement has been
+  /// deserialized and has the given ID.
+  void RecordLabelStmt(LabelStmt *S, unsigned ID);
+
+  /// \brief Set the label of the given statement to the label
+  /// identified by ID.
+  ///
+  /// Depending on the order in which the label and other statements
+  /// referencing that label occur, this operation may complete
+  /// immediately (updating the statement) or it may queue the
+  /// statement to be back-patched later.
+  void SetLabelOf(GotoStmt *S, unsigned ID);
 };
 
 } // end namespace clang

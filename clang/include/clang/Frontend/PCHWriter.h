@@ -32,6 +32,7 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
+class LabelStmt;
 class Preprocessor;
 class SourceManager;
 class SwitchCase;
@@ -113,6 +114,9 @@ private:
   /// \brief Mapping from SwitchCase statements to IDs.
   std::map<SwitchCase *, unsigned> SwitchCaseIDs;
   
+  /// \brief Mapping from LabelStmt statements to IDs.
+  std::map<LabelStmt *, unsigned> LabelIDs;
+
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
@@ -181,6 +185,10 @@ public:
 
   /// \brief Retrieve the ID for the given switch-case statement.
   unsigned getSwitchCaseID(SwitchCase *S);
+
+  /// \brief Retrieve the ID for the given label statement, which may
+  /// or may not have been emitted yet.
+  unsigned GetLabelID(LabelStmt *S);
 
 };
 

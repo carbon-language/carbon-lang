@@ -33,16 +33,24 @@ void f0(int x) {
       continue;
     } else if (x < 5)
       break;
+    else
+      goto done;
   }
 
   do {
     x++;
   } while (x < 10);
 
+ almost_done:
   for (int y = x; y < 20; ++y) {
     if (x + y == 12)
       return;
+    else if (x - y == 7)
+      goto almost_done;
   }
+
+ done:
+  x = x + 2;
 
   int z = x, *y, j = 5;
 }

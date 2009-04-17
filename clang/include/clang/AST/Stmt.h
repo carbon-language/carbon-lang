@@ -530,13 +530,16 @@ public:
   LabelStmt(SourceLocation IL, IdentifierInfo *label, Stmt *substmt) 
     : Stmt(LabelStmtClass), Label(label), 
       SubStmt(substmt), IdentLoc(IL) {}
+
+  // \brief Build an empty label statement.
+  explicit LabelStmt(EmptyShell Empty) : Stmt(LabelStmtClass, Empty) { }
   
   SourceLocation getIdentLoc() const { return IdentLoc; }
   IdentifierInfo *getID() const { return Label; }
+  void setID(IdentifierInfo *II) { Label = II; }
   const char *getName() const;
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
-
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
 
@@ -817,7 +820,16 @@ public:
   GotoStmt(LabelStmt *label, SourceLocation GL, SourceLocation LL) 
     : Stmt(GotoStmtClass), Label(label), GotoLoc(GL), LabelLoc(LL) {}
   
+  /// \brief Build an empty goto statement.
+  explicit GotoStmt(EmptyShell Empty) : Stmt(GotoStmtClass, Empty) { }
+
   LabelStmt *getLabel() const { return Label; }
+  void setLabel(LabelStmt *S) { Label = S; }
+
+  SourceLocation getGotoLoc() const { return GotoLoc; }
+  void setGotoLoc(SourceLocation L) { GotoLoc = L; }
+  SourceLocation getLabelLoc() const { return LabelLoc; }
+  void setLabelLoc(SourceLocation L) { LabelLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(GotoLoc, LabelLoc); 

@@ -451,11 +451,13 @@ namespace {
     void VisitSwitchCase(SwitchCase *S);
     void VisitCaseStmt(CaseStmt *S);
     void VisitDefaultStmt(DefaultStmt *S);
+    void VisitLabelStmt(LabelStmt *S);
     void VisitIfStmt(IfStmt *S);
     void VisitSwitchStmt(SwitchStmt *S);
     void VisitWhileStmt(WhileStmt *S);
     void VisitDoStmt(DoStmt *S);
     void VisitForStmt(ForStmt *S);
+    void VisitGotoStmt(GotoStmt *S);
     void VisitContinueStmt(ContinueStmt *S);
     void VisitBreakStmt(BreakStmt *S);
     void VisitReturnStmt(ReturnStmt *S);
@@ -536,6 +538,15 @@ void PCHStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
   Code = pch::STMT_DEFAULT;
 }
 
+void PCHStmtWriter::VisitLabelStmt(LabelStmt *S) {
+  VisitStmt(S);
+  Writer.AddIdentifierRef(S->getID(), Record);
+  Writer.WriteSubStmt(S->getSubStmt());
+  Writer.AddSourceLocation(S->getIdentLoc(), Record);
+  Record.push_back(Writer.GetLabelID(S));
+  Code = pch::STMT_LABEL;
+}
+
 void PCHStmtWriter::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
   Writer.WriteSubStmt(S->getCond());
@@ -580,6 +591,14 @@ void PCHStmtWriter::VisitForStmt(ForStmt *S) {
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getForLoc(), Record);
   Code = pch::STMT_FOR;
+}
+
+void PCHStmtWriter::VisitGotoStmt(GotoStmt *S) {
+  VisitStmt(S);
+  Record.push_back(Writer.GetLabelID(S->getLabel()));
+  Writer.AddSourceLocation(S->getGotoLoc(), Record);
+  Writer.AddSourceLocation(S->getLabelLoc(), Record);
+  Code = pch::STMT_GOTO;
 }
 
 void PCHStmtWriter::VisitContinueStmt(ContinueStmt *S) {
@@ -1856,4 +1875,16 @@ unsigned PCHWriter::getSwitchCaseID(SwitchCase *S) {
   assert(SwitchCaseIDs.find(S) != SwitchCaseIDs.end() && 
          "SwitchCase hasn't been seen yet");
   return SwitchCaseIDs[S];
+}
+
+/// \brief Retrieve the ID for the given label statement, which may
+/// or may not have been emitted yet.
+unsigned PCHWriter::GetLabelID(LabelStmt *S) {
+  std::map<LabelStmt *, unsigned>::iterator Pos = LabelIDs.find(S);
+  if (Pos != LabelIDs.end())
+    return Pos->second;
+
+  unsigned NextID = LabelIDs.size();
+  LabelIDs[S] = NextID;
+  return NextID;
 }

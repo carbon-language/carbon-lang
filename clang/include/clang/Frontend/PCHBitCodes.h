@@ -383,6 +383,8 @@ namespace clang {
       STMT_CASE,
       /// \brief A DefaultStmt record.
       STMT_DEFAULT,
+      /// \brief A LabelStmt record.
+      STMT_LABEL,
       /// \brief An IfStmt record.
       STMT_IF,
       /// \brief A SwitchStmt record.
@@ -393,6 +395,8 @@ namespace clang {
       STMT_DO,
       /// \brief A ForStmt record.
       STMT_FOR,
+      /// \brief A GotoStmt record.
+      STMT_GOTO,
       /// \brief A ContinueStmt record.
       STMT_CONTINUE,
       /// \brief A BreakStmt record.

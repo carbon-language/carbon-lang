@@ -249,11 +249,13 @@ namespace {
     unsigned VisitSwitchCase(SwitchCase *S);
     unsigned VisitCaseStmt(CaseStmt *S);
     unsigned VisitDefaultStmt(DefaultStmt *S);
+    unsigned VisitLabelStmt(LabelStmt *S);
     unsigned VisitIfStmt(IfStmt *S);
     unsigned VisitSwitchStmt(SwitchStmt *S);
     unsigned VisitWhileStmt(WhileStmt *S);
     unsigned VisitDoStmt(DoStmt *S);
     unsigned VisitForStmt(ForStmt *S);
+    unsigned VisitGotoStmt(GotoStmt *S);
     unsigned VisitContinueStmt(ContinueStmt *S);
     unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitReturnStmt(ReturnStmt *S);
@@ -336,6 +338,15 @@ unsigned PCHStmtReader::VisitDefaultStmt(DefaultStmt *S) {
   return 1;
 }
 
+unsigned PCHStmtReader::VisitLabelStmt(LabelStmt *S) {
+  VisitStmt(S);
+  S->setID(Reader.GetIdentifierInfo(Record, Idx));
+  S->setSubStmt(StmtStack.back());
+  S->setIdentLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  Reader.RecordLabelStmt(S, Record[Idx++]);
+  return 1;
+}
+
 unsigned PCHStmtReader::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
   S->setCond(cast<Expr>(StmtStack[StmtStack.size() - 3]));
@@ -386,6 +397,14 @@ unsigned PCHStmtReader::VisitForStmt(ForStmt *S) {
   S->setBody(StmtStack.back());
   S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 4;
+}
+
+unsigned PCHStmtReader::VisitGotoStmt(GotoStmt *S) {
+  VisitStmt(S);
+  Reader.SetLabelOf(S, Record[Idx++]);
+  S->setGotoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setLabelLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
 }
 
 unsigned PCHStmtReader::VisitContinueStmt(ContinueStmt *S) {
@@ -2172,6 +2191,10 @@ Stmt *PCHReader::ReadStmt() {
       S = new (Context) DefaultStmt(Empty);
       break;
 
+    case pch::STMT_LABEL:
+      S = new (Context) LabelStmt(Empty);
+      break;
+
     case pch::STMT_IF:
       S = new (Context) IfStmt(Empty);
       break;
@@ -2190,6 +2213,10 @@ Stmt *PCHReader::ReadStmt() {
       
     case pch::STMT_FOR:
       S = new (Context) ForStmt(Empty);
+      break;
+
+    case pch::STMT_GOTO:
+      S = new (Context) GotoStmt(Empty);
       break;
 
     case pch::STMT_CONTINUE:
@@ -2342,7 +2369,7 @@ Stmt *PCHReader::ReadStmt() {
       }
     }
 
-    assert(Idx == Record.size() && "Invalid deserialization of expression");
+    assert(Idx == Record.size() && "Invalid deserialization of statement");
     StmtStack.push_back(S);
   }
   assert(StmtStack.size() == 1 && "Extra expressions on stack!");
@@ -2375,4 +2402,40 @@ void PCHReader::RecordSwitchCaseID(SwitchCase *SC, unsigned ID) {
 SwitchCase *PCHReader::getSwitchCaseWithID(unsigned ID) {
   assert(SwitchCaseStmts[ID] != 0 && "No SwitchCase with this ID");
   return SwitchCaseStmts[ID];
+}
+
+/// \brief Record that the given label statement has been
+/// deserialized and has the given ID.
+void PCHReader::RecordLabelStmt(LabelStmt *S, unsigned ID) {
+  assert(LabelStmts.find(ID) == LabelStmts.end() && 
+         "Deserialized label twice");
+  LabelStmts[ID] = S;
+
+  // If we've already seen any goto statements that point to this
+  // label, resolve them now.
+  typedef std::multimap<unsigned, GotoStmt *>::iterator GotoIter;
+  std::pair<GotoIter, GotoIter> Gotos = UnresolvedGotoStmts.equal_range(ID);
+  for (GotoIter Goto = Gotos.first; Goto != Gotos.second; ++Goto)
+    Goto->second->setLabel(S);
+  UnresolvedGotoStmts.erase(Gotos.first, Gotos.second);
+}
+
+/// \brief Set the label of the given statement to the label
+/// identified by ID.
+///
+/// Depending on the order in which the label and other statements
+/// referencing that label occur, this operation may complete
+/// immediately (updating the statement) or it may queue the
+/// statement to be back-patched later.
+void PCHReader::SetLabelOf(GotoStmt *S, unsigned ID) {
+  std::map<unsigned, LabelStmt *>::iterator Label = LabelStmts.find(ID);
+  if (Label != LabelStmts.end()) {
+    // We've already seen this label, so set the label of the goto and
+    // we're done.
+    S->setLabel(Label->second);
+  } else {
+    // We haven't seen this label yet, so add this goto to the set of
+    // unresolved goto statements.
+    UnresolvedGotoStmts.insert(std::make_pair(ID, S));
+  }
 }
