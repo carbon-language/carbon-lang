@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -96,6 +97,7 @@ public:
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
   }
+  void VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *E);
   void VisitVAArgExpr(VAArgExpr *E);
 
   void EmitInitializationToLValue(Expr *E, LValue Address);
@@ -288,6 +290,18 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   if (DestPtr)
     // FIXME: volatility
     CGF.EmitAggregateCopy(DestPtr, ArgPtr, VE->getType());
+}
+
+void
+AggExprEmitter::VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *E) {
+  llvm::Value *This = 0;
+  
+  if (DestPtr)
+    This = DestPtr;
+  else 
+    This = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "tmp");
+  
+  CGF.EmitCXXTemporaryObjectExpr(This, E);
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {

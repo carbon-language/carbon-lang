@@ -145,6 +145,51 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
   SetLLVMFunctionAttributesForDefinition(D, Fn);
 }
 
+void
+CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D, 
+                                        CXXCtorType Type, 
+                                        llvm::Value *This,
+                                        CallExpr::const_arg_iterator ArgBeg,
+                                        CallExpr::const_arg_iterator ArgEnd) {
+  CallArgList Args;
+  
+  // Push the 'this' pointer.
+  Args.push_back(std::make_pair(RValue::get(This), 
+                                D->getThisType(getContext())));
+  
+  EmitCallArgs(Args, D->getType()->getAsFunctionProtoType(), ArgBeg, ArgEnd);
+  
+  EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args), 
+           CGM.GetAddrOfCXXConstructor(D, Type), Args, D);
+}
+
+LValue 
+CodeGenFunction::EmitCXXTemporaryObjectExprLValue(
+                                              const CXXTemporaryObjectExpr *E) {
+  // Allocate the destination.
+  llvm::Value *Dest = CreateTempAlloca(ConvertType(E->getType()), "tmp");
+  
+  EmitCXXTemporaryObjectExpr(Dest, E);
+  
+  return LValue::MakeAddr(Dest, E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
+}
+
+void 
+CodeGenFunction::EmitCXXTemporaryObjectExpr(llvm::Value *Dest, 
+                                            const CXXTemporaryObjectExpr *E) {
+  assert(Dest && "Must have a destination!");
+  
+  const CXXRecordDecl *RD = 
+  cast<CXXRecordDecl>(E->getType()->getAsRecordType()->getDecl());
+  if (RD->hasTrivialConstructor())
+    return;
+  
+  // Call the constructor.
+  EmitCXXConstructorCall(E->getConstructor(), Ctor_Complete, Dest, 
+                         E->arg_begin(), E->arg_end());
+}
+
 static bool canGenerateCXXConstructor(const CXXConstructorDecl *D, 
                                       ASTContext &Context) {
   const CXXRecordDecl *RD = D->getParent();

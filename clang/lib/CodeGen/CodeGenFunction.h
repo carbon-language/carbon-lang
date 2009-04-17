@@ -25,6 +25,7 @@
 #include "CGBlocks.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
+#include "CGCXX.h"
 #include "CGValue.h"
 
 namespace llvm {
@@ -458,6 +459,11 @@ public:
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
   
+  void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type, 
+                              llvm::Value *This,
+                              CallExpr::const_arg_iterator ArgBeg,
+                              CallExpr::const_arg_iterator ArgEnd);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -632,6 +638,7 @@ public:
   LValue EmitBlockDeclRefLValue(const BlockDeclRefExpr *E);
 
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
+  LValue EmitCXXTemporaryObjectExprLValue(const CXXTemporaryObjectExpr *E);
 
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
@@ -743,6 +750,9 @@ public:
   void GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
                                          llvm::GlobalVariable *GV);
 
+  void EmitCXXTemporaryObjectExpr(llvm::Value *Dest, 
+                                  const CXXTemporaryObjectExpr *E);
+  
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//
