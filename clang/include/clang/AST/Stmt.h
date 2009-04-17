@@ -673,10 +673,18 @@ public:
     WhileLoc = WL;
   }
   
+  /// \brief Build an empty while statement.
+  explicit WhileStmt(EmptyShell Empty) : Stmt(WhileStmtClass, Empty) { }
+
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt*>(E); }
   Stmt *getBody() { return SubExprs[BODY]; }
   const Stmt *getBody() const { return SubExprs[BODY]; }
+  void setBody(Stmt *S) { SubExprs[BODY] = S; }
+
+  SourceLocation getWhileLoc() const { return WhileLoc; }
+  void setWhileLoc(SourceLocation L) { WhileLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(WhileLoc, SubExprs[BODY]->getLocEnd()); 
@@ -838,6 +846,12 @@ class ContinueStmt : public Stmt {
 public:
   ContinueStmt(SourceLocation CL) : Stmt(ContinueStmtClass), ContinueLoc(CL) {}
   
+  /// \brief Build an empty continue statement.
+  explicit ContinueStmt(EmptyShell Empty) : Stmt(ContinueStmtClass, Empty) { }
+
+  SourceLocation getContinueLoc() const { return ContinueLoc; }
+  void setContinueLoc(SourceLocation L) { ContinueLoc = L; }
+
   virtual SourceRange getSourceRange() const { 
     return SourceRange(ContinueLoc); 
   }

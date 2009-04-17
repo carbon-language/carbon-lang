@@ -251,6 +251,8 @@ namespace {
     unsigned VisitDefaultStmt(DefaultStmt *S);
     unsigned VisitIfStmt(IfStmt *S);
     unsigned VisitSwitchStmt(SwitchStmt *S);
+    unsigned VisitWhileStmt(WhileStmt *S);
+    unsigned VisitContinueStmt(ContinueStmt *S);
     unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitExpr(Expr *E);
     unsigned VisitPredefinedExpr(PredefinedExpr *E);
@@ -354,6 +356,20 @@ unsigned PCHStmtReader::VisitSwitchStmt(SwitchStmt *S) {
     PrevSC = SC;
   }
   return 2;
+}
+
+unsigned PCHStmtReader::VisitWhileStmt(WhileStmt *S) {
+  VisitStmt(S);
+  S->setCond(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  S->setBody(StmtStack.back());
+  S->setWhileLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 2;
+}
+
+unsigned PCHStmtReader::VisitContinueStmt(ContinueStmt *S) {
+  VisitStmt(S);
+  S->setContinueLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
 }
 
 unsigned PCHStmtReader::VisitBreakStmt(BreakStmt *S) {
@@ -2114,6 +2130,14 @@ Stmt *PCHReader::ReadStmt() {
 
     case pch::STMT_SWITCH:
       S = new (Context) SwitchStmt(Empty);
+      break;
+
+    case pch::STMT_WHILE:
+      S = new (Context) WhileStmt(Empty);
+      break;
+
+    case pch::STMT_CONTINUE:
+      S = new (Context) ContinueStmt(Empty);
       break;
 
     case pch::STMT_BREAK:

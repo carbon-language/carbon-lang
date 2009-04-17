@@ -387,6 +387,10 @@ namespace clang {
       STMT_IF,
       /// \brief A SwitchStmt record.
       STMT_SWITCH,
+      /// \brief A WhileStmt record.
+      STMT_WHILE,
+      /// \brief A ContinueStmt record.
+      STMT_CONTINUE,
       /// \brief A BreakStmt record.
       STMT_BREAK,
       /// \brief A PredefinedExpr record.

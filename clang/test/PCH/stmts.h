@@ -19,4 +19,11 @@ void f0(int x) {
   default:
     break;
   }
+
+  while (x > 20) {
+    if (x > 30) {
+      --x;
+      continue;
+    }
+  }
 }
