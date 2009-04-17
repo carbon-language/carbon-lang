@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify
+// RUN: clang-cc -fsyntax-only %s -verify -Wvector-conversions
 
 typedef long long t1 __attribute__ ((vector_size (8)));
 typedef char t2 __attribute__ ((vector_size (16)));
@@ -28,3 +28,11 @@ type 't1' and integer type 'short' of different size}}
   char *r3 = (char *)v1; // -expected-error {{invalid conversion between vector\
  type 't1' and scalar type 'char *'}}
 }
+
+
+void f2(t2 X);
+
+void f3(t3 Y) {
+  f2(Y);  // expected-warning {{incompatible vector types passing 't3', expected 't2'}}
+}
+
