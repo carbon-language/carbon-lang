@@ -478,17 +478,6 @@ static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                    State);
 }
 
-/// AddLiveIn - This helper function adds the specified physical register to the
-/// MachineFunction as a live in value.  It also creates a corresponding virtual
-/// register for it.
-static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
-                          const TargetRegisterClass *RC) {
-  assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
-  MF.getRegInfo().addLiveIn(PReg, VReg);
-  return VReg;
-}
-
 /// LowerCallResult - Lower the result values of an ISD::CALL into the
 /// appropriate copies out of appropriate physical registers.  This assumes that
 /// Chain/InFlag are the input chain/flag to use, and that TheCall is the call
@@ -1062,6 +1051,17 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
   SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0);
+}
+
+/// AddLiveIn - This helper function adds the specified physical register to the
+/// MachineFunction as a live-in value.  It also creates a corresponding virtual
+/// register for it.
+static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
+                          const TargetRegisterClass *RC) {
+  assert(RC->contains(PReg) && "Not the correct regclass!");
+  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
+  MF.getRegInfo().addLiveIn(PReg, VReg);
+  return VReg;
 }
 
 SDValue
