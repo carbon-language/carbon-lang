@@ -667,6 +667,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   default:
     return false;
   case X86::MOV8rr:
+  case X86::MOV8rr_NOREX:
   case X86::MOV16rr:
   case X86::MOV32rr: 
   case X86::MOV64rr:
@@ -1664,9 +1665,10 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     } else if (DestRC == &X86::GR16RegClass) {
       Opc = X86::MOV16rr;
     } else if (DestRC == &X86::GR8RegClass) {
-      // Copying two or from a physical H register requires a NOREX move.
-      // Otherwise use a normal move.
-      if (isHReg(DestReg) || isHReg(SrcReg))
+      // Copying two or from a physical H register on x86-64 requires a NOREX
+      // move.  Otherwise use a normal move.
+      if ((isHReg(DestReg) || isHReg(SrcReg)) &&
+          TM.getSubtarget<X86Subtarget>().is64Bit())
         Opc = X86::MOV8rr_NOREX;
       else
         Opc = X86::MOV8rr;
