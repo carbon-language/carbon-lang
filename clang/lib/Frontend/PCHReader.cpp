@@ -197,6 +197,7 @@ void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
 
 void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   VisitDecl(BD);
+  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadStmt()));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
@@ -294,6 +295,7 @@ namespace {
     unsigned VisitChooseExpr(ChooseExpr *E);
     unsigned VisitGNUNullExpr(GNUNullExpr *E);
     unsigned VisitShuffleVectorExpr(ShuffleVectorExpr *E);
+    unsigned VisitBlockExpr(BlockExpr *E);
     unsigned VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
   };
 }
@@ -790,6 +792,13 @@ unsigned PCHStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return NumExprs;
+}
+
+unsigned PCHStmtReader::VisitBlockExpr(BlockExpr *E) {
+  VisitExpr(E);
+  E->setBlockDecl(cast_or_null<BlockDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setHasBlockDeclRefExprs(Record[Idx++]);
+  return 0;
 }
 
 unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
@@ -2388,6 +2397,10 @@ Stmt *PCHReader::ReadStmt() {
       S = new (Context) ShuffleVectorExpr(Empty);
       break;
       
+    case pch::EXPR_BLOCK:
+      S = new (Context) BlockExpr(Empty);
+      break;
+
     case pch::EXPR_BLOCK_DECL_REF:
       // FIXME: untested until we have statement and block support
       S = new (Context) BlockDeclRefExpr(Empty);

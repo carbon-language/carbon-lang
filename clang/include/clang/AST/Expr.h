@@ -2493,9 +2493,13 @@ public:
     : Expr(BlockExprClass, ty), 
       TheBlock(BD), HasBlockDeclRefExprs(hasBlockDeclRefExprs) {}
 
+  /// \brief Build an empty block expression.
+  explicit BlockExpr(EmptyShell Empty) : Expr(BlockExprClass, Empty) { }
+
   const BlockDecl *getBlockDecl() const { return TheBlock; }
   BlockDecl *getBlockDecl() { return TheBlock; }
-  
+  void setBlockDecl(BlockDecl *BD) { TheBlock = BD; }
+
   // Convenience functions for probing the underlying BlockDecl.
   SourceLocation getCaretLocation() const;
   const Stmt *getBody() const;
@@ -2511,6 +2515,7 @@ public:
   /// hasBlockDeclRefExprs - Return true iff the block has BlockDeclRefExpr
   /// contained inside.
   bool hasBlockDeclRefExprs() const { return HasBlockDeclRefExprs; }
+  void setHasBlockDeclRefExprs(bool BDRE) { HasBlockDeclRefExprs = BDRE; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BlockExprClass;

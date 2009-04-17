@@ -468,7 +468,9 @@ namespace clang {
       EXPR_GNU_NULL,
       /// \brief A ShuffleVectorExpr record.
       EXPR_SHUFFLE_VECTOR,
-      /// FIXME: BlockExpr
+      /// \brief BlockExpr
+      EXPR_BLOCK,
+      /// \brief A BlockDeclRef record.
       EXPR_BLOCK_DECL_REF
     };
 

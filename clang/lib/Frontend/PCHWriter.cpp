@@ -403,7 +403,7 @@ void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
 
 void PCHDeclWriter::VisitBlockDecl(BlockDecl *D) {
   VisitDecl(D);
-  // FIXME: emit block body
+  Writer.AddStmt(D->getBody());
   Record.push_back(D->param_size());
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
        P != PEnd; ++P)
@@ -496,6 +496,7 @@ namespace {
     void VisitChooseExpr(ChooseExpr *E);
     void VisitGNUNullExpr(GNUNullExpr *E);
     void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
+    void VisitBlockExpr(BlockExpr *E);
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
   };
 }
@@ -938,6 +939,13 @@ void PCHStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_SHUFFLE_VECTOR;
+}
+
+void PCHStmtWriter::VisitBlockExpr(BlockExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getBlockDecl(), Record);
+  Record.push_back(E->hasBlockDeclRefExprs());
+  Code = pch::EXPR_BLOCK;
 }
 
 void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
