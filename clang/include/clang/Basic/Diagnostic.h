@@ -27,6 +27,7 @@ namespace clang {
   class SourceRange;
   class DiagnosticBuilder;
   class IdentifierInfo;
+  class LangOptions;
   
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -666,6 +667,13 @@ public:
 class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
+  
+  /// setLangOptions - This is set by clients of diagnostics when they know the
+  /// language parameters of the diagnostics that may be sent through.  Note
+  /// that this can change over time if a DiagClient has multiple languages sent
+  /// through it.  It may also be set to null (e.g. when processing command line
+  /// options).
+  virtual void setLangOptions(const LangOptions *LO) {}
   
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   ///  returns true) indicates whether the diagnostics handled by this

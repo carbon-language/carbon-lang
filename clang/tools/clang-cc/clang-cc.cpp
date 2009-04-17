@@ -2301,11 +2301,7 @@ int main(int argc, char **argv) {
     
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
-    
-    if (!VerifyDiagnostics)
-      static_cast<TextDiagnosticPrinter*>(TextDiagClient)
-        ->SetLangOpts(LangInfo);
-
+    TextDiagClient->setLangOptions(&LangInfo);
     
     InitializeBaseLanguage();
     LangKind LK = GetLanguage(InFile);
@@ -2346,7 +2342,8 @@ int main(int argc, char **argv) {
     // Process the source file.
     ProcessInputFile(*PP, PPFactory, InFile, ProgAction);
     
-    HeaderInfo.ClearFileInfo();      
+    HeaderInfo.ClearFileInfo();
+    TextDiagClient->setLangOptions(0);
   }
 
   if (Verbose)

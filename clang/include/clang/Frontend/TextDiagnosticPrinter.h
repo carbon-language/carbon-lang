@@ -50,8 +50,8 @@ public:
       PrintRangeInfo(printRangeInfo),
       PrintDiagnosticOption(printDiagnosticOption) {}
 
-  void SetLangOpts(const LangOptions &LO) {
-    LangOpts = &LO;
+  void setLangOptions(const LangOptions *LO) {
+    LangOpts = LO;
   }
   
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
