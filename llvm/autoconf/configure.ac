@@ -285,6 +285,15 @@ else
   AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
 fi
 
+dnl --enable-profiling : check whether they want to do a profile build:
+AC_ARG_ENABLE(profiling, AS_HELP_STRING(
+ [--enable-profiling,Compile with profiling enabled (default is NO)]),,enableval="no")
+if test ${enableval} = "no" ; then
+  AC_SUBST(ENABLE_PROFILING,[[]])
+else
+  AC_SUBST(ENABLE_PROFILING,[[ENABLE_PROFILING=1]])
+fi
+
 dnl --enable-assertions : check whether they want to turn on assertions or not:
 AC_ARG_ENABLE(assertions,AS_HELP_STRING(
   [--enable-assertions,Compile with assertion checks enabled (default is YES)]),, enableval="yes")

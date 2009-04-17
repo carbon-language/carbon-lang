@@ -215,7 +215,15 @@ RDYNAMIC := @RDYNAMIC@
 #ENABLE_OPTIMIZED = 1
 @ENABLE_OPTIMIZED@
 
-# When DISABLE_ASSERTIONS is enabled, builds of all of the LLVM code will
+# When ENABLE_PROFILING is enabled, profile instrumentation is done
+# and output is put into the "<Flavor>+Profile" directories, where
+# <Flavor> is either Debug or Release depending on how other builkd
+# flags are set.. Otherwise, output is put in the <Flavor>
+# directories.
+#ENABLE_PROFILING = 1
+@ENABLE_PROFILING@
+
+# When DISABLE_ASSERTIONS is enabled, builds of all of the LLVM code will 
 # exclude assertion checks, otherwise they are included.
 #DISABLE_ASSERTIONS = 1
 @DISABLE_ASSERTIONS@

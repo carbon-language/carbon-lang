@@ -237,37 +237,36 @@ else
   OPTIMIZE_OPTION := -O3
 endif
 
-ifdef ENABLE_PROFILING
-  BuildMode := Profile
-  CXX.Flags += $(OPTIMIZE_OPTION) -pg -g
-  C.Flags   += $(OPTIMIZE_OPTION) -pg -g
-  LD.Flags  += $(OPTIMIZE_OPTION) -pg -g
-  KEEP_SYMBOLS := 1
-else
-  ifeq ($(ENABLE_OPTIMIZED),1)
-    BuildMode := Release
-    # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
-    ifneq ($(OS),FreeBSD)
-    ifneq ($(OS),Darwin)
-      OmitFramePointer := -fomit-frame-pointer
-    endif
-    endif
-
-    # Darwin requires -fstrict-aliasing to be explicitly enabled.
-    ifeq ($(OS),Darwin)
-      EXTRA_OPTIONS += -fstrict-aliasing -Wstrict-aliasing
-    endif
-
-    CXX.Flags += $(OPTIMIZE_OPTION) $(OmitFramePointer)
-    C.Flags   += $(OPTIMIZE_OPTION) $(OmitFramePointer)
-    LD.Flags  += $(OPTIMIZE_OPTION)
-  else
-    BuildMode := Debug
-    CXX.Flags += -g
-    C.Flags   += -g
-    LD.Flags  += -g
-    KEEP_SYMBOLS := 1
+ifeq ($(ENABLE_OPTIMIZED),1)
+  BuildMode := Release
+  # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
+  ifneq ($(OS),FreeBSD)
+  ifneq ($(OS),Darwin)
+    OmitFramePointer := -fomit-frame-pointer
   endif
+  endif
+
+  # Darwin requires -fstrict-aliasing to be explicitly enabled.
+  ifeq ($(OS),Darwin)
+    EXTRA_OPTIONS += -fstrict-aliasing -Wstrict-aliasing
+  endif
+  CXX.Flags += $(OPTIMIZE_OPTION) $(OmitFramePointer)
+  C.Flags   += $(OPTIMIZE_OPTION) $(OmitFramePointer)
+  LD.Flags  += $(OPTIMIZE_OPTION)
+else
+  BuildMode := Debug
+  CXX.Flags += -g
+  C.Flags   += -g
+  LD.Flags  += -g
+  KEEP_SYMBOLS := 1
+endif
+
+ifeq ($(ENABLE_PROFILING),1)
+  BuildMode := $(BuildMode)+Profile
+  CXX.Flags := $(filter-out -fomit-frame-pointer,$(CXX.Flags)) -pg -g
+  C.Flags   := $(filter-out -fomit-frame-pointer,$(C.Flags)) -pg -g
+  LD.Flags  := $(filter-out -fomit-frame-pointer,$(LD.Flags)) -pg -g
+  KEEP_SYMBOLS := 1
 endif
 
 #ifeq ($(ENABLE_VISIBILITY_INLINES_HIDDEN),1)
