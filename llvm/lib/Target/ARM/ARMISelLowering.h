@@ -18,6 +18,7 @@
 #include "ARMSubtarget.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include <vector>
 
 namespace llvm {
@@ -147,7 +148,14 @@ namespace llvm {
     ///
     unsigned ARMPCLabelIndex;
 
+    SDValue LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
+                             const SDValue &StackPtr, const CCValAssign &VA,
+                             SDValue Chain,
+                             SDValue Arg, ISD::ArgFlagsTy Flags);
+    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall, 
+                            unsigned CallingConv, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressDarwin(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);

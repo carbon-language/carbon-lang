@@ -182,6 +182,10 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << IndentStr << IndentStr << "LocInfo = CCValAssign::ZExt;\n"
         << IndentStr << "else\n"
         << IndentStr << IndentStr << "LocInfo = CCValAssign::AExt;\n";
+    } else if (Action->isSubClassOf("CCBitConvertToType")) {
+      Record *DestTy = Action->getValueAsDef("DestTy");
+      O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
+      O << IndentStr << "LocInfo = CCValAssign::BCvt;\n";
     } else if (Action->isSubClassOf("CCPassByVal")) {
       int Size = Action->getValueAsInt("Size");
       int Align = Action->getValueAsInt("Align");
@@ -189,6 +193,11 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << "State.HandleByVal(ValNo, ValVT, LocVT, LocInfo, "
         << Size << ", " << Align << ", ArgFlags);\n";
       O << IndentStr << "return false;\n";
+    } else if (Action->isSubClassOf("CCCustom")) {
+      O << IndentStr
+        << "if (" << Action->getValueAsString("FuncName") << "(ValNo, ValVT, "
+        << "LocVT, LocInfo, ArgFlags, State))\n";
+      O << IndentStr << IndentStr << "return false;\n";
     } else {
       Action->dump();
       throw "Unknown CCAction!";

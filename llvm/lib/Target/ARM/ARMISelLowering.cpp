@@ -22,19 +22,43 @@
 #include "ARMTargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
 #include "llvm/Instruction.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
+
+static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                   MVT &LocVT,
+                                   CCValAssign::LocInfo &LocInfo,
+                                   ISD::ArgFlagsTy &ArgFlags,
+                                   CCState &State);
+static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                    MVT &LocVT,
+                                    CCValAssign::LocInfo &LocInfo,
+                                    ISD::ArgFlagsTy &ArgFlags,
+                                    CCState &State);
+static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                      MVT &LocVT,
+                                      CCValAssign::LocInfo &LocInfo,
+                                      ISD::ArgFlagsTy &ArgFlags,
+                                      CCState &State);
+static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                       MVT &LocVT,
+                                       CCValAssign::LocInfo &LocInfo,
+                                       ISD::ArgFlagsTy &ArgFlags,
+                                       CCState &State);
 
 ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM), ARMPCLabelIndex(0) {
@@ -361,38 +385,208 @@ static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
   return Invert;
 }
 
-static void
-HowToPassArgument(MVT ObjectVT, unsigned NumGPRs,
-                  unsigned StackOffset, unsigned &NeededGPRs,
-                  unsigned &NeededStackSize, unsigned &GPRPad,
-                  unsigned &StackPad, ISD::ArgFlagsTy Flags) {
-  NeededStackSize = 0;
-  NeededGPRs = 0;
-  StackPad = 0;
-  GPRPad = 0;
-  unsigned align = Flags.getOrigAlign();
-  GPRPad = NumGPRs % ((align + 3)/4);
-  StackPad = StackOffset % align;
-  unsigned firstGPR = NumGPRs + GPRPad;
-  switch (ObjectVT.getSimpleVT()) {
-  default: assert(0 && "Unhandled argument type!");
-  case MVT::i32:
-  case MVT::f32:
-    if (firstGPR < 4)
-      NeededGPRs = 1;
+//===----------------------------------------------------------------------===//
+//                      Calling Convention Implementation
+//
+//  The lower operations present on calling convention works on this order:
+//      LowerCALL (virt regs --> phys regs, virt regs --> stack)
+//      LowerFORMAL_ARGUMENTS (phys --> virt regs, stack --> virt regs)
+//      LowerRET (virt regs --> phys regs)
+//      LowerCALL (phys regs --> virt regs)
+//
+//===----------------------------------------------------------------------===//
+
+#include "ARMGenCallingConv.inc"
+
+// APCS f64 is in register pairs, possibly split to stack
+static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                   MVT &LocVT,
+                                   CCValAssign::LocInfo &LocInfo,
+                                   ISD::ArgFlagsTy &ArgFlags,
+                                   CCState &State) {
+  static const unsigned HiRegList[] = { ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
+  static const unsigned LoRegList[] = { ARM::R1,
+                                        ARM::R2,
+                                        ARM::R3,
+                                        ARM::NoRegister };
+
+  if (unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 4)) {
+    unsigned i;
+    for (i = 0; i < 4; ++i)
+      if (HiRegList[i] == Reg)
+        break;
+
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
+                                           MVT::i32, LocInfo));
+    if (LoRegList[i] != ARM::NoRegister)
+      State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
+                                             MVT::i32, LocInfo));
     else
-      NeededStackSize = 4;
-    break;
-  case MVT::i64:
-  case MVT::f64:
-    if (firstGPR < 3)
-      NeededGPRs = 2;
-    else if (firstGPR == 3) {
-      NeededGPRs = 1;
-      NeededStackSize = 4;
-    } else
-      NeededStackSize = 8;
+      State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
+                                             State.AllocateStack(4, 4),
+                                             MVT::i32, LocInfo));
+    return true;  // we handled it
   }
+
+  return false; // we didn't handle it
+}
+
+// AAPCS f64 is in aligned register pairs
+static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                    MVT &LocVT,
+                                    CCValAssign::LocInfo &LocInfo,
+                                    ISD::ArgFlagsTy &ArgFlags,
+                                    CCState &State) {
+  static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
+  static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
+
+  if (unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2)) {
+    unsigned i;
+    for (i = 0; i < 2; ++i)
+      if (HiRegList[i] == Reg)
+        break;
+
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
+                                           MVT::i32, LocInfo));
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
+                                           MVT::i32, LocInfo));
+    return true;  // we handled it
+  }
+
+  return false; // we didn't handle it
+}
+
+static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                      MVT &LocVT,
+                                      CCValAssign::LocInfo &LocInfo,
+                                      ISD::ArgFlagsTy &ArgFlags,
+                                      CCState &State) {
+  static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
+  static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
+
+  if (unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2)) {
+    unsigned i;
+    for (i = 0; i < 2; ++i)
+      if (HiRegList[i] == Reg)
+        break;
+
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg,
+                                           MVT::i32, LocInfo));
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
+                                           MVT::i32, LocInfo));
+    return true;  // we handled it
+  }
+
+  return false; // we didn't handle it
+}
+
+static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
+                                       MVT &LocVT,
+                                       CCValAssign::LocInfo &LocInfo,
+                                       ISD::ArgFlagsTy &ArgFlags,
+                                       CCState &State) {
+  return RetCC_ARM_APCS_Custom_f64(ValNo, ValVT, LocVT, LocInfo, ArgFlags,
+                                   State);
+}
+
+/// AddLiveIn - This helper function adds the specified physical register to the
+/// MachineFunction as a live in value.  It also creates a corresponding virtual
+/// register for it.
+static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
+                          const TargetRegisterClass *RC) {
+  assert(RC->contains(PReg) && "Not the correct regclass!");
+  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
+  MF.getRegInfo().addLiveIn(PReg, VReg);
+  return VReg;
+}
+
+/// LowerCallResult - Lower the result values of an ISD::CALL into the
+/// appropriate copies out of appropriate physical registers.  This assumes that
+/// Chain/InFlag are the input chain/flag to use, and that TheCall is the call
+/// being lowered.  The returns a SDNode with the same number of values as the
+/// ISD::CALL.
+SDNode *ARMTargetLowering::
+LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
+                unsigned CallingConv, SelectionDAG &DAG) {
+
+  DebugLoc dl = TheCall->getDebugLoc();
+  // Assign locations to each value returned by this call.
+  SmallVector<CCValAssign, 16> RVLocs;
+  bool isVarArg = TheCall->isVarArg();
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
+  CCInfo.AnalyzeCallResult(TheCall, RetCC_ARM);
+
+  SmallVector<SDValue, 8> ResultVals;
+
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign VA = RVLocs[i];
+
+    // handle f64 as custom
+    if (VA.needsCustom()) {
+      SDValue Lo = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+                                      InFlag);
+      VA = RVLocs[++i]; // skip ahead to next loc
+      SDValue Hi = DAG.getCopyFromReg(Lo, dl, VA.getLocReg(), VA.getLocVT(),
+                                      Lo.getValue(2));
+      ResultVals.push_back(DAG.getNode(ARMISD::FMDRR, dl, VA.getValVT(), Lo,
+                                       Hi));
+    } else {
+      Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+                                 InFlag).getValue(1);
+      SDValue Val = Chain.getValue(0);
+      InFlag = Chain.getValue(2);
+
+      switch (VA.getLocInfo()) {
+      default: assert(0 && "Unknown loc info!");
+      case CCValAssign::Full: break;
+      case CCValAssign::BCvt:
+        Val = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(),
+                          Chain.getValue(0));
+        break;
+      }
+
+      ResultVals.push_back(Val);
+    }
+  }
+
+  // Merge everything together with a MERGE_VALUES node.
+  ResultVals.push_back(Chain);
+  return DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
+                     &ResultVals[0], ResultVals.size()).getNode();
+}
+
+/// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
+/// by "Src" to address "Dst" of size "Size".  Alignment information is
+/// specified by the specific parameter attribute. The copy will be passed as
+/// a byval function parameter.
+/// Sometimes what we are copying is the end of a larger object, the part that
+/// does not fit in registers.
+static SDValue
+CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
+                          ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
+                          DebugLoc dl) {
+  SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
+  return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
+                       /*AlwaysInline=*/false, NULL, 0, NULL, 0);
+}
+
+/// LowerMemOpCallTo - Store the argument to the stack
+SDValue
+ARMTargetLowering::LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
+                                    const SDValue &StackPtr,
+                                    const CCValAssign &VA,
+                                    SDValue Chain,
+                                    SDValue Arg, ISD::ArgFlagsTy Flags) {
+  DebugLoc dl = TheCall->getDebugLoc();
+  unsigned LocMemOffset = VA.getLocMemOffset();
+  SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
+  PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
+  if (Flags.isByVal()) {
+    return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
+  }
+  return DAG.getStore(Chain, dl, Arg, PtrOff,
+                      PseudoSourceValue::getStack(), LocMemOffset);
 }
 
 /// LowerCALL - Lowering a ISD::CALL node into a callseq_start <-
@@ -400,33 +594,22 @@ HowToPassArgument(MVT ObjectVT, unsigned NumGPRs,
 /// nodes.
 SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
-  MVT RetVT = TheCall->getRetValType(0);
-  SDValue Chain    = TheCall->getChain();
-  assert((TheCall->getCallingConv() == CallingConv::C ||
-          TheCall->getCallingConv() == CallingConv::Fast) &&
-         "unknown calling convention");
-  SDValue Callee   = TheCall->getCallee();
-  unsigned NumOps  = TheCall->getNumArgs();
-  DebugLoc dl      = TheCall->getDebugLoc();
-  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
-  unsigned NumGPRs = 0;     // GPRs used for parameter passing.
+  MVT RetVT           = TheCall->getRetValType(0);
+  SDValue Chain       = TheCall->getChain();
+  unsigned CC         = TheCall->getCallingConv();
+  assert((CC == CallingConv::C ||
+          CC == CallingConv::Fast) && "unknown calling convention");
+  bool isVarArg       = TheCall->isVarArg();
+  SDValue Callee      = TheCall->getCallee();
+  DebugLoc dl         = TheCall->getDebugLoc();
 
-  // Count how many bytes are to be pushed on the stack.
-  unsigned NumBytes = 0;
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCInfo.AnalyzeCallOperands(TheCall, CC_ARM);
 
-  // Add up all the space actually used.
-  for (unsigned i = 0; i < NumOps; ++i) {
-    unsigned ObjSize;
-    unsigned ObjGPRs;
-    unsigned StackPad;
-    unsigned GPRPad;
-    MVT ObjectVT = TheCall->getArg(i).getValueType();
-    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
-    HowToPassArgument(ObjectVT, NumGPRs, NumBytes, ObjGPRs, ObjSize,
-                      GPRPad, StackPad, Flags);
-    NumBytes += ObjSize + StackPad;
-    NumGPRs += ObjGPRs + GPRPad;
-  }
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
 
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
@@ -434,77 +617,64 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   SDValue StackPtr = DAG.getRegister(ARM::SP, MVT::i32);
 
-  static const unsigned GPRArgRegs[] = {
-    ARM::R0, ARM::R1, ARM::R2, ARM::R3
-  };
+  SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
+  SmallVector<SDValue, 8> MemOpChains;
 
-  NumGPRs = 0;
-  std::vector<std::pair<unsigned, SDValue> > RegsToPass;
-  std::vector<SDValue> MemOpChains;
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = TheCall->getArg(i);
-    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
-    MVT ArgVT = Arg.getValueType();
+  // Walk the register/memloc assignments, inserting copies/loads.  In the case
+  // of tail call optimization arguments are handle later.
+  for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
+       i != e;
+       ++i, ++realArgIdx) {
+    CCValAssign &VA = ArgLocs[i];
+    SDValue Arg = TheCall->getArg(realArgIdx);
+    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(realArgIdx);
 
-    unsigned ObjSize;
-    unsigned ObjGPRs;
-    unsigned GPRPad;
-    unsigned StackPad;
-    HowToPassArgument(ArgVT, NumGPRs, ArgOffset, ObjGPRs,
-                      ObjSize, GPRPad, StackPad, Flags);
-    NumGPRs += GPRPad;
-    ArgOffset += StackPad;
-    if (ObjGPRs > 0) {
-      switch (ArgVT.getSimpleVT()) {
-      default: assert(0 && "Unexpected ValueType for argument!");
-      case MVT::i32:
-        RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs], Arg));
-        break;
-      case MVT::f32:
-        RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs],
-                             DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Arg)));
-        break;
-      case MVT::i64: {
-        SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
-                                 DAG.getConstant(0, getPointerTy()));
-        SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
-                                 DAG.getConstant(1, getPointerTy()));
-        RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs], Lo));
-        if (ObjGPRs == 2)
-          RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs+1], Hi));
-        else {
-          SDValue PtrOff= DAG.getConstant(ArgOffset, StackPtr.getValueType());
-          PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
-          MemOpChains.push_back(DAG.getStore(Chain, dl, Hi, PtrOff, NULL, 0));
-        }
-        break;
-      }
-      case MVT::f64: {
-        SDValue Cvt = DAG.getNode(ARMISD::FMRRD, dl,
-                                  DAG.getVTList(MVT::i32, MVT::i32),
-                                  &Arg, 1);
-        RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs], Cvt));
-        if (ObjGPRs == 2)
-          RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs+1],
-                                              Cvt.getValue(1)));
-        else {
-          SDValue PtrOff= DAG.getConstant(ArgOffset, StackPtr.getValueType());
-          PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
-          MemOpChains.push_back(DAG.getStore(Chain, dl, Cvt.getValue(1), PtrOff,
-                                             NULL, 0));
-        }
-        break;
-      }
-      }
-    } else {
-      assert(ObjSize != 0);
-      SDValue PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
-      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::ZExt:
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::AExt:
+      Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::BCvt:
+      Arg = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getLocVT(), Arg);
+      break;
     }
 
-    NumGPRs += ObjGPRs;
-    ArgOffset += ObjSize;
+    // f64 is passed in i32 pairs and must be combined
+    if (VA.needsCustom()) {
+      SDValue fmrrd = DAG.getNode(ARMISD::FMRRD, dl,
+                                  DAG.getVTList(MVT::i32, MVT::i32), &Arg, 1);
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), fmrrd));
+      VA = ArgLocs[++i]; // skip ahead to next loc
+      if (VA.isRegLoc())
+        RegsToPass.push_back(std::make_pair(VA.getLocReg(),
+                                            fmrrd.getValue(1)));
+      else {
+        assert(VA.isMemLoc());
+        if (StackPtr.getNode() == 0)
+          StackPtr = DAG.getCopyFromReg(Chain, dl, ARM::SP, getPointerTy());
+
+        MemOpChains.push_back(LowerMemOpCallTo(TheCall, DAG, StackPtr, VA,
+                                               Chain, fmrrd.getValue(1),
+                                               Flags));
+      }
+    } else if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+      if (StackPtr.getNode() == 0)
+        StackPtr = DAG.getCopyFromReg(Chain, dl, ARM::SP, getPointerTy());
+
+      MemOpChains.push_back(LowerMemOpCallTo(TheCall, DAG, StackPtr, VA,
+                                             Chain, Arg, Flags));
+    }
   }
 
   if (!MemOpChains.empty())
@@ -610,107 +780,82 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
 
-  std::vector<SDValue> ResultVals;
-
-  // If the call has results, copy the values out of the ret val registers.
-  switch (RetVT.getSimpleVT()) {
-  default: assert(0 && "Unexpected ret value!");
-  case MVT::Other:
-    break;
-  case MVT::i32:
-    Chain = DAG.getCopyFromReg(Chain, dl, ARM::R0,
-                               MVT::i32, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    if (TheCall->getNumRetVals() > 1 &&
-        TheCall->getRetValType(1) == MVT::i32) {
-      // Returns a i64 value.
-      Chain = DAG.getCopyFromReg(Chain, dl, ARM::R1, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-    }
-    break;
-  case MVT::f32:
-    Chain = DAG.getCopyFromReg(Chain, dl, ARM::R0,
-                               MVT::i32, InFlag).getValue(1);
-    ResultVals.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32,
-                                     Chain.getValue(0)));
-    break;
-  case MVT::f64: {
-    SDValue Lo = DAG.getCopyFromReg(Chain, dl, ARM::R0, MVT::i32, InFlag);
-    SDValue Hi = DAG.getCopyFromReg(Lo, dl, ARM::R1, MVT::i32, Lo.getValue(2));
-    ResultVals.push_back(DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, Lo, Hi));
-    break;
-  }
-  }
-
-  if (ResultVals.empty())
-    return Chain;
-
-  ResultVals.push_back(Chain);
-  SDValue Res = DAG.getMergeValues(&ResultVals[0], ResultVals.size(), dl);
-  return Res.getValue(Op.getResNo());
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return SDValue(LowerCallResult(Chain, InFlag, TheCall, CC, DAG),
+                                 Op.getResNo());
 }
 
-static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
-  SDValue Copy;
+SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
+  // The chain is always operand #0
   SDValue Chain = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
-  switch(Op.getNumOperands()) {
-  default:
-    assert(0 && "Do not know how to return this many arguments!");
-    abort();
-  case 1: {
-    SDValue LR = DAG.getRegister(ARM::LR, MVT::i32);
-    return DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain);
-  }
-  case 3:
-    Op = Op.getOperand(1);
-    if (Op.getValueType() == MVT::f32) {
-      Op = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
-    } else if (Op.getValueType() == MVT::f64) {
-      // Legalize ret f64 -> ret 2 x i32.  We always have fmrrd if f64 is
-      // available.
-      Op = DAG.getNode(ARMISD::FMRRD, dl,
-                       DAG.getVTList(MVT::i32, MVT::i32), &Op,1);
-      SDValue Sign = DAG.getConstant(0, MVT::i32);
-      return DAG.getNode(ISD::RET, dl, MVT::Other, Chain, Op, Sign,
-                         Op.getValue(1), Sign);
-    }
-    Copy = DAG.getCopyToReg(Chain, dl, ARM::R0, Op, SDValue());
-    if (DAG.getMachineFunction().getRegInfo().liveout_empty())
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R0);
-    break;
-  case 5:
-    Copy = DAG.getCopyToReg(Chain, dl, ARM::R1, Op.getOperand(3), SDValue());
-    Copy = DAG.getCopyToReg(Copy, dl, ARM::R0, Op.getOperand(1),
-                            Copy.getValue(1));
-    // If we haven't noted the R0+R1 are live out, do so now.
-    if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R0);
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R1);
-    }
-    break;
-  case 9:  // i128 -> 4 regs
-    Copy = DAG.getCopyToReg(Chain, dl, ARM::R3, Op.getOperand(7), SDValue());
-    Copy = DAG.getCopyToReg(Copy, dl, ARM::R2, Op.getOperand(5),
-                            Copy.getValue(1));
-    Copy = DAG.getCopyToReg(Copy, dl, ARM::R1, Op.getOperand(3),
-                            Copy.getValue(1));
-    Copy = DAG.getCopyToReg(Copy, dl, ARM::R0, Op.getOperand(1),
-                            Copy.getValue(1));
-    // If we haven't noted the R0+R1 are live out, do so now.
-    if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R0);
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R1);
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R2);
-      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R3);
-    }
-    break;
 
+  // CCValAssign - represent the assignment of
+  // the return value to a location
+  SmallVector<CCValAssign, 16> RVLocs;
+  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
+  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+
+  // CCState - Info about the registers and stack slot.
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
+
+  // Analize return values of ISD::RET
+  CCInfo.AnalyzeReturn(Op.getNode(), RetCC_ARM);
+
+  // If this is the first return lowered for this function, add
+  // the regs to the liveout set for the function.
+  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
+    for (unsigned i = 0; i != RVLocs.size(); ++i)
+      if (RVLocs[i].isRegLoc())
+        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
 
-  //We must use RET_FLAG instead of BRIND because BRIND doesn't have a flag
-  return DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Copy, Copy.getValue(1));
+  SDValue Flag;
+
+  // Copy the result values into the output registers.
+  for (unsigned i = 0, realRVLocIdx = 0;
+       i != RVLocs.size();
+       ++i, ++realRVLocIdx) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+
+    // ISD::RET => ret chain, (regnum1,val1), ...
+    // So i*2+1 index only the regnums
+    SDValue Arg = Op.getOperand(realRVLocIdx*2+1);
+
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::BCvt:
+      Arg = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getLocVT(), Arg);
+      break;
+    }
+
+    // Legalize ret f64 -> ret 2 x i32.  We always have fmrrd if f64 is
+    // available.
+    if (VA.needsCustom()) {
+      SDValue fmrrd = DAG.getNode(ARMISD::FMRRD, dl,
+                                  DAG.getVTList(MVT::i32, MVT::i32), &Arg, 1);
+      Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd, Flag);
+      VA = RVLocs[++i]; // skip ahead to next loc
+      Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd.getValue(1),
+                               Flag);
+    } else
+      Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Arg, Flag);
+
+    // guarantee that all emitted copies are
+    // stuck together, avoiding something bad
+    Flag = Chain.getValue(1);
+  }
+
+  SDValue result;
+  if (Flag.getNode())
+    result = DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+  else // Return Void
+    result = DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain);
+
+  return result;
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
@@ -933,123 +1078,139 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
   return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0);
 }
 
-static SDValue LowerFORMAL_ARGUMENT(SDValue Op, SelectionDAG &DAG,
-                                    unsigned ArgNo, unsigned &NumGPRs,
-                                    unsigned &ArgOffset, DebugLoc dl) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  MVT ObjectVT = Op.getValue(ArgNo).getValueType();
-  SDValue Root = Op.getOperand(0);
-  MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-
-  static const unsigned GPRArgRegs[] = {
-    ARM::R0, ARM::R1, ARM::R2, ARM::R3
-  };
-
-  unsigned ObjSize;
-  unsigned ObjGPRs;
-  unsigned GPRPad;
-  unsigned StackPad;
-  ISD::ArgFlagsTy Flags =
-    cast<ARG_FLAGSSDNode>(Op.getOperand(ArgNo + 3))->getArgFlags();
-  HowToPassArgument(ObjectVT, NumGPRs, ArgOffset, ObjGPRs,
-                    ObjSize, GPRPad, StackPad, Flags);
-  NumGPRs += GPRPad;
-  ArgOffset += StackPad;
-
-  SDValue ArgValue;
-  if (ObjGPRs == 1) {
-    unsigned VReg;
-    if (AFI->isThumbFunction())
-      VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
-    else
-      VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
-    RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
-    ArgValue = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
-    if (ObjectVT == MVT::f32)
-      ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue);
-  } else if (ObjGPRs == 2) {
-    unsigned VReg;
-    if (AFI->isThumbFunction())
-      VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
-    else
-      VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
-    RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
-    ArgValue = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
-
-    if (AFI->isThumbFunction())
-      VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
-    else
-      VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
-    RegInfo.addLiveIn(GPRArgRegs[NumGPRs+1], VReg);
-    SDValue ArgValue2 = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
-
-    assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
-    ArgValue = DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, ArgValue, ArgValue2);
-  }
-  NumGPRs += ObjGPRs;
-
-  if (ObjSize) {
-    MachineFrameInfo *MFI = MF.getFrameInfo();
-    int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-    SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-    if (ObjGPRs == 0)
-      ArgValue = DAG.getLoad(ObjectVT, dl, Root, FIN, NULL, 0);
-    else {
-      SDValue ArgValue2 = DAG.getLoad(MVT::i32, dl, Root, FIN, NULL, 0);
-      assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
-      ArgValue = DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, ArgValue, ArgValue2);
-    }
-
-    ArgOffset += ObjSize;   // Move on to the next argument.
-  }
-
-  return ArgValue;
-}
-
 SDValue
 ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
-  std::vector<SDValue> ArgValues;
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+
   SDValue Root = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
-  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
-  unsigned NumGPRs = 0;     // GPRs used for parameter passing.
-
-  unsigned NumArgs = Op.getNode()->getNumValues()-1;
-  for (unsigned ArgNo = 0; ArgNo < NumArgs; ++ArgNo)
-    ArgValues.push_back(LowerFORMAL_ARGUMENT(Op, DAG, ArgNo,
-                                             NumGPRs, ArgOffset, dl));
-
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  unsigned CC = MF.getFunction()->getCallingConv();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+
+  // Assign locations to all of the incoming arguments.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_ARM);
+
+  SmallVector<SDValue, 16> ArgValues;
+
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+
+    // Arguments stored on registers
+    if (VA.isRegLoc()) {
+      MVT RegVT = VA.getLocVT();
+      TargetRegisterClass *RC;
+      if (AFI->isThumbFunction())
+        RC = ARM::tGPRRegisterClass;
+      else
+        RC = ARM::GPRRegisterClass;
+
+      if (RegVT == MVT::f64) {
+        // f64 is passed in pairs of GPRs and must be combined
+        RegVT = MVT::i32;
+      } else if (!((RegVT == MVT::i32) || (RegVT == MVT::f32)))
+        assert(0 && "RegVT not supported by FORMAL_ARGUMENTS Lowering");
+
+      // Transform the arguments stored on
+      // physical registers into virtual ones
+      unsigned Reg = AddLiveIn(MF, VA.getLocReg(), RC);
+      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
+
+      // f64 is passed in i32 pairs and must be combined
+      if (VA.needsCustom()) {
+        SDValue ArgValue2;
+
+        VA = ArgLocs[++i]; // skip ahead to next loc
+        if (VA.isMemLoc()) {
+          // must be APCS and older than V5T to split like this
+          unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
+          int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset());
+
+          // Create load node to retrieve arguments from the stack
+          SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+          ArgValue2 = DAG.getLoad(MVT::i32, dl, Root, FIN, NULL, 0);
+        } else {
+          Reg = AddLiveIn(MF, VA.getLocReg(), RC);
+          ArgValue2 = DAG.getCopyFromReg(Root, dl, Reg, MVT::i32);
+        }
+
+        ArgValue = DAG.getNode(ARMISD::FMDRR, dl, MVT::f64,
+                               ArgValue, ArgValue2);
+      }
+
+      // If this is an 8 or 16-bit value, it is really passed promoted
+      // to 32 bits.  Insert an assert[sz]ext to capture this, then
+      // truncate to the right size.
+      switch (VA.getLocInfo()) {
+      default: assert(0 && "Unknown loc info!");
+      case CCValAssign::Full: break;
+      case CCValAssign::BCvt:
+        ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), ArgValue);
+        break;
+      case CCValAssign::SExt:
+        ArgValue = DAG.getNode(ISD::AssertSext, dl, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+        break;
+      case CCValAssign::ZExt:
+        ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+        break;
+      }
+
+      ArgValues.push_back(ArgValue);
+
+    } else { // VA.isRegLoc()
+
+      // sanity check
+      assert(VA.isMemLoc());
+      assert(VA.getValVT() != MVT::i64 && "i64 should already be lowered");
+
+      unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
+      int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset());
+
+      // Create load nodes to retrieve arguments from the stack
+      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+      ArgValues.push_back(DAG.getLoad(VA.getValVT(), dl, Root, FIN, NULL, 0));
+    }
+  }
+
+  // varargs
   if (isVarArg) {
     static const unsigned GPRArgRegs[] = {
       ARM::R0, ARM::R1, ARM::R2, ARM::R3
     };
 
-    MachineFunction &MF = DAG.getMachineFunction();
-    MachineRegisterInfo &RegInfo = MF.getRegInfo();
-    MachineFrameInfo *MFI = MF.getFrameInfo();
-    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    unsigned NumGPRs = CCInfo.getFirstUnallocated(GPRArgRegs,
+                              sizeof(GPRArgRegs)/sizeof(GPRArgRegs[0]));
+
     unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
     unsigned VARegSize = (4 - NumGPRs) * 4;
     unsigned VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
+    unsigned ArgOffset = 0;
     if (VARegSaveSize) {
       // If this function is vararg, store any remaining integer argument regs
       // to their spots on the stack so that they may be loaded by deferencing
       // the result of va_next.
       AFI->setVarArgsRegSaveSize(VARegSaveSize);
+      ArgOffset = CCInfo.getNextStackOffset();
       VarArgsFrameIndex = MFI->CreateFixedObject(VARegSaveSize, ArgOffset +
                                                  VARegSaveSize - VARegSize);
       SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
 
       SmallVector<SDValue, 4> MemOps;
       for (; NumGPRs < 4; ++NumGPRs) {
-        unsigned VReg;
+        TargetRegisterClass *RC;
         if (AFI->isThumbFunction())
-          VReg = RegInfo.createVirtualRegister(ARM::tGPRRegisterClass);
+          RC = ARM::tGPRRegisterClass;
         else
-          VReg = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
-        RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
+          RC = ARM::GPRRegisterClass;
+
+        unsigned VReg = AddLiveIn(MF, GPRArgRegs[NumGPRs], RC);
         SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
         SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);
@@ -1068,7 +1229,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
-                     &ArgValues[0], ArgValues.size());
+                     &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
 }
 
 /// isFloatingPointZero - Return true if this is +0.0.

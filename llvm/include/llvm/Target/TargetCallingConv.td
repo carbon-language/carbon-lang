@@ -15,6 +15,11 @@
 class CCAction;
 class CallingConv;
 
+/// CCCustom - Calls a custom arg handling function.
+class CCCustom<string fn> : CCAction {
+  string FuncName = fn;
+}
+
 /// CCPredicateAction - Instances of this class check some predicate, then
 /// delegate to another action if the predicate is true.
 class CCPredicateAction<CCAction A> : CCAction {
@@ -87,6 +92,12 @@ class CCPassByVal<int size, int align> : CCAction {
 /// CCPromoteToType - If applied, this promotes the specified current value to
 /// the specified type.
 class CCPromoteToType<ValueType destTy> : CCAction {
+  ValueType DestTy = destTy;
+}
+
+/// CCBitConvertToType - If applied, this bitconverts the specified current
+/// value to the specified type.
+class CCBitConvertToType<ValueType destTy> : CCAction {
   ValueType DestTy = destTy;
 }
 

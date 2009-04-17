@@ -32,7 +32,8 @@ public:
     Full,   // The value fills the full location.
     SExt,   // The value is sign extended in the location.
     ZExt,   // The value is zero extended in the location.
-    AExt    // The value is extended with undefined upper bits.
+    AExt,   // The value is extended with undefined upper bits.
+    BCvt    // The value is bit-converted in the location
     // TODO: a subset of the value is in the location.
   };
 private:
@@ -45,8 +46,11 @@ private:
   /// isMem - True if this is a memory loc, false if it is a register loc.
   bool isMem : 1;
   
+  /// isCustom - True if this arg/retval requires special handling
+  bool isCustom : 1;
+  
   /// Information about how the value is assigned.
-  LocInfo HTP : 7;
+  LocInfo HTP : 6;
   
   /// ValVT - The type of the value being assigned.
   MVT ValVT;
@@ -62,11 +66,22 @@ public:
     Ret.ValNo = ValNo;
     Ret.Loc = RegNo;
     Ret.isMem = false;
+    Ret.isCustom = false;
     Ret.HTP = HTP;
     Ret.ValVT = ValVT;
     Ret.LocVT = LocVT;
     return Ret;
   }
+  
+  static CCValAssign getCustomReg(unsigned ValNo, MVT ValVT,
+                                  unsigned RegNo, MVT LocVT,
+                                  LocInfo HTP) {
+    CCValAssign Ret;
+    Ret = getReg(ValNo, ValVT, RegNo, LocVT, HTP);
+    Ret.isCustom = true;
+    return Ret;
+  }
+
   static CCValAssign getMem(unsigned ValNo, MVT ValVT,
                             unsigned Offset, MVT LocVT,
                             LocInfo HTP) {
@@ -74,9 +89,19 @@ public:
     Ret.ValNo = ValNo;
     Ret.Loc = Offset;
     Ret.isMem = true;
+    Ret.isCustom = false;
     Ret.HTP = HTP;
     Ret.ValVT = ValVT;
     Ret.LocVT = LocVT;
+    return Ret;
+  }
+  
+  static CCValAssign getCustomMem(unsigned ValNo, MVT ValVT,
+                                  unsigned Offset, MVT LocVT,
+                                  LocInfo HTP) {
+    CCValAssign Ret;
+    Ret = getMem(ValNo, ValVT, Offset, LocVT, HTP);
+    Ret.isCustom = true;
     return Ret;
   }
   
@@ -86,6 +111,8 @@ public:
   bool isRegLoc() const { return !isMem; }
   bool isMemLoc() const { return isMem; }
   
+  bool needsCustom() const { return isCustom; }
+  
   unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
   unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
   MVT getLocVT() const { return LocVT; }
@@ -93,14 +120,19 @@ public:
   LocInfo getLocInfo() const { return HTP; }
 };
 
-
 /// CCAssignFn - This function assigns a location for Val, updating State to
 /// reflect the change.
 typedef bool CCAssignFn(unsigned ValNo, MVT ValVT,
                         MVT LocVT, CCValAssign::LocInfo LocInfo,
                         ISD::ArgFlagsTy ArgFlags, CCState &State);
 
-  
+/// CCCustomFn - This function assigns a location for Val, possibly updating
+/// all args to reflect changes and indicates if it handled it. It must set
+/// isCustom if it handles the arg and returns true.
+typedef bool CCCustomFn(unsigned &ValNo, MVT &ValVT,
+                        MVT &LocVT, CCValAssign::LocInfo &LocInfo,
+                        ISD::ArgFlagsTy &ArgFlags, CCState &State);
+
 /// CCState - This class holds information needed while lowering arguments and
 /// return values.  It captures which registers are already assigned and which
 /// stack slots are used.  It provides accessors to allocate these values.

@@ -90,6 +90,8 @@ def : Proc<"mpcore",          [ArchV6, FeatureVFP2]>;
 
 include "ARMRegisterInfo.td"
 
+include "ARMCallingConv.td"
+
 //===----------------------------------------------------------------------===//
 // Instruction Descriptions
 //===----------------------------------------------------------------------===//
