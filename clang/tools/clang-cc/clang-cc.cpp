@@ -1841,6 +1841,82 @@ FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
 
 //===----------------------------------------------------------------------===//
+// -dump-build-information Stuff
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<std::string>
+DumpBuildInformation("dump-build-information",
+                     llvm::cl::value_desc("filename"),
+          llvm::cl::desc("output a dump of some build information to a file"));
+
+static llvm::raw_ostream *BuildLogFile = 0;
+
+/// LoggingDiagnosticClient - This is a simple diagnostic client that forwards
+/// all diagnostics to both BuildLogFile and a chained DiagnosticClient.
+namespace {
+class LoggingDiagnosticClient : public DiagnosticClient {
+  llvm::OwningPtr<DiagnosticClient> Chain1;
+  llvm::OwningPtr<DiagnosticClient> Chain2;
+public:
+  
+  LoggingDiagnosticClient(DiagnosticClient *Normal) {
+    // Output diags both where requested...
+    Chain1.reset(Normal);
+    // .. and to our log file.
+    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile,
+                                           !NoShowColumn,
+                                           !NoCaretDiagnostics,
+                                           !NoShowLocation,
+                                           PrintSourceRangeInfo,
+                                           PrintDiagnosticOption));
+  }
+  
+  virtual void setLangOptions(const LangOptions *LO) {
+    Chain1->setLangOptions(LO);
+    Chain2->setLangOptions(LO);
+  }
+  
+  virtual bool IncludeInDiagnosticCounts() const {
+    return Chain1->IncludeInDiagnosticCounts();
+  }
+
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                const DiagnosticInfo &Info) {
+    Chain1->HandleDiagnostic(DiagLevel, Info);
+    Chain2->HandleDiagnostic(DiagLevel, Info);
+  }
+};
+} // end anonymous namespace.
+
+static void SetUpBuildDumpLog(unsigned argc, char **argv,
+                              llvm::OwningPtr<DiagnosticClient> &DiagClient) {
+  
+  std::string ErrorInfo;
+  BuildLogFile = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(), false,
+                                          ErrorInfo);
+  
+  if (!ErrorInfo.empty()) {
+    llvm::errs() << "error opening -dump-build-information file '"
+                 << DumpBuildInformation << "', option ignored!\n";
+    delete BuildLogFile;
+    BuildLogFile = 0;
+    DumpBuildInformation = "";
+    return;
+  }
+
+  (*BuildLogFile) << "clang-cc command line arguments: ";
+  for (unsigned i = 0; i != argc; ++i)
+    (*BuildLogFile) << argv[i] << ' ';
+  (*BuildLogFile) << '\n';
+ 
+  // LoggingDiagnosticClient - Insert a new logging diagnostic client in between
+  // the diagnostic producers and the normal receiver.
+  DiagClient.reset(new LoggingDiagnosticClient(DiagClient.take()));
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
 
@@ -2252,6 +2328,17 @@ int main(int argc, char **argv) {
   } else {
     DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
   }
+  
+  if (!DumpBuildInformation.empty()) {
+    if (!HTMLDiag.empty()) {
+      fprintf(stderr,
+              "-dump-build-information and -html-diags don't work together\n");
+      return 1;
+    }
+    
+    SetUpBuildDumpLog(argc, argv, DiagClient);
+  }
+  
 
   // Configure our handling of diagnostics.
   Diagnostic Diags(DiagClient.get());
@@ -2350,13 +2437,14 @@ int main(int argc, char **argv) {
     FileMgr.PrintStats();
     fprintf(stderr, "\n");
   }
+
+  delete ClangFrontendTimer;
+  delete BuildLogFile;
   
   // If verifying diagnostics and we reached here, all is well.
   if (VerifyDiagnostics)
     return 0;
   
-  delete ClangFrontendTimer;
-
   // Managed static deconstruction. Useful for making things like
   // -time-passes usable.
   llvm::llvm_shutdown();
