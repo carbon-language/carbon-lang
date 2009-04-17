@@ -463,6 +463,7 @@ namespace {
     void VisitBreakStmt(BreakStmt *S);
     void VisitReturnStmt(ReturnStmt *S);
     void VisitDeclStmt(DeclStmt *S);
+    void VisitAsmStmt(AsmStmt *S);
     void VisitExpr(Expr *E);
     void VisitPredefinedExpr(PredefinedExpr *E);
     void VisitDeclRefExpr(DeclRefExpr *E);
@@ -638,6 +639,38 @@ void PCHStmtWriter::VisitDeclStmt(DeclStmt *S) {
   for (DeclGroupRef::iterator D = DG.begin(), DEnd = DG.end(); D != DEnd; ++D)
     Writer.AddDeclRef(*D, Record);
   Code = pch::STMT_DECL;
+}
+
+void PCHStmtWriter::VisitAsmStmt(AsmStmt *S) {
+  VisitStmt(S);
+  Record.push_back(S->getNumOutputs());
+  Record.push_back(S->getNumInputs());
+  Record.push_back(S->getNumClobbers());
+  Writer.AddSourceLocation(S->getAsmLoc(), Record);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
+  Record.push_back(S->isVolatile());
+  Record.push_back(S->isSimple());
+  Writer.WriteSubStmt(S->getAsmString());
+
+  // Outputs
+  for (unsigned I = 0, N = S->getNumOutputs(); I != N; ++I) {
+    Writer.AddString(S->getOutputName(I), Record);
+    Writer.WriteSubStmt(S->getOutputConstraintLiteral(I));
+    Writer.WriteSubStmt(S->getOutputExpr(I));
+  }
+
+  // Inputs
+  for (unsigned I = 0, N = S->getNumInputs(); I != N; ++I) {
+    Writer.AddString(S->getInputName(I), Record);
+    Writer.WriteSubStmt(S->getInputConstraintLiteral(I));
+    Writer.WriteSubStmt(S->getInputExpr(I));
+  }
+
+  // Clobbers
+  for (unsigned I = 0, N = S->getNumClobbers(); I != N; ++I)
+    Writer.WriteSubStmt(S->getClobber(I));
+
+  Code = pch::STMT_ASM;
 }
 
 void PCHStmtWriter::VisitExpr(Expr *E) {
@@ -1505,9 +1538,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
            Var->getStorageClass() == VarDecl::Static))
         ExternalDefinitions.push_back(ID);
     } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
-      if (Func->isThisDeclarationADefinition() &&
-          Func->getStorageClass() != FunctionDecl::Static &&
-          !Func->isInline())
+      if (Func->isThisDeclarationADefinition())
         ExternalDefinitions.push_back(ID);
     }
   }

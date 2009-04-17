@@ -129,8 +129,6 @@ private:
   void WriteIdentifierTable();
   void WriteAttributeRecord(const Attr *Attr);
 
-  void AddString(const std::string &Str, RecordData &Record);
-
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
@@ -162,6 +160,9 @@ public:
 
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
+
+  /// \brief Add a string to the given record.
+  void AddString(const std::string &Str, RecordData &Record);
 
   /// \brief Add the given statement or expression to the queue of statements to
   /// emit.

@@ -262,6 +262,7 @@ namespace {
     unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitReturnStmt(ReturnStmt *S);
     unsigned VisitDeclStmt(DeclStmt *S);
+    unsigned VisitAsmStmt(AsmStmt *S);
     unsigned VisitExpr(Expr *E);
     unsigned VisitPredefinedExpr(PredefinedExpr *E);
     unsigned VisitDeclRefExpr(DeclRefExpr *E);
@@ -454,6 +455,42 @@ unsigned PCHStmtReader::VisitDeclStmt(DeclStmt *S) {
                                                    &Decls[0], Decls.size())));
   }
   return 0;
+}
+
+unsigned PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
+  VisitStmt(S);
+  unsigned NumOutputs = Record[Idx++];
+  unsigned NumInputs = Record[Idx++];
+  unsigned NumClobbers = Record[Idx++];
+  S->setAsmLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setVolatile(Record[Idx++]);
+  S->setSimple(Record[Idx++]);
+  
+  unsigned StackIdx 
+    = StmtStack.size() - (NumOutputs*2 + NumInputs*2 + NumClobbers + 1);
+  S->setAsmString(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
+
+  // Outputs and inputs
+  llvm::SmallVector<std::string, 16> Names;
+  llvm::SmallVector<StringLiteral*, 16> Constraints;
+  llvm::SmallVector<Stmt*, 16> Exprs;
+  for (unsigned I = 0, N = NumOutputs + NumInputs; I != N; ++I) {
+    Names.push_back(Reader.ReadString(Record, Idx));
+    Constraints.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
+    Exprs.push_back(StmtStack[StackIdx++]);
+  }
+  S->setOutputsAndInputs(NumOutputs, NumInputs,
+                         &Names[0], &Constraints[0], &Exprs[0]);
+
+  // Constraints
+  llvm::SmallVector<StringLiteral*, 16> Clobbers;
+  for (unsigned I = 0; I != NumClobbers; ++I)
+    Clobbers.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
+  S->setClobbers(&Clobbers[0], NumClobbers);
+
+  assert(StackIdx == StmtStack.size() && "Error deserializing AsmStmt");
+  return NumOutputs*2 + NumInputs*2 + NumClobbers + 1;
 }
 
 unsigned PCHStmtReader::VisitExpr(Expr *E) {
@@ -2271,6 +2308,10 @@ Stmt *PCHReader::ReadStmt() {
 
     case pch::STMT_DECL:
       S = new (Context) DeclStmt(Empty);
+      break;
+
+    case pch::STMT_ASM:
+      S = new (Context) AsmStmt(Empty);
       break;
 
     case pch::EXPR_PREDEFINED:

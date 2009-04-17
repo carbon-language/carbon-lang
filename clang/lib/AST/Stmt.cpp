@@ -175,6 +175,22 @@ std::string AsmStmt::getInputConstraint(unsigned i) const {
 }
 
 
+void AsmStmt::setOutputsAndInputs(unsigned NumOutputs,
+                                  unsigned NumInputs, 
+                                  const std::string *Names,
+                                  StringLiteral **Constraints,
+                                  Stmt **Exprs) {
+  this->NumOutputs = NumOutputs;
+  this->NumInputs = NumInputs;
+  this->Names.clear();
+  this->Names.insert(this->Names.end(), Names, Names + NumOutputs + NumInputs);
+  this->Constraints.clear();
+  this->Constraints.insert(this->Constraints.end(), 
+                           Constraints, Constraints + NumOutputs + NumInputs);
+  this->Exprs.clear();
+  this->Exprs.insert(this->Exprs.end(), Exprs, Exprs + NumOutputs + NumInputs);
+}
+
 /// getNamedOperand - Given a symbolic operand reference like %[foo],
 /// translate this into a numeric value needed to reference the same operand.
 /// This returns -1 if the operand name is invalid.
@@ -195,6 +211,10 @@ int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
   return -1;
 }
 
+void AsmStmt::setClobbers(StringLiteral **Clobbers, unsigned NumClobbers) {
+  this->Clobbers.clear();
+  this->Clobbers.insert(this->Clobbers.end(), Clobbers, Clobbers + NumClobbers);
+}
 
 /// AnalyzeAsmString - Analyze the asm string of the current asm, decomposing
 /// it into pieces.  If the asm string is erroneous, emit errors and return

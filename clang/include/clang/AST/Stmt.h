@@ -1004,14 +1004,25 @@ public:
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
           StringLiteral **clobbers, SourceLocation rparenloc);
 
+  /// \brief Build an empty inline-assembly statement.
+  explicit AsmStmt(EmptyShell Empty) : Stmt(AsmStmtClass, Empty) { }
+
+  SourceLocation getAsmLoc() const { return AsmLoc; }
+  void setAsmLoc(SourceLocation L) { AsmLoc = L; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
   bool isVolatile() const { return IsVolatile; }
+  void setVolatile(bool V) { IsVolatile = V; }
   bool isSimple() const { return IsSimple; }
+  void setSimple(bool V) { IsSimple = false; }
 
   //===--- Asm String Analysis ---===//
 
   const StringLiteral *getAsmString() const { return AsmStr; }
   StringLiteral *getAsmString() { return AsmStr; }
-  
+  void setAsmString(StringLiteral *E) { AsmStr = E; }
+
   /// AsmStringPiece - this is part of a decomposed asm string specification
   /// (for use with the AnalyzeAsmString function below).  An asm string is
   /// considered to be a concatenation of these parts.
@@ -1125,7 +1136,13 @@ public:
   const Expr *getInputExpr(unsigned i) const {
     return const_cast<AsmStmt*>(this)->getInputExpr(i);
   }
-  
+
+  void setOutputsAndInputs(unsigned NumOutputs,
+                           unsigned NumInputs, 
+                           const std::string *Names,
+                           StringLiteral **Constraints,
+                           Stmt **Exprs);
+
   //===--- Other ---===//
   
   /// getNamedOperand - Given a symbolic operand reference like %[foo],
@@ -1138,7 +1155,8 @@ public:
   unsigned getNumClobbers() const { return Clobbers.size(); }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
   const StringLiteral *getClobber(unsigned i) const { return Clobbers[i]; }
-  
+  void setClobbers(StringLiteral **Clobbers, unsigned NumClobbers);
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(AsmLoc, RParenLoc);
   }

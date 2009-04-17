@@ -407,7 +407,8 @@ namespace clang {
       STMT_RETURN,
       /// \brief A DeclStmt record.
       STMT_DECL,
-      /// FIXME: An AsmStmt record.
+      /// \brief An AsmStmt record.
+      STMT_ASM,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.
