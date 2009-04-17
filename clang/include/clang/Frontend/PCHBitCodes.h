@@ -397,6 +397,8 @@ namespace clang {
       STMT_CONTINUE,
       /// \brief A BreakStmt record.
       STMT_BREAK,
+      /// \brief A ReturnStmt record.
+      STMT_RETURN,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.

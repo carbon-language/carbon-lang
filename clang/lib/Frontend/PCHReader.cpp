@@ -256,6 +256,7 @@ namespace {
     unsigned VisitForStmt(ForStmt *S);
     unsigned VisitContinueStmt(ContinueStmt *S);
     unsigned VisitBreakStmt(BreakStmt *S);
+    unsigned VisitReturnStmt(ReturnStmt *S);
     unsigned VisitExpr(Expr *E);
     unsigned VisitPredefinedExpr(PredefinedExpr *E);
     unsigned VisitDeclRefExpr(DeclRefExpr *E);
@@ -396,6 +397,13 @@ unsigned PCHStmtReader::VisitBreakStmt(BreakStmt *S) {
   VisitStmt(S);
   S->setBreakLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
+}
+
+unsigned PCHStmtReader::VisitReturnStmt(ReturnStmt *S) {
+  VisitStmt(S);
+  S->setRetValue(cast_or_null<Expr>(StmtStack.back()));
+  S->setReturnLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitExpr(Expr *E) {
@@ -2172,6 +2180,10 @@ Stmt *PCHReader::ReadStmt() {
       S = new (Context) BreakStmt(Empty);
       break;
 
+    case pch::STMT_RETURN:
+      S = new (Context) ReturnStmt(Empty);
+      break;
+
     case pch::EXPR_PREDEFINED:
       // FIXME: untested (until we can serialize function bodies).
       S = new (Context) PredefinedExpr(Empty);
@@ -2311,6 +2323,7 @@ Stmt *PCHReader::ReadStmt() {
     StmtStack.push_back(S);
   }
   assert(StmtStack.size() == 1 && "Extra expressions on stack!");
+  SwitchCaseStmts.clear();
   return StmtStack.back();
 }
 

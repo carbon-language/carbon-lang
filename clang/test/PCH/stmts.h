@@ -17,6 +17,13 @@ void f0(int x) {
     break;
 
   default:
+    switch (x >> 1) {
+    case 7:
+      // fall through
+    case 9:
+      break;
+    }
+    x += 2;
     break;
   }
 
@@ -32,5 +39,20 @@ void f0(int x) {
     x++;
   } while (x < 10);
 
-  for (; x < 20; ++x) ;
+  for (; x < 20; ++x) {
+    if (x == 12)
+      return;
+  }
+}
+
+int f1(int x) {
+  switch (x) {
+  case 17:
+    return 12;
+
+  default:
+    break;
+  }
+
+  return x*2;
 }

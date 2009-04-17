@@ -931,9 +931,16 @@ class ReturnStmt : public Stmt {
 public:
   ReturnStmt(SourceLocation RL, Expr *E = 0) : Stmt(ReturnStmtClass), 
     RetExpr((Stmt*) E), RetLoc(RL) {}
-  
+
+  /// \brief Build an empty return expression.
+  explicit ReturnStmt(EmptyShell Empty) : Stmt(ReturnStmtClass, Empty) { }
+
   const Expr *getRetValue() const;
   Expr *getRetValue();
+  void setRetValue(Expr *E) { RetExpr = reinterpret_cast<Stmt*>(E); }
+
+  SourceLocation getReturnLoc() const { return RetLoc; }
+  void setReturnLoc(SourceLocation L) { RetLoc = L; }
 
   virtual SourceRange getSourceRange() const;
   

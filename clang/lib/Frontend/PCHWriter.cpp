@@ -458,6 +458,7 @@ namespace {
     void VisitForStmt(ForStmt *S);
     void VisitContinueStmt(ContinueStmt *S);
     void VisitBreakStmt(BreakStmt *S);
+    void VisitReturnStmt(ReturnStmt *S);
     void VisitExpr(Expr *E);
     void VisitPredefinedExpr(PredefinedExpr *E);
     void VisitDeclRefExpr(DeclRefExpr *E);
@@ -590,6 +591,13 @@ void PCHStmtWriter::VisitBreakStmt(BreakStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getBreakLoc(), Record);
   Code = pch::STMT_BREAK;
+}
+
+void PCHStmtWriter::VisitReturnStmt(ReturnStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getRetValue());
+  Writer.AddSourceLocation(S->getReturnLoc(), Record);
+  Code = pch::STMT_RETURN;
 }
 
 void PCHStmtWriter::VisitExpr(Expr *E) {
@@ -1822,6 +1830,7 @@ void PCHWriter::FlushStmts() {
   }
 
   StmtsToEmit.clear();
+  SwitchCaseIDs.clear();
 }
 
 unsigned PCHWriter::RecordSwitchCaseID(SwitchCase *S) {
