@@ -222,7 +222,7 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
   for (unsigned i = getNumArgs()+ARGS_START; i != NumArgs+ARGS_START; ++i)
     NewSubExprs[i] = 0;
   
-  delete [] SubExprs;
+  if (SubExprs) C.Deallocate(SubExprs);
   SubExprs = NewSubExprs;
   this->NumArgs = NumArgs;
 }

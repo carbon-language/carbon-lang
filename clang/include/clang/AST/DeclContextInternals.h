@@ -101,7 +101,7 @@ public:
       VectorTy *Vector = getAsVector();
       if (!Vector) {
         Vector = new VectorTy;
-        Data = reinterpret_cast<uintptr_t>(Vector) | DK_Decl_Vector;
+        Data = reinterpret_cast<uintptr_t>(Vector) | DK_ID_Vector;
       }
 
       Vector->resize(Vec.size());
