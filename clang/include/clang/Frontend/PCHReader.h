@@ -149,6 +149,14 @@ private:
   /// been de-serialized.
   std::multimap<unsigned, AddrLabelExpr *> UnresolvedAddrLabelExprs;
 
+  /// \brief The number of statements (and expressions) de-serialized
+  /// from the PCH file.
+  unsigned NumStatementsRead;
+
+  /// \brief The total number of statements (and expressions) stored
+  /// in the PCH file.
+  unsigned TotalNumStatements;
+
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
@@ -168,7 +176,7 @@ public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
   PCHReader(Preprocessor &PP, ASTContext &Context) 
-    : PP(PP), Context(Context), IdentifierTable(0) { }
+    : PP(PP), Context(Context), IdentifierTable(0), NumStatementsRead(0) { }
 
   ~PCHReader() {}
 

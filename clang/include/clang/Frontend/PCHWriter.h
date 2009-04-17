@@ -117,6 +117,9 @@ private:
   /// \brief Mapping from LabelStmt statements to IDs.
   std::map<LabelStmt *, unsigned> LabelIDs;
 
+  /// \brief The number of statements written to the PCH file.
+  unsigned NumStatements;
+
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);

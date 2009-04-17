@@ -1173,7 +1173,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
   }
 
   uint64_t PreprocessorBlockBit = 0;
-  
+
   // Read all of the records and blocks for the PCH file.
   RecordData Record;
   while (!Stream.AtEndOfStream()) {
@@ -1315,6 +1315,11 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
       }
       ExternalDefinitions.swap(Record);
       break;
+
+    case pch::STATISTICS:
+      TotalNumStatements = Record[0];
+      break;
+
     }
   }
 
@@ -1976,6 +1981,9 @@ void PCHReader::PrintStats() {
   std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
                NumIdentifiersLoaded, (unsigned)IdentifierData.size(),
                ((float)NumIdentifiersLoaded/IdentifierData.size() * 100));
+  std::fprintf(stderr, "  %u/%u statements read (%f%%)\n",
+               NumStatementsRead, TotalNumStatements,
+               ((float)NumStatementsRead/TotalNumStatements * 100));
   std::fprintf(stderr, "\n");
 }
 
@@ -2449,6 +2457,8 @@ Stmt *PCHReader::ReadStmt() {
     // We hit a STMT_STOP, so we're done with this expression.
     if (Finished)
       break;
+
+    ++NumStatementsRead;
 
     if (S) {
       unsigned NumSubStmts = Reader.Visit(S);

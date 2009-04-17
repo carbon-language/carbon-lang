@@ -1723,7 +1723,7 @@ void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
-  : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS) { }
+  : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS), NumStatements(0) { }
 
 void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   // Emit the file header.
@@ -1749,6 +1749,11 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
   if (!ExternalDefinitions.empty())
     Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
+  
+  // Some simple statistics
+  RecordData Record;
+  Record.push_back(NumStatements);
+  Stream.EmitRecord(pch::STATISTICS, Record);
   Stream.ExitBlock();
 }
 
@@ -1880,6 +1885,7 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
 void PCHWriter::WriteSubStmt(Stmt *S) {
   RecordData Record;
   PCHStmtWriter Writer(*this, Record);
+  ++NumStatements;
 
   if (!S) {
     Stream.EmitRecord(pch::STMT_NULL_PTR, Record);
@@ -1900,6 +1906,7 @@ void PCHWriter::FlushStmts() {
   PCHStmtWriter Writer(*this, Record);
 
   for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {
+    ++NumStatements;
     Stmt *S = StmtsToEmit[I];
 
     if (!S) {

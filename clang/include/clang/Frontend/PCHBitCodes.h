@@ -140,7 +140,11 @@ namespace clang {
       /// reported to the AST consumer after the PCH file has been
       /// read, since their presence can affect the semantics of the
       /// program (e.g., for code generation).
-      EXTERNAL_DEFINITIONS = 7
+      EXTERNAL_DEFINITIONS = 7,
+
+      /// \brief Record code for the block of extra statistics we
+      /// gather while generating a PCH file.
+      STATISTICS = 8
     };
 
     /// \brief Record types used within a source manager block.
