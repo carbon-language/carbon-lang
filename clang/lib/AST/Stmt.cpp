@@ -96,6 +96,14 @@ bool Stmt::CollectingStats(bool enable) {
   return StatSwitch;
 }
 
+void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
+  if (this->Body)
+    C.Deallocate(Body);
+  this->NumStmts = NumStmts;
+
+  Body = new (C) Stmt*[NumStmts];
+  memcpy(Body, Stmts, sizeof(Stmt *) * NumStmts);
+}
 
 const char *LabelStmt::getName() const {
   return getID()->getName();

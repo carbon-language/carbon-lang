@@ -338,7 +338,9 @@ void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitValueDecl(D);
-  // FIXME: function body
+  Record.push_back(D->isThisDeclarationADefinition());
+  if (D->isThisDeclarationADefinition())
+    Writer.AddStmt(D->getBody());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->isInline());
@@ -443,6 +445,15 @@ namespace {
     PCHStmtWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
       : Writer(Writer), Record(Record) { }
 
+    void VisitStmt(Stmt *S);
+    void VisitNullStmt(NullStmt *S);
+    void VisitCompoundStmt(CompoundStmt *S);
+    void VisitSwitchCase(SwitchCase *S);
+    void VisitCaseStmt(CaseStmt *S);
+    void VisitDefaultStmt(DefaultStmt *S);
+    void VisitIfStmt(IfStmt *S);
+    void VisitSwitchStmt(SwitchStmt *S);
+    void VisitBreakStmt(BreakStmt *S);
     void VisitExpr(Expr *E);
     void VisitPredefinedExpr(PredefinedExpr *E);
     void VisitDeclRefExpr(DeclRefExpr *E);
@@ -478,7 +489,75 @@ namespace {
   };
 }
 
+void PCHStmtWriter::VisitStmt(Stmt *S) { 
+}
+
+void PCHStmtWriter::VisitNullStmt(NullStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getSemiLoc(), Record);
+  Code = pch::STMT_NULL;
+}
+
+void PCHStmtWriter::VisitCompoundStmt(CompoundStmt *S) {
+  VisitStmt(S);
+  Record.push_back(S->size());
+  for (CompoundStmt::body_iterator CS = S->body_begin(), CSEnd = S->body_end();
+       CS != CSEnd; ++CS)
+    Writer.WriteSubStmt(*CS);
+  Writer.AddSourceLocation(S->getLBracLoc(), Record);
+  Writer.AddSourceLocation(S->getRBracLoc(), Record);
+  Code = pch::STMT_COMPOUND;
+}
+
+void PCHStmtWriter::VisitSwitchCase(SwitchCase *S) {
+  VisitStmt(S);
+  Record.push_back(Writer.RecordSwitchCaseID(S));
+}
+
+void PCHStmtWriter::VisitCaseStmt(CaseStmt *S) {
+  VisitSwitchCase(S);
+  Writer.WriteSubStmt(S->getLHS());
+  Writer.WriteSubStmt(S->getRHS());
+  Writer.WriteSubStmt(S->getSubStmt());
+  Writer.AddSourceLocation(S->getCaseLoc(), Record);
+  Code = pch::STMT_CASE;
+}
+
+void PCHStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
+  VisitSwitchCase(S);
+  Writer.WriteSubStmt(S->getSubStmt());
+  Writer.AddSourceLocation(S->getDefaultLoc(), Record);
+  Code = pch::STMT_DEFAULT;
+}
+
+void PCHStmtWriter::VisitIfStmt(IfStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getCond());
+  Writer.WriteSubStmt(S->getThen());
+  Writer.WriteSubStmt(S->getElse());
+  Writer.AddSourceLocation(S->getIfLoc(), Record);
+  Code = pch::STMT_IF;
+}
+
+void PCHStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getCond());
+  Writer.WriteSubStmt(S->getBody());
+  Writer.AddSourceLocation(S->getSwitchLoc(), Record);
+  for (SwitchCase *SC = S->getSwitchCaseList(); SC; 
+       SC = SC->getNextSwitchCase())
+    Record.push_back(Writer.getSwitchCaseID(SC));
+  Code = pch::STMT_SWITCH;
+}
+
+void PCHStmtWriter::VisitBreakStmt(BreakStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getBreakLoc(), Record);
+  Code = pch::STMT_BREAK;
+}
+
 void PCHStmtWriter::VisitExpr(Expr *E) {
+  VisitStmt(E);
   Writer.AddTypeRef(E->getType(), Record);
   Record.push_back(E->isTypeDependent());
   Record.push_back(E->isValueDependent());
@@ -1707,4 +1786,18 @@ void PCHWriter::FlushStmts() {
   }
 
   StmtsToEmit.clear();
+}
+
+unsigned PCHWriter::RecordSwitchCaseID(SwitchCase *S) {
+  assert(SwitchCaseIDs.find(S) == SwitchCaseIDs.end() && 
+         "SwitchCase recorded twice");
+  unsigned NextID = SwitchCaseIDs.size();
+  SwitchCaseIDs[S] = NextID;
+  return NextID;
+}
+
+unsigned PCHWriter::getSwitchCaseID(SwitchCase *S) {
+  assert(SwitchCaseIDs.find(S) != SwitchCaseIDs.end() && 
+         "SwitchCase hasn't been seen yet");
+  return SwitchCaseIDs[S];
 }

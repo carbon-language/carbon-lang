@@ -20,6 +20,7 @@
 #include "clang/Frontend/PCHBitCodes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include <map>
 #include <queue>
 
 namespace llvm {
@@ -33,6 +34,7 @@ namespace clang {
 class ASTContext;
 class Preprocessor;
 class SourceManager;
+class SwitchCase;
 class TargetInfo;
 
 /// \brief Writes a precompiled header containing the contents of a
@@ -108,6 +110,9 @@ private:
   /// declaration or type.
   llvm::SmallVector<Stmt *, 8> StmtsToEmit;
 
+  /// \brief Mapping from SwitchCase statements to IDs.
+  std::map<SwitchCase *, unsigned> SwitchCaseIDs;
+  
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
@@ -170,6 +175,13 @@ public:
   /// \brief Flush all of the statements and expressions that have
   /// been added to the queue via AddStmt().
   void FlushStmts();
+
+  /// \brief Record an ID for the given switch-case statement.
+  unsigned RecordSwitchCaseID(SwitchCase *S);
+
+  /// \brief Retrieve the ID for the given switch-case statement.
+  unsigned getSwitchCaseID(SwitchCase *S);
+
 };
 
 } // end namespace clang

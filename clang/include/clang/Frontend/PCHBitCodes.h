@@ -375,6 +375,20 @@ namespace clang {
       STMT_STOP,
       /// \brief A NULL expression.
       STMT_NULL_PTR,
+      /// \brief A NullStmt record.
+      STMT_NULL,
+      /// \brief A CompoundStmt record.
+      STMT_COMPOUND,
+      /// \brief A CaseStmt record.
+      STMT_CASE,
+      /// \brief A DefaultStmt record.
+      STMT_DEFAULT,
+      /// \brief An IfStmt record.
+      STMT_IF,
+      /// \brief A SwitchStmt record.
+      STMT_SWITCH,
+      /// \brief A BreakStmt record.
+      STMT_BREAK,
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.

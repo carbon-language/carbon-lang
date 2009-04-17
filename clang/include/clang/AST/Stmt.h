@@ -136,11 +136,22 @@ public:
   void operator delete(void*, std::size_t) throw() { }
   void operator delete(void*, void*) throw() { }
 
+public:
+  /// \brief A placeholder type used to construct an empty shell of a
+  /// type, that will be filled in later (e.g., by some
+  /// de-serialization).
+  struct EmptyShell { };
+
 protected:
   /// DestroyChildren - Invoked by destructors of subclasses of Stmt to
   ///  recursively release child AST nodes.
   void DestroyChildren(ASTContext& Ctx);
   
+  /// \brief Construct an empty statement.
+  explicit Stmt(StmtClass SC, EmptyShell) : sClass(SC) { 
+    if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
+  }
+
 public:
   Stmt(StmtClass SC) : sClass(SC) { 
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
@@ -210,11 +221,6 @@ public:
   const_child_iterator child_end() const {
     return const_child_iterator(const_cast<Stmt*>(this)->child_end());
   }
-
-  /// \brief A placeholder type used to construct an empty shell of a
-  /// type, that will be filled in later (e.g., by some
-  /// de-serialization).
-  struct EmptyShell { };
 
   void Emit(llvm::Serializer& S) const;
   static Stmt* Create(llvm::Deserializer& D, ASTContext& C);
@@ -288,7 +294,11 @@ class NullStmt : public Stmt {
 public:
   NullStmt(SourceLocation L) : Stmt(NullStmtClass), SemiLoc(L) {}
 
+  /// \brief Build an empty null statement.
+  explicit NullStmt(EmptyShell Empty) : Stmt(NullStmtClass, Empty) { }
+
   SourceLocation getSemiLoc() const { return SemiLoc; }
+  void setSemiLoc(SourceLocation L) { SemiLoc = L; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(SemiLoc); }
   
@@ -323,9 +333,16 @@ public:
     Body = new (C) Stmt*[NumStmts];
     memcpy(Body, StmtStart, numStmts * sizeof(*Body));
   }           
+
+  // \brief Build an empty compound statement.
+  explicit CompoundStmt(EmptyShell Empty)
+    : Stmt(CompoundStmtClass, Empty), Body(0), NumStmts(0) { }
+
+  void setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts);
   
   bool body_empty() const { return NumStmts == 0; }
-  
+  unsigned size() const { return NumStmts; }
+
   typedef Stmt** body_iterator;
   body_iterator body_begin() { return Body; }
   body_iterator body_end() { return Body + NumStmts; }
@@ -360,7 +377,9 @@ public:
   }
   
   SourceLocation getLBracLoc() const { return LBracLoc; }
+  void setLBracLoc(SourceLocation L) { LBracLoc = L; }
   SourceLocation getRBracLoc() const { return RBracLoc; }
+  void setRBracLoc(SourceLocation L) { RBracLoc = L; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundStmtClass; 
@@ -418,12 +437,17 @@ public:
     SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
     CaseLoc = caseLoc;
   }
-  
+
+  /// \brief Build an empty switch case statement.
+  explicit CaseStmt(EmptyShell Empty) : SwitchCase(CaseStmtClass) { }
+
   SourceLocation getCaseLoc() const { return CaseLoc; }
-  
+  void setCaseLoc(SourceLocation L) { CaseLoc = L; }
+
   Expr *getLHS() { return reinterpret_cast<Expr*>(SubExprs[LHS]); }
   Expr *getRHS() { return reinterpret_cast<Expr*>(SubExprs[RHS]); }
   Stmt *getSubStmt() { return SubExprs[SUBSTMT]; }
+
   const Expr *getLHS() const { 
     return reinterpret_cast<const Expr*>(SubExprs[LHS]); 
   }
@@ -465,11 +489,16 @@ class DefaultStmt : public SwitchCase {
 public:
   DefaultStmt(SourceLocation DL, Stmt *substmt) : 
     SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL) {}
-    
+
+  /// \brief Build an empty default statement.
+  explicit DefaultStmt(EmptyShell) : SwitchCase(DefaultStmtClass) { }
+
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
-    
+  void setSubStmt(Stmt *S) { SubStmt = S; }
+
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
+  void setDefaultLoc(SourceLocation L) { DefaultLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(DefaultLoc, SubStmt->getLocEnd()); 
@@ -537,13 +566,22 @@ public:
     IfLoc = IL;
   }
   
+  /// \brief Build an empty if/then/else statement
+  explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
+
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
   const Stmt *getThen() const { return SubExprs[THEN]; }
+  void setThen(Stmt *S) { SubExprs[THEN] = S; } 
   const Stmt *getElse() const { return SubExprs[ELSE]; }
+  void setElse(Stmt *S) { SubExprs[ELSE] = S; }
 
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Stmt *getThen() { return SubExprs[THEN]; }
   Stmt *getElse() { return SubExprs[ELSE]; }
+
+  SourceLocation getIfLoc() const { return IfLoc; }
+  void setIfLoc(SourceLocation L) { IfLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     if (SubExprs[ELSE])
@@ -579,13 +617,22 @@ public:
       SubExprs[BODY] = NULL;
     }
   
+  /// \brief Build a empty switch statement.
+  explicit SwitchStmt(EmptyShell Empty) : Stmt(SwitchStmtClass, Empty) { }
+
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   const Stmt *getBody() const { return SubExprs[BODY]; }
   const SwitchCase *getSwitchCaseList() const { return FirstCase; }
 
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
   Stmt *getBody() { return SubExprs[BODY]; }
+  void setBody(Stmt *S) { SubExprs[BODY] = S; }
   SwitchCase *getSwitchCaseList() { return FirstCase; }
+  void setSwitchCaseList(SwitchCase *SC) { FirstCase = SC; }
+
+  SourceLocation getSwitchLoc() const { return SwitchLoc; }
+  void setSwitchLoc(SourceLocation L) { SwitchLoc = L; }
 
   void setBody(Stmt *S, SourceLocation SL) { 
     SubExprs[BODY] = S; 
@@ -814,6 +861,12 @@ class BreakStmt : public Stmt {
 public:
   BreakStmt(SourceLocation BL) : Stmt(BreakStmtClass), BreakLoc(BL) {}
   
+  /// \brief Build an empty break statement.
+  explicit BreakStmt(EmptyShell Empty) : Stmt(BreakStmtClass, Empty) { }
+
+  SourceLocation getBreakLoc() const { return BreakLoc; }
+  void setBreakLoc(SourceLocation L) { BreakLoc = L; }
+
   virtual SourceRange getSourceRange() const { return SourceRange(BreakLoc); }
 
   static bool classof(const Stmt *T) { 

@@ -139,7 +139,8 @@ void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
 
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitValueDecl(FD);
-  // FIXME: function body
+  if (Record[Idx++])
+    FD->setBody(cast<CompoundStmt>(Reader.ReadStmt()));
   FD->setPreviousDeclaration(
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
@@ -229,15 +230,28 @@ namespace {
                   unsigned &Idx, llvm::SmallVectorImpl<Stmt *> &StmtStack)
       : Reader(Reader), Record(Record), Idx(Idx), StmtStack(StmtStack) { }
 
+    /// \brief The number of record fields required for the Stmt class
+    /// itself.
+    static const unsigned NumStmtFields = 0;
+
     /// \brief The number of record fields required for the Expr class
     /// itself.
-    static const unsigned NumExprFields = 3;
+    static const unsigned NumExprFields = NumStmtFields + 3;
 
     // Each of the Visit* functions reads in part of the expression
     // from the given record and the current expression stack, then
     // return the total number of operands that it read from the
     // expression stack.
 
+    unsigned VisitStmt(Stmt *S);
+    unsigned VisitNullStmt(NullStmt *S);
+    unsigned VisitCompoundStmt(CompoundStmt *S);
+    unsigned VisitSwitchCase(SwitchCase *S);
+    unsigned VisitCaseStmt(CaseStmt *S);
+    unsigned VisitDefaultStmt(DefaultStmt *S);
+    unsigned VisitIfStmt(IfStmt *S);
+    unsigned VisitSwitchStmt(SwitchStmt *S);
+    unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitExpr(Expr *E);
     unsigned VisitPredefinedExpr(PredefinedExpr *E);
     unsigned VisitDeclRefExpr(DeclRefExpr *E);
@@ -273,7 +287,83 @@ namespace {
   };
 }
 
+unsigned PCHStmtReader::VisitStmt(Stmt *S) {
+  assert(Idx == NumStmtFields && "Incorrect statement field count");
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitNullStmt(NullStmt *S) {
+  VisitStmt(S);
+  S->setSemiLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitCompoundStmt(CompoundStmt *S) {
+  VisitStmt(S);
+  unsigned NumStmts = Record[Idx++];
+  S->setStmts(Reader.getContext(), 
+              &StmtStack[StmtStack.size() - NumStmts], NumStmts);
+  S->setLBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setRBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return NumStmts;
+}
+
+unsigned PCHStmtReader::VisitSwitchCase(SwitchCase *S) {
+  VisitStmt(S);
+  Reader.RecordSwitchCaseID(S, Record[Idx++]);
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitCaseStmt(CaseStmt *S) {
+  VisitSwitchCase(S);
+  S->setLHS(cast<Expr>(StmtStack[StmtStack.size() - 3]));
+  S->setRHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  S->setSubStmt(StmtStack.back());
+  S->setCaseLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 3;
+}
+
+unsigned PCHStmtReader::VisitDefaultStmt(DefaultStmt *S) {
+  VisitSwitchCase(S);
+  S->setSubStmt(StmtStack.back());
+  S->setDefaultLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitIfStmt(IfStmt *S) {
+  VisitStmt(S);
+  S->setCond(cast<Expr>(StmtStack[StmtStack.size() - 3]));
+  S->setThen(StmtStack[StmtStack.size() - 2]);
+  S->setElse(StmtStack[StmtStack.size() - 1]);
+  S->setIfLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 3;
+}
+
+unsigned PCHStmtReader::VisitSwitchStmt(SwitchStmt *S) {
+  VisitStmt(S);
+  S->setCond(cast<Expr>(StmtStack[StmtStack.size() - 2]));
+  S->setBody(StmtStack.back());
+  S->setSwitchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  SwitchCase *PrevSC = 0;
+  for (unsigned N = Record.size(); Idx != N; ++Idx) {
+    SwitchCase *SC = Reader.getSwitchCaseWithID(Record[Idx]);
+    if (PrevSC)
+      PrevSC->setNextSwitchCase(SC);
+    else
+      S->setSwitchCaseList(SC);
+    PrevSC = SC;
+  }
+  return 2;
+}
+
+unsigned PCHStmtReader::VisitBreakStmt(BreakStmt *S) {
+  VisitStmt(S);
+  S->setBreakLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
 unsigned PCHStmtReader::VisitExpr(Expr *E) {
+  VisitStmt(E);
   E->setType(Reader.GetType(Record[Idx++]));
   E->setTypeDependent(Record[Idx++]);
   E->setValueDependent(Record[Idx++]);
@@ -2002,6 +2092,34 @@ Stmt *PCHReader::ReadStmt() {
       S = 0; 
       break;
 
+    case pch::STMT_NULL:
+      S = new (Context) NullStmt(Empty);
+      break;
+
+    case pch::STMT_COMPOUND:
+      S = new (Context) CompoundStmt(Empty);
+      break;
+
+    case pch::STMT_CASE:
+      S = new (Context) CaseStmt(Empty);
+      break;
+
+    case pch::STMT_DEFAULT:
+      S = new (Context) DefaultStmt(Empty);
+      break;
+
+    case pch::STMT_IF:
+      S = new (Context) IfStmt(Empty);
+      break;
+
+    case pch::STMT_SWITCH:
+      S = new (Context) SwitchStmt(Empty);
+      break;
+
+    case pch::STMT_BREAK:
+      S = new (Context) BreakStmt(Empty);
+      break;
+
     case pch::EXPR_PREDEFINED:
       // FIXME: untested (until we can serialize function bodies).
       S = new (Context) PredefinedExpr(Empty);
@@ -2156,4 +2274,17 @@ DiagnosticBuilder PCHReader::Diag(SourceLocation Loc, unsigned DiagID) {
   return PP.getDiagnostics().Report(FullSourceLoc(Loc,
                                                   Context.getSourceManager()),
                                     DiagID);
+}
+
+/// \brief Record that the given ID maps to the given switch-case
+/// statement.
+void PCHReader::RecordSwitchCaseID(SwitchCase *SC, unsigned ID) {
+  assert(SwitchCaseStmts[ID] == 0 && "Already have a SwitchCase with this ID");
+  SwitchCaseStmts[ID] = SC;
+}
+
+/// \brief Retrieve the switch-case statement with the given ID.
+SwitchCase *PCHReader::getSwitchCaseWithID(unsigned ID) {
+  assert(SwitchCaseStmts[ID] != 0 && "No SwitchCase with this ID");
+  return SwitchCaseStmts[ID];
 }

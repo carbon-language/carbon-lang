@@ -26,6 +26,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/DataTypes.h"
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,6 +42,7 @@ class Attr;
 class Decl;
 class DeclContext;
 class Preprocessor;
+class SwitchCase;
 
 /// \brief Reads a precompiled head containing the contents of a
 /// translation unit.
@@ -125,6 +127,10 @@ private:
   /// \brief The set of external definitions stored in the the PCH
   /// file.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
+
+  /// \brief Mapping from switch-case IDs in the PCH file to
+  /// switch-case statements.
+  std::map<unsigned, SwitchCase *> SwitchCaseStmts;
 
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
@@ -241,6 +247,13 @@ public:
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.
   ASTContext &getContext() { return Context; }
+
+  /// \brief Record that the given ID maps to the given switch-case
+  /// statement.
+  void RecordSwitchCaseID(SwitchCase *SC, unsigned ID);
+
+  /// \brief Retrieve the switch-case statement with the given ID.
+  SwitchCase *getSwitchCaseWithID(unsigned ID);
 };
 
 } // end namespace clang
