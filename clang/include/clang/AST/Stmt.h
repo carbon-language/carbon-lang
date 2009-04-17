@@ -852,13 +852,18 @@ public:
 class IndirectGotoStmt : public Stmt {
   Stmt *Target;
   // FIXME: Add location information (e.g. SourceLocation objects).
-  //        When doing so, update the serialization routines.
+  //        When doing so, update the PCH serialization routines.
 public:
   IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass),
                                    Target((Stmt*)target){}
+
+  /// \brief Build an empty indirect goto statement.
+  explicit IndirectGotoStmt(EmptyShell Empty) 
+    : Stmt(IndirectGotoStmtClass, Empty) { }
   
   Expr *getTarget();
   const Expr *getTarget() const;
+  void setTarget(Expr *E) { Target = reinterpret_cast<Stmt*>(E); }
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
   

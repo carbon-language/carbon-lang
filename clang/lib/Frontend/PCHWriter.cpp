@@ -458,6 +458,7 @@ namespace {
     void VisitDoStmt(DoStmt *S);
     void VisitForStmt(ForStmt *S);
     void VisitGotoStmt(GotoStmt *S);
+    void VisitIndirectGotoStmt(IndirectGotoStmt *S);
     void VisitContinueStmt(ContinueStmt *S);
     void VisitBreakStmt(BreakStmt *S);
     void VisitReturnStmt(ReturnStmt *S);
@@ -489,6 +490,7 @@ namespace {
     void VisitDesignatedInitExpr(DesignatedInitExpr *E);
     void VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     void VisitVAArgExpr(VAArgExpr *E);
+    void VisitAddrLabelExpr(AddrLabelExpr *E);
     void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     void VisitChooseExpr(ChooseExpr *E);
     void VisitGNUNullExpr(GNUNullExpr *E);
@@ -599,6 +601,12 @@ void PCHStmtWriter::VisitGotoStmt(GotoStmt *S) {
   Writer.AddSourceLocation(S->getGotoLoc(), Record);
   Writer.AddSourceLocation(S->getLabelLoc(), Record);
   Code = pch::STMT_GOTO;
+}
+
+void PCHStmtWriter::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getTarget());
+  Code = pch::STMT_INDIRECT_GOTO;
 }
 
 void PCHStmtWriter::VisitContinueStmt(ContinueStmt *S) {
@@ -878,6 +886,14 @@ void PCHStmtWriter::VisitVAArgExpr(VAArgExpr *E) {
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_VA_ARG;
+}
+
+void PCHStmtWriter::VisitAddrLabelExpr(AddrLabelExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getAmpAmpLoc(), Record);
+  Writer.AddSourceLocation(E->getLabelLoc(), Record);
+  Record.push_back(Writer.GetLabelID(E->getLabel()));
+  Code = pch::EXPR_ADDR_LABEL;
 }
 
 void PCHStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {

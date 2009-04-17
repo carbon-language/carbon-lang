@@ -397,6 +397,8 @@ namespace clang {
       STMT_FOR,
       /// \brief A GotoStmt record.
       STMT_GOTO,
+      /// \brief An IndirectGotoStmt record.
+      STMT_INDIRECT_GOTO,
       /// \brief A ContinueStmt record.
       STMT_CONTINUE,
       /// \brief A BreakStmt record.
@@ -405,6 +407,7 @@ namespace clang {
       STMT_RETURN,
       /// \brief A DeclStmt record.
       STMT_DECL,
+      /// FIXME: An AsmStmt record.
       /// \brief A PredefinedExpr record.
       EXPR_PREDEFINED,
       /// \brief A DeclRefExpr record.
@@ -453,7 +456,8 @@ namespace clang {
       EXPR_IMPLICIT_VALUE_INIT,
       /// \brief A VAArgExpr record.
       EXPR_VA_ARG,
-      // FIXME: AddrLabelExpr
+      // An AddrLabelExpr record.
+      EXPR_ADDR_LABEL,
       // FIXME: StmtExpr
       /// \brief A TypesCompatibleExpr record.
       EXPR_TYPES_COMPATIBLE,

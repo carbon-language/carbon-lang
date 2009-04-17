@@ -256,6 +256,7 @@ namespace {
     unsigned VisitDoStmt(DoStmt *S);
     unsigned VisitForStmt(ForStmt *S);
     unsigned VisitGotoStmt(GotoStmt *S);
+    unsigned VisitIndirectGotoStmt(IndirectGotoStmt *S);
     unsigned VisitContinueStmt(ContinueStmt *S);
     unsigned VisitBreakStmt(BreakStmt *S);
     unsigned VisitReturnStmt(ReturnStmt *S);
@@ -287,6 +288,7 @@ namespace {
     unsigned VisitDesignatedInitExpr(DesignatedInitExpr *E);
     unsigned VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     unsigned VisitVAArgExpr(VAArgExpr *E);
+    unsigned VisitAddrLabelExpr(AddrLabelExpr *E);
     unsigned VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     unsigned VisitChooseExpr(ChooseExpr *E);
     unsigned VisitGNUNullExpr(GNUNullExpr *E);
@@ -405,6 +407,12 @@ unsigned PCHStmtReader::VisitGotoStmt(GotoStmt *S) {
   S->setGotoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setLabelLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
+}
+
+unsigned PCHStmtReader::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
+  VisitStmt(S);
+  S->setTarget(cast_or_null<Expr>(StmtStack.back()));
+  return 1;
 }
 
 unsigned PCHStmtReader::VisitContinueStmt(ContinueStmt *S) {
@@ -731,6 +739,14 @@ unsigned PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
+}
+
+unsigned PCHStmtReader::VisitAddrLabelExpr(AddrLabelExpr *E) {
+  VisitExpr(E);
+  E->setAmpAmpLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setLabelLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  Reader.SetLabelOf(E, Record[Idx++]);
+  return 0;
 }
 
 unsigned PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
@@ -2218,6 +2234,10 @@ Stmt *PCHReader::ReadStmt() {
     case pch::STMT_GOTO:
       S = new (Context) GotoStmt(Empty);
       break;
+      
+    case pch::STMT_INDIRECT_GOTO:
+      S = new (Context) IndirectGotoStmt(Empty);
+      break;
 
     case pch::STMT_CONTINUE:
       S = new (Context) ContinueStmt(Empty);
@@ -2335,6 +2355,10 @@ Stmt *PCHReader::ReadStmt() {
       S = new (Context) VAArgExpr(Empty);
       break;
 
+    case pch::EXPR_ADDR_LABEL:
+      S = new (Context) AddrLabelExpr(Empty);
+      break;
+
     case pch::EXPR_TYPES_COMPATIBLE:
       S = new (Context) TypesCompatibleExpr(Empty);
       break;
@@ -2418,6 +2442,16 @@ void PCHReader::RecordLabelStmt(LabelStmt *S, unsigned ID) {
   for (GotoIter Goto = Gotos.first; Goto != Gotos.second; ++Goto)
     Goto->second->setLabel(S);
   UnresolvedGotoStmts.erase(Gotos.first, Gotos.second);
+
+  // If we've already seen any address-label statements that point to
+  // this label, resolve them now.
+  typedef std::multimap<unsigned, AddrLabelExpr *>::iterator AddrLabelIter;
+  std::pair<AddrLabelIter, AddrLabelIter> AddrLabels 
+    = UnresolvedAddrLabelExprs.equal_range(ID);
+  for (AddrLabelIter AddrLabel = AddrLabels.first; 
+       AddrLabel != AddrLabels.second; ++AddrLabel)
+    AddrLabel->second->setLabel(S);
+  UnresolvedAddrLabelExprs.erase(AddrLabels.first, AddrLabels.second);
 }
 
 /// \brief Set the label of the given statement to the label
@@ -2437,5 +2471,25 @@ void PCHReader::SetLabelOf(GotoStmt *S, unsigned ID) {
     // We haven't seen this label yet, so add this goto to the set of
     // unresolved goto statements.
     UnresolvedGotoStmts.insert(std::make_pair(ID, S));
+  }
+}
+
+/// \brief Set the label of the given expression to the label
+/// identified by ID.
+///
+/// Depending on the order in which the label and other statements
+/// referencing that label occur, this operation may complete
+/// immediately (updating the statement) or it may queue the
+/// statement to be back-patched later.
+void PCHReader::SetLabelOf(AddrLabelExpr *S, unsigned ID) {
+  std::map<unsigned, LabelStmt *>::iterator Label = LabelStmts.find(ID);
+  if (Label != LabelStmts.end()) {
+    // We've already seen this label, so set the label of the
+    // label-address expression and we're done.
+    S->setLabel(Label->second);
+  } else {
+    // We haven't seen this label yet, so add this label-address
+    // expression to the set of unresolved label-address expressions.
+    UnresolvedAddrLabelExprs.insert(std::make_pair(ID, S));
   }
 }

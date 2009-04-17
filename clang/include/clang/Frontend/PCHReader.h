@@ -37,6 +37,7 @@ namespace llvm {
 
 namespace clang {
 
+class AddrLabelExpr;
 class ASTContext;
 class Attr;
 class Decl;
@@ -142,6 +143,11 @@ private:
   /// that point to that label before the label itself has been
   /// de-serialized.
   std::multimap<unsigned, GotoStmt *> UnresolvedGotoStmts;
+
+  /// \brief Mapping from label IDs to the set of address label
+  /// expressions that point to that label before the label itself has
+  /// been de-serialized.
+  std::multimap<unsigned, AddrLabelExpr *> UnresolvedAddrLabelExprs;
 
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
@@ -278,6 +284,15 @@ public:
   /// immediately (updating the statement) or it may queue the
   /// statement to be back-patched later.
   void SetLabelOf(GotoStmt *S, unsigned ID);
+
+  /// \brief Set the label of the given expression to the label
+  /// identified by ID.
+  ///
+  /// Depending on the order in which the label and other statements
+  /// referencing that label occur, this operation may complete
+  /// immediately (updating the statement) or it may queue the
+  /// statement to be back-patched later.
+  void SetLabelOf(AddrLabelExpr *S, unsigned ID);
 };
 
 } // end namespace clang

@@ -1601,12 +1601,22 @@ public:
                 QualType t)
     : Expr(AddrLabelExprClass, t), AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
   
+  /// \brief Build an empty address of a label expression.
+  explicit AddrLabelExpr(EmptyShell Empty) 
+    : Expr(AddrLabelExprClass, Empty) { }
+
+  SourceLocation getAmpAmpLoc() const { return AmpAmpLoc; }
+  void setAmpAmpLoc(SourceLocation L) { AmpAmpLoc = L; }
+  SourceLocation getLabelLoc() const { return LabelLoc; }
+  void setLabelLoc(SourceLocation L) { LabelLoc = L; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(AmpAmpLoc, LabelLoc);
   }
   
   LabelStmt *getLabel() const { return Label; }
-  
+  void setLabel(LabelStmt *S) { Label = S; }
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AddrLabelExprClass; 
   }

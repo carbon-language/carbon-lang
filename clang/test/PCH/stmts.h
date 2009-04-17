@@ -68,3 +68,21 @@ int f1(int x) {
 }
 
 const char* what_is_my_name(void) { return __func__; }
+
+int computed_goto(int x) {
+ start:
+  x = x << 1;
+  void *location = &&start;
+
+  if (x > 17)
+    location = &&done;
+
+  while (x > 12) {
+    --x;
+    if (x == 15)
+      goto *location;
+  }
+
+  done:
+  return 5;
+}
