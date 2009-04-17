@@ -33,7 +33,7 @@ public:
     SExt,   // The value is sign extended in the location.
     ZExt,   // The value is zero extended in the location.
     AExt,   // The value is extended with undefined upper bits.
-    BCvt    // The value is bit-converted in the location
+    BCvt    // The value is bit-converted in the location.
     // TODO: a subset of the value is in the location.
   };
 private:
@@ -46,9 +46,9 @@ private:
   /// isMem - True if this is a memory loc, false if it is a register loc.
   bool isMem : 1;
   
-  /// isCustom - True if this arg/retval requires special handling
+  /// isCustom - True if this arg/retval requires special handling.
   bool isCustom : 1;
-  
+
   /// Information about how the value is assigned.
   LocInfo HTP : 6;
   
@@ -72,7 +72,7 @@ public:
     Ret.LocVT = LocVT;
     return Ret;
   }
-  
+
   static CCValAssign getCustomReg(unsigned ValNo, MVT ValVT,
                                   unsigned RegNo, MVT LocVT,
                                   LocInfo HTP) {
@@ -104,7 +104,7 @@ public:
     Ret.isCustom = true;
     return Ret;
   }
-  
+
   unsigned getValNo() const { return ValNo; }
   MVT getValVT() const { return ValVT; }
 
@@ -112,7 +112,7 @@ public:
   bool isMemLoc() const { return isMem; }
   
   bool needsCustom() const { return isCustom; }
-  
+
   unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
   unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
   MVT getLocVT() const { return LocVT; }

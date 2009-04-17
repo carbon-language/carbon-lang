@@ -39,23 +39,19 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
-static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                   MVT &LocVT,
+static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
                                    ISD::ArgFlagsTy &ArgFlags,
                                    CCState &State);
-static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                    MVT &LocVT,
+static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                     CCValAssign::LocInfo &LocInfo,
                                     ISD::ArgFlagsTy &ArgFlags,
                                     CCState &State);
-static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                      MVT &LocVT,
+static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                       CCValAssign::LocInfo &LocInfo,
                                       ISD::ArgFlagsTy &ArgFlags,
                                       CCState &State);
-static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                       MVT &LocVT,
+static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                        CCValAssign::LocInfo &LocInfo,
                                        ISD::ArgFlagsTy &ArgFlags,
                                        CCState &State);
@@ -399,8 +395,7 @@ static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
 #include "ARMGenCallingConv.inc"
 
 // APCS f64 is in register pairs, possibly split to stack
-static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                   MVT &LocVT,
+static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
                                    ISD::ArgFlagsTy &ArgFlags,
                                    CCState &State) {
@@ -432,8 +427,7 @@ static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
 }
 
 // AAPCS f64 is in aligned register pairs
-static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                    MVT &LocVT,
+static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                     CCValAssign::LocInfo &LocInfo,
                                     ISD::ArgFlagsTy &ArgFlags,
                                     CCState &State) {
@@ -456,8 +450,7 @@ static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
   return false; // we didn't handle it
 }
 
-static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                      MVT &LocVT,
+static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                       CCValAssign::LocInfo &LocInfo,
                                       ISD::ArgFlagsTy &ArgFlags,
                                       CCState &State) {
@@ -480,8 +473,7 @@ static bool RetCC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
   return false; // we didn't handle it
 }
 
-static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT,
-                                       MVT &LocVT,
+static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                        CCValAssign::LocInfo &LocInfo,
                                        ISD::ArgFlagsTy &ArgFlags,
                                        CCState &State) {
@@ -558,7 +550,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
 
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
 /// by "Src" to address "Dst" of size "Size".  Alignment information is
-/// specified by the specific parameter attribute. The copy will be passed as
+/// specified by the specific parameter attribute.  The copy will be passed as
 /// a byval function parameter.
 /// Sometimes what we are copying is the end of a larger object, the part that
 /// does not fit in registers.
@@ -571,12 +563,11 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                        /*AlwaysInline=*/false, NULL, 0, NULL, 0);
 }
 
-/// LowerMemOpCallTo - Store the argument to the stack
+/// LowerMemOpCallTo - Store the argument to the stack.
 SDValue
 ARMTargetLowering::LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
                                     const SDValue &StackPtr,
-                                    const CCValAssign &VA,
-                                    SDValue Chain,
+                                    const CCValAssign &VA, SDValue Chain,
                                     SDValue Arg, ISD::ArgFlagsTy Flags) {
   DebugLoc dl = TheCall->getDebugLoc();
   unsigned LocMemOffset = VA.getLocMemOffset();
@@ -621,7 +612,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   SmallVector<SDValue, 8> MemOpChains;
 
   // Walk the register/memloc assignments, inserting copies/loads.  In the case
-  // of tail call optimization arguments are handle later.
+  // of tail call optimization, arguments are handled later.
   for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
        i != e;
        ++i, ++realArgIdx) {
@@ -654,8 +645,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), fmrrd));
       VA = ArgLocs[++i]; // skip ahead to next loc
       if (VA.isRegLoc())
-        RegsToPass.push_back(std::make_pair(VA.getLocReg(),
-                                            fmrrd.getValue(1)));
+        RegsToPass.push_back(std::make_pair(VA.getLocReg(), fmrrd.getValue(1)));
       else {
         assert(VA.isMemLoc());
         if (StackPtr.getNode() == 0)
@@ -791,16 +781,15 @@ SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
 
-  // CCValAssign - represent the assignment of
-  // the return value to a location
+  // CCValAssign - represent the assignment of the return value to a location.
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
 
-  // CCState - Info about the registers and stack slot.
+  // CCState - Info about the registers and stack slots.
   CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
 
-  // Analize return values of ISD::RET
+  // Analyze return values of ISD::RET.
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_ARM);
 
   // If this is the first return lowered for this function, add
@@ -844,8 +833,8 @@ SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
     } else
       Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Arg, Flag);
 
-    // guarantee that all emitted copies are
-    // stuck together, avoiding something bad
+    // Guarantee that all emitted copies are
+    // stuck together, avoiding something bad.
     Flag = Chain.getValue(1);
   }
 
@@ -1099,7 +1088,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
 
-    // Arguments stored on registers
+    // Arguments stored in registers.
     if (VA.isRegLoc()) {
       MVT RegVT = VA.getLocVT();
       TargetRegisterClass *RC;
@@ -1109,17 +1098,16 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         RC = ARM::GPRRegisterClass;
 
       if (RegVT == MVT::f64) {
-        // f64 is passed in pairs of GPRs and must be combined
+        // f64 is passed in pairs of GPRs and must be combined.
         RegVT = MVT::i32;
       } else if (!((RegVT == MVT::i32) || (RegVT == MVT::f32)))
         assert(0 && "RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
-      // Transform the arguments stored on
-      // physical registers into virtual ones
+      // Transform the arguments stored in physical registers into virtual ones.
       unsigned Reg = AddLiveIn(MF, VA.getLocReg(), RC);
       SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
 
-      // f64 is passed in i32 pairs and must be combined
+      // f64 is passed in i32 pairs and must be combined.
       if (VA.needsCustom()) {
         SDValue ArgValue2;
 
@@ -1129,7 +1117,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
           unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
           int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset());
 
-          // Create load node to retrieve arguments from the stack
+          // Create load node to retrieve arguments from the stack.
           SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
           ArgValue2 = DAG.getLoad(MVT::i32, dl, Root, FIN, NULL, 0);
         } else {
@@ -1173,7 +1161,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
       int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset());
 
-      // Create load nodes to retrieve arguments from the stack
+      // Create load nodes to retrieve arguments from the stack.
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
       ArgValues.push_back(DAG.getLoad(VA.getValVT(), dl, Root, FIN, NULL, 0));
     }
@@ -1185,8 +1173,8 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       ARM::R0, ARM::R1, ARM::R2, ARM::R3
     };
 
-    unsigned NumGPRs = CCInfo.getFirstUnallocated(GPRArgRegs,
-                              sizeof(GPRArgRegs)/sizeof(GPRArgRegs[0]));
+    unsigned NumGPRs = CCInfo.getFirstUnallocated
+      (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
 
     unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
     unsigned VARegSize = (4 - NumGPRs) * 4;

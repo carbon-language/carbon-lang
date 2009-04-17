@@ -1,16 +1,16 @@
 //===- ARMCallingConv.td - Calling Conventions for ARM ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 // This describes the calling conventions for ARM architecture.
 //===----------------------------------------------------------------------===//
 
 /// CCIfSubtarget - Match if the current subtarget has a feature F.
-class CCIfSubtarget<string F, CCAction A>: 
+class CCIfSubtarget<string F, CCAction A>:
   CCIf<!strconcat("State.getTarget().getSubtarget<ARMSubtarget>().", F), A>;
 
 /// CCIfAlign - Match of the original alignment of the arg
