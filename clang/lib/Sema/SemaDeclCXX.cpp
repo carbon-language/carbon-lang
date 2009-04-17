@@ -380,6 +380,12 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     Class->setHasTrivialConstructor(cast<CXXRecordDecl>(BaseDecl)->
                                     hasTrivialConstructor());
   }
+
+  // C++ [class.ctor]p3:
+  //   A destructor is trivial if all the direct base classes of its class
+  //   have trivial destructors.
+  Class->setHasTrivialDestructor(cast<CXXRecordDecl>(BaseDecl)->
+                                 hasTrivialDestructor());
   
   // Create the base specifier.
   // FIXME: Allocate via ASTContext?
@@ -952,7 +958,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
   if (RD->isAbstract()) 
     AbstractClassUsageDiagnoser(*this, RD);
     
-  if (RD->hasTrivialConstructor()) {
+  if (RD->hasTrivialConstructor() || RD->hasTrivialDestructor()) {
     for (RecordDecl::field_iterator i = RD->field_begin(Context), 
          e = RD->field_end(Context); i != e; ++i) {
       // All the nonstatic data members must have trivial constructors.
@@ -962,10 +968,16 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
       
       if (const RecordType *RT = FTy->getAsRecordType()) {
         CXXRecordDecl *FieldRD = cast<CXXRecordDecl>(RT->getDecl());
-        if (!FieldRD->hasTrivialConstructor()) {
+        
+        if (!FieldRD->hasTrivialConstructor())
           RD->setHasTrivialConstructor(false);
+        if (!FieldRD->hasTrivialDestructor())
+          RD->setHasTrivialDestructor(false);
+        
+        // If RD has neither a trivial constructor nor a trivial destructor
+        // we don't need to continue checking.
+        if (!RD->hasTrivialConstructor() && !RD->hasTrivialDestructor())
           break;
-        }
       }
     }
   }

@@ -228,6 +228,9 @@ class CXXRecordDecl : public RecordDecl {
   /// HasTrivialConstructor - True when this class has a trivial constructor
   bool HasTrivialConstructor : 1;
   
+  /// HasTrivialDestructor - True when this class has a trivial destructor
+  bool HasTrivialDestructor : 1;
+  
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -327,7 +330,7 @@ public:
   /// setUserDeclaredDestructor - Set whether this class has a
   /// user-declared destructor. If not set by the time the class is
   /// fully defined, a destructor will be implicitly declared.
-  void setUserDeclaredDestructor(bool UCD = true) { 
+  void setUserDeclaredDestructor(bool UCD) { 
     UserDeclaredDestructor = UCD; 
   }
 
@@ -385,6 +388,14 @@ public:
   // setHasTrivialConstructor - Set whether this class has a trivial constructor
   // (C++ [class.ctor]p5)
   void setHasTrivialConstructor(bool TC) { HasTrivialConstructor = TC; }
+  
+  // hasTrivialDestructor - Whether this class has a trivial destructor
+  // (C++ [class.dtor]p3)
+  bool hasTrivialDestructor() const { return HasTrivialDestructor; }
+  
+  // setHasTrivialDestructor - Set whether this class has a trivial destructor
+  // (C++ [class.dtor]p3)
+  void setHasTrivialDestructor(bool TC) { HasTrivialDestructor = TC; }
   
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.

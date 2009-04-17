@@ -32,3 +32,7 @@ struct T7 {
   T4 t4;
 };
 static_assert(!__has_trivial_constructor(T7), "t4 does not have a trivial constructor!");
+
+struct T8 : T2 {
+};
+static_assert(!__has_trivial_constructor(T8), "The base class T2 does not have a trivial constructor!");

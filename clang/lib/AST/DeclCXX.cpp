@@ -29,7 +29,7 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
-    HasTrivialConstructor(true),
+    HasTrivialConstructor(true), HasTrivialDestructor(true),
     Bases(0), NumBases(0), Conversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
 

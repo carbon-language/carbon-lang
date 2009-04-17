@@ -2251,6 +2251,10 @@ bool Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
       // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
       // user-defined destructor.
       Record->setPOD(false);
+      
+      // C++ [class.dtor]p3: A destructor is trivial if it is an implicitly-
+      // declared destructor.
+      Record->setHasTrivialDestructor(false);
     } else if (CXXConversionDecl *Conversion 
                = dyn_cast<CXXConversionDecl>(NewFD))
       ActOnConversionDeclarator(Conversion);
