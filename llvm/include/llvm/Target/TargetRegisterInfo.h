@@ -58,7 +58,6 @@ public:
 private:
   unsigned ID;
   const char *Name;
-  bool  isSubClass;
   const vt_iterator VTs;
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
