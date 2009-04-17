@@ -4868,23 +4868,23 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
     ObjCIvarOffsetVariable(ExternalName, ID, Ivar);
   
   // (char *) BaseValue
-  llvm::Value *V =  CGF.Builder.CreateBitCast(BaseValue,
-                                              ObjCTypes.Int8PtrTy);
+  llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, ObjCTypes.Int8PtrTy);
   llvm::Value *Offset = CGF.Builder.CreateLoad(IvarOffsetGV);
   // (char*)BaseValue + Offset_symbol
   V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
   // (type *)((char*)BaseValue + Offset_symbol)
   const llvm::Type *IvarTy = 
-    CGM.getTypes().ConvertType(Ivar->getType());
+    CGM.getTypes().ConvertTypeForMem(Ivar->getType());
   llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
   V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
   
   if (Ivar->isBitField()) {
+    QualType FieldTy = Field->getType();
     CodeGenTypes::BitFieldInfo bitFieldInfo =
                                  CGM.getTypes().getBitFieldInfo(Field);
     return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
-                                Field->getType()->isSignedIntegerType(),
-                                Field->getType().getCVRQualifiers()|CVRQualifiers);
+                                FieldTy->isSignedIntegerType(),
+                                FieldTy.getCVRQualifiers()|CVRQualifiers);
   }
 
   LValue LV = LValue::MakeAddr(V, 
