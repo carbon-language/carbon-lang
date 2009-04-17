@@ -16,9 +16,11 @@ let Component = "Lex" in {
 def null_in_string : Warning<"null character(s) preserved in string literal">;
 def null_in_char : Warning<"null character(s) preserved in character literal">;
 def null_in_file : Warning<"null character ignored">;
-def warn_nested_block_comment : Warning<"'/*' within block comment">;
+def warn_nested_block_comment : Warning<"'/*' within block comment">,
+  InGroup<Comment>;
 def escaped_newline_block_comment_end : Warning<
-  "escaped newline between */ characters at block comment end">;
+  "escaped newline between */ characters at block comment end">,
+  InGroup<Comment>;
 def backslash_newline_space : Warning<
   "backslash and newline separated by space">;
 
@@ -31,9 +33,11 @@ def trigraph_ends_block_comment : Warning<"trigraph ends block comment">,
 def trigraph_converted : Warning<"trigraph converted to '%0' character">,
     InGroup<Trigraphs>;
 
-def ext_multi_line_bcpl_comment : Extension<"multi-line // comment">;
+def ext_multi_line_bcpl_comment : Extension<"multi-line // comment">,
+    InGroup<Comment>;
 def ext_bcpl_comment : Extension<
-  "// comments are not allowed in this language">;
+  "// comments are not allowed in this language">,
+  InGroup<Comment>;
 def ext_no_newline_eof : Extension<"no newline at end of file">;
 def ext_backslash_newline_eof : Extension<"backslash-newline at end of file">;
 def ext_dollar_in_identifier : Extension<"'$' in identifier">;

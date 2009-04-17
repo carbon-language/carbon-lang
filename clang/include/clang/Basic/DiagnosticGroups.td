@@ -17,6 +17,7 @@ def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def : DiagGroup<"char-subscripts">;
+def Comment : DiagGroup<"comment">;
 def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"error-implicit-function-declaration">;
 def : DiagGroup<"format-security">;
@@ -31,8 +32,6 @@ def : DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
 def : DiagGroup<"nested-externs">;
 def : DiagGroup<"newline-eof">;
-def : DiagGroup<"no-#warnings">;
-def : DiagGroup<"no-comment">;
 def : DiagGroup<"format-y2k">;
 def : DiagGroup<"long-long">;
 def : DiagGroup<"missing-field-initializers">;
@@ -69,6 +68,7 @@ def : DiagGroup<"", [Extra]>;  // -W = -Wextra
 
 // Aggregation warning settings.
 def Most : DiagGroup<"most", [
+    Comment,
     ImplicitFunctionDeclare,
     Switch,
     Trigraphs,
