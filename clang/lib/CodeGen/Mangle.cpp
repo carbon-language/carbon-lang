@@ -29,16 +29,19 @@ namespace {
     ASTContext &Context;
     llvm::raw_ostream &Out;
 
-    const CXXConstructorDecl *Ctor;
+    const CXXMethodDecl *Structor;
+    unsigned StructorType;
     CXXCtorType CtorType;
     
   public:
     CXXNameMangler(ASTContext &C, llvm::raw_ostream &os)
-      : Context(C), Out(os), Ctor(0), CtorType(Ctor_Complete) { }
+      : Context(C), Out(os), Structor(0), StructorType(0) { }
 
     bool mangle(const NamedDecl *D);
     void mangleGuardVariable(const VarDecl *D);
+    
     void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type);
+    void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
 
   private:
     bool mangleFunctionDecl(const FunctionDecl *FD);
@@ -63,6 +66,7 @@ namespace {
     void mangleType(const ObjCInterfaceType *T);
     void mangleExpression(Expr *E);
     void mangleCXXCtorType(CXXCtorType T);
+    void mangleCXXDtorType(CXXDtorType T);
   };
 }
 
@@ -132,9 +136,18 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
 
 void CXXNameMangler::mangleCXXCtor(const CXXConstructorDecl *D, 
                                    CXXCtorType Type) {
-  assert(!Ctor && "Ctor already set!");
-  Ctor = D;
-  CtorType = Type;
+  assert(!Structor && "Structor already set!");
+  Structor = D;
+  StructorType = Type;
+  
+  mangle(D);
+}
+
+void CXXNameMangler::mangleCXXDtor(const CXXDestructorDecl *D, 
+                                   CXXDtorType Type) {
+  assert(!Structor && "Structor already set!");
+  Structor = D;
+  StructorType = Type;
   
   mangle(D);
 }
@@ -198,10 +211,10 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     break;
 
   case DeclarationName::CXXConstructorName:
-    if (ND == Ctor)
+    if (ND == Structor)
       // If the named decl is the C++ constructor we're mangling, use the 
       // type we were given.
-      mangleCXXCtorType(CtorType);
+      mangleCXXCtorType(static_cast<CXXCtorType>(StructorType));
     else
       // Otherwise, use the complete constructor name. This is relevant if a
       // class with a constructor is declared within a constructor.
@@ -209,13 +222,14 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     break;
 
   case DeclarationName::CXXDestructorName:
-    // <ctor-dtor-name> ::= D0  # deleting destructor
-    //                  ::= D1  # complete object destructor
-    //                  ::= D2  # base object destructor
-    //
-    // FIXME: We don't even have all of these destructors in the AST
-    // yet.
-    Out << "D0";
+    if (ND == Structor)
+      // If the named decl is the C++ destructor we're mangling, use the 
+      // type we were given.
+      mangleCXXDtorType(static_cast<CXXDtorType>(StructorType));
+    else
+      // Otherwise, use the complete destructor name. This is relevant if a
+      // class with a destructor is declared within a destructor.
+      mangleCXXDtorType(Dtor_Complete);
     break;
 
   case DeclarationName::CXXConversionFunctionName:
@@ -612,6 +626,24 @@ void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
   }
 }
 
+void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
+  // <ctor-dtor-name> ::= D0  # deleting destructor
+  //                  ::= D1  # complete object destructor
+  //                  ::= D2  # base object destructor
+  //
+  switch (T) {
+  case Dtor_Deleting:
+    Out << "D0";
+    break;
+  case Dtor_Complete:
+    Out << "D1";
+    break;
+  case Dtor_Base:
+    Out << "D2";
+    break;
+  }
+}
+
 namespace clang {
   /// \brief Mangles the name of the declaration D and emits that name
   /// to the given output stream.
@@ -648,5 +680,15 @@ namespace clang {
     
     os.flush();
   }
+  
+  void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
+                     ASTContext &Context, llvm::raw_ostream &os) {
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleCXXDtor(D, Type);
+    
+    os.flush();
+  }
+  
+  
 }
 

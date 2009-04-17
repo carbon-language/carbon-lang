@@ -1367,6 +1367,9 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::CXXConstructor:
     EmitCXXConstructors(cast<CXXConstructorDecl>(D));
     break;
+  case Decl::CXXDestructor:
+    EmitCXXDestructors(cast<CXXDestructorDecl>(D));
+    break;
         
   // Objective-C Decls
     

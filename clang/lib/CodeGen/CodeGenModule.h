@@ -56,6 +56,7 @@ namespace clang {
   class CompileOptions;
   class Diagnostic;
   class AnnotateAttr;
+  class CXXDestructorDecl;
 
 namespace CodeGen {
 
@@ -240,6 +241,11 @@ public:
   /// given type.
   llvm::Function *GetAddrOfCXXConstructor(const CXXConstructorDecl *D, 
                                           CXXCtorType Type);
+
+  /// GetAddrOfCXXDestructor - Return the address of the constructor of the
+  /// given type.
+  llvm::Function *GetAddrOfCXXDestructor(const CXXDestructorDecl *D, 
+                                         CXXDtorType Type);
   
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
@@ -331,6 +337,8 @@ public:
   const char *getMangledName(const NamedDecl *ND);
   const char *getMangledCXXCtorName(const CXXConstructorDecl *D, 
                                     CXXCtorType Type);
+  const char *getMangledCXXDtorName(const CXXDestructorDecl *D, 
+                                    CXXDtorType Type);
   
   enum GVALinkage {
     GVA_Internal,
@@ -391,6 +399,14 @@ private:
   /// EmitCXXConstructor - Emit a single constructor with the given type from
   /// a C++ constructor Decl.
   void EmitCXXConstructor(const CXXConstructorDecl *D, CXXCtorType Type);
+  
+  /// EmitCXXDestructors - Emit destructors (base, complete) from a 
+  /// C++ destructor Decl.
+  void EmitCXXDestructors(const CXXDestructorDecl *D);
+  
+  /// EmitCXXDestructor - Emit a single destructor with the given type from
+  /// a C++ destructor Decl.
+  void EmitCXXDestructor(const CXXDestructorDecl *D, CXXDtorType Type);
   
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function * Ctor, int Priority=65535);

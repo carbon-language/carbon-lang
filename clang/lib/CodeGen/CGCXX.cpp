@@ -124,27 +124,6 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
   return Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
 }
 
-const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D, 
-                                                 CXXCtorType Type) {
-  llvm::SmallString<256> Name;
-  llvm::raw_svector_ostream Out(Name);
-  mangleCXXCtor(D, Type, Context, Out);
-
-  Name += '\0';
-  return UniqueMangledName(Name.begin(), Name.end());
-}
-
-void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D, 
-                                       CXXCtorType Type) {
-  
-  llvm::Function *Fn = GetAddrOfCXXConstructor(D, Type);
- 
-  CodeGenFunction(*this).GenerateCode(D, Fn);
-  
-  SetFunctionDefinitionAttributes(D, Fn);
-  SetLLVMFunctionAttributesForDefinition(D, Fn);
-}
-
 void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D, 
                                         CXXCtorType Type, 
@@ -190,10 +169,8 @@ CodeGenFunction::EmitCXXTemporaryObjectExpr(llvm::Value *Dest,
                          E->arg_begin(), E->arg_end());
 }
 
-static bool canGenerateCXXConstructor(const CXXConstructorDecl *D, 
-                                      ASTContext &Context) {
-  const CXXRecordDecl *RD = D->getParent();
-  
+static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
+                                   ASTContext &Context) {
   // The class has base classes - we don't support that right now.
   if (RD->getNumBases() > 0)
     return false;
@@ -209,13 +186,24 @@ static bool canGenerateCXXConstructor(const CXXConstructorDecl *D,
 }
 
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
-  if (!canGenerateCXXConstructor(D, getContext())) {
+  if (!canGenerateCXXstructor(D->getParent(), getContext())) {
     ErrorUnsupported(D, "C++ constructor", true);
     return;
   }
 
   EmitCXXConstructor(D, Ctor_Complete);
   EmitCXXConstructor(D, Ctor_Base);
+}
+
+void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D, 
+                                       CXXCtorType Type) {
+  
+  llvm::Function *Fn = GetAddrOfCXXConstructor(D, Type);
+  
+  CodeGenFunction(*this).GenerateCode(D, Fn);
+  
+  SetFunctionDefinitionAttributes(D, Fn);
+  SetLLVMFunctionAttributesForDefinition(D, Fn);
 }
 
 llvm::Function *
@@ -227,3 +215,54 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
   const char *Name = getMangledCXXCtorName(D, Type);
   return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, D));
 }
+
+const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D, 
+                                                 CXXCtorType Type) {
+  llvm::SmallString<256> Name;
+  llvm::raw_svector_ostream Out(Name);
+  mangleCXXCtor(D, Type, Context, Out);
+  
+  Name += '\0';
+  return UniqueMangledName(Name.begin(), Name.end());
+}
+
+void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
+  if (!canGenerateCXXstructor(D->getParent(), getContext())) {
+    ErrorUnsupported(D, "C++ destructor", true);
+    return;
+  }
+  
+  EmitCXXDestructor(D, Dtor_Complete);
+  EmitCXXDestructor(D, Dtor_Base);
+}
+
+void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D, 
+                                      CXXDtorType Type) {
+  llvm::Function *Fn = GetAddrOfCXXDestructor(D, Type);
+  
+  CodeGenFunction(*this).GenerateCode(D, Fn);
+  
+  SetFunctionDefinitionAttributes(D, Fn);
+  SetLLVMFunctionAttributesForDefinition(D, Fn);
+}
+
+llvm::Function *
+CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D, 
+                                      CXXDtorType Type) {
+  const llvm::FunctionType *FTy =
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(D), false);
+  
+  const char *Name = getMangledCXXDtorName(D, Type);
+  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, D));
+}
+
+const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D, 
+                                                 CXXDtorType Type) {
+  llvm::SmallString<256> Name;
+  llvm::raw_svector_ostream Out(Name);
+  mangleCXXDtor(D, Type, Context, Out);
+  
+  Name += '\0';
+  return UniqueMangledName(Name.begin(), Name.end());
+}
+

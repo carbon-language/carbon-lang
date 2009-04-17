@@ -27,6 +27,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class CXXConstructorDecl;
+  class CXXDestructorDecl;
   class NamedDecl;
   class VarDecl;
   
@@ -35,6 +36,8 @@ namespace clang {
   void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
                            llvm::raw_ostream &os);
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
+                     ASTContext &Context, llvm::raw_ostream &os);
+  void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                      ASTContext &Context, llvm::raw_ostream &os);
 }
 
