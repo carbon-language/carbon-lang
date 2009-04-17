@@ -1154,11 +1154,8 @@ LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
   if (CGM.getObjCRuntime().LateBoundIVars())
     assert(0 && "late-bound ivars are unsupported");
   
-  LValue LV = CGM.getObjCRuntime().EmitObjCValueForIvar(*this,
-                                                        ObjectTy,
-                                                        BaseValue, Ivar, Field,
-                                                        CVRQualifiers);
-  return LV;
+  return CGM.getObjCRuntime().EmitObjCValueForIvar(*this, ObjectTy, BaseValue,
+                                                   Ivar, Field, CVRQualifiers);
 }
 
 LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
