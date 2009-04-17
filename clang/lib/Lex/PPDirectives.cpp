@@ -1066,8 +1066,11 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return;
   }
   
-  // Verify that there is nothing after the filename, other than EOM.
-  CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getName());
+  // Verify that there is nothing after the filename, other than EOM.  Note that
+  // we allow macros that expand to nothing after the filename, because this
+  // falls into the category of "#include pp-tokens new-line" specified in
+  // C99 6.10.2p4.
+  CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getName(), true);
 
   // Check that we don't have infinite #include recursion.
   if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1) {

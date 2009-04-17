@@ -674,7 +674,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
 /// after having lexed the '<' character.  This is used for #include filenames.
 void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
-  
+  const char *AfterLessPos = CurPtr;
   char C = getAndAdvanceChar(CurPtr, Result);
   while (C != '>') {
     // Skip escaped characters.
@@ -683,9 +683,9 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (!isLexingRawMode() && !Features.AsmPreprocessor)
-        Diag(BufferPtr, diag::err_unterminated_angled_string);
-      FormTokenWithChars(Result, CurPtr-1, tok::unknown);
+      // If the filename is unterminated, then it must just be a lone <
+      // character.  Return this as such.
+      FormTokenWithChars(Result, AfterLessPos, tok::less);
       return;
     } else if (C == 0) {
       NulCharacter = CurPtr-1;
@@ -1635,7 +1635,7 @@ LexNextToken:
   case '<':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (ParsingFilename) {
-      return LexAngledStringLiteral(Result, CurPtr+SizeTmp);
+      return LexAngledStringLiteral(Result, CurPtr);
     } else if (Char == '<' &&
                getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == '=') {
       Kind = tok::lesslessequal;
