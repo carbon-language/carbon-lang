@@ -14,3 +14,7 @@ clang_diag_gen(Frontend)
 clang_diag_gen(Lex)
 clang_diag_gen(Parse)
 clang_diag_gen(Sema)
+tablegen(DiagnosticGroups.inc
+         -gen-clang-diag-groups)
+add_custom_target(ClangDiagnosticGroups
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/DiagnosticGroups.inc)
