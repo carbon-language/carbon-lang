@@ -679,13 +679,13 @@ _mm_avg_pu16(__m64 a, __m64 b)
   return (__m64)__builtin_ia32_pavgw((__v4hi)a, (__v4hi)b);
 }
 
-static inline __m64 __attribute__((__always_inline__, __nodebug___))
+static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_sad_pu8(__m64 a, __m64 b)
 {
   return (__m64)__builtin_ia32_psadbw((__v8qi)a, (__v8qi)b);
 }
 
-static inline unsigned int __attribute__((__always_inline__, __nodebug___))
+static inline unsigned int __attribute__((__always_inline__, __nodebug__))
 _mm_getcsr(void)
 {
   return __builtin_ia32_stmxcsr();
