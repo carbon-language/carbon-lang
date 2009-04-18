@@ -21,4 +21,9 @@ int test6() { return ({5;}); }
 void test7() { ({5;}); }                   // expected-warning {{expression result unused}}
 
 // PR3062
-int x[({10;})]; // expected-error {{statement expression not allowed at file scope}}
+int test8[({10;})]; // expected-error {{statement expression not allowed at file scope}}
+
+// PR3912
+void test9(const void *P) {
+  __builtin_prefetch(P);
+}
