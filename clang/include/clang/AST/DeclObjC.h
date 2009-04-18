@@ -225,7 +225,10 @@ public:
     return ImplementationControl(DeclImplementation); 
   }
 
-  virtual CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
+  virtual CompoundStmt *getBody(ASTContext &C) const { 
+    return (CompoundStmt*) Body; 
+  }
+  CompoundStmt *getBody() { return (CompoundStmt*)Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   // Implement isa/cast/dyncast/etc.

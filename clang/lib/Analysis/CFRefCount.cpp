@@ -2903,7 +2903,8 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   }
   
   if (!L.isValid()) {
-    CompoundStmt *CS = BR.getStateManager().getCodeDecl().getBody();
+    CompoundStmt *CS 
+      = BR.getStateManager().getCodeDecl().getBody(BR.getContext());
     L = PathDiagnosticLocation(CS->getRBracLoc(), SMgr);
   }
 

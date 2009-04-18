@@ -16,11 +16,13 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallVector.h"
+#include <cassert>
 namespace clang {
 
 class ASTConsumer;
 class Decl;
 class DeclContext;
+class Stmt;
 
 /// \brief The deserialized representation of a set of declarations
 /// with the same name that are visible in a given context.

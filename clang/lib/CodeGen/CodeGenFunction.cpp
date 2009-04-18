@@ -225,7 +225,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                     FProto->getArgType(i)));
   }
 
-  const CompoundStmt *S = FD->getBody();
+  const CompoundStmt *S = FD->getBody(getContext());
 
   StartFunction(FD, FD->getResultType(), Fn, Args, S->getLBracLoc());
   EmitStmt(S);

@@ -241,13 +241,15 @@ namespace {
     : public DeclVisitor<PCHDeclWriter, void> {
 
     PCHWriter &Writer;
+    ASTContext &Context;
     PCHWriter::RecordData &Record;
 
   public:
     pch::DeclCode Code;
 
-    PCHDeclWriter(PCHWriter &Writer, PCHWriter::RecordData &Record) 
-      : Writer(Writer), Record(Record) { }
+    PCHDeclWriter(PCHWriter &Writer, ASTContext &Context, 
+                  PCHWriter::RecordData &Record) 
+      : Writer(Writer), Context(Context), Record(Record) { }
 
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
@@ -340,7 +342,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->isThisDeclarationADefinition());
   if (D->isThisDeclarationADefinition())
-    Writer.AddStmt(D->getBody());
+    Writer.AddStmt(D->getBody(Context));
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->isInline());
@@ -1474,7 +1476,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 
   // Emit all of the declarations.
   RecordData Record;
-  PCHDeclWriter W(*this, Record);
+  PCHDeclWriter W(*this, Context, Record);
   while (!DeclsToEmit.empty()) {
     // Pull the next declaration off the queue
     Decl *D = DeclsToEmit.front();

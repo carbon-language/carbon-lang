@@ -273,6 +273,9 @@ public:
   /// supplements.
   ASTContext &getContext() { return Context; }
 
+  /// \brief Retrieve the stream that this PCH reader is reading from.
+  llvm::BitstreamReader &getStream() { return Stream; }
+
   /// \brief Record that the given ID maps to the given switch-case
   /// statement.
   void RecordSwitchCaseID(SwitchCase *SC, unsigned ID);

@@ -131,8 +131,8 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   if (CGM.getDebugInfo() && !OMD->hasAttr<NodebugAttr>())
     DebugInfo = CGM.getDebugInfo();
   StartObjCMethod(OMD, OMD->getClassInterface());
-  EmitStmt(OMD->getBody());
-  FinishFunction(cast<CompoundStmt>(OMD->getBody())->getRBracLoc());
+  EmitStmt(OMD->getBody(getContext()));
+  FinishFunction(cast<CompoundStmt>(OMD->getBody(getContext()))->getRBracLoc());
 }
 
 // FIXME: I wasn't sure about the synthesis approach. If we end up

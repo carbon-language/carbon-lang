@@ -399,8 +399,12 @@ const FunctionType *BlockExpr::getFunctionType() const {
 SourceLocation BlockExpr::getCaretLocation() const { 
   return TheBlock->getCaretLocation(); 
 }
-const Stmt *BlockExpr::getBody() const { return TheBlock->getBody(); }
-Stmt *BlockExpr::getBody() { return TheBlock->getBody(); }
+const Stmt *BlockExpr::getBody() const { 
+  return TheBlock->getBody();
+}
+Stmt *BlockExpr::getBody() { 
+  return TheBlock->getBody(); 
+}
 
 
 //===----------------------------------------------------------------------===//

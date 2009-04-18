@@ -676,8 +676,8 @@ public:
   /// defined. If false, then this constructor was defined by the
   /// user. This operation can only be invoked if the constructor has
   /// already been defined.
-  bool isImplicitlyDefined() const { 
-    assert(getBody() != 0 && 
+  bool isImplicitlyDefined(ASTContext &C) const { 
+    assert(isThisDeclarationADefinition() && 
            "Can only get the implicit-definition flag once the constructor has been defined");
     return ImplicitlyDefined; 
   }
@@ -685,7 +685,7 @@ public:
   /// setImplicitlyDefined - Set whether this constructor was
   /// implicitly defined or not.
   void setImplicitlyDefined(bool ID) { 
-    assert(getBody() != 0 && 
+    assert(isThisDeclarationADefinition() && 
            "Can only set the implicit-definition flag once the constructor has been defined");
     ImplicitlyDefined = ID; 
   }
@@ -773,7 +773,7 @@ public:
   /// user. This operation can only be invoked if the destructor has
   /// already been defined.
   bool isImplicitlyDefined() const { 
-    assert(getBody() != 0 && 
+    assert(isThisDeclarationADefinition() && 
            "Can only get the implicit-definition flag once the destructor has been defined");
     return ImplicitlyDefined; 
   }
@@ -781,7 +781,7 @@ public:
   /// setImplicitlyDefined - Set whether this destructor was
   /// implicitly defined or not.
   void setImplicitlyDefined(bool ID) { 
-    assert(getBody() != 0 && 
+    assert(isThisDeclarationADefinition() && 
            "Can only set the implicit-definition flag once the destructor has been defined");
     ImplicitlyDefined = ID; 
   }

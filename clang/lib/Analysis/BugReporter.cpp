@@ -140,7 +140,7 @@ public:
                                             const ExplodedNode<GRState>* N);
   
   ParentMap& getParentMap() {
-    if (PM.get() == 0) PM.reset(new ParentMap(CodeDecl.getBody()));
+    if (PM.get() == 0) PM.reset(new ParentMap(CodeDecl.getBody(getContext())));
     return *PM.get();
   }
   
@@ -163,7 +163,7 @@ public:
   BugReport& getReport() { return *R; }
   GRBugReporter& getBugReporter() { return BR; }
   GRStateManager& getStateManager() { return BR.getStateManager(); }
-  
+
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
   
   PathDiagnosticLocation
@@ -189,7 +189,7 @@ PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
   if (Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, SMgr);
 
-  return FullSourceLoc(CodeDecl.getBody()->getRBracLoc(), SMgr);
+  return FullSourceLoc(CodeDecl.getBody(getContext())->getRBracLoc(), SMgr);
 }
   
 PathDiagnosticLocation

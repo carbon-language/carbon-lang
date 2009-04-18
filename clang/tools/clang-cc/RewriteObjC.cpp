@@ -994,7 +994,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
-    SourceLocation LocEnd = OMD->getBody()->getLocStart();
+    SourceLocation LocEnd = OMD->getBody(*Context)->getLocStart();
     
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
@@ -1009,7 +1009,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
-    SourceLocation LocEnd = OMD->getBody()->getLocStart();
+    SourceLocation LocEnd = OMD->getBody(*Context)->getLocStart();
     
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
@@ -4445,7 +4445,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     // definitions using the same code.
     RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
-    if (CompoundStmt *Body = FD->getBody()) {
+    if (CompoundStmt *Body = FD->getBody(*Context)) {
       CurFunctionDef = FD;
       CollectPropertySetters(Body);
       CurrentBody = Body;

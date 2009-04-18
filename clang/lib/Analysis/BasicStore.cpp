@@ -525,7 +525,7 @@ Store BasicStoreManager::getInitialStore() {
           
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
-          St = scanForIvars(MD->getBody(), PD, St);
+          St = scanForIvars(MD->getBody(getContext()), PD, St);
         }
       }
     }

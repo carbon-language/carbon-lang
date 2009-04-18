@@ -172,7 +172,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   }
   
   // dealloc found.  Scan for missing [super dealloc].
-  if (MD->getBody() && !scan_dealloc(MD->getBody(), S)) {
+  if (MD->getBody(Ctx) && !scan_dealloc(MD->getBody(Ctx), S)) {
     
     const char* name = LOpts.getGCMode() == LangOptions::NonGC
                        ? "missing [super dealloc]"
@@ -223,7 +223,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
               
     // ivar must be released if and only if the kind of setter was not 'assign'
     bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
-    if(scan_ivar_release(MD->getBody(), ID, PD, RS, SelfII, Ctx) 
+    if(scan_ivar_release(MD->getBody(Ctx), ID, PD, RS, SelfII, Ctx) 
        != requiresRelease) {
       const char *name;
       const char* category = "Memory (Core Foundation/Objective-C)";

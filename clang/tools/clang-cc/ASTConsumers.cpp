@@ -80,9 +80,10 @@ void DeclPrinter:: PrintDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     PrintFunctionDeclStart(FD);
 
-    if (FD->getBody()) {
+    // FIXME: Pass a context here so we can use getBody()
+    if (FD->getBodyIfAvailable()) {
       Out << ' ';
-      FD->getBody()->printPretty(Out, 0, Indentation, true);
+      FD->getBodyIfAvailable()->printPretty(Out, 0, Indentation, true);
       Out << '\n';
     }
   } else if (isa<ObjCMethodDecl>(D)) {
@@ -221,7 +222,8 @@ void DeclPrinter::Print(NamespaceDecl *NS) {
 }
 
 void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
-  bool HasBody = FD->getBody();
+  // FIXME: pass a context so that we can use getBody.
+  bool HasBody = FD->getBodyIfAvailable();
   
   Out << '\n';
 
@@ -264,7 +266,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
   AFT->getResultType().getAsStringInternal(Proto);
   Out << Proto;
   
-  if (!FD->getBody())
+  if (!FD->getBodyIfAvailable())
     Out << ";\n";
   // Doesn't print the body.
 }
@@ -596,10 +598,10 @@ void ASTDumper::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     PrintFunctionDeclStart(FD);
     
-    if (FD->getBody()) {
+    if (FD->getBodyIfAvailable()) {
       Out << '\n';
       // FIXME: convert dumper to use std::ostream?
-      FD->getBody()->dumpAll(*SM);
+      FD->getBodyIfAvailable()->dumpAll(*SM);
       Out << '\n';
     }
   } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
@@ -664,9 +666,9 @@ void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     DeclPrinter().PrintFunctionDeclStart(FD);
     
-    if (FD->getBody()) {
+    if (FD->getBodyIfAvailable()) {
       llvm::cerr << '\n';
-      FD->getBody()->viewAST();
+      FD->getBodyIfAvailable()->viewAST();
       llvm::cerr << '\n';
     }
     return;

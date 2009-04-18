@@ -16,6 +16,7 @@
 
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/ExternalASTSource.h"
 
 namespace clang {
 class Expr;
@@ -564,7 +565,7 @@ private:
   /// FunctionDecl object to save an allocation like FunctionType does.
   ParmVarDecl **ParamInfo;
   
-  Stmt *Body;  // Null if a prototype.
+  Stmt *Body;
   
   /// PreviousDeclaration - A link to the previous declaration of this
   /// same function, NULL if this is the first declaration. For
@@ -596,7 +597,7 @@ protected:
                SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, N, T), 
       DeclContext(DK),
-      ParamInfo(0), Body(0), PreviousDeclaration(0),
+      ParamInfo(0), Body(), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
       InheritedPrototype(false), HasPrototype(true), IsDeleted(false), 
       TypeSpecStartLoc(TSSL) {}
@@ -619,20 +620,25 @@ public:
   /// function. The variant that accepts a FunctionDecl pointer will
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
-  CompoundStmt *getBody(const FunctionDecl *&Definition) const;
+  CompoundStmt *getBody(ASTContext &Context, 
+                        const FunctionDecl *&Definition) const;
 
-  virtual CompoundStmt *getBody() const { 
+  virtual CompoundStmt *getBody(ASTContext &Context) const { 
     const FunctionDecl* Definition;
-    return getBody(Definition);
+    return getBody(Context, Definition);
   }
-  
+
+  /// \brief If the function has a body that is immediately available,
+  /// return it.
+  CompoundStmt *getBodyIfAvailable() const;
+
   /// isThisDeclarationADefinition - Returns whether this specific
   /// declaration of the function is also a definition. This does not
   /// determine whether the function has been defined (e.g., in a
   /// previous definition); for that information, use getBody.
   /// FIXME: Should return true if function is deleted or defaulted. However,
   /// CodeGenModule.cpp uses it, and I don't know if this would break it.
-  bool isThisDeclarationADefinition() const { return Body != 0; }
+  bool isThisDeclarationADefinition() const { return Body; }
 
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
@@ -1258,6 +1264,7 @@ public:
   SourceLocation getCaretLocation() const { return getLocation(); }
 
   CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
+  CompoundStmt *getBody(ASTContext &C) const { return (CompoundStmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   // Iterator access to formal parameters.

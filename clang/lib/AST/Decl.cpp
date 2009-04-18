@@ -320,12 +320,22 @@ void FunctionDecl::Destroy(ASTContext& C) {
 }
 
 
-CompoundStmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
+CompoundStmt *FunctionDecl::getBody(ASTContext &Context,
+                                    const FunctionDecl *&Definition) const {
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
     if (FD->Body) {
       Definition = FD;
       return cast<CompoundStmt>(FD->Body);
     }
+  }
+
+  return 0;
+}
+
+CompoundStmt *FunctionDecl::getBodyIfAvailable() const {
+  for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
+    if (FD->Body)
+      return cast<CompoundStmt>(FD->Body);
   }
 
   return 0;

@@ -2417,7 +2417,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       // Check if we have too few/too many template arguments, based
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
-      if (FDecl->getBody(Def) && NumArgs != Def->param_size())
+      if (FDecl->getBody(Context, Def) && NumArgs != Def->param_size())
         Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
           << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
     }

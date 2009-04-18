@@ -477,11 +477,11 @@ void FunctionDecl::EmitImpl(Serializer& S) const {
   if (ParamInfo != NULL) {
     S.EmitBool(true);
     S.EmitInt(getNumParams());
-    S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], Body);
+    // FIXME:    S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], Body);
   }
   else {
     S.EmitBool(false);
-    S.EmitOwnedPtr(Body);
+    // FIXME:    S.EmitOwnedPtr(Body);
   }
 }
 
@@ -508,7 +508,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   if (hasParamDecls)
     D.BatchReadOwnedPtrs(numParams,
                          reinterpret_cast<Decl**>(&decl->ParamInfo[0]),
-                         decl->Body, C);
+                         /*FIXME: decl->Body,*/ C);
   else
     decl->Body = D.ReadOwnedPtr<Stmt>(C);
   

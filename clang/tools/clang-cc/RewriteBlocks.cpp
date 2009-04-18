@@ -1092,7 +1092,7 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
     // definitions using the same code.
     RewriteFunctionProtoType(FD->getType(), FD);
     
-    if (CompoundStmt *Body = FD->getBody()) {
+    if (CompoundStmt *Body = FD->getBody(*Context)) {
       CurFunctionDef = FD;
       FD->setBody(cast_or_null<CompoundStmt>(RewriteFunctionBody(Body)));
       // This synthesizes and inserts the block "impl" struct, invoke function,
@@ -1104,7 +1104,7 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
   }
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     RewriteMethodDecl(MD);
-    if (Stmt *Body = MD->getBody()) {
+    if (Stmt *Body = MD->getBody(*Context)) {
       CurMethodDef = MD;
       RewriteFunctionBody(Body);
       InsertBlockLiteralsWithinMethod(MD);
@@ -1116,7 +1116,7 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
       RewriteBlockPointerDecl(VD);
       if (VD->getInit()) {
         if (BlockExpr *CBE = dyn_cast<BlockExpr>(VD->getInit())) {
-          RewriteFunctionBody(CBE->getBody());
+          RewriteFunctionBody(CBE->getBody(*Context));
 
           // We've just rewritten the block body in place.
           // Now we snarf the rewritten text and stash it away for later use.

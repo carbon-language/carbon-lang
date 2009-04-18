@@ -425,7 +425,7 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
           AnalyzeSpecificFunction != FD->getIdentifier()->getName())
         break;
       
-      Stmt* Body = FD->getBody();
+      Stmt* Body = FD->getBody(*Ctx);
       if (Body) HandleCode(FD, Body, FunctionActions);
       break;
     }
