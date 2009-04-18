@@ -78,7 +78,21 @@ const char*test6() {
 }
 
 // radr://6732116 - block comparisons
-void (^g)();
-int foo(void (^p)()) {
-  return g == p;
+void (^test7a)();
+int test7(void (^p)()) {
+  return test7a == p;
 }
+
+
+void test8() {
+somelabel:
+ // FIXME: This should say "jump out of block not legal" when gotos are allowed.
+  ^{ goto somelabel; }();   // expected-error {{goto not allowed in block literal}}
+}
+
+void test9() {
+  goto somelabel;       // expected-error {{use of undeclared label 'somelabel'}}
+  ^{ somelabel: ; }();
+}
+
+
