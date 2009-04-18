@@ -38,14 +38,14 @@ ConstantRange LoopVR::getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE) {
 /// getRange - determine the range for a particular SCEV with a given trip count
 ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
 
-  if (SCEVConstant *C = dyn_cast<SCEVConstant>(S))
+  if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
     return ConstantRange(C->getValue()->getValue());
 
   ConstantRange FullSet(cast<IntegerType>(S->getType())->getBitWidth(), true);
 
   // {x,+,y,+,...z}. We detect overflow by checking the size of the set after
   // summing the upper and lower.
-  if (SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
+  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     ConstantRange X = getRange(Add->getOperand(0), T, SE);
     if (X.isFullSet()) return FullSet;
     for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i) {
@@ -67,7 +67,7 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
 
   // {x,*,y,*,...,z}. In order to detect overflow, we use k*bitwidth where
   // k is the number of terms being multiplied.
-  if (SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
+  if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
     ConstantRange X = getRange(Mul->getOperand(0), T, SE);
     if (X.isFullSet()) return FullSet;
 
@@ -91,7 +91,7 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
   //                               smax(X_smax, Y_smax, ..., Z_smax))
   // It doesn't matter if one of the SCEVs has FullSet because we're taking
   // a maximum of the minimums across all of them.
-  if (SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
+  if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
     ConstantRange X = getRange(SMax->getOperand(0), T, SE);
     if (X.isFullSet()) return FullSet;
 
@@ -109,7 +109,7 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
   //                               umax(X_umax, Y_umax, ..., Z_umax))
   // It doesn't matter if one of the SCEVs has FullSet because we're taking
   // a maximum of the minimums across all of them.
-  if (SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
+  if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
     ConstantRange X = getRange(UMax->getOperand(0), T, SE);
     if (X.isFullSet()) return FullSet;
 
@@ -124,7 +124,7 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
   }
 
   // L udiv R. Luckily, there's only ever 2 sides to a udiv.
-  if (SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
+  if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
     ConstantRange L = getRange(UDiv->getLHS(), T, SE);
     ConstantRange R = getRange(UDiv->getRHS(), T, SE);
     if (L.isFullSet() && R.isFullSet()) return FullSet;
@@ -158,34 +158,34 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
 
   // ConstantRange already implements the cast operators.
 
-  if (SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
+  if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
     T = SE.getTruncateOrZeroExtend(T, ZExt->getOperand()->getType());
     ConstantRange X = getRange(ZExt->getOperand(), T, SE);
     return X.zeroExtend(cast<IntegerType>(ZExt->getType())->getBitWidth());
   }
 
-  if (SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
+  if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
     T = SE.getTruncateOrZeroExtend(T, SExt->getOperand()->getType());
     ConstantRange X = getRange(SExt->getOperand(), T, SE);
     return X.signExtend(cast<IntegerType>(SExt->getType())->getBitWidth());
   }
 
-  if (SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
+  if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
     T = SE.getTruncateOrZeroExtend(T, Trunc->getOperand()->getType());
     ConstantRange X = getRange(Trunc->getOperand(), T, SE);
     if (X.isFullSet()) return FullSet;
     return X.truncate(cast<IntegerType>(Trunc->getType())->getBitWidth());
   }
 
-  if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
-    SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
+  if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
+    const SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
     if (!Trip) return FullSet;
 
     if (AddRec->isAffine()) {
       SCEVHandle StartHandle = AddRec->getStart();
       SCEVHandle StepHandle = AddRec->getOperand(1);
 
-      SCEVConstant *Step = dyn_cast<SCEVConstant>(StepHandle);
+      const SCEVConstant *Step = dyn_cast<SCEVConstant>(StepHandle);
       if (!Step) return FullSet;
 
       uint32_t ExWidth = 2 * Trip->getValue()->getBitWidth();
@@ -196,8 +196,8 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
 
       SCEVHandle EndHandle = SE.getAddExpr(StartHandle,
                                            SE.getMulExpr(T, StepHandle));
-      SCEVConstant *Start = dyn_cast<SCEVConstant>(StartHandle);
-      SCEVConstant *End = dyn_cast<SCEVConstant>(EndHandle);
+      const SCEVConstant *Start = dyn_cast<SCEVConstant>(StartHandle);
+      const SCEVConstant *End = dyn_cast<SCEVConstant>(EndHandle);
       if (!Start || !End) return FullSet;
 
       const APInt &StartInt = Start->getValue()->getValue();
