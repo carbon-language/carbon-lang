@@ -1065,9 +1065,6 @@ AC_CONFIG_FILES([llvm.spec])
 dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
 
-dnl Configure llvmc's Base plugin
-AC_CONFIG_FILES([tools/llvmc/plugins/Base/Base.td])
-
 dnl Do the first stage of configuration for llvm-config.in.
 AC_CONFIG_FILES([tools/llvm-config/llvm-config.in])
 

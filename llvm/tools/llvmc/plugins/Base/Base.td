@@ -80,10 +80,10 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
  (sink)
 ]>;
 
-def llvm_gcc_c : llvm_gcc_based<"@LLVMGCC@ -x c", "c", "i">;
-def llvm_gcc_cpp : llvm_gcc_based<"@LLVMGXX@ -x c++", "c++", "i">;
-def llvm_gcc_m : llvm_gcc_based<"@LLVMGCC@ -x objective-c", "objective-c", "mi">;
-def llvm_gcc_mxx : llvm_gcc_based<"@LLVMGCC@ -x objective-c++",
+def llvm_gcc_c : llvm_gcc_based<"llvm-gcc -x c", "c", "i">;
+def llvm_gcc_cpp : llvm_gcc_based<"llvm-g++ -x c++", "c++", "i">;
+def llvm_gcc_m : llvm_gcc_based<"llvm-gcc -x objective-c", "objective-c", "mi">;
+def llvm_gcc_mxx : llvm_gcc_based<"llvm-gcc -x objective-c++",
                                   "objective-c++", "mi">;
 
 def opt : Tool<
@@ -105,7 +105,7 @@ def llvm_gcc_assembler : Tool<
 [(in_language "assembler"),
  (out_language "object-code"),
  (output_suffix "o"),
- (cmd_line "@LLVMGCC@ -c -x assembler $INFILE -o $OUTFILE"),
+ (cmd_line "llvm-gcc -c -x assembler $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "c"), (stop_compilation),
           (not_empty "Wa,"), (unpack_values "Wa,")))
@@ -136,9 +136,9 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
 ]>;
 
 // Default linker
-def llvm_gcc_linker : llvm_gcc_based_linker<"@LLVMGCC@">;
+def llvm_gcc_linker : llvm_gcc_based_linker<"llvm-gcc">;
 // Alternative linker for C++
-def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"@LLVMGXX@">;
+def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"llvm-g++">;
 
 // Language map
 
