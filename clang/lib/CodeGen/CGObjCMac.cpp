@@ -708,6 +708,9 @@ private:
   llvm::GlobalVariable* ObjCEmptyCacheVar;
   llvm::GlobalVariable* ObjCEmptyVtableVar;
   
+  /// SuperClassReferences - uniqued super class references.
+  llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> SuperClassReferences;
+  
   /// MetaClassReferences - uniqued meta class references.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> MetaClassReferences;
 
@@ -778,10 +781,14 @@ private:
   llvm::GlobalVariable *GetClassGlobal(const std::string &Name);
                                         
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
-  /// for the given class.
+  /// for the given class reference.
   llvm::Value *EmitClassRef(CGBuilderTy &Builder, 
-                            const ObjCInterfaceDecl *ID,
-                            bool IsSuper = false);
+                            const ObjCInterfaceDecl *ID);
+  
+  /// EmitSuperClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
+  /// for the given super class reference.
+  llvm::Value *EmitSuperClassRef(CGBuilderTy &Builder, 
+                            const ObjCInterfaceDecl *ID);
   
   /// EmitMetaClassRef - Return a Value * of the address of _class_t
   /// meta-data
@@ -4545,9 +4552,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
 }
 
 /// EmitIvarList - Emit the ivar list for the given
-/// implementation. If ForClass is true the list of class ivars
-/// (i.e. metaclass ivars) is emitted, otherwise the list of
-/// interface ivars will be emitted. The return value has type
+/// implementation. The return value has type
 /// IvarListnfABIPtrTy.
 ///  struct _ivar_t {
 ///   unsigned long int *offset;  // pointer to ivar offset location
@@ -5045,9 +5050,7 @@ CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name) {
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder, 
-                                     const ObjCInterfaceDecl *ID,
-                                     bool IsSuper) {
-  
+                                     const ObjCInterfaceDecl *ID) {
   llvm::GlobalVariable *&Entry = ClassReferences[ID->getIdentifier()];
   
   if (!Entry) {
@@ -5057,17 +5060,36 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
       new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
                                llvm::GlobalValue::InternalLinkage,
                                ClassGV, 
-                               IsSuper ? "\01L_OBJC_CLASSLIST_SUP_REFS_$_" 
-                                       : "\01L_OBJC_CLASSLIST_REFERENCES_$_",
+                               "\01L_OBJC_CLASSLIST_REFERENCES_$_",
                                &CGM.getModule());
     Entry->setAlignment(
                      CGM.getTargetData().getPrefTypeAlignment(
                                                   ObjCTypes.ClassnfABIPtrTy));
+    Entry->setSection("__DATA, __objc_classrefs, regular, no_dead_strip");
+    UsedGlobals.push_back(Entry);
+  }
+  
+  return Builder.CreateLoad(Entry, false, "tmp");
+}
 
-    if (IsSuper)
-      Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
-    else
-      Entry->setSection("__DATA, __objc_classrefs, regular, no_dead_strip");
+llvm::Value *
+CGObjCNonFragileABIMac::EmitSuperClassRef(CGBuilderTy &Builder, 
+                                          const ObjCInterfaceDecl *ID) {
+  llvm::GlobalVariable *&Entry = SuperClassReferences[ID->getIdentifier()];
+  
+  if (!Entry) {
+    std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
+    llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
+    Entry = 
+      new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
+                               llvm::GlobalValue::InternalLinkage,
+                               ClassGV, 
+                               "\01L_OBJC_CLASSLIST_SUP_REFS_$_",
+                               &CGM.getModule());
+    Entry->setAlignment(
+                     CGM.getTargetData().getPrefTypeAlignment(
+                                                  ObjCTypes.ClassnfABIPtrTy));
+    Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
     UsedGlobals.push_back(Entry);
   }
   
@@ -5137,7 +5159,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
     if (isCategoryImpl) {
       // Message sent to "super' in a class method defined in
       // a category implementation.
-      Target = EmitClassRef(CGF.Builder, Class, false);
+      Target = EmitClassRef(CGF.Builder, Class);
       Target = CGF.Builder.CreateStructGEP(Target, 0);
       Target = CGF.Builder.CreateLoad(Target);
     }
@@ -5145,7 +5167,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       Target = EmitMetaClassRef(CGF.Builder, Class);
   }
   else
-    Target = EmitClassRef(CGF.Builder, Class, true);
+    Target = EmitSuperClassRef(CGF.Builder, Class);
     
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext
   // and ObjCTypes types.
