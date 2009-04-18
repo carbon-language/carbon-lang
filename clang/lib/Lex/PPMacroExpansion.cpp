@@ -485,6 +485,10 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // be affected by #line.
     SourceLocation Loc = Tok.getLocation();
     
+    // Advance to the location of the first _, this might not be the first byte
+    // of the token if it starts with an escaped newline.
+    Loc = AdvanceToTokenCharacter(Loc, 0);
+    
     // One wrinkle here is that GCC expands __LINE__ to location of the *end* of
     // a macro instantiation.  This doesn't matter for object-like macros, but
     // can matter for a function-like macro that expands to contain __LINE__.

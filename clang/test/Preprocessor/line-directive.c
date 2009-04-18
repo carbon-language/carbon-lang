@@ -79,3 +79,11 @@ typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}
 #line 010  // expected-warning {{#line directive interprets number as decimal, not octal}}
 extern int array[__LINE__ == 10 ? 1:-1];
 
+/* PR3917 */
+#line 41
+extern char array2[\
+_\
+_LINE__ == 42 ? 1: -1];  /* line marker is location of first _ */
+
+
+
