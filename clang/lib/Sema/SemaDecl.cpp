@@ -3067,10 +3067,6 @@ void JumpScopeChecker::VerifyJumps() {
     Stmt *Jump = Jumps.pop_back_val();
     
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
-      // FIXME: invalid code makes dangling AST, see test6 in scope-check.c.
-      // FIXME: This is a hack.
-      if (!LabelAndGotoScopes.count(GS->getLabel())) return;
-      
       assert(LabelAndGotoScopes.count(GS->getLabel()) && "Label not visited?");
       CheckJump(GS, LabelAndGotoScopes[GS->getLabel()],
                 diag::err_goto_into_protected_scope);
@@ -3155,31 +3151,37 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   // Check goto/label use.
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
        I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
+    LabelStmt *L = I->second;
+    
     // Verify that we have no forward references left.  If so, there was a goto
     // or address of a label taken, but no definition of it.  Label fwd
     // definitions are indicated with a null substmt.
-    if (I->second->getSubStmt() == 0) {
-      LabelStmt *L = I->second;
-      // Emit error.
-      Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
-      
-      // At this point, we have gotos that use the bogus label.  Stitch it into
-      // the function body so that they aren't leaked and that the AST is well
-      // formed.
-      if (Body) {
-#if 0
-        // FIXME: Why do this?  Having a 'push_back' in CompoundStmt is ugly,
-        // and the AST is malformed anyway.  We should just blow away 'L'.
-        L->setSubStmt(new (Context) NullStmt(L->getIdentLoc()));
-        cast<CompoundStmt>(Body)->push_back(L);        
-#else
-        L->Destroy(Context);
-#endif
-      } else {
-        // The whole function wasn't parsed correctly, just delete this.
-        L->Destroy(Context);
-      }
+    if (L->getSubStmt() != 0)
+      continue;
+    
+    // Emit error.
+    Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
+    
+    // At this point, we have gotos that use the bogus label.  Stitch it into
+    // the function body so that they aren't leaked and that the AST is well
+    // formed.
+    if (Body == 0) {
+      // The whole function wasn't parsed correctly, just delete this.
+      L->Destroy(Context);
+      continue;
     }
+    
+    // Otherwise, the body is valid: we want to stitch the label decl into the
+    // function somewhere so that it is properly owned and so that the goto
+    // has a valid target.  Do this by creating a new compound stmt with the
+    // label in it.
+    
+    // Give the label a sub-statement.
+    L->setSubStmt(new (Context) NullStmt(L->getIdentLoc()));
+      
+    std::vector<Stmt*> Elements(Body->body_begin(), Body->body_end());
+    Elements.push_back(L);
+    Body->setStmts(Context, &Elements[0], Elements.size());
   }
   LabelMap.clear();
 
