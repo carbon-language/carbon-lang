@@ -1,5 +1,5 @@
 // Test this without pch.
-// RUN: clang-cc -fblocks -include %S/exprs.h -fsyntax-only -verify %s
+// RUN: clang-cc -fblocks -include %S/exprs.h -fsyntax-only -verify %s &&
 
 // Test with pch.
 // RUN: clang-cc -emit-pch -fblocks -o %t %S/exprs.h &&

@@ -1,5 +1,5 @@
 // Test this without pch.
-// RUN: clang-cc -include %S/stmts.h -fsyntax-only -emit-llvm -o - %s
+// RUN: clang-cc -include %S/stmts.h -fsyntax-only -emit-llvm -o - %s &&
 
 // Test with pch.
 // RUN: clang-cc -emit-pch -o %t %S/stmts.h &&
