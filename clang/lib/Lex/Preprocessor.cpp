@@ -292,32 +292,41 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
 /// token, return a new location that specifies a character within the token.
 SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart, 
                                                      unsigned CharNo) {
-  // If they request the first char of the token, we're trivially done.
-  if (CharNo == 0) return TokStart;
-  
   // Figure out how many physical characters away the specified instantiation
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
   const char *TokPtr = SourceMgr.getCharacterData(TokStart);
+  
+  // If they request the first char of the token, we're trivially done.
+  if (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr))
+    return TokStart;
+  
   unsigned PhysOffset = 0;
   
   // The usual case is that tokens don't contain anything interesting.  Skip
   // over the uninteresting characters.  If a token only consists of simple
   // chars, this method is extremely fast.
-  while (CharNo && Lexer::isObviouslySimpleCharacter(*TokPtr))
+  while (Lexer::isObviouslySimpleCharacter(*TokPtr)) {
+    if (CharNo == 0)
+      return TokStart.getFileLocWithOffset(PhysOffset);
     ++TokPtr, --CharNo, ++PhysOffset;
+  }
   
   // If we have a character that may be a trigraph or escaped newline, use a
   // lexer to parse it correctly.
-  if (CharNo != 0) {
-    // Skip over the remaining characters.
-    for (; CharNo; --CharNo) {
-      unsigned Size;
-      Lexer::getCharAndSizeNoWarn(TokPtr, Size, Features);
-      TokPtr += Size;
-      PhysOffset += Size;
-    }
+  for (; CharNo; --CharNo) {
+    unsigned Size;
+    Lexer::getCharAndSizeNoWarn(TokPtr, Size, Features);
+    TokPtr += Size;
+    PhysOffset += Size;
   }
+  
+  // Final detail: if we end up on an escaped newline, we want to return the
+  // location of the actual byte of the token.  For example foo\<newline>bar
+  // advanced by 3 should return the location of b, not of \\.  One compounding
+  // detail of this is that the escape may be made by a trigraph.
+  if (!Lexer::isObviouslySimpleCharacter(*TokPtr))
+    PhysOffset = Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
   
   return TokStart.getFileLocWithOffset(PhysOffset);
 }
