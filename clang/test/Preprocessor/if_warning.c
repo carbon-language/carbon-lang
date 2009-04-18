@@ -1,7 +1,8 @@
-// RUN: clang-cc %s -E -Wundef -Werror 2>&1 | grep error | count 1 &&
-// RUN: clang-cc %s -E -Werror 2>&1 | not grep error 
+// RUN: clang-cc %s -Eonly -Werror=undef -verify
 
-#if foo   // Should generate an warning
+extern int x;
+
+#if foo   // expected-error {{'foo' is not defined, evaluates to 0}}
 #endif
 
 #ifdef foo
