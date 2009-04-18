@@ -46,5 +46,16 @@ int test6() {
   goto x;  // expected-error {{use of undeclared label 'x'}}
 }
 
+void test7(int x) {
+foo:
+  switch (x) {      // expected-error {{illegal switch into protected scope}}
+  case 1: ;
+    int a[x];       // expected-note {{jump bypasses initialization of variable length array}}
+  case 2:
+    a[1] = 2;
+    break;
+  }
+}
+
 
 // FIXME: Switch cases etc.

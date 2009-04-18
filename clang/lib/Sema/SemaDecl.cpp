@@ -3070,8 +3070,13 @@ void JumpScopeChecker::VerifyJumps() {
       assert(LabelAndGotoScopes.count(GS->getLabel()) && "Label not visited?");
       CheckJump(GS, LabelAndGotoScopes[GS->getLabel()],
                 diag::err_goto_into_protected_scope);
-    } else if (isa<SwitchStmt>(Jump)) {
-      // FIXME: Handle this.
+    } else if (SwitchStmt *SS = dyn_cast<SwitchStmt>(Jump)) {
+      for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
+           SC = SC->getNextSwitchCase()) {
+        assert(LabelAndGotoScopes.count(SC) && "Case not visited?");
+        CheckJump(SS, LabelAndGotoScopes[SC],
+                  diag::err_switch_into_protected_scope);
+      }
       continue;
     } else {
       assert(isa<IndirectGotoStmt>(Jump));
