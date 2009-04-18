@@ -891,7 +891,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_shufpd: {
     unsigned i = cast<ConstantInt>(Ops[2])->getZExtValue();
-    return EmitShuffleVector(Ops[0], Ops[1], i & 1, (i & 2) + 2, "shufpd");
+    return EmitShuffleVector(Ops[0], Ops[1], i & 1,
+                             ((i & 2) >> 1)+2, "shufpd");
   }
   case X86::BI__builtin_ia32_punpcklbw128:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 16, 1, 17, 2, 18, 3, 19,
