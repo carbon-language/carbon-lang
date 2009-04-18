@@ -1357,6 +1357,7 @@ public:
       AtTryLoc = atTryLoc;
     }
     
+  SourceLocation getAtTryLoc() const { return AtTryLoc; }
   const Stmt *getTryBody() const { return SubStmts[TRY]; }
   Stmt *getTryBody() { return SubStmts[TRY]; }
   const ObjCAtCatchStmt *getCatchStmts() const { 
