@@ -47,11 +47,11 @@ int test6() {
 }
 
 void test7(int x) {
-foo:
-  switch (x) {      // expected-error {{illegal switch into protected scope}}
+foo:  // FIXME: remove
+  switch (x) {
   case 1: ;
     int a[x];       // expected-note {{jump bypasses initialization of variable length array}}
-  case 2:
+  case 2:           // expected-error {{illegal switch case into protected scope}}
     a[1] = 2;
     break;
   }

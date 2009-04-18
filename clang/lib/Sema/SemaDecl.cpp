@@ -2953,7 +2953,8 @@ private:
   bool StatementCreatesScope(DeclStmt *S, unsigned ParentScope);
   void BuildScopeInformation(Stmt *S, unsigned ParentScope);
   void VerifyJumps();
-  void CheckJump(Stmt *S, unsigned JumpTargetScope, unsigned JumpDiag);
+  void CheckJump(Stmt *From, Stmt *To,
+                 SourceLocation DiagLoc, unsigned JumpDiag);
 };
 } // end anonymous namespace
 
@@ -3067,14 +3068,13 @@ void JumpScopeChecker::VerifyJumps() {
     Stmt *Jump = Jumps.pop_back_val();
     
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
-      assert(LabelAndGotoScopes.count(GS->getLabel()) && "Label not visited?");
-      CheckJump(GS, LabelAndGotoScopes[GS->getLabel()],
+      CheckJump(GS, GS->getLabel(), GS->getGotoLoc(),
                 diag::err_goto_into_protected_scope);
     } else if (SwitchStmt *SS = dyn_cast<SwitchStmt>(Jump)) {
       for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
            SC = SC->getNextSwitchCase()) {
         assert(LabelAndGotoScopes.count(SC) && "Case not visited?");
-        CheckJump(SS, LabelAndGotoScopes[SC],
+        CheckJump(SS, SC, SC->getLocStart(),
                   diag::err_switch_into_protected_scope);
       }
       continue;
@@ -3088,22 +3088,25 @@ void JumpScopeChecker::VerifyJumps() {
 
 /// CheckJump - Validate that the specified jump statement is valid: that it is
 /// jumping within or out of its current scope, not into a deeper one.
-void JumpScopeChecker::CheckJump(Stmt *Jump, unsigned JumpTargetScope,
-                                 unsigned JumpDiag) {
-  assert(LabelAndGotoScopes.count(Jump) && "Jump didn't get added to scopes?");
-  unsigned JumpScope = LabelAndGotoScopes[Jump];
+void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
+                                 SourceLocation DiagLoc, unsigned JumpDiag) {
+  assert(LabelAndGotoScopes.count(From) && "Jump didn't get added to scopes?");
+  unsigned FromScope = LabelAndGotoScopes[From];
 
+  assert(LabelAndGotoScopes.count(To) && "Jump didn't get added to scopes?");
+  unsigned ToScope = LabelAndGotoScopes[To];
+  
   // Common case: exactly the same scope, which is fine.
-  if (JumpScope == JumpTargetScope) return;
+  if (FromScope == ToScope) return;
   
   // The only valid mismatch jump case happens when the jump is more deeply
   // nested inside the jump target.  Do a quick scan to see if the jump is valid
   // because valid code is more common than invalid code.
-  unsigned TestScope = Scopes[JumpScope].ParentScope;
+  unsigned TestScope = Scopes[FromScope].ParentScope;
   while (TestScope != ~0U) {
     // If we found the jump target, then we're jumping out of our current scope,
     // which is perfectly fine.
-    if (TestScope == JumpTargetScope) return;
+    if (TestScope == ToScope) return;
     
     // Otherwise, scan up the hierarchy.
     TestScope = Scopes[TestScope].ParentScope;
@@ -3111,23 +3114,23 @@ void JumpScopeChecker::CheckJump(Stmt *Jump, unsigned JumpTargetScope,
   
   // If we get here, then we know we have invalid code.  Diagnose the bad jump,
   // and then emit a note at each VLA being jumped out of.
-  S.Diag(Jump->getLocStart(), JumpDiag);
+  S.Diag(DiagLoc, JumpDiag);
 
   // FIXME: This is N^2 and silly.
   while (1) {
     // Diagnose that the jump jumps over this declaration.
-    const GotoScope &TargetScope = Scopes[JumpTargetScope];
+    const GotoScope &TargetScope = Scopes[ToScope];
     S.Diag(TargetScope.Loc, TargetScope.Diag);
 
     // Walk out one level.
-    JumpTargetScope = Scopes[JumpTargetScope].ParentScope;
-    assert(JumpTargetScope != ~0U && "Didn't find top-level function scope?");
+    ToScope = Scopes[ToScope].ParentScope;
+    assert(ToScope != ~0U && "Didn't find top-level function scope?");
  
     // Check to see if the jump is valid now.
-    unsigned TestScope = JumpScope;
+    unsigned TestScope = FromScope;
     while (TestScope != ~0U) {
       // If we found the jump target, the the jump became valid.
-      if (TestScope == JumpTargetScope) return;
+      if (TestScope == ToScope) return;
       
       // Otherwise, scan up the hierarchy.
       TestScope = Scopes[TestScope].ParentScope;

@@ -833,7 +833,7 @@ def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
 
 def err_goto_into_protected_scope : Error<"illegal goto into protected scope">;
 def err_switch_into_protected_scope : Error<
-  "illegal switch into protected scope">;
+  "illegal switch case into protected scope">;
 def note_protected_by_vla_typedef : Note<
   "jump bypasses initialization of VLA typedef">;
 def note_protected_by_vla : Note<
