@@ -624,24 +624,27 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
   IntegerBuffer.resize(DigitTok.getLength());
   const char *DigitTokBegin = &IntegerBuffer[0];
   unsigned ActualLength = PP.getSpelling(DigitTok, DigitTokBegin);
-  NumericLiteralParser Literal(DigitTokBegin, DigitTokBegin+ActualLength, 
-                               DigitTok.getLocation(), PP);
-  if (Literal.hadError)
-    return true;   // Error already emitted.
   
-  if (Literal.isFloatingLiteral() || Literal.isImaginary) {
-    PP.Diag(DigitTok, DiagID);
-    return true;
+  // Verify that we have a simple digit-sequence, and compute the value.  This
+  // is always a simple digit string computed in decimal, so we do this manually
+  // here.
+  Val = 0;
+  for (unsigned i = 0; i != ActualLength; ++i) {
+    if (!isdigit(DigitTokBegin[i])) {
+      PP.Diag(PP.AdvanceToTokenCharacter(DigitTok.getLocation(), i),
+              diag::err_pp_line_digit_sequence);
+      PP.DiscardUntilEndOfDirective();
+      return true;
+    }
+    
+    unsigned NextVal = Val*10+(DigitTokBegin[i]-'0');
+    if (NextVal < Val) { // overflow.
+      PP.Diag(DigitTok, DiagID);
+      PP.DiscardUntilEndOfDirective();
+      return true;
+    }
+    Val = NextVal;
   }
-  
-  // Parse the integer literal into Result.
-  llvm::APInt APVal(32, 0);
-  if (Literal.GetIntegerValue(APVal)) {
-    // Overflow parsing integer literal.
-    PP.Diag(DigitTok, DiagID);
-    return true;
-  }
-  Val = APVal.getZExtValue();
   
   // Reject 0, this is needed both by #line numbers and flags. 
   if (Val == 0) {
@@ -650,12 +653,9 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
     return true;
   }
   
-  // Warn about hex and octal line numbers.  Do this after the check for 0,
-  // because it is octal.
-  if (Literal.getRadix() != 10) 
-    PP.Diag(DigitTok, diag::warn_pp_line_decimal);
-  else if (Literal.hasSuffix())
-    PP.Diag(DigitTok, diag::warn_pp_line_digit_sequence);
+  if (DigitTokBegin[0] == '0')
+    PP.Diag(DigitTok.getLocation(), diag::warn_pp_line_decimal);
+  
   return false;
 }
 
@@ -671,7 +671,7 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
 
   // Validate the number and convert it to an unsigned.
   unsigned LineNo;
-  if (GetLineValue(DigitTok, LineNo, diag::err_pp_line_requires_integer, *this))
+  if (GetLineValue(DigitTok, LineNo, diag::err_pp_line_requires_integer,*this))
     return;
 
   // Enforce C99 6.10.4p3: "The digit sequence shall not specify ... a

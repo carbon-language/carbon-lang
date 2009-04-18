@@ -4,6 +4,7 @@
 
 #line 'a'            // expected-error {{#line directive requires a positive integer argument}}
 #line 0              // expected-error {{#line directive requires a positive integer argument}}
+#line 00             // expected-error {{#line directive requires a positive integer argument}}
 #line 2147483648     // expected-warning {{C requires #line number to be less than 2147483648, allowed as extension}}
 #line 42             // ok
 #line 42 'a'         // expected-error {{invalid filename for #line directive}}
@@ -69,7 +70,12 @@ typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}
 #line 2 "foo.c" NONEMPTY( )  // expected-warning{{extra tokens at end of #line directive}}
 
 // PR3940
-#line 0xf  // expected-warning {{#line directive requires decimal line number}}
-#line 42U  // expected-warning {{#line directive requires a simple digit sequence}}
+#line 0xf  // expected-error {{#line directive requires a simple digit sequence}}
+#line 42U  // expected-error {{#line directive requires a simple digit sequence}}
 
+
+// Line markers are digit strings interpreted as decimal numbers, this is
+// 10, not 8.
+#line 010  // expected-warning {{#line directive interprets number as decimal, not octal}}
+extern int array[__LINE__ == 10 ? 1:-1];
 
