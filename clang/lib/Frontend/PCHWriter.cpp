@@ -1439,6 +1439,11 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (DC->getPrimaryContext() != DC)
     return 0;
 
+  // Since there is no name lookup into functions or methods, don't
+  // bother to build a visible-declarations table.
+  if (DC->isFunctionOrMethod())
+    return 0;
+
   // Force the DeclContext to build a its name-lookup table.
   DC->lookup(Context, DeclarationName());
 
