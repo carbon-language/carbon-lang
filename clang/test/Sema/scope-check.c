@@ -57,17 +57,21 @@ void test7(int x) {
 }
 
 int test8(int x) {
-  if (x) goto L;     // expected-error {{illegal goto into protected scope}}
+  // For statement.
   goto L2;     // expected-error {{illegal goto into protected scope}}
-  
   for (int arr[x];   // expected-note {{jump bypasses initialization of variable length array}}  
-       ; ++x) {
-    
+       ; ++x)
   L2:;
-  }
+
+  // Statement expressions.
+  goto L3;   // expected-error {{illegal goto into protected scope}}
+  int Y = ({  int a[x];   // expected-note {{jump bypasses initialization of variable length array}}  
+           L3: 4; });
   
+  // Statement expressions 2.
+  goto L1;     // expected-error {{illegal goto into protected scope}}
   return x == ({
                  int a[x];   // expected-note {{jump bypasses initialization of variable length array}}  
-               L:
+               L1:
                  42; });
 }
