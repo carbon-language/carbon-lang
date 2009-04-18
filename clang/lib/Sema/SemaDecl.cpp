@@ -2934,29 +2934,32 @@ static void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap
                                      llvm::SmallVectorImpl<Stmt*> &ScopeStack,
                                      Stmt *CurStmt, Stmt *ParentCompoundStmt,
                                      Sema &S) {
-  for (Stmt::child_iterator i = CurStmt->child_begin();
-       i != CurStmt->child_end(); ++i) {
-    if (!*i) continue;
-    if (StatementCreatesScope(*i))  {
-      ScopeStack.push_back(*i);
-      PopScopeMap[*i] = ParentCompoundStmt;
-    } else if (ObjCAtTryStmt *AT = dyn_cast<ObjCAtTryStmt>(*i)) {
-      ScopeStack.push_back(*i);
-      PopScopeMap[*i] = AT->getTryBody();
-    } else if (ObjCAtCatchStmt *AC = dyn_cast<ObjCAtCatchStmt>(*i)) {
-      ScopeStack.push_back(*i);
-      PopScopeMap[*i] = AC->getCatchBody();
-    } else if (ObjCAtFinallyStmt *AF = dyn_cast<ObjCAtFinallyStmt>(*i)) {
-      ScopeStack.push_back(*i);
-      PopScopeMap[*i] = AF->getFinallyBody();
+  for (Stmt::child_iterator CI = CurStmt->child_begin(),
+       E = CurStmt->child_end(); CI != E; ++CI) {
+    Stmt *SubStmt = *CI;
+    if (SubStmt == 0) continue;
+    
+    if (StatementCreatesScope(SubStmt))  {
+      ScopeStack.push_back(SubStmt);
+      PopScopeMap[SubStmt] = ParentCompoundStmt;
+    } else if (ObjCAtTryStmt *AT = dyn_cast<ObjCAtTryStmt>(SubStmt)) {
+      ScopeStack.push_back(SubStmt);
+      PopScopeMap[SubStmt] = AT->getTryBody();
+    } else if (ObjCAtCatchStmt *AC = dyn_cast<ObjCAtCatchStmt>(SubStmt)) {
+      ScopeStack.push_back(SubStmt);
+      PopScopeMap[SubStmt] = AC->getCatchBody();
+    } else if (ObjCAtFinallyStmt *AF = dyn_cast<ObjCAtFinallyStmt>(SubStmt)) {
+      ScopeStack.push_back(SubStmt);
+      PopScopeMap[SubStmt] = AF->getFinallyBody();
     } else if (isa<LabelStmt>(CurStmt)) {
       LabelScopeMap[CurStmt] = ScopeStack.size() ? ScopeStack.back() : 0;
     }
-    if (isa<DeclStmt>(*i)) continue;
+    if (isa<DeclStmt>(SubStmt)) continue;
     
-    Stmt *CurCompound = isa<CompoundStmt>(*i) ? *i : ParentCompoundStmt;
+    Stmt *CurCompound =
+      isa<CompoundStmt>(SubStmt) ? SubStmt : ParentCompoundStmt;
     RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack,
-                             *i, CurCompound, S);
+                             SubStmt, CurCompound, S);
   }
   
   while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
@@ -2968,13 +2971,15 @@ static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap,
                                     llvm::DenseMap<Stmt*, Stmt*> &GotoScopeMap,
                                     llvm::SmallVectorImpl<Stmt*> &ScopeStack,
                                     Stmt *CurStmt, Sema &S) {
-  for (Stmt::child_iterator i = CurStmt->child_begin();
-       i != CurStmt->child_end(); ++i) {
-    if (!*i) continue;
-    if (StatementCreatesScope(*i))  {
-      ScopeStack.push_back(*i);
-    } else if (GotoStmt* GS = dyn_cast<GotoStmt>(*i)) {
-      if (void *LScope = LabelScopeMap[GS->getLabel()]) {
+  for (Stmt::child_iterator CI = CurStmt->child_begin(),
+       E = CurStmt->child_end(); CI != E; ++CI) {
+    Stmt *SubStmt = *CI;
+    if (SubStmt == 0) continue;
+    
+    if (StatementCreatesScope(SubStmt))  {
+      ScopeStack.push_back(SubStmt);
+    } else if (GotoStmt* GS = dyn_cast<GotoStmt>(SubStmt)) {
+      if (Stmt *LScope = LabelScopeMap[GS->getLabel()]) {
         bool foundScopeInStack = false;
         for (unsigned i = ScopeStack.size(); i > 0; --i) {
           if (LScope == ScopeStack[i-1]) {
@@ -2986,9 +2991,9 @@ static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap,
           S.Diag(GS->getSourceRange().getBegin(), diag::err_goto_into_scope);
       }
     }
-    if (isa<DeclStmt>(*i)) continue;
+    if (isa<DeclStmt>(SubStmt)) continue;
     RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
-                            ScopeStack, *i, S);
+                            ScopeStack, SubStmt, S);
   }
   while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
     ScopeStack.pop_back();
