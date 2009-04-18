@@ -47,7 +47,6 @@ int test6() {
 }
 
 void test7(int x) {
-foo:  // FIXME: remove
   switch (x) {
   case 1: ;
     int a[x];       // expected-note {{jump bypasses initialization of variable length array}}

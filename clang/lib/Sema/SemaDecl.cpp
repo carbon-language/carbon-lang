@@ -3157,7 +3157,6 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
 
   assert(&getLabelMap() == &FunctionLabelMap && "Didn't pop block right?");
   
-  bool HaveLabels = !FunctionLabelMap.empty();
   // Check goto/label use.
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
        I = FunctionLabelMap.begin(), E = FunctionLabelMap.end(); I != E; ++I) {
@@ -3197,9 +3196,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
 
   if (!Body) return D;
 
-  // If we have labels, verify that goto doesn't jump into scopes illegally.
-  if (HaveLabels)
-    JumpScopeChecker(Body, *this);
+  // Verify that that gotos and switch cases don't jump into scopes illegally.
+  JumpScopeChecker(Body, *this);
 
   return D;
 }
