@@ -18,6 +18,8 @@
 
 namespace clang {
 namespace driver {
+  class Driver;
+
 namespace toolchains {
   class Darwin_X86;
 }
@@ -25,7 +27,8 @@ namespace toolchains {
 namespace tools {
 
   class VISIBILITY_HIDDEN Clang : public Tool {
-    void AddPreprocessingOptions(const ArgList &Args,
+    void AddPreprocessingOptions(const Driver &D,
+                                 const ArgList &Args,
                                  ArgStringList &CmdArgs,
                                  const InputInfo &Output,
                                  const InputInfoList &Inputs) const;

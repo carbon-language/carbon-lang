@@ -31,7 +31,8 @@
 using namespace clang::driver;
 using namespace clang::driver::tools;
 
-void Clang::AddPreprocessingOptions(const ArgList &Args,
+void Clang::AddPreprocessingOptions(const Driver &D, 
+                                    const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     const InputInfo &Output,
                                     const InputInfoList &Inputs) const {
@@ -94,10 +95,11 @@ void Clang::AddPreprocessingOptions(const ArgList &Args,
 
   // FIXME: Use iterator.
 
-  // Add -i* options, and automatically translate to -include-pth for
-  // transparent PCH support. It's wonky, but we include looking for
-  // .gch so we can support seamless replacement into a build system
-  // already set up to be generating .gch files.
+  // Add -i* options, and automatically translate to
+  // -include-pch/-include-pth for transparent PCH support. It's
+  // wonky, but we include looking for .gch so we can support seamless
+  // replacement into a build system already set up to be generating
+  // .gch files.
   for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -106,20 +108,40 @@ void Clang::AddPreprocessingOptions(const ArgList &Args,
 
     if (A->getOption().matches(options::OPT_include)) {
       bool FoundPTH = false;
+      bool FoundPCH = false;
       llvm::sys::Path P(A->getValue(Args));
-      P.appendSuffix("pth");
-      if (P.exists()) {
-        FoundPTH = true;
-      } else {
-        P.eraseSuffix();
-        P.appendSuffix("gch");
+      if (D.CCCUsePCH) {
+        P.appendSuffix("pch");
         if (P.exists())
-          FoundPTH = true;
+          FoundPCH = true;
+        else 
+          P.eraseSuffix();
       }
 
-      if (FoundPTH) {
+      if (!FoundPCH) {
+        P.appendSuffix("pth");
+        if (P.exists()) 
+          FoundPTH = true;
+        else
+          P.eraseSuffix();
+      } 
+      
+      if (!FoundPCH && !FoundPTH) {
+        P.appendSuffix("gch");
+        if (P.exists()) {
+          FoundPCH = D.CCCUsePCH;
+          FoundPTH = !D.CCCUsePCH;
+        }
+        else 
+          P.eraseSuffix();
+      }
+
+      if (FoundPCH || FoundPTH) {
         A->claim();
-        CmdArgs.push_back("-include-pth");
+        if (FoundPCH)
+          CmdArgs.push_back("-include-pch");
+        else
+          CmdArgs.push_back("-include-pth");
         CmdArgs.push_back(Args.MakeArgString(P.c_str()));
         continue;
       }
@@ -168,7 +190,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-E");
   } else if (isa<PrecompileJobAction>(JA)) {
-    CmdArgs.push_back("-emit-pth");
+    if (D.CCCUsePCH)
+      CmdArgs.push_back("-emit-pch");
+    else
+      CmdArgs.push_back("-emit-pth");
   } else {
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
 
@@ -380,7 +405,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // FIXME: Support -fpreprocessed
   types::ID InputType = Inputs[0].getType();
   if (types::getPreprocessedType(InputType) != types::TY_INVALID)
-    AddPreprocessingOptions(Args, CmdArgs, Output, Inputs);
+    AddPreprocessingOptions(D, Args, CmdArgs, Output, Inputs);
 
   // Manually translate -O to -O1 and -O4 to -O3; let clang reject
   // others.

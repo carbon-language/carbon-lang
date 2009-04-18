@@ -92,6 +92,11 @@ private:
   /// used where an integrated CPP would).
   bool CCCUseClangCPP : 1;
 
+public:
+  /// Use lazy precompiled headers for PCH support.
+  bool CCCUsePCH;
+
+private:
   /// Only use clang for the given architectures (only used when
   /// non-empty).
   std::set<std::string> CCCClangArchs;

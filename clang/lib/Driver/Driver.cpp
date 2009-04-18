@@ -45,7 +45,7 @@ Driver::Driver(const char *_Name, const char *_Dir,
     Host(0),
     CCCIsCXX(false), CCCEcho(false), CCCPrintBindings(false),
     CCCGenericGCCName("gcc"), CCCUseClang(true), CCCUseClangCXX(false), 
-    CCCUseClangCPP(true),
+    CCCUseClangCPP(true), CCCUsePCH(false),
     SuppressMissingInputWarning(false)
 {
   // Only use clang on i386 and x86_64 by default.
@@ -142,6 +142,10 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
     } else if (!strcmp(Opt, "clang-cxx")) {
       CCCUseClangCXX = true;
+    } else if (!strcmp(Opt, "pch-is-pch")) {
+      CCCUsePCH = true;
+    } else if (!strcmp(Opt, "pch-is-pth")) {
+      CCCUsePCH = false;
     } else if (!strcmp(Opt, "no-clang")) {
       CCCUseClang = false;
     } else if (!strcmp(Opt, "no-clang-cpp")) {
@@ -287,6 +291,10 @@ void Driver::PrintHelp(bool ShowHidden) const {
     OptionHelp.push_back(std::make_pair("-ccc-clang-archs",
                                         "Comma separate list of architectures "
                                         "to use the clang compiler for"));
+    OptionHelp.push_back(std::make_pair("-ccc-pch-is-pch",
+                                     "Use lazy PCH for precompiled headers"));
+    OptionHelp.push_back(std::make_pair("-ccc-pch-is-pth",
+                         "Use pretokenized headers for precompiled headers"));
 
     OptionHelp.push_back(std::make_pair("\nDEBUG/DEVELOPMENT OPTIONS:",""));
     OptionHelp.push_back(std::make_pair("-ccc-host-triple",
