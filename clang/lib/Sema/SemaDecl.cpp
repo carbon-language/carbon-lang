@@ -2905,10 +2905,6 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   return DeclPtrTy::make(FD);
 }
 
-
-
-/// TODO: statement expressions, for (int x[n]; ;), case.
-
 /// JumpScopeChecker - This object is used by Sema to diagnose invalid jumps
 /// into VLA and other protected scopes.  For example, this rejects:
 ///    goto L;
@@ -2945,7 +2941,6 @@ class JumpScopeChecker {
 public:
   JumpScopeChecker(CompoundStmt *Body, Sema &S);
 private:
-  bool StatementCreatesScope(DeclStmt *S, unsigned ParentScope);
   void BuildScopeInformation(Stmt *S, unsigned ParentScope);
   void VerifyJumps();
   void CheckJump(Stmt *From, Stmt *To,
@@ -2966,39 +2961,20 @@ JumpScopeChecker::JumpScopeChecker(CompoundStmt *Body, Sema &s) : S(s) {
   VerifyJumps();
 }
   
-/// StatementCreatesScope - Return true if the specified statement should start
-/// a new cleanup scope that cannot be entered with a goto.  When this returns
-/// true it pushes a new scope onto the top of Scopes, indicating what scope to
-/// use for sub-statements.
-bool JumpScopeChecker::StatementCreatesScope(DeclStmt *DS,
-                                             unsigned ParentScope) {
-  // The decl statement creates a scope if any of the decls in it are VLAs or
-  // have the cleanup attribute.
-  for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-       I != E; ++I) {
-    if (VarDecl *D = dyn_cast<VarDecl>(*I)) {
-      if (D->getType()->isVariablyModifiedType()) {
-        Scopes.push_back(GotoScope(ParentScope,
-                                   diag::note_protected_by_vla,
-                                   D->getLocation()));
-        return true;  // FIXME: Handle int X[n], Y[n+1];
-      }
-      if (D->hasAttr<CleanupAttr>()) {
-        Scopes.push_back(GotoScope(ParentScope,
-                                   diag::note_protected_by_cleanup,
-                                   D->getLocation()));
-        return true;
-      }
-    } else if (TypedefDecl *D = dyn_cast<TypedefDecl>(*I)) {
-      if (D->getUnderlyingType()->isVariablyModifiedType()) {
-        Scopes.push_back(GotoScope(ParentScope,
-                                   diag::note_protected_by_vla_typedef,
-                                   D->getLocation()));
-        return true;
-      }
-    }
+/// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
+/// diagnostic that should be emitted if control goes over it. If not, return 0.
+static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (VD->getType()->isVariablyModifiedType())
+      return diag::note_protected_by_vla;
+    if (VD->hasAttr<CleanupAttr>())
+      return diag::note_protected_by_cleanup;
+  } else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+    if (TD->getUnderlyingType()->isVariablyModifiedType())
+      return diag::note_protected_by_vla_typedef;
   }
-  return false;
+  
+  return 0;
 }
 
 
@@ -3029,16 +3005,23 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
 
     // If this is a declstmt with a VLA definition, it defines a scope from here
     // to the end of the containing context.
-    if (isa<DeclStmt>(SubStmt) &&
-        // If StatementCreatesScope returns true, then it pushed a new scope
-        // onto Scopes.
-        StatementCreatesScope(cast<DeclStmt>(SubStmt), ParentScope)) {
-      // FIXME: what about substatements (initializers) of the DeclStmt itself?
-      // TODO: int x = ({  int x[n]; label: ... });  // decl stmts matter.
-
-      // Continue analyzing the remaining statements in this scope with a new
-      // parent scope ID.
-      ParentScope = Scopes.size()-1;
+    if (DeclStmt *DS = dyn_cast<DeclStmt>(SubStmt)) {
+      // The decl statement creates a scope if any of the decls in it are VLAs or
+      // have the cleanup attribute.
+      for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+           I != E; ++I) {
+        // If this decl causes a new scope, push and switch to it.
+        if (unsigned Diag = GetDiagForGotoScopeDecl(*I)) {
+          Scopes.push_back(GotoScope(ParentScope, Diag, (*I)->getLocation()));
+          ParentScope = Scopes.size()-1;
+        }
+      
+        // If the decl has an initializer, walk it with the potentially new
+        // scope we just installed.
+        if (VarDecl *VD = dyn_cast<VarDecl>(*I))
+          if (Expr *Init = VD->getInit())
+            BuildScopeInformation(Init, ParentScope);
+      }
       continue;
     }
 

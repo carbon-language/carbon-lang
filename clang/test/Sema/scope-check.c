@@ -68,6 +68,35 @@ int test8(int x) {
   int Y = ({  int a[x];   // expected-note {{jump bypasses initialization of variable length array}}  
            L3: 4; });
   
+  goto L4; // expected-error {{illegal goto into protected scope}}
+  {
+    int A[x],  // expected-note {{jump bypasses initialization of variable length array}}
+        B[x];  // expected-note {{jump bypasses initialization of variable length array}}
+  L4: ;
+  }
+  
+  {
+  L5: ;// ok
+    int A[x], B = ({ if (x)
+                       goto L5;
+                     else 
+                       goto L6;
+                   4; }); 
+  L6:; // ok.
+  }
+  
+  {
+  L7: ;// ok
+    int A[x], B = ({ if (x)
+                       goto L7;
+                     else 
+                       goto L8;  // expected-error {{illegal goto into protected scope}}
+                     4; }),
+        C[x];   // expected-note {{jump bypasses initialization of variable length array}}
+  L8:; // bad
+  }
+ 
+  
   // Statement expressions 2.
   goto L1;     // expected-error {{illegal goto into protected scope}}
   return x == ({
