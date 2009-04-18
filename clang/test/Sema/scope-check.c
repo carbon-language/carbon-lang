@@ -56,5 +56,18 @@ void test7(int x) {
   }
 }
 
-
-// FIXME: Switch cases etc.
+int test8(int x) {
+  if (x) goto L;     // expected-error {{illegal goto into protected scope}}
+  goto L2;     // expected-error {{illegal goto into protected scope}}
+  
+  for (int arr[x];   // expected-note {{jump bypasses initialization of variable length array}}  
+       ; ++x) {
+    
+  L2:;
+  }
+  
+  return x == ({
+                 int a[x];   // expected-note {{jump bypasses initialization of variable length array}}  
+               L:
+                 42; });
+}
