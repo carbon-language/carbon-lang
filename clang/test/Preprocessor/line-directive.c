@@ -70,3 +70,6 @@ typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}
 
 // PR3940
 #line 0xf  // expected-warning {{#line directive requires decimal line number}}
+#line 42U  // expected-warning {{#line directive requires a simple digit sequence}}
+
+

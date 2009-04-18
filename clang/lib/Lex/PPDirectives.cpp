@@ -654,7 +654,8 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
   // because it is octal.
   if (Literal.getRadix() != 10) 
     PP.Diag(DigitTok, diag::warn_pp_line_decimal);
-  
+  else if (Literal.hasSuffix())
+    PP.Diag(DigitTok, diag::warn_pp_line_digit_sequence);
   return false;
 }
 
