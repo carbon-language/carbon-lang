@@ -842,6 +842,10 @@ def note_protected_by_cleanup : Note<
   "jump bypasses initialization of declaration with __attribute__((cleanup))">;
 def note_protected_by_objc_try : Note<
   "jump bypasses initialization of @try block">;
+def note_protected_by_objc_catch : Note<
+  "jump bypasses initialization of @catch block">;
+def note_protected_by_objc_finally : Note<
+  "jump bypasses initialization of @finally block">;
 
 def err_func_returning_array_function : Error<
   "function cannot return array or function type %0">;

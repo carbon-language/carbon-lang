@@ -3022,6 +3022,13 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     // it.  This makes the second scan not have to walk the AST again.
     LabelAndGotoScopes[S] = ParentScope;
     Jumps.push_back(S);
+  } else if (ObjCAtCatchStmt *AC = dyn_cast<ObjCAtCatchStmt>(S)) {
+    // @catch always starts a new scope.
+    // FIXME: We have to do this because @catches are nested inside each other,
+    // which seems weird and causes us to emit wierd diagnostics.
+    Scopes.push_back(GotoScope(ParentScope,diag::note_protected_by_objc_catch,
+                               AC->getAtCatchLoc()));
+    ParentScope = Scopes.size()-1;
   }
 
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
@@ -3050,10 +3057,24 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     // Disallow jumps into any part of an @try statement by pushing a scope and
     // walking all sub-stmts in that scope.
     if (ObjCAtTryStmt *AT = dyn_cast<ObjCAtTryStmt>(SubStmt)) {
-      Scopes.push_back(GotoScope(ParentScope, diag::note_protected_by_objc_try,
+      // Recursively walk the AST for the @try part.
+      Scopes.push_back(GotoScope(ParentScope,diag::note_protected_by_objc_try,
                                  AT->getAtTryLoc()));
-      // Recursively walk the AST.
-      BuildScopeInformation(SubStmt, Scopes.size()-1);
+      if (Stmt *TryPart = AT->getTryBody())
+        BuildScopeInformation(TryPart, Scopes.size()-1);
+
+      // Jump from the catch or finally to the try is not valid.
+      if (ObjCAtCatchStmt *AC = AT->getCatchStmts())
+        // @catches are nested and it isn't 
+        BuildScopeInformation(AC, ParentScope);
+      
+      if (ObjCAtFinallyStmt *AF = AT->getFinallyStmt()) {
+        Scopes.push_back(GotoScope(ParentScope,
+                                   diag::note_protected_by_objc_finally,
+                                   AF->getAtFinallyLoc()));
+        BuildScopeInformation(AF, Scopes.size()-1);
+      }
+      
       continue;
     }
     // FIXME: what about jumps into C++ catch blocks, what are the rules?

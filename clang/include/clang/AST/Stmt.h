@@ -1290,6 +1290,7 @@ public:
     return ExceptionDecl; 
   }
   
+  SourceLocation getAtCatchLoc() const { return AtCatchLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   
   virtual SourceRange getSourceRange() const { 
@@ -1319,12 +1320,14 @@ public:
   : Stmt(ObjCAtFinallyStmtClass), 
     AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
   
-  const Stmt *getFinallyBody () const { return AtFinallyStmt; }
-  Stmt *getFinallyBody () { return AtFinallyStmt; }
+  const Stmt *getFinallyBody() const { return AtFinallyStmt; }
+  Stmt *getFinallyBody() { return AtFinallyStmt; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
   }
+  
+  SourceLocation getAtFinallyLoc() const { return AtFinallyLoc; }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtFinallyStmtClass;
