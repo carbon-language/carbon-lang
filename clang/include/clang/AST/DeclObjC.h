@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECLOBJC_H
 
 #include "clang/AST/Decl.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace clang {
 class Expr;
@@ -200,6 +201,17 @@ public:
     ParamInfo.set(List, Num, C);
   }
 
+  // Iterator access to parameter types.
+  typedef std::const_mem_fun_t<QualType, ParmVarDecl> deref_fun;
+  typedef llvm::mapped_iterator<param_iterator, deref_fun> arg_type_iterator;
+
+  arg_type_iterator arg_type_begin() const {
+    return llvm::map_iterator(param_begin(), deref_fun(&ParmVarDecl::getType));
+  }
+  arg_type_iterator arg_type_end() const {
+    return llvm::map_iterator(param_end(), deref_fun(&ParmVarDecl::getType));
+  }
+  
   /// createImplicitParams - Used to lazily create the self and cmd
   /// implict parameters. This must be called prior to using getSelfDecl()
   /// or getCmdDecl(). The call is ignored if the implicit paramters
