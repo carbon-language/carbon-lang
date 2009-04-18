@@ -676,7 +676,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT VT,
     NewVT = EltTy;
   IntermediateVT = NewVT;
 
-  MVT DestVT = getTypeToTransformTo(NewVT);
+  MVT DestVT = getRegisterType(NewVT);
   RegisterVT = DestVT;
   if (DestVT.bitsLT(NewVT)) {
     // Value is expanded, e.g. i64 -> i16.
