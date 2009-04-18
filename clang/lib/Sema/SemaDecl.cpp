@@ -2905,123 +2905,245 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   return DeclPtrTy::make(FD);
 }
 
-/// StatementCreatesScope - Return true if the specified statement should start
-/// a new cleanup scope that cannot be entered with a goto.
-static bool StatementCreatesScope(Stmt *S) {
-  // Only decl statements create scopes.
-  DeclStmt *DS = dyn_cast<DeclStmt>(S);
-  if (DS == 0) return false;
+
+
+/// TODO: statement expressions, for (int x[n]; ;), case.
+/// TODO: check the body of an objc method.
+
+// TODO: Consider wording like: "branching bypasses declaration of
+// variable-length"
+
+
+/// JumpScopeChecker - This object is used by Sema to diagnose invalid jumps
+/// into VLA and other protected scopes.  For example, this rejects:
+///    goto L;
+///    int a[n];
+///  L:
+///
+namespace {
+class JumpScopeChecker {
+  Sema &S;
   
+  /// GotoScope - This is a record that we use to keep track of all of the scopes
+  /// that are introduced by VLAs and other things that scope jumps like gotos.
+  /// This scope tree has nothing to do with the source scope tree, because you
+  /// can have multiple VLA scopes per compound statement, and most compound
+  /// statements don't introduce any scopes.
+  struct GotoScope {
+    /// ParentScope - The index in ScopeMap of the parent scope.  This is 0 for
+    /// the parent scope is the function body.
+    unsigned ParentScope;
+    
+    /// Diag - The diagnostic to emit if there is a jump into this scope.
+    unsigned Diag;
+    
+    /// Loc - Location to emit the diagnostic.
+    SourceLocation Loc;
+    
+    GotoScope(unsigned parentScope, unsigned diag, SourceLocation L)
+    : ParentScope(parentScope), Diag(diag), Loc(L) {}
+  };
+ 
+  llvm::SmallVector<GotoScope, 48> Scopes;
+  llvm::DenseMap<Stmt*, unsigned> LabelAndGotoScopes;
+  llvm::SmallVector<Stmt*, 16> Jumps;
+public:
+  JumpScopeChecker(CompoundStmt *Body, Sema &S);
+private:
+  bool StatementCreatesScope(DeclStmt *S, unsigned ParentScope);
+  void BuildScopeInformation(Stmt *S, unsigned ParentScope);
+  void VerifyJumps();
+  void CheckJump(Stmt *S, unsigned JumpTargetScope, unsigned JumpDiag);
+};
+} // end anonymous namespace
+
+
+JumpScopeChecker::JumpScopeChecker(CompoundStmt *Body, Sema &s) : S(s) {
+  // Add a scope entry for function scope.
+  Scopes.push_back(GotoScope(~0U, ~0U, SourceLocation()));
+  
+  // Build information for the top level compound statement, so that we have a
+  // defined scope record for every "goto" and label.
+  BuildScopeInformation(Body, 0);
+  
+  // Check that all jumps we saw are kosher.
+  VerifyJumps();
+}
+  
+/// StatementCreatesScope - Return true if the specified statement should start
+/// a new cleanup scope that cannot be entered with a goto.  When this returns
+/// true it pushes a new scope onto the top of Scopes, indicating what scope to
+/// use for sub-statements.
+bool JumpScopeChecker::StatementCreatesScope(DeclStmt *DS,
+                                             unsigned ParentScope) {
   // The decl statement creates a scope if any of the decls in it are VLAs or
   // have the cleanup attribute.
   for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
        I != E; ++I) {
     if (VarDecl *D = dyn_cast<VarDecl>(*I)) {
-      if (D->getType()->isVariablyModifiedType() ||
-          D->hasAttr<CleanupAttr>())
+      if (D->getType()->isVariablyModifiedType()) {
+        Scopes.push_back(GotoScope(ParentScope,
+                                   diag::note_protected_by_vla,
+                                   D->getLocation()));
+        return true;  // FIXME: Handle int X[n], Y[n+1];
+      }
+      if (D->hasAttr<CleanupAttr>()) {
+        Scopes.push_back(GotoScope(ParentScope,
+                                   diag::note_protected_by_cleanup,
+                                   D->getLocation()));
         return true;
+      }
     } else if (TypedefDecl *D = dyn_cast<TypedefDecl>(*I)) {
-      if (D->getUnderlyingType()->isVariablyModifiedType())
+      if (D->getUnderlyingType()->isVariablyModifiedType()) {
+        Scopes.push_back(GotoScope(ParentScope,
+                                   diag::note_protected_by_vla_typedef,
+                                   D->getLocation()));
         return true;
+      }
     }
   }
   return false;
 }
 
 
-static void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap,
-                                     llvm::DenseMap<Stmt*, Stmt*> &PopScopeMap,
-                                     llvm::SmallVectorImpl<Stmt*> &ScopeStack,
-                                     Stmt *CurStmt, Stmt *ParentCompoundStmt,
-                                     Sema &S) {
-  for (Stmt::child_iterator CI = CurStmt->child_begin(),
-       E = CurStmt->child_end(); CI != E; ++CI) {
+/// BuildScopeInformation - The statements from CI to CE are known to form a
+/// coherent VLA scope with a specified parent node.  Walk through the
+/// statements, adding any labels or gotos to LabelAndGotoScopes and recursively
+/// walking the AST as needed.
+void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
+  
+  // If we found a label, remember that it is in ParentScope scope.
+  if (isa<LabelStmt>(S) || isa<DefaultStmt>(S) || isa<CaseStmt>(S)) {
+    LabelAndGotoScopes[S] = ParentScope;
+  } else if (isa<GotoStmt>(S) || isa<SwitchStmt>(S) ||
+             isa<IndirectGotoStmt>(S)) {
+    // Remember both what scope a goto is in as well as the fact that we have
+    // it.  This makes the second scan not have to walk the AST again.
+    LabelAndGotoScopes[S] = ParentScope;
+    Jumps.push_back(S);
+  }
+
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
+       ++CI) {
     Stmt *SubStmt = *CI;
     if (SubStmt == 0) continue;
     
-    if (StatementCreatesScope(SubStmt))  {
-      ScopeStack.push_back(SubStmt);
-      PopScopeMap[SubStmt] = ParentCompoundStmt;
-    } else if (ObjCAtTryStmt *AT = dyn_cast<ObjCAtTryStmt>(SubStmt)) {
-      ScopeStack.push_back(SubStmt);
-      PopScopeMap[SubStmt] = AT->getTryBody();
-    } else if (ObjCAtCatchStmt *AC = dyn_cast<ObjCAtCatchStmt>(SubStmt)) {
-      ScopeStack.push_back(SubStmt);
-      PopScopeMap[SubStmt] = AC->getCatchBody();
-    } else if (ObjCAtFinallyStmt *AF = dyn_cast<ObjCAtFinallyStmt>(SubStmt)) {
-      ScopeStack.push_back(SubStmt);
-      PopScopeMap[SubStmt] = AF->getFinallyBody();
-    } else if (isa<LabelStmt>(CurStmt)) {
-      LabelScopeMap[CurStmt] = ScopeStack.size() ? ScopeStack.back() : 0;
+    // FIXME: diagnose jumps past initialization: required in C++, warning in C.
+    //     { int X = 4;   L: } goto L;
+
+    // If this is a declstmt with a VLA definition, it defines a scope from here
+    // to the end of the containing context.
+    if (isa<DeclStmt>(SubStmt) &&
+        // If StatementCreatesScope returns true, then it pushed a new scope
+        // onto Scopes.
+        StatementCreatesScope(cast<DeclStmt>(SubStmt), ParentScope)) {
+      // FIXME: what about substatements (initializers) of the DeclStmt itself?
+      // TODO: int x = ({  int x[n]; label: ... });  // decl stmts matter.
+
+      // Continue analyzing the remaining statements in this scope with a new
+      // parent scope ID.
+      ParentScope = Scopes.size()-1;
+      continue;
     }
-    if (isa<DeclStmt>(SubStmt)) continue;
+
+    // Disallow jumps into any part of an @try statement by pushing a scope and
+    // walking all sub-stmts in that scope.
+    if (ObjCAtTryStmt *AT = dyn_cast<ObjCAtTryStmt>(SubStmt)) {
+      Scopes.push_back(GotoScope(ParentScope, diag::note_protected_by_objc_try,
+                                 AT->getAtTryLoc()));
+      // Recursively walk the AST.
+      BuildScopeInformation(SubStmt, Scopes.size()-1);
+      continue;
+    }
+    // FIXME: what about jumps into C++ catch blocks, what are the rules?
     
-    Stmt *CurCompound =
-      isa<CompoundStmt>(SubStmt) ? SubStmt : ParentCompoundStmt;
-    RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack,
-                             SubStmt, CurCompound, S);
+    // Recursively walk the AST.
+    BuildScopeInformation(SubStmt, ParentScope);
+  }
+}
+
+void JumpScopeChecker::VerifyJumps() {
+  while (!Jumps.empty()) {
+    Stmt *Jump = Jumps.pop_back_val();
+    
+    if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
+      // FIXME: invalid code makes dangling AST, see test6 in scope-check.c.
+      // FIXME: This is a hack.
+      if (!LabelAndGotoScopes.count(GS->getLabel())) return;
+      
+      assert(LabelAndGotoScopes.count(GS->getLabel()) && "Label not visited?");
+      CheckJump(GS, LabelAndGotoScopes[GS->getLabel()],
+                diag::err_goto_into_protected_scope);
+    } else if (isa<SwitchStmt>(Jump)) {
+      // FIXME: Handle this.
+      continue;
+    } else {
+      assert(isa<IndirectGotoStmt>(Jump));
+      // FIXME: Emit an error on indirect gotos when not in scope 0.
+      continue;
+    }
+  }
+}
+
+/// CheckJump - Validate that the specified jump statement is valid: that it is
+/// jumping within or out of its current scope, not into a deeper one.
+void JumpScopeChecker::CheckJump(Stmt *Jump, unsigned JumpTargetScope,
+                                 unsigned JumpDiag) {
+  assert(LabelAndGotoScopes.count(Jump) && "Jump didn't get added to scopes?");
+  unsigned JumpScope = LabelAndGotoScopes[Jump];
+
+  // Common case: exactly the same scope, which is fine.
+  if (JumpScope == JumpTargetScope) return;
+  
+  // The only valid mismatch jump case happens when the jump is more deeply
+  // nested inside the jump target.  Do a quick scan to see if the jump is valid
+  // because valid code is more common than invalid code.
+  unsigned TestScope = Scopes[JumpScope].ParentScope;
+  while (TestScope != ~0U) {
+    // If we found the jump target, then we're jumping out of our current scope,
+    // which is perfectly fine.
+    if (TestScope == JumpTargetScope) return;
+    
+    // Otherwise, scan up the hierarchy.
+    TestScope = Scopes[TestScope].ParentScope;
   }
   
-  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
-    ScopeStack.pop_back();
-}
+  // If we get here, then we know we have invalid code.  Diagnose the bad jump,
+  // and then emit a note at each VLA being jumped out of.
+  S.Diag(Jump->getLocStart(), JumpDiag);
 
-static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap,
-                                    llvm::DenseMap<Stmt*, Stmt*> &PopScopeMap,
-                                    llvm::DenseMap<Stmt*, Stmt*> &GotoScopeMap,
-                                    llvm::SmallVectorImpl<Stmt*> &ScopeStack,
-                                    Stmt *CurStmt, Sema &S) {
-  for (Stmt::child_iterator CI = CurStmt->child_begin(),
-       E = CurStmt->child_end(); CI != E; ++CI) {
-    Stmt *SubStmt = *CI;
-    if (SubStmt == 0) continue;
-    
-    if (StatementCreatesScope(SubStmt))  {
-      ScopeStack.push_back(SubStmt);
-    } else if (GotoStmt* GS = dyn_cast<GotoStmt>(SubStmt)) {
-      if (Stmt *LScope = LabelScopeMap[GS->getLabel()]) {
-        bool foundScopeInStack = false;
-        for (unsigned i = ScopeStack.size(); i > 0; --i) {
-          if (LScope == ScopeStack[i-1]) {
-            foundScopeInStack = true;
-            break;
-          }
-        }
-        if (!foundScopeInStack)
-          S.Diag(GS->getSourceRange().getBegin(), diag::err_goto_into_scope);
-      }
+  // FIXME: This is N^2 and silly.
+  while (1) {
+    // Diagnose that the jump jumps over this declaration.
+    const GotoScope &TargetScope = Scopes[JumpTargetScope];
+    S.Diag(TargetScope.Loc, TargetScope.Diag);
+
+    // Walk out one level.
+    JumpTargetScope = Scopes[JumpTargetScope].ParentScope;
+    assert(JumpTargetScope != ~0U && "Didn't find top-level function scope?");
+ 
+    // Check to see if the jump is valid now.
+    unsigned TestScope = JumpScope;
+    while (TestScope != ~0U) {
+      // If we found the jump target, the the jump became valid.
+      if (TestScope == JumpTargetScope) return;
+      
+      // Otherwise, scan up the hierarchy.
+      TestScope = Scopes[TestScope].ParentScope;
     }
-    if (isa<DeclStmt>(SubStmt)) continue;
-    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
-                            ScopeStack, SubStmt, S);
   }
-  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
-    ScopeStack.pop_back();
-}
-
-/// CheckFunctionJumpScopes - Check the body of a function to see if gotos obey
-/// the scopes of VLAs and other things correctly.
-static void CheckFunctionJumpScopes(Stmt *Body, Sema &S) {
-  llvm::DenseMap<Stmt*, Stmt*> LabelScopeMap;
-  llvm::DenseMap<Stmt*, Stmt*> PopScopeMap;
-  llvm::DenseMap<Stmt*, Stmt*> GotoScopeMap;
-  llvm::SmallVector<Stmt*, 32> ScopeStack;
-  RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack, Body, Body,
-                           S);
-  RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
-                          ScopeStack, Body, S);
 }
 
 
 Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   Decl *dcl = D.getAs<Decl>();
-  Stmt *Body = static_cast<Stmt*>(BodyArg.release());
+  CompoundStmt *Body =cast<CompoundStmt>(static_cast<Stmt*>(BodyArg.release()));
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
-    FD->setBody(cast<CompoundStmt>(Body));
+    FD->setBody(Body);
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
-    MD->setBody(cast<CompoundStmt>(Body));
+    MD->setBody(Body);
   } else {
     Body->Destroy(Context);
     return DeclPtrTy();
@@ -3065,7 +3187,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
 
   // If we have labels, verify that goto doesn't jump into scopes illegally.
   if (HaveLabels)
-    CheckFunctionJumpScopes(Body, *this);
+    JumpScopeChecker(Body, *this);
 
   return D;
 }

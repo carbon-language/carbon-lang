@@ -2,11 +2,11 @@
 
 @class A, B, C;
 
-void f() {
-  goto L; // expected-error{{illegal jump}}
-  goto L2; // expected-error{{illegal jump}}
-  goto L3; // expected-error{{illegal jump}}
-  @try {
+void test1() {
+  goto L; // expected-error{{illegal goto into protected scope}}
+  goto L2; // expected-error{{illegal goto into protected scope}}
+  goto L3; // expected-error{{illegal goto into protected scope}}
+  @try {   // expected-note 3 {{scope created by @try block}}
 L: ;
   } @catch (A *x) {
 L2: ;
@@ -17,9 +17,17 @@ L3: ;
   }
 }
 
-void f0(int a) {
+void test2(int a) {
   if (a) goto L0;
   @try {} @finally {}
  L0:
   return;
+}
+
+// rdar://6803963
+void test3() {
+  @try {
+    goto blargh;
+  blargh: ;
+  } @catch (...) {}
 }

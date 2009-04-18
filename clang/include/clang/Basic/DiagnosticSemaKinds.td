@@ -831,8 +831,15 @@ def err_bitfield_width_exceeds_type_size : Error<
 def err_redefinition_of_label : Error<"redefinition of label '%0'">;
 def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
 
-def err_goto_into_scope : Error<"illegal jump (scoping violation)">;
-
+def err_goto_into_protected_scope : Error<"illegal goto into protected scope">;
+def note_protected_by_vla_typedef : Note<
+  "scope created by VLA typedef">;
+def note_protected_by_vla : Note<
+  "scope created by variable length array">;
+def note_protected_by_cleanup : Note<
+  "scope created by declaration with __attribute__((cleanup))">;
+def note_protected_by_objc_try : Note<
+  "scope created by @try block">;
 
 def err_func_returning_array_function : Error<
   "function cannot return array or function type %0">;
