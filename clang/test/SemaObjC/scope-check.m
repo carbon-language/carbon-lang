@@ -44,8 +44,6 @@ L3: ;
   } @catch (C *c) { // expected-note {{jump bypasses initialization of @catch block}}
   L8: ;
   }
-  
-  
 }
 
 void test2(int a) {
@@ -62,3 +60,18 @@ void test3() {
   blargh: ;
   } @catch (...) {}
 }
+
+@interface Greeter
++ (void) hello;
+@end
+
+@implementation Greeter
++ (void) hello {
+
+  @try {
+    goto blargh;     // expected-error {{illegal goto into protected scope}}
+  } @catch (...) {   // expected-note {{jump bypasses initialization of @catch block}}
+  blargh: ;
+  }
+}
+@end

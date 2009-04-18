@@ -2908,11 +2908,6 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
 
 
 /// TODO: statement expressions, for (int x[n]; ;), case.
-/// TODO: check the body of an objc method.
-
-// TODO: Consider wording like: "branching bypasses declaration of
-// variable-length"
-
 
 /// JumpScopeChecker - This object is used by Sema to diagnose invalid jumps
 /// into VLA and other protected scopes.  For example, this rejects:
