@@ -123,6 +123,22 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
   return false;
 }
 
+/// overlaps - Return true if the live interval overlaps a range specified
+/// by [Start, End).
+bool LiveInterval::overlaps(unsigned Start, unsigned End) const {
+  assert(Start < End && "Invalid range");
+  const_iterator I  = begin();
+  const_iterator E  = end();
+  const_iterator si = std::upper_bound(I, E, Start);
+  const_iterator ei = std::upper_bound(I, E, End);
+  if (si != ei)
+    return true;
+  if (si == I)
+    return false;
+  --si;
+  return si->contains(Start);
+}
+
 /// extendIntervalEndTo - This method is used when we want to extend the range
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is

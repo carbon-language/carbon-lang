@@ -379,6 +379,10 @@ namespace llvm {
       return overlapsFrom(other, other.begin());
     }
 
+    /// overlaps - Return true if the live interval overlaps a range specified
+    /// by [Start, End).
+    bool overlaps(unsigned Start, unsigned End) const;
+
     /// overlapsFrom - Return true if the intersection of the two live intervals
     /// is not empty.  The specified iterator is a hint that we can begin
     /// scanning the Other interval starting at I.
