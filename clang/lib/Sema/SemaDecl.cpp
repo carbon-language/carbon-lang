@@ -3026,7 +3026,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     // @catch always starts a new scope.
     // FIXME: We have to do this because @catches are nested inside each other,
     // which seems weird and causes us to emit wierd diagnostics.
-    Scopes.push_back(GotoScope(ParentScope,diag::note_protected_by_objc_catch,
+    Scopes.push_back(GotoScope(ParentScope, diag::note_protected_by_objc_catch,
                                AC->getAtCatchLoc()));
     ParentScope = Scopes.size()-1;
   }
