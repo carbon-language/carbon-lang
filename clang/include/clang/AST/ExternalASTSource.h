@@ -55,6 +55,13 @@ public:
   /// building a new declaration.
   virtual Decl *GetDecl(unsigned ID) = 0;
 
+  /// \brief Resolve the offset of a statement into a statement.
+  ///
+  /// This operation will read a new statement from the external
+  /// source each time it is called, and is meant to be used via a
+  /// LazyOffsetPtr.
+  virtual Stmt *GetStmt(uint64_t Offset) = 0;
+
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.
   ///
@@ -94,6 +101,72 @@ public:
   /// the external AST source.
   virtual void PrintStats();
 };
+
+/// \brief A lazy pointer to an AST node (of base type T) that resides
+/// within an external AST source.
+///
+/// The AST node is identified within the external AST source by a
+/// 63-bit offset, and can be retrieved via an operation on the
+/// external AST source itself.
+template<typename T, T* (ExternalASTSource::*Get)(uint64_t Offset)>
+struct LazyOffsetPtr {
+  /// \brief Either a pointer to an AST node or the offset within the
+  /// external AST source where the AST node can be found.
+  ///
+  /// If the low bit is clear, a pointer to the AST node. If the low
+  /// bit is set, the upper 63 bits are the offset.
+  mutable uint64_t Ptr;
+
+public:
+  LazyOffsetPtr() : Ptr(0) { }
+
+  explicit LazyOffsetPtr(T *Ptr) : Ptr(reinterpret_cast<uint64_t>(Ptr)) { }
+  explicit LazyOffsetPtr(uint64_t Offset) : Ptr((Offset << 1) | 0x01) {
+    assert((Offset << 1 >> 1) == Offset && "Offsets must require < 63 bits");
+    if (Offset == 0)
+      Ptr = 0;
+  }
+
+  LazyOffsetPtr &operator=(T *Ptr) {
+    this->Ptr = reinterpret_cast<uint64_t>(Ptr);
+    return *this;
+  }
+  
+  LazyOffsetPtr &operator=(uint64_t Offset) {
+    assert((Offset << 1 >> 1) == Offset && "Offsets must require < 63 bits");
+    if (Offset == 0)
+      Ptr = 0;
+    else
+      Ptr = (Offset << 1) | 0x01;
+
+    return *this;
+  }
+
+  /// \brief Whether this pointer is non-NULL.
+  ///
+  /// This operation does not require the AST node to be deserialized.
+  operator bool() const { return Ptr != 0; }
+
+  /// \brief Whether this pointer is currently stored as an offset.
+  bool isOffset() const { return Ptr & 0x01; }
+
+  /// \brief Retrieve the pointer to the AST node that this lazy pointer
+  ///
+  /// \param Source the external AST source.
+  ///
+  /// \returns a pointer to the AST node.
+  T* get(ExternalASTSource *Source) const {
+    if (isOffset()) {
+      assert(Source && 
+             "Cannot deserialize a lazy pointer without an AST source");
+      Ptr = reinterpret_cast<uint64_t>((Source->*Get)(Ptr >> 1));
+    }
+    return reinterpret_cast<T*>(Ptr);
+  }
+};
+
+/// \brief A lazy pointer to a statement.
+typedef LazyOffsetPtr<Stmt, &ExternalASTSource::GetStmt> LazyStmtPtr;
 
 } // end namespace clang
 

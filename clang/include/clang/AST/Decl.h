@@ -565,7 +565,7 @@ private:
   /// FunctionDecl object to save an allocation like FunctionType does.
   ParmVarDecl **ParamInfo;
   
-  Stmt *Body;
+  LazyStmtPtr Body;
   
   /// PreviousDeclaration - A link to the previous declaration of this
   /// same function, NULL if this is the first declaration. For
@@ -641,6 +641,7 @@ public:
   bool isThisDeclarationADefinition() const { return Body; }
 
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
+  void setLazyBody(uint64_t Offset) { Body = Offset; }
 
   /// Whether this function is virtual, either by explicit marking, or by
   /// overriding a virtual function. Only valid on C++ member functions.

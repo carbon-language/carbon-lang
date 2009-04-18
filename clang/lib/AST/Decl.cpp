@@ -308,8 +308,8 @@ const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
 //===----------------------------------------------------------------------===//
 
 void FunctionDecl::Destroy(ASTContext& C) {
-  if (Body)
-    Body->Destroy(C);
+  if (Body && Body.isOffset())
+    Body.get(C.getExternalSource())->Destroy(C);
 
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     (*I)->Destroy(C);
@@ -325,7 +325,7 @@ CompoundStmt *FunctionDecl::getBody(ASTContext &Context,
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
     if (FD->Body) {
       Definition = FD;
-      return cast<CompoundStmt>(FD->Body);
+      return cast<CompoundStmt>(FD->Body.get(Context.getExternalSource()));
     }
   }
 
@@ -334,8 +334,9 @@ CompoundStmt *FunctionDecl::getBody(ASTContext &Context,
 
 CompoundStmt *FunctionDecl::getBodyIfAvailable() const {
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
-    if (FD->Body)
-      return cast<CompoundStmt>(FD->Body);
+    if (FD->Body && !FD->Body.isOffset()) {
+      return cast<CompoundStmt>(FD->Body.get(0));
+    }
   }
 
   return 0;

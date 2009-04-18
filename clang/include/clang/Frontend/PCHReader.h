@@ -190,6 +190,13 @@ public:
   /// building a new declaration.
   virtual Decl *GetDecl(pch::DeclID ID);
 
+  /// \brief Resolve the offset of a statement into a statement.
+  ///
+  /// This operation will read a new statement from the external
+  /// source each time it is called, and is meant to be used via a
+  /// LazyOffsetPtr.
+  virtual Stmt *GetStmt(uint64_t Offset);
+
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.
   ///

@@ -140,7 +140,7 @@ void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitValueDecl(FD);
   if (Record[Idx++])
-    FD->setBody(cast<CompoundStmt>(Reader.ReadStmt()));
+    FD->setLazyBody(Reader.getStream().GetCurrentBitNo());
   FD->setPreviousDeclaration(
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
@@ -1878,6 +1878,15 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 
   // Load the declaration from the PCH file.
   return ReadDeclRecord(DeclOffsets[Index], Index);
+}
+
+Stmt *PCHReader::GetStmt(uint64_t Offset) {
+  // Keep track of where we are in the stream, then jump back there
+  // after reading this declaration.
+  SavedStreamPosition SavedPosition(Stream);
+
+  Stream.JumpToBit(Offset);
+  return ReadStmt();
 }
 
 bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
