@@ -95,4 +95,21 @@ void test9() {
   ^{ somelabel: ; }();
 }
 
+void test10(int i) {
+  switch (i) {
+  case 41: ;
+  ^{ case 42: ; }();     // expected-error {{'case' statement not in switch statement}}
+  }
+}
+
+void test11(int i) {
+  switch (i) {
+  case 41: ;
+    ^{ break; }();     // expected-error {{'break' statement not in loop or switch statement}}
+  }
+  
+  for (; i < 100; ++i)
+    ^{ break; }();     // expected-error {{'break' statement not in loop or switch statement}}
+}
+
 

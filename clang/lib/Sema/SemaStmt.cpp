@@ -112,7 +112,7 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
     rhsval = 0;
   }
 
-  if (SwitchStack.empty()) {
+  if (getSwitchStack().empty()) {
     Diag(CaseLoc, diag::err_case_not_in_switch);
     return StmtError();
   }
@@ -121,7 +121,7 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
   lhsval.release();
   rhsval.release();
   CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc);
-  SwitchStack.back()->addSwitchCase(CS);
+  getSwitchStack().back()->addSwitchCase(CS);
   return Owned(CS);
 }
 
@@ -137,13 +137,13 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
                        StmtArg subStmt, Scope *CurScope) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
 
-  if (SwitchStack.empty()) {
+  if (getSwitchStack().empty()) {
     Diag(DefaultLoc, diag::err_default_not_in_switch);
     return Owned(SubStmt);
   }
 
   DefaultStmt *DS = new (Context) DefaultStmt(DefaultLoc, SubStmt);
-  SwitchStack.back()->addSwitchCase(DS);
+  getSwitchStack().back()->addSwitchCase(DS);
   return Owned(DS);
 }
 
@@ -241,7 +241,7 @@ Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
   }
 
   SwitchStmt *SS = new (Context) SwitchStmt(Cond);
-  SwitchStack.push_back(SS);
+  getSwitchStack().push_back(SS);
   return Owned(SS);
 }
 
@@ -325,11 +325,11 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
                             StmtArg Body) {
   Stmt *BodyStmt = (Stmt*)Body.release();
 
-  SwitchStmt *SS = SwitchStack.back();
+  SwitchStmt *SS = getSwitchStack().back();
   assert(SS == (SwitchStmt*)Switch.get() && "switch stack missing push/pop!");
 
   SS->setBody(BodyStmt, SwitchLoc);
-  SwitchStack.pop_back(); 
+  getSwitchStack().pop_back(); 
 
   Expr *CondExpr = SS->getCond();
   QualType CondType = CondExpr->getType();

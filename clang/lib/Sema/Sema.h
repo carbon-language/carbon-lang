@@ -103,6 +103,10 @@ struct BlockSemaInfo {
   /// labels have a LabelStmt created for them with a null location & SubStmt.
   llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
   
+  /// SwitchStack - This is the current set of active switch statements in the
+  /// block.
+  llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
+  
   /// PrevBlockInfo - If this is nested inside another block, this points
   /// to the outer block.
   BlockSemaInfo *PrevBlockInfo;
@@ -144,7 +148,10 @@ public:
   /// to handle blocks properly.
   llvm::DenseMap<IdentifierInfo*, LabelStmt*> FunctionLabelMap;
   
-  llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
+  /// FunctionSwitchStack - This is the current set of active switch statements
+  /// in the top level function.  Clients should always use getSwitchStack() to
+  /// handle the case when they are in a block.
+  llvm::SmallVector<SwitchStmt*, 8> FunctionSwitchStack;
   
   /// ExtVectorDecls - This is a list all the extended vector types. This allows
   /// us to associate a raw vector type with one of the ext_vector type names.
@@ -334,6 +341,12 @@ public:
   /// return it.
   llvm::DenseMap<IdentifierInfo*, LabelStmt*> &getLabelMap() {
     return CurBlock ? CurBlock->LabelMap : FunctionLabelMap;
+  }
+  
+  /// getSwitchStack - This is returns the switch stack for the current block or
+  /// function.
+  llvm::SmallVector<SwitchStmt*,8> &getSwitchStack() {
+    return CurBlock ? CurBlock->SwitchStack : FunctionSwitchStack;
   }
   
   //===--------------------------------------------------------------------===//
