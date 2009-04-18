@@ -98,7 +98,7 @@ namespace {
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
                                    SCEVExpander &Rewriter);
-    void RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount);
+    void RewriteLoopExitValues(Loop *L, const SCEV *BackedgeTakenCount);
 
     void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts);
 
@@ -211,7 +211,8 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 /// final value of any expressions that are recurrent in the loop, and
 /// substitute the exit values from the loop into any instructions outside of
 /// the loop that use the final values of the current expressions.
-void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *BackedgeTakenCount) {
+void IndVarSimplify::RewriteLoopExitValues(Loop *L,
+                                           const SCEV *BackedgeTakenCount) {
   BasicBlock *Preheader = L->getLoopPreheader();
 
   // Scan all of the instructions in the loop, looking at those that have
@@ -627,7 +628,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       // polynomial evaluations inside of the loop, and the str reduction pass
       // currently can only reduce affine polynomials.  For now just disable
       // indvar subst on anything more complex than an affine addrec.
-      if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SCEV))
+      if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SCEV))
         if (AR->getLoop() == L && AR->isAffine())
           IndVars.push_back(std::make_pair(PN, SCEV));
     }
@@ -716,7 +717,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // variable.
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
-    SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(IndVars.back().second);
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(IndVars.back().second);
     Value *NewVal = Rewriter.expandCodeFor(AR, PN->getType(), InsertPt);
     DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *PN
          << "   into = " << *NewVal << "\n";

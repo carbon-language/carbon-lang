@@ -112,7 +112,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   return BinaryOperator::Create(Opcode, LHS, RHS, "tmp", InsertPt);
 }
 
-Value *SCEVExpander::visitAddExpr(SCEVAddExpr *S) {
+Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   const Type *Ty = S->getType();
   if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
   Value *V = expand(S->getOperand(S->getNumOperands()-1));
@@ -127,11 +127,11 @@ Value *SCEVExpander::visitAddExpr(SCEVAddExpr *S) {
   return V;
 }
     
-Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
+Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
   const Type *Ty = S->getType();
   if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
   int FirstOp = 0;  // Set if we should emit a subtract.
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getOperand(0)))
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getOperand(0)))
     if (SC->getValue()->isAllOnesValue())
       FirstOp = 1;
 
@@ -152,13 +152,13 @@ Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
   return V;
 }
 
-Value *SCEVExpander::visitUDivExpr(SCEVUDivExpr *S) {
+Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
   const Type *Ty = S->getType();
   if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
 
   Value *LHS = expand(S->getLHS());
   LHS = InsertCastOfTo(CastInst::getCastOpcode(LHS, false, Ty, false), LHS, Ty);
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getRHS())) {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getRHS())) {
     const APInt &RHS = SC->getValue()->getValue();
     if (RHS.isPowerOf2())
       return InsertBinop(Instruction::LShr, LHS,
@@ -171,7 +171,7 @@ Value *SCEVExpander::visitUDivExpr(SCEVUDivExpr *S) {
   return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
 }
 
-Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
+Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   const Type *Ty = S->getType();
   const Loop *L = S->getLoop();
   // We cannot yet do fp recurrences, e.g. the xform of {X,+,F} --> X+{0,+,F}
@@ -275,14 +275,14 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   return expand(V);
 }
 
-Value *SCEVExpander::visitTruncateExpr(SCEVTruncateExpr *S) {
+Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
   Value *V = expand(S->getOperand());
   if (isa<PointerType>(V->getType()))
     V = InsertCastOfTo(Instruction::PtrToInt, V, TD.getIntPtrType());
   return CastInst::CreateTruncOrBitCast(V, S->getType(), "tmp.", InsertPt);
 }
 
-Value *SCEVExpander::visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
+Value *SCEVExpander::visitZeroExtendExpr(const SCEVZeroExtendExpr *S) {
   const Type *Ty = S->getType();
   if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
   Value *V = expand(S->getOperand());
@@ -291,7 +291,7 @@ Value *SCEVExpander::visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
   return CastInst::CreateZExtOrBitCast(V, Ty, "tmp.", InsertPt);
 }
 
-Value *SCEVExpander::visitSignExtendExpr(SCEVSignExtendExpr *S) {
+Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
   const Type *Ty = S->getType();
   if (isa<PointerType>(Ty)) Ty = TD.getIntPtrType();
   Value *V = expand(S->getOperand());
@@ -300,7 +300,7 @@ Value *SCEVExpander::visitSignExtendExpr(SCEVSignExtendExpr *S) {
   return CastInst::CreateSExtOrBitCast(V, Ty, "tmp.", InsertPt);
 }
 
-Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
+Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
   const Type *Ty = S->getType();
   Value *LHS = expand(S->getOperand(0));
   LHS = InsertCastOfTo(CastInst::getCastOpcode(LHS, false, Ty, false), LHS, Ty);
@@ -314,7 +314,7 @@ Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
   return LHS;
 }
 
-Value *SCEVExpander::visitUMaxExpr(SCEVUMaxExpr *S) {
+Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   const Type *Ty = S->getType();
   Value *LHS = expand(S->getOperand(0));
   LHS = InsertCastOfTo(CastInst::getCastOpcode(LHS, false, Ty, false), LHS, Ty);
@@ -338,7 +338,7 @@ Value *SCEVExpander::expandCodeFor(SCEVHandle SH, const Type *Ty,
   return InsertCastOfTo(CastInst::getCastOpcode(V, false, Ty, false), V, Ty);
 }
 
-Value *SCEVExpander::expand(SCEV *S) {
+Value *SCEVExpander::expand(const SCEV *S) {
   // Check to see if we already expanded this.
   std::map<SCEVHandle, Value*>::iterator I = InsertedExpressions.find(S);
   if (I != InsertedExpressions.end())

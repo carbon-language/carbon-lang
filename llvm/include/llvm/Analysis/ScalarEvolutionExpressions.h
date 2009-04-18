@@ -552,39 +552,39 @@ namespace llvm {
   /// for various SCEV analysis purposes.
   template<typename SC, typename RetVal=void>
   struct SCEVVisitor {
-    RetVal visit(SCEV *S) {
+    RetVal visit(const SCEV *S) {
       switch (S->getSCEVType()) {
       case scConstant:
-        return ((SC*)this)->visitConstant((SCEVConstant*)S);
+        return ((SC*)this)->visitConstant((const SCEVConstant*)S);
       case scTruncate:
-        return ((SC*)this)->visitTruncateExpr((SCEVTruncateExpr*)S);
+        return ((SC*)this)->visitTruncateExpr((const SCEVTruncateExpr*)S);
       case scZeroExtend:
-        return ((SC*)this)->visitZeroExtendExpr((SCEVZeroExtendExpr*)S);
+        return ((SC*)this)->visitZeroExtendExpr((const SCEVZeroExtendExpr*)S);
       case scSignExtend:
-        return ((SC*)this)->visitSignExtendExpr((SCEVSignExtendExpr*)S);
+        return ((SC*)this)->visitSignExtendExpr((const SCEVSignExtendExpr*)S);
       case scAddExpr:
-        return ((SC*)this)->visitAddExpr((SCEVAddExpr*)S);
+        return ((SC*)this)->visitAddExpr((const SCEVAddExpr*)S);
       case scMulExpr:
-        return ((SC*)this)->visitMulExpr((SCEVMulExpr*)S);
+        return ((SC*)this)->visitMulExpr((const SCEVMulExpr*)S);
       case scUDivExpr:
-        return ((SC*)this)->visitUDivExpr((SCEVUDivExpr*)S);
+        return ((SC*)this)->visitUDivExpr((const SCEVUDivExpr*)S);
       case scAddRecExpr:
-        return ((SC*)this)->visitAddRecExpr((SCEVAddRecExpr*)S);
+        return ((SC*)this)->visitAddRecExpr((const SCEVAddRecExpr*)S);
       case scSMaxExpr:
-        return ((SC*)this)->visitSMaxExpr((SCEVSMaxExpr*)S);
+        return ((SC*)this)->visitSMaxExpr((const SCEVSMaxExpr*)S);
       case scUMaxExpr:
-        return ((SC*)this)->visitUMaxExpr((SCEVUMaxExpr*)S);
+        return ((SC*)this)->visitUMaxExpr((const SCEVUMaxExpr*)S);
       case scUnknown:
-        return ((SC*)this)->visitUnknown((SCEVUnknown*)S);
+        return ((SC*)this)->visitUnknown((const SCEVUnknown*)S);
       case scCouldNotCompute:
-        return ((SC*)this)->visitCouldNotCompute((SCEVCouldNotCompute*)S);
+        return ((SC*)this)->visitCouldNotCompute((const SCEVCouldNotCompute*)S);
       default:
         assert(0 && "Unknown SCEV type!");
         abort();
       }
     }
 
-    RetVal visitCouldNotCompute(SCEVCouldNotCompute *S) {
+    RetVal visitCouldNotCompute(const SCEVCouldNotCompute *S) {
       assert(0 && "Invalid use of SCEVCouldNotCompute!");
       abort();
       return RetVal();

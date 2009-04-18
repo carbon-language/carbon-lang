@@ -278,13 +278,13 @@ static bool containsAddRecFromDifferentLoop(SCEVHandle S, Loop *L) {
   // This is very common, put it first.
   if (isa<SCEVConstant>(S))
     return false;
-  if (SCEVCommutativeExpr *AE = dyn_cast<SCEVCommutativeExpr>(S)) {
+  if (const SCEVCommutativeExpr *AE = dyn_cast<SCEVCommutativeExpr>(S)) {
     for (unsigned int i=0; i< AE->getNumOperands(); i++)
       if (containsAddRecFromDifferentLoop(AE->getOperand(i), L))
         return true;
     return false;
   }
-  if (SCEVAddRecExpr *AE = dyn_cast<SCEVAddRecExpr>(S)) {
+  if (const SCEVAddRecExpr *AE = dyn_cast<SCEVAddRecExpr>(S)) {
     if (const Loop *newLoop = AE->getLoop()) {
       if (newLoop == L)
         return false;
@@ -294,21 +294,21 @@ static bool containsAddRecFromDifferentLoop(SCEVHandle S, Loop *L) {
     }
     return true;
   }
-  if (SCEVUDivExpr *DE = dyn_cast<SCEVUDivExpr>(S))
+  if (const SCEVUDivExpr *DE = dyn_cast<SCEVUDivExpr>(S))
     return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
            containsAddRecFromDifferentLoop(DE->getRHS(), L);
 #if 0
   // SCEVSDivExpr has been backed out temporarily, but will be back; we'll 
   // need this when it is.
-  if (SCEVSDivExpr *DE = dyn_cast<SCEVSDivExpr>(S))
+  if (const SCEVSDivExpr *DE = dyn_cast<SCEVSDivExpr>(S))
     return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
            containsAddRecFromDifferentLoop(DE->getRHS(), L);
 #endif
-  if (SCEVTruncateExpr *TE = dyn_cast<SCEVTruncateExpr>(S))
+  if (const SCEVTruncateExpr *TE = dyn_cast<SCEVTruncateExpr>(S))
     return containsAddRecFromDifferentLoop(TE->getOperand(), L);
-  if (SCEVZeroExtendExpr *ZE = dyn_cast<SCEVZeroExtendExpr>(S))
+  if (const SCEVZeroExtendExpr *ZE = dyn_cast<SCEVZeroExtendExpr>(S))
     return containsAddRecFromDifferentLoop(ZE->getOperand(), L);
-  if (SCEVSignExtendExpr *SE = dyn_cast<SCEVSignExtendExpr>(S))
+  if (const SCEVSignExtendExpr *SE = dyn_cast<SCEVSignExtendExpr>(S))
     return containsAddRecFromDifferentLoop(SE->getOperand(), L);
   return false;
 }
@@ -326,7 +326,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 
   // If the outer level is an AddExpr, the operands are all start values except
   // for a nested AddRecExpr.
-  if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(SH)) {
+  if (const SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(SH)) {
     for (unsigned i = 0, e = AE->getNumOperands(); i != e; ++i)
       if (SCEVAddRecExpr *AddRec =
              dyn_cast<SCEVAddRecExpr>(AE->getOperand(i))) {
@@ -344,7 +344,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
     return false;  // not analyzable.
   }
   
-  SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(TheAddRec);
+  const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(TheAddRec);
   if (!AddRec || AddRec->getLoop() != L) return false;
   
   // FIXME: Generalize to non-affine IV's.
@@ -787,7 +787,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
 /// mode, and does not need to be put in a register first.
 static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
                              const TargetLowering *TLI, bool HasBaseReg) {
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     int64_t VC = SC->getValue()->getSExtValue();
     if (TLI) {
       TargetLowering::AddrMode AM;
@@ -800,7 +800,7 @@ static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
     }
   }
 
-  if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
+  if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
     if (GlobalValue *GV = dyn_cast<GlobalValue>(SU->getValue())) {
       TargetLowering::AddrMode AM;
       AM.BaseGV = GV;
@@ -817,7 +817,7 @@ static void MoveLoopVariantsToImmediateField(SCEVHandle &Val, SCEVHandle &Imm,
                                             Loop *L, ScalarEvolution *SE) {
   if (Val->isLoopInvariant(L)) return;  // Nothing to do.
   
-  if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
+  if (const SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
     std::vector<SCEVHandle> NewOps;
     NewOps.reserve(SAE->getNumOperands());
     
@@ -834,7 +834,7 @@ static void MoveLoopVariantsToImmediateField(SCEVHandle &Val, SCEVHandle &Imm,
       Val = SE->getIntegerSCEV(0, Val->getType());
     else
       Val = SE->getAddExpr(NewOps);
-  } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
+  } else if (const SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
     MoveLoopVariantsToImmediateField(Start, Imm, L, SE);
@@ -858,7 +858,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
                                 SCEVHandle &Val, SCEVHandle &Imm,
                                 bool isAddress, Loop *L,
                                 ScalarEvolution *SE) {
-  if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
+  if (const SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
     std::vector<SCEVHandle> NewOps;
     NewOps.reserve(SAE->getNumOperands());
     
@@ -880,7 +880,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     else
       Val = SE->getAddExpr(NewOps);
     return;
-  } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
+  } else if (const SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
     MoveImmediateValues(TLI, UseTy, Start, Imm, isAddress, L, SE);
@@ -891,7 +891,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
       Val = SE->getAddRecExpr(Ops, SARE->getLoop());
     }
     return;
-  } else if (SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
+  } else if (const SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
     // Transform "8 * (4 + v)" -> "32 + 8*V" if "32" fits in the immed field.
     if (isAddress && fitsInAddressMode(SME->getOperand(0), UseTy, TLI, false) &&
         SME->getNumOperands() == 2 && SME->isLoopInvariant(L)) {
@@ -945,10 +945,10 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
                              SCEVHandle Expr,
                              ScalarEvolution *SE) {
-  if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Expr)) {
+  if (const SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Expr)) {
     for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
       SeparateSubExprs(SubExprs, AE->getOperand(j), SE);
-  } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Expr)) {
+  } else if (const SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Expr)) {
     SCEVHandle Zero = SE->getIntegerSCEV(0, Expr->getType());
     if (SARE->getOperand(0) == Zero) {
       SubExprs.push_back(Expr);
@@ -1156,7 +1156,7 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
       continue;
     
     TargetLowering::AddrMode AM;
-    if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
+    if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
       AM.BaseOffs = SC->getValue()->getSExtValue();
     AM.HasBaseReg = HasBaseReg || !UsersToProcess[i].Base->isZero();
     AM.Scale = Scale;
@@ -1201,7 +1201,7 @@ SCEVHandle LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 const SCEVHandle &Stride, 
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
     int64_t SInt = SC->getValue()->getSExtValue();
     for (unsigned NewStride = 0, e = StrideOrder.size(); NewStride != e;
          ++NewStride) {
@@ -1261,8 +1261,8 @@ SCEVHandle LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                 IVsByStride.find(StrideOrder[NewStride]);
       if (SI == IVsByStride.end()) 
         continue;
-      if (SCEVMulExpr *ME = dyn_cast<SCEVMulExpr>(SI->first))
-        if (SCEVConstant *SC = dyn_cast<SCEVConstant>(ME->getOperand(0)))
+      if (const SCEVMulExpr *ME = dyn_cast<SCEVMulExpr>(SI->first))
+        if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(ME->getOperand(0)))
           if (Stride == ME->getOperand(1) &&
               SC->getValue()->getSExtValue() == -1LL)
             for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
@@ -1287,11 +1287,11 @@ static bool PartitionByIsUseOfPostIncrementedValue(const BasedUser &Val) {
 /// isNonConstantNegative - Return true if the specified scev is negated, but
 /// not a constant.
 static bool isNonConstantNegative(const SCEVHandle &Expr) {
-  SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Expr);
+  const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Expr);
   if (!Mul) return false;
   
   // If there is a constant factor, it will be first.
-  SCEVConstant *SC = dyn_cast<SCEVConstant>(Mul->getOperand(0));
+  const SCEVConstant *SC = dyn_cast<SCEVConstant>(Mul->getOperand(0));
   if (!SC) return false;
   
   // Return true if the value is negative, this matches things like (-42 * V).
@@ -1711,10 +1711,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // If the immediate part of the common expression is a GV, check if it's
       // possible to fold it into the target addressing mode.
       GlobalValue *GV = 0;
-      if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(Imm))
+      if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(Imm))
         GV = dyn_cast<GlobalValue>(SU->getValue());
       int64_t Offset = 0;
-      if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
+      if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
         Offset = SC->getValue()->getSExtValue();
       if (GV || Offset)
         // Pass VoidTy as the AccessTy to be conservative, because
@@ -1963,8 +1963,8 @@ namespace {
     explicit StrideCompare(const TargetData *td) : TD(td) {}
 
     bool operator()(const SCEVHandle &LHS, const SCEVHandle &RHS) {
-      SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
-      SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
+      const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
+      const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
       if (LHSC && RHSC) {
         int64_t  LV = LHSC->getValue()->getSExtValue();
         int64_t  RV = RHSC->getValue()->getSExtValue();
@@ -2239,7 +2239,7 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
   // Check the relevant induction variable for conformance to
   // the pattern.
   SCEVHandle IV = SE->getSCEV(Cond->getOperand(0));
-  SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(IV);
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(IV);
   if (!AR || !AR->isAffine() ||
       AR->getStart() != One ||
       AR->getStepRecurrence(*SE) != One)

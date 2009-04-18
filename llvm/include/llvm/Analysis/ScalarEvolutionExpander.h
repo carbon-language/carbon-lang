@@ -69,7 +69,7 @@ namespace llvm {
 
     /// addInsertedValue - Remember the specified instruction as being the
     /// canonical form for the specified SCEV.
-    void addInsertedValue(Instruction *I, SCEV *S) {
+    void addInsertedValue(Instruction *I, const SCEV *S) {
       InsertedExpressions[S] = (Value*)I;
       InsertedInstructions.insert(I);
     }
@@ -90,31 +90,31 @@ namespace llvm {
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
                               Value *RHS, Instruction *InsertPt);
   protected:
-    Value *expand(SCEV *S);
+    Value *expand(const SCEV *S);
 
-    Value *visitConstant(SCEVConstant *S) {
+    Value *visitConstant(const SCEVConstant *S) {
       return S->getValue();
     }
 
-    Value *visitTruncateExpr(SCEVTruncateExpr *S);
+    Value *visitTruncateExpr(const SCEVTruncateExpr *S);
 
-    Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S);
+    Value *visitZeroExtendExpr(const SCEVZeroExtendExpr *S);
 
-    Value *visitSignExtendExpr(SCEVSignExtendExpr *S);
+    Value *visitSignExtendExpr(const SCEVSignExtendExpr *S);
 
-    Value *visitAddExpr(SCEVAddExpr *S);
+    Value *visitAddExpr(const SCEVAddExpr *S);
 
-    Value *visitMulExpr(SCEVMulExpr *S);
+    Value *visitMulExpr(const SCEVMulExpr *S);
 
-    Value *visitUDivExpr(SCEVUDivExpr *S);
+    Value *visitUDivExpr(const SCEVUDivExpr *S);
 
-    Value *visitAddRecExpr(SCEVAddRecExpr *S);
+    Value *visitAddRecExpr(const SCEVAddRecExpr *S);
 
-    Value *visitSMaxExpr(SCEVSMaxExpr *S);
+    Value *visitSMaxExpr(const SCEVSMaxExpr *S);
 
-    Value *visitUMaxExpr(SCEVUMaxExpr *S);
+    Value *visitUMaxExpr(const SCEVUMaxExpr *S);
 
-    Value *visitUnknown(SCEVUnknown *S) {
+    Value *visitUnknown(const SCEVUnknown *S) {
       return S->getValue();
     }
   };
