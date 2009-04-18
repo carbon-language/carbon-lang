@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -std=gnu99 %s
 
 int test1(int x) {
   goto L;    // expected-error{{illegal goto into protected scope}}
@@ -61,7 +61,7 @@ int test8(int x) {
   goto L2;     // expected-error {{illegal goto into protected scope}}
   for (int arr[x];   // expected-note {{jump bypasses initialization of variable length array}}  
        ; ++x)
-  L2:;
+    L2:;
 
   // Statement expressions.
   goto L3;   // expected-error {{illegal goto into protected scope}}
@@ -96,6 +96,23 @@ int test8(int x) {
   L8:; // bad
   }
  
+  {
+  L9: ;// ok
+    int A[({ if (x)
+               goto L9;
+             else
+               // FIXME:
+               goto L10;  // fixme-error {{illegal goto into protected scope}}
+           4; })];
+  L10:; // bad
+  }
+  
+  {
+    // FIXME: Crashes goto checker.
+    //goto L11;// ok
+    //int A[({   L11: 4; })];
+  }
+  
   
   // Statement expressions 2.
   goto L1;     // expected-error {{illegal goto into protected scope}}
