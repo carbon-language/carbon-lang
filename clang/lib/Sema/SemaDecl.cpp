@@ -2924,11 +2924,11 @@ static bool StatementCreatesScope(Stmt* S) {
 }
 
 
-void Sema::RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
-                                    llvm::DenseMap<void*, Stmt*>& PopScopeMap,
-                                    std::vector<void*>& ScopeStack,
-                                    Stmt* CurStmt,
-                                    Stmt* ParentCompoundStmt) {
+static void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
+                                     llvm::DenseMap<void*, Stmt*>& PopScopeMap,
+                                     std::vector<void*>& ScopeStack,
+                                     Stmt* CurStmt,
+                                     Stmt* ParentCompoundStmt, Sema &S) {
   for (Stmt::child_iterator i = CurStmt->child_begin();
        i != CurStmt->child_end(); ++i) {
     if (!*i) continue;
@@ -2948,28 +2948,28 @@ void Sema::RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
       LabelScopeMap[CurStmt] = ScopeStack.size() ? ScopeStack.back() : 0;
     }
     if (isa<DeclStmt>(*i)) continue;
-    Stmt* CurCompound = isa<CompoundStmt>(*i) ? *i : ParentCompoundStmt;
+    
+    Stmt *CurCompound = isa<CompoundStmt>(*i) ? *i : ParentCompoundStmt;
     RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack,
-                             *i, CurCompound);
+                             *i, CurCompound, S);
   }
-  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
+  
+  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
     ScopeStack.pop_back();
-  }
 }
 
-void Sema::RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
-                                   llvm::DenseMap<void*, Stmt*>& PopScopeMap,
-                                   llvm::DenseMap<Stmt*, void*>& GotoScopeMap,
-                                   std::vector<void*>& ScopeStack,
-                                   Stmt* CurStmt) {
+static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
+                                    llvm::DenseMap<void*, Stmt*>& PopScopeMap,
+                                    llvm::DenseMap<Stmt*, void*>& GotoScopeMap,
+                                    std::vector<void*>& ScopeStack,
+                                    Stmt *CurStmt, Sema &S) {
   for (Stmt::child_iterator i = CurStmt->child_begin();
        i != CurStmt->child_end(); ++i) {
     if (!*i) continue;
     if (StatementCreatesScope(*i))  {
       ScopeStack.push_back(*i);
     } else if (GotoStmt* GS = dyn_cast<GotoStmt>(*i)) {
-      void* LScope = LabelScopeMap[GS->getLabel()];
-      if (LScope) {
+      if (void *LScope = LabelScopeMap[GS->getLabel()]) {
         bool foundScopeInStack = false;
         for (unsigned i = ScopeStack.size(); i > 0; --i) {
           if (LScope == ScopeStack[i-1]) {
@@ -2977,18 +2977,16 @@ void Sema::RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
             break;
           }
         }
-        if (!foundScopeInStack) {
-          Diag(GS->getSourceRange().getBegin(), diag::err_goto_into_scope);
-        }
+        if (!foundScopeInStack)
+          S.Diag(GS->getSourceRange().getBegin(), diag::err_goto_into_scope);
       }
     }
     if (isa<DeclStmt>(*i)) continue;
     RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
-                            ScopeStack, *i);
+                            ScopeStack, *i, S);
   }
-  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt) {
+  while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
     ScopeStack.pop_back();
-  }
 }
 
 Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
@@ -3046,8 +3044,10 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
     llvm::DenseMap<void*, Stmt*> PopScopeMap;
     llvm::DenseMap<Stmt*, void*> GotoScopeMap;
     std::vector<void*> ScopeStack;
-    RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack, Body, Body);
-    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap, ScopeStack, Body);
+    RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack, Body, Body,
+                             *this);
+    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
+                            ScopeStack, Body, *this);
   }
 
   return D;
