@@ -18,15 +18,27 @@ void test3clean(int*);
 
 int test3() {
   goto L; // expected-error{{illegal jump}}
-  int a __attribute((cleanup(test3clean)));
-  L:
+int a __attribute((cleanup(test3clean)));
+L:
   return a;
 }
 
 int test4(int x) {
- goto L; // expected-error{{illegal jump}}
- int a[x];
- test4(x);
- L:
- return sizeof a;
+  goto L; // expected-error{{illegal jump}}
+int a[x];
+  test4(x);
+L:
+  return sizeof a;
 }
+
+int test5(int x) {
+  int a[x];
+  test5(x);
+  goto L;  // Ok.
+L:
+  goto L;  // Ok.
+  return sizeof a;
+}
+
+
+// FIXME: Switch cases etc.
