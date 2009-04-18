@@ -3022,15 +3022,8 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     // it.  This makes the second scan not have to walk the AST again.
     LabelAndGotoScopes[S] = ParentScope;
     Jumps.push_back(S);
-  } else if (ObjCAtCatchStmt *AC = dyn_cast<ObjCAtCatchStmt>(S)) {
-    // @catch always starts a new scope.
-    // FIXME: We have to do this because @catches are nested inside each other,
-    // which seems weird and causes us to emit wierd diagnostics.
-    Scopes.push_back(GotoScope(ParentScope, diag::note_protected_by_objc_catch,
-                               AC->getAtCatchLoc()));
-    ParentScope = Scopes.size()-1;
   }
-
+  
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
        ++CI) {
     Stmt *SubStmt = *CI;
@@ -3063,11 +3056,17 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
       if (Stmt *TryPart = AT->getTryBody())
         BuildScopeInformation(TryPart, Scopes.size()-1);
 
-      // Jump from the catch or finally to the try is not valid.
-      if (ObjCAtCatchStmt *AC = AT->getCatchStmts())
+      // Jump from the catch to the finally or try is not valid.
+      for (ObjCAtCatchStmt *AC = AT->getCatchStmts(); AC;
+           AC = AC->getNextCatchStmt()) {
+        Scopes.push_back(GotoScope(ParentScope,
+                                   diag::note_protected_by_objc_catch,
+                                   AC->getAtCatchLoc()));
         // @catches are nested and it isn't 
-        BuildScopeInformation(AC, ParentScope);
+        BuildScopeInformation(AC->getCatchBody(), Scopes.size()-1);
+      }
       
+      // Jump from the finally to the try or catch is not valid.
       if (ObjCAtFinallyStmt *AF = AT->getFinallyStmt()) {
         Scopes.push_back(GotoScope(ParentScope,
                                    diag::note_protected_by_objc_finally,

@@ -39,8 +39,8 @@ L3: ;
   
   goto L8;  // expected-error{{illegal goto into protected scope}}
   @try { 
-  } @catch (A *c) { // expected-note {{jump bypasses initialization of @catch block}}
-  } @catch (B *c) { // expected-note {{jump bypasses initialization of @catch block}}
+  } @catch (A *c) {
+  } @catch (B *c) {
   } @catch (C *c) { // expected-note {{jump bypasses initialization of @catch block}}
   L8: ;
   }
