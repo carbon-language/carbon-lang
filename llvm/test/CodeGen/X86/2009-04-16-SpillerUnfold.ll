@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of modref unfolded}
-; XFAIL - 69408 removed the opportunity for this optimization to work
+; XFAIL: *
+; 69408 removed the opportunity for this optimization to work
 
 	%struct.SHA512_CTX = type { [8 x i64], i64, i64, %struct.anon, i32, i32 }
 	%struct.anon = type { [16 x i64] }
