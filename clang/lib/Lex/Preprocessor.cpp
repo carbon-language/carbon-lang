@@ -310,7 +310,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // If we have a character that may be a trigraph or escaped newline, use a
   // lexer to parse it correctly.
   if (CharNo != 0) {
-    // Skip over characters the remaining characters.
+    // Skip over the remaining characters.
     for (; CharNo; --CharNo) {
       unsigned Size;
       Lexer::getCharAndSizeNoWarn(TokPtr, Size, Features);
