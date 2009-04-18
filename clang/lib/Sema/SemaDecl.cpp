@@ -3155,10 +3155,12 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   PopDeclContext();
   // Verify and clean out per-function state.
 
-  bool HaveLabels = !LabelMap.empty();
+  //assert(&getLabelMap() == &FunctionLabelMap && "Didn't pop block right?");
+  
+  bool HaveLabels = !FunctionLabelMap.empty();
   // Check goto/label use.
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
-       I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
+       I = FunctionLabelMap.begin(), E = FunctionLabelMap.end(); I != E; ++I) {
     LabelStmt *L = I->second;
     
     // Verify that we have no forward references left.  If so, there was a goto
@@ -3191,7 +3193,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
     Elements.push_back(L);
     Body->setStmts(Context, &Elements[0], Elements.size());
   }
-  LabelMap.clear();
+  FunctionLabelMap.clear();
 
   if (!Body) return D;
 

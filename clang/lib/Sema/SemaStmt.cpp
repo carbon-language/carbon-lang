@@ -152,7 +152,7 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                      SourceLocation ColonLoc, StmtArg subStmt) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = CurBlock ? CurBlock->LabelMap[II] : LabelMap[II];
+  LabelStmt *&LabelDecl = getLabelMap()[II];
 
   // If not forward referenced or defined already, just create a new LabelStmt.
   if (LabelDecl == 0)
@@ -656,8 +656,7 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
     return StmtError(Diag(GotoLoc, diag::err_goto_in_block));
 
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = CurBlock ? CurBlock->LabelMap[LabelII] : 
-                                     LabelMap[LabelII];
+  LabelStmt *&LabelDecl = getLabelMap()[LabelII];
 
   // If we haven't seen this label yet, create a forward reference.
   if (LabelDecl == 0)

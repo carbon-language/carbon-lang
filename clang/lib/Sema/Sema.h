@@ -77,9 +77,36 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
   class ObjCContainerDecl;
-  struct BlockSemaInfo;
   class BasePaths;
   struct MemberLookupCriteria;
+
+/// BlockSemaInfo - When a block is being parsed, this contains information
+/// about the block.  It is pointed to from Sema::CurBlock.
+struct BlockSemaInfo {
+  llvm::SmallVector<ParmVarDecl*, 8> Params;
+  bool hasPrototype;
+  bool isVariadic;
+  bool hasBlockDeclRefExprs;
+  
+  BlockDecl *TheDecl;
+  
+  /// TheScope - This is the scope for the block itself, which contains
+  /// arguments etc.
+  Scope *TheScope;
+  
+  /// ReturnType - This will get set to block result type, by looking at
+  /// return types, if any, in the block body.
+  Type *ReturnType;
+  
+  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
+  /// it (which acts like the label decl in some ways).  Forward referenced
+  /// labels have a LabelStmt created for them with a null location & SubStmt.
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  
+  /// PrevBlockInfo - If this is nested inside another block, this points
+  /// to the outer block.
+  BlockSemaInfo *PrevBlockInfo;
+};
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -108,10 +135,14 @@ public:
   /// of 0 indicates default alignment.
   void *PackContext; // Really a "PragmaPackStack*"
 
-  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
-  /// it (which acts like the label decl in some ways).  Forward referenced
-  /// labels have a LabelStmt created for them with a null location & SubStmt.
-  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  /// FunctionLabelMap - This is a mapping from label identifiers to the
+  /// LabelStmt for it (which acts like the label decl in some ways).  Forward
+  /// referenced labels have a LabelStmt created for them with a null location &
+  /// SubStmt.
+  ///
+  /// Note that this should always be accessed through getLabelMap() in order
+  /// to handle blocks properly.
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> FunctionLabelMap;
   
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
   
@@ -299,6 +330,12 @@ public:
 
   virtual void ActOnEndOfTranslationUnit();
 
+  /// getLabelMap() - Return the current label map.  If we're in a block, we
+  /// return it.
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> &getLabelMap() {
+    return CurBlock ? CurBlock->LabelMap : FunctionLabelMap;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
@@ -2514,34 +2551,7 @@ private:
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
 };
 
-/// BlockSemaInfo - When a block is being parsed, this contains information
-/// about the block.  It is pointed to from Sema::CurBlock.
-struct BlockSemaInfo {
-  llvm::SmallVector<ParmVarDecl*, 8> Params;
-  bool hasPrototype;
-  bool isVariadic;
-  bool hasBlockDeclRefExprs;
 
-  BlockDecl *TheDecl;
-  
-  /// TheScope - This is the scope for the block itself, which contains
-  /// arguments etc.
-  Scope *TheScope;
-  
-  /// ReturnType - This will get set to block result type, by looking at
-  /// return types, if any, in the block body.
-  Type *ReturnType;
-  
-  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
-  /// it (which acts like the label decl in some ways).  Forward referenced
-  /// labels have a LabelStmt created for them with a null location & SubStmt.
-  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
-  
-  /// PrevBlockInfo - If this is nested inside another block, this points
-  /// to the outer block.
-  BlockSemaInfo *PrevBlockInfo;
-};
-  
 //===--------------------------------------------------------------------===//
 // Typed version of Parser::ExprArg (smart pointer for wrapping Expr pointers).
 template <typename T>
