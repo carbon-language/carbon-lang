@@ -95,6 +95,11 @@ def pp_include_macros_out_of_predefines : Error<
 def pp_include_next_absolute_path : Warning<"#include_next with absolute path">;
 def ext_c99_whitespace_required_after_macro_name : ExtWarn<
   "ISO C99 requires whitespace after the macro name">;
+def ext_missing_whitespace_after_macro_name : ExtWarn<
+  "whitespace required after macro name">;
+def warn_missing_whitespace_after_macro_name : Warning<
+  "whitespace required after macro name">;
+  
 def pp_pragma_once_in_main_file : Warning<"#pragma once in main file">;
 def pp_pragma_sysheader_in_main_file : Warning<
   "#pragma system_header ignored in main file">;

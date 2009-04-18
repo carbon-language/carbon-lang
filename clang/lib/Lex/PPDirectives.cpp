@@ -1289,7 +1289,11 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   // check other constraints on the first token of the macro body.
   if (Tok.is(tok::eom)) {
     // If there is no body to this macro, we have no special handling here.
-  } else if (Tok.is(tok::l_paren) && !Tok.hasLeadingSpace()) {
+  } else if (Tok.hasLeadingSpace()) {
+    // This is a normal token with leading space.  Clear the leading space
+    // marker on the first token to get proper expansion.
+    Tok.clearFlag(Token::LeadingSpace);
+  } else if (Tok.is(tok::l_paren)) {
     // This is a function-like macro definition.  Read the argument list.
     MI->setIsFunctionLike();
     if (ReadMacroDefinitionArgList(MI)) {
@@ -1303,19 +1307,30 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
     // Read the first token after the arg list for down below.
     LexUnexpandedToken(Tok);
-  } else if (!Tok.hasLeadingSpace()) {
+  } else if (Features.C99) {
     // C99 requires whitespace between the macro definition and the body.  Emit
     // a diagnostic for something like "#define X+".
-    if (Features.C99) {
-      Diag(Tok, diag::ext_c99_whitespace_required_after_macro_name);
-    } else {
-      // FIXME: C90/C++ do not get this diagnostic, but it does get a similar
-      // one in some cases!
-    }
+    Diag(Tok, diag::ext_c99_whitespace_required_after_macro_name);
   } else {
-    // This is a normal token with leading space.  Clear the leading space
-    // marker on the first token to get proper expansion.
-    Tok.clearFlag(Token::LeadingSpace);
+    // C90 6.8 TC1 says: "In the definition of an object-like macro, if the
+    // first character of a replacement list is not a character required by
+    // subclause 5.2.1, then there shall be white-space separation between the
+    // identifier and the replacement list.".  5.2.1 lists this set:
+    //   "A-Za-z0-9!"#%&'()*+,_./:;<=>?[\]^_{|}~" as well as whitespace, which
+    // is irrelevant here.
+    bool isInvalid = false;
+    if (Tok.is(tok::at)) // @ is not in the list above.
+      isInvalid = true;
+    else if (Tok.is(tok::unknown)) {
+      // If we have an unknown token, it is something strange like "`".  Since
+      // all of valid characters would have lexed into a single character
+      // token of some sort, we know this is not a valid case.
+      isInvalid = true;
+    }
+    if (isInvalid)
+      Diag(Tok, diag::ext_missing_whitespace_after_macro_name);
+    else
+      Diag(Tok, diag::warn_missing_whitespace_after_macro_name);
   }
   
   // If this is a definition of a variadic C99 function-like macro, not using
