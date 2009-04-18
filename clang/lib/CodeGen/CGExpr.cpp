@@ -825,13 +825,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                                                     BaseTypeSize));
   }
   
-  QualType T = E->getBase()->getType();
-  QualType ExprTy = getContext().getCanonicalType(T);
-  T = T->getAsPointerType()->getPointeeType();
-  LValue LV = 
-           LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
-           ExprTy->getAsPointerType()->getPointeeType().getCVRQualifiers(),
-           getContext().getObjCGCAttrKind(T));
+  QualType T = E->getBase()->getType()->getAsPointerType()->getPointeeType();
+  LValue LV = LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
+                               T.getCVRQualifiers(),
+                               getContext().getObjCGCAttrKind(T));
   if (getContext().getLangOptions().ObjC1 &&
       getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
     LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate());
@@ -900,7 +897,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
     const PointerType *PTy = 
-      cast<PointerType>(getContext().getCanonicalType(BaseExpr->getType()));
+      BaseExpr->getType()->getAsPointerType();
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
@@ -1166,8 +1163,7 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   QualType ObjectTy;
   if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
-    const PointerType *PTy = 
-      cast<PointerType>(getContext().getCanonicalType(BaseExpr->getType()));
+    const PointerType *PTy = BaseExpr->getType()->getAsPointerType();
     ObjectTy = PTy->getPointeeType();
     CVRQualifiers = ObjectTy.getCVRQualifiers();
   } else {
