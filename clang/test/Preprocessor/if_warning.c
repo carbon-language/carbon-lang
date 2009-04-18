@@ -11,3 +11,10 @@ extern int x;
 #if defined(foo)
 #endif
 
+
+// PR3938
+#if 0
+#ifdef D
+#else 1       // Should not warn due to C99 6.10p4
+#endif
+#endif
