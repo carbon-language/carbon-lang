@@ -336,6 +336,12 @@ public:
     Size = 0;
     return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
   }
+  
+  /// getEscapedNewLineSize - Return the size of the specified escaped newline,
+  /// or 0 if it is not an escaped newline. P[-1] is known to be a "\" on entry
+  /// to this function.
+  static unsigned getEscapedNewLineSize(const char *P);
+  
 private:
   
   /// getCharAndSizeSlowNoWarn - Same as getCharAndSizeSlow, but never emits a

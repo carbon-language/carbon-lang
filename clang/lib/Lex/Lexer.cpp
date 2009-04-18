@@ -399,6 +399,30 @@ static char DecodeTrigraphChar(const char *CP, Lexer *L) {
   return Res;
 }
 
+/// getEscapedNewLineSize - Return the size of the specified escaped newline,
+/// or 0 if it is not an escaped newline. P[-1] is known to be a "\" or a
+/// trigraph equivalent on entry to this function.  
+unsigned Lexer::getEscapedNewLineSize(const char *Ptr) {
+  unsigned Size = 0;
+  while (isWhitespace(Ptr[Size])) {
+    ++Size;
+    
+    if (Ptr[Size-1] != '\n' && Ptr[Size-1] != '\r')
+      continue;
+
+    // If this is a \r\n or \n\r, skip the other half.
+    if ((Ptr[Size] == '\r' || Ptr[Size] == '\n') &&
+        Ptr[Size-1] != Ptr[Size])
+      ++Size;
+      
+    return Size;
+  } 
+  
+  // Not an escaped newline, must be a \t or something else.
+  return 0;
+}
+
+
 /// getCharAndSizeSlow - Peek a single 'character' from the specified buffer,
 /// get its size, and return it.  This is tricky in several cases:
 ///   1. If currently at the start of a trigraph, we warn about the trigraph,
@@ -427,29 +451,20 @@ Slash:
     if (!isWhitespace(Ptr[0])) return '\\';
     
     // See if we have optional whitespace characters followed by a newline.
-    unsigned SizeTmp = 0;
-    do {
-      ++SizeTmp;
-      if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
-        // Remember that this token needs to be cleaned.
-        if (Tok) Tok->setFlag(Token::NeedsCleaning);
+    if (unsigned EscapedNewLineSize = getEscapedNewLineSize(Ptr)) {
+      // Remember that this token needs to be cleaned.
+      if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
-        // Warn if there was whitespace between the backslash and newline.
-        if (SizeTmp != 1 && Tok && !isLexingRawMode())
-          Diag(Ptr, diag::backslash_newline_space);
+      // Warn if there was whitespace between the backslash and newline.
+      if (EscapedNewLineSize != 1 && Tok && !isLexingRawMode())
+        Diag(Ptr, diag::backslash_newline_space);
         
-        // If this is a \r\n or \n\r, skip the newlines.
-        if ((Ptr[SizeTmp] == '\r' || Ptr[SizeTmp] == '\n') &&
-            Ptr[SizeTmp-1] != Ptr[SizeTmp])
-          ++SizeTmp;
-        
-        // Found backslash<whitespace><newline>.  Parse the char after it.
-        Size += SizeTmp;
-        Ptr  += SizeTmp;
-        // Use slow version to accumulate a correct size field.
-        return getCharAndSizeSlow(Ptr, Size, Tok);
-      }
-    } while (isWhitespace(Ptr[SizeTmp]));
+      // Found backslash<whitespace><newline>.  Parse the char after it.
+      Size += EscapedNewLineSize;
+      Ptr  += EscapedNewLineSize;
+      // Use slow version to accumulate a correct size field.
+      return getCharAndSizeSlow(Ptr, Size, Tok);
+    }
       
     // Otherwise, this is not an escaped newline, just return the slash.
     return '\\';
@@ -493,24 +508,14 @@ Slash:
     if (!isWhitespace(Ptr[0])) return '\\';
     
     // See if we have optional whitespace characters followed by a newline.
-    unsigned SizeTmp = 0;
-    do {
-      ++SizeTmp;
-      if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
-        
-        // If this is a \r\n or \n\r, skip the newlines.
-        if ((Ptr[SizeTmp] == '\r' || Ptr[SizeTmp] == '\n') &&
-            Ptr[SizeTmp-1] != Ptr[SizeTmp])
-          ++SizeTmp;
-        
-        // Found backslash<whitespace><newline>.  Parse the char after it.
-        Size += SizeTmp;
-        Ptr  += SizeTmp;
-        
-        // Use slow version to accumulate a correct size field.
-        return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
-      }
-    } while (isWhitespace(Ptr[SizeTmp]));
+    if (unsigned EscapedNewLineSize = getEscapedNewLineSize(Ptr)) {
+      // Found backslash<whitespace><newline>.  Parse the char after it.
+      Size += EscapedNewLineSize;
+      Ptr  += EscapedNewLineSize;
+      
+      // Use slow version to accumulate a correct size field.
+      return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
+    }
     
     // Otherwise, this is not an escaped newline, just return the slash.
     return '\\';
