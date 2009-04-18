@@ -246,6 +246,7 @@ namespace llvm {
     SCEVHandle getUMaxExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
     SCEVHandle getUMaxExpr(std::vector<SCEVHandle> Operands);
     SCEVHandle getUnknown(Value *V);
+    SCEVHandle getCouldNotCompute();
 
     /// getNegativeSCEV - Return the SCEV object corresponding to -V.
     ///

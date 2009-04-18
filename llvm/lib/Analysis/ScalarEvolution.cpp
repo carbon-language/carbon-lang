@@ -569,7 +569,7 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
   // Protection from insane SCEVs; this bound is conservative,
   // but it probably doesn't matter.
   if (K > 1000)
-    return new SCEVCouldNotCompute();
+    return SE.getCouldNotCompute();
 
   unsigned W = SE.getTargetData().getTypeSizeInBits(ResultTy);
 
@@ -1337,7 +1337,6 @@ SCEVHandle ScalarEvolution::getUnknown(Value *V) {
   return Result;
 }
 
-
 //===----------------------------------------------------------------------===//
 //             ScalarEvolutionsImpl Definition and Implementation
 //===----------------------------------------------------------------------===//
@@ -1385,6 +1384,8 @@ namespace {
     ScalarEvolutionsImpl(ScalarEvolution &se, Function &f, LoopInfo &li,
                          TargetData &td)
       : SE(se), F(f), LI(li), TD(td), UnknownValue(new SCEVCouldNotCompute()) {}
+
+    SCEVHandle getCouldNotCompute();
 
     /// getIntegerSCEV - Given an integer or FP type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
@@ -1575,6 +1576,10 @@ void ScalarEvolutionsImpl::deleteValueFromRecords(Value *V) {
 
 const TargetData &ScalarEvolutionsImpl::getTargetData() const {
   return TD;
+}
+
+SCEVHandle ScalarEvolutionsImpl::getCouldNotCompute() {
+  return UnknownValue;
 }
 
 /// getSCEV - Return an existing SCEV if it exists, otherwise analyze the
@@ -2732,7 +2737,7 @@ static SCEVHandle SolveLinEquationWithOverflow(const APInt &A, const APInt &B,
   // B is divisible by D if and only if the multiplicity of prime factor 2 for B
   // is not less than multiplicity of this prime factor for D.
   if (B.countTrailingZeros() < Mult2)
-    return new SCEVCouldNotCompute();
+    return SE.getCouldNotCompute();
 
   // 3. Compute I: the multiplicative inverse of (A / D) in arithmetic
   // modulo (N / D).
@@ -2766,7 +2771,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 
   // We currently can only solve this if the coefficients are constants.
   if (!LC || !MC || !NC) {
-    SCEV *CNC = new SCEVCouldNotCompute();
+    SCEV *CNC = SE.getCouldNotCompute();
     return std::make_pair(CNC, CNC);
   }
 
@@ -2802,7 +2807,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     APInt NegB(-B);
     APInt TwoA( A << 1 );
     if (TwoA.isMinValue()) {
-      SCEV *CNC = new SCEVCouldNotCompute();
+      SCEV *CNC = SE.getCouldNotCompute();
       return std::make_pair(CNC, CNC);
     }
 
@@ -3093,7 +3098,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
 SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
                                                    ScalarEvolution &SE) const {
   if (Range.isFullSet())  // Infinite loop.
-    return new SCEVCouldNotCompute();
+    return SE.getCouldNotCompute();
 
   // If the start is a non-zero constant, shift the range to simplify things.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(getStart()))
@@ -3105,14 +3110,14 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
         return ShiftedAddRec->getNumIterationsInRange(
                            Range.subtract(SC->getValue()->getValue()), SE);
       // This is strange and shouldn't happen.
-      return new SCEVCouldNotCompute();
+      return SE.getCouldNotCompute();
     }
 
   // The only time we can solve this is when we have all constant indices.
   // Otherwise, we cannot determine the overflow conditions.
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (!isa<SCEVConstant>(getOperand(i)))
-      return new SCEVCouldNotCompute();
+      return SE.getCouldNotCompute();
 
 
   // Okay at this point we know that all elements of the chrec are constants and
@@ -3145,7 +3150,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // things must have happened.
     ConstantInt *Val = EvaluateConstantChrecAtConstant(this, ExitValue, SE);
     if (Range.contains(Val->getValue()))
-      return new SCEVCouldNotCompute();  // Something strange happened
+      return SE.getCouldNotCompute();  // Something strange happened
 
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
@@ -3188,7 +3193,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
           if (!Range.contains(R1Val->getValue()))
             return SE.getConstant(NextVal);
-          return new SCEVCouldNotCompute();  // Something strange happened
+          return SE.getCouldNotCompute();  // Something strange happened
         }
 
         // If R1 was not in the range, then it is a good return value.  Make
@@ -3197,12 +3202,12 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
         if (Range.contains(R1Val->getValue()))
           return R1;
-        return new SCEVCouldNotCompute();  // Something strange happened
+        return SE.getCouldNotCompute();  // Something strange happened
       }
     }
   }
 
-  return new SCEVCouldNotCompute();
+  return SE.getCouldNotCompute();
 }
 
 
@@ -3231,6 +3236,10 @@ void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
 
 const TargetData &ScalarEvolution::getTargetData() const {
   return ((ScalarEvolutionsImpl*)Impl)->getTargetData();
+}
+
+SCEVHandle ScalarEvolution::getCouldNotCompute() {
+  return ((ScalarEvolutionsImpl*)Impl)->getCouldNotCompute();
 }
 
 SCEVHandle ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
