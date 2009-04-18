@@ -5111,7 +5111,9 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   /// ConstraintOperands - Information about all of the constraints.
   std::vector<SDISelAsmOperandInfo> ConstraintOperands;
 
-  SDValue Chain = getRoot();
+  // We won't need to flush pending loads if this asm doesn't touch
+  // memory and is nonvolatile.
+  SDValue Chain = IA->hasSideEffects() ? getRoot() : DAG.getRoot();
   SDValue Flag;
 
   std::set<unsigned> OutputRegs, InputRegs;
@@ -5122,6 +5124,10 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     ConstraintInfos = IA->ParseConstraints();
 
   bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
+  // Flush pending loads if this touches memory (includes clobbering it).
+  // It's possible this is overly conservative.
+  if (hasMemory)
+    Chain = getRoot();
 
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
   unsigned ResNo = 0;   // ResNo - The result number of the next output.
