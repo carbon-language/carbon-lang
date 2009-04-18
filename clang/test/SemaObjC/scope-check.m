@@ -6,7 +6,7 @@ void test1() {
   goto L; // expected-error{{illegal goto into protected scope}}
   goto L2; // expected-error{{illegal goto into protected scope}}
   goto L3; // expected-error{{illegal goto into protected scope}}
-  @try {   // expected-note 3 {{scope created by @try block}}
+  @try {   // expected-note 3 {{jump bypasses initialization of @try block}}
 L: ;
   } @catch (A *x) {
 L2: ;
