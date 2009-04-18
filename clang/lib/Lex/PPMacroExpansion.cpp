@@ -136,13 +136,7 @@ bool Preprocessor::isNextPPTokenLParen() {
   // Okay, if we know that the token is a '(', lex it and return.  Otherwise we
   // have found something that isn't a '(' or we found the end of the
   // translation unit.  In either case, return false.
-  if (Val != 1)
-    return false;
-  
-  Token Tok;
-  LexUnexpandedToken(Tok);
-  assert(Tok.is(tok::l_paren) && "Error computing l-paren-ness?");
-  return true;
+  return Val == 1;
 }
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
@@ -174,8 +168,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
     // C99 6.10.3p10: If the preprocessing token immediately after the the macro
-    // name isn't a '(', this macro should not be expanded.  Otherwise, consume
-    // it.
+    // name isn't a '(', this macro should not be expanded.
     if (!isNextPPTokenLParen())
       return true;
     
@@ -277,9 +270,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   return false;
 }
 
-/// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
-/// invoked to read all of the actual arguments specified for the macro
-/// invocation.  This returns null on error.
+/// ReadFunctionLikeMacroArgs - After reading "MACRO" and knowing that the next
+/// token is the '(' of the macro, this method is invoked to read all of the
+/// actual arguments specified for the macro invocation.  This returns null on
+/// error.
 MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
                                                    MacroInfo *MI,
                                                    SourceLocation &MacroEnd) {
@@ -289,16 +283,25 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   
   // Outer loop, while there are more arguments, keep reading them.
   Token Tok;
-  Tok.setKind(tok::comma);
-  --NumFixedArgsLeft;  // Start reading the first arg.
 
+  // Read arguments as unexpanded tokens.  This avoids issues, e.g., where
+  // an argument value in a macro could expand to ',' or '(' or ')'.
+  LexUnexpandedToken(Tok);
+  assert(Tok.is(tok::l_paren) && "Error computing l-paren-ness?");
+  
   // ArgTokens - Build up a list of tokens that make up each argument.  Each
   // argument is separated by an EOF token.  Use a SmallVector so we can avoid
   // heap allocations in the common case.
   llvm::SmallVector<Token, 64> ArgTokens;
 
   unsigned NumActuals = 0;
-  while (Tok.is(tok::comma)) {
+  while (Tok.isNot(tok::r_paren)) {
+    assert((Tok.is(tok::l_paren) || Tok.is(tok::comma)) &&
+           "only expect argument separators here");
+    
+    unsigned ArgTokenStart = ArgTokens.size();
+    SourceLocation ArgStartLoc = Tok.getLocation();
+    
     // C99 6.10.3p11: Keep track of the number of l_parens we have seen.  Note
     // that we already consumed the first one.
     unsigned NumParens = 0;
@@ -323,17 +326,11 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         ++NumParens;
       } else if (Tok.is(tok::comma) && NumParens == 0) {
         // Comma ends this argument if there are more fixed arguments expected.
-        if (NumFixedArgsLeft)
+        // However, if this is a variadic macro, and this is part of the
+        // variadic part, then the comma is just an argument token. 
+        if (!isVariadic) break;
+        if (NumFixedArgsLeft > 1)
           break;
-        
-        // If this is not a variadic macro, too many args were specified.
-        if (!isVariadic) {
-          // Emit the diagnostic at the macro name in case there is a missing ).
-          // Emitting it at the , could be far away from the macro name.
-          Diag(MacroName, diag::err_too_many_args_in_macro_invoc);
-          return 0;
-        }
-        // Otherwise, continue to add the tokens to this variable argument.
       } else if (Tok.is(tok::comment) && !KeepMacroComments) {
         // If this is a comment token in the argument list and we're just in
         // -C mode (not -CC mode), discard the comment.
@@ -351,10 +348,27 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       }
       ArgTokens.push_back(Tok);
     }
+    
+    // If this was an empty argument list foo(), don't add this as an empty
+    // argument.
+    if (ArgTokens.empty() && Tok.getKind() == tok::r_paren)
+      break;
 
+    // If this is not a variadic macro, and too many args were specified, emit
+    // an error.
+    if (!isVariadic && NumFixedArgsLeft == 0) {
+      if (ArgTokens.size() != ArgTokenStart)
+        ArgStartLoc = ArgTokens[ArgTokenStart].getLocation();
+      
+      // Emit the diagnostic at the macro name in case there is a missing ).
+      // Emitting it at the , could be far away from the macro name.
+      Diag(ArgStartLoc, diag::err_too_many_args_in_macro_invoc);
+      return 0;
+    }
+    
     // Empty arguments are standard in C99 and supported as an extension in
     // other modes.
-    if (ArgTokens.empty() && !Features.C99)
+    if (ArgTokens.size() == ArgTokenStart && !Features.C99)
       Diag(Tok, diag::ext_empty_fnmacro_arg);
     
     // Add a marker EOF token to the end of the token list for this argument.
@@ -365,6 +379,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     EOFTok.setLength(0);
     ArgTokens.push_back(EOFTok);
     ++NumActuals;
+    assert(NumFixedArgsLeft != 0 && "Too many arguments parsed");
     --NumFixedArgsLeft;
   }
   
@@ -383,12 +398,18 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // A("blah")
       Diag(Tok, diag::ext_missing_varargs_arg);
 
-      // Remember this occurred if this is a macro invocation with at least
-      // one actual argument.  This allows us to elide the comma when used for
+      // Remember this occurred, allowing us to elide the comma when used for
       // cases like:
       //   #define A(x, foo...) blah(a, ## foo) 
-      //   #define A(x, ...) blah(a, ## __VA_ARGS__) 
-      isVarargsElided = MI->getNumArgs() > 1;
+      //   #define B(x, ...) blah(a, ## __VA_ARGS__) 
+      //   #define C(...) blah(a, ## __VA_ARGS__) 
+      //  A(x) B(x) C()
+      isVarargsElided = true; //MI->getNumArgs() > 1;
+    } else if (NumActuals == 0 && MinArgsExpected == 1) {
+      assert(!MI->isVariadic() && "Variadic should be handled by case above");
+      // If there is exactly one argument, and that argument is missing,
+      // then we have an empty "()" argument empty list.  This is fine, even if
+      // the macro expects one argument (the argument is just empty).
     } else {
       // Otherwise, emit the error.
       Diag(Tok, diag::err_too_few_args_in_macro_invoc);
@@ -402,12 +423,11 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     Tok.setLocation(EndLoc);
     Tok.setLength(0);
     ArgTokens.push_back(Tok);
-  } else if (NumActuals == 1 && ArgTokens.size() == 1) {
-    // If there is exactly one argument, and that argument is just an EOF token,
-    // then we have an empty "()" argument empty list.  This is fine, even if
-    // the macro expects one argument (the argument is just empty).  However, if
-    // the macro expects "...", then we need to know that it was elided.
-    isVarargsElided = MinArgsExpected == 1 && MI->isVariadic();
+  } else if (NumActuals > MinArgsExpected && !MI->isVariadic()) {
+    // Emit the diagnostic at the macro name in case there is a missing ).
+    // Emitting it at the , could be far away from the macro name.
+    Diag(MacroName, diag::err_too_many_args_in_macro_invoc);
+    return 0;
   }
   
   return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size(),isVarargsElided);
