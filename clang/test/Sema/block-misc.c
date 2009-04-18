@@ -113,3 +113,8 @@ void test11(int i) {
 }
 
 
+void (^test12f)(void);
+void test12() {
+  test12f = ^test12f;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
+}
+
