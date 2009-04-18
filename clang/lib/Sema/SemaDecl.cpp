@@ -2905,30 +2905,35 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   return DeclPtrTy::make(FD);
 }
 
-static bool StatementCreatesScope(Stmt* S) {
+/// StatementCreatesScope - Return true if the specified statement should start
+/// a new cleanup scope that cannot be entered with a goto.
+static bool StatementCreatesScope(Stmt *S) {
+  // Only decl statements create scopes.
+  DeclStmt *DS = dyn_cast<DeclStmt>(S);
+  if (DS == 0) return false;
   
-  if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
-    for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-         I != E; ++I) {
-      if (VarDecl *D = dyn_cast<VarDecl>(*I)) {
-        if (D->getType()->isVariablyModifiedType() ||
-            D->hasAttr<CleanupAttr>())
-          return true;
-      } else if (TypedefDecl *D = dyn_cast<TypedefDecl>(*I)) {
-        if (D->getUnderlyingType()->isVariablyModifiedType())
-          return true;
-      }
+  // The decl statement creates a scope if any of the decls in it are VLAs or
+  // have the cleanup attribute.
+  for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+       I != E; ++I) {
+    if (VarDecl *D = dyn_cast<VarDecl>(*I)) {
+      if (D->getType()->isVariablyModifiedType() ||
+          D->hasAttr<CleanupAttr>())
+        return true;
+    } else if (TypedefDecl *D = dyn_cast<TypedefDecl>(*I)) {
+      if (D->getUnderlyingType()->isVariablyModifiedType())
+        return true;
     }
-  } 
+  }
   return false;
 }
 
 
-static void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
-                                     llvm::DenseMap<void*, Stmt*>& PopScopeMap,
-                                     std::vector<void*>& ScopeStack,
-                                     Stmt* CurStmt,
-                                     Stmt* ParentCompoundStmt, Sema &S) {
+static void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap,
+                                     llvm::DenseMap<Stmt*, Stmt*> &PopScopeMap,
+                                     llvm::SmallVectorImpl<Stmt*> &ScopeStack,
+                                     Stmt *CurStmt, Stmt *ParentCompoundStmt,
+                                     Sema &S) {
   for (Stmt::child_iterator i = CurStmt->child_begin();
        i != CurStmt->child_end(); ++i) {
     if (!*i) continue;
@@ -2958,10 +2963,10 @@ static void RecursiveCalcLabelScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap
     ScopeStack.pop_back();
 }
 
-static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
-                                    llvm::DenseMap<void*, Stmt*>& PopScopeMap,
-                                    llvm::DenseMap<Stmt*, void*>& GotoScopeMap,
-                                    std::vector<void*>& ScopeStack,
+static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, Stmt*> &LabelScopeMap,
+                                    llvm::DenseMap<Stmt*, Stmt*> &PopScopeMap,
+                                    llvm::DenseMap<Stmt*, Stmt*> &GotoScopeMap,
+                                    llvm::SmallVectorImpl<Stmt*> &ScopeStack,
                                     Stmt *CurStmt, Sema &S) {
   for (Stmt::child_iterator i = CurStmt->child_begin();
        i != CurStmt->child_end(); ++i) {
@@ -2988,6 +2993,20 @@ static void RecursiveCalcJumpScopes(llvm::DenseMap<Stmt*, void*>& LabelScopeMap,
   while (ScopeStack.size() && PopScopeMap[ScopeStack.back()] == CurStmt)
     ScopeStack.pop_back();
 }
+
+/// CheckFunctionJumpScopes - Check the body of a function to see if gotos obey
+/// the scopes of VLAs and other things correctly.
+static void CheckFunctionJumpScopes(Stmt *Body, Sema &S) {
+  llvm::DenseMap<Stmt*, Stmt*> LabelScopeMap;
+  llvm::DenseMap<Stmt*, Stmt*> PopScopeMap;
+  llvm::DenseMap<Stmt*, Stmt*> GotoScopeMap;
+  llvm::SmallVector<Stmt*, 32> ScopeStack;
+  RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack, Body, Body,
+                           S);
+  RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
+                          ScopeStack, Body, S);
+}
+
 
 Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   Decl *dcl = D.getAs<Decl>();
@@ -3039,16 +3058,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
 
   if (!Body) return D;
 
-  if (HaveLabels) {
-    llvm::DenseMap<Stmt*, void*> LabelScopeMap;
-    llvm::DenseMap<void*, Stmt*> PopScopeMap;
-    llvm::DenseMap<Stmt*, void*> GotoScopeMap;
-    std::vector<void*> ScopeStack;
-    RecursiveCalcLabelScopes(LabelScopeMap, PopScopeMap, ScopeStack, Body, Body,
-                             *this);
-    RecursiveCalcJumpScopes(LabelScopeMap, PopScopeMap, GotoScopeMap,
-                            ScopeStack, Body, *this);
-  }
+  // If we have labels, verify that goto doesn't jump into scopes illegally.
+  if (HaveLabels)
+    CheckFunctionJumpScopes(Body, *this);
 
   return D;
 }
