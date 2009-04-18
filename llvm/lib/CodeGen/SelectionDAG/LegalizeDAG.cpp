@@ -1643,9 +1643,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // then a shuffle that inserts it into the right position in the vector.
       if (ConstantSDNode *InsertPos = dyn_cast<ConstantSDNode>(Tmp3)) {
         // SCALAR_TO_VECTOR requires that the type of the value being inserted
-        // match the element type of the vector being created.
-        if (Tmp2.getValueType() ==
-            Op.getValueType().getVectorElementType()) {
+        // match the element type of the vector being created, except for
+        // integers in which case the inserted value can be over width.
+        MVT EltVT = Op.getValueType().getVectorElementType();
+        if (Tmp2.getValueType() == EltVT ||
+            (EltVT.isInteger() && Tmp2.getValueType().bitsGE(EltVT))) {
           SDValue ScVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
                                       Tmp1.getValueType(), Tmp2);
 
@@ -5463,9 +5465,10 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr);
   int SPFI = StackPtrFI->getIndex();
 
-  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Node->getOperand(0),
-                            StackPtr,
-                            PseudoSourceValue::getFixedStack(SPFI), 0);
+  SDValue Ch = DAG.getTruncStore(DAG.getEntryNode(), dl, Node->getOperand(0),
+                                 StackPtr,
+                                 PseudoSourceValue::getFixedStack(SPFI), 0,
+                                 Node->getValueType(0).getVectorElementType());
   return DAG.getLoad(Node->getValueType(0), dl, Ch, StackPtr,
                      PseudoSourceValue::getFixedStack(SPFI), 0);
 }
@@ -5480,41 +5483,6 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   MVT VT = Node->getValueType(0);
   MVT OpVT = SplatValue.getValueType();
   MVT EltVT = VT.getVectorElementType();
-
-  // Check if the BUILD_VECTOR operands were promoted to legalize their types.
-  if (OpVT != EltVT) {
-    // Now that the DAG combiner and target-specific lowering have had a
-    // chance to optimize/recognize the BUILD_VECTOR with promoted operands,
-    // transform it so the operand types match the vector.  Build a vector of
-    // half the length out of elements of twice the bitwidth.
-    // For example <4 x i16> -> <2 x i32>.
-    MVT NewVT = MVT::getIntegerVT(2 * EltVT.getSizeInBits());
-    assert(OpVT.isSimple() && NewVT.isSimple());
-    SmallVector<SDValue, 16> NewElts;
-
-    for (unsigned i = 0; i < NumElems; i += 2) {
-      // Combine two successive elements into one promoted element.
-      SDValue Lo = Node->getOperand(i);
-      SDValue Hi = Node->getOperand(i+1);
-      if (TLI.isBigEndian())
-        std::swap(Lo, Hi);
-      Lo = DAG.getZeroExtendInReg(Lo, dl, EltVT);
-      Hi = DAG.getNode(ISD::SHL, dl, OpVT, Hi,
-                       DAG.getConstant(EltVT.getSizeInBits(),
-                                       TLI.getPointerTy()));
-      NewElts.push_back(DAG.getNode(ISD::OR, dl, OpVT, Lo, Hi));
-    }
-
-    SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                 MVT::getVectorVT(NewVT, NewElts.size()),
-                                 &NewElts[0], NewElts.size());
-
-    // Recurse
-    NewVec = ExpandBUILD_VECTOR(NewVec.getNode());
-
-    // Convert the new vector to the old vector type.
-    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, NewVec);
-  }
 
   // If the only non-undef value is the low element, turn this into a
   // SCALAR_TO_VECTOR node.  If this is { X, X, X, X }, determine X.

@@ -2302,7 +2302,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     break;
   case ISD::SCALAR_TO_VECTOR:
     assert(VT.isVector() && !Operand.getValueType().isVector() &&
-           VT.getVectorElementType() == Operand.getValueType() &&
+           (VT.getVectorElementType() == Operand.getValueType() ||
+            (VT.getVectorElementType().isInteger() &&
+             Operand.getValueType().isInteger() &&
+             VT.getVectorElementType().bitsLE(Operand.getValueType()))) &&
            "Illegal SCALAR_TO_VECTOR node!");
     if (OpOpcode == ISD::UNDEF)
       return getUNDEF(VT);

@@ -863,24 +863,10 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SCALAR_TO_VECTOR(SDNode *N) {
-  // The vector type is legal but the element type is not.  This implies
-  // that the vector is a power-of-two in length and that the element
-  // type does not have a strange size (eg: it is not i1).
-  MVT VecVT = N->getValueType(0);
-  unsigned NumElts = VecVT.getVectorNumElements();
-  assert(!(NumElts & 1) && "Legal vector of one illegal element?");
-  DebugLoc dl = N->getDebugLoc();
-
-  MVT OldVT = N->getOperand(0).getValueType();
-  MVT NewVT = MVT::getIntegerVT(2 * OldVT.getSizeInBits());
-  assert(OldVT.isSimple() && NewVT.isSimple());
-
-  SDValue ExtVal = DAG.getNode(ISD::ANY_EXTEND, dl, NewVT, N->getOperand(0));
-  SDValue NewVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
-                               MVT::getVectorVT(NewVT, NumElts/2), ExtVal);
-
-  // Convert the new vector to the old vector type.
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, NewVec);
+  // Integer SCALAR_TO_VECTOR operands are implicitly truncated, so just promote
+  // the operand in place.
+  return DAG.UpdateNodeOperands(SDValue(N, 0),
+                                GetPromotedInteger(N->getOperand(0)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {

@@ -347,6 +347,8 @@ SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
 SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
   MVT VT = N->getValueType(0);
+  assert(VT.getVectorElementType() == N->getOperand(0).getValueType() &&
+         "SCALAR_TO_VECTOR operand type doesn't match vector element type!");
   unsigned NumElts = VT.getVectorNumElements();
   SmallVector<SDValue, 16> Ops(NumElts);
   Ops[0] = N->getOperand(0);

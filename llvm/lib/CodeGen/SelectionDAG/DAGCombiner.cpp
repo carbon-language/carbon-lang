@@ -5110,8 +5110,15 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (scalar_to_vector val, 0) -> val
   SDValue InVec = N->getOperand(0);
 
- if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR)
-   return InVec.getOperand(0);
+ if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+   // If the operand is wider than the vector element type then it is implicitly
+   // truncated.  Make that explicit here.
+   MVT EltVT = InVec.getValueType().getVectorElementType();
+   SDValue InOp = InVec.getOperand(0);
+   if (InOp.getValueType() != EltVT)
+     return DAG.getNode(ISD::TRUNCATE, InVec.getDebugLoc(), EltVT, InOp);
+   return InOp;
+ }
 
   // Perform only after legalization to ensure build_vector / vector_shuffle
   // optimizations have already been done.

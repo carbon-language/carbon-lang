@@ -183,7 +183,13 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_UnaryOp(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SCALAR_TO_VECTOR(SDNode *N) {
-  return N->getOperand(0);
+  // If the operand is wider than the vector element type then it is implicitly
+  // truncated.  Make that explicit here.
+  MVT EltVT = N->getValueType(0).getVectorElementType();
+  SDValue InOp = N->getOperand(0);
+  if (InOp.getValueType() != EltVT)
+    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), EltVT, InOp);
+  return InOp;
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
