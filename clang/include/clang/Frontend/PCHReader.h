@@ -157,6 +157,9 @@ private:
   /// in the PCH file.
   unsigned TotalNumStatements;
 
+  /// \brief 
+  llvm::SmallVector<uint64_t, 4> SpecialTypes;
+
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,

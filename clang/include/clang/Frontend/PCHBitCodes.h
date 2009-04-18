@@ -142,9 +142,18 @@ namespace clang {
       /// program (e.g., for code generation).
       EXTERNAL_DEFINITIONS = 7,
 
+      /// \brief Record code for the set of non-builtin, special
+      /// types.
+      ///
+      /// This record contains the type IDs for the various type nodes
+      /// that are constructed during semantic analysis (e.g.,
+      /// __builtin_va_list). The SPECIAL_TYPE_* constants provide
+      /// offsets into this record.
+      SPECIAL_TYPES = 8,
+
       /// \brief Record code for the block of extra statistics we
       /// gather while generating a PCH file.
-      STATISTICS = 8
+      STATISTICS = 9
     };
 
     /// \brief Record types used within a source manager block.
@@ -312,6 +321,16 @@ namespace clang {
       TYPE_OBJC_QUALIFIED_ID        = 23,
       /// \brief An ObjCQualifiedClassType record.
       TYPE_OBJC_QUALIFIED_CLASS     = 24
+    };
+
+    /// \brief The type IDs for special types constructed by semantic
+    /// analysis.
+    ///
+    /// The constants in this enumeration are indices into the
+    /// SPECIAL_TYPES record.
+    enum SpecialTypeIDs {
+      /// \brief __builtin_va_list
+      SPECIAL_TYPE_BUILTIN_VA_LIST = 0
     };
 
     /// \brief Record codes for each kind of declaration.

@@ -1739,6 +1739,7 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   DeclsToEmit.push(Context.getTranslationUnitDecl());
 
   // Write the remaining PCH contents.
+  RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 3);
   WriteTargetTriple(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
@@ -1749,11 +1750,17 @@ void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
   WriteIdentifierTable();
   Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
   Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
+
+  // Write the record of special types.
+  Record.clear();
+  AddTypeRef(Context.getBuiltinVaListType(), Record);
+  Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
+
   if (!ExternalDefinitions.empty())
     Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
   
   // Some simple statistics
-  RecordData Record;
+  Record.clear();
   Record.push_back(NumStatements);
   Stream.EmitRecord(pch::STATISTICS, Record);
   Stream.ExitBlock();

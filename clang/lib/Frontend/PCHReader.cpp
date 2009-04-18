@@ -1316,6 +1316,10 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
       ExternalDefinitions.swap(Record);
       break;
 
+    case pch::SPECIAL_TYPES:
+      SpecialTypes.swap(Record);
+      break;
+
     case pch::STATISTICS:
       TotalNumStatements = Record[0];
       break;
@@ -1398,6 +1402,10 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
 
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
+
+  // Load the special types.
+  Context.setBuiltinVaListType(
+    GetType(SpecialTypes[pch::SPECIAL_TYPE_BUILTIN_VA_LIST]));
 
   return Success;
 }
