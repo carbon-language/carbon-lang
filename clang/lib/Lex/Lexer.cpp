@@ -427,31 +427,29 @@ Slash:
     if (!isWhitespace(Ptr[0])) return '\\';
     
     // See if we have optional whitespace characters followed by a newline.
-    {
-      unsigned SizeTmp = 0;
-      do {
-        ++SizeTmp;
-        if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
-          // Remember that this token needs to be cleaned.
-          if (Tok) Tok->setFlag(Token::NeedsCleaning);
+    unsigned SizeTmp = 0;
+    do {
+      ++SizeTmp;
+      if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
+        // Remember that this token needs to be cleaned.
+        if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
-          // Warn if there was whitespace between the backslash and newline.
-          if (SizeTmp != 1 && Tok && !isLexingRawMode())
-            Diag(Ptr, diag::backslash_newline_space);
-          
-          // If this is a \r\n or \n\r, skip the newlines.
-          if ((Ptr[SizeTmp] == '\r' || Ptr[SizeTmp] == '\n') &&
-              Ptr[SizeTmp-1] != Ptr[SizeTmp])
-            ++SizeTmp;
-          
-          // Found backslash<whitespace><newline>.  Parse the char after it.
-          Size += SizeTmp;
-          Ptr  += SizeTmp;
-          // Use slow version to accumulate a correct size field.
-          return getCharAndSizeSlow(Ptr, Size, Tok);
-        }
-      } while (isWhitespace(Ptr[SizeTmp]));
-    }
+        // Warn if there was whitespace between the backslash and newline.
+        if (SizeTmp != 1 && Tok && !isLexingRawMode())
+          Diag(Ptr, diag::backslash_newline_space);
+        
+        // If this is a \r\n or \n\r, skip the newlines.
+        if ((Ptr[SizeTmp] == '\r' || Ptr[SizeTmp] == '\n') &&
+            Ptr[SizeTmp-1] != Ptr[SizeTmp])
+          ++SizeTmp;
+        
+        // Found backslash<whitespace><newline>.  Parse the char after it.
+        Size += SizeTmp;
+        Ptr  += SizeTmp;
+        // Use slow version to accumulate a correct size field.
+        return getCharAndSizeSlow(Ptr, Size, Tok);
+      }
+    } while (isWhitespace(Ptr[SizeTmp]));
       
     // Otherwise, this is not an escaped newline, just return the slash.
     return '\\';
@@ -495,26 +493,24 @@ Slash:
     if (!isWhitespace(Ptr[0])) return '\\';
     
     // See if we have optional whitespace characters followed by a newline.
-    {
-      unsigned SizeTmp = 0;
-      do {
-        ++SizeTmp;
-        if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
-          
-          // If this is a \r\n or \n\r, skip the newlines.
-          if ((Ptr[SizeTmp] == '\r' || Ptr[SizeTmp] == '\n') &&
-              Ptr[SizeTmp-1] != Ptr[SizeTmp])
-            ++SizeTmp;
-          
-          // Found backslash<whitespace><newline>.  Parse the char after it.
-          Size += SizeTmp;
-          Ptr  += SizeTmp;
-          
-          // Use slow version to accumulate a correct size field.
-          return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
-        }
-      } while (isWhitespace(Ptr[SizeTmp]));
-    }
+    unsigned SizeTmp = 0;
+    do {
+      ++SizeTmp;
+      if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
+        
+        // If this is a \r\n or \n\r, skip the newlines.
+        if ((Ptr[SizeTmp] == '\r' || Ptr[SizeTmp] == '\n') &&
+            Ptr[SizeTmp-1] != Ptr[SizeTmp])
+          ++SizeTmp;
+        
+        // Found backslash<whitespace><newline>.  Parse the char after it.
+        Size += SizeTmp;
+        Ptr  += SizeTmp;
+        
+        // Use slow version to accumulate a correct size field.
+        return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
+      }
+    } while (isWhitespace(Ptr[SizeTmp]));
     
     // Otherwise, this is not an escaped newline, just return the slash.
     return '\\';
