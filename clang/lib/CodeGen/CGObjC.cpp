@@ -79,11 +79,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     Receiver = EmitScalarExpr(E->getReceiver());
   }
 
-  // FIXME: This should use EmitCallArgs.
   CallArgList Args;
-  for (CallExpr::const_arg_iterator i = E->arg_begin(), e = E->arg_end(); 
-       i != e; ++i)
-    Args.push_back(std::make_pair(EmitAnyExprToTemp(*i), (*i)->getType()));
+  EmitCallArgs(Args, E->getMethodDecl(), E->arg_begin(), E->arg_end());
   
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
