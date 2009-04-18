@@ -3155,7 +3155,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   PopDeclContext();
   // Verify and clean out per-function state.
 
-  //assert(&getLabelMap() == &FunctionLabelMap && "Didn't pop block right?");
+  assert(&getLabelMap() == &FunctionLabelMap && "Didn't pop block right?");
   
   bool HaveLabels = !FunctionLabelMap.empty();
   // Check goto/label use.

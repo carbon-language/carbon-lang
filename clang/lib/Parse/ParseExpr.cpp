@@ -1342,6 +1342,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
       // If there was an error parsing the arguments, they may have
       // tried to use ^(x+y) which requires an argument list.  Just
       // skip the whole block literal.
+      Actions.ActOnBlockError(CaretLoc, CurScope);
       return ExprError();
     }
     // Inform sema that we are starting a block.
@@ -1364,6 +1365,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   if (!Tok.is(tok::l_brace)) {
     // Saw something like: ^expr
     Diag(Tok, diag::err_expected_expression);
+    Actions.ActOnBlockError(CaretLoc, CurScope);
     return ExprError();
   }
   
