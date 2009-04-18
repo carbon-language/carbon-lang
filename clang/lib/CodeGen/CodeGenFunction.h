@@ -811,14 +811,46 @@ private:
   RValue EmitCallArg(const Expr *E, QualType ArgType);
   
   /// EmitCallArgs - Emit call arguments for a function.
-  /// FIXME: It should be possible to generalize this and pass a generic
-  /// "argument type container" type instead of the FunctionProtoType. This way
-  /// it can work on Objective-C methods as well.
-  void EmitCallArgs(CallArgList& args, const FunctionProtoType *FPT,
+  /// The CallArgTypeInfo parameter is used for iterating over the known 
+  /// argument types of the function being called.
+  template<typename T>
+  void EmitCallArgs(CallArgList& Args, const T* CallArgTypeInfo,
                     CallExpr::const_arg_iterator ArgBeg,
-                    CallExpr::const_arg_iterator ArgEnd);
+                    CallExpr::const_arg_iterator ArgEnd) {
+      CallExpr::const_arg_iterator Arg = ArgBeg;
 
+    // First, use the argument types that the type info knows about
+    if (CallArgTypeInfo) {
+      for (typename T::arg_type_iterator I = CallArgTypeInfo->arg_type_begin(),
+           E = CallArgTypeInfo->arg_type_end(); I != E; ++I, ++Arg) {
+        QualType ArgType = *I;
+
+        assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
+               getTypePtr() == 
+               getContext().getCanonicalType(Arg->getType()).getTypePtr() && 
+               "type mismatch in call argument!");
+        
+        Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType), 
+                                      ArgType));
+      }
+      
+      // Either we've emitted all the call args, or we have a call to a 
+      // variadic function.
+      assert(Arg == ArgEnd || CallArgTypeInfo->isVariadic() && 
+             "Extra arguments in non-variadic function!");
+      
+    }
+    
+    // If we still have any arguments, emit them using the type of the argument.
+    for (; Arg != ArgEnd; ++Arg) {
+      QualType ArgType = Arg->getType();
+      Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
+                                    ArgType));
+    }
+  }
 };
+  
+
 }  // end namespace CodeGen
 }  // end namespace clang
 

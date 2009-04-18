@@ -1935,38 +1935,6 @@ RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
   return EmitAnyExprToTemp(E);
 }
 
-void CodeGenFunction::EmitCallArgs(CallArgList& Args, 
-                                   const FunctionProtoType *FPT,
-                                   CallExpr::const_arg_iterator ArgBeg,
-                                   CallExpr::const_arg_iterator ArgEnd) {
-  CallExpr::const_arg_iterator Arg = ArgBeg;
-  
-  // First, use the function argument types.
-  if (FPT) {
-    for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin(),
-         E = FPT->arg_type_end(); I != E; ++I, ++Arg) {
-      assert(getContext().getCanonicalType(I->getNonReferenceType()).
-             getTypePtr() == 
-             getContext().getCanonicalType(Arg->getType()).getTypePtr() && 
-             "type mismatch in call argument!");
-      
-      QualType ArgType = *I;
-      Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType), 
-                                    ArgType));
-    }
-    
-    assert(Arg == ArgEnd || FPT->isVariadic() && 
-           "Extra arguments in non-variadic function!");
-  }
-  
-  // If we still have any arguments, emit them using the type of the argument.
-  for (; Arg != ArgEnd; ++Arg) {
-    QualType ArgType = Arg->getType();
-    Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
-                                  ArgType));
-  }
-}
-
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee, 
                                  const CallArgList &CallArgs,
