@@ -34,22 +34,32 @@
  * Since we only support pow-2 targets, these map directly to exact width types.
  */
 
+#ifndef __int8_t_defined  /* glibc does weird things with sys/types.h */
+#define __int8_t_defined
 typedef signed __INT8_TYPE__ int8_t;
+typedef __INT16_TYPE__ int16_t;
+typedef __INT32_TYPE__ int32_t;
+#ifdef __INT64_TYPE__
+typedef __INT64_TYPE__ int64_t;
+#endif
+#endif
+
 typedef unsigned __INT8_TYPE__ uint8_t;
 typedef int8_t     int_least8_t;
 typedef uint8_t   uint_least8_t;
 typedef int8_t     int_fast8_t;
 typedef uint8_t   uint_fast8_t;
 
-typedef __INT16_TYPE__ int16_t;
 typedef unsigned __INT16_TYPE__ uint16_t;
 typedef int16_t   int_least16_t;
 typedef uint16_t uint_least16_t;
 typedef int16_t   int_fast16_t;
 typedef uint16_t uint_fast16_t;
 
-typedef __INT32_TYPE__ int32_t;
+#ifndef __uint32_t_defined  /* more glibc compatibility */
+#define __uint32_t_defined
 typedef unsigned __INT32_TYPE__ uint32_t;
+#endif
 typedef int32_t   int_least32_t;
 typedef uint32_t uint_least32_t;
 typedef int32_t   int_fast32_t;
@@ -59,7 +69,6 @@ typedef uint32_t uint_fast32_t;
  * typedefs if there is something to typedef them to.
  */
 #ifdef __INT64_TYPE__
-typedef __INT64_TYPE__ int64_t;
 typedef unsigned __INT64_TYPE__ uint64_t;
 typedef int64_t   int_least64_t;
 typedef uint64_t uint_least64_t;
