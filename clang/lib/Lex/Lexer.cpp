@@ -422,6 +422,29 @@ unsigned Lexer::getEscapedNewLineSize(const char *Ptr) {
   return 0;
 }
 
+/// SkipEscapedNewLines - If P points to an escaped newline (or a series of
+/// them), skip over them and return the first non-escaped-newline found,
+/// otherwise return P.
+const char *Lexer::SkipEscapedNewLines(const char *P) {
+  while (1) {
+    const char *AfterEscape;
+    if (*P == '\\') {
+      AfterEscape = P+1;
+    } else if (*P == '?') {
+      // If not a trigraph for escape, bail out.
+      if (P[1] != '?' || P[2] != '/')
+        return P;
+      AfterEscape = P+3;
+    } else {
+      return P;
+    }
+    
+    unsigned NewLineSize = Lexer::getEscapedNewLineSize(AfterEscape);
+    if (NewLineSize == 0) return P;
+    P = AfterEscape+NewLineSize;
+  }
+}
+
 
 /// getCharAndSizeSlow - Peek a single 'character' from the specified buffer,
 /// get its size, and return it.  This is tricky in several cases:
