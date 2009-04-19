@@ -164,9 +164,22 @@ L2:
   return;
 }
 
+void test11(int n) {
+  void *P = ^{
+    switch (n) {
+    case 1:;
+    case 2: 
+    case 3:;
+      int Arr[n]; // expected-note {{jump bypasses initialization of variable length array}}
+    case 4:       // expected-error {{illegal switch case into protected scope}}
+      return;
+    }
+  };
+}
+
 
 // TODO: When and if gotos are allowed in blocks, this should work.
-void test13(int n) {
+void test12(int n) {
   void *P = ^{
     goto L1;  // expected-error {{goto not allowed in block literal}}
   L1:

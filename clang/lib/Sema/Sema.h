@@ -107,6 +107,10 @@ struct BlockSemaInfo {
   /// block.
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
   
+  /// SavedFunctionNeedsScopeChecking - This is the value of
+  /// CurFunctionNeedsScopeChecking at the point when the block started.
+  bool SavedFunctionNeedsScopeChecking;
+  
   /// PrevBlockInfo - If this is nested inside another block, this points
   /// to the outer block.
   BlockSemaInfo *PrevBlockInfo;

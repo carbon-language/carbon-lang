@@ -4661,6 +4661,8 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   BSI->ReturnType = 0;
   BSI->TheScope = BlockScope;
   BSI->hasBlockDeclRefExprs = false;
+  BSI->SavedFunctionNeedsScopeChecking = CurFunctionNeedsScopeChecking;
+  CurFunctionNeedsScopeChecking = false;
 
   BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
   PushDeclContext(BlockScope, BSI->TheDecl);
@@ -4746,11 +4748,12 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
   // Ensure that CurBlock is deleted.
   llvm::OwningPtr<BlockSemaInfo> CC(CurBlock);
 
+  CurFunctionNeedsScopeChecking = CurBlock->SavedFunctionNeedsScopeChecking;
+
   // Pop off CurBlock, handle nested blocks.
   CurBlock = CurBlock->PrevBlockInfo;
 
   // FIXME: Delete the ParmVarDecl objects as well???
-  
 }
 
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
@@ -4793,6 +4796,11 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   BlockTy = Context.getBlockPointerType(BlockTy);
 
+  // If needed, diagnose invalid gotos and switches in the block.
+  if (CurFunctionNeedsScopeChecking)
+    DiagnoseInvalidJumps(static_cast<CompoundStmt*>(body.get()));
+  CurFunctionNeedsScopeChecking = BSI->SavedFunctionNeedsScopeChecking;
+  
   BSI->TheDecl->setBody(static_cast<CompoundStmt*>(body.release()));
   return Owned(new (Context) BlockExpr(BSI->TheDecl, BlockTy,
                                        BSI->hasBlockDeclRefExprs));
