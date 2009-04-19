@@ -786,6 +786,11 @@ public:
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
     getLinuxDefines(Opts, Defines);
+    
+    // Define __NO_MATH_INLINES on linux/x86 so that we don't get inline
+    // functions in glibc header files that use FP Stack inline asm which the
+    // backend can't deal with (PR879).
+    Define(Defines, "__NO_MATH_INLINES");
   }
 };
 } // end anonymous namespace
@@ -865,6 +870,11 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
+    // Define __NO_MATH_INLINES on linux/x86 so that we don't get inline
+    // functions in glibc header files that use FP Stack inline asm which the
+    // backend can't deal with (PR879).
+    Define(Defines, "__NO_MATH_INLINES");
+    
     getLinuxDefines(Opts, Defines);
   }
 };
