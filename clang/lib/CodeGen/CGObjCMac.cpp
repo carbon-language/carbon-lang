@@ -819,6 +819,10 @@ private:
     return "OBJC_CLASS_$_";
   }
 
+  void GetClassSizeInfo(const ObjCInterfaceDecl *OID,
+                        uint32_t &InstanceStart,
+                        uint32_t &InstanceSize);
+
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
   // FIXME. All stubs for now!
@@ -2568,6 +2572,7 @@ const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
                                         const ObjCInterfaceDecl *OID) const {
   const llvm::Type *InterfaceTy;
   
+  // FIXME: When does this happen? It seems pretty bad to do this...
   if (OID->isForwardDecl()) {
     InterfaceTy = llvm::StructType::get(NULL, NULL);
   } else {
@@ -2624,7 +2629,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
 
       const RecordType *RT = FQT->getAsRecordType();
       const RecordDecl *RD = RT->getDecl();
-      // FIXME - Find a more efficiant way of passing records down.
+      // FIXME - Find a more efficient way of passing records down.
       TmpRecFields.append(RD->field_begin(CGM.getContext()),
                           RD->field_end(CGM.getContext()));
       // FIXME - Is Layout correct?
@@ -4204,6 +4209,35 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   return GV;
 }
 
+void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
+                                              uint32_t &InstanceStart,
+                                              uint32_t &InstanceSize) {
+  // FIXME. Share this with the one in EmitIvarList.
+  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
+    
+  RecordDecl::field_iterator firstField, lastField;
+  const RecordDecl *RD = GetFirstIvarInRecord(OID, firstField, lastField);
+    
+  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()),
+         ifield = firstField; ifield != e; ++ifield)
+    lastField = ifield;
+    
+  InstanceStart = InstanceSize = 0;
+  if (lastField != RD->field_end(CGM.getContext())) {
+    FieldDecl *Field = *lastField;
+    const llvm::Type *FieldTy =
+      CGM.getTypes().ConvertTypeForMem(Field->getType());
+    unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
+    InstanceSize = GetIvarBaseOffset(Layout, Field) + Size;
+    if (firstField == RD->field_end(CGM.getContext()))
+      InstanceStart = InstanceSize;
+    else {
+      Field = *firstField;
+      InstanceStart =  GetIvarBaseOffset(Layout, Field);
+    }
+  }
+}
+
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   if (!ObjCEmptyCacheVar) {
@@ -4225,6 +4259,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   }
   assert(ID->getClassInterface() && 
          "CGObjCNonFragileABIMac::GenerateClass - class is 0");
+  // FIXME: Is this correct (That meta class size is never computed)?
   uint32_t InstanceStart = 
     CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassnfABITy);
   uint32_t InstanceSize = InstanceStart;
@@ -4279,34 +4314,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = GetClassGlobal(ObjCClassName + RootClassName);
   }
-  // FIXME: Gross
-  InstanceStart = InstanceSize = 0;
-  if (ObjCInterfaceDecl *OID = 
-        const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
-    // FIXME. Share this with the one in EmitIvarList.
-    const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
-    
-    RecordDecl::field_iterator firstField, lastField;
-    const RecordDecl *RD = GetFirstIvarInRecord(OID, firstField, lastField);
-    
-    for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()),
-         ifield = firstField; ifield != e; ++ifield)
-      lastField = ifield;
-    
-    if (lastField != RD->field_end(CGM.getContext())) {
-      FieldDecl *Field = *lastField;
-      const llvm::Type *FieldTy =
-        CGM.getTypes().ConvertTypeForMem(Field->getType());
-      unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
-      InstanceSize = GetIvarBaseOffset(Layout, Field) + Size;
-      if (firstField == RD->field_end(CGM.getContext()))
-        InstanceStart = InstanceSize;
-      else {
-        Field = *firstField;
-        InstanceStart =  GetIvarBaseOffset(Layout, Field);
-      }
-    }
-  }
+  GetClassSizeInfo(ID->getClassInterface(), InstanceStart, InstanceSize);
   CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                          InstanceStart,
                                          InstanceSize, 
