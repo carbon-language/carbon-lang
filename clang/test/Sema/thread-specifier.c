@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -triple i686-pc-linux-gnu -fsyntax-only -verify %s
 
 __thread int t1;
 __thread extern int t2;

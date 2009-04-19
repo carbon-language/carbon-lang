@@ -1734,6 +1734,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getDeclSpec().isThreadSpecified()) {
     if (NewVD->hasLocalStorage())
       Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_non_global);
+    else if (!Context.Target.isTLSSupported())
+      Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_unsupported);
     else
       NewVD->setThreadSpecified(true);
   }

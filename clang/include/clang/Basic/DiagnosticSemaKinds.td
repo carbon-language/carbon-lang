@@ -97,6 +97,8 @@ def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;
 def err_thread_non_global : Error<
   "'__thread' variables must have global storage">;
+def err_thread_unsupported : Error<
+  "thread-local storage is unsupported for the current target">;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<
