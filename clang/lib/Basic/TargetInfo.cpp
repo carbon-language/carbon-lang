@@ -23,6 +23,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   // like PPC or SPARC.
   // These should be overridden by concrete targets as needed.
   CharIsSigned = true;
+  TLSSupported = true;
   PointerWidth = PointerAlign = 32;
   WCharWidth = WCharAlign = 32;
   IntWidth = IntAlign = 32;

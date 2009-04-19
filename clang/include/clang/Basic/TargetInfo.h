@@ -36,6 +36,7 @@ protected:
   // Target values set by the ctor of the actual target implementation.  Default
   // values are specified by the TargetInfo constructor.
   bool CharIsSigned;
+  bool TLSSupported;
   unsigned char PointerWidth, PointerAlign;
   unsigned char WCharWidth, WCharAlign;
   unsigned char IntWidth, IntAlign;
@@ -309,6 +310,11 @@ public:
   // getRegParmMax - Returns maximal number of args passed in registers.
   unsigned getRegParmMax() const {
     return RegParmMax;
+  }
+
+  // isTLSSupported - Whether the target supports thread-local storage
+  unsigned isTLSSupported() const {
+    return TLSSupported;
   }
 
 protected:

@@ -718,6 +718,7 @@ public:
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:128:128";
+    TLSSupported = false;
   }
 
   virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
@@ -801,6 +802,7 @@ class WindowsX86_32TargetInfo : public X86_32TargetInfo {
 public:
   WindowsX86_32TargetInfo(const std::string& triple)
     : X86_32TargetInfo(triple) {
+    TLSSupported = false;
     // FIXME: Fix wchar_t.
     // FIXME: We should probably enable -fms-extensions by default for
     // this target.
@@ -879,8 +881,9 @@ namespace {
 // x86-64 Darwin (OS X) target
 class DarwinX86_64TargetInfo : public X86_64TargetInfo {
 public:
-  DarwinX86_64TargetInfo(const std::string& triple) :
-    X86_64TargetInfo(triple) {}
+  DarwinX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
+    TLSSupported = false;
+  }
 
   virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
     return IsConstant ? "\01LC" : "\01lC";
@@ -1012,7 +1015,9 @@ public:
 namespace {
 class DarwinARMTargetInfo : public ARMTargetInfo {
 public:
-  DarwinARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {}
+  DarwinARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {
+    TLSSupported = false;
+  }
 
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -1155,6 +1160,7 @@ namespace {
   class PIC16TargetInfo : public TargetInfo{
   public:
     PIC16TargetInfo(const std::string& triple) : TargetInfo(triple) {
+      TLSSupported = false;
       IntWidth = 16;
       LongWidth = LongLongWidth = 32;
       PointerWidth = 16;
