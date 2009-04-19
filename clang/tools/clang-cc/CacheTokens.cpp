@@ -479,7 +479,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       assert(!Tok.isAtStartOfLine());
       
       // Did we see 'include'/'import'/'include_next'?
-      if (!Tok.is(tok::identifier)) {
+      if (Tok.isNot(tok::identifier)) {
         EmitToken(Tok);
         continue;
       }
@@ -535,8 +535,9 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
         
         // Some files have gibberish on the same line as '#endif'.
         // Discard these tokens.
-        do L.LexFromRawLexer(Tok); while (!Tok.is(tok::eof) &&
-                                          !Tok.isAtStartOfLine());
+        do
+          L.LexFromRawLexer(Tok);
+        while (Tok.isNot(tok::eof) && !Tok.isAtStartOfLine());
         // We have the next token in hand.
         // Don't immediately lex the next one.
         goto NextToken;        
