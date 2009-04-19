@@ -1306,6 +1306,15 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       return;
     }
 
+    // If this is a definition of a variadic C99 function-like macro, not using
+    // the GNU named varargs extension, enabled __VA_ARGS__.
+    
+    // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
+    // This gets unpoisoned where it is allowed.
+    assert(Ident__VA_ARGS__->isPoisoned() && "__VA_ARGS__ should be poisoned!");
+    if (MI->isC99Varargs())
+      Ident__VA_ARGS__->setIsPoisoned(false);
+    
     // Read the first token after the arg list for down below.
     LexUnexpandedToken(Tok);
   } else if (Features.C99) {
@@ -1333,15 +1342,6 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     else
       Diag(Tok, diag::warn_missing_whitespace_after_macro_name);
   }
-  
-  // If this is a definition of a variadic C99 function-like macro, not using
-  // the GNU named varargs extension, enabled __VA_ARGS__.
-  
-  // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
-  // This gets unpoisoned where it is allowed.
-  assert(Ident__VA_ARGS__->isPoisoned() && "__VA_ARGS__ should be poisoned!");
-  if (MI->isC99Varargs())
-    Ident__VA_ARGS__->setIsPoisoned(false);
   
   // Read the rest of the macro body.
   if (MI->isObjectLike()) {

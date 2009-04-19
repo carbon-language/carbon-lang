@@ -25,3 +25,9 @@ two(
              expected-error {{too many arguments provided to function-like macro invocation}} */
     )     
 two(,)      /* expected-warning 2 {{empty macro arguments were standardized in C99}} */
+
+
+
+/* PR4006 */
+#define e(...) __VA_ARGS__  /* expected-warning {{variadic macros were introduced in C99}} */
+e(x)
