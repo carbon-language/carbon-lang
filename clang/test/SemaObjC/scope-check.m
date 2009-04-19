@@ -74,4 +74,20 @@ void test3() {
   blargh: ;
   }
 }
+
++ (void)meth2 {
+    int n; void *P;
+    goto L0;     // expected-error {{illegal goto into protected scope}}
+    typedef int A[n];  // expected-note {{jump bypasses initialization of VLA typedef}}
+  L0:
+    
+    goto L1;      // expected-error {{illegal goto into protected scope}}
+    A b, c[10];        // expected-note 2 {{jump bypasses initialization of variable length array}}
+  L1:
+    goto L2;     // expected-error {{illegal goto into protected scope}}
+    A d[n];      // expected-note {{jump bypasses initialization of variable length array}}
+  L2:
+    return;
+}
+
 @end
