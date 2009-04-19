@@ -1,4 +1,4 @@
-// RUN: clang-cc -x assembler-with-cpp -E %s > %t &&
+// RUN: clang-cc -x assembler-with-cpp -fdollars-in-identifiers=0 -E %s > %t &&
 
 #ifndef __ASSEMBLER__
 #error "__ASSEMBLER__ not defined"
@@ -42,6 +42,15 @@
 
 5: M5()
 
+// rdar://6804322
+// RUN: grep -F "6: blarg $foo" %t &&
+#define FOO(name)  name ## $foo
+6: FOO(blarg)
+
+// RUN: clang-cc -x assembler-with-cpp -fdollars-in-identifiers=1 -E %s > %t &&
+// RUN: grep -F "7: blarg$foo" %t &&
+#define FOO(name)  name ## $foo
+7: FOO(blarg)
 
 
 // RUN: true

@@ -618,22 +618,22 @@ EmitAllDecls("femit-all-decls",
 // value).
 static llvm::cl::opt<bool>
 Exceptions("fexceptions",
-           llvm::cl::desc("Enable support for exception handling."));
+           llvm::cl::desc("Enable support for exception handling"));
 
 static llvm::cl::opt<bool>
 GNURuntime("fgnu-runtime",
             llvm::cl::desc("Generate output compatible with the standard GNU "
-                           "Objective-C runtime."));
+                           "Objective-C runtime"));
 
 static llvm::cl::opt<bool>
 NeXTRuntime("fnext-runtime",
             llvm::cl::desc("Generate output compatible with the NeXT "
-                           "runtime."));
+                           "runtime"));
 
 
 
 static llvm::cl::opt<bool>
-Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences."));
+Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences"));
 
 static llvm::cl::list<std::string>
 TargetFeatures("mattr", llvm::cl::CommaSeparated,
@@ -643,6 +643,9 @@ static llvm::cl::opt<unsigned>
 TemplateDepth("ftemplate-depth", llvm::cl::init(99),
               llvm::cl::desc("Maximum depth of recursive template "
                              "instantiation"));
+static llvm::cl::opt<bool>
+DollarsInIdents("fdollars-in-identifiers",
+                llvm::cl::desc("Allow '$' in identifiers"));
 
 
 static llvm::cl::opt<bool>
@@ -679,8 +682,6 @@ PICLevel("pic-level", llvm::cl::desc("Value for __PIC__"));
 static llvm::cl::opt<bool>
 StaticDefine("static-define", llvm::cl::desc("Should __STATIC__ be defined"));
 
-// FIXME: add:
-//   -fdollars-in-identifiers
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target) {
   // Allow the target to set the default the langauge options as it sees fit.
@@ -785,7 +786,10 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   
   // Never accept '$' in identifiers when preprocessing assembler.
   if (LK != langkind_asm_cpp)
-    Options.DollarIdents = 1;  // FIXME: Really a target property.
+    Options.DollarIdents = true;  // FIXME: target property?
+  else
+    Options.DollarIdents = DollarsInIdents;
+  
   if (PascalStrings.getPosition())
     Options.PascalStrings = PascalStrings;
   Options.Microsoft = MSExtensions;
