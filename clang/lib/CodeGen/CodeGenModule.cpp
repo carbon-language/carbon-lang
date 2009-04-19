@@ -656,10 +656,6 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
     return llvm::ConstantExpr::getBitCast(Entry, Ty);
   }
   
-  // We don't support __thread yet.
-  if (D && D->isThreadSpecified())
-    ErrorUnsupported(D, "thread local ('__thread') variable", true);
-  
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
@@ -676,7 +672,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
     new llvm::GlobalVariable(Ty->getElementType(), false, 
                              llvm::GlobalValue::ExternalLinkage,
                              0, "", &getModule(), 
-                             0, Ty->getAddressSpace());
+                             false, Ty->getAddressSpace());
   GV->setName(MangledName);
 
   // Handle things which are present even on external declarations.
@@ -691,6 +687,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
 
     if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
       GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+
+    GV->setThreadLocal(D->isThreadSpecified());
   }
   
   return Entry = GV;

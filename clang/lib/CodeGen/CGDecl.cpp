@@ -63,10 +63,6 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   if (D.hasAttr<AsmLabelAttr>())
     CGM.ErrorUnsupported(&D, "__asm__");
   
-  // We don't support __thread yet.
-  if (D.isThreadSpecified())
-    CGM.ErrorUnsupported(&D, "thread local ('__thread') variable", true);
-  
   switch (D.getStorageClass()) {
   case VarDecl::None:
   case VarDecl::Auto:
@@ -110,7 +106,8 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   return new llvm::GlobalVariable(LTy, Ty.isConstant(getContext()), Linkage,
                                   llvm::Constant::getNullValue(LTy), Name,
-                                  &CGM.getModule(), 0, Ty.getAddressSpace());
+                                  &CGM.getModule(), D.isThreadSpecified(),
+                                  Ty.getAddressSpace());
 }
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 
@@ -145,7 +142,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
         
         GV = new llvm::GlobalVariable(Init->getType(), OldGV->isConstant(),
                                       OldGV->getLinkage(), Init, "",
-                                      &CGM.getModule(), 0, 
+                                      &CGM.getModule(), D.isThreadSpecified(),
                                       D.getType().getAddressSpace());
 
         // Steal the name of the old global
