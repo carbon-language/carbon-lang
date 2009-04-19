@@ -164,3 +164,27 @@ L2:
   return;
 }
 
+// TODO: When and if gotos are allowed in blocks, this should work.
+void test11(int n) {
+  void *P = ^{
+    goto L1;  // expected-error {{goto not allowed in block literal}}
+  L1:
+    goto L2;  // expected-error {{goto not allowed in block literal}}
+  L2:
+    goto L3;    // expected-error {{goto not allowed in block literal}}
+      // todo-error {{illegal goto into protected scope}}
+    int Arr[n]; // todo-note {{jump bypasses initialization of variable length array}}
+  L3:
+    goto L4;  // expected-error {{goto not allowed in block literal}}
+  L4: return;
+  };
+}
+
+
+
+#if 0
+// in Sema::CheckVariableDeclaration
+// FIXME: This won't give the correct result for
+// int a[10][n];    
+#endif
+
