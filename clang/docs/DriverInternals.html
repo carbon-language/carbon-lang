@@ -15,7 +15,7 @@
 
     <div id="content">
 
-      <h1>Driver Design & Internals</h1>
+      <h1>Driver Design &amp; Internals</h1>
 
       <ul>
         <li><a href="#intro">Introduction</a></li>
@@ -268,7 +268,7 @@
             5: assembler, {4}, object
             6: linker, {3, 5}, image
           </pre>
-          <p>Here the driver is constructing sevent distinct actions,
+          <p>Here the driver is constructing seven distinct actions,
             four to compile the "t.c" input into an object file, two to
             assemble the "t.s" input, and one to link them together.</p>
 
@@ -307,7 +307,7 @@
         <li>
           <b>Bind: Tool &amp; Filename Selection</b>
 
-          <p>The stage (in conjunction with the Translate stage) turns
+          <p>This stage (in conjunction with the Translate stage) turns
             the tree of Actions into a list of actual subprocess to
             run. Conceptually, the driver performs a simple tree match
             to assign Action(s) to Tools. Once an Action has been
@@ -437,7 +437,7 @@
         command line arguments the user really cared about may go
         unused. This problem is particularly important when using
         clang as a compiler, since the clang compiler does not support
-        anywhere all the options that gcc does, and we want to make
+        anywhere near all the options that gcc does, and we want to make
         sure users know which ones are being used.</p>
 
       <p>To support this, the driver maintains a bit associated with
@@ -445,7 +445,7 @@
         compilation. This bit usually doesn't need to be set by hand,
         as the key ArgList accessors will set it automatically.</p>
 
-      <p>When a compilation is successfull (there are no errors), the
+      <p>When a compilation is successful (there are no errors), the
         driver checks the bit and emits an "unused argument" warning for
         any arguments which were never accessed. This is conservative
         (the argument may not have been used to do what the user wanted)
