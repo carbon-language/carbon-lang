@@ -52,7 +52,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   // Get source file information.
   const char *FileName =  "<unknown>";
   SourceManager &SM = M->getContext().getSourceManager();
-  unsigned FID;
+  unsigned FID = 0;
   if (Loc.isValid()) {
     PresumedLoc PLoc = SM.getPresumedLoc(Loc);
     FileName = PLoc.getFilename();
