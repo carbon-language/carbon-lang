@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MutexGuard.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/System/Disassembler.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -57,23 +58,23 @@ namespace {
   private:
     /// FunctionToStubMap - Keep track of the stub created for a particular
     /// function so that we can reuse them if necessary.
-    std::map<Function*, void*> FunctionToStubMap;
+    std::map<AssertingVH<Function>, void*> FunctionToStubMap;
 
     /// StubToFunctionMap - Keep track of the function that each stub
     /// corresponds to.
-    std::map<void*, Function*> StubToFunctionMap;
+    std::map<void*, AssertingVH<Function> > StubToFunctionMap;
 
     /// GlobalToIndirectSymMap - Keep track of the indirect symbol created for a
     /// particular GlobalVariable so that we can reuse them if necessary.
     std::map<GlobalValue*, void*> GlobalToIndirectSymMap;
 
   public:
-    std::map<Function*, void*>& getFunctionToStubMap(const MutexGuard& locked) {
+    std::map<AssertingVH<Function>, void*>& getFunctionToStubMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return FunctionToStubMap;
     }
 
-    std::map<void*, Function*>& getStubToFunctionMap(const MutexGuard& locked) {
+    std::map<void*, AssertingVH<Function> >& getStubToFunctionMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return StubToFunctionMap;
     }
@@ -275,11 +276,11 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
                                     SmallVectorImpl<void*> &Ptrs) {
   MutexGuard locked(TheJIT->lock);
   
-  std::map<Function*,void*> &FM = state.getFunctionToStubMap(locked);
+  std::map<AssertingVH<Function>,void*> &FM =state.getFunctionToStubMap(locked);
   std::map<GlobalValue*,void*> &GM = state.getGlobalToIndirectSymMap(locked);
   
-  for (std::map<Function*,void*>::iterator i = FM.begin(), e = FM.end();
-       i != e; ++i) {
+  for (std::map<AssertingVH<Function>,void*>::iterator i = FM.begin(),
+       e = FM.end(); i != e; ++i) {
     Function *F = i->first;
     if (F->isDeclaration() && F->hasExternalLinkage()) {
       GVs.push_back(i->first);
@@ -296,8 +297,8 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
 GlobalValue *JITResolver::invalidateStub(void *Stub) {
   MutexGuard locked(TheJIT->lock);
   
-  std::map<Function*,void*> &FM = state.getFunctionToStubMap(locked);
-  std::map<void*,Function*> &SM = state.getStubToFunctionMap(locked);
+  std::map<AssertingVH<Function>,void*> &FM =state.getFunctionToStubMap(locked);
+  std::map<void*,AssertingVH<Function> > &SM=state.getStubToFunctionMap(locked);
   std::map<GlobalValue*,void*> &GM = state.getGlobalToIndirectSymMap(locked);
   
   // Look up the cheap way first, to see if it's a function stub we are
@@ -348,7 +349,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
     // The address given to us for the stub may not be exactly right, it might be
     // a little bit after the stub.  As such, use upper_bound to find it.
-    std::map<void*, Function*>::iterator I =
+    std::map<void*, AssertingVH<Function> >::iterator I =
       JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
     assert(I != JR.state.getStubToFunctionMap(locked).begin() &&
            "This is not a known stub!");
