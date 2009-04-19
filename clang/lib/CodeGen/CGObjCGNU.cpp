@@ -299,9 +299,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   const ObjCInterfaceDecl *SuperClass = Class->getSuperClass();
   // TODO: This should be cached, not looked up every time.
   llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
-  if (IsClassMessage)
-    ReceiverClass = CGF.Builder.CreateBitCast(CGF.Builder.CreateLoad(
-      CGF.Builder.CreateStructGEP(ReceiverClass, 0)), IdTy);
+
+
   // Construct the structure used to look up the IMP
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(Receiver->getType(),
       IdTy, NULL);
