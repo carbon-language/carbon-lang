@@ -152,7 +152,7 @@ public:
 /// Note that an AssertingVH handle does *not* follow values across RAUW
 /// operations.  This means that RAUW's need to explicitly update the
 /// AssertingVH's as it moves.  This is required because in non-assert mode this
-  /// class turns into a trivial wrapper around a pointer.
+/// class turns into a trivial wrapper around a pointer.
 template <typename ValueTy>
 class AssertingVH 
 #ifndef NDEBUG
