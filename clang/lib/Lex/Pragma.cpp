@@ -509,6 +509,42 @@ struct PragmaCommentHandler : public PragmaHandler {
     PP.HandlePragmaComment(CommentTok);
   }
 };
+  
+// Pragma STDC implementations.
+  
+/// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
+struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
+  PragmaSTDC_FP_CONTRACTHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+    //PP.HandlePragmaComment(CommentTok);
+  }
+};
+  
+/// PragmaSTDC_FENV_ACCESSHandler - "#pragma STDC FENV_ACCESS ...".
+struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
+  PragmaSTDC_FENV_ACCESSHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+    //PP.HandlePragmaComment(CommentTok);
+  }
+};
+  
+/// PragmaSTDC_CX_LIMITED_RANGEHandler - "#pragma STDC CX_LIMITED_RANGE ...".
+struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
+  PragmaSTDC_CX_LIMITED_RANGEHandler(const IdentifierInfo *ID)
+    : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+    //PP.HandlePragmaComment(CommentTok);
+  }
+};
+  
+/// PragmaSTDC_UnknownHandler - "#pragma STDC ...".
+struct PragmaSTDC_UnknownHandler : public PragmaHandler {
+  PragmaSTDC_UnknownHandler() : PragmaHandler(0) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+    //PP.HandlePragmaComment(CommentTok);
+  }
+};
+  
 }  // end anonymous namespace
 
 
@@ -522,6 +558,14 @@ void Preprocessor::RegisterBuiltinPragmas() {
                                           getIdentifierInfo("system_header")));
   AddPragmaHandler("GCC", new PragmaDependencyHandler(
                                           getIdentifierInfo("dependency")));
+  
+  AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler(
+                                             getIdentifierInfo("FP_CONTRACT")));
+  AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler(
+                                             getIdentifierInfo("FENV_ACCESS")));
+  AddPragmaHandler("STDC", new PragmaSTDC_CX_LIMITED_RANGEHandler(
+                                        getIdentifierInfo("CX_LIMITED_RANGE")));
+  AddPragmaHandler("STDC", new PragmaSTDC_UnknownHandler());
   
   // MS extensions.
   if (Features.Microsoft)
