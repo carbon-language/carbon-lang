@@ -28,6 +28,8 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
   if (!MDecl)
     return;
 
+  CurFunctionNeedsScopeChecking = false;
+
   // Allow the rest of sema to find private method decl implementations.
   if (MDecl->isInstanceMethod())
     AddInstanceMethodToGlobalPool(MDecl);

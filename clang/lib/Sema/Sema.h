@@ -153,6 +153,12 @@ public:
   /// handle the case when they are in a block.
   llvm::SmallVector<SwitchStmt*, 8> FunctionSwitchStack;
   
+  /// CurFunctionNeedsScopeChecking - This is set to true when a function or
+  /// ObjC method body contains a VLA or an ObjC try block, which introduce
+  /// scopes that need to be checked for goto conditions.  If a function does
+  /// not contain this, then it need not have the jump checker run on it.
+  bool CurFunctionNeedsScopeChecking;
+  
   /// ExtVectorDecls - This is a list all the extended vector types. This allows
   /// us to associate a raw vector type with one of the ext_vector type names.
   /// This is only necessary for issuing pretty diagnostics.

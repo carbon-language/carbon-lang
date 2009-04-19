@@ -1056,6 +1056,7 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtArg Body) {
 Action::OwningStmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
                          StmtArg Try, StmtArg Catch, StmtArg Finally) {
+  CurFunctionNeedsScopeChecking = true;
   return Owned(new (Context) ObjCAtTryStmt(AtLoc,
                                         static_cast<Stmt*>(Try.release()),
                                         static_cast<Stmt*>(Catch.release()),

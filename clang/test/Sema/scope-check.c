@@ -164,8 +164,9 @@ L2:
   return;
 }
 
+
 // TODO: When and if gotos are allowed in blocks, this should work.
-void test11(int n) {
+void test13(int n) {
   void *P = ^{
     goto L1;  // expected-error {{goto not allowed in block literal}}
   L1:
@@ -179,12 +180,4 @@ void test11(int n) {
   L4: return;
   };
 }
-
-
-
-#if 0
-// in Sema::CheckVariableDeclaration
-// FIXME: This won't give the correct result for
-// int a[10][n];    
-#endif
 

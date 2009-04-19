@@ -1564,11 +1564,13 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       InvalidDecl = true;
   }
 
-  if (S->getFnParent() == 0) {
-    QualType T = NewTD->getUnderlyingType();
-    // C99 6.7.7p2: If a typedef name specifies a variably modified type
-    // then it shall have block scope.
-    if (T->isVariablyModifiedType()) {
+  // C99 6.7.7p2: If a typedef name specifies a variably modified type
+  // then it shall have block scope.
+  QualType T = NewTD->getUnderlyingType();
+  if (T->isVariablyModifiedType()) {
+    CurFunctionNeedsScopeChecking = true;
+  
+    if (S->getFnParent() == 0) {
       bool SizeIsNegative;
       QualType FixedTy =
           TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
@@ -1810,9 +1812,12 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
       && !NewVD->hasAttr<BlocksAttr>())
     Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
 
-  bool isIllegalVLA = T->isVariableArrayType() && NewVD->hasGlobalStorage();
-  bool isIllegalVM = T->isVariablyModifiedType() && NewVD->hasLinkage();
-  if (isIllegalVLA || isIllegalVM) {
+  bool isVM = T->isVariablyModifiedType();
+  if (isVM || NewVD->hasAttr<CleanupAttr>())
+    CurFunctionNeedsScopeChecking = true;
+  
+  if ((isVM && NewVD->hasLinkage()) ||
+      (T->isVariableArrayType() && NewVD->hasGlobalStorage())) {
     bool SizeIsNegative;
     QualType FixedTy =
         TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
@@ -2822,6 +2827,8 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
 Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   FunctionDecl *FD = cast<FunctionDecl>(D.getAs<Decl>());
 
+  CurFunctionNeedsScopeChecking = false;
+  
   // See if this is a redefinition.
   const FunctionDecl *Definition;
   if (FD->getBody(Context, Definition)) {
@@ -2964,7 +2971,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   if (!Body) return D;
 
   // Verify that that gotos and switch cases don't jump into scopes illegally.
-  DiagnoseInvalidJumps(Body);
+  if (CurFunctionNeedsScopeChecking)
+    DiagnoseInvalidJumps(Body);
 
   return D;
 }
