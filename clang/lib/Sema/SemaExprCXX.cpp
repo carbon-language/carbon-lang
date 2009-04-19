@@ -1311,8 +1311,61 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (!Composite.isNull())
     return Composite;
 
-  // Fourth bullet is same for pointers-to-member.
-  // FIXME: Handle this case where both are member pointers.
+  // Fourth bullet is same for pointers-to-member. However, the possible
+  // conversions are far more limited: we have null-to-pointer, upcast of
+  // containing class, and second-level cv-ness.
+  // cv-ness is not a union, but must match one of the two operands. (Which,
+  // frankly, is stupid.)
+  const MemberPointerType *LMemPtr = LTy->getAsMemberPointerType();
+  const MemberPointerType *RMemPtr = RTy->getAsMemberPointerType();
+  if (LMemPtr && RHS->isNullPointerConstant(Context)) {
+    ImpCastExprToType(RHS, LTy);
+    return LTy;
+  }
+  if (RMemPtr && LHS->isNullPointerConstant(Context)) {
+    ImpCastExprToType(LHS, RTy);
+    return RTy;
+  }
+  if (LMemPtr && RMemPtr) {
+    QualType LPointee = LMemPtr->getPointeeType();
+    QualType RPointee = RMemPtr->getPointeeType();
+    // First, we check that the unqualified pointee type is the same. If it's
+    // not, there's no conversion that will unify the two pointers.
+    if (Context.getCanonicalType(LPointee).getUnqualifiedType() ==
+        Context.getCanonicalType(RPointee).getUnqualifiedType()) {
+      // Second, we take the greater of the two cv qualifications. If neither
+      // is greater than the other, the conversion is not possible.
+      unsigned Q = LPointee.getCVRQualifiers() | RPointee.getCVRQualifiers();
+      if (Q == LPointee.getCVRQualifiers() || Q == RPointee.getCVRQualifiers()){
+        // Third, we check if either of the container classes is derived from
+        // the other.
+        QualType LContainer(LMemPtr->getClass(), 0);
+        QualType RContainer(RMemPtr->getClass(), 0);
+        QualType MoreDerived;
+        if (Context.getCanonicalType(LContainer) ==
+            Context.getCanonicalType(RContainer))
+          MoreDerived = LContainer;
+        else if (IsDerivedFrom(LContainer, RContainer))
+          MoreDerived = LContainer;
+        else if (IsDerivedFrom(RContainer, LContainer))
+          MoreDerived = RContainer;
+
+        if (!MoreDerived.isNull()) {
+          // The type 'Q Pointee (MoreDerived::*)' is the common type.
+          // We don't use ImpCastExprToType here because this could still fail
+          // for ambiguous or inaccessible conversions.
+          QualType Common = Context.getMemberPointerType(
+            LPointee.getQualifiedType(Q), MoreDerived.getTypePtr());
+          if (PerformImplicitConversion(LHS, Common, "converting"))
+            return QualType();
+          if (PerformImplicitConversion(RHS, Common, "converting"))
+            return QualType();
+          return Common;
+        }
+      }
+    }
+  }
+
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
     << LHS->getType() << RHS->getType()
     << LHS->getSourceRange() << RHS->getSourceRange();

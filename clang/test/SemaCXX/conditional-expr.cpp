@@ -38,6 +38,14 @@ struct BadDerived : BadBase {};
 struct Fields {
   int i1, i2, b1 : 3, b2 : 3;
 };
+struct MixedFields {
+  int i;
+  volatile int vi;
+  const int ci;
+  const volatile int cvi;
+};
+struct MixedFieldsDerived : MixedFields {
+};
 
 enum Enum { EVal };
 
@@ -148,11 +156,15 @@ void test()
   d1 = i1 ? 4.0 : 'c';
   Base *pb = i1 ? (Base*)0 : (Derived*)0;
   pb = i1 ? (Derived*)0 : (Base*)0;
-  // FIXME: member pointer conversions don't work yet.
-  //pfm = i1 ? &Base::fn1 : &Derived::fn2;
-  //pfm = i1 ? &Derived::fn2 : &Base::fn1;
-  //pfm = i1 ? &Derived::fn2 : 0;
-  //pfm = i1 ? 0 : &Derived::fn2;
+  pfm = i1 ? &Base::fn1 : &Derived::fn2;
+  pfm = i1 ? &Derived::fn2 : &Base::fn1;
+  pfm = i1 ? &Derived::fn2 : 0;
+  pfm = i1 ? 0 : &Derived::fn2;
+  const int (MixedFieldsDerived::*mp1) =
+    i1 ? &MixedFields::ci : &MixedFieldsDerived::i;
+  const volatile int (MixedFields::*mp2) =
+    i1 ? &MixedFields::ci : &MixedFields::cvi;
+  i1 ? &MixedFields::ci : &MixedFields::vi; // expected-error {{incompatible operand types}}
   // Conversion of primitives does not result in an lvalue.
   &(i1 ? i1 : d1); // expected-error {{address expression must be an lvalue or a function designator}}
 
