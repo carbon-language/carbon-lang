@@ -1062,7 +1062,7 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
 llvm::Constant *CodeGenModule::
 GetAddrOfConstantCFString(const StringLiteral *Literal) {
   std::string str;
-  unsigned StringLength;
+  unsigned StringLength = 0;
   
   bool isUTF16 = false;
   if (Literal->containsNonAsciiOrNull()) {
