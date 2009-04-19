@@ -18,3 +18,16 @@ XYZ
 #define i   ##      // expected-error {{'##' cannot appear at start of macro expansion}}
 #define j() ##      // expected-error {{'##' cannot appear at start of macro expansion}}
 
+// Invalid token pasting.
+// PR3918
+
+// When pasting creates poisoned identifiers, we error.
+#pragma GCC poison BLARG
+BLARG  // expected-error {{attempt to use a poisoned identifier}}
+#define XX BL ## ARG
+XX     // expected-error {{attempt to use a poisoned identifier}}
+
+#define VA __VA_ ## ARGS__
+int VA;   // expected-warning {{__VA_ARGS__ can only appear in the expansion of a C99 variadic macro}}
+
+

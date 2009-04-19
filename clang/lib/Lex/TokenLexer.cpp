@@ -308,13 +308,18 @@ void TokenLexer::Lex(Token &Tok) {
   // Get the next token to return.
   Tok = Tokens[CurToken++];
   
+  bool TokenIsFromPaste = false;
+  
   // If this token is followed by a token paste (##) operator, paste the tokens!
   if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash))
     if (PasteTokens(Tok)) {
       // When handling the microsoft /##/ extension, the final token is
       // returned by PasteTokens, not the pasted token.
       return;
+    } else {
+      TokenIsFromPaste = true;
     }
+      
 
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
@@ -341,6 +346,17 @@ void TokenLexer::Lex(Token &Tok) {
     // Change the kind of this identifier to the appropriate token kind, e.g.
     // turning "for" into a keyword.
     Tok.setKind(II->getTokenID());
+    
+    // If this identifier was poisoned and from a paste, emit an error.  This
+    // won't be handled by Preprocessor::HandleIdentifier because this is coming
+    // from a macro expansion.
+    if (II->isPoisoned() && TokenIsFromPaste) {
+      // We warn about __VA_ARGS__ with poisoning.
+      if (II->isStr("__VA_ARGS__"))
+        PP.Diag(Tok, diag::ext_pp_bad_vaargs_use);
+      else
+        PP.Diag(Tok, diag::err_pp_used_poisoned_id);
+    }
     
     if (!DisableMacroExpansion && II->isHandleIdentifierCase())
       PP.HandleIdentifier(Tok);
@@ -476,17 +492,6 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     // by saying we're skipping contents, so we need to do this manually.
     IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr);
     Tok.setIdentifierInfo(II);
-    
-    // If this identifier was poisoned, emit an error.  This won't be handled by
-    // Preprocessor::HandleIdentifier because this is coming from a macro
-    // expansion.
-    if (II->isPoisoned()) {
-      // We warn about __VA_ARGS__ with poisoning.
-      if (II->isStr("__VA_ARGS__"))
-        PP.Diag(Tok, diag::ext_pp_bad_vaargs_use);
-      else
-        PP.Diag(Tok, diag::err_pp_used_poisoned_id);
-    }
   }
   return false;
 }
