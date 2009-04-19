@@ -2988,7 +2988,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
   if (isa<LabelStmt>(S) || isa<DefaultStmt>(S) || isa<CaseStmt>(S)) {
     LabelAndGotoScopes[S] = ParentScope;
   } else if (isa<GotoStmt>(S) || isa<SwitchStmt>(S) ||
-             isa<IndirectGotoStmt>(S)) {
+             isa<IndirectGotoStmt>(S) || isa<AddrLabelExpr>(S)) {
     // Remember both what scope a goto is in as well as the fact that we have
     // it.  This makes the second scan not have to walk the AST again.
     LabelAndGotoScopes[S] = ParentScope;
@@ -3082,19 +3082,41 @@ void JumpScopeChecker::VerifyJumps() {
     }
     
     
+    unsigned DiagnosticScope;
+    
     // We don't know where an indirect goto goes, require that it be at the
     // top level of scoping.
-    assert(isa<IndirectGotoStmt>(Jump));
-    assert(LabelAndGotoScopes.count(Jump) &&"Jump didn't get added to scopes?");
-    unsigned GotoScope = LabelAndGotoScopes[Jump];
-    if (GotoScope == 0) continue;
-    S.Diag(Jump->getLocStart(), diag::err_indirect_goto_in_protected_scope);
+    if (IndirectGotoStmt *IG = dyn_cast<IndirectGotoStmt>(Jump)) {
+      assert(LabelAndGotoScopes.count(Jump) &&
+             "Jump didn't get added to scopes?");
+      unsigned GotoScope = LabelAndGotoScopes[IG];
+      if (GotoScope == 0) continue;  // indirect jump is ok.
+      S.Diag(IG->getGotoLoc(), diag::err_indirect_goto_in_protected_scope);
+      DiagnosticScope = GotoScope;
+    } else {
+      // We model &&Label as a jump for purposes of scope tracking.  We actually
+      // don't care *where* the address of label is, but we require the *label
+      // itself* to be in scope 0.  If it is nested inside of a VLA scope, then
+      // it is possible for an indirect goto to illegally enter the VLA scope by
+      // indirectly jumping to the label.
+      assert(isa<AddrLabelExpr>(Jump) && "Unknown jump type");
+      LabelStmt *TheLabel = cast<AddrLabelExpr>(Jump)->getLabel();
     
-    while (GotoScope != 0) {
-      S.Diag(Scopes[GotoScope].Loc, Scopes[GotoScope].Diag);
-      GotoScope = Scopes[GotoScope].ParentScope;
+      assert(LabelAndGotoScopes.count(TheLabel) &&
+             "Referenced label didn't get added to scopes?");
+      unsigned LabelScope = LabelAndGotoScopes[TheLabel];
+      if (LabelScope == 0) continue; // Addr of label is ok.
+    
+      S.Diag(Jump->getLocStart(), diag::err_addr_of_label_in_protected_scope);
+      DiagnosticScope = LabelScope;
     }
-    continue;
+
+    // Report all the things that would be skipped over by this &&label or
+    // indirect goto.
+    while (DiagnosticScope != 0) {
+      S.Diag(Scopes[DiagnosticScope].Loc, Scopes[DiagnosticScope].Diag);
+      DiagnosticScope = Scopes[DiagnosticScope].ParentScope;
+    }
   }
 }
 

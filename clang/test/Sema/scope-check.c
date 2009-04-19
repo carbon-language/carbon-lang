@@ -136,14 +136,17 @@ void test9(int n, void *P) {
   goto *P;  // ok.
 
 L2: ;
-  int a[n];  // expected-note {{jump bypasses initialization of variable length array}}
+  int a[n]; // expected-note 2 {{jump bypasses initialization of variable length array}}
 
 L3:
+L4:  
   goto *P;  // expected-error {{illegal indirect goto in protected scope, unknown effect on scopes}}
+  goto L3;  // ok
+  goto L4;  // ok
   
   void *Ptrs[] = {
-    &&L2,
-    &&L3   // FIXME: Not Ok.
+    &&L2,   // Ok.
+    &&L3   // expected-error {{address taken of label in protected scope, jump to it would have unknown effect on scope}}
   };
 }
 
