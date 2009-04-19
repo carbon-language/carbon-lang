@@ -798,7 +798,7 @@ private:
   /// ObjCIvarOffsetVariable - Returns the ivar offset variable for
   /// the given ivar.
   ///
-  llvm::GlobalVariable * ObjCIvarOffsetVariable(std::string &Name, 
+  llvm::GlobalVariable * ObjCIvarOffsetVariable(
                               const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar);
   
@@ -4497,10 +4497,9 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
 /// the given ivar.
 ///
 llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
-                              std::string &Name, 
                               const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar) {
-  Name += "OBJC_IVAR_$_" + 
+  std::string Name = "OBJC_IVAR_$_" + 
     getInterfaceDeclForIvar(ID, Ivar, CGM.getContext())->getNameAsString() + 
     '.' + Ivar->getNameAsString();
   llvm::GlobalVariable *IvarOffsetGV = 
@@ -4874,9 +4873,7 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
   assert(ObjectTy->isObjCInterfaceType() && 
          "CGObjCNonFragileABIMac::EmitObjCValueForIvar");
   ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
-  std::string ExternalName;
-  llvm::GlobalVariable *IvarOffsetGV =
-    ObjCIvarOffsetVariable(ExternalName, ID, Ivar);
+  llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
   
   // (char *) BaseValue
   llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, ObjCTypes.Int8PtrTy);
@@ -4909,11 +4906,8 @@ llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
                                        CodeGen::CodeGenFunction &CGF,
                                        ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
-  std::string ExternalName;
-  llvm::GlobalVariable *IvarOffsetGV =  
-    ObjCIvarOffsetVariable(ExternalName, Interface, Ivar);
-  
-  return CGF.Builder.CreateLoad(IvarOffsetGV, false, "ivar");
+  return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar), 
+                                false, "ivar");
 }
 
 CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
