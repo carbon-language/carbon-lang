@@ -3150,26 +3150,25 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
   // and then emit a note at each VLA being jumped out of.
   S.Diag(DiagLoc, JumpDiag);
 
-  // FIXME: This is N^2 and silly.
-  while (1) {
-    // Diagnose that the jump jumps over this declaration.
-    const GotoScope &TargetScope = Scopes[ToScope];
-    S.Diag(TargetScope.Loc, TargetScope.Diag);
+  // Eliminate the common prefix of the jump and the target.  Start by
+  // linearizing both scopes, reversing them as we go.
+  std::vector<unsigned> FromScopes, ToScopes;
+  for (TestScope = FromScope; TestScope != ~0U;
+       TestScope = Scopes[TestScope].ParentScope)
+    FromScopes.push_back(TestScope);
+  for (TestScope = ToScope; TestScope != ~0U;
+       TestScope = Scopes[TestScope].ParentScope)
+    ToScopes.push_back(TestScope);
 
-    // Walk out one level.
-    ToScope = Scopes[ToScope].ParentScope;
-    assert(ToScope != ~0U && "Didn't find top-level function scope?");
- 
-    // Check to see if the jump is valid now.
-    unsigned TestScope = FromScope;
-    while (TestScope != ~0U) {
-      // If we found the jump target, the the jump became valid.
-      if (TestScope == ToScope) return;
-      
-      // Otherwise, scan up the hierarchy.
-      TestScope = Scopes[TestScope].ParentScope;
-    }
+  // Remove any common entries (such as the top-level function scope).
+  while (!FromScopes.empty() && FromScopes.back() == ToScopes.back()) {
+    FromScopes.pop_back();
+    ToScopes.pop_back();
   }
+  
+  // Emit diagnostics for whatever is left in ToScopes.
+  for (unsigned i = 0, e = ToScopes.size(); i != e; ++i)
+    S.Diag(Scopes[ToScopes[i]].Loc, Scopes[ToScopes[i]].Diag);
 }
 
 
