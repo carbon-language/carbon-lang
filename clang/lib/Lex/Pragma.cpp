@@ -511,12 +511,48 @@ struct PragmaCommentHandler : public PragmaHandler {
 };
   
 // Pragma STDC implementations.
+
+enum STDCSetting {
+  STDC_ON, STDC_OFF, STDC_DEFAULT, STDC_INVALID
+};
+  
+static STDCSetting LexOnOffSwitch(Preprocessor &PP) {
+  Token Tok;
+  PP.LexUnexpandedToken(Tok);
+
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok, diag::ext_stdc_pragma_syntax);
+    return STDC_INVALID;
+  }
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  STDCSetting Result;
+  if (II->isStr("ON"))
+    Result = STDC_ON;
+  else if (II->isStr("OFF"))
+    Result = STDC_OFF;
+  else if (II->isStr("DEFAULT"))
+    Result = STDC_DEFAULT;
+  else {
+    PP.Diag(Tok, diag::ext_stdc_pragma_syntax);
+    return STDC_INVALID;
+  }
+
+  // Verify that this is followed by EOM.
+  PP.LexUnexpandedToken(Tok);
+  if (Tok.isNot(tok::eom))
+    PP.Diag(Tok, diag::ext_stdc_pragma_syntax_eom);
+  return Result;
+}
   
 /// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
 struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
   PragmaSTDC_FP_CONTRACTHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
-    //PP.HandlePragmaFP_CONTRACT(CommentTok);
+    // We just ignore the setting of FP_CONTRACT. Since we don't do contractions
+    // at all, our default is OFF and setting it to ON is an optimization hint
+    // we can safely ignore.  When we support -ffma or something, we would need
+    // to diagnose that we are ignoring FMA.
+    LexOnOffSwitch(PP);
   }
 };
   
@@ -524,7 +560,7 @@ struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
-    //PP.HandlePragmaFENV_ACCESS(CommentTok);
+    LexOnOffSwitch(PP);
   }
 };
   
@@ -533,7 +569,7 @@ struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
   PragmaSTDC_CX_LIMITED_RANGEHandler(const IdentifierInfo *ID)
     : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
-    //PP.HandlePragmaCX_LIMITED_RANGE(CommentTok);
+    LexOnOffSwitch(PP);
   }
 };
   
@@ -541,6 +577,7 @@ struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
 struct PragmaSTDC_UnknownHandler : public PragmaHandler {
   PragmaSTDC_UnknownHandler() : PragmaHandler(0) {}
   virtual void HandlePragma(Preprocessor &PP, Token &UnknownTok) {
+    // C99 6.10.6p2, unknown forms are not allowed.
     PP.Diag(UnknownTok, diag::ext_stdc_pragma_ignored);
   }
 };
