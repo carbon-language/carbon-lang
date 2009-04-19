@@ -739,8 +739,12 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // Get the size of instances.  For runtimes that support late-bound instances
   // this should probably be something different (size just of instance
   // varaibles in this class, not superclasses?).
-  const llvm::Type *ObjTy =
-    CGM.getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
+  const llvm::Type *ObjTy;
+
+  if (ClassDecl->isForwardDecl())
+    ObjTy = llvm::StructType::get(NULL, NULL);
+  else
+    ObjTy = CGM.getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
   int instanceSize = CGM.getTargetData().getTypePaddedSize(ObjTy);
 
   // Collect information about instance variables.

@@ -1484,7 +1484,11 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getNameAsString(),
                      Interface->protocol_begin(),
                      Interface->protocol_end());
-  const llvm::Type *InterfaceTy = 
+  const llvm::Type *InterfaceTy;
+  if (Interface->isForwardDecl())
+    InterfaceTy = llvm::StructType::get(NULL, NULL);
+  else
+    InterfaceTy =
    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
   unsigned Flags = eClassFlags_Factory;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
@@ -2562,10 +2566,16 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
 /// interface declaration.
 const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
                                         const ObjCInterfaceDecl *OID) const {
-  const llvm::Type *InterfaceTy =
-    CGM.getTypes().ConvertType(
-      CGM.getContext().getObjCInterfaceType(
-                                        const_cast<ObjCInterfaceDecl*>(OID)));
+  const llvm::Type *InterfaceTy;
+  
+  if (OID->isForwardDecl()) {
+    InterfaceTy = llvm::StructType::get(NULL, NULL);
+  } else {
+    QualType T = CGM.getContext().getObjCInterfaceType(
+                                           const_cast<ObjCInterfaceDecl*>(OID));
+    InterfaceTy = CGM.getTypes().ConvertType(T);
+  }
+  
   const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
   return Layout;
@@ -4263,8 +4273,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (!ID->getClassInterface()->getSuperClass()) {
     flags |= CLS_ROOT;
     SuperClassGV = 0;
-  }
-  else {
+  } else {
     // Has a root. Current class is not a root.
     std::string RootClassName =
       ID->getClassInterface()->getSuperClass()->getNameAsString();
@@ -4273,7 +4282,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   // FIXME: Gross
   InstanceStart = InstanceSize = 0;
   if (ObjCInterfaceDecl *OID = 
-      const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
+        const_cast<ObjCInterfaceDecl*>(ID->getClassInterface())) {
     // FIXME. Share this with the one in EmitIvarList.
     const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
     
