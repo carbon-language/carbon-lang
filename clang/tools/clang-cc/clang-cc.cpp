@@ -784,10 +784,11 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (!Options.ObjC1 && !Options.GNUMode)
     Options.Blocks = 0;
   
-  // Never accept '$' in identifiers when preprocessing assembler.
-  if (LK != langkind_asm_cpp)
-    Options.DollarIdents = true;  // FIXME: target property?
-  else
+  // Default to not accepting '$' in identifiers when preprocessing assembler,
+  // but do accept when preprocessing C.  FIXME: these defaults are right for
+  // darwin, are they right everywhere?
+  Options.DollarIdents = LK != langkind_asm_cpp;
+  if (DollarsInIdents.getPosition())  // Explicit setting overrides default.
     Options.DollarIdents = DollarsInIdents;
   
   if (PascalStrings.getPosition())
