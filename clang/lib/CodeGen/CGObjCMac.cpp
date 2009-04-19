@@ -1879,17 +1879,20 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
 uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
                                             const FieldDecl *Field) {
   if (!Field->isBitField())
-    return Layout->getElementOffset(
-            CGM.getTypes().getLLVMFieldNo(Field));
+    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+  
   // FIXME. Must be a better way of getting a bitfield base offset.
-  uint64_t offset = CGM.getTypes().getLLVMFieldNo(Field);
-  const llvm::Type *Ty = CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
-  uint64_t size = CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
-  offset = (offset*size)/8; 
-  return offset;
+  CodeGenTypes::BitFieldInfo BFI = CGM.getTypes().getBitFieldInfo(Field);
+  // FIXME: The "field no" for bitfields is something completely
+  // different; it is the offset in multiples of the base type size!
+  uint64_t Offset = CGM.getTypes().getLLVMFieldNo(Field);
+  const llvm::Type *Ty = 
+    CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
+  Offset *= CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
+  return (Offset + BFI.Begin) / 8;
 }
 
-/// GetFieldBaseOffset - return's field byt offset.
+/// GetFieldBaseOffset - return the field's byte offset.
 uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
                                              const llvm::StructLayout *Layout,
                                              const FieldDecl *Field) {
@@ -4580,8 +4583,8 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()); 
        i != e; ++i) {
     FieldDecl *Field = *i;
-    uint64_t offset = GetIvarBaseOffset(Layout, Field);
-    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), OIvars[iv++], offset);
+    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), OIvars[iv++], 
+                                GetIvarBaseOffset(Layout, Field));
     if (Field->getIdentifier())
       Ivar[1] = GetMethodVarName(Field->getIdentifier());
     else
