@@ -107,7 +107,6 @@ namespace llvm {
     ///
     union {
       uintptr_t V;
-      SimpleValueType SimpleTy;
       const Type *LLVMTy;
     };
 
@@ -229,41 +228,36 @@ namespace llvm {
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
       return isSimple() ?
-             ((SimpleTy >= f32 && SimpleTy <= ppcf128) ||
-              (SimpleTy >= v2f32 && SimpleTy <= v2f64)) :
+             ((V >= f32 && V <= ppcf128) || (V >= v2f32 && V <= v2f64)) :
              isExtendedFloatingPoint();
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
       return isSimple() ?
-             ((SimpleTy >= FIRST_INTEGER_VALUETYPE &&
-               SimpleTy <= LAST_INTEGER_VALUETYPE) ||
-              (SimpleTy >= v2i8 && SimpleTy <= v2i64)) :
-             isExtendedInteger();
+             ((V >= FIRST_INTEGER_VALUETYPE && V <= LAST_INTEGER_VALUETYPE) ||
+              (V >= v2i8 && V <= v2i64)) : isExtendedInteger();
     }
 
     /// isVector - Return true if this is a vector value type.
     bool isVector() const {
       return isSimple() ?
-             (SimpleTy >= FIRST_VECTOR_VALUETYPE &&
-              SimpleTy <= LAST_VECTOR_VALUETYPE) :
+             (V >= FIRST_VECTOR_VALUETYPE && V <= LAST_VECTOR_VALUETYPE) :
              isExtendedVector();
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
     bool is64BitVector() const {
       return isSimple() ?
-             (SimpleTy==v8i8 || SimpleTy==v4i16 || SimpleTy==v2i32 ||
-              SimpleTy==v1i64 || SimpleTy==v2f32) :
+             (V==v8i8 || V==v4i16 || V==v2i32 || V==v1i64 || V==v2f32) :
              isExtended64BitVector();
     }
 
     /// is128BitVector - Return true if this is a 128-bit vector type.
     bool is128BitVector() const {
       return isSimple() ?
-             (SimpleTy==v16i8 || SimpleTy==v8i16 || SimpleTy==v4i32 ||
-              SimpleTy==v2i64 || SimpleTy==v4f32 || SimpleTy==v2f64) :
+             (V==v16i8 || V==v8i16 || V==v4i32 ||
+              V==v2i64 || V==v4f32 || V==v2f64) :
              isExtended128BitVector();
     }
 
@@ -308,7 +302,7 @@ namespace llvm {
     /// simple MVT.
     SimpleValueType getSimpleVT() const {
       assert(isSimple() && "Expected a SimpleValueType!");
-      return SimpleTy;
+      return SimpleValueType(V);
     }
 
     /// getVectorElementType - Given a vector type, return the type of
