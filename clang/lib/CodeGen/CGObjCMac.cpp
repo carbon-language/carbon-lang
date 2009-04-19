@@ -4519,30 +4519,17 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                                               const ObjCInterfaceDecl *ID,
                                               const ObjCIvarDecl *Ivar,
                                               unsigned long int Offset) {
-  
-  assert(ID && "EmitIvarOffsetVar - null interface decl.");
-  std::string ExternalName("OBJC_IVAR_$_" + ID->getNameAsString() + '.' 
-                           + Ivar->getNameAsString());
-  llvm::Constant *Init = llvm::ConstantInt::get(ObjCTypes.LongTy, Offset);
-  llvm::GlobalVariable *IvarOffsetGV = 
-    CGM.getModule().getGlobalVariable(ExternalName);
-  if (IvarOffsetGV)
-    // ivar offset symbol already built due to user code referencing it.
-    IvarOffsetGV->setInitializer(Init);
-  else
-    IvarOffsetGV = 
-      new llvm::GlobalVariable(Init->getType(),
-                               false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               Init,
-                               ExternalName,
-                               &CGM.getModule());
+  llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
+  IvarOffsetGV->setInitializer(llvm::ConstantInt::get(ObjCTypes.LongTy, 
+                                                      Offset));
   IvarOffsetGV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
-  // @private and @package have hidden visibility.
-  bool globalVisibility = (Ivar->getAccessControl() == ObjCIvarDecl::Public ||
-                           Ivar->getAccessControl() == ObjCIvarDecl::Protected);
-  if (!globalVisibility || CGM.getDeclVisibilityMode(ID) == LangOptions::Hidden)
+
+  // FIXME: This matches gcc, but shouldn't the visibility be set on
+  // the use as well (i.e., in ObjCIvarOffsetVariable).
+  if (Ivar->getAccessControl() == ObjCIvarDecl::Private ||
+      Ivar->getAccessControl() == ObjCIvarDecl::Package ||
+      CGM.getDeclVisibilityMode(ID) == LangOptions::Hidden)
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   else
     IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
