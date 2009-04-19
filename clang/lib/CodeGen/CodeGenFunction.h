@@ -836,7 +836,7 @@ private:
       
       // Either we've emitted all the call args, or we have a call to a 
       // variadic function.
-      assert(Arg == ArgEnd || CallArgTypeInfo->isVariadic() && 
+      assert((Arg == ArgEnd || CallArgTypeInfo->isVariadic()) && 
              "Extra arguments in non-variadic function!");
       
     }
