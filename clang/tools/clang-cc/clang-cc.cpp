@@ -300,6 +300,11 @@ NoCaretDiagnostics("fno-caret-diagnostics",
                                   " diagnostics"));
 
 static llvm::cl::opt<bool>
+NoDiagnosticsFixIt("fno-diagnostics-fixit-info",
+                   llvm::cl::desc("Do not include fixit information in"
+                                  " diagnostics"));
+
+static llvm::cl::opt<bool>
 PrintSourceRangeInfo("fprint-source-range-info",
                     llvm::cl::desc("Print source range spans in numeric form"));
 
@@ -1873,7 +1878,8 @@ public:
                                            !NoCaretDiagnostics,
                                            !NoShowLocation,
                                            PrintSourceRangeInfo,
-                                           PrintDiagnosticOption));
+                                           PrintDiagnosticOption,
+                                           !NoDiagnosticsFixIt));
   }
   
   virtual void setLangOptions(const LangOptions *LO) {
@@ -2329,7 +2335,8 @@ int main(int argc, char **argv) {
                                                !NoCaretDiagnostics,
                                                !NoShowLocation,
                                                PrintSourceRangeInfo,
-                                               PrintDiagnosticOption));
+                                               PrintDiagnosticOption,
+                                               !NoDiagnosticsFixIt));
   } else {
     DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
   }

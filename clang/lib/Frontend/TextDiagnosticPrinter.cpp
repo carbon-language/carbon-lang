@@ -207,10 +207,9 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   OS << SourceLine << '\n';
   OS << CaretLine << '\n';
 
-  if (NumHints) {
+  if (NumHints && PrintFixItInfo) {
     std::string InsertionLine;
-    for (const CodeModificationHint *Hint = Hints, 
-                                *LastHint = Hints + NumHints;
+    for (const CodeModificationHint *Hint = Hints, *LastHint = Hints + NumHints;
          Hint != LastHint; ++Hint) {
       if (Hint->InsertionLoc.isValid()) {
         // We have an insertion hint. Determine whether the inserted
