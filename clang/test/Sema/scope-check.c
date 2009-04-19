@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=gnu99 %s
+// RUN: clang-cc -fsyntax-only -verify -fblocks -std=gnu99 %s
 
 int test1(int x) {
   goto L;    // expected-error{{illegal goto into protected scope}}
@@ -148,5 +148,19 @@ L4:
     &&L2,   // Ok.
     &&L3   // expected-error {{address taken of label in protected scope, jump to it would have unknown effect on scope}}
   };
+}
+
+void test10(int n, void *P) {
+  goto L0;     // expected-error {{illegal goto into protected scope}}
+  typedef int A[n];  // expected-note {{jump bypasses initialization of VLA typedef}}
+L0:
+  
+  goto L1;      // expected-error {{illegal goto into protected scope}}
+  A b, c[10];        // expected-note 2 {{jump bypasses initialization of variable length array}}
+L1:
+  goto L2;     // expected-error {{illegal goto into protected scope}}
+  A d[n];      // expected-note {{jump bypasses initialization of variable length array}}
+L2:
+  return;
 }
 
