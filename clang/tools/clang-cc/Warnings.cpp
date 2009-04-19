@@ -40,45 +40,6 @@ static llvm::cl::opt<bool> OptPedantic("pedantic");
 static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
-struct WarningOption {
-  const char  *Name;
-  const short *Members;
-  const char  *SubGroups;
-};
-
-#define GET_DIAG_ARRAYS
-#include "clang/Basic/DiagnosticGroups.inc"
-#undef GET_DIAG_ARRAYS
-
-// Second the table of options, sorted by name for fast binary lookup.
-static const WarningOption OptionTable[] = {
-#define GET_DIAG_TABLE
-#include "clang/Basic/DiagnosticGroups.inc"
-#undef GET_DIAG_TABLE
-};
-static const size_t OptionTableSize =
-  sizeof(OptionTable) / sizeof(OptionTable[0]);
-
-static bool WarningOptionCompare(const WarningOption &LHS,
-                                 const WarningOption &RHS) {
-  return strcmp(LHS.Name, RHS.Name) < 0;
-}
-
-static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
-                            Diagnostic &Diags) {
-  // Option exists, poke all the members of its diagnostic set.
-  if (const short *Member = Group->Members) {
-    for (; *Member != -1; ++Member)
-      Diags.setDiagnosticMapping(*Member, Mapping);
-  }
-
-  // Enable/disable all subgroups along with this one.
-  if (const char *SubGroups = Group->SubGroups) {
-    for (; *SubGroups != (char)-1; ++SubGroups)
-      MapGroupMembers(&OptionTable[(unsigned char)*SubGroups], Mapping, Diags);
-  }
-}
-
 bool clang::ProcessWarningOptions(Diagnostic &Diags) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
   Diags.setIgnoreAllWarnings(OptNoWarnings);
@@ -144,17 +105,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
       OptStart = Specifier;
     }
     
-    WarningOption Key = { OptStart, 0, 0 };
-    const WarningOption *Found =
-      std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
-                       WarningOptionCompare);
-    if (Found == OptionTable + OptionTableSize ||
-        strcmp(Found->Name, OptStart) != 0) {
+    if (Diags.setDiagnosticGroupMapping(OptStart, Mapping))
       fprintf(stderr, "warning: unknown warning option: -W%s\n", Opt.c_str());
-      continue;
-    }
-    
-    MapGroupMembers(Found, Mapping, Diags);
   }
   
   return false;

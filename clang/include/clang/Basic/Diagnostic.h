@@ -252,6 +252,11 @@ public:
            "Cannot map errors!");
     setDiagnosticMappingInternal(Diag, Map, true);
   }
+  
+  /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
+  /// "unknown-pragmas" to have the specified mapping.  This returns true and
+  /// ignores the request if "Group" was unknown, false otherwise.
+  bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map);
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }

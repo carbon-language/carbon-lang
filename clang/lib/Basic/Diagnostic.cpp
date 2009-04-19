@@ -344,6 +344,64 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
   return Result;
 }
 
+struct WarningOption {
+  const char  *Name;
+  const short *Members;
+  const char  *SubGroups;
+};
+
+#define GET_DIAG_ARRAYS
+#include "clang/Basic/DiagnosticGroups.inc"
+#undef GET_DIAG_ARRAYS
+
+// Second the table of options, sorted by name for fast binary lookup.
+static const WarningOption OptionTable[] = {
+#define GET_DIAG_TABLE
+#include "clang/Basic/DiagnosticGroups.inc"
+#undef GET_DIAG_TABLE
+};
+static const size_t OptionTableSize =
+sizeof(OptionTable) / sizeof(OptionTable[0]);
+
+static bool WarningOptionCompare(const WarningOption &LHS,
+                                 const WarningOption &RHS) {
+  return strcmp(LHS.Name, RHS.Name) < 0;
+}
+
+static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
+                            Diagnostic &Diags) {
+  // Option exists, poke all the members of its diagnostic set.
+  if (const short *Member = Group->Members) {
+    for (; *Member != -1; ++Member)
+      Diags.setDiagnosticMapping(*Member, Mapping);
+  }
+  
+  // Enable/disable all subgroups along with this one.
+  if (const char *SubGroups = Group->SubGroups) {
+    for (; *SubGroups != (char)-1; ++SubGroups)
+      MapGroupMembers(&OptionTable[(unsigned char)*SubGroups], Mapping, Diags);
+  }
+}
+
+/// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
+/// "unknown-pragmas" to have the specified mapping.  This returns true and
+/// ignores the request if "Group" was unknown, false otherwise.
+bool Diagnostic::setDiagnosticGroupMapping(const char *Group,
+                                           diag::Mapping Map) {
+  
+  WarningOption Key = { Group, 0, 0 };
+  const WarningOption *Found =
+  std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
+                   WarningOptionCompare);
+  if (Found == OptionTable + OptionTableSize ||
+      strcmp(Found->Name, Group) != 0)
+    return true;  // Option not found.
+  
+  MapGroupMembers(Found, Map, *this);
+  return false;
+}
+
+
 /// ProcessDiag - This is the method used to report a diagnostic that is
 /// finally fully formed.
 void Diagnostic::ProcessDiag() {
