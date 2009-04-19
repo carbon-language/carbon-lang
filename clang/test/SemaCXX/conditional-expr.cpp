@@ -146,13 +146,13 @@ void test()
   i1 = i1 ? EVal : i1;
   d1 = i1 ? 'c' : 4.0;
   d1 = i1 ? 4.0 : 'c';
-  pfm = i1 ? &Derived::fn2 : 0;
-  pfm = i1 ? 0 : &Derived::fn2;
-  // FIXME: pointer conversions don't work yet.
-  //Base *pb = i1 ? (Base*)0 : (Derived*)0;
-  //Base *pb = i1 ? (Derived*)0 : (Base*)0;
+  Base *pb = i1 ? (Base*)0 : (Derived*)0;
+  pb = i1 ? (Derived*)0 : (Base*)0;
+  // FIXME: member pointer conversions don't work yet.
   //pfm = i1 ? &Base::fn1 : &Derived::fn2;
   //pfm = i1 ? &Derived::fn2 : &Base::fn1;
+  //pfm = i1 ? &Derived::fn2 : 0;
+  //pfm = i1 ? 0 : &Derived::fn2;
   // Conversion of primitives does not result in an lvalue.
   &(i1 ? i1 : d1); // expected-error {{address expression must be an lvalue or a function designator}}
 

@@ -2389,7 +2389,7 @@ public:
                                                    QualType rhsType);
                                                    
   // Helper function for CheckAssignmentConstraints involving two
-  // blcok pointer types.
+  // block pointer types.
   AssignConvertType CheckBlockPointerTypesForAssignment(QualType lhsType, 
                                                         QualType rhsType);
 
@@ -2440,6 +2440,7 @@ public:
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
+  QualType FindCompositePointerType(Expr *&E1, Expr *&E2); // C++ 5.9
 
   /// type checking for vector binary operators.
   inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);

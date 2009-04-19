@@ -1307,21 +1307,101 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //      type and the other is a null pointer constant; pointer conversions
   //      and qualification conversions are performed to bring them to their
   //      composite pointer type. The result is of the composite pointer type.
-  // Fourth bullet is same for pointers-to-member.
-  if ((LTy->isPointerType() || LTy->isMemberPointerType()) &&
-      RHS->isNullPointerConstant(Context)) {
-    ImpCastExprToType(RHS, LTy); // promote the null to a pointer.
-    return LTy;
-  }
-  if ((RTy->isPointerType() || RTy->isMemberPointerType()) &&
-      LHS->isNullPointerConstant(Context)) {
-    ImpCastExprToType(LHS, RTy); // promote the null to a pointer.
-    return RTy;
-  }
+  QualType Composite = FindCompositePointerType(LHS, RHS);
+  if (!Composite.isNull())
+    return Composite;
 
-  // FIXME: Handle the case where both are pointers.
+  // Fourth bullet is same for pointers-to-member.
+  // FIXME: Handle this case where both are member pointers.
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
     << LHS->getType() << RHS->getType()
     << LHS->getSourceRange() << RHS->getSourceRange();
+  return QualType();
+}
+
+/// \brief Find a merged pointer type and convert the two expressions to it.
+///
+/// This finds the composite pointer type for @p E1 and @p E2 according to
+/// C++0x 5.9p2. It converts both expressions to this type and returns it.
+/// It does not emit diagnostics.
+QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
+  assert(getLangOptions().CPlusPlus && "This function assumes C++");
+  QualType T1 = E1->getType(), T2 = E2->getType();
+  if(!T1->isPointerType() && !T2->isPointerType())
+    return QualType();
+
+  // C++0x 5.9p2
+  //   Pointer conversions and qualification conversions are performed on
+  //   pointer operands to bring them to their composite pointer type. If
+  //   one operand is a null pointer constant, the composite pointer type is
+  //   the type of the other operand.
+  if (E1->isNullPointerConstant(Context)) {
+    ImpCastExprToType(E1, T2);
+    return T2;
+  }
+  if (E2->isNullPointerConstant(Context)) {
+    ImpCastExprToType(E2, T1);
+    return T1;
+  }
+  // Now both have to be pointers.
+  if(!T1->isPointerType() || !T2->isPointerType())
+    return QualType();
+
+  //   Otherwise, of one of the operands has type "pointer to cv1 void," then
+  //   the other has type "pointer to cv2 T" and the composite pointer type is
+  //   "pointer to cv12 void," where cv12 is the union of cv1 and cv2.
+  //   Otherwise, the composite pointer type is a pointer type similar to the
+  //   type of one of the operands, with a cv-qualification signature that is
+  //   the union of the cv-qualification signatures of the operand types.
+  // In practice, the first part here is redundant; it's subsumed by the second.
+  // What we do here is, we build the two possible composite types, and try the
+  // conversions in both directions. If only one works, or if the two composite
+  // types are the same, we have succeeded.
+  llvm::SmallVector<unsigned, 4> QualifierUnion;
+  QualType Composite1 = T1, Composite2 = T2;
+  const PointerType *Ptr1, *Ptr2;
+  while ((Ptr1 = Composite1->getAsPointerType()) &&
+         (Ptr2 = Composite2->getAsPointerType())) {
+    Composite1 = Ptr1->getPointeeType();
+    Composite2 = Ptr2->getPointeeType();
+    QualifierUnion.push_back(
+      Composite1.getCVRQualifiers() | Composite2.getCVRQualifiers());
+  }
+  // Rewrap the composites as pointers with the union CVRs.
+  for (llvm::SmallVector<unsigned, 4>::iterator I = QualifierUnion.begin(),
+       E = QualifierUnion.end(); I != E; ++I) {
+    Composite1 = Context.getPointerType(Composite1.getQualifiedType(*I));
+    Composite2 = Context.getPointerType(Composite2.getQualifiedType(*I));
+  }
+
+  ImplicitConversionSequence E1ToC1 = TryImplicitConversion(E1, Composite1);
+  ImplicitConversionSequence E2ToC1 = TryImplicitConversion(E2, Composite1);
+  ImplicitConversionSequence E1ToC2, E2ToC2;
+  E1ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
+  E2ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
+  if (Context.getCanonicalType(Composite1) !=
+      Context.getCanonicalType(Composite2)) {
+    E1ToC2 = TryImplicitConversion(E1, Composite2);
+    E2ToC2 = TryImplicitConversion(E2, Composite2);
+  }
+
+  bool ToC1Viable = E1ToC1.ConversionKind !=
+                      ImplicitConversionSequence::BadConversion
+                 && E2ToC1.ConversionKind !=
+                      ImplicitConversionSequence::BadConversion;
+  bool ToC2Viable = E1ToC2.ConversionKind !=
+                      ImplicitConversionSequence::BadConversion
+                 && E2ToC2.ConversionKind !=
+                      ImplicitConversionSequence::BadConversion;
+  if (ToC1Viable && !ToC2Viable) {
+    if (!PerformImplicitConversion(E1, Composite1, E1ToC1, "converting") &&
+        !PerformImplicitConversion(E2, Composite1, E2ToC1, "converting"))
+      return Composite1;
+  }
+  if (ToC2Viable && !ToC1Viable) {
+    if (!PerformImplicitConversion(E1, Composite2, E1ToC2, "converting") &&
+        !PerformImplicitConversion(E2, Composite2, E2ToC2, "converting"))
+      return Composite2;
+  }
   return QualType();
 }
