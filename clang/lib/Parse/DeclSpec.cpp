@@ -94,6 +94,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   case DeclSpec::SCS_static:      return "static";
   case DeclSpec::SCS_auto:        return "auto";
   case DeclSpec::SCS_register:    return "register";
+  case DeclSpec::SCS_private_extern: return "__private_extern__";
   case DeclSpec::SCS_mutable:     return "mutable";
   }
 }
@@ -343,18 +344,6 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
       Diag(D, TSCLoc, SrcMgr, diag::err_invalid_complex_spec)
         << getSpecifierName((TST)TypeSpecType);
       TypeSpecComplex = TSC_unspecified;
-    }
-  }
-  
-  // Verify __thread.
-  if (SCS_thread_specified) {
-    if (StorageClassSpec == SCS_unspecified) {
-      StorageClassSpec = SCS_extern; // '__thread int' -> 'extern __thread int'
-    } else if (StorageClassSpec != SCS_extern &&
-               StorageClassSpec != SCS_static) {
-      Diag(D, getStorageClassSpecLoc(), SrcMgr, diag::err_invalid_thread_spec)
-        << getSpecifierName((SCS)StorageClassSpec);
-      SCS_thread_specified = false;
     }
   }
 

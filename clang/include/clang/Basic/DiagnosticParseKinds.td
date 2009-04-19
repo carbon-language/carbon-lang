@@ -35,7 +35,6 @@ def err_invalid_short_spec : Error<"'short %0' is invalid">;
 def err_invalid_long_spec : Error<"'long %0' is invalid">;
 def err_invalid_longlong_spec : Error<"'long long %0' is invalid">;
 def err_invalid_complex_spec : Error<"'_Complex %0' is invalid">;
-def err_invalid_thread_spec : Error<"'__thread %0' is invalid">;
 
 def ext_ident_list_in_param : Extension<
   "type-less parameter names in function declaration">;

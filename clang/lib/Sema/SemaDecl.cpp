@@ -917,6 +917,14 @@ bool Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     return true;
   }
 
+  if (New->isThreadSpecified() && !Old->isThreadSpecified()) {
+    Diag(New->getLocation(), diag::err_thread_non_thread) << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_previous_definition);
+  } else if (!New->isThreadSpecified() && Old->isThreadSpecified()) {
+    Diag(New->getLocation(), diag::err_non_thread_thread) << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_previous_definition);
+  }
+
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);
 
@@ -962,6 +970,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   // FIXME: Error on auto/register at file scope
   // FIXME: Error on inline/virtual/explicit
   // FIXME: Error on invalid restrict
+  // FIXME: Warn on useless __thread
   // FIXME: Warn on useless const/volatile
   // FIXME: Warn on useless static/extern/typedef/private_extern/mutable
   // FIXME: Warn on useless attributes
@@ -1551,6 +1560,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   DiagnoseFunctionSpecifiers(D);
 
+  if (D.getDeclSpec().isThreadSpecified())
+    Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+
   TypedefDecl *NewTD = ParseTypedefDecl(S, D, R);
   if (!NewTD) return 0;
 
@@ -1694,7 +1706,6 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   DiagnoseFunctionSpecifiers(D);
 
-  bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
   if (!DC->isRecord() && S->getFnParent() == 0) {
     // C99 6.9p2: The storage-class specifiers auto and register shall not
     // appear in the declaration specifiers in an external declaration.
@@ -1719,7 +1730,13 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                           II, R, SC, 
                           // FIXME: Move to DeclGroup...
                           D.getDeclSpec().getSourceRange().getBegin());
-  NewVD->setThreadSpecified(ThreadSpecified);
+
+  if (D.getDeclSpec().isThreadSpecified()) {
+    if (NewVD->hasLocalStorage())
+      Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_non_global);
+    else
+      NewVD->setThreadSpecified(true);
+  }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
@@ -1912,6 +1929,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
   case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
   }
+
+  if (D.getDeclSpec().isThreadSpecified())
+    Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
   bool isInline = D.getDeclSpec().isInlineSpecified();
   bool isVirtual = D.getDeclSpec().isVirtualSpecified();
@@ -2683,11 +2703,10 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
          diag::err_invalid_storage_class_in_func_decl);
     D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
-  if (DS.isThreadSpecified()) {
-    Diag(DS.getThreadSpecLoc(),
-         diag::err_invalid_storage_class_in_func_decl);
-    D.getMutableDeclSpec().ClearStorageClassSpecs();
-  }
+
+  if (D.getDeclSpec().isThreadSpecified())
+    Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+
   DiagnoseFunctionSpecifiers(D);
 
   // Check that there are no default arguments inside the type of this
@@ -3573,6 +3592,9 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     CheckExtraCXXDefaultArguments(D);
 
   DiagnoseFunctionSpecifiers(D);
+
+  if (D.getDeclSpec().isThreadSpecified())
+    Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
   NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
   if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))

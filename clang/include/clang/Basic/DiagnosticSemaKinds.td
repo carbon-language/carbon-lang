@@ -93,6 +93,11 @@ def warn_use_out_of_scope_declaration : Warning<
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
 
+def err_invalid_thread : Error<
+  "'__thread' is only allowed on variable declarations">;
+def err_thread_non_global : Error<
+  "'__thread' variables must have global storage">;
+
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<
   "implicitly declaring C library function '%0' with type %1">;
@@ -743,6 +748,10 @@ def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
 def err_non_static_static : Error<
   "non-static declaration of %0 follows static declaration">;
+def err_non_thread_thread : Error<
+  "non-thread-local declaration of %0 follows thread-local declaration">;
+def err_thread_non_thread : Error<
+  "thread-local declaration of %0 follows non-thread-local declaration">;
 def err_redefinition_different_type : Error<
   "redefinition of %0 with a different type">;
 def err_redefinition_different_kind : Error<
