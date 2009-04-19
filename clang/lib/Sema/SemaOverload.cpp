@@ -2497,6 +2497,10 @@ class BuiltinCandidateTypeSet  {
   /// built-in candidates.
   TypeSet PointerTypes;
 
+  /// MemberPointerTypes - The set of member pointer types that will be
+  /// used in the built-in candidates.
+  TypeSet MemberPointerTypes;
+
   /// EnumerationTypes - The set of enumeration types that will be
   /// used in the built-in candidates.
   TypeSet EnumerationTypes;
@@ -2504,7 +2508,8 @@ class BuiltinCandidateTypeSet  {
   /// Context - The AST context in which we will build the type sets.
   ASTContext &Context;
 
-  bool AddWithMoreQualifiedTypeVariants(QualType Ty);
+  bool AddPointerWithMoreQualifiedTypeVariants(QualType Ty);
+  bool AddMemberPointerWithMoreQualifiedTypeVariants(QualType Ty);
 
 public:
   /// iterator - Iterates through the types that are part of the set.
@@ -2518,24 +2523,31 @@ public:
   /// pointer_begin - First pointer type found;
   iterator pointer_begin() { return PointerTypes.begin(); }
 
-  /// pointer_end - Last pointer type found;
+  /// pointer_end - Past the last pointer type found;
   iterator pointer_end() { return PointerTypes.end(); }
+
+  /// member_pointer_begin - First member pointer type found;
+  iterator member_pointer_begin() { return MemberPointerTypes.begin(); }
+
+  /// member_pointer_end - Past the last member pointer type found;
+  iterator member_pointer_end() { return MemberPointerTypes.end(); }
 
   /// enumeration_begin - First enumeration type found;
   iterator enumeration_begin() { return EnumerationTypes.begin(); }
 
-  /// enumeration_end - Last enumeration type found;
+  /// enumeration_end - Past the last enumeration type found;
   iterator enumeration_end() { return EnumerationTypes.end(); }
 };
 
-/// AddWithMoreQualifiedTypeVariants - Add the pointer type @p Ty to
+/// AddPointerWithMoreQualifiedTypeVariants - Add the pointer type @p Ty to
 /// the set of pointer types along with any more-qualified variants of
 /// that type. For example, if @p Ty is "int const *", this routine
 /// will add "int const *", "int const volatile *", "int const
 /// restrict *", and "int const volatile restrict *" to the set of
 /// pointer types. Returns true if the add of @p Ty itself succeeded,
 /// false otherwise.
-bool BuiltinCandidateTypeSet::AddWithMoreQualifiedTypeVariants(QualType Ty) {
+bool
+BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
   // Insert this type.
   if (!PointerTypes.insert(Ty))
     return false;
@@ -2547,14 +2559,47 @@ bool BuiltinCandidateTypeSet::AddWithMoreQualifiedTypeVariants(QualType Ty) {
     // FIXME: Do we have to add CVR qualifiers at *all* levels to deal
     // with all pointer conversions that don't cast away constness?
     if (!PointeeTy.isConstQualified())
-      AddWithMoreQualifiedTypeVariants
+      AddPointerWithMoreQualifiedTypeVariants
         (Context.getPointerType(PointeeTy.withConst()));
     if (!PointeeTy.isVolatileQualified())
-      AddWithMoreQualifiedTypeVariants
+      AddPointerWithMoreQualifiedTypeVariants
         (Context.getPointerType(PointeeTy.withVolatile()));
     if (!PointeeTy.isRestrictQualified())
-      AddWithMoreQualifiedTypeVariants
+      AddPointerWithMoreQualifiedTypeVariants
         (Context.getPointerType(PointeeTy.withRestrict()));
+  }
+
+  return true;
+}
+
+/// AddMemberPointerWithMoreQualifiedTypeVariants - Add the pointer type @p Ty
+/// to the set of pointer types along with any more-qualified variants of
+/// that type. For example, if @p Ty is "int const *", this routine
+/// will add "int const *", "int const volatile *", "int const
+/// restrict *", and "int const volatile restrict *" to the set of
+/// pointer types. Returns true if the add of @p Ty itself succeeded,
+/// false otherwise.
+bool
+BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
+    QualType Ty) {
+  // Insert this type.
+  if (!MemberPointerTypes.insert(Ty))
+    return false;
+
+  if (const MemberPointerType *PointerTy = Ty->getAsMemberPointerType()) {
+    QualType PointeeTy = PointerTy->getPointeeType();
+    const Type *ClassTy = PointerTy->getClass();
+    // FIXME: Optimize this so that we don't keep trying to add the same types.
+
+    if (!PointeeTy.isConstQualified())
+      AddMemberPointerWithMoreQualifiedTypeVariants
+        (Context.getMemberPointerType(PointeeTy.withConst(), ClassTy));
+    if (!PointeeTy.isVolatileQualified())
+      AddMemberPointerWithMoreQualifiedTypeVariants
+        (Context.getMemberPointerType(PointeeTy.withVolatile(), ClassTy));
+    if (!PointeeTy.isRestrictQualified())
+      AddMemberPointerWithMoreQualifiedTypeVariants
+        (Context.getMemberPointerType(PointeeTy.withRestrict(), ClassTy));
   }
 
   return true;
@@ -2562,7 +2607,8 @@ bool BuiltinCandidateTypeSet::AddWithMoreQualifiedTypeVariants(QualType Ty) {
 
 /// AddTypesConvertedFrom - Add each of the types to which the type @p
 /// Ty can be implicit converted to the given set of @p Types. We're
-/// primarily interested in pointer types and enumeration types.
+/// primarily interested in pointer types and enumeration types. We also
+/// take member pointer types, for the conditional operator.
 /// AllowUserConversions is true if we should look at the conversion
 /// functions of a class type, and AllowExplicitConversions if we
 /// should also include the explicit conversion functions of a class
@@ -2587,14 +2633,14 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
 
     // Insert our type, and its more-qualified variants, into the set
     // of types.
-    if (!AddWithMoreQualifiedTypeVariants(Ty))
+    if (!AddPointerWithMoreQualifiedTypeVariants(Ty))
       return;
 
     // Add 'cv void*' to our set of types.
     if (!Ty->isVoidType()) {
       QualType QualVoid 
         = Context.VoidTy.getQualifiedType(PointeeTy.getCVRQualifiers());
-      AddWithMoreQualifiedTypeVariants(Context.getPointerType(QualVoid));
+      AddPointerWithMoreQualifiedTypeVariants(Context.getPointerType(QualVoid));
     }
 
     // If this is a pointer to a class type, add pointers to its bases
@@ -2612,6 +2658,10 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
         AddTypesConvertedFrom(Context.getPointerType(BaseTy), false, false);
       }
     }
+  } else if (Ty->isMemberPointerType()) {
+    // Member pointers are far easier, since the pointee can't be converted.
+    if (!AddMemberPointerWithMoreQualifiedTypeVariants(Ty))
+      return;
   } else if (Ty->isEnumeralType()) {
     EnumerationTypes.insert(Ty);
   } else if (AllowUserConversions) {
@@ -3231,9 +3281,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //
     //        T        operator?(bool, T, T);
     //
-    // FIXME: pointer-to-member
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin(),
          E = CandidateTypes.pointer_end(); Ptr != E; ++Ptr) {
+      QualType ParamTypes[2] = { *Ptr, *Ptr };
+      AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+    }
+    for (BuiltinCandidateTypeSet::iterator Ptr =
+           CandidateTypes.member_pointer_begin(),
+         E = CandidateTypes.member_pointer_end(); Ptr != E; ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, *Ptr };
       AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
     }

@@ -1151,6 +1151,8 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
       ICS.Standard.ReferenceBinding) {
     assert(ICS.Standard.DirectBinding &&
            "TryClassUnification should never generate indirect ref bindings");
+    // FIXME: Should use CheckReferenceInit here, but we no longer have a
+    // reference type.
     Self.ImpCastExprToType(E, TargetType(ICS), true);
     return false;
   }

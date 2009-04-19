@@ -108,11 +108,18 @@ void test()
   // should fail: const lost
   (void)(i1 ? Base() : constder()); // expected-error {{incompatible operand types ('struct Base' and 'struct Derived const')}}
   (void)(i1 ? constder() : Base()); // expected-error {{incompatible operand types ('struct Derived const' and 'struct Base')}}
-  // FIXME: should fail: private or ambiguous base
+
+  // FIXME: these are invalid hierarchy conversions
+  Priv priv;
+  Fin fin;
   (void)(i1 ? Base() : Priv()); // xpected-error private base
   (void)(i1 ? Priv() : Base()); // xpected-error private base
   (void)(i1 ? Base() : Fin()); // xpected-error ambiguous base
   (void)(i1 ? Fin() : Base()); // xpected-error ambiguous base
+  (void)(i1 ? base : priv); // xpected-error private base
+  (void)(i1 ? priv : base); // xpected-error private base
+  (void)(i1 ? base : fin); // xpected-error ambiguous base
+  (void)(i1 ? fin : base); // xpected-error ambiguous base
 
   // b2.2 (non-hierarchy)
   i1 = i1 ? I() : i1;
@@ -142,9 +149,8 @@ void test()
   double d1 = i1 ? I() : K();
   pfn = i1 ? F() : G();
   DFnPtr pfm;
-  // FIXME: Overload resolution won't choose the member pointer yet.
-  //pfm = i1 ? DFnPtr() : &Base::fn1;
-  //pfm = i1 ? &Base::fn1 : DFnPtr();
+  pfm = i1 ? DFnPtr() : &Base::fn1;
+  pfm = i1 ? &Base::fn1 : DFnPtr();
 
   // p6 (final conversions)
   i1 = i1 ? i1 : ir1;
