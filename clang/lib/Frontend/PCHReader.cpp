@@ -415,6 +415,7 @@ unsigned PCHStmtReader::VisitGotoStmt(GotoStmt *S) {
 
 unsigned PCHStmtReader::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
   VisitStmt(S);
+  S->setGotoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setTarget(cast_or_null<Expr>(StmtStack.back()));
   return 1;
 }

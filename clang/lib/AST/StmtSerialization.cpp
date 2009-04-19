@@ -691,7 +691,7 @@ void IndirectGotoStmt::EmitImpl(Serializer& S) const {
 
 IndirectGotoStmt* IndirectGotoStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   Expr* Target = D.ReadOwnedPtr<Expr>(C);
-  return new IndirectGotoStmt(Target);
+  return new IndirectGotoStmt(SourceLocation(), Target);
 }
 
 void InitListExpr::EmitImpl(Serializer& S) const {

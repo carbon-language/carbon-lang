@@ -850,22 +850,26 @@ public:
 /// IndirectGotoStmt - This represents an indirect goto.
 ///
 class IndirectGotoStmt : public Stmt {
+  SourceLocation GotoLoc;
   Stmt *Target;
-  // FIXME: Add location information (e.g. SourceLocation objects).
-  //        When doing so, update the PCH serialization routines.
 public:
-  IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass),
-                                   Target((Stmt*)target){}
+  IndirectGotoStmt(SourceLocation gotoLoc, Expr *target)
+    : Stmt(IndirectGotoStmtClass), GotoLoc(gotoLoc), Target((Stmt*)target) {}
 
   /// \brief Build an empty indirect goto statement.
   explicit IndirectGotoStmt(EmptyShell Empty) 
     : Stmt(IndirectGotoStmtClass, Empty) { }
   
+  void setGotoLoc(SourceLocation L) { GotoLoc = L; }
+  SourceLocation getGotoLoc() const { return GotoLoc; }
+  
   Expr *getTarget();
   const Expr *getTarget() const;
   void setTarget(Expr *E) { Target = reinterpret_cast<Stmt*>(E); }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(GotoLoc, Target->getLocEnd());
+  }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IndirectGotoStmtClass; 

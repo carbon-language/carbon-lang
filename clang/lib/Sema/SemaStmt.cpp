@@ -666,7 +666,7 @@ Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
 }
 
 Action::OwningStmtResult
-Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
+Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
                             ExprArg DestExp) {
   // Convert operand to void*
   Expr* E = DestExp.takeAs<Expr>();
@@ -676,7 +676,7 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
   if (DiagnoseAssignmentResult(ConvTy, StarLoc, Context.VoidPtrTy, ETy,
                                E, "passing"))
     return StmtError();
-  return Owned(new (Context) IndirectGotoStmt(E));
+  return Owned(new (Context) IndirectGotoStmt(GotoLoc, E));
 }
 
 Action::OwningStmtResult
