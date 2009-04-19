@@ -515,16 +515,16 @@ struct PragmaCommentHandler : public PragmaHandler {
 /// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
 struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
   PragmaSTDC_FP_CONTRACTHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
-  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
-    //PP.HandlePragmaComment(CommentTok);
+  virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
+    //PP.HandlePragmaFP_CONTRACT(CommentTok);
   }
 };
   
 /// PragmaSTDC_FENV_ACCESSHandler - "#pragma STDC FENV_ACCESS ...".
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
-  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
-    //PP.HandlePragmaComment(CommentTok);
+  virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
+    //PP.HandlePragmaFENV_ACCESS(CommentTok);
   }
 };
   
@@ -532,16 +532,16 @@ struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
 struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
   PragmaSTDC_CX_LIMITED_RANGEHandler(const IdentifierInfo *ID)
     : PragmaHandler(ID) {}
-  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
-    //PP.HandlePragmaComment(CommentTok);
+  virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
+    //PP.HandlePragmaCX_LIMITED_RANGE(CommentTok);
   }
 };
   
 /// PragmaSTDC_UnknownHandler - "#pragma STDC ...".
 struct PragmaSTDC_UnknownHandler : public PragmaHandler {
   PragmaSTDC_UnknownHandler() : PragmaHandler(0) {}
-  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
-    //PP.HandlePragmaComment(CommentTok);
+  virtual void HandlePragma(Preprocessor &PP, Token &UnknownTok) {
+    PP.Diag(UnknownTok, diag::ext_stdc_pragma_ignored);
   }
 };
   

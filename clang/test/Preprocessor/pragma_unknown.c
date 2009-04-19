@@ -1,5 +1,5 @@
 // RUN: clang-cc -E %s | grep '#pragma foo bar' &&
-// RUN: clang-cc -fsyntax-only -Wunknown-pragmas %s
+// RUN: clang-cc -fsyntax-only -Wunknown-pragmas -verify %s
 
 // GCC doesn't expand macro args for unrecognized pragmas.
 #define bar xX
@@ -20,5 +20,6 @@
 #pragma STDC CX_LIMITED_RANGE DEFAULT 
 #pragma STDC CX_LIMITED_RANGE IN_BETWEEN
 
-#pragma STDC SO_GREAT
+#pragma STDC SO_GREAT  // expected-warning {{unknown pragma in STDC namespace}}
+#pragma STDC   // expected-warning {{unknown pragma in STDC namespace}}
 

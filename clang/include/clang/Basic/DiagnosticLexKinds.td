@@ -206,6 +206,9 @@ def err_pragma_comment_malformed : Error<
   "pragma comment requires parenthesized identifier and optional string">;
 def warn_pragma_ignored : Warning<"unknown pragma ignored">,
    InGroup<UnknownPragmas>, DefaultIgnore;
+def ext_stdc_pragma_ignored : ExtWarn<"unknown pragma in STDC namespace">,
+   InGroup<UnknownPragmas>;
+
   
 def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_defined_macro_name : Error<"'defined' cannot be used as a macro name">;
