@@ -1284,6 +1284,7 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
   StrVector::const_iterator I = StrVec.begin(), E = StrVec.end();
 
   // If there is a hook invocation on the place of the first command, skip it.
+  assert(!StrVec[0].empty());
   if (StrVec[0][0] == '$') {
     while (I != E && (*I)[0] != ')' )
       ++I;
@@ -1297,7 +1298,7 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
 
   for (; I != E; ++I) {
     const std::string& cmd = *I;
-    //    std::cerr << cmd;
+    assert(!cmd.empty());
     O << IndentLevel;
     if (cmd.at(0) == '$') {
       if (cmd == "$INFILE") {
