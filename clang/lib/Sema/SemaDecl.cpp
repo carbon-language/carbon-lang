@@ -3001,7 +3001,8 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     if (SubStmt == 0) continue;
     
     // FIXME: diagnose jumps past initialization: required in C++, warning in C.
-    //     { int X = 4;   L: } goto L;
+    //   goto L; int X = 4;   L: ;
+    // FIXME: what about jumps into C++ catch blocks, what are the rules?
 
     // If this is a declstmt with a VLA definition, it defines a scope from here
     // to the end of the containing context.
@@ -3054,7 +3055,6 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
       
       continue;
     }
-    // FIXME: what about jumps into C++ catch blocks, what are the rules?
     
     // Recursively walk the AST.
     BuildScopeInformation(SubStmt, ParentScope);
@@ -3068,7 +3068,10 @@ void JumpScopeChecker::VerifyJumps() {
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
       CheckJump(GS, GS->getLabel(), GS->getGotoLoc(),
                 diag::err_goto_into_protected_scope);
-    } else if (SwitchStmt *SS = dyn_cast<SwitchStmt>(Jump)) {
+      continue;
+    }
+    
+    if (SwitchStmt *SS = dyn_cast<SwitchStmt>(Jump)) {
       for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
            SC = SC->getNextSwitchCase()) {
         assert(LabelAndGotoScopes.count(SC) && "Case not visited?");
@@ -3076,11 +3079,22 @@ void JumpScopeChecker::VerifyJumps() {
                   diag::err_switch_into_protected_scope);
       }
       continue;
-    } else {
-      assert(isa<IndirectGotoStmt>(Jump));
-      // FIXME: Emit an error on indirect gotos when not in scope 0.
-      continue;
     }
+    
+    
+    // We don't know where an indirect goto goes, require that it be at the
+    // top level of scoping.
+    assert(isa<IndirectGotoStmt>(Jump));
+    assert(LabelAndGotoScopes.count(Jump) &&"Jump didn't get added to scopes?");
+    unsigned GotoScope = LabelAndGotoScopes[Jump];
+    if (GotoScope == 0) continue;
+    S.Diag(Jump->getLocStart(), diag::err_indirect_goto_in_protected_scope);
+    
+    while (GotoScope != 0) {
+      S.Diag(Scopes[GotoScope].Loc, Scopes[GotoScope].Diag);
+      GotoScope = Scopes[GotoScope].ParentScope;
+    }
+    continue;
   }
 }
 

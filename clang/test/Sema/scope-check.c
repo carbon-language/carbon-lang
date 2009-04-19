@@ -83,6 +83,7 @@ int test8(int x) {
                        goto L6;
                    4; }); 
   L6:; // ok.
+    if (x) goto L6; // ok
   }
   
   {
@@ -113,6 +114,13 @@ int test8(int x) {
     //int A[({   L11: 4; })];
   }
   
+  {
+    goto L12;
+    
+    int y = 4;   // fixme-warn: skips initializer.
+  L12:
+    ;
+  }
   
   // Statement expressions 2.
   goto L1;     // expected-error {{illegal goto into protected scope}}
@@ -121,3 +129,21 @@ int test8(int x) {
                L1:
                  42; });
 }
+
+void test9(int n, void *P) {
+  int Y;
+  int Z = 4;
+  goto *P;  // ok.
+
+L2: ;
+  int a[n];  // expected-note {{jump bypasses initialization of variable length array}}
+
+L3:
+  goto *P;  // expected-error {{illegal indirect goto in protected scope, unknown effect on scopes}}
+  
+  void *Ptrs[] = {
+    &&L2,
+    &&L3   // FIXME: Not Ok.
+  };
+}
+
