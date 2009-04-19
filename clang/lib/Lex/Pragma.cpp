@@ -70,7 +70,10 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
   
   // Get the handler for this token.  If there is no handler, ignore the pragma.
   PragmaHandler *Handler = FindHandler(Tok.getIdentifierInfo(), false);
-  if (Handler == 0) return;
+  if (Handler == 0) {
+    PP.Diag(Tok, diag::warn_pragma_ignored);
+    return;
+  }
   
   // Otherwise, pass it down.
   Handler->HandlePragma(PP, Tok);

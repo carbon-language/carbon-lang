@@ -204,6 +204,9 @@ def err__Pragma_malformed : Error<
   "_Pragma takes a parenthesized string literal">;
 def err_pragma_comment_malformed : Error<
   "pragma comment requires parenthesized identifier and optional string">;
+def warn_pragma_ignored : Warning<"unknown pragma ignored">,
+   InGroup<UnknownPragmas>, DefaultIgnore;
+  
 def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_defined_macro_name : Error<"'defined' cannot be used as a macro name">;
 def err_paste_at_start : Error<
