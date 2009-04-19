@@ -457,7 +457,6 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       // operator.
       if (Result.is(tok::hashhash))
         Result.setKind(tok::unknown);
-      // FIXME: Turn __VA_ARGS__ into "not a token"?
     }
       
     // Transfer properties of the LHS over the the Result.
@@ -475,7 +474,19 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   if (Tok.is(tok::identifier)) {
     // Look up the identifier info for the token.  We disabled identifier lookup
     // by saying we're skipping contents, so we need to do this manually.
-    Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr));
+    IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr);
+    Tok.setIdentifierInfo(II);
+    
+    // If this identifier was poisoned, emit an error.  This won't be handled by
+    // Preprocessor::HandleIdentifier because this is coming from a macro
+    // expansion.
+    if (II->isPoisoned()) {
+      // We warn about __VA_ARGS__ with poisoning.
+      if (II->isStr("__VA_ARGS__"))
+        PP.Diag(Tok, diag::ext_pp_bad_vaargs_use);
+      else
+        PP.Diag(Tok, diag::err_pp_used_poisoned_id);
+    }
   }
   return false;
 }
