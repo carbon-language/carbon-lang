@@ -560,7 +560,8 @@ struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
-    LexOnOffSwitch(PP);
+    if (LexOnOffSwitch(PP) == STDC_ON)
+      PP.Diag(Tok, diag::warn_stdc_fenv_access_not_supported);
   }
 };
   
