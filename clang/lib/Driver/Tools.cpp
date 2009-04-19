@@ -471,8 +471,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
     CmdArgs.push_back("-fbuiltin=0");
 
-  // -fblocks default varies depending on platform and language;
-  // -always pass if specified.
+  // -fblocks default varies depending on platform and language; only
+  // pass if specified.
   if (Arg *A = Args.getLastArg(options::OPT_fblocks, options::OPT_fno_blocks)) {
     if (A->getOption().matches(options::OPT_fblocks))
       CmdArgs.push_back("-fblocks");
@@ -514,6 +514,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_fdiagnostics_show_option, 
                    options::OPT_fno_diagnostics_show_option))
     CmdArgs.push_back("-fdiagnostics-show-option");
+
+  // -fdollars-in-identifiers default varies depending on platform and
+  // language; only pass if specified.
+  if (Arg *A = Args.getLastArg(options::OPT_fdollars_in_identifiers, 
+                               options::OPT_fno_dollars_in_identifiers)) {
+    if (A->getOption().matches(options::OPT_fdollars_in_identifiers))
+      CmdArgs.push_back("-fdollars-in-identifiers=1");
+    else
+      CmdArgs.push_back("-fdollars-in-identifiers=0");
+  }
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
