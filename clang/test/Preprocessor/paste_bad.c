@@ -1,17 +1,16 @@
 // GCC PR 20077
-// RUN: not clang-cc -E %s &&
-// RUN: not clang-cc -E %s 2>&1 | grep error: | wc -l | grep 10
+// RUN: clang-cc -Eonly %s -verify
 
-#define a   a ## ## /* { dg-error "end of a macro expansion" } */
-#define b() b ## ## /* { dg-error "end of a macro expansion" } */
-#define c   c ##    /* { dg-error "end of a macro expansion" } */
-#define d() d ##    /* { dg-error "end of a macro expansion" } */
+#define a   a ## ## // expected-error {{'##' cannot appear at end of macro expansion}}
+#define b() b ## ## // expected-error {{'##' cannot appear at end of macro expansion}}
+#define c   c ##    // expected-error {{'##' cannot appear at end of macro expansion}}
+#define d() d ##    // expected-error {{'##' cannot appear at end of macro expansion}}
 
 
-#define e   ## ## e /* { dg-error "end of a macro expansion" } */
-#define f() ## ## f /* { dg-error "end of a macro expansion" } */
-#define g   ## g    /* { dg-error "end of a macro expansion" } */
-#define h() ## h    /* { dg-error "end of a macro expansion" } */
-#define i   ##      /* { dg-error "end of a macro expansion" } */
-#define j() ##      /* { dg-error "end of a macro expansion" } */
+#define e   ## ## e // expected-error {{'##' cannot appear at start of macro expansion}}
+#define f() ## ## f // expected-error {{'##' cannot appear at start of macro expansion}}
+#define g   ## g    // expected-error {{'##' cannot appear at start of macro expansion}}
+#define h() ## h    // expected-error {{'##' cannot appear at start of macro expansion}}
+#define i   ##      // expected-error {{'##' cannot appear at start of macro expansion}}
+#define j() ##      // expected-error {{'##' cannot appear at start of macro expansion}}
 
