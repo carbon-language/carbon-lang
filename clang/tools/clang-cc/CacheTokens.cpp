@@ -490,12 +490,15 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       Tok.setIdentifierInfo(II);
       tok::PPKeywordKind K = II->getPPKeywordID();
       
-      assert(K != tok::pp_not_keyword);
       ParsingPreprocessorDirective = true;
       
       switch (K) {
+      case tok::pp_not_keyword:
+        // Invalid directives "#foo" can occur in #if 0 blocks etc, just pass
+        // them through.
       default:
         break;
+          
       case tok::pp_include:
       case tok::pp_import:
       case tok::pp_include_next: {        
