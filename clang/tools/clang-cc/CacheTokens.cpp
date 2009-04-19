@@ -475,8 +475,10 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
 
       // Get the next token.
       L.LexFromRawLexer(Tok);
-            
-      assert(!Tok.isAtStartOfLine());
+
+      // If we see the start of line, then we had a null directive "#".
+      if (Tok.isAtStartOfLine())
+        goto NextToken;
       
       // Did we see 'include'/'import'/'include_next'?
       if (Tok.isNot(tok::identifier)) {
