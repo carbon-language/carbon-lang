@@ -114,7 +114,7 @@
 
         <li>Don't parse arguments more than once.</li>
 
-        <li>Provide a few simple interfaces for effienctly searching
+        <li>Provide a few simple interfaces for efficiently searching
           arguments.</li>
       </ul>
 
@@ -208,15 +208,15 @@
             unique ID (e.g., <tt>options::OPT_I</tt>),</p>
 
           <p>Arg instances themselves do not generally store the
-            values of parameters. In almost all cases, this would
+            values of parameters. In many cases, this would
             simply result in creating unnecessary string
             copies. Instead, Arg instances are always embedded inside
             an ArgList structure, which contains the original vector
-            of argument strings. Each Arg itself can then only contain
+            of argument strings. Each Arg itself only needs to contain
             an index into this vector instead of storing its values
             directly.</p>
 
-          <p>The current clang driver can dump the results of this
+          <p>The clang driver can dump the results of this
             stage using the <tt>-ccc-print-options</tt> flag (which
             must preceed any actual command line arguments). For
             example:</p>
@@ -255,7 +255,7 @@
             is BindArchAction, which conceptually alters the
             architecture to be used for all of its input Actions.</p>
 
-          <p>The current clang driver can dump the results of this
+          <p>The clang driver can dump the results of this
             stage using the <tt>-ccc-print-phases</tt> flag. For
             example:</p>
           <pre>
@@ -307,21 +307,28 @@
         <li>
           <b>Bind: Tool &amp; Filename Selection</b>
 
-          <p>This stage (in conjunction with the Translate stage) turns
-            the tree of Actions into a list of actual subprocess to
-            run. Conceptually, the driver performs a simple tree match
-            to assign Action(s) to Tools. Once an Action has been
-            bound to a Tool, the driver interacts with the tool to
-            determine how the Tools should be connected (via pipes,
-            temporary files, or user provided filenames) and whether
-            the tool supports things like an integrated
-            preprocessor.</p>
+          <p>This stage (in conjunction with the Translate stage)
+            turns the tree of Actions into a list of actual subprocess
+            to run. Conceptually, the driver performs a top down
+            matching to assign Action(s) to Tools. The ToolChain is
+            responsible for selecting the tool to perform a particular
+            action; once seleected the driver interacts with the tool
+            to see if it can match additional actions (for example, by
+            having an integrated preprocessor).
+
+          <p>Once Tools have been selected for all actions, the driver
+            determines how the tools should be connected (for example,
+            using an inprocess module, pipes, temporary files, or user
+            provided filenames). If an output file is required, the
+            driver also computes the appropriate file name (the suffix
+            and file location depend on the input types and options
+            such as <tt>-save-temps</tt>).
 
           <p>The driver interacts with a ToolChain to perform the Tool
             bindings. Each ToolChain contains information about all
             the tools needed for compilation for a particular
             architecture, platform, and operating system. A single
-            driver may query multiple ToolChains during a single
+            driver invocation may query multiple ToolChains during one
             compilation in order to interact with tools for separate
             architectures.</p>
 
@@ -330,13 +337,13 @@
             the <tt>-ccc-print-bindings</tt> option. For example:</p>
           <pre>
             $ <b>clang -ccc-print-bindings -arch i386 -arch ppc t0.c</b>
-            # "i386-apple-darwin10.0.0d6" - "clang", inputs: ["t0.c"], output: "/tmp/cc-Sn4RKF.s"
-            # "i386-apple-darwin10.0.0d6" - "darwin::Assemble", inputs: ["/tmp/cc-Sn4RKF.s"], output: "/tmp/cc-gvSnbS.o"
-            # "i386-apple-darwin10.0.0d6" - "darwin::Link", inputs: ["/tmp/cc-gvSnbS.o"], output: "/tmp/cc-jgHQxi.out"
-            # "ppc-apple-darwin10.0.0d6" - "gcc::Compile", inputs: ["t0.c"], output: "/tmp/cc-Q0bTox.s"
-            # "ppc-apple-darwin10.0.0d6" - "gcc::Assemble", inputs: ["/tmp/cc-Q0bTox.s"], output: "/tmp/cc-WCdicw.o"
-            # "ppc-apple-darwin10.0.0d6" - "gcc::Link", inputs: ["/tmp/cc-WCdicw.o"], output: "/tmp/cc-HHBEBh.out"
-            # "i386-apple-darwin10.0.0d6" - "darwin::Lipo", inputs: ["/tmp/cc-jgHQxi.out", "/tmp/cc-HHBEBh.out"], output: "a.out"
+            # "i386-apple-darwin9" - "clang", inputs: ["t0.c"], output: "/tmp/cc-Sn4RKF.s"
+            # "i386-apple-darwin9" - "darwin::Assemble", inputs: ["/tmp/cc-Sn4RKF.s"], output: "/tmp/cc-gvSnbS.o"
+            # "i386-apple-darwin9" - "darwin::Link", inputs: ["/tmp/cc-gvSnbS.o"], output: "/tmp/cc-jgHQxi.out"
+            # "ppc-apple-darwin9" - "gcc::Compile", inputs: ["t0.c"], output: "/tmp/cc-Q0bTox.s"
+            # "ppc-apple-darwin9" - "gcc::Assemble", inputs: ["/tmp/cc-Q0bTox.s"], output: "/tmp/cc-WCdicw.o"
+            # "ppc-apple-darwin9" - "gcc::Link", inputs: ["/tmp/cc-WCdicw.o"], output: "/tmp/cc-HHBEBh.out"
+            # "i386-apple-darwin9" - "darwin::Lipo", inputs: ["/tmp/cc-jgHQxi.out", "/tmp/cc-HHBEBh.out"], output: "a.out"
           </pre>
 
           <p>This shows the tool chain, tool, inputs and outputs which
