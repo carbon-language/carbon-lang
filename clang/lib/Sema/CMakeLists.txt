@@ -2,6 +2,7 @@ set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangSema
   IdentifierResolver.cpp
+  JumpDiagnostics.cpp
   ParseAST.cpp
   Sema.cpp
   SemaAccess.cpp
