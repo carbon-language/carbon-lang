@@ -348,7 +348,7 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     Lex(Tok); // eat the comma.
 
     // We need at least one string.
-    if (Tok.getKind() != tok::string_literal) {
+    if (Tok.isNot(tok::string_literal)) {
       Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
       return;
     }
@@ -357,7 +357,7 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     // macro expansion.
     // "foo " "bar" "Baz"
     llvm::SmallVector<Token, 4> StrToks;
-    while (Tok.getKind() == tok::string_literal) {
+    while (Tok.is(tok::string_literal)) {
       StrToks.push_back(Tok);
       Lex(Tok);
     }
@@ -502,6 +502,81 @@ struct PragmaDependencyHandler : public PragmaHandler {
   }
 };
   
+/// PragmaDiagnosticHandler - e.g. '#pragma GCC diagnostic ignored "-Wformat"'
+struct PragmaDiagnosticHandler : public PragmaHandler {
+  PragmaDiagnosticHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &DiagToken) {
+    Token Tok;
+    PP.LexUnexpandedToken(Tok);
+    if (Tok.isNot(tok::identifier)) {
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
+      return;
+    }
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    
+    diag::Mapping Map;
+    if (II->isStr("warning"))
+      Map = diag::MAP_WARNING;
+    else if (II->isStr("error"))
+      Map = diag::MAP_ERROR;
+    else if (II->isStr("ignored"))
+      Map = diag::MAP_IGNORE;
+    else if (II->isStr("fatal"))
+      Map = diag::MAP_FATAL;
+    else {
+      PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
+      return;
+    }
+    
+    PP.LexUnexpandedToken(Tok);
+
+    // We need at least one string.
+    if (Tok.isNot(tok::string_literal)) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_diagnostic_invalid_token);
+      return;
+    }
+    
+    // String concatenation allows multiple strings, which can even come from
+    // macro expansion.
+    // "foo " "bar" "Baz"
+    llvm::SmallVector<Token, 4> StrToks;
+    while (Tok.is(tok::string_literal)) {
+      StrToks.push_back(Tok);
+      PP.LexUnexpandedToken(Tok);
+    }
+    
+    if (Tok.isNot(tok::eom)) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_diagnostic_invalid_token);
+      return;
+    }
+    
+    // Concatenate and parse the strings.
+    StringLiteralParser Literal(&StrToks[0], StrToks.size(), PP);
+    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    if (Literal.hadError)
+      return;
+    if (Literal.Pascal) {
+      PP.Diag(StrToks[0].getLocation(), diag::warn_pragma_diagnostic_invalid);
+      return;
+    }
+    
+    std::string WarningName(Literal.GetString(),
+                            Literal.GetString()+Literal.GetStringLength());
+
+    if (WarningName.size() < 3 || WarningName[0] != '-' ||
+        WarningName[1] != 'W') {
+      PP.Diag(StrToks[0].getLocation(),
+              diag::warn_pragma_diagnostic_invalid_option);
+      return;
+    }
+    
+    if (PP.getDiagnostics().setDiagnosticGroupMapping(WarningName.c_str()+2,
+                                                      Map))
+      PP.Diag(StrToks[0].getLocation(),
+              diag::warn_pragma_diagnostic_unknown_warning) << WarningName;
+  }
+};
+  
 /// PragmaCommentHandler - "#pragma comment ...".
 struct PragmaCommentHandler : public PragmaHandler {
   PragmaCommentHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
@@ -596,6 +671,8 @@ void Preprocessor::RegisterBuiltinPragmas() {
                                           getIdentifierInfo("system_header")));
   AddPragmaHandler("GCC", new PragmaDependencyHandler(
                                           getIdentifierInfo("dependency")));
+  AddPragmaHandler("GCC", new PragmaDiagnosticHandler(
+                                              getIdentifierInfo("diagnostic")));
   
   AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler(
                                              getIdentifierInfo("FP_CONTRACT")));

@@ -217,6 +217,19 @@ def ext_stdc_pragma_syntax_eom :
 def warn_stdc_fenv_access_not_supported :
    ExtWarn<"pragma STDC FENV_ACCESS ON is not supported, ignoring pragma">,
    InGroup<UnknownPragmas>;
+def warn_pragma_diagnostic_invalid :
+   ExtWarn<"pragma diagnostic expected 'error', 'warning', 'ignored', or"
+            " 'fatal'">,
+   InGroup<UnknownPragmas>;
+def warn_pragma_diagnostic_invalid_option :
+   ExtWarn<"pragma diagnostic expected option name (e.g. \"-Wundef\")">,
+   InGroup<UnknownPragmas>;
+def warn_pragma_diagnostic_invalid_token :
+   ExtWarn<"unexpected token in pragma diagnostic">,
+   InGroup<UnknownPragmas>;
+def warn_pragma_diagnostic_unknown_warning :
+   ExtWarn<"unknown warning group '%0', ignored">,
+   InGroup<UnknownPragmas>;
 
 def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_defined_macro_name : Error<"'defined' cannot be used as a macro name">;
