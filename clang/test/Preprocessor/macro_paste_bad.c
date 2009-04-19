@@ -4,7 +4,6 @@
 XYZ
 
 // GCC PR 20077
-// RUN: clang-cc -Eonly %s -verify
 
 #define a   a ## ## // expected-error {{'##' cannot appear at end of macro expansion}}
 #define b() b ## ## // expected-error {{'##' cannot appear at end of macro expansion}}
@@ -18,5 +17,4 @@ XYZ
 #define h() ## h    // expected-error {{'##' cannot appear at start of macro expansion}}
 #define i   ##      // expected-error {{'##' cannot appear at start of macro expansion}}
 #define j() ##      // expected-error {{'##' cannot appear at start of macro expansion}}
-
 
