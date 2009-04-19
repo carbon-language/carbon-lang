@@ -267,6 +267,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         bool PrintedRange = false;
         
         for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i) {
+          // Ignore invalid ranges.
+          if (!Info.getRange(i).isValid()) continue;
+
           SourceLocation B = Info.getRange(i).getBegin();
           SourceLocation E = Info.getRange(i).getEnd();
           std::pair<FileID, unsigned> BInfo=SM.getDecomposedInstantiationLoc(B);
