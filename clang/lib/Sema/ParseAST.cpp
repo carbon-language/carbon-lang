@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <llvm/ADT/OwningPtr.h>
 #include "clang/Sema/ParseAST.h"
+#include "Sema.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
-#include "Sema.h"
 #include "clang/Parse/Parser.h"
+#include "llvm/ADT/OwningPtr.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
