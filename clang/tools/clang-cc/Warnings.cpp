@@ -121,11 +121,12 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags) {
     }
     
     // -Werror/-Wno-error is a special case, not controlled by the option table.
-    // It also has the "specifier" form of -Werror=foo.
+    // It also has the "specifier" form of -Werror=foo and -Werror-foo.
     if (OptEnd-OptStart >= 5 && memcmp(OptStart, "error", 5) == 0) {
       const char *Specifier = 0;
       if (OptEnd-OptStart != 5) {  // Specifier must be present.
-        if (OptStart[5] != '=' || OptEnd-OptStart == 6) {
+        if ((OptStart[5] != '=' && OptStart[5] != '-') ||
+            OptEnd-OptStart == 6) {
           fprintf(stderr, "warning: unknown -Werror warning specifier: -W%s\n",
                   Opt.c_str());
           continue;
