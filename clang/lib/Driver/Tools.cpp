@@ -505,6 +505,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     D.Diag(clang::diag::warn_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
 
+  // -fdiagnostics-fixit-info is default, only pass non-default.
+  if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info, 
+                    options::OPT_fno_diagnostics_fixit_info))
+    CmdArgs.push_back("-fno-diagnostics-fixit-info");
+
   // Enable -fdiagnostics-show-option by default.
   if (Args.hasFlag(options::OPT_fdiagnostics_show_option, 
                    options::OPT_fno_diagnostics_show_option))
