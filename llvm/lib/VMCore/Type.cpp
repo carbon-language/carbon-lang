@@ -1428,4 +1428,9 @@ std::ostream &operator<<(std::ostream &OS, const Type &T) {
   T.print(OS);
   return OS;
 }
+
+raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
+  T.print(OS);
+  return OS;
+}
 }
