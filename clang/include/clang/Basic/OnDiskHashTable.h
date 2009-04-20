@@ -184,7 +184,12 @@ public:
     insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
   }
   
-  io::Offset Emit(llvm::raw_ostream& out) {
+  io::Offset Emit(llvm::raw_ostream &out) {
+    Info InfoObj;
+    return Emit(out, InfoObj);
+  }
+
+  io::Offset Emit(llvm::raw_ostream &out, Info &InfoObj) {
     using namespace clang::io;
 
     // Emit the payload of the table.
@@ -202,9 +207,9 @@ public:
       for (Item *I = B.head; I ; I = I->next) {
         Emit32(out, I->hash);
         const std::pair<unsigned, unsigned>& Len = 
-          Info::EmitKeyDataLength(out, I->key, I->data);
-        Info::EmitKey(out, I->key, Len.first);
-        Info::EmitData(out, I->key, I->data, Len.second);
+          InfoObj.EmitKeyDataLength(out, I->key, I->data);
+        InfoObj.EmitKey(out, I->key, Len.first);
+        InfoObj.EmitData(out, I->key, I->data, Len.second);
       }
     }
     
