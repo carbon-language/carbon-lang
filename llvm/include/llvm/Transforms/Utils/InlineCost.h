@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include <cassert>
+#include <climits>
 #include <map>
 #include <vector>
 
@@ -37,26 +38,41 @@ namespace llvm {
       Never
     };
 
-    int Cost : 30;
-    unsigned Type :  2;
+    // This is a do-it-yourself implementation of
+    //   int Cost : 30;
+    //   unsigned Type : 2;
+    // We used to use bitfields, but they were sometimes miscompiled (PR3822).
+    enum { TYPE_BITS = 2 };
+    enum { COST_BITS = unsigned(sizeof(unsigned)) * CHAR_BIT - TYPE_BITS };
+    unsigned TypedCost; // int Cost : COST_BITS; unsigned Type : TYPE_BITS;
 
-    InlineCost(int C, int T) : Cost(C), Type(T) {
-      assert(Cost == C && "Cost exceeds InlineCost precision");
+    Kind getType() const {
+      return Kind(TypedCost >> COST_BITS);
+    }
+
+    int getCost() const {
+      // Sign-extend the bottom COST_BITS bits.
+      return (int(TypedCost << TYPE_BITS)) >> TYPE_BITS;
+    }
+
+    InlineCost(int C, int T) {
+      TypedCost = (unsigned(C << TYPE_BITS) >> TYPE_BITS) | (T << COST_BITS);
+      assert(getCost() == C && "Cost exceeds InlineCost precision");
     }
   public:
     static InlineCost get(int Cost) { return InlineCost(Cost, Value); }
     static InlineCost getAlways() { return InlineCost(0, Always); }
-    static InlineCost getNever() { return InlineCost(0, Never); } 
+    static InlineCost getNever() { return InlineCost(0, Never); }
 
-    bool isVariable() const { return Type == Value; }
-    bool isAlways() const { return Type == Always; }
-    bool isNever() const { return Type == Never; }
+    bool isVariable() const { return getType() == Value; }
+    bool isAlways() const { return getType() == Always; }
+    bool isNever() const { return getType() == Never; }
 
     /// getValue() - Return a "variable" inline cost's amount. It is
     /// an error to call this on an "always" or "never" InlineCost.
-    int getValue() const { 
-      assert(Type == Value && "Invalid access of InlineCost");
-      return Cost;
+    int getValue() const {
+      assert(getType() == Value && "Invalid access of InlineCost");
+      return getCost();
     }
   };
   
