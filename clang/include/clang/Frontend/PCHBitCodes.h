@@ -356,6 +356,10 @@ namespace clang {
       DECL_FUNCTION,
       /// \brief A ObjCMethodDecl record.
       DECL_OBJC_METHOD,
+      /// \brief A ObjCInterfaceDecl record.
+      DECL_OBJC_INTERFACE_DECL,
+      /// \brief A ObjCIvarDecl record.
+      DECL_OBJC_IVAR_DECL,
       /// \brief A FieldDecl record.
       DECL_FIELD,
       /// \brief A VarDecl record.

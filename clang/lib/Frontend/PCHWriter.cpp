@@ -272,6 +272,9 @@ namespace {
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset, 
                           uint64_t VisibleOffset);
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
+    void VisitObjCContainerDecl(ObjCContainerDecl *D);
+    void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+    void VisitObjCIvarDecl(ObjCIvarDecl *D);
   };
 }
 
@@ -385,6 +388,36 @@ void PCHDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
                                    PEnd = D->param_end(); P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
   Code = pch::DECL_OBJC_METHOD;
+}
+
+void PCHDeclWriter::VisitObjCContainerDecl(ObjCContainerDecl *D) {
+  VisitNamedDecl(D);
+  Writer.AddSourceLocation(D->getAtEndLoc(), Record);
+  // Abstract class (no need to define a stable pch::DECL code).
+}
+
+void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+  VisitObjCContainerDecl(D);
+  Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
+  Writer.AddDeclRef(D->getSuperClass(), Record);
+  Record.push_back(D->ivar_size());
+  for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(), 
+                                     IEnd = D->ivar_end(); I != IEnd; ++I)
+    Writer.AddDeclRef(*I, Record);
+  Record.push_back(D->isForwardDecl());
+  Record.push_back(D->isImplicitInterfaceDecl());
+  Writer.AddSourceLocation(D->getClassLoc(), Record);
+  Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
+  Writer.AddSourceLocation(D->getLocEnd(), Record);
+  // FIXME: add protocols, categories.
+  Code = pch::DECL_OBJC_INTERFACE_DECL;
+}
+
+void PCHDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
+  VisitFieldDecl(D);
+  // FIXME: stable encoding for @public/@private/@protected/@package
+  Record.push_back(D->getAccessControl()); 
+  Code = pch::DECL_OBJC_IVAR_DECL;
 }
 
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {

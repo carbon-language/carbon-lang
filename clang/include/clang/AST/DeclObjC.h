@@ -479,15 +479,21 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
   
+  void setClassLoc(SourceLocation Loc) { ClassLoc = Loc; }
   SourceLocation getClassLoc() const { return ClassLoc; }
   void setSuperClassLoc(SourceLocation Loc) { SuperClassLoc = Loc; }
   SourceLocation getSuperClassLoc() const { return SuperClassLoc; }
     
-  /// ImplicitInterfaceDecl - check that this is an implicitely declared
+  /// isImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c @implementation
   /// declaration without an @interface declaration.
-  bool ImplicitInterfaceDecl() const { return InternalInterface; }
+  bool isImplicitInterfaceDecl() const { return InternalInterface; }
+  void setImplicitInterfaceDecl(bool val) { InternalInterface = val; }
   
+  // Low-level accessor
+  Type *getTypeForDecl() const { return TypeForDecl; }
+  void setTypeForDecl(Type *TD) { TypeForDecl = TD; }
+
   static bool classof(const Decl *D) { return D->getKind() == ObjCInterface; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
 };

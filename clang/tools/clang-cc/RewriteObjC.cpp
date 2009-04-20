@@ -3164,7 +3164,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   ObjCInterfaceDecl *CDecl = IDecl->getClassInterface();
   
   // Explictly declared @interface's are already synthesized.
-  if (CDecl->ImplicitInterfaceDecl()) {
+  if (CDecl->isImplicitInterfaceDecl()) {
     // FIXME: Implementation of a class with no @interface (legacy) doese not 
     // produce correct synthesis as yet.
     SynthesizeObjCInternalStruct(CDecl, Result);

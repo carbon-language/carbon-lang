@@ -68,6 +68,9 @@ namespace {
     void VisitBlockDecl(BlockDecl *BD);
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
+    void VisitObjCContainerDecl(ObjCContainerDecl *D);
+    void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+    void VisitObjCIvarDecl(ObjCIvarDecl *D);
   };
 }
 
@@ -182,6 +185,35 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   MD->setMethodParams(Reader.getContext(), &Params[0], NumParams);
+}
+
+void PCHDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
+  VisitNamedDecl(CD);
+  CD->setAtEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+
+void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
+  VisitObjCContainerDecl(ID);
+  ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
+  ID->setSuperClass(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  unsigned NumIvars = Record[Idx++];
+  llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
+  IVars.reserve(NumIvars);
+  for (unsigned I = 0; I != NumIvars; ++I)
+    IVars.push_back(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
+  ID->setIVarList(&IVars[0], NumIvars, Reader.getContext());
+
+  ID->setForwardDecl(Record[Idx++]);
+  ID->setImplicitInterfaceDecl(Record[Idx++]);
+  ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  ID->setSuperClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  ID->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  // FIXME: add protocols, categories.
+}
+
+void PCHDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
+  VisitFieldDecl(IVD);
+  IVD->setAccessControl((ObjCIvarDecl::AccessControl)Record[Idx++]);
 }
 
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
@@ -1798,6 +1830,17 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   case pch::DECL_OBJC_METHOD: {
     D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(), 
                                Selector(), QualType(), 0);
+    break;
+  }
+
+  case pch::DECL_OBJC_INTERFACE_DECL: {
+    D = ObjCInterfaceDecl::Create(Context, 0, SourceLocation(), 0);
+    break;
+  }
+
+  case pch::DECL_OBJC_IVAR_DECL: {
+    D = ObjCIvarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
+                             ObjCIvarDecl::None);
     break;
   }
 

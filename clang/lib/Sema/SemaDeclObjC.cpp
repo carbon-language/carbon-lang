@@ -699,7 +699,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
   /// Check case of non-existing @interface decl.
   /// (legacy objective-c @implementation decl without an @interface decl).
   /// Add implementations's ivar to the synthesize class's ivar list.
-  if (IDecl->ImplicitInterfaceDecl()) {
+  if (IDecl->isImplicitInterfaceDecl()) {
     IDecl->setIVarList(ivars, numIvars, Context);
     IDecl->setLocEnd(RBrace);
     return;
