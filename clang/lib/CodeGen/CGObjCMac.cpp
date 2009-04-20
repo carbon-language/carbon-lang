@@ -422,7 +422,7 @@ protected:
   
   // FIXME: This is a horrible name.
   llvm::Constant *GetMethodVarType(const ObjCMethodDecl *D);
-  llvm::Constant *GetMethodVarType(FieldDecl *D);
+  llvm::Constant *GetMethodVarType(const FieldDecl *D);
   
   /// GetPropertyName - Return a unique constant for the given
   /// name. The return value has type char *.
@@ -502,6 +502,15 @@ protected:
                                           const char *Section,
                                           unsigned Align,
                                           bool AddToUsed);
+
+  /// GetNamedIvarList - Return the list of ivars in the interface
+  /// itself (not including super classes and not including unnamed
+  /// bitfields).
+  /// 
+  /// For the non-fragile ABI, this also includes synthesized property
+  /// ivars.
+  void GetNamedIvarList(const ObjCInterfaceDecl *OID,
+                        llvm::SmallVector<ObjCIvarDecl*, 16> &Res) const;
 
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
@@ -1775,16 +1784,14 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
   
-  RecordDecl::field_iterator ifield, pfield;
-  const RecordDecl *RD = GetFirstIvarInRecord(OID, ifield, pfield);
-  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext());
-       ifield != e; ++ifield) {
-    FieldDecl *Field = *ifield;
+  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
+  GetNamedIvarList(OID, OIvars);
+    
+  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
+    ObjCIvarDecl *IVD = OIvars[i];
+    const FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), IVD);
     uint64_t  Offset = GetIvarBaseOffset(Layout, Field);
-    if (Field->getIdentifier())
-      Ivar[0] = GetMethodVarName(Field->getIdentifier());
-    else
-      Ivar[0] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+    Ivar[0] = GetMethodVarName(Field->getIdentifier());
     Ivar[1] = GetMethodVarType(Field);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
@@ -3014,7 +3021,7 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarName(const std::string &Name) {
   return GetMethodVarName(&CGM.getContext().Idents.get(Name));
 }
 
-llvm::Constant *CGObjCCommonMac::GetMethodVarType(FieldDecl *Field) {
+llvm::Constant *CGObjCCommonMac::GetMethodVarType(const FieldDecl *Field) {
   std::string TypeStr;
   CGM.getContext().getObjCEncodingForType(Field->getType(), TypeStr, Field);
 
@@ -4574,6 +4581,24 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
 ///   struct _iver_t list[count];
 /// }
 ///
+
+void CGObjCCommonMac::GetNamedIvarList(const ObjCInterfaceDecl *OID,
+                              llvm::SmallVector<ObjCIvarDecl*, 16> &Res) const {
+  for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
+         E = OID->ivar_end(); I != E; ++I) {
+    // Ignore unnamed bit-fields.
+    if (!(*I)->getDeclName())
+      continue;
+
+     Res.push_back(*I);
+  }
+  
+  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(CGM.getContext()),
+         E = OID->prop_end(CGM.getContext()); I != E; ++I)
+    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
+      Res.push_back(IV);
+}
+
 llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                                             const ObjCImplementationDecl *ID) {
   
@@ -4585,28 +4610,13 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   // FIXME. Consolidate this with similar code in GenerateClass.
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
   
-  RecordDecl::field_iterator i,p;
-  const RecordDecl *RD = GetFirstIvarInRecord(OID, i,p);
   // Collect declared and synthesized ivars in a small vector.
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
-       E = OID->ivar_end(); I != E; ++I) 
-     OIvars.push_back(*I);
-  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(CGM.getContext()),
-       E = OID->prop_end(CGM.getContext()); I != E; ++I)
-    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
-      OIvars.push_back(IV);
+  GetNamedIvarList(OID, OIvars);
     
-  unsigned iv = 0;
-  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()); 
-       i != e; ++i) {
-    ObjCIvarDecl *IVD = OIvars[iv++];
-    // Don't emit entries for unnamed bit fields.
-    if (!IVD->getDeclName())
-      continue;
-
-    FieldDecl *Field = *i;
-    assert(Field == OID->lookupFieldDeclForIvar(CGM.getContext(), IVD));
+  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
+    ObjCIvarDecl *IVD = OIvars[i];
+    const FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), IVD);
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), IVD, 
                                 GetIvarBaseOffset(Layout, Field));
     Ivar[1] = GetMethodVarName(Field->getIdentifier());
