@@ -81,11 +81,11 @@ int main(int argc, char **argv) {
   }
 
   // Figure out which function we should extract
-  GlobalVariable *G = ExtractGlobal.size() ? 
+  GlobalVariable *G = !ExtractGlobal.empty() ?
     M.get()->getNamedGlobal(ExtractGlobal) : 0;
 
   // Figure out which function we should extract
-  if (!ExtractFunc.size() && !ExtractGlobal.size()) ExtractFunc = "main";
+  if (ExtractFunc.empty() && ExtractGlobal.empty()) ExtractFunc = "main";
   Function *F = M.get()->getFunction(ExtractFunc);
 
   if (F == 0 && G == 0) {
