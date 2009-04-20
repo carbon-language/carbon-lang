@@ -213,7 +213,11 @@ public:
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);
-  Value *VisitCastExpr(const CastExpr *E) { 
+  Value *VisitCastExpr(const CastExpr *E) {
+    // Make sure to evaluate VLA bounds now so that we have them for later.
+    if (E->getType()->isVariablyModifiedType())
+      CGF.EmitVLASize(E->getType());
+
     return EmitCastExpr(E->getSubExpr(), E->getType());
   }
   Value *EmitCastExpr(const Expr *E, QualType T);

@@ -122,6 +122,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   // circular references.
   DMEntry = GV;
 
+  // Make sure to evaluate VLA bounds now so that we have them for later.
+  if (D.getType()->isVariablyModifiedType())
+    EmitVLASize(D.getType());
+
   if (D.getInit()) {
     llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
 
