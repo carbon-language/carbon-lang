@@ -29,8 +29,9 @@ struct CTargetMachine : public TargetMachine {
   virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
                                         CodeGenFileType FileType, bool Fast);
 
-  // This class always works, but shouldn't be the default in most cases.
-  static unsigned getModuleMatchQuality(const Module &M) { return 1; }
+  // This class always works, but must be requested explicitly on 
+  // llc command line.
+  static unsigned getModuleMatchQuality(const Module &M) { return 0; }
   
   virtual const TargetData *getTargetData() const { return &DataLayout; }
 };
