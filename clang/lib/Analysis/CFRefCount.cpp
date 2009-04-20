@@ -1694,7 +1694,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                              Expr* Ex,
                              Expr* Receiver,
                              RetainSummary* Summ,
-                             ExprIterator arg_beg, ExprIterator arg_end,                             
+                             ExprIterator arg_beg, ExprIterator arg_end,
                              ExplodedNode<GRState>* Pred) {
   
   // Get the state.
@@ -1930,9 +1930,9 @@ void CFRefCount::EvalCall(ExplodedNodeSet<GRState>& Dst,
                           GRStmtNodeBuilder<GRState>& Builder,
                           CallExpr* CE, SVal L,
                           ExplodedNode<GRState>* Pred) {
-
-  RetainSummary* Summ = !isa<loc::FuncVal>(L) ? 0
-                      : Summaries.getSummary(cast<loc::FuncVal>(L).getDecl());
+  const FunctionDecl* FD = L.getAsFunctionDecl();
+  RetainSummary* Summ = !FD ? 0 
+                        : Summaries.getSummary(const_cast<FunctionDecl*>(FD));
   
   EvalSummary(Dst, Eng, Builder, CE, 0, Summ,
               CE->arg_begin(), CE->arg_end(), Pred);
@@ -2582,9 +2582,9 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
 
     if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Get the name of the callee (if it is available).
-      SVal X = CurrSt.GetSValAsScalarOrLoc(CE->getCallee());        
-      if (loc::FuncVal* FV = dyn_cast<loc::FuncVal>(&X))
-        os << "Call to function '" << FV->getDecl()->getNameAsString() <<'\'';
+      SVal X = CurrSt.GetSValAsScalarOrLoc(CE->getCallee());
+      if (const FunctionDecl* FD = X.getAsFunctionDecl())
+        os << "Call to function '" << FD->getNameAsString() <<'\'';
       else
         os << "function call";      
     }          
@@ -2675,9 +2675,9 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     if (contains(AEffects, MakeCollectable)) {
       // Get the name of the function.
       Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-      loc::FuncVal FV =
-        cast<loc::FuncVal>(CurrSt.GetSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee()));
-      const std::string& FName = FV.getDecl()->getNameAsString();
+      SVal X = CurrSt.GetSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
+      const FunctionDecl* FD = X.getAsFunctionDecl();
+      const std::string& FName = FD->getNameAsString();
       
       if (TF.isGCEnabled()) {
         // Determine if the object's reference count was pushed to zero.

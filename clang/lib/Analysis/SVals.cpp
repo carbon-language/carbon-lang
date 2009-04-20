@@ -30,9 +30,25 @@ using llvm::APSInt;
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
+const FunctionDecl* SVal::getAsFunctionDecl() const {
+  if (const loc::FuncVal* FV = dyn_cast<loc::FuncVal>(this)) {
+    return FV->getDecl();
+  }
+
+  if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
+    const MemRegion* R = X->getRegion();
+    if (const CodeTextRegion* CTR = dyn_cast<CodeTextRegion>(R)) {
+      if (CTR->isDeclared())
+        return CTR->getDecl();
+    }
+  }
+
+  return 0;
+}
+
 /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
-///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolRef
-///  where 'isValid()' returns false.
+///  wraps a symbol, return that SymbolRef.  Otherwise return 0.
+// FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
 SymbolRef SVal::getAsLocSymbol() const {
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion *R = X->getRegion();
@@ -55,7 +71,8 @@ SymbolRef SVal::getAsLocSymbol() const {
 }
 
 /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
-///  Otherwise return a SymbolRef where 'isValid()' returns false.
+///  Otherwise return 0.
+// FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
 SymbolRef SVal::getAsSymbol() const {
   if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
     return X->getSymbol();

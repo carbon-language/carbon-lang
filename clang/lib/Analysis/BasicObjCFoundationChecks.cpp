@@ -375,9 +375,9 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   Expr* Callee = CE->getCallee();  
   SVal CallV = GetSVal(N->getState(), Callee);  
-  loc::FuncVal* FuncV = dyn_cast<loc::FuncVal>(&CallV);
+  const FunctionDecl* FD = CallV.getAsFunctionDecl();
 
-  if (!FuncV || FuncV->getDecl()->getIdentifier() != II || CE->getNumArgs()!=3)
+  if (!FD || FD->getIdentifier() != II || CE->getNumArgs()!=3)
     return false;
   
   // Get the value of the "theType" argument.

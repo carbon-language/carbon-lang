@@ -976,7 +976,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
     assert(asLValue);
-    SVal V = loc::FuncVal(FD);
+    SVal V = ValMgr.getFunctionPointer(FD);
     MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V));
     return;
   }
@@ -1369,11 +1369,10 @@ static bool EvalOSAtomic(ExplodedNodeSet<GRState>& Dst,
                          GRStmtNodeBuilder<GRState>& Builder,
                          CallExpr* CE, SVal L,
                          ExplodedNode<GRState>* Pred) {
-  
-  if (!isa<loc::FuncVal>(L))
+  const FunctionDecl* FD = L.getAsFunctionDecl();
+  if (!FD)
     return false;
-  
-  const FunctionDecl *FD = cast<loc::FuncVal>(L).getDecl();
+
   const char *FName = FD->getNameAsCString();
   
   // Check for compare and swap.
@@ -1473,11 +1472,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
     // Check for the "noreturn" attribute.
     
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-    
-    if (isa<loc::FuncVal>(L)) {      
-      
-      FunctionDecl* FD = cast<loc::FuncVal>(L).getDecl();
-      
+    const FunctionDecl* FD = L.getAsFunctionDecl();
+    if (FD) {      
       if (FD->getAttr<NoReturnAttr>() || FD->getAttr<AnalyzerNoReturnAttr>())
         Builder->BuildSinks = true;
       else {
@@ -1559,10 +1555,9 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
     
     // Evaluate the call.
 
-    if (isa<loc::FuncVal>(L)) {
+    if (FD) {
       
-      if (unsigned id 
-            = cast<loc::FuncVal>(L).getDecl()->getBuiltinID(getContext()))
+      if (unsigned id = FD->getBuiltinID(getContext()))
         switch (id) {
           case Builtin::BI__builtin_expect: {
             // For __builtin_expect, just return the value of the subexpression.

@@ -89,6 +89,11 @@ public:
   }
   
   bool isZeroConstant() const;
+
+  /// getAsFunctionDecl - If this SVal is a MemRegionVal and wraps a
+  /// CodeTextRegion wrapping a FunctionDecl, return that FunctionDecl. 
+  /// Otherwise return 0.
+  const FunctionDecl* getAsFunctionDecl() const;
   
   /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
   ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolData*

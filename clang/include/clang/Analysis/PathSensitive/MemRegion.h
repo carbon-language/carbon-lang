@@ -39,11 +39,11 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind,
-              CodeTextRegionKind,
               SymbolicRegionKind,
               AllocaRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
+               CodeTextRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                TypedViewRegionKind,
@@ -214,6 +214,13 @@ public:
 
   QualType getLValueType(ASTContext &C) const {
     return LocationType;
+  }
+
+  bool isDeclared() const { return codekind == Declared; }
+
+  const FunctionDecl* getDecl() const {
+    assert(codekind == Declared);
+    return static_cast<const FunctionDecl*>(Data);
   }
   
   virtual bool isBoundable(ASTContext&) const { return false; }

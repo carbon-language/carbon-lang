@@ -432,11 +432,11 @@ public:
     const GRState* state = N->getState();
     
     SVal X = VMgr.GetSVal(state, CE->getCallee());
-    
-    if (!isa<loc::FuncVal>(X))
+
+    const FunctionDecl* FD = X.getAsFunctionDecl();
+    if (!FD)
       return false;
-    
-    FunctionDecl* FD = dyn_cast<FunctionDecl>(cast<loc::FuncVal>(X).getDecl());
+
     const NonNullAttr* Att = FD->getAttr<NonNullAttr>();
     
     if (!Att)
