@@ -19,5 +19,9 @@ struct a {
   enum e0 f : 1; // expected-error {{field has incomplete type 'enum e0'}}
   
   int g : (_Bool)1;
+  
+  // PR4017  
+  char : 10;      // expected-error {{size of anonymous bitfield exceeds size of its type (8 bits)}}
+  unsigned : -2;  // expected-error {{anonymous bit-field has negative width (-2)}}
+  float : 12;     // expected-error {{anonymous bit-field has non-integral type 'float'}}
 };
-

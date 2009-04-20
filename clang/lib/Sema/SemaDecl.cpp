@@ -3528,16 +3528,21 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD) {
   Consumer.HandleTagDeclDefinition(Tag);
 }
 
+// Note that FieldName may be null for anonymous bitfields.
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
                           QualType FieldTy, const Expr *BitWidth) {
+  
   // C99 6.7.2.1p4 - verify the field type.
   // C++ 9.6p3: A bit-field shall have integral or enumeration type.
   if (!FieldTy->isDependentType() && !FieldTy->isIntegralType()) {
     // Handle incomplete types with specific error.
     if (RequireCompleteType(FieldLoc, FieldTy, diag::err_field_incomplete))
       return true;
-    return Diag(FieldLoc, diag::err_not_integral_type_bitfield)
-      << FieldName << FieldTy << BitWidth->getSourceRange();
+    if (FieldName)
+      return Diag(FieldLoc, diag::err_not_integral_type_bitfield)
+        << FieldName << FieldTy << BitWidth->getSourceRange();
+    return Diag(FieldLoc, diag::err_not_integral_type_anon_bitfield)
+      << FieldTy << BitWidth->getSourceRange();
   }
 
   // If the bit-width is type- or value-dependent, don't try to check
@@ -3553,16 +3558,23 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   if (Value == 0 && FieldName)
     return Diag(FieldLoc, diag::err_bitfield_has_zero_width) << FieldName;
   
-  if (Value.isSigned() && Value.isNegative())
-    return Diag(FieldLoc, diag::err_bitfield_has_negative_width) 
-             << FieldName << Value.toString(10);
+  if (Value.isSigned() && Value.isNegative()) {
+    if (FieldName)
+      return Diag(FieldLoc, diag::err_bitfield_has_negative_width) 
+               << FieldName << Value.toString(10);
+    return Diag(FieldLoc, diag::err_anon_bitfield_has_negative_width)
+      << Value.toString(10);
+  }
 
   if (!FieldTy->isDependentType()) {
     uint64_t TypeSize = Context.getTypeSize(FieldTy);
-    // FIXME: We won't need the 0 size once we check that the field type is valid.
-    if (TypeSize && Value.getZExtValue() > TypeSize)
-      return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
-        << FieldName << (unsigned)TypeSize;
+    if (Value.getZExtValue() > TypeSize) {
+      if (FieldName)
+        return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_size)
+          << FieldName << (unsigned)TypeSize;
+      return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_size)
+        << (unsigned)TypeSize;
+    }
   }
 
   return false;

@@ -285,6 +285,8 @@ def err_static_out_of_line : Error<
 def err_typedef_not_bitfield : Error<"typedef member %0 cannot be a bit-field">;
 def err_not_integral_type_bitfield : Error<
   "bit-field %0 has non-integral type %1">;
+def err_not_integral_type_anon_bitfield : Error<
+  "anonymous bit-field has non-integral type %0">;
 def err_member_initialization : Error<
   "%0 can only be initialized if it is a static const integral data member">;
 def err_member_function_initialization : Error<
@@ -835,9 +837,13 @@ def err_implicit_empty_initializer : Error<
   "initializer for aggregate with no elements requires explicit braces">;
 def err_bitfield_has_negative_width : Error<
   "bit-field %0 has negative width (%1)">;
+def err_anon_bitfield_has_negative_width : Error<
+  "anonymous bit-field has negative width (%0)">;
 def err_bitfield_has_zero_width : Error<"bit-field %0 has zero width">;
 def err_bitfield_width_exceeds_type_size : Error<
   "size of bit-field %0 exceeds size of its type (%1 bits)">;
+def err_anon_bitfield_width_exceeds_type_size : Error<
+  "size of anonymous bitfield exceeds size of its type (%0 bits)">;
 
 def err_redefinition_of_label : Error<"redefinition of label '%0'">;
 def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
