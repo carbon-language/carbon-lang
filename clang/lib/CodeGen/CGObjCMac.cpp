@@ -4586,7 +4586,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   
   RecordDecl::field_iterator i,p;
   const RecordDecl *RD = GetFirstIvarInRecord(OID, i,p);
-  // collect declared and synthesized ivars in a small vector.
+  // Collect declared and synthesized ivars in a small vector.
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
   for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
        E = OID->ivar_end(); I != E; ++I) 
@@ -4614,11 +4614,11 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                        Field->getType().getTypePtr()) >> 3;
     Align = llvm::Log2_32(Align);
     Ivar[3] = llvm::ConstantInt::get(ObjCTypes.IntTy, Align);
-    // NOTE. Size of a bitfield does not match gcc's, because of the way
-    // bitfields are treated special in each. But I am told that 'size'
-    // for bitfield ivars is ignored by the runtime so it does not matter.
-    // (even if it matters, some day, there is enough info. to get the bitfield
-    // right!
+    // NOTE. Size of a bitfield does not match gcc's, because of the
+    // way bitfields are treated special in each. But I am told that
+    // 'size' for bitfield ivars is ignored by the runtime so it does
+    // not matter.  If it matters, there is enough info to get the
+    // bitfield right!
     Ivar[4] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarnfABITy, Ivar));
   }
