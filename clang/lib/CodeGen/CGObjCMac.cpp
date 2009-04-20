@@ -1702,28 +1702,6 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
                            4, true);
 }
 
-/// countInheritedIvars - count number of ivars in class and its super class(s)
-///
-static int countInheritedIvars(const ObjCInterfaceDecl *OI, 
-                               ASTContext &Context) {
-  int count = 0;
-  if (!OI)
-    return 0;
-  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
-  if (SuperClass)
-    count += countInheritedIvars(SuperClass, Context);
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I)
-    ++count;
-  // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
-       E = OI->prop_end(Context); I != E; ++I) {
-    if ((*I)->getPropertyIvarDecl())
-      ++count;
-  }
-  return count;
-}
-
 /// getInterfaceDeclForIvar - Get the interface declaration node where
 /// this ivar is declared in.
 /// FIXME. Ideally, this info should be in the ivar node. But currently 
@@ -1787,10 +1765,10 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
     ObjCIvarDecl *IVD = OIvars[i];
     const FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), IVD);
-    uint64_t  Offset = GetIvarBaseOffset(Layout, Field);
     Ivar[0] = GetMethodVarName(Field->getIdentifier());
     Ivar[1] = GetMethodVarType(Field);
-    Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, Offset);
+    Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
+                                     GetIvarBaseOffset(Layout, Field));
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
   }
 
@@ -2584,20 +2562,16 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
 /// interface declaration.
 const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
                                         const ObjCInterfaceDecl *OID) const {
-  const llvm::Type *InterfaceTy;
-  
   // FIXME: When does this happen? It seems pretty bad to do this...
-  if (OID->isForwardDecl()) {
-    InterfaceTy = llvm::StructType::get(NULL, NULL);
-  } else {
-    QualType T = CGM.getContext().getObjCInterfaceType(
-                                           const_cast<ObjCInterfaceDecl*>(OID));
-    InterfaceTy = CGM.getTypes().ConvertType(T);
-  }
-  
-  const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceTy));
-  return Layout;
+  if (OID->isForwardDecl())
+    return CGM.getTargetData().getStructLayout(llvm::StructType::get(NULL, 
+                                                                     NULL));
+
+  QualType T = 
+    CGM.getContext().getObjCInterfaceType(const_cast<ObjCInterfaceDecl*>(OID));
+  const llvm::StructType *InterfaceTy = 
+    cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
+  return CGM.getTargetData().getStructLayout(InterfaceTy);
 }
 
 /// GetIvarLayoutName - Returns a unique constant for the given
@@ -4200,10 +4174,31 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   return GV;
 }
 
+/// countInheritedIvars - count number of ivars in class and its super class(s)
+///
+static int countInheritedIvars(const ObjCInterfaceDecl *OI, 
+                               ASTContext &Context) {
+  int count = 0;
+  if (!OI)
+    return 0;
+  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
+  if (SuperClass)
+    count += countInheritedIvars(SuperClass, Context);
+  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
+       E = OI->ivar_end(); I != E; ++I)
+    ++count;
+  // look into properties.
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
+       E = OI->prop_end(Context); I != E; ++I) {
+    if ((*I)->getPropertyIvarDecl())
+      ++count;
+  }
+  return count;
+}
+
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
-  // FIXME. Share this with the one in EmitIvarList.
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
     
   int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),
@@ -4257,7 +4252,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   }
   assert(ID->getClassInterface() && 
          "CGObjCNonFragileABIMac::GenerateClass - class is 0");
-  // FIXME: Is this correct (That meta class size is never computed)?
+  // FIXME: Is this correct (that meta class size is never computed)?
   uint32_t InstanceStart = 
     CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassnfABITy);
   uint32_t InstanceSize = InstanceStart;
