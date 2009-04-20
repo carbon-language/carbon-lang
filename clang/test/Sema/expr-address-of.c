@@ -45,18 +45,21 @@ void f0() {
   int *_dummy1 = &(*(x1 + 1));
 }
 
+// FIXME: The checks for this function are broken; we should error
+// on promoting a register array to a pointer! (C99 6.3.2.1p3)
 void f1() {
   register int x0[10];
-  int *_dummy0 = &(*x0); // expected-error {{address of register variable requested}}
+  int *_dummy00 = x0; // fixme-error {{address of register variable requested}}
+  int *_dummy01 = &(*x0); // fixme-error {{address of register variable requested}}
 
   register int x1[10];
-  int *_dummy1 = &(*(x1 + 1)); // expected-error {{address of register variable requested}}
+  int *_dummy1 = &(*(x1 + 1)); // fixme-error {{address of register variable requested}}
 
   register int *x2;
   int *_dummy2 = &(*(x2 + 1));
 
   register int x3[10][10][10];
-  int *_dummy3 = &x3[0][0]; // expected-error {{address of register variable requested}}
+  int (*_dummy3)[10] = &x3[0][0]; // expected-error {{address of register variable requested}}
 
   register struct { int f0[10]; } x4;
   int *_dummy4 = &x4.f0[2]; // expected-error {{address of register variable requested}}
@@ -93,4 +96,14 @@ void f5() {
 
 void f6(register int x) {
   int * dummy0 = &x; // expected-error {{address of register variable requested}}
+}
+
+char* f7() {
+  register struct {char* x;} t1 = {"Hello"};
+  char* dummy1 = &(t1.x[0]);
+
+  struct {int a : 10;} t2;
+  int* dummy2 = &(t2.a); // expected-error {{address of bit-field requested}}
+
+  void* t3 = &(*(void*)0);
 }

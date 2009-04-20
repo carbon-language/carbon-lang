@@ -1330,8 +1330,6 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
 QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
   if (V->isTypeDependent())
     return Context.DependentTy;
-
-  DefaultFunctionArrayConversion(V);
   
   // These operators return the element type of a complex type.
   if (const ComplexType *CT = V->getType()->getAsComplexType())
@@ -3952,35 +3950,27 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
   case Stmt::QualifiedDeclRefExprClass:
     return cast<DeclRefExpr>(E)->getDecl();
   case Stmt::MemberExprClass:
-    // Fields cannot be declared with a 'register' storage class.
-    // &X->f is always ok, even if X is declared register.
+    // If this is an arrow operator, the address is an offset from
+    // the base's value, so the object the base refers to is
+    // irrelevant.
     if (cast<MemberExpr>(E)->isArrow())
       return 0;
+    // Otherwise, the expression refers to a part of the base
     return getPrimaryDecl(cast<MemberExpr>(E)->getBase());
   case Stmt::ArraySubscriptExprClass: {
-    // &X[4] and &4[X] refers to X if X is not a pointer.
-
-    NamedDecl *D = getPrimaryDecl(cast<ArraySubscriptExpr>(E)->getBase());
-    ValueDecl *VD = dyn_cast_or_null<ValueDecl>(D);
-    if (!VD || VD->getType()->isPointerType())
-      return 0;
-    else
-      return VD;
+    // FIXME: This code shouldn't be necessary!  We should catch the
+    // implicit promotion of register arrays earlier.
+    Expr* Base = cast<ArraySubscriptExpr>(E)->getBase();
+    if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Base)) {
+      if (ICE->getSubExpr()->getType()->isArrayType())
+        return getPrimaryDecl(ICE->getSubExpr());
+    }
+    return 0;
   }
   case Stmt::UnaryOperatorClass: {
     UnaryOperator *UO = cast<UnaryOperator>(E);
 
     switch(UO->getOpcode()) {
-    case UnaryOperator::Deref: {
-      // *(X + 1) refers to X if X is not a pointer.
-      if (NamedDecl *D = getPrimaryDecl(UO->getSubExpr())) {
-        ValueDecl *VD = dyn_cast<ValueDecl>(D);
-        if (!VD || VD->getType()->isPointerType())
-          return 0;
-        return VD;
-      }
-      return 0;
-    }
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
     case UnaryOperator::Extension:
@@ -3989,27 +3979,11 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
       return 0;
     }
   }
-  case Stmt::BinaryOperatorClass: {
-    BinaryOperator *BO = cast<BinaryOperator>(E);
-
-    // Handle cases involving pointer arithmetic. The result of an
-    // Assign or AddAssign is not an lvalue so they can be ignored.
-
-    // (x + n) or (n + x) => x
-    if (BO->getOpcode() == BinaryOperator::Add) {
-      if (BO->getLHS()->getType()->isPointerType()) {
-        return getPrimaryDecl(BO->getLHS());
-      } else if (BO->getRHS()->getType()->isPointerType()) {
-        return getPrimaryDecl(BO->getRHS());
-      }
-    }
-
-    return 0;
-  }
   case Stmt::ParenExprClass:
     return getPrimaryDecl(cast<ParenExpr>(E)->getSubExpr());
   case Stmt::ImplicitCastExprClass:
-    // &X[4] when X is an array, has an implicit cast from array to pointer.
+    // If the result of an implicit cast is an l-value, we care about
+    // the sub-expression; otherwise, the result here doesn't matter.
     return getPrimaryDecl(cast<ImplicitCastExpr>(E)->getSubExpr());
   default:
     return 0;
@@ -4024,6 +3998,9 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
 /// In C++, the operand might be an overloaded function name, in which case
 /// we allow the '&' but retain the overloaded-function type.
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
+  // Make sure to ignore parentheses in subsequent checks
+  op = op->IgnoreParens();
+
   if (op->isTypeDependent())
     return Context.DependentTy;
 
@@ -4042,23 +4019,21 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Expr::isLvalueResult lval = op->isLvalue(Context);
 
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
-    if (!dcl || !isa<FunctionDecl>(dcl)) {// allow function designators
+    // The operand must be either an l-value or a function designator
+    if (!dcl || !isa<FunctionDecl>(dcl)) {
       // FIXME: emit more specific diag...
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
         << op->getSourceRange();
       return QualType();
     }
-  } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(op)) { // C99 6.5.3.2p1
-    if (FieldDecl *Field = dyn_cast<FieldDecl>(MemExpr->getMemberDecl())) {
-      if (Field->isBitField()) {
-        Diag(OpLoc, diag::err_typecheck_address_of)
-          << "bit-field" << op->getSourceRange();
+  } else if (op->isBitField()) { // C99 6.5.3.2p1
+    // The operand cannot be a bit-field
+    Diag(OpLoc, diag::err_typecheck_address_of)
+      << "bit-field" << op->getSourceRange();
         return QualType();
-      }
-    }
-  // Check for Apple extension for accessing vector components.
   } else if (isa<ExtVectorElementExpr>(op) || (isa<ArraySubscriptExpr>(op) &&
            cast<ArraySubscriptExpr>(op)->getBase()->getType()->isVectorType())){
+    // The operand cannot be an element of a vector
     Diag(OpLoc, diag::err_typecheck_address_of)
       << "vector element" << op->getSourceRange();
     return QualType();
