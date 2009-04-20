@@ -1656,15 +1656,24 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
-  if (DestRC == SrcRC) {
+  // Determine if DstRC and SrcRC have a common superclass in common.
+  const TargetRegisterClass *CommonRC = DestRC;
+  if (DestRC == SrcRC)
+    /* Source and destination have the same register class. */;
+  else if (CommonRC->hasSuperClass(SrcRC))
+    CommonRC = SrcRC;
+  else if (!DestRC->hasSubClass(SrcRC))
+    CommonRC = 0;
+
+  if (CommonRC) {
     unsigned Opc;
-    if (DestRC == &X86::GR64RegClass) {
+    if (CommonRC == &X86::GR64RegClass) {
       Opc = X86::MOV64rr;
-    } else if (DestRC == &X86::GR32RegClass) {
+    } else if (CommonRC == &X86::GR32RegClass) {
       Opc = X86::MOV32rr;
-    } else if (DestRC == &X86::GR16RegClass) {
+    } else if (CommonRC == &X86::GR16RegClass) {
       Opc = X86::MOV16rr;
-    } else if (DestRC == &X86::GR8RegClass) {
+    } else if (CommonRC == &X86::GR8RegClass) {
       // Copying two or from a physical H register on x86-64 requires a NOREX
       // move.  Otherwise use a normal move.
       if ((isHReg(DestReg) || isHReg(SrcReg)) &&
@@ -1672,35 +1681,35 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
         Opc = X86::MOV8rr_NOREX;
       else
         Opc = X86::MOV8rr;
-    } else if (DestRC == &X86::GR64_RegClass) {
+    } else if (CommonRC == &X86::GR64_RegClass) {
       Opc = X86::MOV64rr;
-    } else if (DestRC == &X86::GR32_RegClass) {
+    } else if (CommonRC == &X86::GR32_RegClass) {
       Opc = X86::MOV32rr;
-    } else if (DestRC == &X86::GR16_RegClass) {
+    } else if (CommonRC == &X86::GR16_RegClass) {
       Opc = X86::MOV16rr;
-    } else if (DestRC == &X86::GR8_RegClass) {
+    } else if (CommonRC == &X86::GR8_RegClass) {
       Opc = X86::MOV8rr;
-    } else if (DestRC == &X86::GR64_NOREXRegClass) {
+    } else if (CommonRC == &X86::GR64_NOREXRegClass) {
       Opc = X86::MOV64rr;
-    } else if (DestRC == &X86::GR32_NOREXRegClass) {
+    } else if (CommonRC == &X86::GR32_NOREXRegClass) {
       Opc = X86::MOV32rr;
-    } else if (DestRC == &X86::GR16_NOREXRegClass) {
+    } else if (CommonRC == &X86::GR16_NOREXRegClass) {
       Opc = X86::MOV16rr;
-    } else if (DestRC == &X86::GR8_NOREXRegClass) {
+    } else if (CommonRC == &X86::GR8_NOREXRegClass) {
       Opc = X86::MOV8rr;
-    } else if (DestRC == &X86::RFP32RegClass) {
+    } else if (CommonRC == &X86::RFP32RegClass) {
       Opc = X86::MOV_Fp3232;
-    } else if (DestRC == &X86::RFP64RegClass || DestRC == &X86::RSTRegClass) {
+    } else if (CommonRC == &X86::RFP64RegClass || CommonRC == &X86::RSTRegClass) {
       Opc = X86::MOV_Fp6464;
-    } else if (DestRC == &X86::RFP80RegClass) {
+    } else if (CommonRC == &X86::RFP80RegClass) {
       Opc = X86::MOV_Fp8080;
-    } else if (DestRC == &X86::FR32RegClass) {
+    } else if (CommonRC == &X86::FR32RegClass) {
       Opc = X86::FsMOVAPSrr;
-    } else if (DestRC == &X86::FR64RegClass) {
+    } else if (CommonRC == &X86::FR64RegClass) {
       Opc = X86::FsMOVAPDrr;
-    } else if (DestRC == &X86::VR128RegClass) {
+    } else if (CommonRC == &X86::VR128RegClass) {
       Opc = X86::MOVAPSrr;
-    } else if (DestRC == &X86::VR64RegClass) {
+    } else if (CommonRC == &X86::VR64RegClass) {
       Opc = X86::MMX_MOVQ64rr;
     } else {
       return false;

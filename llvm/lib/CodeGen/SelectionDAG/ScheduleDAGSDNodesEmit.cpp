@@ -131,12 +131,6 @@ void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     VRBase = MRI.createVirtualRegister(DstRC);
     bool Emitted = TII->copyRegToReg(*BB, InsertPos, VRBase, SrcReg,
                                      DstRC, SrcRC);
-    // If the target didn't handle the copy with different register
-    // classes and the destination is a subset of the source,
-    // try a normal same-RC copy.
-    if (!Emitted && DstRC->hasSuperClass(SrcRC))
-      Emitted = TII->copyRegToReg(*BB, InsertPos, VRBase, SrcReg,
-                                  SrcRC, SrcRC);
 
     assert(Emitted && "Unable to issue a copy instruction!\n");
   }
@@ -273,12 +267,6 @@ ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
       unsigned NewVReg = MRI.createVirtualRegister(DstRC);
       bool Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
                                        DstRC, SrcRC);
-      // If the target didn't handle the copy with different register
-      // classes and the destination is a subset of the source,
-      // try a normal same-RC copy.
-      if (!Emitted && DstRC->hasSuperClass(SrcRC))
-        Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
-                                    SrcRC, SrcRC);
       assert(Emitted && "Unable to issue a copy instruction!\n");
       VReg = NewVReg;
     }
@@ -480,12 +468,6 @@ ScheduleDAGSDNodes::EmitCopyToRegClassNode(SDNode *Node,
   unsigned NewVReg = MRI.createVirtualRegister(DstRC);
   bool Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
                                    DstRC, SrcRC);
-  // If the target didn't handle the copy with different register
-  // classes and the destination is a subset of the source,
-  // try a normal same-RC copy.
-  if (!Emitted && SrcRC->hasSubClass(DstRC))
-    Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
-                                SrcRC, SrcRC);
   assert(Emitted &&
          "Unable to issue a copy instruction for a COPY_TO_REGCLASS node!\n");
 
@@ -610,13 +592,6 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
 
     bool Emitted = TII->copyRegToReg(*BB, InsertPos, DestReg, SrcReg,
                                      DstTRC, SrcTRC);
-    // If the target didn't handle the copy with different register
-    // classes and the destination is a subset of the source,
-    // try a normal same-RC copy.
-    if (!Emitted && DstTRC->hasSubClass(SrcTRC))
-      Emitted = TII->copyRegToReg(*BB, InsertPos, DestReg, SrcReg,
-                                  DstTRC, DstTRC);
-
     assert(Emitted && "Unable to issue a copy instruction!\n");
     break;
   }
