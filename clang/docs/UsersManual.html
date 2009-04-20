@@ -1,0 +1,259 @@
+<html>
+<head>
+<title>Clang Compiler User's Manual</title>
+<link type="text/css" rel="stylesheet" href="../menu.css" />
+<link type="text/css" rel="stylesheet" href="../content.css" />
+<style type="text/css">
+td {
+	vertical-align: top;
+}
+</style>
+</head>
+<body>
+
+<!--#include virtual="../menu.html.incl"-->
+
+<div id="content">
+
+<h1>Clang Compiler User's Manual</h1>
+
+<ul>
+<li><a href="#intro">Introduction</a>
+  <ul>
+  <li><a href="#terminology">Terminology</a></li>
+  <li><a href="#basicusage">Basic Usage</a></li>
+  </ul>
+</li>
+<li><a href="#commandline">Command Line Options</a></li>
+<li><a href="#general_features">Language and Target-Independent Features</a>
+ <ul>
+  <li><a href="#diagnostics">Controlling Errors and Warnings</a></li>
+  <li><a href="#precompiledheaders">Precompiled Headers</a></li>
+  </ul>
+</li>
+<li><a href="#c">C Language Features</a>
+  <ul>
+<!--  <li><a href="#pragmas">Pragmas Supported</a></li> -->
+  <li><a href="#c_extensions">C Extensions Supported</a></li>
+  <li><a href="#c_incompatibilities">Intentional Incompatibilities with
+      GCC</a></li>
+  </ul>
+</li>
+<li><a href="#objc">Objective-C Language Features</a>
+  <ul>
+  <li><a href="#objc_incompatibilities">Intentional Incompatibilities with
+      GCC</a></li>
+  </ul>
+</li>
+<li><a href="#cxx">C++ Language Features</a>
+  <ul>
+  <li>...</li>
+  </ul>
+</li>
+<li><a href="#objcxx">Objective C++ Language Features</a>
+  <ul>
+  <li>...</li>
+  </ul>
+</li>
+<li><a href="#target_features">Target-Specific Features and Limitations</a>
+  <ul>
+  <li><a href="#target_arch">CPU Architectures Features and Limitations</a>
+    <ul>
+    <li><a href="#target_arch_x86">X86</a></li>
+    <li>PPC</li>
+    <li>ARM</li>
+    </ul>
+  </li>
+  <li><a href="#target_os">Operating System Features and Limitations</a>
+    <ul>
+    <li><a href="#target_os_darwin">Darwin (Mac OS/X)</a></li>
+    <li>Linux, etc.</li>
+    </ul>
+  
+  </li>
+  </ul>
+</li>
+</ul>
+
+
+<!-- ======================================================================= -->
+<h2 id="intro">Introduction</h2>
+<!-- ======================================================================= -->
+
+<p>The Clang Compiler is an open-source compiler for the C family of programming
+languages, aiming to be the best in class implementation of these languages.
+Clang builds on the LLVM optimizer and code generator, allowing it to provide
+high-quality optimization and code generation support for many targets.  For
+more general information, please see the <a href="http://clang.llvm.org">Clang
+Web Site</a> or the <a href="http://llvm.org">LLVM Web Site</a>.</p>
+
+<p>This document describes important notes about using Clang as a compiler for
+an end-user, documenting the supported features, command line options, etc.  If
+you are interested in using Clang to build a tool that processes code, please
+see <a href="InternalsManual.html">the Clang Internals Manual</a>.  If you are
+interested in the <a href="http://clang.llvm.org/StaticAnalysis.html">Clang
+Static Analyzer</a>, please see its web page.</p>
+
+<p>Clang is designed to support the C family of programming languages, which
+includes <a href="#c">C</a>, <a href="#objc">Objective-C</a>, <a
+href="#cxx">C++</a>, and <a href="#objcxx">Objective-C++</a> as well as many
+dialects of those.  For language-specific information, please see the
+corresponding language specific section:</p>
+
+<ul>
+<li><a href="#c">C Language</a>: K&amp;R C, ANSI C89, ISO C90, ISO C94
+    (C89+AMD1), ISO C99 (+TC1, TC2, TC3). </li>
+<li><a href="#objc">Objective-C Language</a>: ObjC 1, ObjC 2, ObjC 2.1, plus
+    variants depending on base language.</li>
+<li><a href="#cxx">C++ Language Features</a></li>
+<li><a href="#objcxx">Objective C++ Language</a></li>
+</ul>
+
+<p>In addition to these base languages and their dialects, Clang supports a
+broad variety of language extensions, which are documented in the corresponding
+language section.  These extensions are provided to be compatible with the GCC,
+Microsoft, and other popular compilers as well as to improve functionality
+through Clang-specific features.  The Clang driver and language features are
+intentionally designed to be as compatible with the GNU GCC compiler as
+reasonably possible, easing migration from GCC to Clang.  In most cases, code
+"just works".</p>
+
+<p>In addition to language specific features, Clang has a variety of features
+that depend on what CPU architecture or operating system is being compiled for.
+Please see the <a href="target_features">Target-Specific Features and
+Limitations</a> section for more details.</p>
+
+<p>The rest of the introduction introduces some basic <a
+href="#terminology">compiler terminology</a> that is used throughout this manual
+and contains a basic <a href="#basicusage">introduction to using Clang</a>
+as a command line compiler.</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="terminology">Terminology</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>Front end, parser, backend, preprocessor, undefined behavior, diagnostic,
+ optimizer</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="basicusage">Basic Usage</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>Intro to how to use a C compiler for newbies.</p>
+<p>
+compile + link
+
+compile then link
+
+debug info
+
+enabling optimizations
+
+picking a language to use, defaults to C99 by default.  Autosenses based on
+extension.
+
+using a makefile
+</p>
+
+
+<!-- ======================================================================= -->
+<h2 id="commandline">Command Line Options</h2>
+<!-- ======================================================================= -->
+
+<p>
+This section is generally an index into other sections.  It does not go into
+depth on most.  However, the first part introduces the language selection and
+other high level options like -c, -g, etc.
+</p>
+
+<!-- ======================================================================= -->
+<h2 id="general_features">Language and Target-Independent Features</h2>
+<!-- ======================================================================= -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="diagnostics">Controlling Errors and Warnings</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="precompiledheaders">Precompiled Headers</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+
+
+<!-- ======================================================================= -->
+<h2 id="c">C Language Features</h2>
+<!-- ======================================================================= -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="c_incompatibilities">Intentional Incompatibilities with GCC</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>No VLAs in structs.</p>
+
+
+
+
+<!-- ======================================================================= -->
+<h2 id="objc">Objective-C Language Features</h2>
+<!-- ======================================================================= -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="objc_incompatibilities">Intentional Incompatibilities with GCC</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>No cast of super, no lvalue casts.</p>
+
+
+
+<!-- ======================================================================= -->
+<h2 id="cxx">C++ Language Features</h2>
+<!-- ======================================================================= -->
+
+<p>At this point, Clang C++ is not generally useful.  However, Clang C++ support
+is under active development and is progressing rapidly.  Please see the <a
+href="http://clang.llvm.org/cxx_status.html">C++ Status</a> page for details or
+ask on the mailing list about how you can help.</p>
+
+<p>Note that the clang driver will refuse to even try to use clang to compile
+C++ code unless you pass the <tt>-ccc-clang-cxx</tt> option to the driver.  If
+you really want to play with Clang's C++ support, please pass that flag. </p>
+ 
+<!-- ======================================================================= -->
+<h2 id="objcxx">Objective C++ Language Features</h2>
+<!-- ======================================================================= -->
+
+<p>At this point, Clang C++ support is not generally useful (and therefore,
+neither is Objective-C++).  Please see the <a href="#cxx">C++ section</a> for
+more information.</p>
+
+<!-- ======================================================================= -->
+<h2 id="target_features">Target-Specific Features and Limitations</h2>
+<!-- ======================================================================= -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="target_arch">CPU Architectures Features and Limitations</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<!-- ======================== -->
+<h4 id="target_arch_x86">X86</h4>
+<!-- ======================== -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="target_os">Operating System Features and Limitations</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<!-- ======================================= -->
+<h4 id="target_os_darwin">Darwin (Mac OS/X)</h4>
+<!-- ======================================= -->
+
+<p>No __thread support, 64-bit ObjC support requires SL tools.</p>
+
+</div>
+</body>
+</html>
