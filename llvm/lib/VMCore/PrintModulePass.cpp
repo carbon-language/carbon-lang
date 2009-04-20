@@ -38,7 +38,6 @@ namespace {
     
     bool runOnModule(Module &M) {
       (*Out) << M;
-      Out->flush();
       return false;
     }
     
@@ -67,7 +66,6 @@ namespace {
     //
     bool runOnFunction(Function &F) {
       (*Out) << Banner << static_cast<Value&>(F);
-      Out->flush();
       return false;
     }
     
