@@ -161,7 +161,7 @@ cd $DIR/obj-llvm || exit 1
 make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
     LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
     LLVM_SUBMIT_SUBVERSION=$LLVM_SUBMIT_SUBVERSION \
-    OPTIMIZE_OPTION='-O2' VERBOSE=1 install
+    OPTIMIZE_OPTION='-O3' VERBOSE=1 install
 
 if ! test $? == 0 ; then
     echo "error: LLVM 'make install' failed!"
