@@ -1833,7 +1833,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     W.write(BB);
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
     SlotTracker SlotTable(GV->getParent());
-    AssemblyWriter W(OS, SlotTable, GV->getParent(), 0);
+    AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
     W.write(GV);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
