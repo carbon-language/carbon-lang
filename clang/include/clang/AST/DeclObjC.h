@@ -177,6 +177,7 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
+  void setEndLoc(SourceLocation Loc) { EndLoc = Loc; }
   SourceRange getSourceRange() const { 
     return SourceRange(getLocation(), EndLoc); 
   }
@@ -189,6 +190,7 @@ public:
   Selector getSelector() const { return getDeclName().getObjCSelector(); }
   unsigned getSynthesizedMethodSize() const;
   QualType getResultType() const { return MethodDeclType; }
+  void setResultType(QualType T) { MethodDeclType = T; }
   
   // Iterator access to formal parameters.
   unsigned param_size() const { return ParamInfo.size(); }
@@ -196,8 +198,7 @@ public:
   param_iterator param_begin() const { return ParamInfo.begin(); }
   param_iterator param_end() const { return ParamInfo.end(); }
 
-  void setMethodParams(ParmVarDecl *const *List, unsigned Num,
-                       ASTContext &C) {
+  void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num) {
     ParamInfo.set(List, Num, C);
   }
 
@@ -219,15 +220,19 @@ public:
   void createImplicitParams(ASTContext &Context, const ObjCInterfaceDecl *ID);
 
   ImplicitParamDecl * getSelfDecl() const { return SelfDecl; }
+  void setSelfDecl(ImplicitParamDecl *SD) { SelfDecl = SD; }
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
+  void setCmdDecl(ImplicitParamDecl *CD) { CmdDecl = CD; }
   
   bool isInstanceMethod() const { return IsInstance; }
+  void setInstanceMethod(bool isInst) { IsInstance = isInst; }
   bool isVariadic() const { return IsVariadic; }
+  void setVariadic(bool isVar) { IsVariadic = isVar; }
   
   bool isClassMethod() const { return !IsInstance; }
 
   bool isSynthesized() const { return IsSynthesized; }
-  void setIsSynthesized() { IsSynthesized = true; }
+  void setSynthesized(bool isSynth) { IsSynthesized = isSynth; }
   
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic) { 

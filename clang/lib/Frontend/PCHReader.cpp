@@ -67,6 +67,7 @@ namespace {
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
     void VisitBlockDecl(BlockDecl *BD);
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
+    void VisitObjCMethodDecl(ObjCMethodDecl *D);
   };
 }
 
@@ -157,6 +158,30 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setParams(Reader.getContext(), &Params[0], NumParams);
+}
+
+void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
+  VisitNamedDecl(MD);
+  if (Record[Idx++]) {
+    // In practice, this won't be executed (since method definitions
+    // don't occur in header files).
+    MD->setBody(cast<CompoundStmt>(Reader.GetStmt(Record[Idx++])));
+    MD->setSelfDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
+    MD->setCmdDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
+  }
+  MD->setInstanceMethod(Record[Idx++]);
+  MD->setVariadic(Record[Idx++]);
+  MD->setSynthesized(Record[Idx++]);
+  MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record[Idx++]);
+  MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
+  MD->setResultType(Reader.GetType(Record[Idx++]));
+  MD->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  unsigned NumParams = Record[Idx++];
+  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  Params.reserve(NumParams);
+  for (unsigned I = 0; I != NumParams; ++I)
+    Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  MD->setMethodParams(Reader.getContext(), &Params[0], NumParams);
 }
 
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
@@ -1767,6 +1792,12 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   case pch::DECL_FUNCTION: {
     D = FunctionDecl::Create(Context, 0, SourceLocation(), DeclarationName(), 
                              QualType());
+    break;
+  }
+
+  case pch::DECL_OBJC_METHOD: {
+    D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(), 
+                               Selector(), QualType(), 0);
     break;
   }
 

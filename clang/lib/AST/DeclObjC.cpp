@@ -285,12 +285,12 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
   } else // we have a factory method.
     selfTy = Context.getObjCClassType();
 
-  SelfDecl = ImplicitParamDecl::Create(Context, this, SourceLocation(), 
-                                       &Context.Idents.get("self"), selfTy);
+  setSelfDecl(ImplicitParamDecl::Create(Context, this, SourceLocation(), 
+                                        &Context.Idents.get("self"), selfTy));
 
-  CmdDecl = ImplicitParamDecl::Create(Context, this, SourceLocation(), 
-                                      &Context.Idents.get("_cmd"), 
-                                      Context.getObjCSelType());
+  setCmdDecl(ImplicitParamDecl::Create(Context, this, SourceLocation(), 
+                                       &Context.Idents.get("_cmd"), 
+                                       Context.getObjCSelType()));
 }
 
 

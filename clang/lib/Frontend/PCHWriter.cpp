@@ -270,6 +270,7 @@ namespace {
     void VisitBlockDecl(BlockDecl *D);
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset, 
                           uint64_t VisibleOffset);
+    void VisitObjCMethodDecl(ObjCMethodDecl *D);
   };
 }
 
@@ -357,6 +358,32 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
        P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
   Code = pch::DECL_FUNCTION;
+}
+
+void PCHDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
+  VisitNamedDecl(D);
+  // FIXME: convert to LazyStmtPtr?
+  // Unlike C/C++, method bodies will never be in header files. 
+  Record.push_back(D->getBody() != 0);
+  if (D->getBody() != 0) {
+    Writer.AddStmt(D->getBody(Context));
+    Writer.AddDeclRef(D->getSelfDecl(), Record);
+    Writer.AddDeclRef(D->getCmdDecl(), Record);
+  }
+  Record.push_back(D->isInstanceMethod());
+  Record.push_back(D->isVariadic());
+  Record.push_back(D->isSynthesized());
+  // FIXME: stable encoding for @required/@optional
+  Record.push_back(D->getImplementationControl()); 
+  // FIXME: stable encoding for in/out/inout/bycopy/byref/oneway
+  Record.push_back(D->getObjCDeclQualifier()); 
+  Writer.AddTypeRef(D->getResultType(), Record);
+  Writer.AddSourceLocation(D->getLocEnd(), Record);
+  Record.push_back(D->param_size());
+  for (ObjCMethodDecl::param_iterator P = D->param_begin(), 
+                                   PEnd = D->param_end(); P != PEnd; ++P)
+    Writer.AddDeclRef(*P, Record);
+  Code = pch::DECL_OBJC_METHOD;
 }
 
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {

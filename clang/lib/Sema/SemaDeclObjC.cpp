@@ -1226,7 +1226,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   } else
     // A user declared getter will be synthesize when @synthesize of
     // the property with the same name is seen in the @implementation
-    GetterMethod->setIsSynthesized();
+    GetterMethod->setSynthesized(true);
   property->setGetterMethodDecl(GetterMethod);
 
   // Skip setter if property is read-only.
@@ -1252,12 +1252,12 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   property->getType(),
                                                   VarDecl::None,
                                                   0);
-      SetterMethod->setMethodParams(&Argument, 1, Context);
+      SetterMethod->setMethodParams(Context, &Argument, 1);
       CD->addDecl(Context, SetterMethod);
     } else
       // A user declared setter will be synthesize when @synthesize of
       // the property with the same name is seen in the @implementation
-      SetterMethod->setIsSynthesized();
+      SetterMethod->setSynthesized(true);
     property->setSetterMethodDecl(SetterMethod);
   }
   // Add any synthesized methods to the global pool. This allows us to 
@@ -1506,7 +1506,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     Params.push_back(Param);
   }
 
-  ObjCMethod->setMethodParams(&Params[0], Sel.getNumArgs(), Context);
+  ObjCMethod->setMethodParams(Context, &Params[0], Sel.getNumArgs());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
   const ObjCMethodDecl *PrevMethod = 0;

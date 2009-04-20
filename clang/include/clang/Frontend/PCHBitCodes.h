@@ -354,6 +354,8 @@ namespace clang {
       DECL_ENUM_CONSTANT,
       /// \brief A FunctionDecl record.
       DECL_FUNCTION,
+      /// \brief A ObjCMethodDecl record.
+      DECL_OBJC_METHOD,
       /// \brief A FieldDecl record.
       DECL_FIELD,
       /// \brief A VarDecl record.
