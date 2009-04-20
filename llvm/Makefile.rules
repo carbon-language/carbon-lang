@@ -247,8 +247,8 @@ ifeq ($(ENABLE_OPTIMIZED),1)
   endif
 
   # Darwin requires -fstrict-aliasing to be explicitly enabled.
-  # Avoid -O3 on Darwin for now, there are unresolved issues with
-  # -fstrict-aliasing and ipa-type-escape radr://6756684
+  # Avoid -fstrict-aliasing on Darwin for now, there are unresolved issues
+  # with -fstrict-aliasing and ipa-type-escape radr://6756684
   #ifeq ($(OS),Darwin)
   #  EXTRA_OPTIONS += -fstrict-aliasing -Wstrict-aliasing
   #endif
