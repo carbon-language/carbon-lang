@@ -808,9 +808,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
          "Type of inserted value narrower than vector element type!");
 
   SmallVector<SDValue, 16> NewOps;
-  for (unsigned i = 0; i < NumElts; ++i) {
+  for (unsigned i = 0; i < NumElts; ++i)
     NewOps.push_back(GetPromotedInteger(N->getOperand(i)));
-  }
 
   return DAG.UpdateNodeOperands(SDValue(N, 0), &NewOps[0], NumElts);
 }

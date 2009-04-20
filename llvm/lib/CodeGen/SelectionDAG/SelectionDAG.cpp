@@ -2556,7 +2556,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
       if (Elt.getValueType() != VT) {
         // If the vector element type is not legal, the BUILD_VECTOR operands
         // are promoted and implicitly truncated.  Make that explicit here.
-        assert(Elt.getValueType() == TLI.getTypeToTransformTo(VT) &&
+        assert(VT.isInteger() && Elt.getValueType().isInteger() &&
+               VT.bitsLE(Elt.getValueType()) &&
                "Bad type for BUILD_VECTOR operand");
         Elt = getNode(ISD::TRUNCATE, DL, VT, Elt);
       }

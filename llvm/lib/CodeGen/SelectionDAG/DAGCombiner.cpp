@@ -3811,12 +3811,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
       SDValue Op = BV->getOperand(i);
       // If the vector element type is not legal, the BUILD_VECTOR operands
       // are promoted and implicitly truncated.  Make that explicit here.
-      if (Op.getValueType() != SrcEltVT) {
-        if (Op.getOpcode() == ISD::UNDEF)
-          Op = DAG.getUNDEF(SrcEltVT);
-        else
-          Op = DAG.getNode(ISD::TRUNCATE, BV->getDebugLoc(), SrcEltVT, Op);
-      }
+      if (Op.getValueType() != SrcEltVT)
+        Op = DAG.getNode(ISD::TRUNCATE, BV->getDebugLoc(), SrcEltVT, Op);
       Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, BV->getDebugLoc(),
                                 DstEltVT, Op));
       AddToWorkList(Ops.back().getNode());
