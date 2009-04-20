@@ -20,7 +20,7 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli gccas gccld llvm-extract llvm-db \
-                 bugpoint llvm-bcanalyzer llvm-stub llvmc
+                 bugpoint llvm-bcanalyzer llvm-stub llvmc clang
 
 include $(LEVEL)/Makefile.config
 

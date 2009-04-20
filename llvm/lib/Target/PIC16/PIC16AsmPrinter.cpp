@@ -67,7 +67,7 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       else {
         // External Symbol is generated for temp data. Temp data in in
         // fdata.<functionname>.# section.
-        NewBank = "fdata." + CurrentFnName +".#";
+        NewBank = "fpdata." + CurrentFnName +".#";
       }
       // Operand after global address or external symbol should be  banksel.
       // Value 1 for this operand means we need to generate banksel else do not
@@ -117,8 +117,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit the frame address of the function at the beginning of code.
   O << CurrentFnName << ":\n";
-  O << "    retlw  low(" << CurrentFnName << ".frame)\n";
-  O << "    retlw  high(" << CurrentFnName << ".frame)\n"; 
+  O << "    retlw  low(" << FunctionLabelBegin<< CurrentFnName << ".frame)\n";
+  O << "    retlw  high(" << FunctionLabelBegin<< CurrentFnName << ".frame)\n"; 
 
 
   // Print out code for the function.
@@ -178,14 +178,22 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       O << (int)MO.getImm();
       return;
 
-    case MachineOperand::MO_GlobalAddress:
-      O << Mang->getValueName(MO.getGlobal());
+    case MachineOperand::MO_GlobalAddress: {
+      std::string Name = Mang->getValueName(MO.getGlobal());
+      if (isLocalName(Name)) 
+        O << FunctionLabelBegin << Mang->getValueName(MO.getGlobal());
+      else
+         O << Mang->getValueName(MO.getGlobal());
       break;
-
-    case MachineOperand::MO_ExternalSymbol:
-      O << MO.getSymbolName();
+    }
+    case MachineOperand::MO_ExternalSymbol: {
+      std::string Name = MO.getSymbolName(); 
+      if (Name.find("__intrinsics.") != std::string::npos)
+        O  << MO.getSymbolName();
+      else
+        O << FunctionLabelBegin << MO.getSymbolName();
       break;
-
+    }
     case MachineOperand::MO_MachineBasicBlock:
       printBasicBlockLabel(MO.getMBB());
       return;
@@ -234,13 +242,13 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
 
     if (I->isDeclaration()) {
       O << "\textern " <<Name << "\n";
-      O << "\textern " << Name << ".retval\n";
-      O << "\textern " << Name << ".args\n";
+      O << "\textern "  << FunctionLabelBegin << Name << ".retval\n";
+      O << "\textern " << FunctionLabelBegin << Name << ".args\n";
     }
     else if (I->hasExternalLinkage()) {
       O << "\tglobal " << Name << "\n";
-      O << "\tglobal " << Name << ".retval\n";
-      O << "\tglobal " << Name << ".args\n";
+      O << "\tglobal " << FunctionLabelBegin << Name << ".retval\n";
+      O << "\tglobal " << FunctionLabelBegin<< Name << ".args\n";
     }
   }
 
@@ -371,15 +379,16 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   unsigned FrameSize = 0;
   // Emit the data section name.
   O << "\n"; 
-  std::string SectionName = "fdata." + CurrentFnName + ".# " + "UDATA";
+  std::string SectionName = "fpdata." + CurrentFnName + ".# " + "UDATA_OVR";
 
-  const Section *fDataSection = TAI->getNamedSection(SectionName.c_str(),
-                                               SectionFlags::Writeable);
-  SwitchToSection(fDataSection);
+  const Section *fPDataSection = TAI->getNamedSection(SectionName.c_str(),
+                                                      SectionFlags::Writeable);
+  SwitchToSection(fPDataSection);
   
 
   // Emit function frame label
-  O << CurrentFnName << ".frame:\n";
+  char ch;
+  O << FunctionLabelBegin << CurrentFnName << ".frame:\n";
 
   const Type *RetType = F->getReturnType();
   unsigned RetSize = 0; 
@@ -388,9 +397,10 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   
   //Emit function return value space
   if(RetSize > 0)
-     O << CurrentFnName << ".retval    RES  " << RetSize << "\n";
+     O << FunctionLabelBegin << CurrentFnName << ".retval    RES  " << RetSize 
+       << "\n";
   else
-     O << CurrentFnName << ".retval:\n";
+     O << FunctionLabelBegin << CurrentFnName << ".retval:\n";
    
   // Emit variable to hold the space for function arguments 
   unsigned ArgSize = 0;
@@ -399,12 +409,22 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     const Type *Ty = argi->getType();
     ArgSize += TD->getTypePaddedSize(Ty);
    }
-  O << CurrentFnName << ".args      RES  " << ArgSize << "\n";
+  O << FunctionLabelBegin << CurrentFnName << ".args      RES  " << ArgSize 
+    << "\n";
 
   // Emit temporary space
   int TempSize = PTLI->GetTmpSize();
   if (TempSize > 0 )
-    O << CurrentFnName << ".tmp       RES  " << TempSize <<"\n";
+    O << FunctionLabelBegin << CurrentFnName << ".tmp       RES  " << TempSize 
+      <<"\n";
+
+  // Emit the section name for local variables.
+  O << "\n";
+  std::string SecNameLocals = "fadata." + CurrentFnName + ".# " + "UDATA_OVR";
+
+  const Section *fADataSection = TAI->getNamedSection(SecNameLocals.c_str(),
+                                                      SectionFlags::Writeable);
+  SwitchToSection(fADataSection);
 
   // Emit the function variables. 
    
@@ -424,13 +444,13 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     if (! isLocalToFunc(FuncName, VarName))
      continue;
 
-    I->setSection("fdata." + CurrentFnName + ".#");
+    I->setSection("fadata." + CurrentFnName + ".#");
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
     unsigned Size = TD->getTypePaddedSize(Ty);
     FrameSize += Size; 
     // Emit memory reserve directive.
-    O << VarName << "  RES  " << Size << "\n";
+    O << FunctionLabelBegin << VarName << "  RES  " << Size << "\n";
   }
 
 }

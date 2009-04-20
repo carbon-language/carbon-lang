@@ -28,6 +28,7 @@ namespace llvm {
                     const TargetAsmInfo *T, bool F, bool V)
       : AsmPrinter(O, TM, T, F, V) {
       CurBank = "";
+      FunctionLabelBegin = '@';
       IsRomData = false;
       PTLI = TM.getTargetLowering();
     }
@@ -55,6 +56,7 @@ namespace llvm {
     PIC16TargetLowering *PTLI;
     std::string CurBank;
     bool IsRomData;
+    char FunctionLabelBegin;
   };
 } // end of namespace
 
