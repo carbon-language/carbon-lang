@@ -725,6 +725,10 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
       if (E->isArgumentType()) {
         // sizeof(type) - make sure to emit the VLA size.
         CGF.EmitVLASize(TypeToSize);
+      } else {
+        // C99 6.5.3.4p2: If the argument is an expression of type
+        // VLA, it is evaluated.
+        CGF.EmitAnyExpr(E->getArgumentExpr());
       }
       
       return CGF.GetVLASize(VAT);
