@@ -10695,7 +10695,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (User::op_iterator i = GEP.op_begin() + 1, e = GEP.op_end();
        i != e; ++i, ++GTI) {
-    if (isa<SequentialType>(*GTI)) {
+    // Before trying to eliminate/introduce cast/ext/trunc to make
+    // indices as pointer types, make sure that the pointer size
+    // makes a valid sequential index.
+    const SequentialType *ST = dyn_cast<SequentialType>(*GTI);
+    Value *PtrTypeVal = Constant::getNullValue(TD->getIntPtrType());
+    if (ST && ST->indexValid(PtrTypeVal)) {
       if (CastInst *CI = dyn_cast<CastInst>(*i)) {
         if (CI->getOpcode() == Instruction::ZExt ||
             CI->getOpcode() == Instruction::SExt) {
