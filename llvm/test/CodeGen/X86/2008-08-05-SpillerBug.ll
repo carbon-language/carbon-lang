@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -disable-fp-elim -stats |& grep asm-printer | grep 57
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -disable-fp-elim -stats |& grep asm-printer | grep 56
 ; PR2568
 
 @g_3 = external global i16		; <i16*> [#uses=1]

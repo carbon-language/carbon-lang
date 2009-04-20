@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -relocation-model=pic -disable-fp-elim -mtriple=i386-apple-darwin | grep {andl.*7.*ecx}
+; RUN: llvm-as < %s | llc -relocation-model=pic -disable-fp-elim -mtriple=i386-apple-darwin | grep {andl.*7.*edx}
 
 	%struct.XXDActiveTextureTargets = type { i64, i64, i64, i64, i64, i64 }
 	%struct.XXDAlphaTest = type { float, i16, i8, i8 }

@@ -1734,14 +1734,6 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
   }
 }
 
-namespace {
-  struct LISorter {
-    bool operator()(LiveInterval* A, LiveInterval* B) {
-      return A->beginNumber() < B->beginNumber();
-    }
-  };
-}
-
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpillsFast(const LiveInterval &li,
                           const MachineLoopInfo *loopInfo,
@@ -1837,9 +1829,6 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     
     RI = mri_->reg_begin(li.reg);
   }
-
-  // Clients expect the new intervals to be returned in sorted order.
-  std::sort(added.begin(), added.end(), LISorter());
 
   return added;
 }
