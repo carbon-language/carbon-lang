@@ -748,7 +748,7 @@ bool
 Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (0 != ::rename(path.c_str(), newName.c_str()))
     return MakeErrMsg(ErrMsg, std::string("can't rename '") + path + "' as '" +
-               newName.toString() + "' ");
+               newName.toString() + "'");
   return false;
 }
 
@@ -786,7 +786,7 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
       if (errno != EINTR && errno != EAGAIN) {
         ::close(inFile);
         ::close(outFile);
-        return MakeErrMsg(ErrMsg, Src.toString()+": can't read source file: ");
+        return MakeErrMsg(ErrMsg, Src.toString()+": can't read source file");
       }
     } else {
       char *BufPtr = Buffer;
@@ -797,7 +797,7 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
             ::close(inFile);
             ::close(outFile);
             return MakeErrMsg(ErrMsg, Dest.toString() +
-              ": can't write destination file: ");
+              ": can't write destination file");
           }
         } else {
           Amt -= AmtWritten;

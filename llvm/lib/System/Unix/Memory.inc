@@ -76,7 +76,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
                                 (vm_size_t)(pageSize*NumPages), 0,
                                 VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
   if (KERN_SUCCESS != kr) {
-    MakeErrMsg(ErrMsg, "vm_protect max RX failed\n");
+    MakeErrMsg(ErrMsg, "vm_protect max RX failed");
     return sys::MemoryBlock();
   }
 
@@ -84,7 +84,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
                   (vm_size_t)(pageSize*NumPages), 0,
                   VM_PROT_READ | VM_PROT_WRITE);
   if (KERN_SUCCESS != kr) {
-    MakeErrMsg(ErrMsg, "vm_protect RW failed\n");
+    MakeErrMsg(ErrMsg, "vm_protect RW failed");
     return sys::MemoryBlock();
   }
 #endif

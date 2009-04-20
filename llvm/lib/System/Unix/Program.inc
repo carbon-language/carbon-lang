@@ -99,7 +99,7 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
   int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
   if (InFD == -1) {
     MakeErrMsg(ErrMsg, "Cannot open file '" + File + "' for "
-              + (FD == 0 ? "input" : "output") + "!\n");
+              + (FD == 0 ? "input" : "output"));
     return true;
   }
 
