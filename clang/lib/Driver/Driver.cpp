@@ -1110,7 +1110,12 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
   // FIXME: This is lame; sys::Path should provide this function (in
   // particular, it should know how to find the temporary files dir).
   std::string Error;
-  llvm::sys::Path P("/tmp/cc");
+  llvm::sys::Path P;
+  if (const char *TmpDir = ::getenv("TMPDIR"))
+    P = TmpDir;
+  else
+    P = "/tmp";
+  P.appendComponent("cc");
   if (P.makeUnique(false, &Error)) {
     Diag(clang::diag::err_drv_unable_to_make_temp) << Error;
     return "";
