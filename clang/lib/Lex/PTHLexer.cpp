@@ -14,6 +14,7 @@
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PTHManager.h"
@@ -21,73 +22,12 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Host.h"
 #include <sys/stat.h>
 using namespace clang;
+using namespace clang::io;
 
 #define DISK_TOKEN_SIZE (1+1+2+4+4)
-
-//===----------------------------------------------------------------------===//
-// Utility methods for reading from the mmap'ed PTH file.
-//===----------------------------------------------------------------------===//
-
-static inline uint16_t ReadUnalignedLE16(const unsigned char *&Data) {
-  uint16_t V = ((uint16_t)Data[0]) |
-               ((uint16_t)Data[1] <<  8);
-  Data += 2;
-  return V;
-}
-
-static inline uint32_t ReadUnalignedLE32(const unsigned char *&Data) {
-  uint32_t V = ((uint32_t)Data[0])  |
-               ((uint32_t)Data[1] << 8)  |
-               ((uint32_t)Data[2] << 16) |
-               ((uint32_t)Data[3] << 24);
-  Data += 4;
-  return V;
-}
-
-static inline uint64_t ReadUnalignedLE64(const unsigned char *&Data) {
-  uint64_t V = ((uint64_t)Data[0])  |
-    ((uint64_t)Data[1] << 8)  |
-    ((uint64_t)Data[2] << 16) |
-    ((uint64_t)Data[3] << 24) |
-    ((uint64_t)Data[4] << 32) |
-    ((uint64_t)Data[5] << 40) |
-    ((uint64_t)Data[6] << 48) |
-    ((uint64_t)Data[7] << 56);
-  Data += 8;
-  return V;
-}
-
-static inline uint32_t ReadLE32(const unsigned char *&Data) {
-  // Hosts that directly support little-endian 32-bit loads can just
-  // use them.  Big-endian hosts need a bswap.
-  uint32_t V = *((uint32_t*)Data);
-  if (llvm::sys::isBigEndianHost())
-    V = llvm::ByteSwap_32(V);
-  Data += 4;
-  return V;
-}
-
-// Bernstein hash function:
-// This is basically copy-and-paste from StringMap.  This likely won't
-// stay here, which is why I didn't both to expose this function from
-// String Map.
-static unsigned BernsteinHash(const char* x) {
-  unsigned int R = 0;
-  for ( ; *x != '\0' ; ++x) R = R * 33 + *x;
-  return R + (R >> 5);
-}
-
-static unsigned BernsteinHash(const char* x, unsigned n) {
-  unsigned int R = 0;
-  for (unsigned i = 0 ; i < n ; ++i, ++x) R = R * 33 + *x;
-  return R + (R >> 5);
-}
 
 //===----------------------------------------------------------------------===//
 // PTHLexer methods.
@@ -342,115 +282,6 @@ SourceLocation PTHLexer::getSourceLocation() {
   uint32_t Offset = ReadLE32(OffsetPtr);
   return FileStartLoc.getFileLocWithOffset(Offset);
 }
-
-//===----------------------------------------------------------------------===//
-// OnDiskChainedHashTable
-//===----------------------------------------------------------------------===//
-
-template<typename Info>
-class OnDiskChainedHashTable {
-  const unsigned NumBuckets;
-  const unsigned NumEntries;
-  const unsigned char* const Buckets;
-  const unsigned char* const Base;
-public:
-  typedef typename Info::internal_key_type internal_key_type;
-  typedef typename Info::external_key_type external_key_type;
-  typedef typename Info::data_type         data_type;
-  
-  OnDiskChainedHashTable(unsigned numBuckets, unsigned numEntries,
-                         const unsigned char* buckets,
-                         const unsigned char* base)
-    : NumBuckets(numBuckets), NumEntries(numEntries),
-      Buckets(buckets), Base(base) {        
-        assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
-               "'buckets' must have a 4-byte alignment");
-      }
-
-  unsigned getNumBuckets() const { return NumBuckets; }
-  unsigned getNumEntries() const { return NumEntries; }
-  const unsigned char* getBase() const { return Base; }
-  const unsigned char* getBuckets() const { return Buckets; }
-
-  bool isEmpty() const { return NumEntries == 0; }
-  
-  class iterator {
-    internal_key_type key;
-    const unsigned char* const data;
-    const unsigned len;
-  public:
-    iterator() : data(0), len(0) {}
-    iterator(const internal_key_type k, const unsigned char* d, unsigned l)
-      : key(k), data(d), len(l) {}
-    
-    data_type operator*() const { return Info::ReadData(key, data, len); }    
-    bool operator==(const iterator& X) const { return X.data == data; }    
-    bool operator!=(const iterator& X) const { return X.data != data; }
-  };    
-  
-  iterator find(const external_key_type& eKey) {
-    const internal_key_type& iKey = Info::GetInternalKey(eKey);
-    unsigned key_hash = Info::ComputeHash(iKey);
-    
-    // Each bucket is just a 32-bit offset into the PTH file.
-    unsigned idx = key_hash & (NumBuckets - 1);
-    const unsigned char* Bucket = Buckets + sizeof(uint32_t)*idx;
-    
-    unsigned offset = ReadLE32(Bucket);
-    if (offset == 0) return iterator(); // Empty bucket.
-    const unsigned char* Items = Base + offset;
-    
-    // 'Items' starts with a 16-bit unsigned integer representing the
-    // number of items in this bucket.
-    unsigned len = ReadUnalignedLE16(Items);
-    
-    for (unsigned i = 0; i < len; ++i) {
-      // Read the hash.
-      uint32_t item_hash = ReadUnalignedLE32(Items);
-      
-      // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Items);      
-      unsigned item_len = L.first + L.second;
-
-      // Compare the hashes.  If they are not the same, skip the entry entirely.
-      if (item_hash != key_hash) {
-        Items += item_len;
-        continue;
-      }
-      
-      // Read the key.
-      const internal_key_type& X =
-        Info::ReadKey((const unsigned char* const) Items, L.first);
-
-      // If the key doesn't match just skip reading the value.
-      if (!Info::EqualKey(X, iKey)) {
-        Items += item_len;
-        continue;
-      }
-      
-      // The key matches!
-      return iterator(X, Items + L.first, L.second);
-    }
-    
-    return iterator();
-  }
-  
-  iterator end() const { return iterator(); }
-  
-  
-  static OnDiskChainedHashTable* Create(const unsigned char* buckets,
-                                        const unsigned char* const base) {
-
-    assert(buckets > base);
-    assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
-           "buckets should be 4-byte aligned.");
-    
-    unsigned numBuckets = ReadLE32(buckets);
-    unsigned numEntries = ReadLE32(buckets);
-    return new OnDiskChainedHashTable<Info>(numBuckets, numEntries, buckets,
-                                            base);
-  }  
-};
 
 //===----------------------------------------------------------------------===//
 // PTH file lookup: map from strings to file data.
