@@ -392,7 +392,16 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   
   if (NumActuals < MinArgsExpected) {
     // There are several cases where too few arguments is ok, handle them now.
-    if (NumActuals+1 == MinArgsExpected && MI->isVariadic()) {
+    if (NumActuals == 0 && MinArgsExpected == 1) {
+      // #define A(X)  or  #define A(...)   ---> A()
+      
+      // If there is exactly one argument, and that argument is missing,
+      // then we have an empty "()" argument empty list.  This is fine, even if
+      // the macro expects one argument (the argument is just empty).
+      isVarargsElided = MI->isVariadic();
+    } else if (MI->isVariadic() &&
+               (NumActuals+1 == MinArgsExpected ||  // A(x, ...) -> A(X)
+                (NumActuals == 0 && MinArgsExpected == 2))) {// A(x,...) -> A()
       // Varargs where the named vararg parameter is missing: ok as extension.
       // #define A(x, ...)
       // A("blah")
@@ -404,12 +413,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       //   #define B(x, ...) blah(a, ## __VA_ARGS__) 
       //   #define C(...) blah(a, ## __VA_ARGS__) 
       //  A(x) B(x) C()
-      isVarargsElided = true; //MI->getNumArgs() > 1;
-    } else if (NumActuals == 0 && MinArgsExpected == 1) {
-      assert(!MI->isVariadic() && "Variadic should be handled by case above");
-      // If there is exactly one argument, and that argument is missing,
-      // then we have an empty "()" argument empty list.  This is fine, even if
-      // the macro expects one argument (the argument is just empty).
+      isVarargsElided = true;
     } else {
       // Otherwise, emit the error.
       Diag(Tok, diag::err_too_few_args_in_macro_invoc);
