@@ -886,7 +886,7 @@ class TypeDecl : public NamedDecl {
   /// this TypeDecl.  It is a cache maintained by
   /// ASTContext::getTypedefType, ASTContext::getTagDeclType, and
   /// ASTContext::getTemplateTypeParmType, and TemplateTypeParmDecl.
-  Type *TypeForDecl;
+  mutable Type *TypeForDecl;
   friend class ASTContext;
   friend class DeclContext;
   friend class TagDecl;
