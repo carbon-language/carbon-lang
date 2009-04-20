@@ -339,6 +339,12 @@ void raw_os_ostream::write_impl(const char *Ptr, unsigned Size) {
   OS.write(Ptr, Size);
 }
 
+uint64_t raw_os_ostream::current_pos() { return OS.tellp(); }
+
+uint64_t raw_os_ostream::tell() { 
+  return (uint64_t)OS.tellp() + GetNumBytesInBuffer(); 
+}
+
 //===----------------------------------------------------------------------===//
 //  raw_string_ostream
 //===----------------------------------------------------------------------===//
@@ -363,3 +369,8 @@ void raw_svector_ostream::write_impl(const char *Ptr, unsigned Size) {
   OS.append(Ptr, Ptr + Size);
 }
 
+uint64_t raw_svector_ostream::current_pos() { return OS.size(); }
+
+uint64_t raw_svector_ostream::tell() { 
+  return OS.size() + GetNumBytesInBuffer(); 
+}

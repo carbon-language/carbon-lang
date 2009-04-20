@@ -54,6 +54,9 @@ public:
     delete [] OutBufStart;
   }
 
+  /// tell - Return the current offset with the file.
+  uint64_t tell() { return current_pos() + GetNumBytesInBuffer(); }
+
   //===--------------------------------------------------------------------===//
   // Configuration Interface
   //===--------------------------------------------------------------------===//
@@ -179,6 +182,10 @@ private:
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
 
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos() = 0;
+
   //===--------------------------------------------------------------------===//
   // Private Interface
   //===--------------------------------------------------------------------===//
@@ -202,6 +209,11 @@ class raw_fd_ostream : public raw_ostream {
 
   /// write_impl - See raw_ostream::write_impl.
   virtual void write_impl(const char *Ptr, unsigned Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos() { return pos; }
+
 public:
   /// raw_fd_ostream - Open the specified file for writing. If an
   /// error occurs, information about the error is put into ErrorInfo,
@@ -271,9 +283,17 @@ class raw_os_ostream : public raw_ostream {
 
   /// write_impl - See raw_ostream::write_impl.
   virtual void write_impl(const char *Ptr, unsigned Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos();
+
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
   ~raw_os_ostream();
+
+  /// tell - Return the current offset with the stream.
+  uint64_t tell();
 };
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
@@ -283,9 +303,16 @@ class raw_string_ostream : public raw_ostream {
 
   /// write_impl - See raw_ostream::write_impl.
   virtual void write_impl(const char *Ptr, unsigned Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos() { return OS.size(); }
 public:
   raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
+
+  /// tell - Return the current offset with the stream.
+  uint64_t tell() { return OS.size() + GetNumBytesInBuffer(); }
 
   /// str - Flushes the stream contents to the target string and returns
   ///  the string's reference.
@@ -302,9 +329,16 @@ class raw_svector_ostream : public raw_ostream {
 
   /// write_impl - See raw_ostream::write_impl.
   virtual void write_impl(const char *Ptr, unsigned Size);
+
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos();
 public:
   raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
   ~raw_svector_ostream();
+
+  /// tell - Return the current offset with the stream.
+  uint64_t tell();
 };
 
 } // end llvm namespace
