@@ -240,7 +240,7 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   
   // If the inline function explicitly has the GNU inline attribute on it, then
   // force to GNUC semantics (which is strong external), regardless of language.
-  if (FD->hasAttr<GNUCInlineAttr>())
+  if (FD->hasAttr<GNUInlineAttr>())
     return CodeGenModule::GVA_StrongExternal;
 
   // The definition of inline changes based on the language.  Note that we

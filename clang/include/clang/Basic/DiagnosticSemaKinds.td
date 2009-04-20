@@ -411,11 +411,11 @@ def warn_attribute_weak_import_invalid_on_definition : Warning<
 def warn_attribute_wrong_decl_type : Warning<
   "'%0' attribute only applies to %select{function|union|"
   "variable and function|function or method}1 types">;
-def warn_gnuc_inline_attribute_requires_inline : Warning<
-  "'gnuc_inline' attribute requires function to be marked 'inline',"
+def warn_gnu_inline_attribute_requires_inline : Warning<
+  "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;
-def warn_gnuc_inline_attribute_extern_inline : Warning<
- "'gnuc_inline' attribute is overridden by 'extern inline', attribute ignored">;
+def warn_gnu_inline_attribute_extern_inline : Warning<
+ "'gnu_inline' attribute is overridden by 'extern inline', attribute ignored">;
 
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;

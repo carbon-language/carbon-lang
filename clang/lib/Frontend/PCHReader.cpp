@@ -2186,7 +2186,7 @@ Attr *PCHReader::ReadAttributes() {
       break;
     }
 
-    SIMPLE_ATTR(GNUCInline);
+    SIMPLE_ATTR(GNUInline);
     
     case Attr::IBOutletKind:
       New = ::new (Context) IBOutletAttr();

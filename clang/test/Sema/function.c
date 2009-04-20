@@ -64,11 +64,11 @@ struct incomplete_test a(void) {} // expected-error{{incomplete result type 'str
 
 
 extern __inline
-__attribute__((__gnuc_inline__))  // expected-warning{{'gnuc_inline' attribute is overridden by 'extern inline', attribute ignored}} expected-warning{{extension used}}
+__attribute__((__gnu_inline__))  // expected-warning{{'gnu_inline' attribute is overridden by 'extern inline', attribute ignored}} expected-warning{{extension used}}
 void gnu_inline1() {}
 
 void
-__attribute__((__gnuc_inline__)) // expected-warning {{'gnuc_inline' attribute requires function to be marked 'inline', attribute ignored}} expected-warning{{extension used}}
+__attribute__((__gnu_inline__)) // expected-warning {{'gnu_inline' attribute requires function to be marked 'inline', attribute ignored}} expected-warning{{extension used}}
 gnu_inline2() {}
 
 

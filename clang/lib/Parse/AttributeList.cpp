@@ -105,13 +105,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "destructor", 10)) return AT_destructor;
     if (!memcmp(Str, "format_arg", 10))
       return IgnoredAttribute; // FIXME: printf format string checking.
+    if (!memcmp(Str, "gnu_inline", 10)) return AT_gnu_inline;
     break;
   case 11:
     if (!memcmp(Str, "weak_import", 11)) return AT_weak_import;
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
     if (!memcmp(Str, "constructor", 11)) return AT_constructor;
     if (!memcmp(Str, "unavailable", 11)) return AT_unavailable;
-    if (!memcmp(Str, "gnuc_inline", 11)) return AT_gnuc_inline;
     break;
   case 12:
     if (!memcmp(Str, "overloadable", 12)) return AT_overloadable;

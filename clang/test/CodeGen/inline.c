@@ -36,4 +36,4 @@ int bar() { return foo(); }
 inline void unreferenced1() {}
 extern inline void unreferenced2() {}
 
-__inline __attribute((__gnuc_inline__)) void gnu_inline() {}
+__inline __attribute((__gnu_inline__)) void gnu_inline() {}
