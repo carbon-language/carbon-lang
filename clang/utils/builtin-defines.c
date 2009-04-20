@@ -55,6 +55,7 @@ RUN: done;
 #undef __tune_core2__
 #undef __POINTER_WIDTH__
 #undef __INTPTR_TYPE__
+#undef __NO_MATH_INLINES
 
 #undef __DEC128_DEN__
 #undef __DEC128_EPSILON__
