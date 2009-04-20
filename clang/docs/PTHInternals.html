@@ -14,73 +14,14 @@
 <!--#include virtual="../menu.html.incl"-->
 
 <div id="content">
-<h1>Pretokenized Headers</h1>
 
-<p> <a href="http://en.wikipedia.org/wiki/Precompiled_header">Precompiled
-headers</a> are a general approach employed by many compilers to reduce
-compilation time. The underlying motivation of the approach is that it is
-common for the same (and often large) header files to be included by
-multiple source files. Consequently, compile times can often be greatly improved
-by caching some of the (redundant) work done by a compiler to process headers.
-Precompiled header files, which represent one of many ways to implement
-this optimization, are literally files that represent an on-disk cache that
-contains the vital information necessary to reduce some (or all) of the work
-needed to process a corresponding header file. While details of precompiled
-headers vary between compilers, precompiled headers have been shown to be a
-highly effective at speeding up program compilation on systems with very large
-system headers (e.g., Mac OS/X).</p>
+<h1>Pretokenized Headers (PTH)</h1>
 
-<p>Clang supports an implementation of precompiled headers known as
-<em>pre-tokenized headers</em> (PTH). Clang's pre-tokenized headers support most
-of same interfaces as GCC's pre-compiled headers (as well as others) but are
-completely different in their implementation. This first describes the interface
-for using PTH and then briefly elaborates on its design and implementation.</p>
+<p>This document first describes the low-level
+interface for using PTH and then briefly elaborates on its design and
+implementation.  If you are interested in the end-user view, please see the
+<a href="UsersManual.html#precompiledheaders">User's Manual</a>.</p>
 
-
-<h2>Using Pretokenized Headers with <tt>clang</tt></h2>
-
-<p>The high-level <tt>clang</tt> driver supports an interface to use PTH files
-that is similar to GCC's interface for precompiled headers.</p>
-
-<h3>Generating a PTH File</h3>
-
-<p>To generate a PTH file using <tt>clang</tt>, one invokes <tt>clang</tt> using
-the <b><tt>-x <i>&lt;language&gt;</i>-header</tt></b> option. This mirrors the
-interface in GCC for generating PCH files:</p>
-
-<pre>
-  $ gcc -x c-header test.h -o test.h.gch
-  $ clang -x c-header test.h -o test.h.pth
-</pre>
-
-<h3>Using a PTH File</h3>
-
-<p>A PTH file can then be used as a prefix header when a
-<b><tt>-include</tt></b> option is passed to <tt>clang</tt>:</p>
-
-<pre>
-  $ clang -include test.h test.c -o test
-</pre>
-
-<p>The <tt>clang</tt> driver will first check if a PTH file for <tt>test.h</tt>
-is available; if so, the contents of <tt>test.h</tt> (and the files it includes)
-will be processed from the PTH file. Otherwise, <tt>clang</tt> falls back to
-directly processing the content of <tt>test.h</tt>. This mirrors the behavior of
-GCC.</p>
-
-<p><b>NOTE:</b> <tt>clang</tt> does <em>not</em> automatically used PTH files
-for headers that are directly included within a source file. For example:</p>
-
-<pre>
-  $ clang -x c-header test.h -o test.h.pth
-  $ cat test.c
-  #include "test.h"
-  $ clang test.c -o test
-</pre>
-
-<p>In this example, <tt>clang</tt> will not automatically use the PTH file for
-<tt>test.h</tt> since <tt>test.h</tt> was included directly in the source file
-and not specified on the command line using <tt>-include</tt>.</p>
 
 <h2>Using Pretokenized Headers with <tt>clang-cc</tt> (Low-level Interface)</h2>
 
