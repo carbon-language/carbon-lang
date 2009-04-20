@@ -345,7 +345,7 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
 SVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
   CodeTextRegion* R 
     = MemMgr.getCodeTextRegion(FD, Context.getPointerType(FD->getType()));
-  return Loc::MakeVal(R);
+  return loc::MemRegionVal(R);
 }
 
 nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
