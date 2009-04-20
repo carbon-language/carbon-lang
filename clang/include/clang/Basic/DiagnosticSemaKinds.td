@@ -1599,7 +1599,8 @@ def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
 def warn_missing_declspec : Warning<
   "declaration specifier missing, defaulting to 'int'">;
 def warn_missing_type_specifier : Warning<
-  "type specifier missing, defaults to 'int'">;
+  "type specifier missing, defaults to 'int'">,
+  InGroup<ImplicitInt>;
 def err_missing_type_specifier : Error<
   "C++ requires a type specifier for all declarations">;
 def err_missing_param_declspec : Error<

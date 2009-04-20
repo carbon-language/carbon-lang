@@ -7,8 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
 def Trigraphs : DiagGroup<"trigraphs">;
+
+def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
+def ImplicitInt : DiagGroup<"implicit-int">;
+
+// Aggregation warning settings.
+def Implicit : DiagGroup<"implicit", [
+    ImplicitFunctionDeclare,
+    ImplicitInt
+]>;
+    
+
 
 // Empty DiagGroups: these are recognized by clang but ignored.
 def : DiagGroup<"aggregate-return">;
@@ -19,11 +29,12 @@ def : DiagGroup<"char-align">;
 def : DiagGroup<"char-subscripts">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"declaration-after-statement">;
-def : DiagGroup<"error-implicit-function-declaration">;
 def : DiagGroup<"format-security">;
 def : DiagGroup<"format=2">;
 def : DiagGroup<"format">;
 def : DiagGroup<"four-char-constants">;
+
+
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;
@@ -69,7 +80,7 @@ def : DiagGroup<"", [Extra]>;  // -W = -Wextra
 // Aggregation warning settings.
 def Most : DiagGroup<"most", [
     Comment,
-    ImplicitFunctionDeclare,
+    Implicit,
     Switch,
     Trigraphs,
     Uninitialized,
