@@ -1053,17 +1053,6 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
   return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0);
 }
 
-/// AddLiveIn - This helper function adds the specified physical register to the
-/// MachineFunction as a live-in value.  It also creates a corresponding virtual
-/// register for it.
-static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
-                          const TargetRegisterClass *RC) {
-  assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
-  MF.getRegInfo().addLiveIn(PReg, VReg);
-  return VReg;
-}
-
 SDValue
 ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -1101,7 +1090,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         assert(0 && "RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
       // Transform the arguments stored in physical registers into virtual ones.
-      unsigned Reg = AddLiveIn(MF, VA.getLocReg(), RC);
+      unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
       SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
 
       // f64 is passed in i32 pairs and must be combined.
@@ -1118,7 +1107,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
           SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
           ArgValue2 = DAG.getLoad(MVT::i32, dl, Root, FIN, NULL, 0);
         } else {
-          Reg = AddLiveIn(MF, VA.getLocReg(), RC);
+          Reg = MF.addLiveIn(VA.getLocReg(), RC);
           ArgValue2 = DAG.getCopyFromReg(Root, dl, Reg, MVT::i32);
         }
 
@@ -1195,7 +1184,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         else
           RC = ARM::GPRRegisterClass;
 
-        unsigned VReg = AddLiveIn(MF, GPRArgRegs[NumGPRs], RC);
+        unsigned VReg = MF.addLiveIn(GPRArgRegs[NumGPRs], RC);
         SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
         SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);

@@ -1147,17 +1147,6 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
 //  For info on fast calling convention see Fast Calling Convention (tail call)
 //  implementation LowerX86_32FastCCCallTo.
 
-/// AddLiveIn - This helper function adds the specified physical register to the
-/// MachineFunction as a live in value.  It also creates a corresponding virtual
-/// register for it.
-static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
-                          const TargetRegisterClass *RC) {
-  assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
-  MF.getRegInfo().addLiveIn(PReg, VReg);
-  return VReg;
-}
-
 /// CallIsStructReturn - Determines whether a CALL node uses struct return
 /// semantics.
 static bool CallIsStructReturn(CallSDNode *TheCall) {
@@ -1356,7 +1345,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         assert(0 && "Unknown argument type!");
       }
 
-      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      unsigned Reg = DAG.getMachineFunction().addLiveIn(VA.getLocReg(), RC);
       SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
 
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
@@ -1472,8 +1461,8 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
                                   DAG.getIntPtrConstant(VarArgsGPOffset));
       for (; NumIntRegs != TotalNumIntRegs; ++NumIntRegs) {
-        unsigned VReg = AddLiveIn(MF, GPR64ArgRegs[NumIntRegs],
-                                  X86::GR64RegisterClass);
+        unsigned VReg = MF.addLiveIn(GPR64ArgRegs[NumIntRegs],
+                                     X86::GR64RegisterClass);
         SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
@@ -1487,8 +1476,8 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
                         DAG.getIntPtrConstant(VarArgsFPOffset));
       for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
-        unsigned VReg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs],
-                                  X86::VR128RegisterClass);
+        unsigned VReg = MF.addLiveIn(XMMArgRegs[NumXMMRegs],
+                                     X86::VR128RegisterClass);
         SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::v4f32);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,

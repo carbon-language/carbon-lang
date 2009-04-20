@@ -33,6 +33,7 @@ class MachineFrameInfo;
 class MachineConstantPool;
 class MachineJumpTableInfo;
 class TargetMachine;
+class TargetRegisterClass;
 
 template <>
 struct ilist_traits<MachineBasicBlock>
@@ -237,6 +238,10 @@ public:
   typedef BasicBlockListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
+
+  /// addLiveIn - Add the specified physical register as a live-in value and
+  /// create a corresponding virtual register for it.
+  unsigned addLiveIn(unsigned PReg, const TargetRegisterClass *RC);
 
   //===--------------------------------------------------------------------===//
   // BasicBlock accessor functions.

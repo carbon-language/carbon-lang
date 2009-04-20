@@ -385,6 +385,16 @@ MachineFunction& MachineFunction::get(const Function *F)
   return *mc;
 }
 
+/// addLiveIn - Add the specified physical register as a live-in value and
+/// create a corresponding virtual register for it.
+unsigned MachineFunction::addLiveIn(unsigned PReg,
+                                    const TargetRegisterClass *RC) {
+  assert(RC->contains(PReg) && "Not the correct regclass!");
+  unsigned VReg = getRegInfo().createVirtualRegister(RC);
+  getRegInfo().addLiveIn(PReg, VReg);
+  return VReg;
+}
+
 /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
 /// source file, line, and column. If none currently exists, create a new
 /// DebugLocTuple, and insert it into the DebugIdMap.
