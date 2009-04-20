@@ -89,6 +89,8 @@ static unsigned ApproximateLoopSize(const Loop *L) {
         // Ignore instructions only used by the loop terminator.
       } else if (isa<DbgInfoIntrinsic>(I)) {
         // Ignore debug instructions
+      } else if (isa<GetElementPtrInst>(I) && I->hasOneUse()) {
+        // Ignore GEP as they generally are subsumed into a load or store.
       } else if (isa<CallInst>(I)) {
         // Estimate size overhead introduced by call instructions which
         // is higher than other instructions. Here 3 and 10 are magic
