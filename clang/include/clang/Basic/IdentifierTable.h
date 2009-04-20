@@ -141,7 +141,7 @@ public:
       return tok::objc_not_keyword;
   }
   void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCOrBuiltinID = ID; }
-  
+
   /// getBuiltinID - Return a value indicating whether this is a builtin
   /// function.  0 is not-built-in.  1 is builtin-for-some-nonprimary-target.
   /// 2+ are specific builtin functions.
@@ -156,7 +156,10 @@ public:
     assert(ObjCOrBuiltinID - unsigned(tok::NUM_OBJC_KEYWORDS) == ID 
            && "ID too large for field!");
   }
-  
+
+  unsigned getObjCOrBuiltinID() const { return ObjCOrBuiltinID; }
+  void setObjCOrBuiltinID(unsigned ID) { ObjCOrBuiltinID = ID; }
+
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is
   /// only valid if a custom token ID is set.

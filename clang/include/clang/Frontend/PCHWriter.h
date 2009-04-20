@@ -94,6 +94,10 @@ private:
   /// IdentifierInfo.
   llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
 
+  /// \brief Offsets of each of the identifier IDs into the identifier
+  /// table, shifted left by one bit with the low bit set.
+  llvm::SmallVector<uint64_t, 16> IdentifierOffsets;
+
   /// \brief Declarations encountered that might be external
   /// definitions.
   ///
@@ -162,14 +166,22 @@ public:
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordData &Record);
 
+  /// \brief Determine the declaration ID of an already-emitted
+  /// declaration.
+  pch::DeclID getDeclID(const Decl *D);
+
   /// \brief Emit a declaration name.
   void AddDeclarationName(DeclarationName Name, RecordData &Record);
 
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);
 
-  /// \brief Add the given statement or expression to the queue of statements to
-  /// emit.
+  /// \brief Note that the identifier II occurs at the given offset
+  /// within the identifier table.
+  void SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset);
+
+  /// \brief Add the given statement or expression to the queue of
+  /// statements to emit.
   ///
   /// This routine should be used when emitting types and declarations
   /// that have expressions as part of their formulation. Once the

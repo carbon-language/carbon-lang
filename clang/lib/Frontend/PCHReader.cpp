@@ -2089,9 +2089,10 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   }
   
   if (IdentifierData[ID - 1] & 0x01) {
-    uint64_t Offset = IdentifierData[ID - 1];
+    uint64_t Offset = IdentifierData[ID - 1] >> 1;
     IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(
-                                                        &Context.Idents.get(IdentifierTable + Offset));
+                               &Context.Idents.get(IdentifierTable + Offset));
+    // FIXME: also read the contents of the IdentifierInfo.
   }
   
   return reinterpret_cast<IdentifierInfo *>(IdentifierData[ID - 1]);

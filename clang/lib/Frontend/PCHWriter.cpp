@@ -13,6 +13,7 @@
 
 #include "clang/Frontend/PCHWriter.h"
 #include "../Sema/Sema.h" // FIXME: move header into include/clang/Sema
+#include "../Sema/IdentifierResolver.h" // FIXME: move header 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
@@ -23,6 +24,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1616,6 +1618,71 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   Stream.ExitBlock();
 }
 
+namespace {
+class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
+  PCHWriter &Writer;
+
+public:
+  typedef const IdentifierInfo* key_type;
+  typedef key_type  key_type_ref;
+  
+  typedef pch::IdentID data_type;
+  typedef data_type data_type_ref;
+  
+  PCHIdentifierTableTrait(PCHWriter &Writer) : Writer(Writer) { }
+
+  static unsigned ComputeHash(const IdentifierInfo* II) {
+    return clang::BernsteinHash(II->getName());
+  }
+  
+  static std::pair<unsigned,unsigned> 
+    EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II, 
+                      pch::IdentID ID) {
+    unsigned KeyLen = strlen(II->getName()) + 1;
+    clang::io::Emit16(Out, KeyLen);
+    unsigned DataLen = 4 + 4 + 2; // 4 bytes for token ID, builtin, flags
+                                  // 4 bytes for the persistent ID
+                                  // 2 bytes for the length of the decl chain
+    for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
+                                   DEnd = IdentifierResolver::end();
+         D != DEnd; ++D)
+      DataLen += sizeof(pch::DeclID);
+    return std::make_pair(KeyLen, DataLen);
+  }
+  
+  void EmitKey(llvm::raw_ostream& Out, const IdentifierInfo* II, 
+               unsigned KeyLen) {
+    // Record the location of the key data.  This is used when generating
+    // the mapping from persistent IDs to strings.
+    Writer.SetIdentifierOffset(II, Out.tell());
+    Out.write(II->getName(), KeyLen);
+  }
+  
+  void EmitData(llvm::raw_ostream& Out, const IdentifierInfo* II, 
+                pch::IdentID ID, unsigned) {
+    uint32_t Bits = 0;
+    Bits = Bits | (uint32_t)II->getTokenID();
+    Bits = (Bits << 8) | (uint32_t)II->getObjCOrBuiltinID();
+    Bits = (Bits << 10) | II->hasMacroDefinition();
+    Bits = (Bits << 1) | II->isExtensionToken();
+    Bits = (Bits << 1) | II->isPoisoned();
+    Bits = (Bits << 1) | II->isCPlusPlusOperatorKeyword();
+    clang::io::Emit32(Out, Bits);
+    clang::io::Emit32(Out, ID);
+
+    llvm::SmallVector<pch::DeclID, 8> Decls;
+    for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
+                                   DEnd = IdentifierResolver::end();
+         D != DEnd; ++D)
+      Decls.push_back(Writer.getDeclID(*D));
+
+    clang::io::Emit16(Out, Decls.size());
+    for (unsigned I = 0; I < Decls.size(); ++I)
+      clang::io::Emit32(Out, Decls[I]);
+  }
+};
+} // end anonymous namespace
+
 /// \brief Write the identifier table into the PCH file.
 ///
 /// The identifier table consists of a blob containing string data
@@ -1626,43 +1693,42 @@ void PCHWriter::WriteIdentifierTable() {
 
   // Create and write out the blob that contains the identifier
   // strings.
-  RecordData IdentOffsets;
-  IdentOffsets.resize(IdentifierIDs.size());
+  IdentifierOffsets.resize(IdentifierIDs.size());
   {
-    // Create the identifier string data.
-    std::vector<char> Data;
-    Data.push_back(0); // Data must not be empty.
+    OnDiskChainedHashTableGenerator<PCHIdentifierTableTrait> Generator;
+    
+    // Create the on-disk hash table representation.
     for (llvm::DenseMap<const IdentifierInfo *, pch::IdentID>::iterator
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
+      Generator.insert(ID->first, ID->second);
+    }
 
-      // Make sure we're starting on an odd byte. The PCH reader
-      // expects the low bit to be set on all of the offsets.
-      if ((Data.size() & 0x01) == 0)
-        Data.push_back((char)0);
-
-      IdentOffsets[ID->second - 1] = Data.size();
-      Data.insert(Data.end(), 
-                  ID->first->getName(), 
-                  ID->first->getName() + ID->first->getLength());
-      Data.push_back((char)0);
+    // Create the on-disk hash table in a buffer.
+    llvm::SmallVector<char, 4096> IdentifierTable; 
+    {
+      PCHIdentifierTableTrait Trait(*this);
+      llvm::raw_svector_ostream Out(IdentifierTable);
+      Generator.Emit(Out, Trait);
     }
 
     // Create a blob abbreviation
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_TABLE));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Triple name
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned IDTableAbbrev = Stream.EmitAbbrev(Abbrev);
 
     // Write the identifier table
     RecordData Record;
     Record.push_back(pch::IDENTIFIER_TABLE);
-    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, &Data.front(), Data.size());
+    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, 
+                              &IdentifierTable.front(), 
+                              IdentifierTable.size());
   }
 
   // Write the offsets table for identifier IDs.
-  Stream.EmitRecord(pch::IDENTIFIER_OFFSET, IdentOffsets);
+  Stream.EmitRecord(pch::IDENTIFIER_OFFSET, IdentifierOffsets);
 }
 
 /// \brief Write a record containing the given attributes.
@@ -1789,6 +1855,12 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
 void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
   Record.push_back(Str.size());
   Record.insert(Record.end(), Str.begin(), Str.end());
+}
+
+/// \brief Note that the identifier II occurs at the given offset
+/// within the identifier table.
+void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
+  IdentifierOffsets[IdentifierIDs[II] - 1] = (Offset << 1) | 0x01;
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
@@ -1928,6 +2000,14 @@ void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
   }
 
   Record.push_back(ID);
+}
+
+pch::DeclID PCHWriter::getDeclID(const Decl *D) {
+  if (D == 0)
+    return 0;
+
+  assert(DeclIDs.find(D) != DeclIDs.end() && "Declaration not emitted!");
+  return DeclIDs[D];
 }
 
 void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
