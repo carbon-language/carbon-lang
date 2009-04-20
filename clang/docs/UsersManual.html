@@ -24,7 +24,12 @@ td {
   <li><a href="#basicusage">Basic Usage</a></li>
   </ul>
 </li>
-<li><a href="#commandline">Command Line Options</a></li>
+<li><a href="#commandline">Command Line Options</a>
+  <ul>
+  <li><a href="#cl_diagnostics">Options to Control Error and Warning
+      Messages</a></li>
+  </ul>
+</li>
 <li><a href="#general_features">Language and Target-Independent Features</a>
  <ul>
   <li><a href="#diagnostics">Controlling Errors and Warnings</a></li>
@@ -162,9 +167,191 @@ using a makefile
 
 <p>
 This section is generally an index into other sections.  It does not go into
-depth on most.  However, the first part introduces the language selection and
-other high level options like -c, -g, etc.
+depth on the ones that are covered by other sections.  However, the first part
+introduces the language selection and other high level options like -c, -g, etc.
 </p>
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="cl_diagnostics">Options to Control Error and Warning Messages</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p><b>-Werror</b>: Turn warnings into errors.</p>
+<p><b>-Werror=foo</b>: Turn warning "foo" into an error.</p>
+<p><b>-Wno-error=foo</b>: Turn warning "foo" into an warning even if -Werror is
+   specified.</p>
+<p><b>-Wfoo</b>: Enable warning foo</p>
+<p><b>-Wno-foo</b>: Disable warning foo</p>
+<p><b>-w</b>: Disable all warnings.</p>
+<p><b>-pedantic</b>: Warn on language extensions.</p>
+<p><b>-pedantic-errors</b>: Error on language extensions.</p>
+<p><b>-Wsystem-headers</b>: Enable warnings from system headers.</p>
+
+<!-- ================================================= -->
+<h4 id="cl_diag_formatting">Formatting of Diagnostics</h4>
+<!-- ================================================= -->
+
+<p>Clang aims to produce beautiful diagnostics by default, particularly for new
+users that first come to Clang.  However, different people have different
+preferences, and sometimes Clang is driven by another program, not a person. For
+these cases, Clang provides a wide range of options to control the exact output
+format of the diagnostics that it generates.</p>
+
+<dl>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fshow-column"><b>-f[no-]show-column</b>: Print column number in
+diagnostic.</dt>
+<dd>This option, which defaults to on, controls whether or not Clang prints the
+column number of a diagnostic.  For example, when this is enabled, Clang will
+print something like:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+         //
+</pre>
+
+<p>When this is disabled, Clang will print "test.c:28: warning..." with no
+column number.</p>
+</dd>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fshow-source-location"><b>-f[no-]show-source-location</b>: Print
+source file/line/column information in diagnostic.</dt>
+<dd>This option, which defaults to on, controls whether or not Clang prints the
+filename, line number and column number of a diagnostic.  For example,
+when this is enabled, Clang will print something like:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+         //
+</pre>
+
+<p>When this is disabled, Clang will not print the "test.c:28:8: " part.</p>
+</dd>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fcaret-diagnostics"><b>-f[no-]caret-diagnostics</b>: Print source
+line and ranges from source code in diagnostic.</dt>
+<dd>This option, which defaults to on, controls whether or not Clang prints the
+source line, source ranges, and caret when emitting a diagnostic.  For example,
+when this is enabled, Clang will print something like:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+         //
+</pre>
+
+<p>When this is disabled, Clang will just print:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+</pre>
+
+</dd>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fdiagnostics-show-option"><b>-f[no-]diagnostics-show-option</b>:
+Enable <tt>[-Woption]</tt> information in diagnostic line.</dt>
+<dd>This option, which defaults to on,
+controls whether or not Clang prints the associated <A
+href="#cl_diag_warning_groups">warning group</a> option name when outputting
+a warning diagnostic.  For example, in this output:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+         //
+</pre>
+
+<p>Passing <b>-fno-diagnostics-show-option</b> will prevent Clang from printing
+the [<a href="#opt_Wextra-tokens">-Wextra-tokens</a>] information in the
+diagnostic.  This information tells you the flag needed to enable or disable the
+diagnostic, either from the command line or through <a 
+href="#pragma_GCC_diagnostic">#pragma GCC diagnostic</a>.</dd>
+
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fdiagnostics-fixit-info"><b>-f[no-]diagnostics-fixit-info</b>:
+Enable "FixIt" information in the diagnostics output.</dt>
+<dd>This option, which defaults to on, controls whether or not Clang prints the
+information on how to fix a specific diagnostic underneath it when it knows.
+For example, in this output:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+         //
+</pre>
+
+<p>Passing <b>-fno-diagnostics-fixit-info</b> will prevent Clang from printing
+the "//" line at the end of the message.  This information is useful for users
+who may not understand what is wrong, but can be confusing for machine
+parsing.</p>
+</dd>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fprint-source-range-info"><b>-f[no-]print-source-range-info</b>:
+Print machine parsable information about source ranges.</dt>
+<dd>This option, which defaults to off, controls whether or not Clang prints
+information about source ranges in a machine parsable format after the
+file/line/column number information.  The information is a simple sequence of
+brace enclosed ranges, where each range lists the start and end line/column
+locations.  For example, in this output:</p>
+
+<pre>
+exprs.c:47:15:{47:8-47:14}{47:17-47:24}: error: invalid operands to binary expression ('int *' and '_Complex float')
+   P = (P-42) + Gamma*4;
+       ~~~~~~ ^ ~~~~~~~
+</pre>
+
+<p>The {}'s are generated by -fprint-source-range-info.</p>
+</dd>
+
+
+</dl>
+
+ 
+
+
+<!-- ===================================================== -->
+<h4 id="cl_diag_warning_groups">Individual Warning Groups</h4>
+<!-- ===================================================== -->
+
+<p>TODO: Generate this from tblgen.  Define one anchor per warning group.</p>
+
+
+<dl>
+
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_Wextra-tokens"><b>-Wextra-tokens</b>: Warn about excess tokens at
+    the end of a preprocessor directive.</dt>
+<dd>This option, which defaults to on, enables warnings about extra tokens at
+the end of preprocessor directives.  For example:</p>
+
+<pre>
+  test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+</pre>
+
+<p>These extra tokens are not strictly conforming, and are usually best handled
+by commenting them out.</p>
+
+<p>This option is also enabled by <a href="">-Wfoo</a>, <a href="">-Wbar</a>,
+ and <a href="">-Wbaz</a>.</p>
+</dd>
+
+</dl>
 
 <!-- ======================================================================= -->
 <h2 id="general_features">Language and Target-Independent Features</h2>
@@ -174,6 +361,11 @@ other high level options like -c, -g, etc.
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="diagnostics">Controlling Errors and Warnings</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>Clang provides a number of ways to control which code constructs cause it to
+emit errors and warning messages.  
+
+error and warning cases 
 
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
