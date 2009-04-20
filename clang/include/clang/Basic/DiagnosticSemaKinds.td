@@ -1289,7 +1289,8 @@ def err_typecheck_choose_expr_requires_constant : Error<
   "'__builtin_choose_expr' requires a constant expression">;
 def ext_typecheck_expression_not_constant_but_accepted : Extension<
   "expression is not a constant, but is accepted as one by GNU extensions">;
-def warn_unused_expr : Warning<"expression result unused">;
+def warn_unused_expr : Warning<"expression result unused">,
+  InGroup<UnusedValue>;
 
 // inline asm.
 def err_asm_wide_character : Error<"wide string is invalid in 'asm'">;
