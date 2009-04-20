@@ -375,11 +375,12 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
   return 0;
 }
 
-/// lookupFieldDeclForIvar - looks up a field decl' in the laid out
+/// lookupFieldDeclForIvar - looks up a field decl in the laid out
 /// storage which matches this 'ivar'.
 ///
-FieldDecl *ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
-                                                     const ObjCIvarDecl *IVar) {
+const FieldDecl *
+ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
+                                          const ObjCIvarDecl *IVar) const {
   const RecordDecl *RecordForDecl = Context.addRecordToClass(this);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclContext::lookup_const_result Lookup =

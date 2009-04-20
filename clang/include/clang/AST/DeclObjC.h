@@ -428,13 +428,9 @@ public:
   void setIVarList(ObjCIvarDecl * const *List, unsigned Num, ASTContext &C) {
     IVars.set(List, Num, C);
   }
-  FieldDecl *lookupFieldDeclForIvar(ASTContext &Context, 
-                                    const ObjCIvarDecl *ivar);
 
   const FieldDecl *lookupFieldDeclForIvar(ASTContext &Ctx, 
-                                          const ObjCIvarDecl *IV) const {
-    return const_cast<ObjCInterfaceDecl*>(this)->lookupFieldDeclForIvar(Ctx,IV);
-  }
+                                          const ObjCIvarDecl *IV) const;
 
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }

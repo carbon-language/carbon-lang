@@ -2400,7 +2400,8 @@ llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                        ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(Interface);
-  FieldDecl *Field = Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
+  const FieldDecl *Field = 
+    Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   uint64_t Offset = GetIvarBaseOffset(Layout, Field);
   return llvm::ConstantInt::get(
                             CGM.getTypes().ConvertType(CGM.getContext().LongTy),

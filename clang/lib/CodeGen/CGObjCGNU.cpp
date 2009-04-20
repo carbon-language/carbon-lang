@@ -764,7 +764,8 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
       IvarTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
       // Get the offset
-      FieldDecl *Field = ClassDecl->lookupFieldDeclForIvar(Context, (*iter));
+      const FieldDecl *Field = 
+        ClassDecl->lookupFieldDeclForIvar(Context, (*iter));
       int offset =
         (int)Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
       IvarOffsets.push_back(
@@ -1105,7 +1106,8 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                             CGM.getContext().getObjCInterfaceType(Interface));
   const llvm::StructLayout *Layout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
-  FieldDecl *Field = Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
+  const FieldDecl *Field = 
+    Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   uint64_t Offset =
     Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
   

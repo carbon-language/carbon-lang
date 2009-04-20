@@ -195,7 +195,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                            Types.ConvertType(PD->getType())));
     EmitReturnOfRValue(RV, PD->getType());
   } else {
-    FieldDecl *Field = 
+    const FieldDecl *Field = 
       IMP->getClassInterface()->lookupFieldDeclForIvar(getContext(), Ivar);
     LValue LV = EmitLValueForIvar(TypeOfSelfObject(),
                                   LoadObjCSelf(), Ivar, Field, 0);
