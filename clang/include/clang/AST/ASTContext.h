@@ -378,7 +378,7 @@ public:
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.
   void getObjCEncodingForType(QualType t, std::string &S, 
-                              FieldDecl *Field=NULL);
+                              const FieldDecl *Field=0);
 
   void getLegacyIntegralTypeEncoding(QualType &t) const;
   
@@ -730,7 +730,7 @@ private:
   void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
                                   bool ExpandPointedToStructures,
                                   bool ExpandStructures,
-                                  FieldDecl *Field,
+                                  const FieldDecl *Field,
                                   bool OutermostType = false,
                                   bool EncodingProperty = false);
                                   

@@ -2166,7 +2166,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   // Encode result type.
   // GCC has some special rules regarding encoding of properties which
   // closely resembles encoding of ivars.
-  getObjCEncodingForTypeImpl(PD->getType(), S, true, true, NULL, 
+  getObjCEncodingForTypeImpl(PD->getType(), S, true, true, 0, 
                              true /* outermost type */,
                              true /* encoding for property */);
 
@@ -2227,7 +2227,7 @@ void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-                                        FieldDecl *Field) {
+                                        const FieldDecl *Field) {
   // We follow the behavior of gcc, expanding structures which are
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
@@ -2237,7 +2237,7 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
 }
 
 static void EncodeBitField(const ASTContext *Context, std::string& S, 
-                           FieldDecl *FD) {
+                           const FieldDecl *FD) {
   const Expr *E = FD->getBitWidth();
   assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
   ASTContext *Ctx = const_cast<ASTContext*>(Context);
@@ -2249,7 +2249,7 @@ static void EncodeBitField(const ASTContext *Context, std::string& S,
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
-                                            FieldDecl *FD,
+                                            const FieldDecl *FD,
                                             bool OutermostType,
                                             bool EncodingProperty) {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
