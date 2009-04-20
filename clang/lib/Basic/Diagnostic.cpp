@@ -714,6 +714,11 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     case Diagnostic::ak_c_string: {
       const char *S = getArgCStr(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
+
+      // Don't crash if get passed a null pointer by accident.
+      if (!S)
+        S = "(null)";
+      
       OutStr.append(S, S + strlen(S));
       break;
     }
@@ -757,6 +762,14 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     case Diagnostic::ak_identifierinfo: {
       const IdentifierInfo *II = getArgIdentifier(ArgNo);
       assert(ModifierLen == 0 && "No modifiers for strings yet");
+
+      // Don't crash if get passed a null pointer by accident.
+      if (!II) {
+        const char *S = "(null)";
+        OutStr.append(S, S + strlen(S));
+        continue;
+      }
+
       OutStr.push_back('\'');
       OutStr.append(II->getName(), II->getName() + II->getLength());
       OutStr.push_back('\'');
