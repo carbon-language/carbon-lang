@@ -4600,13 +4600,16 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   unsigned iv = 0;
   for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()); 
        i != e; ++i) {
+    ObjCIvarDecl *IVD = OIvars[iv++];
+    // Don't emit entries for unnamed bit fields.
+    if (!IVD->getDeclName())
+      continue;
+
     FieldDecl *Field = *i;
-    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), OIvars[iv++], 
+    assert(Field == OID->lookupFieldDeclForIvar(CGM.getContext(), IVD));
+    Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), IVD, 
                                 GetIvarBaseOffset(Layout, Field));
-    if (Field->getIdentifier())
-      Ivar[1] = GetMethodVarName(Field->getIdentifier());
-    else
-      Ivar[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
+    Ivar[1] = GetMethodVarName(Field->getIdentifier());
     Ivar[2] = GetMethodVarType(Field);
     const llvm::Type *FieldTy =
       CGM.getTypes().ConvertTypeForMem(Field->getType());
