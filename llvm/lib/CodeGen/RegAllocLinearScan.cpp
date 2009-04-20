@@ -554,9 +554,6 @@ void RALinScan::updateSpillWeights(std::vector<float> &Weights,
   SmallSet<unsigned, 4> Processed;
   SmallSet<unsigned, 4> SuperAdded;
   SmallVector<unsigned, 4> Supers;
-  // Unfavor downgraded registers for spilling.
-  if (DowngradedRegs.count(reg))
-    weight *= 2.0f;
   Weights[reg] += weight;
   Processed.insert(reg);
   for (const unsigned* as = tri_->getAliasSet(reg); *as; ++as) {
@@ -1015,8 +1012,32 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     // Merge added with unhandled.  Note that we have already sorted
     // intervals returned by addIntervalsForSpills by their starting
     // point.
-    for (unsigned i = 0, e = added.size(); i != e; ++i)
-      unhandled_.push(added[i]);
+    // This also update the NextReloadMap. That is, it adds mapping from a
+    // register defined by a reload from SS to the next reload from SS in the
+    // same basic block.
+    MachineBasicBlock *LastReloadMBB = 0;
+    LiveInterval *LastReload = 0;
+    int LastReloadSS = VirtRegMap::NO_STACK_SLOT;
+    for (unsigned i = 0, e = added.size(); i != e; ++i) {
+      LiveInterval *ReloadLi = added[i];
+      if (ReloadLi->weight == HUGE_VALF &&
+          li_->getApproximateInstructionCount(*ReloadLi) == 0) {
+        unsigned ReloadIdx = ReloadLi->beginNumber();
+        MachineBasicBlock *ReloadMBB = li_->getMBBFromIndex(ReloadIdx);
+        int ReloadSS = vrm_->getStackSlot(ReloadLi->reg);
+        if (LastReloadMBB == ReloadMBB && LastReloadSS == ReloadSS) {
+          // Last reload of same SS is in the same MBB. We want to try to
+          // allocate both reloads the same register and make sure the reg
+          // isn't clobbered in between if at all possible.
+          assert(LastReload->beginNumber() < ReloadIdx);
+          NextReloadMap.insert(std::make_pair(LastReload->reg, ReloadLi->reg));
+        }
+        LastReloadMBB = ReloadMBB;
+        LastReload = ReloadLi;
+        LastReloadSS = ReloadSS;
+      }
+      unhandled_.push(ReloadLi);
+    }
     return;
   }
 
