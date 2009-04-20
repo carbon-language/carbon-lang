@@ -459,9 +459,6 @@ protected:
   llvm::Constant *GetIvarLayoutName(IdentifierInfo *Ident,
                                     const ObjCCommonTypesHelper &ObjCTypes);
   
-  const RecordDecl *GetFirstIvarInRecord(const ObjCInterfaceDecl *OID,
-                                         RecordDecl::field_iterator &FIV,
-                                         RecordDecl::field_iterator &PIV);  
   /// EmitPropertyList - Emit the given property list. The return
   /// value has type PropertyListPtrTy.
   llvm::Constant *EmitPropertyList(const std::string &Name,
@@ -3103,29 +3100,6 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
   NameOut += ']';
 }
 
-/// GetFirstIvarInRecord - This routine returns the record for the 
-/// implementation of the fiven class OID. It also returns field
-/// corresponding to the first ivar in the class in FIV. It also
-/// returns the one before the first ivar. 
-///
-const RecordDecl *CGObjCCommonMac::GetFirstIvarInRecord(
-                                          const ObjCInterfaceDecl *OID,
-                                          RecordDecl::field_iterator &FIV,
-                                          RecordDecl::field_iterator &PIV) {
-  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),
-                                                 CGM.getContext());
-  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  RecordDecl::field_iterator ifield = RD->field_begin(CGM.getContext());
-  RecordDecl::field_iterator pfield = RD->field_end(CGM.getContext());
-  while (countSuperClassIvars-- > 0) {
-    pfield = ifield;
-    ++ifield;
-  }
-  FIV = ifield;
-  PIV = pfield;
-  return RD;
-}
-
 void CGObjCMac::FinishModule() {
   EmitModuleInfo();
 
@@ -4232,8 +4206,15 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
   // FIXME. Share this with the one in EmitIvarList.
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
     
-  RecordDecl::field_iterator firstField, lastField;
-  const RecordDecl *RD = GetFirstIvarInRecord(OID, firstField, lastField);
+  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),
+                                                 CGM.getContext());
+  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
+  RecordDecl::field_iterator firstField = RD->field_begin(CGM.getContext());
+  RecordDecl::field_iterator lastField = RD->field_end(CGM.getContext());
+  while (countSuperClassIvars-- > 0) {
+    lastField = firstField;
+    ++firstField;
+  }
     
   for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()),
          ifield = firstField; ifield != e; ++ifield)
