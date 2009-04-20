@@ -154,13 +154,13 @@ _mm_maddubs_pi16(__m64 a, __m64 b)
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
-_mm_mulrhs_epi16(__m128i a, __m128i b)
+_mm_mulhrs_epi16(__m128i a, __m128i b)
 {
     return (__m128i)__builtin_ia32_pmulhrsw128((__v8hi)a, (__v8hi)b);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
-_mm_mulrhs_pi16(__m64 a, __m64 b)
+_mm_mulhrs_pi16(__m64 a, __m64 b)
 {
     return (__m64)__builtin_ia32_pmulhrsw((__v4hi)a, (__v4hi)b);
 }
