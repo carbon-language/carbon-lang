@@ -116,7 +116,6 @@ SimpleConstraintManager::AssumeAux(const GRState* St, Loc Cond, bool Assumption,
     // FALL-THROUGH.
   }
       
-  case loc::FuncValKind:
   case loc::GotoLabelKind:
     isFeasible = Assumption;
     return St;

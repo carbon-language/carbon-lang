@@ -362,7 +362,7 @@ public:
 
 namespace loc {
   
-enum Kind { GotoLabelKind, MemRegionKind, FuncValKind, ConcreteIntKind };
+enum Kind { GotoLabelKind, MemRegionKind, ConcreteIntKind };
 
 class GotoLabel : public Loc {
 public:
@@ -413,33 +413,6 @@ public:
   static inline bool classof(const Loc* V) {
     return V->getSubKind() == MemRegionKind;
   }    
-};
-
-class FuncVal : public Loc {
-public:
-  FuncVal(const FunctionDecl* fd) : Loc(FuncValKind, fd) {}
-  
-  FunctionDecl* getDecl() const {
-    return static_cast<FunctionDecl*>(Data);
-  }
-  
-  inline bool operator==(const FuncVal& R) const {
-    return getDecl() == R.getDecl();
-  }
-  
-  inline bool operator!=(const FuncVal& R) const {
-    return getDecl() != R.getDecl();
-  }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == LocKind &&
-           V->getSubKind() == FuncValKind;
-  }
-  
-  static inline bool classof(const Loc* V) {
-    return V->getSubKind() == FuncValKind;
-  }
 };
 
 class ConcreteInt : public Loc {

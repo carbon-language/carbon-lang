@@ -31,10 +31,6 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 
 const FunctionDecl* SVal::getAsFunctionDecl() const {
-  if (const loc::FuncVal* FV = dyn_cast<loc::FuncVal>(this)) {
-    return FV->getDecl();
-  }
-
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion* R = X->getRegion();
     if (const CodeTextRegion* CTR = dyn_cast<CodeTextRegion>(R)) {
@@ -479,11 +475,6 @@ void Loc::print(llvm::raw_ostream& Out) const {
 
     case loc::MemRegionKind:
       Out << '&' << cast<loc::MemRegionVal>(this)->getRegion()->getString();
-      break;
-      
-    case loc::FuncValKind:
-      Out << "function " 
-          << cast<loc::FuncVal>(this)->getDecl()->getIdentifier()->getName();
       break;
       
     default:

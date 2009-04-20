@@ -200,8 +200,6 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
   
   switch(BaseL.getSubKind()) {
     case loc::GotoLabelKind:
-    case loc::FuncValKind:
-      // Technically we can get here if people do funny things with casts.
       return UndefinedVal();
 
     case loc::MemRegionKind:
@@ -234,7 +232,6 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
   
   switch(BaseL.getSubKind()) {
     case loc::GotoLabelKind:
-    case loc::FuncValKind:
       // Technically we can get here if people do funny things with casts.
       return UndefinedVal();
       
@@ -338,8 +335,6 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
       // they are doing a quick scan through their Locs (potentially to
       // invalidate their bindings).  Just return Undefined.
       return UndefinedVal();            
-    case loc::FuncValKind:
-      return loc;
       
     default:
       assert (false && "Invalid Loc.");

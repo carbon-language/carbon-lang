@@ -365,7 +365,6 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
     break;
 
   case loc::GotoLabelKind:
-  case loc::FuncValKind:
     // These are anormal cases. Flag an undefined value.
     return UndefinedVal();
 
@@ -661,11 +660,6 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   //  dereference at a higher level?
   if (isa<loc::ConcreteInt>(L))
     return UndefinedVal();
-
-  // FIXME: Should this be refactored into GRExprEngine or GRStateManager?
-  //  It seems that all StoreManagers would do the same thing here.
-  if (isa<loc::FuncVal>(L))
-    return L;
 
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
 

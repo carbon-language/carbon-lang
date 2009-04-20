@@ -307,7 +307,6 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
     
     // Fall-through.
       
-    case loc::FuncValKind:
     case loc::GotoLabelKind:
       return NonLoc::MakeIntTruthVal(BasicVals, L == R);
   }
@@ -356,7 +355,6 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
       // Fall through:
     }
       
-    case loc::FuncValKind:
     case loc::GotoLabelKind:
       return NonLoc::MakeIntTruthVal(BasicVals, L != R);
   }
