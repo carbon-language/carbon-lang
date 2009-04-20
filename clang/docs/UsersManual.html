@@ -193,9 +193,10 @@ introduces the language selection and other high level options like -c, -g, etc.
 
 <p>Clang aims to produce beautiful diagnostics by default, particularly for new
 users that first come to Clang.  However, different people have different
-preferences, and sometimes Clang is driven by another program, not a person. For
-these cases, Clang provides a wide range of options to control the exact output
-format of the diagnostics that it generates.</p>
+preferences, and sometimes Clang is driven by another program that wants to
+parse simple and consistent output, not a person. For these cases, Clang
+provides a wide range of options to control the exact output format of the
+diagnostics that it generates.</p>
 
 <dl>
 
@@ -363,10 +364,52 @@ by commenting them out.</p>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
 <p>Clang provides a number of ways to control which code constructs cause it to
-emit errors and warning messages.  
+emit errors and warning messages, and how they are displayed to the console.</p>
 
-error and warning cases 
+<h4>Controlling How Clang Displays Diagnostics</h4>
 
+<p>When Clang emits a diagnostic, it includes rich information in the output,
+and gives you fine-grain control over which information is printed.  Clang has
+the ability to print this information, and these are the options that control
+it:</p>
+
+<p>
+<ol>
+<li>A file/line/column indicator that shows exactly where the diagnostic occurs
+    in your code [<a href="#opt_fshow-column">-fshow-column</a>, <a
+    href="#opt_fshow-source-location">-fshow-source-location</a>].</li>
+<li>A categorization of the diagnostic as a note, warning, error, or fatal
+    error.</li>
+<li>A text string that describes what the problem is.</li>
+<li>An option that indicates how to control the diagnostic (for diagnostics that
+    support it) [<a 
+   href="#opt_fdiagnostics-show-option">-fdiagnostics-show-option</a>].</li>
+<li>The line of source code that the issue occurs on, along with a caret and
+    ranges that indicate the important locations [<a
+    href="opt_fcaret-diagnostics">-fcaret-diagnostics</a>].</li>
+<li>"FixIt" information, which is a concise explanation of how to fix the
+    problem (when Clang is certain it knows) [<a
+    href="opt_fdiagnostics-fixit-info">-fdiagnostics-fixit-info</a>].</li>
+<li>A machine-parsable representation of the ranges involved (off by
+    default) [<a
+      href="opt_fprint-source-range-info">-fprint-source-range-info</a>].</li>
+</ol></p>
+
+<p>For more information please see <a href="#cl_diag_formatting">Formatting of
+Diagnostics</a>.</p>
+
+<h4>Controlling Which Diagnostics Clang Generates</h4>
+
+<p>mappings: ignore, note, warning, error, fatal</p>
+
+<p>
+The two major classes are control from the command line and control via pragmas
+in your code.</p>
+
+
+<p>-W flags, -pedantic, etc</p>
+
+<p>pragma GCC diagnostic</p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="precompiledheaders">Precompiled Headers</h3>
