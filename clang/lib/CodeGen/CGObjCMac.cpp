@@ -2426,9 +2426,15 @@ llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
 ///   unsigned flags;
 /// };
 enum ImageInfoFlags {
-  eImageInfo_FixAndContinue   = (1 << 0), // FIXME: Not sure what this implies
-  eImageInfo_GarbageCollected = (1 << 1), 
-  eImageInfo_GCOnly           = (1 << 2)  
+  eImageInfo_FixAndContinue      = (1 << 0), // FIXME: Not sure what
+                                             // this implies.
+  eImageInfo_GarbageCollected    = (1 << 1), 
+  eImageInfo_GCOnly              = (1 << 2),  
+  eImageInfo_OptimizedByDyld     = (1 << 3), // FIXME: When is this set.
+
+  // A flag indicating that the module has no instances of an
+  // @synthesize of a superclass variable. <rdar://problem/6803242>
+  eImageInfo_CorrectedSynthesize = (1 << 4)
 };
 
 void CGObjCMac::EmitImageInfo() {
@@ -2440,6 +2446,9 @@ void CGObjCMac::EmitImageInfo() {
     flags |= eImageInfo_GarbageCollected;
   if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly)
     flags |= eImageInfo_GCOnly;
+  
+  // We never allow @synthesize of a superclass property.
+  flags |= eImageInfo_CorrectedSynthesize;
 
   // Emitted as int[2];
   llvm::Constant *values[2] = {
