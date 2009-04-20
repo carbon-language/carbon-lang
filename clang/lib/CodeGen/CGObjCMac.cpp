@@ -1886,6 +1886,9 @@ uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
 uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
                                              const llvm::StructLayout *Layout,
                                              const FieldDecl *Field) {
+  // Is this a c struct?
+  if (!OI)
+    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
   const ObjCIvarDecl *Ivar = cast<ObjCIvarDecl>(Field);
   const FieldDecl *FD = OI->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   return GetIvarBaseOffset(Layout, FD);
@@ -2620,8 +2623,11 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       // FIXME - Find a more efficient way of passing records down.
       TmpRecFields.append(RD->field_begin(CGM.getContext()),
                           RD->field_end(CGM.getContext()));
-      // FIXME - Is Layout correct?
-      BuildAggrIvarLayout(OI, Layout, RD, TmpRecFields,
+      const llvm::Type *Ty = CGM.getTypes().ConvertType(FQT);
+      const llvm::StructLayout *RecLayout = 
+        CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
+      
+      BuildAggrIvarLayout(0, RecLayout, RD, TmpRecFields,
                           BytePos + GetFieldBaseOffset(OI, Layout, Field),
                           ForStrongLayout, Index, SkIndex,
                           HasUnion);
@@ -2653,8 +2659,11 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         // FIXME - Find a more efficiant way of passing records down.
         TmpRecFields.append(RD->field_begin(CGM.getContext()),
                             RD->field_end(CGM.getContext()));
+        const llvm::Type *Ty = CGM.getTypes().ConvertType(FQT);
+        const llvm::StructLayout *RecLayout = 
+        CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
         
-        BuildAggrIvarLayout(OI, Layout, RD,
+        BuildAggrIvarLayout(0, RecLayout, RD,
                             TmpRecFields,
                             BytePos + GetFieldBaseOffset(OI, Layout, Field),
                             ForStrongLayout, Index, SkIndex,
@@ -2954,6 +2963,20 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   // null terminate string.
   unsigned char zero = 0;
   BitMap += zero;
+  
+  if (CGM.getLangOptions().ObjCGCBitmapPrint) {
+    printf("\n%s ivar layout for class '%s': ", 
+           ForStrongLayout ? "strong" : "weak",
+           OMD->getClassInterface()->getNameAsCString());
+    const unsigned char *s = (unsigned char*)BitMap.c_str();
+    for (unsigned i = 0; i < BitMap.size(); i++)
+      if (!(s[i] & 0xf0))
+        printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
+      else
+        printf("0x%x%s",  s[i], s[i] != 0 ? ", " : "");
+    printf("\n");
+  }
+  
   // if ivar_layout bitmap is all 1 bits (nothing skipped) then use NULL as
   // final layout.
   if (ForStrongLayout && !BytesSkipped)
@@ -2962,20 +2985,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
                                       llvm::ConstantArray::get(BitMap.c_str()),
                                       "__TEXT,__cstring,cstring_literals",
                                       1, true);
-  // FIXME. Need a commomand-line option for this eventually.
-  if (ForStrongLayout)
-    printf("\nstrong ivar layout: ");
-  else
-    printf("\nweak ivar layout: ");
-  const unsigned char *s = (unsigned char*)BitMap.c_str();
-  for (unsigned i = 0; i < BitMap.size(); i++)
-    if (!(s[i] & 0xf0))
-      printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
-    else
-      printf("0x%x%s",  s[i], s[i] != 0 ? ", " : "");
-  printf("\n");
-  
-  return getConstantGEP(Entry, 0, 0);
+    return getConstantGEP(Entry, 0, 0);
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
@@ -4063,6 +4073,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
   // FIXME. ivarLayout is currently null!
+  // Values[ 3] = BuildIvarLayout(ID, true); 
   Values[ 3] = GetIvarLayoutName(0, ObjCTypes);
   Values[ 4] = GetClassName(ID->getIdentifier());
   // const struct _method_list_t * const baseMethods;
@@ -4113,6 +4124,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   else
     Values[ 7] = EmitIvarList(ID);
   // FIXME. weakIvarLayout is currently null.
+  // Values[ 8] = BuildIvarLayout(ID, false); 
   Values[ 8] = GetIvarLayoutName(0, ObjCTypes); 
   if (flags & CLS_META)
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
