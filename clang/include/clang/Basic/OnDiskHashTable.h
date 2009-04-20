@@ -73,7 +73,7 @@ inline void Emit64(llvm::raw_ostream& Out, uint64_t V) {
   Out << (unsigned char)(V >> 56);
 }
 
-inline void Pad(llvm::raw_fd_ostream& Out, unsigned A) {
+inline void Pad(llvm::raw_ostream& Out, unsigned A) {
   Offset off = (Offset) Out.tell();
   uint32_t n = ((uintptr_t)(off+A-1) & ~(uintptr_t)(A-1)) - off;
   for (; n ; --n)
@@ -184,7 +184,7 @@ public:
     insert(Buckets, NumBuckets, new (BA.Allocate<Item>()) Item(key, data));
   }
   
-  io::Offset Emit(llvm::raw_fd_ostream& out) {
+  io::Offset Emit(llvm::raw_ostream& out) {
     using namespace clang::io;
 
     // Emit the payload of the table.
@@ -193,7 +193,6 @@ public:
       if (!B.head) continue;
       
       // Store the offset for the data of this bucket.
-      // FIXME: need tell() to work on other raw ostreams
       B.off = out.tell();
       
       // Write out the number of items in the bucket.

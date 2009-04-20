@@ -604,7 +604,7 @@ public:
     return std::make_pair(n, sizeof(uint32_t));
   }
   
-  static void EmitKey(llvm::raw_fd_ostream& Out, PTHIdKey* key, unsigned n) {
+  static void EmitKey(llvm::raw_ostream& Out, PTHIdKey* key, unsigned n) {
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     key->FileOffset = Out.tell();
