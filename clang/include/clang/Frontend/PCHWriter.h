@@ -34,6 +34,7 @@ namespace clang {
 class ASTContext;
 class LabelStmt;
 class Preprocessor;
+class Sema;
 class SourceManager;
 class SwitchCase;
 class TargetInfo;
@@ -137,8 +138,8 @@ public:
   /// the given bitstream.
   PCHWriter(llvm::BitstreamWriter &Stream);
   
-  /// \brief Write a precompiled header for the given AST context.
-  void WritePCH(ASTContext &Context, const Preprocessor &PP);
+  /// \brief Write a precompiled header for the given semantic analysis.
+  void WritePCH(Sema &SemaRef);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);

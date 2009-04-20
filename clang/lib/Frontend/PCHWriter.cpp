@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/PCHWriter.h"
+#include "../Sema/Sema.h" // FIXME: move header into include/clang/Sema
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
@@ -1760,7 +1761,10 @@ void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
   : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS), NumStatements(0) { }
 
-void PCHWriter::WritePCH(ASTContext &Context, const Preprocessor &PP) {
+void PCHWriter::WritePCH(Sema &SemaRef) {
+  ASTContext &Context = SemaRef.Context;
+  Preprocessor &PP = SemaRef.PP;
+
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
   Stream.Emit((unsigned)'P', 8);

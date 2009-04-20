@@ -14,6 +14,7 @@
 
 #include "ASTConsumers.h"
 #include "clang/Frontend/PCHWriter.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Lex/Preprocessor.h"
@@ -28,14 +29,16 @@ using namespace clang;
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN PCHGenerator : public ASTConsumer {
+  class VISIBILITY_HIDDEN PCHGenerator : public SemaConsumer {
     const Preprocessor &PP;
     std::string OutFile;
+    Sema *SemaPtr;
 
   public:
     explicit PCHGenerator(const Preprocessor &PP, const std::string &OutFile)
-      : PP(PP), OutFile(OutFile) { }
+      : PP(PP), OutFile(OutFile), SemaPtr(0) { }
 
+    virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
     virtual void HandleTranslationUnit(ASTContext &Ctx);
   };
 }
@@ -50,7 +53,8 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   PCHWriter Writer(Stream);
 
   // Emit the PCH file
-  Writer.WritePCH(Ctx, PP);
+  assert(SemaPtr && "No Sema?");
+  Writer.WritePCH(*SemaPtr);
 
   // Open up the PCH file.
   std::string ErrMsg;

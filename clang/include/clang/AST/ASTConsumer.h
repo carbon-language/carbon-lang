@@ -19,16 +19,25 @@ namespace clang {
   class DeclGroupRef;
   class TagDecl;
   class HandleTagDeclDefinition;
-  
+  class SemaConsumer; // layering violation required for safe SemaConsumer
+
 /// ASTConsumer - This is an abstract interface that should be implemented by
 /// clients that read ASTs.  This abstraction layer allows the client to be
 /// independent of the AST producer (e.g. parser vs AST dump file reader, etc).
 class ASTConsumer {
+  /// \brief Whether this AST consumer also requires information about
+  /// semantic analysis.
+  bool SemaConsumer;
+
+  friend class SemaConsumer;
+
 public:
+  ASTConsumer() : SemaConsumer(false) { }
+
   virtual ~ASTConsumer() {}
   
   /// Initialize - This is called to initialize the consumer, providing the
-  /// ASTContext.
+  /// ASTContext and the Action.
   virtual void Initialize(ASTContext &Context) {}
   
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
@@ -50,6 +59,9 @@ public:
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {
   }
+
+  // Support isa/cast/dyn_cast
+  static bool classof(const ASTConsumer *) { return true; }
 };
 
 } // end namespace clang.
