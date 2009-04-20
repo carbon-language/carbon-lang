@@ -214,7 +214,15 @@ when:</p> <pre> int x; void *p = &amp;x; </pre>
 
 <p>The region of <tt>x</tt> has its root position at 'int*' node. the cast to
 void* moves that region up to the 'void*' node. I propose to not allow such
-casts, and assign the region of <tt>x</tt> for <tt>p</tt>.<p>
+casts, and assign the region of <tt>x</tt> for <tt>p</tt>.</p>
+
+<p>Another non-ideal case is that people might cast to a non-generic pointer
+from another non-generic pointer instead of first casting it back to the generic
+pointer. Direct handling of this case would result in multiple layers of
+TypedViewRegions. This enforces an incorrect semantic view to the region,
+because we can only have one typed view on a region at a time. To avoid this
+inconsistency, before casting the region, we strip the TypedViewRegion, then do
+the cast. In summary, we only allow one layer of TypedViewRegion.</p>
 
 <h3>Region Bindings</h3>
 
