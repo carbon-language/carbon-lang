@@ -387,7 +387,6 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   
 
   // Emit function frame label
-  char ch;
   O << FunctionLabelBegin << CurrentFnName << ".frame:\n";
 
   const Type *RetType = F->getReturnType();
