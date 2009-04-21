@@ -1092,6 +1092,15 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
                                   StmtArg SynchBody) {
   CurFunctionNeedsScopeChecking = true;
 
+  // Make sure the expression type is an ObjC pointer or "void *".
+  Expr *SyncExpr = static_cast<Expr*>(SynchExpr.get());
+  if (!Context.isObjCObjectPointerType(SyncExpr->getType())) {
+    const PointerType *PT = SyncExpr->getType()->getAsPointerType();
+    if (!PT || !PT->getPointeeType()->isVoidType())
+      return StmtError(Diag(AtLoc, diag::error_objc_synchronized_expects_object)
+                       << SyncExpr->getType() << SyncExpr->getSourceRange());
+  }
+  
   return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc,
                      static_cast<Stmt*>(SynchExpr.release()),
                      static_cast<Stmt*>(SynchBody.release())));

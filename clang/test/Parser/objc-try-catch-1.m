@@ -27,7 +27,10 @@ void * foo()
       return proc();
     }
     @catch (Frob* ex) {
-      @throw 1,2; // expected-error {{invalid 'int' argument (expected an ObjC object type)}}
+      @throw 1,2; // expected-error {{@throw requires an Objective-C object type ('int' invalid)}}
+    }
+    @catch (float x) {  // expected-error {{@catch parameter is not a pointer to an interface type}}
+      
     }
     @catch(...) {
       @throw (4,3,proc());

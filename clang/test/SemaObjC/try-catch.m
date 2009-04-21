@@ -40,8 +40,8 @@ typedef struct _NSZone NSZone;
 int foo() {
   struct s { int a, b; } agg, *pagg;
 
-  @throw 42; // expected-error {{invalid 'int' argument (expected an ObjC object type)}}
-  @throw agg; // expected-error {{invalid 'struct s' argument (expected an ObjC object type)}}
-  @throw pagg; // expected-error {{invalid 'struct s *' argument (expected an ObjC object type)}}
+  @throw 42; // expected-error {{@throw requires an Objective-C object type ('int' invalid))}}
+  @throw agg; // expected-error {{@throw requires an Objective-C object type ('struct s' invalid)}}
+  @throw pagg; // expected-error {{@throw requires an Objective-C object type ('struct s *' invalid)}}
   @throw; // expected-error {{@throw (rethrow) used outside of a @catch block}}
 }

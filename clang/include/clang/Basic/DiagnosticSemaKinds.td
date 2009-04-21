@@ -1079,7 +1079,9 @@ def warn_bad_receiver_type : Warning<
   "casting it to 'id'">;
 def err_bad_receiver_type : Error<"bad receiver type %0">;
 def error_objc_throw_expects_object : Error<
-  "invalid %0 argument (expected an ObjC object type)">;
+  "@throw requires an Objective-C object type (%0 invalid)">;
+def error_objc_synchronized_expects_object : Error<
+  "@synchronized requires an Objective-C object type (%0 invalid)">;
 def error_rethrow_used_outside_catch : Error<
   "@throw (rethrow) used outside of a @catch block">;
 def err_attribute_multiple_objc_gc : Error<
