@@ -245,3 +245,18 @@ void rdar_6777003(int x) {
   *p = 1; // expected-warning{{Dereference of null pointer}}  
 }
 
+// For pointer arithmetic, --/++ should be treated as preserving non-nullness,
+// regardless of how well the underlying StoreManager reasons about pointer
+// arithmetic.
+// <rdar://problem/6777209>
+
+void rdar_6777209(char *p) {
+  if (p == 0)
+    return;
+  
+  ++p;
+  
+  // This branch should always be infeasible.
+  if (p == 0)
+    *p = 'c'; // no-warning
+}

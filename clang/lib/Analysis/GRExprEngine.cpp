@@ -2674,9 +2674,33 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U), U->getType());    
       
       // Conjure a new symbol if necessary to recover precision.
-      if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result))
+      if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result)){
         Result = ValMgr.getConjuredSymbolVal(Ex,
                                              Builder->getCurrentBlockCount());
+        
+        // If the value is a location, ++/-- should always preserve
+        // non-nullness.  Check if the original value was non-null, and if so propagate
+        // that constraint.        
+        if (Loc::IsLocType(U->getType())) {
+          SVal Constraint = EvalBinOp(BinaryOperator::EQ, V2,
+                                      ValMgr.makeZeroVal(U->getType()),
+                                      getContext().IntTy);          
+          
+          bool isFeasible = false;
+          Assume(state, Constraint, true, isFeasible);
+          if (!isFeasible) {
+            // It isn't feasible for the original value to be null.
+            // Propagate this constraint.
+            Constraint = EvalBinOp(BinaryOperator::EQ, Result,
+                                   ValMgr.makeZeroVal(U->getType()),
+                                   getContext().IntTy);
+            
+            bool isFeasible = false;
+            state = Assume(state, Constraint, false, isFeasible);
+            assert(isFeasible && state);
+          }            
+        }        
+      }
       
       state = BindExpr(state, U, U->isPostfix() ? V2 : Result);
 
