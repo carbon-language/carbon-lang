@@ -381,6 +381,7 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
 const FieldDecl *
 ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
                                           const ObjCIvarDecl *IVar) const {
+  assert(!isForwardDecl() && "Invalid interface decl!");
   const RecordDecl *RecordForDecl = Context.addRecordToClass(this);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclContext::lookup_const_result Lookup =

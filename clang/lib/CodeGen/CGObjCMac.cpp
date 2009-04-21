@@ -2564,11 +2564,7 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
 /// interface declaration.
 const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
                                         const ObjCInterfaceDecl *OID) const {
-  // FIXME: When does this happen? It seems pretty bad to do this...
-  if (OID->isForwardDecl())
-    return CGM.getTargetData().getStructLayout(llvm::StructType::get(NULL, 
-                                                                     NULL));
-
+  assert(!OID->isForwardDecl() && "Invalid interface decl!");
   QualType T = 
     CGM.getContext().getObjCInterfaceType(const_cast<ObjCInterfaceDecl*>(OID));
   const llvm::StructType *InterfaceTy = 
@@ -4231,6 +4227,7 @@ static int countInheritedIvars(const ObjCInterfaceDecl *OI,
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
+  assert(!OID->isForwardDecl() && "Invalid interface decl!");
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
     
   int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),

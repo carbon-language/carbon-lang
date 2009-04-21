@@ -668,6 +668,11 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     CurContext->addDecl(Context, IDecl);
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(DeclPtrTy::make(IDecl));
+  } else {
+    // Mark the interface as being completed, even if it was just as
+    //   @class ....;
+    // declaration; the user cannot reopen it.
+    IDecl->setForwardDecl(false);
   }
   
   ObjCImplementationDecl* IMPDecl = 

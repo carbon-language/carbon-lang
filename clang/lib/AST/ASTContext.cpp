@@ -644,6 +644,9 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
 /// ivars and all those inherited.
 ///
 const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
+  // FIXME: The only client relying on this working in the presence of
+  // forward declarations is IRgen, which should not need it. Fix
+  // and simplify this code.
   RecordDecl *&RD = ASTRecordForInterface[D];
   if (RD) {
     // If we have a record decl already and it is either a definition or if 'D'
