@@ -449,7 +449,6 @@ bool InitializePreprocessor(Preprocessor &PP,
       AddImplicitIncludePTH(PredefineBuffer, PP, I->first);
     else
       AddImplicitInclude(PredefineBuffer, I->first);
-    }
  }
 
   LineDirective = "# 2 \"<built-in>\" 2\n";
