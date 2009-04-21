@@ -2977,7 +2977,7 @@ def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
 // Thread Local Storage Instructions
 //
 
-let hasSideEffects = 1, Uses = [EAX, EBX] in
+let hasSideEffects = 1, Uses = [EBX], Defs = [EAX] in
 def TLS_addr32 : I<0, Pseudo, (outs), (ins i32imm:$sym),
                   "leal\t${sym:mem}(,%ebx,1), %eax",
                   [(X86tlsaddr tglobaltlsaddr:$sym)]>,

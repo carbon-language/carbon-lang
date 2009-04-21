@@ -1303,7 +1303,7 @@ def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
 // Thread Local Storage Instructions
 //===----------------------------------------------------------------------===//
 
-let hasSideEffects = 1, Uses = [RDI] in
+let hasSideEffects = 1, Defs = [RDI] in
 def TLS_addr64 : I<0, Pseudo, (outs), (ins i64imm:$sym),
               ".byte\t0x66; leaq\t${sym:mem}(%rip), %rdi; .word\t0x6666; rex64",
                   [(X86tlsaddr tglobaltlsaddr:$sym)]>,
