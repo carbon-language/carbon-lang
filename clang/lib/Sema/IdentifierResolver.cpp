@@ -243,6 +243,28 @@ IdentifierResolver::begin(DeclarationName Name) {
   return end();
 }
 
+void IdentifierResolver::AddDeclToIdentifierChain(IdentifierInfo *II, 
+                                                  NamedDecl *D) {
+  void *Ptr = II->getFETokenInfo<void>();
+
+  if (!Ptr) {
+    II->setFETokenInfo(D);
+    return;
+  }
+
+  IdDeclInfo *IDI;
+
+  if (isDeclPtr(Ptr)) {
+    II->setFETokenInfo(NULL);
+    IDI = &(*IdDeclInfos)[II];
+    NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
+    IDI->AddDecl(PrevD);
+  } else
+    IDI = toIdDeclInfo(Ptr);
+
+  IDI->AddDecl(D);
+}
+
 //===----------------------------------------------------------------------===//
 // IdDeclInfoMap Implementation
 //===----------------------------------------------------------------------===//

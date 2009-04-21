@@ -14,6 +14,7 @@
 #include "clang/Sema/ParseAST.h"
 #include "Sema.h"
 #include "clang/Sema/SemaConsumer.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
@@ -50,8 +51,13 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
   if (SemaConsumer *SC = dyn_cast<SemaConsumer>(Consumer))
     SC->InitializeSema(S);
 
-  if (Ctx.getExternalSource())
-    Ctx.getExternalSource()->StartTranslationUnit(Consumer);
+  if (ExternalASTSource *External = Ctx.getExternalSource()) {
+    if (ExternalSemaSource *ExternalSema = 
+          dyn_cast<ExternalSemaSource>(External))
+      ExternalSema->InitializeSema(S);
+
+    External->StartTranslationUnit(Consumer);
+  }
 
   Parser::DeclGroupPtrTy ADecl;
   

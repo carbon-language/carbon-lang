@@ -1421,7 +1421,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
 ///
 void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   // Enter the preprocessor block.
-  Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 3);
+  Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 2);
   
   // If the PCH file contains __DATE__ or __TIME__ emit a warning about this.
   // FIXME: use diagnostics subsystem for localization etc.
@@ -1732,13 +1732,13 @@ public:
                       pch::IdentID ID) {
     unsigned KeyLen = strlen(II->getName()) + 1;
     clang::io::Emit16(Out, KeyLen);
-    unsigned DataLen = 4 + 4 + 2; // 4 bytes for token ID, builtin, flags
-                                  // 4 bytes for the persistent ID
-                                  // 2 bytes for the length of the decl chain
+    unsigned DataLen = 4 + 4; // 4 bytes for token ID, builtin, flags
+                              // 4 bytes for the persistent ID
     for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                    DEnd = IdentifierResolver::end();
          D != DEnd; ++D)
       DataLen += sizeof(pch::DeclID);
+    clang::io::Emit16(Out, DataLen);
     return std::make_pair(KeyLen, DataLen);
   }
   
@@ -1762,15 +1762,18 @@ public:
     clang::io::Emit32(Out, Bits);
     clang::io::Emit32(Out, ID);
 
-    llvm::SmallVector<pch::DeclID, 8> Decls;
-    for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
-                                   DEnd = IdentifierResolver::end();
+    // Emit the declaration IDs in reverse order, because the
+    // IdentifierResolver provides the declarations as they would be
+    // visible (e.g., the function "stat" would come before the struct
+    // "stat"), but IdentifierResolver::AddDeclToIdentifierChain()
+    // adds declarations to the end of the list (so we need to see the
+    // struct "status" before the function "status").
+    llvm::SmallVector<Decl *, 16> Decls(IdentifierResolver::begin(II), 
+                                        IdentifierResolver::end());
+    for (llvm::SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
+                                                      DEnd = Decls.rend();
          D != DEnd; ++D)
-      Decls.push_back(Writer.getDeclID(*D));
-
-    clang::io::Emit16(Out, Decls.size());
-    for (unsigned I = 0; I < Decls.size(); ++I)
-      clang::io::Emit32(Out, Decls[I]);
+      clang::io::Emit32(Out, Writer.getDeclID(*D));
   }
 };
 } // end anonymous namespace
@@ -1799,21 +1802,24 @@ void PCHWriter::WriteIdentifierTable() {
 
     // Create the on-disk hash table in a buffer.
     llvm::SmallVector<char, 4096> IdentifierTable; 
+    uint32_t BucketOffset;
     {
       PCHIdentifierTableTrait Trait(*this);
       llvm::raw_svector_ostream Out(IdentifierTable);
-      Generator.Emit(Out, Trait);
+      BucketOffset = Generator.Emit(Out, Trait);
     }
 
     // Create a blob abbreviation
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_TABLE));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned IDTableAbbrev = Stream.EmitAbbrev(Abbrev);
 
     // Write the identifier table
     RecordData Record;
     Record.push_back(pch::IDENTIFIER_TABLE);
+    Record.push_back(BucketOffset);
     Stream.EmitRecordWithBlob(IDTableAbbrev, Record, 
                               &IdentifierTable.front(), 
                               IdentifierTable.size());

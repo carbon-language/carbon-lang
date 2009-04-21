@@ -15,9 +15,10 @@
 
 #include "clang/Frontend/PCHBitCodes.h"
 #include "clang/AST/DeclarationName.h"
-#include "clang/AST/ExternalASTSource.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
@@ -44,7 +45,9 @@ class Decl;
 class DeclContext;
 class GotoStmt;
 class LabelStmt;
+class NamedDecl;
 class Preprocessor;
+class Sema;
 class SwitchCase;
 
 /// \brief Reads a precompiled head containing the contents of a
@@ -59,11 +62,15 @@ class SwitchCase;
 /// The PCH reader provides lazy de-serialization of declarations, as
 /// required when traversing the AST. Only those AST nodes that are
 /// actually required will be de-serialized.
-class PCHReader : public ExternalASTSource {
+class PCHReader : public ExternalSemaSource, public IdentifierInfoLookup {
 public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
 
 private:
+  /// \brief The semantic analysis object that will be processing the
+  /// PCH file and the translation unit that uses it.
+  Sema *SemaObj;
+
   /// \brief The preprocessor that will be loading the source file.
   Preprocessor &PP;
 
@@ -116,8 +123,14 @@ private:
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
 
-  /// \brief String data for the identifiers in the PCH file.
-  const char *IdentifierTable;
+  /// \brief Actual data for the on-disk hash table.
+  ///
+  /// FIXME: This will eventually go away.
+  const char *IdentifierTableData;
+
+  /// \brief A pointer to an on-disk hash table of opaque type
+  /// IdentifierHashTable.
+  void *IdentifierLookupTable;
 
   /// \brief String data for identifiers, indexed by the identifier ID
   /// minus one.
@@ -158,10 +171,10 @@ private:
   /// in the PCH file.
   unsigned TotalNumStatements;
 
-  /// \brief 
+  /// \brief FIXME: document!
   llvm::SmallVector<uint64_t, 4> SpecialTypes;
 
-  PCHReadResult ReadPCHBlock();
+  PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset);
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
                              FileID PCHBufferID);
@@ -179,8 +192,9 @@ private:
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  PCHReader(Preprocessor &PP, ASTContext &Context) 
-    : PP(PP), Context(Context), IdentifierTable(0), NumStatementsRead(0) { }
+  explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
+    : SemaObj(0), PP(PP), Context(Context), 
+      IdentifierTableData(0), NumStatementsRead(0) { }
 
   ~PCHReader() {}
 
@@ -246,6 +260,23 @@ public:
   /// \brief Print some statistics about PCH usage.
   virtual void PrintStats();
 
+  /// \brief Initialize the semantic source with the Sema instance
+  /// being used to perform semantic analysis on the abstract syntax
+  /// tree.
+  virtual void InitializeSema(Sema &S);
+
+  /// \brief Retrieve the IdentifierInfo for the named identifier.
+  ///
+  /// This routine builds a new IdentifierInfo for the given
+  /// identifier. If any declarations with this name are visible from
+  /// translation unit scope, their declarations will be deserialized
+  /// and introduced into the declaration chain of the
+  /// identifier. FIXME: if this identifier names a macro, deserialize
+  /// the macro.
+  virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd);
+
+  void SetIdentifierInfo(unsigned ID, const IdentifierInfo *II);
+
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(unsigned DiagID);
 
@@ -284,8 +315,21 @@ public:
   /// supplements.
   ASTContext &getContext() { return Context; }
 
+  // FIXME: temporary hack to store declarations that we deserialized
+  // before we had access to the Sema object.
+  llvm::SmallVector<NamedDecl *, 16> TUDecls;
+
+  /// \brief Retrieve the semantic analysis object used to analyze the
+  /// translation unit in which the precompiled header is being
+  /// imported.
+  Sema *getSema() { return SemaObj; }
+
   /// \brief Retrieve the stream that this PCH reader is reading from.
   llvm::BitstreamReader &getStream() { return Stream; }
+
+  /// \brief Retrieve the identifier table associated with the
+  /// preprocessor.
+  IdentifierTable &getIdentifierTable();
 
   /// \brief Record that the given ID maps to the given switch-case
   /// statement.

@@ -242,6 +242,8 @@ class OnDiskChainedHashTable {
   const unsigned NumEntries;
   const unsigned char* const Buckets;
   const unsigned char* const Base;
+  Info InfoObj;
+
 public:
   typedef typename Info::internal_key_type internal_key_type;
   typedef typename Info::external_key_type external_key_type;
@@ -249,9 +251,10 @@ public:
   
   OnDiskChainedHashTable(unsigned numBuckets, unsigned numEntries,
                          const unsigned char* buckets,
-                         const unsigned char* base)
+                         const unsigned char* base,
+                         const Info &InfoObj = Info())
     : NumBuckets(numBuckets), NumEntries(numEntries),
-      Buckets(buckets), Base(base) {        
+      Buckets(buckets), Base(base), InfoObj(InfoObj) {
         assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
                "'buckets' must have a 4-byte alignment");
       }
@@ -267,22 +270,27 @@ public:
     internal_key_type key;
     const unsigned char* const data;
     const unsigned len;
+    Info *InfoObj;
   public:
     iterator() : data(0), len(0) {}
-    iterator(const internal_key_type k, const unsigned char* d, unsigned l)
-      : key(k), data(d), len(l) {}
+    iterator(const internal_key_type k, const unsigned char* d, unsigned l,
+             Info *InfoObj)
+      : key(k), data(d), len(l), InfoObj(InfoObj) {}
     
-    data_type operator*() const { return Info::ReadData(key, data, len); }    
+    data_type operator*() const { return InfoObj->ReadData(key, data, len); }    
     bool operator==(const iterator& X) const { return X.data == data; }    
     bool operator!=(const iterator& X) const { return X.data != data; }
   };    
   
-  iterator find(const external_key_type& eKey) {
+  iterator find(const external_key_type& eKey, Info *InfoPtr = 0) {
+    if (!InfoPtr)
+      InfoPtr = &InfoObj;
+
     using namespace io;
     const internal_key_type& iKey = Info::GetInternalKey(eKey);
     unsigned key_hash = Info::ComputeHash(iKey);
     
-    // Each bucket is just a 32-bit offset into the PTH file.
+    // Each bucket is just a 32-bit offset into the hash table file.
     unsigned idx = key_hash & (NumBuckets - 1);
     const unsigned char* Bucket = Buckets + sizeof(uint32_t)*idx;
     
@@ -319,7 +327,7 @@ public:
       }
       
       // The key matches!
-      return iterator(X, Items + L.first, L.second);
+      return iterator(X, Items + L.first, L.second, InfoPtr);
     }
     
     return iterator();
@@ -329,7 +337,8 @@ public:
   
   
   static OnDiskChainedHashTable* Create(const unsigned char* buckets,
-                                        const unsigned char* const base) {
+                                        const unsigned char* const base,
+                                        const Info &InfoObj = Info()) {
     using namespace io;
     assert(buckets > base);
     assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
@@ -338,7 +347,7 @@ public:
     unsigned numBuckets = ReadLE32(buckets);
     unsigned numEntries = ReadLE32(buckets);
     return new OnDiskChainedHashTable<Info>(numBuckets, numEntries, buckets,
-                                            base);
+                                            base, InfoObj);
   }  
 };
 

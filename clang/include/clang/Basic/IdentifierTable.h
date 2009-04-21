@@ -229,7 +229,7 @@ private:
 };
 
 /// IdentifierInfoLookup - An abstract class used by IdentifierTable that
-///  provides an interface for for performing lookups from strings
+///  provides an interface for performing lookups from strings
 /// (const char *) to IdentiferInfo objects.
 class IdentifierInfoLookup {
 public:
@@ -260,6 +260,11 @@ public:
   IdentifierTable(const LangOptions &LangOpts,
                   IdentifierInfoLookup* externalLookup = 0);
   
+  /// \brief Set the external identifier lookup mechanism.
+  void setExternalIdentifierLookup(IdentifierInfoLookup *IILookup) {
+    ExternalLookup = IILookup;
+  }
+
   llvm::BumpPtrAllocator& getAllocator() {
     return HashTable.getAllocator();
   }
@@ -295,6 +300,34 @@ public:
     return *II;
   }
   
+  /// \brief Creates a new IdentifierInfo from the given string.
+  ///
+  /// This is a lower-level version of get() that requires that this
+  /// identifier not be known previously and that does not consult an
+  /// external source for identifiers. In particular, external
+  /// identifier sources can use this routine to build IdentifierInfo
+  /// nodes and then introduce additional information about those
+  /// identifiers.
+  IdentifierInfo &CreateIdentifierInfo(const char *NameStart, 
+                                       const char *NameEnd) {
+    llvm::StringMapEntry<IdentifierInfo*> &Entry =
+      HashTable.GetOrCreateValue(NameStart, NameEnd);
+    
+    IdentifierInfo *II = Entry.getValue();
+    assert(!II && "IdentifierInfo already exists");
+    
+    // Lookups failed, make a new IdentifierInfo.
+    void *Mem = getAllocator().Allocate<IdentifierInfo>();
+    II = new (Mem) IdentifierInfo();
+    Entry.setValue(II);
+
+    // Make sure getName() knows how to find the IdentifierInfo
+    // contents.
+    II->Entry = &Entry;
+
+    return *II;
+  }
+
   IdentifierInfo &get(const char *Name) {
     return get(Name, Name+strlen(Name));
   }
@@ -304,14 +337,11 @@ public:
     return get(NameBytes, NameBytes+Name.size());
   }
 
-private:
   typedef HashTableTy::const_iterator iterator;
   typedef HashTableTy::const_iterator const_iterator;
   
   iterator begin() const { return HashTable.begin(); }
   iterator end() const   { return HashTable.end(); }
-public:
-  
   unsigned size() const { return HashTable.size(); }
   
   /// PrintStats - Print some statistics to stderr that indicate how well the

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "../Sema/Sema.h" // FIXME: move Sema headers elsewhere
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -22,6 +23,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/FileManager.h"
@@ -994,6 +996,111 @@ unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   return 0;
 }
 
+//===----------------------------------------------------------------------===//
+// PCH reader implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN PCHIdentifierLookupTrait {
+  PCHReader &Reader;
+
+  // If we know the IdentifierInfo in advance, it is here and we will
+  // not build a new one. Used when deserializing information about an
+  // identifier that was constructed before the PCH file was read.
+  IdentifierInfo *KnownII;
+
+public:
+  typedef IdentifierInfo * data_type;
+
+  typedef const std::pair<const char*, unsigned> external_key_type;
+
+  typedef external_key_type internal_key_type;
+
+  explicit PCHIdentifierLookupTrait(PCHReader &Reader, IdentifierInfo *II = 0) 
+    : Reader(Reader), KnownII(II) { }
+  
+  static bool EqualKey(const internal_key_type& a,
+                       const internal_key_type& b) {
+    return (a.second == b.second) ? memcmp(a.first, b.first, a.second) == 0
+                                  : false;
+  }
+  
+  static unsigned ComputeHash(const internal_key_type& a) {
+    return BernsteinHash(a.first, a.second);
+  }
+  
+  // This hopefully will just get inlined and removed by the optimizer.
+  static const internal_key_type&
+  GetInternalKey(const external_key_type& x) { return x; }
+  
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    using namespace clang::io;
+    unsigned KeyLen = ReadUnalignedLE16(d);
+    unsigned DataLen = ReadUnalignedLE16(d);
+    return std::make_pair(KeyLen, DataLen);
+  }
+    
+  static std::pair<const char*, unsigned>
+  ReadKey(const unsigned char* d, unsigned n) {
+    assert(n >= 2 && d[n-1] == '\0');
+    return std::make_pair((const char*) d, n-1);
+  }
+    
+  IdentifierInfo *ReadData(const internal_key_type& k, 
+                           const unsigned char* d,
+                           unsigned DataLen) {
+    using namespace clang::io;
+    uint32_t Bits = ReadUnalignedLE32(d); // FIXME: use these?
+    (void)Bits;
+    pch::IdentID ID = ReadUnalignedLE32(d);
+    DataLen -= 8;
+
+    // Build the IdentifierInfo itself and link the identifier ID with
+    // the new IdentifierInfo.
+    IdentifierInfo *II = KnownII;
+    if (!II)
+      II = &Reader.getIdentifierTable().CreateIdentifierInfo(
+                                                 k.first, k.first + k.second);
+    Reader.SetIdentifierInfo(ID, II);
+
+    // FIXME: If this identifier is a macro, deserialize the macro
+    // definition now.
+
+    // Read all of the declarations visible at global scope with this
+    // name.
+    Sema *SemaObj = Reader.getSema();
+    while (DataLen > 0) {
+      NamedDecl *D = cast<NamedDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
+
+      if (SemaObj) {
+        // Introduce this declaration into the translation-unit scope
+        // and add it to the declaration chain for this identifier, so
+        // that (unqualified) name lookup will find it.
+        SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(D));
+        SemaObj->IdResolver.AddDeclToIdentifierChain(II, D);
+      } else {
+        // Queue this declaration so that it will be added to the
+        // translation unit scope and identifier's declaration chain
+        // once a Sema object is known.
+        // FIXME: This is a temporary hack. It will go away once we have
+        // lazy deserialization of macros.
+        Reader.TUDecls.push_back(D);
+      }
+
+      DataLen -= 4;
+    }
+    return II;
+  }
+};
+  
+} // end anonymous namespace  
+
+/// \brief The on-disk hash table used to contain information about
+/// all of the identifiers in the program.
+typedef OnDiskChainedHashTable<PCHIdentifierLookupTrait> 
+  PCHIdentifierLookupTable;
+
 // FIXME: use the diagnostics machinery
 static bool Error(const char *Str) {
   std::fprintf(stderr, "%s\n", Str);
@@ -1314,30 +1421,18 @@ bool PCHReader::ReadPreprocessorBlock() {
   }
 }
 
-PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
+PCHReader::PCHReadResult 
+PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
     Error("Malformed block record");
     return Failure;
   }
-
-  uint64_t PreprocessorBlockBit = 0;
 
   // Read all of the records and blocks for the PCH file.
   RecordData Record;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
-      // If we saw the preprocessor block, read it now.
-      if (PreprocessorBlockBit) {
-        uint64_t SavedPos = Stream.GetCurrentBitNo();
-        Stream.JumpToBit(PreprocessorBlockBit);
-        if (ReadPreprocessorBlock()) {
-          Error("Malformed preprocessor block");
-          return Failure;
-        }
-        Stream.JumpToBit(SavedPos);
-      }        
-      
       if (Stream.ReadBlockEnd()) {
         Error("Error at end of module block");
         return Failure;
@@ -1360,11 +1455,11 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
       case pch::PREPROCESSOR_BLOCK_ID:
         // Skip the preprocessor block for now, but remember where it is.  We
         // want to read it in after the identifier table.
-        if (PreprocessorBlockBit) {
+        if (PreprocessorBlockOffset) {
           Error("Multiple preprocessor blocks found.");
           return Failure;
         }
-        PreprocessorBlockBit = Stream.GetCurrentBitNo();
+        PreprocessorBlockOffset = Stream.GetCurrentBitNo();
         if (Stream.SkipBlock()) {
           Error("Malformed block record");
           return Failure;
@@ -1437,7 +1532,15 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
     }
 
     case pch::IDENTIFIER_TABLE:
-      IdentifierTable = BlobStart;
+      IdentifierTableData = BlobStart;
+      IdentifierLookupTable 
+        = PCHIdentifierLookupTable::Create(
+                        (const unsigned char *)IdentifierTableData + Record[0],
+                        (const unsigned char *)IdentifierTableData, 
+                        PCHIdentifierLookupTrait(*this));
+      // FIXME: What about any identifiers already placed into the
+      // identifier table? Should we load decls with those names now?
+      PP.getIdentifierTable().setExternalIdentifierLookup(this);
       break;
 
     case pch::IDENTIFIER_OFFSET:
@@ -1479,6 +1582,23 @@ PCHReader::PCHReadResult PCHReader::ReadPCHBlock() {
   return Failure;
 }
 
+namespace {
+  /// \brief Helper class that saves the current stream position and
+  /// then restores it when destroyed.
+  struct VISIBILITY_HIDDEN SavedStreamPosition {
+    explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
+      : Stream(Stream), Offset(Stream.GetCurrentBitNo()) { }
+
+    ~SavedStreamPosition() {
+      Stream.JumpToBit(Offset);
+    }
+
+  private:
+    llvm::BitstreamReader &Stream;
+    uint64_t Offset;
+  };
+}
+
 PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Set the PCH file name.
   this->FileName = FileName;
@@ -1506,6 +1626,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
 
   // We expect a number of well-defined blocks, though we don't necessarily
   // need to understand them all.
+  uint64_t PreprocessorBlockOffset = 0;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     
@@ -1515,7 +1636,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     }
 
     unsigned BlockID = Stream.ReadSubBlockID();
-    
+
     // We only know the PCH subblock ID.
     switch (BlockID) {
     case llvm::bitc::BLOCKINFO_BLOCK_ID:
@@ -1525,7 +1646,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       }
       break;
     case pch::PCH_BLOCK_ID:
-      switch (ReadPCHBlock()) {
+      switch (ReadPCHBlock(PreprocessorBlockOffset)) {
       case Success:
         break;
 
@@ -1551,28 +1672,54 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
 
+  // Initialization of builtins and library builtins occurs before the
+  // PCH file is read, so there may be some identifiers that were
+  // loaded into the IdentifierTable before we intercepted the
+  // creation of identifiers. Iterate through the list of known
+  // identifiers and determine whether we have to establish
+  // preprocessor definitions or top-level identifier declaration
+  // chains for those identifiers.
+  //
+  // We copy the IdentifierInfo pointers to a small vector first,
+  // since de-serializing declarations or macro definitions can add
+  // new entries into the identifier table, invalidating the
+  // iterators.
+  llvm::SmallVector<IdentifierInfo *, 128> Identifiers;
+  for (IdentifierTable::iterator Id = PP.getIdentifierTable().begin(),
+                              IdEnd = PP.getIdentifierTable().end();
+       Id != IdEnd; ++Id)
+    Identifiers.push_back(Id->second);
+  PCHIdentifierLookupTable *IdTable 
+    = (PCHIdentifierLookupTable *)IdentifierLookupTable;
+  for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
+    IdentifierInfo *II = Identifiers[I];
+    // Look in the on-disk hash table for an entry for
+    PCHIdentifierLookupTrait Info(*this, II);
+    std::pair<const char*, unsigned> Key(II->getName(), II->getLength());
+    PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
+    if (Pos == IdTable->end())
+      continue;
+
+    // Dereferencing the iterator has the effect of populating the
+    // IdentifierInfo node with the various declarations it needs.
+    (void)*Pos;
+  }
+
   // Load the special types.
   Context.setBuiltinVaListType(
     GetType(SpecialTypes[pch::SPECIAL_TYPE_BUILTIN_VA_LIST]));
 
-  return Success;
-}
-
-namespace {
-  /// \brief Helper class that saves the current stream position and
-  /// then restores it when destroyed.
-  struct VISIBILITY_HIDDEN SavedStreamPosition {
-    explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
-      : Stream(Stream), Offset(Stream.GetCurrentBitNo()) { }
-
-    ~SavedStreamPosition() {
-      Stream.JumpToBit(Offset);
+  // If we saw the preprocessor block, read it now.
+  if (PreprocessorBlockOffset) {
+    SavedStreamPosition SavedPos(Stream);
+    Stream.JumpToBit(PreprocessorBlockOffset);
+    if (ReadPreprocessorBlock()) {
+      Error("Malformed preprocessor block");
+      return Failure;
     }
+  }
 
-  private:
-    llvm::BitstreamReader &Stream;
-    uint64_t Offset;
-  };
+  return Success;
 }
 
 /// \brief Parse the record that corresponds to a LangOptions data
@@ -2021,7 +2168,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
   }
 
-  assert(D && "Unknown declaration creating PCH file");
+  assert(D && "Unknown declaration reading PCH file");
   if (D) {
     LoadedDecl(Index, D);
     Reader.Visit(D);
@@ -2220,11 +2367,44 @@ void PCHReader::PrintStats() {
   std::fprintf(stderr, "\n");
 }
 
+void PCHReader::InitializeSema(Sema &S) {
+  SemaObj = &S;
+ 
+  // FIXME: this makes sure any declarations that were deserialized
+  // "too early" still get added to the identifier's declaration
+  // chains.
+  for (unsigned I = 0, N = TUDecls.size(); I != N; ++I) {
+    SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(TUDecls[I]));
+    SemaObj->IdResolver.AddDecl(TUDecls[I]);
+  }
+  TUDecls.clear();
+}
+
+IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
+  // Try to find this name within our on-disk hash table
+  PCHIdentifierLookupTable *IdTable 
+    = (PCHIdentifierLookupTable *)IdentifierLookupTable;
+  std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
+  PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key);
+  if (Pos == IdTable->end())
+    return 0;
+
+  // Dereferencing the iterator has the effect of building the
+  // IdentifierInfo node and populating it with the various
+  // declarations it needs.
+  return *Pos;
+}
+
+void PCHReader::SetIdentifierInfo(unsigned ID, const IdentifierInfo *II) {
+  assert(ID && "Non-zero identifier ID required");
+  IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(II);
+}
+
 IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
   
-  if (!IdentifierTable || IdentifierData.empty()) {
+  if (!IdentifierTableData || IdentifierData.empty()) {
     Error("No identifier table in PCH file");
     return 0;
   }
@@ -2232,8 +2412,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (IdentifierData[ID - 1] & 0x01) {
     uint64_t Offset = IdentifierData[ID - 1] >> 1;
     IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(
-                               &Context.Idents.get(IdentifierTable + Offset));
-    // FIXME: also read the contents of the IdentifierInfo.
+                               &Context.Idents.get(IdentifierTableData + Offset));
   }
   
   return reinterpret_cast<IdentifierInfo *>(IdentifierData[ID - 1]);
@@ -2722,6 +2901,12 @@ DiagnosticBuilder PCHReader::Diag(SourceLocation Loc, unsigned DiagID) {
   return PP.getDiagnostics().Report(FullSourceLoc(Loc,
                                                   Context.getSourceManager()),
                                     DiagID);
+}
+
+/// \brief Retrieve the identifier table associated with the
+/// preprocessor.
+IdentifierTable &PCHReader::getIdentifierTable() {
+  return PP.getIdentifierTable();
 }
 
 /// \brief Record that the given ID maps to the given switch-case

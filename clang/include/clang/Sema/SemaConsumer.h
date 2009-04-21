@@ -25,7 +25,7 @@ namespace clang {
   /// analysis of the entities in those ASTs.
   class SemaConsumer : public ASTConsumer {
   public:
-    explicit SemaConsumer() {
+    SemaConsumer() {
       ASTConsumer::SemaConsumer = true;
     }
 

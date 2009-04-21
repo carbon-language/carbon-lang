@@ -177,6 +177,14 @@ public:
   /// (and, therefore, replaced).
   bool ReplaceDecl(NamedDecl *Old, NamedDecl *New);
 
+  /// \brief Link the declaration into the chain of declarations for
+  /// the given identifier.
+  ///
+  /// This is a lower-level routine used by the PCH reader to link a
+  /// declaration into a specific IdentifierInfo before the
+  /// declaration actually has a name.
+  void AddDeclToIdentifierChain(IdentifierInfo *II, NamedDecl *D);
+
   explicit IdentifierResolver(const LangOptions &LangOpt);
   ~IdentifierResolver();
 

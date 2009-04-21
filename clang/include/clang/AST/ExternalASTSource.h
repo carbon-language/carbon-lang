@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the ExternalASTSource interface, 
+//  This file defines the ExternalASTSource interface, which enables
+//  construction of AST nodes from some external source.x
 //
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
@@ -22,6 +23,7 @@ namespace clang {
 class ASTConsumer;
 class Decl;
 class DeclContext;
+class ExternalSemaSource; // layering violation required for downcasting
 class Stmt;
 
 /// \brief The deserialized representation of a set of declarations
@@ -44,7 +46,15 @@ struct VisibleDeclaration {
 /// actual type and declaration nodes, and read parts of declaration
 /// contexts.
 class ExternalASTSource {
+  /// \brief Whether this AST source also provides information for
+  /// semantic analysis.
+  bool SemaSource;
+
+  friend class ExternalSemaSource;
+
 public:
+  ExternalASTSource() : SemaSource(false) { }
+
   virtual ~ExternalASTSource();
 
   /// \brief Resolve a type ID into a type, potentially building a new
