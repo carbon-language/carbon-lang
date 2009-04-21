@@ -20,6 +20,7 @@ namespace clang {
   class TagDecl;
   class HandleTagDeclDefinition;
   class SemaConsumer; // layering violation required for safe SemaConsumer
+  class VarDecl;
 
 /// ASTConsumer - This is an abstract interface that should be implemented by
 /// clients that read ASTs.  This abstraction layer allows the client to be
@@ -56,6 +57,17 @@ public:
   /// can be defined in declspecs).
   virtual void HandleTagDeclDefinition(TagDecl *D) {}
   
+  /// \brief Callback invoked at the end of a translation unit to
+  /// notify the consumer that the given tentative definition should
+  /// be completed.
+  ///
+  /// The variable declaration itself will be a tentative
+  /// definition. If it had an incomplete array type, its type will
+  /// have already been changed to an array of size 1. However, the
+  /// declaration remains a tentative definition and has not been
+  /// modified by the introduction of an implicit zero initializer.
+  virtual void CompleteTentativeDefinition(VarDecl *D) {}
+
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {
   }

@@ -233,6 +233,14 @@ public:
   ///     not visible.
   llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
 
+  /// \brief The set of tentative declarations seen so far in this
+  /// translation unit for which no definition has been seen.
+  ///
+  /// The tentative declarations are indexed by the name of the
+  /// declaration, and only the most recent tentative declaration for
+  /// a given variable will be recorded here.
+  llvm::DenseMap<DeclarationName, VarDecl *> TentativeDefinitions;
+
   IdentifierResolver IdResolver;
 
   // Enum values used by KnownFunctionIDs (see below).

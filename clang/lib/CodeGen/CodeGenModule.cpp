@@ -424,13 +424,6 @@ void CodeGenModule::EmitDeferred() {
     // Otherwise, emit the definition and move on to the next one.
     EmitGlobalDefinition(D);
   }
-
-  // Emit any tentative definitions, in reverse order so the most
-  // important (merged) decl will be seen and emitted first.
-  for (std::vector<const VarDecl*>::reverse_iterator 
-         it = TentativeDefinitions.rbegin(), ie = TentativeDefinitions.rend(); 
-       it != ie; ++it)
-    EmitTentativeDefinition(*it);
 }
 
 /// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the 
@@ -502,6 +495,7 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   
   const VarDecl *VD = cast<VarDecl>(Global);
   assert(VD->isFileVarDecl() && "Invalid decl");
+
   return VD->getStorageClass() == VarDecl::Static;
 }
 
@@ -520,16 +514,14 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
     const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
-    // If this isn't a definition, defer code generation.
-    if (!VD->getInit()) {
-      // If this is a tentative definition, remember it so that we can
-      // emit the common definition if needed. It is important to
-      // defer tentative definitions, since they may have incomplete
-      // type.
-      if (!VD->hasExternalStorage())
-        TentativeDefinitions.push_back(VD);
+    // In C++, if this is marked "extern", defer code generation.
+    if (getLangOptions().CPlusPlus && 
+        VD->getStorageClass() == VarDecl::Extern && !VD->getInit())
       return;
-    }
+
+    // In C, if this isn't a definition, defer code generation.
+    if (!getLangOptions().CPlusPlus && !VD->getInit())
+      return;
   }
 
   // Defer code generation when possible if this is a static definition, inline
@@ -727,6 +719,9 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
   // See if we have already defined this (as a variable), if so we do
   // not need to do anything.
   llvm::GlobalValue *GV = GlobalDeclMap[getMangledName(D)];
+  if (!GV && MayDeferGeneration(D)) // this variable was never referenced
+    return;
+
   if (llvm::GlobalVariable *Var = dyn_cast_or_null<llvm::GlobalVariable>(GV))
     if (Var->hasInitializer())
       return;

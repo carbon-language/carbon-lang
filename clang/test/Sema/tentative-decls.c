@@ -57,3 +57,9 @@ void func2(void)
   extern double *p;
 }
 
+// <rdar://problem/6808352>
+static int a0[];
+static int b0;
+
+static int a0[] = { 4 };
+static int b0 = 5;

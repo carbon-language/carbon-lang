@@ -158,6 +158,10 @@ namespace {
                                      "LLVM IR generation of declaration");
       Gen->HandleTagDeclDefinition(D);
     }
+
+    virtual void CompleteTentativeDefinition(VarDecl *D) {
+      Gen->CompleteTentativeDefinition(D);
+    }
   };  
 }
 

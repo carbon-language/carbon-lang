@@ -2545,6 +2545,18 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     
   // Attach the initializer to the decl.
   VDecl->setInit(Init);
+
+  // If the previous declaration of VDecl was a tentative definition,
+  // remove it from the set of tentative definitions.
+  if (VDecl->getPreviousDeclaration() &&
+      VDecl->getPreviousDeclaration()->isTentativeDefinition(Context)) {
+    llvm::DenseMap<DeclarationName, VarDecl *>::iterator Pos 
+      = TentativeDefinitions.find(VDecl->getDeclName());
+    assert(Pos != TentativeDefinitions.end() && 
+           "Unrecorded tentative definition?");
+    TentativeDefinitions.erase(Pos);
+  }
+
   return;
 }
 
@@ -2557,6 +2569,11 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
 
   if (VarDecl *Var = dyn_cast<VarDecl>(RealDecl)) {
     QualType Type = Var->getType();
+
+    // Record tentative definitions.
+    if (Var->isTentativeDefinition(Context))
+      TentativeDefinitions[Var->getDeclName()] = Var;
+
     // C++ [dcl.init.ref]p3:
     //   The initializer can be omitted for a reference only in a
     //   parameter declaration (8.3.5), in the declaration of a

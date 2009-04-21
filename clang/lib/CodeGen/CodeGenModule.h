@@ -119,14 +119,6 @@ class CodeGenModule : public BlockModule {
   /// is done.
   std::vector<const ValueDecl*> DeferredDeclsToEmit;
 
-  /// TentativeDefinitions - A list of declarations which are
-  /// tentative definitions. Code generation for these must be
-  /// deferred because they are allowed to have incomplete type when
-  /// they are seen. This also allows us to avoid generating an extra
-  /// common definiton in situations where the tentative definition is
-  /// followed by an actual definition.
-  std::vector<const VarDecl*> TentativeDefinitions;
-  
   /// LLVMUsed - List of global values which are required to be
   /// present in the object file; bitcast to i8*. This is used for
   /// forcing visibility of symbols which may otherwise be optimized
@@ -339,6 +331,8 @@ public:
                                     CXXCtorType Type);
   const char *getMangledCXXDtorName(const CXXDestructorDecl *D, 
                                     CXXDtorType Type);
+
+  void EmitTentativeDefinition(const VarDecl *D);
   
   enum GVALinkage {
     GVA_Internal,
@@ -382,7 +376,6 @@ private:
   void EmitGlobalDefinition(const ValueDecl *D);
 
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
-  void EmitTentativeDefinition(const VarDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);
   void EmitAliasDefinition(const ValueDecl *D);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);

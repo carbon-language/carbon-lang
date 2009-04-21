@@ -291,7 +291,8 @@ bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
   if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
     return false;
 
-  return (!getInit() &&
+  const VarDecl *Def = 0;
+  return (!getDefinition(Def) &&
           (getStorageClass() == None || getStorageClass() == Static));
 }
 

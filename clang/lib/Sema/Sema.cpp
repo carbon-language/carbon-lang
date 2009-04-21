@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -232,41 +233,39 @@ void Sema::ActOnEndOfTranslationUnit() {
   //   translation unit contains a file scope declaration of that
   //   identifier, with the composite type as of the end of the
   //   translation unit, with an initializer equal to 0.
-  if (!getLangOptions().CPlusPlus) {
-    // Note: we traverse the scope's list of declarations rather than
-    // the DeclContext's list, because we only want to see the most
-    // recent declaration of each identifier.
-    for (Scope::decl_iterator I = TUScope->decl_begin(),
-         IEnd = TUScope->decl_end();
-         I != IEnd; ++I) {
-      Decl *D = (*I).getAs<Decl>();
-      if (D->isInvalidDecl())
-        continue;
+  for (llvm::DenseMap<DeclarationName, VarDecl *>::iterator 
+         D = TentativeDefinitions.begin(),
+         DEnd = TentativeDefinitions.end();
+       D != DEnd; ++D) {
+    VarDecl *VD = D->second;
 
-      if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-        if (VD->isTentativeDefinition(Context)) {
-          if (const IncompleteArrayType *ArrayT 
-                = Context.getAsIncompleteArrayType(VD->getType())) {
-            if (RequireCompleteType(VD->getLocation(), 
-                                    ArrayT->getElementType(),
-                                 diag::err_tentative_def_incomplete_type_arr))
-              VD->setInvalidDecl();
-            else {
-              // Set the length of the array to 1 (C99 6.9.2p5).
-              Diag(VD->getLocation(),  diag::warn_tentative_incomplete_array);
-              llvm::APInt One(Context.getTypeSize(Context.getSizeType()), 
-                              true);
-              QualType T 
-                = Context.getConstantArrayType(ArrayT->getElementType(),
-                                               One, ArrayType::Normal, 0);
-              VD->setType(T);
-            }
-          } else if (RequireCompleteType(VD->getLocation(), VD->getType(), 
-                                    diag::err_tentative_def_incomplete_type))
-            VD->setInvalidDecl();
-        }
+    if (VD->isInvalidDecl() || !VD->isTentativeDefinition(Context))
+      continue;
+
+    if (const IncompleteArrayType *ArrayT 
+        = Context.getAsIncompleteArrayType(VD->getType())) {
+      if (RequireCompleteType(VD->getLocation(), 
+                              ArrayT->getElementType(),
+                              diag::err_tentative_def_incomplete_type_arr))
+        VD->setInvalidDecl();
+      else {
+        // Set the length of the array to 1 (C99 6.9.2p5).
+        Diag(VD->getLocation(),  diag::warn_tentative_incomplete_array);
+        llvm::APInt One(Context.getTypeSize(Context.getSizeType()), 
+                        true);
+        QualType T 
+          = Context.getConstantArrayType(ArrayT->getElementType(),
+                                         One, ArrayType::Normal, 0);
+        VD->setType(T);
       }
-    }
+    } else if (RequireCompleteType(VD->getLocation(), VD->getType(), 
+                                   diag::err_tentative_def_incomplete_type))
+      VD->setInvalidDecl();
+
+    // Notify the consumer that we've completed a tentative definition.
+    if (!VD->isInvalidDecl())
+      Consumer.CompleteTentativeDefinition(VD);
+
   }
 }
 
