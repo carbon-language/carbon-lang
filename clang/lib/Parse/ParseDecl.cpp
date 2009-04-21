@@ -1876,7 +1876,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     else
       // Remember that we parsed a Block type, and remember the type-quals.
       D.AddTypeInfo(DeclaratorChunk::getBlockPointer(DS.getTypeQualifiers(), 
-                                                     Loc),
+                                                     Loc, DS.TakeAttributes()),
                     SourceLocation());
   } else {
     // Is a reference

@@ -2009,7 +2009,7 @@ inline bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType.getUnqualifiedType()); 
 }
 inline bool Type::isBlockPointerType() const {
-    return isa<BlockPointerType>(CanonicalType); 
+  return isa<BlockPointerType>(CanonicalType.getUnqualifiedType()); 
 }
 inline bool Type::isReferenceType() const {
   return isa<ReferenceType>(CanonicalType.getUnqualifiedType());

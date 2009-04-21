@@ -561,7 +561,10 @@ struct DeclaratorChunk {
     /// For now, sema will catch these as invalid.
     /// The type qualifiers: const/volatile/restrict.
     unsigned TypeQuals : 3;
-    void destroy() {}
+    AttributeList *AttrList;
+    void destroy() {
+      delete AttrList;
+    }
   };
 
   struct MemberPointerTypeInfo {
@@ -617,7 +620,7 @@ struct DeclaratorChunk {
     case MemberPointer: return Mem.AttrList;
     case Array:         return 0;
     case Function:      return 0;
-    case BlockPointer:  return 0; // FIXME: Do blocks have attr list?
+    case BlockPointer:  return Cls.AttrList;
     }
   }
 
@@ -672,12 +675,13 @@ struct DeclaratorChunk {
   
   /// getBlockPointer - Return a DeclaratorChunk for a block.
   ///
-  static DeclaratorChunk getBlockPointer(unsigned TypeQuals, 
-                                         SourceLocation Loc) {
+  static DeclaratorChunk getBlockPointer(unsigned TypeQuals, SourceLocation Loc,
+                                         AttributeList *AL) {
     DeclaratorChunk I;
     I.Kind          = BlockPointer;
     I.Loc           = Loc;
     I.Cls.TypeQuals = TypeQuals;
+    I.Cls.AttrList  = AL;
     return I;
   }
 
