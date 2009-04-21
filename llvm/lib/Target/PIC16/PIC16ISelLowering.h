@@ -139,6 +139,7 @@ namespace llvm {
     // new offset and returns.
     unsigned GetTmpOffsetForFI(unsigned FI, unsigned slot_size); 
     void ResetTmpOffsetMap() { FiTmpOffsetMap.clear(); SetTmpSize(0); }
+    void InitReservedFrameCount(const Function *F); 
 
     // Return the size of Tmp variable 
     unsigned GetTmpSize() { return TmpSize; }
@@ -168,7 +169,6 @@ namespace llvm {
     void LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG, SDValue &ES, 
                             int &Offset);
 
-    SDValue LegalizeFrameArgument(SDValue Arg, DebugLoc dl, SelectionDAG &DAG);
 
     // CALL node should have all legal operands only. Legalize all non-legal
     // operands of CALL node and then return the new call will all operands
@@ -216,6 +216,11 @@ namespace llvm {
     // This maps maintain zero based indexes for these FIs.
     std::map<unsigned, unsigned> FiTmpOffsetMap;
     unsigned TmpSize;
+
+    // These are the frames for return value and argument passing 
+    // These FrameIndices will be expanded to foo.frame external symbol
+    // and all others will be expanded to foo.tmp external symbol.
+    unsigned ReservedFrameCount; 
   };
 } // namespace llvm
 

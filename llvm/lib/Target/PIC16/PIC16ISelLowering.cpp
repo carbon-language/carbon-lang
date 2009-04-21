@@ -527,9 +527,6 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const std::string Name = Func->getName();
 
-  char *tmpName = new char [strlen(Name.c_str()) +  8];
-  sprintf(tmpName, "%s.frame", Name.c_str());
-  ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
   FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(Op);
 
   // FrameIndices are not stack offsets. But they represent the request
@@ -538,9 +535,19 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   // with, we need to traverse all the FrameIndices available earlier in 
   // the list and add their requested size.
   unsigned FIndex = FR->getIndex();
-  Offset = 0;
-  for (unsigned i=0; i<FIndex ; ++i) {
-    Offset += MFI->getObjectSize(i);
+  char *tmpName = new char [strlen(Name.c_str()) +  8];
+  if (FIndex < ReservedFrameCount) {
+    sprintf(tmpName, "%s.frame", Name.c_str());
+    ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
+    Offset = 0;
+    for (unsigned i=0; i<FIndex ; ++i) {
+      Offset += MFI->getObjectSize(i);
+    }
+  } else {
+   // FrameIndex has been made for some temporary storage 
+    sprintf(tmpName, "%s.tmp", Name.c_str());
+    ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
+    Offset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
   }
 
   return;
@@ -891,12 +898,7 @@ LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
   for (unsigned i = 0, ArgOffset = RetVals; i < NumOps; i++) {
     // Get the arguments
     Arg = TheCall->getArg(i);
-    // If argument is FrameIndex then map it with temporary
-    if (Arg.getOpcode() == PIC16ISD::Lo || Arg.getOpcode() == PIC16ISD::Hi) {
-      if (Arg.getOperand(0).getOpcode() == ISD::TargetFrameIndex) {
-        Arg = LegalizeFrameArgument(Arg, dl, DAG);
-      }
-    } 
+    
     Ops.clear();
     Ops.push_back(Chain);
     Ops.push_back(Arg);
@@ -912,36 +914,6 @@ LowerIndirectCallArguments(SDValue Op, SDValue Chain, SDValue InFlag,
     ArgOffset++;
   }
   return Chain;
-}
-
-SDValue PIC16TargetLowering::
-LegalizeFrameArgument(SDValue Arg, DebugLoc dl, SelectionDAG &DAG) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  const Function *Func = MF.getFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  const std::string Name = Func->getName();
-
-  // Caller creates the stack storage to pass the aggregate type
-  // as argument. So it should be relative to tmp variable.
-  SDValue FI = Arg.getOperand(0);
-  char *tmpName = new char [strlen(Name.c_str()) +  8];
-  sprintf(tmpName, "%s.tmp", Name.c_str());
-  SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
-  FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(FI);
-
-  unsigned FIndex = FR->getIndex();
-  // Reserve space in tmp variable for the aggregate type
-  int FrameOffset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
-
-  if (Arg.getOpcode() == PIC16ISD::Lo) {
-    // Lo part of frame index
-    SDValue FrameConst = DAG.getConstant(FrameOffset, MVT::i8);
-    return DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, ES, FrameConst);
-  } else { 
-    // Hi part of frame index
-    SDValue FrameConst = DAG.getConstant(FrameOffset + 1, MVT::i8);
-    return DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, ES, FrameConst);
-  }
 }
 
 SDValue PIC16TargetLowering::
@@ -975,12 +947,6 @@ LowerDirectCallArguments(SDValue Op, SDValue Chain, SDValue ArgLabel,
   for (unsigned i=ArgCount, Offset = 0; i<NumOps; i++) {
     // Get the argument
     Arg = TheCall->getArg(i);
-    // If argument is FrameIndex then map it with temporary
-    if (Arg.getOpcode() == PIC16ISD::Lo || Arg.getOpcode() == PIC16ISD::Hi) {
-      if (Arg.getOperand(0).getOpcode() == ISD::TargetFrameIndex) {
-        Arg = LegalizeFrameArgument(Arg, dl, DAG);
-      }
-    } 
     StoreOffset = (Offset + AddressOffset);
    
     // Store the argument on frame
@@ -1455,6 +1421,17 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1));
 }
 
+void PIC16TargetLowering::InitReservedFrameCount(const Function *F) {
+  unsigned NumArgs = F->arg_size();
+
+  bool isVoidFunc = (F->getReturnType()->getTypeID() == Type::VoidTyID);
+
+  if (isVoidFunc)
+    ReservedFrameCount = NumArgs;
+  else
+    ReservedFrameCount = NumArgs + 1;
+}
+
 // LowerFORMAL_ARGUMENTS - Argument values are loaded from the
 // <fname>.args + offset. All arguments are already broken to leaglized
 // types, so the offset just runs from 0 to NumArgVals - 1.
@@ -1467,12 +1444,15 @@ SDValue PIC16TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   SDValue Chain = Op.getOperand(0);    // Formal arguments' chain
 
 
-  // Reset the map of FI and TmpOffset 
-  ResetTmpOffsetMap();
   // Get the callee's name to create the <fname>.args label to pass args.
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *F = MF.getFunction();
   std::string FuncName = F->getName();
+
+  // Reset the map of FI and TmpOffset 
+  ResetTmpOffsetMap();
+  // Initialize the ReserveFrameCount
+  InitReservedFrameCount(F);
 
   // Create the <fname>.args external symbol.
   char *tmpName = new char [strlen(FuncName.c_str()) +  6];
