@@ -461,6 +461,11 @@
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Parse/AttributeList.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; tabWidth = 2; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		9063F2210F9E8BDF002F7251 /* ExternalSemaSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalSemaSource.h; path = clang/Sema/ExternalSemaSource.h; sourceTree = "<group>"; };
+		9063F2220F9E8BDF002F7251 /* SemaConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaConsumer.h; path = clang/Sema/SemaConsumer.h; sourceTree = "<group>"; };
+		9063F2280F9E911F002F7251 /* OnDiskHashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OnDiskHashTable.h; sourceTree = "<group>"; };
+		9063F2290F9E911F002F7251 /* SourceManagerInternals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceManagerInternals.h; sourceTree = "<group>"; };
+		9063F22A0F9E911F002F7251 /* TemplateKinds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TemplateKinds.h; sourceTree = "<group>"; };
 		906BF4AE0F83BA16001071FA /* ConvertUTF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConvertUTF.h; sourceTree = "<group>"; };
 		906BF4AF0F83BA2E001071FA /* ConvertUTF.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ConvertUTF.c; sourceTree = "<group>"; };
 		90FB99DE0F98FB1D008F9415 /* DeclContextInternals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclContextInternals.h; path = clang/AST/DeclContextInternals.h; sourceTree = "<group>"; };
@@ -1039,6 +1044,8 @@
 		DE67E7260C02108300F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				9063F2210F9E8BDF002F7251 /* ExternalSemaSource.h */,
+				9063F2220F9E8BDF002F7251 /* SemaConsumer.h */,
 				DE67E7270C02109800F66BC5 /* ParseAST.h */,
 				DEA09A890F3175D9000C2258 /* SemaDiagnostic.h */,
 			);
@@ -1191,6 +1198,9 @@
 		DED7D7300A524295003AD0FB /* Basic */ = {
 			isa = PBXGroup;
 			children = (
+				9063F2280F9E911F002F7251 /* OnDiskHashTable.h */,
+				9063F2290F9E911F002F7251 /* SourceManagerInternals.h */,
+				9063F22A0F9E911F002F7251 /* TemplateKinds.h */,
 				906BF4AE0F83BA16001071FA /* ConvertUTF.h */,
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
 				DEDFFF070F959EE60035BD10 /* Diagnostic.td */,
