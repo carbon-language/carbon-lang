@@ -284,7 +284,6 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     DeclRefExpr Base(Self, Self->getType(), Loc);
     ParmVarDecl *ArgDecl = *OMD->param_begin();
     DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
-    ObjCInterfaceDecl *OI = IMP->getClassInterface();
     ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
                             true, true);
     BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
