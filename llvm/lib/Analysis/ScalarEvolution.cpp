@@ -2234,9 +2234,6 @@ SCEVHandle ScalarEvolutionsImpl::ComputeBackedgeTakenCount(const Loop *L) {
     Cond = ICmpInst::getSwappedPredicate(Cond);
   }
 
-  // FIXME: think about handling pointer comparisons!  i.e.:
-  // while (P != P+100) ++P;
-
   // If we have a comparison of a chrec against a constant, try to use value
   // ranges to answer this query.
   if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS))
