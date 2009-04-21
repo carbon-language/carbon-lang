@@ -486,6 +486,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       return;
       
     case Stmt::ObjCPropertyRefExprClass:
+    case Stmt::ObjCKVCRefExprClass:
       // FIXME: Property assignments are lvalues, but not really "locations".
       //  e.g.:  self.x = something;
       //  Here the "self.x" really can translate to a method call (setter) when
