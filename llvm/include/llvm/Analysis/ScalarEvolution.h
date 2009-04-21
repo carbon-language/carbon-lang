@@ -32,6 +32,7 @@ namespace llvm {
   class Type;
   class SCEVHandle;
   class ScalarEvolution;
+  class TargetData;
 
   /// SCEV - This class represent an analyzed expression in the program.  These
   /// are reference counted opaque objects that the client is not allowed to
@@ -118,6 +119,7 @@ namespace llvm {
   /// marker.
   struct SCEVCouldNotCompute : public SCEV {
     SCEVCouldNotCompute();
+    ~SCEVCouldNotCompute();
 
     // None of these methods are valid for this object.
     virtual bool isLoopInvariant(const Loop *L) const;
@@ -195,10 +197,110 @@ namespace llvm {
   /// they must ask this class for services.
   ///
   class ScalarEvolution : public FunctionPass {
-    void *Impl;    // ScalarEvolution uses the pimpl pattern
+    /// F - The function we are analyzing.
+    ///
+    Function *F;
+
+    /// LI - The loop information for the function we are currently analyzing.
+    ///
+    LoopInfo *LI;
+
+    /// TD - The target data information for the target we are targetting.
+    ///
+    TargetData *TD;
+
+    /// UnknownValue - This SCEV is used to represent unknown trip counts and
+    /// things.
+    SCEVHandle UnknownValue;
+
+    /// Scalars - This is a cache of the scalars we have analyzed so far.
+    ///
+    std::map<Value*, SCEVHandle> Scalars;
+
+    /// BackedgeTakenCounts - Cache the backedge-taken count of the loops for
+    /// this function as they are computed.
+    std::map<const Loop*, SCEVHandle> BackedgeTakenCounts;
+
+    /// ConstantEvolutionLoopExitValue - This map contains entries for all of
+    /// the PHI instructions that we attempt to compute constant evolutions for.
+    /// This allows us to avoid potentially expensive recomputation of these
+    /// properties.  An instruction maps to null if we are unable to compute its
+    /// exit value.
+    std::map<PHINode*, Constant*> ConstantEvolutionLoopExitValue;
+
+    /// createSCEV - We know that there is no SCEV for the specified value.
+    /// Analyze the expression.
+    SCEVHandle createSCEV(Value *V);
+
+    /// createNodeForPHI - Provide the special handling we need to analyze PHI
+    /// SCEVs.
+    SCEVHandle createNodeForPHI(PHINode *PN);
+
+    /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value
+    /// for the specified instruction and replaces any references to the
+    /// symbolic value SymName with the specified value.  This is used during
+    /// PHI resolution.
+    void ReplaceSymbolicValueWithConcrete(Instruction *I,
+                                          const SCEVHandle &SymName,
+                                          const SCEVHandle &NewVal);
+
+    /// ComputeBackedgeTakenCount - Compute the number of times the specified
+    /// loop will iterate.
+    SCEVHandle ComputeBackedgeTakenCount(const Loop *L);
+
+    /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
+    /// of 'icmp op load X, cst', try to see if we can compute the trip count.
+    SCEVHandle
+      ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI,
+                                                   Constant *RHS,
+                                                   const Loop *L,
+                                                   ICmpInst::Predicate p);
+
+    /// ComputeBackedgeTakenCountExhaustively - If the trip is known to execute
+    /// a constant number of times (the condition evolves only from constants),
+    /// try to evaluate a few iterations of the loop until we get the exit
+    /// condition gets a value of ExitWhen (true or false).  If we cannot
+    /// evaluate the trip count of the loop, return UnknownValue.
+    SCEVHandle ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond,
+                                                     bool ExitWhen);
+
+    /// HowFarToZero - Return the number of times a backedge comparing the
+    /// specified value to zero will execute.  If not computable, return
+    /// UnknownValue.
+    SCEVHandle HowFarToZero(SCEV *V, const Loop *L);
+
+    /// HowFarToNonZero - Return the number of times a backedge checking the
+    /// specified value for nonzero will execute.  If not computable, return
+    /// UnknownValue.
+    SCEVHandle HowFarToNonZero(SCEV *V, const Loop *L);
+
+    /// HowManyLessThans - Return the number of times a backedge containing the
+    /// specified less-than comparison will execute.  If not computable, return
+    /// UnknownValue. isSigned specifies whether the less-than is signed.
+    SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
+                                bool isSigned);
+
+    /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
+    /// (which may not be an immediate predecessor) which has exactly one
+    /// successor from which BB is reachable, or null if no such block is
+    /// found.
+    BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
+
+    /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
+    /// in the header of its containing loop, we know the loop executes a
+    /// constant number of times, and the PHI node is just a recurrence
+    /// involving constants, fold it.
+    Constant *getConstantEvolutionLoopExitValue(PHINode *PN, const APInt& BEs,
+                                                const Loop *L);
+
+    /// getSCEVAtScope - Compute the value of the specified expression within
+    /// the indicated loop (which may be null to indicate in no loop).  If the
+    /// expression cannot be evaluated, return UnknownValue itself.
+    SCEVHandle getSCEVAtScope(SCEV *S, const Loop *L);
+
   public:
     static char ID; // Pass identification, replacement for typeid
-    ScalarEvolution() : FunctionPass(&ID), Impl(0) {}
+    ScalarEvolution();
 
     /// isSCEVable - Test if values of the given type are analyzable within
     /// the SCEV framework. This primarily includes integer types, and it
@@ -218,7 +320,7 @@ namespace llvm {
 
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.
-    SCEVHandle getSCEV(Value *V) const;
+    SCEVHandle getSCEV(Value *V);
 
     SCEVHandle getConstant(ConstantInt *V);
     SCEVHandle getConstant(const APInt& Val);
@@ -309,7 +411,7 @@ namespace llvm {
     ///
     /// If this value is not computable at this scope, a SCEVCouldNotCompute
     /// object is returned.
-    SCEVHandle getSCEVAtScope(Value *V, const Loop *L) const;
+    SCEVHandle getSCEVAtScope(Value *V, const Loop *L);
 
     /// isLoopGuardedByCond - Test whether entry to the loop is protected by
     /// a conditional between LHS and RHS.
@@ -327,11 +429,11 @@ namespace llvm {
     /// loop-invariant backedge-taken count (see
     /// hasLoopInvariantBackedgeTakenCount).
     ///
-    SCEVHandle getBackedgeTakenCount(const Loop *L) const;
+    SCEVHandle getBackedgeTakenCount(const Loop *L);
 
     /// hasLoopInvariantBackedgeTakenCount - Return true if the specified loop
     /// has an analyzable loop-invariant backedge-taken count.
-    bool hasLoopInvariantBackedgeTakenCount(const Loop *L) const;
+    bool hasLoopInvariantBackedgeTakenCount(const Loop *L);
 
     /// forgetLoopBackedgeTakenCount - This method should be called by the
     /// client when it has changed a loop in a way that may effect
@@ -342,7 +444,7 @@ namespace llvm {
     /// deleteValueFromRecords - This method should be called by the
     /// client before it removes a Value from the program, to make sure
     /// that no dangling references are left around.
-    void deleteValueFromRecords(Value *V) const;
+    void deleteValueFromRecords(Value *V);
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
