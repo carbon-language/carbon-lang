@@ -1466,7 +1466,11 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
 
   if (!MI->isUsed())
     Diag(MI->getDefinitionLoc(), diag::pp_macro_not_used);
-  
+
+  // If the callbacks want to know, tell them about the macro #undef.
+  if (Callbacks)
+    Callbacks->MacroUndefined(MacroNameTok.getIdentifierInfo(), MI);
+
   // Free macro definition.
   ReleaseMacroInfo(MI);
   setMacroInfo(MacroNameTok.getIdentifierInfo(), 0);

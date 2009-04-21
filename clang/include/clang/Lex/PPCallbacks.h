@@ -64,6 +64,11 @@ public:
   /// MacroDefined - This hook is called whenever a macro definition is seen.
   virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
   }
+
+  /// MacroUndefined - This hook is called whenever a macro #undef is seen.
+  /// MI is released immediately following this callback.
+  virtual void MacroUndefined(const IdentifierInfo *II, const MacroInfo *MI) {
+  }
 };
 
 }  // end namespace clang
