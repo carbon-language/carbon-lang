@@ -1079,18 +1079,18 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   if (!SrcTy->isConstantSizeType())
     return false;
 
+  unsigned BitWidth = 0;
   if (SrcTy->isObjCInterfaceType()) {
     // Slightly unusual case: the size of an ObjC interface type is the
-    // size of the class.  This code intentionally falls through to the normal
-    // case.
+    // size of the class.
     ObjCInterfaceDecl *OI = SrcTy->getAsObjCInterfaceType()->getDecl();
-    RecordDecl *RD = const_cast<RecordDecl*>(Info.Ctx.addRecordToClass(OI));
-    SrcTy = Info.Ctx.getTagDeclType(static_cast<TagDecl*>(RD));
-  }
+    const ASTRecordLayout &Layout = Info.Ctx.getASTObjCInterfaceLayout(OI);
+    BitWidth = Layout.getSize();
+  } else
+    BitWidth = Info.Ctx.getTypeSize(SrcTy);
 
   // Get information about the size.
-  unsigned CharSize = Info.Ctx.Target.getCharWidth();
-  return Success(Info.Ctx.getTypeSize(SrcTy) / CharSize, E);
+  return Success(BitWidth / Info.Ctx.Target.getCharWidth(), E);
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
