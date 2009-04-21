@@ -37,13 +37,20 @@ class SubRegionMap;
 class StoreManager {
 protected:
   ValueManager &ValMgr;
+  GRStateManager &StateMgr;
 
   /// MRMgr - Manages region objects associated with this StoreManager.
   MemRegionManager &MRMgr;
 
-  StoreManager(ValueManager &valMgr)
-    : ValMgr(valMgr), MRMgr(ValMgr.getRegionManager()) {}
+  StoreManager(GRStateManager &stateMgr);
 
+protected:
+  virtual const GRState* AddRegionView(const GRState* St,
+                                       const MemRegion* View,
+                                       const MemRegion* Base) {
+    return St;
+  }
+  
 public:  
   virtual ~StoreManager() {}
   
@@ -125,8 +132,8 @@ public:
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
-  virtual CastResult CastRegion(const GRState* state, const MemRegion* R,
-                                QualType CastToTy) = 0;
+  CastResult CastRegion(const GRState* state, const MemRegion* R,
+                        QualType CastToTy);
 
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {

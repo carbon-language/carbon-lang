@@ -35,14 +35,12 @@ public:
   
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   BindingsTy::Factory VBFactory;
-  GRStateManager& StateMgr;
   const MemRegion* SelfRegion;
   
 public:
   BasicStoreManager(GRStateManager& mgr)
-    : StoreManager(mgr.getValueManager()),
+    : StoreManager(mgr),
       VBFactory(mgr.getAllocator()), 
-      StateMgr(mgr), 
       SelfRegion(0) {}
   
   ~BasicStoreManager() {}
@@ -87,12 +85,6 @@ public:
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(Loc Array) { return Array; }
 
-  /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
-  ///  a MemRegion* to a specific location type.  'R' is the region being
-  ///  casted and 'CastToTy' the result type of the cast.
-  CastResult CastRegion(const GRState* state, const MemRegion* R,
-                        QualType CastToTy);
-  
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this
   ///  method returns NULL.
@@ -168,27 +160,7 @@ SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
   
   return UnknownVal();
 }
-  
-/// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
-///  a MemRegion* to a specific location type.  'R' is the region being
-///  casted and 'CastToTy' the result type of the cast.
-StoreManager::CastResult
-BasicStoreManager::CastRegion(const GRState* state, const MemRegion* R,
-                              QualType CastToTy) {
 
-  // Return the same region if the region types are compatible.
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    ASTContext& Ctx = StateMgr.getContext();
-    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
-    QualType Tb = Ctx.getCanonicalType(CastToTy);
-    
-    if (Ta == Tb)
-      return CastResult(state, R);
-  }
-
-  return CastResult(state, MRMgr.getTypedViewRegion(CastToTy, R));
-}
-  
 SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
                                        const FieldDecl* D) {
 

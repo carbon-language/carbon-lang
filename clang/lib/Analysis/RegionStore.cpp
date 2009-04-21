@@ -142,16 +142,15 @@ class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionBindingsTy::Factory RBFactory;
   RegionViews::Factory RVFactory;
 
-  GRStateManager& StateMgr;
   const MemRegion* SelfRegion;
   const ImplicitParamDecl *SelfDecl;
 
 public:
   RegionStoreManager(GRStateManager& mgr) 
-    : StoreManager(mgr.getValueManager()),
+    : StoreManager(mgr),
       RBFactory(mgr.getAllocator()),
       RVFactory(mgr.getAllocator()),
-      StateMgr(mgr), SelfRegion(0), SelfDecl(0) {
+      SelfRegion(0), SelfDecl(0) {
     if (const ObjCMethodDecl* MD =
           dyn_cast<ObjCMethodDecl>(&StateMgr.getCodeDecl()))
       SelfDecl = MD->getSelfDecl();
@@ -198,12 +197,6 @@ public:
   ///  the array).  This is called by GRExprEngine when evaluating
   ///  casts from arrays to pointers.
   SVal ArrayToPointer(Loc Array);
-
-  /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
-  ///  a MemRegion* to a specific location type.  'R' is the region being
-  ///  casted and 'CastToTy' the result type of the cast.  
-  CastResult CastRegion(const GRState* state, const MemRegion* R,
-                        QualType CastToTy);
 
   SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R);
 
@@ -577,31 +570,6 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
-}
-
-StoreManager::CastResult
-RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
-                               QualType CastToTy) {
-  
-  // Return the same region if the region types are compatible.
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    ASTContext& Ctx = StateMgr.getContext();
-    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
-    QualType Tb = Ctx.getCanonicalType(CastToTy);
-    
-    if (Ta == Tb)
-      return CastResult(state, R);
-  }
-
-  // FIXME: We should handle the case when we are casting *back* to a
-  // previous type. For example:
-  //
-  //      void* x = ...;
-  //      char* y = (char*) x;
-  //      void* z = (void*) y; // <-- we should get the same region that is 
-  //                                  bound to 'x'
-  const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
-  return CastResult(AddRegionView(state, ViewR, R), ViewR);
 }
 
 SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
