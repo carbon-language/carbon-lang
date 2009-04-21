@@ -112,6 +112,13 @@ void test11(int i) {
     ^{ break; }();     // expected-error {{'break' statement not in loop or switch statement}}
 }
 
+
+void (^test12f)(void);
+void test12() {
+  test12f = ^test12f;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
+}
+
+
 // rdar://6808730
 void *test13 = ^{
   int X = 32;
@@ -131,9 +138,3 @@ void test14() {
     };
   };
 }
-
-void (^test12f)(void);
-void test12() {
-  test12f = ^test12f;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
-}
-

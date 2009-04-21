@@ -4755,8 +4755,8 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
   CurFunctionNeedsScopeChecking = CurBlock->SavedFunctionNeedsScopeChecking;
 
   // Pop off CurBlock, handle nested blocks.
+  PopDeclContext();
   CurBlock = CurBlock->PrevBlockInfo;
-
   // FIXME: Delete the ParmVarDecl objects as well???
 }
 
