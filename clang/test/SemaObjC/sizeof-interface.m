@@ -13,7 +13,7 @@ int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to a for
 @end
 
 // size == 4
-int g1[ sizeof(I0)     // expected-error {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
+int g1[ sizeof(I0)     // expected-warning {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
        == 4 ? 1 : -1];
 
 @implementation I0
@@ -22,7 +22,7 @@ int g1[ sizeof(I0)     // expected-error {{invalid application of 'sizeof' to in
 
 // size == 4 (we do not include extended properties in the
 // sizeof).
-int g2[ sizeof(I0)   // expected-error {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
+int g2[ sizeof(I0)   // expected-warning {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
        == 4 ? 1 : -1];
 
 @interface I1

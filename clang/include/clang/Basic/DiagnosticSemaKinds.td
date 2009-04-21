@@ -922,7 +922,7 @@ def ext_sizeof_void_type : Extension<
 def err_sizeof_forward_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to a forward declared"
   " interface %0">;
-def err_sizeof_nonfragile_interface : Error<
+def err_sizeof_nonfragile_interface : Warning<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
 def err_atdef_nonfragile_interface : Error<
