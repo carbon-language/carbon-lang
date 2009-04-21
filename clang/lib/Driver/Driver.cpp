@@ -1114,6 +1114,8 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
   if (!TmpDir)
     TmpDir = ::getenv("TEMP");
   if (!TmpDir)
+    TmpDir = ::getenv("TMP");
+  if (!TmpDir)
     TmpDir = "/tmp";
   llvm::sys::Path P(TmpDir);
   P.appendComponent("cc");
