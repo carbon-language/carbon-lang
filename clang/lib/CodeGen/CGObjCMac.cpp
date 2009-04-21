@@ -2594,6 +2594,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   uint64_t MaxSkippedUnionIvarSize = 0;
   FieldDecl *MaxField = 0;
   FieldDecl *MaxSkippedField = 0;
+  FieldDecl *LastFieldBitfield = 0;
+  
   unsigned base = 0;
   if (RecFields.empty())
     return;
@@ -2607,8 +2609,11 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
     // Skip over unnamed or bitfields
-    if (!Field->getIdentifier() || Field->isBitField())
+    if (!Field->getIdentifier() || Field->isBitField()) {
+      LastFieldBitfield = Field;
       continue;
+    }
+    LastFieldBitfield = 0;
     QualType FQT = Field->getType();
     if (FQT->isRecordType() || FQT->isUnionType()) {
       if (FQT->isUnionType())
@@ -2637,18 +2642,19 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     if (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
       const ConstantArrayType *CArray = 
                                  dyn_cast_or_null<ConstantArrayType>(Array);
+      uint64_t ElCount = CArray->getSize().getZExtValue();
       assert(CArray && "only array with know element size is supported");
       FQT = CArray->getElementType();
       while (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
         const ConstantArrayType *CArray =
                                  dyn_cast_or_null<ConstantArrayType>(Array);
+        ElCount *= CArray->getSize().getZExtValue();
         FQT = CArray->getElementType();
       }
         
       assert(!FQT->isUnionType() && 
              "layout for array of unions not supported");
       if (FQT->isRecordType()) {
-        uint64_t ElCount = CArray->getSize().getZExtValue();
         int OldIndex = Index;
         int OldSkIndex = SkIndex;
         
@@ -2751,11 +2757,24 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         GC_IVAR skivar;
         skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
         skivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
-                           WordSizeInBits;
+                           ByteSizeInBits;
         SkipIvars.push_back(skivar); ++SkIndex;
       }
     }
   }
+  if (LastFieldBitfield) {
+    // Last field was a bitfield. Must update skip info.
+    GC_IVAR skivar;
+    skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                       LastFieldBitfield);
+    Expr *BitWidth = LastFieldBitfield->getBitWidth();
+    uint64_t BitFieldSize =
+      BitWidth->getIntegerConstantExprValue(CGM.getContext()).getZExtValue();
+    skivar.ivar_size = (BitFieldSize / ByteSizeInBits) 
+                         + ((BitFieldSize % ByteSizeInBits) != 0);
+    SkipIvars.push_back(skivar); ++SkIndex;    
+  }
+  
   if (MaxField) {
     GC_IVAR gcivar;
     gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, MaxField);
@@ -4072,7 +4091,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
   // FIXME. ivarLayout is currently null!
-  // Values[ 3] = BuildIvarLayout(ID, true); 
+  // Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
+  //                                : BuildIvarLayout(ID, true); 
   Values[ 3] = GetIvarLayoutName(0, ObjCTypes);
   Values[ 4] = GetClassName(ID->getIdentifier());
   // const struct _method_list_t * const baseMethods;
@@ -4123,7 +4143,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   else
     Values[ 7] = EmitIvarList(ID);
   // FIXME. weakIvarLayout is currently null.
-  // Values[ 8] = BuildIvarLayout(ID, false); 
+  // Values[ 8] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
+  //                                : BuildIvarLayout(ID, false); 
   Values[ 8] = GetIvarLayoutName(0, ObjCTypes); 
   if (flags & CLS_META)
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
