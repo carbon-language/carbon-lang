@@ -716,16 +716,18 @@ CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
 void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
   assert(!D->getInit() && "Cannot emit definite definitions here!");
 
-  // See if we have already defined this (as a variable), if so we do
-  // not need to do anything.
-  llvm::GlobalValue *GV = GlobalDeclMap[getMangledName(D)];
-  if (!GV && MayDeferGeneration(D)) // this variable was never referenced
-    return;
-
-  if (llvm::GlobalVariable *Var = dyn_cast_or_null<llvm::GlobalVariable>(GV))
-    if (Var->hasInitializer())
+  if (MayDeferGeneration(D)) {
+    // If we have not seen a reference to this variable yet, place it
+    // into the deferred declarations table to be emitted if needed
+    // later.
+    const char *MangledName = getMangledName(D);
+    if (GlobalDeclMap.count(MangledName) == 0) {
+      DeferredDecls[MangledName] = D;
       return;
-  
+    }
+  }
+
+  // The tentative definition is the only definition.
   EmitGlobalVarDefinition(D);
 }
 
