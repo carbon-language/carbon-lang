@@ -76,10 +76,8 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       Reduction += 10;
     else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
       // If the GEP has variable indices, we won't be able to do much with it.
-      for (Instruction::op_iterator I = GEP->op_begin()+1, E = GEP->op_end();
-           I != E; ++I)
-        if (!isa<Constant>(*I)) return 0;
-      Reduction += CountCodeReductionForAlloca(GEP)+15;
+      if (!GEP->hasAllConstantIndices())
+        Reduction += CountCodeReductionForAlloca(GEP)+15;
     } else {
       // If there is some other strange instruction, we're not going to be able
       // to do much if we inline this.
@@ -143,13 +141,8 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
                  dyn_cast<GetElementPtrInst>(II)) {
         // If a GEP has all constant indices, it will probably be folded with
         // a load/store.
-        bool AllConstant = true;
-        for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
-          if (!isa<ConstantInt>(GEPI->getOperand(i))) {
-            AllConstant = false;
-            break;
-          }
-        if (AllConstant) continue;
+        if (GEPI->hasAllConstantIndices())
+          continue;
       }
       
       ++NumInsts;
