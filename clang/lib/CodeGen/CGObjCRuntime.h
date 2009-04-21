@@ -157,7 +157,6 @@ public:
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
                                       const ObjCIvarDecl *Ivar,
-                                      const FieldDecl *Field,
                                       unsigned CVRQualifiers) = 0;
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       ObjCInterfaceDecl *Interface,

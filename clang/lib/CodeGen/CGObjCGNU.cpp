@@ -146,7 +146,6 @@ public:
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
                                       const ObjCIvarDecl *Ivar,
-                                      const FieldDecl *Field,
                                       unsigned CVRQualifiers);
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       ObjCInterfaceDecl *Interface,
@@ -1081,9 +1080,9 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        QualType ObjectTy,
                                        llvm::Value *BaseValue,
                                        const ObjCIvarDecl *Ivar,
-                                       const FieldDecl *Field,
                                        unsigned CVRQualifiers) {
-  assert(Field == ObjectTy->getAsObjCInterfaceType()->getDecl()->lookupFieldDeclForIvar(CGM.getContext(), Ivar));
+  const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const FieldDecl *Field = ID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   if (Ivar->isBitField()) 
     return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
                                  CVRQualifiers);

@@ -195,10 +195,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                            Types.ConvertType(PD->getType())));
     EmitReturnOfRValue(RV, PD->getType());
   } else {
-    const FieldDecl *Field = 
-      IMP->getClassInterface()->lookupFieldDeclForIvar(getContext(), Ivar);
-    LValue LV = EmitLValueForIvar(TypeOfSelfObject(),
-                                  LoadObjCSelf(), Ivar, Field, 0);
+    LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
     if (hasAggregateLLVMType(Ivar->getType())) {
       EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
     }
@@ -290,7 +287,6 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     ObjCInterfaceDecl *OI = IMP->getClassInterface();
     ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
                             true, true);
-    getContext().setFieldDecl(OI, Ivar, &IvarRef);
     BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
                           Ivar->getType(), Loc);
     EmitStmt(&Assign);

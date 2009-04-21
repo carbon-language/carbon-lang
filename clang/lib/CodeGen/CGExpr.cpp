@@ -1137,10 +1137,9 @@ llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
 LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
                                           llvm::Value *BaseValue,
                                           const ObjCIvarDecl *Ivar,
-                                          const FieldDecl *Field,
                                           unsigned CVRQualifiers) {
   return CGM.getObjCRuntime().EmitObjCValueForIvar(*this, ObjectTy, BaseValue,
-                                                   Ivar, Field, CVRQualifiers);
+                                                   Ivar, CVRQualifiers);
 }
 
 LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
@@ -1162,8 +1161,7 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     CVRQualifiers = ObjectTy.getCVRQualifiers();
   }
 
-  return EmitLValueForIvar(ObjectTy, BaseValue, E->getDecl(), 
-                           getContext().getFieldDecl(E), CVRQualifiers);
+  return EmitLValueForIvar(ObjectTy, BaseValue, E->getDecl(), CVRQualifiers);
 }
 
 LValue 

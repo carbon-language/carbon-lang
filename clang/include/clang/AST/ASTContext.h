@@ -102,7 +102,6 @@ class ASTContext {
   // FIXME: ASTRecordForInterface/ASTFieldForIvarRef and addRecordToClass and
   // getFieldDecl be part of the backend (i.e. CodeGenTypes)?
   llvm::DenseMap<const ObjCInterfaceDecl*, RecordDecl*> ASTRecordForInterface;
-  llvm::DenseMap<const ObjCIvarRefExpr*, const FieldDecl*> ASTFieldForIvarRef;
   
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
@@ -507,15 +506,7 @@ public:
   const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
   void CollectObjCIvars(const ObjCInterfaceDecl *OI,
                         llvm::SmallVectorImpl<FieldDecl*> &Fields);
-  const FieldDecl *getFieldDecl(const ObjCIvarRefExpr *MRef) {
-    llvm::DenseMap<const ObjCIvarRefExpr *, const FieldDecl*>::iterator I 
-      = ASTFieldForIvarRef.find(MRef);
-    assert (I != ASTFieldForIvarRef.end()  && "Unable to find field_decl");
-    return I->second;
-  }
-  void setFieldDecl(const ObjCInterfaceDecl *OI,
-                    const ObjCIvarDecl *Ivar,
-                    const ObjCIvarRefExpr *MRef);
+
   //===--------------------------------------------------------------------===//
   //                            Type Operators
   //===--------------------------------------------------------------------===//

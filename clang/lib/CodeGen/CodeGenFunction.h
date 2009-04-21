@@ -629,7 +629,6 @@ public:
                             bool isUnion, unsigned CVRQualifiers);
   LValue EmitLValueForIvar(QualType ObjectTy,
                            llvm::Value* Base, const ObjCIvarDecl *Ivar,
-                           const FieldDecl *Field,
                            unsigned CVRQualifiers);
 
   LValue EmitLValueForBitfield(llvm::Value* Base, FieldDecl* Field,

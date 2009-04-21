@@ -691,11 +691,10 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // this into Self->ivar, just return a BareIVarExpr or something.
           IdentifierInfo &II = Context.Idents.get("self");
           OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
-          ObjCIvarRefExpr *MRef = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                    Loc, static_cast<Expr*>(SelfExpr.release()),
-                                    true, true);
-          Context.setFieldDecl(IFace, IV, MRef);
-          return Owned(MRef);
+          return Owned(new (Context) 
+                       ObjCIvarRefExpr(IV, IV->getType(), Loc, 
+                                       static_cast<Expr*>(SelfExpr.release()),
+                                       true, true));
         }
       }
     }
@@ -1948,11 +1947,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
           Diag(MemberLoc, diag::error_protected_ivar_access) << IV->getDeclName();
       }
 
-      ObjCIvarRefExpr *MRef= new (Context) ObjCIvarRefExpr(IV, IV->getType(),
+      return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
                                                  MemberLoc, BaseExpr,
-                                                 OpKind == tok::arrow);
-      Context.setFieldDecl(IFTy->getDecl(), IV, MRef);
-      return Owned(MRef);
+                                                 OpKind == tok::arrow));
     }
     return ExprError(Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
                        << IFTy->getDecl()->getDeclName() << &Member

@@ -701,7 +701,6 @@ private:
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
                                       const ObjCIvarDecl *Ivar,
-                                      const FieldDecl *Field,
                                       unsigned CVRQualifiers);
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       ObjCInterfaceDecl *Interface,
@@ -891,7 +890,6 @@ public:
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
                                       const ObjCIvarDecl *Ivar,
-                                      const FieldDecl *Field,
                                       unsigned CVRQualifiers);
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       ObjCInterfaceDecl *Interface,
@@ -2366,9 +2364,9 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        QualType ObjectTy,
                                        llvm::Value *BaseValue,
                                        const ObjCIvarDecl *Ivar,
-                                       const FieldDecl *Field,
                                        unsigned CVRQualifiers) {
-  assert(Field == ObjectTy->getAsObjCInterfaceType()->getDecl()->lookupFieldDeclForIvar(CGM.getContext(), Ivar));
+  const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const FieldDecl *Field = ID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   if (Ivar->isBitField())
     return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field),
                                      CVRQualifiers);
@@ -4887,12 +4885,9 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                              QualType ObjectTy,
                                              llvm::Value *BaseValue,
                                              const ObjCIvarDecl *Ivar,
-                                             const FieldDecl *Field,
                                              unsigned CVRQualifiers) {
-  assert(Field == ObjectTy->getAsObjCInterfaceType()->getDecl()->lookupFieldDeclForIvar(CGM.getContext(), Ivar));
-  assert(ObjectTy->isObjCInterfaceType() && 
-         "CGObjCNonFragileABIMac::EmitObjCValueForIvar");
-  ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const FieldDecl *Field = ID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
   
   // (char *) BaseValue
