@@ -3272,7 +3272,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 bool ScalarEvolution::runOnFunction(Function &F) {
   Impl = new ScalarEvolutionsImpl(*this, F,
                                   getAnalysis<LoopInfo>(),
-                                  &getAnalysis<TargetData>());
+                                  getAnalysisIfAvailable<TargetData>());
   return false;
 }
 
@@ -3284,7 +3284,6 @@ void ScalarEvolution::releaseMemory() {
 void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<LoopInfo>();
-  AU.addRequiredTransitive<TargetData>();
 }
 
 bool ScalarEvolution::isSCEVable(const Type *Ty) const {
