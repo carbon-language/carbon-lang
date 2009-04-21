@@ -25,23 +25,43 @@ StoreManager::CastResult
 StoreManager::CastRegion(const GRState* state, const MemRegion* R,
                                QualType CastToTy) {
   
+  ASTContext& Ctx = StateMgr.getContext();
+
+  // We need to know the real type of CastToTy.
+  QualType ToTy = Ctx.getCanonicalType(CastToTy);
+
   // Return the same region if the region types are compatible.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    ASTContext& Ctx = StateMgr.getContext();
     QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
-    QualType Tb = Ctx.getCanonicalType(CastToTy);
-    
-    if (Ta == Tb)
+
+    if (Ta == ToTy)
       return CastResult(state, R);
   }
   
-  // FIXME: We should handle the case when we are casting *back* to a
-  // previous type. For example:
-  //
-  //      void* x = ...;
-  //      char* y = (char*) x;
-  //      void* z = (void*) y; // <-- we should get the same region that is 
-  //                                  bound to 'x'
+  // Check if we are casting to 'void*'.
+  // FIXME: Handle arbitrary upcasts.
+  if (const PointerType* PTy = dyn_cast<PointerType>(ToTy.getTypePtr()))
+    if (PTy->getPointeeType()->isVoidType()) {
+
+      // Casts to void* only removes TypedViewRegion. If there is no
+      // TypedViewRegion, leave the region untouched. This happens when:
+      //
+      // void foo(void*);
+      // ...
+      // void bar() {
+      //   int x;
+      //   foo(&x);
+      // }
+
+      if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R))
+        R = TR->removeViews();
+      
+      return CastResult(state, R);
+    }
+
+  // FIXME: We don't want to layer region views.  Need to handle
+  // arbitrary downcasts.
+
   const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
   return CastResult(AddRegionView(state, ViewR, R), ViewR);
 }
