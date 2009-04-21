@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fsyntax-only %t
+// RUN: clang-cc -triple x86_64-apple-darwin9 -fsyntax-only %s
 
 @class I0;
 // FIXME: Reject sizeof on incomplete interface; this breaks the test!
