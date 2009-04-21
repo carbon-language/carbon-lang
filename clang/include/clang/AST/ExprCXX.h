@@ -949,6 +949,30 @@ public:
   virtual StmtIterator child_end();
 };
 
+class CXXDestroyExpr : public Expr {
+  VarDecl *VD;
+  
+protected:
+  CXXDestroyExpr(VarDecl* vd, QualType T) 
+  : Expr(CXXDestroyExprClass, T, false, vd->getType()->isDependentType()),
+    VD(vd) { }
+  
+public:
+  static CXXDestroyExpr *Create(ASTContext &C, VarDecl *vd);
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXDestroyExprClass;
+  }
+  static bool classof(const CXXDestroyExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 }  // end namespace clang
 
 #endif

@@ -1097,6 +1097,10 @@ void StmtPrinter::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *E)
   OS << E->getName().getAsString();
 }
 
+void StmtPrinter::VisitCXXDestroyExpr(CXXDestroyExpr *E) {
+  // Nothing to print.
+}
+
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
   default: assert(false && "Unknown type trait");

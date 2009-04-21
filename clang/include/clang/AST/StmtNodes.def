@@ -119,6 +119,7 @@ STMT(UnresolvedFunctionNameExpr , Expr)
 STMT(UnaryTypeTraitExpr     , Expr)
 STMT(QualifiedDeclRefExpr   , DeclRefExpr)
 STMT(UnresolvedDeclRefExpr  , Expr)
+STMT(CXXDestroyExpr         , Expr)
 
 // Obj-C Expressions.
 STMT(ObjCStringLiteral    , Expr)

@@ -1064,6 +1064,11 @@ protected:
 public:
   static CXXTempVarDecl *Create(ASTContext &C, DeclContext *DC,
                                 QualType T);
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::CXXTempVar;
+  }
+  static bool classof(CXXTempVarDecl *D) { return true; }
 };
 
 /// Insertion operator for diagnostics.  This allows sending AccessSpecifier's
