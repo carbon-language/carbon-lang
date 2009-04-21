@@ -1431,20 +1431,22 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
     if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
       assert(MSI->getRawDest() == Ptr && "Consistency error!");
       unsigned NumBytes = cast<ConstantInt>(MSI->getLength())->getZExtValue();
-      unsigned Val = cast<ConstantInt>(MSI->getValue())->getZExtValue();
-      
-      // Compute the value replicated the right number of times.
-      APInt APVal(NumBytes*8, Val);
+      if (NumBytes != 0) {
+        unsigned Val = cast<ConstantInt>(MSI->getValue())->getZExtValue();
+        
+        // Compute the value replicated the right number of times.
+        APInt APVal(NumBytes*8, Val);
 
-      // Splat the value if non-zero.
-      if (Val)
-        for (unsigned i = 1; i != NumBytes; ++i)
-          APVal |= APVal << 8;
-      
-      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
-      Value *New = ConvertScalar_InsertValue(ConstantInt::get(APVal), Old,
-                                             Offset, Builder);
-      Builder.CreateStore(New, NewAI);
+        // Splat the value if non-zero.
+        if (Val)
+          for (unsigned i = 1; i != NumBytes; ++i)
+            APVal |= APVal << 8;
+        
+        Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
+        Value *New = ConvertScalar_InsertValue(ConstantInt::get(APVal), Old,
+                                               Offset, Builder);
+        Builder.CreateStore(New, NewAI);
+      }
       MSI->eraseFromParent();
       continue;
     }
