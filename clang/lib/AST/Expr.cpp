@@ -1064,6 +1064,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
       return Exp->getSubExpr()->isConstantInitializer(Ctx);
     break;
   }
+  case ImplicitCastExprClass:
   case CStyleCastExprClass:
     // Handle casts with a destination that's a struct or union; this
     // deals with both the gcc no-op struct cast extension and the

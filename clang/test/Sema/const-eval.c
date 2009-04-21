@@ -55,3 +55,9 @@ EVAL_EXPR(26, (_Complex double)0 ? -1 : 1)
 EVAL_EXPR(27, (_Complex int)0 ? -1 : 1)
 EVAL_EXPR(28, (_Complex double)1 ? 1 : -1)
 EVAL_EXPR(29, (_Complex int)1 ? 1 : -1)
+
+
+// PR4027 + rdar://6808859
+struct a { int x, y };
+static struct a V2 = (struct a)(struct a){ 1, 2};
+static const struct a V1 = (struct a){ 1, 2};
