@@ -1,8 +1,9 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fsyntax-only %s
+// RUN: clang-cc -triple x86_64-apple-darwin9 -verify -fsyntax-only %s
 
 @class I0;
-// FIXME: Reject sizeof on incomplete interface; this breaks the test!
-//int g0 = sizeof(I0); // exxpected-error{{invalid application of 'sizeof' to an incomplete type ...}}
+
+// rdar://6811884
+int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to a forward declared interface 'I0'}}
 
 @interface I0 {
   char x[4];
@@ -12,7 +13,8 @@
 @end
 
 // size == 4
-int g1[ sizeof(I0) == 4 ? 1 : -1];
+int g1[ sizeof(I0)     // expected-error {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
+       == 4 ? 1 : -1];
 
 @implementation I0
 @synthesize p0 = _p0;
@@ -20,7 +22,8 @@ int g1[ sizeof(I0) == 4 ? 1 : -1];
 
 // size == 4 (we do not include extended properties in the
 // sizeof).
-int g2[ sizeof(I0) == 4 ? 1 : -1];
+int g2[ sizeof(I0)   // expected-error {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
+       == 4 ? 1 : -1];
 
 @interface I1
 @property int p0;

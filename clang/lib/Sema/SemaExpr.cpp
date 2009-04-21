@@ -1225,7 +1225,22 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
       << (isSizeof ? "sizeof" : "__alignof") << ExprRange;
     return false;
   }
+  
+  // sizeof(interface) and sizeof(interface<proto>)
+  if (const ObjCInterfaceType *IIT = exprType->getAsObjCInterfaceType()) {
+    if (IIT->getDecl()->isForwardDecl()) {
+      Diag(OpLoc, diag::err_sizeof_forward_interface)
+        << IIT->getDecl()->getDeclName() << isSizeof;
+      return true;
+    }
 
+    if (LangOpts.ObjCNonFragileABI) {
+      Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
+        << IIT->getDecl()->getDeclName() << isSizeof;
+      return true;
+    }
+  }
+    
   return RequireCompleteType(OpLoc, exprType,
                                 isSizeof ? diag::err_sizeof_incomplete_type : 
                                            diag::err_alignof_incomplete_type,

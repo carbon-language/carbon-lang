@@ -919,6 +919,12 @@ def ext_sizeof_function_type : Extension<
   "invalid application of 'sizeof' to a function type">;
 def ext_sizeof_void_type : Extension<
   "invalid application of '%0' to a void type">;
+def err_sizeof_forward_interface : Error<
+  "invalid application of '%select{alignof|sizeof}1' to a forward declared"
+  " interface %0">;
+def err_sizeof_nonfragile_interface : Error<
+  "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
+  "non-fragile ABI">;
 // FIXME: merge with %select
 def err_sizeof_incomplete_type : Error<
   "invalid application of 'sizeof' to an incomplete type %0">;
