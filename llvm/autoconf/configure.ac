@@ -472,6 +472,14 @@ AC_ARG_WITH(llvmgxx,
     LLVMGXX=$with_llvmgxx
     WITH_LLVMGCCDIR="",)
 
+if test -n "$LLVMGCC"; then
+   LLVMGCCCOMMAND="$LLVMGCC"
+fi
+
+if test -n "$LLVMGXX"; then
+   LLVMGXXCOMMAND="$LLVMGXX"
+fi
+
 if test -n "$LLVMGCC" && test -z "$LLVMGXX"; then
    AC_MSG_ERROR([Invalid llvm-g++. Use --with-llvmgxx when --with-llvmgcc is used]);
 fi
@@ -663,21 +671,32 @@ if test "$lt_cv_dlopen_self" = "yes" ; then
               [Define if dlopen(0) will open the symbols of the program])
 fi
 
+
 if test "$WITH_LLVMGCCDIR" = "default" ; then
   LLVMGCC="llvm-gcc${EXEEXT}"
   LLVMGXX="llvm-g++${EXEEXT}"
+  LLVMGCCCOMMAND="$LLVMGCC"
+  LLVMGXXCOMMAND="$LLVMGXX"
+  AC_SUBST(LLVMGCCCOMMAND,$LLVMGCCCOMMAND)
+  AC_SUBST(LLVMGXXCOMMAND,$LLVMGXXCOMMAND)
   AC_PATH_PROG(LLVMGCC, $LLVMGCC, [])
   AC_PATH_PROG(LLVMGXX, $LLVMGXX, [])
 else
   if test -z "$LLVMGCC"; then
     LLVMGCC="$WITH_LLVMGCCDIR/bin/llvm-gcc${EXEEXT}"
+    LLVMGCCCOMMAND="$LLVMGCC"
   fi
   if test -z "$LLVMGXX"; then
     LLVMGXX="$WITH_LLVMGCCDIR/bin/llvm-g++${EXEEXT}"
+    LLVMGXXCOMMAND="$LLVMGXX"
   fi
+
   AC_SUBST(LLVMGCC,$LLVMGCC)
   AC_SUBST(LLVMGXX,$LLVMGXX)
+  AC_SUBST(LLVMGCCCOMMAND,$LLVMGCCCOMMAND)
+  AC_SUBST(LLVMGXXCOMMAND,$LLVMGXXCOMMAND)
 fi
+
 
 AC_MSG_CHECKING([tool compatibility])
 
@@ -1064,6 +1083,9 @@ AC_CONFIG_FILES([llvm.spec])
 
 dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
+
+dnl Configure llvmc's Base plugin
+AC_CONFIG_FILES([tools/llvmc/plugins/Base/Base.td])
 
 dnl Do the first stage of configuration for llvm-config.in.
 AC_CONFIG_FILES([tools/llvm-config/llvm-config.in])

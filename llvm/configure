@@ -899,6 +899,8 @@ ac_ct_F77
 LIBTOOL
 LLVMGCC
 LLVMGXX
+LLVMGCCCOMMAND
+LLVMGXXCOMMAND
 USE_UDIS86
 HAVE_PTHREAD
 HUGE_VAL_SANITY
@@ -5003,6 +5005,13 @@ if test "${with_llvmgxx+set}" = set; then
     WITH_LLVMGCCDIR=""
 fi
 
+if test -n "$LLVMGCC"; then
+   LLVMGCCCOMMAND="$LLVMGCC"
+fi
+
+if test -n "$LLVMGXX"; then
+   LLVMGXXCOMMAND="$LLVMGXX"
+fi
 
 if test -n "$LLVMGCC" && test -z "$LLVMGXX"; then
    { { echo "$as_me:$LINENO: error: Invalid llvm-g++. Use --with-llvmgxx when --with-llvmgcc is used" >&5
@@ -26810,6 +26819,13 @@ fi
 if test "$WITH_LLVMGCCDIR" = "default" ; then
   LLVMGCC="llvm-gcc${EXEEXT}"
   LLVMGXX="llvm-g++${EXEEXT}"
+  LLVMGCCCOMMAND="$LLVMGCC"
+  LLVMGXXCOMMAND="$LLVMGXX"
+
+  LLVMGCCCOMMAND=$LLVMGCCCOMMAND
+
+  LLVMGXXCOMMAND=$LLVMGXXCOMMAND
+
   # Extract the first word of "$LLVMGCC", so it can be a program name with args.
 set dummy $LLVMGCC; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -26893,15 +26909,23 @@ fi
 else
   if test -z "$LLVMGCC"; then
     LLVMGCC="$WITH_LLVMGCCDIR/bin/llvm-gcc${EXEEXT}"
+    LLVMGCCCOMMAND="$LLVMGCC"
   fi
   if test -z "$LLVMGXX"; then
     LLVMGXX="$WITH_LLVMGCCDIR/bin/llvm-g++${EXEEXT}"
+    LLVMGXXCOMMAND="$LLVMGXX"
   fi
+
   LLVMGCC=$LLVMGCC
 
   LLVMGXX=$LLVMGXX
 
+  LLVMGCCCOMMAND=$LLVMGCCCOMMAND
+
+  LLVMGXXCOMMAND=$LLVMGXXCOMMAND
+
 fi
+
 
 { echo "$as_me:$LINENO: checking tool compatibility" >&5
 echo $ECHO_N "checking tool compatibility... $ECHO_C" >&6; }
@@ -34003,6 +34027,9 @@ ac_config_files="$ac_config_files llvm.spec"
 ac_config_files="$ac_config_files docs/doxygen.cfg"
 
 
+ac_config_files="$ac_config_files tools/llvmc/plugins/Base/Base.td"
+
+
 ac_config_files="$ac_config_files tools/llvm-config/llvm-config.in"
 
 
@@ -34617,6 +34644,7 @@ do
     "Makefile.config") CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
     "llvm.spec") CONFIG_FILES="$CONFIG_FILES llvm.spec" ;;
     "docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
+    "tools/llvmc/plugins/Base/Base.td") CONFIG_FILES="$CONFIG_FILES tools/llvmc/plugins/Base/Base.td" ;;
     "tools/llvm-config/llvm-config.in") CONFIG_FILES="$CONFIG_FILES tools/llvm-config/llvm-config.in" ;;
     "setup") CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
@@ -34878,6 +34906,8 @@ ac_ct_F77!$ac_ct_F77$ac_delim
 LIBTOOL!$LIBTOOL$ac_delim
 LLVMGCC!$LLVMGCC$ac_delim
 LLVMGXX!$LLVMGXX$ac_delim
+LLVMGCCCOMMAND!$LLVMGCCCOMMAND$ac_delim
+LLVMGXXCOMMAND!$LLVMGXXCOMMAND$ac_delim
 USE_UDIS86!$USE_UDIS86$ac_delim
 HAVE_PTHREAD!$HAVE_PTHREAD$ac_delim
 HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
@@ -34911,7 +34941,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 79; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
