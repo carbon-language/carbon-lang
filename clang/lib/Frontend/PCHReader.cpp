@@ -36,6 +36,23 @@
 
 using namespace clang;
 
+namespace {
+  /// \brief Helper class that saves the current stream position and
+  /// then restores it when destroyed.
+  struct VISIBILITY_HIDDEN SavedStreamPosition {
+    explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
+      : Stream(Stream), Offset(Stream.GetCurrentBitNo()) { }
+
+    ~SavedStreamPosition() {
+      Stream.JumpToBit(Offset);
+    }
+
+  private:
+    llvm::BitstreamReader &Stream;
+    uint64_t Offset;
+  };
+}
+
 //===----------------------------------------------------------------------===//
 // Declaration deserialization
 //===----------------------------------------------------------------------===//
@@ -1053,6 +1070,8 @@ public:
     using namespace clang::io;
     uint32_t Bits = ReadUnalignedLE32(d); // FIXME: use these?
     (void)Bits;
+    bool hasMacroDefinition = (Bits >> 3) & 0x01;
+    
     pch::IdentID ID = ReadUnalignedLE32(d);
     DataLen -= 8;
 
@@ -1064,8 +1083,13 @@ public:
                                                  k.first, k.first + k.second);
     Reader.SetIdentifierInfo(ID, II);
 
-    // FIXME: If this identifier is a macro, deserialize the macro
-    // definition now.
+    // If this identifier is a macro, deserialize the macro
+    // definition.
+    if (hasMacroDefinition) {
+      uint32_t Offset = ReadUnalignedLE64(d);
+      Reader.ReadMacroRecord(Offset);
+      DataLen -= 8;
+    }
 
     // Read all of the declarations visible at global scope with this
     // name.
@@ -1323,14 +1347,116 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   }
 }
 
+void PCHReader::ReadMacroRecord(uint64_t Offset) {
+  // Keep track of where we are in the stream, then jump back there
+  // after reading this macro.
+  SavedStreamPosition SavedPosition(Stream);
+
+  Stream.JumpToBit(Offset);
+  RecordData Record;
+  llvm::SmallVector<IdentifierInfo*, 16> MacroArgs;
+  MacroInfo *Macro = 0;
+  while (true) {
+    unsigned Code = Stream.ReadCode();
+    switch (Code) {
+    case llvm::bitc::END_BLOCK:
+      return;
+
+    case llvm::bitc::ENTER_SUBBLOCK:
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock()) {
+        Error("Malformed block record");
+        return;
+      }
+      continue;
+    
+    case llvm::bitc::DEFINE_ABBREV:
+      Stream.ReadAbbrevRecord();
+      continue;
+    default: break;
+    }
+
+    // Read a record.
+    Record.clear();
+    pch::PreprocessorRecordTypes RecType =
+      (pch::PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
+    switch (RecType) {
+    case pch::PP_COUNTER_VALUE:
+      // Skip this record.
+      break;
+
+    case pch::PP_MACRO_OBJECT_LIKE:
+    case pch::PP_MACRO_FUNCTION_LIKE: {
+      // If we already have a macro, that means that we've hit the end
+      // of the definition of the macro we were looking for. We're
+      // done.
+      if (Macro)
+        return;
+
+      IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
+      if (II == 0) {
+        Error("Macro must have a name");
+        return;
+      }
+      SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[1]);
+      bool isUsed = Record[2];
+      
+      MacroInfo *MI = PP.AllocateMacroInfo(Loc);
+      MI->setIsUsed(isUsed);
+      
+      if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {
+        // Decode function-like macro info.
+        bool isC99VarArgs = Record[3];
+        bool isGNUVarArgs = Record[4];
+        MacroArgs.clear();
+        unsigned NumArgs = Record[5];
+        for (unsigned i = 0; i != NumArgs; ++i)
+          MacroArgs.push_back(DecodeIdentifierInfo(Record[6+i]));
+
+        // Install function-like macro info.
+        MI->setIsFunctionLike();
+        if (isC99VarArgs) MI->setIsC99Varargs();
+        if (isGNUVarArgs) MI->setIsGNUVarargs();
+        MI->setArgumentList(&MacroArgs[0], MacroArgs.size(),
+                            PP.getPreprocessorAllocator());
+      }
+
+      // Finally, install the macro.
+      PP.setMacroInfo(II, MI);
+
+      // Remember that we saw this macro last so that we add the tokens that
+      // form its body to it.
+      Macro = MI;
+      ++NumMacrosRead;
+      break;
+    }
+        
+    case pch::PP_TOKEN: {
+      // If we see a TOKEN before a PP_MACRO_*, then the file is
+      // erroneous, just pretend we didn't see this.
+      if (Macro == 0) break;
+      
+      Token Tok;
+      Tok.startToken();
+      Tok.setLocation(SourceLocation::getFromRawEncoding(Record[0]));
+      Tok.setLength(Record[1]);
+      if (IdentifierInfo *II = DecodeIdentifierInfo(Record[2]))
+        Tok.setIdentifierInfo(II);
+      Tok.setKind((tok::TokenKind)Record[3]);
+      Tok.setFlag((Token::TokenFlags)Record[4]);
+      Macro->AddTokenToBody(Tok);
+      break;
+    }
+    }
+  }
+}
+
 bool PCHReader::ReadPreprocessorBlock() {
   if (Stream.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID))
     return Error("Malformed preprocessor block record");
   
   RecordData Record;
-  llvm::SmallVector<IdentifierInfo*, 16> MacroArgs;
-  MacroInfo *LastMacro = 0;
-  
   while (true) {
     unsigned Code = Stream.ReadCode();
     switch (Code) {
@@ -1365,58 +1491,10 @@ bool PCHReader::ReadPreprocessorBlock() {
       break;
 
     case pch::PP_MACRO_OBJECT_LIKE:
-    case pch::PP_MACRO_FUNCTION_LIKE: {
-      IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
-      if (II == 0)
-        return Error("Macro must have a name");
-      SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[1]);
-      bool isUsed = Record[2];
-      
-      MacroInfo *MI = PP.AllocateMacroInfo(Loc);
-      MI->setIsUsed(isUsed);
-      
-      if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {
-        // Decode function-like macro info.
-        bool isC99VarArgs = Record[3];
-        bool isGNUVarArgs = Record[4];
-        MacroArgs.clear();
-        unsigned NumArgs = Record[5];
-        for (unsigned i = 0; i != NumArgs; ++i)
-          MacroArgs.push_back(DecodeIdentifierInfo(Record[6+i]));
-
-        // Install function-like macro info.
-        MI->setIsFunctionLike();
-        if (isC99VarArgs) MI->setIsC99Varargs();
-        if (isGNUVarArgs) MI->setIsGNUVarargs();
-        MI->setArgumentList(&MacroArgs[0], MacroArgs.size(),
-                            PP.getPreprocessorAllocator());
-      }
-
-      // Finally, install the macro.
-      PP.setMacroInfo(II, MI);
-
-      // Remember that we saw this macro last so that we add the tokens that
-      // form its body to it.
-      LastMacro = MI;
-      break;
-    }
-        
-    case pch::PP_TOKEN: {
-      // If we see a TOKEN before a PP_MACRO_*, then the file is eroneous, just
-      // pretend we didn't see this.
-      if (LastMacro == 0) break;
-      
-      Token Tok;
-      Tok.startToken();
-      Tok.setLocation(SourceLocation::getFromRawEncoding(Record[0]));
-      Tok.setLength(Record[1]);
-      if (IdentifierInfo *II = DecodeIdentifierInfo(Record[2]))
-        Tok.setIdentifierInfo(II);
-      Tok.setKind((tok::TokenKind)Record[3]);
-      Tok.setFlag((Token::TokenFlags)Record[4]);
-      LastMacro->AddTokenToBody(Tok);
-      break;
-    }
+    case pch::PP_MACRO_FUNCTION_LIKE:
+    case pch::PP_TOKEN:
+      // Once we've hit a macro definition or a token, we're done.
+      return false;
     }
   }
 }
@@ -1573,6 +1651,7 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
 
     case pch::STATISTICS:
       TotalNumStatements = Record[0];
+      TotalNumMacros = Record[1];
       break;
 
     }
@@ -1580,23 +1659,6 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
 
   Error("Premature end of bitstream");
   return Failure;
-}
-
-namespace {
-  /// \brief Helper class that saves the current stream position and
-  /// then restores it when destroyed.
-  struct VISIBILITY_HIDDEN SavedStreamPosition {
-    explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
-      : Stream(Stream), Offset(Stream.GetCurrentBitNo()) { }
-
-    ~SavedStreamPosition() {
-      Stream.JumpToBit(Offset);
-    }
-
-  private:
-    llvm::BitstreamReader &Stream;
-    uint64_t Offset;
-  };
 }
 
 PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
@@ -2364,6 +2426,9 @@ void PCHReader::PrintStats() {
   std::fprintf(stderr, "  %u/%u statements read (%f%%)\n",
                NumStatementsRead, TotalNumStatements,
                ((float)NumStatementsRead/TotalNumStatements * 100));
+  std::fprintf(stderr, "  %u/%u macros read (%f%%)\n",
+               NumMacrosRead, TotalNumMacros,
+               ((float)NumMacrosRead/TotalNumMacros * 100));
   std::fprintf(stderr, "\n");
 }
 

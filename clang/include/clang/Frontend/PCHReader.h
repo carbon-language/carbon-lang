@@ -171,6 +171,11 @@ private:
   /// in the PCH file.
   unsigned TotalNumStatements;
 
+  /// \brief The number of macros de-serialized from the PCH file.
+  unsigned NumMacrosRead;
+  /// \brief The total number of macros stored in the PCH file.
+  unsigned TotalNumMacros;
+
   /// \brief FIXME: document!
   llvm::SmallVector<uint64_t, 4> SpecialTypes;
 
@@ -310,6 +315,9 @@ public:
 
   /// \brief Reads a statement from the current stream position.
   Stmt *ReadStmt();
+
+  /// \brief Reads the macro record located at the given offset.
+  void ReadMacroRecord(uint64_t Offset);
 
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.

@@ -1439,8 +1439,6 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
-  // FIXME: Eventually we want to emit an index so that we can lazily load
-  // macros.
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     // FIXME: This emits macros in hash table order, we should do it in a stable
@@ -1452,7 +1450,9 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     if (MI->isBuiltinMacro())
       continue;
 
+    // FIXME: Remove this identifier reference?
     AddIdentifierRef(I->first, Record);
+    MacroOffsets[I->first] = Stream.GetCurrentBitNo();
     Record.push_back(MI->getDefinitionLoc().getRawEncoding());
     Record.push_back(MI->isUsed());
     
@@ -1494,7 +1494,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
       Stream.EmitRecord(pch::PP_TOKEN, Record);
       Record.clear();
     }
-    
+    ++NumMacros;
   }
   
   Stream.ExitBlock();
@@ -1715,6 +1715,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 namespace {
 class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
   PCHWriter &Writer;
+  Preprocessor &PP;
 
 public:
   typedef const IdentifierInfo* key_type;
@@ -1723,19 +1724,23 @@ public:
   typedef pch::IdentID data_type;
   typedef data_type data_type_ref;
   
-  PCHIdentifierTableTrait(PCHWriter &Writer) : Writer(Writer) { }
+  PCHIdentifierTableTrait(PCHWriter &Writer, Preprocessor &PP) 
+    : Writer(Writer), PP(PP) { }
 
   static unsigned ComputeHash(const IdentifierInfo* II) {
     return clang::BernsteinHash(II->getName());
   }
   
-  static std::pair<unsigned,unsigned> 
+  std::pair<unsigned,unsigned> 
     EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II, 
                       pch::IdentID ID) {
     unsigned KeyLen = strlen(II->getName()) + 1;
     clang::io::Emit16(Out, KeyLen);
     unsigned DataLen = 4 + 4; // 4 bytes for token ID, builtin, flags
                               // 4 bytes for the persistent ID
+    if (II->hasMacroDefinition() && 
+        !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro())
+      DataLen += 8;
     for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                    DEnd = IdentifierResolver::end();
          D != DEnd; ++D)
@@ -1755,14 +1760,20 @@ public:
   void EmitData(llvm::raw_ostream& Out, const IdentifierInfo* II, 
                 pch::IdentID ID, unsigned) {
     uint32_t Bits = 0;
+    bool hasMacroDefinition = 
+      II->hasMacroDefinition() && 
+      !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro();
     Bits = Bits | (uint32_t)II->getTokenID();
     Bits = (Bits << 8) | (uint32_t)II->getObjCOrBuiltinID();
-    Bits = (Bits << 10) | II->hasMacroDefinition();
+    Bits = (Bits << 10) | hasMacroDefinition;
     Bits = (Bits << 1) | II->isExtensionToken();
     Bits = (Bits << 1) | II->isPoisoned();
     Bits = (Bits << 1) | II->isCPlusPlusOperatorKeyword();
     clang::io::Emit32(Out, Bits);
     clang::io::Emit32(Out, ID);
+
+    if (hasMacroDefinition)
+      clang::io::Emit64(Out, Writer.getMacroOffset(II));
 
     // Emit the declaration IDs in reverse order, because the
     // IdentifierResolver provides the declarations as they would be
@@ -1785,7 +1796,7 @@ public:
 /// The identifier table consists of a blob containing string data
 /// (the actual identifiers themselves) and a separate "offsets" index
 /// that maps identifier IDs to locations within the blob.
-void PCHWriter::WriteIdentifierTable() {
+void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
   using namespace llvm;
 
   // Create and write out the blob that contains the identifier
@@ -1806,7 +1817,7 @@ void PCHWriter::WriteIdentifierTable() {
     llvm::SmallVector<char, 4096> IdentifierTable; 
     uint32_t BucketOffset;
     {
-      PCHIdentifierTableTrait Trait(*this);
+      PCHIdentifierTableTrait Trait(*this, PP);
       llvm::raw_svector_ostream Out(IdentifierTable);
       BucketOffset = Generator.Emit(Out, Trait);
     }
@@ -1964,7 +1975,8 @@ void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
-  : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS), NumStatements(0) { }
+  : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS), 
+    NumStatements(0), NumMacros(0) { }
 
 void PCHWriter::WritePCH(Sema &SemaRef) {
   ASTContext &Context = SemaRef.Context;
@@ -1989,7 +2001,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
-  WriteIdentifierTable();
+  WriteIdentifierTable(PP);
   Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
   Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
 
@@ -2004,6 +2016,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   // Some simple statistics
   Record.clear();
   Record.push_back(NumStatements);
+  Record.push_back(NumMacros);
   Stream.EmitRecord(pch::STATISTICS, Record);
   Stream.ExitBlock();
 }

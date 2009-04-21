@@ -98,6 +98,14 @@ private:
   /// table, shifted left by one bit with the low bit set.
   llvm::SmallVector<uint64_t, 16> IdentifierOffsets;
 
+  /// \brief Offsets of each of the macro identifiers into the
+  /// bitstream.
+  ///
+  /// For each identifier that is associated with a macro, this map
+  /// provides the offset into the bitstream where that macro is
+  /// defined.
+  llvm::DenseMap<const IdentifierInfo *, uint64_t> MacroOffsets;
+
   /// \brief Declarations encountered that might be external
   /// definitions.
   ///
@@ -125,6 +133,9 @@ private:
   /// \brief The number of statements written to the PCH file.
   unsigned NumStatements;
 
+  /// \brief The number of macros written to the PCH file.
+  unsigned NumMacros;
+
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
@@ -134,7 +145,7 @@ private:
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
   void WriteDeclsBlock(ASTContext &Context);
-  void WriteIdentifierTable();
+  void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributeRecord(const Attr *Attr);
 
 public:
@@ -159,6 +170,16 @@ public:
 
   /// \brief Emit a reference to an identifier
   void AddIdentifierRef(const IdentifierInfo *II, RecordData &Record);
+
+  /// \brief Retrieve the offset of the macro definition for the given
+  /// identifier.
+  ///
+  /// The identifier must refer to a macro.
+  uint64_t getMacroOffset(const IdentifierInfo *II) {
+    assert(MacroOffsets.find(II) != MacroOffsets.end() && 
+           "Identifier does not name a macro");
+    return MacroOffsets[II];
+  }
 
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordData &Record);

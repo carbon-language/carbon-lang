@@ -198,7 +198,6 @@ namespace clang {
       /// [PP_COUNTER_VALUE, Val]
       PP_COUNTER_VALUE = 4
     };
-    
 
     /// \defgroup PCHAST Precompiled header AST constants
     ///
