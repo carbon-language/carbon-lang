@@ -1164,9 +1164,9 @@ public:
   void AddVariable(DbgVariable *V) { Variables.push_back(V); }
 
   virtual bool isInlinedSubroutine() { return false; }
-  virtual unsigned getLine()   { assert ( 0 && "Unexpected scope!"); }
-  virtual unsigned getColumn() { assert ( 0 && "Unexpected scope!"); }
-  virtual unsigned getFile()   { assert ( 0 && "Unexpected scope!"); }
+  virtual unsigned getLine()   { assert ( 0 && "Unexpected scope!"); return 0; }
+  virtual unsigned getColumn() { assert ( 0 && "Unexpected scope!"); return 0; }
+  virtual unsigned getFile()   { assert ( 0 && "Unexpected scope!"); return 0; }
 };
 
 
