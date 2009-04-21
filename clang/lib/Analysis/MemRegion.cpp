@@ -157,16 +157,6 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
   os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
-void CodeTextRegion::print(llvm::raw_ostream& os) const {
-  os << "code{";
-  if (isDeclared())
-    os << getDecl()->getDeclName();
-  else
-    os << '$' << getSymbol();
-
-  os << '}';
-}
-
 void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
   // FIXME: More elaborate pretty-printing.
   os << "{ " << (void*) CL <<  " }";
