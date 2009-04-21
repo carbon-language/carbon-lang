@@ -402,9 +402,9 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 /// variables defined outside the block) or false if this is not needed (e.g.
 /// for values inside the block or for globals).
 ///
-/// FIXME: This will create BlockDeclRefExprs for global variables,
-/// function references, etc which is suboptimal :) and breaks
-/// things like "integer constant expression" tests.
+/// This also keeps the 'hasBlockDeclRefExprs' in the BlockSemaInfo records
+/// up-to-date.
+///
 static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
                                               ValueDecl *VD) {
   // If the value is defined inside the block, we couldn't snapshot it even if
@@ -420,7 +420,27 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
   // snapshot it.
   // FIXME: What about 'const' variables in C++?
   if (const VarDecl *Var = dyn_cast<VarDecl>(VD))
-    return Var->hasLocalStorage();
+    if (!Var->hasLocalStorage())
+      return false;
+  
+  // Blocks that have these can't be constant.
+  CurBlock->hasBlockDeclRefExprs = true;
+
+  // If we have nested blocks, the decl may be declared in an outer block (in
+  // which case that outer block doesn't get "hasBlockDeclRefExprs") or it may
+  // be defined outside all of the current blocks (in which case the blocks do
+  // all get the bit).  Walk the nesting chain.
+  for (BlockSemaInfo *NextBlock = CurBlock->PrevBlockInfo; NextBlock;
+       NextBlock = NextBlock->PrevBlockInfo) {
+    // If we found the defining block for the variable, don't mark the block as
+    // having a reference outside it.
+    if (NextBlock->TheDecl == VD->getDeclContext())
+      break;
+    
+    // Otherwise, the DeclRef from the inner block causes the outer one to need
+    // a snapshot as well.
+    NextBlock->hasBlockDeclRefExprs = true;
+  }
   
   return true;
 }  
@@ -948,9 +968,6 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // as they do not get snapshotted.
   //
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
-    // Blocks that have these can't be constant.
-    CurBlock->hasBlockDeclRefExprs = true;
-
     QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>())
@@ -4762,11 +4779,6 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   QualType RetTy = Context.VoidTy;
   if (BSI->ReturnType)
     RetTy = QualType(BSI->ReturnType, 0);
-
-  // A reference in a nested block, winds up being a reference in the outer
-  // block.
-  if (CurBlock)
-    CurBlock->hasBlockDeclRefExprs |= BSI->hasBlockDeclRefExprs;
 
   llvm::SmallVector<QualType, 8> ArgTypes;
   for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)

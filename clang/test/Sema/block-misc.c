@@ -112,6 +112,25 @@ void test11(int i) {
     ^{ break; }();     // expected-error {{'break' statement not in loop or switch statement}}
 }
 
+// rdar://6808730
+void *test13 = ^{
+  int X = 32;
+
+  void *P = ^{
+    return X+4;  // References outer block's "X", so outer block is constant.
+  };
+};
+
+void test14() {
+  int X = 32;
+  static void *P = ^{  // expected-error {{initializer element is not a compile-time constant}}
+
+    void *Q = ^{
+      // References test14's "X": outer block is non constant.
+      return X+4;
+    };
+  };
+}
 
 void (^test12f)(void);
 void test12() {
