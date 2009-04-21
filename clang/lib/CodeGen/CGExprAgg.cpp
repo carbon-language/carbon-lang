@@ -64,16 +64,19 @@ public:
   void VisitMemberExpr(MemberExpr *ME) { EmitAggLoadOfLValue(ME); }
   void VisitUnaryDeref(UnaryOperator *E) { EmitAggLoadOfLValue(E); }
   void VisitStringLiteral(StringLiteral *E) { EmitAggLoadOfLValue(E); }
-  void VisitCompoundLiteralExpr(CompoundLiteralExpr *E)
-      { EmitAggLoadOfLValue(E); }
-
+  void VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+    EmitAggLoadOfLValue(E); 
+  }
   void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
     EmitAggLoadOfLValue(E);
   }
+  void VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
+    EmitAggLoadOfLValue(E); 
+  }
+  void VisitPredefinedExpr(const PredefinedExpr *E) {
+    EmitAggLoadOfLValue(E); 
+  }
   
-  void VisitBlockDeclRefExpr(const BlockDeclRefExpr *E)
-      { EmitAggLoadOfLValue(E); }
-
   // Operators.
   //  case Expr::UnaryOperatorClass:
   //  case Expr::CastExprClass: 

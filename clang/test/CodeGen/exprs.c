@@ -94,3 +94,8 @@ struct s6 { int f0; };
 int f6(int a0, struct s6 a1, struct s6 a2) {
   return (a0 ? a1 : a2).f0;
 }
+
+// PR4026
+void f7() {
+  __func__;
+}
