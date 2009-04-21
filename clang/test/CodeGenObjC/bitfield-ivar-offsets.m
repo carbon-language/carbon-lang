@@ -8,6 +8,9 @@
 // RUN: grep -F '@"OBJC_IVAR_$_I0._y" = global i64 6, section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep -F '@"OBJC_IVAR_$_I0._b4" = global i64 7, section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep -F '@"OBJC_IVAR_$_I0." = global' %t | count 0 &&
+// RUN: grep -F '@"OBJC_IVAR_$_I1._c0" = global i64 8, section "__DATA, __objc_const", align 8' %t &&
+// RUN: grep -F '@"OBJC_IVAR_$_I1._c1" = global i64 9, section "__DATA, __objc_const", align 8' %t &&
+// RUN: grep -F '@"OBJC_IVAR_$_I1._c2" = global i64 9, section "__DATA, __objc_const", align 8' %t &&
 // RUN: true
 
 @interface I0 {
@@ -22,5 +25,15 @@
 }
 @end
 
+@interface I1 : I0 {
+  char _c0:4;
+  char _c1:5;
+  char _c2:2;
+}
+@end
+
 @implementation I0
+@end
+
+@implementation I1
 @end
