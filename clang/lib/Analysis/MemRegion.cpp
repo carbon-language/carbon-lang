@@ -157,6 +157,29 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
   os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
+void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
+  // FIXME: More elaborate pretty-printing.
+  os << "{ " << (void*) CL <<  " }";
+}
+
+void ElementRegion::print(llvm::raw_ostream& os) const {
+  superRegion->print(os);
+  os << '['; Index.print(os); os << ']';
+}
+
+void FieldRegion::print(llvm::raw_ostream& os) const {
+  superRegion->print(os);
+  os << "->" << getDecl()->getNameAsString();
+}
+
+void StringRegion::print(llvm::raw_ostream& os) const {
+  Str->printPretty(os);
+}
+
+void SymbolicRegion::print(llvm::raw_ostream& os) const {
+  os << "SymRegion-" << sym;
+}
+
 void TypedViewRegion::print(llvm::raw_ostream& os) const {
   os << "typed_view{" << LValueType.getAsString() << ',';
   getSuperRegion()->print(os);
@@ -165,29 +188,6 @@ void TypedViewRegion::print(llvm::raw_ostream& os) const {
 
 void VarRegion::print(llvm::raw_ostream& os) const {
   os << cast<VarDecl>(D)->getNameAsString();
-}
-
-void SymbolicRegion::print(llvm::raw_ostream& os) const {
-  os << "SymRegion-" << sym;
-}
-
-void FieldRegion::print(llvm::raw_ostream& os) const {
-  superRegion->print(os);
-  os << "->" << getDecl()->getNameAsString();
-}
-
-void ElementRegion::print(llvm::raw_ostream& os) const {
-  superRegion->print(os);
-  os << '['; Index.print(os); os << ']';
-}
-
-void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
-  // FIXME: More elaborate pretty-printing.
-  os << "{ " << (void*) CL <<  " }";
-}
-
-void StringRegion::print(llvm::raw_ostream& os) const {
-  Str->printPretty(os);
 }
 
 //===----------------------------------------------------------------------===//
