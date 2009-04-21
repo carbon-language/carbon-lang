@@ -33,7 +33,7 @@ using llvm::APSInt;
 const FunctionDecl* SVal::getAsFunctionDecl() const {
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion* R = X->getRegion();
-    if (const CodeTextRegion* CTR = dyn_cast<CodeTextRegion>(R)) {
+    if (const CodeTextRegion* CTR = R->getAs<CodeTextRegion>()) {
       if (CTR->isDeclared())
         return CTR->getDecl();
     }
