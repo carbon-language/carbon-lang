@@ -31,6 +31,8 @@ class MacroInfo {
 
   /// Location - This is the place the macro is defined.
   SourceLocation Location;
+  /// EndLocation - The location of the last token in the macro.
+  SourceLocation EndLocation;
 
   /// Arguments - The list of arguments for a function-like macro.  This can be
   /// empty, for, e.g. "#define X()".  In a C99-style variadic macro, this
@@ -98,7 +100,14 @@ public:
   /// getDefinitionLoc - Return the location that the macro was defined at.
   ///
   SourceLocation getDefinitionLoc() const { return Location; }
-  
+
+  /// setDefinitionEndLoc - Set the location of the last token in the macro.
+  ///
+  void setDefinitionEndLoc(SourceLocation EndLoc) { EndLocation = EndLoc; }
+  /// getDefinitionEndLoc - Return the location of the last token in the macro.
+  ///
+  SourceLocation getDefinitionEndLoc() const { return EndLocation; }
+
   /// isIdenticalTo - Return true if the specified macro definition is equal to
   /// this macro in spelling, arguments, and whitespace.  This is used to emit
   /// duplicate definition warnings.  This implements the rules in C99 6.10.3.

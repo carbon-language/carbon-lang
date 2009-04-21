@@ -1275,6 +1275,8 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   if (MacroNameTok.is(tok::eom))
     return;
 
+  Token LastTok = MacroNameTok;
+
   // If we are supposed to keep comments in #defines, reenable comment saving
   // mode.
   if (CurLexer) CurLexer->SetCommentRetentionState(KeepMacroComments);
@@ -1342,11 +1344,15 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     else
       Diag(Tok, diag::warn_missing_whitespace_after_macro_name);
   }
-  
+
+  if (!Tok.is(tok::eom))
+    LastTok = Tok;
+
   // Read the rest of the macro body.
   if (MI->isObjectLike()) {
     // Object-like macros are very simple, just read their body.
     while (Tok.isNot(tok::eom)) {
+      LastTok = Tok;
       MI->AddTokenToBody(Tok);
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
@@ -1356,6 +1362,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     // Otherwise, read the body of a function-like macro.  This has to validate
     // the # (stringize) operator.
     while (Tok.isNot(tok::eom)) {
+      LastTok = Tok;
       MI->AddTokenToBody(Tok);
 
       // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
@@ -1412,6 +1419,8 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   // used yet.
   if (isInPrimaryFile())
     MI->setIsUsed(false);
+
+  MI->setDefinitionEndLoc(LastTok.getLocation());
   
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
