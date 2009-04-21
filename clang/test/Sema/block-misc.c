@@ -112,12 +112,15 @@ void test11(int i) {
     ^{ break; }();     // expected-error {{'break' statement not in loop or switch statement}}
 }
 
+enum { LESS };
+
+void foo(long (^comp)()) {
+}
 
 void (^test12f)(void);
 void test12() {
-  test12f = ^test12f;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
+  foo(^{ return LESS; });	// expected-error {{incompatible block pointer types passing 'int (^)(void)', expected 'long (^)()'}}
 }
-
 
 // rdar://6808730
 void *test13 = ^{
@@ -137,4 +140,9 @@ void test14() {
       return X+4;
     };
   };
+}
+
+void (^test90f)(void);
+void test90() {
+  test90f = ^test90f;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
 }

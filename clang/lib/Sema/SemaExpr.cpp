@@ -4894,7 +4894,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::err_int_to_block_pointer;
     break;
   case IncompatibleBlockPointer:
-    DiagKind = diag::ext_typecheck_convert_incompatible_block_pointer;
+    DiagKind = diag::err_typecheck_convert_incompatible_block_pointer;
     break;
   case IncompatibleObjCQualifiedId:
     // FIXME: Diagnose the problem in ObjCQualifiedIdTypesAreCompatible, since

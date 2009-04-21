@@ -1242,7 +1242,7 @@ def err_int_to_block_pointer : Error<
   "invalid conversion %2 integer %1, expected block pointer %0">;
 def err_typecheck_comparison_of_distinct_blocks : Error<
   "comparison of distinct block types (%0 and %1)">;
-def ext_typecheck_convert_incompatible_block_pointer : ExtWarn<
+def err_typecheck_convert_incompatible_block_pointer : Error<
   "incompatible block pointer types %2 %1, expected %0">;
 
 def err_typecheck_array_not_modifiable_lvalue : Error<

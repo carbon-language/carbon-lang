@@ -4,7 +4,7 @@ typedef void (^CL)(void);
 
 CL foo() {
   short y;
-  short (^add1)(void) = ^{ return y+1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(void)', expected 'short (^)(void)'}}
+  short (^add1)(void) = ^{ return y+1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(void)', expected 'short (^)(void)'}}
 
   CL X = ^{
     if (2)
@@ -26,7 +26,7 @@ CL foo() {
       return (char*)0;
   };
 
-  double (^A)(void) = ^ { // expected-warning {{incompatible block pointer types initializing 'float (^)(void)', expected 'double (^)(void)'}}
+  double (^A)(void) = ^ { // expected-error {{incompatible block pointer types initializing 'float (^)(void)', expected 'double (^)(void)'}}
     if (1)
       return (float)1.0;
     else
@@ -41,7 +41,7 @@ CL foo() {
       return 2; // expected-warning {{incompatible integer to pointer conversion returning 'int', expected 'char *'}}
   };
 
-  return ^{ return 1; }; // expected-warning {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}}
+  return ^{ return 1; }; // expected-error {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}}
 }
 
 typedef int (^CL2)(void);
@@ -77,7 +77,7 @@ static int funk(char *s) {
     return 0;
 }
 void foo4() {
-  int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
+  int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
   int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (char *)', expected 'int (*)(char const *)'}}
   
   int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; }; // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
