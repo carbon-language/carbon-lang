@@ -599,7 +599,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   bool isForwardProtoDecl; // declared with @protocol.
   
   SourceLocation EndLoc; // marks the '>' or identifier.
-  SourceLocation AtEndLoc; // marks the end of the entire interface.
   
   ObjCProtocolDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : ObjCContainerDecl(ObjCProtocol, DC, L, Id), 
@@ -621,6 +620,7 @@ public:
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  unsigned protocol_size() const { return ReferencedProtocols.size(); }
   
   /// setProtocolList - Set the list of protocols that this interface
   /// implements.
@@ -664,11 +664,18 @@ public:
   virtual void Destroy(ASTContext& C);
   
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                               ObjCInterfaceDecl *const *Elts, unsigned nElts);
+                               ObjCInterfaceDecl *const *Elts = 0, 
+                               unsigned nElts = 0);
   
   typedef ObjCList<ObjCInterfaceDecl>::iterator iterator;
   iterator begin() const { return ForwardDecls.begin(); }
   iterator end() const { return ForwardDecls.end(); }
+  unsigned size() const { return ForwardDecls.size(); }
+
+  /// setClassList - Set the list of forward classes.
+  void setClassList(ASTContext &C, ObjCInterfaceDecl*const*List, unsigned Num) {
+    ForwardDecls.set(List, Num, C);
+  }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCClass; }
   static bool classof(const ObjCClassDecl *D) { return true; }
@@ -690,16 +697,22 @@ class ObjCForwardProtocolDecl : public Decl {
 public:
   static ObjCForwardProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                          SourceLocation L, 
-                                         ObjCProtocolDecl *const *Elts,
-                                         unsigned Num);
+                                         ObjCProtocolDecl *const *Elts = 0,
+                                         unsigned Num = 0);
 
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
   
-  typedef ObjCList<ObjCProtocolDecl>::iterator iterator;
-  iterator begin() const { return ReferencedProtocols.begin(); }
-  iterator end() const { return ReferencedProtocols.end(); }
-  
+  typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
+  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
+  protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  unsigned protocol_size() const { return ReferencedProtocols.size(); }
+
+  /// setProtocolList - Set the list of forward protocols.
+  void setProtocolList(ObjCProtocolDecl *const*List, unsigned Num,
+                       ASTContext &C) {
+    ReferencedProtocols.set(List, Num, C);
+  }
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCForwardProtocol;
   }
@@ -763,8 +776,12 @@ public:
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  unsigned protocol_size() const { return ReferencedProtocols.size(); }
   
   ObjCCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
+  void setNextClassCategory(ObjCCategoryDecl *Cat) {
+    NextClassCategory = Cat;
+  }
   void insertNextClassCategory() {
     NextClassCategory = ClassInterface->getCategoryList();
     ClassInterface->setCategoryList(this);
@@ -844,7 +861,6 @@ public:
     classmeth_iterator;
   classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
   classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
-  
   
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); }
@@ -1002,6 +1018,7 @@ public:
 
   const ObjCInterfaceDecl *getClassInterface() const { return AliasedClass; }
   ObjCInterfaceDecl *getClassInterface() { return AliasedClass; }
+  void setClassInterface(ObjCInterfaceDecl *D) { AliasedClass = D; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCCompatibleAlias;

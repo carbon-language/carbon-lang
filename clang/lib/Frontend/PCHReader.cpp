@@ -71,6 +71,17 @@ namespace {
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     void VisitObjCIvarDecl(ObjCIvarDecl *D);
+    void VisitObjCProtocolDecl(ObjCProtocolDecl *D);
+    void VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D);
+    void VisitObjCClassDecl(ObjCClassDecl *D);
+    void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
+    void VisitObjCCategoryDecl(ObjCCategoryDecl *D);
+    void VisitObjCImplDecl(ObjCImplDecl *D);
+    void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
+    void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
+    void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
+    void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+    void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
   };
 }
 
@@ -207,13 +218,92 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setSuperClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  ID->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: add protocols, categories.
 }
 
 void PCHDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
   VisitFieldDecl(IVD);
   IVD->setAccessControl((ObjCIvarDecl::AccessControl)Record[Idx++]);
+}
+
+void PCHDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
+  VisitObjCContainerDecl(PD);
+  PD->setForwardDecl(Record[Idx++]);
+  PD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  unsigned NumProtoRefs = Record[Idx++];
+  llvm::SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+  ProtoRefs.reserve(NumProtoRefs);
+  for (unsigned I = 0; I != NumProtoRefs; ++I)
+    ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
+  PD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
+}
+
+void PCHDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
+  VisitFieldDecl(FD);
+}
+
+void PCHDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
+  VisitDecl(CD);
+  unsigned NumClassRefs = Record[Idx++];
+  llvm::SmallVector<ObjCInterfaceDecl *, 16> ClassRefs;
+  ClassRefs.reserve(NumClassRefs);
+  for (unsigned I = 0; I != NumClassRefs; ++I)
+    ClassRefs.push_back(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  CD->setClassList(Reader.getContext(), &ClassRefs[0], NumClassRefs);
+}
+
+void PCHDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
+  VisitDecl(FPD);
+  unsigned NumProtoRefs = Record[Idx++];
+  llvm::SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+  ProtoRefs.reserve(NumProtoRefs);
+  for (unsigned I = 0; I != NumProtoRefs; ++I)
+    ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
+  FPD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
+}
+
+void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
+  VisitObjCContainerDecl(CD);
+  CD->setClassInterface(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  unsigned NumProtoRefs = Record[Idx++];
+  llvm::SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+  ProtoRefs.reserve(NumProtoRefs);
+  for (unsigned I = 0; I != NumProtoRefs; ++I)
+    ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
+  CD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
+  CD->setNextClassCategory(cast<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
+  CD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+
+void PCHDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
+  VisitNamedDecl(CAD);
+  CAD->setClassInterface(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+  VisitNamedDecl(D);
+  // FIXME: Implement.
+}
+
+void PCHDeclReader::VisitObjCImplDecl(ObjCImplDecl *D) {
+  VisitDecl(D);
+  // FIXME: Implement.
+}
+
+void PCHDeclReader::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+  VisitObjCImplDecl(D);
+  // FIXME: Implement.
+}
+
+void PCHDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+  VisitObjCImplDecl(D);
+  // FIXME: Implement.
+}
+
+
+void PCHDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
+  VisitDecl(D);
+  // FIXME: Implement.
 }
 
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
@@ -1833,14 +1923,65 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   }
 
-  case pch::DECL_OBJC_INTERFACE_DECL: {
+  case pch::DECL_OBJC_INTERFACE: {
     D = ObjCInterfaceDecl::Create(Context, 0, SourceLocation(), 0);
     break;
   }
 
-  case pch::DECL_OBJC_IVAR_DECL: {
+  case pch::DECL_OBJC_IVAR: {
     D = ObjCIvarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
                              ObjCIvarDecl::None);
+    break;
+  }
+
+  case pch::DECL_OBJC_PROTOCOL: {
+    D = ObjCProtocolDecl::Create(Context, 0, SourceLocation(), 0);
+    break;
+  }
+
+  case pch::DECL_OBJC_AT_DEFS_FIELD: {
+    D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(), 0, 
+                                    QualType(), 0);
+    break;
+  }
+
+  case pch::DECL_OBJC_CLASS: {
+    D = ObjCClassDecl::Create(Context, 0, SourceLocation());
+    break;
+  }
+
+  case pch::DECL_OBJC_FORWARD_PROTOCOL: {
+    D = ObjCForwardProtocolDecl::Create(Context, 0, SourceLocation());
+    break;
+  }
+
+  case pch::DECL_OBJC_CATEGORY: {
+    D = ObjCCategoryDecl::Create(Context, 0, SourceLocation(), 0);
+    break;
+  }
+
+  case pch::DECL_OBJC_CATEGORY_IMPL: {
+    // FIXME: Implement.
+    break;
+  }
+  
+  case pch::DECL_OBJC_IMPLEMENTATION: {
+    // FIXME: Implement.
+    break;
+  }
+  
+  case pch::DECL_OBJC_COMPATIBLE_ALIAS: {
+    // FIXME: Implement.
+    break;
+  }
+  
+  case pch::DECL_OBJC_PROPERTY: {
+    // FIXME: Implement.
+    break;
+  }
+  
+  case pch::DECL_OBJC_PROPERTY_IMPL: {
+    // FIXME: Implement.
     break;
   }
 

@@ -277,6 +277,17 @@ namespace {
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     void VisitObjCIvarDecl(ObjCIvarDecl *D);
+    void VisitObjCProtocolDecl(ObjCProtocolDecl *D);
+    void VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D);
+    void VisitObjCClassDecl(ObjCClassDecl *D);
+    void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
+    void VisitObjCCategoryDecl(ObjCCategoryDecl *D);
+    void VisitObjCImplDecl(ObjCImplDecl *D);
+    void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
+    void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
+    void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
+    void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+    void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
   };
 }
 
@@ -412,14 +423,95 @@ void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   // FIXME: add protocols, categories.
-  Code = pch::DECL_OBJC_INTERFACE_DECL;
+  Code = pch::DECL_OBJC_INTERFACE;
 }
 
 void PCHDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
   VisitFieldDecl(D);
   // FIXME: stable encoding for @public/@private/@protected/@package
   Record.push_back(D->getAccessControl()); 
-  Code = pch::DECL_OBJC_IVAR_DECL;
+  Code = pch::DECL_OBJC_IVAR;
+}
+
+void PCHDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
+  VisitObjCContainerDecl(D);
+  Record.push_back(D->isForwardDecl());
+  Writer.AddSourceLocation(D->getLocEnd(), Record);
+  Record.push_back(D->protocol_size());
+  for (ObjCProtocolDecl::protocol_iterator 
+       I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
+    Writer.AddDeclRef(*I, Record);
+  Code = pch::DECL_OBJC_PROTOCOL;
+}
+
+void PCHDeclWriter::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
+  VisitFieldDecl(D);
+  Code = pch::DECL_OBJC_AT_DEFS_FIELD;
+}
+
+void PCHDeclWriter::VisitObjCClassDecl(ObjCClassDecl *D) {
+  VisitDecl(D);
+  Record.push_back(D->size());
+  for (ObjCClassDecl::iterator I = D->begin(), IEnd = D->end(); I != IEnd; ++I)
+    Writer.AddDeclRef(*I, Record);
+  Code = pch::DECL_OBJC_CLASS;
+}
+
+void PCHDeclWriter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
+  VisitDecl(D);
+  Record.push_back(D->protocol_size());
+  for (ObjCProtocolDecl::protocol_iterator 
+       I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
+    Writer.AddDeclRef(*I, Record);
+  Code = pch::DECL_OBJC_FORWARD_PROTOCOL;
+}
+
+void PCHDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
+  VisitObjCContainerDecl(D);
+  Writer.AddDeclRef(D->getClassInterface(), Record);
+  Record.push_back(D->protocol_size());
+  for (ObjCProtocolDecl::protocol_iterator 
+       I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
+    Writer.AddDeclRef(*I, Record);
+  Writer.AddDeclRef(D->getNextClassCategory(), Record);
+  Writer.AddSourceLocation(D->getLocEnd(), Record);
+  Code = pch::DECL_OBJC_CATEGORY;
+}
+
+void PCHDeclWriter::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D) {
+  VisitNamedDecl(D);
+  Writer.AddDeclRef(D->getClassInterface(), Record);
+  Code = pch::DECL_OBJC_COMPATIBLE_ALIAS;
+}
+
+void PCHDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+  VisitNamedDecl(D);
+  // FIXME: Implement.
+  Code = pch::DECL_OBJC_PROPERTY;
+}
+
+void PCHDeclWriter::VisitObjCImplDecl(ObjCImplDecl *D) {
+  VisitDecl(D);
+  // FIXME: Implement.
+  // Abstract class (no need to define a stable pch::DECL code).
+}
+
+void PCHDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+  VisitObjCImplDecl(D);
+  // FIXME: Implement.
+  Code = pch::DECL_OBJC_CATEGORY_IMPL;
+}
+
+void PCHDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+  VisitObjCImplDecl(D);
+  // FIXME: Implement.
+  Code = pch::DECL_OBJC_IMPLEMENTATION;
+}
+
+void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
+  VisitDecl(D);
+  // FIXME: Implement.
+  Code = pch::DECL_OBJC_PROPERTY_IMPL;
 }
 
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {

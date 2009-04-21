@@ -357,9 +357,29 @@ namespace clang {
       /// \brief A ObjCMethodDecl record.
       DECL_OBJC_METHOD,
       /// \brief A ObjCInterfaceDecl record.
-      DECL_OBJC_INTERFACE_DECL,
+      DECL_OBJC_INTERFACE,
+      /// \brief A ObjCProtocolDecl record.
+      DECL_OBJC_PROTOCOL,
       /// \brief A ObjCIvarDecl record.
-      DECL_OBJC_IVAR_DECL,
+      DECL_OBJC_IVAR,
+      /// \brief A ObjCAtDefsFieldDecl record.
+      DECL_OBJC_AT_DEFS_FIELD,
+      /// \brief A ObjCClassDecl record.
+      DECL_OBJC_CLASS,
+      /// \brief A ObjCForwardProtocolDecl record.
+      DECL_OBJC_FORWARD_PROTOCOL,
+      /// \brief A ObjCCategoryDecl record.
+      DECL_OBJC_CATEGORY,
+      /// \brief A ObjCCategoryImplDecl record.
+      DECL_OBJC_CATEGORY_IMPL,
+      /// \brief A ObjCImplementationDecl record.
+      DECL_OBJC_IMPLEMENTATION,
+      /// \brief A ObjCCompatibleAliasDecl record.
+      DECL_OBJC_COMPATIBLE_ALIAS,
+      /// \brief A ObjCPropertyDecl record.
+      DECL_OBJC_PROPERTY,
+      /// \brief A ObjCPropertyImplDecl record.
+      DECL_OBJC_PROPERTY_IMPL,
       /// \brief A FieldDecl record.
       DECL_FIELD,
       /// \brief A VarDecl record.

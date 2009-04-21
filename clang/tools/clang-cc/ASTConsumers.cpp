@@ -98,9 +98,10 @@ void DeclPrinter:: PrintDecl(Decl *D) {
   } else if (ObjCForwardProtocolDecl *OFPD = 
              dyn_cast<ObjCForwardProtocolDecl>(D)) {
     Out << "@protocol ";
-    for (ObjCForwardProtocolDecl::iterator I = OFPD->begin(), E = OFPD->end();
+    for (ObjCForwardProtocolDecl::protocol_iterator I = OFPD->protocol_begin(), 
+                                                    E = OFPD->protocol_end();
          I != E; ++I) {
-      if (I != OFPD->begin()) Out << ", ";
+      if (I != OFPD->protocol_begin()) Out << ", ";
       Out << (*I)->getNameAsString();
     }
     Out << ";\n";
