@@ -357,7 +357,7 @@ void RangeConstraintManager::print(const GRState* St, std::ostream& Out,
   Out << nl << sep << "ranges of symbol values:";
   
   for (ConstraintRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I){
-    Out << nl << " $" << I.getKey() << " : ";
+    Out << nl << ' ' << I.getKey() << " : ";
     I.getData().Print(Out);
   }
 }
