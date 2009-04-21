@@ -430,11 +430,10 @@ bool InitializePreprocessor(Preprocessor &PP,
   // Process #define's and #undef's in the order they are given.
   for (PreprocessorInitOptions::macro_iterator I = InitOpts.macro_begin(),
        E = InitOpts.macro_end(); I != E; ++I) {
-    bool isUndef = I->second;
-    if (isUndef)
-      DefineBuiltinMacro(PredefineBuffer, I->first.c_str());
-    else
+    if (I->second)  // isUndef
       DefineBuiltinMacro(PredefineBuffer, I->first.c_str(), "#undef ");
+    else
+      DefineBuiltinMacro(PredefineBuffer, I->first.c_str());
   }
 
   // If -imacros are specified, include them now.  These are processed before
@@ -446,13 +445,12 @@ bool InitializePreprocessor(Preprocessor &PP,
   // Process -include directives.
   for (PreprocessorInitOptions::include_iterator I = InitOpts.include_begin(),
        E = InitOpts.include_end(); I != E; ++I) {
-    bool isPTH = I->second;
-    if (isPTH) {
-      AddImplicitInclude(PredefineBuffer, I->first);
-    } else {
+    if (I->second) // isPTH
       AddImplicitIncludePTH(PredefineBuffer, PP, I->first);
+    else
+      AddImplicitInclude(PredefineBuffer, I->first);
     }
-  }
+ }
 
   LineDirective = "# 2 \"<built-in>\" 2\n";
   PredefineBuffer.insert(PredefineBuffer.end(),
