@@ -126,6 +126,14 @@ static char GetFirstChar(Preprocessor &PP, const Token &Tok) {
 /// don't want to track enough to tell "x.." from "...".
 bool TokenConcatenation::AvoidConcat(const Token &PrevTok,
                                      const Token &Tok) const {
+  // First, check to see if the tokens were directly adjacent in the original
+  // source.  If they were, it must be okay to stick them together: if there
+  // were an issue, the tokens would have been lexed differently.
+  if (PrevTok.getLocation().isFileID() && Tok.getLocation().isFileID() &&
+      PrevTok.getLocation().getFileLocWithOffset(PrevTok.getLength()) == 
+        Tok.getLocation())
+    return false;
+  
   tok::TokenKind PrevKind = PrevTok.getKind();
   if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
     PrevKind = tok::identifier;
