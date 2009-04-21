@@ -1947,6 +1947,19 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
   case Instruction::Sub:
     return SE.getMinusSCEV(getSCEV(U->getOperand(0)),
                            getSCEV(U->getOperand(1)));
+  case Instruction::And:
+    // For an expression like x&255 that merely masks off the high bits,
+    // use zext(trunc(x)) as the SCEV expression.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      const APInt &A = CI->getValue();
+      unsigned Ones = A.countTrailingOnes();
+      if (APIntOps::isMask(Ones, A))
+        return
+          SE.getZeroExtendExpr(SE.getTruncateExpr(getSCEV(U->getOperand(0)),
+                                                  IntegerType::get(Ones)),
+                               U->getType());
+    }
+    break;
   case Instruction::Or:
     // If the RHS of the Or is a constant, we may have something like:
     // X*4+1 which got turned into X*4|1.  Handle this as an Add so loop
@@ -1994,6 +2007,20 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return SE.getUDivExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
+    break;
+
+  case Instruction::AShr:
+    // For a two-shift sext-inreg, use sext(trunc(x)) as the SCEV expression.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1)))
+      if (Instruction *L = dyn_cast<Instruction>(U->getOperand(0)))
+        if (L->getOpcode() == Instruction::Shl &&
+            L->getOperand(1) == U->getOperand(1)) {
+          uint64_t Amt = CI->getZExtValue();
+          return
+            SE.getSignExtendExpr(SE.getTruncateExpr(getSCEV(L->getOperand(0)),
+                                                    IntegerType::get(Amt)),
+                                 U->getType());
+        }
     break;
 
   case Instruction::Trunc:
