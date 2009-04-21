@@ -44,6 +44,16 @@ L3: ;
   } @catch (C *c) { // expected-note {{jump bypasses initialization of @catch block}}
   L8: ;
   }
+  
+  // rdar://6810106
+  id X;
+  goto L9;    // expected-error{{illegal goto into protected scope}}
+  goto L10;   // ok
+  @synchronized    // expected-note {{jump bypasses initialization of @synchronized block}}
+  ( ({ L10: ; X; })) {
+  L9:
+    ;
+  }
 }
 
 void test2(int a) {

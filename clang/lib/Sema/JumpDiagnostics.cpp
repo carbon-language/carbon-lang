@@ -168,6 +168,22 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
       continue;
     }
     
+    // Disallow jumps into the protected statement of an @synchronized, but
+    // allow jumps into the object expression it protects.
+    if (ObjCAtSynchronizedStmt *AS = dyn_cast<ObjCAtSynchronizedStmt>(SubStmt)){
+      // Recursively walk the AST for the @synchronized object expr, it is
+      // evaluated in the normal scope.
+      BuildScopeInformation(AS->getSynchExpr(), ParentScope);
+      
+      // Recursively walk the AST for the @synchronized part, protected by a new
+      // scope.
+      Scopes.push_back(GotoScope(ParentScope,
+                                 diag::note_protected_by_objc_synchronized,
+                                 AS->getAtSynchronizedLoc()));
+      BuildScopeInformation(AS->getSynchBody(), Scopes.size()-1);
+      continue;
+    }
+    
     // Recursively walk the AST.
     BuildScopeInformation(SubStmt, ParentScope);
   }

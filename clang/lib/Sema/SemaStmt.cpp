@@ -1090,6 +1090,8 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
 Action::OwningStmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
                                   StmtArg SynchBody) {
+  CurFunctionNeedsScopeChecking = true;
+
   return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc,
                      static_cast<Stmt*>(SynchExpr.release()),
                      static_cast<Stmt*>(SynchBody.release())));

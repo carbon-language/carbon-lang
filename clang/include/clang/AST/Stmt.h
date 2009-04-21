@@ -1410,10 +1410,12 @@ public:
   ObjCAtSynchronizedStmt(SourceLocation atSynchronizedLoc, Stmt *synchExpr,
                          Stmt *synchBody)
   : Stmt(ObjCAtSynchronizedStmtClass) {
-      SubStmts[SYNC_EXPR] = synchExpr;
-      SubStmts[SYNC_BODY] = synchBody;
-      AtSynchronizedLoc = atSynchronizedLoc;
-    }
+    SubStmts[SYNC_EXPR] = synchExpr;
+    SubStmts[SYNC_BODY] = synchBody;
+    AtSynchronizedLoc = atSynchronizedLoc;
+  }
+  
+  SourceLocation getAtSynchronizedLoc() const { return AtSynchronizedLoc; }
   
   const CompoundStmt *getSynchBody() const {
     return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]);
