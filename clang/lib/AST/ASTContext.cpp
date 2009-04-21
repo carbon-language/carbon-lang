@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
@@ -684,6 +685,7 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
 void ASTContext::setFieldDecl(const ObjCInterfaceDecl *OI,
                               const ObjCIvarDecl *Ivar,
                               const ObjCIvarRefExpr *MRef) {
+  assert(MRef->getDecl() == Ivar);
   ASTFieldForIvarRef[MRef] = OI->lookupFieldDeclForIvar(*this, Ivar);
 }
 

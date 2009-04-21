@@ -1086,6 +1086,7 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        const ObjCIvarDecl *Ivar,
                                        const FieldDecl *Field,
                                        unsigned CVRQualifiers) {
+  assert(Field == ObjectTy->getAsObjCInterfaceType()->getDecl()->lookupFieldDeclForIvar(CGM.getContext(), Ivar));
   if (Ivar->isBitField()) 
     return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
                                  CVRQualifiers);

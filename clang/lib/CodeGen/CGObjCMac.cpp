@@ -2368,6 +2368,7 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        const ObjCIvarDecl *Ivar,
                                        const FieldDecl *Field,
                                        unsigned CVRQualifiers) {
+  assert(Field == ObjectTy->getAsObjCInterfaceType()->getDecl()->lookupFieldDeclForIvar(CGM.getContext(), Ivar));
   if (Ivar->isBitField())
     return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field),
                                      CVRQualifiers);
@@ -4888,6 +4889,7 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                              const ObjCIvarDecl *Ivar,
                                              const FieldDecl *Field,
                                              unsigned CVRQualifiers) {
+  assert(Field == ObjectTy->getAsObjCInterfaceType()->getDecl()->lookupFieldDeclForIvar(CGM.getContext(), Ivar));
   assert(ObjectTy->isObjCInterfaceType() && 
          "CGObjCNonFragileABIMac::EmitObjCValueForIvar");
   ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
