@@ -73,16 +73,16 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// SCEVTruncateExpr - This class represents a truncation of an integer value
-  /// to a smaller integer value.
+  /// SCEVCastExpr - This is the base class for unary cast operator classes.
   ///
-  class SCEVTruncateExpr : public SCEV {
-    friend class ScalarEvolution;
-
+  class SCEVCastExpr : public SCEV {
+  protected:
     SCEVHandle Op;
     const Type *Ty;
-    SCEVTruncateExpr(const SCEVHandle &op, const Type *ty);
-    virtual ~SCEVTruncateExpr();
+
+    SCEVCastExpr(unsigned SCEVTy, const SCEVHandle &op, const Type *ty);
+    virtual ~SCEVCastExpr();
+
   public:
     const SCEVHandle &getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
@@ -95,6 +95,28 @@ namespace llvm {
       return Op->hasComputableLoopEvolution(L);
     }
 
+    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const;
+
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const SCEVCastExpr *S) { return true; }
+    static inline bool classof(const SCEV *S) {
+      return S->getSCEVType() == scTruncate ||
+             S->getSCEVType() == scZeroExtend ||
+             S->getSCEVType() == scSignExtend;
+    }
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// SCEVTruncateExpr - This class represents a truncation of an integer value
+  /// to a smaller integer value.
+  ///
+  class SCEVTruncateExpr : public SCEVCastExpr {
+    friend class ScalarEvolution;
+
+    SCEVTruncateExpr(const SCEVHandle &op, const Type *ty);
+    virtual ~SCEVTruncateExpr();
+
+  public:
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
                                                  ScalarEvolution &SE) const {
@@ -103,8 +125,6 @@ namespace llvm {
         return this;
       return SE.getTruncateExpr(H, Ty);
     }
-
-    virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual void print(raw_ostream &OS) const;
 
@@ -119,25 +139,13 @@ namespace llvm {
   /// SCEVZeroExtendExpr - This class represents a zero extension of a small
   /// integer value to a larger integer value.
   ///
-  class SCEVZeroExtendExpr : public SCEV {
+  class SCEVZeroExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVHandle Op;
-    const Type *Ty;
     SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty);
     virtual ~SCEVZeroExtendExpr();
+
   public:
-    const SCEVHandle &getOperand() const { return Op; }
-    virtual const Type *getType() const { return Ty; }
-
-    virtual bool isLoopInvariant(const Loop *L) const {
-      return Op->isLoopInvariant(L);
-    }
-
-    virtual bool hasComputableLoopEvolution(const Loop *L) const {
-      return Op->hasComputableLoopEvolution(L);
-    }
-
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
                                                  ScalarEvolution &SE) const {
@@ -146,8 +154,6 @@ namespace llvm {
         return this;
       return SE.getZeroExtendExpr(H, Ty);
     }
-
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual void print(raw_ostream &OS) const;
 
@@ -162,25 +168,13 @@ namespace llvm {
   /// SCEVSignExtendExpr - This class represents a sign extension of a small
   /// integer value to a larger integer value.
   ///
-  class SCEVSignExtendExpr : public SCEV {
+  class SCEVSignExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVHandle Op;
-    const Type *Ty;
     SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty);
     virtual ~SCEVSignExtendExpr();
+
   public:
-    const SCEVHandle &getOperand() const { return Op; }
-    virtual const Type *getType() const { return Ty; }
-
-    virtual bool isLoopInvariant(const Loop *L) const {
-      return Op->isLoopInvariant(L);
-    }
-
-    virtual bool hasComputableLoopEvolution(const Loop *L) const {
-      return Op->hasComputableLoopEvolution(L);
-    }
-
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
                                                  ScalarEvolution &SE) const {
@@ -189,8 +183,6 @@ namespace llvm {
         return this;
       return SE.getSignExtendExpr(H, Ty);
     }
-
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual void print(raw_ostream &OS) const;
 
@@ -207,8 +199,6 @@ namespace llvm {
   /// operators.
   ///
   class SCEVCommutativeExpr : public SCEV {
-    friend class ScalarEvolution;
-
     std::vector<SCEVHandle> Operands;
 
   protected:

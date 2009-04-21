@@ -190,6 +190,16 @@ void SCEVConstant::print(raw_ostream &OS) const {
   WriteAsOperand(OS, V, false);
 }
 
+SCEVCastExpr::SCEVCastExpr(unsigned SCEVTy,
+                           const SCEVHandle &op, const Type *ty)
+  : SCEV(SCEVTy), Op(op), Ty(ty) {}
+
+SCEVCastExpr::~SCEVCastExpr() {}
+
+bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  return Op->dominates(BB, DT);
+}
+
 // SCEVTruncates - Only allow the creation of one SCEVTruncateExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will
 // never be deleted!
@@ -197,7 +207,7 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
                      SCEVTruncateExpr*> > SCEVTruncates;
 
 SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
-  : SCEV(scTruncate), Op(op), Ty(ty) {
+  : SCEVCastExpr(scTruncate, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate non-integer value!");
@@ -205,10 +215,6 @@ SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
 
 SCEVTruncateExpr::~SCEVTruncateExpr() {
   SCEVTruncates->erase(std::make_pair(Op, Ty));
-}
-
-bool SCEVTruncateExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  return Op->dominates(BB, DT);
 }
 
 void SCEVTruncateExpr::print(raw_ostream &OS) const {
@@ -222,7 +228,7 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
                      SCEVZeroExtendExpr*> > SCEVZeroExtends;
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
-  : SCEV(scZeroExtend), Op(op), Ty(ty) {
+  : SCEVCastExpr(scZeroExtend, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot zero extend non-integer value!");
@@ -230,10 +236,6 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
 
 SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
   SCEVZeroExtends->erase(std::make_pair(Op, Ty));
-}
-
-bool SCEVZeroExtendExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  return Op->dominates(BB, DT);
 }
 
 void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
@@ -247,7 +249,7 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
                      SCEVSignExtendExpr*> > SCEVSignExtends;
 
 SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
-  : SCEV(scSignExtend), Op(op), Ty(ty) {
+  : SCEVCastExpr(scSignExtend, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot sign extend non-integer value!");
@@ -255,10 +257,6 @@ SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
 
 SCEVSignExtendExpr::~SCEVSignExtendExpr() {
   SCEVSignExtends->erase(std::make_pair(Op, Ty));
-}
-
-bool SCEVSignExtendExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  return Op->dominates(BB, DT);
 }
 
 void SCEVSignExtendExpr::print(raw_ostream &OS) const {

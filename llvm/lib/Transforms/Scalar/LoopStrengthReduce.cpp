@@ -300,12 +300,8 @@ static bool containsAddRecFromDifferentLoop(SCEVHandle S, Loop *L) {
     return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
            containsAddRecFromDifferentLoop(DE->getRHS(), L);
 #endif
-  if (const SCEVTruncateExpr *TE = dyn_cast<SCEVTruncateExpr>(S))
-    return containsAddRecFromDifferentLoop(TE->getOperand(), L);
-  if (const SCEVZeroExtendExpr *ZE = dyn_cast<SCEVZeroExtendExpr>(S))
-    return containsAddRecFromDifferentLoop(ZE->getOperand(), L);
-  if (const SCEVSignExtendExpr *SE = dyn_cast<SCEVSignExtendExpr>(S))
-    return containsAddRecFromDifferentLoop(SE->getOperand(), L);
+  if (const SCEVCastExpr *CE = dyn_cast<SCEVCastExpr>(S))
+    return containsAddRecFromDifferentLoop(CE->getOperand(), L);
   return false;
 }
 
