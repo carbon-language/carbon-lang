@@ -223,7 +223,14 @@ public:
     return static_cast<const FunctionDecl*>(Data);
   }
   
-  virtual bool isBoundable(ASTContext&) const { return false; }
+  SymbolRef getSymbol() const {
+    assert(codekind == Symbolic);
+    return const_cast<SymbolRef>(static_cast<const SymbolRef>(Data));
+  }
+  
+  bool isBoundable(ASTContext&) const { return false; }
+  
+  virtual void print(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
