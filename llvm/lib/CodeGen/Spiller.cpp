@@ -23,6 +23,7 @@ STATISTIC(NumDRM     , "Number of re-materializable defs elided");
 STATISTIC(NumStores  , "Number of stores added");
 STATISTIC(NumPSpills , "Number of physical register spills");
 STATISTIC(NumOmitted , "Number of reloads omited");
+STATISTIC(NumAvoided , "Number of reloads deemed unnecessary");
 STATISTIC(NumCopified, "Number of available reloads turned into copies");
 STATISTIC(NumReMats  , "Number of re-materialization");
 STATISTIC(NumLoads   , "Number of loads added");
@@ -50,7 +51,8 @@ SpillerOpt("spiller",
 
 Spiller::~Spiller() {}
 
-bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
+bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
+                                         LiveIntervals* LIs) {
   DOUT << "********** REWRITE MACHINE CODE **********\n";
   DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
   const TargetMachine &TM = MF.getTarget();
@@ -521,7 +523,8 @@ unsigned ReuseInfo::GetRegForReload(unsigned PhysReg, MachineInstr *MI,
 // Local Spiller Implementation  //
 // ***************************** //
 
-bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
+bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
+                                        LiveIntervals* LIs) {
   RegInfo = &MF.getRegInfo(); 
   TRI = MF.getTarget().getRegisterInfo();
   TII = MF.getTarget().getInstrInfo();
@@ -555,7 +558,7 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
        DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
     if (!EarlyVisited.count(MBB))
-      RewriteMBB(*MBB, VRM, Spills, RegKills, KillOps);
+      RewriteMBB(*MBB, VRM, LIs, Spills, RegKills, KillOps);
 
     // If this MBB is the only predecessor of a successor. Keep the
     // availability information and visit it next.
@@ -571,7 +574,7 @@ bool LocalSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
         MBB = SinglePredSuccs[0];
         if (!Visited.count(MBB) && EarlyVisited.insert(MBB)) {
           Spills.AddAvailableRegsToLiveIn(*MBB, RegKills, KillOps);
-          RewriteMBB(*MBB, VRM, Spills, RegKills, KillOps);
+          RewriteMBB(*MBB, VRM, LIs, Spills, RegKills, KillOps);
         }
       }
     } while (MBB);
@@ -1109,6 +1112,7 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
+                              LiveIntervals *LIs,
                               AvailableSpills &Spills, BitVector &RegKills,
                               std::vector<MachineOperand*> &KillOps) {
   DOUT << "\n**** Local spiller rewriting MBB '"
@@ -1339,6 +1343,22 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       if (!MO.isUse())
         continue;  // Handle defs in the loop below (handle use&def here though)
 
+      bool AvoidReload = false;
+      if (LIs->hasInterval(VirtReg)) {
+        LiveInterval &LI = LIs->getInterval(VirtReg);
+        if (!LI.liveAt(LIs->getUseIndex(LI.beginNumber())))
+          // Must be defined by an implicit def. It should not be spilled. Note,
+          // this is for correctness reason. e.g.
+          // 8   %reg1024<def> = IMPLICIT_DEF
+          // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
+          // The live range [12, 14) are not part of the r1024 live interval since
+          // it's defined by an implicit def. It will not conflicts with live
+          // interval of r1025. Now suppose both registers are spilled, you can
+          // easily see a situation where both registers are reloaded before
+          // the INSERT_SUBREG and both target registers that would overlap.
+          AvoidReload = true;
+      }
+
       bool DoReMat = VRM.isReMaterialized(VirtReg);
       int SSorRMId = DoReMat
         ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
@@ -1357,14 +1377,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       //       = EXTRACT_SUBREG fi#1
       // fi#1 is available in EDI, but it cannot be reused because it's not in
       // the right register file.
-      if (PhysReg &&
+      if (PhysReg && !AvoidReload &&
           (SubIdx || MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)) {
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         if (!RC->contains(PhysReg))
           PhysReg = 0;
       }
 
-      if (PhysReg) {
+      if (PhysReg && !AvoidReload) {
         // This spilled operand might be part of a two-address operand.  If this
         // is the case, then changing it will necessarily require changing the 
         // def part of the instruction as well.  However, in some cases, we
@@ -1513,34 +1533,39 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       
       RegInfo->setPhysRegUsed(PhysReg);
       ReusedOperands.markClobbered(PhysReg);
-      if (DoReMat) {
-        ReMaterialize(MBB, MII, PhysReg, VirtReg, TII, TRI, VRM);
-      } else {
-        const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-        TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
-        MachineInstr *LoadMI = prior(MII);
-        VRM.addSpillSlotUse(SSorRMId, LoadMI);
-        ++NumLoads;
-      }
-      // This invalidates PhysReg.
-      Spills.ClobberPhysReg(PhysReg);
+      if (AvoidReload)
+        ++NumAvoided;
+      else {
+        if (DoReMat) {
+          ReMaterialize(MBB, MII, PhysReg, VirtReg, TII, TRI, VRM);
+        } else {
+          const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
+          TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
+          MachineInstr *LoadMI = prior(MII);
+          VRM.addSpillSlotUse(SSorRMId, LoadMI);
+          ++NumLoads;
+        }
+        // This invalidates PhysReg.
+        Spills.ClobberPhysReg(PhysReg);
 
-      // Any stores to this stack slot are not dead anymore.
-      if (!DoReMat)
-        MaybeDeadStores[SSorRMId] = NULL;
-      Spills.addAvailable(SSorRMId, PhysReg);
-      // Assumes this is the last use. IsKill will be unset if reg is reused
-      // unless it's a two-address operand.
-      if (!MI.isRegTiedToDefOperand(i) &&
-          KilledMIRegs.count(VirtReg) == 0) {
-        MI.getOperand(i).setIsKill();
-        KilledMIRegs.insert(VirtReg);
+        // Any stores to this stack slot are not dead anymore.
+        if (!DoReMat)
+          MaybeDeadStores[SSorRMId] = NULL;
+        Spills.addAvailable(SSorRMId, PhysReg);
+        // Assumes this is the last use. IsKill will be unset if reg is reused
+        // unless it's a two-address operand.
+        if (!MI.isRegTiedToDefOperand(i) &&
+            KilledMIRegs.count(VirtReg) == 0) {
+          MI.getOperand(i).setIsKill();
+          KilledMIRegs.insert(VirtReg);
+        }
+
+        UpdateKills(*prior(MII), RegKills, KillOps, TRI);
+        DOUT << '\t' << *prior(MII);
       }
       unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       MI.getOperand(i).setReg(RReg);
       MI.getOperand(i).setSubReg(0);
-      UpdateKills(*prior(MII), RegKills, KillOps, TRI);
-      DOUT << '\t' << *prior(MII);
     }
 
     // Ok - now we can remove stores that have been confirmed dead.

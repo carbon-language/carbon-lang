@@ -1304,7 +1304,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
 
     // Update stack slot spill weight if we are splitting.
     float Weight = getSpillWeight(HasDef, HasUse, loopDepth);
-      if (!TrySplit)
+    if (!TrySplit)
       SSWeight += Weight;
 
     // Create a new virtual register for the spill interval.
@@ -1338,7 +1338,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
           HasUse = false;
           HasDef = false;
           CanFold = false;
-          if (isRemoved(MI)) {
+          if (isNotInMIMap(MI)) {
             SSWeight -= Weight;
             break;
           }
@@ -1393,7 +1393,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
     if (DefIsReMat && ImpUse)
       MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
 
-    // create a new register interval for this spill / remat.
+    // Create a new register interval for this spill / remat.
     LiveInterval &nI = getOrCreateInterval(NewVReg);
     if (CreatedNewVReg) {
       NewLIs.push_back(&nI);

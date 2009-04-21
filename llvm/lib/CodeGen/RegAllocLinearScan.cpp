@@ -345,7 +345,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   linearScan();
 
   // Rewrite spill code and update the PhysRegsUsed set.
-  spiller_->runOnMachineFunction(*mf_, *vrm_);
+  spiller_->runOnMachineFunction(*mf_, *vrm_, li_);
 
   assert(unhandled_.empty() && "Unhandled live intervals remain!");
   fixed_.clear();

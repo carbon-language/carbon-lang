@@ -854,7 +854,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
 
   // Run spiller
   std::auto_ptr<Spiller> spiller(createSpiller());
-  spiller->runOnMachineFunction(*mf, *vrm);
+  spiller->runOnMachineFunction(*mf, *vrm, lis);
 
   return true;
 }

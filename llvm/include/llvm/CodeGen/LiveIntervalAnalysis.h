@@ -300,9 +300,9 @@ namespace llvm {
       r2iMap_.erase(I);
     }
 
-    /// isRemoved - returns true if the specified machine instr has been
-    /// removed.
-    bool isRemoved(MachineInstr* instr) const {
+    /// isNotInMIMap - returns true if the specified machine instr has been
+    /// removed or was never entered in the map.
+    bool isNotInMIMap(MachineInstr* instr) const {
       return !mi2iMap_.count(instr);
     }
 

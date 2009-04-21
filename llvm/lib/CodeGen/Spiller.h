@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -37,8 +38,8 @@ namespace llvm {
   /// virtual registers to stack slots, rewriting the code.
   struct Spiller {
     virtual ~Spiller();
-    virtual bool runOnMachineFunction(MachineFunction &MF,
-                                      VirtRegMap &VRM) = 0;
+    virtual bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
+                                      LiveIntervals* LIs) = 0;
   };
 
   /// createSpiller - Create an return a spiller object, as specified on the
@@ -49,7 +50,8 @@ namespace llvm {
   
   // Simple Spiller Implementation
   struct VISIBILITY_HIDDEN SimpleSpiller : public Spiller {
-    bool runOnMachineFunction(MachineFunction& mf, VirtRegMap &VRM);
+    bool runOnMachineFunction(MachineFunction& mf, VirtRegMap &VRM,
+                              LiveIntervals* LIs);
   };
   
   // ************************************************************************ //
@@ -287,7 +289,8 @@ namespace llvm {
     BitVector AllocatableRegs;
     DenseMap<MachineInstr*, unsigned> DistanceMap;
   public:
-    bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM);
+    bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
+                              LiveIntervals* LI);
   private:
     void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
                           unsigned Reg, BitVector &RegKills,
@@ -329,7 +332,7 @@ namespace llvm {
                              VirtRegMap &VRM);
 
     void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
-                    AvailableSpills &Spills,
+                    LiveIntervals *LIs, AvailableSpills &Spills,
                     BitVector &RegKills, std::vector<MachineOperand*> &KillOps);
   };
 }
