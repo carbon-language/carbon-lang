@@ -2516,7 +2516,7 @@ public:
   const FunctionType *getFunctionType() const;
 
   /// hasBlockDeclRefExprs - Return true iff the block has BlockDeclRefExpr
-  /// contained inside.
+  /// inside of the block that reference values outside the block.
   bool hasBlockDeclRefExprs() const { return HasBlockDeclRefExprs; }
   void setHasBlockDeclRefExprs(bool BDRE) { HasBlockDeclRefExprs = BDRE; }
 

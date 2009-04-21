@@ -1237,7 +1237,7 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     if (LangOpts.ObjCNonFragileABI) {
       Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
         << IIT->getDecl()->getDeclName() << isSizeof;
-      return true;
+      //return false;
     }
   }
     
