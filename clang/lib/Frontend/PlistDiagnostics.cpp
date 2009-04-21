@@ -148,14 +148,7 @@ static void ReportControlFlow(llvm::raw_ostream& o,
   ++indent;
   
   Indent(o, indent) << "<key>kind</key><string>control</string>\n";
-  
-  // FIXME: Eventually remove (DEPRECATED)
-  // Output the start and end locations.
-  Indent(o, indent) << "<key>start</key>\n";
-  EmitLocation(o, SM, LangOpts, P.getStartLocation(), FM, indent);
-  Indent(o, indent) << "<key>end</key>\n";
-  EmitLocation(o, SM, LangOpts, P.getEndLocation(), FM, indent);
-  
+    
   // Emit edges.
   Indent(o, indent) << "<key>edges</key>\n";
   ++indent;
