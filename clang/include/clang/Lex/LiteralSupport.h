@@ -124,7 +124,7 @@ private:
 /// CharLiteralParser - Perform interpretation and semantic analysis of a
 /// character literal.
 class CharLiteralParser {
-  unsigned Value;
+  uint64_t Value;
   bool IsWide;
   bool HadError;
 public:
@@ -133,7 +133,7 @@ public:
 
   bool hadError() const { return HadError; }
   bool isWide() const { return IsWide; }
-  unsigned getValue() const { return Value; }
+  uint64_t getValue() const { return Value; }
 };
 
 /// StringLiteralParser - This decodes string escape characters and performs

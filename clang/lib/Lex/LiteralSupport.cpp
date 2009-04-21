@@ -622,7 +622,6 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
                                      SourceLocation Loc, Preprocessor &PP) {
   // At this point we know that the character matches the regex "L?'.*'".
   HadError = false;
-  Value = 0;
   
   // Determine if this is a wide character.
   IsWide = begin[0] == 'L';
@@ -632,21 +631,23 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   assert(begin[0] == '\'' && "Invalid token lexed");
   ++begin;
 
-  // FIXME: This assumes that 'int' is 32-bits in overflow calculation, and the
-  // size of "value".
-  assert(PP.getTargetInfo().getIntWidth() == 32 &&
-         "Assumes sizeof(int) == 4 for now");
-  // FIXME: This assumes that wchar_t is 32-bits for now.
-  assert(PP.getTargetInfo().getWCharWidth() == 32 && 
-         "Assumes sizeof(wchar_t) == 4 for now");
+  // FIXME: The "Value" is an uint64_t so we can handle char literals of 
+  // upto 64-bits.
+  assert(PP.getTargetInfo().getIntWidth() <= 64 &&
+         "Assumes sizeof(int) on target is <= 64");
+  assert(PP.getTargetInfo().getWCharWidth() <= 64 &&
+         "Assumes sizeof(wchar) on target is <= 64");
   // FIXME: This extensively assumes that 'char' is 8-bits.
   assert(PP.getTargetInfo().getCharWidth() == 8 &&
          "Assumes char is 8 bits");
+
+  // This is what we will use for overflow detection 
+  llvm::APInt LitVal(PP.getTargetInfo().getIntWidth(), 0);
   
   bool isFirstChar = true;
   bool isMultiChar = false;
   while (begin[0] != '\'') {
-    unsigned ResultChar;
+    uint64_t ResultChar;
     if (begin[0] != '\\')     // If this is a normal character, consume it.
       ResultChar = *begin++;
     else                      // Otherwise, this is an escape character.
@@ -667,19 +668,23 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
       if (IsWide) {
         // Emulate GCC's (unintentional?) behavior: L'ab' -> L'b'.
-        Value = 0;
+        LitVal = 0;
       } else {
         // Narrow character literals act as though their value is concatenated
         // in this implementation.
-        if (((Value << 8) >> 8) != Value)
+        if ((LitVal.shl(8)).lshr(8) != LitVal)
+        // if (((LitVal << 8) >> 8) != LitVal)
           PP.Diag(Loc, diag::warn_char_constant_too_large);
-        Value <<= 8;
+        LitVal <<= 8;
       }
     }
     
-    Value += ResultChar;
+    LitVal = LitVal + ResultChar;
     isFirstChar = false;
   }
+
+  // Transfer the value from APInt to uint64_t
+  Value = LitVal.getZExtValue();
   
   // If this is a single narrow character, sign extend it (e.g. '\xFF' is "-1")
   // if 'char' is signed for this target (C99 6.4.4.4p10).  Note that multiple
