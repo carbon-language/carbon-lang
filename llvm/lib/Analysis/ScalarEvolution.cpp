@@ -2015,7 +2015,7 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       if (Instruction *L = dyn_cast<Instruction>(U->getOperand(0)))
         if (L->getOpcode() == Instruction::Shl &&
             L->getOperand(1) == U->getOperand(1)) {
-          uint64_t Amt = CI->getZExtValue();
+          uint64_t Amt = getTypeSizeInBits(U->getType()) - CI->getZExtValue();
           return
             SE.getSignExtendExpr(SE.getTruncateExpr(getSCEV(L->getOperand(0)),
                                                     IntegerType::get(Amt)),
