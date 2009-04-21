@@ -137,19 +137,13 @@ public:
   /// EnumerationMutationFunction - Return the function that's called by the
   /// compiler when a mutation is detected during foreach iteration.
   virtual llvm::Constant *EnumerationMutationFunction() = 0;
-    
-  /// If instance variable addresses are determined at runtime then this should
-  /// return true, otherwise instance variables will be accessed directly from
-  /// the structure.  If this returns true then @defs is invalid for this
-  /// runtime and a warning should be generated.
-  virtual bool LateBoundIVars() const { return false; }
-
+  
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                          const Stmt &S) = 0;
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S) = 0;
-  virtual llvm::Value * EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
-                                         llvm::Value *AddrWeakObj) = 0;
+  virtual llvm::Value *EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *AddrWeakObj) = 0;
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dest) = 0;
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,

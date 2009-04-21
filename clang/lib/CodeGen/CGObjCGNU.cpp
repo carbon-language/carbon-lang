@@ -733,9 +733,6 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     const_cast<ObjCInterfaceDecl *>(OID->getClassInterface());
   std::string ClassName = ClassDecl->getNameAsString();
 
-  // This is required by newer ObjC runtimes.
-  assert(!LateBoundIVars() &&"Late-bound instance variables not yet supported");
-
   // Get the size of instances.  For runtimes that support late-bound instances
   // this should probably be something different (size just of instance
   // varaibles in this class, not superclasses?).

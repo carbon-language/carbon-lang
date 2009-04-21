@@ -1131,14 +1131,6 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
 
 llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
                                              const ObjCIvarDecl *Ivar) {
-  // Objective-C objects are traditionally C structures with their layout
-  // defined at compile-time.  In some implementations, their layout is not
-  // defined until run time in order to allow instance variables to be added to
-  // a class without recompiling all of the subclasses.  If this is the case
-  // then the CGObjCRuntime subclass must return true to LateBoundIvars and
-  // implement the lookup itself.
-  if (CGM.getObjCRuntime().LateBoundIVars())
-    assert(0 && "late-bound ivars are unsupported");
   return CGM.getObjCRuntime().EmitIvarOffset(*this, Interface, Ivar);
 }
 
@@ -1147,10 +1139,6 @@ LValue CodeGenFunction::EmitLValueForIvar(QualType ObjectTy,
                                           const ObjCIvarDecl *Ivar,
                                           const FieldDecl *Field,
                                           unsigned CVRQualifiers) {
-  // See comment in EmitIvarOffset.
-  if (CGM.getObjCRuntime().LateBoundIVars())
-    assert(0 && "late-bound ivars are unsupported");
-  
   return CGM.getObjCRuntime().EmitObjCValueForIvar(*this, ObjectTy, BaseValue,
                                                    Ivar, Field, CVRQualifiers);
 }
