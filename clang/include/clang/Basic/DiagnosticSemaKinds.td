@@ -925,6 +925,8 @@ def err_sizeof_forward_interface : Error<
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
+def err_atdef_nonfragile_interface : Error<
+  "invalid application of @defs in non-fragile ABI">;
 // FIXME: merge with %select
 def err_sizeof_incomplete_type : Error<
   "invalid application of 'sizeof' to an incomplete type %0">;

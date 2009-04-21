@@ -1975,6 +1975,11 @@ void Sema::ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
     Diag(DeclStart, diag::err_undef_interface) << ClassName;
     return;
   }
+  if (LangOpts.ObjCNonFragileABI) {
+    Diag(DeclStart, diag::err_atdef_nonfragile_interface);
+    return;
+  }
+  
   // Collect the instance variables
   CollectIvars(Class, dyn_cast<RecordDecl>(TagD.getAs<Decl>()), Context, Decls);
   

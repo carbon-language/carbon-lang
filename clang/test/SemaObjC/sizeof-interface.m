@@ -33,6 +33,8 @@ int g2[ sizeof(I0)   // expected-error {{invalid application of 'sizeof' to inte
 @synthesize p0 = _p0;
 @end
 
+typedef struct { @defs(I1) } I1_defs; // expected-error {{invalid application of @defs in non-fragile ABI}}
+
 // FIXME: This is currently broken due to the way the record layout we
 // create is tied to whether we have seen synthesized properties. Ugh.
 // int g3[ sizeof(I1) == 0 ? 1 : -1];
