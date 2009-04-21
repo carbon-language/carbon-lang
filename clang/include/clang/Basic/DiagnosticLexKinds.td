@@ -215,7 +215,7 @@ def ext_stdc_pragma_syntax_eom :
    ExtWarn<"expected end of macro in STDC pragma">,
    InGroup<UnknownPragmas>;
 def warn_stdc_fenv_access_not_supported :
-   ExtWarn<"pragma STDC FENV_ACCESS ON is not supported, ignoring pragma">,
+   Warning<"pragma STDC FENV_ACCESS ON is not supported, ignoring pragma">,
    InGroup<UnknownPragmas>;
 def warn_pragma_diagnostic_invalid :
    ExtWarn<"pragma diagnostic expected 'error', 'warning', 'ignored', or"
