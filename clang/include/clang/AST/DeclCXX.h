@@ -1026,6 +1026,7 @@ public:
   static bool classof(const NamespaceAliasDecl *D) { return true; }
 };
   
+/// StaticAssertDecl - Represents a C++0x static_assert declaration.
 class StaticAssertDecl : public Decl {
   Expr *AssertExpr;
   StringLiteral *Message;
@@ -1052,6 +1053,17 @@ public:
     return D->getKind() == Decl::StaticAssert;
   }
   static bool classof(StaticAssertDecl *D) { return true; }
+};
+
+/// CXXTempVarDecl - Represents an implicit C++ temporary variable declaration.
+class CXXTempVarDecl : public VarDecl {
+protected:
+  CXXTempVarDecl(DeclContext *DC, QualType T) 
+    : VarDecl(CXXTempVar, DC, SourceLocation(), 0, T, None) {}
+
+public:
+  static CXXTempVarDecl *Create(ASTContext &C, DeclContext *DC,
+                                QualType T);
 };
 
 /// Insertion operator for diagnostics.  This allows sending AccessSpecifier's
