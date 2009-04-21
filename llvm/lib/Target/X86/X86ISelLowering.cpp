@@ -9075,7 +9075,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       }
       if (DestReg) {
         Res.first = DestReg;
-        Res.second = Res.second = X86::GR8RegisterClass;
+        Res.second = X86::GR8RegisterClass;
       }
     } else if (VT == MVT::i32) {
       unsigned DestReg = 0;
@@ -9092,7 +9092,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       }
       if (DestReg) {
         Res.first = DestReg;
-        Res.second = Res.second = X86::GR32RegisterClass;
+        Res.second = X86::GR32RegisterClass;
       }
     } else if (VT == MVT::i64) {
       unsigned DestReg = 0;
@@ -9109,7 +9109,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       }
       if (DestReg) {
         Res.first = DestReg;
-        Res.second = Res.second = X86::GR64RegisterClass;
+        Res.second = X86::GR64RegisterClass;
       }
     }
   } else if (Res.second == X86::FR32RegisterClass ||
