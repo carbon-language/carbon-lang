@@ -66,7 +66,7 @@ foreach my $lib (@libs ) {
                    # this strips both LF and CRLF.
     $libdefs{$_} = $lib;
   }
-  close DEFS;
+  close DEFS or die "nm failed";
 }
 
 # Gather definitions from the object files.
@@ -79,7 +79,7 @@ foreach my $obj (@objs ) {
                    # this strips both LF and CRLF.    
     $objdefs{$_} = $obj;
   }
-  close DEFS;
+  close DEFS or die "nm failed";
 }
 
 # Generate one entry in the <dl> list. This generates the <dt> and <dd> elements
@@ -113,7 +113,7 @@ sub gen_one_entry {
       }
     }
   }
-  close UNDEFS;
+  close UNDEFS or die "nm failed";
   unless(keys %DepLibs) {
     # above failed
     open UNDEFS, "$nmPath -g -u $Directory/$lib |";
@@ -138,6 +138,7 @@ sub gen_one_entry {
         }
       }
     }
+    close UNDEFS or die "nm failed";
   }
 
   for my $key (sort keys %DepLibs) {
