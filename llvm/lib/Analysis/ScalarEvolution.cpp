@@ -201,10 +201,6 @@ SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate non-integer value!");
-  assert((!Op->getType()->isInteger() || !Ty->isInteger() ||
-          Op->getType()->getPrimitiveSizeInBits() >
-            Ty->getPrimitiveSizeInBits()) &&
-         "This is not a truncating conversion!");
 }
 
 SCEVTruncateExpr::~SCEVTruncateExpr() {
@@ -255,8 +251,6 @@ SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot sign extend non-integer value!");
-  assert(Op->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()
-         && "This is not an extending conversion!");
 }
 
 SCEVSignExtendExpr::~SCEVSignExtendExpr() {
@@ -654,6 +648,10 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It,
 //===----------------------------------------------------------------------===//
 
 SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty) {
+  assert(getTargetData().getTypeSizeInBits(Op->getType()) >
+         getTargetData().getTypeSizeInBits(Ty) &&
+         "This is not a truncating conversion!");
+
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return getUnknown(
         ConstantExpr::getTrunc(SC->getValue(), Ty));
@@ -702,6 +700,10 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
 }
 
 SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *Ty) {
+  assert(getTargetData().getTypeSizeInBits(Op->getType()) <
+         getTargetData().getTypeSizeInBits(Ty) &&
+         "This is not an extending conversion!");
+
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
     const Type *IntTy = Ty;
     if (isa<PointerType>(IntTy)) IntTy = getTargetData().getIntPtrType();
