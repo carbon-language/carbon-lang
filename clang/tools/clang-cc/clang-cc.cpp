@@ -305,8 +305,13 @@ NoDiagnosticsFixIt("fno-diagnostics-fixit-info",
                                   " diagnostics"));
 
 static llvm::cl::opt<bool>
-PrintSourceRangeInfo("fprint-source-range-info",
-                    llvm::cl::desc("Print source range spans in numeric form"));
+PrintSourceRangeInfo("fdiagnostics-print-source-range-info",
+                     llvm::cl::desc("Print source range spans in numeric form"));
+
+static llvm::cl::alias
+PrintSourceRangeInfo2("fprint-source-range-info",
+        llvm::cl::desc("Print source range spans in numeric form [deprecated]"),
+                      llvm::cl::aliasopt(PrintSourceRangeInfo));
 
 static llvm::cl::opt<bool>
 PrintDiagnosticOption("fdiagnostics-show-option",
