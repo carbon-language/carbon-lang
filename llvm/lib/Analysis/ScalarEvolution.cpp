@@ -79,7 +79,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <ostream>
@@ -115,8 +115,13 @@ char ScalarEvolution::ID = 0;
 //
 SCEV::~SCEV() {}
 void SCEV::dump() const {
-  print(cerr);
-  cerr << '\n';
+  print(errs());
+  errs() << '\n';
+}
+
+void SCEV::print(std::ostream &o) const {
+  raw_os_ostream OS(o);
+  print(OS);
 }
 
 bool SCEV::isZero() const {
@@ -150,7 +155,7 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
   return this;
 }
 
-void SCEVCouldNotCompute::print(std::ostream &OS) const {
+void SCEVCouldNotCompute::print(raw_ostream &OS) const {
   OS << "***COULDNOTCOMPUTE***";
 }
 
@@ -181,7 +186,7 @@ SCEVHandle ScalarEvolution::getConstant(const APInt& Val) {
 
 const Type *SCEVConstant::getType() const { return V->getType(); }
 
-void SCEVConstant::print(std::ostream &OS) const {
+void SCEVConstant::print(raw_ostream &OS) const {
   WriteAsOperand(OS, V, false);
 }
 
@@ -210,7 +215,7 @@ bool SCEVTruncateExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return Op->dominates(BB, DT);
 }
 
-void SCEVTruncateExpr::print(std::ostream &OS) const {
+void SCEVTruncateExpr::print(raw_ostream &OS) const {
   OS << "(truncate " << *Op << " to " << *Ty << ")";
 }
 
@@ -235,7 +240,7 @@ bool SCEVZeroExtendExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return Op->dominates(BB, DT);
 }
 
-void SCEVZeroExtendExpr::print(std::ostream &OS) const {
+void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
   OS << "(zeroextend " << *Op << " to " << *Ty << ")";
 }
 
@@ -262,7 +267,7 @@ bool SCEVSignExtendExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return Op->dominates(BB, DT);
 }
 
-void SCEVSignExtendExpr::print(std::ostream &OS) const {
+void SCEVSignExtendExpr::print(raw_ostream &OS) const {
   OS << "(signextend " << *Op << " to " << *Ty << ")";
 }
 
@@ -278,7 +283,7 @@ SCEVCommutativeExpr::~SCEVCommutativeExpr() {
                                                          Operands.end())));
 }
 
-void SCEVCommutativeExpr::print(std::ostream &OS) const {
+void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   assert(Operands.size() > 1 && "This plus expr shouldn't exist!");
   const char *OpStr = getOperationStr();
   OS << "(" << *Operands[0];
@@ -342,7 +347,7 @@ bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
 }
 
-void SCEVUDivExpr::print(std::ostream &OS) const {
+void SCEVUDivExpr::print(raw_ostream &OS) const {
   OS << "(" << *LHS << " /u " << *RHS << ")";
 }
 
@@ -403,7 +408,7 @@ bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
 }
 
 
-void SCEVAddRecExpr::print(std::ostream &OS) const {
+void SCEVAddRecExpr::print(raw_ostream &OS) const {
   OS << "{" << *Operands[0];
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
     OS << ",+," << *Operands[i];
@@ -435,7 +440,7 @@ const Type *SCEVUnknown::getType() const {
   return V->getType();
 }
 
-void SCEVUnknown::print(std::ostream &OS) const {
+void SCEVUnknown::print(raw_ostream &OS) const {
   if (isa<PointerType>(V->getType()))
     OS << "(ptrtoint " << *V->getType() << " ";
   WriteAsOperand(OS, V, false);
@@ -2245,10 +2250,10 @@ SCEVHandle ScalarEvolutionsImpl::ComputeBackedgeTakenCount(const Loop *L) {
   }
   default:
 #if 0
-    cerr << "ComputeBackedgeTakenCount ";
+    errs() << "ComputeBackedgeTakenCount ";
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
-      cerr << "[unsigned] ";
-    cerr << *LHS << "   "
+      errs() << "[unsigned] ";
+    errs() << *LHS << "   "
          << Instruction::getOpcodeName(Instruction::ICmp) 
          << "   " << *RHS << "\n";
 #endif
@@ -2369,9 +2374,9 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
     if (!isa<ConstantInt>(Result)) break;  // Couldn't decide for sure
     if (cast<ConstantInt>(Result)->getValue().isMinValue()) {
 #if 0
-      cerr << "\n***\n*** Computed loop count " << *ItCst
-           << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
-           << "***\n";
+      errs() << "\n***\n*** Computed loop count " << *ItCst
+             << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
+             << "***\n";
 #endif
       ++NumArrayLenItCounts;
       return SE.getConstant(ItCst);   // Found terminating iteration!
@@ -2873,8 +2878,8 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
     SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
 #if 0
-      cerr << "HFTZ: " << *V << " - sol#1: " << *R1
-           << "  sol#2: " << *R2 << "\n";
+      errs() << "HFTZ: " << *V << " - sol#1: " << *R1
+             << "  sol#2: " << *R2 << "\n";
 #endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
@@ -3326,7 +3331,7 @@ void ScalarEvolution::deleteValueFromRecords(Value *V) const {
   return ((ScalarEvolutionsImpl*)Impl)->deleteValueFromRecords(V);
 }
 
-static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
+static void PrintLoopInfo(raw_ostream &OS, const ScalarEvolution *SE,
                           const Loop *L) {
   // Print all inner loops first
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
@@ -3348,7 +3353,7 @@ static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
   OS << "\n";
 }
 
-void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
+void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
   Function &F = ((ScalarEvolutionsImpl*)Impl)->F;
   LoopInfo &LI = ((ScalarEvolutionsImpl*)Impl)->LI;
 
@@ -3378,4 +3383,9 @@ void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
   OS << "Determining loop execution counts for: " << F.getName() << "\n";
   for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
     PrintLoopInfo(OS, this, *I);
+}
+
+void ScalarEvolution::print(std::ostream &o, const Module *M) const {
+  raw_os_ostream OS(o);
+  print(OS, M);
 }
