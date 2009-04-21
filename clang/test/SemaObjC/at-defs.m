@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only
+// RUN: clang-cc -triple i386-unknown-unknown %s -fsyntax-only
 
 @interface Test {
 	double a;
