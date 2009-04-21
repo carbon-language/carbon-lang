@@ -1595,9 +1595,11 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (DC->getPrimaryContext() != DC)
     return 0;
 
-  // Since there is no name lookup into functions or methods, don't
-  // bother to build a visible-declarations table.
-  if (DC->isFunctionOrMethod())
+  // Since there is no name lookup into functions or methods, and we
+  // perform name lookup for the translation unit via the
+  // IdentifierInfo chains, don't bother to build a
+  // visible-declarations table for these entities.
+  if (DC->isFunctionOrMethod() || DC->isTranslationUnit())
     return 0;
 
   // Force the DeclContext to build a its name-lookup table.
