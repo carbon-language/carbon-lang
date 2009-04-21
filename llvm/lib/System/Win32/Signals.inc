@@ -188,10 +188,10 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
       // Print the PC in hexadecimal.
       DWORD PC = StackFrame.AddrPC.Offset;
-      fprintf(stderr, "%08X", PC);
+      fprintf(stderr, "%08lX", PC);
 
       // Print the parameters.  Assume there are four.
-      fprintf(stderr, " (0x%08X 0x%08X 0x%08X 0x%08X)", StackFrame.Params[0],
+      fprintf(stderr, " (0x%08lX 0x%08lX 0x%08lX 0x%08lX)", StackFrame.Params[0],
               StackFrame.Params[1], StackFrame.Params[2], StackFrame.Params[3]);
 
       // Verify the PC belongs to a module in this process.
@@ -215,7 +215,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
       buffer[511] = 0;
       if (dwDisp > 0)
-        fprintf(stderr, ", %s()+%04d bytes(s)", symbol->Name, dwDisp);
+        fprintf(stderr, ", %s()+%04lu bytes(s)", symbol->Name, dwDisp);
       else
         fprintf(stderr, ", %s", symbol->Name);
 
@@ -224,9 +224,9 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
       memset(&line, 0, sizeof(line));
       line.SizeOfStruct = sizeof(line);
       if (SymGetLineFromAddr(hProcess, PC, &dwDisp, &line)) {
-        fprintf(stderr, ", %s, line %d", line.FileName, line.LineNumber);
+        fprintf(stderr, ", %s, line %lu", line.FileName, line.LineNumber);
         if (dwDisp > 0)
-          fprintf(stderr, "+%04d byte(s)", dwDisp);
+          fprintf(stderr, "+%04lu byte(s)", dwDisp);
       }
 
       fputc('\n', stderr);
