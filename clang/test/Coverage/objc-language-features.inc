@@ -78,6 +78,8 @@ int f0(id x) {
 #endif
 }
 
+#ifndef __OBJC2__
 struct s0 {
   @defs(A);
 };
+#endif
