@@ -32,7 +32,6 @@ namespace llvm {
   class Type;
   class SCEVHandle;
   class ScalarEvolution;
-  class TargetData;
 
   /// SCEV - This class represent an analyzed expression in the program.  These
   /// are reference counted opaque objects that the client is not allowed to
@@ -201,9 +200,21 @@ namespace llvm {
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution() : FunctionPass(&ID), Impl(0) {}
 
-    // getTargetData - Return the TargetData object contained in this
-    // ScalarEvolution.
-    const TargetData &getTargetData() const;
+    /// isSCEVable - Test if values of the given type are analyzable within
+    /// the SCEV framework. This primarily includes integer types, and it
+    /// can optionally include pointer types if the ScalarEvolution class
+    /// has access to target-specific information.
+    bool isSCEVable(const Type *Ty) const;
+
+    /// getTypeSizeInBits - Return the size in bits of the specified type,
+    /// for which isSCEVable must return true.
+    uint64_t getTypeSizeInBits(const Type *Ty) const;
+
+    /// getEffectiveSCEVType - Return a type with the same bitwidth as
+    /// the given type and which represents how SCEV will treat the given
+    /// type, for which isSCEVable must return true. For pointer types,
+    /// this is the pointer-sized integer type.
+    const Type *getEffectiveSCEVType(const Type *Ty) const;
 
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.

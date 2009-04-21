@@ -20,8 +20,6 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
 namespace llvm {
-  class TargetData;
-
   /// SCEVExpander - This class uses information about analyze scalars to
   /// rewrite expressions in canonical form.
   ///
@@ -31,7 +29,6 @@ namespace llvm {
   struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
     LoopInfo &LI;
-    const TargetData &TD;
     std::map<SCEVHandle, Value*> InsertedExpressions;
     std::set<Instruction*> InsertedInstructions;
 
@@ -39,8 +36,8 @@ namespace llvm {
 
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
-    SCEVExpander(ScalarEvolution &se, LoopInfo &li, const TargetData &td)
-      : SE(se), LI(li), TD(td) {}
+    SCEVExpander(ScalarEvolution &se, LoopInfo &li)
+      : SE(se), LI(li) {}
 
     LoopInfo &getLoopInfo() const { return LI; }
 
@@ -85,6 +82,11 @@ namespace llvm {
     /// we can to share the casts.
     Value *InsertCastOfTo(Instruction::CastOps opcode, Value *V,
                           const Type *Ty);
+
+    /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
+    /// which must be possible with a noop cast.
+    Value *InsertNoopCastOfTo(Value *V, const Type *Ty);
+
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,

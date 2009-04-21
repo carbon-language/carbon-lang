@@ -570,7 +570,7 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
   if (K > 1000)
     return SE.getCouldNotCompute();
 
-  unsigned W = SE.getTargetData().getTypeSizeInBits(ResultTy);
+  unsigned W = SE.getTypeSizeInBits(ResultTy);
 
   // Calculate K! / 2^T and T; we divide out the factors of two before
   // multiplying for calculating K! / 2^T to avoid overflow.
@@ -648,8 +648,7 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It,
 //===----------------------------------------------------------------------===//
 
 SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty) {
-  assert(getTargetData().getTypeSizeInBits(Op->getType()) >
-         getTargetData().getTypeSizeInBits(Ty) &&
+  assert(getTypeSizeInBits(Op->getType()) > getTypeSizeInBits(Ty) &&
          "This is not a truncating conversion!");
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
@@ -677,13 +676,11 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty
 
 SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
                                               const Type *Ty) {
-  assert(getTargetData().getTypeSizeInBits(Op->getType()) <
-         getTargetData().getTypeSizeInBits(Ty) &&
+  assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
-    const Type *IntTy = Ty;
-    if (isa<PointerType>(IntTy)) IntTy = getTargetData().getIntPtrType();
+    const Type *IntTy = getEffectiveSCEVType(Ty);
     Constant *C = ConstantExpr::getZExt(SC->getValue(), IntTy);
     if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
     return getUnknown(C);
@@ -700,13 +697,11 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
 }
 
 SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *Ty) {
-  assert(getTargetData().getTypeSizeInBits(Op->getType()) <
-         getTargetData().getTypeSizeInBits(Ty) &&
+  assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
-    const Type *IntTy = Ty;
-    if (isa<PointerType>(IntTy)) IntTy = getTargetData().getIntPtrType();
+    const Type *IntTy = getEffectiveSCEVType(Ty);
     Constant *C = ConstantExpr::getSExt(SC->getValue(), IntTy);
     if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
     return getUnknown(C);
@@ -1366,7 +1361,7 @@ namespace {
 
     /// TD - The target data information for the target we are targetting.
     ///
-    TargetData &TD;
+    TargetData *TD;
 
     /// UnknownValue - This SCEV is used to represent unknown trip counts and
     /// things.
@@ -1389,8 +1384,24 @@ namespace {
 
   public:
     ScalarEvolutionsImpl(ScalarEvolution &se, Function &f, LoopInfo &li,
-                         TargetData &td)
+                         TargetData *td)
       : SE(se), F(f), LI(li), TD(td), UnknownValue(new SCEVCouldNotCompute()) {}
+
+    /// isSCEVable - Test if values of the given type are analyzable within
+    /// the SCEV framework. This primarily includes integer types, and it
+    /// can optionally include pointer types if the ScalarEvolution class
+    /// has access to target-specific information.
+    bool isSCEVable(const Type *Ty) const;
+
+    /// getTypeSizeInBits - Return the size in bits of the specified type,
+    /// for which isSCEVable must return true.
+    uint64_t getTypeSizeInBits(const Type *Ty) const;
+
+    /// getEffectiveSCEVType - Return a type with the same bitwidth as
+    /// the given type and which represents how SCEV will treat the given
+    /// type, for which isSCEVable must return true. For pointer types,
+    /// this is the pointer-sized integer type.
+    const Type *getEffectiveSCEVType(const Type *Ty) const;
 
     SCEVHandle getCouldNotCompute();
 
@@ -1477,9 +1488,6 @@ namespace {
     /// client before it removes a value from the program, to make sure
     /// that no dangling references are left around.
     void deleteValueFromRecords(Value *V);
-
-    /// getTargetData - Return the TargetData.
-    const TargetData &getTargetData() const;
 
   private:
     /// createSCEV - We know that there is no SCEV for the specified value.
@@ -1581,8 +1589,50 @@ void ScalarEvolutionsImpl::deleteValueFromRecords(Value *V) {
   }
 }
 
-const TargetData &ScalarEvolutionsImpl::getTargetData() const {
-  return TD;
+/// isSCEVable - Test if values of the given type are analyzable within
+/// the SCEV framework. This primarily includes integer types, and it
+/// can optionally include pointer types if the ScalarEvolution class
+/// has access to target-specific information.
+bool ScalarEvolutionsImpl::isSCEVable(const Type *Ty) const {
+  // Integers are always SCEVable.
+  if (Ty->isInteger())
+    return true;
+
+  // Pointers are SCEVable if TargetData information is available
+  // to provide pointer size information.
+  if (isa<PointerType>(Ty))
+    return TD != NULL;
+
+  // Otherwise it's not SCEVable.
+  return false;
+}
+
+/// getTypeSizeInBits - Return the size in bits of the specified type,
+/// for which isSCEVable must return true.
+uint64_t ScalarEvolutionsImpl::getTypeSizeInBits(const Type *Ty) const {
+  assert(isSCEVable(Ty) && "Type is not SCEVable!");
+
+  // If we have a TargetData, use it!
+  if (TD)
+    return TD->getTypeSizeInBits(Ty);
+
+  // Otherwise, we support only integer types.
+  assert(Ty->isInteger() && "isSCEVable permitted a non-SCEVable type!");
+  return Ty->getPrimitiveSizeInBits();
+}
+
+/// getEffectiveSCEVType - Return a type with the same bitwidth as
+/// the given type and which represents how SCEV will treat the given
+/// type, for which isSCEVable must return true. For pointer types,
+/// this is the pointer-sized integer type.
+const Type *ScalarEvolutionsImpl::getEffectiveSCEVType(const Type *Ty) const {
+  assert(isSCEVable(Ty) && "Type is not SCEVable!");
+
+  if (Ty->isInteger())
+    return Ty;
+
+  assert(isa<PointerType>(Ty) && "Unexpected non-pointer non-integer type!");
+  return TD->getIntPtrType();
 }
 
 SCEVHandle ScalarEvolutionsImpl::getCouldNotCompute() {
@@ -1592,7 +1642,7 @@ SCEVHandle ScalarEvolutionsImpl::getCouldNotCompute() {
 /// getSCEV - Return an existing SCEV if it exists, otherwise analyze the
 /// expression and create a new one.
 SCEVHandle ScalarEvolutionsImpl::getSCEV(Value *V) {
-  assert(V->getType() != Type::VoidTy && "Can't analyze void expressions!");
+  assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
 
   std::map<Value*, SCEVHandle>::iterator I = Scalars.find(V);
   if (I != Scalars.end()) return I->second;
@@ -1604,8 +1654,7 @@ SCEVHandle ScalarEvolutionsImpl::getSCEV(Value *V) {
 /// getIntegerSCEV - Given an integer or FP type, create a constant for the
 /// specified signed integer value and return a SCEV for the constant.
 SCEVHandle ScalarEvolutionsImpl::getIntegerSCEV(int Val, const Type *Ty) {
-  if (isa<PointerType>(Ty))
-    Ty = TD.getIntPtrType();
+  Ty = SE.getEffectiveSCEVType(Ty);
   Constant *C;
   if (Val == 0)
     C = Constant::getNullValue(Ty);
@@ -1624,8 +1673,7 @@ SCEVHandle ScalarEvolutionsImpl::getNegativeSCEV(const SCEVHandle &V) {
     return SE.getUnknown(ConstantExpr::getNeg(VC->getValue()));
 
   const Type *Ty = V->getType();
-  if (isa<PointerType>(Ty))
-    Ty = TD.getIntPtrType();
+  Ty = SE.getEffectiveSCEVType(Ty);
   return SE.getMulExpr(V, SE.getConstant(ConstantInt::getAllOnesValue(Ty)));
 }
 
@@ -1635,8 +1683,7 @@ SCEVHandle ScalarEvolutionsImpl::getNotSCEV(const SCEVHandle &V) {
     return SE.getUnknown(ConstantExpr::getNot(VC->getValue()));
 
   const Type *Ty = V->getType();
-  if (isa<PointerType>(Ty))
-    Ty = TD.getIntPtrType();
+  Ty = SE.getEffectiveSCEVType(Ty);
   SCEVHandle AllOnes = SE.getConstant(ConstantInt::getAllOnesValue(Ty));
   return getMinusSCEV(AllOnes, V);
 }
@@ -1656,12 +1703,12 @@ SCEVHandle
 ScalarEvolutionsImpl::getTruncateOrZeroExtend(const SCEVHandle &V,
                                               const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
+         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
          "Cannot truncate or zero extend with non-integer arguments!");
-  if (TD.getTypeSizeInBits(SrcTy) == TD.getTypeSizeInBits(Ty))
+  if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
-  if (TD.getTypeSizeInBits(SrcTy) > TD.getTypeSizeInBits(Ty))
+  if (getTypeSizeInBits(SrcTy) > getTypeSizeInBits(Ty))
     return SE.getTruncateExpr(V, Ty);
   return SE.getZeroExtendExpr(V, Ty);
 }
@@ -1673,12 +1720,12 @@ SCEVHandle
 ScalarEvolutionsImpl::getTruncateOrSignExtend(const SCEVHandle &V,
                                               const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
+         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
          "Cannot truncate or zero extend with non-integer arguments!");
-  if (TD.getTypeSizeInBits(SrcTy) == TD.getTypeSizeInBits(Ty))
+  if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
-  if (TD.getTypeSizeInBits(SrcTy) > TD.getTypeSizeInBits(Ty))
+  if (getTypeSizeInBits(SrcTy) > getTypeSizeInBits(Ty))
     return SE.getTruncateExpr(V, Ty);
   return SE.getSignExtendExpr(V, Ty);
 }
@@ -1806,66 +1853,66 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
 /// guaranteed to end in (at every loop iteration).  It is, at the same time,
 /// the minimum number of times S is divisible by 2.  For example, given {4,+,8}
 /// it returns 2.  If S is guaranteed to be 0, it returns the bitwidth of S.
-static uint32_t GetMinTrailingZeros(SCEVHandle S, const TargetData &TD) {
+static uint32_t GetMinTrailingZeros(SCEVHandle S, const ScalarEvolution &SE) {
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(S))
     return C->getValue()->getValue().countTrailingZeros();
 
   if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
-    return std::min(GetMinTrailingZeros(T->getOperand(), TD),
-                    (uint32_t)TD.getTypeSizeInBits(T->getType()));
+    return std::min(GetMinTrailingZeros(T->getOperand(), SE),
+                    (uint32_t)SE.getTypeSizeInBits(T->getType()));
 
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S)) {
-    uint32_t OpRes = GetMinTrailingZeros(E->getOperand(), TD);
-    return OpRes == TD.getTypeSizeInBits(E->getOperand()->getType()) ?
-             TD.getTypeSizeInBits(E->getOperand()->getType()) : OpRes;
+    uint32_t OpRes = GetMinTrailingZeros(E->getOperand(), SE);
+    return OpRes == SE.getTypeSizeInBits(E->getOperand()->getType()) ?
+             SE.getTypeSizeInBits(E->getOperand()->getType()) : OpRes;
   }
 
   if (SCEVSignExtendExpr *E = dyn_cast<SCEVSignExtendExpr>(S)) {
-    uint32_t OpRes = GetMinTrailingZeros(E->getOperand(), TD);
-    return OpRes == TD.getTypeSizeInBits(E->getOperand()->getType()) ?
-             TD.getTypeSizeInBits(E->getOperand()->getType()) : OpRes;
+    uint32_t OpRes = GetMinTrailingZeros(E->getOperand(), SE);
+    return OpRes == SE.getTypeSizeInBits(E->getOperand()->getType()) ?
+             SE.getTypeSizeInBits(E->getOperand()->getType()) : OpRes;
   }
 
   if (SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
     // The result is the min of all operands results.
-    uint32_t MinOpRes = GetMinTrailingZeros(A->getOperand(0), TD);
+    uint32_t MinOpRes = GetMinTrailingZeros(A->getOperand(0), SE);
     for (unsigned i = 1, e = A->getNumOperands(); MinOpRes && i != e; ++i)
-      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(A->getOperand(i), TD));
+      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(A->getOperand(i), SE));
     return MinOpRes;
   }
 
   if (SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
     // The result is the sum of all operands results.
-    uint32_t SumOpRes = GetMinTrailingZeros(M->getOperand(0), TD);
-    uint32_t BitWidth = TD.getTypeSizeInBits(M->getType());
+    uint32_t SumOpRes = GetMinTrailingZeros(M->getOperand(0), SE);
+    uint32_t BitWidth = SE.getTypeSizeInBits(M->getType());
     for (unsigned i = 1, e = M->getNumOperands();
          SumOpRes != BitWidth && i != e; ++i)
-      SumOpRes = std::min(SumOpRes + GetMinTrailingZeros(M->getOperand(i), TD),
+      SumOpRes = std::min(SumOpRes + GetMinTrailingZeros(M->getOperand(i), SE),
                           BitWidth);
     return SumOpRes;
   }
 
   if (SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
     // The result is the min of all operands results.
-    uint32_t MinOpRes = GetMinTrailingZeros(A->getOperand(0), TD);
+    uint32_t MinOpRes = GetMinTrailingZeros(A->getOperand(0), SE);
     for (unsigned i = 1, e = A->getNumOperands(); MinOpRes && i != e; ++i)
-      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(A->getOperand(i), TD));
+      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(A->getOperand(i), SE));
     return MinOpRes;
   }
 
   if (SCEVSMaxExpr *M = dyn_cast<SCEVSMaxExpr>(S)) {
     // The result is the min of all operands results.
-    uint32_t MinOpRes = GetMinTrailingZeros(M->getOperand(0), TD);
+    uint32_t MinOpRes = GetMinTrailingZeros(M->getOperand(0), SE);
     for (unsigned i = 1, e = M->getNumOperands(); MinOpRes && i != e; ++i)
-      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(M->getOperand(i), TD));
+      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(M->getOperand(i), SE));
     return MinOpRes;
   }
 
   if (SCEVUMaxExpr *M = dyn_cast<SCEVUMaxExpr>(S)) {
     // The result is the min of all operands results.
-    uint32_t MinOpRes = GetMinTrailingZeros(M->getOperand(0), TD);
+    uint32_t MinOpRes = GetMinTrailingZeros(M->getOperand(0), SE);
     for (unsigned i = 1, e = M->getNumOperands(); MinOpRes && i != e; ++i)
-      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(M->getOperand(i), TD));
+      MinOpRes = std::min(MinOpRes, GetMinTrailingZeros(M->getOperand(i), SE));
     return MinOpRes;
   }
 
@@ -1877,8 +1924,7 @@ static uint32_t GetMinTrailingZeros(SCEVHandle S, const TargetData &TD) {
 /// Analyze the expression.
 ///
 SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
-  if (!isa<IntegerType>(V->getType()) &&
-      !isa<PointerType>(V->getType()))
+  if (!isSCEVable(V->getType()))
     return SE.getUnknown(V);
 
   unsigned Opcode = Instruction::UserOp1;
@@ -1913,7 +1959,7 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
       SCEVHandle LHS = getSCEV(U->getOperand(0));
       const APInt &CIVal = CI->getValue();
-      if (GetMinTrailingZeros(LHS, TD) >=
+      if (GetMinTrailingZeros(LHS, SE) >=
           (CIVal.getBitWidth() - CIVal.countLeadingZeros()))
         return SE.getAddExpr(LHS, getSCEV(U->getOperand(1)));
     }
@@ -1963,23 +2009,23 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
 
   case Instruction::BitCast:
     // BitCasts are no-op casts so we just eliminate the cast.
-    if ((U->getType()->isInteger() ||
-         isa<PointerType>(U->getType())) &&
-        (U->getOperand(0)->getType()->isInteger() ||
-         isa<PointerType>(U->getOperand(0)->getType())))
+    if (isSCEVable(U->getType()) && isSCEVable(U->getOperand(0)->getType()))
       return getSCEV(U->getOperand(0));
     break;
 
   case Instruction::IntToPtr:
+    if (!TD) break; // Without TD we can't analyze pointers.
     return getTruncateOrZeroExtend(getSCEV(U->getOperand(0)),
-                                   TD.getIntPtrType());
+                                   TD->getIntPtrType());
 
   case Instruction::PtrToInt:
+    if (!TD) break; // Without TD we can't analyze pointers.
     return getTruncateOrZeroExtend(getSCEV(U->getOperand(0)),
                                    U->getType());
 
   case Instruction::GetElementPtr: {
-    const Type *IntPtrTy = TD.getIntPtrType();
+    if (!TD) break; // Without TD we can't analyze pointers.
+    const Type *IntPtrTy = TD->getIntPtrType();
     Value *Base = U->getOperand(0);
     SCEVHandle TotalOffset = SE.getIntegerSCEV(0, IntPtrTy);
     gep_type_iterator GTI = gep_type_begin(U);
@@ -1990,7 +2036,7 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       // Compute the (potentially symbolic) offset in bytes for this index.
       if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
         // For a struct, add the member offset.
-        const StructLayout &SL = *TD.getStructLayout(STy);
+        const StructLayout &SL = *TD->getStructLayout(STy);
         unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
         uint64_t Offset = SL.getElementOffset(FieldNo);
         TotalOffset = SE.getAddExpr(TotalOffset,
@@ -2004,7 +2050,7 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
                                                 IntPtrTy);
         LocalOffset =
           SE.getMulExpr(LocalOffset,
-                        SE.getIntegerSCEV(TD.getTypePaddedSize(*GTI),
+                        SE.getIntegerSCEV(TD->getTypePaddedSize(*GTI),
                                           IntPtrTy));
         TotalOffset = SE.getAddExpr(TotalOffset, LocalOffset);
       }
@@ -3132,7 +3178,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
   // First check to see if the range contains zero.  If not, the first
   // iteration exits.
-  unsigned BitWidth = SE.getTargetData().getTypeSizeInBits(getType());
+  unsigned BitWidth = SE.getTypeSizeInBits(getType());
   if (!Range.contains(APInt(BitWidth, 0)))
     return SE.getConstant(ConstantInt::get(getType(),0));
 
@@ -3226,7 +3272,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 bool ScalarEvolution::runOnFunction(Function &F) {
   Impl = new ScalarEvolutionsImpl(*this, F,
                                   getAnalysis<LoopInfo>(),
-                                  getAnalysis<TargetData>());
+                                  &getAnalysis<TargetData>());
   return false;
 }
 
@@ -3241,8 +3287,16 @@ void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<TargetData>();
 }
 
-const TargetData &ScalarEvolution::getTargetData() const {
-  return ((ScalarEvolutionsImpl*)Impl)->getTargetData();
+bool ScalarEvolution::isSCEVable(const Type *Ty) const {
+  return ((ScalarEvolutionsImpl*)Impl)->isSCEVable(Ty);
+}
+
+uint64_t ScalarEvolution::getTypeSizeInBits(const Type *Ty) const {
+  return ((ScalarEvolutionsImpl*)Impl)->getTypeSizeInBits(Ty);
+}
+
+const Type *ScalarEvolution::getEffectiveSCEVType(const Type *Ty) const {
+  return ((ScalarEvolutionsImpl*)Impl)->getEffectiveSCEVType(Ty);
 }
 
 SCEVHandle ScalarEvolution::getCouldNotCompute() {

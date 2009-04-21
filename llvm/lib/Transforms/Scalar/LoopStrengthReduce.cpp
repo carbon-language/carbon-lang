@@ -26,7 +26,6 @@
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
@@ -112,8 +111,6 @@ namespace {
     LoopInfo *LI;
     DominatorTree *DT;
     ScalarEvolution *SE;
-    const TargetData *TD;
-    const Type *UIntPtrTy;
     bool Changed;
 
     /// IVUsesByStride - Keep track of all uses of induction variables that we
@@ -156,7 +153,6 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<TargetData>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
     }
@@ -485,11 +481,11 @@ static const Type *getAccessType(const Instruction *Inst) {
 /// return true.  Otherwise, return false.
 bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
                                       SmallPtrSet<Instruction*,16> &Processed) {
-  if (!I->getType()->isInteger() && !isa<PointerType>(I->getType()))
+  if (!SE->isSCEVable(I->getType()))
     return false;   // Void and FP expressions cannot be reduced.
 
   // LSR is not APInt clean, do not touch integers bigger than 64-bits.
-  if (TD->getTypeSizeInBits(I->getType()) > 64)
+  if (SE->getTypeSizeInBits(I->getType()) > 64)
     return false;
   
   if (!Processed.insert(I))
@@ -1174,13 +1170,11 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
                                                 const Type *Ty2) {
   if (Ty1 == Ty2)
     return false;
+  if (SE->getEffectiveSCEVType(Ty1) == SE->getEffectiveSCEVType(Ty2))
+    return false;
   if (Ty1->canLosslesslyBitCastTo(Ty2))
     return false;
   if (TLI && TLI->isTruncateFree(Ty1, Ty2))
-    return false;
-  if (isa<PointerType>(Ty2) && Ty1->canLosslesslyBitCastTo(UIntPtrTy))
-    return false;
-  if (isa<PointerType>(Ty1) && Ty2->canLosslesslyBitCastTo(UIntPtrTy))
     return false;
   return true;
 }
@@ -1468,7 +1462,6 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
 ///
 static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
                                 const Loop *L,
-                                const TargetData *TD,
                                 SCEVExpander &Rewriter) {
   assert(Start->isLoopInvariant(L) && "New PHI start is not loop invariant!");
   assert(Step->isLoopInvariant(L) && "New PHI stride is not loop invariant!");
@@ -1477,7 +1470,7 @@ static PHINode *InsertAffinePhi(SCEVHandle Start, SCEVHandle Step,
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *LatchBlock = L->getLoopLatch();
   const Type *Ty = Start->getType();
-  if (isa<PointerType>(Ty)) Ty = TD->getIntPtrType();
+  Ty = Rewriter.SE.getEffectiveSCEVType(Ty);
 
   PHINode *PN = PHINode::Create(Ty, "lsr.iv", Header->begin());
   PN->addIncoming(Rewriter.expandCodeFor(Start, Ty, Preheader->getTerminator()),
@@ -1564,7 +1557,7 @@ LoopStrengthReduce::PrepareToStrengthReduceFully(
     SCEVHandle Imm = UsersToProcess[i].Imm;
     SCEVHandle Base = UsersToProcess[i].Base;
     SCEVHandle Start = SE->getAddExpr(CommonExprs, Base, Imm);
-    PHINode *Phi = InsertAffinePhi(Start, Stride, L, TD,
+    PHINode *Phi = InsertAffinePhi(Start, Stride, L,
                                    PreheaderRewriter);
     // Loop over all the users with the same base.
     do {
@@ -1591,7 +1584,7 @@ LoopStrengthReduce::PrepareToStrengthReduceWithNewPhi(
   DOUT << "  Inserting new PHI:\n";
 
   PHINode *Phi = InsertAffinePhi(SE->getUnknown(CommonBaseV),
-                                 Stride, L, TD,
+                                 Stride, L,
                                  PreheaderRewriter);
 
   // Remember this in case a later stride is multiple of this.
@@ -1695,9 +1688,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // a register operand, which potentially restricts what stride values are
   // valid.
   bool HaveCommonExprs = !CommonExprs->isZero();
-
   const Type *ReplacedTy = CommonExprs->getType();
-  if (isa<PointerType>(ReplacedTy)) ReplacedTy = TD->getIntPtrType();
 
   // If all uses are addresses, consider sinking the immediate part of the
   // common expression back into uses if they can fit in the immediate fields.
@@ -1739,14 +1730,14 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
        << *Stride << ":\n"
        << "  Common base: " << *CommonExprs << "\n";
 
-  SCEVExpander Rewriter(*SE, *LI, *TD);
-  SCEVExpander PreheaderRewriter(*SE, *LI, *TD);
+  SCEVExpander Rewriter(*SE, *LI);
+  SCEVExpander PreheaderRewriter(*SE, *LI);
 
   BasicBlock  *Preheader = L->getLoopPreheader();
   Instruction *PreInsertPt = Preheader->getTerminator();
   BasicBlock *LatchBlock = L->getLoopLatch();
 
-  Value *CommonBaseV = ConstantInt::get(ReplacedTy, 0);
+  Value *CommonBaseV = Constant::getNullValue(ReplacedTy);
 
   SCEVHandle RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
@@ -1837,10 +1828,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       SCEVHandle RewriteExpr = SE->getUnknown(RewriteOp);
 
-      if (TD->getTypeSizeInBits(RewriteOp->getType()) !=
-          TD->getTypeSizeInBits(ReplacedTy)) {
-        assert(TD->getTypeSizeInBits(RewriteOp->getType()) >
-               TD->getTypeSizeInBits(ReplacedTy) &&
+      if (SE->getTypeSizeInBits(RewriteOp->getType()) !=
+          SE->getTypeSizeInBits(ReplacedTy)) {
+        assert(SE->getTypeSizeInBits(RewriteOp->getType()) >
+               SE->getTypeSizeInBits(ReplacedTy) &&
                "Unexpected widening cast!");
         RewriteExpr = SE->getTruncateExpr(RewriteExpr, ReplacedTy);
       }
@@ -1868,13 +1859,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // it here.
         if (!ReuseIV.Base->isZero()) {
           SCEVHandle typedBase = ReuseIV.Base;
-          if (TD->getTypeSizeInBits(RewriteExpr->getType()) !=
-              TD->getTypeSizeInBits(ReuseIV.Base->getType())) {
+          if (SE->getTypeSizeInBits(RewriteExpr->getType()) !=
+              SE->getTypeSizeInBits(ReuseIV.Base->getType())) {
             // It's possible the original IV is a larger type than the new IV,
             // in which case we have to truncate the Base.  We checked in
             // RequiresTypeConversion that this is valid.
-            assert(TD->getTypeSizeInBits(RewriteExpr->getType()) <
-                   TD->getTypeSizeInBits(ReuseIV.Base->getType()) &&
+            assert(SE->getTypeSizeInBits(RewriteExpr->getType()) <
+                   SE->getTypeSizeInBits(ReuseIV.Base->getType()) &&
                    "Unexpected lengthening conversion!");
             typedBase = SE->getTruncateExpr(ReuseIV.Base, 
                                             RewriteExpr->getType());
@@ -1959,8 +1950,8 @@ namespace {
   // e.g.
   // 4, -1, X, 1, 2 ==> 1, -1, 2, 4, X
   struct StrideCompare {
-    const TargetData *TD;
-    explicit StrideCompare(const TargetData *td) : TD(td) {}
+    const ScalarEvolution *SE;
+    explicit StrideCompare(const ScalarEvolution *se) : SE(se) {}
 
     bool operator()(const SCEVHandle &LHS, const SCEVHandle &RHS) {
       const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
@@ -1980,8 +1971,8 @@ namespace {
         // If it's the same value but different type, sort by bit width so
         // that we emit larger induction variables before smaller
         // ones, letting the smaller be re-written in terms of larger ones.
-        return TD->getTypeSizeInBits(RHS->getType()) <
-               TD->getTypeSizeInBits(LHS->getType());
+        return SE->getTypeSizeInBits(RHS->getType()) <
+               SE->getTypeSizeInBits(LHS->getType());
       }
       return LHSC && !RHSC;
     }
@@ -2014,17 +2005,17 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
   ICmpInst::Predicate Predicate = Cond->getPredicate();
   int64_t CmpSSInt = SC->getValue()->getSExtValue();
-  unsigned BitWidth = TD->getTypeSizeInBits((*CondStride)->getType());
+  unsigned BitWidth = SE->getTypeSizeInBits((*CondStride)->getType());
   uint64_t SignBit = 1ULL << (BitWidth-1);
   const Type *CmpTy = Cond->getOperand(0)->getType();
   const Type *NewCmpTy = NULL;
-  unsigned TyBits = TD->getTypeSizeInBits(CmpTy);
+  unsigned TyBits = SE->getTypeSizeInBits(CmpTy);
   unsigned NewTyBits = 0;
   SCEVHandle *NewStride = NULL;
   Value *NewCmpLHS = NULL;
   Value *NewCmpRHS = NULL;
   int64_t Scale = 1;
-  SCEVHandle NewOffset = SE->getIntegerSCEV(0, UIntPtrTy);
+  SCEVHandle NewOffset = SE->getIntegerSCEV(0, CmpTy);
 
   if (ConstantInt *C = dyn_cast<ConstantInt>(Cond->getOperand(1))) {
     int64_t CmpVal = C->getValue().getSExtValue();
@@ -2070,7 +2061,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         continue;
 
       NewCmpTy = NewCmpLHS->getType();
-      NewTyBits = TD->getTypeSizeInBits(NewCmpTy);
+      NewTyBits = SE->getTypeSizeInBits(NewCmpTy);
+      const Type *NewCmpIntTy = IntegerType::get(NewTyBits);
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.
@@ -2111,13 +2103,13 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       if (!isa<PointerType>(NewCmpTy))
         NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
       else {
-        ConstantInt *CI = ConstantInt::get(UIntPtrTy, NewCmpVal);
+        ConstantInt *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
         NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->Offset,
                          SE->getConstant(ConstantInt::get(CmpTy, Scale)))
-        : SE->getConstant(ConstantInt::get(IntegerType::get(NewTyBits),
+        : SE->getConstant(ConstantInt::get(NewCmpIntTy,
           cast<SCEVConstant>(CondUse->Offset)->getValue()->getSExtValue()*Scale));
       break;
     }
@@ -2335,7 +2327,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       const Type *SrcTy = PH->getType();
       int Mantissa = DestTy->getFPMantissaWidth();
       if (Mantissa == -1) continue; 
-      if ((int)TD->getTypeSizeInBits(SrcTy) > Mantissa)
+      if ((int)SE->getTypeSizeInBits(SrcTy) > Mantissa)
         continue;
 
       unsigned Entry, Latch;
@@ -2462,8 +2454,6 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
-  TD = &getAnalysis<TargetData>();
-  UIntPtrTy = TD->getIntPtrType();
   Changed = false;
 
   // Find all uses of induction variables in this loop, and categorize
@@ -2481,7 +2471,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 #endif
 
     // Sort the StrideOrder so we process larger strides first.
-    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare(TD));
+    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare(SE));
 
     // Optimize induction variables.  Some indvar uses can be transformed to use
     // strides that will be needed for other purposes.  A common example of this

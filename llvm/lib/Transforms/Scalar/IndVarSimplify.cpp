@@ -50,7 +50,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
@@ -67,7 +66,6 @@ STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
 namespace {
   class VISIBILITY_HIDDEN IndVarSimplify : public LoopPass {
     LoopInfo        *LI;
-    TargetData      *TD;
     ScalarEvolution *SE;
     bool Changed;
   public:
@@ -82,7 +80,6 @@ namespace {
      AU.addRequiredID(LCSSAID);
      AU.addRequiredID(LoopSimplifyID);
      AU.addRequired<LoopInfo>();
-     AU.addRequired<TargetData>();
      AU.addPreserved<ScalarEvolution>();
      AU.addPreservedID(LoopSimplifyID);
      AU.addPreservedID(LCSSAID);
@@ -217,7 +214,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
 
   // Scan all of the instructions in the loop, looking at those that have
   // extra-loop users and which are recurrences.
-  SCEVExpander Rewriter(*SE, *LI, *TD);
+  SCEVExpander Rewriter(*SE, *LI);
 
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
@@ -350,7 +347,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 /// induction-variable PHINode Phi is cast to.
 ///
 static const Type *getEffectiveIndvarType(const PHINode *Phi,
-                                          const TargetData *TD) {
+                                          const ScalarEvolution *SE) {
   const Type *Ty = Phi->getType();
 
   for (Value::use_const_iterator UI = Phi->use_begin(), UE = Phi->use_end();
@@ -360,8 +357,13 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi,
       CandidateType = ZI->getDestTy();
     else if (const SExtInst *SI = dyn_cast<SExtInst>(UI))
       CandidateType = SI->getDestTy();
+    else if (const IntToPtrInst *IP = dyn_cast<IntToPtrInst>(UI))
+      CandidateType = IP->getDestTy();
+    else if (const PtrToIntInst *PI = dyn_cast<PtrToIntInst>(UI))
+      CandidateType = PI->getDestTy();
     if (CandidateType &&
-        TD->getTypeSizeInBits(CandidateType) > TD->getTypeSizeInBits(Ty))
+        SE->isSCEVable(CandidateType) &&
+        SE->getTypeSizeInBits(CandidateType) > SE->getTypeSizeInBits(Ty))
       Ty = CandidateType;
   }
 
@@ -389,7 +391,7 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi,
 static const PHINode *TestOrigIVForWrap(const Loop *L,
                                         const BranchInst *BI,
                                         const Instruction *OrigCond,
-                                        const TargetData *TD,
+                                        const ScalarEvolution &SE,
                                         bool &NoSignedWrap,
                                         bool &NoUnsignedWrap,
                                         const ConstantInt* &InitialVal,
@@ -462,7 +464,7 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
     if (const SExtInst *SI = dyn_cast<SExtInst>(CmpLHS)) {
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
-            .isSignedIntN(TD->getTypeSizeInBits(IncrInst->getType())))
+            .isSignedIntN(SE.getTypeSizeInBits(IncrInst->getType())))
         return 0;
       IncrInst = SI->getOperand(0);
     }
@@ -470,7 +472,7 @@ static const PHINode *TestOrigIVForWrap(const Loop *L,
     if (const ZExtInst *ZI = dyn_cast<ZExtInst>(CmpLHS)) {
       if (!isa<ConstantInt>(CmpRHS) ||
           !cast<ConstantInt>(CmpRHS)->getValue()
-            .isIntN(TD->getTypeSizeInBits(IncrInst->getType())))
+            .isIntN(SE.getTypeSizeInBits(IncrInst->getType())))
         return 0;
       IncrInst = ZI->getOperand(0);
     }
@@ -590,7 +592,6 @@ static bool allUsesAreSameTyped(unsigned int Opcode, Instruction *I) {
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
-  TD = &getAnalysis<TargetData>();
   SE = &getAnalysis<ScalarEvolution>();
   Changed = false;
 
@@ -621,7 +622,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
-    if (PN->getType()->isInteger() || isa<PointerType>(PN->getType())) {
+    if (SE->isSCEVable(PN->getType())) {
       SCEVHandle SCEV = SE->getSCEV(PN);
       // FIXME: It is an extremely bad idea to indvar substitute anything more
       // complex than affine induction variables.  Doing so will put expensive
@@ -640,26 +641,25 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   SmallSetVector<const Type *, 4> SizesToInsert;
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount)) {
     LargestType = BackedgeTakenCount->getType();
-    if (isa<PointerType>(LargestType))
-      LargestType = TD->getIntPtrType();
+    LargestType = SE->getEffectiveSCEVType(LargestType);
     SizesToInsert.insert(LargestType);
   }
   for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
     const PHINode *PN = IndVars[i].first;
     const Type *PNTy = PN->getType();
-    if (isa<PointerType>(PNTy)) PNTy = TD->getIntPtrType();
+    PNTy = SE->getEffectiveSCEVType(PNTy);
     SizesToInsert.insert(PNTy);
-    const Type *EffTy = getEffectiveIndvarType(PN, TD);
-    if (isa<PointerType>(EffTy)) EffTy = TD->getIntPtrType();
+    const Type *EffTy = getEffectiveIndvarType(PN, SE);
+    EffTy = SE->getEffectiveSCEVType(EffTy);
     SizesToInsert.insert(EffTy);
     if (!LargestType ||
-        TD->getTypeSizeInBits(EffTy) >
-          TD->getTypeSizeInBits(LargestType))
+        SE->getTypeSizeInBits(EffTy) >
+          SE->getTypeSizeInBits(LargestType))
       LargestType = EffTy;
   }
 
   // Create a rewriter object which we'll use to transform the code with.
-  SCEVExpander Rewriter(*SE, *LI, *TD);
+  SCEVExpander Rewriter(*SE, *LI);
 
   // Now that we know the largest of of the induction variables in this loop,
   // insert a canonical induction variable of the largest size.
@@ -683,7 +683,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (Instruction *OrigCond = dyn_cast<Instruction>(BI->getCondition())) {
         // Determine if the OrigIV will ever undergo overflow.
         OrigControllingPHI =
-          TestOrigIVForWrap(L, BI, OrigCond, TD,
+          TestOrigIVForWrap(L, BI, OrigCond, *SE,
                             NoSignedWrap, NoUnsignedWrap,
                             InitialVal, IncrVal, LimitVal);
 
