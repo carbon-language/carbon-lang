@@ -396,8 +396,7 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
   return LabelIDs.insert(std::make_pair(L, LabelIDs.size())).first->second;
 }
 
-void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty)
-{
+void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
   const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
@@ -405,6 +404,10 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty)
   // Get size and alignment info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
 
+  // Don't bother emitting a zero-byte memset.
+  if (TypeInfo.first == 0)
+    return;
+  
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
 
