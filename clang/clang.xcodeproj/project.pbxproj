@@ -175,6 +175,7 @@
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */; };
 		DECB6D650F9AE26600F5FBC7 /* JumpDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */; };
+		DECB6F070F9D93A800F5FBC7 /* InitPreprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
 		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
@@ -582,6 +583,8 @@
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; tabWidth = 2; };
 		DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteRope.cpp; path = lib/Rewrite/RewriteRope.cpp; sourceTree = "<group>"; };
 		DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JumpDiagnostics.cpp; path = lib/Sema/JumpDiagnostics.cpp; sourceTree = "<group>"; };
+		DECB6F030F9D939A00F5FBC7 /* InitPreprocessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InitPreprocessor.h; path = clang/Frontend/InitPreprocessor.h; sourceTree = "<group>"; };
+		DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitPreprocessor.cpp; path = lib/Frontend/InitPreprocessor.cpp; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = lib/AST/Decl.cpp; sourceTree = "<group>"; tabWidth = 2; usesTabs = 0; };
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; tabWidth = 2; };
@@ -803,6 +806,7 @@
 				DEF1683F0F9548DC0098507F /* FixItRewriter.cpp */,
 				352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */,
 				352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */,
+				DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */,
 				352246E30F5C6BE000D0D279 /* ManagerRegistry.cpp */,
 				DEF165740F8FB3510098507F /* PCHReader.cpp */,
 				DEF165700F8FB34D0098507F /* PCHWriter.cpp */,
@@ -1363,6 +1367,7 @@
 				DEF168620F9549250098507F /* FixItRewriter.h */,
 				DEF169220F9645960098507F /* FrontendDiagnostic.h */,
 				DEF1615E0F65C81C0098507F /* InitHeaderSearch.h */,
+				DECB6F030F9D939A00F5FBC7 /* InitPreprocessor.h */,
 				DEF1615F0F65C81C0098507F /* ManagerRegistry.h */,
 				DEF1657E0F8FB3730098507F /* PCHBitCodes.h */,
 				DEF1657B0F8FB36E0098507F /* PCHReader.h */,
@@ -1657,6 +1662,7 @@
 				DEF165900F8FB3FC0098507F /* GeneratePCH.cpp in Sources */,
 				DEF168400F9548DC0098507F /* FixItRewriter.cpp in Sources */,
 				DECB6D650F9AE26600F5FBC7 /* JumpDiagnostics.cpp in Sources */,
+				DECB6F070F9D93A800F5FBC7 /* InitPreprocessor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
