@@ -27,9 +27,12 @@ PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
 
   // Print out the other include frames first.
   PrintIncludeStack(PLoc.getIncludeLoc(), SM);
-  
-  OS << "In file included from " << PLoc.getFilename()
-     << ':' << PLoc.getLine() << ":\n";
+
+  if (ShowLocation)
+    OS << "In file included from " << PLoc.getFilename()
+       << ':' << PLoc.getLine() << ":\n";
+  else
+    OS << "In included file:\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
@@ -129,12 +132,15 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       Ranges[i] = SourceRange(S, E);
     }
     
-    // Emit the file/line/column that this expansion came from.
-    OS << SM.getBufferName(Loc) << ':' << SM.getInstantiationLineNumber(Loc)
-       << ':';
-    if (ShowColumn)
-      OS << SM.getInstantiationColumnNumber(Loc) << ':';
-    OS << " note: instantiated from:\n";
+    if (ShowLocation) {
+      // Emit the file/line/column that this expansion came from.
+      OS << SM.getBufferName(Loc) << ':' << SM.getInstantiationLineNumber(Loc)
+         << ':';
+      if (ShowColumn)
+        OS << SM.getInstantiationColumnNumber(Loc) << ':';
+      OS << ' ';
+    }
+    OS << "note: instantiated from:\n";
   }
   
   // Decompose the location into a FID/Offset pair.
