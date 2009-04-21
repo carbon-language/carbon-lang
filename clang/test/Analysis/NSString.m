@@ -19,6 +19,7 @@ typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
+void CFRelease(CFTypeRef cf);
 typedef const struct __CFDictionary * CFDictionaryRef;
 const void *CFDictionaryGetValue(CFDictionaryRef theDict, const void *key);
 extern CFStringRef CFStringCreateWithFormat(CFAllocatorRef alloc, CFDictionaryRef formatOptions, CFStringRef format, ...);
@@ -156,13 +157,19 @@ NSString* f11(CFDictionaryRef dict, const char* key) {
 }
 
 // Test case for passing a tracked object by-reference to a function we
-// don't undersand.
+// don't understand.
 void unknown_function_f12(NSString** s);
 void f12() {
   NSString *string = [[NSString alloc] init];
   unknown_function_f12(&string); // no-warning
 }
 
+// Test double release of CFString (PR 4014).
+void f13(void) {
+  CFStringRef ref = CFStringCreateWithFormat(kCFAllocatorDefault, ((void*)0), ((CFStringRef) __builtin___CFStringMakeConstantString ("" "%d" "")), 100);
+  CFRelease(ref);
+  CFRelease(ref); // expected-warning{{Reference-counted object is used after it is released}}
+}
 
 @interface C1 : NSObject {}
 - (NSString*) getShared;
