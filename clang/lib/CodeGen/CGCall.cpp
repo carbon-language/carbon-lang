@@ -1272,6 +1272,45 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
+// ABI Info for PIC16 
+class PIC16ABIInfo : public ABIInfo {
+  ABIArgInfo classifyReturnType(QualType RetTy, 
+                                ASTContext &Context) const;
+  
+  ABIArgInfo classifyArgumentType(QualType RetTy,
+                                  ASTContext &Context) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context);
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type, Context);
+  }
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+
+};
+
+ABIArgInfo PIC16ABIInfo::classifyReturnType(QualType RetTy,
+                                              ASTContext &Context) const {
+  if (RetTy->isVoidType()) {
+    return ABIArgInfo::getIgnore();
+  } else {
+    return ABIArgInfo::getDirect();
+  }
+}
+
+ABIArgInfo PIC16ABIInfo::classifyArgumentType(QualType Ty,
+                                                ASTContext &Context) const {
+  return ABIArgInfo::getDirect();
+}
+
+llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  return 0;
+}
+
 class ARMABIInfo : public ABIInfo {
   ABIArgInfo classifyReturnType(QualType RetTy, 
                                 ASTContext &Context) const;
@@ -1400,6 +1439,8 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   } else if (strcmp(TargetPrefix, "arm") == 0) {
     // FIXME: Support for OABI?
     return *(TheABIInfo = new ARMABIInfo());
+  } else if (strcmp(TargetPrefix, "pic16") == 0) {
+    return *(TheABIInfo = new PIC16ABIInfo());
   }
 
   return *(TheABIInfo = new DefaultABIInfo);

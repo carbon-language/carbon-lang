@@ -1184,7 +1184,7 @@ namespace {
                                    unsigned &NumRecords) const {}
     virtual const char *getVAListDeclaration() const { return "";}
     virtual const char *getClobbers() const {return "";}
-    virtual const char *getTargetPrefix() const {return "";}
+    virtual const char *getTargetPrefix() const {return "pic16";}
     virtual void getGCCRegNames(const char * const *&Names, 
                                 unsigned &NumNames) const {} 
     virtual bool validateAsmConstraint(const char *&Name, 
