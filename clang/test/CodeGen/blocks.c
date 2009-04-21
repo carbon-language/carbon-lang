@@ -17,4 +17,10 @@ struct s0 f2(struct s0 a0) {
   return ^(struct s0 a1){ return a1; }(a0);
 }
 
+// This should not crash: rdar://6808051
+void *P = ^{
+  void *Q = __func__;
+};
+
+
 // RUN: true

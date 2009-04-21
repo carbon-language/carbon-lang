@@ -753,7 +753,7 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
   }
 
   std::string FunctionName;
-  if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl)) {
     FunctionName = CGM.getMangledName(FD);
   } else {
     // Just get the mangled name; skipping the asm prefix if it
