@@ -64,6 +64,9 @@ int f1(int x) {
     break;
   }
 
+  // variable-length array
+  int array[x * 17 + 3];
+
   return x*2;
 }
 

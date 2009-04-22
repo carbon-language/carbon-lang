@@ -36,7 +36,7 @@ five_ints fvi = { 1, 2, 3, 4, 5 };
 float_array fa1 = { 1, 2, 3 };
 float_array fa2 = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-// FIXME: TYPE_VARIABLE_ARRAY
+// TYPE_VARIABLE_ARRAY in stmts.[ch]
 
 // TYPE_VECTOR
 float4 f4 = { 1.0, 2.0, 3.0, 4.0 };

@@ -20,7 +20,7 @@ typedef int five_ints[5];
 // TYPE_INCOMPLETE_ARRAY
 typedef float float_array[];
 
-// FIXME: TYPE_VARIABLE_ARRAY
+// TYPE_VARIABLE_ARRAY in stmts.[ch]
 
 // TYPE_VECTOR
 typedef float float4 __attribute__((vector_size(16)));
