@@ -159,7 +159,7 @@ public:
                                       const ObjCIvarDecl *Ivar,
                                       unsigned CVRQualifiers) = 0;
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
-                                      ObjCInterfaceDecl *Interface,
+                                      const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar) = 0;
 };
 

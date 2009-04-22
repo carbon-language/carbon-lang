@@ -1129,7 +1129,7 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
                           getContext().getObjCGCAttrKind(E->getType()));
 }
 
-llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
+llvm::Value *CodeGenFunction::EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                                              const ObjCIvarDecl *Ivar) {
   return CGM.getObjCRuntime().EmitIvarOffset(*this, Interface, Ivar);
 }

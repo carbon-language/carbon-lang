@@ -148,7 +148,7 @@ public:
                                       const ObjCIvarDecl *Ivar,
                                       unsigned CVRQualifiers);
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
-                                      ObjCInterfaceDecl *Interface,
+                                      const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
 };
 } // end anonymous namespace
@@ -1096,7 +1096,7 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
-                         ObjCInterfaceDecl *Interface,
+                         const ObjCInterfaceDecl *Interface,
                          const ObjCIvarDecl *Ivar) {
   const llvm::Type *InterfaceLTy =
     CGM.getTypes().ConvertType(

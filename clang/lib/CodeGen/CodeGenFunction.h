@@ -623,7 +623,7 @@ public:
   LValue EmitConditionalOperator(const ConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
 
-  llvm::Value *EmitIvarOffset(ObjCInterfaceDecl *Interface,
+  llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);

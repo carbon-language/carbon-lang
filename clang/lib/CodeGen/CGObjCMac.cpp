@@ -963,7 +963,7 @@ private:
                                       const ObjCIvarDecl *Ivar,
                                       unsigned CVRQualifiers);
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
-                                      ObjCInterfaceDecl *Interface,
+                                      const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
 };
   
@@ -1152,7 +1152,7 @@ public:
                                       const ObjCIvarDecl *Ivar,
                                       unsigned CVRQualifiers);
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
-                                      ObjCInterfaceDecl *Interface,
+                                      const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
 };
   
@@ -2643,7 +2643,7 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
-                                       ObjCInterfaceDecl *Interface,
+                                       const ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(Interface);
   const FieldDecl *Field = 
@@ -2827,8 +2827,7 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
 const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
                                         const ObjCInterfaceDecl *OID) const {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  QualType T = 
-    CGM.getContext().getObjCInterfaceType(const_cast<ObjCInterfaceDecl*>(OID));
+  QualType T = CGM.getContext().getObjCInterfaceType(OID);
   const llvm::StructType *InterfaceTy = 
     cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
   return CGM.getTargetData().getStructLayout(InterfaceTy);
@@ -4955,7 +4954,7 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
 
 llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
                                        CodeGen::CodeGenFunction &CGF,
-                                       ObjCInterfaceDecl *Interface,
+                                       const ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
   return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar), 
                                 false, "ivar");
