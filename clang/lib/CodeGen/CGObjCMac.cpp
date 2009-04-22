@@ -33,15 +33,22 @@ using namespace CodeGen;
 // don't belong in CGObjCRuntime either so we will live with it for
 // now.
 
+const llvm::StructType *
+CGObjCRuntime::GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
+                                      const ObjCInterfaceDecl *OID) {
+  assert(!OID->isForwardDecl() && "Invalid interface decl!");
+  QualType T = CGM.getContext().getObjCInterfaceType(OID);
+  return cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
+}
+
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
                                               const ObjCInterfaceDecl *OID,
                                               const ObjCIvarDecl *Ivar) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
   QualType T = CGM.getContext().getObjCInterfaceType(OID);
-  const llvm::StructType *InterfaceTy = 
-    cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
+  const llvm::StructType *STy = GetConcreteClassStruct(CGM, OID);
   const llvm::StructLayout *Layout = 
-    CGM.getTargetData().getStructLayout(InterfaceTy);
+    CGM.getTargetData().getStructLayout(STy);
   const FieldDecl *Field = 
     OID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
   if (!Field->isBitField())
@@ -767,11 +774,6 @@ protected:
   /// GetClassName - Return a unique constant for the given selector's
   /// name. The return value has type char *.
   llvm::Constant *GetClassName(IdentifierInfo *Ident);
-  
-  /// GetInterfaceDeclStructLayout - Get layout for ivars of given
-  /// interface declaration.
-  const llvm::StructLayout *GetInterfaceDeclStructLayout(
-                                          const ObjCInterfaceDecl *ID) const;
   
   /// BuildIvarLayout - Builds ivar layout bitmap for the class
   /// implementation for the __strong or __weak case.
@@ -1820,12 +1822,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getNameAsString(),
                      Interface->protocol_begin(),
                      Interface->protocol_end());
-  const llvm::Type *InterfaceTy;
-  if (Interface->isForwardDecl())
-    InterfaceTy = llvm::StructType::get(NULL, NULL);
-  else
-    InterfaceTy =
-   CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
+  const llvm::Type *InterfaceTy = GetConcreteClassStruct(CGM, Interface);
   unsigned Flags = eClassFlags_Factory;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
 
@@ -2857,17 +2854,6 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
   return getConstantGEP(Entry, 0, 0);
 }
 
-/// GetInterfaceDeclStructLayout - Get layout for ivars of given
-/// interface declaration.
-const llvm::StructLayout *CGObjCCommonMac::GetInterfaceDeclStructLayout(
-                                        const ObjCInterfaceDecl *OID) const {
-  assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  QualType T = CGM.getContext().getObjCInterfaceType(OID);
-  const llvm::StructType *InterfaceTy = 
-    cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
-  return CGM.getTargetData().getStructLayout(InterfaceTy);
-}
-
 /// GetIvarLayoutName - Returns a unique constant for the given
 /// ivar layout bitmap.
 llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
@@ -3133,7 +3119,8 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   SkipIvars.clear(); 
   IvarsInfo.clear();
   
-  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OI);
+  const llvm::StructLayout *Layout = 
+    CGM.getTargetData().getStructLayout(GetConcreteClassStruct(CGM, OI));
   BuildAggrIvarLayout(OI, Layout, 0, RecFields, 0, ForStrongLayout, 
                       Index, SkIndex, hasUnion);
   if (Index == -1)

@@ -28,6 +28,7 @@ namespace llvm {
   class Function;
   class Module;
   class StructLayout;
+  class StructType;
   class Type;
   class Value;
 }
@@ -65,9 +66,14 @@ protected:
   // eventually be folded into other places (the structure layout
   // code).
 
-  // Compute an offset to the given ivar, suitable for passing to
-  // EmitValueForIvarAtOffset.  Note that the correct handling of
-  // bit-fields is carefully coordinated by these two, use caution!
+  /// Return the (fixed) LLVM struct type for the interface. This is
+  /// only very meaningful for runtimes which use a non-fragile ABI.
+  const llvm::StructType * GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
+                                                  const ObjCInterfaceDecl *OID);
+
+  /// Compute an offset to the given ivar, suitable for passing to
+  /// EmitValueForIvarAtOffset.  Note that the correct handling of
+  /// bit-fields is carefully coordinated by these two, use caution!
   uint64_t ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
                                  const ObjCInterfaceDecl *OID,
                                  const ObjCIvarDecl *Ivar);
