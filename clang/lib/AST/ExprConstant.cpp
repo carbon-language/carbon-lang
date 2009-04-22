@@ -1205,7 +1205,18 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     return true;
   }
 
-  // FIXME: Handle complex types
+  if (SrcType->isAnyComplexType()) {
+    APValue C;
+    if (!EvaluateComplex(SubExpr, C, Info))
+      return false;
+    if (C.isComplexFloat())
+      return Success(HandleFloatToIntCast(DestType, SrcType,
+                                          C.getComplexFloatReal(), Info.Ctx),
+                     E);
+    else
+      return Success(HandleIntToIntCast(DestType, SrcType,
+                                        C.getComplexIntReal(), Info.Ctx), E);
+  }
   // FIXME: Handle vectors
 
   if (!SrcType->isRealFloatingType())
@@ -1467,28 +1478,41 @@ public:
 
     if (SubType->isRealFloatingType()) {
       APFloat Result(0.0);
-                     
+
       if (!EvaluateFloat(SubExpr, Result, Info))
         return APValue();
-      
-      // Apply float conversion if necessary.
-      Result = HandleFloatToFloatCast(EltType, SubType, Result, Info.Ctx);
-      return APValue(Result, 
-                     APFloat(Result.getSemantics(), APFloat::fcZero, false));
+
+      if (EltType->isRealFloatingType()) {
+        Result = HandleFloatToFloatCast(EltType, SubType, Result, Info.Ctx);
+        return APValue(Result, 
+                       APFloat(Result.getSemantics(), APFloat::fcZero, false));
+      } else {
+        llvm::APSInt IResult;
+        IResult = HandleFloatToIntCast(EltType, SubType, Result, Info.Ctx);
+        llvm::APSInt Zero(IResult.getBitWidth(), !IResult.isSigned());
+        Zero = 0;
+        return APValue(IResult, Zero);
+      }
     } else if (SubType->isIntegerType()) {
       APSInt Result;
-                     
+
       if (!EvaluateInteger(SubExpr, Result, Info))
         return APValue();
 
-      // Apply integer conversion if necessary.
-      Result = HandleIntToIntCast(EltType, SubType, Result, Info.Ctx);
-      llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
-      Zero = 0;
-      return APValue(Result, Zero);
+      if (EltType->isRealFloatingType()) {
+        APFloat FResult =
+            HandleIntToFloatCast(EltType, SubType, Result, Info.Ctx);
+        return APValue(FResult, 
+                       APFloat(FResult.getSemantics(), APFloat::fcZero, false));
+      } else {
+        Result = HandleIntToIntCast(EltType, SubType, Result, Info.Ctx);
+        llvm::APSInt Zero(Result.getBitWidth(), !Result.isSigned());
+        Zero = 0;
+        return APValue(Result, Zero);
+      }
     } else if (const ComplexType *CT = SubType->getAsComplexType()) {
       APValue Src;
-                     
+
       if (!EvaluateComplex(SubExpr, Src, Info))
         return APValue();
 

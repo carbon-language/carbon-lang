@@ -61,3 +61,5 @@ EVAL_EXPR(29, (_Complex int)1 ? 1 : -1)
 struct a { int x, y };
 static struct a V2 = (struct a)(struct a){ 1, 2};
 static const struct a V1 = (struct a){ 1, 2};
+
+EVAL_EXPR(30, (int)(_Complex float)((1<<30)-1) == (1<<30) ? 1 : -1)
