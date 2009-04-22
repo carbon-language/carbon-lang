@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines serialization methods for the SourceLocation class.
 //  This file defines accessor methods for the FullSourceLoc class.
 //
 //===----------------------------------------------------------------------===//
@@ -15,8 +14,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Bitcode/Serialize.h"
-#include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
@@ -37,14 +34,6 @@ void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
 //===----------------------------------------------------------------------===//
 // SourceLocation
 //===----------------------------------------------------------------------===//
-
-void SourceLocation::Emit(llvm::Serializer& S) const {
-  S.EmitInt(getRawEncoding());  
-}
-
-SourceLocation SourceLocation::ReadVal(llvm::Deserializer& D) {
-  return SourceLocation::getFromRawEncoding(D.ReadInt());   
-}
 
 void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
   if (!isValid()) {
@@ -69,17 +58,6 @@ void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
 
 void SourceLocation::dump(const SourceManager &SM) const {
   print(llvm::errs(), SM);
-}
-
-void SourceRange::Emit(llvm::Serializer& S) const {
-  B.Emit(S);
-  E.Emit(S);
-}
-
-SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
-  SourceLocation A = SourceLocation::ReadVal(D);
-  SourceLocation B = SourceLocation::ReadVal(D);
-  return SourceRange(A,B);
 }
 
 //===----------------------------------------------------------------------===//

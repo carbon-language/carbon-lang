@@ -5,7 +5,6 @@ add_clang_library(clangBasic
   Diagnostic.cpp
   FileManager.cpp
   IdentifierTable.cpp
-  LangOptions.cpp
   SourceLocation.cpp
   SourceManager.cpp
   TargetInfo.cpp

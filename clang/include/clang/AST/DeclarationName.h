@@ -15,7 +15,6 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/Type.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 
 namespace llvm {
   template <typename T> struct DenseMapInfo;

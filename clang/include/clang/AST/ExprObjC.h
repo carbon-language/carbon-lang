@@ -53,9 +53,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCStringLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// ObjCEncodeExpr, used for @encode in Objective-C.  @encode has the same type
@@ -93,9 +90,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCEncodeExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCSelectorExpr used for @selector in Objective-C.
@@ -132,9 +126,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCSelectorExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// ObjCProtocolExpr used for protocol expression in Objective-C.  This is used
@@ -172,9 +163,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCProtocolExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.
@@ -215,9 +203,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCIvarRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCPropertyRefExpr - A dot-syntax expression to access an ObjC
@@ -254,9 +239,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCPropertyRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCKVCRefExpr - A dot-syntax expression to access "implicit" properties 
@@ -319,9 +301,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-    
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCKVCRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 class ObjCMessageExpr : public Expr {
@@ -453,10 +432,6 @@ public:
   arg_iterator arg_end()   { return &SubExprs[ARGS_START] + NumArgs; }
   const_arg_iterator arg_begin() const { return &SubExprs[ARGS_START]; }
   const_arg_iterator arg_end() const { return &SubExprs[ARGS_START] + NumArgs; }
-  
-  // Serialization.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCMessageExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCSuperExpr - Represents the "super" expression in Objective-C,
@@ -477,9 +452,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCSuperExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);  
 };
 
 }  // end namespace clang

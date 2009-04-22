@@ -180,13 +180,11 @@ enum ProgActions {
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
   EmitLLVMOnly,                 // Generate LLVM IR, but do not 
-  SerializeAST,                 // Emit a .ast file.
   EmitHTML,                     // Translate input source into HTML.
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
   ASTView,                      // Parse ASTs and view them in Graphviz.
   PrintDeclContext,             // Print DeclContext and their Decls.
-  TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
@@ -234,8 +232,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Generate pre-tokenized header file"),
              clEnumValN(GeneratePCH, "emit-pch",
                         "Generate pre-compiled header file"),
-             clEnumValN(TestSerialization, "test-pickling",
-                        "Run prototype serialization code"),
              clEnumValN(EmitAssembly, "S",
                         "Emit native assembly code"),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -244,8 +240,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs then convert to LLVM, emit .bc file"),
              clEnumValN(EmitLLVMOnly, "emit-llvm-only",
                         "Build ASTs and convert to LLVM, discarding output"),
-             clEnumValN(SerializeAST, "serialize",
-                        "Build ASTs and emit .ast file"),
              clEnumValN(RewriteTest, "rewrite-test",
                         "Rewriter playground"),
              clEnumValN(RewriteObjC, "rewrite-objc",
@@ -262,7 +256,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
 static llvm::cl::opt<std::string>
 OutputFile("o",
  llvm::cl::value_desc("path"),
- llvm::cl::desc("Specify output file (for --serialize, this is a directory)"));
+ llvm::cl::desc("Specify output file"));
 
 
 //===----------------------------------------------------------------------===//
@@ -1559,9 +1553,6 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
   case InheritanceView:
     return CreateInheritanceViewer(InheritanceViewCls);
     
-  case TestSerialization:
-    return CreateSerializationTest(Diag, FileMgr);
-    
   case EmitAssembly:
   case EmitLLVM:
   case EmitBC: 
@@ -1582,12 +1573,7 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
                                  InFile, OutputFile);
   }
 
-  case SerializeAST:
-    // FIXME: Allow user to tailor where the file is written.
-    return CreateASTSerializer(InFile, OutputFile, Diag);
-    
   case GeneratePCH:
-    assert(PP && "Generate PCH doesn't work from serialized file yet");
     return CreatePCHGenerator(*PP, OutputFile);    
 
   case RewriteObjC:
@@ -1841,69 +1827,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     Consumer.take();
 }
 
-static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
-                                  FileManager& FileMgr) {
-  
-  if (VerifyDiagnostics) {
-    fprintf(stderr, "-verify does not yet work with serialized ASTs.\n");
-    exit (1);
-  }
-  
-  llvm::sys::Path Filename(InFile);
-  
-  if (!Filename.isValid()) {
-    fprintf(stderr, "serialized file '%s' not available.\n",InFile.c_str());
-    exit (1);
-  }
-  
-  llvm::OwningPtr<ASTContext> Ctx;
-  
-  // Create the memory buffer that contains the contents of the file.  
-  llvm::OwningPtr<llvm::MemoryBuffer> 
-    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
-  
-  if (MBuffer)
-    Ctx.reset(ASTContext::ReadASTBitcodeBuffer(*MBuffer, FileMgr));
-  
-  if (!Ctx) {
-    fprintf(stderr, "error: file '%s' could not be deserialized\n", 
-            InFile.c_str());
-    exit (1);
-  }
-  
-  // Observe that we use the source file name stored in the deserialized
-  // translation unit, rather than InFile.
-  llvm::OwningPtr<ASTConsumer>
-    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, Ctx->getLangOptions(),
-                               0, 0));
-
-  if (!Consumer) {      
-    fprintf(stderr, "Unsupported program action with serialized ASTs!\n");
-    exit (1);
-  }
-
-  Consumer->Initialize(*Ctx);
-
-  // FIXME: We need to inform Consumer about completed TagDecls as well.
-  TranslationUnitDecl *TUD = Ctx->getTranslationUnitDecl();
-  for (DeclContext::decl_iterator I = TUD->decls_begin(*Ctx), 
-                                  E = TUD->decls_end(*Ctx);
-       I != E; ++I)
-    Consumer->HandleTopLevelDecl(DeclGroupRef(*I));
-}
-
-
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
-
-static bool isSerializedFile(const std::string& InFile) {
-  if (InFile.size() < 4)
-    return false;
-  
-  const char* s = InFile.c_str()+InFile.size()-4;
-  return s[0] == '.' && s[1] == 'a' && s[2] == 's' && s[3] == 't';    
-}
-
 
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -1990,11 +1915,6 @@ int main(int argc, char **argv) {
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
-    
-    if (isSerializedFile(InFile)) {
-      ProcessSerializedFile(InFile,Diags,FileMgr);
-      continue;
-    }
     
     /// Create a SourceManager object.  This tracks and owns all the file
     /// buffers allocated to a translation unit.

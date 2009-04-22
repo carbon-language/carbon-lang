@@ -14,8 +14,6 @@
 #ifndef LLVM_CLANG_LANGOPTIONS_H
 #define LLVM_CLANG_LANGOPTIONS_H
 
-#include "llvm/Bitcode/SerializationFwd.h"
-
 namespace clang {
 
 /// LangOptions - This class keeps track of the various options that can be
@@ -146,12 +144,6 @@ public:
     return (VisibilityMode) SymbolVisibility; 
   }
   void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
-  
-  /// Emit - Emit this LangOptions object to bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Read new values for this LangOption object from bitcode.
-  void Read(llvm::Deserializer& S);  
 };
 
 }  // end namespace clang

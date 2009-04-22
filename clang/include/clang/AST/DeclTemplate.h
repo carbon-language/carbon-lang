@@ -271,15 +271,6 @@ public:
     return D->getKind() == TemplateTypeParm;
   }
   static bool classof(const TemplateTypeParmDecl *D) { return true; }
-
-protected:
-  /// Serialize this TemplateTypeParmDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-
-  /// Deserialize a TemplateTypeParmDecl.  Called by Decl::Create.
-  static TemplateTypeParmDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// NonTypeTemplateParmDecl - Declares a non-type template parameter,
@@ -328,16 +319,6 @@ public:
     return D->getKind() == NonTypeTemplateParm;
   }
   static bool classof(const NonTypeTemplateParmDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this TemplateTypeParmDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-
-  /// CreateImpl - Deserialize a TemplateTypeParmDecl.  Called by Decl::Create.
-  static NonTypeTemplateParmDecl* CreateImpl(llvm::Deserializer& D,
-                                             ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// TemplateTemplateParmDecl - Declares a template template parameter,
@@ -389,16 +370,6 @@ public:
     return D->getKind() == TemplateTemplateParm;
   }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this TemplateTypeParmDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-
-  /// CreateImpl - Deserialize a TemplateTypeParmDecl.  Called by Decl::Create.
-  static TemplateTemplateParmDecl* CreateImpl(llvm::Deserializer& D,
-                                              ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// \brief Represents a template argument within a class template

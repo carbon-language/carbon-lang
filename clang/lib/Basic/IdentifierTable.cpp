@@ -16,8 +16,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Bitcode/Serialize.h"
-#include "llvm/Bitcode/Deserialize.h"
 #include <cstdio>
 
 using namespace clang;
@@ -53,10 +51,6 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
   // language.
   AddKeywords(LangOpts);
 }
-
-// This cstor is intended to be used only for serialization.
-IdentifierTable::IdentifierTable() 
-  : HashTable(8192), ExternalLookup(0) { }
 
 //===----------------------------------------------------------------------===//
 // Language Keyword Implementation
@@ -264,7 +258,6 @@ namespace clang {
 /// this class is provided strictly through Selector.
 class MultiKeywordSelector 
   : public DeclarationNameExtra, public llvm::FoldingSetNode {
-  friend SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer&);
   MultiKeywordSelector(unsigned nKeys) {
     ExtraKindOrNumArgs = NUM_EXTRA_KINDS + nKeys;
   }
@@ -414,155 +407,3 @@ SelectorTable::~SelectorTable() {
   delete &getSelectorTableImpl(Impl);
 }
 
-//===----------------------------------------------------------------------===//
-// Serialization for IdentifierInfo and IdentifierTable.
-//===----------------------------------------------------------------------===//
-
-void IdentifierInfo::Emit(llvm::Serializer& S) const {
-  S.EmitInt(getTokenID());
-  S.EmitInt(getBuiltinID());
-  S.EmitInt(getObjCKeywordID());  
-  S.EmitBool(hasMacroDefinition());
-  S.EmitBool(isExtensionToken());
-  S.EmitBool(isPoisoned());
-  S.EmitBool(isCPlusPlusOperatorKeyword());
-  // FIXME: FETokenInfo
-}
-
-void IdentifierInfo::Read(llvm::Deserializer& D) {
-  setTokenID((tok::TokenKind) D.ReadInt());
-  setBuiltinID(D.ReadInt());  
-  setObjCKeywordID((tok::ObjCKeywordKind) D.ReadInt());  
-  setHasMacroDefinition(D.ReadBool());
-  setIsExtensionToken(D.ReadBool());
-  setIsPoisoned(D.ReadBool());
-  setIsCPlusPlusOperatorKeyword(D.ReadBool());
-  // FIXME: FETokenInfo
-}
-
-void IdentifierTable::Emit(llvm::Serializer& S) const {
-  S.EnterBlock();
-  
-  S.EmitPtr(this);
-  
-  for (iterator I=begin(), E=end(); I != E; ++I) {
-    const char* Key = I->getKeyData();
-    const IdentifierInfo* Info = I->getValue();
-    
-    bool KeyRegistered = S.isRegistered(Key);
-    bool InfoRegistered = S.isRegistered(Info);
-    
-    if (KeyRegistered || InfoRegistered) {
-      // These acrobatics are so that we don't incur the cost of registering
-      // a pointer with the backpatcher during deserialization if nobody
-      // references the object.
-      S.EmitPtr(InfoRegistered ? Info : NULL);
-      S.EmitPtr(KeyRegistered ? Key : NULL);
-      S.EmitCStr(Key);
-      S.Emit(*Info);
-    }
-  }
-  
-  S.ExitBlock();
-}
-
-IdentifierTable* IdentifierTable::CreateAndRegister(llvm::Deserializer& D) {
-  llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
-
-  std::vector<char> buff;
-  buff.reserve(200);
-
-  IdentifierTable* t = new IdentifierTable();
-  D.RegisterPtr(t);  
-  
-  while (!D.FinishedBlock(BLoc)) {
-    llvm::SerializedPtrID InfoPtrID = D.ReadPtrID();
-    llvm::SerializedPtrID KeyPtrID = D.ReadPtrID();
-    
-    D.ReadCStr(buff);
-    IdentifierInfo *II = &t->get(&buff[0], &buff[0] + buff.size());
-    II->Read(D);
-    
-    if (InfoPtrID) D.RegisterPtr(InfoPtrID, II);
-    if (KeyPtrID)  D.RegisterPtr(KeyPtrID, II->getName());
-  }
-  
-  return t;
-}
-
-//===----------------------------------------------------------------------===//
-// Serialization for Selector and SelectorTable.
-//===----------------------------------------------------------------------===//
-
-void Selector::Emit(llvm::Serializer& S) const {
-  S.EmitInt(getIdentifierInfoFlag());
-  S.EmitPtr(reinterpret_cast<void*>(InfoPtr & ~ArgFlags));
-}
-
-Selector Selector::ReadVal(llvm::Deserializer& D) {
-  unsigned flag = D.ReadInt();
-  
-  uintptr_t ptr;  
-  D.ReadUIntPtr(ptr,false); // No backpatching.
-  
-  return Selector(ptr | flag);
-}
-
-void SelectorTable::Emit(llvm::Serializer& S) const {
-  typedef llvm::FoldingSet<MultiKeywordSelector>::iterator iterator;
-  llvm::FoldingSet<MultiKeywordSelector> *SelTab;
-  SelTab = static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
-  
-  S.EnterBlock();
-  
-  S.EmitPtr(this);
-  
-  for (iterator I=SelTab->begin(), E=SelTab->end(); I != E; ++I) {
-    if (!S.isRegistered(&*I))
-      continue;
-    
-    S.FlushRecord(); // Start a new record.
-
-    S.EmitPtr(&*I);
-    S.EmitInt(I->getNumArgs());
-
-    for (MultiKeywordSelector::keyword_iterator KI = I->keyword_begin(),
-         KE = I->keyword_end(); KI != KE; ++KI)
-      S.EmitPtr(*KI);
-  }
-  
-  S.ExitBlock();
-}
-
-SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer& D) {
-  llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
-  
-  SelectorTable* t = new SelectorTable();
-  D.RegisterPtr(t);
-  
-  llvm::FoldingSet<MultiKeywordSelector>& SelTab =
-    *static_cast<llvm::FoldingSet<MultiKeywordSelector>*>(t->Impl);
-
-  while (!D.FinishedBlock(BLoc)) {
-
-    llvm::SerializedPtrID PtrID = D.ReadPtrID();
-    unsigned nKeys = D.ReadInt();
-    
-    MultiKeywordSelector *SI = 
-      (MultiKeywordSelector*)malloc(sizeof(MultiKeywordSelector) + 
-                                    nKeys*sizeof(IdentifierInfo *));
-
-    new (SI) MultiKeywordSelector(nKeys);
-    
-    D.RegisterPtr(PtrID,SI);
-
-    IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(SI+1);
-
-    for (unsigned i = 0; i != nKeys; ++i)
-      D.ReadPtr(KeyInfo[i],false);
-    
-    SelTab.GetOrInsertNode(SI);
-  }
-  
-  return t;
-}

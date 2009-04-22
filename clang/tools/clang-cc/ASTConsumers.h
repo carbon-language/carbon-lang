@@ -61,13 +61,6 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
 ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
                                Preprocessor *PP, PreprocessorFactory *PPF);
 
-ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
-                                     FileManager &FMgr);
-  
-ASTConsumer *CreateASTSerializer(const std::string &InFile,
-                                 const std::string &EmitDir,
-                                 Diagnostic &Diags);
-  
 ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
                                 const std::string &OutFile);
 

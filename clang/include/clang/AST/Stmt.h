@@ -21,7 +21,6 @@
 #include "clang/AST/DeclGroup.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include "clang/AST/ASTContext.h"
 #include <string>
 using llvm::dyn_cast_or_null;
@@ -221,14 +220,6 @@ public:
   const_child_iterator child_end() const {
     return const_child_iterator(const_cast<Stmt*>(this)->child_end());
   }
-
-  void Emit(llvm::Serializer& S) const;
-  static Stmt* Create(llvm::Deserializer& D, ASTContext& C);
-
-  virtual void EmitImpl(llvm::Serializer& S) const {
-    // This method will eventually be a pure-virtual function.
-    assert (false && "Not implemented.");
-  }
 };
 
 /// DeclStmt - Adaptor class for mixing declarations with statements and
@@ -287,10 +278,6 @@ public:
   decl_iterator decl_end() { return DG.end(); }
   const_decl_iterator decl_begin() const { return DG.begin(); }
   const_decl_iterator decl_end() const { return DG.end(); }
-  
-  // Serialization.  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static DeclStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.
@@ -316,9 +303,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static NullStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -395,9 +379,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CompoundStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
@@ -483,9 +464,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CaseStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class DefaultStmt : public SwitchCase {
@@ -517,9 +495,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static DefaultStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class LabelStmt : public Stmt {
@@ -554,9 +529,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static LabelStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -607,9 +579,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static IfStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
@@ -663,9 +632,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static SwitchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -706,9 +672,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static WhileStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// DoStmt - This represents a 'do/while' stmt.
@@ -749,9 +712,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static DoStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -805,9 +765,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ForStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// GotoStmt - This represents a direct goto.
@@ -842,9 +799,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static GotoStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// IndirectGotoStmt - This represents an indirect goto.
@@ -879,9 +833,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static IndirectGotoStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -909,9 +860,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ContinueStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// BreakStmt - This represents a break.
@@ -937,9 +885,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static BreakStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -979,9 +924,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ReturnStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// AsmStmt - This represents a GNU inline-assembly statement extension.
@@ -1213,9 +1155,6 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static AsmStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCForCollectionStmt - This represents Objective-c's collection statement;
@@ -1255,9 +1194,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCForCollectionStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };  
   
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
@@ -1310,9 +1246,6 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtCatchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// ObjCAtFinallyStmt - This represent objective-c's @finally Statement 
@@ -1340,9 +1273,6 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtFinallyStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// ObjCAtTryStmt - This represent objective-c's over-all 
@@ -1390,9 +1320,6 @@ public:
     
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtTryStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
@@ -1442,10 +1369,6 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtSynchronizedStmt* CreateImpl(llvm::Deserializer& D,
-                                            ASTContext& C);
 };
   
 /// ObjCAtThrowStmt - This represents objective-c's @throw statement.
@@ -1475,9 +1398,6 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtThrowStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXCatchStmt - This represents a C++ catch block.
@@ -1510,9 +1430,6 @@ public:
 
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXCatchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXTryStmt - A C++ try block, including all handlers.
@@ -1550,9 +1467,6 @@ public:
 
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXTryStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

@@ -15,9 +15,8 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Bitcode/Serialize.h"
-#include "llvm/Bitcode/Deserialize.h"
 using namespace clang;
 
 namespace clang {

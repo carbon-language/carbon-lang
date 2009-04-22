@@ -19,8 +19,6 @@
 
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Bitcode/Serialize.h"
-#include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Config/config.h"
 using namespace clang;

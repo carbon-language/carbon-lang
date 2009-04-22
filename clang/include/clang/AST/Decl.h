@@ -25,10 +25,6 @@ class CompoundStmt;
 class StringLiteral;
 
 /// TranslationUnitDecl - The top declaration context.
-/// FIXME: The TranslationUnit class should probably be modified to serve as
-/// the top decl context. It would have ownership of the top decls so that the
-/// AST is self-contained and easily de/serializable.
-/// FIXME: TranslationUnitDecl isn't really a Decl (!)
 class TranslationUnitDecl : public Decl, public DeclContext {
   TranslationUnitDecl()
     : Decl(TranslationUnit, 0, SourceLocation()),
@@ -44,15 +40,6 @@ public:
   static TranslationUnitDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<TranslationUnitDecl *>(const_cast<DeclContext*>(DC));
   }
-
-protected:
-  /// EmitImpl - Serialize this TranslationUnitDecl. Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-
-  /// CreateImpl - Deserialize a TranslationUnitDecl.  Called by Decl::Create.
-  static TranslationUnitDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// NamedDecl - This represents a decl with a name.  Many decls have names such
@@ -120,10 +107,6 @@ public:
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }
   static bool classof(const NamedDecl *D) { return true; }
-  
-protected:
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// NamespaceDecl - Represent a C++ namespace.
@@ -179,15 +162,6 @@ public:
   static NamespaceDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<NamespaceDecl *>(const_cast<DeclContext*>(DC));
   }
-  
-protected:
-  /// EmitImpl - Serialize this NamespaceDecl. Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-
-  /// CreateImpl - Deserialize a NamespaceDecl.  Called by Decl::Create.
-  static NamespaceDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
@@ -209,10 +183,6 @@ public:
     return D->getKind() >= ValueFirst && D->getKind() <= ValueLast;
   }
   static bool classof(const ValueDecl *D) { return true; }
-  
-protected:
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// VarDecl - An instance of this class is created to represent a variable
@@ -393,22 +363,6 @@ public:
     return D->getKind() >= VarFirst && D->getKind() <= VarLast;
   }
   static bool classof(const VarDecl *D) { return true; }
-
-protected:
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
-  
-  void EmitOutRec(llvm::Serializer& S) const;
-  void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
-  
-  /// EmitImpl - Serialize this VarDecl. Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// ReadImpl - Deserialize this VarDecl. Called by subclasses.
-  virtual void ReadImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  /// CreateImpl - Deserialize a VarDecl.  Called by Decl::Create.
-  static VarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class ImplicitParamDecl : public VarDecl {
@@ -492,15 +446,6 @@ public:
             D->getKind() == OriginalParmVar); 
   }
   static bool classof(const ParmVarDecl *D) { return true; }
-  
-protected:
-  /// EmitImpl - Serialize this ParmVarDecl. Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a ParmVarDecl.  Called by Decl::Create.
-  static ParmVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// OriginalParmVarDecl - Represent a parameter to a function, when
@@ -528,18 +473,6 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
   static bool classof(const OriginalParmVarDecl *D) { return true; }
-    
-protected:
-  /// EmitImpl - Serialize this OriginalParmVarDecl. 
-  /// Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-    
-  /// CreateImpl - Deserialize a OriginalParmVarDecl.  
-  /// Called by Decl::Create.
-  static OriginalParmVarDecl* CreateImpl(llvm::Deserializer& D, 
-                                                 ASTContext& C);
-    
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// FunctionDecl - An instance of this class is created to represent a
@@ -765,16 +698,6 @@ public:
   static FunctionDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<FunctionDecl *>(const_cast<DeclContext*>(DC));
   }
-
-protected:
-  /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a FunctionDecl.  Called by Decl::Create.
-  static FunctionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-  friend class CXXRecordDecl;
 };
 
 
@@ -821,15 +744,6 @@ public:
     return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;
   }
   static bool classof(const FieldDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this FieldDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a FieldDecl.  Called by Decl::Create.
-  static FieldDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// EnumConstantDecl - An instance of this object exists for each enum constant
@@ -867,15 +781,6 @@ public:
   static bool classof(const EnumConstantDecl *D) { return true; }
   
   friend class StmtIteratorBase;
-  
-protected:
-  /// EmitImpl - Serialize this EnumConstantDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a EnumConstantDecl.  Called by Decl::Create.
-  static EnumConstantDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -932,15 +837,6 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
   static bool classof(const TypedefDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this TypedefDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a TypedefDecl.  Called by Decl::Create.
-  static TypedefDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);  
 };
 
 class TypedefDecl;
@@ -1090,15 +986,6 @@ public:
 
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
-  
-protected:
-  /// EmitImpl - Serialize this EnumDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a EnumDecl.  Called by Decl::Create.
-  static EnumDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -1202,14 +1089,6 @@ public:
     return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;
   }
   static bool classof(const RecordDecl *D) { return true; }
-protected:
-  /// EmitImpl - Serialize this RecordDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a RecordDecl.  Called by Decl::Create.
-  static RecordDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 class FileScopeAsmDecl : public Decl {
@@ -1228,14 +1107,6 @@ public:
     return D->getKind() == FileScopeAsm;
   }
   static bool classof(const FileScopeAsmDecl *D) { return true; }  
-protected:
-  /// EmitImpl - Serialize this FileScopeAsmDecl. Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a FileScopeAsmDecl.  Called by Decl::Create.
-  static FileScopeAsmDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// BlockDecl - This represents a block literal declaration, which is like an
@@ -1300,15 +1171,6 @@ public:
   static BlockDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<BlockDecl *>(const_cast<DeclContext*>(DC));
   }
-
-protected:
-  /// EmitImpl - Serialize this BlockDecl. Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-
-  /// CreateImpl - Deserialize a BlockDecl.  Called by Decl::Create.
-  static BlockDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// Insertion operator for diagnostics.  This allows sending NamedDecl's

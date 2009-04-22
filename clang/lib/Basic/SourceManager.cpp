@@ -17,10 +17,9 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
-#include "llvm/Bitcode/Serialize.h"
-#include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <iostream>
 using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
@@ -865,135 +864,4 @@ void SourceManager::PrintStats() const {
              << NumLineNumsComputed << " files with line #'s computed.\n";
   llvm::cerr << "FileID scans: " << NumLinearScans << " linear, "
              << NumBinaryProbes << " binary.\n";
-}
-
-//===----------------------------------------------------------------------===//
-// Serialization.
-//===----------------------------------------------------------------------===//
-  
-void ContentCache::Emit(llvm::Serializer& S) const {
-  S.FlushRecord();
-  S.EmitPtr(this);
-
-  if (Entry) {
-    llvm::sys::Path Fname(Buffer->getBufferIdentifier());
-
-    if (Fname.isAbsolute())
-      S.EmitCStr(Fname.c_str());
-    else {
-      // Create an absolute path.
-      // FIXME: This will potentially contain ".." and "." in the path.
-      llvm::sys::Path path = llvm::sys::Path::GetCurrentDirectory();
-      path.appendComponent(Fname.c_str());      
-      S.EmitCStr(path.c_str());
-    }
-  }
-  else {
-    const char* p = Buffer->getBufferStart();
-    const char* e = Buffer->getBufferEnd();
-    
-    S.EmitInt(e-p);
-    
-    for ( ; p != e; ++p)
-      S.EmitInt(*p);    
-  }
-  
-  S.FlushRecord();  
-}
-
-void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
-                                       SourceManager& SMgr,
-                                       FileManager* FMgr,
-                                       std::vector<char>& Buf) {
-  if (FMgr) {
-    llvm::SerializedPtrID PtrID = D.ReadPtrID();    
-    D.ReadCStr(Buf,false);
-    
-    // Create/fetch the FileEntry.
-    const char* start = &Buf[0];
-    const FileEntry* E = FMgr->getFile(start,start+Buf.size());
-    
-    // FIXME: Ideally we want a lazy materialization of the ContentCache
-    //  anyway, because we don't want to read in source files unless this
-    //  is absolutely needed.
-    if (!E)
-      D.RegisterPtr(PtrID,NULL);
-    else
-      // Get the ContextCache object and register it with the deserializer.
-      D.RegisterPtr(PtrID, SMgr.getOrCreateContentCache(E));
-    return;
-  }
-  
-  // Register the ContextCache object with the deserializer.
-  /* FIXME:
-  ContentCache *Entry
-  SMgr.MemBufferInfos.push_back(ContentCache());
-   = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());
-  D.RegisterPtr(&Entry);
-  
-  // Create the buffer.
-  unsigned Size = D.ReadInt();
-  Entry.Buffer = MemoryBuffer::getNewUninitMemBuffer(Size);
-  
-  // Read the contents of the buffer.
-  char* p = const_cast<char*>(Entry.Buffer->getBufferStart());
-  for (unsigned i = 0; i < Size ; ++i)
-    p[i] = D.ReadInt();    
-   */
-}
-
-void SourceManager::Emit(llvm::Serializer& S) const {
-  S.EnterBlock();
-  S.EmitPtr(this);
-  S.EmitInt(MainFileID.getOpaqueValue());
-  
-  // Emit: FileInfos.  Just emit the file name.
-  S.EnterBlock();    
-
-  // FIXME: Emit FileInfos.
-  //std::for_each(FileInfos.begin(), FileInfos.end(),
-  //              S.MakeEmitter<ContentCache>());
-  
-  S.ExitBlock();
-  
-  // Emit: MemBufferInfos
-  S.EnterBlock();
-
-  /* FIXME: EMIT.
-  std::for_each(MemBufferInfos.begin(), MemBufferInfos.end(),
-                S.MakeEmitter<ContentCache>());
-   */
-  
-  S.ExitBlock();
-  
-  // FIXME: Emit SLocEntryTable.
-  
-  S.ExitBlock();
-}
-
-SourceManager*
-SourceManager::CreateAndRegister(llvm::Deserializer &D, FileManager &FMgr) {
-  SourceManager *M = new SourceManager();
-  D.RegisterPtr(M);
-  
-  // Read: the FileID of the main source file of the translation unit.
-  M->MainFileID = FileID::get(D.ReadInt());
-  
-  std::vector<char> Buf;
-    
-  /*{ // FIXME Read: FileInfos.
-    llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
-    while (!D.FinishedBlock(BLoc))
-    ContentCache::ReadToSourceManager(D,*M,&FMgr,Buf);
-  }*/
-    
-  /*{ // FIXME Read: MemBufferInfos.
-    llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
-    while (!D.FinishedBlock(BLoc))
-    ContentCache::ReadToSourceManager(D,*M,NULL,Buf);
-    }*/
-  
-  // FIXME: Read SLocEntryTable.
-  
-  return M;
 }

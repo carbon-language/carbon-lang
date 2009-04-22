@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_SOURCELOCATION_H
 #define LLVM_CLANG_SOURCELOCATION_H
 
-#include "llvm/Bitcode/SerializationFwd.h"
 #include <utility>
 #include <cassert>
 
@@ -130,12 +129,6 @@ public:
     return X;
   }
   
-  /// Emit - Emit this SourceLocation object to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// ReadVal - Read a SourceLocation object from Bitcode.
-  static SourceLocation ReadVal(llvm::Deserializer& D);
-
   void print(llvm::raw_ostream &OS, const SourceManager &SM) const;
   void dump(const SourceManager &SM) const;
 };
@@ -176,12 +169,6 @@ public:
   bool operator!=(const SourceRange &X) const {
     return B != X.B || E != X.E;
   }
-  
-  /// Emit - Emit this SourceRange object to Bitcode.
-  void Emit(llvm::Serializer& S) const;    
-
-  /// ReadVal - Read a SourceRange object from Bitcode.
-  static SourceRange ReadVal(llvm::Deserializer& D);
 };
   
 /// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful

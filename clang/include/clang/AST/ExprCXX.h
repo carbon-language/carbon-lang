@@ -129,10 +129,6 @@ public:
     }
   }
   static bool classof(const CXXNamedCastExpr *) { return true; }
-      
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXNamedCastExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C,
-                                      StmtClass SC);
 };
 
 /// CXXStaticCastExpr - A C++ @c static_cast expression (C++ [expr.static.cast]).
@@ -276,9 +272,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXTypeidExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXThisExpr - Represents the "this" expression in C++, which is a
@@ -313,9 +306,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXThisExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);  
 };
 
 ///  CXXThrowExpr - [C++ 15] C++ Throw Expression.  This handles
@@ -387,11 +377,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  // Serialization
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXDefaultArgExpr* CreateImpl(llvm::Deserializer& D,
-                                       ASTContext& C);
 };
 
 /// CXXFunctionalCastExpr - Represents an explicit C++ type conversion
@@ -417,10 +402,6 @@ public:
     return T->getStmtClass() == CXXFunctionalCastExprClass; 
   }
   static bool classof(const CXXFunctionalCastExpr *) { return true; }
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXFunctionalCastExpr *
-      CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// @brief Represents a C++ functional cast expression that builds a
@@ -482,9 +463,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXTemporaryObjectExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXZeroInitValueExpr - [C++ 5.2.3p2]
@@ -523,10 +501,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXZeroInitValueExpr *
-      CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXConditionDeclExpr - Condition declaration of a if/switch/while/for
@@ -560,11 +534,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  // FIXME: Implement these.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  //static CXXConditionDeclExpr *
-  //    CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXNewExpr - A new expression for memory allocation and constructor calls,
@@ -600,19 +569,6 @@ class CXXNewExpr : public Expr {
   SourceLocation StartLoc;
   SourceLocation EndLoc;
 
-  // Deserialization constructor
-  CXXNewExpr(QualType ty, bool globalNew, bool parenTypeId, bool initializer,
-             bool array, unsigned numPlaceArgs, unsigned numConsArgs,
-             Stmt **subExprs, FunctionDecl *operatorNew,
-             FunctionDecl *operatorDelete, CXXConstructorDecl *constructor,
-             SourceLocation startLoc, SourceLocation endLoc)
-    : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
-      GlobalNew(globalNew), ParenTypeId(parenTypeId),
-      Initializer(initializer), Array(array), NumPlacementArgs(numPlaceArgs),
-      NumConstructorArgs(numConsArgs), SubExprs(subExprs),
-      OperatorNew(operatorNew), OperatorDelete(operatorDelete),
-      Constructor(constructor), StartLoc(startLoc), EndLoc(endLoc)
-  { }
 public:
   CXXNewExpr(bool globalNew, FunctionDecl *operatorNew, Expr **placementArgs,
              unsigned numPlaceArgs, bool ParenTypeId, Expr *arraySize,
@@ -706,9 +662,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXNewExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXDeleteExpr - A delete expression for memory deallocation and destructor
@@ -751,9 +704,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CXXDeleteExpr * CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// \brief Represents the name of a function that has not been
@@ -800,9 +750,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static UnresolvedFunctionNameExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// UnaryTypeTraitExpr - A GCC or MS unary type trait, as used in the
@@ -845,9 +792,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static UnaryTypeTraitExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// QualifiedDeclRefExpr - A reference to a declared variable,
@@ -883,9 +827,6 @@ public:
     return T->getStmtClass() == QualifiedDeclRefExprClass;
   }
   static bool classof(const QualifiedDeclRefExpr *) { return true; }
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static QualifiedDeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// \brief A qualified reference to a name whose declaration cannot

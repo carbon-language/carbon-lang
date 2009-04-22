@@ -297,22 +297,9 @@ public:
   static DeclContext *castToDeclContext(const Decl *);
   static Decl *castFromDeclContext(const DeclContext *);
   
-  /// Emit - Serialize this Decl to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-    
-  /// Create - Deserialize a Decl from Bitcode.
-  static Decl* Create(llvm::Deserializer& D, ASTContext& C);
-
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
 
-protected:
-  /// EmitImpl - Provides the subclass-specific serialization logic for
-  ///   serializing out a decl.
-  virtual void EmitImpl(llvm::Serializer& S) const {
-    // FIXME: This will eventually be a pure virtual function.
-    assert (false && "Not implemented.");
-  }
 private:
   const Attr *getAttrsImpl() const;
 
@@ -800,11 +787,6 @@ private:
 
   void buildLookup(ASTContext &Context, DeclContext *DCtx);
   void makeDeclVisibleInContextImpl(ASTContext &Context, NamedDecl *D);
-
-  void EmitOutRec(llvm::Serializer& S) const;
-  void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
-
-  friend class Decl;
 };
 
 inline bool Decl::isTemplateParameter() const {

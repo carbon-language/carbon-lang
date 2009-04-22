@@ -294,10 +294,6 @@ public:
            T->getStmtClass() <= lastExprConstant; 
   }
   static bool classof(const Expr *) { return true; }
-  
-  static inline Expr* Create(llvm::Deserializer& D, ASTContext& C) {
-    return cast<Expr>(Stmt::Create(D, C));
-  }
 };
 
   
@@ -352,9 +348,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static DeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// PredefinedExpr - [C99 6.4.2.2] - A predefined identifier such as __func__.
@@ -393,9 +386,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static PredefinedExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class IntegerLiteral : public Expr {
@@ -432,9 +422,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static IntegerLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class CharacterLiteral : public Expr {
@@ -469,9 +456,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CharacterLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class FloatingLiteral : public Expr {
@@ -511,9 +495,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static FloatingLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ImaginaryLiteral - We support imaginary integer and floating point literals,
@@ -544,9 +525,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ImaginaryLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
@@ -636,9 +614,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static StringLiteral* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
@@ -678,9 +653,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ParenExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -782,9 +754,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static UnaryOperator* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// SizeOfAlignOfExpr - [C99 6.5.3.4] - This is for sizeof/alignof, both of
@@ -872,9 +841,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static SizeOfAlignOfExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 //===----------------------------------------------------------------------===//
@@ -951,9 +917,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ArraySubscriptExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -1055,10 +1018,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CallExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C, 
-                              StmtClass SC);
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
@@ -1118,9 +1077,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static MemberExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CompoundLiteralExpr - [C99 6.5.2.5] 
@@ -1169,9 +1125,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CompoundLiteralExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CastExpr - Base class for type casts, including both implicit
@@ -1260,9 +1213,6 @@ public:
     return T->getStmtClass() == ImplicitCastExprClass; 
   }
   static bool classof(const ImplicitCastExpr *) { return true; }
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ImplicitCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ExplicitCastExpr - An explicit cast written in the source
@@ -1341,9 +1291,6 @@ public:
     return T->getStmtClass() == CStyleCastExprClass; 
   }
   static bool classof(const CStyleCastExpr *) { return true; }
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CStyleCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// \brief A builtin binary operation expression such as "x + y" or "x <= y".
@@ -1466,9 +1413,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static BinaryOperator* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
@@ -1520,10 +1464,6 @@ public:
   static bool classof(const Stmt *S) { 
     return S->getStmtClass() == CompoundAssignOperatorClass; 
   }
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static CompoundAssignOperator* CreateImpl(llvm::Deserializer& D,
-                                            ASTContext& C);
 };
 
 /// ConditionalOperator - The ?: operator.  Note that LHS may be null when the
@@ -1587,9 +1527,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ConditionalOperator* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// AddrLabelExpr - The GNU address of label extension, representing &&label.
@@ -1625,9 +1562,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static AddrLabelExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// StmtExpr - This is the GNU Statement Expression extension: ({int X=4; X;}).
@@ -1665,9 +1599,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static StmtExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// TypesCompatibleExpr - GNU builtin-in function __builtin_type_compatible_p.
@@ -1710,9 +1641,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static TypesCompatibleExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ShuffleVectorExpr - clang-specific builtin-in function
@@ -1790,9 +1718,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ShuffleVectorExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
@@ -1855,9 +1780,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ChooseExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// GNUNullExpr - Implements the GNU __null extension, which is a name
@@ -1892,9 +1814,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static GNUNullExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);  
 };
 
 /// VAArgExpr, used for the builtin function __builtin_va_start.
@@ -1932,9 +1851,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();  
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static VAArgExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// @brief Describes an C or C++ initializer list.
@@ -2085,14 +2001,6 @@ public:
   iterator end() { return InitExprs.end(); }
   reverse_iterator rbegin() { return InitExprs.rbegin(); }
   reverse_iterator rend() { return InitExprs.rend(); }
-  
-  // Serailization.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static InitListExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-private:
-  // Used by serializer.
-  InitListExpr() : Expr(InitListExprClass, QualType()) {}
 };
 
 /// @brief Represents a C99 designated initializer expression.
@@ -2476,9 +2384,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ExtVectorElementExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -2528,9 +2433,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static BlockExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
     
 /// BlockDeclRefExpr - A reference to a declared variable, function,
@@ -2568,9 +2470,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static BlockDeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

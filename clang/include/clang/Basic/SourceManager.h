@@ -15,7 +15,6 @@
 #define LLVM_CLANG_SOURCEMANAGER_H
 
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
@@ -105,14 +104,6 @@ namespace SrcMgr {
               
       NumLines = RHS.NumLines;      
     }
-    
-    /// Emit - Emit this ContentCache to Bitcode.
-    void Emit(llvm::Serializer &S) const;
-    
-    /// ReadToSourceManager - Reconstitute a ContentCache from Bitcode
-    //   and store it in the specified SourceManager.
-    static void ReadToSourceManager(llvm::Deserializer &D, SourceManager &SM,
-                                    FileManager *FMgr, std::vector<char> &Buf);
     
   private:
     // Disable assignments.
@@ -610,13 +601,6 @@ public:
   ///
   void PrintStats() const;
 
-  /// Emit - Emit this SourceManager to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Reconstitute a SourceManager from Bitcode.
-  static SourceManager* CreateAndRegister(llvm::Deserializer& S,
-                                          FileManager &FMgr);
-
   // Iteration over the source location entry table.  
   typedef std::vector<SrcMgr::SLocEntry>::const_iterator sloc_entry_iterator;
 
@@ -638,8 +622,6 @@ public:
   unsigned getNextOffset() const { return NextOffset; }
 
 private:
-  friend class SrcMgr::ContentCache; // Used for deserialization.
-  
   /// isOffsetInFileID - Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.
   inline bool isOffsetInFileID(FileID FID, unsigned SLocOffset) const {

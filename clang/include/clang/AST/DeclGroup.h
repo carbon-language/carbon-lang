@@ -15,7 +15,6 @@
 #define LLVM_CLANG_AST_DECLGROUP_H
 
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include <cassert>
 
 namespace clang {
@@ -48,12 +47,6 @@ public:
     assert (i < NumDecls && "Out-of-bounds access.");
     return *((Decl* const*) (this+1));
   }
-  
-  /// Emit - Serialize a DeclGroup to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Deserialize a DeclGroup from Bitcode.
-  static DeclGroup* Read(llvm::Deserializer& D, ASTContext& C);
 };
     
 class DeclGroupRef {
@@ -136,12 +129,6 @@ public:
     X.D = static_cast<Decl*>(Ptr);
     return X;
   }
-  
-  /// Emit - Serialize a DeclGroupRef to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Deserialize a DeclGroupRef from Bitcode.
-  static DeclGroupRef ReadVal(llvm::Deserializer& D);
 };
   
 } // end clang namespace

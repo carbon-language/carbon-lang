@@ -44,7 +44,11 @@ protected:
   /// Functions - the set of overloaded functions contained in this
   /// overload set.
   llvm::SmallVector<FunctionDecl *, 4> Functions;
-  
+
+  // FIXME: This should go away when we stop using
+  // OverloadedFunctionDecl to store conversions in CXXRecordDecl.
+  friend class CXXRecordDecl;
+
 public:
   typedef llvm::SmallVector<FunctionDecl *, 4>::iterator function_iterator;
   typedef llvm::SmallVector<FunctionDecl *, 4>::const_iterator
@@ -97,18 +101,6 @@ public:
     return D->getKind() == OverloadedFunction; 
   }
   static bool classof(const OverloadedFunctionDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize an OverloadedFunctionDecl.  Called by
-  /// Decl::Create.
-  static OverloadedFunctionDecl* CreateImpl(llvm::Deserializer& D, 
-                                            ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-  friend class CXXRecordDecl;
 };
 
 /// CXXBaseSpecifier - A base class of a C++ class.
@@ -458,17 +450,6 @@ public:
   static bool classof(const ClassTemplateSpecializationDecl *D) { 
     return true; 
   }
-
-protected:
-  /// EmitImpl - Serialize this CXXRecordDecl.  Called by Decl::Emit.
-  // FIXME: Implement this.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a CXXRecordDecl.  Called by Decl::Create.
-  // FIXME: Implement this.
-  static CXXRecordDecl* CreateImpl(Kind DK, llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXMethodDecl - Represents a static or instance method of a
@@ -520,17 +501,6 @@ public:
     return D->getKind() >= CXXMethod && D->getKind() <= CXXConversion;
   }
   static bool classof(const CXXMethodDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this CXXMethodDecl.  Called by Decl::Emit.
-  // FIXME: Implement this.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a CXXMethodDecl.  Called by Decl::Create.
-  // FIXME: Implement this.
-  static CXXMethodDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXBaseOrMemberInitializer - Represents a C++ base or member
@@ -727,13 +697,6 @@ public:
     return D->getKind() == CXXConstructor;
   }
   static bool classof(const CXXConstructorDecl *D) { return true; }
-  /// EmitImpl - Serialize this CXXConstructorDecl.  Called by Decl::Emit.
-  // FIXME: Implement this.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a CXXConstructorDecl.  Called by Decl::Create.
-  // FIXME: Implement this.
-  static CXXConstructorDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXDestructorDecl - Represents a C++ destructor within a
@@ -791,13 +754,6 @@ public:
     return D->getKind() == CXXDestructor;
   }
   static bool classof(const CXXDestructorDecl *D) { return true; }
-  /// EmitImpl - Serialize this CXXDestructorDecl.  Called by Decl::Emit.
-  // FIXME: Implement this.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a CXXDestructorDecl.  Called by Decl::Create.
-  // FIXME: Implement this.
-  static CXXDestructorDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXConversionDecl - Represents a C++ conversion function within a
@@ -843,13 +799,6 @@ public:
     return D->getKind() == CXXConversion;
   }
   static bool classof(const CXXConversionDecl *D) { return true; }
-  /// EmitImpl - Serialize this CXXConversionDecl.  Called by Decl::Emit.
-  // FIXME: Implement this.
-  //virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize a CXXConversionDecl.  Called by Decl::Create.
-  // FIXME: Implement this.
-  static CXXConversionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
@@ -897,10 +846,6 @@ public:
   static LinkageSpecDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<LinkageSpecDecl *>(const_cast<DeclContext*>(DC));
   }
-  
-protected:
-  void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// UsingDirectiveDecl - Represents C++ using-directive. For example:

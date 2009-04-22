@@ -20,7 +20,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <string> 
 #include <cassert> 
@@ -207,12 +206,6 @@ public:
   /// know that HandleIdentifier will not affect the token.
   bool isHandleIdentifierCase() const { return NeedsHandleIdentifier; }
   
-  /// Emit - Serialize this IdentifierInfo to a bitstream.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Deserialize an IdentifierInfo object from a bitstream.
-  void Read(llvm::Deserializer& D);  
-  
 private:
   /// RecomputeNeedsHandleIdentifier - The Preprocessor::HandleIdentifier does
   /// several special (but rare) things to identifiers of various sorts.  For
@@ -349,20 +342,6 @@ public:
   void PrintStats() const;
   
   void AddKeywords(const LangOptions &LangOpts);
-
-  /// Emit - Serialize this IdentifierTable to a bitstream.  This should
-  ///  be called AFTER objects that externally reference the identifiers in the 
-  ///  table have been serialized.  This is because only the identifiers that
-  ///  are actually referenced are serialized.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Create - Deserialize an IdentifierTable from a bitstream.
-  static IdentifierTable* CreateAndRegister(llvm::Deserializer& D);
-  
-private:  
-  /// This ctor is not intended to be used by anyone except for object
-  /// serialization.
-  IdentifierTable();  
 };
 
 /// Selector - This smart pointer class efficiently represents Objective-C
@@ -440,12 +419,6 @@ public:
   static Selector getTombstoneMarker() {
     return Selector(uintptr_t(-2));
   }
-  
-  // Emit - Emit a selector to bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  // ReadVal - Read a selector from bitcode.
-  static Selector ReadVal(llvm::Deserializer& D);
 };
 
 /// SelectorTable - This table allows us to fully hide how we implement
@@ -484,12 +457,6 @@ public:
       &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
     return SelTable.getUnarySelector(SetterName);
   }
-
-  // Emit - Emit a SelectorTable to bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  // Create - Reconstitute a SelectorTable from bitcode.
-  static SelectorTable* CreateAndRegister(llvm::Deserializer& D);
 };
 
 /// DeclarationNameExtra - Common base of the MultiKeywordSelector,

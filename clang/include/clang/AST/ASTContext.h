@@ -25,7 +25,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
@@ -167,11 +166,6 @@ public:
 
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
-  /// This is intentionally not serialized.  It is populated by the
-  /// ASTContext ctor, and there are no external pointers/references to
-  /// internal variables of BuiltinInfo.
-  // FIXME: PCH does serialize this information, so that we don't have to
-  // construct it again when the PCH is loaded.
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.
@@ -698,17 +692,6 @@ public:
   type_iterator types_end() { return Types.end(); }
   const_type_iterator types_begin() const { return Types.begin(); }
   const_type_iterator types_end() const { return Types.end(); }  
-  
-  //===--------------------------------------------------------------------===//
-  //                    Serialization
-  //===--------------------------------------------------------------------===//
-
-  void EmitASTBitcodeBuffer(std::vector<unsigned char> &Buffer) const;
-  static ASTContext *ReadASTBitcodeBuffer(llvm::MemoryBuffer &MBuffer,
-                                          FileManager &FMgr);  
-
-  void Emit(llvm::Serializer& S) const;
-  static ASTContext *Create(llvm::Deserializer& D);  
   
   //===--------------------------------------------------------------------===//
   //                    Integer Values

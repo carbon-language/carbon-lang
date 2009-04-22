@@ -23,7 +23,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 
 using llvm::isa;
 using llvm::cast;
@@ -203,14 +202,6 @@ public:
   bool isObjCGCStrong() const {
     return getObjCGCAttr() == Strong;
   }
-  
-  /// Emit - Serialize a QualType to Bitcode.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Read - Deserialize a QualType from Bitcode.
-  static QualType ReadVal(llvm::Deserializer& D);
-  
-  void ReadBackpatch(llvm::Deserializer& D);
 };
 
 } // end clang.
@@ -300,9 +291,6 @@ protected:
   virtual ~Type() {}
   virtual void Destroy(ASTContext& C);
   friend class ASTContext;
-  
-  void EmitTypeInternal(llvm::Serializer& S) const;
-  void ReadTypeInternal(llvm::Deserializer& D);
   
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
@@ -487,20 +475,6 @@ public:
   void dump() const;
   virtual void getAsStringInternal(std::string &InnerString) const = 0;
   static bool classof(const Type *) { return true; }
-  
-protected:  
-  /// Emit - Emit a Type to bitcode.  Used by ASTContext.
-  void Emit(llvm::Serializer& S) const;
-  
-  /// Create - Construct a Type from bitcode.  Used by ASTContext.
-  static void Create(ASTContext& Context, unsigned i, llvm::Deserializer& S);
-  
-  /// EmitImpl - Subclasses must implement this method in order to
-  ///  be serialized.
-  // FIXME: Make this abstract once implemented.
-  virtual void EmitImpl(llvm::Serializer& S) const {
-    assert(false && "Serialization for type not supported.");
-  }
 };
 
 /// ExtQualType - TR18037 (C embedded extensions) 6.2.5p26 
@@ -546,11 +520,6 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == ExtQual; }
   static bool classof(const ExtQualType *) { return true; }
-  
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 
@@ -643,11 +612,6 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
   static bool classof(const ComplexType *) { return true; }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
@@ -674,11 +638,6 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
-
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// BlockPointerType - pointer to a block type.
@@ -710,11 +669,6 @@ public:
     return T->getTypeClass() == BlockPointer; 
   }
   static bool classof(const BlockPointerType *) { return true; }
-
-  protected:  
-    virtual void EmitImpl(llvm::Serializer& S) const;
-    static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-    friend class Type;
 };
 
 /// ReferenceType - Base for LValueReferenceType and RValueReferenceType
@@ -742,9 +696,6 @@ public:
            T->getTypeClass() == RValueReference;
   }
   static bool classof(const ReferenceType *) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
 };
 
 /// LValueReferenceType - C++ [dcl.ref] - Lvalue reference
@@ -761,10 +712,6 @@ public:
     return T->getTypeClass() == LValueReference;
   }
   static bool classof(const LValueReferenceType *) { return true; }
-
-protected:
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// RValueReferenceType - C++0x [dcl.ref] - Rvalue reference
@@ -781,10 +728,6 @@ public:
     return T->getTypeClass() == RValueReference;
   }
   static bool classof(const RValueReferenceType *) { return true; }
-
-protected:
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// MemberPointerType - C++ 8.3.3 - Pointers to members
@@ -822,11 +765,6 @@ public:
     return T->getTypeClass() == MemberPointer;
   }
   static bool classof(const MemberPointerType *) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
@@ -910,11 +848,6 @@ public:
     return T->getTypeClass() == ConstantArray; 
   }
   static bool classof(const ConstantArrayType *) { return true; }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// IncompleteArrayType - This class represents C arrays with an unspecified
@@ -946,11 +879,6 @@ public:
     ID.AddInteger(SizeMod);
     ID.AddInteger(TypeQuals);
   }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// VariableArrayType - This class represents C arrays with a specified size
@@ -998,11 +926,6 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) {
     assert(0 && "Cannnot unique VariableArrayTypes.");
   }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// DependentSizedArrayType - This type represents an array type in
@@ -1046,11 +969,6 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) {
     assert(0 && "Cannnot unique DependentSizedArrayTypes.");
   }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// VectorType - GCC generic vector type. This type is created using
@@ -1215,11 +1133,6 @@ public:
     return T->getTypeClass() == FunctionNoProto;
   }
   static bool classof(const FunctionNoProtoType *) { return true; }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// FunctionProtoType - Represents a prototype with argument type info, e.g.
@@ -1283,11 +1196,6 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
                       bool isVariadic, unsigned TypeQuals);
-
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 
@@ -1315,11 +1223,6 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
   static bool classof(const TypedefType *) { return true; }
-  
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// TypeOfExprType (GCC extension).
@@ -1334,11 +1237,6 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExpr; }
   static bool classof(const TypeOfExprType *) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// TypeOfType (GCC extension).
@@ -1356,11 +1254,6 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOf; }
   static bool classof(const TypeOfType *) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 class TagType : public Type {
@@ -1398,11 +1291,6 @@ public:
   static bool classof(const TagType *) { return true; }
   static bool classof(const RecordType *) { return true; }
   static bool classof(const EnumType *) { return true; }
- 
-protected:  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
@@ -1493,11 +1381,6 @@ public:
     return T->getTypeClass() == TemplateTypeParm; 
   }
   static bool classof(const TemplateTypeParmType *T) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// \brief Represents the type of a template specialization as written
@@ -1577,11 +1460,6 @@ public:
     return T->getTypeClass() == TemplateSpecialization; 
   }
   static bool classof(const TemplateSpecializationType *T) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// \brief Represents a type that was referred to via a qualified
@@ -1628,11 +1506,6 @@ public:
     return T->getTypeClass() == QualifiedName; 
   }
   static bool classof(const QualifiedNameType *T) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// \brief Represents a 'typename' specifier that names a type within
@@ -1709,11 +1582,6 @@ public:
     return T->getTypeClass() == Typename; 
   }
   static bool classof(const TypenameType *T) { return true; }
-
-protected:
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
-  friend class Type;
 };
 
 /// ObjCInterfaceType - Interfaces are the core concept in Objective-C for

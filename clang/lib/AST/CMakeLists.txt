@@ -12,7 +12,6 @@ add_clang_library(clangAST
   DeclCXX.cpp
   DeclGroup.cpp
   DeclObjC.cpp
-  DeclSerialization.cpp
   DeclTemplate.cpp
   ExprConstant.cpp
   Expr.cpp
@@ -24,11 +23,9 @@ add_clang_library(clangAST
   StmtDumper.cpp
   StmtIterator.cpp
   StmtPrinter.cpp
-  StmtSerialization.cpp
   StmtViz.cpp
   TemplateName.cpp
   Type.cpp
-  TypeSerialization.cpp
   )
 
 add_dependencies(clangAST ClangDiagnosticAST)
