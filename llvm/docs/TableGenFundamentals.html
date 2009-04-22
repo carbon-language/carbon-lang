@@ -632,9 +632,10 @@ Here is an example TableGen fragment that shows this idea:
 
 <p>The name of the resultant definitions has the multidef fragment names
    appended to them, so this defines <tt>ADD_rr</tt>, <tt>ADD_ri</tt>,
-   <tt>SUB_rr</tt>, etc.  Using a multiclass this way is exactly
-   equivalent to instantiating the classes multiple times yourself,
-   e.g. by writing:</p>
+   <tt>SUB_rr</tt>, etc.  A defm may inherit from multiple multiclasses,
+   instantiating definitions from each multiclass.  Using a multiclass
+   this way is exactly equivalent to instantiating the classes multiple
+   times yourself, e.g. by writing:</p>
 
 <div class="doc_code">
 <pre>
