@@ -102,16 +102,40 @@ public:
   }
   
   /// GcAssignGlobalFn -- LLVM objc_assign_global function.
-  llvm::Constant *GcAssignGlobalFn;
+  llvm::Constant *getGcAssignGlobalFn() {
+    // id objc_assign_global(id, id *)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    Args.push_back(ObjectPtrTy->getPointerTo());
+    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_assign_global");
+  }
   
   /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
-  llvm::Constant *GcAssignIvarFn;
+  llvm::Constant *getGcAssignIvarFn() {
+    // id objc_assign_ivar(id, id *)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    Args.push_back(ObjectPtrTy->getPointerTo());
+    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
+  }
   
   /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
-  llvm::Constant *GcAssignStrongCastFn;
+  llvm::Constant *getGcAssignStrongCastFn() {
+    // id objc_assign_global(id, id *)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    Args.push_back(ObjectPtrTy->getPointerTo());
+    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_assign_strongCast");
+  }
 
   /// ExceptionThrowFn - LLVM objc_exception_throw function.
-  llvm::Constant *ExceptionThrowFn;
+  llvm::Constant *getExceptionThrowFn() {
+    // void objc_exception_throw(id)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
+  }
   
   /// SyncEnterFn - LLVM object_sync_enter function.
   llvm::Constant *getSyncEnterFn() {
@@ -123,7 +147,13 @@ public:
   }
   
   /// SyncExitFn - LLVM object_sync_exit function.
-  llvm::Constant *SyncExitFn;
+  llvm::Constant *getSyncExitFn() {
+    // void objc_sync_exit (id)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    llvm::FunctionType *FTy =
+    llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
+  }
   
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCCommonTypesHelper(){}
@@ -2339,7 +2369,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   } else {
     // Emit objc_sync_exit(expr); as finally's sole statement for
     // @synchronized.
-    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, SyncArg);
+    CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg);
   }
 
   // Emit the switch block
@@ -2349,7 +2379,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.EmitBlock(Info.EndBlock);
   
   CGF.EmitBlock(FinallyRethrow);
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, 
+  CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), 
                          CGF.Builder.CreateLoad(RethrowPtr));
   CGF.Builder.CreateUnreachable();
   
@@ -2370,7 +2400,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
     ExceptionAsObject = CGF.ObjCEHValueStack.back();
   }
   
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
+  CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), ExceptionAsObject);
   CGF.Builder.CreateUnreachable();
 
   // Clear the insertion point to indicate we are in unreachable code.
@@ -2429,7 +2459,7 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignGlobalFn(),
                           src, dst, "globalassign");
   return;
 }
@@ -2450,7 +2480,7 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignIvarFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignIvarFn(),
                           src, dst, "assignivar");
   return;
 }
@@ -2471,7 +2501,7 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignStrongCastFn(),
                           src, dst, "weakassign");
   return;
 }
@@ -3416,33 +3446,6 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   Params.push_back(Ctx.getPointerType(IdType));
   FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
   GcReadWeakFn = CGM.CreateRuntimeFunction(FTy, "objc_read_weak");
-
-  // id objc_assign_global (id, id *)
-  Params.clear();
-  Params.push_back(IdType);
-  Params.push_back(Ctx.getPointerType(IdType));
-  
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
-  GcAssignGlobalFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_global");
-  GcAssignIvarFn = CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
-  GcAssignStrongCastFn = 
-    CGM.CreateRuntimeFunction(FTy, "objc_assign_strongCast");
-  
-  // void objc_exception_throw(id)
-  Params.clear();
-  Params.push_back(IdType);
-  
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
-  ExceptionThrowFn =
-    CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
-
-  // synchronized APIs
-  // void objc_sync_exit (id)
-  Params.clear();
-  Params.push_back(IdType);
-
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
-  SyncExitFn = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
@@ -5251,7 +5254,7 @@ void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignIvarFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignIvarFn(),
                           src, dst, "assignivar");
   return;
 }
@@ -5273,7 +5276,7 @@ void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignStrongCastFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignStrongCastFn(),
                           src, dst, "weakassign");
   return;
 }
@@ -5331,7 +5334,7 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.GcAssignGlobalFn,
+  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignGlobalFn(),
                           src, dst, "globalassign");
   return;
 }
@@ -5566,7 +5569,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   } else {
     // Emit 'objc_sync_exit(expr)' as finally's sole statement for
     // @synchronized.
-    CGF.Builder.CreateCall(ObjCTypes.SyncExitFn, SyncArg);
+    CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg);
   }
 
   if (Info.SwitchBlock)
@@ -5602,12 +5605,12 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *InvokeDest = CGF.getInvokeDest();
   if (InvokeDest) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-    CGF.Builder.CreateInvoke(ObjCTypes.ExceptionThrowFn,
+    CGF.Builder.CreateInvoke(ObjCTypes.getExceptionThrowFn(),
                              Cont, InvokeDest,
                              &ExceptionAsObject, &ExceptionAsObject + 1);
     CGF.EmitBlock(Cont);
   } else
-    CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);  
+    CGF.Builder.CreateCall(ObjCTypes.getExceptionThrowFn(), ExceptionAsObject);  
   CGF.Builder.CreateUnreachable();
 
   // Clear the insertion point to indicate we are in unreachable code.
