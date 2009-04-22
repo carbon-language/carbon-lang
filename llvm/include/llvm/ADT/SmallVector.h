@@ -302,7 +302,7 @@ public:
       append(End-NumToInsert, End);
 
       // Copy the existing elements that get replaced.
-      std::copy(I, OldEnd-NumToInsert, I+NumToInsert);
+      std::copy_backward(I, OldEnd-NumToInsert, OldEnd);
 
       std::fill_n(I, NumToInsert, Elt);
       return I;
@@ -351,7 +351,7 @@ public:
       append(End-NumToInsert, End);
 
       // Copy the existing elements that get replaced.
-      std::copy(I, OldEnd-NumToInsert, I+NumToInsert);
+      std::copy_backward(I, OldEnd-NumToInsert, OldEnd);
 
       std::copy(From, To, I);
       return I;
