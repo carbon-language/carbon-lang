@@ -94,8 +94,8 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
 Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
   Instruction::CastOps Op = CastInst::getCastOpcode(V, false, Ty, false);
   assert((Op == Instruction::BitCast ||
-          Op == Instruction::Instruction::PtrToInt ||
-          Op == Instruction::Instruction::IntToPtr) &&
+          Op == Instruction::PtrToInt ||
+          Op == Instruction::IntToPtr) &&
          "InsertNoopCastOfTo cannot perform non-noop casts!");
   assert(SE.getTypeSizeInBits(V->getType()) == SE.getTypeSizeInBits(Ty) &&
          "InsertNoopCastOfTo cannot change sizes!");
