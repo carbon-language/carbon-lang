@@ -111,11 +111,11 @@ static void EmitLocation(llvm::raw_ostream& o, const SourceManager &SM,
 
 static void EmitRange(llvm::raw_ostream& o, const SourceManager &SM,
                       const LangOptions &LangOpts,
-                      SourceRange R, const FIDMap &FM,
+                      PathDiagnosticRange R, const FIDMap &FM,
                       unsigned indent) {
   Indent(o, indent) << "<array>\n";
   EmitLocation(o, SM, LangOpts, R.getBegin(), FM, indent+1);  
-  EmitLocation(o, SM, LangOpts, R.getEnd(), FM, indent+1, true);
+  EmitLocation(o, SM, LangOpts, R.getEnd(), FM, indent+1, !R.isPoint);
   Indent(o, indent) << "</array>\n";
 }
 

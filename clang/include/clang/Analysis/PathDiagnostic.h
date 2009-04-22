@@ -55,6 +55,14 @@ public:
 //===----------------------------------------------------------------------===//
 // Path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
+
+class PathDiagnosticRange : public SourceRange {
+public:
+  const bool isPoint;
+  
+  PathDiagnosticRange(const SourceRange &R, bool isP = false)
+    : SourceRange(R), isPoint(isP) {}
+};
   
 class PathDiagnosticLocation {
 private:
@@ -103,7 +111,7 @@ public:
   const SourceManager& getSourceManager() const { assert(isValid());return *SM;}
     
   FullSourceLoc asLocation() const;
-  SourceRange asRange() const;
+  PathDiagnosticRange asRange() const;
   const Stmt *asStmt() const { assert(isValid()); return S; }
   const Decl *asDecl() const { assert(isValid()); return D; }
   

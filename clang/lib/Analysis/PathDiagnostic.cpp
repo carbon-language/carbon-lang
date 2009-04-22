@@ -158,12 +158,13 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
   return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
 }
 
-SourceRange PathDiagnosticLocation::asRange() const {
+PathDiagnosticRange PathDiagnosticLocation::asRange() const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
     case SingleLocK:
+      return PathDiagnosticRange(R, true);
     case RangeK:
       break;
     case StmtK: {
@@ -201,7 +202,7 @@ SourceRange PathDiagnosticLocation::asRange() const {
       }
       else {
         SourceLocation L = D->getLocation();
-        return SourceRange(L, L);
+        return PathDiagnosticRange(SourceRange(L, L), true);
       }
   }
   
