@@ -796,8 +796,9 @@ class VISIBILITY_HIDDEN EdgeBuilder {
 public:
   EdgeBuilder(PathDiagnostic &pd, PathDiagnosticBuilder &pdb)
     : PD(pd), PDB(pdb) {
-      CLocs.push_back(PathDiagnosticLocation(&PDB.getCodeDecl(),
-                                             PDB.getSourceManager()));
+      
+      // If the PathDiagnostic already has pieces, add the enclosing statement
+      // of the first piece as a context as well.
       if (!PD.empty()) {
         PrevLoc = PD.begin()->getLocation();
         
@@ -808,6 +809,15 @@ public:
 
   ~EdgeBuilder() {
     while (!CLocs.empty()) popLocation();
+    
+    // Finally, add an initial edge from the start location of the first
+    // statement (if it doesn't already exist).
+    if (const CompoundStmt *CS = PDB.getCodeDecl().getBody(PDB.getContext()))
+      if (!CS->body_empty()) {
+        SourceLocation Loc = (*CS->body_begin())->getLocStart();
+        rawAddEdge(PathDiagnosticLocation(Loc, PDB.getSourceManager()));
+      }
+    
   }
 
   void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false);
@@ -907,6 +917,10 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
 }
 
 void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
+  
+  if (!alwaysAdd && NewLoc.asLocation().isMacroID())
+    return;
+  
   const PathDiagnosticLocation &CLoc = getContextLocation(NewLoc);
 
   while (!CLocs.empty()) {
