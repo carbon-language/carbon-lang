@@ -806,6 +806,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // (RHS doesn't have to be constant.  There should be a better approach
         // than bottom-up pattern matching for this...)
         if (UInst && UInst->getOpcode()==Instruction::And &&
+            !UInst->use_empty() &&
             allUsesAreSameTyped(Instruction::ZExt, UInst) &&
             isa<ConstantInt>(UInst->getOperand(1))) {
           uint64_t newBitSize = LargestType->getPrimitiveSizeInBits();
