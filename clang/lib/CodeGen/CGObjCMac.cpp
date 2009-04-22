@@ -317,7 +317,29 @@ public:
     return llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
   }
 
-  llvm::Constant *UnwindResumeOrRethrowFn, *ObjCBeginCatchFn, *ObjCEndCatchFn;
+  llvm::Constant *getUnwindResumeOrRethrowFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(Int8PtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, false),
+                                     "_Unwind_Resume_or_Rethrow");
+  }
+  
+  llvm::Constant *getObjCEndCatchFn() {
+    std::vector<const llvm::Type*> Params;
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, false),
+                                     "objc_end_catch");
+    
+  }
+  
+  llvm::Constant *getObjCBeginCatchFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(Int8PtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(Int8PtrTy,
+                                                             Params, false),
+                                     "objc_begin_catch");
+  }
 
   const llvm::StructType *EHTypeTy;
   const llvm::Type *EHTypePtrTy;
@@ -3915,24 +3937,6 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                               "objc_msgSendSuper2_stret_fixup");
 
   Params.clear();
-  Params.push_back(Int8PtrTy);
-  UnwindResumeOrRethrowFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "_Unwind_Resume_or_Rethrow");
-  ObjCBeginCatchFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(Int8PtrTy,
-                                                      Params,
-                                                      false),
-                              "objc_begin_catch");
-
-  Params.clear();
-  ObjCEndCatchFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "objc_end_catch");
 
   // struct objc_typeinfo {
   //   const void** vtable; // objc_ehtype_vtable + 2
@@ -5469,7 +5473,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       CGF.setInvokeDest(MatchHandler);
       
       llvm::Value *ExcObject = 
-        CGF.Builder.CreateCall(ObjCTypes.ObjCBeginCatchFn, Exc);
+        CGF.Builder.CreateCall(ObjCTypes.getObjCBeginCatchFn(), Exc);
 
       // Bind the catch parameter if it exists.
       if (CatchParam) {
@@ -5512,7 +5516,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       llvm::BasicBlock *MatchEndHandler = 
         CGF.createBasicBlock("match.end.handler");
       llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-      CGF.Builder.CreateInvoke(ObjCTypes.ObjCEndCatchFn, 
+      CGF.Builder.CreateInvoke(ObjCTypes.getObjCEndCatchFn(), 
                                Cont, MatchEndHandler,
                                Args.begin(), Args.begin());
 
@@ -5571,7 +5575,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.EmitBranch(FinallyEnd);
 
   CGF.EmitBlock(FinallyRethrow);
-  CGF.Builder.CreateCall(ObjCTypes.UnwindResumeOrRethrowFn, 
+  CGF.Builder.CreateCall(ObjCTypes.getUnwindResumeOrRethrowFn(), 
                          CGF.Builder.CreateLoad(RethrowPtr));
   CGF.Builder.CreateUnreachable();
   
