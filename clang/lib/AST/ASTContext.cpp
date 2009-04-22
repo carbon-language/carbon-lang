@@ -644,29 +644,20 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
 /// ivars and all those inherited.
 ///
 const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
+  assert(!D->isForwardDecl() && "Invalid decl!");
+
   // FIXME: The only client relying on this working in the presence of
   // forward declarations is IRgen, which should not need it. Fix
   // and simplify this code.
   RecordDecl *&RD = ASTRecordForInterface[D];
-  if (RD) {
-    // If we have a record decl already and it is either a definition or if 'D'
-    // is still a forward declaration, return it.
-    if (RD->isDefinition() || D->isForwardDecl())
-      return RD;
-  }
-  
-  // If D is a forward declaration, then just make a forward struct decl.
-  if (D->isForwardDecl())
-    return RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0,
-                                   D->getLocation(),
-                                   D->getIdentifier());
+  if (RD)
+    return RD;
   
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   CollectObjCIvars(D, RecFields);
   
-  if (RD == 0)
-    RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, D->getLocation(),
-                            D->getIdentifier());
+  RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, D->getLocation(),
+                          D->getIdentifier());
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
