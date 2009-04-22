@@ -1918,8 +1918,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
   // FIXME: Set ivar_layout
-  // Values[10] = BuildIvarLayout(ID, true); 
-  Values[10] = GetIvarLayoutName(0, ObjCTypes);
+  Values[10] = BuildIvarLayout(ID, true); 
+  // Values[10] = GetIvarLayoutName(0, ObjCTypes);
   Values[11] = EmitClassExtension(ID);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
@@ -2043,8 +2043,8 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   // FIXME: Output weak_ivar_layout string.
-  // Values[1] = BuildIvarLayout(ID, false);
-  Values[1] = GetIvarLayoutName(0, ObjCTypes);
+  Values[1] = BuildIvarLayout(ID, false);
+  // Values[1] = GetIvarLayoutName(0, ObjCTypes);
   Values[2] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
 
@@ -4160,9 +4160,9 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
   // FIXME. ivarLayout is currently null!
-  // Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
-  //                                : BuildIvarLayout(ID, true); 
-  Values[ 3] = GetIvarLayoutName(0, ObjCTypes);
+  Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
+                                  : BuildIvarLayout(ID, true); 
+  // Values[ 3] = GetIvarLayoutName(0, ObjCTypes);
   Values[ 4] = GetClassName(ID->getIdentifier());
   // const struct _method_list_t * const baseMethods;
   std::vector<llvm::Constant*> Methods;
@@ -4212,9 +4212,9 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   else
     Values[ 7] = EmitIvarList(ID);
   // FIXME. weakIvarLayout is currently null.
-  // Values[ 8] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
-  //                                : BuildIvarLayout(ID, false); 
-  Values[ 8] = GetIvarLayoutName(0, ObjCTypes); 
+  Values[ 8] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
+                                  : BuildIvarLayout(ID, false); 
+  // Values[ 8] = GetIvarLayoutName(0, ObjCTypes); 
   if (flags & CLS_META)
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   else
@@ -4296,6 +4296,16 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
   const llvm::Type *FieldTy =
     CGM.getTypes().ConvertTypeForMem(Last->getType());
   unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
+// FIXME. This breaks compatibility with llvm-gcc-4.2 (but makes it compatible
+// with gcc-4.2). We postpone this for now.
+#if 0
+  if (Last->isBitField()) {
+    Expr *BitWidth = Last->getBitWidth();
+    uint64_t BitFieldSize =
+      BitWidth->getIntegerConstantExprValue(CGM.getContext()).getZExtValue();
+    Size = (BitFieldSize / 8) + ((BitFieldSize % 8) != 0);
+  }
+#endif
   InstanceSize = ComputeIvarBaseOffset(CGM, OID, Last) + Size;
 }
 
