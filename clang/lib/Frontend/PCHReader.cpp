@@ -225,7 +225,8 @@ void PCHDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitObjCContainerDecl(ID);
   ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
-  ID->setSuperClass(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  ID->setSuperClass(cast_or_null<ObjCInterfaceDecl>
+                       (Reader.GetDecl(Record[Idx++])));
   unsigned NumIvars = Record[Idx++];
   llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
   IVars.reserve(NumIvars);
@@ -237,6 +238,7 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setSuperClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  ID->setAtEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: add protocols, categories.
 }
 
@@ -464,6 +466,7 @@ namespace {
     unsigned VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     unsigned VisitBlockExpr(BlockExpr *E);
     unsigned VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
+    unsigned VisitObjCEncodeExpr(ObjCEncodeExpr *E);
   };
 }
 
@@ -1012,6 +1015,15 @@ unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   E->setByRef(Record[Idx++]);
   return 0;
 }
+
+unsigned PCHStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
+  VisitExpr(E);
+  E->setEncodedType(Reader.GetType(Record[Idx++]));
+  E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
 
 //===----------------------------------------------------------------------===//
 // PCH reader implementation
@@ -2040,9 +2052,9 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context.getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_OBJC_INTERFACE:
-    // FIXME: Deserialize ObjCInterfaceType
-    assert(false && "Cannot de-serialize ObjC interface types yet");
-    return QualType();
+    assert(Record.size() == 1 && "Incorrect encoding of objc interface type");
+    return Context.getObjCInterfaceType(
+                                  cast<ObjCInterfaceDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_OBJC_QUALIFIED_INTERFACE:
     // FIXME: Deserialize ObjCQualifiedInterfaceType
@@ -2932,6 +2944,10 @@ Stmt *PCHReader::ReadStmt() {
 
     case pch::EXPR_BLOCK_DECL_REF:
       S = new (Context) BlockDeclRefExpr(Empty);
+      break;
+        
+    case pch::EXPR_OBJC_ENCODE:
+      S = new (Context) ObjCEncodeExpr(Empty);
       break;
     }
 

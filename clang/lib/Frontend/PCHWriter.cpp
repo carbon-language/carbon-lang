@@ -656,6 +656,11 @@ namespace {
     void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     void VisitBlockExpr(BlockExpr *E);
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
+      
+    // Objective-C
+    void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
+
+      
   };
 }
 
@@ -1146,6 +1151,19 @@ void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   Record.push_back(E->isByRef());
   Code = pch::EXPR_BLOCK_DECL_REF;
 }
+
+//===----------------------------------------------------------------------===//
+// Objective-C Expressions and Statements.
+//===----------------------------------------------------------------------===//
+
+void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) { 
+  VisitExpr(E);
+  Writer.AddTypeRef(E->getEncodedType(), Record);
+  Writer.AddSourceLocation(E->getAtLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_OBJC_ENCODE;
+}
+
 
 //===----------------------------------------------------------------------===//
 // PCHWriter Implementation

@@ -65,15 +65,23 @@ public:
                  SourceLocation at, SourceLocation rp)
     : Expr(ObjCEncodeExprClass, T), EncType(ET), AtLoc(at), RParenLoc(rp) {}
   
+  /// \brief Build an empty block expression.
+  explicit ObjCEncodeExpr(EmptyShell Empty) : Expr(ObjCEncodeExprClass, Empty){}
+
+  
   SourceLocation getAtLoc() const { return AtLoc; }
+  void setAtLoc(SourceLocation L) { AtLoc = L; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+  
+  QualType getEncodedType() const { return EncType; }
+  void setEncodedType(QualType T) { EncType = T; }
+
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
   }
-
-  QualType getEncodedType() const { return EncType; }
-
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCEncodeExprClass;
   }

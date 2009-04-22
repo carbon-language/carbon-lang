@@ -520,7 +520,12 @@ namespace clang {
       /// \brief BlockExpr
       EXPR_BLOCK,
       /// \brief A BlockDeclRef record.
-      EXPR_BLOCK_DECL_REF
+      EXPR_BLOCK_DECL_REF,
+      
+      // Objective-C
+      /// \brief A ObjCEncodeExpr record.
+      EXPR_OBJC_ENCODE
+
     };
 
     /// \brief The kinds of designators that can occur in a
