@@ -18,5 +18,6 @@ int *A3 = (objc_protocol)0; // expected-warning {{aka 'Protocol *'}}
 int *T0 = (objc_id_protocol_ty)0; // expected-error {{not a compile-time constant}} \
                                      expected-warning {{aka 'id<foo>'}}
 
-
+int *T1 = (objc_interface_ty)0; // expected-warning {{aka 'itf *'}}
+int *T2 = (objc_qual_interface_ty)0; // expected-warning {{aka 'itf<foo> *'}}
 
