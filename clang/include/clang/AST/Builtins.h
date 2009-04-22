@@ -51,12 +51,15 @@ class Context {
   unsigned NumTSRecords;
 public:
   Context() : TSRecords(0), NumTSRecords(0) {}
-  
+
+  /// \brief Load all of the target builtins. This should be called
+  /// prior to initializing the builtin identifiers.
+  void InitializeTargetBuiltins(const TargetInfo &Target);
+
   /// InitializeBuiltins - Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
-  void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target,
-                          bool NoBuiltins = false);
+  void InitializeBuiltins(IdentifierTable &Table, bool NoBuiltins = false);
   
   /// Builtin::GetName - Return the identifier name for the specified builtin,
   /// e.g. "__builtin_abs".
