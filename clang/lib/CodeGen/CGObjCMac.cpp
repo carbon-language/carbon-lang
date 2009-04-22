@@ -194,19 +194,54 @@ public:
   const llvm::Type *ExceptionDataTy;
   
   /// ExceptionTryEnterFn - LLVM objc_exception_try_enter function.
-  llvm::Constant *ExceptionTryEnterFn;
+  llvm::Constant *getExceptionTryEnterFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, false),
+                                     "objc_exception_try_enter");
+  }
 
   /// ExceptionTryExitFn - LLVM objc_exception_try_exit function.
-  llvm::Constant *ExceptionTryExitFn;
+  llvm::Constant *getExceptionTryExitFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, false),
+                                     "objc_exception_try_exit");
+  }
 
   /// ExceptionExtractFn - LLVM objc_exception_extract function.
-  llvm::Constant *ExceptionExtractFn;
+  llvm::Constant *getExceptionExtractFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, false),
+                                     "objc_exception_extract");
+    
+  }
   
   /// ExceptionMatchFn - LLVM objc_exception_match function.
-  llvm::Constant *ExceptionMatchFn;
+  llvm::Constant *getExceptionMatchFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ClassPtrTy);
+    Params.push_back(ObjectPtrTy);
+   return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                            Params, false),
+                                    "objc_exception_match");
+    
+  }
   
   /// SetJmpFn - LLVM _setjmp function.
-  llvm::Constant *SetJmpFn;
+  llvm::Constant *getSetJmpFn() {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
+    return
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                        Params, false),
+                                "_setjmp");
+    
+  }
   
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -2081,11 +2116,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(), CallTryExitPtr);
   
   // Enter a new try block and call setjmp.
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
+  CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData);
   llvm::Value *JmpBufPtr = CGF.Builder.CreateStructGEP(ExceptionData, 0, 
                                                        "jmpbufarray");
   JmpBufPtr = CGF.Builder.CreateStructGEP(JmpBufPtr, 0, "tmp");
-  llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
+  llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.getSetJmpFn(),
                                                      JmpBufPtr, "result");
 
   llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
@@ -2104,9 +2139,9 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Retrieve the exception object.  We may emit multiple blocks but
   // nothing can cross this so the value is already in SSA form.
-  llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
-                                               ExceptionData,
-                                               "caught");
+  llvm::Value *Caught =
+    CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
+                           ExceptionData, "caught");
   CGF.ObjCEHValueStack.back() = Caught;
   if (!isTry)
   {
@@ -2119,9 +2154,9 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   {    
     // Enter a new exception try block (in case a @catch block throws
     // an exception).
-    CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
+    CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData);
         
-    llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
+    llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.getSetJmpFn(),
                                                        JmpBufPtr, "result");
     llvm::Value *Threw = CGF.Builder.CreateIsNotNull(SetJmpResult, "threw");
 
@@ -2175,8 +2210,9 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // Check if the @catch block matches the exception object.
       llvm::Value *Class = EmitClassRef(CGF.Builder, ObjCType->getDecl());
       
-      llvm::Value *Match = CGF.Builder.CreateCall2(ObjCTypes.ExceptionMatchFn,
-                                                   Class, Caught, "match");
+      llvm::Value *Match =
+        CGF.Builder.CreateCall2(ObjCTypes.getExceptionMatchFn(),
+                                Class, Caught, "match");
       
       llvm::BasicBlock *MatchedBlock = CGF.createBasicBlock("matched");
       
@@ -2208,8 +2244,9 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     
     // Emit the exception handler for the @catch blocks.
     CGF.EmitBlock(CatchHandler);    
-    CGF.Builder.CreateStore(CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
-                                                   ExceptionData), 
+    CGF.Builder.CreateStore(
+                    CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
+                                           ExceptionData), 
                             RethrowPtr);
     CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
@@ -2233,7 +2270,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCondBr(CallTryExit, FinallyExit, FinallyNoExit);
   
   CGF.EmitBlock(FinallyExit);
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
+  CGF.Builder.CreateCall(ObjCTypes.getExceptionTryExitFn(), ExceptionData);
 
   CGF.EmitBlock(FinallyNoExit);
   if (isTry) {
@@ -3626,41 +3663,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_exception_data", 
                               ExceptionDataTy);
 
-  Params.clear();
-  Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
-  ExceptionTryEnterFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "objc_exception_try_enter");
-  ExceptionTryExitFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      false),
-                              "objc_exception_try_exit");
-  ExceptionExtractFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      false),
-                              "objc_exception_extract");
-  
-  Params.clear();
-  Params.push_back(ClassPtrTy);
-  Params.push_back(ObjectPtrTy);
-  ExceptionMatchFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
-                                                      Params,
-                                                      false),
-                              "objc_exception_match");
-  
-  Params.clear();
-  Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
-  SetJmpFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
-                                                      Params,
-                                                      false),
-                              "_setjmp");
-  
 }
 
 ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm) 
