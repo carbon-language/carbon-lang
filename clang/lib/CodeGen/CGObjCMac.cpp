@@ -84,12 +84,57 @@ public:
   /// CachePtrTy - LLVM type for struct objc_cache *.
   const llvm::Type *CachePtrTy;
   
-  llvm::Constant *GetPropertyFn, *SetPropertyFn;
+  llvm::Constant *getGetPropertyFn() {
+    CodeGen::CodeGenTypes &Types = CGM.getTypes();
+    ASTContext &Ctx = CGM.getContext();
+    // id objc_getProperty (id, SEL, ptrdiff_t, bool)
+    llvm::SmallVector<QualType,16> Params;
+    QualType IdType = Ctx.getObjCIdType();
+    QualType SelType = Ctx.getObjCSelType();
+    Params.push_back(IdType);
+    Params.push_back(SelType);
+    Params.push_back(Ctx.LongTy);
+    Params.push_back(Ctx.BoolTy);
+    const llvm::FunctionType *FTy =
+      Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_getProperty");
+  }
   
-  llvm::Constant *EnumerationMutationFn;
+  llvm::Constant *getSetPropertyFn() {
+    CodeGen::CodeGenTypes &Types = CGM.getTypes();
+    ASTContext &Ctx = CGM.getContext();
+    // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
+    llvm::SmallVector<QualType,16> Params;
+    QualType IdType = Ctx.getObjCIdType();
+    QualType SelType = Ctx.getObjCSelType();
+    Params.push_back(IdType);
+    Params.push_back(SelType);
+    Params.push_back(Ctx.LongTy);
+    Params.push_back(IdType);
+    Params.push_back(Ctx.BoolTy);
+    Params.push_back(Ctx.BoolTy);
+    const llvm::FunctionType *FTy =
+      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_setProperty");
+  }
+  
+  llvm::Constant *getEnumerationMutationFn() {
+    // void objc_enumerationMutation (id)
+    std::vector<const llvm::Type*> Args;
+    Args.push_back(ObjectPtrTy);
+    llvm::FunctionType *FTy = 
+      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
+  }
   
   /// GcReadWeakFn -- LLVM objc_read_weak (id *src) function.
-  llvm::Constant *GcReadWeakFn;
+  llvm::Constant *getGcReadWeakFn() {
+    // id objc_read_weak (id *)
+    std::vector<const llvm::Type*> Args;
+    Args.push_back(ObjectPtrTy->getPointerTo());
+    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_read_weak");
+  }    
   
   /// GcAssignWeakFn -- LLVM objc_assign_weak function.
   llvm::Constant *getGcAssignWeakFn() {
@@ -1009,13 +1054,13 @@ public:
                                            const ObjCProtocolDecl *PD);
   
   virtual llvm::Constant *GetPropertyGetFunction() { 
-    return ObjCTypes.GetPropertyFn;
+    return ObjCTypes.getGetPropertyFn();
   }
   virtual llvm::Constant *GetPropertySetFunction() { 
-    return ObjCTypes.SetPropertyFn; 
+    return ObjCTypes.getSetPropertyFn(); 
   }
   virtual llvm::Constant *EnumerationMutationFunction() {
-    return ObjCTypes.EnumerationMutationFn;
+    return ObjCTypes.getEnumerationMutationFn();
   }
   
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
@@ -2068,15 +2113,15 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
 }
 
 llvm::Constant *CGObjCMac::GetPropertyGetFunction() {
-  return ObjCTypes.GetPropertyFn;
+  return ObjCTypes.getGetPropertyFn();
 }
 
 llvm::Constant *CGObjCMac::GetPropertySetFunction() {
-  return ObjCTypes.SetPropertyFn;
+  return ObjCTypes.getSetPropertyFn();
 }
 
 llvm::Constant *CGObjCMac::EnumerationMutationFunction() {
-  return ObjCTypes.EnumerationMutationFn;
+  return ObjCTypes.getEnumerationMutationFn();
 }
 
 /* 
@@ -2416,7 +2461,7 @@ llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
   const llvm::Type* DestTy =
       cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy); 
-  llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
+  llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.getGcReadWeakFn(),
                                                   AddrWeakObj, "weakread");
   read_weak = CGF.Builder.CreateBitCast(read_weak, DestTy);
   return read_weak;
@@ -3403,49 +3448,6 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   CacheTy = llvm::OpaqueType::get();
   CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
   CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
-    
-  // Property manipulation functions.
-
-  QualType IdType = Ctx.getObjCIdType();
-  QualType SelType = Ctx.getObjCSelType();
-  llvm::SmallVector<QualType,16> Params;
-  const llvm::FunctionType *FTy;
-  
-  // id objc_getProperty (id, SEL, ptrdiff_t, bool)
-  Params.push_back(IdType);
-  Params.push_back(SelType);
-  Params.push_back(Ctx.LongTy);
-  Params.push_back(Ctx.BoolTy);
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), 
-                              false);
-  GetPropertyFn = CGM.CreateRuntimeFunction(FTy, "objc_getProperty");
-  
-  // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
-  Params.clear();
-  Params.push_back(IdType);
-  Params.push_back(SelType);
-  Params.push_back(Ctx.LongTy);
-  Params.push_back(IdType);
-  Params.push_back(Ctx.BoolTy);
-  Params.push_back(Ctx.BoolTy);
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
-  SetPropertyFn = CGM.CreateRuntimeFunction(FTy, "objc_setProperty");
-
-  // Enumeration mutation.
-
-  // void objc_enumerationMutation (id)
-  Params.clear();
-  Params.push_back(IdType);
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
-  EnumerationMutationFn = CGM.CreateRuntimeFunction(FTy,
-                                                    "objc_enumerationMutation");
-  
-  // gc's API
-  // id objc_read_weak (id *)
-  Params.clear();
-  Params.push_back(Ctx.getPointerType(IdType));
-  FTy = Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
-  GcReadWeakFn = CGM.CreateRuntimeFunction(FTy, "objc_read_weak");
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
@@ -5291,7 +5293,7 @@ llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
   const llvm::Type* DestTy =
       cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy); 
-  llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.GcReadWeakFn,
+  llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.getGcReadWeakFn(),
                                                   AddrWeakObj, "weakread");
   read_weak = CGF.Builder.CreateBitCast(read_weak, DestTy);
   return read_weak;
