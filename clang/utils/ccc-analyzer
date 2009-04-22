@@ -193,6 +193,11 @@ sub Analyze {
     # Check if there were any unhandled attributes.
     if (open(CHILD, $ofile)) {
       my %attributes_not_handled;
+      
+      # Don't flag warnings about the following attributes that we
+      # know are currently not supported by Clang.
+      $attributes_not_handled{"cdecl"} = 1;
+      
       my $ppfile;
       while (<CHILD>) {
         next if (! /warning: '([^\']+)' attribute ignored/);
