@@ -2089,9 +2089,8 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     
   for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
     ObjCIvarDecl *IVD = OIvars[i];
-    const FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), IVD);
-    Ivar[0] = GetMethodVarName(Field->getIdentifier());
-    Ivar[1] = GetMethodVarType(Field);
+    Ivar[0] = GetMethodVarName(IVD->getIdentifier());
+    Ivar[1] = GetMethodVarType(IVD);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
                                      ComputeIvarBaseOffset(CGM, OID, IVD));
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
@@ -4648,16 +4647,15 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     
   for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
     ObjCIvarDecl *IVD = OIvars[i];
-    const FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), IVD);
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), IVD, 
                                 ComputeIvarBaseOffset(CGM, OID, IVD));
-    Ivar[1] = GetMethodVarName(Field->getIdentifier());
-    Ivar[2] = GetMethodVarType(Field);
+    Ivar[1] = GetMethodVarName(IVD->getIdentifier());
+    Ivar[2] = GetMethodVarType(IVD);
     const llvm::Type *FieldTy =
-      CGM.getTypes().ConvertTypeForMem(Field->getType());
+      CGM.getTypes().ConvertTypeForMem(IVD->getType());
     unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
     unsigned Align = CGM.getContext().getPreferredTypeAlign(
-                       Field->getType().getTypePtr()) >> 3;
+                       IVD->getType().getTypePtr()) >> 3;
     Align = llvm::Log2_32(Align);
     Ivar[3] = llvm::ConstantInt::get(ObjCTypes.IntTy, Align);
     // NOTE. Size of a bitfield does not match gcc's, because of the
