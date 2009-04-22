@@ -29,6 +29,78 @@
 using namespace clang;
 using namespace CodeGen;
 
+// Common CGObjCRuntime functions, these don't belong here, but they
+// don't belong in CGObjCRuntime either so we will live with it for
+// now.
+
+uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                              const ObjCInterfaceDecl *OID,
+                                              const ObjCIvarDecl *Ivar) {
+  assert(!OID->isForwardDecl() && "Invalid interface decl!");
+  QualType T = CGM.getContext().getObjCInterfaceType(OID);
+  const llvm::StructType *InterfaceTy = 
+    cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
+  const llvm::StructLayout *Layout = 
+    CGM.getTargetData().getStructLayout(InterfaceTy);
+  const FieldDecl *Field = 
+    OID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
+  if (!Field->isBitField())
+    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+  
+  // FIXME. Must be a better way of getting a bitfield base offset.
+  CodeGenTypes::BitFieldInfo BFI = CGM.getTypes().getBitFieldInfo(Field);
+  // FIXME: The "field no" for bitfields is something completely
+  // different; it is the offset in multiples of the base type size!
+  uint64_t Offset = CGM.getTypes().getLLVMFieldNo(Field);
+  const llvm::Type *Ty = 
+    CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
+  Offset *= CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
+  return (Offset + BFI.Begin) / 8;
+}
+
+LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
+                                               const ObjCInterfaceDecl *OID,
+                                               llvm::Value *BaseValue,
+                                               const ObjCIvarDecl *Ivar,
+                                               unsigned CVRQualifiers,
+                                               llvm::Value *Offset) {
+  // FIXME: For now, we use an implementation based on just computing
+  // the offset and calculating things directly. For optimization
+  // purposes, it would be cleaner to use a GEP on the proper type
+  // since the structure layout is fixed; however for that we need to
+  // be able to walk the class chain for an Ivar.
+  const FieldDecl *Field = 
+    OID->lookupFieldDeclForIvar(CGF.CGM.getContext(), Ivar);
+  
+  // (char *) BaseValue
+  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, I8Ptr);
+  // (char*)BaseValue + Offset_symbol
+  V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
+  // (type *)((char*)BaseValue + Offset_symbol)
+  const llvm::Type *IvarTy = 
+    CGF.CGM.getTypes().ConvertTypeForMem(Ivar->getType());
+  llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
+  V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
+  
+  if (Ivar->isBitField()) {
+    QualType FieldTy = Field->getType();
+    CodeGenTypes::BitFieldInfo bitFieldInfo =
+                                 CGF.CGM.getTypes().getBitFieldInfo(Field);
+    return LValue::MakeBitfield(V, bitFieldInfo.Begin % 8, bitFieldInfo.Size,
+                                FieldTy->isSignedIntegerType(),
+                                FieldTy.getCVRQualifiers()|CVRQualifiers);
+  }
+
+  LValue LV = LValue::MakeAddr(V, 
+              Ivar->getType().getCVRQualifiers()|CVRQualifiers,
+              CGF.CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
+  LValue::SetObjCIvar(LV, true);
+  return LV;
+}
+
+///
+
 namespace {
 
   typedef std::vector<llvm::Constant*> ConstantVector;
@@ -731,10 +803,6 @@ protected:
   /// defined. The return value has type ProtocolPtrTy.
   llvm::Constant *GetProtocolRef(const ObjCProtocolDecl *PD);
 
-  /// GetIvarBaseOffset - returns ivars byte offset.
-  uint64_t GetIvarBaseOffset(const llvm::StructLayout *Layout,
-                             const FieldDecl *Field);
-  
   /// GetFieldBaseOffset - return's field byte offset.
   uint64_t GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
                               const llvm::StructLayout *Layout,
@@ -2015,7 +2083,6 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   
   ObjCInterfaceDecl *OID = 
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
-  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
   
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
   GetNamedIvarList(OID, OIvars);
@@ -2026,7 +2093,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     Ivar[0] = GetMethodVarName(Field->getIdentifier());
     Ivar[1] = GetMethodVarType(Field);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
-                                     GetIvarBaseOffset(Layout, Field));
+                                     ComputeIvarBaseOffset(CGM, OID, IVD));
     Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
   }
 
@@ -2124,32 +2191,14 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   return Method;
 }
 
-uint64_t CGObjCCommonMac::GetIvarBaseOffset(const llvm::StructLayout *Layout,
-                                            const FieldDecl *Field) {
-  if (!Field->isBitField())
-    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
-  
-  // FIXME. Must be a better way of getting a bitfield base offset.
-  CodeGenTypes::BitFieldInfo BFI = CGM.getTypes().getBitFieldInfo(Field);
-  // FIXME: The "field no" for bitfields is something completely
-  // different; it is the offset in multiples of the base type size!
-  uint64_t Offset = CGM.getTypes().getLLVMFieldNo(Field);
-  const llvm::Type *Ty = 
-    CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
-  Offset *= CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
-  return (Offset + BFI.Begin) / 8;
-}
-
 /// GetFieldBaseOffset - return the field's byte offset.
 uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
                                              const llvm::StructLayout *Layout,
                                              const FieldDecl *Field) {
-  // Is this a c struct?
+  // Is this a C struct?
   if (!OI)
     return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
-  const ObjCIvarDecl *Ivar = cast<ObjCIvarDecl>(Field);
-  const FieldDecl *FD = OI->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  return GetIvarBaseOffset(Layout, FD);
+  return ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
 }
 
 llvm::GlobalVariable *
@@ -2628,27 +2677,14 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        const ObjCIvarDecl *Ivar,
                                        unsigned CVRQualifiers) {
   const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
-  const FieldDecl *Field = ID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  if (Ivar->isBitField())
-    return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field),
-                                     CVRQualifiers);
-  // TODO:  Add a special case for isa (index 0)
-  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
-  llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
-  LValue LV = LValue::MakeAddr(V, 
-               Ivar->getType().getCVRQualifiers()|CVRQualifiers,
-               CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
-  LValue::SetObjCIvar(LV, true);
-  return LV;
+  return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
+                                  EmitIvarOffset(CGF, ID, Ivar));
 }
 
 llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                        const ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
-  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(Interface);
-  const FieldDecl *Field = 
-    Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  uint64_t Offset = GetIvarBaseOffset(Layout, Field);
+  uint64_t Offset = ComputeIvarBaseOffset(CGM, Interface, Ivar);
   return llvm::ConstantInt::get(
                             CGM.getTypes().ConvertType(CGM.getContext().LongTy),
                             Offset);
@@ -4219,62 +4255,28 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   return GV;
 }
 
-/// countInheritedIvars - count number of ivars in class and its super class(s)
-///
-static int countInheritedIvars(const ObjCInterfaceDecl *OI, 
-                               ASTContext &Context) {
-  int count = 0;
-  if (!OI)
-    return 0;
-  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
-  if (SuperClass)
-    count += countInheritedIvars(SuperClass, Context);
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I)
-    ++count;
-  // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
-       E = OI->prop_end(Context); I != E; ++I) {
-    if ((*I)->getPropertyIvarDecl())
-      ++count;
-  }
-  return count;
-}
-
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
-  assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
-    
-  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),
-                                                 CGM.getContext());
-  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  RecordDecl::field_iterator firstField = RD->field_begin(CGM.getContext());
-  RecordDecl::field_iterator lastField = RD->field_end(CGM.getContext());
-  while (countSuperClassIvars-- > 0) {
-    lastField = firstField;
-    ++firstField;
+  // Find first and last (non-padding) ivars in this interface.
+
+  // FIXME: Use iterator.
+  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
+  GetNamedIvarList(OID, OIvars);
+
+  if (OIvars.empty()) {
+    InstanceStart = InstanceSize = 0;
+    return;
   }
-    
-  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()),
-         ifield = firstField; ifield != e; ++ifield)
-    lastField = ifield;
-    
-  InstanceStart = InstanceSize = 0;
-  if (lastField != RD->field_end(CGM.getContext())) {
-    FieldDecl *Field = *lastField;
-    const llvm::Type *FieldTy =
-      CGM.getTypes().ConvertTypeForMem(Field->getType());
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
-    InstanceSize = GetIvarBaseOffset(Layout, Field) + Size;
-    if (firstField == RD->field_end(CGM.getContext()))
-      InstanceStart = InstanceSize;
-    else {
-      Field = *firstField;
-      InstanceStart =  GetIvarBaseOffset(Layout, Field);
-    }
-  }
+
+  const ObjCIvarDecl *First = OIvars.front();
+  const ObjCIvarDecl *Last = OIvars.back();
+
+  InstanceStart = ComputeIvarBaseOffset(CGM, OID, First);
+  const llvm::Type *FieldTy =
+    CGM.getTypes().ConvertTypeForMem(Last->getType());
+  unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
+  InstanceSize = ComputeIvarBaseOffset(CGM, OID, Last) + Size;
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
@@ -4639,7 +4641,6 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   assert(OID && "CGObjCNonFragileABIMac::EmitIvarList - null interface");
   
   // FIXME. Consolidate this with similar code in GenerateClass.
-  const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
   
   // Collect declared and synthesized ivars in a small vector.
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
@@ -4649,7 +4650,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     ObjCIvarDecl *IVD = OIvars[i];
     const FieldDecl *Field = OID->lookupFieldDeclForIvar(CGM.getContext(), IVD);
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), IVD, 
-                                GetIvarBaseOffset(Layout, Field));
+                                ComputeIvarBaseOffset(CGM, OID, IVD));
     Ivar[1] = GetMethodVarName(Field->getIdentifier());
     Ivar[2] = GetMethodVarType(Field);
     const llvm::Type *FieldTy =
@@ -4922,34 +4923,8 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                              const ObjCIvarDecl *Ivar,
                                              unsigned CVRQualifiers) {
   const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
-  const FieldDecl *Field = ID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
-  
-  // (char *) BaseValue
-  llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, ObjCTypes.Int8PtrTy);
-  llvm::Value *Offset = CGF.Builder.CreateLoad(IvarOffsetGV);
-  // (char*)BaseValue + Offset_symbol
-  V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
-  // (type *)((char*)BaseValue + Offset_symbol)
-  const llvm::Type *IvarTy = 
-    CGM.getTypes().ConvertTypeForMem(Ivar->getType());
-  llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
-  V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
-  
-  if (Ivar->isBitField()) {
-    QualType FieldTy = Field->getType();
-    CodeGenTypes::BitFieldInfo bitFieldInfo =
-                                 CGM.getTypes().getBitFieldInfo(Field);
-    return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
-                                FieldTy->isSignedIntegerType(),
-                                FieldTy.getCVRQualifiers()|CVRQualifiers);
-  }
-
-  LValue LV = LValue::MakeAddr(V, 
-              Ivar->getType().getCVRQualifiers()|CVRQualifiers,
-              CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
-  LValue::SetObjCIvar(LV, true);
-  return LV;
+  return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
+                                  EmitIvarOffset(CGF, ID, Ivar));
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(

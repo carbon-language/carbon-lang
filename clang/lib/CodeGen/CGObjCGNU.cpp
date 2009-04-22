@@ -1082,32 +1082,14 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        const ObjCIvarDecl *Ivar,
                                        unsigned CVRQualifiers) {
   const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
-  const FieldDecl *Field = ID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  if (Ivar->isBitField()) 
-    return CGF.EmitLValueForBitfield(BaseValue, const_cast<FieldDecl *>(Field), 
-                                 CVRQualifiers);
-  // TODO:  Add a special case for isa (index 0)
-  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
-  llvm::Value *V = CGF.Builder.CreateStructGEP(BaseValue, Index, "tmp");
-  LValue LV = LValue::MakeAddr(V, 
-                Ivar->getType().getCVRQualifiers()|CVRQualifiers);
-  LValue::SetObjCIvar(LV, true);
-  return LV;
+  return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
+                                  EmitIvarOffset(CGF, ID, Ivar));
 }
 
 llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                          const ObjCInterfaceDecl *Interface,
                          const ObjCIvarDecl *Ivar) {
-  const llvm::Type *InterfaceLTy =
-    CGM.getTypes().ConvertType(
-                            CGM.getContext().getObjCInterfaceType(Interface));
-  const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
-  const FieldDecl *Field = 
-    Interface->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
-  uint64_t Offset =
-    Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
-  
+  uint64_t Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
   return llvm::ConstantInt::get(
                             CGM.getTypes().ConvertType(CGM.getContext().LongTy),
                             Offset);

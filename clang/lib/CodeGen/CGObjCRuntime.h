@@ -25,10 +25,11 @@
 
 namespace llvm {
   class Constant;
+  class Function;
+  class Module;
+  class StructLayout;
   class Type;
   class Value;
-  class Module;
-  class Function;
 }
 
 namespace clang {
@@ -36,6 +37,7 @@ namespace CodeGen {
   class CodeGenFunction;
 }
 
+  class FieldDecl;
   class ObjCAtTryStmt;
   class ObjCAtThrowStmt;
   class ObjCAtSynchronizedStmt;
@@ -58,6 +60,24 @@ namespace CodeGen {
 
 /// Implements runtime-specific code generation functions.
 class CGObjCRuntime {
+protected:
+  // Utility functions for unified ivar access. These need to
+  // eventually be folded into other places (the structure layout
+  // code).
+
+  // Compute an offset to the given ivar, suitable for passing to
+  // EmitValueForIvarAtOffset.  Note that the correct handling of
+  // bit-fields is carefully coordinated by these two, use caution!
+  uint64_t ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                 const ObjCInterfaceDecl *OID,
+                                 const ObjCIvarDecl *Ivar);
+
+  LValue EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
+                                  const ObjCInterfaceDecl *OID,
+                                  llvm::Value *BaseValue,
+                                  const ObjCIvarDecl *Ivar,
+                                  unsigned CVRQualifiers,
+                                  llvm::Value *Offset);  
 
 public:
   virtual ~CGObjCRuntime();
