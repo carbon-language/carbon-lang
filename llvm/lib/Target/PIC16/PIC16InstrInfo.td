@@ -428,7 +428,8 @@ def sublw_cc : SUBLW<0, PIC16Subcc>;
 let isCall = 1,
     Defs = [W, FSR0, FSR1] in {
     def CALL: LiteralFormat<0x1, (outs), (ins i8imm:$func),
-            "call ${func} + 2",
+            //"call ${func} + 2",
+            "call ${func}",
             [(PIC16call diraddr:$func)]>;
 }
 

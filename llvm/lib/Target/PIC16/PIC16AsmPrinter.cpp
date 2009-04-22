@@ -116,9 +116,9 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToSection (fCodeSection);
 
   // Emit the frame address of the function at the beginning of code.
-  O << CurrentFnName << ":\n";
   O << "    retlw  low(" << FunctionLabelBegin<< CurrentFnName << ".frame)\n";
   O << "    retlw  high(" << FunctionLabelBegin<< CurrentFnName << ".frame)\n"; 
+  O << CurrentFnName << ":\n";
 
 
   // Print out code for the function.

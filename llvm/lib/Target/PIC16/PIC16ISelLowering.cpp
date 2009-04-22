@@ -1155,10 +1155,12 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
    SDValue Lo = Callee.getOperand(0);
    SDValue Hi = Callee.getOperand(1);
 
+   SDValue Data_Lo, Data_Hi;
    SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other, MVT::Flag);
    Hi = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, Hi);
-   // Use the Lo part as is and make CALLW
-   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Lo, Hi);
+   // Subtract 2 from Lo to get the Lower part of DataAddress. 
+   Data_Lo = DAG.getNode(ISD::SUB, dl, MVT::i8, Lo, DAG.getConstant(2, MVT::i8));
+   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Data_Lo, Hi);
    SDValue Call = DAG.getNode(PIC16ISD::CALLW, dl, Tys, Chain, Callee,
                               OperFlag);
    Chain = getChain(Call);
@@ -1176,10 +1178,10 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
    Chain = getChain(SeqStart);
    OperFlag = getOutFlag(SeqStart); // To manage the data dependency
 
-   // Add 1 to Lo part for the second code word.
-   Lo = DAG.getNode(ISD::ADD, dl, MVT::i8, Lo, DAG.getConstant(1, MVT::i8));
+   // Subtract 1 to Lo part for the second code word.
+   Data_Lo = DAG.getNode(ISD::SUB, dl, MVT::i8, Lo, DAG.getConstant(1, MVT::i8));
    // Use new Lo to make another CALLW
-   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Lo, Hi);
+   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Data_Lo, Hi);
    Call = DAG.getNode(PIC16ISD::CALLW, dl, Tys, Chain, Callee, OperFlag);
    Chain = getChain(Call);
    OperFlag = getOutFlag(Call);
@@ -1266,8 +1268,8 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
        SDValue CodeAddr_Lo = Callee.getOperand(0);
        SDValue CodeAddr_Hi = Callee.getOperand(1);
 
-       CodeAddr_Lo = DAG.getNode(ISD::ADD, dl, MVT::i8, CodeAddr_Lo,
-                                 DAG.getConstant(2, MVT::i8));
+       /*CodeAddr_Lo = DAG.getNode(ISD::ADD, dl, MVT::i8, CodeAddr_Lo,
+                                 DAG.getConstant(2, MVT::i8));*/
 
        // move Hi part in PCLATH
        CodeAddr_Hi = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, CodeAddr_Hi);
