@@ -91,7 +91,8 @@ namespace llvm {
     /// of work to avoid inserting an obviously redundant operation.
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
                               Value *RHS, Instruction *InsertPt);
-  protected:
+
+  private:
     Value *expand(const SCEV *S);
 
     Value *visitConstant(const SCEVConstant *S) {
