@@ -1161,7 +1161,7 @@ def : Pat&lt;(i32 imm:$imm),
 
 <ul>
   <li>Overall, there is no way to define or match SelectionDAG nodes that define
-      multiple values (e.g. <tt>ADD_PARTS</tt>, <tt>LOAD</tt>, <tt>CALL</tt>,
+      multiple values (e.g. <tt>SMUL_LOHI</tt>, <tt>LOAD</tt>, <tt>CALL</tt>,
       etc).  This is the biggest reason that you currently still <em>have
       to</em> write custom C++ code for your instruction selector.</li>
 
