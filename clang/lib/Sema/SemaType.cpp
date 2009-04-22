@@ -46,9 +46,11 @@ QualType Sema::adjustParameterType(QualType T) {
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
 /// \param DS  the declaration specifiers
+/// \param DeclLoc The location of the declarator identifier or invalid if none.
 /// \returns The type described by the declaration specifiers, or NULL
 /// if there was an error.
-QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
+QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
+                                     SourceLocation DeclLoc) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
@@ -101,20 +103,29 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     if (getLangOptions().ImplicitInt) {
       // In C89 mode, we only warn if there is a completely missing declspec
       // when one is not allowed.
-      if (DS.isEmpty())
-        Diag(DS.getSourceRange().getBegin(), diag::warn_missing_declspec)
+      if (DS.isEmpty()) {
+        if (DeclLoc.isInvalid())
+          DeclLoc = DS.getSourceRange().getBegin();
+        Diag(DeclLoc, diag::warn_missing_declspec)
+          << DS.getSourceRange()
         << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
                                                  "int");
+      }
     } else if (!DS.hasTypeSpecifier()) {
       // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:
       // "At least one type specifier shall be given in the declaration
       // specifiers in each declaration, and in the specifier-qualifier list in
       // each struct declaration and type name."
       // FIXME: Does Microsoft really have the implicit int extension in C++?
-      unsigned DK = getLangOptions().CPlusPlus && !getLangOptions().Microsoft?
-          diag::err_missing_type_specifier
-        : diag::warn_missing_type_specifier;
-      Diag(DS.getSourceRange().getBegin(), DK);
+      if (DeclLoc.isInvalid())
+        DeclLoc = DS.getSourceRange().getBegin();
+
+      if (getLangOptions().CPlusPlus && !getLangOptions().Microsoft)
+        Diag(DeclLoc, diag::err_missing_type_specifier)
+          << DS.getSourceRange();
+      else
+        Diag(DeclLoc, diag::warn_missing_type_specifier)
+          << DS.getSourceRange();
 
       // FIXME: If we could guarantee that the result would be
       // well-formed, it would be useful to have a code insertion hint
@@ -183,13 +194,18 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
         // id<protocol-list>
         Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)PQ,
                                                 DS.getNumProtocolQualifiers());
-      else if (Result == Context.getObjCClassType())
+      else if (Result == Context.getObjCClassType()) {
+        if (DeclLoc.isInvalid())
+          DeclLoc = DS.getSourceRange().getBegin();
         // Class<protocol-list>
-        Diag(DS.getSourceRange().getBegin(), 
-             diag::err_qualified_class_unsupported) << DS.getSourceRange();
-      else
-        Diag(DS.getSourceRange().getBegin(),
-             diag::err_invalid_protocol_qualifiers) << DS.getSourceRange();
+        Diag(DeclLoc, diag::err_qualified_class_unsupported)
+          << DS.getSourceRange();
+      } else {
+        if (DeclLoc.isInvalid())
+          DeclLoc = DS.getSourceRange().getBegin();
+        Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
+          << DS.getSourceRange();
+      }
     }
     // TypeQuals handled by caller.
     break;
@@ -592,13 +608,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
   case Declarator::DK_Abstract:
   case Declarator::DK_Normal:
   case Declarator::DK_Operator: {
-    const DeclSpec& DS = D.getDeclSpec();
-    if (OmittedReturnType)
+    const DeclSpec &DS = D.getDeclSpec();
+    if (OmittedReturnType) {
       // We default to a dependent type initially.  Can be modified by
       // the first return statement.
       T = Context.DependentTy;
-    else {
-      T = ConvertDeclSpecToType(DS);
+    } else {
+      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc());
       if (T.isNull())
         return T;
     }

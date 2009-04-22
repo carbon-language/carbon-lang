@@ -371,7 +371,7 @@ public:
   // Type Analysis / Processing: SemaType.cpp.
   //
   QualType adjustParameterType(QualType T);
-  QualType ConvertDeclSpecToType(const DeclSpec &DS);
+  QualType ConvertDeclSpecToType(const DeclSpec &DS, SourceLocation DeclLoc);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType BuildPointerType(QualType T, unsigned Quals, 
                             SourceLocation Loc, DeclarationName Entity);

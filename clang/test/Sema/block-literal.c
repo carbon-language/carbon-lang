@@ -40,7 +40,7 @@ void test2() {
 
 foo:
 	takeclosure(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
-  __block y = 7; 
+  __block y = 7;    // expected-warning {{type specifier missing, defaults to 'int'}}
   takeclosure(^{ y = 8; });
 }
 
