@@ -39,6 +39,7 @@ namespace llvm {
 namespace clang {
 
 class AddrLabelExpr;
+class ASTConsumer;
 class ASTContext;
 class Attr;
 class Decl;
@@ -76,6 +77,9 @@ private:
 
   /// \brief The AST context into which we'll read the PCH file.
   ASTContext &Context;
+
+  /// \brief The AST consumer.
+  ASTConsumer *Consumer;
 
   /// \brief The bitstream reader from which we'll read the PCH file.
   llvm::BitstreamReader Stream;
@@ -198,7 +202,7 @@ public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
   explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
-    : SemaObj(0), PP(PP), Context(Context), 
+    : SemaObj(0), PP(PP), Context(Context), Consumer(0),
       IdentifierTableData(0), NumStatementsRead(0) { }
 
   ~PCHReader() {}

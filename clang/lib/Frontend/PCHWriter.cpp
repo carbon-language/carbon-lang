@@ -574,8 +574,7 @@ void PCHDeclWriter::VisitBlockDecl(BlockDecl *D) {
 void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset, 
                                      uint64_t VisibleOffset) {
   Record.push_back(LexicalOffset);
-  if (DC->getPrimaryContext() == DC)
-    Record.push_back(VisibleOffset);
+  Record.push_back(VisibleOffset);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1728,20 +1727,6 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     // in the PCH file later.
     if (isa<FileScopeAsmDecl>(D))
       ExternalDefinitions.push_back(ID);
-    else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-      if (// Non-static file-scope variables with initializers or that
-          // are tentative definitions.
-          (Var->isFileVarDecl() &&
-           (Var->getInit() || Var->getStorageClass() == VarDecl::None)) ||
-          // Out-of-line definitions of static data members (C++).
-          (Var->getDeclContext()->isRecord() && 
-           !Var->getLexicalDeclContext()->isRecord() && 
-           Var->getStorageClass() == VarDecl::Static))
-        ExternalDefinitions.push_back(ID);
-    } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
-      if (Func->isThisDeclarationADefinition())
-        ExternalDefinitions.push_back(ID);
-    }
   }
 
   // Exit the declarations block

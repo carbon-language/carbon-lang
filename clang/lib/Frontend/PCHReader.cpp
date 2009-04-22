@@ -377,9 +377,7 @@ void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
 std::pair<uint64_t, uint64_t> 
 PCHDeclReader::VisitDeclContext(DeclContext *DC) {
   uint64_t LexicalOffset = Record[Idx++];
-  uint64_t VisibleOffset = 0;
-  if (DC->getPrimaryContext() == DC)
-    VisibleOffset = Record[Idx++];
+  uint64_t VisibleOffset = Record[Idx++];
   return std::make_pair(LexicalOffset, VisibleOffset);
 }
 
@@ -2317,6 +2315,23 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
   assert(Idx == Record.size());
 
+  if (Consumer) {
+    // If we have deserialized a declaration that has a definition the
+    // AST consumer might need to know about, notify the consumer
+    // about that definition now.
+    if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+      if (Var->isFileVarDecl() && Var->getInit()) {
+        DeclGroupRef DG(Var);
+        Consumer->HandleTopLevelDecl(DG);
+      }
+    } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
+      if (Func->isThisDeclarationADefinition()) {
+        DeclGroupRef DG(Func);
+        Consumer->HandleTopLevelDecl(DG);
+      }
+    }
+  }
+
   return D;
 }
 
@@ -2458,6 +2473,8 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
 }
 
 void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
+  this->Consumer = Consumer;
+
   if (!Consumer)
     return;
 
