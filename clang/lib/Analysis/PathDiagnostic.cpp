@@ -166,8 +166,29 @@ SourceRange PathDiagnosticLocation::asRange() const {
     case SingleLocK:
     case RangeK:
       break;
-    case StmtK:
+    case StmtK: {
+      const Stmt *S = asStmt();
+      switch (S->getStmtClass()) {
+        default:
+          break;
+          // FIXME: Provide better range information for different
+          //  terminators.
+        case Stmt::IfStmtClass:
+        case Stmt::WhileStmtClass:
+        case Stmt::DoStmtClass:
+        case Stmt::ForStmtClass:
+        case Stmt::ChooseExprClass:
+        case Stmt::IndirectGotoStmtClass:
+        case Stmt::SwitchStmtClass:
+        case Stmt::ConditionalOperatorClass:
+        case Stmt::ObjCForCollectionStmtClass: {
+          SourceLocation L = S->getLocStart();
+          return SourceRange(L, L);
+        }
+      }
+      
       return S->getSourceRange();
+    }
     case DeclK:
       if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
         return MD->getSourceRange();
