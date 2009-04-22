@@ -197,39 +197,6 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   }
 }
 
-void CodeGenTypes::UpdateCompletedType(const ObjCInterfaceDecl *OID) {
-  // Check to see if we have already laid this type out, if not, just return.
-  QualType OIDTy = Context.getObjCInterfaceType(OID);
-  llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator TCI =
-    TypeCache.find(OIDTy.getTypePtr());
-  if (TCI == TypeCache.end()) return;
-
-  // Remember the opaque LLVM type for this interface.
-  llvm::PATypeHolder OpaqueHolder = TCI->second;
-  assert(isa<llvm::OpaqueType>(OpaqueHolder.get()) &&
-         "Updating compilation of an already non-opaque type?");
-  
-  // Remove it from TagDeclTypes so that it will be regenerated.
-  TypeCache.erase(TCI);
-
-  // Update the "shadow" struct that is laid out.
-  // FIXME: REMOVE THIS.
-  const RecordDecl *RD = Context.addRecordToClass(OID);
-  UpdateCompletedType(RD);
-  
-  // Generate the new type.
-  const llvm::Type *NT = ConvertType(OIDTy);
-  assert(!isa<llvm::OpaqueType>(NT) && "Didn't do layout!");
-
-  // FIXME: Remove this check when shadow structs go away.
-  if (isa<llvm::OpaqueType>(OpaqueHolder)) {
-  
-  // Refine the old opaque type to its new definition.
-  cast<llvm::OpaqueType>(OpaqueHolder.get())->refineAbstractTypeTo(NT);
-  }
-}
-
-
 static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
   if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::FloatTy;
@@ -373,8 +340,13 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
       
   case Type::ObjCInterface: {
-    ObjCInterfaceDecl *ID = cast<ObjCInterfaceType>(Ty).getDecl();
-    return ConvertTagDeclType(Context.addRecordToClass(ID));
+    // Objective-C interfaces are always opaque (outside of the
+    // runtime, which can do whatever it likes); we never refine
+    // these.
+    const llvm::Type *&T = InterfaceTypes[cast<ObjCInterfaceType>(&Ty)];
+    if (!T)
+        T = llvm::OpaqueType::get();
+    return T;
   }
       
   case Type::ObjCQualifiedId:

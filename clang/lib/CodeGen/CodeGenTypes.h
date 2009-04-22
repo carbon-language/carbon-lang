@@ -92,6 +92,12 @@ class CodeGenTypes {
 
   llvm::DenseMap<const Type*, llvm::PATypeHolder> FunctionTypes;
 
+  /// The opaque type map for Objective-C interfaces. All direct
+  /// manipulation is done by the runtime interfaces, which are
+  /// responsible for coercing to the appropriate type; these opaque
+  /// types are never refined.
+  llvm::DenseMap<const ObjCInterfaceType*, const llvm::Type *> InterfaceTypes;
+
   /// CGRecordLayouts - This maps llvm struct type with corresponding 
   /// record layout info. 
   /// FIXME : If CGRecordLayout is less than 16 bytes then use 
@@ -162,8 +168,6 @@ public:
   /// UpdateCompletedType - When we find the full definition for a TagDecl,
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
-  /// Likewise for an ObjC Interface.
-  void UpdateCompletedType(const ObjCInterfaceDecl *OID);
 
   /// getFunctionInfo - Get the CGFunctionInfo for this function signature.
   const CGFunctionInfo &getFunctionInfo(QualType RetTy, 

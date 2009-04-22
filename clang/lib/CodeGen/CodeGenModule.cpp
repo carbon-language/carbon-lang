@@ -1369,11 +1369,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ObjCClass:
   case Decl::ObjCForwardProtocol:
   case Decl::ObjCCategory:
-    break;
   case Decl::ObjCInterface:
-    // If we already laid out this interface due to an @class, and if we
-    // codegen'd a reference it, update the 'opaque' type to be a real type now.
-    Types.UpdateCompletedType(cast<ObjCInterfaceDecl>(D));
     break;
 
   case Decl::ObjCProtocol:

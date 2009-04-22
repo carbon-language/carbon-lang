@@ -37,8 +37,8 @@ const llvm::StructType *
 CGObjCRuntime::GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
                                       const ObjCInterfaceDecl *OID) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  QualType T = CGM.getContext().getObjCInterfaceType(OID);
-  return cast<llvm::StructType>(CGM.getTypes().ConvertType(T));
+  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
+  return cast<llvm::StructType>(CGM.getTypes().ConvertTagDeclType(RD));
 }
 
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
@@ -71,6 +71,11 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                const ObjCIvarDecl *Ivar,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
+  // Force generation of the codegen information for this structure.
+  //
+  // FIXME: Remove once we don't use the bit-field lookup map.
+  (void) GetConcreteClassStruct(CGF.CGM, OID);
+
   // FIXME: For now, we use an implementation based on just computing
   // the offset and calculating things directly. For optimization
   // purposes, it would be cleaner to use a GEP on the proper type
