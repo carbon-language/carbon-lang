@@ -4220,62 +4220,29 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   return GV;
 }
 
-/// countInheritedIvars - count number of ivars in class and its super class(s)
-///
-static int countInheritedIvars(const ObjCInterfaceDecl *OI, 
-                               ASTContext &Context) {
-  int count = 0;
-  if (!OI)
-    return 0;
-  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
-  if (SuperClass)
-    count += countInheritedIvars(SuperClass, Context);
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I)
-    ++count;
-  // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
-       E = OI->prop_end(Context); I != E; ++I) {
-    if ((*I)->getPropertyIvarDecl())
-      ++count;
-  }
-  return count;
-}
-
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
   const llvm::StructLayout *Layout = GetInterfaceDeclStructLayout(OID);
     
-  int countSuperClassIvars = countInheritedIvars(OID->getSuperClass(),
-                                                 CGM.getContext());
   const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  RecordDecl::field_iterator firstField = RD->field_begin(CGM.getContext());
-  RecordDecl::field_iterator lastField = RD->field_end(CGM.getContext());
-  while (countSuperClassIvars-- > 0) {
-    lastField = firstField;
-    ++firstField;
-  }
-    
-  for (RecordDecl::field_iterator e = RD->field_end(CGM.getContext()),
-         ifield = firstField; ifield != e; ++ifield)
-    lastField = ifield;
-    
-  InstanceStart = InstanceSize = 0;
-  if (lastField != RD->field_end(CGM.getContext())) {
-    FieldDecl *Field = *lastField;
-    const llvm::Type *FieldTy =
-      CGM.getTypes().ConvertTypeForMem(Field->getType());
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
-    InstanceSize = GetIvarBaseOffset(Layout, Field) + Size;
-    if (firstField == RD->field_end(CGM.getContext()))
-      InstanceStart = InstanceSize;
-    else {
-      Field = *firstField;
-      InstanceStart =  GetIvarBaseOffset(Layout, Field);
-    }
-  }
+  
+  // Field 0 is always the superclass record (which may be empty).
+  RecordDecl::field_iterator fi = RD->field_begin(CGM.getContext());
+  RecordDecl::field_iterator fe = RD->field_end(CGM.getContext());
+  assert(fi != fe && "class record should never be empty!");
+
+  InstanceStart = CGM.getContext().getTypeSize((*fi)->getType()) / 8;
+
+  // We report the size of the instance as the offset following the
+  // last ivar (which is, of course, not the actual size).
+  std::advance(fi, std::distance(fi, fe) - 1);
+  const FieldDecl *LastField = *fi;
+  uint64_t Offset = GetIvarBaseOffset(Layout, LastField);
+  // Add size of type (rounded to next byte).
+  InstanceSize = (Offset + 
+                  (CGM.getContext().getTypeSize(LastField->getType()) + 7) / 8);
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
