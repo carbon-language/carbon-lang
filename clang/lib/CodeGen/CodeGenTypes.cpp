@@ -464,11 +464,20 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   
   const llvm::Type *ResultType;
   const RecordDecl *RD = cast<const RecordDecl>(TD);
-  if (TD->isStruct() || TD->isClass()) {
+
+  // There isn't any extra information for empty structures/unions.
+  if (RD->field_empty(getContext())) {
+    ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
+  } else {
     // Layout fields.
     RecordOrganizer RO(*this, *RD);
     
-    RO.layoutStructFields(Context.getASTRecordLayout(RD));
+    if (TD->isStruct() || TD->isClass())
+      RO.layoutStructFields(Context.getASTRecordLayout(RD));
+    else {
+      assert(TD->isUnion() && "unknown tag decl kind!");
+      RO.layoutUnionFields(Context.getASTRecordLayout(RD));
+    }
     
     // Get llvm::StructType.
     const Type *Key = 
@@ -476,27 +485,6 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     CGRecordLayouts[Key] = new CGRecordLayout(RO.getLLVMType(), 
                                               RO.getPaddingFields());
     ResultType = RO.getLLVMType();
-    
-  } else if (TD->isUnion()) {
-    // Just use the largest element of the union, breaking ties with the
-    // highest aligned member.
-    if (!RD->field_empty(getContext())) {
-      RecordOrganizer RO(*this, *RD);
-      
-      RO.layoutUnionFields(Context.getASTRecordLayout(RD));
-      
-      // Get llvm::StructType.
-      const Type *Key = 
-        Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
-      CGRecordLayouts[Key] = new CGRecordLayout(RO.getLLVMType(),
-                                                RO.getPaddingFields());
-      ResultType = RO.getLLVMType();
-    } else {       
-      ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
-    }
-  } else {
-    assert(0 && "FIXME: Unknown tag decl kind!");
-    abort();
   }
   
   // Refine our Opaque type to ResultType.  This can invalidate ResultType, so
