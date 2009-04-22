@@ -19,6 +19,7 @@ add_dependencies(clangBasic
                  ClangDiagnosticCommon
                  ClangDiagnosticDriver
                  ClangDiagnosticFrontend
+                 ClangDiagnosticGroups
                  ClangDiagnosticLex
                  ClangDiagnosticParse
                  ClangDiagnosticSema)
