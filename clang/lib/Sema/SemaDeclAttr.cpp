@@ -1474,11 +1474,6 @@ static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  if (Fn->getStorageClass() == FunctionDecl::Extern) {
-    S.Diag(Attr.getLoc(), diag::warn_gnu_inline_attribute_extern_inline);
-    return;
-  }
-  
   d->addAttr(::new (S.Context) GNUInlineAttr());
 }
 

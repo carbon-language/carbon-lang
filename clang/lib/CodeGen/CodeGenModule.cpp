@@ -238,30 +238,27 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   if (!FD->isInline())
     return CodeGenModule::GVA_StrongExternal;
   
-  // If the inline function explicitly has the GNU inline attribute on it, then
-  // force to GNUC semantics (which is strong external), regardless of language.
-  if (FD->hasAttr<GNUInlineAttr>())
+  // If the inline function explicitly has the GNU inline attribute on it, or if
+  // this is C89 mode, we use to GNU semantics.
+  if (FD->hasAttr<GNUInlineAttr>() || (!Features.C99 && !Features.CPlusPlus)) {
+    // extern inline in GNU mode is like C99 inline.
+    if (FD->getStorageClass() == FunctionDecl::Extern)
+      return CodeGenModule::GVA_C99Inline;
+    // Normal inline is a strong symbol.
     return CodeGenModule::GVA_StrongExternal;
+  }
 
   // The definition of inline changes based on the language.  Note that we
   // have already handled "static inline" above, with the GVA_Internal case.
   if (Features.CPlusPlus)  // inline and extern inline.
     return CodeGenModule::GVA_CXXInline;
   
-  if (FD->getStorageClass() == FunctionDecl::Extern) {
-    // extern inline in C99 is a strong definition. In C89, it is extern inline.
-    if (Features.C99)
-      return CodeGenModule::GVA_StrongExternal;
-    
-    // In C89 mode, an 'extern inline' works like a C99 inline function.
-    return CodeGenModule::GVA_C99Inline;
-  }
+  assert(Features.C99 && "Must be in C99 mode if not in C89 or C++ mode");
+  // extern inline in C99 is a strong definition.
+  if (FD->getStorageClass() == FunctionDecl::Extern) 
+    return CodeGenModule::GVA_StrongExternal;
   
-  if (Features.C99)
-    return CodeGenModule::GVA_C99Inline;
-  
-  // Otherwise, this is the GNU inline extension in K&R and GNU C89 mode.
-  return CodeGenModule::GVA_StrongExternal;
+  return CodeGenModule::GVA_C99Inline;
 }
 
 /// SetFunctionDefinitionAttributes - Set attributes for a global.

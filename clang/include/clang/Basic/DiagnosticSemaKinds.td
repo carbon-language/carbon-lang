@@ -414,8 +414,6 @@ def warn_attribute_wrong_decl_type : Warning<
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;
-def warn_gnu_inline_attribute_extern_inline : Warning<
- "'gnu_inline' attribute is overridden by 'extern inline', attribute ignored">;
 
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;
