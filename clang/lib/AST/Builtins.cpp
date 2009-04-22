@@ -58,6 +58,24 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
+void 
+Builtin::Context::GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
+                                  bool NoBuiltins) {
+  // Final all target-independent names
+  for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
+    if (!BuiltinInfo[i].Suppressed &&
+        (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f')))
+      Names.push_back(BuiltinInfo[i].Name);
+  
+  // Find target-specific names.
+  for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
+    if (!TSRecords[i].Suppressed &&
+        (!NoBuiltins || 
+         (TSRecords[i].Attributes && 
+          !strchr(TSRecords[i].Attributes, 'f'))))
+      Names.push_back(TSRecords[i].Name);
+}
+
 bool 
 Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx, 
                                bool &HasVAListArg) {

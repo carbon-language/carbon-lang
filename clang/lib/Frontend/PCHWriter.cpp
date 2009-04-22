@@ -1800,8 +1800,8 @@ public:
       II->hasMacroDefinition() && 
       !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro();
     Bits = Bits | (uint32_t)II->getTokenID();
-    Bits = (Bits << 8) | (uint32_t)II->getObjCOrBuiltinID();
-    Bits = (Bits << 10) | hasMacroDefinition;
+    Bits = (Bits << 10) | (uint32_t)II->getObjCOrBuiltinID();
+    Bits = (Bits << 1) | hasMacroDefinition;
     Bits = (Bits << 1) | II->isExtensionToken();
     Bits = (Bits << 1) | II->isPoisoned();
     Bits = (Bits << 1) | II->isCPlusPlusOperatorKeyword();
@@ -2028,6 +2028,17 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   DeclIDs[Context.getTranslationUnitDecl()] = 1;
   DeclsToEmit.push(Context.getTranslationUnitDecl());
 
+  // Make sure that we emit IdentifierInfos (and any attached
+  // declarations) for builtins.
+  {
+    IdentifierTable &Table = PP.getIdentifierTable();
+    llvm::SmallVector<const char *, 32> BuiltinNames;
+    Context.BuiltinInfo.GetBuiltinNames(BuiltinNames,
+                                        Context.getLangOptions().NoBuiltin);
+    for (unsigned I = 0, N = BuiltinNames.size(); I != N; ++I)
+      getIdentifierRef(&Table.get(BuiltinNames[I]));
+  }
+
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 3);
@@ -2079,16 +2090,17 @@ void PCHWriter::AddAPFloat(const llvm::APFloat &Value, RecordData &Record) {
 }
 
 void PCHWriter::AddIdentifierRef(const IdentifierInfo *II, RecordData &Record) {
-  if (II == 0) {
-    Record.push_back(0);
-    return;
-  }
+  Record.push_back(getIdentifierRef(II));
+}
+
+pch::IdentID PCHWriter::getIdentifierRef(const IdentifierInfo *II) {
+  if (II == 0)
+    return 0;
 
   pch::IdentID &ID = IdentifierIDs[II];
   if (ID == 0)
     ID = IdentifierIDs.size();
-  
-  Record.push_back(ID);
+  return ID;
 }
 
 void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {

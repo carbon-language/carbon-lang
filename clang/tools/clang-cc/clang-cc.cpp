@@ -1760,7 +1760,9 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       PP.getTargetInfo(),
                                       PP.getIdentifierTable(),
                                       PP.getSelectorTable(),
-                                      /* FreeMemory = */ !DisableFree));
+                                      /* FreeMemory = */ !DisableFree,
+                                      /* size_reserve = */0,
+                       /* InitializeBuiltins = */ImplicitIncludePCH.empty()));
     
     if (!ImplicitIncludePCH.empty()) {
       // The user has asked us to include a precompiled header. Load
@@ -1788,6 +1790,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       case PCHReader::IgnorePCH:
         // No suitable PCH file could be found. Just ignore the
         // -include-pch option entirely.
+        
+        // We delayed the initialization of builtins in the hope of
+        // loading the PCH file. Since the PCH file could not be
+        // loaded, initialize builtins now.
+        ContextOwner->InitializeBuiltins(PP.getIdentifierTable());
         break;
       }
 

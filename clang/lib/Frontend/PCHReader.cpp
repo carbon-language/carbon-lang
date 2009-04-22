@@ -1110,10 +1110,21 @@ public:
                            unsigned DataLen) {
     using namespace clang::io;
     uint32_t Bits = ReadUnalignedLE32(d); // FIXME: use these?
-    (void)Bits;
-    bool hasMacroDefinition = (Bits >> 3) & 0x01;
-    
+    bool CPlusPlusOperatorKeyword = Bits & 0x01;
+    Bits >>= 1;
+    bool Poisoned = Bits & 0x01;
+    Bits >>= 1;
+    bool ExtensionToken = Bits & 0x01;
+    Bits >>= 1;
+    bool hasMacroDefinition = Bits & 0x01;
+    Bits >>= 1;
+    unsigned ObjCOrBuiltinID = Bits & 0x3FF;
+    Bits >>= 10;
+    unsigned TokenID = Bits & 0xFF;
+    Bits >>= 8;
+
     pch::IdentID ID = ReadUnalignedLE32(d);
+    assert(Bits == 0 && "Extra bits in the identifier?");
     DataLen -= 8;
 
     // Build the IdentifierInfo itself and link the identifier ID with
@@ -1123,6 +1134,20 @@ public:
       II = &Reader.getIdentifierTable().CreateIdentifierInfo(
                                                  k.first, k.first + k.second);
     Reader.SetIdentifierInfo(ID, II);
+
+    // Set or check the various bits in the IdentifierInfo structure.
+    // FIXME: Load token IDs lazily, too?
+    assert((unsigned)II->getTokenID() == TokenID && 
+           "Incorrect token ID loaded"); 
+    (void)TokenID;
+    II->setObjCOrBuiltinID(ObjCOrBuiltinID);
+    assert(II->isExtensionToken() == ExtensionToken && 
+           "Incorrect extension token flag");
+    (void)ExtensionToken;
+    II->setIsPoisoned(Poisoned);
+    assert(II->isCPlusPlusOperatorKeyword() == CPlusPlusOperatorKeyword &&
+           "Incorrect C++ operator keyword flag");
+    (void)CPlusPlusOperatorKeyword;
 
     // If this identifier is a macro, deserialize the macro
     // definition.

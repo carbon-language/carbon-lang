@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <string>
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
   class TargetInfo;
@@ -60,6 +61,10 @@ public:
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
   void InitializeBuiltins(IdentifierTable &Table, bool NoBuiltins = false);
+
+  /// \brief Popular the vector with the names of all of the builtins.
+  void GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
+                       bool NoBuiltins);
   
   /// Builtin::GetName - Return the identifier name for the specified builtin,
   /// e.g. "__builtin_abs".

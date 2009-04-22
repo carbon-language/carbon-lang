@@ -171,6 +171,10 @@ public:
   /// \brief Emit a reference to an identifier
   void AddIdentifierRef(const IdentifierInfo *II, RecordData &Record);
 
+  /// \brief Get the unique number used to refer to the given
+  /// identifier.
+  pch::IdentID getIdentifierRef(const IdentifierInfo *II);
+
   /// \brief Retrieve the offset of the macro definition for the given
   /// identifier.
   ///

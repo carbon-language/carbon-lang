@@ -34,16 +34,17 @@ enum FloatingRank {
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
-                       bool FreeMem, unsigned size_reserve) : 
+                       bool FreeMem, unsigned size_reserve,
+                       bool InitializeBuiltins) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
   ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
   FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels),
   ExternalSource(0) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
-  BuiltinInfo.InitializeTargetBuiltins(Target);
-  BuiltinInfo.InitializeBuiltins(idents, LangOpts.NoBuiltin);
   TUDecl = TranslationUnitDecl::Create(*this);
+  if (InitializeBuiltins)
+    this->InitializeBuiltins(idents);
 }
 
 ASTContext::~ASTContext() {
@@ -92,6 +93,11 @@ ASTContext::~ASTContext() {
     GlobalNestedNameSpecifier->Destroy(*this);
 
   TUDecl->Destroy(*this);
+}
+
+void ASTContext::InitializeBuiltins(IdentifierTable &idents) {
+  BuiltinInfo.InitializeTargetBuiltins(Target);
+  BuiltinInfo.InitializeBuiltins(idents, LangOpts.NoBuiltin);
 }
 
 void 

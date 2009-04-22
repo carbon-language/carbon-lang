@@ -170,6 +170,8 @@ public:
   /// This is intentionally not serialized.  It is populated by the
   /// ASTContext ctor, and there are no external pointers/references to
   /// internal variables of BuiltinInfo.
+  // FIXME: PCH does serialize this information, so that we don't have to
+  // construct it again when the PCH is loaded.
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.
@@ -188,9 +190,19 @@ public:
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels, 
-             bool FreeMemory = true, unsigned size_reserve=0);
+             bool FreeMemory = true, unsigned size_reserve=0,
+             bool InitializeBuiltins = true);
 
   ~ASTContext();
+
+  /// \brief Initialize builtins.
+  ///
+  /// Typically, this routine will be called automatically by the
+  /// constructor. However, in certain cases (e.g., when there is a
+  /// PCH file to be loaded), the constructor does not perform
+  /// initialization for builtins. This routine can be called to
+  /// perform the initialization.
+  void InitializeBuiltins(IdentifierTable &idents);
 
   /// \brief Attach an external AST source to the AST context.
   ///
