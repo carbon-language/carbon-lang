@@ -185,8 +185,15 @@ private:
 
   /// \brief The number of macros de-serialized from the PCH file.
   unsigned NumMacrosRead;
+
   /// \brief The total number of macros stored in the PCH file.
   unsigned TotalNumMacros;
+
+  /// Number of lexical decl contexts read/total.
+  unsigned NumLexicalDeclContextsRead, TotalLexicalDeclContexts;
+
+  /// Number of visible decl contexts read/total.
+  unsigned NumVisibleDeclContextsRead, TotalVisibleDeclContexts;
 
   /// \brief FIXME: document!
   llvm::SmallVector<uint64_t, 4> SpecialTypes;
@@ -211,7 +218,8 @@ public:
 
   explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
     : SemaObj(0), PP(PP), Context(Context), Consumer(0),
-      IdentifierTableData(0), NumStatementsRead(0) { }
+      IdentifierTableData(0), NumStatementsRead(0), NumMacrosRead(0),
+      NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
 
   ~PCHReader() {}
 

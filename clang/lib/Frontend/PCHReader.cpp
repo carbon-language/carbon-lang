@@ -1711,6 +1711,8 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
     case pch::STATISTICS:
       TotalNumStatements = Record[0];
       TotalNumMacros = Record[1];
+      TotalLexicalDeclContexts = Record[2];
+      TotalVisibleDeclContexts = Record[3];
       break;
 
     case pch::TENTATIVE_DEFINITIONS:
@@ -2439,6 +2441,7 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
   // Load all of the declaration IDs
   Decls.clear();
   Decls.insert(Decls.end(), Record.begin(), Record.end());
+  ++NumLexicalDeclContextsRead;
   return false;
 }
 
@@ -2479,6 +2482,7 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
       LoadedDecls.push_back(Record[Idx++]);
   }
 
+  ++NumVisibleDeclContextsRead;
   return false;
 }
 
@@ -2525,6 +2529,14 @@ void PCHReader::PrintStats() {
   std::fprintf(stderr, "  %u/%u macros read (%f%%)\n",
                NumMacrosRead, TotalNumMacros,
                ((float)NumMacrosRead/TotalNumMacros * 100));
+  std::fprintf(stderr, "  %u/%u lexical declcontexts read (%f%%)\n",
+               NumLexicalDeclContextsRead, TotalLexicalDeclContexts,
+               ((float)NumLexicalDeclContextsRead/TotalLexicalDeclContexts
+                * 100));
+  std::fprintf(stderr, "  %u/%u visible declcontexts read (%f%%)\n",
+               NumVisibleDeclContextsRead, TotalVisibleDeclContexts,
+               ((float)NumVisibleDeclContextsRead/TotalVisibleDeclContexts
+                * 100));
   std::fprintf(stderr, "\n");
 }
 

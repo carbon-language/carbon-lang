@@ -1616,6 +1616,7 @@ uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
        D != DEnd; ++D)
     AddDeclRef(*D, Record);
 
+  ++NumLexicalDeclContexts;
   Stream.EmitRecord(pch::DECL_CONTEXT_LEXICAL, Record);
   return Offset;
 }
@@ -1664,6 +1665,7 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
     return 0;
 
   Stream.EmitRecord(pch::DECL_CONTEXT_VISIBLE, Record);
+  ++NumVisibleDeclContexts;
   return Offset;
 }
 
@@ -1997,7 +1999,8 @@ void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
   : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS), 
-    NumStatements(0), NumMacros(0) { }
+    NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
+    NumVisibleDeclContexts(0) { }
 
 void PCHWriter::WritePCH(Sema &SemaRef) {
   ASTContext &Context = SemaRef.Context;
@@ -2078,6 +2081,8 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   Record.clear();
   Record.push_back(NumStatements);
   Record.push_back(NumMacros);
+  Record.push_back(NumLexicalDeclContexts);
+  Record.push_back(NumVisibleDeclContexts);
   Stream.EmitRecord(pch::STATISTICS, Record);
   Stream.ExitBlock();
 }

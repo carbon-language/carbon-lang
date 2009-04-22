@@ -136,6 +136,14 @@ private:
   /// \brief The number of macros written to the PCH file.
   unsigned NumMacros;
 
+  /// \brief The number of lexical declcontexts written to the PCH
+  /// file.
+  unsigned NumLexicalDeclContexts;
+
+  /// \brief The number of visible declcontexts written to the PCH
+  /// file.
+  unsigned NumVisibleDeclContexts;
+
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr);
