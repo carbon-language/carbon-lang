@@ -747,8 +747,6 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   llvm::SmallVector<llvm::Constant*, 16> IvarNames;
   llvm::SmallVector<llvm::Constant*, 16> IvarTypes;
   llvm::SmallVector<llvm::Constant*, 16> IvarOffsets;
-  const llvm::StructLayout *Layout =
-    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(ObjTy));
   ObjTy = llvm::PointerType::getUnqual(ObjTy);
   for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
       endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
@@ -760,12 +758,9 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
       IvarTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
       // Get the offset
-      const FieldDecl *Field = 
-        ClassDecl->lookupFieldDeclForIvar(Context, (*iter));
-      int offset =
-        (int)Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+      uint64_t Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
       IvarOffsets.push_back(
-          llvm::ConstantInt::get(llvm::Type::Int32Ty, offset));
+          llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset));
   }
 
   // Collect information about instance methods
