@@ -739,6 +739,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // See if we can figure out sext(i+constant) doesn't wrap, so we can
         // use a larger add.  This is common in subscripting.
         if (UInst && UInst->getOpcode()==Instruction::Add &&
+            !UInst->use_empty() &&
             allUsesAreSameTyped(Instruction::SExt, UInst) &&
             isa<ConstantInt>(UInst->getOperand(1)) &&
             NoSignedWrap && LimitVal) {
@@ -771,6 +772,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // Try for sext(i | constant).  This is safe as long as the
         // high bit of the constant is not set.
         if (UInst && UInst->getOpcode()==Instruction::Or &&
+            !UInst->use_empty() &&
             allUsesAreSameTyped(Instruction::SExt, UInst) && NoSignedWrap &&
             isa<ConstantInt>(UInst->getOperand(1))) {
           ConstantInt* RHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
@@ -841,6 +843,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
           ConstantInt* AddRHS = dyn_cast<ConstantInt>(UInst->getOperand(1));
           Instruction *UInst2 = dyn_cast<Instruction>(UInst->use_begin());
           if (UInst2 && UInst2->getOpcode() == Instruction::And &&
+              !UInst2->use_empty() &&
               allUsesAreSameTyped(Instruction::ZExt, UInst2) &&
               isa<ConstantInt>(UInst2->getOperand(1))) {
             ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst2->use_begin());
