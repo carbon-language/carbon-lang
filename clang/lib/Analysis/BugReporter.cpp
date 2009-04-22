@@ -791,7 +791,7 @@ class VISIBILITY_HIDDEN EdgeBuilder {
     if (L.asLocation().isFileID()) {
       // For contexts, we only one the first character as the range.
       L = PathDiagnosticLocation(L.asLocation(), L.getManager());      
-      rawAddEdge(CLocs.back());
+      rawAddEdge(L);
     }
     CLocs.pop_back();
   }
