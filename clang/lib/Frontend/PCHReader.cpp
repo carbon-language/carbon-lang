@@ -2090,10 +2090,14 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     assert(false && "Cannot de-serialize ObjC qualified interface types yet");
     return QualType();
 
-  case pch::TYPE_OBJC_QUALIFIED_ID:
-    // FIXME: Deserialize ObjCQualifiedIdType
-    assert(false && "Cannot de-serialize ObjC qualified id types yet");
-    return QualType();
+  case pch::TYPE_OBJC_QUALIFIED_ID: {
+    unsigned Idx = 0;
+    unsigned NumProtos = Record[Idx++];
+    llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
+    for (unsigned I = 0; I != NumProtos; ++I)
+      Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
+    return Context.getObjCQualifiedIdType(&Protos[0], NumProtos);
+  }
 
   case pch::TYPE_OBJC_QUALIFIED_CLASS:
     // FIXME: Deserialize ObjCQualifiedClassType

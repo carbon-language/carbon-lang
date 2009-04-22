@@ -1174,6 +1174,7 @@ void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
 
 void PCHStmtWriter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   VisitExpr(E);
+  assert(0 && "Can't write a selector yet!");
   // FIXME!  Write selectors.
   //Writer.WriteSubStmt(E->getSelector());
   Writer.AddSourceLocation(E->getAtLoc(), Record);

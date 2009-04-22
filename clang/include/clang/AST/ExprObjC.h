@@ -264,10 +264,7 @@ public:
 /// Key Value Encoding, a generic concept for accessing or setting a 'Key'
 /// value for an object.
 ///
-
 class ObjCKVCRefExpr : public Expr {
-private:
-  
   ObjCMethodDecl *Setter;
   ObjCMethodDecl *Getter;
   SourceLocation Loc;
@@ -466,7 +463,6 @@ public:
 /// which refers to the object on which the current method is executing.
 class ObjCSuperExpr : public Expr {
   SourceLocation Loc;
-
 public:
   ObjCSuperExpr(SourceLocation L, QualType Type) 
     : Expr(ObjCSuperExprClass, Type), Loc(L) { }

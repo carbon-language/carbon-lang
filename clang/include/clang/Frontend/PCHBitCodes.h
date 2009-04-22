@@ -533,6 +533,8 @@ namespace clang {
       /// \brief A ObjCProtocolExpr record.
       EXPR_OBJC_PROTOCOL_EXPR
 
+      // FIXME: From ExprObjC.h: ObjCIvarRefExpr, ObjCPropertyRefExpr,
+      // ObjCKVCRefExpr, ObjCMessageExpr, ObjCSuperExpr
     };
 
     /// \brief The kinds of designators that can occur in a
