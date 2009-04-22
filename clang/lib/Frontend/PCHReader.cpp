@@ -1803,9 +1803,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     if (Pos == IdTable->end())
       continue;
 
-    fprintf(stderr, "Looked up pre-allocated IdentifierInfo \"%s\"\n",
-            II->getName());
-
     // Dereferencing the iterator has the effect of populating the
     // IdentifierInfo node with the various declarations it needs.
     (void)*Pos;
