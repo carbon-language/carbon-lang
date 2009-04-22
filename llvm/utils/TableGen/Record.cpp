@@ -395,7 +395,7 @@ std::string ListInit::getAsString() const {
   return Result + "]";
 }
 
-Init *BinOpInit::Fold() {
+Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   switch (getOpcode()) {
   default: assert(0 && "Unknown binop");
   case CONCAT: {
@@ -437,6 +437,43 @@ Init *BinOpInit::Fold() {
       return new StringInit(LHSs->getValue() + RHSs->getValue());
     break;
   }
+  case NAMECONCAT: {
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
+    if (LHSs && RHSs) {
+      std::string Name(LHSs->getValue() + RHSs->getValue());
+
+      // From TGParser::ParseIDValue
+      if (CurRec) {
+        if (const RecordVal *RV = CurRec->getValue(Name))
+          return new VarInit(Name, RV->getType());
+
+        std::string TemplateArgName = CurRec->getName()+":"+Name;
+        if (CurRec->isTemplateArg(TemplateArgName)) {
+          const RecordVal *RV = CurRec->getValue(TemplateArgName);
+          assert(RV && "Template arg doesn't exist??");
+          return new VarInit(TemplateArgName, RV->getType());
+        }
+      }
+
+      if (CurMultiClass) {
+        std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
+        if (CurMultiClass->Rec.isTemplateArg(MCName)) {
+          const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
+          assert(RV && "Template arg doesn't exist??");
+          return new VarInit(MCName, RV->getType());
+        }
+      }
+
+      if (Record *D = Records.getDef(Name))
+        return new DefInit(D);
+
+      cerr << "Variable not defined: '" + Name + "'\n";
+      assert(0 && "Variable not found");
+      return 0;
+    }
+    break;
+  }
   case SHL:
   case SRA:
   case SRL: {
@@ -464,8 +501,8 @@ Init *BinOpInit::resolveReferences(Record &R, const RecordVal *RV) {
   Init *rhs = RHS->resolveReferences(R, RV);
   
   if (LHS != lhs || RHS != rhs)
-    return (new BinOpInit(getOpcode(), lhs, rhs))->Fold();
-  return Fold();
+    return (new BinOpInit(getOpcode(), lhs, rhs))->Fold(&R, 0);
+  return Fold(&R, 0);
 }
 
 std::string BinOpInit::getAsString() const {
@@ -476,6 +513,7 @@ std::string BinOpInit::getAsString() const {
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;
   case STRCONCAT: Result = "!strconcat"; break;
+  case NAMECONCAT: Result = "!nameconcat"; break;
   }
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
 }

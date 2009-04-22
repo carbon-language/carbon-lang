@@ -398,6 +398,11 @@ supported include:</p>
 <dt><tt>!strconcat(a, b)</tt></dt>
   <dd>A string value that is the result of concatenating the 'a' and 'b'
   strings.</dd>
+<dt><tt>!nameconcat(a, b)</tt></dt>
+  <dd>A value that is the result of concatenating the 'a' and 'b'
+  strings and looking up the resulting name in the symbol table.  The symbol type 
+  determines the type of the resulting value.  If the symbol is not found, 
+  TableGen emits an error and aborts.</dd>
 </dl>
 
 <p>Note that all of the values have rules specifying how they convert to values
@@ -627,8 +632,9 @@ Here is an example TableGen fragment that shows this idea:
 
 <p>The name of the resultant definitions has the multidef fragment names
    appended to them, so this defines <tt>ADD_rr</tt>, <tt>ADD_ri</tt>,
-   <tt>SUB_rr</tt>, etc.  Using a multiclass this way is exactly equivalent to
-   instantiating the classes multiple times yourself, e.g. by writing:</p>
+   <tt>SUB_rr</tt>, etc.  Using a multiclass this way is exactly
+   equivalent to instantiating the classes multiple times yourself,
+   e.g. by writing:</p>
 
 <div class="doc_code">
 <pre>

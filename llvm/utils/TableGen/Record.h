@@ -53,6 +53,7 @@ class VarListElementInit;
 // Other classes.
 class Record;
 class RecordVal;
+class MultiClass;
 
 //===----------------------------------------------------------------------===//
 //  Type Classes
@@ -659,7 +660,7 @@ public:
 ///
 class BinOpInit : public Init {
 public:
-  enum BinaryOp { SHL, SRA, SRL, STRCONCAT, CONCAT };
+  enum BinaryOp { SHL, SRA, SRL, STRCONCAT, CONCAT, NAMECONCAT };
 private:
   BinaryOp Opc;
   Init *LHS, *RHS;
@@ -673,7 +674,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold();
+  Init *Fold(Record *CurRec, MultiClass *CurMultiClass);
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
@@ -1123,6 +1124,14 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &OS, const Record &R);
+
+struct MultiClass {
+  Record Rec;  // Placeholder for template args and Name.
+  typedef std::vector<Record*> RecordVector;
+  RecordVector DefPrototypes;
+    
+  MultiClass(const std::string &Name, TGLoc Loc) : Rec(Name, Loc) {}
+};
 
 class RecordKeeper {
   std::map<std::string, Record*> Classes, Defs;

@@ -127,7 +127,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     OperandList.clear();
     return;
   }
-  DI = (DagInit*)(new BinOpInit(BinOpInit::CONCAT, DI, IDI))->Fold();
+  DI = (DagInit*)(new BinOpInit(BinOpInit::CONCAT, DI, IDI))->Fold(R, 0);
 
   unsigned MIOperandNo = 0;
   std::set<std::string> OperandNames;

@@ -429,11 +429,12 @@ tgtok::TokKind TGLexer::LexExclaim() {
   // Check to see which operator this is.
   unsigned Len = CurPtr-Start;
   
-  if (Len == 3 && !memcmp(Start, "con", 3)) return tgtok::XConcat;
-  if (Len == 3 && !memcmp(Start, "sra", 3)) return tgtok::XSRA;
-  if (Len == 3 && !memcmp(Start, "srl", 3)) return tgtok::XSRL;
-  if (Len == 3 && !memcmp(Start, "shl", 3)) return tgtok::XSHL;
-  if (Len == 9 && !memcmp(Start, "strconcat", 9)) return tgtok::XStrConcat;
+  if (Len == 3  && !memcmp(Start, "con", 3)) return tgtok::XConcat;
+  if (Len == 3  && !memcmp(Start, "sra", 3)) return tgtok::XSRA;
+  if (Len == 3  && !memcmp(Start, "srl", 3)) return tgtok::XSRL;
+  if (Len == 3  && !memcmp(Start, "shl", 3)) return tgtok::XSHL;
+  if (Len == 9  && !memcmp(Start, "strconcat", 9))   return tgtok::XStrConcat;
+  if (Len == 10 && !memcmp(Start, "nameconcat", 10)) return tgtok::XNameConcat;
   
   return ReturnError(Start-1, "Unknown operator");
 }

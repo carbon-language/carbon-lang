@@ -23,14 +23,6 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-struct MultiClass {
-  Record Rec;  // Placeholder for template args and Name.
-  typedef std::vector<Record*> RecordVector;
-  RecordVector DefPrototypes;
-    
-  MultiClass(const std::string &Name, TGLoc Loc) : Rec(Name, Loc) {}
-};
-  
 struct SubClassReference {
   TGLoc RefLoc;
   Record *Rec;
@@ -777,14 +769,47 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   }
   case tgtok::l_paren: {         // Value ::= '(' IDValue DagArgList ')'
     Lex.Lex();   // eat the '('
-    if (Lex.getCode() != tgtok::Id) {
+    if (Lex.getCode() != tgtok::Id
+        && Lex.getCode() != tgtok::XNameConcat) {
       TokError("expected identifier in dag init");
       return 0;
     }
     
-    Init *Operator = ParseIDValue(CurRec);
-    if (Operator == 0) return 0;
-    
+    Init *Operator = 0;
+    if (Lex.getCode() == tgtok::Id) {
+      Operator = ParseIDValue(CurRec);
+      if (Operator == 0) return 0;
+    }
+    else {
+      BinOpInit::BinaryOp Code = BinOpInit::NAMECONCAT;
+ 
+      Lex.Lex();  // eat the operation
+      if (Lex.getCode() != tgtok::l_paren) {
+        TokError("expected '(' after binary operator");
+        return 0;
+      }
+      Lex.Lex();  // eat the '('
+
+      Init *LHS = ParseValue(CurRec);
+      if (LHS == 0) return 0;
+
+      if (Lex.getCode() != tgtok::comma) {
+        TokError("expected ',' in binary operator");
+        return 0;
+      }
+      Lex.Lex();  // eat the ','
+
+      Init *RHS = ParseValue(CurRec);
+       if (RHS == 0) return 0;
+
+       if (Lex.getCode() != tgtok::r_paren) {
+         TokError("expected ')' in binary operator");
+         return 0;
+       }
+       Lex.Lex();  // eat the ')'
+       Operator = (new BinOpInit(Code, LHS, RHS))->Fold(CurRec, CurMultiClass);
+    }
+
     // If the operator name is present, parse it.
     std::string OperatorName;
     if (Lex.getCode() == tgtok::colon) {
@@ -795,7 +820,6 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       OperatorName = Lex.getCurStrVal();
       Lex.Lex();  // eat the VarName.
     }
-    
     
     std::vector<std::pair<llvm::Init*, std::string> > DagArgs;
     if (Lex.getCode() != tgtok::r_paren) {
@@ -815,15 +839,17 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   case tgtok::XSRA: 
   case tgtok::XSRL:
   case tgtok::XSHL:
-  case tgtok::XStrConcat: {  // Value ::= !binop '(' Value ',' Value ')'
+  case tgtok::XStrConcat:
+  case tgtok::XNameConcat: {  // Value ::= !binop '(' Value ',' Value ')'
     BinOpInit::BinaryOp Code;
     switch (Lex.getCode()) {
     default: assert(0 && "Unhandled code!");
-    case tgtok::XConcat:    Code = BinOpInit::CONCAT; break;
-    case tgtok::XSRA:       Code = BinOpInit::SRA; break;
-    case tgtok::XSRL:       Code = BinOpInit::SRL; break;
-    case tgtok::XSHL:       Code = BinOpInit::SHL; break;
-    case tgtok::XStrConcat: Code = BinOpInit::STRCONCAT; break;
+    case tgtok::XConcat:     Code = BinOpInit::CONCAT; break;
+    case tgtok::XSRA:        Code = BinOpInit::SRA; break;
+    case tgtok::XSRL:        Code = BinOpInit::SRL; break;
+    case tgtok::XSHL:        Code = BinOpInit::SHL; break;
+    case tgtok::XStrConcat:  Code = BinOpInit::STRCONCAT; break;
+    case tgtok::XNameConcat: Code = BinOpInit::NAMECONCAT; break;
     }
     Lex.Lex();  // eat the operation
     if (Lex.getCode() != tgtok::l_paren) {
@@ -831,7 +857,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       return 0;
     }
     Lex.Lex();  // eat the '('
-    
+
     Init *LHS = ParseValue(CurRec);
     if (LHS == 0) return 0;
 
@@ -849,7 +875,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       return 0;
     }
     Lex.Lex();  // eat the ')'
-    return (new BinOpInit(Code, LHS, RHS))->Fold();
+    return (new BinOpInit(Code, LHS, RHS))->Fold(CurRec, CurMultiClass);
   }
   }
   
