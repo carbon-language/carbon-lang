@@ -787,7 +787,8 @@ class VISIBILITY_HIDDEN EdgeBuilder {
   void rawAddEdge(PathDiagnosticLocation NewLoc);
   
   void popLocation() {
-    rawAddEdge(CLocs.back());
+    PathDiagnosticLocation L = CLocs.back();
+    if (L.asLocation().isFileID()) rawAddEdge(CLocs.back());
     CLocs.pop_back();
   }
   
@@ -945,8 +946,6 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
     // Context does not contain the location.  Flush it.
     popLocation();
   }
-
-  assert(0 && "addEdge should never pop the top context");
 }
 
 void EdgeBuilder::addContext(const Stmt *S) {
