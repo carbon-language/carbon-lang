@@ -654,6 +654,10 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty
     return getUnknown(
         ConstantExpr::getTrunc(SC->getValue(), Ty));
 
+  // trunc(trunc(x)) --> trunc(x)
+  if (SCEVTruncateExpr *ST = dyn_cast<SCEVTruncateExpr>(Op))
+    return getTruncateExpr(ST->getOperand(), Ty);
+
   // If the input value is a chrec scev made out of constants, truncate
   // all of the constants.
   if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
@@ -685,6 +689,10 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
     return getUnknown(C);
   }
 
+  // zext(zext(x)) --> zext(x)
+  if (SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
+    return getZeroExtendExpr(SZ->getOperand(), Ty);
+
   // FIXME: If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
   // operands (often constants).  This would allow analysis of something like
@@ -705,6 +713,10 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *
     if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
     return getUnknown(C);
   }
+
+  // sext(sext(x)) --> sext(x)
+  if (SCEVSignExtendExpr *SS = dyn_cast<SCEVSignExtendExpr>(Op))
+    return getSignExtendExpr(SS->getOperand(), Ty);
 
   // FIXME: If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can sign extend all of the
