@@ -41,6 +41,22 @@ CGObjCRuntime::GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
   return cast<llvm::StructType>(CGM.getTypes().ConvertTagDeclType(RD));
 }
 
+
+/// LookupFieldDeclForIvar - looks up a field decl in the laid out
+/// storage which matches this 'ivar'.
+///
+static const FieldDecl *LookupFieldDeclForIvar(ASTContext &Context, 
+                                               const ObjCInterfaceDecl *OID,
+                                               const ObjCIvarDecl *OIVD) {
+  assert(!OID->isForwardDecl() && "Invalid interface decl!");
+  const RecordDecl *RecordForDecl = Context.addRecordToClass(OID);
+  assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
+  DeclContext::lookup_const_result Lookup =
+    RecordForDecl->lookup(Context, OIVD->getDeclName());
+  assert((Lookup.first != Lookup.second) && "field decl not found");
+  return cast<FieldDecl>(*Lookup.first);
+}
+
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
                                               const ObjCInterfaceDecl *OID,
                                               const ObjCIvarDecl *Ivar) {
@@ -50,7 +66,7 @@ uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
   const llvm::StructLayout *Layout = 
     CGM.getTargetData().getStructLayout(STy);
   const FieldDecl *Field = 
-    OID->lookupFieldDeclForIvar(CGM.getContext(), Ivar);
+    LookupFieldDeclForIvar(CGM.getContext(), OID, Ivar);
   if (!Field->isBitField())
     return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
   
@@ -82,7 +98,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // since the structure layout is fixed; however for that we need to
   // be able to walk the class chain for an Ivar.
   const FieldDecl *Field = 
-    OID->lookupFieldDeclForIvar(CGF.CGM.getContext(), Ivar);
+    LookupFieldDeclForIvar(CGF.CGM.getContext(), OID, Ivar);
   
   // (char *) BaseValue
   llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);

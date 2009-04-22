@@ -434,9 +434,6 @@ public:
     IVars.set(List, Num, C);
   }
 
-  const FieldDecl *lookupFieldDeclForIvar(ASTContext &Ctx, 
-                                          const ObjCIvarDecl *IV) const;
-
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
   

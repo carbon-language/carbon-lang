@@ -375,21 +375,6 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
   return 0;
 }
 
-/// lookupFieldDeclForIvar - looks up a field decl in the laid out
-/// storage which matches this 'ivar'.
-///
-const FieldDecl *
-ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
-                                          const ObjCIvarDecl *IVar) const {
-  assert(!isForwardDecl() && "Invalid interface decl!");
-  const RecordDecl *RecordForDecl = Context.addRecordToClass(this);
-  assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
-  DeclContext::lookup_const_result Lookup =
-    RecordForDecl->lookup(Context, IVar->getDeclName());
-  assert((Lookup.first != Lookup.second) && "field decl not found");
-  return cast<FieldDecl>(*Lookup.first);
-}
-
 //===----------------------------------------------------------------------===//
 // ObjCIvarDecl
 //===----------------------------------------------------------------------===//
