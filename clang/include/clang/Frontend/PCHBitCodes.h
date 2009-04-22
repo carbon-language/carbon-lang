@@ -134,7 +134,7 @@ namespace clang {
 
       /// \brief Record code for the array of external definitions.
       ///
-      /// The PCH file contains a list of all of the external
+      /// The PCH file contains a list of all of the unnamed external
       /// definitions present within the parsed headers, stored as an
       /// array of declaration IDs. These external definitions will be
       /// reported to the AST consumer after the PCH file has been
@@ -151,9 +151,12 @@ namespace clang {
       /// offsets into this record.
       SPECIAL_TYPES = 8,
 
-      /// \brief Record code for the block of extra statistics we
-      /// gather while generating a PCH file.
-      STATISTICS = 9
+      /// \brief Record code for the extra statistics we gather while
+      /// generating a PCH file.
+      STATISTICS = 9,
+
+      /// \brief Record code for the array of tentative definitions.
+      TENTATIVE_DEFINITIONS = 10
     };
 
     /// \brief Record types used within a source manager block.

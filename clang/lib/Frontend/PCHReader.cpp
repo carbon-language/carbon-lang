@@ -1713,6 +1713,13 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
       TotalNumMacros = Record[1];
       break;
 
+    case pch::TENTATIVE_DEFINITIONS:
+      if (!TentativeDefinitions.empty()) {
+        Error("Duplicate TENTATIVE_DEFINITIONS record in PCH file");
+        return Failure;
+      }
+      TentativeDefinitions.swap(Record);
+      break;
     }
   }
 
@@ -2523,6 +2530,13 @@ void PCHReader::InitializeSema(Sema &S) {
     SemaObj->IdResolver.AddDecl(PreloadedDecls[I]);
   }
   PreloadedDecls.clear();
+
+  // If there were any tentative definitions, deserialize them and add
+  // them to Sema's table of tentative definitions.
+  for (unsigned I = 0, N = TentativeDefinitions.size(); I != N; ++I) {
+    VarDecl *Var = cast<VarDecl>(GetDecl(TentativeDefinitions[I]));
+    SemaObj->TentativeDefinitions[Var->getDeclName()] = Var;
+  }
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {

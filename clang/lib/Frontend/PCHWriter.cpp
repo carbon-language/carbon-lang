@@ -2024,6 +2024,15 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
       getIdentifierRef(&Table.get(BuiltinNames[I]));
   }
 
+  // Build a record containing all of the tentative definitions in
+  // this header file. Generally, this record will be empty.
+  RecordData TentativeDefinitions;
+  for (llvm::DenseMap<DeclarationName, VarDecl *>::iterator 
+         TD = SemaRef.TentativeDefinitions.begin(),
+         TDEnd = SemaRef.TentativeDefinitions.end();
+       TD != TDEnd; ++TD)
+    AddDeclRef(TD->second, TentativeDefinitions);
+
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 3);
@@ -2042,8 +2051,13 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   AddTypeRef(Context.getBuiltinVaListType(), Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
 
+  // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
     Stream.EmitRecord(pch::EXTERNAL_DEFINITIONS, ExternalDefinitions);
+
+  // Write the record containing tentative definitions.
+  if (!TentativeDefinitions.empty())
+    Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
   
   // Some simple statistics
   Record.clear();

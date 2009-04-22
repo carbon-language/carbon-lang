@@ -149,6 +149,10 @@ private:
   /// file.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
 
+  /// \brief The set of tentative definitions stored in the the PCH
+  /// file.
+  llvm::SmallVector<uint64_t, 16> TentativeDefinitions;
+
   /// \brief Mapping from switch-case IDs in the PCH file to
   /// switch-case statements.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
