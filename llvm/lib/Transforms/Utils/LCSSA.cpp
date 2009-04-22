@@ -40,6 +40,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/PredIteratorCache.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;
@@ -55,6 +56,7 @@ namespace {
     LoopInfo *LI;
     DominatorTree *DT;
     std::vector<BasicBlock*> LoopBlocks;
+    PredIteratorCache PredCache;
     
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -104,6 +106,7 @@ const PassInfo *const llvm::LCSSAID = &X;
 
 /// runOnFunction - Process all loops in the function, inner-most out.
 bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
+  PredCache.clear();
   
   LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
@@ -163,7 +166,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
       Phi = PN;
 
       // Add inputs from inside the loop for this PHI.
-      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+      for (BasicBlock** PI = PredCache.GetPreds(BB); *PI; ++PI)
         PN->addIncoming(Instr, *PI);
     }
   }
@@ -264,7 +267,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   Phis.insert(std::make_pair(BB, PN));
                                  
   // Fill in the incoming values for the block.
-  for (pred_iterator PI = pred_begin(BBN), E = pred_end(BBN); PI != E; ++PI)
+  for (BasicBlock** PI = PredCache.GetPreds(BBN); *PI; ++PI)
     PN->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
   return PN;
 }
