@@ -134,9 +134,68 @@ public:
 class ObjCTypesHelper : public ObjCCommonTypesHelper {
 private:
   
-  llvm::Constant *MessageSendFn, *MessageSendStretFn, *MessageSendFpretFn;
-  llvm::Constant *MessageSendSuperFn, *MessageSendSuperStretFn, 
-    *MessageSendSuperFpretFn;
+  llvm::Constant *getMessageSendFn() {
+    // id objc_msgSend (id, SEL, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                        Params, true),
+                                "objc_msgSend");
+  }
+  
+  llvm::Constant *getMessageSendStretFn() {
+    // id objc_msgSend_stret (id, SEL, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                        Params, true),
+                                "objc_msgSend_stret");
+    
+  }
+  
+  llvm::Constant *getMessageSendFpretFn() {
+    // FIXME: This should be long double on x86_64?
+    // [double | long double] objc_msgSend_fpret(id self, SEL op, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
+                                                        Params,
+                                                        true),
+                                "objc_msgSend_fpret");
+    
+  }
+  
+  llvm::Constant *getMessageSendSuperFn() {
+    // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     "objc_msgSendSuper");
+  }
+  llvm::Constant *getMessageSendSuperStretFn() {
+    // void objc_msgSendSuper_stret(void * stretAddr, struct objc_super *super, 
+    //                              SEL op, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(Int8PtrTy);
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, true),
+                                     "objc_msgSendSuper_stret");
+  }
+  
+  llvm::Constant *getMessageSendSuperFpretFn() {
+    // There is no objc_msgSendSuper_fpret? How can that work?
+    return getMessageSendSuperFn();
+  }
 
 public:
   /// SymtabTy - LLVM type for struct objc_symtab.
@@ -249,15 +308,15 @@ public:
 
 
   llvm::Constant *getSendFn(bool IsSuper) {
-    return IsSuper ? MessageSendSuperFn : MessageSendFn;
+    return IsSuper ? getMessageSendSuperFn() : getMessageSendFn();
   }
 
   llvm::Constant *getSendStretFn(bool IsSuper) {
-    return IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
+    return IsSuper ? getMessageSendSuperStretFn() : getMessageSendStretFn();
   }
 
   llvm::Constant *getSendFpretFn(bool IsSuper) {
-    return IsSuper ? MessageSendSuperFpretFn : MessageSendFpretFn;
+    return IsSuper ? getMessageSendSuperFpretFn() : getMessageSendFpretFn();
   }
 };
 
@@ -3589,64 +3648,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                           NULL);
   CGM.getModule().addTypeName("struct._objc_module", ModuleTy);
 
-  // Message send functions.
-
-  // id objc_msgSend (id, SEL, ...)
-  std::vector<const llvm::Type*> Params;
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  MessageSendFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSend");
-  
-  // id objc_msgSend_stret (id, SEL, ...)
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  MessageSendStretFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSend_stret");
-
-  // 
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(SelectorPtrTy);
-  // FIXME: This should be long double on x86_64?
-  // [double | long double] objc_msgSend_fpret(id self, SEL op, ...)
-  MessageSendFpretFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSend_fpret");
-  
-  // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
-  Params.clear();
-  Params.push_back(SuperPtrTy);
-  Params.push_back(SelectorPtrTy);
-  MessageSendSuperFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSendSuper");
-
-  // void objc_msgSendSuper_stret(void * stretAddr, struct objc_super *super, 
-  //                              SEL op, ...)
-  Params.clear();
-  Params.push_back(Int8PtrTy);
-  Params.push_back(SuperPtrTy);
-  Params.push_back(SelectorPtrTy);
-  MessageSendSuperStretFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSendSuper_stret");
-
-  // There is no objc_msgSendSuper_fpret? How can that work?
-  MessageSendSuperFpretFn = MessageSendSuperFn;
   
   // FIXME: This is the size of the setjmp buffer and should be 
   // target specific. 18 is what's used on 32-bit X86.
