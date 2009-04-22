@@ -32,7 +32,7 @@ namespace llvm {
     std::map<SCEVHandle, Value*> InsertedExpressions;
     std::set<Instruction*> InsertedInstructions;
 
-    Instruction *InsertPt;
+    BasicBlock::iterator InsertPt;
 
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
@@ -71,12 +71,13 @@ namespace llvm {
       InsertedInstructions.insert(I);
     }
 
-    Instruction *getInsertionPoint() const { return InsertPt; }
-    
+    BasicBlock::iterator getInsertionPoint() const { return InsertPt; }
+
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(SCEVHandle SH, const Type *Ty, Instruction *IP);
+    Value *expandCodeFor(SCEVHandle SH, const Type *Ty,
+                         BasicBlock::iterator IP);
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
     /// we can to share the casts.
@@ -90,7 +91,7 @@ namespace llvm {
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
-                              Value *RHS, Instruction *InsertPt);
+                              Value *RHS, BasicBlock::iterator InsertPt);
 
   private:
     Value *expand(const SCEV *S);
