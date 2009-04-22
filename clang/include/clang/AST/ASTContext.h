@@ -299,7 +299,7 @@ public:
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
-  QualType getObjCInterfaceType(ObjCInterfaceDecl *Decl);
+  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
                                    IdentifierInfo *Name = 0);

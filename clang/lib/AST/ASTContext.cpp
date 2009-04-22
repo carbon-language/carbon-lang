@@ -1383,10 +1383,11 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
 
 /// getObjCInterfaceType - Return the unique reference to the type for the
 /// specified ObjC interface decl.
-QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
+QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  Decl->TypeForDecl = new(*this,8) ObjCInterfaceType(Type::ObjCInterface, Decl);
+  ObjCInterfaceDecl *OID = const_cast<ObjCInterfaceDecl*>(Decl);
+  Decl->TypeForDecl = new(*this,8) ObjCInterfaceType(Type::ObjCInterface, OID);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }

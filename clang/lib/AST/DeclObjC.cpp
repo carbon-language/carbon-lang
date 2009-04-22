@@ -277,7 +277,7 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
     // There may be no interface context due to error in declaration
     // of the interface (which has been reported). Recover gracefully.
     if (OID) {
-      selfTy =Context.getObjCInterfaceType(const_cast<ObjCInterfaceDecl*>(OID));
+      selfTy = Context.getObjCInterfaceType(OID);
       selfTy = Context.getPointerType(selfTy);
     } else {
       selfTy = Context.getObjCIdType();

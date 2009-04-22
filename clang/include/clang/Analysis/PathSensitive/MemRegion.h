@@ -463,8 +463,7 @@ public:
   }
   
   QualType getRValueType(ASTContext& C) const {
-    ObjCInterfaceDecl* ID = const_cast<ObjCInterfaceDecl*>(getInterface());
-    return C.getObjCInterfaceType(ID);
+    return C.getObjCInterfaceType(getInterface());
   }
   
   static bool classof(const MemRegion* R) {

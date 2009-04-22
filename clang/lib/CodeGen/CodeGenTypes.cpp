@@ -199,8 +199,7 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
 
 void CodeGenTypes::UpdateCompletedType(const ObjCInterfaceDecl *OID) {
   // Check to see if we have already laid this type out, if not, just return.
-  QualType OIDTy = 
-    Context.getObjCInterfaceType(const_cast<ObjCInterfaceDecl*>(OID));
+  QualType OIDTy = Context.getObjCInterfaceType(OID);
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator TCI =
     TypeCache.find(OIDTy.getTypePtr());
   if (TCI == TypeCache.end()) return;
