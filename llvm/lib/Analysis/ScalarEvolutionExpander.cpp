@@ -49,6 +49,9 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
             // If the cast isn't the first instruction of the function, move it.
             if (BasicBlock::iterator(CI) != 
                 A->getParent()->getEntryBlock().begin()) {
+              // If the CastInst is the insert point, change the insert point.
+              if (CI == InsertPt) ++InsertPt;
+              // Splice the cast at the beginning of the entry block.
               CI->moveBefore(A->getParent()->getEntryBlock().begin());
             }
             return CI;
@@ -71,6 +74,8 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
             It = cast<InvokeInst>(I)->getNormalDest()->begin();
           while (isa<PHINode>(It)) ++It;
           if (It != BasicBlock::iterator(CI)) {
+            // If the CastInst is the insert point, change the insert point.
+            if (CI == InsertPt) ++InsertPt;
             // Splice the cast immediately after the operand in question.
             CI->moveBefore(It);
           }
