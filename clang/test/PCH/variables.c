@@ -11,8 +11,8 @@ float *fp = &ip; // expected-warning{{incompatible pointer types}}
 double z; // expected-error{{redefinition}}
 // FIXME:variables.h expected-note{{previous}}
 int z2 = 18; // expected-error{{redefinition}}
-//double VeryHappy; // FIXME: xpected-error{{redefinition}}
-
+double VeryHappy; // expected-error{{redefinition}}
+// FIXME:variables.h expected-note{{previous definition is here}}
 
 int Q = A_MACRO_IN_THE_PCH;
 
