@@ -575,8 +575,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::Vector:
   case Type::ExtVector:
   case Type::ExtQual:
-  case Type::ObjCQualifiedInterface:
-  case Type::ObjCQualifiedId:
   case Type::FixedWidthInt:
   case Type::BlockPointer:
   case Type::MemberPointer:
@@ -584,16 +582,18 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::QualifiedName:
     // Unsupported types
     return llvm::DIType();
-
+  case Type::ObjCQualifiedId:   // Encode id<p> in debug info just like id.
+    return Slot = getOrCreateType(M->getContext().getObjCIdType(), Unit);
+      
+  case Type::ObjCQualifiedInterface:  // Drop protocols from interface.
   case Type::ObjCInterface: 
-    Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit); break;
-  case Type::Builtin: Slot = CreateType(cast<BuiltinType>(Ty), Unit); break;
-  case Type::Pointer: Slot = CreateType(cast<PointerType>(Ty), Unit); break;
-  case Type::Typedef: Slot = CreateType(cast<TypedefType>(Ty), Unit); break;
+    return Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit);
+  case Type::Builtin: return Slot = CreateType(cast<BuiltinType>(Ty), Unit);
+  case Type::Pointer: return Slot = CreateType(cast<PointerType>(Ty), Unit);
+  case Type::Typedef: return Slot = CreateType(cast<TypedefType>(Ty), Unit);
   case Type::Record:
   case Type::Enum:
-    Slot = CreateType(cast<TagType>(Ty), Unit); 
-    break;
+    return Slot = CreateType(cast<TagType>(Ty), Unit); 
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return Slot = CreateType(cast<FunctionType>(Ty), Unit);
