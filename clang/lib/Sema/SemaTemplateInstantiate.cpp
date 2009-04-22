@@ -540,14 +540,6 @@ InstantiateObjCQualifiedIdType(const ObjCQualifiedIdType *T,
   return QualType();
 }
 
-QualType 
-TemplateTypeInstantiator::
-InstantiateObjCQualifiedClassType(const ObjCQualifiedClassType *T,
-                                  unsigned Quals) const {
-  assert(false && "Objective-C types cannot be dependent");
-  return QualType();
-}
-
 /// \brief The actual implementation of Sema::InstantiateType().
 QualType TemplateTypeInstantiator::Instantiate(QualType T) const {
   // If T is not a dependent type, there is nothing to do.

@@ -78,7 +78,6 @@ DEPENDENT_TYPE(Typename, Type)
 TYPE(ObjCInterface, Type)
 TYPE(ObjCQualifiedInterface, ObjCInterfaceType)
 TYPE(ObjCQualifiedId, Type)
-TYPE(ObjCQualifiedClass, Type)
 
 #undef DEPENDENT_TYPE
 #undef NON_CANONICAL_TYPE

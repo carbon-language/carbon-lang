@@ -228,14 +228,6 @@ void PCHTypeWriter::VisitObjCQualifiedIdType(const ObjCQualifiedIdType *T) {
   Code = pch::TYPE_OBJC_QUALIFIED_ID;
 }
 
-void 
-PCHTypeWriter::VisitObjCQualifiedClassType(const ObjCQualifiedClassType *T) {
-  Record.push_back(T->getNumProtocols());
-  for (unsigned I = 0, N = T->getNumProtocols(); I != N; ++I)
-    Writer.AddDeclRef(T->getProtocols(I), Record);
-  Code = pch::TYPE_OBJC_QUALIFIED_CLASS;
-}
-
 //===----------------------------------------------------------------------===//
 // Declaration serialization
 //===----------------------------------------------------------------------===//

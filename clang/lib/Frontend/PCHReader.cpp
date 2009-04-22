@@ -2103,13 +2103,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
     return Context.getObjCQualifiedIdType(&Protos[0], NumProtos);
   }
-
-  case pch::TYPE_OBJC_QUALIFIED_CLASS:
-    // FIXME: Deserialize ObjCQualifiedClassType
-    assert(false && "Cannot de-serialize ObjC qualified class types yet");
-    return QualType();
   }
-
   // Suppress a GCC warning
   return QualType();
 }

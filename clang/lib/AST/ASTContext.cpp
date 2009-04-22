@@ -431,7 +431,6 @@ ASTContext::getTypeInfo(const Type *T) {
     // alignment requirements: getPointerInfo should take an AddrSpace.
     return getTypeInfo(QualType(cast<ExtQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
-  case Type::ObjCQualifiedClass:
   case Type::ObjCQualifiedInterface:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
@@ -3135,9 +3134,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return QualType();
   case Type::FixedWidthInt:
     // Distinct fixed-width integers are not compatible.
-    return QualType();
-  case Type::ObjCQualifiedClass:
-    // Distinct qualified classes are not compatible.
     return QualType();
   case Type::ExtQual:
     // FIXME: ExtQual types can be compatible even if they're not

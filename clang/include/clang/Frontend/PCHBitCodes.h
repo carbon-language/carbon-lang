@@ -317,9 +317,7 @@ namespace clang {
       /// \brief An ObjCQualifiedInterfaceType record.
       TYPE_OBJC_QUALIFIED_INTERFACE = 22,
       /// \brief An ObjCQualifiedIdType record.
-      TYPE_OBJC_QUALIFIED_ID        = 23,
-      /// \brief An ObjCQualifiedClassType record.
-      TYPE_OBJC_QUALIFIED_CLASS     = 24
+      TYPE_OBJC_QUALIFIED_ID        = 23
     };
 
     /// \brief The type IDs for special types constructed by semantic

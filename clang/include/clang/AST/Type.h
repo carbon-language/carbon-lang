@@ -1872,50 +1872,6 @@ public:
     
 };
   
-/// ObjCQualifiedClassType - to represent Class<protocol-list>.
-///
-/// Duplicate protocols are removed and protocol list is canonicalized to be in
-/// alphabetical order.
-class ObjCQualifiedClassType : public Type,
-                               public llvm::FoldingSetNode {
-  // List of protocols for this protocol conforming 'id' type
-  // List is sorted on protocol name. No protocol is enterred more than once.
-  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
-    
-  ObjCQualifiedClassType(ObjCProtocolDecl **Protos, unsigned NumP)
-    : Type(ObjCQualifiedClass, QualType()/*these are always canonical*/,
-           /*Dependent=*/false), 
-  Protocols(Protos, Protos+NumP) { }
-  friend class ASTContext;  // ASTContext creates these.
-public:
-    
-  ObjCProtocolDecl *getProtocols(unsigned i) const {
-    return Protocols[i];
-  }
-  unsigned getNumProtocols() const {
-    return Protocols.size();
-  }
-  ObjCProtocolDecl **getReferencedProtocols() {
-    return &Protocols[0];
-  }
-                              
-  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
-  qual_iterator qual_begin() const { return Protocols.begin(); }
-  qual_iterator qual_end() const   { return Protocols.end(); }
-    
-  virtual void getAsStringInternal(std::string &InnerString) const;
-    
-  void Profile(llvm::FoldingSetNodeID &ID);
-  static void Profile(llvm::FoldingSetNodeID &ID,
-                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
-    
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjCQualifiedClass; 
-  }
-  static bool classof(const ObjCQualifiedClassType *) { return true; }
-    
-};
-
 // Inline function definitions.
 
 /// getUnqualifiedType - Return the type without any qualifiers.

@@ -582,7 +582,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::MemberPointer:
   case Type::TemplateSpecialization:
   case Type::QualifiedName:
-  case Type::ObjCQualifiedClass:
     // Unsupported types
     return llvm::DIType();
 

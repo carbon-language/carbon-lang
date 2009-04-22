@@ -378,7 +378,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
       
   case Type::ObjCQualifiedId:
-  case Type::ObjCQualifiedClass:
     // Protocols don't influence the LLVM type.
     return ConvertTypeRecursive(Context.getObjCIdType());
 
