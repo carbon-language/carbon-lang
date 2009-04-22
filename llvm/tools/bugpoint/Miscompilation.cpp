@@ -220,8 +220,10 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   std::cout << '\n';
 
   // Split the module into the two halves of the program we want.
-  Module *ToNotOptimize = CloneModule(BD.getProgram());
-  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, Funcs);
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *ToNotOptimize = CloneModule(BD.getProgram(), ValueMap);
+  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, Funcs,
+                                                 ValueMap);
 
   // Run the predicate, note that the predicate will delete both input modules.
   return TestFn(BD, ToOptimize, ToNotOptimize);
@@ -258,9 +260,11 @@ static bool ExtractLoops(BugDriver &BD,
   while (1) {
     if (BugpointIsInterrupted) return MadeChange;
     
-    Module *ToNotOptimize = CloneModule(BD.getProgram());
+    DenseMap<const Value*, Value*> ValueMap;
+    Module *ToNotOptimize = CloneModule(BD.getProgram(), ValueMap);
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
-                                                   MiscompiledFunctions);
+                                                   MiscompiledFunctions,
+                                                   ValueMap);
     Module *ToOptimizeLoopExtracted = BD.ExtractLoop(ToOptimize);
     if (!ToOptimizeLoopExtracted) {
       // If the loop extractor crashed or if there were no extractible loops,
@@ -396,9 +400,11 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
   std::cout << '\n';
 
   // Split the module into the two halves of the program we want.
-  Module *ToNotOptimize = CloneModule(BD.getProgram());
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *ToNotOptimize = CloneModule(BD.getProgram(), ValueMap);
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
-                                                 FunctionsBeingTested);
+                                                 FunctionsBeingTested,
+                                                 ValueMap);
 
   // Try the extraction.  If it doesn't work, then the block extractor crashed
   // or something, in which case bugpoint can't chase down this possibility.
@@ -443,9 +449,11 @@ static bool ExtractBlocks(BugDriver &BD,
       return false;
   }
 
-  Module *ProgClone = CloneModule(BD.getProgram());
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *ProgClone = CloneModule(BD.getProgram(), ValueMap);
   Module *ToExtract = SplitFunctionsOutOfModule(ProgClone,
-                                                MiscompiledFunctions);
+                                                MiscompiledFunctions,
+                                                ValueMap);
   Module *Extracted = BD.ExtractMappedBlocksFromModule(Blocks, ToExtract);
   if (Extracted == 0) {
     // Weird, extraction should have worked.
@@ -608,9 +616,11 @@ bool BugDriver::debugMiscompilation() {
 
   // Output a bunch of bitcode files for the user...
   std::cout << "Outputting reduced bitcode files which expose the problem:\n";
-  Module *ToNotOptimize = CloneModule(getProgram());
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *ToNotOptimize = CloneModule(getProgram(), ValueMap);
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
-                                                 MiscompiledFunctions);
+                                                 MiscompiledFunctions,
+                                                 ValueMap);
 
   std::cout << "  Non-optimized portion: ";
   ToNotOptimize = swapProgramIn(ToNotOptimize);
@@ -856,8 +866,9 @@ bool BugDriver::debugCodeGenerator() {
   std::vector<Function*> Funcs = DebugAMiscompilation(*this, TestCodeGenerator);
 
   // Split the module into the two halves of the program we want.
-  Module *ToNotCodeGen = CloneModule(getProgram());
-  Module *ToCodeGen = SplitFunctionsOutOfModule(ToNotCodeGen, Funcs);
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *ToNotCodeGen = CloneModule(getProgram(), ValueMap);
+  Module *ToCodeGen = SplitFunctionsOutOfModule(ToNotCodeGen, Funcs, ValueMap);
 
   // Condition the modules
   CleanupAndPrepareModules(*this, ToCodeGen, ToNotCodeGen);

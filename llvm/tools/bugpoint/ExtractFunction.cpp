@@ -197,7 +197,8 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
 /// M1 has all of the global variables.  If M2 contains any functions that are
 /// static ctors/dtors, we need to add an llvm.global_[cd]tors global to M2, and
 /// prune appropriate entries out of M1s list.
-static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
+static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2,
+                                DenseMap<const Value*, Value*> ValueMap) {
   GlobalVariable *GV = M1->getNamedGlobal(GlobalName);
   if (!GV || GV->isDeclaration() || GV->hasLocalLinkage() ||
       !GV->use_empty()) return;
@@ -225,7 +226,7 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
           M1Tors.push_back(std::make_pair(F, Priority));
         else {
           // Map to M2's version of the function.
-          F = M2->getFunction(F->getName());
+          F = cast<Function>(ValueMap[F]);
           M2Tors.push_back(std::make_pair(F, Priority));
         }
       }
@@ -255,8 +256,10 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
 /// SplitFunctionsOutOfModule - Given a module and a list of functions in the
 /// module, split the functions OUT of the specified module, and place them in
 /// the new module.
-Module *llvm::SplitFunctionsOutOfModule(Module *M,
-                                        const std::vector<Function*> &F) {
+Module *
+llvm::SplitFunctionsOutOfModule(Module *M,
+                                const std::vector<Function*> &F,
+                                DenseMap<const Value*, Value*> &ValueMap) {
   // Make sure functions & globals are all external so that linkage
   // between the two modules will work.
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -268,7 +271,8 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
     I->setLinkage(GlobalValue::ExternalLinkage);
   }
 
-  Module *New = CloneModule(M);
+  DenseMap<const Value*, Value*> NewValueMap;
+  Module *New = CloneModule(M, NewValueMap);
 
   // Make sure global initializers exist only in the safe module (CBE->.so)
   for (Module::global_iterator I = New->global_begin(), E = New->global_end();
@@ -276,27 +280,27 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
     I->setInitializer(0);  // Delete the initializer to make it external
 
   // Remove the Test functions from the Safe module
-  std::set<std::pair<std::string, const PointerType*> > TestFunctions;
+  std::set<Function *> TestFunctions;
   for (unsigned i = 0, e = F.size(); i != e; ++i) {
-    TestFunctions.insert(std::make_pair(F[i]->getName(), F[i]->getType()));  
-    Function *TNOF = M->getFunction(F[i]->getName());
-    assert(TNOF && "Function doesn't exist in module!");
-    assert(TNOF->getFunctionType() == F[i]->getFunctionType() && "wrong type?");
-    DEBUG(std::cerr << "Removing function " << F[i]->getName() << "\n");
+    Function *TNOF = cast<Function>(ValueMap[F[i]]);
+    DEBUG(std::cerr << "Removing function ");
+    DEBUG(WriteAsOperand(std::cerr, TNOF, false));
+    DEBUG(std::cerr << "\n");
+    TestFunctions.insert(cast<Function>(NewValueMap[TNOF]));
     DeleteFunctionBody(TNOF);       // Function is now external in this module!
   }
 
   
   // Remove the Safe functions from the Test module
   for (Module::iterator I = New->begin(), E = New->end(); I != E; ++I)
-    if (!TestFunctions.count(std::make_pair(I->getName(), I->getType())))
+    if (!TestFunctions.count(I))
       DeleteFunctionBody(I);
   
 
   // Make sure that there is a global ctor/dtor array in both halves of the
   // module if they both have static ctor/dtor functions.
-  SplitStaticCtorDtor("llvm.global_ctors", M, New);
-  SplitStaticCtorDtor("llvm.global_dtors", M, New);
+  SplitStaticCtorDtor("llvm.global_ctors", M, New, NewValueMap);
+  SplitStaticCtorDtor("llvm.global_dtors", M, New, NewValueMap);
   
   return New;
 }
