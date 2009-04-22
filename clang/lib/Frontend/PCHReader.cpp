@@ -466,7 +466,10 @@ namespace {
     unsigned VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     unsigned VisitBlockExpr(BlockExpr *E);
     unsigned VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
+    unsigned VisitObjCStringLiteral(ObjCStringLiteral *E);
     unsigned VisitObjCEncodeExpr(ObjCEncodeExpr *E);
+    unsigned VisitObjCSelectorExpr(ObjCSelectorExpr *E);
+    unsigned VisitObjCProtocolExpr(ObjCProtocolExpr *E);
   };
 }
 
@@ -1016,9 +1019,35 @@ unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   return 0;
 }
 
+//===----------------------------------------------------------------------===//
+// Objective-C Expressions and Statements
+
+unsigned PCHStmtReader::VisitObjCStringLiteral(ObjCStringLiteral *E) {
+  VisitExpr(E);
+  E->setString(cast<StringLiteral>(StmtStack.back()));
+  E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
 unsigned PCHStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   VisitExpr(E);
   E->setEncodedType(Reader.GetType(Record[Idx++]));
+  E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
+  VisitExpr(E);
+  // FIXME: Selectors.
+  E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
+  VisitExpr(E);
+  E->setProtocol(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
   E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
@@ -2946,8 +2975,17 @@ Stmt *PCHReader::ReadStmt() {
       S = new (Context) BlockDeclRefExpr(Empty);
       break;
         
+    case pch::EXPR_OBJC_STRING_LITERAL:
+      S = new (Context) ObjCStringLiteral(Empty);
+      break;
     case pch::EXPR_OBJC_ENCODE:
       S = new (Context) ObjCEncodeExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_SELECTOR_EXPR:
+      S = new (Context) ObjCSelectorExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_PROTOCOL_EXPR:
+      S = new (Context) ObjCProtocolExpr(Empty);
       break;
     }
 

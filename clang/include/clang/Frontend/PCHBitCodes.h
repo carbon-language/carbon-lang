@@ -523,8 +523,15 @@ namespace clang {
       EXPR_BLOCK_DECL_REF,
       
       // Objective-C
+      
+      /// \brief A ObjCStringLiteral record.
+      EXPR_OBJC_STRING_LITERAL,
       /// \brief A ObjCEncodeExpr record.
-      EXPR_OBJC_ENCODE
+      EXPR_OBJC_ENCODE,
+      /// \brief A ObjCSelectorExpr record.
+      EXPR_OBJC_SELECTOR_EXPR,
+      /// \brief A ObjCProtocolExpr record.
+      EXPR_OBJC_PROTOCOL_EXPR
 
     };
 

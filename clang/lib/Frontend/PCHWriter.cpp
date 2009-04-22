@@ -658,9 +658,10 @@ namespace {
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
       
     // Objective-C
+    void VisitObjCStringLiteral(ObjCStringLiteral *E);
     void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
-
-      
+    void VisitObjCSelectorExpr(ObjCSelectorExpr *E);
+    void VisitObjCProtocolExpr(ObjCProtocolExpr *E);
   };
 }
 
@@ -1156,12 +1157,36 @@ void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
 // Objective-C Expressions and Statements.
 //===----------------------------------------------------------------------===//
 
+void PCHStmtWriter::VisitObjCStringLiteral(ObjCStringLiteral *E) {
+  VisitExpr(E);
+  Writer.WriteSubStmt(E->getString());
+  Writer.AddSourceLocation(E->getAtLoc(), Record);
+  Code = pch::EXPR_OBJC_STRING_LITERAL;
+}
+
 void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) { 
   VisitExpr(E);
   Writer.AddTypeRef(E->getEncodedType(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_OBJC_ENCODE;
+}
+
+void PCHStmtWriter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
+  VisitExpr(E);
+  // FIXME!  Write selectors.
+  //Writer.WriteSubStmt(E->getSelector());
+  Writer.AddSourceLocation(E->getAtLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_OBJC_SELECTOR_EXPR;
+}
+
+void PCHStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getProtocol(), Record);
+  Writer.AddSourceLocation(E->getAtLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_OBJC_PROTOCOL_EXPR;
 }
 
 

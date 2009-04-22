@@ -31,11 +31,15 @@ class ObjCStringLiteral : public Expr {
 public:
   ObjCStringLiteral(StringLiteral *SL, QualType T, SourceLocation L)
     : Expr(ObjCStringLiteralClass, T), String(SL), AtLoc(L) {}
-  
-  StringLiteral* getString() { return cast<StringLiteral>(String); }
-  const StringLiteral* getString() const { return cast<StringLiteral>(String); }
+  explicit ObjCStringLiteral(EmptyShell Empty)
+    : Expr(ObjCStringLiteralClass, Empty) {}
+
+  StringLiteral *getString() { return cast<StringLiteral>(String); }
+  const StringLiteral *getString() const { return cast<StringLiteral>(String); }
+  void setString(StringLiteral *S) { String = S; }
 
   SourceLocation getAtLoc() const { return AtLoc; }
+  void setAtLoc(SourceLocation L) { AtLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtLoc, String->getLocEnd());
@@ -65,7 +69,6 @@ public:
                  SourceLocation at, SourceLocation rp)
     : Expr(ObjCEncodeExprClass, T), EncType(ET), AtLoc(at), RParenLoc(rp) {}
   
-  /// \brief Build an empty block expression.
   explicit ObjCEncodeExpr(EmptyShell Empty) : Expr(ObjCEncodeExprClass, Empty){}
 
   
@@ -102,13 +105,17 @@ class ObjCSelectorExpr : public Expr {
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCSelectorExprClass, T), SelName(selInfo), 
-  AtLoc(at), RParenLoc(rp) {}
-  
+  : Expr(ObjCSelectorExprClass, T), SelName(selInfo), AtLoc(at), RParenLoc(rp){}
+  explicit ObjCSelectorExpr(EmptyShell Empty)
+   : Expr(ObjCSelectorExprClass, Empty) {}
+
   Selector getSelector() const { return SelName; }
+  void setSelector(Selector S) { SelName = S; }
   
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setAtLoc(SourceLocation L) { AtLoc = L; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
@@ -130,20 +137,28 @@ public:
   static ObjCSelectorExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
-/// ObjCProtocolExpr used for protocol in Objective-C.
+/// ObjCProtocolExpr used for protocol expression in Objective-C.  This is used
+/// as: @protocol(foo), as in:
+///   obj conformsToProtocol:@protocol(foo)]
+/// The return type is "Protocol*".
 class ObjCProtocolExpr : public Expr {    
   ObjCProtocolDecl *Protocol;    
   SourceLocation AtLoc, RParenLoc;
 public:
   ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCProtocolExprClass, T), Protocol(protocol), 
-  AtLoc(at), RParenLoc(rp) {}
-    
+  : Expr(ObjCProtocolExprClass, T), Protocol(protocol),
+    AtLoc(at), RParenLoc(rp) {}
+  explicit ObjCProtocolExpr(EmptyShell Empty)
+    : Expr(ObjCProtocolExprClass, Empty) {}
+
   ObjCProtocolDecl *getProtocol() const { return Protocol; }
+  void setProtocol(ObjCProtocolDecl *P) { Protocol = P; }
     
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setAtLoc(SourceLocation L) { AtLoc = L; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
