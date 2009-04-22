@@ -380,32 +380,14 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
 ///
 const FieldDecl *
 ObjCInterfaceDecl::lookupFieldDeclForIvar(ASTContext &Context, 
-                                          const ObjCIvarDecl *OIVD) const {
+                                          const ObjCIvarDecl *IVar) const {
   assert(!isForwardDecl() && "Invalid interface decl!");
   const RecordDecl *RecordForDecl = Context.addRecordToClass(this);
+  assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclContext::lookup_const_result Lookup =
-    RecordForDecl->lookup(Context, OIVD->getDeclName());
-
-  if (Lookup.first != Lookup.second)
-    return cast<FieldDecl>(*Lookup.first);
-
-  // If lookup failed, try the superclass.
-  //
-  // FIXME: This is very non-performant. However, the root problem
-  // here is not the lookup itself. The main issue is that we should
-  // be able to map from an IvarDecl back to the context it lives
-  // inside; then this problem goes away. Currently, however,
-  // IvarDecl's live inside the translation unit!!!!
-  //
-  // Fixing IvarDecl's is less obvious than it might appear, we need
-  // to choose where synthesized ivars should live, and we also need
-  // to decide where to put IvarDecl's which appeared in an
-  // implementation context (either in the situation where they must
-  // duplicate the instance variables, or if there was no instance
-  // declaration).
-  const ObjCInterfaceDecl *OID = getSuperClass();
-  assert(OID && "field decl not found!");
-  return OID->lookupFieldDeclForIvar(Context, OIVD);
+    RecordForDecl->lookup(Context, IVar->getDeclName());
+  assert((Lookup.first != Lookup.second) && "field decl not found");
+  return cast<FieldDecl>(*Lookup.first);
 }
 
 //===----------------------------------------------------------------------===//
