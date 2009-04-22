@@ -621,11 +621,9 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
   Alignment = std::max(Alignment, FieldAlign);
 }
 
-void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
-                             llvm::SmallVectorImpl<FieldDecl*> &Fields) {
-  const ObjCInterfaceDecl *SuperClass = OI->getSuperClass();
-  if (SuperClass)
-    CollectObjCIvars(SuperClass, Fields);
+static void CollectLocalObjCIvars(ASTContext *Ctx,
+                                  const ObjCInterfaceDecl *OI,
+                                  llvm::SmallVectorImpl<FieldDecl*> &Fields) {
   for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
        E = OI->ivar_end(); I != E; ++I) {
     ObjCIvarDecl *IVDecl = *I;
@@ -633,11 +631,18 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
       Fields.push_back(cast<FieldDecl>(IVDecl));
   }
   // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*this),
-       E = OI->prop_end(*this); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*Ctx),
+       E = OI->prop_end(*Ctx); I != E; ++I) {
     if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
       Fields.push_back(cast<FieldDecl>(IV));
   }
+}
+
+void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
+                             llvm::SmallVectorImpl<FieldDecl*> &Fields) {
+  if (const ObjCInterfaceDecl *SuperClass = OI->getSuperClass())
+    CollectObjCIvars(SuperClass, Fields);
+  CollectLocalObjCIvars(this, OI, Fields);
 }
 
 /// addRecordToClass - produces record info. for the class for its
@@ -646,18 +651,30 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
 const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
   assert(!D->isForwardDecl() && "Invalid decl!");
 
-  // FIXME: The only client relying on this working in the presence of
-  // forward declarations is IRgen, which should not need it. Fix
-  // and simplify this code.
   RecordDecl *&RD = ASTRecordForInterface[D];
   if (RD)
     return RD;
   
   llvm::SmallVector<FieldDecl*, 32> RecFields;
-  CollectObjCIvars(D, RecFields);
+  CollectLocalObjCIvars(this, D, RecFields);
   
   RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, D->getLocation(),
                           D->getIdentifier());
+  const RecordDecl *SRD;
+  if (const ObjCInterfaceDecl *SuperClass = D->getSuperClass()) {
+    SRD = addRecordToClass(SuperClass);
+  } else {
+    SRD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, SourceLocation(), 0);
+    const_cast<RecordDecl*>(SRD)->completeDefinition(*this);
+  }
+
+  RD->addDecl(*this, 
+              FieldDecl::Create(*this, RD,
+                                SourceLocation(),
+                                0,
+                                getTagDeclType(const_cast<RecordDecl*>(SRD)),
+                                0, false));
+
   /// FIXME! Can do collection of ivars and adding to the record while
   /// doing it.
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {

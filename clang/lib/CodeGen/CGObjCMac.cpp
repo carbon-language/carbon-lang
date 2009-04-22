@@ -47,26 +47,38 @@ CGObjCRuntime::GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
 ///
 static const FieldDecl *LookupFieldDeclForIvar(ASTContext &Context, 
                                                const ObjCInterfaceDecl *OID,
-                                               const ObjCIvarDecl *OIVD) {
+                                               const ObjCIvarDecl *OIVD,
+                                               const ObjCInterfaceDecl *&Found) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
   const RecordDecl *RecordForDecl = Context.addRecordToClass(OID);
   assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
   DeclContext::lookup_const_result Lookup =
     RecordForDecl->lookup(Context, OIVD->getDeclName());
-  assert((Lookup.first != Lookup.second) && "field decl not found");
-  return cast<FieldDecl>(*Lookup.first);
+
+  if (Lookup.first != Lookup.second) {
+    Found = OID;
+    return cast<FieldDecl>(*Lookup.first);
+  }
+
+  // If lookup failed, try the superclass.
+  //
+  // FIXME: This is slow, we shouldn't need to do this.
+  const ObjCInterfaceDecl *Super = OID->getSuperClass();
+  assert(OID && "field decl not found!");
+  return LookupFieldDeclForIvar(Context, Super, OIVD, Found);
 }
 
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
                                               const ObjCInterfaceDecl *OID,
                                               const ObjCIvarDecl *Ivar) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  QualType T = CGM.getContext().getObjCInterfaceType(OID);
-  const llvm::StructType *STy = GetConcreteClassStruct(CGM, OID);
+  const ObjCInterfaceDecl *Container;
+  const FieldDecl *Field = 
+    LookupFieldDeclForIvar(CGM.getContext(), OID, Ivar, Container);
+  QualType T = CGM.getContext().getObjCInterfaceType(Container);
+  const llvm::StructType *STy = GetConcreteClassStruct(CGM, Container);
   const llvm::StructLayout *Layout = 
     CGM.getTargetData().getStructLayout(STy);
-  const FieldDecl *Field = 
-    LookupFieldDeclForIvar(CGM.getContext(), OID, Ivar);
   if (!Field->isBitField())
     return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
   
@@ -97,8 +109,9 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // purposes, it would be cleaner to use a GEP on the proper type
   // since the structure layout is fixed; however for that we need to
   // be able to walk the class chain for an Ivar.
+  const ObjCInterfaceDecl *Container;
   const FieldDecl *Field = 
-    LookupFieldDeclForIvar(CGF.CGM.getContext(), OID, Ivar);
+    LookupFieldDeclForIvar(CGF.CGM.getContext(), OID, Ivar, Container);
   
   // (char *) BaseValue
   llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
