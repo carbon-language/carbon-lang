@@ -1071,7 +1071,8 @@ public:
                                   IdentifierInfo *Id, QualType T,
                                   PropertyControl propControl = None);
   QualType getType() const { return DeclType; }
-  
+  void setType(QualType T) { DeclType = T; }
+
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);
   }

@@ -478,7 +478,16 @@ void PCHDeclWriter::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D) {
 
 void PCHDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
-  // FIXME: Implement.
+  Writer.AddTypeRef(D->getType(), Record);
+  // FIXME: stable encoding
+  Record.push_back((unsigned)D->getPropertyAttributes());
+  // FIXME: stable encoding
+  Record.push_back((unsigned)D->getPropertyImplementation());
+  Writer.AddDeclarationName(D->getGetterName(), Record);
+  Writer.AddDeclarationName(D->getSetterName(), Record);
+  Writer.AddDeclRef(D->getGetterMethodDecl(), Record);
+  Writer.AddDeclRef(D->getSetterMethodDecl(), Record);
+  Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
   Code = pch::DECL_OBJC_PROPERTY;
 }
 
@@ -1715,7 +1724,13 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     W.Code = (pch::DeclCode)0;
     W.Visit(D);
     if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
-    assert(W.Code && "Unhandled declaration kind while generating PCH");
+
+    if (!W.Code) {
+      fprintf(stderr, "Cannot serialize declaration of kind %s\n",
+              D->getDeclKindName());
+      assert(false && "Unhandled declaration kind while generating PCH");
+      exit(-1);
+    }
     Stream.EmitRecord(W.Code, Record);
 
     // If the declaration had any attributes, write them now.

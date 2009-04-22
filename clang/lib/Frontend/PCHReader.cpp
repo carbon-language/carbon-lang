@@ -303,7 +303,21 @@ void PCHDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
 
 void PCHDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
-  // FIXME: Implement.
+  D->setType(Reader.GetType(Record[Idx++]));
+  // FIXME: stable encoding
+  D->setPropertyAttributes(
+                      (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);
+  // FIXME: stable encoding
+  D->setPropertyImplementation(
+                            (ObjCPropertyDecl::PropertyControl)Record[Idx++]);
+  D->setGetterName(Reader.ReadDeclarationName(Record, Idx).getObjCSelector());
+  D->setSetterName(Reader.ReadDeclarationName(Record, Idx).getObjCSelector());
+  D->setGetterMethodDecl(
+                 cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setSetterMethodDecl(
+                 cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setPropertyIvarDecl(
+                   cast_or_null<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitObjCImplDecl(ObjCImplDecl *D) {
@@ -2264,7 +2278,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
   
   case pch::DECL_OBJC_PROPERTY: {
-    // FIXME: Implement.
+    D = ObjCPropertyDecl::Create(Context, 0, SourceLocation(), 0, QualType());
     break;
   }
   
