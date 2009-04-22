@@ -399,10 +399,6 @@ public:
 /// modern abi
 class ObjCNonFragileABITypesHelper : public ObjCCommonTypesHelper {
 public:
-  llvm::Constant *MessageSendFixupFn, *MessageSendFpretFixupFn,
-                 *MessageSendStretFixupFn, *MessageSendIdFixupFn,
-                 *MessageSendIdStretFixupFn, *MessageSendSuper2FixupFn,
-                 *MessageSendSuper2StretFixupFn;
           
   // MethodListnfABITy - LLVM for struct _method_list_t
   const llvm::StructType *MethodListnfABITy;
@@ -475,6 +471,79 @@ public:
   // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
   const llvm::Type *SuperMessageRefPtrTy;
 
+  llvm::Constant *getMessageSendFixupFn() {
+    // id objc_msgSend_fixup(id, struct message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(MessageRefPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     "objc_msgSend_fixup");
+  }
+  
+  llvm::Constant *getMessageSendFpretFixupFn() {
+    // id objc_msgSend_fpret_fixup(id, struct message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(MessageRefPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     "objc_msgSend_fpret_fixup");
+  }
+  
+  llvm::Constant *getMessageSendStretFixupFn() {
+    // id objc_msgSend_stret_fixup(id, struct message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(MessageRefPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     "objc_msgSend_stret_fixup");
+  }
+  
+  llvm::Constant *getMessageSendIdFixupFn() {
+    // id objc_msgSendId_fixup(id, struct message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(MessageRefPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     "objc_msgSendId_fixup");
+  }
+  
+  llvm::Constant *getMessageSendIdStretFixupFn() {
+    // id objc_msgSendId_stret_fixup(id, struct message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(MessageRefPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     "objc_msgSendId_stret_fixup");
+  }
+  llvm::Constant *getMessageSendSuper2FixupFn() {
+    // id objc_msgSendSuper2_fixup (struct objc_super *, 
+    //                              struct _super_message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SuperMessageRefPtrTy);
+    return  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                              Params, true),
+                                      "objc_msgSendSuper2_fixup");
+  }
+  
+  llvm::Constant *getMessageSendSuper2StretFixupFn() {
+    // id objc_msgSendSuper2_stret_fixup(struct objc_super *, 
+    //                                   struct _super_message_ref_t*, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SuperMessageRefPtrTy);
+    return  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                              Params, true),
+                                      "objc_msgSendSuper2_stret_fixup");
+  }
+  
+  
+  
   /// EHPersonalityPtr - LLVM value for an i8* to the Objective-C
   /// exception personality function.
   llvm::Value *getEHPersonalityPtr() {
@@ -3413,9 +3482,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *name;
   //   char *attributes; 
   // }
-  PropertyTy = llvm::StructType::get(Int8PtrTy,
-                                     Int8PtrTy,
-                                     NULL);
+  PropertyTy = llvm::StructType::get(Int8PtrTy, Int8PtrTy, NULL);
   CGM.getModule().addTypeName("struct._prop_t", 
                               PropertyTy);
   
@@ -3884,67 +3951,6 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
   SuperMessageRefPtrTy = llvm::PointerType::getUnqual(SuperMessageRefTy);  
   
-  // id objc_msgSend_fixup (id, struct message_ref_t*, ...)
-  Params.clear();
-  Params.push_back(ObjectPtrTy);
-  Params.push_back(MessageRefPtrTy);
-  MessengerTy = llvm::FunctionType::get(ObjectPtrTy,
-                                        Params,
-                                        true);
-  MessageSendFixupFn = 
-    CGM.CreateRuntimeFunction(MessengerTy,
-                              "objc_msgSend_fixup");
-  
-  // id objc_msgSend_fpret_fixup (id, struct message_ref_t*, ...)
-  MessageSendFpretFixupFn = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                                  "objc_msgSend_fpret_fixup");
-  
-  // id objc_msgSend_stret_fixup (id, struct message_ref_t*, ...)
-  MessageSendStretFixupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSend_stret_fixup");
-  
-  // id objc_msgSendId_fixup (id, struct message_ref_t*, ...)
-  MessageSendIdFixupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSendId_fixup");
-  
-  
-  // id objc_msgSendId_stret_fixup (id, struct message_ref_t*, ...)
-  MessageSendIdStretFixupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSendId_stret_fixup");
-  
-  // id objc_msgSendSuper2_fixup (struct objc_super *, 
-  //                              struct _super_message_ref_t*, ...)
-  Params.clear();
-  Params.push_back(SuperPtrTy);
-  Params.push_back(SuperMessageRefPtrTy);
-  MessageSendSuper2FixupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSendSuper2_fixup");
-  
-  
-  // id objc_msgSendSuper2_stret_fixup (struct objc_super *, 
-  //                                    struct _super_message_ref_t*, ...)
-  MessageSendSuper2StretFixupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                      Params,
-                                                      true),
-                              "objc_msgSendSuper2_stret_fixup");
-
-  Params.clear();
 
   // struct objc_typeinfo {
   //   const void** vtable; // objc_ehtype_vtable + 2
@@ -4981,7 +4987,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
 #if 0
     // unlike what is documented. gcc never generates this API!!
     if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
-      Fn = ObjCTypes.MessageSendIdStretFixupFn;
+      Fn = ObjCTypes.getMessageSendIdStretFixupFn();
       // FIXME. Is there a better way of getting these names.
       // They are available in RuntimeFunctions vector pair.
       Name += "objc_msgSendId_stret_fixup";
@@ -4989,37 +4995,37 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     else
 #endif
     if (IsSuper) {
-        Fn = ObjCTypes.MessageSendSuper2StretFixupFn;
+        Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
         Name += "objc_msgSendSuper2_stret_fixup";
     } 
     else
     {
-      Fn = ObjCTypes.MessageSendStretFixupFn;
+      Fn = ObjCTypes.getMessageSendStretFixupFn();
       Name += "objc_msgSend_stret_fixup";
     }
   }
   else if (ResultType->isFloatingType() &&
            // Selection of frret API only happens in 32bit nonfragile ABI.
            CGM.getTargetData().getTypePaddedSize(ObjCTypes.LongTy) == 4) {
-    Fn = ObjCTypes.MessageSendFpretFixupFn;
+    Fn = ObjCTypes.getMessageSendFpretFixupFn();
     Name += "objc_msgSend_fpret_fixup";
   }
   else {
 #if 0
 // unlike what is documented. gcc never generates this API!!
     if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
-      Fn = ObjCTypes.MessageSendIdFixupFn;
+      Fn = ObjCTypes.getMessageSendIdFixupFn();
       Name += "objc_msgSendId_fixup";
     }
     else 
 #endif
     if (IsSuper) {
-        Fn = ObjCTypes.MessageSendSuper2FixupFn;
+        Fn = ObjCTypes.getMessageSendSuper2FixupFn();
         Name += "objc_msgSendSuper2_fixup";
     }
     else
     {
-      Fn = ObjCTypes.MessageSendFixupFn;
+      Fn = ObjCTypes.getMessageSendFixupFn();
       Name += "objc_msgSend_fixup";
     }
   }
