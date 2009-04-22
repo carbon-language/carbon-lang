@@ -54,11 +54,17 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
 /// Add the quoted name of an implicit include file.
 static void AddQuotedIncludePath(std::vector<char> &Buf, 
                                  const std::string &File) {
-  // Implicit include paths are relative to the current working
-  // directory; resolve them now instead of using the normal machinery
-  // (which would look relative to the input file).
+  // Implicit include paths should be resolved relative to the current
+  // working directory first, and then use the regular header search
+  // mechanism. The proper way to handle this is to have the
+  // predefines buffer located at the current working directory, but
+  // it has not file entry. For now, workaround this by using an
+  // absolute path if we find the file here, and otherwise letting
+  // header search handle it.
   llvm::sys::Path Path(File);
   Path.makeAbsolute();
+  if (!Path.exists())
+    Path = File;
     
   // Escape double quotes etc.
   Buf.push_back('"');
