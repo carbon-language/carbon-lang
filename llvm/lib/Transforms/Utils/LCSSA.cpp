@@ -86,7 +86,8 @@ namespace {
     }
   private:
     void getLoopValuesUsedOutsideLoop(Loop *L,
-                                      SetVector<Instruction*> &AffectedValues);
+                                      SetVector<Instruction*> &AffectedValues,
+                                 const SmallVector<BasicBlock*, 8>& exitBlocks);
 
     Value *GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
                             DenseMap<DomTreeNode*, Value*> &Phis);
@@ -116,16 +117,16 @@ bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
   std::sort(LoopBlocks.begin(), LoopBlocks.end());
   
+  SmallVector<BasicBlock*, 8> exitBlocks;
+  L->getExitBlocks(exitBlocks);
+  
   SetVector<Instruction*> AffectedValues;
-  getLoopValuesUsedOutsideLoop(L, AffectedValues);
+  getLoopValuesUsedOutsideLoop(L, AffectedValues, exitBlocks);
   
   // If no values are affected, we can save a lot of work, since we know that
   // nothing will be changed.
   if (AffectedValues.empty())
     return false;
-  
-  SmallVector<BasicBlock*, 8> exitBlocks;
-  L->getExitBlocks(exitBlocks);  
   
   // Iterate over all affected values for this loop and insert Phi nodes
   // for them in the appropriate exit blocks
@@ -160,7 +161,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     if (!Phi && DT->dominates(InstrNode, ExitBBNode)) {
       PHINode *PN = PHINode::Create(Instr->getType(), Instr->getName()+".lcssa",
                                     BB->begin());
-      PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+      PN->reserveOperandSpace(PredCache.GetNumPreds(BB));
 
       // Remember that this phi makes the value alive in this block.
       Phi = PN;
@@ -202,15 +203,16 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
 /// getLoopValuesUsedOutsideLoop - Return any values defined in the loop that
 /// are used by instructions outside of it.
 void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
-                                      SetVector<Instruction*> &AffectedValues) {
+                                      SetVector<Instruction*> &AffectedValues,
+                                const SmallVector<BasicBlock*, 8>& exitBlocks) {
   // FIXME: For large loops, we may be able to avoid a lot of use-scanning
   // by using dominance information.  In particular, if a block does not
   // dominate any of the loop exits, then none of the values defined in the
   // block could be used outside the loop.
-  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
-       BB != E; ++BB) {
+  for (Loop::block_iterator BB = L->block_begin(), BE = L->block_end();
+       BB != BE; ++BB) {
     for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
         if (PHINode* p = dyn_cast<PHINode>(*UI)) {
@@ -263,7 +265,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   // now, then get values to fill in the incoming values for the PHI.
   PHINode *PN = PHINode::Create(OrigInst->getType(),
                                 OrigInst->getName() + ".lcssa", BBN->begin());
-  PN->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
+  PN->reserveOperandSpace(PredCache.GetNumPreds(BBN));
   Phis.insert(std::make_pair(BB, PN));
                                  
   // Fill in the incoming values for the block.
