@@ -156,7 +156,11 @@ namespace clang {
       STATISTICS = 9,
 
       /// \brief Record code for the array of tentative definitions.
-      TENTATIVE_DEFINITIONS = 10
+      TENTATIVE_DEFINITIONS = 10,
+
+      /// \brief Record code for the array of locally-scoped external
+      /// declarations.
+      LOCALLY_SCOPED_EXTERNAL_DECLS = 11
     };
 
     /// \brief Record types used within a source manager block.

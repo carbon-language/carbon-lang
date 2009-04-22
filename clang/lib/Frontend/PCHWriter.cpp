@@ -2033,6 +2033,16 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
        TD != TDEnd; ++TD)
     AddDeclRef(TD->second, TentativeDefinitions);
 
+  // Build a record containing all of the locally-scoped external
+  // declarations in this header file. Generally, this record will be
+  // empty.
+  RecordData LocallyScopedExternalDecls;
+  for (llvm::DenseMap<DeclarationName, NamedDecl *>::iterator 
+         TD = SemaRef.LocallyScopedExternalDecls.begin(),
+         TDEnd = SemaRef.LocallyScopedExternalDecls.end();
+       TD != TDEnd; ++TD)
+    AddDeclRef(TD->second, LocallyScopedExternalDecls);
+
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 3);
@@ -2058,6 +2068,11 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   // Write the record containing tentative definitions.
   if (!TentativeDefinitions.empty())
     Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
+
+  // Write the record containing locally-scoped external definitions.
+  if (!LocallyScopedExternalDecls.empty())
+    Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS, 
+                      LocallyScopedExternalDecls);
   
   // Some simple statistics
   Record.clear();

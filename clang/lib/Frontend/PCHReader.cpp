@@ -1720,6 +1720,14 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
       }
       TentativeDefinitions.swap(Record);
       break;
+
+    case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
+      if (!LocallyScopedExternalDecls.empty()) {
+        Error("Duplicate LOCALLY_SCOPED_EXTERNAL_DECLS record in PCH file");
+        return Failure;
+      }
+      LocallyScopedExternalDecls.swap(Record);
+      break;
     }
   }
 
@@ -2536,6 +2544,14 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = TentativeDefinitions.size(); I != N; ++I) {
     VarDecl *Var = cast<VarDecl>(GetDecl(TentativeDefinitions[I]));
     SemaObj->TentativeDefinitions[Var->getDeclName()] = Var;
+  }
+
+  // If there were any locally-scoped external declarations,
+  // deserialize them and add them to Sema's table of locally-scoped
+  // external declarations.
+  for (unsigned I = 0, N = LocallyScopedExternalDecls.size(); I != N; ++I) {
+    NamedDecl *D = cast<NamedDecl>(GetDecl(LocallyScopedExternalDecls[I]));
+    SemaObj->LocallyScopedExternalDecls[D->getDeclName()] = D;
   }
 }
 
