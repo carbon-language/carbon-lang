@@ -867,7 +867,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     return StmtError();
   }
 
-  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+  bool C99orCXXorObjC = getLang().C99 || getLang().CPlusPlus || getLang().ObjC1;
 
   // C99 6.8.5p5 - In C99, the for statement is a block.  This is not
   // the case for C90.  Start the loop scope.
@@ -885,7 +885,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
   // as those declared in the condition.
   //
   unsigned ScopeFlags;
-  if (C99orCXX)
+  if (C99orCXXorObjC)
     ScopeFlags = Scope::BreakScope | Scope::ContinueScope |
                  Scope::DeclScope  | Scope::ControlScope;
   else
@@ -906,7 +906,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     ConsumeToken();
   } else if (isSimpleDeclaration()) {  // for (int X = 4;
     // Parse declaration, which eats the ';'.
-    if (!C99orCXX)   // Use of C99-style for loops in C90 mode?
+    if (!C99orCXXorObjC)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
@@ -976,7 +976,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
   // for-init-statement/condition and a new scope for substatement in C++.
   //
   ParseScope InnerScope(this, Scope::DeclScope, 
-                        C99orCXX && Tok.isNot(tok::l_brace));
+                        C99orCXXorObjC && Tok.isNot(tok::l_brace));
 
   // Read the body statement.
   OwningStmtResult Body(ParseStatement());
