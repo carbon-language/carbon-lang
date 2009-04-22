@@ -3114,31 +3114,15 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
   } else
     return;
 
-  unsigned KnownID;
-  for (KnownID = 0; KnownID != id_num_known_functions; ++KnownID)
-    if (KnownFunctionIDs[KnownID] == Name)
-      break;
-
-  switch (KnownID) {
-  case id_NSLog:
-  case id_NSLogv:
+  if (Name->isStr("NSLog") || Name->isStr("NSLogv")) {
     if (const FormatAttr *Format = FD->getAttr<FormatAttr>()) {
       // FIXME: We known better than our headers.
       const_cast<FormatAttr *>(Format)->setType("printf");
     } else 
       FD->addAttr(::new (Context) FormatAttr("printf", 1, 2));
-    break;
-
-  case id_asprintf:
-  case id_vasprintf:
+  } else if (Name->isStr("asprintf") || Name->isStr("vasprintf")) {
     if (!FD->getAttr<FormatAttr>())
       FD->addAttr(::new (Context) FormatAttr("printf", 2, 3));
-    break;
-
-  default:
-    // Unknown function or known function without any attributes to
-    // add. Do nothing.
-    break;
   }
 }
 

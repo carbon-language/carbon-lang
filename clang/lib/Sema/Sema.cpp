@@ -161,15 +161,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit) {
   
-  // Get IdentifierInfo objects for known functions for which we
-  // do extra checking.  
-  IdentifierTable &IT = PP.getIdentifierTable();  
-
-  KnownFunctionIDs[id_NSLog]         = &IT.get("NSLog");
-  KnownFunctionIDs[id_NSLogv]         = &IT.get("NSLogv");
-  KnownFunctionIDs[id_asprintf]      = &IT.get("asprintf");
-  KnownFunctionIDs[id_vasprintf]     = &IT.get("vasprintf");
-
   StdNamespace = 0;
   TUScope = 0;
   if (getLangOptions().CPlusPlus)

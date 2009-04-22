@@ -243,21 +243,6 @@ public:
 
   IdentifierResolver IdResolver;
 
-  // Enum values used by KnownFunctionIDs (see below).
-  enum {
-    id_NSLog,
-    id_NSLogv,
-    id_asprintf,
-    id_vasprintf,
-    id_num_known_functions
-  };
-  
-  /// KnownFunctionIDs - This is a list of IdentifierInfo objects to a set
-  /// of known functions used by the semantic analysis to do various
-  /// kinds of checking (e.g. checking format string errors in printf calls).
-  /// This list is populated upon the creation of a Sema object.    
-  IdentifierInfo* KnownFunctionIDs[id_num_known_functions];
-
   /// Translation Unit Scope - useful to Objective-C actions that need
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.
