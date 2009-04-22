@@ -417,13 +417,17 @@ bool InitializePreprocessor(Preprocessor &PP,
                             const PreprocessorInitOptions& InitOpts) {
   std::vector<char> PredefineBuffer;
   
+  const char *LineDirective = "# 1 \"<built-in>\" 3\n";
+  PredefineBuffer.insert(PredefineBuffer.end(),
+                         LineDirective, LineDirective+strlen(LineDirective));
+  
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
                              PredefineBuffer);
   
   // Add on the predefines from the driver.  Wrap in a #line directive to report
   // that they come from the command line.
-  const char *LineDirective = "# 1 \"<command line>\" 1\n";
+  LineDirective = "# 1 \"<command line>\" 1\n";
   PredefineBuffer.insert(PredefineBuffer.end(),
                          LineDirective, LineDirective+strlen(LineDirective));
 
@@ -451,7 +455,7 @@ bool InitializePreprocessor(Preprocessor &PP,
       AddImplicitInclude(PredefineBuffer, I->first);
  }
 
-  LineDirective = "# 2 \"<built-in>\" 2\n";
+  LineDirective = "# 2 \"<built-in>\" 2 3\n";
   PredefineBuffer.insert(PredefineBuffer.end(),
                          LineDirective, LineDirective+strlen(LineDirective));
 
