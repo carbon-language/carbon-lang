@@ -25,7 +25,8 @@ using namespace llvm;
 namespace llvm {
 struct MultiClass {
   Record Rec;  // Placeholder for template args and Name.
-  std::vector<Record*> DefPrototypes;
+  typedef std::vector<Record*> RecordVector;
+  RecordVector DefPrototypes;
     
   MultiClass(const std::string &Name, TGLoc Loc) : Rec(Name, Loc) {}
 };
@@ -37,6 +38,15 @@ struct SubClassReference {
   SubClassReference() : Rec(0) {}
   
   bool isInvalid() const { return Rec == 0; }
+};
+
+struct SubMultiClassReference {
+  TGLoc RefLoc;
+  MultiClass *MC;
+  std::vector<Init*> TemplateArgs;
+  SubMultiClassReference() : MC(0) {}
+  
+  bool isInvalid() const { return MC == 0; }
 };
   
 } // end namespace llvm
@@ -177,6 +187,85 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
   return false;
 }
 
+/// AddSubMultiClass - Add SubMultiClass as a subclass to
+/// CurMultiClass, resolving its template args as SubMultiClass's
+/// template arguments.
+bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass, class SubMultiClassReference &SubMultiClass) {
+  MultiClass *SMC = SubMultiClass.MC;
+  Record *CurRec = &CurMultiClass->Rec;
+
+  const std::vector<RecordVal> &MCVals = CurMultiClass->Rec.getValues();
+
+  // Add all of the values in the subclass into the current class.
+  const std::vector<RecordVal> &SMCVals = SMC->Rec.getValues();
+  for (unsigned i = 0, e = SMCVals.size(); i != e; ++i)
+    if (AddValue(CurRec, SubMultiClass.RefLoc, SMCVals[i]))
+      return true;
+
+  // Add all of the defs in the subclass into the current multiclass.
+  for (MultiClass::RecordVector::const_iterator i = SMC->DefPrototypes.begin(),
+         iend = SMC->DefPrototypes.end();
+       i != iend;
+       ++i) {
+    // Clone the def and add it to the current multiclass
+    Record *NewDef = new Record(**i);
+
+    // Add all of the values in the superclass into the current def.
+    for (unsigned i = 0, e = MCVals.size(); i != e; ++i)
+      if (AddValue(NewDef, SubMultiClass.RefLoc, MCVals[i]))
+        return true;
+
+    CurMultiClass->DefPrototypes.push_back(NewDef);
+  }
+  
+  const std::vector<std::string> &SMCTArgs = SMC->Rec.getTemplateArgs();
+
+  // Ensure that an appropriate number of template arguments are specified.
+  if (SMCTArgs.size() < SubMultiClass.TemplateArgs.size())
+    return Error(SubMultiClass.RefLoc, "More template args specified than expected");
+  
+  // Loop over all of the template arguments, setting them to the specified
+  // value or leaving them as the default if necessary.
+  for (unsigned i = 0, e = SMCTArgs.size(); i != e; ++i) {
+    if (i < SubMultiClass.TemplateArgs.size()) {
+      // If a value is specified for this template arg, set it in the superclass now.
+      if (SetValue(CurRec, SubMultiClass.RefLoc, SMCTArgs[i], std::vector<unsigned>(), 
+                   SubMultiClass.TemplateArgs[i]))
+        return true;
+
+      // Resolve it next.
+      CurRec->resolveReferencesTo(CurRec->getValue(SMCTArgs[i]));
+      
+      // Now remove it.
+      CurRec->removeValue(SMCTArgs[i]);
+
+      // If a value is specified for this template arg, set it in the defs now.
+      for (MultiClass::RecordVector::iterator j = CurMultiClass->DefPrototypes.begin(),
+             jend = CurMultiClass->DefPrototypes.end();
+           j != jend;
+           ++j) {
+        Record *Def = *j;
+
+        if (SetValue(Def, SubMultiClass.RefLoc, SMCTArgs[i], std::vector<unsigned>(), 
+                     SubMultiClass.TemplateArgs[i]))
+          return true;
+
+        // Resolve it next.
+        Def->resolveReferencesTo(Def->getValue(SMCTArgs[i]));
+
+        // Now remove it
+        Def->removeValue(SMCTArgs[i]);
+      }
+    } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
+      return Error(SubMultiClass.RefLoc,"Value not specified for template argument #"
+                   + utostr(i) + " (" + SMCTArgs[i] + ") of subclass '" + 
+                   SMC->Rec.getName() + "'!");
+    }
+  }
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Parser Code
 //===----------------------------------------------------------------------===//
@@ -216,6 +305,25 @@ Record *TGParser::ParseClassID() {
   }
   
   Record *Result = Records.getClass(Lex.getCurStrVal());
+  if (Result == 0)
+    TokError("Couldn't find class '" + Lex.getCurStrVal() + "'");
+  
+  Lex.Lex();
+  return Result;
+}
+
+/// ParseMultiClassID - Parse and resolve a reference to a multiclass name.  This returns
+/// null on error.
+///
+///    MultiClassID ::= ID
+///
+MultiClass *TGParser::ParseMultiClassID() {
+  if (Lex.getCode() != tgtok::Id) {
+    TokError("expected name for ClassID");
+    return 0;
+  }
+  
+  MultiClass *Result = MultiClasses[Lex.getCurStrVal()];
   if (Result == 0)
     TokError("Couldn't find class '" + Lex.getCurStrVal() + "'");
   
@@ -282,6 +390,47 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
   }
   Lex.Lex();
   
+  return Result;
+}
+
+/// ParseSubMultiClassReference - Parse a reference to a subclass or to a templated
+/// submulticlass.  This returns a SubMultiClassRefTy with a null Record* on error.
+///
+///  SubMultiClassRef ::= MultiClassID
+///  SubMultiClassRef ::= MultiClassID '<' ValueList '>'
+///
+SubMultiClassReference TGParser::
+ParseSubMultiClassReference(MultiClass *CurMC) {
+  SubMultiClassReference Result;
+  Result.RefLoc = Lex.getLoc();
+  
+  Result.MC = ParseMultiClassID();
+  if (Result.MC == 0) return Result;
+  
+  // If there is no template arg list, we're done.
+  if (Lex.getCode() != tgtok::less)
+    return Result;
+  Lex.Lex();  // Eat the '<'
+  
+  if (Lex.getCode() == tgtok::greater) {
+    TokError("subclass reference requires a non-empty list of template values");
+    Result.MC = 0;
+    return Result;
+  }
+  
+  Result.TemplateArgs = ParseValueList(&CurMC->Rec);
+  if (Result.TemplateArgs.empty()) {
+    Result.MC = 0;   // Error parsing value list.
+    return Result;
+  }
+    
+  if (Lex.getCode() != tgtok::greater) {
+    TokError("expected '>' in template value list");
+    Result.MC = 0;
+    return Result;
+  }
+  Lex.Lex();
+
   return Result;
 }
 
@@ -1231,7 +1380,7 @@ bool TGParser::ParseMultiClassDef(MultiClass *CurMC) {
 
 /// ParseMultiClass - Parse a multiclass definition.
 ///
-///  MultiClassInst ::= MULTICLASS ID TemplateArgList? '{' MultiClassDef+ '}'
+///  MultiClassInst ::= MULTICLASS ID TemplateArgList? ':' BaseMultiClassList '{' MultiClassDef+ '}'
 ///
 bool TGParser::ParseMultiClass() {
   assert(Lex.getCode() == tgtok::MultiClass && "Unexpected token");
@@ -1251,6 +1400,26 @@ bool TGParser::ParseMultiClass() {
   if (Lex.getCode() == tgtok::less)
     if (ParseTemplateArgList(0))
       return true;
+
+  // If there are submulticlasses, parse them.
+  if (Lex.getCode() == tgtok::colon) {
+    Lex.Lex();
+    
+    // Read all of the submulticlasses.
+    SubMultiClassReference SubMultiClass = ParseSubMultiClassReference(CurMultiClass);
+    while (1) {
+      // Check for error.
+      if (SubMultiClass.MC == 0) return true;
+     
+      // Add it.
+      if (AddSubMultiClass(CurMultiClass, SubMultiClass))
+        return true;
+      
+      if (Lex.getCode() != tgtok::comma) break;
+      Lex.Lex(); // eat ','.
+      SubMultiClass = ParseSubMultiClassReference(CurMultiClass);
+    }
+  }
 
   if (Lex.getCode() != tgtok::l_brace)
     return TokError("expected '{' in multiclass definition");

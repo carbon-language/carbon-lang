@@ -25,6 +25,7 @@ namespace llvm {
   struct Init;
   struct MultiClass;
   struct SubClassReference;
+  struct SubMultiClassReference;
   
   struct LetRecord {
     std::string Name;
@@ -46,7 +47,6 @@ class TGParser {
   /// current value.
   MultiClass *CurMultiClass;
 public:
-  
   TGParser(TGSourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
   
   void setIncludeDirs(const std::vector<std::string> &D){Lex.setIncludeDirs(D);}
@@ -67,6 +67,7 @@ private:  // Semantic analysis methods.
   bool SetValue(Record *TheRec, TGLoc Loc, const std::string &ValName, 
                 const std::vector<unsigned> &BitList, Init *V);
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
+  bool AddSubMultiClass(MultiClass *MV, class SubMultiClassReference &SubMultiClass);
 
 private:  // Parser methods.
   bool ParseObjectList();
@@ -87,6 +88,7 @@ private:  // Parser methods.
   std::string ParseDeclaration(Record *CurRec, bool ParsingTemplateArgs);
 
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
+  SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMultiClass);
 
   Init *ParseIDValue(Record *CurRec);
   Init *ParseIDValue(Record *CurRec, const std::string &Name, TGLoc NameLoc);
@@ -101,6 +103,7 @@ private:  // Parser methods.
   RecTy *ParseType();
   std::string ParseObjectName();
   Record *ParseClassID();
+  MultiClass *ParseMultiClassID();
   Record *ParseDefmID();
 };
   

@@ -104,8 +104,10 @@ definition, so the backend can find all definitions of a particular class, such
 as "Instruction".</p>
 
 <p><b>TableGen multiclasses</b> are groups of abstract records that are
-instantiated all at once.  Each instantiation can result in multiple TableGen
-definitions.</p>
+instantiated all at once.  Each instantiation can result in multiple
+TableGen definitions.  If a multiclass inherits from another multiclass,
+the definitions in the sub-multiclass become part of the current
+multiclass, as if they were declared in the current multiclass.</p>
 
 </div>
 
