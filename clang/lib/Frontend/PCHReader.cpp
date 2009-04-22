@@ -1107,7 +1107,7 @@ public:
                            const unsigned char* d,
                            unsigned DataLen) {
     using namespace clang::io;
-    uint32_t Bits = ReadUnalignedLE32(d); // FIXME: use these?
+    uint32_t Bits = ReadUnalignedLE32(d);
     bool CPlusPlusOperatorKeyword = Bits & 0x01;
     Bits >>= 1;
     bool Poisoned = Bits & 0x01;
@@ -1160,7 +1160,6 @@ public:
     Sema *SemaObj = Reader.getSema();
     while (DataLen > 0) {
       NamedDecl *D = cast<NamedDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
-
       if (SemaObj) {
         // Introduce this declaration into the translation-unit scope
         // and add it to the declaration chain for this identifier, so
@@ -1171,9 +1170,7 @@ public:
         // Queue this declaration so that it will be added to the
         // translation unit scope and identifier's declaration chain
         // once a Sema object is known.
-        // FIXME: This is a temporary hack. It will go away once we have
-        // lazy deserialization of macros.
-        Reader.TUDecls.push_back(D);
+        Reader.PreloadedDecls.push_back(D);
       }
 
       DataLen -= 4;
@@ -1680,8 +1677,6 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
                         (const unsigned char *)IdentifierTableData + Record[0],
                         (const unsigned char *)IdentifierTableData, 
                         PCHIdentifierLookupTrait(*this));
-      // FIXME: What about any identifiers already placed into the
-      // identifier table? Should we load decls with those names now?
       PP.getIdentifierTable().setExternalIdentifierLookup(this);
       break;
 
@@ -2521,14 +2516,13 @@ void PCHReader::PrintStats() {
 void PCHReader::InitializeSema(Sema &S) {
   SemaObj = &S;
  
-  // FIXME: this makes sure any declarations that were deserialized
-  // "too early" still get added to the identifier's declaration
-  // chains.
-  for (unsigned I = 0, N = TUDecls.size(); I != N; ++I) {
-    SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(TUDecls[I]));
-    SemaObj->IdResolver.AddDecl(TUDecls[I]);
+  // Makes sure any declarations that were deserialized "too early"
+  // still get added to the identifier's declaration chains.
+  for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
+    SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(PreloadedDecls[I]));
+    SemaObj->IdResolver.AddDecl(PreloadedDecls[I]);
   }
-  TUDecls.clear();
+  PreloadedDecls.clear();
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {

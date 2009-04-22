@@ -327,9 +327,9 @@ public:
   /// supplements.
   ASTContext &getContext() { return Context; }
 
-  // FIXME: temporary hack to store declarations that we deserialized
-  // before we had access to the Sema object.
-  llvm::SmallVector<NamedDecl *, 16> TUDecls;
+  // \brief Contains declarations that were loaded before we have
+  // access to a Sema object.
+  llvm::SmallVector<NamedDecl *, 16> PreloadedDecls;
 
   /// \brief Retrieve the semantic analysis object used to analyze the
   /// translation unit in which the precompiled header is being
