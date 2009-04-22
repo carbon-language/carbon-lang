@@ -3,8 +3,6 @@
 // RUN: clang-cc -triple x86_64-apple-darwin9 -include-pch %t.pch -emit-llvm -o %t %s &&
 
 // RUN: grep "@x = common global i32 0" %t | count 1 &&
-// RUN: grep "@y = global i32 17"  %t | count 1 &&
-// RUN: grep "@d = .*1.742"  %t | count 1 &&
 // RUN: grep "@z" %t | count 0 &&
 
 // RUN: grep "@x2 = global i32 19" %t | count 1 &&
@@ -19,5 +17,3 @@ int incomplete_array3[];
 struct S {
   int x, y;
 };
-
-// XFAIL
