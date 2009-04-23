@@ -249,7 +249,6 @@ void rdar_6777003(int x) {
 // regardless of how well the underlying StoreManager reasons about pointer
 // arithmetic.
 // <rdar://problem/6777209>
-
 void rdar_6777209(char *p) {
   if (p == 0)
     return;
@@ -260,3 +259,16 @@ void rdar_6777209(char *p) {
   if (p == 0)
     *p = 'c'; // no-warning
 }
+
+// PR 4033.  A symbolic 'void *' pointer can be used as the address for a
+// computed goto.
+typedef void *Opcode;
+Opcode pr_4033_getOpcode();
+void pr_4033(void) {
+next_opcode:
+  {
+    Opcode op = pr_4033_getOpcode();
+    if (op) goto *op;
+  }
+}
+

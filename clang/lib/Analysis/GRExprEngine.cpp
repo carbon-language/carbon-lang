@@ -763,8 +763,7 @@ void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
   }
   
   // This is really a catch-all.  We don't support symbolics yet.
-  
-  assert (V.isUnknown());
+  // FIXME: Implement dispatch for symbolic pointers.
   
   for (iterator I=builder.begin(), E=builder.end(); I != E; ++I)
     builder.generateNode(I, state);
