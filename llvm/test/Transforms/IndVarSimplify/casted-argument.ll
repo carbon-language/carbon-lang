@@ -40,9 +40,11 @@ if.end54:		; preds = %if.end54, %if.else
 	%sub.ptr.lhs.cast45.pn = ptrtoint i8* %to to i32		; <i32> [#uses=1]
 	%sub.ptr.sub47.pn = sub i32 %sub.ptr.rhs.cast46.pn, %sub.ptr.lhs.cast45.pn		; <i32> [#uses=1]
 	%sub.ptr4912 = getelementptr i8* %sub.ptr4912.pn, i32 %sub.ptr.sub47.pn		; <i8*> [#uses=2]
-	tail call void @bcopy(i8* %sub.ptr4912, i8* %sub.ptr7, i32 0) nounwind
+	tail call void @bcopy_4038(i8* %sub.ptr4912, i8* %sub.ptr7, i32 0) nounwind
 	%sub.ptr = getelementptr i8* %sub.ptr7, i32 %sub.ptr.rhs.cast40		; <i8*> [#uses=1]
 	br label %if.end54
 }
 
 declare void @bcopy(i8* nocapture) nounwind
+
+declare void @bcopy_4038(i8*, i32) nounwind
