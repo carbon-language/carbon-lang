@@ -34,6 +34,7 @@ namespace CodeGen {
 /// the backend.
 class CGDebugInfo {
   CodeGenModule *M;
+  bool isMainCompileUnitCreated;
   llvm::DIFactory DebugFactory;
   
   SourceLocation CurLoc, PrevLoc;

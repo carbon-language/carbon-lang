@@ -34,7 +34,7 @@ using namespace clang;
 using namespace clang::CodeGen;
 
 CGDebugInfo::CGDebugInfo(CodeGenModule *m)
-  : M(m), DebugFactory(M->getModule()) {
+  : M(m), isMainCompileUnitCreated(false), DebugFactory(M->getModule()) {
 }
 
 CGDebugInfo::~CGDebugInfo() {
@@ -71,16 +71,22 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     AbsFileName = tmp;
   }
 
-  // See if thie compile unit is represnting main source file.
+  // See if thie compile unit is representing main source file. Each source
+  // file has corresponding compile unit. There is only one main source
+  // file at a time.
   bool isMain = false;
   const LangOptions &LO = M->getLangOptions();
   const char *MainFileName = LO.getMainFileName();
-  if (MainFileName) {
-    if (!strcmp(AbsFileName.getLast().c_str(), MainFileName))
-      isMain = true;
-  } else {
-    if (Loc.isValid() && SM.isFromMainFile(Loc))
-      isMain = true;
+  if (isMainCompileUnitCreated == false) {
+    if (MainFileName) {
+      if (!strcmp(AbsFileName.getLast().c_str(), MainFileName))
+        isMain = true;
+    } else {
+      if (Loc.isValid() && SM.isFromMainFile(Loc))
+        isMain = true;
+    }
+    if (isMain)
+      isMainCompileUnitCreated = true;
   }
 
   unsigned LangTag;
