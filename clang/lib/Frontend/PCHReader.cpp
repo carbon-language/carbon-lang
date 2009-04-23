@@ -2280,7 +2280,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
   
   case pch::DECL_OBJC_COMPATIBLE_ALIAS: {
-    // FIXME: Implement.
+    D = ObjCCompatibleAliasDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
   }
   
