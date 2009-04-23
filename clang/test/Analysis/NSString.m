@@ -73,6 +73,7 @@ typedef NSUInteger NSStringCompareOptions;
 - (NSComparisonResult)compare:(NSString *)string options:(NSStringCompareOptions)mask range:(NSRange)compareRange locale:(id)locale;
 - (NSComparisonResult)caseInsensitiveCompare:(NSString *)string;
 - (NSArray *)componentsSeparatedByCharactersInSet:(NSCharacterSet *)separator;
++ (id)stringWithFormat:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
 @end
 @interface NSSimpleCString : NSString {} @end
 @interface NSConstantString : NSSimpleCString @end
@@ -241,5 +242,12 @@ void test_objc_atomicCompareAndSwap() {
     [s release];
   else    
     [old release];
+}
+
+// Test stringWithFormat (<rdar://problem/6815234>)
+void test_stringWithFormat() {  
+  NSString *string = [[NSString stringWithFormat:@"%ld", (long) 100] retain];
+  [string release];
+  [string release]; // expected-warning{{Incorrect decrement of the reference count}}
 }
 

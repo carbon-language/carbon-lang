@@ -1074,15 +1074,18 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
   if (!isTrackedObjectType(Ctx.getCanonicalType(ME->getType())))
     return 0;
 
-  if (followsFundamentalRule(s)) {    
-    RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
-                                : RetEffect::MakeOwned(RetEffect::ObjC, true);
-    RetainSummary* Summ = getPersistentSummary(E);
-    ObjCMethodSummaries[ME] = Summ;
-    return Summ;
-  }
+  // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
+  //  by instance methods.
+
+  RetEffect E =
+    followsFundamentalRule(s)
+    ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
+                     : RetEffect::MakeOwned(RetEffect::ObjC, true))
+    : RetEffect::MakeNotOwned(RetEffect::ObjC);
   
-  return 0;
+  RetainSummary* Summ = getPersistentSummary(E);
+  ObjCMethodSummaries[ME] = Summ;
+  return Summ;
 }
 
 RetainSummary*
@@ -1099,7 +1102,17 @@ RetainSummaryManager::getClassMethodSummary(IdentifierInfo* ClsName,
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
-  return 0;
+  // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
+  //  by class methods.
+  const char* s = S.getIdentifierInfoForSlot(0)->getName();
+  RetEffect E = followsFundamentalRule(s)
+    ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
+       : RetEffect::MakeOwned(RetEffect::ObjC, true))
+    : RetEffect::MakeNotOwned(RetEffect::ObjC);
+  
+  RetainSummary* Summ = getPersistentSummary(E);
+  ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
+  return Summ;
 }
 
 void RetainSummaryManager::InitializeClassMethodSummaries() {
@@ -2351,9 +2364,8 @@ namespace {
     BadRelease(CFRefCount* tf) : CFRefBug(tf, "bad release") {}
 
     const char* getDescription() const {
-      return "Incorrect decrement of the reference count of a "
-      "Core Foundation object ("
-      "the object is not owned at this point by the caller)";
+      return "Incorrect decrement of the reference count of an "
+             "object is not owned at this point by the caller";
     }
   };
   
