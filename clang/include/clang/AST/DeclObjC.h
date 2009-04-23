@@ -809,12 +809,15 @@ public:
   
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
-  
+  void setClassInterface(ObjCInterfaceDecl *IFace) { ClassInterface = IFace; }
+
   void addInstanceMethod(ASTContext &Context, ObjCMethodDecl *method) { 
+    // FIXME: Context should be set correctly before we get here.
     method->setLexicalDeclContext(this);
     addDecl(Context, method); 
   }
   void addClassMethod(ASTContext &Context, ObjCMethodDecl *method) { 
+    // FIXME: Context should be set correctly before we get here.
     method->setLexicalDeclContext(this);
     addDecl(Context, method); 
   }

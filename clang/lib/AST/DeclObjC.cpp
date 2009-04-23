@@ -543,6 +543,7 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
 
 void ObjCImplDecl::addPropertyImplementation(ASTContext &Context, 
                                              ObjCPropertyImplDecl *property) {
+  // FIXME: The context should be correct before we get here.
   property->setLexicalDeclContext(this);
   addDecl(Context, property);
 }
