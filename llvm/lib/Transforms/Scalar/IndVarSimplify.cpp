@@ -543,8 +543,7 @@ static Value *getSignExtendedTruncVar(const SCEVAddRecExpr *AR,
                                       ScalarEvolution *SE,
                                       const Type *LargestType, Loop *L, 
                                       const Type *myType,
-                                      SCEVExpander &Rewriter, 
-                                      BasicBlock::iterator InsertPt) {
+                                      SCEVExpander &Rewriter) {
   SCEVHandle ExtendedStart =
     SE->getSignExtendExpr(AR->getStart(), LargestType);
   SCEVHandle ExtendedStep =
@@ -553,15 +552,14 @@ static Value *getSignExtendedTruncVar(const SCEVAddRecExpr *AR,
     SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
   if (LargestType != myType)
     ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, myType);
-  return Rewriter.expandCodeFor(ExtendedAddRec, myType, InsertPt);
+  return Rewriter.expandCodeFor(ExtendedAddRec, myType);
 }
 
 static Value *getZeroExtendedTruncVar(const SCEVAddRecExpr *AR,
                                       ScalarEvolution *SE,
                                       const Type *LargestType, Loop *L, 
                                       const Type *myType,
-                                      SCEVExpander &Rewriter, 
-                                      BasicBlock::iterator InsertPt) {
+                                      SCEVExpander &Rewriter) {
   SCEVHandle ExtendedStart =
     SE->getZeroExtendExpr(AR->getStart(), LargestType);
   SCEVHandle ExtendedStep =
@@ -570,7 +568,7 @@ static Value *getZeroExtendedTruncVar(const SCEVAddRecExpr *AR,
     SE->getAddRecExpr(ExtendedStart, ExtendedStep, L);
   if (LargestType != myType)
     ExtendedAddRec = SE->getTruncateExpr(ExtendedAddRec, myType);
-  return Rewriter.expandCodeFor(ExtendedAddRec, myType, InsertPt);
+  return Rewriter.expandCodeFor(ExtendedAddRec, myType);
 }
 
 /// allUsesAreSameTyped - See whether all Uses of I are instructions
@@ -699,6 +697,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // recurrences in terms of the induction variable.  Start with the auxillary
   // induction variables, and recursively rewrite any of their uses.
   BasicBlock::iterator InsertPt = Header->getFirstNonPHI();
+  Rewriter.setInsertionPoint(InsertPt);
 
   // If there were induction variables of other sizes, cast the primary
   // induction variable to the right size for them, avoiding the need for the
@@ -718,7 +717,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
     const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(IndVars.back().second);
-    Value *NewVal = Rewriter.expandCodeFor(AR, PN->getType(), InsertPt);
+    Value *NewVal = Rewriter.expandCodeFor(AR, PN->getType());
     DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *PN
          << "   into = " << *NewVal << "\n";
     NewVal->takeName(PN);
@@ -732,7 +731,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         Instruction *UInst = dyn_cast<Instruction>(*UI);
         if (UInst && isa<SExtInst>(UInst) && NoSignedWrap) {
           Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType, L, 
-                                         UInst->getType(), Rewriter, InsertPt);
+                                         UInst->getType(), Rewriter);
           UInst->replaceAllUsesWith(TruncIndVar);
           DeadInsts.insert(UInst);
         }
@@ -753,8 +752,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
               SExtInst* oldSext = dyn_cast<SExtInst>(UInst->use_begin());
               uint64_t truncSize = oldSext->getType()->getPrimitiveSizeInBits();
               Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
-                                                L, oldSext->getType(), Rewriter,
-                                                InsertPt);
+                                                L, oldSext->getType(), Rewriter);
               APInt APnewAddRHS = APInt(AddRHS->getValue()).sext(newBitSize);
               if (newBitSize > truncSize)
                 APnewAddRHS = APnewAddRHS.trunc(truncSize);
@@ -784,8 +782,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
             SExtInst* oldSext = dyn_cast<SExtInst>(UInst->use_begin());
             uint64_t truncSize = oldSext->getType()->getPrimitiveSizeInBits();
             Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
-                                              L, oldSext->getType(), Rewriter,
-                                              InsertPt);
+                                              L, oldSext->getType(), Rewriter);
             APInt APnewOrRHS = APInt(RHS->getValue()).sext(newBitSize);
             if (newBitSize > truncSize)
               APnewOrRHS = APnewOrRHS.trunc(truncSize);
@@ -805,7 +802,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         // A zext of a signed variable known not to overflow is still safe.
         if (UInst && isa<ZExtInst>(UInst) && (NoUnsignedWrap || NoSignedWrap)) {
           Value *TruncIndVar = getZeroExtendedTruncVar(AR, SE, LargestType, L, 
-                                         UInst->getType(), Rewriter, InsertPt);
+                                         UInst->getType(), Rewriter);
           UInst->replaceAllUsesWith(TruncIndVar);
           DeadInsts.insert(UInst);
         }
@@ -822,7 +819,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
           ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst->use_begin());
           uint64_t truncSize = oldZext->getType()->getPrimitiveSizeInBits();
           Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
-                                  L, oldZext->getType(), Rewriter, InsertPt);
+                                  L, oldZext->getType(), Rewriter);
           APInt APnewAndRHS = APInt(AndRHS->getValue()).zext(newBitSize);
           if (newBitSize > truncSize)
             APnewAndRHS = APnewAndRHS.trunc(truncSize);
@@ -858,7 +855,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
             ZExtInst* oldZext = dyn_cast<ZExtInst>(UInst2->use_begin());
             uint64_t truncSize = oldZext->getType()->getPrimitiveSizeInBits();
             Value *TruncIndVar = getSignExtendedTruncVar(AR, SE, LargestType,
-                                    L, oldZext->getType(), Rewriter, InsertPt);
+                                    L, oldZext->getType(), Rewriter);
             ConstantInt* AndRHS = dyn_cast<ConstantInt>(UInst2->getOperand(1));
             APInt APnewAddRHS = APInt(AddRHS->getValue()).zext(newBitSize);
             if (newBitSize > truncSize)

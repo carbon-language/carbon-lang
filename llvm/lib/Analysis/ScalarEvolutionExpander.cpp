@@ -332,12 +332,10 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   return LHS;
 }
 
-Value *SCEVExpander::expandCodeFor(SCEVHandle SH, const Type *Ty,
-                                   BasicBlock::iterator IP) {
+Value *SCEVExpander::expandCodeFor(SCEVHandle SH, const Type *Ty) {
   // Expand the code for this SCEV.
   assert(SE.getTypeSizeInBits(Ty) == SE.getTypeSizeInBits(SH->getType()) &&
          "non-trivial casts should be done with the SCEVs directly!");
-  InsertPt = IP;
   Value *V = expand(SH);
   return InsertNoopCastOfTo(V, Ty);
 }

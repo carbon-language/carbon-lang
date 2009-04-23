@@ -71,13 +71,23 @@ namespace llvm {
       InsertedInstructions.insert(I);
     }
 
+    void setInsertionPoint(BasicBlock::iterator NewIP) { InsertPt = NewIP; }
+
     BasicBlock::iterator getInsertionPoint() const { return InsertPt; }
+
+    /// expandCodeFor - Insert code to directly compute the specified SCEV
+    /// expression into the program.  The inserted code is inserted into the
+    /// SCEVExpander's current insertion point.
+    Value *expandCodeFor(SCEVHandle SH, const Type *Ty);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
     Value *expandCodeFor(SCEVHandle SH, const Type *Ty,
-                         BasicBlock::iterator IP);
+                         BasicBlock::iterator IP) {
+      setInsertionPoint(IP);
+      return expandCodeFor(SH, Ty);
+    }
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
     /// we can to share the casts.
