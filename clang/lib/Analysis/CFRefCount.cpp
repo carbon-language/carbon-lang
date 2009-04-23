@@ -703,7 +703,7 @@ public:
   
   RetainSummary* getSummary(FunctionDecl* FD);  
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
-  RetainSummary* getClassMethodSummary(IdentifierInfo* ClsName, Selector S);
+  RetainSummary* getClassMethodSummary(ObjCMessageExpr *ME, Selector S);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -1089,12 +1089,13 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
 }
 
 RetainSummary*
-RetainSummaryManager::getClassMethodSummary(IdentifierInfo* ClsName,
+RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr* ME,
                                             Selector S) {
   
   // FIXME: Eventually we should properly do class method summaries, but
   // it requires us being able to walk the type hierarchy.  Unfortunately,
-  // we cannot do this with just an IdentifierInfo* for the class name.
+  // we cannot do this with just an IdentifierInfo* for the class name.  
+  IdentifierInfo* ClsName = ME->getClassName();
   
   // Look up a summary in our cache of Selectors -> Summaries.
   ObjCMethodSummariesTy::iterator I = ObjCClassMethodSummaries.find(ClsName, S);
@@ -1102,8 +1103,16 @@ RetainSummaryManager::getClassMethodSummary(IdentifierInfo* ClsName,
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
+  // Look for methods that return an owned object.
+  if (!isTrackedObjectType(Ctx.getCanonicalType(ME->getType())))
+    return 0;
+  
   // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
   //  by class methods.
+  // Look for methods that return an owned object.
+  if (!isTrackedObjectType(Ctx.getCanonicalType(ME->getType())))
+    return 0;  
+  
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
   RetEffect E = followsFundamentalRule(s)
     ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
@@ -2005,8 +2014,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     }
   }
   else
-    Summ = Summaries.getClassMethodSummary(ME->getClassName(),
-                                           ME->getSelector());
+    Summ = Summaries.getClassMethodSummary(ME, ME->getSelector());
 
   EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), Summ,
               ME->arg_begin(), ME->arg_end(), Pred);
