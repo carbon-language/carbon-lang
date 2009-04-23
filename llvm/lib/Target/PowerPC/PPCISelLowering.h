@@ -326,7 +326,7 @@ namespace llvm {
     /// the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
-     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Target which want to do tail call
     /// optimization should implement this function.
     virtual bool IsEligibleForTailCallOptimization(CallSDNode *TheCall,
