@@ -637,12 +637,6 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCImplementationDecl(DC, L, ClassInterface, SuperDecl);
 }
 
-/// Destroy - Call destructors and release memory.
-void ObjCImplementationDecl::Destroy(ASTContext &C) {
-  IVars.Destroy(C);
-  Decl::Destroy(C);
-}
-
 //===----------------------------------------------------------------------===//
 // ObjCCompatibleAliasDecl
 //===----------------------------------------------------------------------===//

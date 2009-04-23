@@ -506,7 +506,7 @@ void PCHDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
 
 void PCHDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
-  // FIXME: Implement.
+  Writer.AddDeclRef(D->getSuperClass(), Record);
   Code = pch::DECL_OBJC_IMPLEMENTATION;
 }
 

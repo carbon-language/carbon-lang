@@ -3952,7 +3952,12 @@ void Sema::ActOnFields(Scope* S,
     } else if (ObjCImplementationDecl *IMPDecl = 
                   dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
-      IMPDecl->setIVarList(ClsFields, RecFields.size(), Context);
+      for (unsigned I = 0, N = RecFields.size(); I != N; ++I) {
+        // FIXME: Set the DeclContext correctly when we build the
+        // declarations.
+        ClsFields[I]->setLexicalDeclContext(IMPDecl);
+        IMPDecl->addDecl(Context, ClsFields[I]);
+      }
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     }
   }

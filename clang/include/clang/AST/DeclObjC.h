@@ -946,9 +946,6 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   /// Implementation Class's super class.
   ObjCInterfaceDecl *SuperClass;
     
-  /// Instance variables declared in the @implementation.
-  ObjCList<ObjCIvarDecl> IVars;
-
   ObjCImplementationDecl(DeclContext *DC, SourceLocation L, 
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
@@ -959,13 +956,6 @@ public:
                                         SourceLocation L, 
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl);
-  
-  /// Destroy - Call destructors and release memory.
-  virtual void Destroy(ASTContext& C);
-
-  void setIVarList(ObjCIvarDecl *const *InArray, unsigned Num, ASTContext &C) {
-    IVars.set(InArray, Num, C);
-  }
   
   /// getIdentifier - Get the identifier that names the class
   /// interface associated with this implementation.
@@ -991,11 +981,19 @@ public:
   
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
     
-  typedef ObjCList<ObjCIvarDecl>::iterator ivar_iterator;
-  ivar_iterator ivar_begin() const { return IVars.begin(); }
-  ivar_iterator ivar_end() const { return IVars.end(); }
-  unsigned ivar_size() const { return IVars.size(); }
-  bool ivar_empty() const { return IVars.empty(); }
+  typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
+  ivar_iterator ivar_begin(ASTContext &Context) const { 
+    return ivar_iterator(decls_begin(Context)); 
+  }
+  ivar_iterator ivar_end(ASTContext &Context) const { 
+    return ivar_iterator(decls_end(Context));
+  }
+  unsigned ivar_size(ASTContext &Context) const { 
+    return std::distance(ivar_begin(Context), ivar_end(Context));
+  }
+  bool ivar_empty(ASTContext &Context) const { 
+    return ivar_begin(Context) == ivar_end(Context);
+  }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCImplementation;

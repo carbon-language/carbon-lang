@@ -3185,8 +3185,8 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   
   // Build _objc_ivar_list metadata for classes ivars if needed
-  unsigned NumIvars = !IDecl->ivar_empty()
-                      ? IDecl->ivar_size() 
+  unsigned NumIvars = !IDecl->ivar_empty(*Context)
+                      ? IDecl->ivar_size(*Context) 
                       : (CDecl ? CDecl->ivar_size() : 0);
   if (NumIvars > 0) {
     static bool objc_ivar = false;
@@ -3223,9 +3223,15 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += "\n";
     
     ObjCInterfaceDecl::ivar_iterator IVI, IVE;
-    if (!IDecl->ivar_empty()) {
-      IVI = IDecl->ivar_begin();
-      IVE = IDecl->ivar_end();
+    llvm::SmallVector<ObjCIvarDecl *, 8> IVars;
+    if (!IDecl->ivar_empty(*Context)) {
+      for (ObjCImplementationDecl::ivar_iterator 
+             IV = IDecl->ivar_begin(*Context),
+             IVEnd = IDecl->ivar_end(*Context);
+           IV != IVEnd; ++IV)
+        IVars.push_back(*IV);
+      IVI = IVars.begin();
+      IVE = IVars.end();
     } else {
       IVI = CDecl->ivar_begin();
       IVE = CDecl->ivar_end();
