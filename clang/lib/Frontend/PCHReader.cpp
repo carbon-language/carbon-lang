@@ -2743,7 +2743,6 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
     return DeclarationName(GetSelector(Record, Idx));
-    break;
 
   case DeclarationName::CXXConstructorName:
     return Context.DeclarationNames.getCXXConstructorName(

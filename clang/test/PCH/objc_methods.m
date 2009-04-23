@@ -7,6 +7,10 @@
 
 void func() {
  TestPCH *xx;
+ TestForwardClassDecl *yy;
+// FIXME:
+// AliasForTestPCH *zz;
+ 
 #if 0
  xx = [TestPCH alloc];
  [xx instMethod];

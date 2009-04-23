@@ -206,8 +206,7 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   
   ObjCAliasDecls[AliasName] = AliasDecl;
 
-  // FIXME: PushOnScopeChains?
-  CurContext->addDecl(Context, AliasDecl);
+  PushOnScopeChains(AliasDecl, TUScope);
   if (!CheckObjCDeclScope(AliasDecl))
     TUScope->AddDecl(DeclPtrTy::make(AliasDecl));
 
@@ -1048,8 +1047,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                         IdentList[i], SourceLocation(), true);
       ObjCInterfaceDecls[IdentList[i]] = IDecl;
 
-      // FIXME: PushOnScopeChains?
-      CurContext->addDecl(Context, IDecl);
+      PushOnScopeChains(IDecl, TUScope);
       // Remember that this needs to be removed when the scope is popped.
       TUScope->AddDecl(DeclPtrTy::make(IDecl));
     }
