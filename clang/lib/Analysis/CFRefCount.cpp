@@ -704,6 +704,7 @@ public:
   RetainSummary* getSummary(FunctionDecl* FD);  
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
   RetainSummary* getClassMethodSummary(ObjCMessageExpr *ME);
+  RetainSummary* getCommonMethodSummary(ObjCMessageExpr *ME, const char *s);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -1056,6 +1057,25 @@ RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
 
 
 RetainSummary*
+RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, const char *s)
+{
+  // Look for methods that return an owned object.
+  if (!isTrackedObjectType(ME->getType()))
+    return 0;
+  
+  // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
+  //  by instance methods.
+  
+  RetEffect E =
+    followsFundamentalRule(s)
+    ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
+                     : RetEffect::MakeOwned(RetEffect::ObjC, true))
+      : RetEffect::MakeNotOwned(RetEffect::ObjC);
+  
+  return getPersistentSummary(E);
+}
+
+RetainSummary*
 RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
                                        ObjCInterfaceDecl* ID) {
 
@@ -1069,25 +1089,12 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
 
   // "initXXX": pass-through for receiver.
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
-  assert (ScratchArgs.empty());
+  assert(ScratchArgs.empty());
   
   if (deriveNamingConvention(s) == InitRule)
     return getInitMethodSummary(ME);
   
-  // Look for methods that return an owned object.
-  if (!isTrackedObjectType(ME->getType()))
-    return 0;
-
-  // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
-  //  by instance methods.
-
-  RetEffect E =
-    followsFundamentalRule(s)
-    ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
-                     : RetEffect::MakeOwned(RetEffect::ObjC, true))
-    : RetEffect::MakeNotOwned(RetEffect::ObjC);
-  
-  RetainSummary* Summ = getPersistentSummary(E);
+  RetainSummary *Summ = getCommonMethodSummary(ME, s);
   ObjCMethodSummaries[ME] = Summ;
   return Summ;
 }
@@ -1107,21 +1114,8 @@ RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr* ME) {
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
-  // Look for methods that return an owned object.
-  if (!isTrackedObjectType(ME->getType()))
-    return 0;
-  
-  // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
-  //  by class methods.
-  // Look for methods that return an owned object.
-
-  const char* s = S.getIdentifierInfoForSlot(0)->getName();
-  RetEffect E = followsFundamentalRule(s)
-    ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
-       : RetEffect::MakeOwned(RetEffect::ObjC, true))
-    : RetEffect::MakeNotOwned(RetEffect::ObjC);
-  
-  RetainSummary* Summ = getPersistentSummary(E);
+  RetainSummary* Summ =
+    getCommonMethodSummary(ME, S.getIdentifierInfoForSlot(0)->getName());
   ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
 }
