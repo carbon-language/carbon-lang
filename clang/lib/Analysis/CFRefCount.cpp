@@ -784,18 +784,22 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
 // Predicates.
 //===----------------------------------------------------------------------===//
 
-bool RetainSummaryManager::isTrackedObjectType(QualType T) {
-  if (!Ctx.isObjCObjectPointerType(T))
+bool RetainSummaryManager::isTrackedObjectType(QualType Ty) {
+  if (!Ctx.isObjCObjectPointerType(Ty))
     return false;
 
-  // Does it subclass NSObject?
-  ObjCInterfaceType* OT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
+  // We assume that id<..>, id, and "Class" all represent tracked objects.
+  const PointerType *PT = Ty->getAsPointerType();
+  if (PT == 0)
+    return true;
+    
+  const ObjCInterfaceType *OT = PT->getPointeeType()->getAsObjCInterfaceType();
 
   // We assume that id<..>, id, and "Class" all represent tracked objects.
   if (!OT)
     return true;
-
-  // Does the object type subclass NSObject?
+    
+  // Does the interface subclass NSObject?
   // FIXME: We can memoize here if this gets too expensive.  
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
   ObjCInterfaceDecl* ID = OT->getDecl();  

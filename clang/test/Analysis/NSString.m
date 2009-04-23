@@ -251,3 +251,12 @@ void test_stringWithFormat() {
   [string release]; // expected-warning{{Incorrect decrement of the reference count}}
 }
 
+// Test isTrackedObjectType()
+typedef NSString* WonkyTypedef;
+@interface TestIsTracked
++ (WonkyTypedef)newString;
+@end
+
+void test_isTrackedObjectType(void) {
+  NSString *str = [TestIsTracked newString]; // expected-warning{{Potential leak}}
+}
