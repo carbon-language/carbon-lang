@@ -41,6 +41,7 @@ def : DiagGroup<"int-to-pointer-cast">;
 def : DiagGroup<"missing-braces">;
 def : DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
+def : DiagGroup<"missing-noreturn">;
 def : DiagGroup<"nested-externs">;
 def : DiagGroup<"newline-eof">;
 def : DiagGroup<"format-y2k">;
