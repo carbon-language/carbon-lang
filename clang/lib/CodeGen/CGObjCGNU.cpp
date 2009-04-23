@@ -671,8 +671,10 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // Collect information about instance methods
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCCategoryImplDecl::instmeth_iterator iter = OCD->instmeth_begin(),
-      endIter = OCD->instmeth_end() ; iter != endIter ; iter++) {
+  for (ObjCCategoryImplDecl::instmeth_iterator
+         iter = OCD->instmeth_begin(CGM.getContext()),
+         endIter = OCD->instmeth_end(CGM.getContext());
+       iter != endIter ; iter++) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     CGM.getContext().getObjCEncodingForMethodDecl(*iter,TypeStr);
@@ -682,8 +684,10 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // Collect information about class methods
   llvm::SmallVector<Selector, 16> ClassMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCCategoryImplDecl::classmeth_iterator iter = OCD->classmeth_begin(),
-      endIter = OCD->classmeth_end() ; iter != endIter ; iter++) {
+  for (ObjCCategoryImplDecl::classmeth_iterator 
+         iter = OCD->classmeth_begin(CGM.getContext()),
+         endIter = OCD->classmeth_end(CGM.getContext());
+       iter != endIter ; iter++) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     CGM.getContext().getObjCEncodingForMethodDecl(*iter,TypeStr);
@@ -761,8 +765,10 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // Collect information about instance methods
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCImplementationDecl::instmeth_iterator iter = OID->instmeth_begin(),
-      endIter = OID->instmeth_end() ; iter != endIter ; iter++) {
+  for (ObjCImplementationDecl::instmeth_iterator 
+         iter = OID->instmeth_begin(CGM.getContext()),
+         endIter = OID->instmeth_end(CGM.getContext());
+       iter != endIter ; iter++) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
@@ -772,8 +778,10 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // Collect information about class methods
   llvm::SmallVector<Selector, 16> ClassMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCImplementationDecl::classmeth_iterator iter = OID->classmeth_begin(),
-      endIter = OID->classmeth_end() ; iter != endIter ; iter++) {
+  for (ObjCImplementationDecl::classmeth_iterator
+         iter = OID->classmeth_begin(CGM.getContext()),
+         endIter = OID->classmeth_end(CGM.getContext());
+       iter != endIter ; iter++) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);

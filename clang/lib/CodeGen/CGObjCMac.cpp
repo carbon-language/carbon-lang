@@ -1764,13 +1764,15 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                       OCD->getNameAsString());
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
-  for (ObjCCategoryImplDecl::instmeth_iterator i = OCD->instmeth_begin(),
-         e = OCD->instmeth_end(); i != e; ++i) {
+  for (ObjCCategoryImplDecl::instmeth_iterator 
+         i = OCD->instmeth_begin(CGM.getContext()),
+         e = OCD->instmeth_end(CGM.getContext()); i != e; ++i) {
     // Instance methods should always be defined.
     InstanceMethods.push_back(GetMethodConstant(*i));
   }
-  for (ObjCCategoryImplDecl::classmeth_iterator i = OCD->classmeth_begin(),
-         e = OCD->classmeth_end(); i != e; ++i) {
+  for (ObjCCategoryImplDecl::classmeth_iterator 
+         i = OCD->classmeth_begin(CGM.getContext()),
+         e = OCD->classmeth_end(CGM.getContext()); i != e; ++i) {
     // Class methods should always be defined.
     ClassMethods.push_back(GetMethodConstant(*i));
   }
@@ -1865,19 +1867,22 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     Flags |= eClassFlags_Hidden;
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
-  for (ObjCImplementationDecl::instmeth_iterator i = ID->instmeth_begin(),
-         e = ID->instmeth_end(); i != e; ++i) {
+  for (ObjCImplementationDecl::instmeth_iterator 
+         i = ID->instmeth_begin(CGM.getContext()),
+         e = ID->instmeth_end(CGM.getContext()); i != e; ++i) {
     // Instance methods should always be defined.
     InstanceMethods.push_back(GetMethodConstant(*i));
   }
-  for (ObjCImplementationDecl::classmeth_iterator i = ID->classmeth_begin(),
-         e = ID->classmeth_end(); i != e; ++i) {
+  for (ObjCImplementationDecl::classmeth_iterator 
+         i = ID->classmeth_begin(CGM.getContext()),
+         e = ID->classmeth_end(CGM.getContext()); i != e; ++i) {
     // Class methods should always be defined.
     ClassMethods.push_back(GetMethodConstant(*i));
   }
 
-  for (ObjCImplementationDecl::propimpl_iterator i = ID->propimpl_begin(),
-         e = ID->propimpl_end(); i != e; ++i) {
+  for (ObjCImplementationDecl::propimpl_iterator 
+         i = ID->propimpl_begin(CGM.getContext()),
+         e = ID->propimpl_end(CGM.getContext()); i != e; ++i) {
     ObjCPropertyImplDecl *PID = *i;
 
     if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize) {
@@ -4169,20 +4174,23 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   std::string MethodListName("\01l_OBJC_$_");
   if (flags & CLS_META) {
     MethodListName += "CLASS_METHODS_" + ID->getNameAsString();
-    for (ObjCImplementationDecl::classmeth_iterator i = ID->classmeth_begin(),
-         e = ID->classmeth_end(); i != e; ++i) {
+    for (ObjCImplementationDecl::classmeth_iterator 
+           i = ID->classmeth_begin(CGM.getContext()),
+           e = ID->classmeth_end(CGM.getContext()); i != e; ++i) {
       // Class methods should always be defined.
       Methods.push_back(GetMethodConstant(*i));
     }
   } else {
     MethodListName += "INSTANCE_METHODS_" + ID->getNameAsString();
-    for (ObjCImplementationDecl::instmeth_iterator i = ID->instmeth_begin(),
-         e = ID->instmeth_end(); i != e; ++i) {
+    for (ObjCImplementationDecl::instmeth_iterator 
+           i = ID->instmeth_begin(CGM.getContext()),
+           e = ID->instmeth_end(CGM.getContext()); i != e; ++i) {
       // Instance methods should always be defined.
       Methods.push_back(GetMethodConstant(*i));
     }
-    for (ObjCImplementationDecl::propimpl_iterator i = ID->propimpl_begin(),
-         e = ID->propimpl_end(); i != e; ++i) {
+    for (ObjCImplementationDecl::propimpl_iterator 
+           i = ID->propimpl_begin(CGM.getContext()),
+           e = ID->propimpl_end(CGM.getContext()); i != e; ++i) {
       ObjCPropertyImplDecl *PID = *i;
       
       if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize){
@@ -4466,8 +4474,9 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   MethodListName += "INSTANCE_METHODS_" + Interface->getNameAsString() + 
     "_$_" + OCD->getNameAsString();
    
-  for (ObjCCategoryImplDecl::instmeth_iterator i = OCD->instmeth_begin(),
-       e = OCD->instmeth_end(); i != e; ++i) {
+  for (ObjCCategoryImplDecl::instmeth_iterator 
+         i = OCD->instmeth_begin(CGM.getContext()),
+         e = OCD->instmeth_end(CGM.getContext()); i != e; ++i) {
     // Instance methods should always be defined.
     Methods.push_back(GetMethodConstant(*i));
   }
@@ -4480,8 +4489,9 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   MethodListName += "CLASS_METHODS_" + Interface->getNameAsString() + "_$_" +
     OCD->getNameAsString();
   Methods.clear();
-  for (ObjCCategoryImplDecl::classmeth_iterator i = OCD->classmeth_begin(),
-       e = OCD->classmeth_end(); i != e; ++i) {
+  for (ObjCCategoryImplDecl::classmeth_iterator 
+         i = OCD->classmeth_begin(CGM.getContext()),
+         e = OCD->classmeth_end(CGM.getContext()); i != e; ++i) {
     // Class methods should always be defined.
     Methods.push_back(GetMethodConstant(*i));
   }

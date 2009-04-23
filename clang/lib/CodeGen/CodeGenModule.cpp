@@ -1292,8 +1292,9 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str,
 /// properties for an implementation.
 void CodeGenModule::EmitObjCPropertyImplementations(const 
                                                     ObjCImplementationDecl *D) {
-  for (ObjCImplementationDecl::propimpl_iterator i = D->propimpl_begin(),
-         e = D->propimpl_end(); i != e; ++i) {
+  for (ObjCImplementationDecl::propimpl_iterator 
+         i = D->propimpl_begin(getContext()),
+         e = D->propimpl_end(getContext()); i != e; ++i) {
     ObjCPropertyImplDecl *PID = *i;
     
     // Dynamic is just for type-checking.
@@ -1305,11 +1306,11 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
       // we want, that just indicates if the decl came from a
       // property. What we want to know is if the method is defined in
       // this implementation.
-      if (!D->getInstanceMethod(PD->getGetterName()))
+      if (!D->getInstanceMethod(getContext(), PD->getGetterName()))
         CodeGenFunction(*this).GenerateObjCGetter(
                                  const_cast<ObjCImplementationDecl *>(D), PID);
       if (!PD->isReadOnly() &&
-          !D->getInstanceMethod(PD->getSetterName()))
+          !D->getInstanceMethod(getContext(), PD->getSetterName()))
         CodeGenFunction(*this).GenerateObjCSetter(
                                  const_cast<ObjCImplementationDecl *>(D), PID);
     }

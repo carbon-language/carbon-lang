@@ -147,8 +147,8 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   ObjCMethodDecl* MD = 0;
   
   // Scan the instance methods for "dealloc".
-  for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
-       E = D->instmeth_end(); I!=E; ++I) {
+  for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(Ctx),
+       E = D->instmeth_end(Ctx); I!=E; ++I) {
     
     if ((*I)->getSelector() == S) {
       MD = *I;
@@ -198,8 +198,8 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   
   // Scan for missing and extra releases of ivars used by implementations
   // of synthesized properties
-  for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
-       E = D->propimpl_end(); I!=E; ++I) {
+  for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(Ctx),
+       E = D->propimpl_end(Ctx); I!=E; ++I) {
 
     // We can only check the synthesized properties
     if((*I)->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)

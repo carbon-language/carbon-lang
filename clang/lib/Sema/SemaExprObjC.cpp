@@ -224,13 +224,13 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
   while (ClassDecl && !Method) {
     if (ObjCImplementationDecl *ImpDecl = 
         ObjCImplementations[ClassDecl->getIdentifier()])
-      Method = ImpDecl->getClassMethod(Sel);
+      Method = ImpDecl->getClassMethod(Context, Sel);
     
     // Look through local category implementations associated with the class.
     if (!Method) {
       for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
         if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
+          Method = ObjCCategoryImpls[i]->getClassMethod(Context, Sel);
       }
     }
     
@@ -257,13 +257,13 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
     // If we have implementations in scope, check "private" methods.
     if (ObjCImplementationDecl *ImpDecl = 
         ObjCImplementations[ClassDecl->getIdentifier()])
-      Method = ImpDecl->getInstanceMethod(Sel);
+      Method = ImpDecl->getInstanceMethod(Context, Sel);
     
     // Look through local category implementations associated with the class.
     if (!Method) {
       for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
         if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
+          Method = ObjCCategoryImpls[i]->getInstanceMethod(Context, Sel);
       }
     }
     ClassDecl = ClassDecl->getSuperClass();
@@ -290,7 +290,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCImplementationDecl *ImpDecl =
             ObjCImplementations[ClassDecl->getIdentifier()])
-          Getter = ImpDecl->getClassMethod(Sel);
+          Getter = ImpDecl->getClassMethod(Context, Sel);
 
   if (Getter) {
     // FIXME: refactor/share with ActOnMemberReference().
@@ -312,13 +312,13 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCImplementationDecl *ImpDecl =
               ObjCImplementations[ClassDecl->getIdentifier()])
-          Setter = ImpDecl->getClassMethod(SetterSel);
+          Setter = ImpDecl->getClassMethod(Context, SetterSel);
   }
   // Look through local category implementations associated with the class.
   if (!Setter) {
     for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
       if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-        Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
+        Setter = ObjCCategoryImpls[i]->getClassMethod(Context, SetterSel);
     }
   }
 

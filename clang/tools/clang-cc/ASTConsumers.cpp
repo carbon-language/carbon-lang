@@ -346,8 +346,12 @@ void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
   else
     Out << "@implementation " << I;
   
-  for (ObjCImplementationDecl::instmeth_iterator I = OID->instmeth_begin(),
-       E = OID->instmeth_end(); I != E; ++I) {
+  // FIXME: Don't use a NULL context
+  ASTContext *Context = 0;
+  for (ObjCImplementationDecl::instmeth_iterator 
+         I = OID->instmeth_begin(*Context),
+         E = OID->instmeth_end(*Context); 
+       I != E; ++I) {
     ObjCMethodDecl *OMD = *I;
     PrintObjCMethodDecl(OMD);
     if (OMD->getBody()) {
@@ -357,8 +361,10 @@ void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
     }
   }
   
-  for (ObjCImplementationDecl::classmeth_iterator I = OID->classmeth_begin(),
-       E = OID->classmeth_end(); I != E; ++I) {
+  for (ObjCImplementationDecl::classmeth_iterator 
+         I = OID->classmeth_begin(*Context),
+       E = OID->classmeth_end(*Context);
+       I != E; ++I) {
     ObjCMethodDecl *OMD = *I;
     PrintObjCMethodDecl(OMD);
     if (OMD->getBody()) {
@@ -368,8 +374,9 @@ void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
     }
   }
   
-  for (ObjCImplementationDecl::propimpl_iterator I = OID->propimpl_begin(),
-       E = OID->propimpl_end(); I != E; ++I)
+  for (ObjCImplementationDecl::propimpl_iterator 
+         I = OID->propimpl_begin(*Context),
+         E = OID->propimpl_end(*Context); I != E; ++I)
     PrintObjCPropertyImplDecl(*I);
   
   Out << "@end\n";
@@ -441,8 +448,12 @@ void DeclPrinter::PrintObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
   Out << "@implementation "
       << PID->getClassInterface()->getNameAsString()
       << '(' << PID->getNameAsString() << ");\n";  
-  for (ObjCCategoryImplDecl::propimpl_iterator I = PID->propimpl_begin(),
-       E = PID->propimpl_end(); I != E; ++I)
+
+  // FIXME: Don't use a NULL context here
+  ASTContext *Context = 0;
+  for (ObjCCategoryImplDecl::propimpl_iterator 
+         I = PID->propimpl_begin(*Context),
+       E = PID->propimpl_end(*Context); I != E; ++I)
     PrintObjCPropertyImplDecl(*I);
   Out << "@end\n";
   // FIXME: implement the rest...

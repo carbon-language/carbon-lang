@@ -541,13 +541,20 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 
+void ObjCImplDecl::addPropertyImplementation(ASTContext &Context, 
+                                             ObjCPropertyImplDecl *property) {
+  property->setLexicalDeclContext(this);
+  addDecl(Context, property);
+}
+
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
 /// properties implemented in this category @implementation block and returns
 /// the implemented property that uses it.
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
-FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
+FindPropertyImplIvarDecl(ASTContext &Context, IdentifierInfo *ivarId) const {
+  for (propimpl_iterator i = propimpl_begin(Context), e = propimpl_end(Context);
+       i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyIvarDecl() &&
         PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
@@ -561,8 +568,9 @@ FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
 /// category @implementation block.
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
-FindPropertyImplDecl(IdentifierInfo *Id) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
+FindPropertyImplDecl(ASTContext &Context, IdentifierInfo *Id) const {
+  for (propimpl_iterator i = propimpl_begin(Context), e = propimpl_end(Context);
+       i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyDecl()->getIdentifier() == Id)
       return PID;
@@ -573,22 +581,47 @@ FindPropertyImplDecl(IdentifierInfo *Id) const {
 // getInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(Selector Sel) const {
-  for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
-    if ((*I)->getSelector() == Sel)
-      return *I;
-  return NULL;
+ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(ASTContext &Context,
+                                                Selector Sel) const {
+  // Since instance & class methods can have the same name, the loop below
+  // ensures we get the correct method.
+  //
+  // @interface Whatever
+  // - (int) class_method;
+  // + (float) class_method;
+  // @end
+  //
+  lookup_const_iterator Meth, MethEnd;
+  for (llvm::tie(Meth, MethEnd) = lookup(Context, Sel);
+       Meth != MethEnd; ++Meth) {
+    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
+    if (MD && MD->isInstanceMethod())
+      return MD;
+  }
+  return 0;
 }
 
 // getClassMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCImplDecl::getClassMethod(Selector Sel) const {
-  for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
-       I != E; ++I)
-    if ((*I)->getSelector() == Sel)
-      return *I;
-  return NULL;
+ObjCMethodDecl *ObjCImplDecl::getClassMethod(ASTContext &Context, 
+                                             Selector Sel) const {
+  // Since instance & class methods can have the same name, the loop below
+  // ensures we get the correct method.
+  //
+  // @interface Whatever
+  // - (int) class_method;
+  // + (float) class_method;
+  // @end
+  //
+  lookup_const_iterator Meth, MethEnd;
+  for (llvm::tie(Meth, MethEnd) = lookup(Context, Sel);
+       Meth != MethEnd; ++Meth) {
+    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
+    if (MD && MD->isClassMethod())
+      return MD;
+  }
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//

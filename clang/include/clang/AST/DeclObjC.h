@@ -796,15 +796,6 @@ class ObjCImplDecl : public Decl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
   
-  /// implemented instance methods
-  llvm::SmallVector<ObjCMethodDecl*, 16> InstanceMethods;
-  
-  /// implemented class methods
-  llvm::SmallVector<ObjCMethodDecl*, 16> ClassMethods;
-  
-  /// Property Implementations in this category
-  llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
-  
   SourceLocation EndLoc;  
   
 protected:
@@ -819,46 +810,61 @@ public:
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   
-  void addInstanceMethod(ObjCMethodDecl *method) {
-    InstanceMethods.push_back(method);
+  void addInstanceMethod(ASTContext &Context, ObjCMethodDecl *method) { 
+    method->setLexicalDeclContext(this);
+    addDecl(Context, method); 
   }
-  void addClassMethod(ObjCMethodDecl *method) {
-    ClassMethods.push_back(method);
-  }   
+  void addClassMethod(ASTContext &Context, ObjCMethodDecl *method) { 
+    method->setLexicalDeclContext(this);
+    addDecl(Context, method); 
+  }
   
   // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
-  ObjCMethodDecl *getClassMethod(Selector Sel) const;
-  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
-    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
+  ObjCMethodDecl *getInstanceMethod(ASTContext &Context, Selector Sel) const;
+  ObjCMethodDecl *getClassMethod(ASTContext &Context, Selector Sel) const;
+  ObjCMethodDecl *getMethod(ASTContext &Context, Selector Sel, 
+                            bool isInstance) const {
+    return isInstance ? getInstanceMethod(Context, Sel) 
+                      : getClassMethod(Context, Sel);
   }
   
-  void addPropertyImplementation(ObjCPropertyImplDecl *property) {
-    PropertyImplementations.push_back(property);
-  }
+  void addPropertyImplementation(ASTContext &Context, 
+                                 ObjCPropertyImplDecl *property);
   
-  ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
-  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
-  
-  typedef llvm::SmallVector<ObjCPropertyImplDecl*, 8>::const_iterator
-    propimpl_iterator;
-  propimpl_iterator propimpl_begin() const { 
-    return PropertyImplementations.begin(); 
+  ObjCPropertyImplDecl *FindPropertyImplDecl(ASTContext &Context, 
+                                             IdentifierInfo *propertyId) const;
+  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(ASTContext &Context, 
+                                                 IdentifierInfo *ivarId) const;
+
+  // Iterator access to properties.
+  typedef specific_decl_iterator<ObjCPropertyImplDecl> propimpl_iterator;
+  propimpl_iterator propimpl_begin(ASTContext &Context) const { 
+    return propimpl_iterator(decls_begin(Context));
   }
-  propimpl_iterator propimpl_end() const { 
-    return PropertyImplementations.end(); 
+  propimpl_iterator propimpl_end(ASTContext &Context) const { 
+    return propimpl_iterator(decls_end(Context));
   }
-  
-  typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
+
+  typedef filtered_decl_iterator<ObjCMethodDecl, 
+                                 &ObjCMethodDecl::isInstanceMethod> 
     instmeth_iterator;
-  instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }
-  instmeth_iterator instmeth_end() const { return InstanceMethods.end(); }
-  
-  typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
+  instmeth_iterator instmeth_begin(ASTContext &Context) const {
+    return instmeth_iterator(decls_begin(Context));
+  }
+  instmeth_iterator instmeth_end(ASTContext &Context) const {
+    return instmeth_iterator(decls_end(Context));
+  }
+
+  typedef filtered_decl_iterator<ObjCMethodDecl, 
+                                 &ObjCMethodDecl::isClassMethod> 
     classmeth_iterator;
-  classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
-  classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
-  
+  classmeth_iterator classmeth_begin(ASTContext &Context) const {
+    return classmeth_iterator(decls_begin(Context));
+  }
+  classmeth_iterator classmeth_end(ASTContext &Context) const {
+    return classmeth_iterator(decls_end(Context));
+  }
+
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }

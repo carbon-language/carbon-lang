@@ -824,19 +824,19 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurContext)) {
     if (ObjCImplementationDecl *IMD = 
         dyn_cast<ObjCImplementationDecl>(OMD->getDeclContext())) {
-      if (IMD->getInstanceMethod(PDecl->getSetterName()))
+      if (IMD->getInstanceMethod(Context, PDecl->getSetterName()))
         return false;
     }
     else if (ObjCCategoryImplDecl *CIMD = 
              dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext())) {
-      if (CIMD->getInstanceMethod(PDecl->getSetterName()))
+      if (CIMD->getInstanceMethod(Context, PDecl->getSetterName()))
         return false;
     }
   }
   // Lastly, look through the implementation (if one is in scope).
   if (ObjCImplementationDecl *ImpDecl = 
         ObjCImplementations[IDecl->getIdentifier()])
-    if (ImpDecl->getInstanceMethod(PDecl->getSetterName()))
+    if (ImpDecl->getInstanceMethod(Context, PDecl->getSetterName()))
       return false;
   // If all fails, look at the super class.
   if (ObjCInterfaceDecl *SIDecl = IDecl->getSuperClass())
@@ -906,8 +906,9 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
   llvm::DenseSet<Selector> InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
-  for (ObjCImplementationDecl::instmeth_iterator I = IMPDecl->instmeth_begin(),
-         E = IMPDecl->instmeth_end(); I != E; ++I)
+  for (ObjCImplementationDecl::instmeth_iterator 
+         I = IMPDecl->instmeth_begin(Context),
+         E = IMPDecl->instmeth_end(Context); I != E; ++I)
     InsMap.insert((*I)->getSelector());
   
   // Check and see if properties declared in the interface have either 1)
@@ -921,8 +922,9 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
           continue;
         ObjCPropertyImplDecl *PI = 0;
         // Is there a matching propery synthesize/dynamic?
-        for (ObjCImplDecl::propimpl_iterator I = IMPDecl->propimpl_begin(),
-             EI = IMPDecl->propimpl_end(); I != EI; ++I)
+        for (ObjCImplDecl::propimpl_iterator 
+               I = IMPDecl->propimpl_begin(Context),
+               EI = IMPDecl->propimpl_end(Context); I != EI; ++I)
           if ((*I)->getPropertyDecl() == Prop) {
             PI = (*I);
             break;
@@ -954,7 +956,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
     }
     
     ObjCMethodDecl *ImpMethodDecl = 
-      IMPDecl->getInstanceMethod((*I)->getSelector());
+      IMPDecl->getInstanceMethod(Context, (*I)->getSelector());
     ObjCMethodDecl *IntfMethodDecl = 
       CDecl->getInstanceMethod(Context, (*I)->getSelector());
     assert(IntfMethodDecl && 
@@ -967,8 +969,9 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in class interface have been
   // implemented in the implementation class.
-  for (ObjCImplementationDecl::classmeth_iterator I =IMPDecl->classmeth_begin(),
-       E = IMPDecl->classmeth_end(); I != E; ++I)
+  for (ObjCImplementationDecl::classmeth_iterator 
+         I = IMPDecl->classmeth_begin(Context),
+         E = IMPDecl->classmeth_end(Context); I != E; ++I)
     ClsMap.insert((*I)->getSelector());
   
   for (ObjCInterfaceDecl::classmeth_iterator 
@@ -979,7 +982,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
     else {
       ObjCMethodDecl *ImpMethodDecl = 
-        IMPDecl->getClassMethod((*I)->getSelector());
+        IMPDecl->getClassMethod(Context, (*I)->getSelector());
       ObjCMethodDecl *IntfMethodDecl = 
         CDecl->getClassMethod(Context, (*I)->getSelector());
       WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
@@ -1526,21 +1529,21 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   if (ObjCImplementationDecl *ImpDecl = 
         dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     if (MethodType == tok::minus) {
-      PrevMethod = ImpDecl->getInstanceMethod(Sel);
-      ImpDecl->addInstanceMethod(ObjCMethod);
+      PrevMethod = ImpDecl->getInstanceMethod(Context, Sel);
+      ImpDecl->addInstanceMethod(Context, ObjCMethod);
     } else {
-      PrevMethod = ImpDecl->getClassMethod(Sel);
-      ImpDecl->addClassMethod(ObjCMethod);
+      PrevMethod = ImpDecl->getClassMethod(Context, Sel);
+      ImpDecl->addClassMethod(Context, ObjCMethod);
     }
   } 
   else if (ObjCCategoryImplDecl *CatImpDecl = 
             dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     if (MethodType == tok::minus) {
-      PrevMethod = CatImpDecl->getInstanceMethod(Sel);
-      CatImpDecl->addInstanceMethod(ObjCMethod);
+      PrevMethod = CatImpDecl->getInstanceMethod(Context, Sel);
+      CatImpDecl->addInstanceMethod(Context, ObjCMethod);
     } else {
-      PrevMethod = CatImpDecl->getClassMethod(Sel);
-      CatImpDecl->addClassMethod(ObjCMethod);
+      PrevMethod = CatImpDecl->getClassMethod(Context, Sel);
+      CatImpDecl->addClassMethod(Context, ObjCMethod);
     }
   }
   if (PrevMethod) {
@@ -1898,28 +1901,28 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
                                   ObjCPropertyImplDecl::Synthesize 
                                   : ObjCPropertyImplDecl::Dynamic),
                                  Ivar);
-  CurContext->addDecl(Context, PIDecl);
   if (IC) {
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl = 
-          IC->FindPropertyImplIvarDecl(PropertyIvar)) {
+          IC->FindPropertyImplIvarDecl(Context, PropertyIvar)) {
         Diag(PropertyLoc, diag::error_duplicate_ivar_use) 
           << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier() 
           << PropertyIvar;
         Diag(PPIDecl->getLocation(), diag::note_previous_use);
       }
     
-    if (ObjCPropertyImplDecl *PPIDecl = IC->FindPropertyImplDecl(PropertyId)) {
+    if (ObjCPropertyImplDecl *PPIDecl 
+          = IC->FindPropertyImplDecl(Context, PropertyId)) {
       Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
       Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
       return DeclPtrTy();
     }
-    IC->addPropertyImplementation(PIDecl);
+    IC->addPropertyImplementation(Context, PIDecl);
   }
   else {
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl = 
-          CatImplClass->FindPropertyImplIvarDecl(PropertyIvar)) {
+          CatImplClass->FindPropertyImplIvarDecl(Context, PropertyIvar)) {
         Diag(PropertyLoc, diag::error_duplicate_ivar_use) 
           << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier() 
           << PropertyIvar;
@@ -1927,12 +1930,12 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       }
     
     if (ObjCPropertyImplDecl *PPIDecl = 
-          CatImplClass->FindPropertyImplDecl(PropertyId)) {
+          CatImplClass->FindPropertyImplDecl(Context, PropertyId)) {
       Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
       Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
       return DeclPtrTy();
     }    
-    CatImplClass->addPropertyImplementation(PIDecl);
+    CatImplClass->addPropertyImplementation(Context, PIDecl);
   }
     
   return DeclPtrTy::make(PIDecl);

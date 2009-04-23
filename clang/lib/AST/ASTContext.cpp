@@ -2142,7 +2142,8 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
     if (const ObjCCategoryImplDecl *CID = 
         dyn_cast<ObjCCategoryImplDecl>(Container)) {
       for (ObjCCategoryImplDecl::propimpl_iterator
-             i = CID->propimpl_begin(), e = CID->propimpl_end(); i != e; ++i) {
+             i = CID->propimpl_begin(*this), e = CID->propimpl_end(*this);
+           i != e; ++i) {
         ObjCPropertyImplDecl *PID = *i;
         if (PID->getPropertyDecl() == PD) {
           if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
@@ -2155,7 +2156,8 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
     } else {
       const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
       for (ObjCCategoryImplDecl::propimpl_iterator
-             i = OID->propimpl_begin(), e = OID->propimpl_end(); i != e; ++i) {
+             i = OID->propimpl_begin(*this), e = OID->propimpl_end(*this);
+           i != e; ++i) {
         ObjCPropertyImplDecl *PID = *i;
         if (PID->getPropertyDecl() == PD) {
           if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {

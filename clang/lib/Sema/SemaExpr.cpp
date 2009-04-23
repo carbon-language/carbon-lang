@@ -1809,7 +1809,7 @@ ObjCMethodDecl *Sema::FindMethodInNestedImplementations(
   ObjCMethodDecl *Method = 0;
   if (ObjCImplementationDecl *ImpDecl =
       Sema::ObjCImplementations[IFace->getIdentifier()])
-    Method = ImpDecl->getInstanceMethod(Sel);
+    Method = ImpDecl->getInstanceMethod(Context, Sel);
   
   if (!Method && IFace->getSuperClass())
     return FindMethodInNestedImplementations(IFace->getSuperClass(), Sel);
@@ -2037,7 +2037,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (!Getter) {
       for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Getter; i++) {
         if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-          Getter = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
+          Getter = ObjCCategoryImpls[i]->getInstanceMethod(Context, Sel);
       }
     }
     if (Getter) {
@@ -2060,7 +2060,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (!Setter) {
       for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
         if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-          Setter = ObjCCategoryImpls[i]->getInstanceMethod(SetterSel);
+          Setter = ObjCCategoryImpls[i]->getInstanceMethod(Context, SetterSel);
       }
     }
 
@@ -2141,7 +2141,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       if (!Setter) {
         for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
           if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-            Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
+            Setter = ObjCCategoryImpls[i]->getClassMethod(Context, SetterSel);
         }
       }
 
