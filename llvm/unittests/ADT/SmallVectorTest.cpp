@@ -340,9 +340,9 @@ TEST_F(SmallVectorTest, InsertTest) {
 TEST_F(SmallVectorTest, InsertRepeatedTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
-  makeSequence(theVector, 1, 3);
-  theVector.insert(theVector.begin() + 1, 3, Constructable(77));
-  assertValuesInOrder(theVector, 6u, 1, 77, 77, 77, 2, 3);
+  makeSequence(theVector, 10, 15);
+  theVector.insert(theVector.begin() + 1, 2, Constructable(16));
+  assertValuesInOrder(theVector, 8u, 10, 16, 16, 11, 12, 13, 14, 15);
 }
 
 // Insert range.
