@@ -248,6 +248,6 @@ void test_objc_atomicCompareAndSwap() {
 void test_stringWithFormat() {  
   NSString *string = [[NSString stringWithFormat:@"%ld", (long) 100] retain];
   [string release];
-  [string release]; // expected-warning{{Incorrect decrement of the reference count}}
+  [string release];
 }
 
