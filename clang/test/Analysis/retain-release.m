@@ -335,7 +335,7 @@ static void rdar_6659160(char *inkind, char *inname)
     return;
 
   [kind release];
-  [name release];
+  [name release]; // expected-warning{{Incorrect decrement of the reference count}}
 }
 
 // PR 3677 - 'allocWithZone' should be treated as following the Cocoa naming
