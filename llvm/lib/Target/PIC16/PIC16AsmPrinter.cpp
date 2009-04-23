@@ -48,26 +48,28 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   std::string NewBank = "";
   unsigned Operands = MI->getNumOperands();
   if (Operands > 1) {
-    // Global address or external symbol should be second operand from last
-    // if we want to print banksel for it.
-    unsigned BankSelVar = Operands - 2;
-    // In cases where an instruction has a def or use defined in td file,
-    // that def or use becomes a machine instruction operand.
-    // eg. addfw_1 instruction defines STATUS register. So the machine
-    // instruction for it has MO_Register Operand as its last operand.
-    while ((MI->getOperand(BankSelVar + 1).getType() ==
-           MachineOperand::MO_Register) && (BankSelVar > 0))
-     BankSelVar--;
-    const MachineOperand &Op = MI->getOperand(BankSelVar);
-    unsigned OpType = Op.getType();
-    if (OpType == MachineOperand::MO_GlobalAddress ||
-        OpType == MachineOperand::MO_ExternalSymbol) {
+    // If we have a Global address or external symbol then we need to print 
+    // banksel for it. 
+    unsigned BankSelVar = 0;
+    MachineOperand Op = MI->getOperand(BankSelVar);
+    while (BankSelVar < Operands-1) {
+      Op = MI->getOperand(BankSelVar);
+      if ((Op.getType() ==  MachineOperand::MO_GlobalAddress) ||
+          (Op.getType() ==  MachineOperand::MO_ExternalSymbol))
+        break;
+      BankSelVar++;
+    }
+    if (BankSelVar < Operands-1) {
+      unsigned OpType = Op.getType();
       if (OpType == MachineOperand::MO_GlobalAddress ) 
         NewBank = Op.getGlobal()->getSection(); 
       else {
-        // External Symbol is generated for temp data. Temp data in in
-        // fdata.<functionname>.# section.
-        NewBank = "fpdata." + CurrentFnName +".#";
+        // External Symbol is generated for temp data and arguments. They are 
+        // in fpdata.<functionname>.# section.
+        std::string ESName = Op.getSymbolName();
+        int index = ESName.find_first_of(".");
+        std::string FnName = ESName.substr(0,index);
+        NewBank = "fpdata." + FnName +".#";
       }
       // Operand after global address or external symbol should be  banksel.
       // Value 1 for this operand means we need to generate banksel else do not
@@ -78,7 +80,7 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       // variables in all files are same at this time. For eg. initialized 
       // data in put in idata.# section in all files. 
       if ((BS.getType() == MachineOperand::MO_Immediate 
-           && (int)BS.getImm() == 1) 
+          && (int)BS.getImm() == 1) 
           && ((Op.isGlobal() && Op.getGlobal()->hasExternalLinkage()) ||
            (NewBank.compare(CurBank) != 0))) { 
         O << "\tbanksel ";
