@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-@class PBXTrackableTaskManager;
+@interface PBXTrackableTaskManager @end
 
 @implementation PBXTrackableTaskManager
 - (id) init {}

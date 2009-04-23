@@ -623,8 +623,10 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   }  else {
     // Is there an interface declaration of this class; if not, warn!
     IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
-    if (!IDecl)
+    if (!IDecl || IDecl->isForwardDecl()) {
       Diag(ClassLoc, diag::warn_undef_interface) << ClassName;
+      IDecl = 0;
+    }
   }
   
   // Check that super class name is valid class name
