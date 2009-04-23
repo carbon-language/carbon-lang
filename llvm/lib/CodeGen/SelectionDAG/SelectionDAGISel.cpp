@@ -476,11 +476,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   // Ensure that all instructions which are used outside of their defining
   // blocks are available as virtual registers.  Invoke is handled elsewhere.
   for (BasicBlock::iterator I = Begin; I != End; ++I)
-    if (!I->use_empty() && !isa<PHINode>(I) && !isa<InvokeInst>(I)) {
-      DenseMap<const Value*,unsigned>::iterator VMI =FuncInfo->ValueMap.find(I);
-      if (VMI != FuncInfo->ValueMap.end())
-        SDL->CopyValueToVirtualRegister(I, VMI->second);
-    }
+    if (!isa<PHINode>(I) && !isa<InvokeInst>(I))
+      SDL->CopyToExportRegsIfNeeded(I);
 
   // Handle PHI nodes in successor blocks.
   if (End == LLVMBB->end()) {

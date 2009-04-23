@@ -1020,6 +1020,17 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
                           &NewValues[0], NewValues.size()));
 }
 
+/// CopyToExportRegsIfNeeded - If the given value has virtual registers
+/// created for it, emit nodes to copy the value into the virtual
+/// registers.
+void SelectionDAGLowering::CopyToExportRegsIfNeeded(Value *V) {
+  if (!V->use_empty()) {
+    DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
+    if (VMI != FuncInfo.ValueMap.end())
+      CopyValueToVirtualRegister(V, VMI->second);
+  }
+}
+
 /// ExportFromCurrentBlock - If this condition isn't known to be exported from
 /// the current basic block, add it to ValueMap now so that we'll get a
 /// CopyTo/FromReg.
@@ -1572,11 +1583,7 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
 
   // If the value of the invoke is used outside of its defining block, make it
   // available as a virtual register.
-  if (!I.use_empty()) {
-    DenseMap<const Value*, unsigned>::iterator VMI = FuncInfo.ValueMap.find(&I);
-    if (VMI != FuncInfo.ValueMap.end())
-      CopyValueToVirtualRegister(&I, VMI->second);
-  }
+  CopyToExportRegsIfNeeded(&I);
 
   // Update successor info
   CurMBB->addSuccessor(Return);
@@ -5924,10 +5931,7 @@ LowerArguments(BasicBlock *LLVMBB) {
                                                 SDL->getCurDebugLoc()));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
-      DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo->ValueMap.find(AI);
-      if (VMI != FuncInfo->ValueMap.end()) {
-        SDL->CopyValueToVirtualRegister(AI, VMI->second);
-      }
+      SDL->CopyToExportRegsIfNeeded(AI);
     }
     a += NumValues;
   }

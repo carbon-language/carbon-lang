@@ -422,6 +422,7 @@ public:
                                     MachineBasicBlock *CurBB);
   bool ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases);
   bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
+  void CopyToExportRegsIfNeeded(Value *V);
   void ExportFromCurrentBlock(Value *V);
   void LowerCallTo(CallSite CS, SDValue Callee, bool IsTailCall,
                    MachineBasicBlock *LandingPad = NULL);
