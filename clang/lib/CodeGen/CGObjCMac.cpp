@@ -1927,9 +1927,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   // cache is always NULL.
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
-  // FIXME: Set ivar_layout
   Values[10] = BuildIvarLayout(ID, true); 
-  // Values[10] = GetIvarLayoutName(0, ObjCTypes);
   Values[11] = EmitClassExtension(ID);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
@@ -2052,9 +2050,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-  // FIXME: Output weak_ivar_layout string.
   Values[1] = BuildIvarLayout(ID, false);
-  // Values[1] = GetIvarLayoutName(0, ObjCTypes);
   Values[2] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
 
@@ -4157,10 +4153,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
-  // FIXME. ivarLayout is currently null!
   Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
                                   : BuildIvarLayout(ID, true); 
-  // Values[ 3] = GetIvarLayoutName(0, ObjCTypes);
   Values[ 4] = GetClassName(ID->getIdentifier());
   // const struct _method_list_t * const baseMethods;
   std::vector<llvm::Constant*> Methods;
@@ -4212,10 +4206,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
     Values[ 7] = llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
   else
     Values[ 7] = EmitIvarList(ID);
-  // FIXME. weakIvarLayout is currently null.
   Values[ 8] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
                                   : BuildIvarLayout(ID, false); 
-  // Values[ 8] = GetIvarLayoutName(0, ObjCTypes); 
   if (flags & CLS_META)
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   else
