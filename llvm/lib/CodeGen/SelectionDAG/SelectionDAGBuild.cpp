@@ -135,6 +135,9 @@ static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
                       StartingOffset + i * EltSize);
     return;
   }
+  // Interpret void as zero return values.
+  if (Ty == Type::VoidTy)
+    return;
   // Base case: we can get an MVT for this LLVM IR type.
   ValueVTs.push_back(TLI.getValueType(Ty));
   if (Offsets)
