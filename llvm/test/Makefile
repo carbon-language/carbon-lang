@@ -51,6 +51,7 @@ endif
 ifneq ($(RUNTEST),)
 check-local:: site.exp
 	( ulimit -t 600 ; ulimit -d 512000 ; \
+	  ulimit -m 512000 ; ulimit -v 512000 ; \
 	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	  $(RUNTEST) $(RUNTESTFLAGS) )
 else
@@ -74,6 +75,7 @@ check-one: site.exp $(TCLSH)
 	  echo "source $(LLVM_SRC_ROOT)/test/lib/llvm.exp" ; \
 	  echo "RunLLVMTests $(TESTPATH)" ) | \
 	( ulimit -t 600 ; ulimit -d 512000 ; \
+	  ulimit -m 512000 ; ulimit -v 512000 ; \
 	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	  $(TCLSH) )
 endif
