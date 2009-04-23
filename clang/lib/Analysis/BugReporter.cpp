@@ -789,6 +789,22 @@ class VISIBILITY_HIDDEN EdgeBuilder {
   void popLocation() {
     PathDiagnosticLocation L = CLocs.back();
     if (L.asLocation().isFileID()) {
+      
+      if (const Stmt *S = L.asStmt()) {        
+        // Adjust the location for some expressions that are best referenced
+        // by one of their subexpressions.
+        if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S))
+          S = CO->getCond();
+        else if (const ChooseExpr *CE = dyn_cast<ChooseExpr>(S))
+          S = CE->getCond();
+        
+        // Ignore parentheses.
+        if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
+          S = PE->IgnoreParens();
+        
+        L = PathDiagnosticLocation(S, L.getManager());        
+      }      
+      
       // For contexts, we only one the first character as the range.
       L = PathDiagnosticLocation(L.asLocation(), L.getManager());      
       rawAddEdge(L);
