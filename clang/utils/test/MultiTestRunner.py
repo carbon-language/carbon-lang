@@ -21,10 +21,6 @@ from Queue import Queue
 
 kTestFileExtensions = set(['.mi','.i','.c','.cpp','.m','.mm','.ll'])
 
-kClangErrorRE = re.compile('(.*):([0-9]+):([0-9]+): error: (.*)')
-kClangWarningRE = re.compile('(.*):([0-9]+):([0-9]+): warning: (.*)')
-kAssertionRE = re.compile('Assertion failed: (.*, function .*, file .*, line [0-9]+\\.)')
-
 def getTests(inputs):
     for path in inputs:
         if not os.path.exists(path):
@@ -104,43 +100,14 @@ class TestingProgressDisplay:
         print '%*d/%*d - %s%s'%(self.digits, index+1, self.digits, 
                               self.numTests, tr.path, extra)
 
-        if tr.failed():
-            msgs = []
-            if tr.warnings:
-                msgs.append('%d warnings'%(len(tr.warnings),))
-            if tr.errors:
-                msgs.append('%d errors'%(len(tr.errors),))
-            if tr.assertions:
-                msgs.append('%d assertions'%(len(tr.assertions),))
-            
-            if msgs:
-                print '\tFAIL (%s)'%(', '.join(msgs))
-            for i,error in enumerate(set([e for (_,_,_,e) in tr.errors])):
-                print '\t\tERROR: %s'%(error,)
-                if i>20:
-                    print '\t\t\t(too many errors, skipping)'
-                    break
-            for assertion in set(tr.assertions):
-                print '\t\tASSERTION: %s'%(assertion,)
-            if self.opts.showOutput:
-                TestRunner.cat(tr.testResults, sys.stdout)
+        if tr.failed() and self.opts.showOutput:
+            TestRunner.cat(tr.testResults, sys.stdout)
 
 class TestResult:
     def __init__(self, path, code, testResults):
         self.path = path
         self.code = code
         self.testResults = testResults
-        self.warnings = []
-        self.errors = []
-        self.assertions = []
-
-        if self.failed():
-            f = open(self.testResults)
-            data = f.read()
-            f.close()
-            self.warnings = [m.groups() for m in kClangWarningRE.finditer(data)]
-            self.errors = [m.groups() for m in kClangErrorRE.finditer(data)]
-            self.assertions = [m.group(1) for m in kAssertionRE.finditer(data)]
 
     def failed(self):
         return self.code in (TestStatus.Fail,TestStatus.XPass)
@@ -360,38 +327,6 @@ def main():
                 print '\t%s'%(tr.path,)
 
         print '\nFailures: %d'%(len(failures),)
-
-        assertions = {}
-        errors = {}
-        errorFree = []
-        for tr in failures:
-            if not tr.errors and not tr.assertions:
-                errorFree.append(tr)
-            for (_,_,_,error) in tr.errors:
-                errors[error] = errors.get(error,0) + 1
-            for assertion in tr.assertions:
-                assertions[assertion] = assertions.get(assertion,0) + 1
-        if errorFree:
-            print 'Failures w/o Errors (%d):' % len(errorFree)
-            for tr in errorFree:
-                print '\t%s'%(tr.path,)
-        
-        if errors:
-            print 'Error Summary (%d):' % sum(errors.values())
-            items = errors.items()
-            items.sort(key = lambda (_,v): -v)
-            for i,(error,count) in enumerate(items):
-                print '\t%3d: %s'%(count,error)
-                if i>100:
-                    print '\t\t(too many errors, skipping)'
-                    break
-
-        if assertions:
-            print 'Assertion Summary (%d):' % sum(assertions.values())
-            items = assertions.items()
-            items.sort(key = lambda (_,v): -v)
-            for assertion,count in items:
-                print '\t%3d: %s'%(count,assertion)
 
 if __name__=='__main__':
     main()
