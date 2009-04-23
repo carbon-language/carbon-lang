@@ -249,6 +249,11 @@ LIBBUILTIN(vfprintf, "iP*cC*a",   "fP:1:", "stdio.h")
 LIBBUILTIN(vsnprintf, "ic*zcC*a", "fP:2:", "stdio.h")
 LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
 
+// FIXME: This type isn't very correct, it should be
+//   id objc_msgSend(id, SEL)
+// but we need new type letters for that.
+LIBBUILTIN(objc_msgSend, "v*.",   "f",     "objc/message.h")
+
 // FIXME: asprintf and vasprintf aren't C99 functions. Should they be
 // target-specific builtins, perhaps? 
 
