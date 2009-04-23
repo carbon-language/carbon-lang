@@ -490,6 +490,11 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 
+  // FIXME: The logic for computing the value of a predefined expr should go
+  // into a method here that takes the inner-most code decl (a block, function
+  // or objc method) that the expr lives in.  This would allow sema and codegen
+  // to be consistent for things like sizeof(__func__) etc.
+  
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 
