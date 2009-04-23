@@ -1305,7 +1305,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         // FIXME: can we handle this?
         return false;
       // This is not an insert_subreg but it looks like one.
-      // e.g. %reg1024:3 = MOV32rr %EAX
+      // e.g. %reg1024:4 = MOV32rr %EAX
       isInsSubReg = true;
       if (SrcIsPhys) {
         if (!CanJoinInsertSubRegToPhysReg(DstReg, SrcReg, SubIdx, RealSrcReg))
@@ -1316,7 +1316,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       SubIdx = SrcMO->getSubReg();
       if (SubIdx) {
         // This is not a extract_subreg but it looks like one.
-        // e.g. %cl = MOV16rr %reg1024:2
+        // e.g. %cl = MOV16rr %reg1024:1
         isExtSubReg = true;
         if (DstIsPhys) {
           if (!CanJoinExtractSubRegToPhysReg(DstReg, SrcReg, SubIdx,RealDstReg))
