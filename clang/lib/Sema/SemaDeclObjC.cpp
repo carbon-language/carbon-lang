@@ -206,7 +206,8 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   
   ObjCAliasDecls[AliasName] = AliasDecl;
 
-  PushOnScopeChains(AliasDecl, TUScope);
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(Context, AliasDecl);
   if (!CheckObjCDeclScope(AliasDecl))
     TUScope->AddDecl(DeclPtrTy::make(AliasDecl));
 
