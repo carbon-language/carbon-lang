@@ -890,10 +890,57 @@ public:
   virtual StmtIterator child_end();
 };
 
+/// CXXConstructExpr - Represents a call to a C++ constructor.
+class CXXConstructExpr : public Expr {
+  VarDecl *VD;
+  CXXConstructorDecl *Constructor;
+
+  bool Elidable;
+  
+  Stmt **Args;
+  unsigned NumArgs;
+
+  CXXConstructExpr(ASTContext &C, VarDecl *vd, QualType T, 
+                   CXXConstructorDecl *d, bool elidable,
+                   Expr **args, unsigned numargs);
+  ~CXXConstructExpr() { } 
+  
+public:
+  static CXXConstructExpr *Create(ASTContext &C, VarDecl *VD, QualType T,
+                                  CXXConstructorDecl *D, bool Elidable, 
+                                  Expr **Args, unsigned NumArgs);
+  
+  void Destroy(ASTContext &C);
+  
+  const VarDecl* getVarDecl() const { return VD; }
+  const CXXConstructorDecl* getConstructor() const { return Constructor; }
+
+  typedef ExprIterator arg_iterator;
+  typedef ConstExprIterator const_arg_iterator;
+  
+  arg_iterator arg_begin() { return Args; }
+  arg_iterator arg_end() { return Args + NumArgs; }
+  const_arg_iterator arg_begin() const { return Args; }
+  const_arg_iterator arg_end() const { return Args + NumArgs; }
+
+  unsigned getNumArgs() const { return NumArgs; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXConstructExprClass;
+  }
+  static bool classof(const CXXConstructExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+/// CXXDestroyExpr - Represents an implicit call to a C++ destructor.
 class CXXDestroyExpr : public Expr {
   VarDecl *VD;
   
-protected:
   CXXDestroyExpr(VarDecl* vd, QualType T) 
   : Expr(CXXDestroyExprClass, T, false, vd->getType()->isDependentType()),
     VD(vd) { }

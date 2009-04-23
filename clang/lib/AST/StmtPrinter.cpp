@@ -1097,6 +1097,10 @@ void StmtPrinter::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *E)
   OS << E->getName().getAsString();
 }
 
+void StmtPrinter::VisitCXXConstructExpr(CXXConstructExpr *E) {
+  // Nothing to print.
+}
+
 void StmtPrinter::VisitCXXDestroyExpr(CXXDestroyExpr *E) {
   // Nothing to print.
 }

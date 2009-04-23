@@ -254,6 +254,37 @@ CXXTemporaryObjectExpr::~CXXTemporaryObjectExpr() {
   delete [] Args;
 }
 
+CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, VarDecl *VD, 
+                                           QualType T, CXXConstructorDecl *D,  
+                                           bool Elidable,
+                                           Expr **Args, unsigned NumArgs) {
+  return new (C) CXXConstructExpr(C, VD, T, D, Elidable, Args, NumArgs);
+}
+
+CXXConstructExpr::CXXConstructExpr(ASTContext &C, VarDecl *vd, 
+                                   QualType T, CXXConstructorDecl *D, 
+                                   bool elidable,
+                                   Expr **args, unsigned numargs) 
+: Expr(CXXConstructExprClass, T,
+       T->isDependentType(),
+       (T->isDependentType() ||
+        CallExpr::hasAnyValueDependentArguments(args, numargs))),
+  VD(vd), Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
+    if (NumArgs > 0) {
+      Args = new (C) Stmt*[NumArgs];
+      for (unsigned i = 0; i < NumArgs; ++i)
+        Args[i] = args[i];
+    }
+}
+
+void CXXConstructExpr::Destroy(ASTContext &C) {
+  DestroyChildren(C);
+  if (Args)
+    C.Deallocate(Args);
+  this->~CXXConstructExpr();
+  C.Deallocate(this);
+}
+
 CXXDestroyExpr *CXXDestroyExpr::Create(ASTContext &C, VarDecl *vd) {
   assert(vd->getKind() == Decl::CXXTempVar || vd->getKind() == Decl::Var &&
          "Can only create a destroy expr with a temp var decl or a var decl!");
@@ -261,6 +292,15 @@ CXXDestroyExpr *CXXDestroyExpr::Create(ASTContext &C, VarDecl *vd) {
   return new (C) CXXDestroyExpr(vd, C.VoidTy);
 }
 
+// CXXConstructExpr
+Stmt::child_iterator CXXConstructExpr::child_begin() {
+  return &Args[0];
+}
+Stmt::child_iterator CXXConstructExpr::child_end() {
+  return &Args[0]+NumArgs;
+}
+
+// CXXDestroyExpr
 Stmt::child_iterator CXXDestroyExpr::child_begin() { 
   return child_iterator();
 }
