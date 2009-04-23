@@ -784,6 +784,26 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       BinOpInit::BinaryOp Code = BinOpInit::NAMECONCAT;
  
       Lex.Lex();  // eat the operation
+
+      if (Lex.getCode() != tgtok::less) {
+        TokError("expected type name for nameconcat");
+        return 0;
+      }
+      Lex.Lex();  // eat the <
+
+      RecTy *Type = ParseType();
+
+      if (Type == 0) {
+        TokError("expected type name for nameconcat");
+        return 0;
+      }
+
+      if (Lex.getCode() != tgtok::greater) {
+        TokError("expected type name for nameconcat");
+        return 0;
+      }
+      Lex.Lex();  // eat the >
+
       if (Lex.getCode() != tgtok::l_paren) {
         TokError("expected '(' after binary operator");
         return 0;
@@ -807,7 +827,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
          return 0;
        }
        Lex.Lex();  // eat the ')'
-       Operator = (new BinOpInit(Code, LHS, RHS))->Fold(CurRec, CurMultiClass);
+       Operator = (new BinOpInit(Code, LHS, RHS, Type))->Fold(CurRec, CurMultiClass);
     }
 
     // If the operator name is present, parse it.
@@ -842,16 +862,59 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   case tgtok::XStrConcat:
   case tgtok::XNameConcat: {  // Value ::= !binop '(' Value ',' Value ')'
     BinOpInit::BinaryOp Code;
+    RecTy *Type = 0;
+
+
     switch (Lex.getCode()) {
     default: assert(0 && "Unhandled code!");
-    case tgtok::XConcat:     Code = BinOpInit::CONCAT; break;
-    case tgtok::XSRA:        Code = BinOpInit::SRA; break;
-    case tgtok::XSRL:        Code = BinOpInit::SRL; break;
-    case tgtok::XSHL:        Code = BinOpInit::SHL; break;
-    case tgtok::XStrConcat:  Code = BinOpInit::STRCONCAT; break;
-    case tgtok::XNameConcat: Code = BinOpInit::NAMECONCAT; break;
+    case tgtok::XConcat:     
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::CONCAT;
+      Type = new DagRecTy();
+      break;
+    case tgtok::XSRA:        
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::SRA;
+      Type = new IntRecTy();
+      break;
+    case tgtok::XSRL:        
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::SRL;
+      Type = new IntRecTy();
+      break;
+    case tgtok::XSHL:        
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::SHL;
+      Type = new IntRecTy();
+      break;
+    case tgtok::XStrConcat:  
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::STRCONCAT;
+      Type = new StringRecTy();
+      break;
+    case tgtok::XNameConcat: 
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::NAMECONCAT;
+      if (Lex.getCode() != tgtok::less) {
+        TokError("expected type name for nameconcat");
+        return 0;
+      }
+      Lex.Lex();  // eat the <
+
+      Type = ParseType();
+
+      if (Type == 0) {
+        TokError("expected type name for nameconcat");
+        return 0;
+      }
+
+      if (Lex.getCode() != tgtok::greater) {
+        TokError("expected type name for nameconcat");
+        return 0;
+      }
+      Lex.Lex();  // eat the >
+      break;
     }
-    Lex.Lex();  // eat the operation
     if (Lex.getCode() != tgtok::l_paren) {
       TokError("expected '(' after binary operator");
       return 0;
@@ -875,7 +938,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       return 0;
     }
     Lex.Lex();  // eat the ')'
-    return (new BinOpInit(Code, LHS, RHS))->Fold(CurRec, CurMultiClass);
+    return (new BinOpInit(Code, LHS, RHS, Type))->Fold(CurRec, CurMultiClass);
   }
   }
   

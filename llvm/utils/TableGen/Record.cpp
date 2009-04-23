@@ -138,10 +138,21 @@ Init *StringRecTy::convertValue(BinOpInit *BO) {
     Init *R = BO->getRHS()->convertInitializerTo(this);
     if (L == 0 || R == 0) return 0;
     if (L != BO->getLHS() || R != BO->getRHS())
-      return new BinOpInit(BinOpInit::STRCONCAT, L, R);
+      return new BinOpInit(BinOpInit::STRCONCAT, L, R, new StringRecTy);
     return BO;
   }
-  return 0;
+  if (BO->getOpcode() == BinOpInit::NAMECONCAT) {
+    if (BO->getType()->getAsString() == getAsString()) {
+      Init *L = BO->getLHS()->convertInitializerTo(this);
+      Init *R = BO->getRHS()->convertInitializerTo(this);
+      if (L == 0 || R == 0) return 0;
+      if (L != BO->getLHS() || R != BO->getRHS())
+        return new BinOpInit(BinOpInit::NAMECONCAT, L, R, new StringRecTy);
+      return BO;
+    }
+  }
+
+  return convertValue((TypedInit*)BO);
 }
 
 
@@ -195,8 +206,18 @@ Init *DagRecTy::convertValue(BinOpInit *BO) {
     Init *R = BO->getRHS()->convertInitializerTo(this);
     if (L == 0 || R == 0) return 0;
     if (L != BO->getLHS() || R != BO->getRHS())
-      return new BinOpInit(BinOpInit::CONCAT, L, R);
+      return new BinOpInit(BinOpInit::CONCAT, L, R, new DagRecTy);
     return BO;
+  }
+  if (BO->getOpcode() == BinOpInit::NAMECONCAT) {
+    if (BO->getType()->getAsString() == getAsString()) {
+      Init *L = BO->getLHS()->convertInitializerTo(this);
+      Init *R = BO->getRHS()->convertInitializerTo(this);
+      if (L == 0 || R == 0) return 0;
+      if (L != BO->getLHS() || R != BO->getRHS())
+        return new BinOpInit(BinOpInit::CONCAT, L, R, new DagRecTy);
+      return BO;
+    }
   }
   return 0;
 }
@@ -445,13 +466,22 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
 
       // From TGParser::ParseIDValue
       if (CurRec) {
-        if (const RecordVal *RV = CurRec->getValue(Name))
+        if (const RecordVal *RV = CurRec->getValue(Name)) {
+          if (RV->getType() != getType()) {
+            throw "type mismatch in nameconcat";
+          }
           return new VarInit(Name, RV->getType());
-
+        }
+        
         std::string TemplateArgName = CurRec->getName()+":"+Name;
         if (CurRec->isTemplateArg(TemplateArgName)) {
           const RecordVal *RV = CurRec->getValue(TemplateArgName);
           assert(RV && "Template arg doesn't exist??");
+
+          if (RV->getType() != getType()) {
+            throw "type mismatch in nameconcat";
+          }
+
           return new VarInit(TemplateArgName, RV->getType());
         }
       }
@@ -461,6 +491,11 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         if (CurMultiClass->Rec.isTemplateArg(MCName)) {
           const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
           assert(RV && "Template arg doesn't exist??");
+
+          if (RV->getType() != getType()) {
+            throw "type mismatch in nameconcat";
+          }
+          
           return new VarInit(MCName, RV->getType());
         }
       }
@@ -501,7 +536,7 @@ Init *BinOpInit::resolveReferences(Record &R, const RecordVal *RV) {
   Init *rhs = RHS->resolveReferences(R, RV);
   
   if (LHS != lhs || RHS != rhs)
-    return (new BinOpInit(getOpcode(), lhs, rhs))->Fold(&R, 0);
+    return (new BinOpInit(getOpcode(), lhs, rhs, getType()))->Fold(&R, 0);
   return Fold(&R, 0);
 }
 
@@ -513,9 +548,38 @@ std::string BinOpInit::getAsString() const {
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;
   case STRCONCAT: Result = "!strconcat"; break;
-  case NAMECONCAT: Result = "!nameconcat"; break;
+  case NAMECONCAT: 
+    Result = "!nameconcat<" + getType()->getAsString() + ">"; break;
   }
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
+}
+
+Init *BinOpInit::resolveBitReference(Record &R, const RecordVal *IRV,
+                                   unsigned Bit) {
+  Init *Folded = Fold(&R, 0);
+
+  if (Folded != this) {
+    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
+    if (Typed) {
+      return Typed->resolveBitReference(R, IRV, Bit);
+    }    
+  }
+  
+  return 0;
+}
+
+Init *BinOpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
+                                           unsigned Elt) {
+  Init *Folded = Fold(&R, 0);
+
+  if (Folded != this) {
+    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
+    if (Typed) {
+      return Typed->resolveListElementReference(R, IRV, Elt);
+    }    
+  }
+  
+  return 0;
 }
 
 Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {

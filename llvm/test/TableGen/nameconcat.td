@@ -1,4 +1,4 @@
-// RUN: tblgen %s | grep {add_ps} | count 2
+// RUN: tblgen %s | grep {add_ps} | count 3
 
 class ValueType<int size, int value> {
   int Size = size;
@@ -66,11 +66,25 @@ def int_x86_sse2_add_pd : Intrinsic<"addpd">;
 multiclass arith<bits<8> opcode, string asmstr, string Intr> {
   def PS : Inst<opcode, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                  !strconcat(asmstr, "\t$dst, $src1, $src2"),
-                 [(set VR128:$dst, (!nameconcat(Intr, "_ps") VR128:$src1, VR128:$src2))]>;
+                 [(set VR128:$dst, (!nameconcat<Intrinsic>(Intr, "_ps") VR128:$src1, VR128:$src2))]>;
 
   def PD : Inst<opcode, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                  !strconcat(asmstr, "\t$dst, $src1, $src2"),
-                 [(set VR128:$dst, (!nameconcat(Intr, "_pd") VR128:$src1, VR128:$src2))]>;
+                 [(set VR128:$dst, (!nameconcat<Intrinsic>(Intr, "_pd") VR128:$src1, VR128:$src2))]>;
 }
 
 defm ADD : arith<0x58, "add", "int_x86_sse2_add">;
+
+class IntInst<bits<8> opcode, string asmstr, Intrinsic Intr> :
+  Inst<opcode,(outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+       !strconcat(asmstr, "\t$dst, $src1, $src2"),
+       [(set VR128:$dst, (Intr VR128:$src1, VR128:$src2))]>;
+
+
+multiclass arith_int<bits<8> opcode, string asmstr, string Intr> {
+  def PS_Int : IntInst<opcode, asmstr, !nameconcat<Intrinsic>(Intr, "_ps")>;
+
+  def PD_Int : IntInst<opcode, asmstr, !nameconcat<Intrinsic>(Intr, "_pd")>;
+}
+
+defm ADD : arith_int<0x58, "add", "int_x86_sse2_add">;
