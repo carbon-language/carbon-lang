@@ -405,6 +405,11 @@ void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   VisitObjCContainerDecl(D);
   Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
   Writer.AddDeclRef(D->getSuperClass(), Record);
+  Record.push_back(D->protocol_size());
+  for (ObjCInterfaceDecl::protocol_iterator P = D->protocol_begin(), 
+         PEnd = D->protocol_end();
+       P != PEnd; ++P)
+    Writer.AddDeclRef(*P, Record);
   Record.push_back(D->ivar_size());
   for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(), 
                                      IEnd = D->ivar_end(); I != IEnd; ++I)
@@ -414,7 +419,7 @@ void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   Writer.AddSourceLocation(D->getClassLoc(), Record);
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
-  // FIXME: add protocols, categories.
+  // FIXME: add categories.
   Code = pch::DECL_OBJC_INTERFACE;
 }
 

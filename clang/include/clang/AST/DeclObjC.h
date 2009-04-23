@@ -416,7 +416,8 @@ public:
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
-  
+  unsigned protocol_size() const { return ReferencedProtocols.size(); }
+
   typedef ObjCList<ObjCIvarDecl>::iterator ivar_iterator;
   ivar_iterator ivar_begin() const { return IVars.begin(); }
   ivar_iterator ivar_end() const { return IVars.end(); }
