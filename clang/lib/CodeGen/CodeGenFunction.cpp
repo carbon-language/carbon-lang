@@ -145,7 +145,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
                                     const FunctionArgList &Args,
                                     SourceLocation StartLoc) {
   DidCallStackSave = false;
-  CurFuncDecl = D;
+  CurCodeDecl = CurFuncDecl = D;
   FnRetTy = RetTy;
   CurFn = Fn;
   assert(CurFn->isDeclaration() && "Function already has body?");

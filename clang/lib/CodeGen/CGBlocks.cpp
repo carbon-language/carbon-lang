@@ -672,9 +672,9 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);
 
-  StartFunction(BD, ResultType, Fn, Args,
+  StartFunction(OuterFuncDecl, ResultType, Fn, Args,
                 BExpr->getBody()->getLocEnd());
-  CurFuncDecl = OuterFuncDecl;
+  CurCodeDecl = BD;
   EmitStmt(BExpr->getBody());
   FinishFunction(cast<CompoundStmt>(BExpr->getBody())->getRBracLoc());
 

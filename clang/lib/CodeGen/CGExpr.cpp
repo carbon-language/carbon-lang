@@ -752,8 +752,11 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
     break;
   }
 
+  // FIXME: This isn't right at all.  The logic for computing this should go
+  // into a method on PredefinedExpr.  This would allow sema and codegen to be
+  // consistent for things like sizeof(__func__) etc.
   std::string FunctionName;
-  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl)) {
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurCodeDecl)) {
     FunctionName = CGM.getMangledName(FD);
   } else {
     // Just get the mangled name; skipping the asm prefix if it

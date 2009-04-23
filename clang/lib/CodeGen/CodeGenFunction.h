@@ -70,9 +70,11 @@ public:
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   CGBuilderTy Builder;
 
-  /// CurFuncDecl - Holds the Decl for the current function or method.  This
-  /// excludes BlockDecls.
+  /// CurFuncDecl - Holds the Decl for the current function or ObjC method.
+  /// This excludes BlockDecls.
   const Decl *CurFuncDecl;
+  /// CurCodeDecl - This is the inner-most code context, which includes blocks.
+  const Decl *CurCodeDecl;
   const CGFunctionInfo *CurFnInfo;
   QualType FnRetTy;
   llvm::Function *CurFn;
