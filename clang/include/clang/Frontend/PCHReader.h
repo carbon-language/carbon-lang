@@ -145,6 +145,9 @@ private:
   /// an IdentifierInfo* that has already been resolved.
   llvm::SmallVector<uint64_t, 16> IdentifierData;
 
+  /// \brief SelectorData, indexed by the selector ID minus one.
+  llvm::SmallVector<Selector, 16> SelectorData;
+
   /// \brief The set of external definitions stored in the the PCH
   /// file.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
@@ -198,13 +201,15 @@ private:
   /// \brief FIXME: document!
   llvm::SmallVector<uint64_t, 4> SpecialTypes;
 
-  PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset);
+  PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
+                             uint64_t &SelectorBlockOffset);
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
                              FileID PCHBufferID);
   PCHReadResult ReadSourceManagerBlock();
   bool ReadPreprocessorBlock();
-
+  bool ReadSelectorBlock();
+  
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);
   void LoadedDecl(unsigned Index, Decl *D);
@@ -312,6 +317,12 @@ public:
   
   IdentifierInfo *GetIdentifierInfo(const RecordData &Record, unsigned &Idx) {
     return DecodeIdentifierInfo(Record[Idx++]);
+  }
+  
+  Selector DecodeSelector(unsigned Idx);
+  
+  Selector GetSelector(const RecordData &Record, unsigned &Idx) {
+    return DecodeSelector(Record[Idx++]);
   }
   DeclarationName ReadDeclarationName(const RecordData &Record, unsigned &Idx);
 

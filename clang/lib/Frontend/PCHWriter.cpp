@@ -1182,9 +1182,7 @@ void PCHStmtWriter::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
 
 void PCHStmtWriter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   VisitExpr(E);
-  assert(0 && "Can't write a selector yet!");
-  // FIXME!  Write selectors.
-  //Writer.WriteSubStmt(E->getSelector());
+  Writer.AddSelectorRef(E->getSelector(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_OBJC_SELECTOR_EXPR;
@@ -1888,6 +1886,26 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
   Stream.EmitRecord(pch::IDENTIFIER_OFFSET, IdentifierOffsets);
 }
 
+void PCHWriter::WriteSelectorTable() {
+  Stream.EnterSubblock(pch::SELECTOR_BLOCK_ID, 3);
+  RecordData Record;
+  Record.push_back(pch::SELECTOR_TABLE);
+  Record.push_back(SelectorIDs.size());
+  
+  // Create the on-disk representation.
+  for (unsigned selIdx = 0; selIdx < SelVector.size(); selIdx++) {
+    assert(SelVector[selIdx].getAsOpaquePtr() && "NULL Selector found");
+    Record.push_back(SelVector[selIdx].getNumArgs());
+    if (SelVector[selIdx].getNumArgs())
+      for (unsigned i = 0; i < SelVector[selIdx].getNumArgs(); i++)
+        AddIdentifierRef(SelVector[selIdx].getIdentifierInfoForSlot(i), Record);
+    else
+      AddIdentifierRef(SelVector[selIdx].getIdentifierInfoForSlot(0), Record);
+  }
+  Stream.EmitRecord(pch::SELECTOR_TABLE, Record);
+  Stream.ExitBlock();
+}
+
 /// \brief Write a record containing the given attributes.
 void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
   RecordData Record;
@@ -2078,6 +2096,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
+  WriteSelectorTable();
   WriteIdentifierTable(PP);
   Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
   Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
@@ -2143,6 +2162,20 @@ pch::IdentID PCHWriter::getIdentifierRef(const IdentifierInfo *II) {
   if (ID == 0)
     ID = IdentifierIDs.size();
   return ID;
+}
+
+void PCHWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
+  if (SelRef.getAsOpaquePtr() == 0) {
+    Record.push_back(0);
+    return;
+  }
+
+  pch::SelectorID &SID = SelectorIDs[SelRef];
+  if (SID == 0) {
+    SID = SelectorIDs.size();
+    SelVector.push_back(SelRef);
+  }
+  Record.push_back(SID);
 }
 
 void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
@@ -2223,7 +2256,7 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    assert(false && "Serialization of Objective-C selectors unavailable");
+    AddSelectorRef(Name.getObjCSelector(), Record);
     break;
 
   case DeclarationName::CXXConstructorName:

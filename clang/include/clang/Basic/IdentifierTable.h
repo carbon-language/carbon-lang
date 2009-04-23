@@ -370,7 +370,6 @@ class Selector {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
   }
-  Selector(uintptr_t V) : InfoPtr(V) {}
   
   IdentifierInfo *getAsIdentifierInfo() const {
     if (getIdentifierInfoFlag())
@@ -388,6 +387,7 @@ public:
   /// The default ctor should only be used when creating data structures that
   ///  will contain selectors.
   Selector() : InfoPtr(0) {}
+  Selector(uintptr_t V) : InfoPtr(V) {}
 
   /// operator==/!= - Indicate whether the specified selectors are identical.
   bool operator==(Selector RHS) const {

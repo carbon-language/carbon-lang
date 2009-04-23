@@ -21,3 +21,8 @@ int *T0 = (objc_id_protocol_ty)0; // expected-error {{not a compile-time constan
 int *T1 = (objc_interface_ty)0; // expected-warning {{aka 'itf *'}}
 int *T2 = (objc_qual_interface_ty)0; // expected-warning {{aka 'itf<foo> *'}}
 
+objc_selector_noArgs s1;
+objc_selector_oneArg s2;
+objc_selector_twoArg s3;
+
+

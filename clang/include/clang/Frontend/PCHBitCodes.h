@@ -45,6 +45,8 @@ namespace clang {
     /// file.
     typedef uint32_t IdentID;
 
+    typedef uint32_t SelectorID;
+    
     /// \brief Describes the various kinds of blocks that occur within
     /// a PCH file.
     enum BlockIDs {
@@ -66,7 +68,10 @@ namespace clang {
 
       /// \brief The block containing the definitions of all of the
       /// declarations stored in the PCH file.
-      DECLS_BLOCK_ID
+      DECLS_BLOCK_ID,
+
+      /// \brief The block containing ObjC selectors stored in the PCH file.   
+      SELECTOR_BLOCK_ID
     };
 
     /// \brief Record types that occur within the PCH block itself.
@@ -160,7 +165,10 @@ namespace clang {
 
       /// \brief Record code for the array of locally-scoped external
       /// declarations.
-      LOCALLY_SCOPED_EXTERNAL_DECLS = 11
+      LOCALLY_SCOPED_EXTERNAL_DECLS = 11,
+      
+      /// \brief Record code for the Objective-C Selector Table.
+      SELECTOR_TABLE = 12
     };
 
     /// \brief Record types used within a source manager block.

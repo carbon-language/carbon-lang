@@ -1063,7 +1063,7 @@ unsigned PCHStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
 
 unsigned PCHStmtReader::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   VisitExpr(E);
-  // FIXME: Selectors.
+  E->setSelector(Reader.GetSelector(Record, Idx));
   E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
@@ -1586,8 +1586,69 @@ bool PCHReader::ReadPreprocessorBlock() {
   }
 }
 
+bool PCHReader::ReadSelectorBlock() {
+  if (Stream.EnterSubBlock(pch::SELECTOR_BLOCK_ID))
+    return Error("Malformed selector block record");
+  
+  RecordData Record;
+  while (true) {
+    unsigned Code = Stream.ReadCode();
+    switch (Code) {
+    case llvm::bitc::END_BLOCK:
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of preprocessor block");
+      return false;
+    
+    case llvm::bitc::ENTER_SUBBLOCK:
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    
+    case llvm::bitc::DEFINE_ABBREV:
+      Stream.ReadAbbrevRecord();
+      continue;
+    default: break;
+    }
+    
+    // Read a record.
+    Record.clear();
+    pch::PCHRecordTypes RecType =
+      (pch::PCHRecordTypes)Stream.ReadRecord(Code, Record);
+    switch (RecType) {
+    default:  // Default behavior: ignore unknown records.
+      break;
+    case pch::SELECTOR_TABLE:
+      unsigned Idx = 1; // Record[0] == pch::SELECTOR_TABLE.
+      unsigned NumSels = Record[Idx++];
+      
+      llvm::SmallVector<IdentifierInfo *, 8> KeyIdents;
+      for (unsigned SelIdx = 0; SelIdx < NumSels; SelIdx++) {
+        unsigned NumArgs = Record[Idx++];
+        KeyIdents.clear();
+        if (NumArgs <= 1) {
+          IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
+          assert(II && "DecodeIdentifierInfo returned 0");
+          KeyIdents.push_back(II);
+        } else {
+          for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+            IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
+            assert(II && "DecodeIdentifierInfo returned 0");
+            KeyIdents.push_back(II);
+          }
+        }
+        Selector Sel = PP.getSelectorTable().getSelector(NumArgs,&KeyIdents[0]);
+        SelectorData.push_back(Sel);
+      }
+    }
+  }
+  return false;
+}
+
 PCHReader::PCHReadResult 
-PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
+PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
+                        uint64_t &SelectorBlockOffset) {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
     Error("Malformed block record");
     return Failure;
@@ -1625,6 +1686,20 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
           return Failure;
         }
         PreprocessorBlockOffset = Stream.GetCurrentBitNo();
+        if (Stream.SkipBlock()) {
+          Error("Malformed block record");
+          return Failure;
+        }
+        break;
+
+      case pch::SELECTOR_BLOCK_ID:
+        // Skip the selector block for now, but remember where it is.  We
+        // want to read it in after the identifier table.
+        if (SelectorBlockOffset) {
+          Error("Multiple selector blocks found.");
+          return Failure;
+        }
+        SelectorBlockOffset = Stream.GetCurrentBitNo();
         if (Stream.SkipBlock()) {
           Error("Malformed block record");
           return Failure;
@@ -1740,7 +1815,6 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
       TotalLexicalDeclContexts = Record[2];
       TotalVisibleDeclContexts = Record[3];
       break;
-
     case pch::TENTATIVE_DEFINITIONS:
       if (!TentativeDefinitions.empty()) {
         Error("Duplicate TENTATIVE_DEFINITIONS record in PCH file");
@@ -1758,7 +1832,6 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
       break;
     }
   }
-
   Error("Premature end of bitstream");
   return Failure;
 }
@@ -1791,6 +1864,8 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // We expect a number of well-defined blocks, though we don't necessarily
   // need to understand them all.
   uint64_t PreprocessorBlockOffset = 0;
+  uint64_t SelectorBlockOffset = 0;
+  
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     
@@ -1810,7 +1885,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       }
       break;
     case pch::PCH_BLOCK_ID:
-      switch (ReadPCHBlock(PreprocessorBlockOffset)) {
+      switch (ReadPCHBlock(PreprocessorBlockOffset, SelectorBlockOffset)) {
       case Success:
         break;
 
@@ -1878,6 +1953,14 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     SavedStreamPosition SavedPos(Stream);
     Stream.JumpToBit(PreprocessorBlockOffset);
     if (ReadPreprocessorBlock()) {
+      Error("Malformed preprocessor block");
+      return Failure;
+    }
+  }
+  if (SelectorBlockOffset) {
+    SavedStreamPosition SavedPos(Stream);
+    Stream.JumpToBit(SelectorBlockOffset);
+    if (ReadSelectorBlock()) {
       Error("Malformed preprocessor block");
       return Failure;
     }
@@ -2631,6 +2714,22 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   }
   
   return reinterpret_cast<IdentifierInfo *>(IdentifierData[ID - 1]);
+}
+
+Selector PCHReader::DecodeSelector(unsigned ID) {
+  if (ID == 0)
+    return Selector();
+  
+  if (SelectorData.empty()) {
+    Error("No selector table in PCH file");
+    return Selector();
+  }
+  
+  if (ID > SelectorData.size()) {
+    Error("Selector ID out of range");
+    return Selector();
+  }
+  return SelectorData[ID-1];
 }
 
 DeclarationName 

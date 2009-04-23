@@ -93,11 +93,17 @@ private:
   /// discovery), starting at 1. An ID of zero refers to a NULL
   /// IdentifierInfo.
   llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
-
+  
   /// \brief Offsets of each of the identifier IDs into the identifier
   /// table, shifted left by one bit with the low bit set.
   llvm::SmallVector<uint64_t, 16> IdentifierOffsets;
 
+  /// \brief Map that provides the ID numbers of each Selector.
+  llvm::DenseMap<Selector, pch::SelectorID> SelectorIDs;
+  
+  /// \brief A vector of all Selectors (ordered by ID).
+  llvm::SmallVector<Selector, 16> SelVector;
+  
   /// \brief Offsets of each of the macro identifiers into the
   /// bitstream.
   ///
@@ -154,6 +160,7 @@ private:
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
   void WriteDeclsBlock(ASTContext &Context);
   void WriteIdentifierTable(Preprocessor &PP);
+  void WriteSelectorTable();
   void WriteAttributeRecord(const Attr *Attr);
 
 public:
@@ -179,6 +186,9 @@ public:
   /// \brief Emit a reference to an identifier
   void AddIdentifierRef(const IdentifierInfo *II, RecordData &Record);
 
+  /// \brief Emit a Selector (which is a smart pointer reference)
+  void AddSelectorRef(const Selector, RecordData &Record);
+  
   /// \brief Get the unique number used to refer to the given
   /// identifier.
   pch::IdentID getIdentifierRef(const IdentifierInfo *II);
