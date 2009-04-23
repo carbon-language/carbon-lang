@@ -658,6 +658,14 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty
   if (SCEVTruncateExpr *ST = dyn_cast<SCEVTruncateExpr>(Op))
     return getTruncateExpr(ST->getOperand(), Ty);
 
+  // trunc(sext(x)) --> sext(x) if widening or trunc(x) if narrowing
+  if (SCEVSignExtendExpr *SS = dyn_cast<SCEVSignExtendExpr>(Op))
+    return getTruncateOrSignExtend(SS->getOperand(), Ty);
+
+  // trunc(zext(x)) --> zext(x) if widening or trunc(x) if narrowing
+  if (SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
+    return getTruncateOrZeroExtend(SZ->getOperand(), Ty);
+
   // If the input value is a chrec scev made out of constants, truncate
   // all of the constants.
   if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
@@ -1152,7 +1160,7 @@ SCEVHandle ScalarEvolution::getAddRecExpr(const SCEVHandle &Start,
 /// SCEVAddRecExpr::get - Get a add recurrence expression for the
 /// specified loop.  Simplify the expression as much as possible.
 SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
-                               const Loop *L) {
+                                          const Loop *L) {
   if (Operands.size() == 1) return Operands[0];
 
   if (Operands.back()->isZero()) {
@@ -1484,7 +1492,7 @@ SCEVHandle ScalarEvolution::getNotSCEV(const SCEVHandle &V) {
 /// getMinusSCEV - Return a SCEV corresponding to LHS - RHS.
 ///
 SCEVHandle ScalarEvolution::getMinusSCEV(const SCEVHandle &LHS,
-                                              const SCEVHandle &RHS) {
+                                         const SCEVHandle &RHS) {
   // X - Y --> X + -Y
   return getAddExpr(LHS, getNegativeSCEV(RHS));
 }
@@ -1494,7 +1502,7 @@ SCEVHandle ScalarEvolution::getMinusSCEV(const SCEVHandle &LHS,
 /// extended.
 SCEVHandle
 ScalarEvolution::getTruncateOrZeroExtend(const SCEVHandle &V,
-                                              const Type *Ty) {
+                                         const Type *Ty) {
   const Type *SrcTy = V->getType();
   assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
          (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
@@ -1511,7 +1519,7 @@ ScalarEvolution::getTruncateOrZeroExtend(const SCEVHandle &V,
 /// extended.
 SCEVHandle
 ScalarEvolution::getTruncateOrSignExtend(const SCEVHandle &V,
-                                              const Type *Ty) {
+                                         const Type *Ty) {
   const Type *SrcTy = V->getType();
   assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
          (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
