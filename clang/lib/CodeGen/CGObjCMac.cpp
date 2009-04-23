@@ -707,6 +707,11 @@ public:
     unsigned int ivar_bytepos;
     unsigned int ivar_size;
     GC_IVAR() : ivar_bytepos(0), ivar_size(0) {}
+
+    // Allow sorting based on byte pos.
+    bool operator<(const GC_IVAR &b) const {
+      return ivar_bytepos < b.ivar_bytepos;
+    }
   };
   
   class SKIP_SCAN {
@@ -3108,19 +3113,6 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   }
 }
 
-static int
-IvarBytePosCompare(const void *a, const void *b)
-{
-  unsigned int sa = ((CGObjCCommonMac::GC_IVAR *)a)->ivar_bytepos;
-  unsigned int sb = ((CGObjCCommonMac::GC_IVAR *)b)->ivar_bytepos;
-  
-  if (sa < sb)
-    return -1;
-  if (sa > sb)
-    return 1;
-  return 0;
-}
-
 /// BuildIvarLayout - Builds ivar layout bitmap for the class
 /// implementation for the __strong or __weak case.
 /// The layout map displays which words in ivar list must be skipped 
@@ -3168,9 +3160,9 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   // Sort on byte position in case we encounterred a union nested in
   // the ivar list.
   if (hasUnion && !IvarsInfo.empty())
-      qsort(&IvarsInfo[0], Index+1, sizeof(GC_IVAR), IvarBytePosCompare);
+    std::sort(IvarsInfo.begin(), IvarsInfo.end());
   if (hasUnion && !SkipIvars.empty())
-    qsort(&SkipIvars[0], Index+1, sizeof(GC_IVAR), IvarBytePosCompare);
+    std::sort(SkipIvars.begin(), SkipIvars.end());
       
   // Build the string of skip/scan nibbles
   SkipScan = -1;
