@@ -176,11 +176,6 @@ public:
   /// we can check for duplicates and find local method declarations.
   llvm::SmallVector<ObjCCategoryImplDecl*, 8> ObjCCategoryImpls;
   
-  /// ObjCProtocols - Keep track of all protocol declarations declared
-  /// with @protocol keyword, so that we can emit errors on duplicates and
-  /// find the declarations when needed.
-  llvm::DenseMap<IdentifierInfo*, ObjCProtocolDecl*> ObjCProtocols;
-
   /// ObjCInterfaceDecls - Keep track of all class declarations declared
   /// with @interface, so that we can emit errors on duplicates and
   /// find the declarations when needed. 
@@ -769,11 +764,13 @@ public:
     /// namespace alias definition, ignoring non-namespace names (C++
     /// [basic.lookup.udir]p1).
     LookupNamespaceName,
-    // Look up an ordinary name that is going to be redeclared as a
-    // name with linkage. This lookup ignores any declarations that
-    // are outside of the current scope unless they have linkage. See 
-    // C99 6.2.2p4-5 and C++ [basic.link]p6.
-    LookupRedeclarationWithLinkage
+    /// Look up an ordinary name that is going to be redeclared as a
+    /// name with linkage. This lookup ignores any declarations that
+    /// are outside of the current scope unless they have linkage. See 
+    /// C99 6.2.2p4-5 and C++ [basic.link]p6.
+    LookupRedeclarationWithLinkage,
+    /// Look up the name of an Objective-C protocol.
+    LookupProtocolName
   };
 
   /// @brief Represents the results of name lookup.
@@ -1025,6 +1022,7 @@ public:
     case Sema::LookupTagName:
     case Sema::LookupMemberName:
     case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
+    case Sema::LookupProtocolName:
       return D->isInIdentifierNamespace(IDNS);
       
     case Sema::LookupOperatorName:
@@ -1057,6 +1055,8 @@ public:
                                 bool RedeclarationOnly = false,
                                 bool AllowBuiltinCreation = true,
                                 SourceLocation Loc = SourceLocation());
+
+  ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2, 

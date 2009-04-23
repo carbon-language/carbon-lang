@@ -1888,7 +1888,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
 }
 
 void PCHWriter::WriteSelectorTable() {
-  Stream.EnterSubblock(pch::SELECTOR_BLOCK_ID, 3);
+  Stream.EnterSubblock(pch::SELECTOR_BLOCK_ID, 2);
   RecordData Record;
   Record.push_back(pch::SELECTOR_TABLE);
   Record.push_back(SelectorIDs.size());

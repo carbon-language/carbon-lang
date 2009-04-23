@@ -222,7 +222,7 @@ void Sema::CheckForwardProtocolDeclarationForCircularDependency(
   for (ObjCList<ObjCProtocolDecl>::iterator I = PList.begin(),
        E = PList.end(); I != E; ++I) {
        
-    if (ObjCProtocolDecl *PDecl = ObjCProtocols[(*I)->getIdentifier()]) {
+    if (ObjCProtocolDecl *PDecl = LookupProtocol((*I)->getIdentifier())) {
       if (PDecl->getIdentifier() == PName) {
         Diag(Ploc, diag::err_protocol_has_circular_dependency);
         Diag(PrevLoc, diag::note_previous_definition);
@@ -243,7 +243,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
                                   AttributeList *AttrList) {
   // FIXME: Deal with AttrList.
   assert(ProtocolName && "Missing protocol identifier");
-  ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolName];
+  ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolName);
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->isForwardDecl()) {
@@ -265,10 +265,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, CurContext, 
                                      AtProtoInterfaceLoc,ProtocolName);
-    // FIXME: PushOnScopeChains?
-    CurContext->addDecl(Context, PDecl);
+    PushOnScopeChains(PDecl, TUScope);
     PDecl->setForwardDecl(false);
-    ObjCProtocols[ProtocolName] = PDecl;
   }
   if (AttrList)
     ProcessDeclAttributeList(PDecl, AttrList);
@@ -291,7 +289,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
                               unsigned NumProtocols,
                               llvm::SmallVectorImpl<DeclPtrTy> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
-    ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolId[i].first];
+    ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolId[i].first);
     if (!PDecl) {
       Diag(ProtocolId[i].second, diag::err_undeclared_protocol)
         << ProtocolId[i].first;
@@ -514,12 +512,11 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
   
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
-    ObjCProtocolDecl *&PDecl = ObjCProtocols[Ident];
+    ObjCProtocolDecl *PDecl = LookupProtocol(Ident);
     if (PDecl == 0) { // Not already seen?
       PDecl = ObjCProtocolDecl::Create(Context, CurContext, 
                                        IdentList[i].second, Ident);
-      // FIXME: PushOnScopeChains?
-      CurContext->addDecl(Context, PDecl);
+      PushOnScopeChains(PDecl, TUScope);
     }
     if (attrList)
       ProcessDeclAttributeList(PDecl, attrList);

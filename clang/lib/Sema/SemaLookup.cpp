@@ -293,6 +293,10 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
   case Sema::LookupNamespaceName:
     IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member;
     break;
+
+  case Sema::LookupProtocolName:
+    IDNS = Decl::IDNS_Protocol;
+    break;
   }
   return IDNS;
 }
@@ -830,6 +834,10 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
                 ->isTransparentContext()))
         S = S->getParent();
       IDNS = Decl::IDNS_Ordinary;
+      break;
+
+    case Sema::LookupProtocolName:
+      IDNS = Decl::IDNS_Protocol;
       break;
     }
 
@@ -1478,6 +1486,12 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
   }
 
   return false;
+}
+
+/// \brief Find the protocol with the given name, if any.
+ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
+  Decl *D = LookupName(TUScope, II, LookupProtocolName).getAsDecl();
+  return cast_or_null<ObjCProtocolDecl>(D);
 }
 
 void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
