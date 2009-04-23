@@ -4101,6 +4101,7 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                              "\01L_OBJC_IMAGE_INFO",
                              &CGM.getModule());
   IMGV->setSection("__DATA, __objc_imageinfo, regular, no_dead_strip");
+  IMGV->setConstant(true);
   UsedGlobals.push_back(IMGV);
   
   std::vector<llvm::Constant*> Used;
