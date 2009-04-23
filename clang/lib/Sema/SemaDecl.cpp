@@ -833,7 +833,21 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   // Merge the storage class.
   New->setStorageClass(Old->getStorageClass());
 
-  // FIXME: need to implement inline semantics
+  // Merge "inline"
+  if (Old->isInline())
+    New->setInline(true);
+
+  // If this function declaration by itself qualifies as a C99 inline
+  // definition (C99 6.7.4p6), but the previous definition did not,
+  // then the function is not a C99 inline definition.
+  if (New->isC99InlineDefinition() && !Old->isC99InlineDefinition())
+    New->setC99InlineDefinition(false);
+  else if (Old->isC99InlineDefinition() && !New->isC99InlineDefinition()) {
+    // Mark all preceding definitions as not being C99 inline definitions.
+    for (const FunctionDecl *Prev = Old; Prev; 
+         Prev = Prev->getPreviousDeclaration())
+      const_cast<FunctionDecl *>(Prev)->setC99InlineDefinition(false);
+  }
 
   // Merge "pure" flag.
   if (Old->isPure())
@@ -2177,6 +2191,19 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
+  // FIXME: We need to determine whether the GNU inline attribute will
+  // be applied to this function declaration, since it affects
+  // declaration merging. This hack will go away when the FIXME below
+  // is resolved, since we should be putting *all* attributes onto the
+  // declaration now.
+  for (const AttributeList *Attr = D.getDeclSpec().getAttributes();
+       Attr; Attr = Attr->getNext()) {
+    if (Attr->getKind() == AttributeList::AT_gnu_inline) {
+      NewFD->addAttr(::new (Context) GNUInlineAttr());
+      break;
+    }
+  }
+
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
   if (CheckFunctionDeclaration(NewFD, PrevDecl, Redeclaration,
@@ -2291,6 +2318,32 @@ bool Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
         CheckOverloadedOperatorDeclaration(NewFD))
       InvalidDecl = true;
   }
+
+  // C99 6.7.4p6:
+  //   [... ] For a function with external linkage, the following
+  //   restrictions apply: [...] If all of the file scope declarations
+  //   for a function in a translation unit include the inline
+  //   function specifier without extern, then the definition in that
+  //   translation unit is an inline definition. An inline definition
+  //   does not provide an external definition for the function, and
+  //   does not forbid an external definition in another translation
+  //   unit.
+  //
+  // Here we determine whether this function, in isolation, would be a
+  // C99 inline definition. MergeCompatibleFunctionDecls looks at
+  // previous declarations.
+  if (NewFD->isInline() && 
+      NewFD->getDeclContext()->getLookupContext()->isTranslationUnit()) {
+    bool GNUInline = NewFD->hasAttr<GNUInlineAttr>() || 
+      (PrevDecl && PrevDecl->hasAttr<GNUInlineAttr>());
+    if (GNUInline || (!getLangOptions().CPlusPlus && !getLangOptions().C99)) {
+      // GNU "extern inline" is the same as "inline" in C99.
+      if (NewFD->getStorageClass() == FunctionDecl::Extern)
+        NewFD->setC99InlineDefinition(true);
+    } else if (getLangOptions().C99 && 
+               NewFD->getStorageClass() == FunctionDecl::None)
+      NewFD->setC99InlineDefinition(true);
+  }           
 
   // Check for a previous declaration of this name.
   if (!PrevDecl && NewFD->isExternC(Context)) {

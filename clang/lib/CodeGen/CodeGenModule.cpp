@@ -242,7 +242,7 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   // this is C89 mode, we use to GNU semantics.
   if (FD->hasAttr<GNUInlineAttr>() || (!Features.C99 && !Features.CPlusPlus)) {
     // extern inline in GNU mode is like C99 inline.
-    if (FD->getStorageClass() == FunctionDecl::Extern)
+    if (FD->isC99InlineDefinition())
       return CodeGenModule::GVA_C99Inline;
     // Normal inline is a strong symbol.
     return CodeGenModule::GVA_StrongExternal;
@@ -254,11 +254,10 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
     return CodeGenModule::GVA_CXXInline;
   
   assert(Features.C99 && "Must be in C99 mode if not in C89 or C++ mode");
-  // extern inline in C99 is a strong definition.
-  if (FD->getStorageClass() == FunctionDecl::Extern) 
-    return CodeGenModule::GVA_StrongExternal;
-  
-  return CodeGenModule::GVA_C99Inline;
+  if (FD->isC99InlineDefinition())
+    return CodeGenModule::GVA_C99Inline;
+
+  return CodeGenModule::GVA_StrongExternal;
 }
 
 /// SetFunctionDefinitionAttributes - Set attributes for a global.

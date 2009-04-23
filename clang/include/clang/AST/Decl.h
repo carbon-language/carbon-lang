@@ -515,6 +515,7 @@ private:
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
   bool IsInline : 1;
+  bool C99InlineDefinition : 1;
   bool IsVirtual : 1;
   bool IsPure : 1;
   bool InheritedPrototype : 1;
@@ -531,9 +532,9 @@ protected:
     : ValueDecl(DK, DC, L, N, T), 
       DeclContext(DK),
       ParamInfo(0), Body(), PreviousDeclaration(0),
-      SClass(S), IsInline(isInline), IsVirtual(false), IsPure(false),
-      InheritedPrototype(false), HasPrototype(true), IsDeleted(false), 
-      TypeSpecStartLoc(TSSL) {}
+      SClass(S), IsInline(isInline), C99InlineDefinition(false), 
+      IsVirtual(false), IsPure(false), InheritedPrototype(false), 
+      HasPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL) {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -678,6 +679,11 @@ public:
 
   bool isInline() const { return IsInline; }
   void setInline(bool I) { IsInline = I; }
+
+  /// \brief Whether this function is an "inline definition" as
+  /// defined by C99.
+  bool isC99InlineDefinition() const { return C99InlineDefinition; }
+  void setC99InlineDefinition(bool I) { C99InlineDefinition = I; }
 
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".
