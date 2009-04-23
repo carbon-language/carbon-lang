@@ -1606,7 +1606,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_F);
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "collect2").c_str());
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
 
   // Find the first non-empty base input (we want to ignore linker
