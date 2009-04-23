@@ -501,6 +501,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     bool needCloseParen = false;
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
@@ -511,7 +512,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       printSuffixedName(Name, "$stub");
       return;
     }
-    if (!isCallOp)
+    if (!isMemOp && !isCallOp)
       O << '$';
     else if (Name[0] == '$') {
       // The name begins with a dollar-sign. In order to avoid having it look
@@ -577,7 +578,8 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   bool NotRIPRel = IndexReg.getReg() || BaseReg.getReg();
   if (DispSpec.isGlobal() ||
       DispSpec.isCPI() ||
-      DispSpec.isJTI()) {
+      DispSpec.isJTI() ||
+      DispSpec.isSymbol()) {
     printOperand(MI, Op+3, "mem", NotRIPRel);
   } else {
     int DispVal = DispSpec.getImm();
