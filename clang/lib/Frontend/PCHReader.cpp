@@ -341,7 +341,11 @@ void PCHDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
 
 void PCHDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   VisitDecl(D);
-  // FIXME: Implement.
+  D->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  D->setPropertyDecl(
+               cast_or_null<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setPropertyIvarDecl(
+                   cast_or_null<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
@@ -2286,7 +2290,9 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
   
   case pch::DECL_OBJC_PROPERTY_IMPL: {
-    // FIXME: Implement.
+    D = ObjCPropertyImplDecl::Create(Context, 0, SourceLocation(),
+                                     SourceLocation(), 0, 
+                                     ObjCPropertyImplDecl::Dynamic, 0);
     break;
   }
 

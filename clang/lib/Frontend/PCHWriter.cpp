@@ -512,7 +512,9 @@ void PCHDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
 
 void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   VisitDecl(D);
-  // FIXME: Implement.
+  Writer.AddSourceLocation(D->getLocStart(), Record);
+  Writer.AddDeclRef(D->getPropertyDecl(), Record);
+  Writer.AddDeclRef(D->getPropertyIvarDecl(), Record);
   Code = pch::DECL_OBJC_PROPERTY_IMPL;
 }
 

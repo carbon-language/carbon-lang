@@ -1179,11 +1179,13 @@ public:
                                       ObjCIvarDecl *ivarDecl);
 
   SourceLocation getLocStart() const { return AtLoc; }
+  void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }
 
   ObjCPropertyDecl *getPropertyDecl() const {
     return PropertyDecl;
   }
-  
+  void setPropertyDecl(ObjCPropertyDecl *Prop) { PropertyDecl = Prop; }
+
   Kind getPropertyImplementation() const {
     return PropertyIvarDecl ? Synthesize : Dynamic;
   }
@@ -1191,7 +1193,8 @@ public:
   ObjCIvarDecl *getPropertyIvarDecl() const {
     return PropertyIvarDecl;
   }
-  
+  void setPropertyIvarDecl(ObjCIvarDecl *Ivar) { PropertyIvarDecl = Ivar; }
+
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCPropertyImpl;
   }
