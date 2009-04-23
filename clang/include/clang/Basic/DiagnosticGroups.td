@@ -28,6 +28,7 @@ def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def : DiagGroup<"char-subscripts">;
 def Comment : DiagGroup<"comment">;
+def : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"format-security">;
 def : DiagGroup<"format=2">;
