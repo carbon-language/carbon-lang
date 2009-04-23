@@ -473,19 +473,19 @@ bool Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     case 2: 
       if (!TypeID->isStr("id"))
         break;
-      Context.setObjCIdType(New);
+      Context.setObjCIdType(Context.getTypeDeclType(New));
       objc_types = true;
       break;
     case 5:
       if (!TypeID->isStr("Class"))
         break;
-      Context.setObjCClassType(New);
+      Context.setObjCClassType(Context.getTypeDeclType(New));
       objc_types = true;
       return false;
     case 3:
       if (!TypeID->isStr("SEL"))
         break;
-      Context.setObjCSelType(New);
+      Context.setObjCSelType(Context.getTypeDeclType(New));
       objc_types = true;
       return false;
     case 8:

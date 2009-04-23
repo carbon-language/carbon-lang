@@ -1948,7 +1948,19 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Load the special types.
   Context.setBuiltinVaListType(
     GetType(SpecialTypes[pch::SPECIAL_TYPE_BUILTIN_VA_LIST]));
-
+  if (unsigned Id = SpecialTypes[pch::SPECIAL_TYPE_OBJC_ID])
+    Context.setObjCIdType(GetType(Id));
+  if (unsigned Sel = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SELECTOR])
+    Context.setObjCSelType(GetType(Sel));
+  if (unsigned Proto = SpecialTypes[pch::SPECIAL_TYPE_OBJC_PROTOCOL])
+    Context.setObjCProtoType(GetType(Proto));
+  if (unsigned Class = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS])
+    Context.setObjCClassType(GetType(Class));
+  if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_CF_CONSTANT_STRING])
+    Context.setCFConstantStringType(GetType(String));
+  if (unsigned FastEnum 
+        = SpecialTypes[pch::SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
+    Context.setObjCFastEnumerationStateType(GetType(FastEnum));
   // If we saw the preprocessor block, read it now.
   if (PreprocessorBlockOffset) {
     SavedStreamPosition SavedPos(Stream);

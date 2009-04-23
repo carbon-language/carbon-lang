@@ -2000,6 +2000,12 @@ QualType ASTContext::getCFConstantStringType() {
   return getTagDeclType(CFConstantStringTypeDecl);
 }
 
+void ASTContext::setCFConstantStringType(QualType T) {
+  const RecordType *Rec = T->getAsRecordType();
+  assert(Rec && "Invalid CFConstantStringType");
+  CFConstantStringTypeDecl = Rec->getDecl();
+}
+
 QualType ASTContext::getObjCFastEnumerationStateType()
 {
   if (!ObjCFastEnumerationStateTypeDecl) {
@@ -2028,6 +2034,12 @@ QualType ASTContext::getObjCFastEnumerationStateType()
   }
   
   return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
+}
+
+void ASTContext::setObjCFastEnumerationStateType(QualType T) {
+  const RecordType *Rec = T->getAsRecordType();
+  assert(Rec && "Invalid ObjCFAstEnumerationStateType");
+  ObjCFastEnumerationStateTypeDecl = Rec->getDecl();
 }
 
 // This returns true if a type has been typedefed to BOOL:
@@ -2520,9 +2532,15 @@ void ASTContext::setBuiltinVaListType(QualType T)
   BuiltinVaListType = T;
 }
 
-void ASTContext::setObjCIdType(TypedefDecl *TD)
+void ASTContext::setObjCIdType(QualType T)
 {
-  ObjCIdType = getTypedefType(TD);
+  ObjCIdType = T;
+
+  const TypedefType *TT = T->getAsTypedefType();
+  if (!TT)
+    return;
+
+  TypedefDecl *TD = TT->getDecl();
 
   // typedef struct objc_object *id;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
@@ -2536,9 +2554,14 @@ void ASTContext::setObjCIdType(TypedefDecl *TD)
   IdStructType = rec;
 }
 
-void ASTContext::setObjCSelType(TypedefDecl *TD)
+void ASTContext::setObjCSelType(QualType T)
 {
-  ObjCSelType = getTypedefType(TD);
+  ObjCSelType = T;
+
+  const TypedefType *TT = T->getAsTypedefType();
+  if (!TT)
+    return;
+  TypedefDecl *TD = TT->getDecl();
 
   // typedef struct objc_selector *SEL;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
@@ -2555,9 +2578,14 @@ void ASTContext::setObjCProtoType(QualType QT)
   ObjCProtoType = QT;
 }
 
-void ASTContext::setObjCClassType(TypedefDecl *TD)
+void ASTContext::setObjCClassType(QualType T)
 {
-  ObjCClassType = getTypedefType(TD);
+  ObjCClassType = T;
+
+  const TypedefType *TT = T->getAsTypedefType();
+  if (!TT)
+    return;
+  TypedefDecl *TD = TT->getDecl();
 
   // typedef struct objc_class *Class;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();

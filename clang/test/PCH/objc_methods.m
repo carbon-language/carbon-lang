@@ -11,8 +11,6 @@ void func() {
 // FIXME:
 // AliasForTestPCH *zz;
  
-#if 0
  xx = [TestPCH alloc];
  [xx instMethod];
-#endif
 }

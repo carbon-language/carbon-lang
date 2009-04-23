@@ -342,7 +342,19 @@ namespace clang {
     /// SPECIAL_TYPES record.
     enum SpecialTypeIDs {
       /// \brief __builtin_va_list
-      SPECIAL_TYPE_BUILTIN_VA_LIST = 0
+      SPECIAL_TYPE_BUILTIN_VA_LIST             = 0,
+      /// \brief Objective-C "id" type
+      SPECIAL_TYPE_OBJC_ID                     = 1,
+      /// \brief Objective-C selector type
+      SPECIAL_TYPE_OBJC_SELECTOR               = 2,
+      /// \brief Objective-C Protocol type
+      SPECIAL_TYPE_OBJC_PROTOCOL               = 3,
+      /// \brief Objective-C Class type
+      SPECIAL_TYPE_OBJC_CLASS                  = 4,
+      /// \brief CFConstantString type
+      SPECIAL_TYPE_CF_CONSTANT_STRING          = 5,
+      /// \brief Objective-C fast enumeration state type
+      SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE = 6
     };
 
     /// \brief Record codes for each kind of declaration.

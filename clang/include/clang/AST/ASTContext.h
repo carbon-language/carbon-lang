@@ -370,6 +370,15 @@ public:
   // constant CFStrings.
   QualType getCFConstantStringType(); 
   
+  /// Get the structure type used to representation CFStrings, or NULL
+  /// if it hasn't yet been built.
+  QualType getRawCFConstantStringType() {
+    if (CFConstantStringTypeDecl)
+      return getTagDeclType(CFConstantStringTypeDecl);
+    return QualType();
+  }
+  void setCFConstantStringType(QualType T);
+
   // This setter/getter represents the ObjC type for an NSConstantString.
   void setObjCConstantStringInterface(ObjCInterfaceDecl *Decl);
   QualType getObjCConstantStringInterface() const { 
@@ -379,6 +388,16 @@ public:
   //// This gets the struct used to keep track of fast enumerations.
   QualType getObjCFastEnumerationStateType();
   
+  /// Get the ObjCFastEnumerationState type, or NULL if it hasn't yet
+  /// been built.
+  QualType getRawObjCFastEnumerationStateType() {
+    if (ObjCFastEnumerationStateTypeDecl)
+      return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
+    return QualType();
+  }
+
+  void setObjCFastEnumerationStateType(QualType T);
+
   /// getObjCEncodingForType - Emit the ObjC type encoding for the
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.
@@ -410,9 +429,9 @@ public:
   /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
   /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.
   QualType getObjCIdType() const { return ObjCIdType; }
-  void setObjCIdType(TypedefDecl *Decl);
+  void setObjCIdType(QualType T);
   
-  void setObjCSelType(TypedefDecl *Decl);
+  void setObjCSelType(QualType T);
   QualType getObjCSelType() const { return ObjCSelType; }
   
   void setObjCProtoType(QualType QT);
@@ -422,7 +441,7 @@ public:
   /// Sema.  'Class' is always a (typedef for a) pointer type, a pointer to a
   /// struct.
   QualType getObjCClassType() const { return ObjCClassType; }
-  void setObjCClassType(TypedefDecl *Decl);
+  void setObjCClassType(QualType T);
   
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }

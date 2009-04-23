@@ -110,46 +110,54 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   PushDeclContext(S, Context.getTranslationUnitDecl());
   if (!PP.getLangOptions().ObjC1) return;
   
-  // Synthesize "typedef struct objc_selector *SEL;"
-  RecordDecl *SelTag = CreateStructDecl(Context, "objc_selector");
-  PushOnScopeChains(SelTag, TUScope);
+  if (Context.getObjCSelType().isNull()) {
+    // Synthesize "typedef struct objc_selector *SEL;"
+    RecordDecl *SelTag = CreateStructDecl(Context, "objc_selector");
+    PushOnScopeChains(SelTag, TUScope);
   
-  QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
-  TypedefDecl *SelTypedef = TypedefDecl::Create(Context, CurContext,
-                                                SourceLocation(),
-                                                &Context.Idents.get("SEL"),
-                                                SelT);
-  PushOnScopeChains(SelTypedef, TUScope);
-  Context.setObjCSelType(SelTypedef);
+    QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
+    TypedefDecl *SelTypedef = TypedefDecl::Create(Context, CurContext,
+                                                  SourceLocation(),
+                                                  &Context.Idents.get("SEL"),
+                                                  SelT);
+    PushOnScopeChains(SelTypedef, TUScope);
+    Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
+  }
 
-  // FIXME: Make sure these don't leak!
-  RecordDecl *ClassTag = CreateStructDecl(Context, "objc_class");
-  QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
-  TypedefDecl *ClassTypedef = 
-    TypedefDecl::Create(Context, CurContext, SourceLocation(),
-                        &Context.Idents.get("Class"), ClassT);
-  PushOnScopeChains(ClassTag, TUScope);
-  PushOnScopeChains(ClassTypedef, TUScope);
-  Context.setObjCClassType(ClassTypedef);
+  if (Context.getObjCClassType().isNull()) {
+    RecordDecl *ClassTag = CreateStructDecl(Context, "objc_class");
+    QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
+    TypedefDecl *ClassTypedef = 
+      TypedefDecl::Create(Context, CurContext, SourceLocation(),
+                          &Context.Idents.get("Class"), ClassT);
+    PushOnScopeChains(ClassTag, TUScope);
+    PushOnScopeChains(ClassTypedef, TUScope);
+    Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
+  }
+
   // Synthesize "@class Protocol;
-  ObjCInterfaceDecl *ProtocolDecl =
-    ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
-                              &Context.Idents.get("Protocol"), 
-                              SourceLocation(), true);
-  Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
-  PushOnScopeChains(ProtocolDecl, TUScope);
-  
-  // Synthesize "typedef struct objc_object { Class isa; } *id;"
-  RecordDecl *ObjectTag = CreateStructDecl(Context, "objc_object");
+  if (Context.getObjCProtoType().isNull()) {
+    ObjCInterfaceDecl *ProtocolDecl =
+      ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
+                                &Context.Idents.get("Protocol"), 
+                                SourceLocation(), true);
+    Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
+    PushOnScopeChains(ProtocolDecl, TUScope);
+  }
 
-  QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
-  PushOnScopeChains(ObjectTag, TUScope);
-  TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,
-                                               SourceLocation(),
-                                               &Context.Idents.get("id"),
-                                               ObjT);
-  PushOnScopeChains(IdTypedef, TUScope);
-  Context.setObjCIdType(IdTypedef);
+  // Synthesize "typedef struct objc_object { Class isa; } *id;"
+  if (Context.getObjCIdType().isNull()) {
+    RecordDecl *ObjectTag = CreateStructDecl(Context, "objc_object");
+    
+    QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
+    PushOnScopeChains(ObjectTag, TUScope);
+    TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,
+                                                 SourceLocation(),
+                                                 &Context.Idents.get("id"),
+                                                 ObjT);
+    PushOnScopeChains(IdTypedef, TUScope);
+    Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
+  }
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,

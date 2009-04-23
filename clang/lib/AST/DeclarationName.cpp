@@ -59,6 +59,11 @@ bool operator<(DeclarationName LHS, DeclarationName RHS) {
 } // end namespace clang
 
 DeclarationName::DeclarationName(Selector Sel) {
+  if (!Sel.getAsOpaquePtr()) {
+    Ptr = StoredObjCZeroArgSelector;
+    return;
+  }
+
   switch (Sel.getNumArgs()) {
   case 0:
     Ptr = reinterpret_cast<uintptr_t>(Sel.getAsIdentifierInfo());
