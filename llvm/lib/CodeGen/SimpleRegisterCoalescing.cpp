@@ -1342,7 +1342,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         return false;
       }
       Limit = allocatableRCRegs_[DstRC].count();
-    } else if (!SrcIsPhys && !SrcIsPhys) {
+    } else if (!SrcIsPhys && !DstIsPhys) {
       unsigned SrcSize = SrcRC->getSize();
       unsigned DstSize = DstRC->getSize();
       if (SrcSize < DstSize)
