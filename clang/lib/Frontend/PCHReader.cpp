@@ -239,13 +239,13 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   for (unsigned I = 0; I != NumIvars; ++I)
     IVars.push_back(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
   ID->setIVarList(&IVars[0], NumIvars, Reader.getContext());
-
+  ID->setCategoryList(
+               cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
   ID->setForwardDecl(Record[Idx++]);
   ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setSuperClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setAtEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  // FIXME: add categories.
 }
 
 void PCHDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {

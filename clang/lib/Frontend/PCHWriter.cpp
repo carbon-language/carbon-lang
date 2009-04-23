@@ -415,12 +415,12 @@ void PCHDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(), 
                                      IEnd = D->ivar_end(); I != IEnd; ++I)
     Writer.AddDeclRef(*I, Record);
+  Writer.AddDeclRef(D->getCategoryList(), Record);
   Record.push_back(D->isForwardDecl());
   Record.push_back(D->isImplicitInterfaceDecl());
   Writer.AddSourceLocation(D->getClassLoc(), Record);
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
-  // FIXME: add categories.
   Code = pch::DECL_OBJC_INTERFACE;
 }
 
