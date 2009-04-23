@@ -57,8 +57,19 @@ def : DiagGroup<"return-type">;
 def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
 def : DiagGroup<"sign-compare">;
-def : DiagGroup<"strict-overflow=">;
+
+// Just silence warnings about common forms of -Wstrict-aliasing for now.
+def : DiagGroup<"strict-aliasing=0">;
+def : DiagGroup<"strict-aliasing=1">;
+def : DiagGroup<"strict-aliasing=2">;
+def : DiagGroup<"strict-aliasing">;
+
+// Just silence warnings about common forms of -Wstrict-aliasing for now.
+def : DiagGroup<"strict-overflow=0">;
+def : DiagGroup<"strict-overflow=1">;
+def : DiagGroup<"strict-overflow=2">;
 def : DiagGroup<"strict-overflow">;
+
 def : DiagGroup<"strict-prototypes">;
 def : DiagGroup<"strict-selector-match">;
 def Switch         : DiagGroup<"switch">;
