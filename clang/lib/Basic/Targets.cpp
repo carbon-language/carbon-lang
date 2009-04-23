@@ -930,14 +930,20 @@ public:
     // FIXME: Are the defaults correct for ARM?
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
-    if (triple.find("arm-") || triple.find("armv6-"))
+    if (triple.find("arm-") == 0 || triple.find("armv6-") == 0)
       ArmArch = Armv6;
-    else if (triple.find("armv5-"))
+    else if (triple.find("armv5-") == 0)
       ArmArch = Armv5;
-    else if (triple.find("armv4t-"))
+    else if (triple.find("armv4t-") == 0)
       ArmArch = Armv4t;
-    else if (triple.find("xscale-"))
+    else if (triple.find("xscale-") == 0)
       ArmArch = XScale;
+    else if (triple.find("armv") == 0) {
+      // FIXME: fuzzy match for other random weird arm triples.  This is useful
+      // for the static analyzer and other clients, but probably should be
+      // re-evaluated when codegen is brought up.
+      ArmArch = Armv6;
+    }
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defs) const {
@@ -1232,9 +1238,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     return new PPC64TargetInfo(T);
   }
 
-  if (T.find("armv6-") == 0 || T.find("arm-") == 0
-      || T.find("armv4t") == 0 || T.find("armv5-") == 0
-      || T.find("xscale") == 0) {
+  if (T.find("armv") == 0 || T.find("arm-") == 0 || T.find("xscale") == 0) {
     if (isDarwin)
       return new DarwinARMTargetInfo(T);
     if (isFreeBSD)
