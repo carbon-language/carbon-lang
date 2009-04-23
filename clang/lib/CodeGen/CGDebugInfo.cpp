@@ -140,6 +140,22 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
                                       Offset, /*flags*/ 0, Encoding);
 }
 
+llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
+                                     llvm::DICompileUnit Unit) {
+  // Bit size, align and offset of the type.
+  unsigned Encoding = llvm::dwarf::DW_ATE_complex_float;
+  if (Ty->isComplexIntegerType())
+    Encoding = llvm::dwarf::DW_ATE_lo_user;
+  
+  uint64_t Size = M->getContext().getTypeSize(Ty);
+  uint64_t Align = M->getContext().getTypeAlign(Ty);
+  uint64_t Offset = 0;
+  
+  return DebugFactory.CreateBasicType(Unit, "complex",
+                                      Unit, 0, Size, Align,
+                                      Offset, /*flags*/ 0, Encoding);
+}
+
 /// getOrCreateCVRType - Get the CVR qualified type from the cache or create 
 /// a new one if necessary.
 llvm::DIType CGDebugInfo::CreateCVRType(QualType Ty, llvm::DICompileUnit Unit) {
@@ -569,7 +585,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 #include "clang/AST/TypeNodes.def"
     assert(false && "Dependent types cannot show up in debug information");
     
-  case Type::Complex:
   case Type::LValueReference:
   case Type::RValueReference:
   case Type::Vector:
@@ -589,6 +604,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::ObjCInterface: 
     return Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit);
   case Type::Builtin: return Slot = CreateType(cast<BuiltinType>(Ty), Unit);
+  case Type::Complex: return Slot = CreateType(cast<ComplexType>(Ty), Unit);
   case Type::Pointer: return Slot = CreateType(cast<PointerType>(Ty), Unit);
   case Type::Typedef: return Slot = CreateType(cast<TypedefType>(Ty), Unit);
   case Type::Record:
