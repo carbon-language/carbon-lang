@@ -904,7 +904,8 @@ public:
   IdentifierInfo *getIdentifier() const { 
     return Id; 
   }
-  
+  void setIdentifier(IdentifierInfo *II) { Id = II; }
+
   /// getNameAsCString - Get the name of identifier for the class
   /// interface associated with this implementation as a C string
   /// (const char*).

@@ -329,7 +329,7 @@ void PCHDeclReader::VisitObjCImplDecl(ObjCImplDecl *D) {
 
 void PCHDeclReader::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   VisitObjCImplDecl(D);
-  // FIXME: Implement.
+  D->setIdentifier(Reader.GetIdentifierInfo(Record, Idx));
 }
 
 void PCHDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
@@ -2265,7 +2265,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
 
   case pch::DECL_OBJC_CATEGORY_IMPL: {
-    // FIXME: Implement.
+    D = ObjCCategoryImplDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
   }
   

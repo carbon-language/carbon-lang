@@ -500,7 +500,7 @@ void PCHDeclWriter::VisitObjCImplDecl(ObjCImplDecl *D) {
 
 void PCHDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   VisitObjCImplDecl(D);
-  // FIXME: Implement.
+  Writer.AddIdentifierRef(D->getIdentifier(), Record);
   Code = pch::DECL_OBJC_CATEGORY_IMPL;
 }
 
