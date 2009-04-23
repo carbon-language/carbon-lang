@@ -2742,7 +2742,7 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    assert(false && "Unable to de-serialize Objective-C selectors");
+    return DeclarationName(GetSelector(Record, Idx));
     break;
 
   case DeclarationName::CXXConstructorName:

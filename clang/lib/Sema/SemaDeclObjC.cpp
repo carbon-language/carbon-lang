@@ -99,8 +99,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       ProcessDeclAttributeList(IDecl, AttrList);
   
     ObjCInterfaceDecls[ClassName] = IDecl;
-    // FIXME: PushOnScopeChains
-    CurContext->addDecl(Context, IDecl);
+    PushOnScopeChains(IDecl, TUScope);
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(DeclPtrTy::make(IDecl));
   }

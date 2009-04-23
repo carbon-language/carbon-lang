@@ -18,9 +18,9 @@ typedef int OBJECT; // expected-note {{previous definition is here}}
 @class OBJECT ;	// expected-error {{redefinition of 'OBJECT' as different kind of symbol}}
 
 
-typedef int Gorf;  // expected-note 2 {{previous definition is here}}
+typedef int Gorf;  // expected-note {{previous definition is here}}
 
-@interface Gorf @end // expected-error {{redefinition of 'Gorf' as different kind of symbol}}
+@interface Gorf @end // expected-error {{redefinition of 'Gorf' as different kind of symbol}} expected-note {{previous definition is here}}
 
 void Gorf() // expected-error {{redefinition of 'Gorf' as different kind of symbol}}
 {
