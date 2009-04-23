@@ -790,18 +790,22 @@ class VISIBILITY_HIDDEN EdgeBuilder {
     PathDiagnosticLocation L = CLocs.back();
     if (L.asLocation().isFileID()) {
       
-      if (const Stmt *S = L.asStmt()) {        
-        // Adjust the location for some expressions that are best referenced
-        // by one of their subexpressions.
-        if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S))
-          S = CO->getCond();
-        else if (const ChooseExpr *CE = dyn_cast<ChooseExpr>(S))
-          S = CE->getCond();
-        
-        // Ignore parentheses.
-        if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
-          S = PE->IgnoreParens();
-        
+      if (const Stmt *S = L.asStmt()) {
+        while (1) {
+          // Adjust the location for some expressions that are best referenced
+          // by one of their subexpressions.
+          if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
+            S = PE->IgnoreParens();
+          else if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S))
+            S = CO->getCond();
+          else if (const ChooseExpr *CE = dyn_cast<ChooseExpr>(S))
+            S = CE->getCond();
+          else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
+            S = BE->getLHS();
+          else
+            break;
+        }
+
         L = PathDiagnosticLocation(S, L.getManager());        
       }      
       
