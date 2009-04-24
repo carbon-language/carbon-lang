@@ -267,16 +267,10 @@ private:
                             bool isVolatile, SDValue ValOp,
                             unsigned StWidth, DebugLoc dl);
 
-  /// isShuffleLegal - Return non-null if a vector shuffle is legal with the
-  /// specified mask and type.  Targets can specify exactly which masks they
-  /// support and the code generator is tasked with not creating illegal masks.
-  ///
-  /// Note that this will also return true for shuffles that are promoted to a
-  /// different type.
-  ///
-  /// If this is a legal shuffle, this method returns the (possibly promoted)
-  /// build_vector Mask.  If it's not a legal shuffle, it returns null.
-  SDNode *isShuffleLegal(MVT VT, SDValue Mask) const;
+  /// promoteShuffle - Promote a shuffle mask of a vector VT to perform the
+  /// same shuffle on a vector of NVT.  Must not create an illegal shuffle mask.
+  SDValue promoteShuffle(MVT NVT, MVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
+                         const int *Mask) const;
 
   bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
                                     SmallPtrSet<SDNode*, 32> &NodesLeadingTo);
@@ -319,50 +313,35 @@ private:
 };
 }
 
-/// isVectorShuffleLegal - Return true if a vector shuffle is legal with the
-/// specified mask and type.  Targets can specify exactly which masks they
-/// support and the code generator is tasked with not creating illegal masks.
-///
-/// Note that this will also return true for shuffles that are promoted to a
-/// different type.
-SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
-  switch (TLI.getOperationAction(ISD::VECTOR_SHUFFLE, VT)) {
-  default: return 0;
-  case TargetLowering::Legal:
-  case TargetLowering::Custom:
-    break;
-  case TargetLowering::Promote: {
-    // If this is promoted to a different type, convert the shuffle mask and
-    // ask if it is legal in the promoted type!
-    MVT NVT = TLI.getTypeToPromoteTo(ISD::VECTOR_SHUFFLE, VT);
-    MVT EltVT = NVT.getVectorElementType();
+/// promoteShuffle - Promote a shuffle mask of a vector VT to perform the
+/// same shuffle on a vector of NVT.  Must not create an illegal shuffle mask.
+/// e.g. <v4i32> <0, 1, 0, 1> -> v8i16 <0, 1, 2, 3, 0, 1, 2, 3>
+SDValue SelectionDAGLegalize::promoteShuffle(MVT NVT, MVT VT, DebugLoc dl, 
+                                             SDValue N1, SDValue N2, 
+                                             const int *Mask) const {
+  MVT EltVT = NVT.getVectorElementType();
+  int NumMaskElts = VT.getVectorNumElements();
+  int NumDestElts = NVT.getVectorNumElements();
+  unsigned NumEltsGrowth = NumDestElts / NumMaskElts;
 
-    // If we changed # elements, change the shuffle mask.
-    unsigned NumEltsGrowth =
-      NVT.getVectorNumElements() / VT.getVectorNumElements();
-    assert(NumEltsGrowth && "Cannot promote to vector type with fewer elts!");
-    if (NumEltsGrowth > 1) {
-      // Renumber the elements.
-      SmallVector<SDValue, 8> Ops;
-      for (unsigned i = 0, e = Mask.getNumOperands(); i != e; ++i) {
-        SDValue InOp = Mask.getOperand(i);
-        for (unsigned j = 0; j != NumEltsGrowth; ++j) {
-          if (InOp.getOpcode() == ISD::UNDEF)
-            Ops.push_back(DAG.getUNDEF(EltVT));
-          else {
-            unsigned InEltNo = cast<ConstantSDNode>(InOp)->getZExtValue();
-            Ops.push_back(DAG.getConstant(InEltNo*NumEltsGrowth+j, EltVT));
-          }
-        }
-      }
-      Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getDebugLoc(),
-                         NVT, &Ops[0], Ops.size());
+  assert(NumEltsGrowth && "Cannot promote to vector type with fewer elts!");
+
+  if (NumEltsGrowth == 1)
+    return DAG.getVectorShuffle(NVT, dl, N1, N2, Mask);
+  
+  SmallVector<int, 8> NewMask;
+  for (int i = 0; i != NumMaskElts; ++i) {
+    int Idx = Mask[i];
+    for (unsigned j = 0; j != NumEltsGrowth; ++j) {
+      if (Idx < 0) 
+        NewMask.push_back(-1);
+      else
+        NewMask.push_back(Idx * NumEltsGrowth + j);
     }
-    VT = NVT;
-    break;
   }
-  }
-  return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.getNode() : 0;
+  assert((int)NewMask.size() == NumDestElts && "Non-integer NumEltsGrowth?");
+  assert(TLI.isShuffleMaskLegal(&Mask[0], NVT) && "Shuffle not legal?");
+  return DAG.getVectorShuffle(NVT, dl, N1, N2, &NewMask[0]);
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
@@ -1652,25 +1631,15 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                       Tmp1.getValueType(), Tmp2);
 
           unsigned NumElts = Tmp1.getValueType().getVectorNumElements();
-          MVT ShufMaskVT =
-            MVT::getIntVectorWithNumElements(NumElts);
-          MVT ShufMaskEltVT = ShufMaskVT.getVectorElementType();
-
           // We generate a shuffle of InVec and ScVec, so the shuffle mask
           // should be 0,1,2,3,4,5... with the appropriate element replaced with
           // elt 0 of the RHS.
-          SmallVector<SDValue, 8> ShufOps;
-          for (unsigned i = 0; i != NumElts; ++i) {
-            if (i != InsertPos->getZExtValue())
-              ShufOps.push_back(DAG.getConstant(i, ShufMaskEltVT));
-            else
-              ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
-          }
-          SDValue ShufMask = DAG.getNode(ISD::BUILD_VECTOR, dl, ShufMaskVT,
-                                         &ShufOps[0], ShufOps.size());
-
-          Result = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, Tmp1.getValueType(),
-                               Tmp1, ScVec, ShufMask);
+          SmallVector<int, 8> ShufOps;
+          for (unsigned i = 0; i != NumElts; ++i)
+            ShufOps.push_back(i != InsertPos->getZExtValue() ? i : NumElts);
+          
+          Result = DAG.getVectorShuffle(Tmp1.getValueType(), dl, Tmp1, ScVec,
+                                        &ShufOps[0]);
           Result = LegalizeOp(Result);
           break;
         }
@@ -1708,13 +1677,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::VECTOR_SHUFFLE:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the input vectors,
     Tmp2 = LegalizeOp(Node->getOperand(1));   // but not the shuffle mask.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
 
     // Allow targets to custom lower the SHUFFLEs they support.
     switch (TLI.getOperationAction(ISD::VECTOR_SHUFFLE, Result.getValueType())){
     default: assert(0 && "Unknown operation action!");
     case TargetLowering::Legal:
-      assert(isShuffleLegal(Result.getValueType(), Node->getOperand(2)) &&
+      assert(TLI.isShuffleMaskLegal(cast<ShuffleVectorSDNode>(Node)->getMask(),
+                                    Result.getValueType()) &&
              "vector shuffle should not be created if not legal!");
       break;
     case TargetLowering::Custom:
@@ -1728,23 +1698,21 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       MVT VT = Node->getValueType(0);
       MVT EltVT = VT.getVectorElementType();
       MVT PtrVT = TLI.getPointerTy();
-      SDValue Mask = Node->getOperand(2);
-      unsigned NumElems = Mask.getNumOperands();
+      const int *Mask = cast<ShuffleVectorSDNode>(Node)->getMask();
+      int NumElems = VT.getVectorNumElements();
       SmallVector<SDValue, 8> Ops;
-      for (unsigned i = 0; i != NumElems; ++i) {
-        SDValue Arg = Mask.getOperand(i);
-        if (Arg.getOpcode() == ISD::UNDEF) {
+      for (int i = 0; i != NumElems; ++i) {
+        if (Mask[i] < 0) {
           Ops.push_back(DAG.getUNDEF(EltVT));
-        } else {
-          assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-          unsigned Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
-          if (Idx < NumElems)
-            Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp1,
-                                      DAG.getConstant(Idx, PtrVT)));
-          else
-            Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp2,
-                                      DAG.getConstant(Idx - NumElems, PtrVT)));
+          continue;
         }
+        int Idx = Mask[i];
+        if (Idx < NumElems)
+          Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp1,
+                                    DAG.getConstant(Idx, PtrVT)));
+        else
+          Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp2,
+                                    DAG.getConstant(Idx - NumElems, PtrVT)));
       }
       Result = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
       break;
@@ -1759,9 +1727,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Tmp2 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Tmp2);
 
       // Convert the shuffle mask to the right # elements.
-      Tmp3 = SDValue(isShuffleLegal(OVT, Node->getOperand(2)), 0);
-      assert(Tmp3.getNode() && "Shuffle not legal?");
-      Result = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, NVT, Tmp1, Tmp2, Tmp3);
+      Result = promoteShuffle(NVT, OVT, dl, Tmp1, Tmp2,
+                              cast<ShuffleVectorSDNode>(Node)->getMask());
       Result = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Result);
       break;
     }
@@ -5490,6 +5457,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 
   // FIXME: it would be far nicer to change this into map<SDValue,uint64_t>
   // and use a bitmask instead of a list of elements.
+  // FIXME: this doesn't treat <0, u, 0, u> for example, as a splat.
   std::map<SDValue, std::vector<unsigned> > Values;
   Values[SplatValue].push_back(0);
   bool isConstant = true;
@@ -5546,21 +5514,17 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 
   if (SplatValue.getNode()) {   // Splat of one value?
     // Build the shuffle constant vector: <0, 0, 0, 0>
-    MVT MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-    SDValue Zero = DAG.getConstant(0, MaskVT.getVectorElementType());
-    std::vector<SDValue> ZeroVec(NumElems, Zero);
-    SDValue SplatMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
-                                    &ZeroVec[0], ZeroVec.size());
+    SmallVector<int, 8> ZeroVec(NumElems, 0);
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
-    if (isShuffleLegal(VT, SplatMask)) {
+    if (TLI.isShuffleMaskLegal(&ZeroVec[0], Node->getValueType(0))) {
       // Get the splatted value into the low element of a vector register.
       SDValue LowValVec =
         DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, SplatValue);
 
       // Return shuffle(LowValVec, undef, <0,0,0,0>)
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, LowValVec,
-                         DAG.getUNDEF(VT), SplatMask);
+      return DAG.getVectorShuffle(VT, dl, LowValVec, DAG.getUNDEF(VT),
+                                  &ZeroVec[0]);
     }
   }
 
@@ -5582,35 +5546,25 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       std::swap(Val1, Val2);
 
     // Build the shuffle constant vector: e.g. <0, 4, 0, 4>
-    MVT MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-    MVT MaskEltVT = MaskVT.getVectorElementType();
-    std::vector<SDValue> MaskVec(NumElems);
+    SmallVector<int, 8> ShuffleMask(NumElems, -1);
 
     // Set elements of the shuffle mask for Val1.
     std::vector<unsigned> &Val1Elts = Values[Val1];
     for (unsigned i = 0, e = Val1Elts.size(); i != e; ++i)
-      MaskVec[Val1Elts[i]] = DAG.getConstant(0, MaskEltVT);
+      ShuffleMask[Val1Elts[i]] = 0;
 
     // Set elements of the shuffle mask for Val2.
     std::vector<unsigned> &Val2Elts = Values[Val2];
     for (unsigned i = 0, e = Val2Elts.size(); i != e; ++i)
       if (Val2.getOpcode() != ISD::UNDEF)
-        MaskVec[Val2Elts[i]] = DAG.getConstant(NumElems, MaskEltVT);
-      else
-        MaskVec[Val2Elts[i]] = DAG.getUNDEF(MaskEltVT);
-
-    SDValue ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVT,
-                                      &MaskVec[0], MaskVec.size());
+        ShuffleMask[Val2Elts[i]] = NumElems;
 
     // If the target supports SCALAR_TO_VECTOR and this shuffle mask, use it.
     if (TLI.isOperationLegalOrCustom(ISD::SCALAR_TO_VECTOR, VT) &&
-        isShuffleLegal(VT, ShuffleMask)) {
+        TLI.isShuffleMaskLegal(&ShuffleMask[0], VT)) {
       Val1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Val1);
       Val2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Val2);
-      SDValue Ops[] = { Val1, Val2, ShuffleMask };
-
-      // Return shuffle(LoValVec, HiValVec, <0,1,0,1>)
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, VT, Ops, 3);
+      return DAG.getVectorShuffle(VT, dl, Val1, Val2, &ShuffleMask[0]);
     }
   }
 
@@ -8066,36 +8020,19 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
   case ISD::VECTOR_SHUFFLE: {
     SDValue Tmp1 = WidenVectorOp(Node->getOperand(0), WidenVT);
     SDValue Tmp2 = WidenVectorOp(Node->getOperand(1), WidenVT);
-    // VECTOR_SHUFFLE 3rd operand must be a constant build vector that is
-    // used as permutation array. We build the vector here instead of widening
-    // because we don't want to legalize and have it turned to something else.
-    SDValue PermOp = Node->getOperand(2);
-    SDValueVector NewOps;
-    MVT PVT = PermOp.getValueType().getVectorElementType();
+    const int *Mask = cast<ShuffleVectorSDNode>(Node)->getMask();
+    SmallVector<int, 8> NewMask;
     for (unsigned i = 0; i < NumElts; ++i) {
-      if (PermOp.getOperand(i).getOpcode() == ISD::UNDEF) {
-        NewOps.push_back(PermOp.getOperand(i));
-      } else {
-        unsigned Idx =
-          cast<ConstantSDNode>(PermOp.getOperand(i))->getZExtValue();
-        if (Idx < NumElts) {
-          NewOps.push_back(PermOp.getOperand(i));
-        }
-        else {
-          NewOps.push_back(DAG.getConstant(Idx + NewNumElts - NumElts,
-                                           PermOp.getOperand(i).getValueType()));
-        }
-      }
+      int Idx = Mask[i];
+      if (Idx < (int)NumElts)
+        NewMask.push_back(Idx);
+      else
+        NewMask.push_back(Idx + NewNumElts - NumElts);
     }
-    for (unsigned i = NumElts; i < NewNumElts; ++i) {
-      NewOps.push_back(DAG.getUNDEF(PVT));
-    }
-
-    SDValue Tmp3 = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                               MVT::getVectorVT(PVT, NewOps.size()),
-                               &NewOps[0], NewOps.size());
-
-    Result = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, WidenVT, Tmp1, Tmp2, Tmp3);
+    for (unsigned i = NumElts; i < NewNumElts; ++i)
+      NewMask.push_back(-1);
+    
+    Result = DAG.getVectorShuffle(WidenVT, dl, Tmp1, Tmp2, &NewMask[0]);
     break;
   }
   case ISD::LOAD: {

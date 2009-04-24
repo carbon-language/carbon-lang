@@ -1672,7 +1672,7 @@ SPU::LowerV2I64Splat(MVT OpVT, SelectionDAG& DAG, uint64_t SplatVal,
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
-  SDValue PermMask = Op.getOperand(2);
+  const int *PermMask = cast<ShuffleVectorSDNode>(Op)->getMask();
   DebugLoc dl = Op.getDebugLoc();
 
   if (V2.getOpcode() == ISD::UNDEF) V2 = V1;
@@ -1703,39 +1703,40 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   } else
     assert(0 && "Unhandled vector type in LowerVECTOR_SHUFFLE");
 
-  for (unsigned i = 0; i != PermMask.getNumOperands(); ++i) {
-    if (PermMask.getOperand(i).getOpcode() != ISD::UNDEF) {
-      unsigned SrcElt = cast<ConstantSDNode > (PermMask.getOperand(i))->getZExtValue();
+  for (unsigned i = 0; i != MaxElts; ++i) {
+    if (PermMask[i] < 0)
+      continue;
+    
+    unsigned SrcElt = PermMask[i];
 
-      if (monotonic) {
-        if (SrcElt >= V2EltIdx0) {
-          if (1 >= (++EltsFromV2)) {
-            V2Elt = (V2EltIdx0 - SrcElt) << 2;
-          }
-        } else if (CurrElt != SrcElt) {
-          monotonic = false;
+    if (monotonic) {
+      if (SrcElt >= V2EltIdx0) {
+        if (1 >= (++EltsFromV2)) {
+          V2Elt = (V2EltIdx0 - SrcElt) << 2;
         }
-
-        ++CurrElt;
+      } else if (CurrElt != SrcElt) {
+        monotonic = false;
       }
 
-      if (rotate) {
-        if (PrevElt > 0 && SrcElt < MaxElts) {
-          if ((PrevElt == SrcElt - 1)
-              || (PrevElt == MaxElts - 1 && SrcElt == 0)) {
-            PrevElt = SrcElt;
-            if (SrcElt == 0)
-              V0Elt = i;
-          } else {
-            rotate = false;
-          }
-        } else if (PrevElt == 0) {
-          // First time through, need to keep track of previous element
+      ++CurrElt;
+    }
+
+    if (rotate) {
+      if (PrevElt > 0 && SrcElt < MaxElts) {
+        if ((PrevElt == SrcElt - 1)
+            || (PrevElt == MaxElts - 1 && SrcElt == 0)) {
           PrevElt = SrcElt;
+          if (SrcElt == 0)
+            V0Elt = i;
         } else {
-          // This isn't a rotation, takes elements from vector 2
           rotate = false;
         }
+      } else if (PrevElt == 0) {
+        // First time through, need to keep track of previous element
+        PrevElt = SrcElt;
+      } else {
+        // This isn't a rotation, takes elements from vector 2
+        rotate = false;
       }
     }
   }
@@ -1768,12 +1769,8 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     unsigned BytesPerElement = EltVT.getSizeInBits()/8;
 
     SmallVector<SDValue, 16> ResultMask;
-    for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
-      unsigned SrcElt;
-      if (PermMask.getOperand(i).getOpcode() == ISD::UNDEF)
-        SrcElt = 0;
-      else
-        SrcElt = cast<ConstantSDNode>(PermMask.getOperand(i))->getZExtValue();
+    for (unsigned i = 0, e = MaxElts; i != e; ++i) {
+      unsigned SrcElt = PermMask[i] < 0 ? 0 : PermMask[i];
 
       for (unsigned j = 0; j < BytesPerElement; ++j) {
         ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,

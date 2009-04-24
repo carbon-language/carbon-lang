@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin | not grep and
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin | grep psrldq
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin -o %t -f
+; RUN: not grep and %t
+; RUN: not grep psrldq %t
+; RUN: grep xorps %t
 
 define <4 x float> @test(<4 x float>* %v1) nounwind {
         %tmp = load <4 x float>* %v1            ; <<4 x float>> [#uses=1]
