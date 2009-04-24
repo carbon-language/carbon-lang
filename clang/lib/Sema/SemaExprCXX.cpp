@@ -131,7 +131,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     
     // FIXME: Is this correct?
     CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
-    return Owned(new (Context) CXXTemporaryObjectExpr(Temp, 0, Ty, TyBeginLoc,
+    return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 0, Ty, 
+                                                      TyBeginLoc,
                                                       Exprs, NumExprs,
                                                       RParenLoc));
   }
@@ -169,7 +170,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
 
       exprs.release();
-      return Owned(new (Context) CXXTemporaryObjectExpr(Temp, Constructor, Ty,
+      return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 
+                                                        Constructor, Ty,
                                                         TyBeginLoc,  Exprs,
                                                         NumExprs, RParenLoc));
     }

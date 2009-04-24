@@ -480,7 +480,7 @@ class CXXTemporaryObjectExpr : public Expr {
   unsigned NumArgs;
 
 public:
-  CXXTemporaryObjectExpr(VarDecl *vd, 
+  CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd, 
                          CXXConstructorDecl *Cons, QualType writtenTy,
                          SourceLocation tyBeginLoc, Expr **Args,
                          unsigned NumArgs, SourceLocation rParenLoc);
