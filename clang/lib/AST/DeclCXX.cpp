@@ -377,8 +377,10 @@ StaticAssertDecl::~StaticAssertDecl() {
 
 CXXTempVarDecl *CXXTempVarDecl::Create(ASTContext &C, DeclContext *DC,
                                        QualType T) {
-  assert(isa<CXXRecordDecl>(T->getAsRecordType()->getDecl()) &&
-         "CXXTempVarDecl must have a C++ record type!");
+  assert(T->isDependentType() || 
+         isa<CXXRecordDecl>(T->getAsRecordType()->getDecl()) &&
+         "CXXTempVarDecl must either have a dependent type "
+         "or a C++ record type!");
   return new (C) CXXTempVarDecl(DC, T);
 }
 
