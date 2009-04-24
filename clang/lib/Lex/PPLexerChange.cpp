@@ -179,7 +179,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   if (CurPPLexer) {  // Not ending a macro, ignore it.
     if (const IdentifierInfo *ControllingMacro = 
           CurPPLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
-      // Okay, this has a controlling macro, remember in PerFileInfo.
+      // Okay, this has a controlling macro, remember in HeaderFileInfo.
       if (const FileEntry *FE = 
             SourceMgr.getFileEntryForID(CurPPLexer->getFileID()))
         HeaderInfo.SetFileControllingMacro(FE, ControllingMacro);

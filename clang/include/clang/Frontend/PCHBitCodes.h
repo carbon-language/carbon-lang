@@ -211,7 +211,11 @@ namespace clang {
       
       /// \brief The value of the next __COUNTER__ to dispense.
       /// [PP_COUNTER_VALUE, Val]
-      PP_COUNTER_VALUE = 4
+      PP_COUNTER_VALUE = 4,
+      
+      /// \brief Describes one header file info [isImport, DirInfo, NumIncludes]
+      /// ControlloingMacro is optional.
+      PP_HEADER_FILE_INFO = 5
     };
 
     /// \defgroup PCHAST Precompiled header AST constants

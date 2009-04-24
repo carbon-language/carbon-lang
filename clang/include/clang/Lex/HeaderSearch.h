@@ -23,7 +23,31 @@ class FileEntry;
 class FileManager;
 class IdentifierInfo;
 
+/// HeaderFileInfo - The preprocessor keeps track of this information for each
+/// file that is #included.
+struct HeaderFileInfo {
+  /// isImport - True if this is a #import'd or #pragma once file.
+  bool isImport : 1;
   
+  /// DirInfo - Keep track of whether this is a system header, and if so,
+  /// whether it is C++ clean or not.  This can be set by the include paths or
+  /// by #pragma gcc system_header.  This is an instance of
+  /// SrcMgr::CharacteristicKind.
+  unsigned DirInfo : 2;
+  
+  /// NumIncludes - This is the number of times the file has been included
+  /// already.
+  unsigned short NumIncludes;
+  
+  /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
+  /// that protects the entire contents of the file, this is the identifier
+  /// for the macro that controls whether or not it has any effect.
+  const IdentifierInfo *ControllingMacro;
+  
+  HeaderFileInfo() : isImport(false), DirInfo(SrcMgr::C_User),
+    NumIncludes(0), ControllingMacro(0) {}
+};
+
 /// HeaderSearch - This class encapsulates the information needed to find the
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
 class HeaderSearch {
@@ -39,35 +63,10 @@ class HeaderSearch {
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
   
-  /// PreFileInfo - The preprocessor keeps track of this information for each
-  /// file that is #included.
-  struct PerFileInfo {
-    /// isImport - True if this is a #import'd or #pragma once file.
-    bool isImport : 1;
-    
-    /// DirInfo - Keep track of whether this is a system header, and if so,
-    /// whether it is C++ clean or not.  This can be set by the include paths or
-    /// by #pragma gcc system_header.  This is an instance of
-    /// SrcMgr::CharacteristicKind.
-    unsigned DirInfo : 2;
-    
-    /// NumIncludes - This is the number of times the file has been included
-    /// already.
-    unsigned short NumIncludes;
-    
-    /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
-    /// that protects the entire contents of the file, this is the identifier
-    /// for the macro that controls whether or not it has any effect.
-    const IdentifierInfo *ControllingMacro;
-    
-    PerFileInfo() : isImport(false), DirInfo(SrcMgr::C_User),
-      NumIncludes(0), ControllingMacro(0) {}
-  };
-  
   /// FileInfo - This contains all of the preprocessor-specific data about files
   /// that are included.  The vector is indexed by the FileEntry's UID.
   ///
-  std::vector<PerFileInfo> FileInfo;
+  std::vector<HeaderFileInfo> FileInfo;
 
   /// LookupFileCache - This is keeps track of each lookup performed by
   /// LookupFile.  The first part of the value is the starting index in
@@ -190,13 +189,20 @@ public:
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
   
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
+
+  typedef std::vector<HeaderFileInfo>::iterator header_file_iterator;
+  header_file_iterator header_file_begin() { return FileInfo.begin(); }
+  header_file_iterator header_file_end() { return FileInfo.end(); }
+
+  // Used by PCHReader.
+  void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
   
   void PrintStats();
 private:
       
-  /// getFileInfo - Return the PerFileInfo structure for the specified
+  /// getFileInfo - Return the HeaderFileInfo structure for the specified
   /// FileEntry.
-  PerFileInfo &getFileInfo(const FileEntry *FE);
+  HeaderFileInfo &getFileInfo(const FileEntry *FE);
 };
 
 }  // end namespace clang

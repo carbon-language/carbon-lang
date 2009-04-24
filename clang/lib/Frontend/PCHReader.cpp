@@ -23,6 +23,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
@@ -1444,6 +1445,7 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
   RecordData Record;
   llvm::SmallVector<IdentifierInfo*, 16> MacroArgs;
   MacroInfo *Macro = 0;
+  
   while (true) {
     unsigned Code = Stream.ReadCode();
     switch (Code) {
@@ -1536,7 +1538,9 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
       Macro->AddTokenToBody(Tok);
       break;
     }
-    }
+    case pch::PP_HEADER_FILE_INFO:
+      break; // Already processed by ReadPreprocessorBlock().
+  }
   }
 }
 
@@ -1545,6 +1549,7 @@ bool PCHReader::ReadPreprocessorBlock() {
     return Error("Malformed preprocessor block record");
   
   RecordData Record;
+  unsigned NumHeaderInfos = 0;
   while (true) {
     unsigned Code = Stream.ReadCode();
     switch (Code) {
@@ -1581,8 +1586,16 @@ bool PCHReader::ReadPreprocessorBlock() {
     case pch::PP_MACRO_OBJECT_LIKE:
     case pch::PP_MACRO_FUNCTION_LIKE:
     case pch::PP_TOKEN:
-      // Once we've hit a macro definition or a token, we're done.
-      return false;
+      break;
+    case pch::PP_HEADER_FILE_INFO: {
+      HeaderFileInfo HFI;
+      HFI.isImport = Record[0];
+      HFI.DirInfo = Record[1];
+      HFI.NumIncludes = Record[2];
+      HFI.ControllingMacro = DecodeIdentifierInfo(Record[3]);
+      PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
+      break;
+    }
     }
   }
 }

@@ -23,6 +23,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
@@ -1547,7 +1548,22 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     }
     ++NumMacros;
   }
-  
+
+  // Loop over all the header files.
+  HeaderSearch &HS = PP.getHeaderSearchInfo();  
+  for (HeaderSearch::header_file_iterator I = HS.header_file_begin(), 
+                                          E = HS.header_file_end();
+       I != E; ++I) {
+    Record.push_back((*I).isImport);
+    Record.push_back((*I).DirInfo);
+    Record.push_back((*I).NumIncludes);
+    if ((*I).ControllingMacro)
+      AddIdentifierRef((*I).ControllingMacro, Record);
+    else
+      Record.push_back(0);
+    Stream.EmitRecord(pch::PP_HEADER_FILE_INFO, Record);
+    Record.clear();
+  }
   Stream.ExitBlock();
 }
 

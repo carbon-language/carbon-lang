@@ -377,13 +377,19 @@ LookupSubframeworkHeader(const char *FilenameStart,
 //===----------------------------------------------------------------------===//
 
 
-/// getFileInfo - Return the PerFileInfo structure for the specified
+/// getFileInfo - Return the HeaderFileInfo structure for the specified
 /// FileEntry.
-HeaderSearch::PerFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
+HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID()+1);
   return FileInfo[FE->getUID()];
 }  
+
+void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
+  if (UID >= FileInfo.size())
+    FileInfo.resize(UID+1);
+  FileInfo[UID] = HFI;
+}
 
 /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
 /// #include, #include_next, or #import directive.  Return false if #including
@@ -392,7 +398,7 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
   ++NumIncluded; // Count # of attempted #includes.
 
   // Get information about this file.
-  PerFileInfo &FileInfo = getFileInfo(File);
+  HeaderFileInfo &FileInfo = getFileInfo(File);
   
   // If this is a #import directive, check that we have not already imported
   // this header.
