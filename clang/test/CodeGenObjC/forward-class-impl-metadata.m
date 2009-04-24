@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-unknown-unknown -emit-llvm -o %t %s
+// RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm -o %t %s
 
 @interface BASE  {
 @private
@@ -21,4 +21,21 @@
 @end
 
 @implementation PVR
+@end
+
+// Reopen of an interface after use.
+
+@interface A { 
+@public 
+  int x; 
+} 
+@property int p0;
+@end
+
+int f0(A *a) { 
+  return a.p0; 
+}
+
+@implementation A
+@synthesize p0 = _p0;
 @end
