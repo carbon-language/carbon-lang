@@ -1389,10 +1389,8 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                llvm::Value *Receiver,
                                                bool IsClassMessage,
                                                const CallArgList &CallArgs) {
-  llvm::Value *Arg0 = 
-    CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
   return EmitMessageSend(CGF, ResultType, Sel,
-                         Arg0, CGF.getContext().getObjCIdType(),
+                         Receiver, CGF.getContext().getObjCIdType(),
                          false, CallArgs);
 }
 
@@ -1404,6 +1402,8 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                            bool IsSuper,
                                            const CallArgList &CallArgs) {
   CallArgList ActualArgs;
+  if (!IsSuper)
+    Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
   ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
   ActualArgs.push_back(std::make_pair(RValue::get(EmitSelector(CGF.Builder, 
                                                                Sel)),
