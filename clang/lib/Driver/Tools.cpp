@@ -1619,7 +1619,13 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  if (Args.getLastArg(options::OPT_g_Group) &&
+  // Run dsymutil if we are making an executable in a single step.
+  //
+  // FIXME: Currently we don't want to do this when we are part of a
+  // universal build step, as this would end up creating stray temp
+  // files.
+  if (!LinkingOutput &&
+      Args.getLastArg(options::OPT_g_Group) &&
       !Args.getLastArg(options::OPT_gstabs) &&
       !Args.getLastArg(options::OPT_g0)) {
     // FIXME: This is gross, but matches gcc. The test only considers
