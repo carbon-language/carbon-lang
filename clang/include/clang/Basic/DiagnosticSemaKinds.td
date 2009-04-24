@@ -917,11 +917,6 @@ def ext_sizeof_function_type : Extension<
   "invalid application of 'sizeof' to a function type">;
 def ext_sizeof_void_type : Extension<
   "invalid application of '%0' to a void type">;
-def err_sizeof_nonfragile_interface : Error<
-  "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
-  "non-fragile ABI">;
-def err_atdef_nonfragile_interface : Error<
-  "invalid application of @defs in non-fragile ABI">;
 // FIXME: merge with %select
 def err_sizeof_incomplete_type : Error<
   "invalid application of 'sizeof' to an incomplete type %0">;
@@ -938,6 +933,20 @@ def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,
   InGroup<DiagGroup<"float-equal">>, DefaultIgnore;
 
+def err_sizeof_nonfragile_interface : Error<
+  "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
+  "non-fragile ABI">;
+def err_atdef_nonfragile_interface : Error<
+  "invalid application of @defs in non-fragile ABI">;
+def err_subscript_nonfragile_interface : Error<
+  "subscript requires size of interface %0, which is not constant in "
+  "non-fragile ABI">;
+
+def err_arithmetic_nonfragile_interface : Error<
+  "arithmetic on pointer to interface %0, which is not a constant size in "
+  "non-fragile ABI">;
+
+
 def err_typecheck_subscript_value : Error<
   "subscripted value is neither array nor pointer">;
 def err_typecheck_subscript : Error<"array subscript is not an integer">;
@@ -945,9 +954,6 @@ def err_subscript_function_type : Error<
   "subscript of pointer to function type %0">;
 def err_subscript_incomplete_type : Error<
   "subscript of pointer to incomplete type %0">;
-def err_subscript_nonfragile_interface : Error<
-  "subscript requires size of interface %0, which is not constant in "
-  "non-fragile ABI">;
 def err_typecheck_member_reference_struct_union : Error<
   "member reference base type %0 is not a structure or union">;
 def err_typecheck_member_reference_ivar : Error<

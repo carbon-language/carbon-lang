@@ -3275,10 +3275,11 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
   if (IExp->getType()->isPointerType())
     std::swap(PExp, IExp);
 
-  if (const PointerType* PTy = PExp->getType()->getAsPointerType()) {
+  if (const PointerType *PTy = PExp->getType()->getAsPointerType()) {
     if (IExp->getType()->isIntegerType()) {
-      // Check for arithmetic on pointers to incomplete types
-      if (PTy->getPointeeType()->isVoidType()) {
+      QualType PointeeTy = PTy->getPointeeType();
+      // Check for arithmetic on pointers to incomplete types.
+      if (PointeeTy->isVoidType()) {
         if (getLangOptions().CPlusPlus) {
           Diag(Loc, diag::err_typecheck_pointer_arith_void_type)
             << lex->getSourceRange() << rex->getSourceRange();
@@ -3288,7 +3289,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
         // GNU extension: arithmetic on pointer to void
         Diag(Loc, diag::ext_gnu_void_ptr)
           << lex->getSourceRange() << rex->getSourceRange();
-      } else if (PTy->getPointeeType()->isFunctionType()) {
+      } else if (PointeeTy->isFunctionType()) {
         if (getLangOptions().CPlusPlus) {
           Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
             << lex->getType() << lex->getSourceRange();
@@ -3299,12 +3300,19 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
         Diag(Loc, diag::ext_gnu_ptr_func_arith)
           << lex->getType() << lex->getSourceRange();
       } else if (!PTy->isDependentType() &&
-                 RequireCompleteType(Loc, PTy->getPointeeType(),
+                 RequireCompleteType(Loc, PointeeTy,
                                 diag::err_typecheck_arithmetic_incomplete_type,
-                                     lex->getSourceRange(), SourceRange(),
-                                     lex->getType()))
+                                     PExp->getSourceRange(), SourceRange(),
+                                     PExp->getType()))
         return QualType();
 
+      // Diagnose bad cases where we step over interface counts.
+      if (PointeeTy->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+        Diag(Loc, diag::err_arithmetic_nonfragile_interface)
+          << PointeeTy << PExp->getSourceRange();
+        return QualType();
+      }
+      
       if (CompLHSTy) {
         QualType LHSTy = lex->getType();
         if (LHSTy->isPromotableIntegerType())
@@ -3371,6 +3379,13 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
                                    lex->getType()))
       return QualType();
 
+    // Diagnose bad cases where we step over interface counts.
+    if (lpointee->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+      Diag(Loc, diag::err_arithmetic_nonfragile_interface)
+        << lpointee << lex->getSourceRange();
+      return QualType();
+    }
+    
     // The result type of a pointer-int computation is the pointer type.
     if (rex->getType()->isIntegerType()) {
       if (ComplainAboutVoid)

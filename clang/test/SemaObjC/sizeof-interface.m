@@ -7,6 +7,8 @@ int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to an in
 
 // rdar://6821047
 void *g3(I0 *P) {
+  P = P+5;        // expected-error {{arithmetic on pointer to incomplete type 'I0 *'}}
+
   return &P[4];   // expected-error{{subscript of pointer to incomplete type 'I0'}}
 }
 
@@ -49,6 +51,10 @@ typedef struct { @defs(I1) } I1_defs; // expected-error {{invalid application of
 
 // rdar://6821047
 int bar(I0 *P) {
+  P = P+5;  // expected-error {{arithmetic on pointer to interface 'I0', which is not a constant size in non-fragile ABI}}
+  P = 5+P;  // expected-error {{arithmetic on pointer to interface 'I0', which is not a constant size in non-fragile ABI}}
+  P = P-5;  // expected-error {{arithmetic on pointer to interface 'I0', which is not a constant size in non-fragile ABI}}
+  
   return P[4].x[2];  // expected-error {{subscript requires size of interface 'I0', which is not constant in non-fragile ABI}}
 }
 
