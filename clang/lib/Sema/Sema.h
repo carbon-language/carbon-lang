@@ -172,14 +172,6 @@ public:
   /// we can check for duplicates and find local method declarations.
   llvm::SmallVector<ObjCCategoryImplDecl*, 8> ObjCCategoryImpls;
   
-  /// ObjCAliasDecls - Keep track of all class declarations declared
-  /// with @compatibility_alias, so that we can emit errors on duplicates and
-  /// find the declarations when needed. This construct is ancient and will
-  /// likely never be seen. Nevertheless, it is here for compatibility.
-  typedef llvm::DenseMap<const IdentifierInfo*, 
-                         ObjCCompatibleAliasDecl*> ObjCAliasTy;
-  ObjCAliasTy ObjCAliasDecls;
-
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;
 

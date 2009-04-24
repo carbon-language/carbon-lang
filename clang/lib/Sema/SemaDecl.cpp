@@ -299,6 +299,18 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       S->RemoveDecl(DeclPtrTy::make(*Redecl));
       IdResolver.RemoveDecl(*Redecl);
     }
+  } else if (isa<ObjCInterfaceDecl>(D)) {
+    // We're pushing an Objective-C interface into the current
+    // context. If there is already an alias declaration, remove it first.
+    for (IdentifierResolver::iterator 
+           I = IdResolver.begin(D->getDeclName()), IEnd = IdResolver.end();
+         I != IEnd; ++I) {
+      if (isa<ObjCCompatibleAliasDecl>(*I)) {
+        S->RemoveDecl(DeclPtrTy::make(*I));
+        IdResolver.RemoveDecl(*I);
+        break;
+      }
+    }
   }
 
   IdResolver.AddDecl(D);

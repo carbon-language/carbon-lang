@@ -311,6 +311,10 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
 
 Sema::LookupResult
 Sema::LookupResult::CreateLookupResult(ASTContext &Context, NamedDecl *D) {
+  if (ObjCCompatibleAliasDecl *Alias 
+        = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
+    D = Alias->getClassInterface();
+
   LookupResult Result;
   Result.StoredKind = (D && isa<OverloadedFunctionDecl>(D))?
     OverloadedDeclSingleDecl : SingleDecl;
@@ -338,9 +342,14 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
       return Result;
     }
   } 
+
+  Decl *D = *F;
+  if (ObjCCompatibleAliasDecl *Alias 
+        = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
+    D = Alias->getClassInterface();
     
   Result.StoredKind = SingleDecl;
-  Result.First = reinterpret_cast<uintptr_t>(*F);
+  Result.First = reinterpret_cast<uintptr_t>(D);
   Result.Last = 0;
   return Result;
 }
@@ -362,9 +371,14 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
       return Result;
     }
   }
+
+  Decl *D = *F;
+  if (ObjCCompatibleAliasDecl *Alias 
+        = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
+    D = Alias->getClassInterface();
   
   Result.StoredKind = SingleDecl;
-  Result.First = reinterpret_cast<uintptr_t>(*F);
+  Result.First = reinterpret_cast<uintptr_t>(D);
   Result.Last = 0;
   return Result;
 }
@@ -929,16 +943,6 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
                             LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
                                                 S, RedeclarationOnly, Loc));
       }
-    }
-    if (getLangOptions().ObjC1 && II) {
-      // @interface and @compatibility_alias introduce typedef-like names.
-      // Unlike typedef's, they can only be introduced at file-scope (and are 
-      // therefore not scoped decls). They can, however, be shadowed by
-      // other names in IDNS_Ordinary.
-      ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
-      if (I != ObjCAliasDecls.end())
-        return LookupResult::CreateLookupResult(Context, 
-                                                I->second->getClassInterface());
     }
   }
   return LookupResult::CreateLookupResult(Context, 0);
