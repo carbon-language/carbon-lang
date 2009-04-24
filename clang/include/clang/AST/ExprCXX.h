@@ -389,12 +389,12 @@ class CXXConstructExpr : public Expr {
   Stmt **Args;
   unsigned NumArgs;
 
-  ~CXXConstructExpr() { } 
   
 protected:
   CXXConstructExpr(ASTContext &C, StmtClass SC, VarDecl *vd, QualType T, 
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs);
+  ~CXXConstructExpr() { } 
 
 public:
   static CXXConstructExpr *Create(ASTContext &C, VarDecl *VD, QualType T,
@@ -419,7 +419,8 @@ public:
   virtual SourceRange getSourceRange() const { return SourceRange(); }
 
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == CXXConstructExprClass;
+    return T->getStmtClass() == CXXConstructExprClass ||
+      T->getStmtClass() == CXXTemporaryObjectExprClass;
   }
   static bool classof(const CXXConstructExpr *) { return true; }
   
@@ -472,12 +473,9 @@ public:
 ///   return X(1, 3.14f); // creates a CXXTemporaryObjectExpr
 /// };
 /// @endcode
-class CXXTemporaryObjectExpr : public Expr {
+class CXXTemporaryObjectExpr : public CXXConstructExpr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
-  CXXConstructorDecl *Constructor;
-  Stmt **Args;
-  unsigned NumArgs;
 
 public:
   CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd, 
@@ -485,23 +483,11 @@ public:
                          SourceLocation tyBeginLoc, Expr **Args,
                          unsigned NumArgs, SourceLocation rParenLoc);
 
-  ~CXXTemporaryObjectExpr();
+  ~CXXTemporaryObjectExpr() { } 
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  
-  typedef ExprIterator arg_iterator;
-  typedef ConstExprIterator const_arg_iterator;
-    
-  arg_iterator arg_begin() { return Args; }
-  arg_iterator arg_end() { return Args + NumArgs; }
-  const_arg_iterator arg_begin() const { return Args; }
-  const_arg_iterator arg_end() const { return Args + NumArgs; }
-  
-  unsigned getNumArgs() const { return NumArgs; }
 
-  const CXXConstructorDecl* getConstructor() const { return Constructor; }
-  
   virtual SourceRange getSourceRange() const {
     return SourceRange(TyBeginLoc, RParenLoc);
   }
@@ -509,10 +495,6 @@ public:
     return T->getStmtClass() == CXXTemporaryObjectExprClass;
   }
   static bool classof(const CXXTemporaryObjectExpr *) { return true; }
-  
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
 };
 
 /// CXXZeroInitValueExpr - [C++ 5.2.3p2]

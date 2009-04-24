@@ -63,14 +63,6 @@ Stmt::child_iterator CXXDefaultArgExpr::child_end() {
   return child_iterator();
 }
 
-// CXXTemporaryObjectExpr
-Stmt::child_iterator CXXTemporaryObjectExpr::child_begin() { 
-  return child_iterator(Args);
-}
-Stmt::child_iterator CXXTemporaryObjectExpr::child_end() {
-  return child_iterator(Args + NumArgs);
-}
-
 // CXXZeroInitValueExpr
 Stmt::child_iterator CXXZeroInitValueExpr::child_begin() { 
   return child_iterator();
@@ -238,21 +230,9 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd,
                                                Expr **Args,
                                                unsigned NumArgs, 
                                                SourceLocation rParenLoc)
-  : Expr(CXXTemporaryObjectExprClass, writtenTy,
-         writtenTy->isDependentType(),
-         (writtenTy->isDependentType() ||
-          CallExpr::hasAnyValueDependentArguments(Args, NumArgs))),
-    TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc),
-    Constructor(Cons), Args(0), NumArgs(NumArgs) {
-  if (NumArgs > 0) {
-    this->Args = new Stmt*[NumArgs];
-    for (unsigned i = 0; i < NumArgs; ++i)
-      this->Args[i] = Args[i];
-  }
-}
-
-CXXTemporaryObjectExpr::~CXXTemporaryObjectExpr() {
-  delete [] Args;
+  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, vd, writtenTy, Cons, 
+                     false, Args, NumArgs), 
+  TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, VarDecl *VD, 
