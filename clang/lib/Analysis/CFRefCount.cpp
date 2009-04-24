@@ -2412,7 +2412,7 @@ namespace {
   
   class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
   public:
-    BadRelease(CFRefCount* tf) : CFRefBug(tf, "bad release") {}
+    BadRelease(CFRefCount* tf) : CFRefBug(tf, "Bad release") {}
 
     const char* getDescription() const {
       return "Incorrect decrement of the reference count of an "
