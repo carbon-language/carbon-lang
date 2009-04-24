@@ -1074,8 +1074,8 @@ RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
 
 
 RetainSummary*
-RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S)
-{
+RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S) {
+
   if (ObjCMethodDecl *MD = ME->getMethodDecl()) {
     // Scan the method decl for 'void*' arguments.  These should be treated
     // as 'StopTracking' because they are often used with delegates.
@@ -1091,12 +1091,26 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S)
       }
   }
   
+  // Any special effect for the receiver?
+  ArgEffect ReceiverEff = DoNothing;
+  
+  // If one of the arguments in the selector has the keyword 'delegate' we
+  // should stop tracking the reference count for the receiver.  This is
+  // because the reference count is quite possibly handled by a delegate
+  // method.
+  if (S.isKeywordSelector()) {
+    const std::string &str = S.getAsString();
+    assert(!str.empty());
+    if (CStrInCStrNoCase(&str[0], "delegate:")) ReceiverEff = StopTracking;
+  }
+  
   // Look for methods that return an owned object.
   if (!isTrackedObjectType(ME->getType())) {
-    if (ScratchArgs.empty())    
+    if (ScratchArgs.empty() && ReceiverEff == DoNothing)
       return 0;
     
-    return getPersistentSummary(RetEffect::MakeNoRet());
+    return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff,
+                                MayEscape);
   }
   
   // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
@@ -1108,7 +1122,7 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S)
                      : RetEffect::MakeOwned(RetEffect::ObjC, true))
       : RetEffect::MakeNotOwned(RetEffect::ObjC);
   
-  return getPersistentSummary(E);
+  return getPersistentSummary(E, ReceiverEff, MayEscape);
 }
 
 RetainSummary*
