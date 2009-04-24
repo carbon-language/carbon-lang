@@ -1076,9 +1076,28 @@ RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
 RetainSummary*
 RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, const char *s)
 {
+  if (ObjCMethodDecl *MD = ME->getMethodDecl()) {
+    // Scan the method decl for 'void*' arguments.  These should be treated
+    // as 'StopTracking' because they are often used with delegates.
+    // Delegates are a frequent form of false positives with the retain
+    // count checker.
+    unsigned i = 0;
+    for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
+         E = MD->param_end(); I != E; ++I, ++i)
+      if (ParmVarDecl *PD = *I) {
+        QualType Ty = Ctx.getCanonicalType(PD->getType());
+        if (Ty.getUnqualifiedType() == Ctx.VoidPtrTy)
+          ScratchArgs.push_back(std::make_pair(i, StopTracking));
+      }
+  }
+  
   // Look for methods that return an owned object.
-  if (!isTrackedObjectType(ME->getType()))
-    return 0;
+  if (!isTrackedObjectType(ME->getType())) {
+    if (ScratchArgs.empty())    
+      return 0;
+    
+    return getPersistentSummary(RetEffect::MakeNoRet());
+  }
   
   // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
   //  by instance methods.
