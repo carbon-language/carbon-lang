@@ -721,7 +721,7 @@ public:
   RetainSummary* getSummary(FunctionDecl* FD);  
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
   RetainSummary* getClassMethodSummary(ObjCMessageExpr *ME);
-  RetainSummary* getCommonMethodSummary(ObjCMessageExpr *ME, const char *s);
+  RetainSummary* getCommonMethodSummary(ObjCMessageExpr *ME, Selector S);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -1074,7 +1074,7 @@ RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
 
 
 RetainSummary*
-RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, const char *s)
+RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S)
 {
   if (ObjCMethodDecl *MD = ME->getMethodDecl()) {
     // Scan the method decl for 'void*' arguments.  These should be treated
@@ -1103,7 +1103,7 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, const char *s)
   //  by instance methods.
   
   RetEffect E =
-    followsFundamentalRule(s)
+    followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
     ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
                      : RetEffect::MakeOwned(RetEffect::ObjC, true))
       : RetEffect::MakeNotOwned(RetEffect::ObjC);
@@ -1124,13 +1124,13 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
     return I->second;
 
   // "initXXX": pass-through for receiver.
-  const char* s = S.getIdentifierInfoForSlot(0)->getName();
   assert(ScratchArgs.empty());
   
-  if (deriveNamingConvention(s) == InitRule)
+  if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
+      == InitRule)
     return getInitMethodSummary(ME);
   
-  RetainSummary *Summ = getCommonMethodSummary(ME, s);
+  RetainSummary *Summ = getCommonMethodSummary(ME, S);
   ObjCMethodSummaries[ME] = Summ;
   return Summ;
 }
@@ -1156,9 +1156,7 @@ RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr *ME) {
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
-  RetainSummary* Summ =
-    getCommonMethodSummary(ME, S.getIdentifierInfoForSlot(0)->getName());
-
+  RetainSummary* Summ = getCommonMethodSummary(ME, S);
   ObjCClassMethodSummaries[ObjCSummaryKey(ME->getClassName(), S)] = Summ;
   return Summ;
 }
