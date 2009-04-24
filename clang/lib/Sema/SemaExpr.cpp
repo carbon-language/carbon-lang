@@ -1251,10 +1251,10 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
     return true;
   
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
-  if (exprType->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+  if (LangOpts.ObjCNonFragileABI && exprType->isObjCInterfaceType()) {
     Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
       << exprType << isSizeof;
-    return true;
+    return false;
   }
     
   return false;

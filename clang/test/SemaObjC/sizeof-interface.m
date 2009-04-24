@@ -52,3 +52,22 @@ int bar(I0 *P) {
   return P[4].x[2];  // expected-error {{subscript requires size of interface 'I0', which is not constant in non-fragile ABI}}
 }
 
+
+@interface I @end
+
+@interface XCAttributeRunDirectNode
+{
+    @public
+    unsigned long attributeRuns[1024 + sizeof(I)]; // expected-error {{invalid application of 'sizeof' to interface 'I' in non-fragile ABI}}
+    int i;
+}
+@end
+
+@implementation XCAttributeRunDirectNode
+
+- (unsigned long)gatherStats:(id )stats
+{
+        return attributeRuns[i];
+}
+@end
+
