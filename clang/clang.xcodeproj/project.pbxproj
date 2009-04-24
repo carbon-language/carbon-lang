@@ -690,6 +690,8 @@
 		DEF168620F9549250098507F /* FixItRewriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixItRewriter.h; path = clang/Frontend/FixItRewriter.h; sourceTree = "<group>"; };
 		DEF169220F9645960098507F /* FrontendDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FrontendDiagnostic.h; path = clang/Frontend/FrontendDiagnostic.h; sourceTree = "<group>"; };
 		DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisDiagnostic.h; path = clang/Analysis/AnalysisDiagnostic.h; sourceTree = "<group>"; };
+		DEF16BE40FA13A5B0098507F /* TypeNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = TypeNodes.def; path = clang/AST/TypeNodes.def; sourceTree = "<group>"; };
+		DEF16BE50FA13A650098507F /* TypeOrdering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeOrdering.h; path = clang/AST/TypeOrdering.h; sourceTree = "<group>"; };
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = lib/AST/StmtDumper.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprAgg.cpp; path = lib/CodeGen/CGExprAgg.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1132,6 +1134,8 @@
 				35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */,
 				1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */,
 				DEDFF87F0F848CE30035BD10 /* TemplateName.h */,
+				DEF16BE40FA13A5B0098507F /* TypeNodes.def */,
+				DEF16BE50FA13A650098507F /* TypeOrdering.h */,
 				DE3464210B03040900DBC861 /* Type.h */,
 			);
 			name = AST;
@@ -1189,9 +1193,6 @@
 		DED7D7300A524295003AD0FB /* Basic */ = {
 			isa = PBXGroup;
 			children = (
-				9063F2280F9E911F002F7251 /* OnDiskHashTable.h */,
-				9063F2290F9E911F002F7251 /* SourceManagerInternals.h */,
-				9063F22A0F9E911F002F7251 /* TemplateKinds.h */,
 				906BF4AE0F83BA16001071FA /* ConvertUTF.h */,
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
 				DEDFFF070F959EE60035BD10 /* Diagnostic.td */,
@@ -1207,12 +1208,15 @@
 				DED7D7330A524295003AD0FB /* FileManager.h */,
 				DE3986EF0CB8D4B300223765 /* IdentifierTable.h */,
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
+				9063F2280F9E911F002F7251 /* OnDiskHashTable.h */,
 				DE8824560ED1244600CBC30A /* OperatorKinds.def */,
 				DE8824530ED1243E00CBC30A /* OperatorKinds.h */,
 				DEAABDF70F5F477C0098928A /* PrettyStackTrace.h */,
 				DED7D7350A524295003AD0FB /* SourceLocation.h */,
 				DED7D7360A524295003AD0FB /* SourceManager.h */,
+				9063F2290F9E911F002F7251 /* SourceManagerInternals.h */,
 				DE46BF270AE0A82D00CC047C /* TargetInfo.h */,
+				9063F22A0F9E911F002F7251 /* TemplateKinds.h */,
 				DED7D7370A524295003AD0FB /* TokenKinds.def */,
 				DED7D7380A524295003AD0FB /* TokenKinds.h */,
 				DEB089EE0F12F1D900522C07 /* TypeTraits.h */,

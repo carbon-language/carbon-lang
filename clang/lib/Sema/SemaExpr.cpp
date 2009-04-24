@@ -1231,37 +1231,33 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
 
   // C99 6.5.3.4p1:
   if (isa<FunctionType>(exprType)) {
-    // alignof(function) is allowed.
+    // alignof(function) is allowed as an extension.
     if (isSizeof)
       Diag(OpLoc, diag::ext_sizeof_function_type) << ExprRange;
     return false;
   }
   
+  // Allow sizeof(void)/alignof(void) as an extension.
   if (exprType->isVoidType()) {
     Diag(OpLoc, diag::ext_sizeof_void_type)
       << (isSizeof ? "sizeof" : "__alignof") << ExprRange;
     return false;
   }
   
-  // sizeof(interface) and sizeof(interface<proto>)
-  if (const ObjCInterfaceType *IIT = exprType->getAsObjCInterfaceType()) {
-    if (IIT->getDecl()->isForwardDecl()) {
-      Diag(OpLoc, diag::err_sizeof_forward_interface)
-        << IIT->getDecl()->getDeclName() << isSizeof;
-      return true;
-    }
-
-    if (LangOpts.ObjCNonFragileABI) {
-      Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
-        << IIT->getDecl()->getDeclName() << isSizeof;
-      //return false;
-    }
+  if (RequireCompleteType(OpLoc, exprType,
+                          isSizeof ? diag::err_sizeof_incomplete_type : 
+                          diag::err_alignof_incomplete_type,
+                          ExprRange))
+    return true;
+  
+  // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
+  if (exprType->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+    Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
+      << exprType << isSizeof;
+    return true;
   }
     
-  return RequireCompleteType(OpLoc, exprType,
-                                isSizeof ? diag::err_sizeof_incomplete_type : 
-                                           diag::err_alignof_incomplete_type,
-                                ExprRange);
+  return false;
 }
 
 bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
@@ -1651,12 +1647,19 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
       << ResultType << BaseExpr->getSourceRange();
     return ExprError();
   }
+  
   if (!ResultType->isDependentType() &&
-      RequireCompleteType(BaseExpr->getLocStart(), ResultType, 
-                          diag::err_subscript_incomplete_type,
+      RequireCompleteType(LLoc, ResultType, diag::err_subscript_incomplete_type,
                           BaseExpr->getSourceRange()))
     return ExprError();
-
+  
+  // Diagnose bad cases where we step over interface counts.
+  if (ResultType->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+    Diag(LLoc, diag::err_subscript_nonfragile_interface)
+      << ResultType << BaseExpr->getSourceRange();
+    return ExprError();
+  }
+  
   Base.release();
   Idx.release();
   return Owned(new (Context) ArraySubscriptExpr(LHSExp, RHSExp,

@@ -825,6 +825,10 @@ bool Type::isIncompleteType() const {
   case IncompleteArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return true;
+  case ObjCInterface:
+  case ObjCQualifiedInterface:
+    // ObjC interfaces are incomplete if they are @class, not @interface.
+    return cast<ObjCInterfaceType>(this)->getDecl()->isForwardDecl();
   }
 }
 

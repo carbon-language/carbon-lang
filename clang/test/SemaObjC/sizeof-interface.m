@@ -3,9 +3,17 @@
 @class I0;
 
 // rdar://6811884
-int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to a forward declared interface 'I0'}}
+int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to an incomplete type 'I0'}}
+
+// rdar://6821047
+void *g3(I0 *P) {
+  return &P[4];   // expected-error{{subscript of pointer to incomplete type 'I0'}}
+}
+
+
 
 @interface I0 {
+@public
   char x[4];
 }
 
@@ -13,7 +21,7 @@ int g0 = sizeof(I0); // expected-error{{invalid application of 'sizeof' to a for
 @end
 
 // size == 4
-int g1[ sizeof(I0)     // expected-warning {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
+int g1[ sizeof(I0)     // expected-error {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
        == 4 ? 1 : -1];
 
 @implementation I0
@@ -22,7 +30,7 @@ int g1[ sizeof(I0)     // expected-warning {{invalid application of 'sizeof' to 
 
 // size == 4 (we do not include extended properties in the
 // sizeof).
-int g2[ sizeof(I0)   // expected-warning {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
+int g2[ sizeof(I0)   // expected-error {{invalid application of 'sizeof' to interface 'I0' in non-fragile ABI}}
        == 4 ? 1 : -1];
 
 @interface I1
@@ -38,3 +46,9 @@ typedef struct { @defs(I1) } I1_defs; // expected-error {{invalid application of
 // FIXME: This is currently broken due to the way the record layout we
 // create is tied to whether we have seen synthesized properties. Ugh.
 // int g3[ sizeof(I1) == 0 ? 1 : -1];
+
+// rdar://6821047
+int bar(I0 *P) {
+  return P[4].x[2];  // expected-error {{subscript requires size of interface 'I0', which is not constant in non-fragile ABI}}
+}
+
