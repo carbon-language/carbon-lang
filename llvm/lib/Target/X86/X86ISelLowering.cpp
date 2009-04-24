@@ -4745,7 +4745,7 @@ X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue
 GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
-           SDValue *InFlag) {
+           SDValue *InFlag, const MVT PtrVT, unsigned ReturnReg) {
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   DebugLoc dl = GA->getDebugLoc();
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
@@ -4753,11 +4753,13 @@ GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
                                            GA->getOffset());
   if (InFlag) {
     SDValue Ops[] = { Chain,  TGA, *InFlag };
-    return DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
+    Chain = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
   } else {
     SDValue Ops[]  = { Chain, TGA };
-    return DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
+    Chain = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
   }
+  SDValue Flag = Chain.getValue(1);
+  return DAG.getCopyFromReg(Chain, dl, ReturnReg, PtrVT, Flag);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 32 bit
@@ -4772,42 +4774,14 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                                  PtrVT), InFlag);
   InFlag = Chain.getValue(1);
 
-  Chain = GetTLSADDR(DAG, Chain, GA, &InFlag);
-  InFlag = Chain.getValue(1);
-
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDValue Ops1[] = { Chain,
-                      DAG.getTargetExternalSymbol("___tls_get_addr",
-                                                  PtrVT),
-                      DAG.getRegister(X86::EAX, PtrVT),
-                      DAG.getRegister(X86::EBX, PtrVT),
-                      InFlag };
-  Chain = DAG.getNode(X86ISD::CALL, dl, NodeTys, Ops1, 5);
-  InFlag = Chain.getValue(1);
-
-  return DAG.getCopyFromReg(Chain, dl, X86::EAX, PtrVT, InFlag);
+  return GetTLSADDR(DAG, Chain, GA, &InFlag, PtrVT, X86::EAX);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 64 bit
 static SDValue
 LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                 const MVT PtrVT) {
-  SDValue InFlag, Chain;
-  DebugLoc dl = GA->getDebugLoc();  // ? function entry point might be better
-
-  Chain = GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL);
-  InFlag = Chain.getValue(1);
-
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDValue Ops1[] = { Chain,
-                      DAG.getTargetExternalSymbol("__tls_get_addr",
-                                                  PtrVT),
-                      DAG.getRegister(X86::RDI, PtrVT),
-                      InFlag };
-  Chain = DAG.getNode(X86ISD::CALL, dl, NodeTys, Ops1, 4);
-  InFlag = Chain.getValue(1);
-
-  return DAG.getCopyFromReg(Chain, dl, X86::RAX, PtrVT, InFlag);
+  return GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT, X86::RAX);
 }
 
 // Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
