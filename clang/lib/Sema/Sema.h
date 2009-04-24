@@ -19,13 +19,13 @@
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Parse/Action.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "clang/AST/DeclObjC.h"
 #include <string>
 #include <vector>
 
@@ -40,6 +40,7 @@ namespace clang {
   class Decl;
   class DeclContext;
   class DeclSpec;
+  class ExternalSemaSource;
   class NamedDecl;
   class Stmt;
   class Expr;
@@ -127,6 +128,9 @@ public:
   ASTConsumer &Consumer;
   Diagnostic &Diags;
   SourceManager &SourceMgr;
+
+  /// \brief Source of additional semantic information.
+  ExternalSemaSource *ExternalSource;
 
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
@@ -243,27 +247,17 @@ public:
   /// unit.
   bool CompleteTranslationUnit;
 
-  /// ObjCMethodList - a linked list of methods with different signatures.
-  struct ObjCMethodList {
-    ObjCMethodDecl *Method;
-    ObjCMethodList *Next;
-    
-    ObjCMethodList() {
-      Method = 0; 
-      Next = 0;
-    }
-    ObjCMethodList(ObjCMethodDecl *M, ObjCMethodList *C) {
-      Method = M;
-      Next = C;
-    }
-  };
+  typedef llvm::DenseMap<Selector, ObjCMethodList> MethodPool;
+
   /// Instance/Factory Method Pools - allows efficient lookup when typechecking
   /// messages to "id". We need to maintain a list, since selectors can have
   /// differing signatures across classes. In Cocoa, this happens to be 
   /// extremely uncommon (only 1% of selectors are "overloaded").
-  llvm::DenseMap<Selector, ObjCMethodList> InstanceMethodPool;
-  llvm::DenseMap<Selector, ObjCMethodList> FactoryMethodPool;
+  MethodPool InstanceMethodPool;
+  MethodPool FactoryMethodPool;
   
+  MethodPool::iterator ReadMethodPool(Selector Sel, bool isInstance);
+
   /// Private Helper predicate to check for 'self'.
   bool isSelfExpr(Expr *RExpr);
 public:
@@ -1126,6 +1120,10 @@ public:
   /// LookupInstanceMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
   ObjCMethodDecl *LookupInstanceMethodInGlobalPool(Selector Sel, SourceRange R);
+
+  /// LookupFactoryMethodInGlobalPool - Returns the method and warns if
+  /// there are multiple signatures.
+  ObjCMethodDecl *LookupFactoryMethodInGlobalPool(Selector Sel, SourceRange R);
   
   /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
   void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method);

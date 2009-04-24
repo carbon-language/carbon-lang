@@ -16,6 +16,7 @@
 #include "clang/Frontend/PCHBitCodes.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -148,6 +149,13 @@ private:
   /// \brief SelectorData, indexed by the selector ID minus one.
   llvm::SmallVector<Selector, 16> SelectorData;
 
+  /// \brief A pointer to an on-disk hash table of opaque type
+  /// PCHMethodPoolLookupTable.
+  ///
+  /// This hash table provides the instance and factory methods
+  /// associated with every selector known in the PCH file.
+  void *MethodPoolLookupTable;
+
   /// \brief The set of external definitions stored in the the PCH
   /// file.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
@@ -223,7 +231,8 @@ public:
 
   explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
     : SemaObj(0), PP(PP), Context(Context), Consumer(0),
-      IdentifierTableData(0), NumStatementsRead(0), NumMacrosRead(0),
+      IdentifierTableData(0), IdentifierLookupTable(0),
+      MethodPoolLookupTable(0), NumStatementsRead(0), NumMacrosRead(0),
       NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
 
   ~PCHReader() {}
@@ -304,6 +313,14 @@ public:
   /// identifier. FIXME: if this identifier names a macro, deserialize
   /// the macro.
   virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd);
+
+  /// \brief Load the contents of the global method pool for a given
+  /// selector.
+  ///
+  /// \returns a pair of Objective-C methods lists containing the
+  /// instance and factory methods, respectively, with this selector.
+  virtual std::pair<ObjCMethodList, ObjCMethodList> 
+    ReadMethodPool(Selector Sel);
 
   void SetIdentifierInfo(unsigned ID, const IdentifierInfo *II);
 

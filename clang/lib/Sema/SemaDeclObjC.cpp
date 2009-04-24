@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -1090,8 +1091,47 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
   return true;
 }
 
+/// \brief Read the contents of the instance and factory method pools
+/// for a given selector from external storage.
+///
+/// This routine should only be called once, when neither the instance
+/// nor the factory method pool has an entry for this selector.
+Sema::MethodPool::iterator Sema::ReadMethodPool(Selector Sel, 
+                                                bool isInstance) {
+  assert(ExternalSource && "We need an external AST source");
+  assert(InstanceMethodPool.find(Sel) == InstanceMethodPool.end() &&
+         "Selector data already loaded into the instance method pool");
+  assert(FactoryMethodPool.find(Sel) == FactoryMethodPool.end() &&
+         "Selector data already loaded into the factory method pool");
+
+  // Read the method list from the external source.
+  std::pair<ObjCMethodList, ObjCMethodList> Methods
+    = ExternalSource->ReadMethodPool(Sel);
+  
+  if (isInstance) {
+    if (Methods.second.Method)
+      FactoryMethodPool[Sel] = Methods.second;
+    return InstanceMethodPool.insert(std::make_pair(Sel, Methods.first)).first;
+  } 
+
+  if (Methods.first.Method)
+    InstanceMethodPool[Sel] = Methods.first;
+
+  return FactoryMethodPool.insert(std::make_pair(Sel, Methods.second)).first;
+}
+
 void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
-  ObjCMethodList &Entry = InstanceMethodPool[Method->getSelector()];
+  llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
+    = InstanceMethodPool.find(Method->getSelector());
+  if (Pos == InstanceMethodPool.end()) {
+    if (ExternalSource && !FactoryMethodPool.count(Method->getSelector()))
+      Pos = ReadMethodPool(Method->getSelector(), /*isInstance=*/true);
+    else
+      Pos = InstanceMethodPool.insert(std::make_pair(Method->getSelector(),
+                                                     ObjCMethodList())).first;
+  }
+
+  ObjCMethodList &Entry = Pos->second;
   if (Entry.Method == 0) {
     // Haven't seen a method with this selector name yet - add it.
     Entry.Method = Method;
@@ -1113,7 +1153,16 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
 // FIXME: Finish implementing -Wno-strict-selector-match.
 ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel, 
                                                        SourceRange R) {
-  ObjCMethodList &MethList = InstanceMethodPool[Sel];
+  llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
+    = InstanceMethodPool.find(Sel);
+  if (Pos == InstanceMethodPool.end() && !FactoryMethodPool.count(Sel)) {
+    if (ExternalSource)
+      Pos = ReadMethodPool(Sel, /*isInstance=*/true);
+    else
+      return 0;
+  }
+
+  ObjCMethodList &MethList = Pos->second;
   bool issueWarning = false;
   
   if (MethList.Method && MethList.Next) {
@@ -1134,7 +1183,17 @@ ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel,
 }
 
 void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
-  ObjCMethodList &FirstMethod = FactoryMethodPool[Method->getSelector()];
+  llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
+    = FactoryMethodPool.find(Method->getSelector());
+  if (Pos == FactoryMethodPool.end()) {
+    if (ExternalSource && !InstanceMethodPool.count(Method->getSelector()))
+      Pos = ReadMethodPool(Method->getSelector(), /*isInstance=*/false);
+    else
+      Pos = FactoryMethodPool.insert(std::make_pair(Method->getSelector(),
+                                                    ObjCMethodList())).first;
+  }
+
+  ObjCMethodList &FirstMethod = Pos->second;
   if (!FirstMethod.Method) {
     // Haven't seen a method with this selector name yet - add it.
     FirstMethod.Method = Method;
@@ -1154,6 +1213,37 @@ void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
       FirstMethod.Next = OMI;
     }
   }
+}
+
+ObjCMethodDecl *Sema::LookupFactoryMethodInGlobalPool(Selector Sel, 
+                                                      SourceRange R) {
+  llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
+    = FactoryMethodPool.find(Sel);
+  if (Pos == FactoryMethodPool.end()) {
+    if (ExternalSource && !InstanceMethodPool.count(Sel)) 
+      Pos = ReadMethodPool(Sel, /*isInstance=*/false);
+    else
+      return 0;
+  }
+
+  ObjCMethodList &MethList = Pos->second;
+  bool issueWarning = false;
+  
+  if (MethList.Method && MethList.Next) {
+    for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
+      // This checks if the methods differ by size & alignment.
+      if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method, true))
+        issueWarning = true;
+  }
+  if (issueWarning && (MethList.Method && MethList.Next)) {
+    Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
+    Diag(MethList.Method->getLocStart(), diag::note_using_decl)
+      << MethList.Method->getSourceRange();
+    for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
+      Diag(Next->Method->getLocStart(), diag::note_also_found_decl)
+        << Next->Method->getSourceRange();
+  }
+  return MethList.Method;
 }
 
 /// ProcessPropertyDecl - Make sure that any user-defined setter/getter methods 

@@ -159,6 +159,7 @@ private:
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
   void WriteDeclsBlock(ASTContext &Context);
+  void WriteMethodPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteSelectorTable();
   void WriteAttributeRecord(const Attr *Attr);

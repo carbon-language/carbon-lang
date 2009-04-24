@@ -168,7 +168,10 @@ namespace clang {
       LOCALLY_SCOPED_EXTERNAL_DECLS = 11,
       
       /// \brief Record code for the Objective-C Selector Table.
-      SELECTOR_TABLE = 12
+      SELECTOR_TABLE = 12,
+
+      /// \brief Record code for the Objective-C method pool,
+      METHOD_POOL = 13
     };
 
     /// \brief Record types used within a source manager block.

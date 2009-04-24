@@ -41,6 +41,11 @@ inline unsigned BernsteinHash(const char* x, unsigned n) {
   return R + (R >> 5);
 }
 
+inline unsigned BernsteinHashPartial(const char* x, unsigned n, unsigned R) {
+  for (unsigned i = 0 ; i < n ; ++i, ++x) R = R * 33 + *x;
+  return R + (R >> 5);
+}
+
 namespace io {
 
 typedef uint32_t Offset;
@@ -199,7 +204,8 @@ public:
       
       // Store the offset for the data of this bucket.
       B.off = out.tell();
-      
+      assert(B.off && "Cannot write a bucket at offset 0. Please add padding.");
+
       // Write out the number of items in the bucket.
       Emit16(out, B.length);
       
@@ -318,7 +324,7 @@ public:
       
       // Read the key.
       const internal_key_type& X =
-        Info::ReadKey((const unsigned char* const) Items, L.first);
+        InfoPtr->ReadKey((const unsigned char* const) Items, L.first);
 
       // If the key doesn't match just skip reading the value.
       if (!Info::EqualKey(X, iKey)) {

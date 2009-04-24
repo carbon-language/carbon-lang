@@ -1774,6 +1774,176 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
 }
 
 namespace {
+// Trait used for the on-disk hash table used in the method pool.
+class VISIBILITY_HIDDEN PCHMethodPoolTrait {
+  PCHWriter &Writer;
+
+public:
+  typedef Selector key_type;
+  typedef key_type key_type_ref;
+  
+  typedef std::pair<ObjCMethodList, ObjCMethodList> data_type;
+  typedef const data_type& data_type_ref;
+
+  explicit PCHMethodPoolTrait(PCHWriter &Writer) : Writer(Writer) { }
+  
+  static unsigned ComputeHash(Selector Sel) {
+    unsigned N = Sel.getNumArgs();
+    if (N == 0)
+      ++N;
+    unsigned R = 5381;
+    for (unsigned I = 0; I != N; ++I)
+      if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
+        R = clang::BernsteinHashPartial(II->getName(), II->getLength(), R);
+    return R;
+  }
+  
+  std::pair<unsigned,unsigned> 
+    EmitKeyDataLength(llvm::raw_ostream& Out, Selector Sel,
+                      data_type_ref Methods) {
+    unsigned KeyLen = 2 + (Sel.getNumArgs()? Sel.getNumArgs() * 4 : 4);
+    clang::io::Emit16(Out, KeyLen);
+    unsigned DataLen = 2 + 2; // 2 bytes for each of the method counts
+    for (const ObjCMethodList *Method = &Methods.first; Method; 
+         Method = Method->Next)
+      if (Method->Method)
+        DataLen += 4;
+    for (const ObjCMethodList *Method = &Methods.second; Method; 
+         Method = Method->Next)
+      if (Method->Method)
+        DataLen += 4;
+    clang::io::Emit16(Out, DataLen);
+    return std::make_pair(KeyLen, DataLen);
+  }
+  
+  void EmitKey(llvm::raw_ostream& Out, Selector Sel, unsigned) {
+    // FIXME: Keep track of the location of the key data (the
+    // selector), so we can fold the selector table's storage into
+    // this hash table.
+    unsigned N = Sel.getNumArgs();
+    clang::io::Emit16(Out, N);
+    if (N == 0)
+      N = 1;
+    for (unsigned I = 0; I != N; ++I)
+      clang::io::Emit32(Out, 
+                    Writer.getIdentifierRef(Sel.getIdentifierInfoForSlot(I)));
+  }
+  
+  void EmitData(llvm::raw_ostream& Out, key_type_ref,
+                data_type_ref Methods, unsigned) {
+    unsigned NumInstanceMethods = 0;
+    for (const ObjCMethodList *Method = &Methods.first; Method; 
+         Method = Method->Next)
+      if (Method->Method)
+        ++NumInstanceMethods;
+
+    unsigned NumFactoryMethods = 0;
+    for (const ObjCMethodList *Method = &Methods.second; Method; 
+         Method = Method->Next)
+      if (Method->Method)
+        ++NumFactoryMethods;
+
+    clang::io::Emit16(Out, NumInstanceMethods);
+    clang::io::Emit16(Out, NumFactoryMethods);
+    for (const ObjCMethodList *Method = &Methods.first; Method; 
+         Method = Method->Next)
+      if (Method->Method)
+        clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
+    clang::io::Emit16(Out, NumFactoryMethods);
+    for (const ObjCMethodList *Method = &Methods.second; Method; 
+         Method = Method->Next)
+      if (Method->Method)
+        clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
+  }
+};
+} // end anonymous namespace
+
+/// \brief Write the method pool into the PCH file.
+///
+/// The method pool contains both instance and factory methods, stored
+/// in an on-disk hash table indexed by the selector.
+void PCHWriter::WriteMethodPool(Sema &SemaRef) {
+  using namespace llvm;
+
+  // Create and write out the blob that contains the instance and
+  // factor method pools.
+  bool Empty = true;
+  {
+    OnDiskChainedHashTableGenerator<PCHMethodPoolTrait> Generator;
+    
+    // Create the on-disk hash table representation. Start by
+    // iterating through the instance method pool.
+    PCHMethodPoolTrait::key_type Key;
+    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
+           Instance = SemaRef.InstanceMethodPool.begin(), 
+           InstanceEnd = SemaRef.InstanceMethodPool.end();
+         Instance != InstanceEnd; ++Instance) {
+      // Check whether there is a factory method with the same
+      // selector.
+      llvm::DenseMap<Selector, ObjCMethodList>::iterator Factory
+        = SemaRef.FactoryMethodPool.find(Instance->first);
+
+      if (Factory == SemaRef.FactoryMethodPool.end())
+        Generator.insert(Instance->first,
+                         std::make_pair(Instance->second, 
+                                        ObjCMethodList()));
+      else
+        Generator.insert(Instance->first,
+                         std::make_pair(Instance->second, Factory->second));
+
+      Empty = false;
+    }
+
+    // Now iterate through the factory method pool, to pick up any
+    // selectors that weren't already in the instance method pool.
+    for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
+           Factory = SemaRef.FactoryMethodPool.begin(), 
+           FactoryEnd = SemaRef.FactoryMethodPool.end();
+         Factory != FactoryEnd; ++Factory) {
+      // Check whether there is an instance method with the same
+      // selector. If so, there is no work to do here.
+      llvm::DenseMap<Selector, ObjCMethodList>::iterator Instance
+        = SemaRef.InstanceMethodPool.find(Factory->first);
+
+      if (Instance == SemaRef.InstanceMethodPool.end())
+        Generator.insert(Factory->first,
+                         std::make_pair(ObjCMethodList(), Factory->second));
+
+      Empty = false;
+    }
+
+    if (Empty)
+      return;
+
+    // Create the on-disk hash table in a buffer.
+    llvm::SmallVector<char, 4096> MethodPool; 
+    uint32_t BucketOffset;
+    {
+      PCHMethodPoolTrait Trait(*this);
+      llvm::raw_svector_ostream Out(MethodPool);
+      // Make sure that no bucket is at offset 0
+      clang::io::Emit16(Out, 0);
+      BucketOffset = Generator.Emit(Out, Trait);
+    }
+
+    // Create a blob abbreviation
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(pch::METHOD_POOL));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned MethodPoolAbbrev = Stream.EmitAbbrev(Abbrev);
+
+    // Write the identifier table
+    RecordData Record;
+    Record.push_back(pch::METHOD_POOL);
+    Record.push_back(BucketOffset);
+    Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, 
+                              &MethodPool.front(), 
+                              MethodPool.size());
+  }
+}
+
+namespace {
 class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
   PCHWriter &Writer;
   Preprocessor &PP;
@@ -1880,6 +2050,8 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
     {
       PCHIdentifierTableTrait Trait(*this, PP);
       llvm::raw_svector_ostream Out(IdentifierTable);
+      // Make sure that no bucket is at offset 0
+      clang::io::Emit16(Out, 0);
       BucketOffset = Generator.Emit(Out, Trait);
     }
 
@@ -2113,6 +2285,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
+  WriteMethodPool(SemaRef);
   WriteSelectorTable();
   WriteIdentifierTable(PP);
   Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);

@@ -497,7 +497,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
     if (!Method)
-      Method = FactoryMethodPool[Sel].Method;
+      Method = LookupFactoryMethodInGlobalPool(Sel, SourceRange(lbrac, rbrac));
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false, 
                                   lbrac, rbrac, returnType))
       return true;
@@ -523,7 +523,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (!Method) {
       // If not messaging 'self', look for any factory method named 'Sel'.
       if (!isSelfExpr(RExpr)) {
-        Method = FactoryMethodPool[Sel].Method;
+        Method = LookupFactoryMethodInGlobalPool(Sel, SourceRange(lbrac,rbrac));
         if (!Method) {
           Method = LookupInstanceMethodInGlobalPool(
                                    Sel, SourceRange(lbrac,rbrac));

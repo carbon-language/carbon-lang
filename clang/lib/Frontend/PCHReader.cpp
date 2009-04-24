@@ -1085,6 +1085,114 @@ unsigned PCHStmtReader::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
+class VISIBILITY_HIDDEN PCHMethodPoolLookupTrait {
+  PCHReader &Reader;
+
+public:
+  typedef std::pair<ObjCMethodList, ObjCMethodList> data_type;
+
+  typedef Selector external_key_type;
+  typedef external_key_type internal_key_type;
+
+  explicit PCHMethodPoolLookupTrait(PCHReader &Reader) : Reader(Reader) { }
+  
+  static bool EqualKey(const internal_key_type& a,
+                       const internal_key_type& b) {
+    return a == b;
+  }
+  
+  static unsigned ComputeHash(Selector Sel) {
+    unsigned N = Sel.getNumArgs();
+    if (N == 0)
+      ++N;
+    unsigned R = 5381;
+    for (unsigned I = 0; I != N; ++I)
+      if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
+        R = clang::BernsteinHashPartial(II->getName(), II->getLength(), R);
+    return R;
+  }
+  
+  // This hopefully will just get inlined and removed by the optimizer.
+  static const internal_key_type&
+  GetInternalKey(const external_key_type& x) { return x; }
+  
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    using namespace clang::io;
+    unsigned KeyLen = ReadUnalignedLE16(d);
+    unsigned DataLen = ReadUnalignedLE16(d);
+    return std::make_pair(KeyLen, DataLen);
+  }
+    
+  internal_key_type ReadKey(const unsigned char* d, unsigned n) {
+    using namespace clang::io;
+    SelectorTable &SelTable = Reader.getContext().Selectors;
+    unsigned N = ReadUnalignedLE16(d);
+    IdentifierInfo *FirstII 
+      = Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
+    if (N == 0)
+      return SelTable.getNullarySelector(FirstII);
+    else if (N == 1)
+      return SelTable.getUnarySelector(FirstII);
+
+    llvm::SmallVector<IdentifierInfo *, 16> Args;
+    Args.push_back(FirstII);
+    for (unsigned I = 1; I != N; ++I)
+      Args.push_back(Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d)));
+
+    return SelTable.getSelector(N, &Args[0]);
+  }
+    
+  data_type ReadData(Selector, const unsigned char* d, unsigned DataLen) {
+    using namespace clang::io;
+    unsigned NumInstanceMethods = ReadUnalignedLE16(d);
+    unsigned NumFactoryMethods = ReadUnalignedLE16(d);
+
+    data_type Result;
+
+    // Load instance methods
+    ObjCMethodList *Prev = 0;
+    for (unsigned I = 0; I != NumInstanceMethods; ++I) {
+      ObjCMethodDecl *Method 
+        = cast<ObjCMethodDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
+      if (!Result.first.Method) {
+        // This is the first method, which is the easy case.
+        Result.first.Method = Method;
+        Prev = &Result.first;
+        continue;
+      }
+
+      Prev->Next = new ObjCMethodList(Method, 0);
+      Prev = Prev->Next;
+    }
+
+    // Load factory methods
+    Prev = 0;
+    for (unsigned I = 0; I != NumFactoryMethods; ++I) {
+      ObjCMethodDecl *Method 
+        = cast<ObjCMethodDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
+      if (!Result.second.Method) {
+        // This is the first method, which is the easy case.
+        Result.second.Method = Method;
+        Prev = &Result.second;
+        continue;
+      }
+
+      Prev->Next = new ObjCMethodList(Method, 0);
+      Prev = Prev->Next;
+    }
+
+    return Result;
+  }
+};
+  
+} // end anonymous namespace  
+
+/// \brief The on-disk hash table used for the global method pool.
+typedef OnDiskChainedHashTable<PCHMethodPoolLookupTrait> 
+  PCHMethodPoolLookupTable;
+
+namespace {
 class VISIBILITY_HIDDEN PCHIdentifierLookupTrait {
   PCHReader &Reader;
 
@@ -1844,6 +1952,14 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
       }
       LocallyScopedExternalDecls.swap(Record);
       break;
+
+    case pch::METHOD_POOL:
+      MethodPoolLookupTable 
+        = PCHMethodPoolLookupTable::Create(
+                        (const unsigned char *)BlobStart + Record[0],
+                        (const unsigned char *)BlobStart, 
+                        PCHMethodPoolLookupTrait(*this));
+      break;
     }
   }
   Error("Premature end of bitstream");
@@ -2539,6 +2655,7 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
     return 0;
 
   unsigned Index = ID - 1;
+  assert(Index < DeclAlreadyLoaded.size() && "Declaration ID out of range");
   if (DeclAlreadyLoaded[Index])
     return reinterpret_cast<Decl *>(DeclOffsets[Index]);
 
@@ -2679,7 +2796,8 @@ void PCHReader::PrintStats() {
 
 void PCHReader::InitializeSema(Sema &S) {
   SemaObj = &S;
- 
+  S.ExternalSource = this;
+
   // Makes sure any declarations that were deserialized "too early"
   // still get added to the identifier's declaration chains.
   for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
@@ -2716,6 +2834,21 @@ IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
   // Dereferencing the iterator has the effect of building the
   // IdentifierInfo node and populating it with the various
   // declarations it needs.
+  return *Pos;
+}
+
+std::pair<ObjCMethodList, ObjCMethodList> 
+PCHReader::ReadMethodPool(Selector Sel) {
+  if (!MethodPoolLookupTable)
+    return std::pair<ObjCMethodList, ObjCMethodList>();
+
+  // Try to find this selector within our on-disk hash table.
+  PCHMethodPoolLookupTable *PoolTable
+    = (PCHMethodPoolLookupTable*)MethodPoolLookupTable;
+  PCHMethodPoolLookupTable::iterator Pos = PoolTable->find(Sel);
+  if (Pos == PoolTable->end())
+    return std::pair<ObjCMethodList, ObjCMethodList>();;
+
   return *Pos;
 }
 
