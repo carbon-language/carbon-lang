@@ -1103,7 +1103,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
         VA = ArgLocs[++i]; // skip ahead to next loc
         if (VA.isMemLoc()) {
-          // must be APCS and older than V5T to split like this
+          // must be APCS to split like this
           unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
           int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset());
 
