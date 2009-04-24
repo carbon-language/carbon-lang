@@ -722,6 +722,7 @@ public:
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
   RetainSummary* getClassMethodSummary(ObjCMessageExpr *ME);
   RetainSummary* getCommonMethodSummary(ObjCMessageExpr *ME, Selector S);
+  RetainSummary* getMethodSummaryFromAnnotations(ObjCMethodDecl *MD);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -1072,6 +1073,33 @@ RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
   return Summ;
 }
 
+RetainSummary*
+RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
+  if (!MD)
+    return 0;
+  
+  assert(ScratchArgs.empty());
+  
+  // Determine if there is a special return effect for this method.
+  bool hasRetEffect = false;
+  RetEffect RE = RetEffect::MakeNoRet();
+  
+  if (isTrackedObjectType(MD->getResultType())) {
+    if (MD->getAttr<ObjCOwnershipReturnsAttr>()) {
+      RE = RetEffect::MakeOwned(RetEffect::ObjC, true);
+      hasRetEffect = true;
+    }
+    else {
+      // Default to 'not owned'.
+      RE = RetEffect::MakeNotOwned(RetEffect::ObjC);
+    }
+  }
+  
+  if (!hasRetEffect)
+    return 0;
+
+  return getPersistentSummary(RE);
+}
 
 RetainSummary*
 RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S) {
@@ -1137,14 +1165,21 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
   if (I != ObjCMethodSummaries.end())
     return I->second;
 
-  // "initXXX": pass-through for receiver.
   assert(ScratchArgs.empty());
+
+  // Annotations take precedence over all other ways to derive
+  // summaries.
+  RetainSummary *Summ = getMethodSummaryFromAnnotations(ME->getMethodDecl());
   
-  if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
-      == InitRule)
-    return getInitMethodSummary(ME);
+  if (!Summ) {      
+    // "initXXX": pass-through for receiver.
+    if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
+        == InitRule)
+      return getInitMethodSummary(ME);
   
-  RetainSummary *Summ = getCommonMethodSummary(ME, S);
+    Summ = getCommonMethodSummary(ME, S);
+  }
+
   ObjCMethodSummaries[ME] = Summ;
   return Summ;
 }
@@ -1153,7 +1188,7 @@ RetainSummary*
 RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr *ME) {
 
   Selector S = ME->getSelector();
-  ObjCMethodSummariesTy::iterator I;
+  ObjCMethodSummariesTy::iterator I;  
   
   if (ObjCInterfaceDecl *ID = ME->getClassInfo().first) {
     // Lookup the method using the decl for the class @interface.
@@ -1170,7 +1205,13 @@ RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr *ME) {
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
-  RetainSummary* Summ = getCommonMethodSummary(ME, S);
+  // Annotations take precedence over all other ways to derive
+  // summaries.
+  RetainSummary *Summ = getMethodSummaryFromAnnotations(ME->getMethodDecl());
+  
+  if (!Summ)
+    Summ = getCommonMethodSummary(ME, S);
+  
   ObjCClassMethodSummaries[ObjCSummaryKey(ME->getClassName(), S)] = Summ;
   return Summ;
 }

@@ -414,6 +414,6 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 @end
 
 void test_attr_1(TestOwnershipAttr *X) {
-  NSString *str = [X returnsAnOwnedString];
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
 }
 
