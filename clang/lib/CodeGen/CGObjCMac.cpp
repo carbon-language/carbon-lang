@@ -825,7 +825,7 @@ protected:
                            const RecordDecl *RD,
                            const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
                            unsigned int BytePos, bool ForStrongLayout,
-                           int &Index, int &SkIndex, bool &HasUnion);
+                           bool &HasUnion);
 
   /// GetIvarLayoutName - Returns a unique constant for the given
   /// ivar layout bitmap.
@@ -2906,7 +2906,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                               const RecordDecl *RD,
                              const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
                               unsigned int BytePos, bool ForStrongLayout,
-                              int &Index, int &SkIndex, bool &HasUnion) {
+                              bool &HasUnion) {
   bool IsUnion = (RD && RD->isUnion());
   uint64_t MaxUnionIvarSize = 0;
   uint64_t MaxSkippedUnionIvarSize = 0;
@@ -2951,8 +2951,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       
       BuildAggrIvarLayout(0, RecLayout, RD, TmpRecFields,
                           BytePos + GetFieldBaseOffset(OI, Layout, Field),
-                          ForStrongLayout, Index, SkIndex,
-                          HasUnion);
+                          ForStrongLayout, HasUnion);
       TmpRecFields.clear();
       continue;
     }
@@ -2973,8 +2972,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       assert(!FQT->isUnionType() && 
              "layout for array of unions not supported");
       if (FQT->isRecordType()) {
-        int OldIndex = Index;
-        int OldSkIndex = SkIndex;
+        int OldIndex = IvarsInfo.size() - 1;
+        int OldSkIndex = SkipIvars.size() -1;
         
         // FIXME - Use a common routine with the above!
         const RecordType *RT = FQT->getAsRecordType();
@@ -2989,29 +2988,28 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         BuildAggrIvarLayout(0, RecLayout, RD,
                             TmpRecFields,
                             BytePos + GetFieldBaseOffset(OI, Layout, Field),
-                            ForStrongLayout, Index, SkIndex,
-                            HasUnion);
+                            ForStrongLayout, HasUnion);
         TmpRecFields.clear();
 
         // Replicate layout information for each array element. Note that
         // one element is already done.
         uint64_t ElIx = 1;
-        for (int FirstIndex = Index, FirstSkIndex = SkIndex;
-             ElIx < ElCount; ElIx++) {
+        for (int FirstIndex = IvarsInfo.size() - 1, 
+                 FirstSkIndex = SkipIvars.size() - 1 ;ElIx < ElCount; ElIx++) {
           uint64_t Size = CGM.getContext().getTypeSize(RT)/ByteSizeInBits;
           for (int i = OldIndex+1; i <= FirstIndex; ++i)
           {
             GC_IVAR gcivar;
             gcivar.ivar_bytepos = IvarsInfo[i].ivar_bytepos + Size*ElIx;
             gcivar.ivar_size = IvarsInfo[i].ivar_size;
-            IvarsInfo.push_back(gcivar); ++Index;
+            IvarsInfo.push_back(gcivar);
           }
           
           for (int i = OldSkIndex+1; i <= FirstSkIndex; ++i) {
             GC_IVAR skivar;
             skivar.ivar_bytepos = SkipIvars[i].ivar_bytepos + Size*ElIx;
             skivar.ivar_size = SkipIvars[i].ivar_size;
-            SkipIvars.push_back(skivar); ++SkIndex;
+            SkipIvars.push_back(skivar);
           }
         }
         continue;
@@ -3055,7 +3053,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
         gcivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
                            WordSizeInBits;
-        IvarsInfo.push_back(gcivar); ++Index;
+        IvarsInfo.push_back(gcivar);
       }
     }
     else if ((ForStrongLayout && 
@@ -3076,7 +3074,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
         skivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
                            ByteSizeInBits;
-        SkipIvars.push_back(skivar); ++SkIndex;
+        SkipIvars.push_back(skivar);
       }
     }
   }
@@ -3090,14 +3088,14 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       BitWidth->getIntegerConstantExprValue(CGM.getContext()).getZExtValue();
     skivar.ivar_size = (BitFieldSize / ByteSizeInBits) 
                          + ((BitFieldSize % ByteSizeInBits) != 0);
-    SkipIvars.push_back(skivar); ++SkIndex;    
+    SkipIvars.push_back(skivar);    
   }
   
   if (MaxField) {
     GC_IVAR gcivar;
     gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, MaxField);
     gcivar.ivar_size = MaxUnionIvarSize;
-    IvarsInfo.push_back(gcivar); ++Index;
+    IvarsInfo.push_back(gcivar);
   }
   
   if (MaxSkippedField) {
@@ -3105,7 +3103,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     skivar.ivar_bytepos = BytePos + 
                           GetFieldBaseOffset(OI, Layout, MaxSkippedField);
     skivar.ivar_size = MaxSkippedUnionIvarSize;
-    SkipIvars.push_back(skivar); ++SkIndex;
+    SkipIvars.push_back(skivar);
   }
 }
 
@@ -3128,10 +3126,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
 llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
                                       const ObjCImplementationDecl *OMD,
                                       bool ForStrongLayout) {
-  int Index = -1;
-  int SkIndex = -1;
   bool hasUnion = false;
-  int SkipScan;
+  
   unsigned int WordsToScan, WordsToSkip;
   const llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
@@ -3148,9 +3144,8 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   
   const llvm::StructLayout *Layout = 
     CGM.getTargetData().getStructLayout(GetConcreteClassStruct(CGM, OI));
-  BuildAggrIvarLayout(OI, Layout, 0, RecFields, 0, ForStrongLayout, 
-                      Index, SkIndex, hasUnion);
-  if (Index == -1)
+  BuildAggrIvarLayout(OI, Layout, 0, RecFields, 0, ForStrongLayout, hasUnion);
+  if (IvarsInfo.empty())
     return llvm::Constant::getNullValue(PtrTy);
   
   // Sort on byte position in case we encounterred a union nested in
@@ -3161,7 +3156,6 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     std::sort(SkipIvars.begin(), SkipIvars.end());
       
   // Build the string of skip/scan nibbles
-  SkipScan = -1;
   SkipScanIvars.clear();
   unsigned int WordSize = 
     CGM.getTypes().getTargetData().getTypePaddedSize(PtrTy);
@@ -3192,12 +3186,12 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       SKIP_SCAN SkScan;
       SkScan.skip = WordsToSkip;
       SkScan.scan = WordsToScan;
-      SkipScanIvars.push_back(SkScan); ++SkipScan;
+      SkipScanIvars.push_back(SkScan);
       
       // Skip the hole.
       SkScan.skip = (IvarsInfo[i].ivar_bytepos - TailPrevGCObjC) / WordSize;
       SkScan.scan = 0;
-      SkipScanIvars.push_back(SkScan); ++SkipScan;
+      SkipScanIvars.push_back(SkScan);
       WordsToSkip = 0;
       WordsToScan = IvarsInfo[i].ivar_size;
     }
@@ -3207,16 +3201,19 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     SKIP_SCAN SkScan;
     SkScan.skip = WordsToSkip;
     SkScan.scan = WordsToScan;
-    SkipScanIvars.push_back(SkScan); ++SkipScan;
+    SkipScanIvars.push_back(SkScan);
   }
   
   bool BytesSkipped = false;
   if (!SkipIvars.empty())
   {
+    unsigned int LastIndex = SkipIvars.size()-1;
     int LastByteSkipped = 
-          SkipIvars[SkIndex].ivar_bytepos + SkipIvars[SkIndex].ivar_size;
+          SkipIvars[LastIndex].ivar_bytepos + SkipIvars[LastIndex].ivar_size;
+    LastIndex = IvarsInfo.size()-1;
     int LastByteScanned = 
-          IvarsInfo[Index].ivar_bytepos + IvarsInfo[Index].ivar_size * WordSize;
+          IvarsInfo[LastIndex].ivar_bytepos + 
+          IvarsInfo[LastIndex].ivar_size * WordSize;
     BytesSkipped = (LastByteSkipped > LastByteScanned);
     // Compute number of bytes to skip at the tail end of the last ivar scanned.
     if (BytesSkipped)
@@ -3225,11 +3222,12 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       SKIP_SCAN SkScan;
       SkScan.skip = TotalWords - (LastByteScanned/WordSize);
       SkScan.scan = 0;
-      SkipScanIvars.push_back(SkScan); ++SkipScan;
+      SkipScanIvars.push_back(SkScan);
     }
   }
   // Mini optimization of nibbles such that an 0xM0 followed by 0x0N is produced
   // as 0xMN.
+  int SkipScan = SkipScanIvars.size()-1;
   for (int i = 0; i <= SkipScan; i++)
   {
     if ((i < SkipScan) && SkipScanIvars[i].skip && SkipScanIvars[i].scan == 0
