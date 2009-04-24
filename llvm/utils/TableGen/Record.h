@@ -1138,7 +1138,9 @@ struct MultiClass {
   Record Rec;  // Placeholder for template args and Name.
   typedef std::vector<Record*> RecordVector;
   RecordVector DefPrototypes;
-    
+
+  void dump() const;
+
   MultiClass(const std::string &Name, TGLoc Loc) : Rec(Name, Loc) {}
 };
 

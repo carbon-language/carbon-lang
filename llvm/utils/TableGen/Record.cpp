@@ -1060,6 +1060,20 @@ std::string Record::getValueAsCode(const std::string &FieldName) const {
 }
 
 
+void MultiClass::dump() const {
+  cerr << "Record:\n";
+  Rec.dump();
+  
+  cerr << "Defs:\n";
+  for (RecordVector::const_iterator r = DefPrototypes.begin(),
+         rend = DefPrototypes.end();
+       r != rend;
+       ++r) {
+    (*r)->dump();
+  }
+}
+
+
 void RecordKeeper::dump() const { cerr << *this; }
 
 std::ostream &llvm::operator<<(std::ostream &OS, const RecordKeeper &RK) {

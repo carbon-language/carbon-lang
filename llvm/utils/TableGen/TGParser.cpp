@@ -16,6 +16,7 @@
 #include "TGParser.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -28,7 +29,7 @@ struct SubClassReference {
   Record *Rec;
   std::vector<Init*> TemplateArgs;
   SubClassReference() : Rec(0) {}
-  
+
   bool isInvalid() const { return Rec == 0; }
 };
 
@@ -39,8 +40,23 @@ struct SubMultiClassReference {
   SubMultiClassReference() : MC(0) {}
   
   bool isInvalid() const { return MC == 0; }
+  void dump() const;
 };
-  
+
+void SubMultiClassReference::dump() const {
+  cerr << "Multiclass:\n";
+ 
+  MC->dump();
+ 
+  cerr << "Template args:\n";
+  for (std::vector<Init *>::const_iterator i = TemplateArgs.begin(),
+         iend = TemplateArgs.end();
+       i != iend;
+       ++i) {
+    (*i)->dump();
+  }
+}
+
 } // end namespace llvm
 
 bool TGParser::AddValue(Record *CurRec, TGLoc Loc, const RecordVal &RV) {
@@ -182,7 +198,8 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
 /// AddSubMultiClass - Add SubMultiClass as a subclass to
 /// CurMultiClass, resolving its template args as SubMultiClass's
 /// template arguments.
-bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass, class SubMultiClassReference &SubMultiClass) {
+bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass,
+                                class SubMultiClassReference &SubMultiClass) {
   MultiClass *SMC = SubMultiClass.MC;
   Record *CurRec = &CurMultiClass->Rec;
 
@@ -193,6 +210,8 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass, class SubMultiClassRe
   for (unsigned i = 0, e = SMCVals.size(); i != e; ++i)
     if (AddValue(CurRec, SubMultiClass.RefLoc, SMCVals[i]))
       return true;
+
+  int newDefStart = CurMultiClass->DefPrototypes.size();
 
   // Add all of the defs in the subclass into the current multiclass.
   for (MultiClass::RecordVector::const_iterator i = SMC->DefPrototypes.begin(),
@@ -212,16 +231,20 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass, class SubMultiClassRe
   
   const std::vector<std::string> &SMCTArgs = SMC->Rec.getTemplateArgs();
 
-  // Ensure that an appropriate number of template arguments are specified.
+  // Ensure that an appropriate number of template arguments are
+  // specified.
   if (SMCTArgs.size() < SubMultiClass.TemplateArgs.size())
-    return Error(SubMultiClass.RefLoc, "More template args specified than expected");
+    return Error(SubMultiClass.RefLoc,
+                 "More template args specified than expected");
   
   // Loop over all of the template arguments, setting them to the specified
   // value or leaving them as the default if necessary.
   for (unsigned i = 0, e = SMCTArgs.size(); i != e; ++i) {
     if (i < SubMultiClass.TemplateArgs.size()) {
-      // If a value is specified for this template arg, set it in the superclass now.
-      if (SetValue(CurRec, SubMultiClass.RefLoc, SMCTArgs[i], std::vector<unsigned>(), 
+      // If a value is specified for this template arg, set it in the
+      // superclass now.
+      if (SetValue(CurRec, SubMultiClass.RefLoc, SMCTArgs[i],
+                   std::vector<unsigned>(), 
                    SubMultiClass.TemplateArgs[i]))
         return true;
 
@@ -231,14 +254,17 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass, class SubMultiClassRe
       // Now remove it.
       CurRec->removeValue(SMCTArgs[i]);
 
-      // If a value is specified for this template arg, set it in the defs now.
-      for (MultiClass::RecordVector::iterator j = CurMultiClass->DefPrototypes.begin(),
+      // If a value is specified for this template arg, set it in the
+      // new defs now.
+      for (MultiClass::RecordVector::iterator j =
+             CurMultiClass->DefPrototypes.begin() + newDefStart,
              jend = CurMultiClass->DefPrototypes.end();
            j != jend;
            ++j) {
         Record *Def = *j;
 
-        if (SetValue(Def, SubMultiClass.RefLoc, SMCTArgs[i], std::vector<unsigned>(), 
+        if (SetValue(Def, SubMultiClass.RefLoc, SMCTArgs[i],
+                     std::vector<unsigned>(), 
                      SubMultiClass.TemplateArgs[i]))
           return true;
 
@@ -249,7 +275,8 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass, class SubMultiClassRe
         Def->removeValue(SMCTArgs[i]);
       }
     } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
-      return Error(SubMultiClass.RefLoc,"Value not specified for template argument #"
+      return Error(SubMultiClass.RefLoc,
+                   "Value not specified for template argument #"
                    + utostr(i) + " (" + SMCTArgs[i] + ") of subclass '" + 
                    SMC->Rec.getName() + "'!");
     }
@@ -1490,8 +1517,12 @@ bool TGParser::ParseMultiClass() {
     if (ParseTemplateArgList(0))
       return true;
 
+  bool inherits = false;
+
   // If there are submulticlasses, parse them.
   if (Lex.getCode() == tgtok::colon) {
+    inherits = true;
+
     Lex.Lex();
     
     // Read all of the submulticlasses.
@@ -1510,17 +1541,25 @@ bool TGParser::ParseMultiClass() {
     }
   }
 
-  if (Lex.getCode() != tgtok::l_brace)
-    return TokError("expected '{' in multiclass definition");
-
-  if (Lex.Lex() == tgtok::r_brace)  // eat the '{'.
-    return TokError("multiclass must contain at least one def");
+  if (Lex.getCode() != tgtok::l_brace) {
+    if (!inherits)
+      return TokError("expected '{' in multiclass definition");
+    else
+      if (Lex.getCode() != tgtok::semi)
+        return TokError("expected ';' in multiclass definition");
+      else
+        Lex.Lex();  // eat the ';'.
+  }
+  else {
+    if (Lex.Lex() == tgtok::r_brace)  // eat the '{'.
+      return TokError("multiclass must contain at least one def");
   
-  while (Lex.getCode() != tgtok::r_brace)
-    if (ParseMultiClassDef(CurMultiClass))
-      return true;
+    while (Lex.getCode() != tgtok::r_brace)
+      if (ParseMultiClassDef(CurMultiClass))
+        return true;
   
-  Lex.Lex();  // eat the '}'.
+    Lex.Lex();  // eat the '}'.
+  }
   
   CurMultiClass = 0;
   return false;
