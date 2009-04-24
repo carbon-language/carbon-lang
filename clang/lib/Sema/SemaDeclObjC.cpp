@@ -98,10 +98,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     if (AttrList)
       ProcessDeclAttributeList(IDecl, AttrList);
   
-    ObjCInterfaceDecls[ClassName] = IDecl;
     PushOnScopeChains(IDecl, TUScope);
-    // Remember that this needs to be removed when the scope is popped.
-    TUScope->AddDecl(DeclPtrTy::make(IDecl));
   }
   
   if (SuperName) {
@@ -658,11 +655,10 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     // we should copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc, 
                                       ClassName, ClassLoc, false, true);
-    ObjCInterfaceDecls[ClassName] = IDecl;
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
-    
-    // FIXME: PushOnScopeChains?
+
+    PushOnScopeChains(IDecl, TUScope);
     CurContext->addDecl(Context, IDecl);
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(DeclPtrTy::make(IDecl));
@@ -1042,11 +1038,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     if (!IDecl) {  // Not already seen?  Make a forward decl.
       IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc, 
                                         IdentList[i], SourceLocation(), true);
-      ObjCInterfaceDecls[IdentList[i]] = IDecl;
-
       PushOnScopeChains(IDecl, TUScope);
-      // Remember that this needs to be removed when the scope is popped.
-      TUScope->AddDecl(DeclPtrTy::make(IDecl));
     }
 
     Interfaces.push_back(IDecl);

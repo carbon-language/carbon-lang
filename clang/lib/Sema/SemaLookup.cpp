@@ -935,9 +935,6 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
       // Unlike typedef's, they can only be introduced at file-scope (and are 
       // therefore not scoped decls). They can, however, be shadowed by
       // other names in IDNS_Ordinary.
-      ObjCInterfaceDeclsTy::iterator IDI = ObjCInterfaceDecls.find(II);
-      if (IDI != ObjCInterfaceDecls.end())
-        return LookupResult::CreateLookupResult(Context, IDI->second);
       ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
       if (I != ObjCAliasDecls.end())
         return LookupResult::CreateLookupResult(Context, 

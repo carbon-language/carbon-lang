@@ -172,13 +172,6 @@ public:
   /// we can check for duplicates and find local method declarations.
   llvm::SmallVector<ObjCCategoryImplDecl*, 8> ObjCCategoryImpls;
   
-  /// ObjCInterfaceDecls - Keep track of all class declarations declared
-  /// with @interface, so that we can emit errors on duplicates and
-  /// find the declarations when needed. 
-  typedef llvm::DenseMap<const IdentifierInfo*, 
-                         ObjCInterfaceDecl*> ObjCInterfaceDeclsTy;
-  ObjCInterfaceDeclsTy ObjCInterfaceDecls;
-    
   /// ObjCAliasDecls - Keep track of all class declarations declared
   /// with @compatibility_alias, so that we can emit errors on duplicates and
   /// find the declarations when needed. This construct is ancient and will
