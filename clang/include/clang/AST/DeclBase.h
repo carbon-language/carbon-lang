@@ -74,16 +74,19 @@ public:
 #include "clang/AST/DeclNodes.def"
   };
 
-  /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
-  /// labels, tags, members and ordinary identifiers. These are meant
-  /// as bitmasks, so that searches in C++ can look into the "tag" namespace
-  /// during ordinary lookup.
+  /// IdentifierNamespace - According to C99 6.2.3, there are four
+  /// namespaces, labels, tags, members and ordinary
+  /// identifiers. These are meant as bitmasks, so that searches in
+  /// C++ can look into the "tag" namespace during ordinary lookup. We
+  /// use additional namespaces for Objective-C entities.
   enum IdentifierNamespace {
     IDNS_Label = 0x1,
     IDNS_Tag = 0x2,
     IDNS_Member = 0x4,
     IDNS_Ordinary = 0x8,
-    IDNS_Protocol = 0x10
+    IDNS_ObjCProtocol = 0x10,
+    IDNS_ObjCImplementation = 0x20,
+    IDNS_ObjCCategoryImpl = 0x40
   };
   
   /// ObjCDeclQualifier - Qualifier used on types in method declarations
@@ -154,7 +157,7 @@ private:
   bool Implicit : 1;
 
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
-  unsigned IdentifierNamespace : 5;
+  unsigned IdentifierNamespace : 8;
   
 #ifndef NDEBUG
   void CheckAccessDeclContext() const;

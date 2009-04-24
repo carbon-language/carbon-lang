@@ -222,8 +222,8 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
   ObjCMethodDecl *Method = 0;
   // lookup in class and all superclasses
   while (ClassDecl && !Method) {
-    if (ObjCImplementationDecl *ImpDecl = 
-        ObjCImplementations[ClassDecl->getIdentifier()])
+    if (ObjCImplementationDecl *ImpDecl 
+          = LookupObjCImplementation(ClassDecl->getIdentifier()))
       Method = ImpDecl->getClassMethod(Context, Sel);
     
     // Look through local category implementations associated with the class.
@@ -255,8 +255,8 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
   ObjCMethodDecl *Method = 0;
   while (ClassDecl && !Method) {
     // If we have implementations in scope, check "private" methods.
-    if (ObjCImplementationDecl *ImpDecl = 
-        ObjCImplementations[ClassDecl->getIdentifier()])
+    if (ObjCImplementationDecl *ImpDecl
+          = LookupObjCImplementation(ClassDecl->getIdentifier()))
       Method = ImpDecl->getInstanceMethod(Context, Sel);
     
     // Look through local category implementations associated with the class.
@@ -288,8 +288,8 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
   if (!Getter)
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl =
-            ObjCImplementations[ClassDecl->getIdentifier()])
+        if (ObjCImplementationDecl *ImpDecl
+              = LookupObjCImplementation(ClassDecl->getIdentifier()))
           Getter = ImpDecl->getClassMethod(Context, Sel);
 
   if (Getter) {
@@ -310,8 +310,8 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
     // methods.
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl =
-              ObjCImplementations[ClassDecl->getIdentifier()])
+        if (ObjCImplementationDecl *ImpDecl 
+              = LookupObjCImplementation(ClassDecl->getIdentifier()))
           Setter = ImpDecl->getClassMethod(Context, SetterSel);
   }
   // Look through local category implementations associated with the class.

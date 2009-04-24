@@ -165,14 +165,19 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCContainer:
     case ObjCCategory:
     case ObjCInterface:
-    case ObjCCategoryImpl:
     case ObjCProperty:
     case ObjCCompatibleAlias:
       return IDNS_Ordinary;
       
     case ObjCProtocol:
-      return IDNS_Protocol;
+      return IDNS_ObjCProtocol;
       
+    case ObjCImplementation:
+      return IDNS_ObjCImplementation;
+
+    case ObjCCategoryImpl:
+      return IDNS_ObjCCategoryImpl;
+
     case Field:
     case ObjCAtDefsField:
     case ObjCIvar:
@@ -197,7 +202,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case FileScopeAsm:
     case StaticAssert:
     case ObjCClass:
-    case ObjCImplementation:
     case ObjCPropertyImpl:
     case ObjCForwardProtocol:
     case Block:

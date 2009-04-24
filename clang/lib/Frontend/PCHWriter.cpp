@@ -498,7 +498,7 @@ void PCHDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
 }
 
 void PCHDeclWriter::VisitObjCImplDecl(ObjCImplDecl *D) {
-  VisitDecl(D);
+  VisitNamedDecl(D);
   Writer.AddDeclRef(D->getClassInterface(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   // Abstract class (no need to define a stable pch::DECL code).

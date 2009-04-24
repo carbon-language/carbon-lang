@@ -168,10 +168,6 @@ public:
   /// This is only necessary for issuing pretty diagnostics.
   llvm::SmallVector<TypedefDecl*, 24> ExtVectorDecls;
 
-  /// ObjCImplementations - Keep track of all class @implementations
-  /// so we can emit errors on duplicates.
-  llvm::DenseMap<IdentifierInfo*, ObjCImplementationDecl*> ObjCImplementations;
-  
   /// ObjCCategoryImpls - Maintain a list of category implementations so 
   /// we can check for duplicates and find local method declarations.
   llvm::SmallVector<ObjCCategoryImplDecl*, 8> ObjCCategoryImpls;
@@ -770,7 +766,11 @@ public:
     /// C99 6.2.2p4-5 and C++ [basic.link]p6.
     LookupRedeclarationWithLinkage,
     /// Look up the name of an Objective-C protocol.
-    LookupProtocolName
+    LookupObjCProtocolName,
+    /// Look up the name of an Objective-C implementation
+    LookupObjCImplementationName,
+    /// Look up the name of an Objective-C category implementation
+    LookupObjCCategoryImplName
   };
 
   /// @brief Represents the results of name lookup.
@@ -1022,7 +1022,9 @@ public:
     case Sema::LookupTagName:
     case Sema::LookupMemberName:
     case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
-    case Sema::LookupProtocolName:
+    case Sema::LookupObjCProtocolName:
+    case Sema::LookupObjCImplementationName:
+    case Sema::LookupObjCCategoryImplName:
       return D->isInIdentifierNamespace(IDNS);
       
     case Sema::LookupOperatorName:
@@ -1057,6 +1059,8 @@ public:
                                 SourceLocation Loc = SourceLocation());
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
+  ObjCImplementationDecl *LookupObjCImplementation(IdentifierInfo *II);
+  ObjCCategoryImplDecl *LookupObjCCategoryImpl(IdentifierInfo *II);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2, 

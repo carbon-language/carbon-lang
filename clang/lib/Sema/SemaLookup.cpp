@@ -294,8 +294,16 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
     IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member;
     break;
 
-  case Sema::LookupProtocolName:
-    IDNS = Decl::IDNS_Protocol;
+  case Sema::LookupObjCProtocolName:
+    IDNS = Decl::IDNS_ObjCProtocol;
+    break;
+
+  case Sema::LookupObjCImplementationName:
+    IDNS = Decl::IDNS_ObjCImplementation;
+    break;
+
+  case Sema::LookupObjCCategoryImplName:
+    IDNS = Decl::IDNS_ObjCCategoryImpl;
     break;
   }
   return IDNS;
@@ -836,8 +844,16 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
       IDNS = Decl::IDNS_Ordinary;
       break;
 
-    case Sema::LookupProtocolName:
-      IDNS = Decl::IDNS_Protocol;
+    case Sema::LookupObjCProtocolName:
+      IDNS = Decl::IDNS_ObjCProtocol;
+      break;
+
+    case Sema::LookupObjCImplementationName:
+      IDNS = Decl::IDNS_ObjCImplementation;
+      break;
+      
+    case Sema::LookupObjCCategoryImplName:
+      IDNS = Decl::IDNS_ObjCCategoryImpl;
       break;
     }
 
@@ -1490,8 +1506,22 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
 
 /// \brief Find the protocol with the given name, if any.
 ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
-  Decl *D = LookupName(TUScope, II, LookupProtocolName).getAsDecl();
+  Decl *D = LookupName(TUScope, II, LookupObjCProtocolName).getAsDecl();
   return cast_or_null<ObjCProtocolDecl>(D);
+}
+
+/// \brief Find the Objective-C implementation with the given name, if
+/// any.
+ObjCImplementationDecl *Sema::LookupObjCImplementation(IdentifierInfo *II) {
+  Decl *D = LookupName(TUScope, II, LookupObjCImplementationName).getAsDecl();
+  return cast_or_null<ObjCImplementationDecl>(D);
+}
+
+/// \brief Find the Objective-C category implementation with the given
+/// name, if any.
+ObjCCategoryImplDecl *Sema::LookupObjCCategoryImpl(IdentifierInfo *II) {
+  Decl *D = LookupName(TUScope, II, LookupObjCCategoryImplName).getAsDecl();
+  return cast_or_null<ObjCCategoryImplDecl>(D);
 }
 
 void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,

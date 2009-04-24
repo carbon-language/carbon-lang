@@ -793,7 +793,7 @@ public:
   static bool classof(const ObjCCategoryDecl *D) { return true; }
 };
 
-class ObjCImplDecl : public Decl, public DeclContext {
+class ObjCImplDecl : public NamedDecl, public DeclContext {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
   
@@ -802,8 +802,10 @@ class ObjCImplDecl : public Decl, public DeclContext {
 protected:
   ObjCImplDecl(Kind DK, DeclContext *DC, SourceLocation L,
                ObjCInterfaceDecl *classInterface)
-      : Decl(DK, DC, L), DeclContext(DK),
-        ClassInterface(classInterface) {}
+    : NamedDecl(DK, DC, L, 
+                classInterface? classInterface->getDeclName() 
+                              : DeclarationName()), 
+      DeclContext(DK), ClassInterface(classInterface) {}
   
 public:
   virtual ~ObjCImplDecl() {}

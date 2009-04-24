@@ -1807,8 +1807,8 @@ ObjCMethodDecl *Sema::FindMethodInNestedImplementations(
                                               const ObjCInterfaceDecl *IFace,
                                               const Selector &Sel) {
   ObjCMethodDecl *Method = 0;
-  if (ObjCImplementationDecl *ImpDecl =
-      Sema::ObjCImplementations[IFace->getIdentifier()])
+  if (ObjCImplementationDecl *ImpDecl 
+        = LookupObjCImplementation(IFace->getIdentifier()))
     Method = ImpDecl->getInstanceMethod(Context, Sel);
   
   if (!Method && IFace->getSuperClass())

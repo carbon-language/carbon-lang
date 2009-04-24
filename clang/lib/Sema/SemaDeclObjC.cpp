@@ -677,18 +677,15 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     ObjCImplementationDecl::Create(Context, CurContext, AtClassImplLoc, 
                                    IDecl, SDecl);
   
-  // FIXME: PushOnScopeChains?
-  CurContext->addDecl(Context, IMPDecl);
-
   if (CheckObjCDeclScope(IMPDecl))
     return DeclPtrTy::make(IMPDecl);
   
   // Check that there is no duplicate implementation of this class.
-  if (ObjCImplementations[ClassName])
+  if (LookupObjCImplementation(ClassName))
     // FIXME: Don't leak everything!
     Diag(ClassLoc, diag::err_dup_implementation_class) << ClassName;
   else // add it to the list.
-    ObjCImplementations[ClassName] = IMPDecl;
+    PushOnScopeChains(IMPDecl, TUScope);
   return DeclPtrTy::make(IMPDecl);
 }
 
@@ -832,8 +829,8 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
     }
   }
   // Lastly, look through the implementation (if one is in scope).
-  if (ObjCImplementationDecl *ImpDecl = 
-        ObjCImplementations[IDecl->getIdentifier()])
+  if (ObjCImplementationDecl *ImpDecl 
+      = LookupObjCImplementation(IDecl->getIdentifier()))
     if (ImpDecl->getInstanceMethod(Context, PDecl->getSetterName()))
       return false;
   // If all fails, look at the super class.
