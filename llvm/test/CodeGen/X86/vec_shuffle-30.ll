@@ -1,7 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -disable-mmx -o %t -f
 ; RUN: grep pshufhw %t | grep 161 | count 1
-; RUN: grep shufps %t | count 1
-; RUN: not grep pslldq %t
+; RUN: grep pslldq %t | count 1
+
+
 
 ; Test case when creating pshufhw, we incorrectly set the higher order bit
 ; for an undef,
@@ -19,4 +20,4 @@ entry:
   %0 = shufflevector <4 x i32> %in, <4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32> < i32 undef, i32 5, i32 undef, i32 2>
   store <4 x i32> %0, <4 x i32>* %dest
   ret void
-}
+}       

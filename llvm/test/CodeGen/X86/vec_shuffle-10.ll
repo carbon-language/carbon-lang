@@ -1,7 +1,9 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep unpcklps %t | count 1
-; RUN: grep pshufd   %t | count 1
-; RUN: not grep {sub.*esp} %t
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | \
+; RUN:   grep unpcklps | count 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | \
+; RUN:   grep unpckhps | count 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | \
+; RUN:   not grep {sub.*esp}
 
 define void @test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) {
 	%tmp = load <4 x float>* %B		; <<4 x float>> [#uses=2]

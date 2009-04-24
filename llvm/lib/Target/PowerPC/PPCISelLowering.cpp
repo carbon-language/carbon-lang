@@ -456,22 +456,22 @@ static bool isFloatingPointZero(SDValue Op) {
 
 /// isConstantOrUndef - Op is either an undef node or a ConstantSDNode.  Return
 /// true if Op is undef or if it matches the specified value.
-static bool isConstantOrUndef(int Op, int Val) {
-  return Op < 0 || Op == Val;
+static bool isConstantOrUndef(SDValue Op, unsigned Val) {
+  return Op.getOpcode() == ISD::UNDEF ||
+         cast<ConstantSDNode>(Op)->getZExtValue() == Val;
 }
 
 /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
 /// VPKUHUM instruction.
-bool PPC::isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary) {
-  const int *Mask = N->getMask();
+bool PPC::isVPKUHUMShuffleMask(SDNode *N, bool isUnary) {
   if (!isUnary) {
     for (unsigned i = 0; i != 16; ++i)
-      if (!isConstantOrUndef(Mask[i],  i*2+1))
+      if (!isConstantOrUndef(N->getOperand(i),  i*2+1))
         return false;
   } else {
     for (unsigned i = 0; i != 8; ++i)
-      if (!isConstantOrUndef(Mask[i],  i*2+1) ||
-          !isConstantOrUndef(Mask[i+8],  i*2+1))
+      if (!isConstantOrUndef(N->getOperand(i),  i*2+1) ||
+          !isConstantOrUndef(N->getOperand(i+8),  i*2+1))
         return false;
   }
   return true;
@@ -479,19 +479,18 @@ bool PPC::isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary) {
 
 /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
 /// VPKUWUM instruction.
-bool PPC::isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary) {
-  const int *Mask = N->getMask();
+bool PPC::isVPKUWUMShuffleMask(SDNode *N, bool isUnary) {
   if (!isUnary) {
     for (unsigned i = 0; i != 16; i += 2)
-      if (!isConstantOrUndef(Mask[i  ],  i*2+2) ||
-          !isConstantOrUndef(Mask[i+1],  i*2+3))
+      if (!isConstantOrUndef(N->getOperand(i  ),  i*2+2) ||
+          !isConstantOrUndef(N->getOperand(i+1),  i*2+3))
         return false;
   } else {
     for (unsigned i = 0; i != 8; i += 2)
-      if (!isConstantOrUndef(Mask[i  ],  i*2+2) ||
-          !isConstantOrUndef(Mask[i+1],  i*2+3) ||
-          !isConstantOrUndef(Mask[i+8],  i*2+2) ||
-          !isConstantOrUndef(Mask[i+9],  i*2+3))
+      if (!isConstantOrUndef(N->getOperand(i  ),  i*2+2) ||
+          !isConstantOrUndef(N->getOperand(i+1),  i*2+3) ||
+          !isConstantOrUndef(N->getOperand(i+8),  i*2+2) ||
+          !isConstantOrUndef(N->getOperand(i+9),  i*2+3))
         return false;
   }
   return true;
@@ -499,29 +498,27 @@ bool PPC::isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary) {
 
 /// isVMerge - Common function, used to match vmrg* shuffles.
 ///
-static bool isVMerge(ShuffleVectorSDNode *N, unsigned UnitSize,
+static bool isVMerge(SDNode *N, unsigned UnitSize,
                      unsigned LHSStart, unsigned RHSStart) {
-  assert(N->getValueType(0) == MVT::v16i8 &&
-         "PPC only supports shuffles by bytes!");
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
   assert((UnitSize == 1 || UnitSize == 2 || UnitSize == 4) &&
          "Unsupported merge size!");
 
-  const int *Mask = N->getMask();
   for (unsigned i = 0; i != 8/UnitSize; ++i)     // Step over units
     for (unsigned j = 0; j != UnitSize; ++j) {   // Step over bytes within unit
-      if (!isConstantOrUndef(Mask[i*UnitSize*2+j],
+      if (!isConstantOrUndef(N->getOperand(i*UnitSize*2+j),
                              LHSStart+j+i*UnitSize) ||
-          !isConstantOrUndef(Mask[i*UnitSize*2+UnitSize+j],
+          !isConstantOrUndef(N->getOperand(i*UnitSize*2+UnitSize+j),
                              RHSStart+j+i*UnitSize))
         return false;
     }
-  return true;
+      return true;
 }
 
 /// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
 /// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
-bool PPC::isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize, 
-                             bool isUnary) {
+bool PPC::isVMRGLShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary) {
   if (!isUnary)
     return isVMerge(N, UnitSize, 8, 24);
   return isVMerge(N, UnitSize, 8, 8);
@@ -529,8 +526,7 @@ bool PPC::isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
 
 /// isVMRGHShuffleMask - Return true if this is a shuffle mask suitable for
 /// a VRGH* instruction with the specified unit size (1,2 or 4 bytes).
-bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize, 
-                             bool isUnary) {
+bool PPC::isVMRGHShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary) {
   if (!isUnary)
     return isVMerge(N, UnitSize, 0, 16);
   return isVMerge(N, UnitSize, 0, 0);
@@ -540,92 +536,91 @@ bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
 /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
 /// amount, otherwise return -1.
 int PPC::isVSLDOIShuffleMask(SDNode *N, bool isUnary) {
-  assert(N->getValueType(0) == MVT::v16i8 &&
-         "PPC only supports shuffles by bytes!");
-
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
   // Find the first non-undef value in the shuffle mask.
-  const int *Mask = SVOp->getMask();
   unsigned i;
-  for (i = 0; i != 16 && Mask[i] < 0; ++i)
+  for (i = 0; i != 16 && N->getOperand(i).getOpcode() == ISD::UNDEF; ++i)
     /*search*/;
 
   if (i == 16) return -1;  // all undef.
 
-  // Otherwise, check to see if the rest of the elements are consecutively
+  // Otherwise, check to see if the rest of the elements are consequtively
   // numbered from this value.
-  unsigned ShiftAmt = Mask[i];
+  unsigned ShiftAmt = cast<ConstantSDNode>(N->getOperand(i))->getZExtValue();
   if (ShiftAmt < i) return -1;
   ShiftAmt -= i;
 
   if (!isUnary) {
-    // Check the rest of the elements to see if they are consecutive.
+    // Check the rest of the elements to see if they are consequtive.
     for (++i; i != 16; ++i)
-      if (!isConstantOrUndef(Mask[i], ShiftAmt+i))
+      if (!isConstantOrUndef(N->getOperand(i), ShiftAmt+i))
         return -1;
   } else {
-    // Check the rest of the elements to see if they are consecutive.
+    // Check the rest of the elements to see if they are consequtive.
     for (++i; i != 16; ++i)
-      if (!isConstantOrUndef(Mask[i], (ShiftAmt+i) & 15))
+      if (!isConstantOrUndef(N->getOperand(i), (ShiftAmt+i) & 15))
         return -1;
   }
+
   return ShiftAmt;
 }
 
 /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a splat of a single element that is suitable for input to
 /// VSPLTB/VSPLTH/VSPLTW.
-bool PPC::isSplatShuffleMask(ShuffleVectorSDNode *N, unsigned EltSize) {
-  assert(N->getValueType(0) == MVT::v16i8 &&
+bool PPC::isSplatShuffleMask(SDNode *N, unsigned EltSize) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 &&
          (EltSize == 1 || EltSize == 2 || EltSize == 4));
 
   // This is a splat operation if each element of the permute is the same, and
   // if the value doesn't reference the second vector.
-  const int *Mask = N->getMask();
-  unsigned ElementBase = Mask[0];
-  
-  // FIXME: Handle UNDEF elements too!
-  if (ElementBase >= 16)
+  unsigned ElementBase = 0;
+  SDValue Elt = N->getOperand(0);
+  if (ConstantSDNode *EltV = dyn_cast<ConstantSDNode>(Elt))
+    ElementBase = EltV->getZExtValue();
+  else
+    return false;   // FIXME: Handle UNDEF elements too!
+
+  if (cast<ConstantSDNode>(Elt)->getZExtValue() >= 16)
     return false;
 
-  // Check that the indices are consecutive, in the case of a multi-byte element
-  // splatted with a v16i8 mask.
-  for (unsigned i = 1; i != EltSize; ++i)
-    if (Mask[i] < 0 || Mask[i] != (int)(i+ElementBase))
+  // Check that they are consequtive.
+  for (unsigned i = 1; i != EltSize; ++i) {
+    if (!isa<ConstantSDNode>(N->getOperand(i)) ||
+        cast<ConstantSDNode>(N->getOperand(i))->getZExtValue() != i+ElementBase)
       return false;
+  }
 
+  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
   for (unsigned i = EltSize, e = 16; i != e; i += EltSize) {
-    if (Mask[i] < 0) continue;
+    if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
     for (unsigned j = 0; j != EltSize; ++j)
-      if (Mask[i+j] != Mask[j])
+      if (N->getOperand(i+j) != N->getOperand(j))
         return false;
   }
+
   return true;
 }
 
 /// isAllNegativeZeroVector - Returns true if all elements of build_vector
 /// are -0.0.
 bool PPC::isAllNegativeZeroVector(SDNode *N) {
-  BuildVectorSDNode *BV = cast<BuildVectorSDNode>(N);
-
-  APInt APVal, APUndef;
-  unsigned BitSize;
-  bool HasAnyUndefs;
-  
-  if (BV->isConstantSplat(APVal, APUndef, BitSize, HasAnyUndefs, 32))
-    if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0)))
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  if (PPC::isSplatShuffleMask(N, N->getNumOperands()))
+    if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N))
       return CFP->getValueAPF().isNegZero();
-
   return false;
 }
 
 /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
 /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
 unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  assert(isSplatShuffleMask(SVOp, EltSize));
-  return SVOp->getMask()[0] / EltSize;
+  assert(isSplatShuffleMask(N, EltSize));
+  return cast<ConstantSDNode>(N->getOperand(0))->getZExtValue() / EltSize;
 }
 
 /// get_VSPLTI_elt - If this is a build_vector of constants which can be formed
@@ -3154,10 +3149,11 @@ static SDValue BuildVSLDOI(SDValue LHS, SDValue RHS, unsigned Amt,
   LHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, LHS);
   RHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, RHS);
 
-  int Ops[16];
+  SDValue Ops[16];
   for (unsigned i = 0; i != 16; ++i)
-    Ops[i] = i + Amt;
-  SDValue T = DAG.getVectorShuffle(MVT::v16i8, dl, LHS, RHS, Ops);
+    Ops[i] = DAG.getConstant(i+Amt, MVT::i8);
+  SDValue T = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v16i8, LHS, RHS,
+                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8, Ops,16));
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, T);
 }
 
@@ -3358,7 +3354,7 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
   OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG, dl);
   OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG, dl);
 
-  int ShufIdxs[16];
+  unsigned ShufIdxs[16];
   switch (OpNum) {
   default: assert(0 && "Unknown i32 permute!");
   case OP_VMRGHW:
@@ -3396,11 +3392,13 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
   case OP_VSLDOI12:
     return BuildVSLDOI(OpLHS, OpRHS, 12, OpLHS.getValueType(), DAG, dl);
   }
-  MVT VT = OpLHS.getValueType();
-  OpLHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, OpLHS);
-  OpRHS = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, OpRHS);
-  SDValue T = DAG.getVectorShuffle(MVT::v16i8, dl, OpLHS, OpRHS, ShufIdxs);
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, T);
+  SDValue Ops[16];
+  for (unsigned i = 0; i != 16; ++i)
+    Ops[i] = DAG.getConstant(ShufIdxs[i], MVT::i8);
+
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, OpLHS.getValueType(),
+                     OpLHS, OpRHS,
+                     DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8, Ops, 16));
 }
 
 /// LowerVECTOR_SHUFFLE - Return the code we lower for VECTOR_SHUFFLE.  If this
@@ -3408,30 +3406,28 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
 /// return the code it can be lowered into.  Worst case, it can always be
 /// lowered into a vperm.
 SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
-                                               SelectionDAG &DAG) {
+                                                 SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  const int *PermMask = SVOp->getMask();
-  MVT VT = Op.getValueType();
+  SDValue PermMask = Op.getOperand(2);
 
   // Cases that are handled by instructions that take permute immediates
   // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
   // selected by the instruction selector.
   if (V2.getOpcode() == ISD::UNDEF) {
-    if (PPC::isSplatShuffleMask(SVOp, 1) ||
-        PPC::isSplatShuffleMask(SVOp, 2) ||
-        PPC::isSplatShuffleMask(SVOp, 4) ||
-        PPC::isVPKUWUMShuffleMask(SVOp, true) ||
-        PPC::isVPKUHUMShuffleMask(SVOp, true) ||
-        PPC::isVSLDOIShuffleMask(SVOp, true) != -1 ||
-        PPC::isVMRGLShuffleMask(SVOp, 1, true) ||
-        PPC::isVMRGLShuffleMask(SVOp, 2, true) ||
-        PPC::isVMRGLShuffleMask(SVOp, 4, true) ||
-        PPC::isVMRGHShuffleMask(SVOp, 1, true) ||
-        PPC::isVMRGHShuffleMask(SVOp, 2, true) ||
-        PPC::isVMRGHShuffleMask(SVOp, 4, true)) {
+    if (PPC::isSplatShuffleMask(PermMask.getNode(), 1) ||
+        PPC::isSplatShuffleMask(PermMask.getNode(), 2) ||
+        PPC::isSplatShuffleMask(PermMask.getNode(), 4) ||
+        PPC::isVPKUWUMShuffleMask(PermMask.getNode(), true) ||
+        PPC::isVPKUHUMShuffleMask(PermMask.getNode(), true) ||
+        PPC::isVSLDOIShuffleMask(PermMask.getNode(), true) != -1 ||
+        PPC::isVMRGLShuffleMask(PermMask.getNode(), 1, true) ||
+        PPC::isVMRGLShuffleMask(PermMask.getNode(), 2, true) ||
+        PPC::isVMRGLShuffleMask(PermMask.getNode(), 4, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.getNode(), 1, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.getNode(), 2, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.getNode(), 4, true)) {
       return Op;
     }
   }
@@ -3439,15 +3435,15 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   // Altivec has a variety of "shuffle immediates" that take two vector inputs
   // and produce a fixed permutation.  If any of these match, do not lower to
   // VPERM.
-  if (PPC::isVPKUWUMShuffleMask(SVOp, false) ||
-      PPC::isVPKUHUMShuffleMask(SVOp, false) ||
-      PPC::isVSLDOIShuffleMask(SVOp, false) != -1 ||
-      PPC::isVMRGLShuffleMask(SVOp, 1, false) ||
-      PPC::isVMRGLShuffleMask(SVOp, 2, false) ||
-      PPC::isVMRGLShuffleMask(SVOp, 4, false) ||
-      PPC::isVMRGHShuffleMask(SVOp, 1, false) ||
-      PPC::isVMRGHShuffleMask(SVOp, 2, false) ||
-      PPC::isVMRGHShuffleMask(SVOp, 4, false))
+  if (PPC::isVPKUWUMShuffleMask(PermMask.getNode(), false) ||
+      PPC::isVPKUHUMShuffleMask(PermMask.getNode(), false) ||
+      PPC::isVSLDOIShuffleMask(PermMask.getNode(), false) != -1 ||
+      PPC::isVMRGLShuffleMask(PermMask.getNode(), 1, false) ||
+      PPC::isVMRGLShuffleMask(PermMask.getNode(), 2, false) ||
+      PPC::isVMRGLShuffleMask(PermMask.getNode(), 4, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.getNode(), 1, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.getNode(), 2, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.getNode(), 4, false))
     return Op;
 
   // Check to see if this is a shuffle of 4-byte values.  If so, we can use our
@@ -3457,10 +3453,11 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   for (unsigned i = 0; i != 4 && isFourElementShuffle; ++i) { // Element number
     unsigned EltNo = 8;   // Start out undef.
     for (unsigned j = 0; j != 4; ++j) {  // Intra-element byte.
-      if (PermMask[i*4+j] < 0)
+      if (PermMask.getOperand(i*4+j).getOpcode() == ISD::UNDEF)
         continue;   // Undef, ignore it.
 
-      unsigned ByteSource = PermMask[i*4+j];
+      unsigned ByteSource =
+        cast<ConstantSDNode>(PermMask.getOperand(i*4+j))->getZExtValue();
       if ((ByteSource & 3) != j) {
         isFourElementShuffle = false;
         break;
@@ -3512,8 +3509,12 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   unsigned BytesPerElement = EltVT.getSizeInBits()/8;
 
   SmallVector<SDValue, 16> ResultMask;
-  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
-    unsigned SrcElt = PermMask[i] < 0 ? 0 : PermMask[i];
+  for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
+    unsigned SrcElt;
+    if (PermMask.getOperand(i).getOpcode() == ISD::UNDEF)
+      SrcElt = 0;
+    else
+      SrcElt = cast<ConstantSDNode>(PermMask.getOperand(i))->getZExtValue();
 
     for (unsigned j = 0; j != BytesPerElement; ++j)
       ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
@@ -3703,12 +3704,13 @@ SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) {
     OddParts = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v16i8, OddParts);
 
     // Merge the results together.
-    int Ops[16];
+    SDValue Ops[16];
     for (unsigned i = 0; i != 8; ++i) {
-      Ops[i*2  ] = 2*i+1;
-      Ops[i*2+1] = 2*i+1+16;
+      Ops[i*2  ] = DAG.getConstant(2*i+1, MVT::i8);
+      Ops[i*2+1] = DAG.getConstant(2*i+1+16, MVT::i8);
     }
-    return DAG.getVectorShuffle(MVT::v16i8, dl, EvenParts, OddParts, Ops);
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, MVT::v16i8, EvenParts, OddParts,
+                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8, Ops, 16));
   } else {
     assert(0 && "Unknown mul to lower!");
     abort();

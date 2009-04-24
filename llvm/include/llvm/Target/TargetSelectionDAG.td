@@ -51,6 +51,15 @@ class SDTCisOpSmallerThanOp<int SmallOp, int BigOp> : SDTypeConstraint<SmallOp>{
   int BigOperandNum = BigOp;
 }
 
+/// SDTCisIntVectorOfSameSize - This indicates that ThisOp and OtherOp are
+/// vector types, and that ThisOp is the result of 
+/// MVT::getIntVectorWithNumElements with the number of elements
+/// that ThisOp has.
+class SDTCisIntVectorOfSameSize<int ThisOp, int OtherOp>
+  : SDTypeConstraint<ThisOp> {
+  int OtherOpNum = OtherOp;
+}
+
 /// SDTCisEltOfVec - This indicates that ThisOp is a scalar type of the same
 /// type as the element type of OtherOp, which is a vector type.
 class SDTCisEltOfVec<int ThisOp, int OtherOp>
@@ -166,8 +175,8 @@ def SDTIStore : SDTypeProfile<1, 3, [       // indexed store
   SDTCisSameAs<0, 2>, SDTCisPtrTy<0>, SDTCisPtrTy<3>
 ]>;
 
-def SDTVecShuffle : SDTypeProfile<1, 2, [
-  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>
+def SDTVecShuffle : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisIntVectorOfSameSize<3, 0>
 ]>;
 def SDTVecExtract : SDTypeProfile<1, 2, [   // vector extract
   SDTCisEltOfVec<0, 1>, SDTCisPtrTy<2>

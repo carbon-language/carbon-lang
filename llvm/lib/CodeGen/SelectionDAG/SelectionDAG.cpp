@@ -456,13 +456,6 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     ID.AddInteger(AT->getRawSubclassData());
     break;
   }
-  case ISD::VECTOR_SHUFFLE: {
-    const int *Mask = cast<ShuffleVectorSDNode>(N)->getMask();
-    for (unsigned i = 0, e = N->getValueType(0).getVectorNumElements(); 
-         i != e; ++i)
-      ID.AddInteger(Mask[i]);
-    break;
-  }
   } // end switch (N->getOpcode())
 }
 
@@ -769,6 +762,12 @@ void SelectionDAG::VerifyNode(SDNode *N) {
     assert(N->getValueType(0).isVector() && "Wrong return type!");
     assert(N->getNumOperands() == N->getValueType(0).getVectorNumElements() &&
            "Wrong number of operands!");
+    MVT EltVT = N->getValueType(0).getVectorElementType();
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
+      assert((I->getValueType() == EltVT ||
+              (EltVT.isInteger() && I->getValueType().isInteger() &&
+               EltVT.bitsLE(I->getValueType()))) &&
+             "Wrong operand type!");
     break;
   }
   }
@@ -1125,110 +1124,6 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
     AllNodes.push_back(N);
   }
   return SDValue(CondCodeNodes[Cond], 0);
-}
-
-static void commuteShuffle(SDValue &N1, SDValue &N2, SmallVectorImpl<int> &M) {
-  std::swap(N1, N2);
-  int NElts = M.size();
-  for (int i = 0; i != NElts; ++i) {
-    if (M[i] >= NElts)
-      M[i] -= NElts;
-    else if (M[i] >= 0)
-      M[i] += NElts;
-  }
-}
-
-SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1, 
-                                       SDValue N2, const int *Mask) {
-  assert(N1.getValueType() == N2.getValueType() && "Invalid VECTOR_SHUFFLE");
-  assert(VT.isVector() && N1.getValueType().isVector() && 
-         "Vector Shuffle VTs must be a vectors");
-  assert(VT.getVectorElementType() == N1.getValueType().getVectorElementType()
-         && "Vector Shuffle VTs must have same element type");
-
-  // Canonicalize shuffle undef, undef -> undef
-  if (N1.getOpcode() == ISD::UNDEF && N2.getOpcode() == ISD::UNDEF)
-    return N1;
-
-  // Validate that all the indices past in in Mask are within the range of 
-  // elements input to the shuffle.
-  int NElts = VT.getVectorNumElements();
-  SmallVector<int, 8> MaskVec;
-  for (int i = 0; i != NElts; ++i) {
-    if (Mask[i] >= (NElts * 2)) {
-      assert(0 && "Index out of range");
-      return SDValue();
-    }
-    MaskVec.push_back(Mask[i]);
-  }
-  
-  // Canonicalize shuffle v, v -> v, undef
-  if (N1 == N2) {
-    N2 = getUNDEF(VT);
-    for (int i = 0; i != NElts; ++i)
-      if (MaskVec[i] >= NElts) MaskVec[i] -= NElts;
-  }
-  
-  // Canonicalize shuffle undef, v -> v, undef.  Commute the shuffle mask.
-  if (N1.getOpcode() == ISD::UNDEF)
-    commuteShuffle(N1, N2, MaskVec);
-  
-  // Canonicalize all index into lhs, -> shuffle lhs, undef
-  // Canonicalize all index into rhs, -> shuffle rhs, undef
-  bool AllLHS = true, AllRHS = true;
-  bool N2Undef = N2.getOpcode() == ISD::UNDEF;
-  for (int i = 0; i != NElts; ++i) {
-    if (MaskVec[i] >= NElts) {
-      if (N2Undef)
-        MaskVec[i] = -1;
-      else
-        AllLHS = false;
-    } else if (MaskVec[i] >= 0) {
-      AllRHS = false;
-    }
-  }
-  if (AllLHS && AllRHS)
-    return getUNDEF(VT);
-  if (AllLHS)
-    N2 = getUNDEF(VT);
-  if (AllRHS) {
-    N1 = getUNDEF(VT);
-    commuteShuffle(N1, N2, MaskVec);
-  }
-  
-  // If Identity shuffle, or all shuffle in to undef, return that node.
-  bool AllUndef = true;
-  bool Identity = true;
-  for (int i = 0; i < NElts; ++i) {
-    if (MaskVec[i] >= 0 && MaskVec[i] != i) Identity = false;
-    if (MaskVec[i] >= 0) AllUndef = false;
-  }
-  if (Identity)
-    return N1;
-  if (AllUndef)
-    return getUNDEF(VT);
-
-  FoldingSetNodeID ID;
-  SDValue Ops[2] = { N1, N2 };
-  AddNodeIDNode(ID, ISD::VECTOR_SHUFFLE, getVTList(VT), Ops, 2);
-  for (int i = 0; i != NElts; ++i)
-    ID.AddInteger(MaskVec[i]);
-  
-  void* IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  
-  // Allocate the mask array for the node out of the BumpPtrAllocator, since
-  // SDNode doesn't have access to it.  This memory will be "leaked" when
-  // the node is deallocated, but recovered when the NodeAllocator is released.
-  int *MaskAlloc = OperandAllocator.Allocate<int>(NElts);
-  memcpy(MaskAlloc, &MaskVec[0], NElts * sizeof(int));
-  
-  ShuffleVectorSDNode *N = NodeAllocator.Allocate<ShuffleVectorSDNode>();
-  new (N) ShuffleVectorSDNode(VT, dl, N1, N2, MaskAlloc);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
 }
 
 SDValue SelectionDAG::getConvertRndSat(MVT VT, DebugLoc dl,
@@ -2192,18 +2087,19 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
 SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   MVT VT = N->getValueType(0);
   DebugLoc dl = N->getDebugLoc();
-  const int *PermMask = cast<ShuffleVectorSDNode>(N)->getMask();
-  if (PermMask[i] < 0)
+  SDValue PermMask = N->getOperand(2);
+  SDValue Idx = PermMask.getOperand(i);
+  if (Idx.getOpcode() == ISD::UNDEF)
     return getUNDEF(VT.getVectorElementType());
-  int Index = PermMask[i];
-  int NumElems = VT.getVectorNumElements();
+  unsigned Index = cast<ConstantSDNode>(Idx)->getZExtValue();
+  unsigned NumElems = PermMask.getNumOperands();
   SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
   Index %= NumElems;
 
   if (V.getOpcode() == ISD::BIT_CONVERT) {
     V = V.getOperand(0);
     MVT VVT = V.getValueType();
-    if (!VVT.isVector() || VVT.getVectorNumElements() != (unsigned)NumElems)
+    if (!VVT.isVector() || VVT.getVectorNumElements() != NumElems)
       return SDValue();
   }
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
@@ -2897,7 +2793,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
     }
     break;
   case ISD::VECTOR_SHUFFLE:
-    assert(0 && "should use getVectorShuffle constructor!");
+    assert(N1.getValueType() == N2.getValueType() &&
+           N1.getValueType().isVector() &&
+           VT.isVector() && N3.getValueType().isVector() &&
+           N3.getOpcode() == ISD::BUILD_VECTOR &&
+           VT.getVectorNumElements() == N3.getNumOperands() &&
+           "Illegal VECTOR_SHUFFLE node!");
     break;
   case ISD::BIT_CONVERT:
     // Fold bit_convert nodes from a type to themselves.
@@ -5421,14 +5322,14 @@ void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
 
 void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   if (!isTargetOpcode() && getOpcode() == ISD::VECTOR_SHUFFLE) {
-    const int *Mask = cast<ShuffleVectorSDNode>(this)->getMask();
+    SDNode *Mask = getOperand(2).getNode();
     OS << "<";
-    for (unsigned i = 0, e = ValueList[0].getVectorNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = Mask->getNumOperands(); i != e; ++i) {
       if (i) OS << ",";
-      if (Mask[i] < 0)
+      if (Mask->getOperand(i).getOpcode() == ISD::UNDEF)
         OS << "u";
       else
-        OS << Mask[i];
+        OS << cast<ConstantSDNode>(Mask->getOperand(i))->getZExtValue();
     }
     OS << ">";
   }
@@ -5707,15 +5608,5 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
   }
 
   SplatBitSize = sz;
-  return true;
-}
-
-bool ShuffleVectorSDNode::isSplatMask(const int *Mask, MVT VT) {
-  int Idx = -1;
-  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
-    if (Idx < 0) Idx = Mask[i];
-    if (Mask[i] >= 0 && Mask[i] != Idx)
-      return false;
-  }
   return true;
 }

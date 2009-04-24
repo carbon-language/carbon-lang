@@ -353,13 +353,6 @@ public:
   SDValue getConvertRndSat(MVT VT, DebugLoc dl, SDValue Val, SDValue DTy,
                            SDValue STy,
                            SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
-  
-  /// getVectorShuffle - Return an ISD::VECTOR_SHUFFLE node.  The number of
-  /// elements in VT, which must be a vector type, must match the number of
-  /// mask elements NumElts.  A negative integer mask element is treated as
-  /// undefined.
-  SDValue getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
-                           const int *MaskElts);
 
   /// getZeroExtendInReg - Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.

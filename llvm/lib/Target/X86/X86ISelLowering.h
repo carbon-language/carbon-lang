@@ -230,8 +230,7 @@ namespace llvm {
 
       // VSHL, VSRL - Vector logical left / right shift.
       VSHL, VSRL,
-
-      // CMPPD, CMPPS - Vector double/float comparison.
+      
       // CMPPD, CMPPS - Vector double/float comparison.
       CMPPD, CMPPS,
       
@@ -252,72 +251,80 @@ namespace llvm {
   namespace X86 {
     /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-    bool isPSHUFDMask(ShuffleVectorSDNode *N);
+    bool isPSHUFDMask(SDNode *N);
 
     /// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-    bool isPSHUFHWMask(ShuffleVectorSDNode *N);
+    bool isPSHUFHWMask(SDNode *N);
 
     /// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-    bool isPSHUFLWMask(ShuffleVectorSDNode *N);
+    bool isPSHUFLWMask(SDNode *N);
 
     /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-    bool isSHUFPMask(ShuffleVectorSDNode *N);
+    bool isSHUFPMask(SDNode *N);
 
     /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
-    bool isMOVHLPSMask(ShuffleVectorSDNode *N);
+    bool isMOVHLPSMask(SDNode *N);
 
     /// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
     /// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
     /// <2, 3, 2, 3>
-    bool isMOVHLPS_v_undef_Mask(ShuffleVectorSDNode *N);
+    bool isMOVHLPS_v_undef_Mask(SDNode *N);
 
     /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for MOVLP{S|D}.
-    bool isMOVLPMask(ShuffleVectorSDNode *N);
+    /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
+    bool isMOVLPMask(SDNode *N);
 
     /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for MOVHP{S|D}.
+    /// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}
     /// as well as MOVLHPS.
-    bool isMOVHPMask(ShuffleVectorSDNode *N);
+    bool isMOVHPMask(SDNode *N);
 
     /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-    bool isUNPCKLMask(ShuffleVectorSDNode *N, bool V2IsSplat = false);
+    bool isUNPCKLMask(SDNode *N, bool V2IsSplat = false);
 
     /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-    bool isUNPCKHMask(ShuffleVectorSDNode *N, bool V2IsSplat = false);
+    bool isUNPCKHMask(SDNode *N, bool V2IsSplat = false);
 
     /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
     /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
     /// <0, 0, 1, 1>
-    bool isUNPCKL_v_undef_Mask(ShuffleVectorSDNode *N);
+    bool isUNPCKL_v_undef_Mask(SDNode *N);
 
     /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
     /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
     /// <2, 2, 3, 3>
-    bool isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N);
+    bool isUNPCKH_v_undef_Mask(SDNode *N);
 
     /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVSS,
     /// MOVSD, and MOVD, i.e. setting the lowest element.
-    bool isMOVLMask(ShuffleVectorSDNode *N);
+    bool isMOVLMask(SDNode *N);
 
     /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
-    bool isMOVSHDUPMask(ShuffleVectorSDNode *N);
+    bool isMOVSHDUPMask(SDNode *N);
 
     /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
-    bool isMOVSLDUPMask(ShuffleVectorSDNode *N);
+    bool isMOVSLDUPMask(SDNode *N);
+
+    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a splat of a single element.
+    bool isSplatMask(SDNode *N);
+
+    /// isSplatLoMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a splat of zero element.
+    bool isSplatLoMask(SDNode *N);
 
     /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVDDUP.
-    bool isMOVDDUPMask(ShuffleVectorSDNode *N);
+    bool isMOVDDUPMask(SDNode *N);
 
     /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
@@ -470,13 +477,14 @@ namespace llvm {
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
     /// values are assumed to be legal.
-    virtual bool isShuffleMaskLegal(const int *Mask, MVT VT) const;
+    virtual bool isShuffleMaskLegal(SDValue Mask, MVT VT) const;
 
     /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
     /// used by Targets can use this to indicate if there is a suitable
     /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
     /// pool entry.
-    virtual bool isVectorClearMaskLegal(const int *Mask, MVT VT) const;
+    virtual bool isVectorClearMaskLegal(const std::vector<SDValue> &BVOps,
+                                        MVT EVT, SelectionDAG &DAG) const;
 
     /// ShouldShrinkFPConstant - If true, then instruction selection should
     /// seek to shrink the FP constant of the specified type to a smaller type

@@ -3801,7 +3801,6 @@ def : Pat<(parallel (store (i32 (X86dec_flag (loadi32 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
           (DEC32m addr:$dst)>, Requires<[In32BitMode]>;
 
-
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support
 //===----------------------------------------------------------------------===//

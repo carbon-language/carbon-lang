@@ -62,7 +62,8 @@ struct SDTypeConstraint {
   unsigned OperandNo;   // The operand # this constraint applies to.
   enum { 
     SDTCisVT, SDTCisPtrTy, SDTCisInt, SDTCisFP, SDTCisSameAs, 
-    SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp, SDTCisEltOfVec
+    SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp, SDTCisIntVectorOfSameSize,
+    SDTCisEltOfVec
   } ConstraintType;
   
   union {   // The discriminated union.
@@ -78,6 +79,9 @@ struct SDTypeConstraint {
     struct {
       unsigned BigOperandNum;
     } SDTCisOpSmallerThanOp_Info;
+    struct {
+      unsigned OtherOperandNum;
+    } SDTCisIntVectorOfSameSize_Info;
     struct {
       unsigned OtherOperandNum;
     } SDTCisEltOfVec_Info;

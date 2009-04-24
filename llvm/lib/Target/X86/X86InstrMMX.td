@@ -30,37 +30,33 @@ def bc_v1i64 : PatFrag<(ops node:$in), (v1i64 (bitconvert node:$in))>;
 
 // MMX_SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to
 // PSHUFW imm.
-def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<vector_shuffle, [{
+def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
   return getI8Imm(X86::getShuffleSHUFImmediate(N));
 }]>;
 
 // Patterns for: vector_shuffle v1, v2, <2, 6, 3, 7, ...>
-def mmx_unpckh : PatFrag<(ops node:$lhs, node:$rhs),
-                         (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKHMask(cast<ShuffleVectorSDNode>(N));
+def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKHMask(N);
 }]>;
 
 // Patterns for: vector_shuffle v1, v2, <0, 4, 2, 5, ...>
-def mmx_unpckl : PatFrag<(ops node:$lhs, node:$rhs),
-                         (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKLMask(cast<ShuffleVectorSDNode>(N));
+def MMX_UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKLMask(N);
 }]>;
 
 // Patterns for: vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
-def mmx_unpckh_undef : PatFrag<(ops node:$lhs, node:$rhs),
-                               (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKH_v_undef_Mask(cast<ShuffleVectorSDNode>(N));
+def MMX_UNPCKH_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKH_v_undef_Mask(N);
 }]>;
 
 // Patterns for: vector_shuffle v1, <undef>, <2, 2, 3, 3, ...>
-def mmx_unpckl_undef : PatFrag<(ops node:$lhs, node:$rhs),
-                               (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKL_v_undef_Mask(cast<ShuffleVectorSDNode>(N));
+def MMX_UNPCKL_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKL_v_undef_Mask(N);
 }]>;
 
-def mmx_pshufw : PatFrag<(ops node:$lhs, node:$rhs),
-                         (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isPSHUFDMask(cast<ShuffleVectorSDNode>(N));
+// Patterns for shuffling.
+def MMX_PSHUFW_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isPSHUFDMask(N);
 }], MMX_SHUFFLE_get_shuf_imm>;
 
 //===----------------------------------------------------------------------===//
@@ -189,8 +185,9 @@ def MMX_MOVDQ2Qrr : SDIi8<0xD6, MRMDestMem, (outs VR64:$dst), (ins VR128:$src),
 def MMX_MOVQ2DQrr : SSDIi8<0xD6, MRMDestMem, (outs VR128:$dst), (ins VR64:$src),
                            "movq2dq\t{$src, $dst|$dst, $src}",
           [(set VR128:$dst,
-            (movl immAllZerosV,
-                  (v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src))))))]>;
+                (v2i64 (vector_shuffle immAllZerosV,
+                        (v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src)))),
+                        MOVL_shuffle_mask)))]>;
 
 let neverHasSideEffects = 1 in
 def MMX_MOVQ2FR64rr: SSDIi8<0xD6, MRMDestMem, (outs FR64:$dst), (ins VR64:$src),
@@ -322,74 +319,86 @@ let isTwoAddress = 1 in {
                              (outs VR64:$dst), (ins VR64:$src1, VR64:$src2),
                              "punpckhbw\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v8i8 (mmx_unpckh VR64:$src1, VR64:$src2)))]>;
+                               (v8i8 (vector_shuffle VR64:$src1, VR64:$src2,
+                                      MMX_UNPCKH_shuffle_mask)))]>;
   def MMX_PUNPCKHBWrm : MMXI<0x68, MRMSrcMem, 
                              (outs VR64:$dst), (ins VR64:$src1, i64mem:$src2),
                              "punpckhbw\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v8i8 (mmx_unpckh VR64:$src1,
-                                      (bc_v8i8 (load_mmx addr:$src2)))))]>;
+                               (v8i8 (vector_shuffle VR64:$src1,
+                                      (bc_v8i8 (load_mmx addr:$src2)),
+                                      MMX_UNPCKH_shuffle_mask)))]>;
 
   def MMX_PUNPCKHWDrr : MMXI<0x69, MRMSrcReg, 
                              (outs VR64:$dst), (ins VR64:$src1, VR64:$src2),
                              "punpckhwd\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v4i16 (mmx_unpckh VR64:$src1, VR64:$src2)))]>;
+                               (v4i16 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKH_shuffle_mask)))]>;
   def MMX_PUNPCKHWDrm : MMXI<0x69, MRMSrcMem, 
                              (outs VR64:$dst), (ins VR64:$src1, i64mem:$src2),
                              "punpckhwd\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v4i16 (mmx_unpckh VR64:$src1,
-                                       (bc_v4i16 (load_mmx addr:$src2)))))]>;
+                               (v4i16 (vector_shuffle VR64:$src1,
+                                       (bc_v4i16 (load_mmx addr:$src2)),
+                                       MMX_UNPCKH_shuffle_mask)))]>;
 
   def MMX_PUNPCKHDQrr : MMXI<0x6A, MRMSrcReg, 
                              (outs VR64:$dst), (ins VR64:$src1, VR64:$src2),
                              "punpckhdq\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v2i32 (mmx_unpckh VR64:$src1, VR64:$src2)))]>;
+                               (v2i32 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKH_shuffle_mask)))]>;
   def MMX_PUNPCKHDQrm : MMXI<0x6A, MRMSrcMem,
                              (outs VR64:$dst), (ins VR64:$src1, i64mem:$src2),
                              "punpckhdq\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v2i32 (mmx_unpckh VR64:$src1,
-                                       (bc_v2i32 (load_mmx addr:$src2)))))]>;
+                               (v2i32 (vector_shuffle VR64:$src1,
+                                       (bc_v2i32 (load_mmx addr:$src2)),
+                                       MMX_UNPCKH_shuffle_mask)))]>;
 
   // Unpack Low Packed Data Instructions
   def MMX_PUNPCKLBWrr : MMXI<0x60, MRMSrcReg,
                              (outs VR64:$dst), (ins VR64:$src1, VR64:$src2),
                              "punpcklbw\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v8i8 (mmx_unpckl VR64:$src1, VR64:$src2)))]>;
+                               (v8i8 (vector_shuffle VR64:$src1, VR64:$src2,
+                                      MMX_UNPCKL_shuffle_mask)))]>;
   def MMX_PUNPCKLBWrm : MMXI<0x60, MRMSrcMem,
                              (outs VR64:$dst), (ins VR64:$src1, i64mem:$src2),
                              "punpcklbw\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v8i8 (mmx_unpckl VR64:$src1,
-                                      (bc_v8i8 (load_mmx addr:$src2)))))]>;
+                               (v8i8 (vector_shuffle VR64:$src1,
+                                      (bc_v8i8 (load_mmx addr:$src2)),
+                                      MMX_UNPCKL_shuffle_mask)))]>;
 
   def MMX_PUNPCKLWDrr : MMXI<0x61, MRMSrcReg,
                              (outs VR64:$dst), (ins VR64:$src1, VR64:$src2),
                              "punpcklwd\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v4i16 (mmx_unpckl VR64:$src1, VR64:$src2)))]>;
+                               (v4i16 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKL_shuffle_mask)))]>;
   def MMX_PUNPCKLWDrm : MMXI<0x61, MRMSrcMem,
                              (outs VR64:$dst), (ins VR64:$src1, i64mem:$src2),
                              "punpcklwd\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v4i16 (mmx_unpckl VR64:$src1,
-                                       (bc_v4i16 (load_mmx addr:$src2)))))]>;
+                               (v4i16 (vector_shuffle VR64:$src1,
+                                       (bc_v4i16 (load_mmx addr:$src2)),
+                                       MMX_UNPCKL_shuffle_mask)))]>;
 
   def MMX_PUNPCKLDQrr : MMXI<0x62, MRMSrcReg, 
                              (outs VR64:$dst), (ins VR64:$src1, VR64:$src2),
                              "punpckldq\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v2i32 (mmx_unpckl VR64:$src1, VR64:$src2)))]>;
+                               (v2i32 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKL_shuffle_mask)))]>;
   def MMX_PUNPCKLDQrm : MMXI<0x62, MRMSrcMem, 
                              (outs VR64:$dst), (ins VR64:$src1, i64mem:$src2),
                              "punpckldq\t{$src2, $dst|$dst, $src2}",
                              [(set VR64:$dst,
-                               (v2i32 (mmx_unpckl VR64:$src1,
-                                       (bc_v2i32 (load_mmx addr:$src2)))))]>;
+                               (v2i32 (vector_shuffle VR64:$src1,
+                                       (bc_v2i32 (load_mmx addr:$src2)),
+                                       MMX_UNPCKL_shuffle_mask)))]>;
 }
 
 // -- Pack Instructions
@@ -402,13 +411,17 @@ def MMX_PSHUFWri : MMXIi8<0x70, MRMSrcReg,
                           (outs VR64:$dst), (ins VR64:$src1, i8imm:$src2),
                           "pshufw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                           [(set VR64:$dst,
-                            (v4i16 (mmx_pshufw:$src2 VR64:$src1, (undef))))]>;
+                            (v4i16 (vector_shuffle
+                                    VR64:$src1, (undef),
+                                    MMX_PSHUFW_shuffle_mask:$src2)))]>;
 def MMX_PSHUFWmi : MMXIi8<0x70, MRMSrcMem,
                           (outs VR64:$dst), (ins i64mem:$src1, i8imm:$src2),
                           "pshufw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                           [(set VR64:$dst,
-                            (mmx_pshufw:$src2 (bc_v4i16 (load_mmx addr:$src1)),
-                                              (undef)))]>;
+                            (v4i16 (vector_shuffle
+                                    (bc_v4i16 (load_mmx addr:$src1)),
+                                    (undef),
+                                    MMX_PSHUFW_shuffle_mask:$src2)))]>;
 
 // -- Conversion Instructions
 let neverHasSideEffects = 1 in {
@@ -614,27 +627,34 @@ def : Pat<(bc_v4i16 (v2i32 (scalar_to_vector GR32:$src))),
 
 // Patterns to perform canonical versions of vector shuffling.
 let AddedComplexity = 10 in {
-  def : Pat<(v8i8  (mmx_unpckl_undef VR64:$src, (undef))),
+  def : Pat<(v8i8  (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKL_v_undef_shuffle_mask)),
             (MMX_PUNPCKLBWrr VR64:$src, VR64:$src)>;
-  def : Pat<(v4i16 (mmx_unpckl_undef VR64:$src, (undef))),
+  def : Pat<(v4i16 (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKL_v_undef_shuffle_mask)),
             (MMX_PUNPCKLWDrr VR64:$src, VR64:$src)>;
-  def : Pat<(v2i32 (mmx_unpckl_undef VR64:$src, (undef))),
+  def : Pat<(v2i32 (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKL_v_undef_shuffle_mask)),
             (MMX_PUNPCKLDQrr VR64:$src, VR64:$src)>;
 }
 
 let AddedComplexity = 10 in {
-  def : Pat<(v8i8  (mmx_unpckh_undef VR64:$src, (undef))),
+  def : Pat<(v8i8  (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKH_v_undef_shuffle_mask)),
             (MMX_PUNPCKHBWrr VR64:$src, VR64:$src)>;
-  def : Pat<(v4i16 (mmx_unpckh_undef VR64:$src, (undef))),
+  def : Pat<(v4i16 (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKH_v_undef_shuffle_mask)),
             (MMX_PUNPCKHWDrr VR64:$src, VR64:$src)>;
-  def : Pat<(v2i32 (mmx_unpckh_undef VR64:$src, (undef))),
+  def : Pat<(v2i32 (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKH_v_undef_shuffle_mask)),
             (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
 }
 
 // Patterns to perform vector shuffling with a zeroed out vector.
 let AddedComplexity = 20 in {
-  def : Pat<(bc_v2i32 (mmx_unpckl immAllZerosV,
-                       (v2i32 (scalar_to_vector (load_mmx addr:$src))))),
+  def : Pat<(bc_v2i32 (vector_shuffle immAllZerosV,
+                       (v2i32 (scalar_to_vector (load_mmx addr:$src))),
+                       MMX_UNPCKL_shuffle_mask)),
             (MMX_PUNPCKLDQrm VR64:$src, VR64:$src)>;
 }
 
