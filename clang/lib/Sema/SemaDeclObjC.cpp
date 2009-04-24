@@ -1155,8 +1155,8 @@ ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel,
                                                        SourceRange R) {
   llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
     = InstanceMethodPool.find(Sel);
-  if (Pos == InstanceMethodPool.end() && !FactoryMethodPool.count(Sel)) {
-    if (ExternalSource)
+  if (Pos == InstanceMethodPool.end()) {
+    if (ExternalSource && !FactoryMethodPool.count(Sel))
       Pos = ReadMethodPool(Sel, /*isInstance=*/true);
     else
       return 0;
