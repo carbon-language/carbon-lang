@@ -274,6 +274,22 @@ CXXDestroyExpr *CXXDestroyExpr::Create(ASTContext &C, VarDecl *vd) {
   return new (C) CXXDestroyExpr(vd, C.VoidTy);
 }
 
+CXXExprWithCleanup::CXXExprWithCleanup(Expr *subexpr, CXXTempVarDecl **decls, 
+                                       unsigned numdecls)
+: Expr(CXXExprWithCleanupClass, subexpr->getType(),
+       subexpr->isTypeDependent(), subexpr->isValueDependent()), 
+  SubExpr(subexpr), Decls(0), NumDecls(numdecls) {
+  if (NumDecls > 0) {
+    Decls = new CXXTempVarDecl*[NumDecls];
+    for (unsigned i = 0; i < NumDecls; ++i)
+      Decls[i] = decls[i];
+  }
+}
+
+CXXExprWithCleanup::~CXXExprWithCleanup() {
+  delete[] Decls;
+}
+
 // CXXConstructExpr
 Stmt::child_iterator CXXConstructExpr::child_begin() {
   return &Args[0];
@@ -289,3 +305,8 @@ Stmt::child_iterator CXXDestroyExpr::child_begin() {
 Stmt::child_iterator CXXDestroyExpr::child_end() {
   return child_iterator();
 }
+
+// CXXExprWithCleanup
+Stmt::child_iterator CXXExprWithCleanup::child_begin() { return &SubExpr; }
+Stmt::child_iterator CXXExprWithCleanup::child_end() { return &SubExpr + 1; }
+

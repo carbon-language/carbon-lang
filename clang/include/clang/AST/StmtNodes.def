@@ -121,6 +121,7 @@ STMT(QualifiedDeclRefExpr   , DeclRefExpr)
 STMT(UnresolvedDeclRefExpr  , Expr)
 STMT(CXXDestroyExpr         , Expr)
 STMT(CXXConstructExpr       , Expr)
+STMT(CXXExprWithCleanup     , Expr)
 
 // Obj-C Expressions.
 STMT(ObjCStringLiteral    , Expr)

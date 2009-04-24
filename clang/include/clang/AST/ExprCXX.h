@@ -21,6 +21,7 @@
 namespace clang {
 
   class CXXConstructorDecl;
+  class CXXTempVarDecl;
 
 //===--------------------------------------------------------------------===//
 // C++ Expressions.
@@ -941,6 +942,32 @@ public:
   }
   static bool classof(const CXXDestroyExpr *) { return true; }
   
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+class CXXExprWithCleanup : public Expr {
+  Stmt *SubExpr;
+    
+  CXXTempVarDecl **Decls;
+  unsigned NumDecls;
+
+public:
+  CXXExprWithCleanup(Expr *subexpr, CXXTempVarDecl **decls, unsigned numdecls);
+  ~CXXExprWithCleanup();
+
+  const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
+  Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXExprWithCleanupClass;
+  }
+  static bool classof(const CXXExprWithCleanup *) { return true; }
+
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
