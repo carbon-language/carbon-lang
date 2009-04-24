@@ -38,3 +38,9 @@ e()
 zero_dot()
 one_dot(x)  /* empty ... argument: expected-warning {{varargs argument missing, but tolerated as an extension}}  */
 one_dot()   /* empty first argument, elided ...: expected-warning {{varargs argument missing, but tolerated as an extension}} */
+
+
+/* rdar://6816766 - Crash with function-like macro test at end of directive. */
+#define E() (i == 0)
+#if E
+#endif

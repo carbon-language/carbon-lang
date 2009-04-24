@@ -1276,6 +1276,7 @@ unsigned Lexer::isNextPPTokenLParen() {
   
   // Save state that can be changed while lexing so that we can restore it.
   const char *TmpBufferPtr = BufferPtr;
+  bool inPPDirectiveMode = ParsingPreprocessorDirective;
   
   Token Tok;
   Tok.startToken();
@@ -1283,6 +1284,7 @@ unsigned Lexer::isNextPPTokenLParen() {
   
   // Restore state that may have changed.
   BufferPtr = TmpBufferPtr;
+  ParsingPreprocessorDirective = inPPDirectiveMode;
   
   // Restore the lexer back to non-skipping mode.
   LexingRawMode = false;
