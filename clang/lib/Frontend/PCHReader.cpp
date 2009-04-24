@@ -2595,6 +2595,9 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
         DeclGroupRef DG(Func);
         Consumer->HandleTopLevelDecl(DG);
       }
+    } else if (isa<ObjCProtocolDecl>(D)) {
+      DeclGroupRef DG(D);
+      Consumer->HandleTopLevelDecl(DG);
     }
   }
 
