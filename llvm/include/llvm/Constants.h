@@ -104,7 +104,7 @@ public:
   }
 
   /// Return a ConstantInt with the specified value for the specified type. The
-  /// value V will be canonicalized to a an unsigned APInt. Accessing it with
+  /// value V will be canonicalized to an unsigned APInt. Accessing it with
   /// either getSExtValue() or getZExtValue() will yield a correctly sized and
   /// signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
