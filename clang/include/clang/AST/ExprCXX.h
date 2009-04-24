@@ -379,7 +379,6 @@ public:
   virtual child_iterator child_end();
 };
 
-
 /// CXXConstructExpr - Represents a call to a C++ constructor.
 class CXXConstructExpr : public Expr {
   VarDecl *VD;
@@ -390,11 +389,13 @@ class CXXConstructExpr : public Expr {
   Stmt **Args;
   unsigned NumArgs;
 
-  CXXConstructExpr(ASTContext &C, VarDecl *vd, QualType T, 
-                   CXXConstructorDecl *d, bool elidable,
-                   Expr **args, unsigned numargs);
   ~CXXConstructExpr() { } 
   
+protected:
+  CXXConstructExpr(ASTContext &C, StmtClass SC, VarDecl *vd, QualType T, 
+                   CXXConstructorDecl *d, bool elidable,
+                   Expr **args, unsigned numargs);
+
 public:
   static CXXConstructExpr *Create(ASTContext &C, VarDecl *VD, QualType T,
                                   CXXConstructorDecl *D, bool Elidable, 

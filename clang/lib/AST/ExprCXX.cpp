@@ -258,14 +258,15 @@ CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, VarDecl *VD,
                                            QualType T, CXXConstructorDecl *D,  
                                            bool Elidable,
                                            Expr **Args, unsigned NumArgs) {
-  return new (C) CXXConstructExpr(C, VD, T, D, Elidable, Args, NumArgs);
+  return new (C) CXXConstructExpr(C, CXXConstructExprClass, VD, T, D, Elidable, 
+                                  Args, NumArgs);
 }
 
-CXXConstructExpr::CXXConstructExpr(ASTContext &C, VarDecl *vd, 
+CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, VarDecl *vd, 
                                    QualType T, CXXConstructorDecl *D, 
                                    bool elidable,
                                    Expr **args, unsigned numargs) 
-: Expr(CXXConstructExprClass, T,
+: Expr(SC, T,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
