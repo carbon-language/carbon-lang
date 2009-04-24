@@ -3820,7 +3820,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   // example, unnamed unions inject all members into the struct namespace!
   
   QualType T = GetTypeForDeclarator(D, S);
-  bool InvalidDecl = false;
+  bool InvalidDecl = D.getInvalidType();
   if (T.isNull()) {
     InvalidDecl = true;
     T = Context.IntTy;

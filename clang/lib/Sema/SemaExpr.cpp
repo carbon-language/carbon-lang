@@ -669,14 +669,14 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
                                          false, true, Loc);
 
-  NamedDecl *D = 0;
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
                             SS && SS->isSet() ? SS->getRange()
                                               : SourceRange());
     return ExprError();
-  } else
-    D = Lookup.getAsDecl();
+  }
+  
+  NamedDecl *D = Lookup.getAsDecl();
 
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
@@ -695,6 +695,12 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         // Check if referencing a field with __attribute__((deprecated)).
         if (DiagnoseUseOfDecl(IV, Loc))
           return ExprError();
+        
+        // If we're referencing an invalid decl, just return this as a silent
+        // error node.  The error diagnostic was already emitted on the decl.
+        if (IV->isInvalidDecl())
+          return ExprError();
+        
         bool IsClsMethod = getCurMethodDecl()->isClassMethod();
         // If a class method attemps to use a free standing ivar, this is
         // an error.
@@ -726,7 +732,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                                            ClassDeclared)) {
         if (IV->getAccessControl() != ObjCIvarDecl::Private ||
             IFace == ClassDeclared)
-          Diag(Loc, diag::warn_ivar_use_hidden)<<IV->getDeclName();
+          Diag(Loc, diag::warn_ivar_use_hidden) << IV->getDeclName();
       }
     }
     // Needed to implement property "super.method" notation.
@@ -1253,8 +1259,8 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
   if (LangOpts.ObjCNonFragileABI && exprType->isObjCInterfaceType()) {
     Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
-      << exprType << isSizeof;
-    return false;
+      << exprType << isSizeof << ExprRange;
+    return true;
   }
     
   return false;

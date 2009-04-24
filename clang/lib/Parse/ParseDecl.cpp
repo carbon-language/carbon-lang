@@ -2579,6 +2579,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   // If there was an error parsing the assignment-expression, recover.
   if (NumElements.isInvalid()) {
+    D.setInvalidType(true);
     // If the expression was invalid, skip it.
     SkipUntil(tok::r_square);
     return;
