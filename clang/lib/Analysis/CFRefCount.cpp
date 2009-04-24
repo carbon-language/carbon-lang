@@ -659,34 +659,51 @@ private:
     Selector S = GetNullarySelector(nullaryName, Ctx);
     ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)]  = Summ;
   }
-    
-  void addInstMethSummary(const char* Cls, RetainSummary* Summ, va_list argp) {
-    
-    IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
+  
+  Selector generateSelector(va_list argp) {
     llvm::SmallVector<IdentifierInfo*, 10> II;
-    
+
     while (const char* s = va_arg(argp, const char*))
       II.push_back(&Ctx.Idents.get(s));
-    
-    Selector S = Ctx.Selectors.getSelector(II.size(), &II[0]);
-    ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
+
+    return Ctx.Selectors.getSelector(II.size(), &II[0]);    
+  }
+  
+  void addMethodSummary(IdentifierInfo *ClsII, ObjCMethodSummariesTy& Summaries,
+                        RetainSummary* Summ, va_list argp) {
+    Selector S = generateSelector(argp);
+    Summaries[ObjCSummaryKey(ClsII, S)] = Summ;
   }
   
   void addInstMethSummary(const char* Cls, RetainSummary* Summ, ...) {
     va_list argp;
     va_start(argp, Summ);
-    addInstMethSummary(Cls, Summ, argp);
+    addMethodSummary(&Ctx.Idents.get(Cls), ObjCMethodSummaries, Summ, argp);
     va_end(argp);    
   }
-          
+  
+  void addClsMethSummary(const char* Cls, RetainSummary* Summ, ...) {
+    va_list argp;
+    va_start(argp, Summ);
+    addMethodSummary(&Ctx.Idents.get(Cls),ObjCClassMethodSummaries, Summ, argp);
+    va_end(argp);
+  }
+  
+  void addClsMethSummary(IdentifierInfo *II, RetainSummary* Summ, ...) {
+    va_list argp;
+    va_start(argp, Summ);
+    addMethodSummary(II, ObjCClassMethodSummaries, Summ, argp);
+    va_end(argp);
+  }
+
   void addPanicSummary(const char* Cls, ...) {
     RetainSummary* Summ = getPersistentSummary(0, RetEffect::MakeNoRet(),
                                                DoNothing,  DoNothing, true);
     va_list argp;
     va_start (argp, Cls);
-    addInstMethSummary(Cls, Summ, argp);
+    addMethodSummary(&Ctx.Idents.get(Cls), ObjCMethodSummaries, Summ, argp);
     va_end(argp);
-  }  
+  }
   
 public:
   
@@ -1100,23 +1117,30 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
 }
 
 RetainSummary*
-RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr* ME) {
-  
-  // FIXME: Eventually we should properly do class method summaries, but
-  // it requires us being able to walk the type hierarchy.  Unfortunately,
-  // we cannot do this with just an IdentifierInfo* for the class name.  
-  IdentifierInfo* ClsName = ME->getClassName();
+RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr *ME) {
+
   Selector S = ME->getSelector();
+  ObjCMethodSummariesTy::iterator I;
   
-  // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethodSummariesTy::iterator I = ObjCClassMethodSummaries.find(ClsName, S);
+  if (ObjCInterfaceDecl *ID = ME->getClassInfo().first) {
+    // Lookup the method using the decl for the class @interface.
+    I = ObjCClassMethodSummaries.find(ID, S); 
+  }
+  else {
+    // Fallback to using the class name.
+    IdentifierInfo *ClsName = ME->getClassName();
+  
+    // Look up a summary in our cache of Selectors -> Summaries.
+    I = ObjCClassMethodSummaries.find(ClsName, S);
+  }
   
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
   RetainSummary* Summ =
     getCommonMethodSummary(ME, S.getIdentifierInfoForSlot(0)->getName());
-  ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
+
+  ObjCClassMethodSummaries[ObjCSummaryKey(ME->getClassName(), S)] = Summ;
   return Summ;
 }
 
@@ -1146,6 +1170,28 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
                     GetUnarySelector("addObject", Ctx),
                     getPersistentSummary(RetEffect::MakeNoRet(),
                                          DoNothing, Autorelease));
+  
+  // Create the summaries for [NSObject performSelector...].  We treat
+  // these as 'stop tracking' for the arguments because they are often
+  // used for delegates that can release the object.  When we have better
+  // inter-procedural analysis we can potentially do something better.  This
+  // workaround is to remove false positives.
+  Summ = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, StopTracking);
+  IdentifierInfo *NSObjectII = &Ctx.Idents.get("NSObject");
+  addClsMethSummary(NSObjectII, Summ, "performSelector", "withObject",
+                    "afterDelay", NULL);
+  addClsMethSummary(NSObjectII, Summ, "performSelector", "withObject",
+                    "afterDelay", "inModes", NULL);
+  addClsMethSummary(NSObjectII, Summ, "performSelectorOnMainThread",
+                    "withObject", "waitUntilDone", NULL);
+  addClsMethSummary(NSObjectII, Summ, "performSelectorOnMainThread",
+                    "withObject", "waitUntilDone", "modes", NULL);
+  addClsMethSummary(NSObjectII, Summ, "performSelector", "onThread",
+                    "withObject", "waitUntilDone", NULL);
+  addClsMethSummary(NSObjectII, Summ, "performSelector", "onThread",
+                    "withObject", "waitUntilDone", "modes", NULL);
+  addClsMethSummary(NSObjectII, Summ, "performSelectorInBackground",
+                    "withObject", NULL);
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -2011,6 +2057,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
   }
   else
     Summ = Summaries.getClassMethodSummary(ME);
+
 
   EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), Summ,
               ME->arg_begin(), ME->arg_end(), Pred);
