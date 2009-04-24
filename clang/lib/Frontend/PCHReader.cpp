@@ -298,9 +298,7 @@ void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
   CD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
-  unsigned nextCat = Record[Idx++];
-  CD->setNextClassCategory(nextCat ? 
-                           cast<ObjCCategoryDecl>(Reader.GetDecl(nextCat)) : 0);
+  CD->setNextClassCategory(cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
   CD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
