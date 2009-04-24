@@ -1816,10 +1816,11 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
   
-  void EmitKey(llvm::raw_ostream& Out, Selector Sel, unsigned) {
+  void EmitKey(llvm::raw_ostream& Out, Selector Sel, unsigned KeyLen) {
     // FIXME: Keep track of the location of the key data (the
     // selector), so we can fold the selector table's storage into
     // this hash table.
+    uint64_t Start = Out.tell(); (void)Start;
     unsigned N = Sel.getNumArgs();
     clang::io::Emit16(Out, N);
     if (N == 0)
@@ -1827,10 +1828,13 @@ public:
     for (unsigned I = 0; I != N; ++I)
       clang::io::Emit32(Out, 
                     Writer.getIdentifierRef(Sel.getIdentifierInfoForSlot(I)));
+    
+    assert(Out.tell() - Start == KeyLen && "Key length is wrong");
   }
   
   void EmitData(llvm::raw_ostream& Out, key_type_ref,
-                data_type_ref Methods, unsigned) {
+                data_type_ref Methods, unsigned DataLen) {
+    uint64_t Start = Out.tell(); (void)Start;
     unsigned NumInstanceMethods = 0;
     for (const ObjCMethodList *Method = &Methods.first; Method; 
          Method = Method->Next)
@@ -1849,11 +1853,12 @@ public:
          Method = Method->Next)
       if (Method->Method)
         clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
-    clang::io::Emit16(Out, NumFactoryMethods);
     for (const ObjCMethodList *Method = &Methods.second; Method; 
          Method = Method->Next)
       if (Method->Method)
         clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
+
+    assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
 };
 } // end anonymous namespace
@@ -1922,7 +1927,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
       PCHMethodPoolTrait Trait(*this);
       llvm::raw_svector_ostream Out(MethodPool);
       // Make sure that no bucket is at offset 0
-      clang::io::Emit16(Out, 0);
+      clang::io::Emit32(Out, 0);
       BucketOffset = Generator.Emit(Out, Trait);
     }
 
@@ -2051,7 +2056,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
       PCHIdentifierTableTrait Trait(*this, PP);
       llvm::raw_svector_ostream Out(IdentifierTable);
       // Make sure that no bucket is at offset 0
-      clang::io::Emit16(Out, 0);
+      clang::io::Emit32(Out, 0);
       BucketOffset = Generator.Emit(Out, Trait);
     }
 
