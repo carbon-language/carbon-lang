@@ -504,23 +504,26 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
     if (VA.needsCustom()) {
       SDValue Lo = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
                                       InFlag);
+      Chain = Lo.getValue(1);
+      InFlag = Lo.getValue(2);
       VA = RVLocs[++i]; // skip ahead to next loc
-      SDValue Hi = DAG.getCopyFromReg(Lo, dl, VA.getLocReg(), VA.getLocVT(),
-                                      Lo.getValue(2));
+      SDValue Hi = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+                                      InFlag);
+      Chain = Hi.getValue(1);
+      InFlag = Hi.getValue(2);
       ResultVals.push_back(DAG.getNode(ARMISD::FMDRR, dl, VA.getValVT(), Lo,
                                        Hi));
     } else {
-      Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
-                                 InFlag).getValue(1);
-      SDValue Val = Chain.getValue(0);
-      InFlag = Chain.getValue(2);
+      SDValue Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+                                       InFlag);
+      Chain = Val.getValue(1);
+      InFlag = Val.getValue(2);
 
       switch (VA.getLocInfo()) {
       default: assert(0 && "Unknown loc info!");
       case CCValAssign::Full: break;
       case CCValAssign::BCvt:
-        Val = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(),
-                          Chain.getValue(0));
+        Val = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), Val);
         break;
       }
 
@@ -813,6 +816,7 @@ SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
       SDValue fmrrd = DAG.getNode(ARMISD::FMRRD, dl,
                                   DAG.getVTList(MVT::i32, MVT::i32), &Arg, 1);
       Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd, Flag);
+      Flag = Chain.getValue(1);
       VA = RVLocs[++i]; // skip ahead to next loc
       Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd.getValue(1),
                                Flag);
