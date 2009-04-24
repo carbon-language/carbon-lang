@@ -2197,16 +2197,17 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
       }
       case ISD::FP_TO_SINT:
       case ISD::FP_TO_UINT: {
-        integerPart x;
+        integerPart x[2];
         bool ignored;
         assert(integerPartWidth >= 64);
         // FIXME need to be more flexible about rounding mode.
-        APFloat::opStatus s = V.convertToInteger(&x, 64U,
+        APFloat::opStatus s = V.convertToInteger(x, VT.getSizeInBits(),
                               Opcode==ISD::FP_TO_SINT,
                               APFloat::rmTowardZero, &ignored);
         if (s==APFloat::opInvalidOp)     // inexact is OK, in fact usual
           break;
-        return getConstant(x, VT);
+        APInt api(VT.getSizeInBits(), 2, x);
+        return getConstant(api, VT);
       }
       case ISD::BIT_CONVERT:
         if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
