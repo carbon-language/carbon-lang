@@ -110,6 +110,15 @@ public:
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, uint64_t V, bool isSigned = false);
 
+  /// Return a ConstantInt with the specified value for the specified type. The
+  /// value V will be canonicalized to a an unsigned APInt. Accessing it with
+  /// either getSExtValue() or getZExtValue() will yield a correctly sized and
+  /// signed value for the type Ty.
+  /// @brief Get a ConstantInt for a specific signed value.
+  static ConstantInt *getSigned(const Type *Ty, int64_t V) {
+    return get(Ty, V, true);
+  }
+
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
   static ConstantInt *get(const APInt &V);

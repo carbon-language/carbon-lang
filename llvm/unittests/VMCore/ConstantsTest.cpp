@@ -19,6 +19,7 @@ TEST(ConstantsTest, Integer_i1) {
   Constant* One = ConstantInt::get(Int1, 1, true);
   Constant* Zero = ConstantInt::get(Int1, 0);
   Constant* NegOne = ConstantInt::get(Int1, static_cast<uint64_t>(-1), true);
+  EXPECT_EQ(NegOne, ConstantInt::getSigned(Int1, -1));
   Constant* Undef = UndefValue::get(Int1);
 
   // Input:  @b = constant i1 add(i1 1 , i1 1)
@@ -92,6 +93,19 @@ TEST(ConstantsTest, Integer_i1) {
   // @u = constant i1 srem(i1  1, i1 -1) ; overflow
   // @u = constant i1 false
   EXPECT_EQ(Zero, ConstantExpr::getSRem(One, NegOne));
+}
+
+TEST(ConstantsTest, IntSigns) {
+  const IntegerType* Int8Ty = Type::Int8Ty;
+  EXPECT_EQ(100, ConstantInt::get(Int8Ty, 100, false)->getSExtValue());
+  EXPECT_EQ(100, ConstantInt::get(Int8Ty, 100, true)->getSExtValue());
+  EXPECT_EQ(100, ConstantInt::getSigned(Int8Ty, 100)->getSExtValue());
+  EXPECT_EQ(-50, ConstantInt::get(Int8Ty, 206)->getSExtValue());
+  EXPECT_EQ(-50, ConstantInt::getSigned(Int8Ty, -50)->getSExtValue());
+  EXPECT_EQ(206U, ConstantInt::getSigned(Int8Ty, -50)->getZExtValue());
+
+  // Overflow is handled by truncation.
+  EXPECT_EQ(0x3b, ConstantInt::get(Int8Ty, 0x13b)->getSExtValue());
 }
 
 }  // end anonymous namespace
