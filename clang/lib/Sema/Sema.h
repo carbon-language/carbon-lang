@@ -1449,8 +1449,8 @@ public:
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc);
 
-  /// InitializeVarWithConstructor - Creates an implicit 
-  /// CXXTemporaryObjectExpr and sets it as the passed in VarDecl initializer.
+  /// InitializeVarWithConstructor - Creates an CXXConstructExpr
+  /// and sets it as the initializer for the the passed in VarDecl.
   void InitializeVarWithConstructor(VarDecl *VD, 
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 

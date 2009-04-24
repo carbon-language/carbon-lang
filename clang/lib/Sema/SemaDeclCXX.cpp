@@ -1780,11 +1780,8 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
-  Expr *Temp = 
-    new (Context) CXXTemporaryObjectExpr(Constructor, DeclInitType,
-                                         SourceLocation(), 
-                                         Exprs, NumExprs,
-                                         SourceLocation());
+  Expr *Temp = CXXConstructExpr::Create(Context, VD, DeclInitType, Constructor, 
+                                        false, Exprs, NumExprs);
   VD->setInit(Temp);
 }
 
