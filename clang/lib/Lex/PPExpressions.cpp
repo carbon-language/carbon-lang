@@ -90,7 +90,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // If this identifier isn't 'defined' and it wasn't macro expanded, it turns
     // into a simple 0, unless it is the C++ keyword "true", in which case it
     // turns into "1".
-    if (II->getPPKeywordID() != tok::pp_defined) {
+    if (!II->isStr("defined")) {
       if (ValueLive)
         PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
       Result.Val = II->getTokenID() == tok::kw_true;
