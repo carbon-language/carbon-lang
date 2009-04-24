@@ -128,7 +128,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   if (Ty->isDependentType() ||
       CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
     exprs.release();
-    return Owned(new (Context) CXXTemporaryObjectExpr(0, Ty, TyBeginLoc,
+    
+    // FIXME: Is this correct?
+    CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
+    return Owned(new (Context) CXXTemporaryObjectExpr(Temp, 0, Ty, TyBeginLoc,
                                                       Exprs, NumExprs,
                                                       RParenLoc));
   }
@@ -163,8 +166,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       if (!Constructor)
         return ExprError();
 
+      CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
+
       exprs.release();
-      return Owned(new (Context) CXXTemporaryObjectExpr(Constructor, Ty,
+      return Owned(new (Context) CXXTemporaryObjectExpr(Temp, Constructor, Ty,
                                                         TyBeginLoc,  Exprs,
                                                         NumExprs, RParenLoc));
     }

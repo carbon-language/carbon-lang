@@ -231,7 +231,8 @@ const char *CXXNamedCastExpr::getCastName() const {
   }
 }
 
-CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(CXXConstructorDecl *Cons,
+CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(VarDecl *vd,
+                                               CXXConstructorDecl *Cons,
                                                QualType writtenTy,
                                                SourceLocation tyBeginLoc, 
                                                Expr **Args,
