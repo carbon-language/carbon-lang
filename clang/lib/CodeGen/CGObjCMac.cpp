@@ -729,7 +729,6 @@ protected:
   // gc ivar layout bitmap calculation helper caches.
   llvm::SmallVector<GC_IVAR, 16> SkipIvars;
   llvm::SmallVector<GC_IVAR, 16> IvarsInfo;
-  llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
   
   /// LazySymbols - Symbols to generate a lazy reference for. See
   /// DefinedSymbols and FinishModule().
@@ -3156,7 +3155,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     std::sort(SkipIvars.begin(), SkipIvars.end());
       
   // Build the string of skip/scan nibbles
-  SkipScanIvars.clear();
+  llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
   unsigned int WordSize = 
     CGM.getTypes().getTargetData().getTypePaddedSize(PtrTy);
   if (IvarsInfo[0].ivar_bytepos == 0) {
