@@ -257,6 +257,9 @@ ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
       case LTO_SYMBOL_DEFINITION_WEAK:
         sym.def = LDPK_WEAKDEF;
         break;
+      case LTO_SYMBOL_DEFINITION_WEAKUNDEF:
+        sym.def = LDPK_WEAKUNDEF;
+        break;
       default:
         (*message)(LDPL_ERROR, "Unknown definition attribute: %d", definition);
         return LDPS_ERR;

@@ -258,9 +258,21 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
 {   
    const char* name = mangler.getValueName(decl).c_str();
     // ignore all llvm.* symbols
-    if ( strncmp(name, "llvm.", 5) != 0 ) {
-        _undefines[name] = 1;
-    }
+    if ( strncmp(name, "llvm.", 5) == 0 )
+      return;
+
+    // we already have the symbol
+    if (_undefines.find(name) != _undefines.end())
+      return;
+
+    NameAndAttributes info;
+    // string is owned by _undefines
+    info.name = ::strdup(name);
+    if (decl->hasExternalWeakLinkage())
+      info.attributes = LTO_SYMBOL_DEFINITION_WEAKUNDEF;
+    else
+      info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+    _undefines[name] = info;
 }
 
 
@@ -339,16 +351,14 @@ void LTOModule::lazyParseSymbols()
         }
 
         // make symbols for all undefines
-        for (StringSet::iterator it=_undefines.begin(); 
+        for (StringMap<NameAndAttributes>::iterator it=_undefines.begin(); 
                                                 it != _undefines.end(); ++it) {
             // if this symbol also has a definition, then don't make an undefine
             // because it is a tentative definition
             if ( _defines.count(it->getKeyData(), it->getKeyData()+
                                                   it->getKeyLength()) == 0 ) {
-                NameAndAttributes info;
-                info.name = it->getKeyData();
-                info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-                _symbols.push_back(info);
+              NameAndAttributes info = it->getValue();
+              _symbols.push_back(info);
             }
         }
     }    

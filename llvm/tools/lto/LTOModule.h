@@ -97,7 +97,7 @@ private:
     std::vector<NameAndAttributes>          _symbols;
     // _defines and _undefines only needed to disambiguate tentative definitions
     StringSet                               _defines;    
-    StringSet                               _undefines; 
+    llvm::StringMap<NameAndAttributes>      _undefines;
 };
 
 extern std::string getFeatureString(const char *TargetTriple);
