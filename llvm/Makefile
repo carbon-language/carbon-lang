@@ -187,7 +187,7 @@ SVN = svn
 SVN-UPDATE-OPTIONS =
 AWK = awk
 SUB-SVN-DIRS = $(AWK) '/\?\ \ \ \ \ \ / {print $$2}'   \
-		| LANG=C xargs $(SVN) info 2>/dev/null \
+		| LC_ALL=C xargs $(SVN) info 2>/dev/null \
 		| $(AWK) '/Path:\ / {print $$2}'
 
 update:
