@@ -1518,6 +1518,22 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 //===----------------------------------------------------------------------===//
+// Checker-specific attribute handlers.
+//===----------------------------------------------------------------------===//
+
+static void HandleObjCOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
+                                           Sema &S) {
+
+  if (!isa<ObjCMethodDecl>(d) && !isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      "objc_ownership_returns" << 3 /* function or method */;
+    return;
+  }
+  
+  d->addAttr(::new (S.Context) ObjCOwnershipReturnsAttr());
+}
+
+//===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
@@ -1553,6 +1569,11 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
+
+  // Checker-specific.
+  case AttributeList::AT_objc_ownership_returns:
+    HandleObjCOwnershipReturnsAttr(D, Attr, S); break;
+
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;
   case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;

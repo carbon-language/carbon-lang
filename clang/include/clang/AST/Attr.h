@@ -51,6 +51,7 @@ public:
     NonNull,
     ObjCException,
     ObjCNSObject,
+    ObjCOwnershipReturns, // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
     Pure,
@@ -587,6 +588,21 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == Regparm; }
   static bool classof(const RegparmAttr *A) { return true; }
 };
+  
+  
+#define DEF_SIMPLE_ATTR(ATTR)\
+class ATTR##Attr : public Attr {\
+public:\
+  ATTR##Attr() : Attr(ATTR) {}\
+  static bool classof(const Attr *A) { return A->getKind() == ATTR; }\
+  static bool classof(const ATTR##Attr *A) { return true; }\
+};
+
+// Checker-specific attributes.
+DEF_SIMPLE_ATTR(ObjCOwnershipReturns)
+
+#undef DEF_SIMPLE_ATTR
+  
 }  // end namespace clang
 
 #endif

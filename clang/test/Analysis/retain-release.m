@@ -405,3 +405,15 @@ void rdar6704930(unsigned char *s, unsigned int length) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// Tests of ownership attributes.
+//===----------------------------------------------------------------------===//
+
+@interface TestOwnershipAttr : NSObject
+- (NSString*) returnsAnOwnedString __attribute__((objc_ownership_returns));
+@end
+
+void test_attr_1(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString];
+}
+
