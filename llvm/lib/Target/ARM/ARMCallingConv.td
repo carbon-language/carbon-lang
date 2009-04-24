@@ -28,9 +28,9 @@ def CC_ARM_APCS : CallingConv<[
   CCIfType<[f64], CCCustom<"CC_ARM_APCS_Custom_f64">>,
 
   CCIfType<[f32], CCBitConvertToType<i32>>,
-  CCIfType<[i32, f32], CCAssignToReg<[R0, R1, R2, R3]>>,
+  CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
 
-  CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
+  CCIfType<[i32], CCAssignToStack<4, 4>>,
   CCIfType<[f64], CCAssignToStack<8, 4>>
 ]>;
 
@@ -55,9 +55,9 @@ def CC_ARM_AAPCS : CallingConv<[
   CCIfType<[f64], CCCustom<"CC_ARM_AAPCS_Custom_f64">>,
 
   CCIfType<[f32], CCBitConvertToType<i32>>,
-  CCIfType<[i32, f32], CCAssignToReg<[R0, R1, R2, R3]>>,
+  CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
 
-  CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
+  CCIfType<[i32], CCAssignToStack<4, 4>>,
   CCIfType<[f64], CCAssignToStack<8, 8>>
 ]>;
 
