@@ -4928,8 +4928,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   return isInvalid;
 }
 
-bool Sema::VerifyIntegerConstantExpression(const Expr* E, llvm::APSInt *Result)
-{
+bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
   Expr::EvalResult EvalResult;
 
   if (!E->Evaluate(EvalResult, Context) || !EvalResult.Val.isInt() ||

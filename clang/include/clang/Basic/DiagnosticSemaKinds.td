@@ -31,8 +31,6 @@ def ext_predef_outside_function : Warning<
   "predefined identifier is only valid inside function">;
 
 // C99 Designated Initializers
-def err_array_designator_nonconstant : Error<
-  "array designator value must be a constant expression">;
 def err_array_designator_negative : Error<
   "array designator value '%0' is negative">;
 def err_array_designator_empty_range : Error<

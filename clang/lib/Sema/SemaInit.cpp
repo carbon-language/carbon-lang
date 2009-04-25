@@ -1391,28 +1391,19 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   llvm::APSInt DesignatedStartIndex, DesignatedEndIndex;
   if (D->isArrayDesignator()) {
     IndexExpr = DIE->getArrayIndex(*D);
-    
-    bool ConstExpr 
-      = IndexExpr->isIntegerConstantExpr(DesignatedStartIndex, SemaRef.Context);
-    assert(ConstExpr && "Expression must be constant"); (void)ConstExpr;
-    
+    DesignatedStartIndex = IndexExpr->EvaluateAsInt(SemaRef.Context);
     DesignatedEndIndex = DesignatedStartIndex;
   } else {
     assert(D->isArrayRangeDesignator() && "Need array-range designator");
-    
-    bool StartConstExpr
-      = DIE->getArrayRangeStart(*D)->isIntegerConstantExpr(DesignatedStartIndex,
-                                                           SemaRef.Context);
-    assert(StartConstExpr && "Expression must be constant"); (void)StartConstExpr;
 
-    bool EndConstExpr
-      = DIE->getArrayRangeEnd(*D)->isIntegerConstantExpr(DesignatedEndIndex,
-                                                         SemaRef.Context);
-    assert(EndConstExpr && "Expression must be constant"); (void)EndConstExpr;
     
+    DesignatedStartIndex = 
+      DIE->getArrayRangeStart(*D)->EvaluateAsInt(SemaRef.Context);
+    DesignatedEndIndex = 
+      DIE->getArrayRangeEnd(*D)->EvaluateAsInt(SemaRef.Context);
     IndexExpr = DIE->getArrayRangeEnd(*D);
 
-    if (DesignatedStartIndex.getZExtValue() != DesignatedEndIndex.getZExtValue())
+    if (DesignatedStartIndex.getZExtValue() !=DesignatedEndIndex.getZExtValue())
       FullyStructuredList->sawArrayRangeDesignator();
   }
 
@@ -1434,7 +1425,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     // Make sure the bit-widths and signedness match.
     if (DesignatedStartIndex.getBitWidth() > DesignatedEndIndex.getBitWidth())
       DesignatedEndIndex.extend(DesignatedStartIndex.getBitWidth());
-    else if (DesignatedStartIndex.getBitWidth() < DesignatedEndIndex.getBitWidth())
+    else if (DesignatedStartIndex.getBitWidth() <
+             DesignatedEndIndex.getBitWidth())
       DesignatedStartIndex.extend(DesignatedEndIndex.getBitWidth());
     DesignatedStartIndex.setIsUnsigned(true);
     DesignatedEndIndex.setIsUnsigned(true);
@@ -1602,25 +1594,21 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
 
 /// Check that the given Index expression is a valid array designator
 /// value. This is essentailly just a wrapper around
-/// Expr::isIntegerConstantExpr that also checks for negative values
+/// VerifyIntegerConstantExpression that also checks for negative values
 /// and produces a reasonable diagnostic if there is a
 /// failure. Returns true if there was an error, false otherwise.  If
 /// everything went okay, Value will receive the value of the constant
 /// expression.
 static bool 
-CheckArrayDesignatorExpr(Sema &Self, Expr *Index, llvm::APSInt &Value) {
+CheckArrayDesignatorExpr(Sema &S, Expr *Index, llvm::APSInt &Value) {
   SourceLocation Loc = Index->getSourceRange().getBegin();
 
   // Make sure this is an integer constant expression.
-  if (!Index->isIntegerConstantExpr(Value, Self.Context, &Loc))
-    return Self.Diag(Loc, diag::err_array_designator_nonconstant)
-      << Index->getSourceRange();
+  if (S.VerifyIntegerConstantExpression(Index, &Value))
+    return true;
 
-  // Make sure this constant expression is non-negative.
-  llvm::APSInt Zero(llvm::APSInt::getNullValue(Value.getBitWidth()), 
-                    Value.isUnsigned());
-  if (Value < Zero)
-    return Self.Diag(Loc, diag::err_array_designator_negative)
+  if (Value.isSigned() && Value.isNegative())
+    return S.Diag(Loc, diag::err_array_designator_negative)
       << Value.toString(10) << Index->getSourceRange();
 
   Value.setIsUnsigned(true);

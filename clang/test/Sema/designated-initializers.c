@@ -221,3 +221,14 @@ struct Enigma enigma = {
   &c0,
   .float_ptr = &f0 // expected-warning{{overrides}}
 };
+
+
+/// PR4073
+/// Should use evaluate to fold aggressively and emit a warning if not an ice.
+extern int crazy_x;
+
+int crazy_Y[] = {
+  [ 0 ? crazy_x : 4] = 1
+};
+
+
