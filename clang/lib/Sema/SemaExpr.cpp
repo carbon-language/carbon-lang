@@ -4929,6 +4929,13 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 }
 
 bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
+  llvm::APSInt ICEResult;
+  if (E->isIntegerConstantExpr(ICEResult, Context)) {
+    if (Result)
+      *Result = ICEResult;
+    return false;
+  }
+
   Expr::EvalResult EvalResult;
 
   if (!E->Evaluate(EvalResult, Context) || !EvalResult.Val.isInt() ||
@@ -4946,14 +4953,12 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
     return true;
   }
 
-  if (EvalResult.Diag) {
-    Diag(E->getExprLoc(), diag::ext_expr_not_ice) <<
-      E->getSourceRange();
+  Diag(E->getExprLoc(), diag::ext_expr_not_ice) <<
+    E->getSourceRange();
 
-    // Print the reason it's not a constant.
-    if (Diags.getDiagnosticLevel(diag::ext_expr_not_ice) != Diagnostic::Ignored)
-      Diag(EvalResult.DiagLoc, EvalResult.Diag);
-  }
+  if (EvalResult.Diag &&
+      Diags.getDiagnosticLevel(diag::ext_expr_not_ice) != Diagnostic::Ignored)
+    Diag(EvalResult.DiagLoc, EvalResult.Diag);
 
   if (Result)
     *Result = EvalResult.Val.getInt();
