@@ -431,12 +431,15 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
 }
 
 
-// Helper function for FunctionDecl::getNumParams and FunctionDecl::setParams()
-static unsigned getNumTypeParams(QualType T) {
-  const FunctionType *FT = T->getAsFunctionType();
+/// getNumParmVarDeclsFromType - Ignoring the actual argument list, this
+/// returns the number of ParmVarDecls that the FunctionType of this function
+/// expects.
+unsigned FunctionDecl::getNumParmVarDeclsFromType() const {
+  const FunctionType *FT = getType()->getAsFunctionType();
   if (isa<FunctionNoProtoType>(FT))
     return 0;
   return cast<FunctionProtoType>(FT)->getNumArgs();
+  
 }
 
 unsigned FunctionDecl::getNumParams() const {
@@ -444,13 +447,13 @@ unsigned FunctionDecl::getNumParams() const {
   if (!ParamInfo)
     return 0;
   
-  return getNumTypeParams(getType());
+  return getNumParmVarDeclsFromType();
 }
 
 void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
                              unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
-  assert(NumParams == getNumTypeParams(getType()) &&
+  assert(NumParams == getNumParmVarDeclsFromType() &&
          "Parameter count mismatch!");
   
   // Zero params -> null pointer.

@@ -643,6 +643,11 @@ public:
 
   unsigned getBuiltinID(ASTContext &Context) const;
 
+  /// getNumParmVarDeclsFromType - Ignoring the actual argument list, this
+  /// returns the number of ParmVarDecls that the FunctionType of this function
+  /// expects.
+  unsigned getNumParmVarDeclsFromType() const;
+  
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
