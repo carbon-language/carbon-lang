@@ -101,6 +101,10 @@ private:
   /// \brief Map that provides the ID numbers of each Selector.
   llvm::DenseMap<Selector, pch::SelectorID> SelectorIDs;
   
+  /// \brief Offset of each selector within the method pool/selector
+  /// table, indexed by the Selector ID (-1).
+  llvm::SmallVector<uint32_t, 16> SelectorOffsets;
+
   /// \brief A vector of all Selectors (ordered by ID).
   llvm::SmallVector<Selector, 16> SelVector;
   
@@ -161,7 +165,6 @@ private:
   void WriteDeclsBlock(ASTContext &Context);
   void WriteMethodPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
-  void WriteSelectorTable();
   void WriteAttributeRecord(const Attr *Attr);
 
 public:
@@ -223,6 +226,10 @@ public:
   /// \brief Note that the identifier II occurs at the given offset
   /// within the identifier table.
   void SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset);
+
+  /// \brief Note that the selector Sel occurs at the given offset
+  /// within the method pool/selector table.
+  void SetSelectorOffset(Selector Sel, uint32_t Offset);
 
   /// \brief Add the given statement or expression to the queue of
   /// statements to emit.

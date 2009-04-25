@@ -1832,11 +1832,10 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
   
-  void EmitKey(llvm::raw_ostream& Out, Selector Sel, unsigned KeyLen) {
-    // FIXME: Keep track of the location of the key data (the
-    // selector), so we can fold the selector table's storage into
-    // this hash table.
-    uint64_t Start = Out.tell(); (void)Start;
+  void EmitKey(llvm::raw_ostream& Out, Selector Sel, unsigned) {
+    uint64_t Start = Out.tell(); 
+    assert((Start >> 32) == 0 && "Selector key offset too large");
+    Writer.SetSelectorOffset(Sel, Start);
     unsigned N = Sel.getNumArgs();
     clang::io::Emit16(Out, N);
     if (N == 0)
@@ -1844,8 +1843,6 @@ public:
     for (unsigned I = 0; I != N; ++I)
       clang::io::Emit32(Out, 
                     Writer.getIdentifierRef(Sel.getIdentifierInfoForSlot(I)));
-    
-    assert(Out.tell() - Start == KeyLen && "Key length is wrong");
   }
   
   void EmitData(llvm::raw_ostream& Out, key_type_ref,
@@ -1895,6 +1892,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
     // Create the on-disk hash table representation. Start by
     // iterating through the instance method pool.
     PCHMethodPoolTrait::key_type Key;
+    unsigned NumSelectorsInMethodPool = 0;
     for (llvm::DenseMap<Selector, ObjCMethodList>::iterator
            Instance = SemaRef.InstanceMethodPool.begin(), 
            InstanceEnd = SemaRef.InstanceMethodPool.end();
@@ -1912,6 +1910,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
         Generator.insert(Instance->first,
                          std::make_pair(Instance->second, Factory->second));
 
+      ++NumSelectorsInMethodPool;
       Empty = false;
     }
 
@@ -1926,41 +1925,68 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
       llvm::DenseMap<Selector, ObjCMethodList>::iterator Instance
         = SemaRef.InstanceMethodPool.find(Factory->first);
 
-      if (Instance == SemaRef.InstanceMethodPool.end())
+      if (Instance == SemaRef.InstanceMethodPool.end()) {
         Generator.insert(Factory->first,
                          std::make_pair(ObjCMethodList(), Factory->second));
+        ++NumSelectorsInMethodPool;
+      }
 
       Empty = false;
     }
 
-    if (Empty)
+    if (Empty && SelectorOffsets.empty())
       return;
 
     // Create the on-disk hash table in a buffer.
     llvm::SmallVector<char, 4096> MethodPool; 
     uint32_t BucketOffset;
+    SelectorOffsets.resize(SelVector.size());
     {
       PCHMethodPoolTrait Trait(*this);
       llvm::raw_svector_ostream Out(MethodPool);
       // Make sure that no bucket is at offset 0
       clang::io::Emit32(Out, 0);
       BucketOffset = Generator.Emit(Out, Trait);
+
+      // For every selector that we have seen but which was not
+      // written into the hash table, write the selector itself and
+      // record it's offset.
+      for (unsigned I = 0, N = SelVector.size(); I != N; ++I)
+        if (SelectorOffsets[I] == 0)
+          Trait.EmitKey(Out, SelVector[I], 0);
     }
 
     // Create a blob abbreviation
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(pch::METHOD_POOL));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned MethodPoolAbbrev = Stream.EmitAbbrev(Abbrev);
 
-    // Write the identifier table
+    // Write the method pool
     RecordData Record;
     Record.push_back(pch::METHOD_POOL);
     Record.push_back(BucketOffset);
+    Record.push_back(NumSelectorsInMethodPool);
     Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, 
                               &MethodPool.front(), 
                               MethodPool.size());
+
+    // Create a blob abbreviation for the selector table offsets.
+    Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(pch::SELECTOR_OFFSETS));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned SelectorOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+
+    // Write the selector offsets table.
+    Record.clear();
+    Record.push_back(pch::SELECTOR_OFFSETS);
+    Record.push_back(SelectorOffsets.size());
+    Stream.EmitRecordWithBlob(SelectorOffsetAbbrev, Record,
+                              (const char *)&SelectorOffsets.front(),
+                              SelectorOffsets.size() * 4);
   }
 }
 
@@ -2094,26 +2120,6 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
 
   // Write the offsets table for identifier IDs.
   Stream.EmitRecord(pch::IDENTIFIER_OFFSET, IdentifierOffsets);
-}
-
-void PCHWriter::WriteSelectorTable() {
-  Stream.EnterSubblock(pch::SELECTOR_BLOCK_ID, 2);
-  RecordData Record;
-  Record.push_back(pch::SELECTOR_TABLE);
-  Record.push_back(SelectorIDs.size());
-  
-  // Create the on-disk representation.
-  for (unsigned selIdx = 0; selIdx < SelVector.size(); selIdx++) {
-    assert(SelVector[selIdx].getAsOpaquePtr() && "NULL Selector found");
-    Record.push_back(SelVector[selIdx].getNumArgs());
-    if (SelVector[selIdx].getNumArgs())
-      for (unsigned i = 0; i < SelVector[selIdx].getNumArgs(); i++)
-        AddIdentifierRef(SelVector[selIdx].getIdentifierInfoForSlot(i), Record);
-    else
-      AddIdentifierRef(SelVector[selIdx].getIdentifierInfoForSlot(0), Record);
-  }
-  Stream.EmitRecord(pch::SELECTOR_TABLE, Record);
-  Stream.ExitBlock();
 }
 
 /// \brief Write a record containing the given attributes.
@@ -2250,6 +2256,14 @@ void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
   IdentifierOffsets[IdentifierIDs[II] - 1] = (Offset << 1) | 0x01;
 }
 
+/// \brief Note that the selector Sel occurs at the given offset
+/// within the method pool/selector table.
+void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
+  unsigned ID = SelectorIDs[Sel];
+  assert(ID && "Unknown selector");
+  SelectorOffsets[ID - 1] = Offset;
+}
+
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream) 
   : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS), 
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
@@ -2309,7 +2323,6 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);
   WriteMethodPool(SemaRef);
-  WriteSelectorTable();
   WriteIdentifierTable(PP);
   Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
   Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);

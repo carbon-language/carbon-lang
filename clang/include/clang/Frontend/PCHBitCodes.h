@@ -68,10 +68,7 @@ namespace clang {
 
       /// \brief The block containing the definitions of all of the
       /// declarations stored in the PCH file.
-      DECLS_BLOCK_ID,
-
-      /// \brief The block containing ObjC selectors stored in the PCH file.   
-      SELECTOR_BLOCK_ID
+      DECLS_BLOCK_ID
     };
 
     /// \brief Record types that occur within the PCH block itself.
@@ -167,8 +164,9 @@ namespace clang {
       /// declarations.
       LOCALLY_SCOPED_EXTERNAL_DECLS = 11,
       
-      /// \brief Record code for the Objective-C Selector Table.
-      SELECTOR_TABLE = 12,
+      /// \brief Record code for the table of offsets into the
+      /// Objective-C method pool.
+      SELECTOR_OFFSETS = 12,
 
       /// \brief Record code for the Objective-C method pool,
       METHOD_POOL = 13

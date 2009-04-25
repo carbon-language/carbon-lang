@@ -146,15 +146,35 @@ private:
   /// an IdentifierInfo* that has already been resolved.
   llvm::SmallVector<uint64_t, 16> IdentifierData;
 
-  /// \brief SelectorData, indexed by the selector ID minus one.
-  llvm::SmallVector<Selector, 16> SelectorData;
-
   /// \brief A pointer to an on-disk hash table of opaque type
   /// PCHMethodPoolLookupTable.
   ///
   /// This hash table provides the instance and factory methods
   /// associated with every selector known in the PCH file.
   void *MethodPoolLookupTable;
+
+  /// \brief A pointer to the character data that comprises the method
+  /// pool.
+  ///
+  /// The SelectorOffsets table refers into this memory.
+  const unsigned char *MethodPoolLookupTableData;
+
+  /// \brief The number of selectors stored in the method pool itself.
+  unsigned TotalSelectorsInMethodPool;
+
+  /// \brief Offsets into the method pool lookup table's data array
+  /// where each selector resides.
+  const uint32_t *SelectorOffsets;
+
+  /// \brief The total number of selectors stored in the PCH file.
+  unsigned TotalNumSelectors;
+
+  /// \brief A vector containing selectors that have already been loaded. 
+  ///
+  /// This vector is indexed by the Selector ID (-1). NULL selector
+  /// entries indicate that the particular selector ID has not yet
+  /// been loaded.
+  llvm::SmallVector<Selector, 16> SelectorsLoaded;
 
   /// \brief The set of external definitions stored in the the PCH
   /// file.
@@ -197,6 +217,13 @@ private:
   /// \brief The number of macros de-serialized from the PCH file.
   unsigned NumMacrosRead;
 
+  /// \brief The number of method pool entries that have been read.
+  unsigned NumMethodPoolSelectorsRead;
+
+  /// \brief The number of times we have looked into the global method
+  /// pool and not found anything.
+  unsigned NumMethodPoolMisses;
+
   /// \brief The total number of macros stored in the PCH file.
   unsigned TotalNumMacros;
 
@@ -217,14 +244,12 @@ private:
   /// Objective-C protocols.
   llvm::SmallVector<Decl *, 16> InterestingDecls;
 
-  PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
-                             uint64_t &SelectorBlockOffset);
+  PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset);
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
                              FileID PCHBufferID);
   PCHReadResult ReadSourceManagerBlock();
   bool ReadPreprocessorBlock();
-  bool ReadSelectorBlock();
   
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);
@@ -240,7 +265,10 @@ public:
   explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
     : SemaObj(0), PP(PP), Context(Context), Consumer(0),
       IdentifierTableData(0), IdentifierLookupTable(0),
-      MethodPoolLookupTable(0), NumStatementsRead(0), NumMacrosRead(0),
+      MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
+      TotalSelectorsInMethodPool(0), SelectorOffsets(0),
+      TotalNumSelectors(0), NumStatementsRead(0), NumMacrosRead(0),
+      NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
       NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
 
   ~PCHReader() {}

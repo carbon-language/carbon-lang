@@ -1141,7 +1141,7 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
     
-  internal_key_type ReadKey(const unsigned char* d, unsigned n) {
+  internal_key_type ReadKey(const unsigned char* d, unsigned) {
     using namespace clang::io;
     SelectorTable &SelTable = Reader.getContext().Selectors;
     unsigned N = ReadUnalignedLE16(d);
@@ -1725,70 +1725,8 @@ bool PCHReader::ReadPreprocessorBlock() {
   }
 }
 
-bool PCHReader::ReadSelectorBlock() {
-  if (Stream.EnterSubBlock(pch::SELECTOR_BLOCK_ID))
-    return Error("Malformed selector block record");
-  
-  RecordData Record;
-  while (true) {
-    unsigned Code = Stream.ReadCode();
-    switch (Code) {
-    case llvm::bitc::END_BLOCK:
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of preprocessor block");
-      return false;
-    
-    case llvm::bitc::ENTER_SUBBLOCK:
-      // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock())
-        return Error("Malformed block record");
-      continue;
-    
-    case llvm::bitc::DEFINE_ABBREV:
-      Stream.ReadAbbrevRecord();
-      continue;
-    default: break;
-    }
-    
-    // Read a record.
-    Record.clear();
-    pch::PCHRecordTypes RecType =
-      (pch::PCHRecordTypes)Stream.ReadRecord(Code, Record);
-    switch (RecType) {
-    default:  // Default behavior: ignore unknown records.
-      break;
-    case pch::SELECTOR_TABLE:
-      unsigned Idx = 1; // Record[0] == pch::SELECTOR_TABLE.
-      unsigned NumSels = Record[Idx++];
-      
-      llvm::SmallVector<IdentifierInfo *, 8> KeyIdents;
-      for (unsigned SelIdx = 0; SelIdx < NumSels; SelIdx++) {
-        unsigned NumArgs = Record[Idx++];
-        KeyIdents.clear();
-        if (NumArgs == 0) {
-          // If the number of arguments is 0, we must have an Identifier.
-          IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
-          assert(II && "DecodeIdentifierInfo returned 0");
-          KeyIdents.push_back(II);
-        } else {
-          // For keyword selectors, the Identifier is optional (::: is legal!).
-          for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
-            IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
-            KeyIdents.push_back(II);
-          }
-        }
-        Selector Sel = PP.getSelectorTable().getSelector(NumArgs,&KeyIdents[0]);
-        SelectorData.push_back(Sel);
-      }
-    }
-  }
-  return false;
-}
-
 PCHReader::PCHReadResult 
-PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
-                        uint64_t &SelectorBlockOffset) {
+PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
     Error("Malformed block record");
     return Failure;
@@ -1832,20 +1770,6 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
         }
         break;
 
-      case pch::SELECTOR_BLOCK_ID:
-        // Skip the selector block for now, but remember where it is.  We
-        // want to read it in after the identifier table.
-        if (SelectorBlockOffset) {
-          Error("Multiple selector blocks found.");
-          return Failure;
-        }
-        SelectorBlockOffset = Stream.GetCurrentBitNo();
-        if (Stream.SkipBlock()) {
-          Error("Malformed block record");
-          return Failure;
-        }
-        break;
-          
       case pch::SOURCE_MANAGER_BLOCK_ID:
         switch (ReadSourceManagerBlock()) {
         case Success:
@@ -1971,12 +1895,21 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
       LocallyScopedExternalDecls.swap(Record);
       break;
 
+    case pch::SELECTOR_OFFSETS:
+      SelectorOffsets = (const uint32_t *)BlobStart;
+      TotalNumSelectors = Record[0];
+      SelectorsLoaded.resize(TotalNumSelectors);
+      break;
+
     case pch::METHOD_POOL:
-      MethodPoolLookupTable 
-        = PCHMethodPoolLookupTable::Create(
-                        (const unsigned char *)BlobStart + Record[0],
-                        (const unsigned char *)BlobStart, 
+      MethodPoolLookupTableData = (const unsigned char *)BlobStart;
+      if (Record[0])
+        MethodPoolLookupTable 
+          = PCHMethodPoolLookupTable::Create(
+                        MethodPoolLookupTableData + Record[0],
+                        MethodPoolLookupTableData, 
                         PCHMethodPoolLookupTrait(*this));
+      TotalSelectorsInMethodPool = Record[1];
       break;
     }
   }
@@ -2012,7 +1945,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // We expect a number of well-defined blocks, though we don't necessarily
   // need to understand them all.
   uint64_t PreprocessorBlockOffset = 0;
-  uint64_t SelectorBlockOffset = 0;
   
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
@@ -2033,7 +1965,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       }
       break;
     case pch::PCH_BLOCK_ID:
-      switch (ReadPCHBlock(PreprocessorBlockOffset, SelectorBlockOffset)) {
+      switch (ReadPCHBlock(PreprocessorBlockOffset)) {
       case Success:
         break;
 
@@ -2113,14 +2045,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     SavedStreamPosition SavedPos(Stream);
     Stream.JumpToBit(PreprocessorBlockOffset);
     if (ReadPreprocessorBlock()) {
-      Error("Malformed preprocessor block");
-      return Failure;
-    }
-  }
-  if (SelectorBlockOffset) {
-    SavedStreamPosition SavedPos(Stream);
-    Stream.JumpToBit(SelectorBlockOffset);
-    if (ReadSelectorBlock()) {
       Error("Malformed preprocessor block");
       return Failure;
     }
@@ -2799,30 +2723,53 @@ void PCHReader::PrintStats() {
     if ((IdentifierData[I] & 0x01) == 0)
       ++NumIdentifiersLoaded;
   }
+  unsigned NumSelectorsLoaded = 0;
+  for (unsigned I = 0; I < SelectorsLoaded.size(); ++I) {
+    if (SelectorsLoaded[I].getAsOpaquePtr())
+      ++NumSelectorsLoaded;
+  }
 
-  std::fprintf(stderr, "  %u/%u types read (%f%%)\n",
-               NumTypesLoaded, (unsigned)TypeAlreadyLoaded.size(),
-               ((float)NumTypesLoaded/TypeAlreadyLoaded.size() * 100));
-  std::fprintf(stderr, "  %u/%u declarations read (%f%%)\n",
-               NumDeclsLoaded, (unsigned)DeclAlreadyLoaded.size(),
-               ((float)NumDeclsLoaded/DeclAlreadyLoaded.size() * 100));
-  std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
-               NumIdentifiersLoaded, (unsigned)IdentifierData.size(),
-               ((float)NumIdentifiersLoaded/IdentifierData.size() * 100));
-  std::fprintf(stderr, "  %u/%u statements read (%f%%)\n",
-               NumStatementsRead, TotalNumStatements,
-               ((float)NumStatementsRead/TotalNumStatements * 100));
-  std::fprintf(stderr, "  %u/%u macros read (%f%%)\n",
-               NumMacrosRead, TotalNumMacros,
-               ((float)NumMacrosRead/TotalNumMacros * 100));
-  std::fprintf(stderr, "  %u/%u lexical declcontexts read (%f%%)\n",
-               NumLexicalDeclContextsRead, TotalLexicalDeclContexts,
-               ((float)NumLexicalDeclContextsRead/TotalLexicalDeclContexts
-                * 100));
-  std::fprintf(stderr, "  %u/%u visible declcontexts read (%f%%)\n",
-               NumVisibleDeclContextsRead, TotalVisibleDeclContexts,
-               ((float)NumVisibleDeclContextsRead/TotalVisibleDeclContexts
-                * 100));
+  if (!TypeAlreadyLoaded.empty())
+    std::fprintf(stderr, "  %u/%u types read (%f%%)\n",
+                 NumTypesLoaded, (unsigned)TypeAlreadyLoaded.size(),
+                 ((float)NumTypesLoaded/TypeAlreadyLoaded.size() * 100));
+  if (!DeclAlreadyLoaded.empty())
+    std::fprintf(stderr, "  %u/%u declarations read (%f%%)\n",
+                 NumDeclsLoaded, (unsigned)DeclAlreadyLoaded.size(),
+                 ((float)NumDeclsLoaded/DeclAlreadyLoaded.size() * 100));
+  if (!IdentifierData.empty())
+    std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
+                 NumIdentifiersLoaded, (unsigned)IdentifierData.size(),
+                 ((float)NumIdentifiersLoaded/IdentifierData.size() * 100));
+  if (TotalNumSelectors)
+    std::fprintf(stderr, "  %u/%u selectors read (%f%%)\n",
+                 NumSelectorsLoaded, TotalNumSelectors,
+                 ((float)NumSelectorsLoaded/TotalNumSelectors * 100));
+  if (TotalNumStatements)
+    std::fprintf(stderr, "  %u/%u statements read (%f%%)\n",
+                 NumStatementsRead, TotalNumStatements,
+                 ((float)NumStatementsRead/TotalNumStatements * 100));
+  if (TotalNumMacros)
+    std::fprintf(stderr, "  %u/%u macros read (%f%%)\n",
+                 NumMacrosRead, TotalNumMacros,
+                 ((float)NumMacrosRead/TotalNumMacros * 100));
+  if (TotalLexicalDeclContexts)
+    std::fprintf(stderr, "  %u/%u lexical declcontexts read (%f%%)\n",
+                 NumLexicalDeclContextsRead, TotalLexicalDeclContexts,
+                 ((float)NumLexicalDeclContextsRead/TotalLexicalDeclContexts
+                  * 100));
+  if (TotalVisibleDeclContexts)
+    std::fprintf(stderr, "  %u/%u visible declcontexts read (%f%%)\n",
+                 NumVisibleDeclContextsRead, TotalVisibleDeclContexts,
+                 ((float)NumVisibleDeclContextsRead/TotalVisibleDeclContexts
+                  * 100));
+  if (TotalSelectorsInMethodPool) {
+    std::fprintf(stderr, "  %u/%u method pool entries read (%f%%)\n",
+                 NumMethodPoolSelectorsRead, TotalSelectorsInMethodPool,
+                 ((float)NumMethodPoolSelectorsRead/TotalSelectorsInMethodPool
+                  * 100));
+    std::fprintf(stderr, "  %u method pool misses\n", NumMethodPoolMisses);
+  }
   std::fprintf(stderr, "\n");
 }
 
@@ -2878,9 +2825,12 @@ PCHReader::ReadMethodPool(Selector Sel) {
   PCHMethodPoolLookupTable *PoolTable
     = (PCHMethodPoolLookupTable*)MethodPoolLookupTable;
   PCHMethodPoolLookupTable::iterator Pos = PoolTable->find(Sel);
-  if (Pos == PoolTable->end())
+  if (Pos == PoolTable->end()) {
+    ++NumMethodPoolMisses;
     return std::pair<ObjCMethodList, ObjCMethodList>();;
+  }
 
+  ++NumMethodPoolSelectorsRead;
   return *Pos;
 }
 
@@ -2911,16 +2861,26 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   if (ID == 0)
     return Selector();
   
-  if (SelectorData.empty()) {
+  if (!MethodPoolLookupTableData) {
     Error("No selector table in PCH file");
     return Selector();
   }
-  
-  if (ID > SelectorData.size()) {
+
+  if (ID > TotalNumSelectors) {
     Error("Selector ID out of range");
     return Selector();
   }
-  return SelectorData[ID-1];
+
+  unsigned Index = ID - 1;
+  if (SelectorsLoaded[Index].getAsOpaquePtr() == 0) {
+    // Load this selector from the selector table.
+    // FIXME: endianness portability issues with SelectorOffsets table
+    PCHMethodPoolLookupTrait Trait(*this);
+    SelectorsLoaded[Index] 
+      = Trait.ReadKey(MethodPoolLookupTableData + SelectorOffsets[Index], 0);
+  }
+
+  return SelectorsLoaded[Index];
 }
 
 DeclarationName 
