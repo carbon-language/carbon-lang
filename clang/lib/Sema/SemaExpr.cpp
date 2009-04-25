@@ -1636,13 +1636,13 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
   } else {
-    return ExprError(Diag(LHSExp->getLocStart(),
-      diag::err_typecheck_subscript_value) << RHSExp->getSourceRange());
+    return ExprError(Diag(LLoc, diag::err_typecheck_subscript_value)
+       << LHSExp->getSourceRange() << RHSExp->getSourceRange());
   }
   // C99 6.5.2.1p1
   if (!IndexExpr->getType()->isIntegerType() && !IndexExpr->isTypeDependent())
-    return ExprError(Diag(IndexExpr->getLocStart(),
-      diag::err_typecheck_subscript) << IndexExpr->getSourceRange());
+    return ExprError(Diag(LLoc, diag::err_typecheck_subscript_not_integer)
+                     << IndexExpr->getSourceRange());
 
   // C99 6.5.2.1p1: "shall have type "pointer to *object* type". Similarly,
   // C++ [expr.sub]p1: The type "T" shall be a completely-defined object 
@@ -4586,7 +4586,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         // FIXME: Leaks Res
         if (!Idx->isTypeDependent() && !Idx->getType()->isIntegerType())
           return ExprError(Diag(Idx->getLocStart(),
-                                diag::err_typecheck_subscript)
+                                diag::err_typecheck_subscript_not_integer)
             << Idx->getSourceRange());
 
         Res = new (Context) ArraySubscriptExpr(Res, Idx, AT->getElementType(),

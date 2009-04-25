@@ -946,8 +946,9 @@ def err_arithmetic_nonfragile_interface : Error<
 
 
 def err_typecheck_subscript_value : Error<
-  "subscripted value is neither array nor pointer">;
-def err_typecheck_subscript : Error<"array subscript is not an integer">;
+  "subscripted value is not an array, pointer, or vector">;
+def err_typecheck_subscript_not_integer : Error<
+  "array subscript is not an integer">;
 def err_subscript_function_type : Error<
   "subscript of pointer to function type %0">;
 def err_subscript_incomplete_type : Error<
