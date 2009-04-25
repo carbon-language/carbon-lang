@@ -1621,13 +1621,11 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
   } else if (const PointerType *PTy = LHSTy->getAsPointerType()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
-    // FIXME: need to deal with const...
     ResultType = PTy->getPointeeType();
   } else if (const PointerType *PTy = RHSTy->getAsPointerType()) {
      // Handle the uncommon case of "123[Ptr]".
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
-    // FIXME: need to deal with const...
     ResultType = PTy->getPointeeType();
   } else if (const VectorType *VTy = LHSTy->getAsVectorType()) {
     BaseExpr = LHSExp;    // vectors: V[123]
@@ -1635,6 +1633,30 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
+  } else if (LHSTy->isArrayType()) {
+    // If we see an array that wasn't promoted by
+    // DefaultFunctionArrayConversion, it must be an array that
+    // wasn't promoted because of the C90 rule that doesn't
+    // allow promoting non-lvalue arrays.  Warn, then
+    // force the promotion here.
+    Diag(LHSExp->getLocStart(), diag::ext_subscript_non_lvalue) <<
+        LHSExp->getSourceRange();
+    ImpCastExprToType(LHSExp, Context.getArrayDecayedType(LHSTy));
+    LHSTy = LHSExp->getType();
+
+    BaseExpr = LHSExp;
+    IndexExpr = RHSExp;
+    ResultType = LHSTy->getAsPointerType()->getPointeeType();
+  } else if (RHSTy->isArrayType()) {
+    // Same as previous, except for 123[f().a] case
+    Diag(RHSExp->getLocStart(), diag::ext_subscript_non_lvalue) <<
+        RHSExp->getSourceRange();
+    ImpCastExprToType(RHSExp, Context.getArrayDecayedType(RHSTy));
+    RHSTy = RHSExp->getType();
+
+    BaseExpr = RHSExp;
+    IndexExpr = LHSExp;
+    ResultType = RHSTy->getAsPointerType()->getPointeeType();
   } else {
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_value)
        << LHSExp->getSourceRange() << RHSExp->getSourceRange());

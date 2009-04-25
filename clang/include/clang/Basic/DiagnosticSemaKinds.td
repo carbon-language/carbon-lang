@@ -945,6 +945,8 @@ def err_arithmetic_nonfragile_interface : Error<
   "non-fragile ABI">;
 
 
+def ext_subscript_non_lvalue : Extension<
+  "ISO C90 does not allow subscripting non-lvalue array">;
 def err_typecheck_subscript_value : Error<
   "subscripted value is not an array, pointer, or vector">;
 def err_typecheck_subscript_not_integer : Error<
