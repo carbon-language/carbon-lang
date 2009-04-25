@@ -1282,8 +1282,7 @@ public:
     // the new IdentifierInfo.
     IdentifierInfo *II = KnownII;
     if (!II)
-      II = &Reader.getIdentifierTable().CreateIdentifierInfo(
-                                                 k.first, k.first + k.second);
+      II = &Reader.BuildIdentifierInfoInsidePCH((const unsigned char *)k.first);
     Reader.SetIdentifierInfo(ID, II);
 
     // Set or check the various bits in the IdentifierInfo structure.
@@ -2847,6 +2846,19 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   }
   
   return IdentifiersLoaded[ID - 1];
+}
+
+IdentifierInfo &
+PCHReader::BuildIdentifierInfoInsidePCH(const unsigned char *Str) {
+  // Allocate the object.
+  std::pair<IdentifierInfo,const unsigned char*> *Mem =
+    Alloc.Allocate<std::pair<IdentifierInfo,const unsigned char*> >();
+
+  // Build the IdentifierInfo itself.
+  Mem->second = Str;
+  assert(Str[0] != '\0');
+  IdentifierInfo *II = new ((void*) Mem) IdentifierInfo();
+  return *II;
 }
 
 Selector PCHReader::DecodeSelector(unsigned ID) {

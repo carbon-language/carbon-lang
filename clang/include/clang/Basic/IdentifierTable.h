@@ -293,34 +293,6 @@ public:
     return *II;
   }
   
-  /// \brief Creates a new IdentifierInfo from the given string.
-  ///
-  /// This is a lower-level version of get() that requires that this
-  /// identifier not be known previously and that does not consult an
-  /// external source for identifiers. In particular, external
-  /// identifier sources can use this routine to build IdentifierInfo
-  /// nodes and then introduce additional information about those
-  /// identifiers.
-  IdentifierInfo &CreateIdentifierInfo(const char *NameStart, 
-                                       const char *NameEnd) {
-    llvm::StringMapEntry<IdentifierInfo*> &Entry =
-      HashTable.GetOrCreateValue(NameStart, NameEnd);
-    
-    IdentifierInfo *II = Entry.getValue();
-    assert(!II && "IdentifierInfo already exists");
-    
-    // Lookups failed, make a new IdentifierInfo.
-    void *Mem = getAllocator().Allocate<IdentifierInfo>();
-    II = new (Mem) IdentifierInfo();
-    Entry.setValue(II);
-
-    // Make sure getName() knows how to find the IdentifierInfo
-    // contents.
-    II->Entry = &Entry;
-
-    return *II;
-  }
-
   IdentifierInfo &get(const char *Name) {
     return get(Name, Name+strlen(Name));
   }
