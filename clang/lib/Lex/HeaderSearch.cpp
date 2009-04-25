@@ -20,10 +20,23 @@
 #include <cstdio>
 using namespace clang;
 
+const IdentifierInfo *
+HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
+  if (ControllingMacro)
+    return ControllingMacro;
+
+  if (!ControllingMacroID || !External)
+    return 0;
+
+  ControllingMacro = External->GetIdentifier(ControllingMacroID);
+  return ControllingMacro;
+}
+
 HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
   SystemDirIdx = 0;
   NoCurDirSearch = false;
-  
+ 
+  ExternalLookup = 0;
   NumIncluded = 0;
   NumMultiIncludeFileOptzn = 0;
   NumFrameworkLookups = NumSubFrameworkLookups = 0;
@@ -417,11 +430,12 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
   
   // Next, check to see if the file is wrapped with #ifndef guards.  If so, and
   // if the macro that guards it is defined, we know the #include has no effect.
-  if (FileInfo.ControllingMacro &&
-      FileInfo.ControllingMacro->hasMacroDefinition()) {
-    ++NumMultiIncludeFileOptzn;
-    return false;
-  }
+  if (const IdentifierInfo *ControllingMacro 
+      = FileInfo.getControllingMacro(ExternalLookup))
+    if (ControllingMacro->hasMacroDefinition()) {
+      ++NumMultiIncludeFileOptzn;
+      return false;
+    }
   
   // Increment the number of times this file has been included.
   ++FileInfo.NumIncludes;

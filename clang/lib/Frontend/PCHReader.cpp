@@ -1717,7 +1717,7 @@ bool PCHReader::ReadPreprocessorBlock() {
       HFI.isImport = Record[0];
       HFI.DirInfo = Record[1];
       HFI.NumIncludes = Record[2];
-      HFI.ControllingMacro = DecodeIdentifierInfo(Record[3]);
+      HFI.ControllingMacroID = Record[3];
       PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
       break;
     }
@@ -1854,6 +1854,7 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
       }
       IdentifierOffsets = (const uint32_t *)BlobStart;
       IdentifiersLoaded.resize(Record[0]);
+      PP.getHeaderSearchInfo().SetExternalLookup(this);
       break;
 
     case pch::EXTERNAL_DEFINITIONS:

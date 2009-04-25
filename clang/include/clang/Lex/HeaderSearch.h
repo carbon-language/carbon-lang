@@ -19,6 +19,8 @@
 #include <vector>
 
 namespace clang {
+
+class ExternalIdentifierLookup;
 class FileEntry;
 class FileManager;
 class IdentifierInfo;
@@ -42,10 +44,27 @@ struct HeaderFileInfo {
   /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
   /// that protects the entire contents of the file, this is the identifier
   /// for the macro that controls whether or not it has any effect.
+  ///
+  /// Note: Most clients should use getControllingMacro() to access
+  /// the controlling macro of this header, since
+  /// getControllingMacro() is able to load a controlling macro from
+  /// external storage.
   const IdentifierInfo *ControllingMacro;
-  
-  HeaderFileInfo() : isImport(false), DirInfo(SrcMgr::C_User),
-    NumIncludes(0), ControllingMacro(0) {}
+
+  /// \brief The ID number of the controlling macro. 
+  ///
+  /// This ID number will be non-zero when there is a controlling
+  /// macro whose IdentifierInfo may not yet have been loaded from
+  /// external storage.
+  unsigned ControllingMacroID;
+
+  HeaderFileInfo() 
+    : isImport(false), DirInfo(SrcMgr::C_User),
+      NumIncludes(0), ControllingMacro(0), ControllingMacroID(0) {}
+
+  /// \brief Retrieve the controlling macro for this header file, if
+  /// any.
+  const IdentifierInfo *getControllingMacro(ExternalIdentifierLookup *External);
 };
 
 /// HeaderSearch - This class encapsulates the information needed to find the
@@ -84,7 +103,11 @@ class HeaderSearch {
   /// HeaderMaps - This is a mapping from FileEntry -> HeaderMap, uniquing 
   /// headermaps.  This vector owns the headermap.
   std::vector<std::pair<const FileEntry*, const HeaderMap*> > HeaderMaps;
-  
+
+  /// \brief Entity used to resolve the identifier IDs of controlling
+  /// macros into IdentifierInfo pointers, as needed.
+  ExternalIdentifierLookup *ExternalLookup;
+
   // Various statistics we track for performance analysis.
   unsigned NumIncluded;
   unsigned NumMultiIncludeFileOptzn;
@@ -115,6 +138,10 @@ public:
     FileInfo.clear();
   }
   
+  void SetExternalLookup(ExternalIdentifierLookup *EIL) {
+    ExternalLookup = EIL;
+  }
+
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
   /// a <> reference.  If successful, this returns 'UsedDir', the

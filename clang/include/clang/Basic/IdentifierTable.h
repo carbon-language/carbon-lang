@@ -234,7 +234,20 @@ public:
   ///  be found.
   virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd) = 0;
 };  
-  
+
+/// \brief An abstract class used to resolve numerical identifier
+/// references (meaningful only to some external source) into
+/// IdentifierInfo pointers.
+class ExternalIdentifierLookup {
+public:
+  virtual ~ExternalIdentifierLookup();
+
+  /// \brief Return the identifier associated with the given ID number.
+  ///
+  /// The ID 0 is associated with the NULL identifier.
+  virtual IdentifierInfo *GetIdentifier(unsigned ID) = 0;
+};
+
 /// IdentifierTable - This table implements an efficient mapping from strings to
 /// IdentifierInfo nodes.  It has no other purpose, but this is an
 /// extremely performance-critical piece of the code, as each occurrance of

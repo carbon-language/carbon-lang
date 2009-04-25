@@ -64,7 +64,10 @@ class SwitchCase;
 /// The PCH reader provides lazy de-serialization of declarations, as
 /// required when traversing the AST. Only those AST nodes that are
 /// actually required will be de-serialized.
-class PCHReader : public ExternalSemaSource, public IdentifierInfoLookup {
+class PCHReader 
+  : public ExternalSemaSource, 
+    public IdentifierInfoLookup,
+    public ExternalIdentifierLookup {
 public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
 
@@ -371,6 +374,10 @@ public:
     return DecodeIdentifierInfo(Record[Idx++]);
   }
   
+  virtual IdentifierInfo *GetIdentifier(unsigned ID) {
+    return DecodeIdentifierInfo(ID);
+  }
+
   Selector DecodeSelector(unsigned Idx);
   
   Selector GetSelector(const RecordData &Record, unsigned &Idx) {
