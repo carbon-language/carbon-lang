@@ -432,7 +432,7 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
 
 
 /// getNumParams - Return the number of parameters this function must have
-/// based on its functiontype.  This is the length of the PararmInfo array
+/// based on its FunctionType.  This is the length of the PararmInfo array
 /// after it has been created.
 unsigned FunctionDecl::getNumParams() const {
   const FunctionType *FT = getType()->getAsFunctionType();
@@ -445,8 +445,7 @@ unsigned FunctionDecl::getNumParams() const {
 void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
                              unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
-  assert(NumParams == getNumParams() &&
-         "Parameter count mismatch!");
+  assert(NumParams == getNumParams() && "Parameter count mismatch!");
   
   // Zero params -> null pointer.
   if (NumParams) {

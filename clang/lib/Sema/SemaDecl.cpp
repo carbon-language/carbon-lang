@@ -2122,15 +2122,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                                         SE->getByteLength())));
   }
 
-  // Copy the parameter declarations from the declarator D to
-  // the function declaration NewFD, if they are available.
+  // Copy the parameter declarations from the declarator D to the function
+  // declaration NewFD, if they are available.  First scavenge them into Params.
+  llvm::SmallVector<ParmVarDecl*, 16> Params;
   if (D.getNumTypeObjects() > 0) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
 
-    // Create Decl objects for each parameter, adding them to the
-    // FunctionDecl.
-    llvm::SmallVector<ParmVarDecl*, 16> Params;
-  
     // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
     // function that takes no arguments, not a function that takes a
     // single void argument.
@@ -2139,7 +2136,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
         FTI.ArgInfo[0].Param &&
         FTI.ArgInfo[0].Param.getAs<ParmVarDecl>()->getType()->isVoidType()) {
-      // empty arg list, don't push any params.
+      // Empty arg list, don't push any params.
       ParmVarDecl *Param = FTI.ArgInfo[0].Param.getAs<ParmVarDecl>();
 
       // In C++, the empty parameter-type-list must be spelled "void"; a
@@ -2147,12 +2144,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       if (getLangOptions().CPlusPlus &&
           Param->getType().getUnqualifiedType() != Context.VoidTy)
         Diag(Param->getLocation(), diag::err_param_typedef_of_void);
+      // FIXME: Leaks decl?
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
         Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
     }
   
-    NewFD->setParams(Context, &Params[0], Params.size());
   } else if (const FunctionProtoType *FT = R->getAsFunctionProtoType()) {
     // When we're declaring a function with a typedef, typeof, etc as in the
     // following example, we'll need to synthesize (unnamed)
@@ -2164,7 +2161,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // @endcode
     
     // Synthesize a parameter for each argument type.
-    llvm::SmallVector<ParmVarDecl*, 16> Params;
     for (FunctionProtoType::arg_type_iterator AI = FT->arg_type_begin(),
          AE = FT->arg_type_end(); AI != AE; ++AI) {
       ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
@@ -2173,9 +2169,31 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       Param->setImplicit();
       Params.push_back(Param);
     }
-
-    NewFD->setParams(Context, &Params[0], Params.size());
   }
+  
+  // If NewFD is invalid, then the Params list may not have the right number of
+  // decls for this FunctionDecl.  Because we want the AST to be as correct as
+  // possible, "fix" these problems by removing or adding params as needed.
+  if (NewFD->isInvalidDecl()) {
+    unsigned NumNeededParams = NewFD->getNumParams();
+    while (NumNeededParams > Params.size()) {
+      ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
+                                               SourceLocation(), 0,
+                                               Context.IntTy, VarDecl::None, 0);
+      Param->setImplicit();
+      Param->setInvalidDecl();
+      Params.push_back(Param);
+    }
+    
+    while (NumNeededParams < Params.size()) {
+      Params.pop_back();
+      // FIXME: Don't leak the decl.
+    }
+  }
+  
+  // Finally, we know we have the right number of parameters, install them.
+  NewFD->setParams(Context, &Params[0], Params.size());
+  
     
   // If name lookup finds a previous declaration that is not in the
   // same scope as the new declaration, this may still be an

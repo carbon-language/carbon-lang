@@ -79,4 +79,7 @@ inline foo_t invalid_type() {  // expected-error {{unknown type name 'foo_t'}}
 typedef void fn_t(void);
 fn_t t17;
 
+// PR4049
+unknown_type t18(void*) {   // expected-error {{unknown type name 'unknown_type'}}
+}
 
