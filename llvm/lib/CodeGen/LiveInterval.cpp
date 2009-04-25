@@ -577,6 +577,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
   if (Clobbers.empty()) return;
   
   DenseMap<VNInfo*, VNInfo*> ValNoMaps;
+  VNInfo *UnusedValNo = 0;
   iterator IP = begin();
   for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
     // For every val# in the Clobbers interval, create a new "unknown" val#.
@@ -584,8 +585,10 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
     DenseMap<VNInfo*, VNInfo*>::iterator VI = ValNoMaps.find(I->valno);
     if (VI != ValNoMaps.end())
       ClobberValNo = VI->second;
+    else if (UnusedValNo)
+      ClobberValNo = UnusedValNo;
     else {
-      ClobberValNo = getNextValue(~0U, 0, VNInfoAllocator);
+      UnusedValNo = ClobberValNo = getNextValue(~0U, 0, VNInfoAllocator);
       ValNoMaps.insert(std::make_pair(I->valno, ClobberValNo));
     }
 
@@ -623,6 +626,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
       // Insert the clobber interval.
       IP = addRangeFrom(LiveRange(SubRangeStart, SubRangeEnd, ClobberValNo),
                         IP);
+      UnusedValNo = 0;
     }
   }
 }
