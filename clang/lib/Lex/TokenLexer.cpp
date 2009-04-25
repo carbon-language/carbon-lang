@@ -311,7 +311,7 @@ void TokenLexer::Lex(Token &Tok) {
   bool TokenIsFromPaste = false;
   
   // If this token is followed by a token paste (##) operator, paste the tokens!
-  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash))
+  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash)) {
     if (PasteTokens(Tok)) {
       // When handling the microsoft /##/ extension, the final token is
       // returned by PasteTokens, not the pasted token.
@@ -319,7 +319,7 @@ void TokenLexer::Lex(Token &Tok) {
     } else {
       TokenIsFromPaste = true;
     }
-      
+  }   
 
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any

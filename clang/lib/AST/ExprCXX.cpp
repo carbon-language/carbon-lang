@@ -268,7 +268,7 @@ void CXXConstructExpr::Destroy(ASTContext &C) {
 }
 
 CXXDestroyExpr *CXXDestroyExpr::Create(ASTContext &C, VarDecl *vd) {
-  assert(vd->getKind() == Decl::CXXTempVar || vd->getKind() == Decl::Var &&
+  assert((vd->getKind() == Decl::CXXTempVar || vd->getKind() == Decl::Var) &&
          "Can only create a destroy expr with a temp var decl or a var decl!");
 
   return new (C) CXXDestroyExpr(vd, C.VoidTy);
