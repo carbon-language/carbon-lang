@@ -1802,21 +1802,21 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
       break;
 
     case pch::TYPE_OFFSET:
-      if (!TypeOffsets.empty()) {
+      if (!TypesLoaded.empty()) {
         Error("Duplicate TYPE_OFFSET record in PCH file");
         return Failure;
       }
-      TypeOffsets.swap(Record);
-      TypeAlreadyLoaded.resize(TypeOffsets.size(), false);
+      TypeOffsets = (const uint64_t *)BlobStart;
+      TypesLoaded.resize(Record[0]);
       break;
 
     case pch::DECL_OFFSET:
-      if (!DeclOffsets.empty()) {
+      if (!DeclsLoaded.empty()) {
         Error("Duplicate DECL_OFFSET record in PCH file");
         return Failure;
       }
-      DeclOffsets.swap(Record);
-      DeclAlreadyLoaded.resize(DeclOffsets.size(), false);
+      DeclOffsets = (const uint64_t *)BlobStart;
+      DeclsLoaded.resize(Record[0]);
       break;
 
     case pch::LANGUAGE_OPTIONS:
@@ -2340,9 +2340,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 /// so that future GetDecl calls will return this declaration rather
 /// than trying to load a new declaration.
 inline void PCHReader::LoadedDecl(unsigned Index, Decl *D) {
-  assert(!DeclAlreadyLoaded[Index] && "Decl loaded twice?");
-  DeclAlreadyLoaded[Index] = true;
-  DeclOffsets[Index] = reinterpret_cast<uint64_t>(D);
+  assert(!DeclsLoaded[Index] && "Decl loaded twice?");
+  DeclsLoaded[Index] = D;
 }
 
 /// \brief Determine whether the consumer will be interested in seeing
@@ -2591,27 +2590,26 @@ QualType PCHReader::GetType(pch::TypeID ID) {
   }
 
   Index -= pch::NUM_PREDEF_TYPE_IDS;
-  if (!TypeAlreadyLoaded[Index]) {
-    // Load the type from the PCH file.
-    TypeOffsets[Index] = reinterpret_cast<uint64_t>(
-                             ReadTypeRecord(TypeOffsets[Index]).getTypePtr());
-    TypeAlreadyLoaded[Index] = true;
-  }
+  if (!TypesLoaded[Index])
+    TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]).getTypePtr();
     
-  return QualType(reinterpret_cast<Type *>(TypeOffsets[Index]), Quals);
+  return QualType(TypesLoaded[Index], Quals);
 }
 
 Decl *PCHReader::GetDecl(pch::DeclID ID) {
   if (ID == 0)
     return 0;
 
-  unsigned Index = ID - 1;
-  assert(Index < DeclAlreadyLoaded.size() && "Declaration ID out of range");
-  if (DeclAlreadyLoaded[Index])
-    return reinterpret_cast<Decl *>(DeclOffsets[Index]);
+  if (ID > DeclsLoaded.size()) {
+    Error("Declaration ID out-of-range for PCH file");
+    return 0;
+  }
 
-  // Load the declaration from the PCH file.
-  return ReadDeclRecord(DeclOffsets[Index], Index);
+  unsigned Index = ID - 1;
+  if (!DeclsLoaded[Index])
+    ReadDeclRecord(DeclOffsets[Index], Index);
+
+  return DeclsLoaded[Index];
 }
 
 Stmt *PCHReader::GetStmt(uint64_t Offset) {
@@ -2712,12 +2710,12 @@ void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
 void PCHReader::PrintStats() {
   std::fprintf(stderr, "*** PCH Statistics:\n");
 
-  unsigned NumTypesLoaded = std::count(TypeAlreadyLoaded.begin(),
-                                       TypeAlreadyLoaded.end(),
-                                       true);
-  unsigned NumDeclsLoaded = std::count(DeclAlreadyLoaded.begin(),
-                                       DeclAlreadyLoaded.end(),
-                                       true);
+  unsigned NumTypesLoaded = 
+    TypesLoaded.size() - std::count(TypesLoaded.begin(), TypesLoaded.end(),
+                                    (Type *)0);
+  unsigned NumDeclsLoaded = 
+    DeclsLoaded.size() - std::count(DeclsLoaded.begin(), DeclsLoaded.end(),
+                                    (Decl *)0);
   unsigned NumIdentifiersLoaded = 0;
   for (unsigned I = 0; I < IdentifierData.size(); ++I) {
     if ((IdentifierData[I] & 0x01) == 0)
@@ -2729,14 +2727,14 @@ void PCHReader::PrintStats() {
       ++NumSelectorsLoaded;
   }
 
-  if (!TypeAlreadyLoaded.empty())
+  if (!TypesLoaded.empty())
     std::fprintf(stderr, "  %u/%u types read (%f%%)\n",
-                 NumTypesLoaded, (unsigned)TypeAlreadyLoaded.size(),
-                 ((float)NumTypesLoaded/TypeAlreadyLoaded.size() * 100));
-  if (!DeclAlreadyLoaded.empty())
+                 NumTypesLoaded, (unsigned)TypesLoaded.size(),
+                 ((float)NumTypesLoaded/TypesLoaded.size() * 100));
+  if (!DeclsLoaded.empty())
     std::fprintf(stderr, "  %u/%u declarations read (%f%%)\n",
-                 NumDeclsLoaded, (unsigned)DeclAlreadyLoaded.size(),
-                 ((float)NumDeclsLoaded/DeclAlreadyLoaded.size() * 100));
+                 NumDeclsLoaded, (unsigned)DeclsLoaded.size(),
+                 ((float)NumDeclsLoaded/DeclsLoaded.size() * 100));
   if (!IdentifierData.empty())
     std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
                  NumIdentifiersLoaded, (unsigned)IdentifierData.size(),

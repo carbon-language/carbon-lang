@@ -94,32 +94,23 @@ private:
 
   /// \brief Offset of each type within the bitstream, indexed by the
   /// type ID, or the representation of a Type*.
-  llvm::SmallVector<uint64_t, 16> TypeOffsets;
+  const uint64_t *TypeOffsets;
 
-  /// \brief Whether the type with a given index has already been loaded.
+  /// \brief Types that have already been loaded from the PCH file.
   /// 
-  /// When the bit at a given index I is true, then TypeOffsets[I] is
-  /// the already-loaded Type*. Otherwise, TypeOffsets[I] is the
-  /// location of the type's record in the PCH file.
-  ///
-  /// FIXME: We can probably eliminate this, e.g., by bitmangling the
-  /// values in TypeOffsets.
-  std::vector<bool> TypeAlreadyLoaded;
+  /// When the pointer at index I is non-NULL, the type with 
+  /// ID = (I + 1) << 3 has already been loaded from the PCH file.
+  std::vector<Type *> TypesLoaded;
 
   /// \brief Offset of each declaration within the bitstream, indexed
-  /// by the declaration ID.
-  llvm::SmallVector<uint64_t, 16> DeclOffsets;
+  /// by the declaration ID (-1).
+  const uint64_t *DeclOffsets;
 
-  /// \brief Whether the declaration with a given index has already
-  /// been loaded.
+  /// \brief Declarations that have already been loaded from the PCH file.
   ///
-  /// When the bit at the given index I is true, then DeclOffsets[I]
-  /// is the already-loaded Decl*. Otherwise, DeclOffsets[I] is the
-  /// location of the declaration's record in the PCH file.
-  ///
-  /// FIXME: We can probably eliminate this, e.g., by bitmangling the
-  /// values in DeclOffsets.
-  std::vector<bool> DeclAlreadyLoaded;
+  /// When the pointer at index I is non-NULL, the declaration with ID
+  /// = I + 1 has already been loaded.
+  std::vector<Decl *> DeclsLoaded;
 
   typedef llvm::DenseMap<const DeclContext *, std::pair<uint64_t, uint64_t> >
     DeclContextOffsetsMap;

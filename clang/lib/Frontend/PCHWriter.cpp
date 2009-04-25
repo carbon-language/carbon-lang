@@ -2270,6 +2270,8 @@ PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
     NumVisibleDeclContexts(0) { }
 
 void PCHWriter::WritePCH(Sema &SemaRef) {
+  using namespace llvm;
+
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
 
@@ -2315,7 +2317,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
 
   // Write the remaining PCH contents.
   RecordData Record;
-  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 3);
+  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
   WriteTargetTriple(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
   WriteSourceManagerBlock(Context.getSourceManager());
@@ -2324,8 +2326,32 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   WriteDeclsBlock(Context);
   WriteMethodPool(SemaRef);
   WriteIdentifierTable(PP);
-  Stream.EmitRecord(pch::TYPE_OFFSET, TypeOffsets);
-  Stream.EmitRecord(pch::DECL_OFFSET, DeclOffsets);
+
+  // Write the type offsets array
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::TYPE_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of types
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // types block
+  unsigned TypeOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+  Record.clear();
+  Record.push_back(pch::TYPE_OFFSET);
+  Record.push_back(TypeOffsets.size());
+  Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record,
+                            (const char *)&TypeOffsets.front(), 
+                            TypeOffsets.size() * sizeof(uint64_t));
+  
+  // Write the declaration offsets array
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::DECL_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of declarations
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // declarations block
+  unsigned DeclOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+  Record.clear();
+  Record.push_back(pch::DECL_OFFSET);
+  Record.push_back(DeclOffsets.size());
+  Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
+                            (const char *)&DeclOffsets.front(), 
+                            DeclOffsets.size() * sizeof(uint64_t));
 
   // Write the record of special types.
   Record.clear();
