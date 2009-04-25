@@ -672,6 +672,7 @@ namespace {
     void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *E);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *E);
+    void VisitObjCMessageExpr(ObjCMessageExpr *E);
   };
 }
 
@@ -1196,6 +1197,21 @@ void PCHStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   Writer.AddSourceLocation(E->getAtLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_OBJC_PROTOCOL_EXPR;
+}
+
+void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumArgs());
+  Writer.AddSourceLocation(E->getSourceRange().getBegin(), Record);
+  Writer.AddSourceLocation(E->getSourceRange().getEnd(), Record);
+  Writer.AddSelectorRef(E->getSelector(), Record);
+  Writer.AddDeclRef(E->getMethodDecl(), Record); // optional
+  // FIXME: deal with class messages.
+  Writer.WriteSubStmt(E->getReceiver());
+  for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
+       Arg != ArgEnd; ++Arg)
+    Writer.WriteSubStmt(*Arg);
+  Code = pch::EXPR_OBJC_MESSAGE_EXPR;
 }
 
 

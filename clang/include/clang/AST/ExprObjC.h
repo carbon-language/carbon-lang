@@ -357,6 +357,9 @@ public:
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
+                  
+  explicit ObjCMessageExpr(EmptyShell Empty)
+    : Expr(ObjCMessageExprClass, Empty) {}
   
   ~ObjCMessageExpr() {
     delete [] SubExprs;
@@ -373,12 +376,15 @@ public:
   const Expr *getReceiver() const {
     return const_cast<ObjCMessageExpr*>(this)->getReceiver();
   }
-  
+  // FIXME: need setters for different receiver types.
+  void setReceiver(Expr *rec) { SubExprs[RECEIVER] = rec; }
   Selector getSelector() const { return SelName; }
-
+  void setSelector(Selector S) { SelName = S; }
+  
   const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
   ObjCMethodDecl *getMethodDecl() { return MethodProto; }
-
+  void setMethodDecl(ObjCMethodDecl *MD) { MethodProto = MD; }
+  
   typedef std::pair<ObjCInterfaceDecl*, IdentifierInfo*> ClassInfo;
   
   /// getClassInfo - For class methods, this returns both the ObjCInterfaceDecl*
@@ -396,7 +402,8 @@ public:
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return NumArgs; }
-
+  void setNumArgs(unsigned nArgs) { NumArgs = nArgs; }
+  
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
@@ -412,6 +419,10 @@ public:
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
 
+  void setSourceRange(SourceRange R) {
+    LBracloc = R.getBegin();
+    RBracloc = R.getEnd();
+  }
   virtual SourceRange getSourceRange() const {
     return SourceRange(LBracloc, RBracloc);
   }

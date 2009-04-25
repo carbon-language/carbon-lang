@@ -497,6 +497,7 @@ namespace {
     unsigned VisitObjCEncodeExpr(ObjCEncodeExpr *E);
     unsigned VisitObjCSelectorExpr(ObjCSelectorExpr *E);
     unsigned VisitObjCProtocolExpr(ObjCProtocolExpr *E);
+    unsigned VisitObjCMessageExpr(ObjCMessageExpr *E);
   };
 }
 
@@ -1078,6 +1079,21 @@ unsigned PCHStmtReader::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
+}
+
+unsigned PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
+  VisitExpr(E);
+  E->setNumArgs(Record[Idx++]);
+  SourceRange SR(SourceLocation::getFromRawEncoding(Record[Idx++]),
+                 SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setSourceRange(SR);
+  E->setSelector(Reader.GetSelector(Record, Idx));
+  E->setMethodDecl(cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  // FIXME: deal with class messages.
+  E->setReceiver(cast<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
+    E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
+  return E->getNumArgs() + 1;
 }
 
 
@@ -3367,6 +3383,9 @@ Stmt *PCHReader::ReadStmt() {
       break;
     case pch::EXPR_OBJC_PROTOCOL_EXPR:
       S = new (Context) ObjCProtocolExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_MESSAGE_EXPR:
+      S = new (Context) ObjCMessageExpr(Empty);
       break;
     }
 
