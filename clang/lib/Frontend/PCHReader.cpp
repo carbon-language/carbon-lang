@@ -1245,8 +1245,8 @@ public:
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d) {
     using namespace clang::io;
-    unsigned KeyLen = ReadUnalignedLE16(d);
     unsigned DataLen = ReadUnalignedLE16(d);
+    unsigned KeyLen = ReadUnalignedLE16(d);
     return std::make_pair(KeyLen, DataLen);
   }
     
