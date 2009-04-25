@@ -1617,6 +1617,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_noinline:    HandleNoinlineAttr  (D, Attr, S); break;
   case AttributeList::AT_regparm:     HandleRegparmAttr   (D, Attr, S); break;
   case AttributeList::IgnoredAttribute: 
+  case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
     // Just ignore
     break;
   default:

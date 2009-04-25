@@ -70,6 +70,7 @@ public:
     AT_mode,
     AT_nodebug,
     AT_noinline,
+    AT_no_instrument_function,
     AT_nonnull,
     AT_noreturn,
     AT_nothrow,
