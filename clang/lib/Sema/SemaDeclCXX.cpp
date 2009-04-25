@@ -1266,13 +1266,12 @@ void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
 /// CheckConstructorDeclarator - Called by ActOnDeclarator to check
 /// the well-formedness of the constructor declarator @p D with type @p
 /// R. If there are any errors in the declarator, this routine will
-/// emit diagnostics and return true. Otherwise, it will return
-/// false. Either way, the type @p R will be updated to reflect a
-/// well-formed type for the constructor.
-bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
-                                      FunctionDecl::StorageClass& SC) {
+/// emit diagnostics and set the invalid bit to true.  In any case, the type
+/// will be updated to reflect a well-formed type for the constructor and
+/// returned.
+QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
+                                          FunctionDecl::StorageClass &SC) {
   bool isVirtual = D.getDeclSpec().isVirtualSpecified();
-  bool isInvalid = false;
 
   // C++ [class.ctor]p3:
   //   A constructor shall not be virtual (10.3) or static (9.4). A
@@ -1280,19 +1279,21 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
   //   volatile object. A constructor shall not be declared const,
   //   volatile, or const volatile (9.3.2).
   if (isVirtual) {
-    Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
-      << "virtual" << SourceRange(D.getDeclSpec().getVirtualSpecLoc())
-      << SourceRange(D.getIdentifierLoc());
-    isInvalid = true;
+    if (!D.isInvalidType())
+      Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
+        << "virtual" << SourceRange(D.getDeclSpec().getVirtualSpecLoc())
+        << SourceRange(D.getIdentifierLoc());
+    D.setInvalidType();
   }
   if (SC == FunctionDecl::Static) {
-    Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
-      << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
-      << SourceRange(D.getIdentifierLoc());
-    isInvalid = true;
+    if (!D.isInvalidType())
+      Diag(D.getIdentifierLoc(), diag::err_constructor_cannot_be)
+        << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+        << SourceRange(D.getIdentifierLoc());
+    D.setInvalidType();
     SC = FunctionDecl::None;
   }
-  if (D.getDeclSpec().hasTypeSpecifier()) {
+  if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Constructors don't have return types, but the parser will
     // happily parse something like:
     //
@@ -1304,9 +1305,10 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
     Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
       << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
       << SourceRange(D.getIdentifierLoc());
-  } 
-  if (R->getAsFunctionProtoType()->getTypeQuals() != 0) {
-    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  }
+  
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  if (FTI.TypeQuals != 0) {
     if (FTI.TypeQuals & QualType::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
         << "const" << SourceRange(D.getIdentifierLoc());
@@ -1324,12 +1326,9 @@ bool Sema::CheckConstructorDeclarator(Declarator &D, QualType &R,
   // *always* have to do this, because GetTypeForDeclarator will
   // put in a result type of "int" when none was specified.
   const FunctionProtoType *Proto = R->getAsFunctionProtoType();
-  R = Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
-                              Proto->getNumArgs(),
-                              Proto->isVariadic(),
-                              0);
-
-  return isInvalid;
+  return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
+                                 Proto->getNumArgs(),
+                                 Proto->isVariadic(), 0);
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -1371,23 +1370,21 @@ bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
 /// CheckDestructorDeclarator - Called by ActOnDeclarator to check
 /// the well-formednes of the destructor declarator @p D with type @p
 /// R. If there are any errors in the declarator, this routine will
-/// emit diagnostics and return true. Otherwise, it will return
-/// false. Either way, the type @p R will be updated to reflect a
-/// well-formed type for the destructor.
-bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
-                                     FunctionDecl::StorageClass& SC) {
-  bool isInvalid = false;
-
+/// emit diagnostics and set the declarator to invalid.  Even if this happens,
+/// will be updated to reflect a well-formed type for the destructor and
+/// returned.
+QualType Sema::CheckDestructorDeclarator(Declarator &D,
+                                         FunctionDecl::StorageClass& SC) {
   // C++ [class.dtor]p1:
   //   [...] A typedef-name that names a class is a class-name
   //   (7.1.3); however, a typedef-name that names a class shall not
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
   QualType DeclaratorType = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
-  if (DeclaratorType->getAsTypedefType()) {
-    Diag(D.getIdentifierLoc(),  diag::err_destructor_typedef_name)
+  if (isa<TypedefType>(DeclaratorType)) {
+    Diag(D.getIdentifierLoc(), diag::err_destructor_typedef_name)
       << DeclaratorType;
-    isInvalid = true;
+    D.setInvalidType();
   }
 
   // C++ [class.dtor]p2:
@@ -1399,13 +1396,14 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
   //   volatile object. A destructor shall not be declared const,
   //   volatile or const volatile (9.3.2).
   if (SC == FunctionDecl::Static) {
-    Diag(D.getIdentifierLoc(), diag::err_destructor_cannot_be)
-      << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
-      << SourceRange(D.getIdentifierLoc());
-    isInvalid = true;
+    if (!D.isInvalidType())
+      Diag(D.getIdentifierLoc(), diag::err_destructor_cannot_be)
+        << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+        << SourceRange(D.getIdentifierLoc());
     SC = FunctionDecl::None;
+    D.setInvalidType();
   }
-  if (D.getDeclSpec().hasTypeSpecifier()) {
+  if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Destructors don't have return types, but the parser will
     // happily parse something like:
     //
@@ -1418,8 +1416,9 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
       << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
       << SourceRange(D.getIdentifierLoc());
   }
-  if (R->getAsFunctionProtoType()->getTypeQuals() != 0) {
-    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  if (FTI.TypeQuals != 0 && !D.isInvalidType()) {
     if (FTI.TypeQuals & QualType::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
         << "const" << SourceRange(D.getIdentifierLoc());
@@ -1429,28 +1428,30 @@ bool Sema::CheckDestructorDeclarator(Declarator &D, QualType &R,
     if (FTI.TypeQuals & QualType::Restrict)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
         << "restrict" << SourceRange(D.getIdentifierLoc());
+    D.setInvalidType();
   }
 
   // Make sure we don't have any parameters.
-  if (R->getAsFunctionProtoType()->getNumArgs() > 0) {
+  if (FTI.NumArgs > 0) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
 
     // Delete the parameters.
-    D.getTypeObject(0).Fun.freeArgs();
+    FTI.freeArgs();
+    D.setInvalidType();
   }
 
   // Make sure the destructor isn't variadic.  
-  if (R->getAsFunctionProtoType()->isVariadic())
+  if (FTI.isVariadic) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_variadic);
+    D.setInvalidType();
+  }
 
   // Rebuild the function type "R" without any type qualifiers or
   // parameters (in case any of the errors above fired) and with
   // "void" as the return type, since destructors don't have return
   // types. We *always* have to do this, because GetTypeForDeclarator
   // will put in a result type of "int" when none was specified.
-  R = Context.getFunctionType(Context.VoidTy, 0, 0, false, 0);
-
-  return isInvalid;
+  return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0);
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the

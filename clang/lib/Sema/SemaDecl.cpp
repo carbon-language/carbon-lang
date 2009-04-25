@@ -1993,8 +1993,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     assert(DC->isRecord() &&
            "Constructors can only be declared in a member context");
 
-    if (!D.isInvalidType())
-      D.setInvalidType(CheckConstructorDeclarator(D, R, SC));
+    R = CheckConstructorDeclarator(D, R, SC);
 
     // Create the new declaration
     NewFD = CXXConstructorDecl::Create(Context, 
@@ -2005,8 +2004,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   } else if (D.getKind() == Declarator::DK_Destructor) {
     // This is a C++ destructor declaration.
     if (DC->isRecord()) {
-      if (!D.isInvalidType())
-        D.setInvalidType(CheckDestructorDeclarator(D, R, SC));
+      R = CheckDestructorDeclarator(D, SC);
       
       NewFD = CXXDestructorDecl::Create(Context,
                                         cast<CXXRecordDecl>(DC),

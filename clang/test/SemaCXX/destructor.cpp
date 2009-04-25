@@ -18,9 +18,13 @@ struct D {
   static void ~D(int, ...) const { } //                          \
     // expected-error{{type qualifier is not allowed on this function}} \
     // expected-error{{destructor cannot be declared 'static'}}  \
-    // expected-error{{destructor cannot have a return type}}    \
     // expected-error{{destructor cannot have any parameters}}   \
     // expected-error{{destructor cannot be variadic}}
+};
+
+struct D2 {
+  void ~D2() { } //                          \
+  // expected-error{{destructor cannot have a return type}}  
 };
 
 

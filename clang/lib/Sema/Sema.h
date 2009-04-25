@@ -1682,11 +1682,11 @@ public:
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr);
   
-  bool CheckConstructorDeclarator(Declarator &D, QualType &R,
-                                  FunctionDecl::StorageClass& SC);
+  QualType CheckConstructorDeclarator(Declarator &D, QualType R,
+                                      FunctionDecl::StorageClass& SC);
   bool CheckConstructor(CXXConstructorDecl *Constructor);
-  bool CheckDestructorDeclarator(Declarator &D, QualType &R,
-                                 FunctionDecl::StorageClass& SC);
+  QualType CheckDestructorDeclarator(Declarator &D,
+                                     FunctionDecl::StorageClass& SC);
   bool CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
