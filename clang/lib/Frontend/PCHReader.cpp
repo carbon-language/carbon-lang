@@ -1245,8 +1245,8 @@ public:
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d) {
     using namespace clang::io;
-    unsigned KeyLen = ReadUnalignedLE16(d);
     unsigned DataLen = ReadUnalignedLE16(d);
+    unsigned KeyLen = ReadUnalignedLE16(d);
     return std::make_pair(KeyLen, DataLen);
   }
     
@@ -2842,8 +2842,31 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   
   if (!IdentifiersLoaded[ID - 1]) {
     uint32_t Offset = IdentifierOffsets[ID - 1];
-    IdentifiersLoaded[ID - 1] 
-      = &Context.Idents.get(IdentifierTableData + Offset);
+
+    // If there is an identifier lookup table, but the offset of this
+    // string is after the identifier table itself, then we know that
+    // this string is not in the on-disk hash table. Therefore,
+    // disable lookup into the hash table when looking for this
+    // identifier.
+    PCHIdentifierLookupTable *IdTable 
+      = (PCHIdentifierLookupTable *)IdentifierLookupTable;
+    bool SkipHashTable = IdTable &&
+      Offset >= uint32_t(IdTable->getBuckets() - IdTable->getBase());
+
+    if (SkipHashTable)
+      PP.getIdentifierTable().setExternalIdentifierLookup(0);
+
+    // All of the strings in the PCH file are preceded by a 16-bit
+    // length. Extract that 16-bit length to avoid having to run
+    // strlen().
+    const char *Str = IdentifierTableData + Offset;
+    const char *StrLenPtr = Str - 2;
+    unsigned StrLen = (((unsigned) StrLenPtr[0])
+                       | (((unsigned) StrLenPtr[1]) << 8)) - 1;
+    IdentifiersLoaded[ID - 1] = &Context.Idents.get(Str, Str + StrLen);
+
+    if (SkipHashTable)
+      PP.getIdentifierTable().setExternalIdentifierLookup(this);
   }
   
   return IdentifiersLoaded[ID - 1];

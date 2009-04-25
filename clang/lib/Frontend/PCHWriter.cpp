@@ -2013,7 +2013,6 @@ public:
     EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II, 
                       pch::IdentID ID) {
     unsigned KeyLen = strlen(II->getName()) + 1;
-    clang::io::Emit16(Out, KeyLen);
     unsigned DataLen = 4 + 4; // 4 bytes for token ID, builtin, flags
                               // 4 bytes for the persistent ID
     if (II->hasMacroDefinition() && 
@@ -2023,7 +2022,13 @@ public:
                                    DEnd = IdentifierResolver::end();
          D != DEnd; ++D)
       DataLen += sizeof(pch::DeclID);
+    // We emit the key length after the data length so that the
+    // "uninteresting" identifiers following the identifier hash table
+    // structure will have the same (key length, key characters)
+    // layout as the keys in the hash table. This also matches the
+    // format for identifiers in pretokenized headers.
     clang::io::Emit16(Out, DataLen);
+    clang::io::Emit16(Out, KeyLen);
     return std::make_pair(KeyLen, DataLen);
   }
   
@@ -2083,12 +2088,33 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
   {
     OnDiskChainedHashTableGenerator<PCHIdentifierTableTrait> Generator;
     
+    llvm::SmallVector<const IdentifierInfo *, 32> UninterestingIdentifiers;
+
     // Create the on-disk hash table representation.
     for (llvm::DenseMap<const IdentifierInfo *, pch::IdentID>::iterator
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
-      Generator.insert(ID->first, ID->second);
+
+      // Classify each identifier as either "interesting" or "not
+      // interesting". Interesting identifiers are those that have
+      // additional information that needs to be read from the PCH
+      // file, e.g., a built-in ID, declaration chain, or macro
+      // definition. These identifiers are placed into the hash table
+      // so that they can be found when looked up in the user program.
+      // All other identifiers are "uninteresting", which means that
+      // the IdentifierInfo built by default has all of the
+      // information we care about. Such identifiers are placed after
+      // the hash table.
+      const IdentifierInfo *II = ID->first;
+      if (II->isPoisoned() ||
+          II->isExtensionToken() ||
+          II->hasMacroDefinition() ||
+          II->getObjCOrBuiltinID() ||
+          II->getFETokenInfo<void>())
+        Generator.insert(ID->first, ID->second);
+      else
+        UninterestingIdentifiers.push_back(II);
     }
 
     // Create the on-disk hash table in a buffer.
@@ -2100,6 +2126,14 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
       // Make sure that no bucket is at offset 0
       clang::io::Emit32(Out, 0);
       BucketOffset = Generator.Emit(Out, Trait);
+      
+      for (unsigned I = 0, N = UninterestingIdentifiers.size(); I != N; ++I) {
+        const IdentifierInfo *II = UninterestingIdentifiers[I];
+        unsigned N = II->getLength() + 1;
+        clang::io::Emit16(Out, N);
+        SetIdentifierOffset(II, Out.tell());
+        Out.write(II->getName(), N);
+      }
     }
 
     // Create a blob abbreviation
