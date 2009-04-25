@@ -298,8 +298,13 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   const ObjCInterfaceDecl *SuperClass = Class->getSuperClass();
   // TODO: This should be cached, not looked up every time.
   llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
-
-
+  if (IsClassMessage)
+  {
+    ReceiverClass = CGF.Builder.CreateBitCast(ReceiverClass, 
+      llvm::PointerType::getUnqual(IdTy));
+    ReceiverClass = CGF.Builder.CreateBitCast(CGF.Builder.CreateLoad(
+      ReceiverClass), IdTy);
+  }
   // Construct the structure used to look up the IMP
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(Receiver->getType(),
       IdTy, NULL);
@@ -850,25 +855,28 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   TheModule.addTypeName(".objc_imp", IMPTy);
 
   std::vector<llvm::Constant*> Elements;
+  llvm::Constant *Statics = NULLPtr;
   // Generate statics list:
-  llvm::ArrayType *StaticsArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
-      ConstantStrings.size() + 1);
-  ConstantStrings.push_back(NULLPtr);
-  Elements.push_back(MakeConstantString("NSConstantString",
-        ".objc_static_class_name"));
-  Elements.push_back(llvm::ConstantArray::get(StaticsArrayTy, ConstantStrings));
-  llvm::StructType *StaticsListTy = 
-    llvm::StructType::get(PtrToInt8Ty, StaticsArrayTy, NULL);
-  llvm::Type *StaticsListPtrTy = llvm::PointerType::getUnqual(StaticsListTy);
-  llvm::Constant *Statics = 
-    MakeGlobal(StaticsListTy, Elements, ".objc_statics");
-  llvm::ArrayType *StaticsListArrayTy =
-    llvm::ArrayType::get(StaticsListPtrTy, 2);
-  Elements.clear();
-  Elements.push_back(Statics);
-  Elements.push_back(llvm::Constant::getNullValue(StaticsListPtrTy));
-  Statics = MakeGlobal(StaticsListArrayTy, Elements, ".objc_statics_ptr");
-  Statics = llvm::ConstantExpr::getBitCast(Statics, PtrTy);
+  if (ConstantStrings.size()) {
+    llvm::ArrayType *StaticsArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
+        ConstantStrings.size() + 1);
+    ConstantStrings.push_back(NULLPtr);
+    Elements.push_back(MakeConstantString("NSConstantString",
+          ".objc_static_class_name"));
+    Elements.push_back(llvm::ConstantArray::get(StaticsArrayTy,
+       ConstantStrings));
+    llvm::StructType *StaticsListTy = 
+      llvm::StructType::get(PtrToInt8Ty, StaticsArrayTy, NULL);
+    llvm::Type *StaticsListPtrTy = llvm::PointerType::getUnqual(StaticsListTy);
+    Statics = MakeGlobal(StaticsListTy, Elements, ".objc_statics");
+    llvm::ArrayType *StaticsListArrayTy =
+      llvm::ArrayType::get(StaticsListPtrTy, 2);
+    Elements.clear();
+    Elements.push_back(Statics);
+    Elements.push_back(llvm::Constant::getNullValue(StaticsListPtrTy));
+    Statics = MakeGlobal(StaticsListArrayTy, Elements, ".objc_statics_ptr");
+    Statics = llvm::ConstantExpr::getBitCast(Statics, PtrTy);
+  }
   // Array of classes, categories, and constant objects
   llvm::ArrayType *ClassListTy = llvm::ArrayType::get(PtrToInt8Ty,
       Classes.size() + Categories.size()  + 2);
