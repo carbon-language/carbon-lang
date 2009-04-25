@@ -23,6 +23,7 @@ struct D {
     // expected-error{{destructor cannot be variadic}}
 };
 
+
 struct E;
 
 typedef E E_typedef;

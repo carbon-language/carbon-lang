@@ -1017,8 +1017,8 @@ public:
 
   OverloadedOperatorKind getOverloadedOperator() const { return OperatorKind; }
 
-  void setInvalidType(bool flag) { InvalidType = flag; }
-  bool getInvalidType() const { 
+  void setInvalidType(bool Val = true) { InvalidType = Val; }
+  bool isInvalidType() const { 
     return InvalidType || DS.getTypeSpecType() == DeclSpec::TST_error; 
   }
 

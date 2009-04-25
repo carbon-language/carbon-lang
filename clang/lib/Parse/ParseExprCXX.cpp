@@ -860,7 +860,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     }
     ParenTypeId = false;
   }
-  if (DeclaratorInfo.getInvalidType()) {
+  if (DeclaratorInfo.isInvalidType()) {
     SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
     return ExprError();
   }
@@ -938,7 +938,7 @@ bool Parser::ParseExpressionListOrTypeId(ExprListTy &PlacementArgs,
     ParseSpecifierQualifierList(D.getMutableDeclSpec());
     D.SetSourceRange(D.getDeclSpec().getSourceRange());
     ParseDeclarator(D);
-    return D.getInvalidType();
+    return D.isInvalidType();
   }
 
   // It's not a type, it has to be an expression list.

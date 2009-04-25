@@ -2547,7 +2547,7 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   QualType ExDeclType = GetTypeForDeclarator(D, S);
   SourceLocation Begin = D.getDeclSpec().getSourceRange().getBegin();
 
-  bool Invalid = false;
+  bool Invalid = D.isInvalidType();
 
   // Arrays and functions decay.
   if (ExDeclType->isArrayType())
@@ -2597,15 +2597,15 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
                                     II, ExDeclType, VarDecl::None, Begin);
-  if (D.getInvalidType() || Invalid)
-    ExDecl->setInvalidDecl();
-
-  if (D.getCXXScopeSpec().isSet()) {
+  if (D.getCXXScopeSpec().isSet() && !Invalid) {
     Diag(D.getIdentifierLoc(), diag::err_qualified_catch_declarator)
       << D.getCXXScopeSpec().getRange();
-    ExDecl->setInvalidDecl();
+    Invalid = true;
   }
 
+  if (Invalid)
+    ExDecl->setInvalidDecl();
+  
   // Add the exception declaration into this scope.
   S->AddDecl(DeclPtrTy::make(ExDecl));
   if (II)

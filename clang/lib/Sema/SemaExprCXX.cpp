@@ -243,7 +243,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   }
 
   QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, Skip);
-  if (D.getInvalidType())
+  if (D.isInvalidType())
     return ExprError();
 
   if (CheckAllocatedType(AllocType, D))

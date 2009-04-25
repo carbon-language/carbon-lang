@@ -124,9 +124,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // FIXME: In theory, we could have a previous declaration for
   // variables that are not static data members.
   bool Redeclaration = false;
-  if (SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration))
-    Var->setInvalidDecl();
-
+  SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration);
   Owner->addDecl(SemaRef.Context, Var);
 
   if (D->getInit()) {
@@ -322,9 +320,8 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     PrevDecl = 0;
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
-  if (SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
-                                       /*FIXME:*/OverloadableAttrRequired))
-    Method->setInvalidDecl();
+  SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
+                                   /*FIXME:*/OverloadableAttrRequired);
 
   if (!Method->isInvalidDecl() || !PrevDecl)
     Owner->addDecl(SemaRef.Context, Method);
@@ -366,12 +363,10 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
     PrevDecl = 0;
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
-  if (SemaRef.CheckFunctionDeclaration(Constructor, PrevDecl, Redeclaration,
-                                       /*FIXME:*/OverloadableAttrRequired))
-    Constructor->setInvalidDecl();
+  SemaRef.CheckFunctionDeclaration(Constructor, PrevDecl, Redeclaration,
+                                   /*FIXME:*/OverloadableAttrRequired);
 
-  if (!Constructor->isInvalidDecl())
-    Owner->addDecl(SemaRef.Context, Constructor);
+  Owner->addDecl(SemaRef.Context, Constructor);
   return Constructor;
 }
 
@@ -396,9 +391,8 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
   NamedDecl *PrevDecl = 0;
-  if (SemaRef.CheckFunctionDeclaration(Destructor, PrevDecl, Redeclaration,
-                                       /*FIXME:*/OverloadableAttrRequired))
-    Destructor->setInvalidDecl();
+  SemaRef.CheckFunctionDeclaration(Destructor, PrevDecl, Redeclaration,
+                                   /*FIXME:*/OverloadableAttrRequired);
   Owner->addDecl(SemaRef.Context, Destructor);
   return Destructor;
 }
@@ -426,9 +420,8 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
   NamedDecl *PrevDecl = 0;
-  if (SemaRef.CheckFunctionDeclaration(Conversion, PrevDecl, Redeclaration,
-                                       /*FIXME:*/OverloadableAttrRequired))
-    Conversion->setInvalidDecl();
+  SemaRef.CheckFunctionDeclaration(Conversion, PrevDecl, Redeclaration,
+                                   /*FIXME:*/OverloadableAttrRequired);
   Owner->addDecl(SemaRef.Context, Conversion);
   return Conversion;  
 }

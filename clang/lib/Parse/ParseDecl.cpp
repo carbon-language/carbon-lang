@@ -37,7 +37,7 @@ Action::TypeResult Parser::ParseTypeName() {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  if (DeclaratorInfo.getInvalidType())
+  if (DeclaratorInfo.isInvalidType())
     return true;
 
   return Actions.ActOnTypeName(CurScope, DeclaratorInfo);

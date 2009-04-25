@@ -326,7 +326,8 @@ public:
   // Type Analysis / Processing: SemaType.cpp.
   //
   QualType adjustParameterType(QualType T);
-  QualType ConvertDeclSpecToType(const DeclSpec &DS, SourceLocation DeclLoc);
+  QualType ConvertDeclSpecToType(const DeclSpec &DS, SourceLocation DeclLoc,
+                                 bool &IsInvalid);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType BuildPointerType(QualType T, unsigned Quals, 
                             SourceLocation Loc, DeclarationName Entity);
@@ -377,20 +378,18 @@ public:
                                         Scope *S);
   void DiagnoseFunctionSpecifiers(Declarator& D);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                    QualType R,
-                                    Decl* PrevDecl, bool& InvalidDecl,
+                                    QualType R, Decl* PrevDecl,
                                     bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, 
-                                     NamedDecl* PrevDecl, bool& InvalidDecl,
+                                     QualType R, NamedDecl* PrevDecl,
                                      bool &Redeclaration);
-  bool CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
+  void CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
                                 bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, NamedDecl* PrevDecl, 
                                      bool IsFunctionDefinition,
-                                     bool& InvalidDecl, bool &Redeclaration);
-  bool CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
+                                     bool &Redeclaration);
+  void CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
                                 bool &Redeclaration, 
                                 bool &OverloadableAttrRequired);
   virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D);
@@ -518,10 +517,10 @@ public:
 
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T);
-  bool MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
+  void MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
-  bool MergeVarDecl(VarDecl *New, Decl *Old);
+  void MergeVarDecl(VarDecl *New, Decl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
   /// C++ Overloading.

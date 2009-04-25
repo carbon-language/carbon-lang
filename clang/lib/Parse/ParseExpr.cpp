@@ -1338,7 +1338,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     SourceLocation Tmp = ParamInfo.getSourceRange().getEnd();
     ParamInfo.SetIdentifier(0, CaretLoc);
     ParamInfo.SetRangeEnd(Tmp);
-    if (ParamInfo.getInvalidType()) {
+    if (ParamInfo.isInvalidType()) {
       // If there was an error parsing the arguments, they may have
       // tried to use ^(x+y) which requires an argument list.  Just
       // skip the whole block literal.

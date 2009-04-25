@@ -50,7 +50,8 @@ QualType Sema::adjustParameterType(QualType T) {
 /// \returns The type described by the declaration specifiers, or NULL
 /// if there was an error.
 QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
-                                     SourceLocation DeclLoc) {
+                                     SourceLocation DeclLoc,
+                                     bool &isInvalid) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
@@ -205,8 +206,15 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
           DeclLoc = DS.getSourceRange().getBegin();
         Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
           << DS.getSourceRange();
+        isInvalid = true;
       }
     }
+    
+    // If this is a reference to an invalid typedef, propagate the invalidity.
+    if (TypedefType *TDT = dyn_cast<TypedefType>(Result))
+      if (TDT->getDecl()->isInvalidDecl())
+        isInvalid = true;
+    
     // TypeQuals handled by caller.
     break;
   }
@@ -614,9 +622,12 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       // the first return statement.
       T = Context.DependentTy;
     } else {
-      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc());
+      bool isInvalid = false;
+      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid);
       if (T.isNull())
         return T;
+      if (isInvalid)
+        D.setInvalidType(true);
     }
     break;
   }
