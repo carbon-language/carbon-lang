@@ -590,12 +590,12 @@ ASTConsumer *clang::CreateASTPrinter(llvm::raw_ostream* out) {
 
 namespace {
   class ASTDumper : public ASTConsumer, public DeclPrinter {
-    SourceManager *SM;
+    ASTContext *Ctx;
   public:
     ASTDumper() : DeclPrinter() {}
     
     void Initialize(ASTContext &Context) {
-      SM = &Context.getSourceManager();
+      Ctx = &Context;
     }
 
     virtual void HandleTopLevelDecl(DeclGroupRef D) {
@@ -610,10 +610,10 @@ void ASTDumper::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     PrintFunctionDeclStart(FD);
     
-    if (FD->getBodyIfAvailable()) {
+    if (Stmt *Body = FD->getBody(*Ctx)) {
       Out << '\n';
-      // FIXME: convert dumper to use std::ostream?
-      FD->getBodyIfAvailable()->dumpAll(*SM);
+      // FIXME: convert dumper to use raw_ostream.
+      Body->dumpAll(Ctx->getSourceManager());
       Out << '\n';
     }
   } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
@@ -633,9 +633,9 @@ void ASTDumper::HandleTopLevelSingleDecl(Decl *D) {
   } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
     Out << "Read objc method decl: '" << MD->getSelector().getAsString()
     << "'\n";
-    if (MD->getBody()) {
-      // FIXME: convert dumper to use std::ostream?
-      MD->getBody()->dumpAll(*SM);
+    if (Stmt *S = MD->getBody()) {
+      // FIXME: convert dumper to use raw_ostream.
+      S->dumpAll(Ctx->getSourceManager());
       Out << '\n';
     }
   } else if (isa<ObjCImplementationDecl>(D)) {
