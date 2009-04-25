@@ -186,7 +186,8 @@ public:
   /// at the specified location.  This is used internally as functions are JIT'd
   /// and as global variables are laid out in memory.  It can and should also be
   /// used by clients of the EE that want to have an LLVM global overlay
-  /// existing data in memory.
+  /// existing data in memory.  After adding a mapping for GV, you must not
+  /// destroy it until you've removed the mapping.
   void addGlobalMapping(const GlobalValue *GV, void *Addr);
   
   /// clearAllGlobalMappings - Clear all global mappings and start over again
@@ -210,19 +211,29 @@ public:
   void *getPointerToGlobalIfAvailable(const GlobalValue *GV);
 
   /// getPointerToGlobal - This returns the address of the specified global
-  /// value.  This may involve code generation if it's a function.
+  /// value.  This may involve code generation if it's a function.  After
+  /// getting a pointer to GV, it and all globals it transitively refers to have
+  /// been passed to addGlobalMapping.  You must clear the mapping for each
+  /// referred-to global before destroying it.  If a referred-to global RTG is a
+  /// function and this ExecutionEngine is a JIT compiler, calling
+  /// updateGlobalMapping(RTG, 0) will leak the function's machine code, so you
+  /// should call freeMachineCodeForFunction(RTG) instead.  Note that
+  /// optimizations can move and delete non-external GlobalValues without
+  /// notifying the ExecutionEngine.
   ///
   void *getPointerToGlobal(const GlobalValue *GV);
 
   /// getPointerToFunction - The different EE's represent function bodies in
   /// different ways.  They should each implement this to say what a function
-  /// pointer should look like.
+  /// pointer should look like.  See getPointerToGlobal for the requirements on
+  /// destroying F and any GlobalValues it refers to.
   ///
   virtual void *getPointerToFunction(Function *F) = 0;
 
   /// getPointerToFunctionOrStub - If the specified function has been
   /// code-gen'd, return a pointer to the function.  If not, compile it, or use
-  /// a stub to implement lazy compilation if available.
+  /// a stub to implement lazy compilation if available.  See getPointerToGlobal
+  /// for the requirements on destroying F and any GlobalValues it refers to.
   ///
   virtual void *getPointerToFunctionOrStub(Function *F) {
     // Default implementation, just codegen the function.
@@ -255,7 +266,8 @@ public:
 
   /// getOrEmitGlobalVariable - Return the address of the specified global
   /// variable, possibly emitting it to memory if needed.  This is used by the
-  /// Emitter.
+  /// Emitter.  See getPointerToGlobal for the requirements on destroying GV and
+  /// any GlobalValues it refers to.
   virtual void *getOrEmitGlobalVariable(const GlobalVariable *GV) {
     return getPointerToGlobal((GlobalValue*)GV);
   }
