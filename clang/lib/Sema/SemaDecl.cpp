@@ -1925,7 +1925,7 @@ NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, NamedDecl* PrevDecl,
                               bool IsFunctionDefinition,
-                              bool& InvalidDecl, bool &Redeclaration) {
+                              bool &InvalidDecl, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
   DeclarationName Name = GetNameForDeclarator(D);
@@ -1998,9 +1998,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                        D.getIdentifierLoc(), Name, R,
                                        isExplicit, isInline,
                                        /*isImplicitlyDeclared=*/false);
-
-    if (InvalidDecl)
-      NewFD->setInvalidDecl();
   } else if (D.getKind() == Declarator::DK_Destructor) {
     // This is a C++ destructor declaration.
     if (DC->isRecord()) {
@@ -2011,9 +2008,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                         D.getIdentifierLoc(), Name, R, 
                                         isInline,
                                         /*isImplicitlyDeclared=*/false);
-
-      if (InvalidDecl)
-        NewFD->setInvalidDecl();
 
       isVirtualOkay = true;
     } else {
@@ -2027,7 +2021,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                    // FIXME: Move to DeclGroup...
                                    D.getDeclSpec().getSourceRange().getBegin());
       InvalidDecl = true;
-      NewFD->setInvalidDecl();
     }
   } else if (D.getKind() == Declarator::DK_Conversion) {
     if (!DC->isRecord()) {
@@ -2041,9 +2034,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                         D.getIdentifierLoc(), Name, R,
                                         isInline, isExplicit);
         
-      if (InvalidDecl)
-        NewFD->setInvalidDecl();
-
       isVirtualOkay = true;
     }
   } else if (DC->isRecord()) {
@@ -2072,6 +2062,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                  D.getDeclSpec().getSourceRange().getBegin());
   }
 
+  if (InvalidDecl)
+    NewFD->setInvalidDecl();
+  
   // Set the lexical context. If the declarator has a C++
   // scope specifier, the lexical context will be different
   // from the semantic context.
@@ -2152,9 +2145,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // In C++, the empty parameter-type-list must be spelled "void"; a
       // typedef of void is not permitted.
       if (getLangOptions().CPlusPlus &&
-          Param->getType().getUnqualifiedType() != Context.VoidTy) {
+          Param->getType().getUnqualifiedType() != Context.VoidTy)
         Diag(Param->getLocation(), diag::err_param_typedef_of_void);
-      }
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
         Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
@@ -2185,8 +2177,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
            ArgType != FT->arg_type_end(); ++ArgType) {
         ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
                                                  SourceLocation(), 0,
-                                                 *ArgType, VarDecl::None,
-                                                 0);
+                                                 *ArgType, VarDecl::None, 0);
         Param->setImplicit();
         Params.push_back(Param);
       }
