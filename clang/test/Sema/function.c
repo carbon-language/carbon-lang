@@ -76,4 +76,7 @@ gnu_inline2() {}
 inline foo_t invalid_type() {  // expected-error {{unknown type name 'foo_t'}}
 }
 
+typedef void fn_t(void);
+fn_t t17;
+
 

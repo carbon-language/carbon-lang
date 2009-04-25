@@ -2153,7 +2153,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   
     NewFD->setParams(Context, &Params[0], Params.size());
-  } else if (R->getAsTypedefType()) {
+  } else if (isa<TypedefType>(R)) {
     // When we're declaring a function with a typedef, as in the
     // following example, we'll need to synthesize (unnamed)
     // parameters for use in the declaration.
@@ -2162,15 +2162,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // typedef void fn(int);
     // fn f;
     // @endcode
-    const FunctionProtoType *FT = R->getAsFunctionProtoType();
-    if (!FT) {
-      // This is a typedef of a function with no prototype, so we
-      // don't need to do anything.
-    } else if ((FT->getNumArgs() == 0) ||
-               (FT->getNumArgs() == 1 && !FT->isVariadic() &&
-                FT->getArgType(0)->isVoidType())) {
-      // This is a zero-argument function. We don't need to do anything.
-    } else {
+    if (const FunctionProtoType *FT = R->getAsFunctionProtoType()) {
       // Synthesize a parameter for each argument type.
       llvm::SmallVector<ParmVarDecl*, 16> Params;
       for (FunctionProtoType::arg_type_iterator ArgType = FT->arg_type_begin();
