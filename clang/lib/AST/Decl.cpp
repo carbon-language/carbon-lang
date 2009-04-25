@@ -431,10 +431,10 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
 }
 
 
-/// getNumParmVarDeclsFromType - Ignoring the actual argument list, this
-/// returns the number of ParmVarDecls that the FunctionType of this function
-/// expects.
-unsigned FunctionDecl::getNumParmVarDeclsFromType() const {
+/// getNumParams - Return the number of parameters this function must have
+/// based on its functiontype.  This is the length of the PararmInfo array
+/// after it has been created.
+unsigned FunctionDecl::getNumParams() const {
   const FunctionType *FT = getType()->getAsFunctionType();
   if (isa<FunctionNoProtoType>(FT))
     return 0;
@@ -442,18 +442,10 @@ unsigned FunctionDecl::getNumParmVarDeclsFromType() const {
   
 }
 
-unsigned FunctionDecl::getNumParams() const {
-  // Can happen if a FunctionDecl is declared using typeof(some_other_func) bar;
-  if (!ParamInfo)
-    return 0;
-  
-  return getNumParmVarDeclsFromType();
-}
-
 void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
                              unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
-  assert(NumParams == getNumParmVarDeclsFromType() &&
+  assert(NumParams == getNumParams() &&
          "Parameter count mismatch!");
   
   // Zero params -> null pointer.

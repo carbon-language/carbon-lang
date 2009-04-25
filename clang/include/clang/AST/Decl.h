@@ -643,9 +643,6 @@ public:
 
   unsigned getBuiltinID(ASTContext &Context) const;
 
-  /// getNumParmVarDeclsFromType - Ignoring the actual argument list, this
-  /// returns the number of ParmVarDecls that the FunctionType of this function
-  /// expects.
   unsigned getNumParmVarDeclsFromType() const;
   
   // Iterator access to formal parameters.
@@ -659,7 +656,11 @@ public:
   param_const_iterator param_begin() const { return ParamInfo; }
   param_const_iterator param_end() const   { return ParamInfo+param_size(); }
   
+  /// getNumParams - Return the number of parameters this function must have
+  /// based on its functiontype.  This is the length of the PararmInfo array
+  /// after it has been created.
   unsigned getNumParams() const;
+  
   const ParmVarDecl *getParamDecl(unsigned i) const {
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];

@@ -2153,8 +2153,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   
     NewFD->setParams(Context, &Params[0], Params.size());
-  } else if (isa<TypedefType>(R)) {
-    // When we're declaring a function with a typedef, as in the
+  } else if (const FunctionProtoType *FT = R->getAsFunctionProtoType()) {
+    // When we're declaring a function with a typedef, typeof, etc as in the
     // following example, we'll need to synthesize (unnamed)
     // parameters for use in the declaration.
     //
@@ -2162,20 +2162,19 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // typedef void fn(int);
     // fn f;
     // @endcode
-    if (const FunctionProtoType *FT = R->getAsFunctionProtoType()) {
-      // Synthesize a parameter for each argument type.
-      llvm::SmallVector<ParmVarDecl*, 16> Params;
-      for (FunctionProtoType::arg_type_iterator ArgType = FT->arg_type_begin();
-           ArgType != FT->arg_type_end(); ++ArgType) {
-        ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
-                                                 SourceLocation(), 0,
-                                                 *ArgType, VarDecl::None, 0);
-        Param->setImplicit();
-        Params.push_back(Param);
-      }
-
-      NewFD->setParams(Context, &Params[0], Params.size());
+    
+    // Synthesize a parameter for each argument type.
+    llvm::SmallVector<ParmVarDecl*, 16> Params;
+    for (FunctionProtoType::arg_type_iterator AI = FT->arg_type_begin(),
+         AE = FT->arg_type_end(); AI != AE; ++AI) {
+      ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
+                                               SourceLocation(), 0,
+                                               *AI, VarDecl::None, 0);
+      Param->setImplicit();
+      Params.push_back(Param);
     }
+
+    NewFD->setParams(Context, &Params[0], Params.size());
   }
     
   // If name lookup finds a previous declaration that is not in the
