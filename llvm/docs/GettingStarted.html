@@ -687,7 +687,7 @@ compressed with the gzip program.
 <div class="doc_text">
 
 <p>If you have access to our Subversion repository, you can get a fresh copy of
-the entire source code.  All you need to do is check it out from Subvresion as
+the entire source code.  All you need to do is check it out from Subversion as
 follows:</p>
 
 <ul>
@@ -708,6 +708,7 @@ revision), you can checkout it from the '<tt>tags</tt>' directory (instead of
 subdirectories of the '<tt>tags</tt>' directory:</p>
 
 <ul>
+<li>Release 2.5: <b>RELEASE_25</b></li>
 <li>Release 2.4: <b>RELEASE_24</b></li>
 <li>Release 2.3: <b>RELEASE_23</b></li>
 <li>Release 2.2: <b>RELEASE_22</b></li>
@@ -848,9 +849,11 @@ script to configure the build system:</p>
   </dd>
   <dt><i>--enable-optimized</i></dt>
   <dd>
-    Enables optimized compilation by default (debugging symbols are removed
-    and GCC optimization flags are enabled).  The default is to use an
-    unoptimized build (also known as a debug build).
+    Enables optimized compilation (debugging symbols are removed
+    and GCC optimization flags are enabled). Note that this is the default 
+    setting     if you are using the LLVM distribution. The default behavior 
+    of an Subversion checkout is to use an unoptimized build (also known as a 
+    debug build).
     <br><br>
   </dd>
   <dt><i>--enable-debug-runtime</i></dt>
@@ -918,10 +921,12 @@ builds:</p>
 <dl>
     <dt>Debug Builds
     <dd>
-    These builds are the default when one types <tt>gmake</tt> (unless the
-    <tt>--enable-optimized</tt> option was used during configuration).  The
-    build system will compile the tools and libraries with debugging
-    information.
+    These builds are the default when one is using an Subversion checkout and 
+    types <tt>gmake</tt> (unless the <tt>--enable-optimized</tt> option was 
+    used during configuration).  The build system will compile the tools and 
+    libraries with debugging information.  To get a Debug Build using the
+    LLVM distribution the <tt>--disable-optimized</tt> option must be passed
+    to <tt>configure</tt>.
     <br><br>
 
     <dt>Release (Optimized) Builds
@@ -931,6 +936,7 @@ builds:</p>
     <tt>gmake</tt> command line.  For these builds, the build system will
     compile the tools and libraries with GCC optimizations enabled and strip
     debugging information from the libraries and executables it generates. 
+    Note that Release Builds are default when using an LLVM distribution.
     <br><br>
 
     <dt>Profile Builds
@@ -1006,6 +1012,11 @@ declaring variables on the command line.  The following are some examples:</p>
   <dt><tt>gmake ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</tt>
   <dd>
   Perform a Release (Optimized) build without assertions enabled.
+  <br><br>
+ 
+  <dt><tt>gmake ENABLE_OPTIMIZED=0</tt>
+  <dd>
+  Perform a Debug build.
   <br><br>
 
   <dt><tt>gmake ENABLE_PROFILING=1</tt>
