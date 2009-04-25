@@ -18,6 +18,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <utility>
+#include <new>
 
 namespace llvm {
 
