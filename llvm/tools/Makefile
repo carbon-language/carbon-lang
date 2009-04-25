@@ -22,6 +22,12 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  lli gccas gccld llvm-extract llvm-db \
                  bugpoint llvm-bcanalyzer llvm-stub llvmc
 
+# Let users override the set of tools to build from the command line.
+ifdef ONLY_TOOLS
+  OPTIONAL_PARALLEL_DIRS :=
+  PARALLEL_DIRS := $(ONLY_TOOLS)
+endif
+
 include $(LEVEL)/Makefile.config
 
 ifeq ($(ENABLE_PIC),1)

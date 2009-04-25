@@ -327,9 +327,9 @@ up</a></li>
 <p>Note that you will need about 1-3 GB of space for a full LLVM build in Debug
 mode, depending on the system (it is so large because of all the debugging
 information and the fact that the libraries are statically linked into multiple
-tools).  If you do not need many of the tools and you are space-conscious,
-you can disable them individually in <tt>llvm/tools/Makefile</tt>.  The Release
-build requires considerably less space.</p>
+tools).  If you do not need many of the tools and you are space-conscious, you
+can pass <tt>ONLY_TOOLS="tools you need"</tt> to make.  The Release build
+requires considerably less space.</p>
 
 <p>The LLVM suite <i>may</i> compile on other platforms, but it is not
 guaranteed to do so.  If compilation is successful, the LLVM utilities should be
