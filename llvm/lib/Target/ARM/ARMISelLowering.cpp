@@ -500,35 +500,35 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign VA = RVLocs[i];
 
-    // handle f64 as custom
+    SDValue Val;
     if (VA.needsCustom()) {
-      SDValue Lo = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+      // Handle f64 as custom.
+      SDValue Lo = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), MVT::i32,
                                       InFlag);
       Chain = Lo.getValue(1);
       InFlag = Lo.getValue(2);
       VA = RVLocs[++i]; // skip ahead to next loc
-      SDValue Hi = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+      SDValue Hi = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), MVT::i32,
                                       InFlag);
       Chain = Hi.getValue(1);
       InFlag = Hi.getValue(2);
-      ResultVals.push_back(DAG.getNode(ARMISD::FMDRR, dl, VA.getValVT(), Lo,
-                                       Hi));
+      Val = DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, Lo, Hi);
     } else {
-      SDValue Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
-                                       InFlag);
+      Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), VA.getLocVT(),
+                               InFlag);
       Chain = Val.getValue(1);
       InFlag = Val.getValue(2);
-
-      switch (VA.getLocInfo()) {
-      default: assert(0 && "Unknown loc info!");
-      case CCValAssign::Full: break;
-      case CCValAssign::BCvt:
-        Val = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), Val);
-        break;
-      }
-
-      ResultVals.push_back(Val);
     }
+
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::BCvt:
+      Val = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), Val);
+      break;
+    }
+
+    ResultVals.push_back(Val);
   }
 
   // Merge everything together with a MERGE_VALUES node.
