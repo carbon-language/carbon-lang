@@ -1750,14 +1750,15 @@ bool PCHReader::ReadSelectorBlock() {
       for (unsigned SelIdx = 0; SelIdx < NumSels; SelIdx++) {
         unsigned NumArgs = Record[Idx++];
         KeyIdents.clear();
-        if (NumArgs <= 1) {
+        if (NumArgs == 0) {
+          // If the number of arguments is 0, the we must have an Identifier.
           IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
           assert(II && "DecodeIdentifierInfo returned 0");
           KeyIdents.push_back(II);
         } else {
+          // For keyword selectors, the Identifier is optional (::: is legal!).
           for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
             IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
-            assert(II && "DecodeIdentifierInfo returned 0");
             KeyIdents.push_back(II);
           }
         }

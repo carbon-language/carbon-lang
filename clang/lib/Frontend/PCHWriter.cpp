@@ -1554,11 +1554,11 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   for (HeaderSearch::header_file_iterator I = HS.header_file_begin(), 
                                           E = HS.header_file_end();
        I != E; ++I) {
-    Record.push_back((*I).isImport);
-    Record.push_back((*I).DirInfo);
-    Record.push_back((*I).NumIncludes);
-    if ((*I).ControllingMacro)
-      AddIdentifierRef((*I).ControllingMacro, Record);
+    Record.push_back(I->isImport);
+    Record.push_back(I->DirInfo);
+    Record.push_back(I->NumIncludes);
+    if (I->ControllingMacro)
+      AddIdentifierRef(I->ControllingMacro, Record);
     else
       Record.push_back(0);
     Stream.EmitRecord(pch::PP_HEADER_FILE_INFO, Record);
