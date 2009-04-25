@@ -1918,9 +1918,9 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
   if (isNeg)
     str++, slen--;
   assert((slen <= numbits || radix != 2) && "Insufficient bit width");
-  assert((slen*3 <= numbits || radix != 8) && "Insufficient bit width");
-  assert((slen*4 <= numbits || radix != 16) && "Insufficient bit width");
-  assert(((slen*64)/22 <= numbits || radix != 10) && "Insufficient bit width");
+  assert(((slen-1)*3 <= numbits || radix != 8) && "Insufficient bit width");
+  assert(((slen-1)*4 <= numbits || radix != 16) && "Insufficient bit width");
+  assert((((slen-1)*64)/22 <= numbits || radix != 10) && "Insufficient bit width");
 
   // Allocate memory
   if (!isSingleWord())
@@ -1961,10 +1961,12 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
     }
 
     // Shift or multiply the value by the radix
-    if (shift)
-      *this <<= shift;
-    else
-      *this *= apradix;
+    if (slen > 1) {
+      if (shift)
+        *this <<= shift;
+      else
+        *this *= apradix;
+    }
 
     // Add in the digit we just interpreted
     if (apdigit.isSingleWord())
