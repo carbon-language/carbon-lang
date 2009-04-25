@@ -209,6 +209,14 @@ private:
   /// \brief FIXME: document!
   llvm::SmallVector<uint64_t, 4> SpecialTypes;
 
+  /// \brief Contains declarations and definitions that will be
+  /// "interesting" to the ASTConsumer, when we get that AST consumer.
+  ///
+  /// "Interesting" declarations are those that have data that may
+  /// need to be emitted, such as inline function definitions or
+  /// Objective-C protocols.
+  llvm::SmallVector<Decl *, 16> InterestingDecls;
+
   PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset,
                              uint64_t &SelectorBlockOffset);
   bool CheckPredefinesBuffer(const char *PCHPredef, 

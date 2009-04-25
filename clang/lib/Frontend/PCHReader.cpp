@@ -2404,6 +2404,20 @@ inline void PCHReader::LoadedDecl(unsigned Index, Decl *D) {
   DeclOffsets[Index] = reinterpret_cast<uint64_t>(D);
 }
 
+/// \brief Determine whether the consumer will be interested in seeing
+/// this declaration (via HandleTopLevelDecl).
+///
+/// This routine should return true for anything that might affect
+/// code generation, e.g., inline function definitions, Objective-C
+/// declarations with metadata, etc.
+static bool isConsumerInterestedIn(Decl *D) {
+  if (VarDecl *Var = dyn_cast<VarDecl>(D))
+    return Var->isFileVarDecl() && Var->getInit();
+  if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
+    return Func->isThisDeclarationADefinition();
+  return isa<ObjCProtocolDecl>(D);
+}
+
 /// \brief Read the declaration at the given offset from the PCH file.
 Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   // Keep track of where we are in the stream, then jump back there
@@ -2581,23 +2595,15 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   }
   assert(Idx == Record.size());
 
-  if (Consumer) {
-    // If we have deserialized a declaration that has a definition the
-    // AST consumer might need to know about, notify the consumer
-    // about that definition now.
-    if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-      if (Var->isFileVarDecl() && Var->getInit()) {
-        DeclGroupRef DG(Var);
-        Consumer->HandleTopLevelDecl(DG);
-      }
-    } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
-      if (Func->isThisDeclarationADefinition()) {
-        DeclGroupRef DG(Func);
-        Consumer->HandleTopLevelDecl(DG);
-      }
-    } else if (isa<ObjCProtocolDecl>(D)) {
+  // If we have deserialized a declaration that has a definition the
+  // AST consumer might need to know about, notify the consumer
+  // about that definition now or queue it for later.
+  if (isConsumerInterestedIn(D)) {
+    if (Consumer) {
       DeclGroupRef DG(D);
       Consumer->HandleTopLevelDecl(DG);
+    } else {
+      InterestingDecls.push_back(D);
     }
   }
 
@@ -2753,6 +2759,11 @@ void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
   for (unsigned I = 0, N = ExternalDefinitions.size(); I != N; ++I) {
     Decl *D = GetDecl(ExternalDefinitions[I]);
     DeclGroupRef DG(D);
+    Consumer->HandleTopLevelDecl(DG);
+  }
+
+  for (unsigned I = 0, N = InterestingDecls.size(); I != N; ++I) {
+    DeclGroupRef DG(InterestingDecls[I]);
     Consumer->HandleTopLevelDecl(DG);
   }
 }
