@@ -135,16 +135,11 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDValue &Lo,
   GetExpandedOp(N->getOperand(0), Lo, Hi);
   SDValue Part = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() ?
                    Hi : Lo;
-  DebugLoc dl = N->getDebugLoc();
 
   assert(Part.getValueType() == N->getValueType(0) &&
          "Type twice as big as expanded type not itself expanded!");
-  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
 
-  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Part,
-                   DAG.getConstant(0, TLI.getPointerTy()));
-  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Part,
-                   DAG.getConstant(1, TLI.getPointerTy()));
+  GetPairElements(Part, Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,

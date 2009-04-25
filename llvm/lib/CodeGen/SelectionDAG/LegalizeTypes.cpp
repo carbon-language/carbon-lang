@@ -933,6 +933,18 @@ void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
   }
 }
 
+/// GetPairElements - Use ISD::EXTRACT_ELEMENT nodes to extract the low and
+/// high parts of the given value.
+void DAGTypeLegalizer::GetPairElements(SDValue Pair,
+                                       SDValue &Lo, SDValue &Hi) {
+  DebugLoc dl = Pair.getDebugLoc();
+  MVT NVT = TLI.getTypeToTransformTo(Pair.getValueType());
+  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
+                   DAG.getIntPtrConstant(0));
+  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
+                   DAG.getIntPtrConstant(1));
+}
+
 SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, MVT EltVT,
                                                   SDValue Index) {
   DebugLoc dl = Index.getDebugLoc();

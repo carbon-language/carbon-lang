@@ -695,6 +695,10 @@ private:
   /// which is split (or expanded) into two not necessarily identical pieces.
   void GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT);
 
+  /// GetPairElements - Use ISD::EXTRACT_ELEMENT nodes to extract the low and
+  /// high parts of the given value.
+  void GetPairElements(SDValue Pair, SDValue &Lo, SDValue &Hi);
+
   // Generic Result Splitting.
   void SplitRes_MERGE_VALUES(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitRes_SELECT      (SDNode *N, SDValue &Lo, SDValue &Hi);
