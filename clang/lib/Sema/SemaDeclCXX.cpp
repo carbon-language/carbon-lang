@@ -1253,10 +1253,8 @@ void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
   // again. It could produce additional diagnostics or affect whether
   // the class has implicitly-declared destructors, among other
   // things.
-  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Method)) {
-    if (CheckConstructor(Constructor))
-      Constructor->setInvalidDecl();
-  }
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Method))
+    CheckConstructor(Constructor);
 
   // Check the default arguments, which we may have added.
   if (!Method->isInvalidDecl())
@@ -1334,13 +1332,11 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
 /// CheckConstructor - Checks a fully-formed constructor for
 /// well-formedness, issuing any diagnostics required. Returns true if
 /// the constructor declarator is invalid.
-bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
+void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
   CXXRecordDecl *ClassDecl 
     = dyn_cast<CXXRecordDecl>(Constructor->getDeclContext());
   if (!ClassDecl)
-    return true;
-
-  bool Invalid = Constructor->isInvalidDecl();
+    return Constructor->setInvalidDecl();
 
   // C++ [class.copy]p3:
   //   A declaration of a constructor for a class X is ill-formed if
@@ -1357,14 +1353,12 @@ bool Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
       SourceLocation ParamLoc = Constructor->getParamDecl(0)->getLocation();
       Diag(ParamLoc, diag::err_constructor_byvalue_arg)
         << CodeModificationHint::CreateInsertion(ParamLoc, " const &");
-      Invalid = true;
+      Constructor->setInvalidDecl();
     }
   }
   
   // Notify the class that we've added a constructor.
   ClassDecl->addedConstructor(Context, Constructor);
-
-  return Invalid;
 }
 
 /// CheckDestructorDeclarator - Called by ActOnDeclarator to check
@@ -1460,22 +1454,21 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
 /// will emit diagnostics and return true. Otherwise, it will return
 /// false. Either way, the type @p R will be updated to reflect a
 /// well-formed type for the conversion operator.
-bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
+void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
                                      FunctionDecl::StorageClass& SC) {
-  bool isInvalid = false;
-
   // C++ [class.conv.fct]p1:
   //   Neither parameter types nor return type can be specified. The
   //   type of a conversion function (8.3.5) is “function taking no
   //   parameter returning conversion-type-id.” 
   if (SC == FunctionDecl::Static) {
-    Diag(D.getIdentifierLoc(), diag::err_conv_function_not_member)
-      << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
-      << SourceRange(D.getIdentifierLoc());
-    isInvalid = true;
+    if (!D.isInvalidType())
+      Diag(D.getIdentifierLoc(), diag::err_conv_function_not_member)
+        << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+        << SourceRange(D.getIdentifierLoc());
+    D.setInvalidType();
     SC = FunctionDecl::None;
   }
-  if (D.getDeclSpec().hasTypeSpecifier()) {
+  if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Conversion functions don't have return types, but the parser will
     // happily parse something like:
     //
@@ -1495,11 +1488,14 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
 
     // Delete the parameters.
     D.getTypeObject(0).Fun.freeArgs();
+    D.setInvalidType();
   }
 
   // Make sure the conversion function isn't variadic.  
-  if (R->getAsFunctionProtoType()->isVariadic())
+  if (R->getAsFunctionProtoType()->isVariadic() && !D.isInvalidType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);
+    D.setInvalidType();
+  }
 
   // C++ [class.conv.fct]p4:
   //   The conversion-type-id shall not represent a function type nor
@@ -1508,9 +1504,11 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   if (ConvType->isArrayType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_to_array);
     ConvType = Context.getPointerType(ConvType);
+    D.setInvalidType();
   } else if (ConvType->isFunctionType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_to_function);
     ConvType = Context.getPointerType(ConvType);
+    D.setInvalidType();
   }
 
   // Rebuild the function type "R" without any parameters (in case any
@@ -1524,8 +1522,6 @@ bool Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     Diag(D.getDeclSpec().getExplicitSpecLoc(), 
          diag::warn_explicit_conversion_functions)
       << SourceRange(D.getDeclSpec().getExplicitSpecLoc());
-
-  return isInvalid;
 }
 
 /// ActOnConversionDeclarator - Called by ActOnDeclarator to complete

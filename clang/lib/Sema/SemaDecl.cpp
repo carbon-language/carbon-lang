@@ -2030,16 +2030,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       Diag(D.getIdentifierLoc(),
            diag::err_conv_function_not_member);
       return 0;
-    } else {
-      if (!D.isInvalidType())
-        D.setInvalidType(CheckConversionDeclarator(D, R, SC));
-
-      NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                        D.getIdentifierLoc(), Name, R,
-                                        isInline, isExplicit);
-        
-      isVirtualOkay = true;
     }
+    
+    CheckConversionDeclarator(D, R, SC);
+    NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
+                                      D.getIdentifierLoc(), Name, R,
+                                      isInline, isExplicit);
+      
+    isVirtualOkay = true;
   } else if (DC->isRecord()) {
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
@@ -2315,8 +2313,7 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
   if (getLangOptions().CPlusPlus) {
     // C++-specific checks.
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD)) {
-      if (CheckConstructor(Constructor))
-        return NewFD->setInvalidDecl();
+      CheckConstructor(Constructor);
     } else if (isa<CXXDestructorDecl>(NewFD)) {
       CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
       Record->setUserDeclaredDestructor(true);

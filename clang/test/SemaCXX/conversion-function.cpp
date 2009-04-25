@@ -23,8 +23,11 @@ typedef int array_type[10];
 class Y {
 public:
   void operator bool(int, ...) const; // expected-error{{conversion function cannot have a return type}} \
-  // expected-error{{conversion function cannot have any parameters}} \
-  // expected-error{{conversion function cannot be variadic}}
+  // expected-error{{conversion function cannot have any parameters}}
+  
+  operator float(...) const;  // expected-error{{conversion function cannot be variadic}}
+  
+  
   operator func_type(); // expected-error{{conversion function cannot convert to a function type}}
   operator array_type(); // expected-error{{conversion function cannot convert to an array type}}
 };
