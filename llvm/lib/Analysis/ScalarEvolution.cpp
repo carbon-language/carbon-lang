@@ -1754,6 +1754,8 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
     // For an expression like x&255 that merely masks off the high bits,
     // use zext(trunc(x)) as the SCEV expression.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      if (CI->isNullValue())
+        return getSCEV(U->getOperand(1));
       const APInt &A = CI->getValue();
       unsigned Ones = A.countTrailingOnes();
       if (APIntOps::isMask(Ones, A))
@@ -1818,10 +1820,15 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
       if (Instruction *L = dyn_cast<Instruction>(U->getOperand(0)))
         if (L->getOpcode() == Instruction::Shl &&
             L->getOperand(1) == U->getOperand(1)) {
-          uint64_t Amt = getTypeSizeInBits(U->getType()) - CI->getZExtValue();
+          unsigned BitWidth = getTypeSizeInBits(U->getType());
+          uint64_t Amt = BitWidth - CI->getZExtValue();
+          if (Amt == BitWidth)
+            return getSCEV(L->getOperand(0));       // shift by zero --> noop
+          if (Amt > BitWidth)
+            return getIntegerSCEV(0, U->getType()); // value is undefined
           return
             getSignExtendExpr(getTruncateExpr(getSCEV(L->getOperand(0)),
-                                                    IntegerType::get(Amt)),
+                                                      IntegerType::get(Amt)),
                                  U->getType());
         }
     break;
