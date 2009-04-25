@@ -845,7 +845,7 @@ public:
 
   /// size() - The length of this string.
   ///
-  unsigned size() const { return StrEnd - StrBegin; }
+  size_t size() const { return StrEnd - StrBegin; }
 
   /// begin() - Pointer to the first byte of the string.
   ///
