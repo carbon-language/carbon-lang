@@ -2842,6 +2842,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   
   if (!IdentifiersLoaded[ID - 1]) {
     uint32_t Offset = IdentifierOffsets[ID - 1];
+    const char *Str = IdentifierTableData + Offset;
 
     // If there is an identifier lookup table, but the offset of this
     // string is after the identifier table itself, then we know that
@@ -2850,23 +2851,40 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
     // identifier.
     PCHIdentifierLookupTable *IdTable 
       = (PCHIdentifierLookupTable *)IdentifierLookupTable;
-    bool SkipHashTable = IdTable &&
-      Offset >= uint32_t(IdTable->getBuckets() - IdTable->getBase());
+    if (!IdTable ||
+        Offset >= uint32_t(IdTable->getBuckets() - IdTable->getBase())) {
+      // Turn off lookup into the on-disk hash table. We know that
+      // this identifier is not there.
+      if (IdTable)
+        PP.getIdentifierTable().setExternalIdentifierLookup(0);
 
-    if (SkipHashTable)
-      PP.getIdentifierTable().setExternalIdentifierLookup(0);
+      // All of the strings in the PCH file are preceded by a 16-bit
+      // length. Extract that 16-bit length to avoid having to execute
+      // strlen().
+      const char *StrLenPtr = Str - 2;
+      unsigned StrLen = (((unsigned) StrLenPtr[0])
+                         | (((unsigned) StrLenPtr[1]) << 8)) - 1;
+      IdentifiersLoaded[ID - 1] = &Context.Idents.get(Str, Str + StrLen);
 
-    // All of the strings in the PCH file are preceded by a 16-bit
-    // length. Extract that 16-bit length to avoid having to run
-    // strlen().
-    const char *Str = IdentifierTableData + Offset;
-    const char *StrLenPtr = Str - 2;
-    unsigned StrLen = (((unsigned) StrLenPtr[0])
-                       | (((unsigned) StrLenPtr[1]) << 8)) - 1;
-    IdentifiersLoaded[ID - 1] = &Context.Idents.get(Str, Str + StrLen);
+      // Turn on lookup into the on-disk hash table, if we have an
+      // on-disk hash table.
+      if (IdTable)
+        PP.getIdentifierTable().setExternalIdentifierLookup(this);
+    } else {
+      // The identifier is a key in our on-disk hash table. Since we
+      // know where the hash table entry starts, just read in this
+      // (key, value) pair.
+      PCHIdentifierLookupTrait Trait(const_cast<PCHReader &>(*this));
+      const unsigned char *Pos = (const unsigned char *)Str - 4;
+      std::pair<unsigned, unsigned> KeyDataLengths
+        = Trait.ReadKeyDataLength(Pos);
 
-    if (SkipHashTable)
-      PP.getIdentifierTable().setExternalIdentifierLookup(this);
+      PCHIdentifierLookupTrait::internal_key_type InternalKey
+        = Trait.ReadKey(Pos, KeyDataLengths.first);
+      Pos = (const unsigned char *)Str + KeyDataLengths.first;
+      IdentifiersLoaded[ID - 1] = Trait.ReadData(InternalKey, Pos,
+                                                 KeyDataLengths.second);
+    }
   }
   
   return IdentifiersLoaded[ID - 1];
