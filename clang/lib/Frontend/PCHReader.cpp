@@ -1751,7 +1751,7 @@ bool PCHReader::ReadSelectorBlock() {
         unsigned NumArgs = Record[Idx++];
         KeyIdents.clear();
         if (NumArgs == 0) {
-          // If the number of arguments is 0, the we must have an Identifier.
+          // If the number of arguments is 0, we must have an Identifier.
           IdentifierInfo *II = DecodeIdentifierInfo(Record[Idx++]);
           assert(II && "DecodeIdentifierInfo returned 0");
           KeyIdents.push_back(II);
