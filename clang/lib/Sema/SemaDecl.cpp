@@ -2164,30 +2164,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       Param->setImplicit();
       Params.push_back(Param);
     }
+  } else {
+    assert(R->isFunctionNoProtoType() && NewFD->getNumParams() == 0 &&
+           "Should not need args for typedef of non-prototype fn");
   }
-  
-  // If NewFD is invalid, then the Params list may not have the right number of
-  // decls for this FunctionDecl.  Because we want the AST to be as correct as
-  // possible, "fix" these problems by removing or adding params as needed.
-  if (NewFD->isInvalidDecl()) {
-    unsigned NumNeededParams = NewFD->getNumParams();
-    while (NumNeededParams > Params.size()) {
-      ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
-                                               SourceLocation(), 0,
-                                               Context.IntTy, VarDecl::None, 0);
-      Param->setImplicit();
-      Param->setInvalidDecl();
-      Params.push_back(Param);
-    }
-    
-    while (NumNeededParams < Params.size()) {
-      Params.pop_back();
-      // FIXME: Don't leak the decl.
-    }
-  }
-  
   // Finally, we know we have the right number of parameters, install them.
   NewFD->setParams(Context, &Params[0], Params.size());
+
   
     
   // If name lookup finds a previous declaration that is not in the
