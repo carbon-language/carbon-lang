@@ -1533,6 +1533,18 @@ static void HandleObjCOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
   d->addAttr(::new (S.Context) ObjCOwnershipReturnsAttr());
 }
 
+static void HandleObjCOwnershipRetainAttr(Decl *d, const AttributeList &Attr,
+                                           Sema &S) {
+  
+  if (!isa<ParmVarDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+    "objc_ownership_retain" << 4 /* parameter */;
+    return;
+  }
+  
+  d->addAttr(::new (S.Context) ObjCOwnershipRetainAttr());
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -1571,6 +1583,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
 
   // Checker-specific.
+  case AttributeList::AT_objc_ownership_retain:
+    HandleObjCOwnershipRetainAttr(D, Attr, S); break;
   case AttributeList::AT_objc_ownership_returns:
     HandleObjCOwnershipReturnsAttr(D, Attr, S); break;
 

@@ -51,6 +51,7 @@ public:
     NonNull,
     ObjCException,
     ObjCNSObject,
+    ObjCOwnershipRetain, // Clang/Checker-specific.
     ObjCOwnershipReturns, // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
@@ -599,6 +600,7 @@ public:\
 };
 
 // Checker-specific attributes.
+DEF_SIMPLE_ATTR(ObjCOwnershipRetain)
 DEF_SIMPLE_ATTR(ObjCOwnershipReturns)
 
 #undef DEF_SIMPLE_ATTR
