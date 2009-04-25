@@ -301,7 +301,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // < 3)
     if (Args.hasFlag(options::OPT_funwind_tables,
                      options::OPT_fno_unwind_tables,
-                     getToolChain().IsUnwindTablesDefault()))
+                     (getToolChain().IsUnwindTablesDefault() &&
+                      !Args.hasArg(options::OPT_mkernel))))
       CmdArgs.push_back("--unwind-tables=1");
     else
       CmdArgs.push_back("--unwind-tables=0");
