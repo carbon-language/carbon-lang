@@ -27,7 +27,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include <map>
 #include <string>
@@ -85,9 +84,6 @@ private:
 
   /// \brief The bitstream reader from which we'll read the PCH file.
   llvm::BitstreamReader Stream;
-
-  /// \brief Allocator used for IdentifierInfo objects.
-  llvm::BumpPtrAllocator Alloc;
 
   /// \brief The file name of the PCH file.
   std::string FileName;
@@ -374,13 +370,6 @@ public:
   IdentifierInfo *GetIdentifierInfo(const RecordData &Record, unsigned &Idx) {
     return DecodeIdentifierInfo(Record[Idx++]);
   }
-
-  /// \brief Builds a new IdentifierInfo object that refers to a
-  /// string stored within the PCH file.
-  ///
-  /// \brief Str must be a pointer into the start of a string within
-  /// IdentifierTableData.
-  IdentifierInfo &BuildIdentifierInfoInsidePCH(const unsigned char *Str);
   
   Selector DecodeSelector(unsigned Idx);
   

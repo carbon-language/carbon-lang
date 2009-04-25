@@ -2013,6 +2013,7 @@ public:
     EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II, 
                       pch::IdentID ID) {
     unsigned KeyLen = strlen(II->getName()) + 1;
+    clang::io::Emit16(Out, KeyLen);
     unsigned DataLen = 4 + 4; // 4 bytes for token ID, builtin, flags
                               // 4 bytes for the persistent ID
     if (II->hasMacroDefinition() && 
@@ -2022,14 +2023,7 @@ public:
                                    DEnd = IdentifierResolver::end();
          D != DEnd; ++D)
       DataLen += sizeof(pch::DeclID);
-
-    // We emit the data length before the key length, because we want
-    // the key length to immediately precede the actual string
-    // data. This is so that our identifier length + key layout
-    // matches that of the identifier hash table for pretokenized
-    // headers.
     clang::io::Emit16(Out, DataLen);
-    clang::io::Emit16(Out, KeyLen);
     return std::make_pair(KeyLen, DataLen);
   }
   
