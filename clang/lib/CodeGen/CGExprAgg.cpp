@@ -78,8 +78,6 @@ public:
   }
   
   // Operators.
-  //  case Expr::UnaryOperatorClass:
-  //  case Expr::CastExprClass: 
   void VisitCStyleCastExpr(CStyleCastExpr *E);
   void VisitImplicitCastExpr(ImplicitCastExpr *E);
   void VisitCallExpr(const CallExpr *E);

@@ -645,7 +645,8 @@ public:
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
   LValue EmitObjCKVCRefLValue(const ObjCKVCRefExpr *E);
-  LValue EmitObjCSuperExpr(const ObjCSuperExpr *E);
+  LValue EmitObjCSuperExprLValue(const ObjCSuperExpr *E);
+  LValue EmitStmtExprLValue(const StmtExpr *E);
 
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission

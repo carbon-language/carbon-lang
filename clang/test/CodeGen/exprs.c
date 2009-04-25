@@ -99,3 +99,8 @@ int f6(int a0, struct s6 a1, struct s6 a2) {
 void f7() {
   __func__;
 }
+
+// PR4067
+int f8() {
+  return ({ foo(); }).Y;
+}

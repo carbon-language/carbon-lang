@@ -168,8 +168,10 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::ObjCKVCRefExprClass:
     return EmitObjCKVCRefLValue(cast<ObjCKVCRefExpr>(E));
   case Expr::ObjCSuperExprClass:
-    return EmitObjCSuperExpr(cast<ObjCSuperExpr>(E));
+    return EmitObjCSuperExprLValue(cast<ObjCSuperExpr>(E));
 
+  case Expr::StmtExprClass:
+    return EmitStmtExprLValue(cast<StmtExpr>(E));
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
   case Expr::ArraySubscriptExprClass:
@@ -1195,9 +1197,20 @@ CodeGenFunction::EmitObjCKVCRefLValue(const ObjCKVCRefExpr *E) {
 }
 
 LValue
-CodeGenFunction::EmitObjCSuperExpr(const ObjCSuperExpr *E) {
+CodeGenFunction::EmitObjCSuperExprLValue(const ObjCSuperExpr *E) {
   return EmitUnsupportedLValue(E, "use of super");
 }
+
+LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
+  
+  // Can only get l-value for message expression returning aggregate type
+  RValue RV = EmitAnyExprToTemp(E);
+  // FIXME: can this be volatile?
+  return LValue::MakeAddr(RV.getAggregateAddr(),
+                          E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
+}
+
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType, 
                                      CallExpr::const_arg_iterator ArgBeg,
