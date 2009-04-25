@@ -357,7 +357,9 @@ bool LLParser::ParseNamedGlobal() {
 /// ParseAlias:
 ///   ::= GlobalVar '=' OptionalVisibility 'alias' OptionalLinkage Aliasee
 /// Aliasee
-///   ::= TypeAndValue | 'bitcast' '(' TypeAndValue 'to' Type ')'
+///   ::= TypeAndValue
+///   ::= 'bitcast' '(' TypeAndValue 'to' Type ')'
+///   ::= 'getelementptr' '(' ... ')'
 ///
 /// Everything through visibility has already been parsed.
 ///
@@ -379,7 +381,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
   
   Constant *Aliasee;
   LocTy AliaseeLoc = Lex.getLoc();
-  if (Lex.getKind() != lltok::kw_bitcast) {
+  if (Lex.getKind() != lltok::kw_bitcast &&
+      Lex.getKind() != lltok::kw_getelementptr) {
     if (ParseGlobalTypeAndValue(Aliasee)) return true;
   } else {
     // The bitcast dest type is not present, it is implied by the dest type.
