@@ -2119,7 +2119,18 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
   }
 
   // Write the offsets table for identifier IDs.
-  Stream.EmitRecord(pch::IDENTIFIER_OFFSET, IdentifierOffsets);
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::IDENTIFIER_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of identifiers
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned IdentifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+
+  RecordData Record;
+  Record.push_back(pch::IDENTIFIER_OFFSET);
+  Record.push_back(IdentifierOffsets.size());
+  Stream.EmitRecordWithBlob(IdentifierOffsetAbbrev, Record,
+                            (const char *)&IdentifierOffsets.front(),
+                            IdentifierOffsets.size() * sizeof(uint32_t));
 }
 
 /// \brief Write a record containing the given attributes.
@@ -2253,7 +2264,7 @@ void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
 /// \brief Note that the identifier II occurs at the given offset
 /// within the identifier table.
 void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
-  IdentifierOffsets[IdentifierIDs[II] - 1] = (Offset << 1) | 0x01;
+  IdentifierOffsets[IdentifierIDs[II] - 1] = Offset;
 }
 
 /// \brief Note that the selector Sel occurs at the given offset

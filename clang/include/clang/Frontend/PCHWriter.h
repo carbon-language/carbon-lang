@@ -95,18 +95,18 @@ private:
   llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
   
   /// \brief Offsets of each of the identifier IDs into the identifier
-  /// table, shifted left by one bit with the low bit set.
-  llvm::SmallVector<uint64_t, 16> IdentifierOffsets;
+  /// table.
+  std::vector<uint32_t> IdentifierOffsets;
 
   /// \brief Map that provides the ID numbers of each Selector.
   llvm::DenseMap<Selector, pch::SelectorID> SelectorIDs;
   
   /// \brief Offset of each selector within the method pool/selector
   /// table, indexed by the Selector ID (-1).
-  llvm::SmallVector<uint32_t, 16> SelectorOffsets;
+  std::vector<uint32_t> SelectorOffsets;
 
   /// \brief A vector of all Selectors (ordered by ID).
-  llvm::SmallVector<Selector, 16> SelVector;
+  std::vector<Selector> SelVector;
   
   /// \brief Offsets of each of the macro identifiers into the
   /// bitstream.

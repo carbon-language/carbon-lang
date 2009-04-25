@@ -121,21 +121,28 @@ private:
 
   /// \brief Actual data for the on-disk hash table.
   ///
-  /// FIXME: This will eventually go away.
+  // This pointer points into a memory buffer, where the on-disk hash
+  // table for identifiers actually lives.
   const char *IdentifierTableData;
 
   /// \brief A pointer to an on-disk hash table of opaque type
   /// IdentifierHashTable.
   void *IdentifierLookupTable;
 
-  /// \brief String data for identifiers, indexed by the identifier ID
-  /// minus one.
+  /// \brief Offsets into the identifier table data.
   ///
-  /// Each element in this array is either an offset into
-  /// IdentifierTable that contains the string data (if the lowest bit
-  /// is set, in which case the offset is shifted left by one) or is
-  /// an IdentifierInfo* that has already been resolved.
-  llvm::SmallVector<uint64_t, 16> IdentifierData;
+  /// This array is indexed by the identifier ID (-1), and provides
+  /// the offset into IdentifierTableData where the string data is
+  /// stored.
+  const uint32_t *IdentifierOffsets;
+
+  /// \brief A vector containing identifiers that have already been
+  /// loaded.
+  ///
+  /// If the pointer at index I is non-NULL, then it refers to the
+  /// IdentifierInfo for the identifier with ID=I+1 that has already
+  /// been loaded.
+  std::vector<IdentifierInfo *> IdentifiersLoaded;
 
   /// \brief A pointer to an on-disk hash table of opaque type
   /// PCHMethodPoolLookupTable.
@@ -256,6 +263,7 @@ public:
   explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
     : SemaObj(0), PP(PP), Context(Context), Consumer(0),
       IdentifierTableData(0), IdentifierLookupTable(0),
+      IdentifierOffsets(0),
       MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
       TotalSelectorsInMethodPool(0), SelectorOffsets(0),
       TotalNumSelectors(0), NumStatementsRead(0), NumMacrosRead(0),
@@ -349,7 +357,7 @@ public:
   virtual std::pair<ObjCMethodList, ObjCMethodList> 
     ReadMethodPool(Selector Sel);
 
-  void SetIdentifierInfo(unsigned ID, const IdentifierInfo *II);
+  void SetIdentifierInfo(unsigned ID, IdentifierInfo *II);
 
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(unsigned DiagID);

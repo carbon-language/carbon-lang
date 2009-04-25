@@ -1837,28 +1837,23 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
 
     case pch::IDENTIFIER_TABLE:
       IdentifierTableData = BlobStart;
-      IdentifierLookupTable 
-        = PCHIdentifierLookupTable::Create(
+      if (Record[0]) {
+        IdentifierLookupTable 
+          = PCHIdentifierLookupTable::Create(
                         (const unsigned char *)IdentifierTableData + Record[0],
                         (const unsigned char *)IdentifierTableData, 
                         PCHIdentifierLookupTrait(*this));
-      PP.getIdentifierTable().setExternalIdentifierLookup(this);
+        PP.getIdentifierTable().setExternalIdentifierLookup(this);
+      }
       break;
 
     case pch::IDENTIFIER_OFFSET:
-      if (!IdentifierData.empty()) {
+      if (!IdentifiersLoaded.empty()) {
         Error("Duplicate IDENTIFIER_OFFSET record in PCH file");
         return Failure;
       }
-      IdentifierData.swap(Record);
-#ifndef NDEBUG
-      for (unsigned I = 0, N = IdentifierData.size(); I != N; ++I) {
-        if ((IdentifierData[I] & 0x01) == 0) {
-          Error("Malformed identifier table in the precompiled header");
-          return Failure;
-        }
-      }
-#endif
+      IdentifierOffsets = (const uint32_t *)BlobStart;
+      IdentifiersLoaded.resize(Record[0]);
       break;
 
     case pch::EXTERNAL_DEFINITIONS:
@@ -2710,22 +2705,20 @@ void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
 void PCHReader::PrintStats() {
   std::fprintf(stderr, "*** PCH Statistics:\n");
 
-  unsigned NumTypesLoaded = 
-    TypesLoaded.size() - std::count(TypesLoaded.begin(), TypesLoaded.end(),
-                                    (Type *)0);
-  unsigned NumDeclsLoaded = 
-    DeclsLoaded.size() - std::count(DeclsLoaded.begin(), DeclsLoaded.end(),
-                                    (Decl *)0);
-  unsigned NumIdentifiersLoaded = 0;
-  for (unsigned I = 0; I < IdentifierData.size(); ++I) {
-    if ((IdentifierData[I] & 0x01) == 0)
-      ++NumIdentifiersLoaded;
-  }
-  unsigned NumSelectorsLoaded = 0;
-  for (unsigned I = 0; I < SelectorsLoaded.size(); ++I) {
-    if (SelectorsLoaded[I].getAsOpaquePtr())
-      ++NumSelectorsLoaded;
-  }
+  unsigned NumTypesLoaded 
+    = TypesLoaded.size() - std::count(TypesLoaded.begin(), TypesLoaded.end(),
+                                      (Type *)0);
+  unsigned NumDeclsLoaded
+    = DeclsLoaded.size() - std::count(DeclsLoaded.begin(), DeclsLoaded.end(),
+                                      (Decl *)0);
+  unsigned NumIdentifiersLoaded
+    = IdentifiersLoaded.size() - std::count(IdentifiersLoaded.begin(),
+                                            IdentifiersLoaded.end(),
+                                            (IdentifierInfo *)0);
+  unsigned NumSelectorsLoaded 
+    = SelectorsLoaded.size() - std::count(SelectorsLoaded.begin(),
+                                          SelectorsLoaded.end(),
+                                          Selector());
 
   if (!TypesLoaded.empty())
     std::fprintf(stderr, "  %u/%u types read (%f%%)\n",
@@ -2735,10 +2728,10 @@ void PCHReader::PrintStats() {
     std::fprintf(stderr, "  %u/%u declarations read (%f%%)\n",
                  NumDeclsLoaded, (unsigned)DeclsLoaded.size(),
                  ((float)NumDeclsLoaded/DeclsLoaded.size() * 100));
-  if (!IdentifierData.empty())
+  if (!IdentifiersLoaded.empty())
     std::fprintf(stderr, "  %u/%u identifiers read (%f%%)\n",
-                 NumIdentifiersLoaded, (unsigned)IdentifierData.size(),
-                 ((float)NumIdentifiersLoaded/IdentifierData.size() * 100));
+                 NumIdentifiersLoaded, (unsigned)IdentifiersLoaded.size(),
+                 ((float)NumIdentifiersLoaded/IdentifiersLoaded.size() * 100));
   if (TotalNumSelectors)
     std::fprintf(stderr, "  %u/%u selectors read (%f%%)\n",
                  NumSelectorsLoaded, TotalNumSelectors,
@@ -2832,27 +2825,28 @@ PCHReader::ReadMethodPool(Selector Sel) {
   return *Pos;
 }
 
-void PCHReader::SetIdentifierInfo(unsigned ID, const IdentifierInfo *II) {
+void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
   assert(ID && "Non-zero identifier ID required");
-  IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(II);
+  assert(ID <= IdentifiersLoaded.size() && "Identifier ID out of range");
+  IdentifiersLoaded[ID - 1] = II;
 }
 
 IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
   
-  if (!IdentifierTableData || IdentifierData.empty()) {
+  if (!IdentifierTableData || IdentifiersLoaded.empty()) {
     Error("No identifier table in PCH file");
     return 0;
   }
   
-  if (IdentifierData[ID - 1] & 0x01) {
-    uint64_t Offset = IdentifierData[ID - 1] >> 1;
-    IdentifierData[ID - 1] = reinterpret_cast<uint64_t>(
-                               &Context.Idents.get(IdentifierTableData + Offset));
+  if (!IdentifiersLoaded[ID - 1]) {
+    uint32_t Offset = IdentifierOffsets[ID - 1];
+    IdentifiersLoaded[ID - 1] 
+      = &Context.Idents.get(IdentifierTableData + Offset);
   }
   
-  return reinterpret_cast<IdentifierInfo *>(IdentifierData[ID - 1]);
+  return IdentifiersLoaded[ID - 1];
 }
 
 Selector PCHReader::DecodeSelector(unsigned ID) {
