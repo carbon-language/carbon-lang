@@ -307,7 +307,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("--unwind-tables=0");
     if (!Args.hasFlag(options::OPT_mred_zone,
                       options::OPT_mno_red_zone,
-                      true))
+                      true) ||
+        Args.hasArg(options::OPT_mkernel) ||
+        Args.hasArg(options::OPT_fapple_kext))
       CmdArgs.push_back("--disable-red-zone");
     if (Args.hasFlag(options::OPT_msoft_float,
                      options::OPT_mno_soft_float,
