@@ -4703,10 +4703,6 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
       || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
     QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
 
-    // The type is entirely optional as well, if none, use DependentTy.
-    if (T.isNull())
-      T = Context.DependentTy;
-
     // The parameter list is optional, if there was none, assume ().
     if (!T->isFunctionType())
       T = Context.getFunctionType(T, NULL, 0, 0, 0);
@@ -4722,9 +4718,6 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
            diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
       return;
     }
-
-    if (!RetTy->isDependentType())
-      CurBlock->ReturnType = RetTy.getTypePtr();
     return;
   }
 

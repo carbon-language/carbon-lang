@@ -47,8 +47,8 @@ QualType Sema::adjustParameterType(QualType T) {
 /// object.
 /// \param DS  the declaration specifiers
 /// \param DeclLoc The location of the declarator identifier or invalid if none.
-/// \returns The type described by the declaration specifiers, or NULL
-/// if there was an error.
+/// \returns The type described by the declaration specifiers.  This function
+/// never returns null.
 QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
                                      SourceLocation DeclLoc,
                                      bool &isInvalid) {
@@ -176,6 +176,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
     Result = Context.getTypeDeclType(cast<TypeDecl>(D));
+    
+    if (D->isInvalidDecl())
+      isInvalid = true;
     break;
   }    
   case DeclSpec::TST_typename: {
@@ -232,7 +235,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     break;
   }
   case DeclSpec::TST_error:
-    return QualType();
+    Result = Context.IntTy;
+    isInvalid = true;
+    break;
   }
   
   // Handle complex types.
@@ -624,8 +629,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
     } else {
       bool isInvalid = false;
       T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid);
-      if (T.isNull())
-        return T;
       if (isInvalid)
         D.setInvalidType(true);
     }
@@ -938,7 +941,7 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
   QualType T = GetTypeForDeclarator(D, S);
-  if (T.isNull())
+  if (D.isInvalidType())
     return true;
 
   // Check that there are no default arguments (C++ only).

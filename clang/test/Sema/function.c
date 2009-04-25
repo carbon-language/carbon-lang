@@ -80,6 +80,10 @@ typedef void fn_t(void);
 fn_t t17;
 
 // PR4049
-unknown_type t18(void*) {   // expected-error {{unknown type name 'unknown_type'}}
+unknown_type t18(void*) {   // expected-error {{unknown type name 'unknown_type'}} expected-error{{parameter name omitted}}
+}
+
+unknown_type t19(int* P) {   // expected-error {{unknown type name 'unknown_type'}}
+  P = P+1;  // no warning.
 }
 

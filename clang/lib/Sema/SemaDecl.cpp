@@ -1361,13 +1361,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition) {
   NamedDecl *New;
 
   QualType R = GetTypeForDeclarator(D, S);
-  if (R.isNull()) {
-    D.setInvalidType();
-    R = Context.IntTy;
-    if (IsFunctionDefinition) // int(...)
-      R = Context.getFunctionType(R, 0, 0, true, 0);
-      
-  }
 
   // See if this is a redefinition of a variable in the same scope.
   if (D.getCXXScopeSpec().isInvalid()) {
@@ -2798,10 +2791,6 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     CheckExtraCXXDefaultArguments(D);
  
   QualType parmDeclType = GetTypeForDeclarator(D, S);
-  if (parmDeclType.isNull()) {
-    D.setInvalidType(true);
-    parmDeclType = Context.IntTy;
-  }
   
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
@@ -3816,10 +3805,6 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   // example, unnamed unions inject all members into the struct namespace!
   
   QualType T = GetTypeForDeclarator(D, S);
- if (T.isNull()) {
-   D.setInvalidType();
-   T = Context.IntTy;
- }
   
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4
