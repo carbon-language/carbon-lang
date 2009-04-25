@@ -809,8 +809,9 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(LLVMPointerWidth),
                                 IdxSigned, "idxprom");
 
-  // We know that the pointer points to a type of the correct size, unless the
-  // size is a VLA.
+  // We know that the pointer points to a type of the correct size,
+  // unless the size is a VLA or Objective-C interface.
+  llvm::Value *Address = 0;
   if (const VariableArrayType *VAT = 
         getContext().getAsVariableArrayType(E->getType())) {
     llvm::Value *VLASize = VLASizeMap[VAT];
@@ -823,10 +824,25 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateUDiv(Idx,
                              llvm::ConstantInt::get(Idx->getType(), 
                                                     BaseTypeSize));
+    Address = Builder.CreateGEP(Base, Idx, "arrayidx");
+  } else if (const ObjCInterfaceType *OIT = 
+             dyn_cast<ObjCInterfaceType>(E->getType())) {
+    llvm::Value *InterfaceSize = 
+      llvm::ConstantInt::get(Idx->getType(),
+                             getContext().getTypeSize(OIT) / 8);
+    
+    Idx = Builder.CreateMul(Idx, InterfaceSize);
+
+    llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy), 
+                                Idx, "arrayidx");
+    Address = Builder.CreateBitCast(Address, Base->getType());
+  } else {
+    Address = Builder.CreateGEP(Base, Idx, "arrayidx");
   }
   
   QualType T = E->getBase()->getType()->getAsPointerType()->getPointeeType();
-  LValue LV = LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
+  LValue LV = LValue::MakeAddr(Address,
                                T.getCVRQualifiers(),
                                getContext().getObjCGCAttrKind(T));
   if (getContext().getLangOptions().ObjC1 &&

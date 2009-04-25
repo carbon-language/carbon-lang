@@ -968,14 +968,27 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
   }
 
+  const QualType ElementType = PT->getPointeeType();
+  // Handle interface types, which are not represented with a concrete
+  // type.
+  if (const ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(ElementType)) {
+    llvm::Value *InterfaceSize = 
+      llvm::ConstantInt::get(Idx->getType(),
+                             CGF.getContext().getTypeSize(OIT) / 8);
+    Idx = Builder.CreateMul(Idx, InterfaceSize);
+    const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
+    Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
+    return Builder.CreateBitCast(Res, Ptr->getType());
+  } 
+
   // Explicitly handle GNU void* and function pointer arithmetic
   // extensions. The GNU void* casts amount to no-ops since our void*
   // type is i8*, but this is future proof.
-  const QualType ElementType = PT->getPointeeType();
   if (ElementType->isVoidType() || ElementType->isFunctionType()) {
     const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
-    Value *Res = Builder.CreateGEP(Casted, Idx, "sub.ptr");
+    Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
     return Builder.CreateBitCast(Res, Ptr->getType());
   } 
   
@@ -1014,6 +1027,20 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
         Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
     }
     Idx = Builder.CreateNeg(Idx, "sub.ptr.neg");
+
+    // Handle interface types, which are not represented with a concrete
+    // type.
+    if (const ObjCInterfaceType *OIT = 
+        dyn_cast<ObjCInterfaceType>(LHSElementType)) {
+      llvm::Value *InterfaceSize = 
+        llvm::ConstantInt::get(Idx->getType(),
+                               CGF.getContext().getTypeSize(OIT) / 8);
+      Idx = Builder.CreateMul(Idx, InterfaceSize);
+      const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
+      Value *Res = Builder.CreateGEP(LHSCasted, Idx, "add.ptr");
+      return Builder.CreateBitCast(Res, Ops.LHS->getType());
+    } 
 
     // Explicitly handle GNU void* and function pointer arithmetic
     // extensions. The GNU void* casts amount to no-ops since our
