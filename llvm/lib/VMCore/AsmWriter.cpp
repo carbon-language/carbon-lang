@@ -1317,12 +1317,12 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     Out << ' ';
     PrintLLVMName(Out, GA);
   } else {
-    const ConstantExpr *CE = 0;
-    if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
-        (CE->getOpcode() == Instruction::BitCast)) {
-      writeOperand(CE, false);    
-    } else
-      assert(0 && "Unsupported aliasee");
+    const ConstantExpr *CE = cast<ConstantExpr>(Aliasee);
+    // The only valid GEP is an all zero GEP.
+    assert((CE->getOpcode() == Instruction::BitCast ||
+            CE->getOpcode() == Instruction::GetElementPtr) &&
+           "Unsupported aliasee");
+    writeOperand(CE, false);
   }
   
   printInfoComment(*GA);

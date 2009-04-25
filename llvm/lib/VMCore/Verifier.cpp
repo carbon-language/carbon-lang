@@ -427,7 +427,9 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
 
   if (!isa<GlobalValue>(GA.getAliasee())) {
     const ConstantExpr *CE = dyn_cast<ConstantExpr>(GA.getAliasee());
-    Assert1(CE && CE->getOpcode() == Instruction::BitCast &&
+    Assert1(CE && 
+            (CE->getOpcode() == Instruction::BitCast ||
+             CE->getOpcode() == Instruction::GetElementPtr) &&
             isa<GlobalValue>(CE->getOperand(0)),
             "Aliasee should be either GlobalValue or bitcast of GlobalValue",
             &GA);
