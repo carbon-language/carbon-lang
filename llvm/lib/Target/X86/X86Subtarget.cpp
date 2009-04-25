@@ -21,6 +21,10 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+#if defined(_MSC_VER)
+    #include <intrin.h>
+#endif
+
 static cl::opt<X86Subtarget::AsmWriterFlavorTy>
 AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
   cl::desc("Choose style of code to emit from X86 backend:"),
@@ -110,43 +114,53 @@ unsigned X86Subtarget::getSpecialAddressLatency() const {
 /// specified arguments.  If we can't run cpuid on the host, return true.
 bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
                           unsigned *rECX, unsigned *rEDX) {
-#if defined(__x86_64__)
-  // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
-  asm ("movq\t%%rbx, %%rsi\n\t"
-       "cpuid\n\t"
-       "xchgq\t%%rbx, %%rsi\n\t"
-       : "=a" (*rEAX),
-         "=S" (*rEBX),
-         "=c" (*rECX),
-         "=d" (*rEDX)
-       :  "a" (value));
-  return false;
+#if defined(__x86_64__) || defined(_M_AMD64)
+  #if defined(__GNUC__)
+    // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
+    asm ("movq\t%%rbx, %%rsi\n\t"
+         "cpuid\n\t"
+         "xchgq\t%%rbx, %%rsi\n\t"
+         : "=a" (*rEAX),
+           "=S" (*rEBX),
+           "=c" (*rECX),
+           "=d" (*rEDX)
+         :  "a" (value));
+    return false;
+  #elif defined(_MSC_VER)
+    int registers[4];
+    __cpuid(registers, value);
+    *rEAX = registers[0];
+    *rEBX = registers[1];
+    *rECX = registers[2];
+    *rEDX = registers[3];
+    return false;
+  #endif
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
-#if defined(__GNUC__)
-  asm ("movl\t%%ebx, %%esi\n\t"
-       "cpuid\n\t"
-       "xchgl\t%%ebx, %%esi\n\t"
-       : "=a" (*rEAX),
-         "=S" (*rEBX),
-         "=c" (*rECX),
-         "=d" (*rEDX)
-       :  "a" (value));
-  return false;
-#elif defined(_MSC_VER)
-  __asm {
-    mov   eax,value
-    cpuid
-    mov   esi,rEAX
-    mov   dword ptr [esi],eax
-    mov   esi,rEBX
-    mov   dword ptr [esi],ebx
-    mov   esi,rECX
-    mov   dword ptr [esi],ecx
-    mov   esi,rEDX
-    mov   dword ptr [esi],edx
-  }
-  return false;
-#endif
+  #if defined(__GNUC__)
+    asm ("movl\t%%ebx, %%esi\n\t"
+         "cpuid\n\t"
+         "xchgl\t%%ebx, %%esi\n\t"
+         : "=a" (*rEAX),
+           "=S" (*rEBX),
+           "=c" (*rECX),
+           "=d" (*rEDX)
+         :  "a" (value));
+    return false;
+  #elif defined(_MSC_VER)
+    __asm {
+      mov   eax,value
+      cpuid
+      mov   esi,rEAX
+      mov   dword ptr [esi],eax
+      mov   esi,rEBX
+      mov   dword ptr [esi],ebx
+      mov   esi,rECX
+      mov   dword ptr [esi],ecx
+      mov   esi,rEDX
+      mov   dword ptr [esi],edx
+    }
+    return false;
+  #endif
 #endif
   return true;
 }
