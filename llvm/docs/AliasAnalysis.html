@@ -36,7 +36,7 @@
 
   <li><a href="#using">Using alias analysis results</a>
     <ul>
-    <li><a href="#loadvn">Using the <tt>-load-vn</tt> Pass</a></li>
+    <li><a href="#memdep">Using the <tt>MemoryDependenceAnalysis</tt> Pass</a></li>
     <li><a href="#ast">Using the <tt>AliasSetTracker</tt> class</a></li>
     <li><a href="#direct">Using the <tt>AliasAnalysis</tt> interface directly</a></li>
     </ul>
@@ -537,16 +537,16 @@ preference, these are...</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="loadvn">Using the <tt>-load-vn</tt> Pass</a>
+  <a name="memdep">Using the <tt>MemoryDependenceAnalysis</tt> Pass</a>
 </div>
 
 <div class="doc_text">
 
-<p>The <tt>load-vn</tt> pass uses alias analysis to provide value numbering
-information for <tt>load</tt> instructions and pointer values.  If your analysis
-or transformation can be modeled in a form that uses value numbering
-information, you don't have to do anything special to handle load instructions:
-just use the <tt>load-vn</tt> pass, which uses alias analysis.</p>
+<p>The <tt>memdep</tt> pass uses alias analysis to provide high-level dependence
+information about memory-using instructions.  This will tell you which store
+feeds into a load, for example.  It uses caching and other techniques to be
+efficient, and is used by Dead Store Elimination, GVN, and memcpy optimizations.
+</p>
 
 </div>
 
@@ -710,7 +710,7 @@ aggressive local analysis that "knows" many important facts:</p>
 for internal global variables that don't "have their address taken".  If a
 global does not have its address taken, the pass knows that no pointers alias
 the global.  This pass also keeps track of functions that it knows never access
-memory or never read memory.  This allows certain optimizations (e.g. GCSE) to
+memory or never read memory.  This allows certain optimizations (e.g. GVN) to
 eliminate call instructions entirely.
 </p>
 
@@ -855,26 +855,14 @@ pointer.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="gcseloadvn">The <tt>-load-vn</tt> &amp; <tt>-gcse</tt> passes</a>
+  <a name="gvn">The <tt>-gvn</tt>, <tt>-memcpyopt</tt>, and <tt>-dse</tt>
+     passes</a>
 </div>
 
 <div class="doc_text">
 
-<p>The <tt>-load-vn</tt> pass uses alias analysis to "<a href="#loadvn">value
-number</a>" loads and pointers values, which is used by the GCSE pass to
-eliminate instructions.  The <tt>-load-vn</tt> pass relies on alias information
-and must-alias information.  This combination of passes can make the following
-transformations:</p>
-
-<ul>
-<li>Redundant load instructions are eliminated.</li>
-<li>Load instructions that follow a store to the same location are replaced with
-the stored value ("store forwarding").</li>
-<li>Pointers values (e.g. formal arguments) that must-alias simpler expressions
-(e.g. global variables or the null pointer) are replaced.  Note that this
-implements transformations like "virtual method resolution", turning indirect
-calls into direct calls.</li>
-</ul>
+<p>These passes use AliasAnalysis information to reason about loads and stores.
+</p>
 
 </div>
 
