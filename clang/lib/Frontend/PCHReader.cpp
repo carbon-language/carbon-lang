@@ -799,7 +799,7 @@ unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 unsigned PCHStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   VisitExpr(E);
   E->setLHS(cast<Expr>(StmtStack[StmtStack.size() - 2]));
-  E->setRHS(cast<Expr>(StmtStack[StmtStack.size() - 2]));
+  E->setRHS(cast<Expr>(StmtStack[StmtStack.size() - 1]));
   E->setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 2;
 }
