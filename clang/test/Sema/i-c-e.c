@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <limits.h>
 
-int a() {int p; *(1 ? &p : (void*)(0 && (a(),1))) = 10;}
+int a() {int p; *(1 ? &p : (void*)(0 && (a(),1))) = 10;} // expected-error {{incomplete type 'void' is not assignable}}
 
 // rdar://6091492 - ?: with __builtin_constant_p as the operand is an i-c-e.
 int expr;

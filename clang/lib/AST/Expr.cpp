@@ -1374,12 +1374,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const
   
   // If we have an integer constant expression, we need to *evaluate* it and
   // test for the value 0.
-  // FIXME: We should probably return false if we're compiling in strict mode
-  // and Diag is not null (this indicates that the value was foldable but not
-  // an ICE.
-  EvalResult Result;
-  return Evaluate(Result, Ctx) && !Result.HasSideEffects &&
-        Result.Val.isInt() && Result.Val.getInt() == 0;
+  llvm::APSInt Result;
+  return isIntegerConstantExpr(Result, Ctx) && Result == 0;
 }
 
 /// isBitField - Return true if this expression is a bit-field.
