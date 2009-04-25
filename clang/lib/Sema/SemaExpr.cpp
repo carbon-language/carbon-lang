@@ -4495,16 +4495,12 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtArg substmt,
   CompoundStmt *Compound = cast<CompoundStmt>(SubStmt);
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
-  if (isFileScope) {
+  if (isFileScope)
     return ExprError(Diag(LPLoc, diag::err_stmtexpr_file_scope));
-  }
 
   // FIXME: there are a variety of strange constraints to enforce here, for
   // example, it is not possible to goto into a stmt expression apparently.
   // More semantic analysis is needed.
-
-  // FIXME: the last statement in the compount stmt has its value used.  We
-  // should not warn about it being unused.
 
   // If there are sub stmts in the compound stmt, take the type of the last one
   // as the type of the stmtexpr.
