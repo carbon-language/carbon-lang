@@ -1485,7 +1485,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
   
   // Limit search depth.
   if (Depth == 10)
-    return false;
+    return 0;
 
   // If multiple users are using the root value, procede with
   // simplification conservatively assuming that all elements
@@ -1496,14 +1496,14 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     // the main instcombine process.
     if (Depth != 0)
       // TODO: Just compute the UndefElts information recursively.
-      return false;
+      return 0;
 
     // Conservatively assume that all elements are needed.
     DemandedElts = EltMask;
   }
   
   Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return false;        // Only analyze instructions.
+  if (!I) return 0;        // Only analyze instructions.
   
   bool MadeChange = false;
   APInt UndefElts2(VWidth, 0);
