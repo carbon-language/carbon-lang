@@ -10,6 +10,10 @@
 // This pass combines dag nodes to form fewer, simpler DAG nodes.  It can be run
 // both before and after the DAG is legalized.
 //
+// This pass is not a substitute for the LLVM IR instcombine pass. This pass is
+// primarily intended to handle simplification opportunities that are implicit
+// in the LLVM IR and exposed by the various codegen lowering phases.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dagcombine"
