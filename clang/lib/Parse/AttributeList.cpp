@@ -135,7 +135,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 21:
     if (!memcmp(Str, "objc_ownership_retain", 21))
-      return AT_objc_ownership_returns;      
+      return AT_objc_ownership_retain;      
   case 22:
     if (!memcmp(Str, "objc_ownership_returns", 22))
       return AT_objc_ownership_returns;

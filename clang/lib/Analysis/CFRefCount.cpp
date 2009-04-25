@@ -1095,7 +1095,18 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
     }
   }
   
-  if (!hasRetEffect)
+  // Determine if there are any arguments with a specific ArgEffect.
+  bool hasArgEffect = false;
+  unsigned i = 0;
+  for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
+       E = MD->param_end(); I != E; ++I, ++i) {
+    if ((*I)->getAttr<ObjCOwnershipRetainAttr>()) {
+      ScratchArgs.push_back(std::make_pair(i, IncRefMsg));
+      hasArgEffect = true;
+    }
+}
+  
+  if (!hasRetEffect && !hasArgEffect)
     return 0;
 
   return getPersistentSummary(RE);
