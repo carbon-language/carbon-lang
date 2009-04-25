@@ -3930,7 +3930,7 @@ void Sema::ActOnFields(Scope* S,
           // structures.
           if (i != NumFields-1)
             Diag(FD->getLocation(), diag::ext_variable_sized_type_in_struct)
-              << FD->getDeclName();
+              << FD->getDeclName() << FD->getType();
           else {
             // We support flexible arrays at the end of structs in
             // other structs as an extension.

@@ -874,8 +874,8 @@ def err_func_returning_array_function : Error<
 def err_field_declared_as_function : Error<"field %0 declared as a function">;
 def err_field_incomplete : Error<"field has incomplete type %0">;
 def ext_variable_sized_type_in_struct : ExtWarn<
-  "field of variable sized type %0 not at the end of a struct or class is a "
-  "GNU extension">;
+  "field %0 with variable sized type %1 not at the end of a struct or class is"
+  " a GNU extension">;
 
 def err_flexible_array_empty_struct : Error<
   "flexible array %0 not allowed in otherwise empty struct">;
