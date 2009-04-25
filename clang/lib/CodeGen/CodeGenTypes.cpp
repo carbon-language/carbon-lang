@@ -529,13 +529,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
     uint64_t size = CGT.getTargetData().getTypePaddedSizeInBits(Ty);
 
     if (Field->isBitField()) {
-      Expr *BitWidth = Field->getBitWidth();
-      llvm::APSInt FieldSize(32);
-      bool isBitField =
-        BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
-      assert(isBitField && "Invalid BitField size expression");
-      isBitField=isBitField; // silence warning.
-      uint64_t BitFieldSize = FieldSize.getZExtValue();
+      uint64_t BitFieldSize =
+          Field->getBitWidth()->EvaluateAsInt(CGT.getContext()).getZExtValue();
 
       // Bitfield field info is different from other field info;
       // it actually ignores the underlying LLVM struct because
