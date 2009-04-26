@@ -3085,7 +3085,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                                                        LastFieldBitfield);
     Expr *BitWidth = LastFieldBitfield->getBitWidth();
     uint64_t BitFieldSize =
-      BitWidth->getIntegerConstantExprValue(CGM.getContext()).getZExtValue();
+      BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
     skivar.ivar_size = (BitFieldSize / ByteSizeInBits) 
                          + ((BitFieldSize % ByteSizeInBits) != 0);
     SkipIvars.push_back(skivar);    
@@ -4293,7 +4293,7 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
   if (Last->isBitField()) {
     Expr *BitWidth = Last->getBitWidth();
     uint64_t BitFieldSize =
-      BitWidth->getIntegerConstantExprValue(CGM.getContext()).getZExtValue();
+      BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
     Size = (BitFieldSize / 8) + ((BitFieldSize % 8) != 0);
   }
 #endif

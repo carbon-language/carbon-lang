@@ -1536,7 +1536,7 @@ void ObjCMessageExpr::setClassInfo(const ObjCMessageExpr::ClassInfo &CI) {
 
 
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
-  return getCond()->getIntegerConstantExprValue(C) != 0;
+  return getCond()->EvaluateAsInt(C) != 0;
 }
 
 void ShuffleVectorExpr::setExprs(Expr ** Exprs, unsigned NumExprs) {

@@ -549,8 +549,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
   if (const Expr *BitWidthExpr = FD->getBitWidth()) {
     // TODO: Need to check this algorithm on other targets!
     //       (tested on Linux-X86)
-    FieldSize = 
-      BitWidthExpr->getIntegerConstantExprValue(Context).getZExtValue();
+    FieldSize = BitWidthExpr->EvaluateAsInt(Context).getZExtValue();
     
     std::pair<uint64_t, unsigned> FieldInfo = 
       Context.getTypeInfo(FD->getType());
@@ -2263,7 +2262,7 @@ static void EncodeBitField(const ASTContext *Context, std::string& S,
   const Expr *E = FD->getBitWidth();
   assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
   ASTContext *Ctx = const_cast<ASTContext*>(Context);
-  unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
+  unsigned N = E->EvaluateAsInt(*Ctx).getZExtValue();
   S += 'b';
   S += llvm::utostr(N);
 }

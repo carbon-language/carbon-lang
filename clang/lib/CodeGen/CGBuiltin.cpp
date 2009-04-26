@@ -196,8 +196,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_object_size: {
     // FIXME: Implement. For now we just always fail and pretend we
     // don't know the object size.
-    llvm::APSInt TypeArg = 
-      E->getArg(1)->getIntegerConstantExprValue(CGM.getContext());
+    llvm::APSInt TypeArg = E->getArg(1)->EvaluateAsInt(CGM.getContext());
     const llvm::Type *ResType = ConvertType(E->getType());
     //    bool UseSubObject = TypeArg.getZExtValue() & 1;
     bool UseMinimum = TypeArg.getZExtValue() & 2;

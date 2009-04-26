@@ -722,8 +722,8 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     } else if (ImplIvar->isBitField() && ClsIvar->isBitField()) {
       Expr *ImplBitWidth = ImplIvar->getBitWidth();
       Expr *ClsBitWidth = ClsIvar->getBitWidth();
-      if (ImplBitWidth->getIntegerConstantExprValue(Context).getZExtValue() !=
-          ClsBitWidth->getIntegerConstantExprValue(Context).getZExtValue()) {
+      if (ImplBitWidth->EvaluateAsInt(Context).getZExtValue() !=
+          ClsBitWidth->EvaluateAsInt(Context).getZExtValue()) {
         Diag(ImplBitWidth->getLocStart(), diag::err_conflicting_ivar_bitwidth)
           << ImplIvar->getIdentifier();
         Diag(ClsBitWidth->getLocStart(), diag::note_previous_definition);

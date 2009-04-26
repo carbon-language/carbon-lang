@@ -177,25 +177,11 @@ public:
   
   bool isBitField();
 
-  /// getIntegerConstantExprValue() - Return the value of an integer
-  /// constant expression. The expression must be a valid integer
-  /// constant expression as determined by isIntegerConstantExpr.
-  llvm::APSInt getIntegerConstantExprValue(ASTContext &Ctx) const {
-    llvm::APSInt X;
-    bool success = isIntegerConstantExpr(X, Ctx);
-    success = success;
-    assert(success && "Illegal argument to getIntegerConstantExpr");
-    return X;
-  }
-
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
   /// of the invalid expression.
   bool isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
-                             SourceLocation *Loc = 0,
-                             bool isEvaluated = true) const;
-  bool isIntegerConstantExprInternal(llvm::APSInt &Result, ASTContext &Ctx,
                              SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
   bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const {
@@ -1722,7 +1708,7 @@ public:
 
   unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
-    return getExpr(N+2)->getIntegerConstantExprValue(Ctx).getZExtValue();
+    return getExpr(N+2)->EvaluateAsInt(Ctx).getZExtValue();
   }
   
   // Iterators

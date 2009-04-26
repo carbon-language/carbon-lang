@@ -577,7 +577,7 @@ void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
     if (Field->isBitField()) {
       Expr *BitWidth = Field->getBitWidth();
       uint64_t BitFieldSize =  
-        BitWidth->getIntegerConstantExprValue(CGT.getContext()).getZExtValue();
+        BitWidth->EvaluateAsInt(CGT.getContext()).getZExtValue();
 
       CGT.addFieldInfo(*Field, 0);
       CGT.addBitFieldInfo(*Field, offset, BitFieldSize);

@@ -785,8 +785,7 @@ void X86_64ABIInfo::classify(QualType Ty,
       // therefore they can straddle an eightbyte.
       if (BitField) {
         uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
-        uint64_t Size = 
-          i->getBitWidth()->getIntegerConstantExprValue(Context).getZExtValue();
+        uint64_t Size = i->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
 
         uint64_t EB_Lo = Offset / 64;
         uint64_t EB_Hi = (Offset + Size - 1) / 64;

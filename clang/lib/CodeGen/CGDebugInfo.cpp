@@ -320,8 +320,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
       FieldSize = M->getContext().getTypeSize(FType);
       Expr *BitWidth = Field->getBitWidth();
       if (BitWidth)
-        FieldSize = 
-          BitWidth->getIntegerConstantExprValue(M->getContext()).getZExtValue();
+        FieldSize = BitWidth->EvaluateAsInt(M->getContext()).getZExtValue();
       
       FieldAlign =  M->getContext().getTypeAlign(FType);
     }
@@ -432,9 +431,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       FieldSize = M->getContext().getTypeSize(FType);
       Expr *BitWidth = Field->getBitWidth();
       if (BitWidth)
-        FieldSize = 
-          BitWidth->getIntegerConstantExprValue(M->getContext()).getZExtValue();
-      
+        FieldSize = BitWidth->EvaluateAsInt(M->getContext()).getZExtValue();
+
       FieldAlign =  M->getContext().getTypeAlign(FType);
     }
 
