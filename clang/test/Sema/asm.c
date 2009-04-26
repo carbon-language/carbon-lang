@@ -69,3 +69,10 @@ void asm_string_tests(int i) {
   asm("%9" :: "i"(4)); // expected-error {{invalid operand number in inline asm string}}
   asm("%1" : "+r"(i)); // ok, referring to input.
 }
+
+// PR4077
+int test7(unsigned long long b) {
+  int a;
+  asm volatile("foo " : "=a" (a) :"0" (b)); // expected-error {{input with type 'unsigned long long' matching output with type 'int'}}
+  return a;
+}

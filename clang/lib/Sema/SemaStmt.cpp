@@ -978,6 +978,24 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     }
     
     DefaultFunctionArrayConversion(Exprs[i]);
+    
+    // If this is a tied constraint, verify that the output and input have
+    // either exactly the same type, or that they are int/ptr operands with the
+    // same size (int/long, int*/long, are ok etc).
+    if (Info.hasTiedOperand()) {
+      unsigned TiedTo = Info.getTiedOperand();
+      QualType T1 = Exprs[TiedTo]->getType(), T2 = Exprs[i]->getType();
+      if (!Context.hasSameType(T1, T2)) {
+        // Int/ptr operands are ok if they are the same size.
+        if (!(T1->isIntegerType() || T1->isPointerType()) ||
+            !(T2->isIntegerType() || T2->isPointerType()) ||
+            Context.getTypeSize(T1) != Context.getTypeSize(T2))
+          return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
+                                diag::err_asm_tying_incompatible_types)
+                           << T2 << T1 << Exprs[TiedTo]->getSourceRange()
+                           << Exprs[i]->getSourceRange());
+      }
+    }
   }
 
   // Check that the clobbers are valid.

@@ -1326,6 +1326,8 @@ def err_asm_invalid_input_constraint : Error<
   "invalid input constraint '%0' in asm">;
 def err_asm_invalid_type_in_input : Error<
   "invalid type %0 in asm input for constraint '%1'">;
+def err_asm_tying_incompatible_types : Error<
+  "unsupported inline asm: input with type %0 matching output with type %1">;
 def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
 def err_invalid_asm_cast_lvalue : Error<
   "invalid use of a cast in a inline asm context requiring an l-value: "
