@@ -29,6 +29,8 @@ class ObjCForCollectionStmt : public Stmt {
 public:
   ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
                         SourceLocation FCL, SourceLocation RPL);
+  explicit ObjCForCollectionStmt(EmptyShell Empty) : 
+    Stmt(ObjCForCollectionStmtClass, Empty) { }
   
   Stmt *getElement() { return SubExprs[ELEM]; }
   Expr *getCollection() { 
@@ -42,7 +44,16 @@ public:
   }
   const Stmt *getBody() const { return SubExprs[BODY]; }
   
+  void setElement(Stmt *S) { SubExprs[ELEM] = S; }
+  void setCollection(Expr *E) { 
+    SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(E);
+  }
+  void setBody(Stmt *S) { SubExprs[BODY] = S; }
+  
+  SourceLocation getForLoc() const { return ForLoc; }
+  void setForLoc(SourceLocation Loc) { ForLoc = Loc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
@@ -73,26 +84,34 @@ public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
                   ParmVarDecl *catchVarDecl, 
                   Stmt *atCatchStmt, Stmt *atCatchList);
+
+  explicit ObjCAtCatchStmt(EmptyShell Empty) : 
+    Stmt(ObjCAtCatchStmtClass, Empty) { }
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
-
+  void setCatchBody(Stmt *S) { SubExprs[BODY] = S; }
+  
   const ObjCAtCatchStmt *getNextCatchStmt() const {
     return static_cast<const ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
   }
   ObjCAtCatchStmt *getNextCatchStmt() { 
     return static_cast<ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
   }
-
+  void setNextCatchStmt(Stmt *S) { SubExprs[NEXT_CATCH] = S; }
+  
   const ParmVarDecl *getCatchParamDecl() const { 
     return ExceptionDecl; 
   }
   ParmVarDecl *getCatchParamDecl() { 
     return ExceptionDecl; 
   }
+  void setCatchParamDecl(ParmVarDecl *D) { ExceptionDecl = D; }
   
   SourceLocation getAtCatchLoc() const { return AtCatchLoc; }
+  void setAtCatchLoc(SourceLocation Loc) { AtCatchLoc = Loc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
@@ -117,15 +136,20 @@ public:
   ObjCAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
   : Stmt(ObjCAtFinallyStmtClass), 
     AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
+
+  explicit ObjCAtFinallyStmt(EmptyShell Empty) : 
+    Stmt(ObjCAtFinallyStmtClass, Empty) { }
   
   const Stmt *getFinallyBody() const { return AtFinallyStmt; }
   Stmt *getFinallyBody() { return AtFinallyStmt; }
-
+  void setFinallyBody(Stmt *S) { AtFinallyStmt = S; }
+  
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
   }
   
   SourceLocation getAtFinallyLoc() const { return AtFinallyLoc; }
+  void setAtFinallyLoc(SourceLocation Loc) { AtFinallyLoc = Loc; }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtFinallyStmtClass;
@@ -154,22 +178,32 @@ public:
       SubStmts[FINALLY] = atFinallyStmt;
       AtTryLoc = atTryLoc;
     }
+  explicit ObjCAtTryStmt(EmptyShell Empty) : 
+    Stmt(ObjCAtTryStmtClass, Empty) { }
     
   SourceLocation getAtTryLoc() const { return AtTryLoc; }
+  void setAtTryLoc(SourceLocation Loc) { AtTryLoc = Loc; }
+  
   const Stmt *getTryBody() const { return SubStmts[TRY]; }
   Stmt *getTryBody() { return SubStmts[TRY]; }
+  void setTryBody(Stmt *S) { SubStmts[TRY] = S; }
+  
   const ObjCAtCatchStmt *getCatchStmts() const { 
     return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]); 
   }
   ObjCAtCatchStmt *getCatchStmts() { 
     return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]); 
   }
+  void setCatchStmts(Stmt *S) { SubStmts[CATCH] = S; }
+  
   const ObjCAtFinallyStmt *getFinallyStmt() const { 
     return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]); 
   }
   ObjCAtFinallyStmt *getFinallyStmt() { 
     return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]); 
   }
+  void setFinallyStmt(Stmt *S) { SubStmts[FINALLY] = S; }
+
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
   }
@@ -202,8 +236,11 @@ public:
     SubStmts[SYNC_BODY] = synchBody;
     AtSynchronizedLoc = atSynchronizedLoc;
   }
+  explicit ObjCAtSynchronizedStmt(EmptyShell Empty) : 
+    Stmt(ObjCAtSynchronizedStmtClass, Empty) { }
   
   SourceLocation getAtSynchronizedLoc() const { return AtSynchronizedLoc; }
+  void setAtSynchronizedLoc(SourceLocation Loc) { AtSynchronizedLoc = Loc; }
   
   const CompoundStmt *getSynchBody() const {
     return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]);
@@ -211,6 +248,7 @@ public:
   CompoundStmt *getSynchBody() { 
     return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]); 
   }
+  void setSynchBody(Stmt *S) { SubStmts[SYNC_BODY] = S; }
   
   const Expr *getSynchExpr() const { 
     return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 
@@ -218,6 +256,7 @@ public:
   Expr *getSynchExpr() { 
     return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 
   }
+  void setSynchExpr(Stmt *S) { SubStmts[SYNC_EXPR] = S; }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtSynchronizedLoc, getSynchBody()->getLocEnd()); 
@@ -241,9 +280,15 @@ public:
   : Stmt(ObjCAtThrowStmtClass), Throw(throwExpr) {
     AtThrowLoc = atThrowLoc;
   }
+  explicit ObjCAtThrowStmt(EmptyShell Empty) : 
+    Stmt(ObjCAtThrowStmtClass, Empty) { }
   
   const Expr *getThrowExpr() const { return reinterpret_cast<Expr*>(Throw); }
   Expr *getThrowExpr() { return reinterpret_cast<Expr*>(Throw); }
+  void setThrowExpr(Stmt *S) { Throw = S; }
+  
+  SourceLocation getThrowLoc() { return AtThrowLoc; }
+  void setThrowLoc(SourceLocation Loc) { AtThrowLoc = Loc; }
   
   virtual SourceRange getSourceRange() const {
     if (Throw)

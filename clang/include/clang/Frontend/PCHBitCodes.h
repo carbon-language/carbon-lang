@@ -570,7 +570,20 @@ namespace clang {
       /// \brief An ObjCMessageExpr record.
       EXPR_OBJC_MESSAGE_EXPR,
       /// \brief An ObjCSuperExpr record.
-      EXPR_OBJC_SUPER_EXPR
+      EXPR_OBJC_SUPER_EXPR,
+
+      /// \brief An ObjCForCollectionStmt record.      
+      STMT_OBJC_FOR_COLLECTION,
+      /// \brief An ObjCAtCatchStmt record.      
+      STMT_OBJC_CATCH,
+      /// \brief An ObjCAtFinallyStmt record.      
+      STMT_OBJC_FINALLY,
+      /// \brief An ObjCAtTryStmt record.      
+      STMT_OBJC_AT_TRY,
+      /// \brief An ObjCAtSynchronizedStmt record.      
+      STMT_OBJC_AT_SYNCHRONIZED,
+      /// \brief An ObjCAtThrowStmt record.      
+      STMT_OBJC_AT_THROW
     };
 
     /// \brief The kinds of designators that can occur in a

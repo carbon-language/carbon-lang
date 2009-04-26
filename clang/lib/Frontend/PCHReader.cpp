@@ -502,6 +502,13 @@ namespace {
     unsigned VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
     unsigned VisitObjCMessageExpr(ObjCMessageExpr *E);
     unsigned VisitObjCSuperExpr(ObjCSuperExpr *E);
+    
+    unsigned VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
+    unsigned VisitObjCCatchStmt(ObjCAtCatchStmt *);
+    unsigned VisitObjCFinallyStmt(ObjCAtFinallyStmt *);
+    unsigned VisitObjCAtTryStmt(ObjCAtTryStmt *);
+    unsigned VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
+    unsigned VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
   };
 }
 
@@ -1138,6 +1145,57 @@ unsigned PCHStmtReader::VisitObjCSuperExpr(ObjCSuperExpr *E) {
   VisitExpr(E);
   E->setLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 0;
+}
+
+unsigned PCHStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+  VisitStmt(S);
+  S->setElement(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 3]));
+  S->setCollection(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
+  S->setBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
+  S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 3;
+}
+
+unsigned PCHStmtReader::VisitObjCCatchStmt(ObjCAtCatchStmt *S) {
+  VisitStmt(S);
+  S->setCatchBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 2]));
+  S->setNextCatchStmt(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
+  S->setCatchParamDecl(cast_or_null<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  S->setAtCatchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 2;
+}
+
+unsigned PCHStmtReader::VisitObjCFinallyStmt(ObjCAtFinallyStmt *S) {
+  VisitStmt(S);
+  S->setFinallyBody(StmtStack.back());
+  S->setAtFinallyLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
+  VisitStmt(S);
+  S->setTryBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 3]));
+  S->setCatchStmts(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 2]));
+  S->setFinallyStmt(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
+  S->setAtTryLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 3;
+}
+
+unsigned PCHStmtReader::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
+  VisitStmt(S);
+  S->setSynchExpr(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 2]));
+  S->setSynchBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
+  S->setAtSynchronizedLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 2;
+}
+
+unsigned PCHStmtReader::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
+  VisitStmt(S);
+  S->setThrowExpr(StmtStack.back());
+  S->setThrowLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3370,6 +3428,24 @@ Stmt *PCHReader::ReadStmt() {
       break;
     case pch::EXPR_OBJC_SUPER_EXPR:
       S = new (Context) ObjCSuperExpr(Empty);
+      break;
+    case pch::STMT_OBJC_FOR_COLLECTION:
+      S = new (Context) ObjCForCollectionStmt(Empty);
+      break;
+    case pch::STMT_OBJC_CATCH:
+      S = new (Context) ObjCAtCatchStmt(Empty);
+      break;
+    case pch::STMT_OBJC_FINALLY:
+      S = new (Context) ObjCAtFinallyStmt(Empty);
+      break;
+    case pch::STMT_OBJC_AT_TRY:
+      S = new (Context) ObjCAtTryStmt(Empty);
+      break;
+    case pch::STMT_OBJC_AT_SYNCHRONIZED:
+      S = new (Context) ObjCAtSynchronizedStmt(Empty);
+      break;
+    case pch::STMT_OBJC_AT_THROW:
+      S = new (Context) ObjCAtThrowStmt(Empty);
       break;
     }
 

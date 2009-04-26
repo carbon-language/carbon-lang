@@ -667,7 +667,7 @@ namespace {
     void VisitBlockExpr(BlockExpr *E);
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
       
-    // Objective-C
+    // Objective-C Expressions
     void VisitObjCStringLiteral(ObjCStringLiteral *E);
     void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *E);
@@ -677,6 +677,14 @@ namespace {
     void VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
     void VisitObjCSuperExpr(ObjCSuperExpr *E);
+    
+    // Objective-C Statements    
+    void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
+    void VisitObjCCatchStmt(ObjCAtCatchStmt *);
+    void VisitObjCFinallyStmt(ObjCAtFinallyStmt *);
+    void VisitObjCAtTryStmt(ObjCAtTryStmt *);
+    void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
+    void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
   };
 }
 
@@ -1259,6 +1267,51 @@ void PCHStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
   Code = pch::EXPR_OBJC_SUPER_EXPR;
 }
 
+void PCHStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+  VisitStmt(S);
+  Writer.WriteSubStmt(S->getElement());
+  Writer.WriteSubStmt(S->getCollection());
+  Writer.WriteSubStmt(S->getBody());
+  Writer.AddSourceLocation(S->getForLoc(), Record);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
+  Code = pch::STMT_OBJC_FOR_COLLECTION;
+}
+
+void PCHStmtWriter::VisitObjCCatchStmt(ObjCAtCatchStmt *S) {
+  Writer.WriteSubStmt(S->getCatchBody());
+  Writer.WriteSubStmt(S->getNextCatchStmt());
+  Writer.AddDeclRef(S->getCatchParamDecl(), Record);
+  Writer.AddSourceLocation(S->getAtCatchLoc(), Record);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
+  Code = pch::STMT_OBJC_CATCH;
+}
+
+void PCHStmtWriter::VisitObjCFinallyStmt(ObjCAtFinallyStmt *S) {
+  Writer.WriteSubStmt(S->getFinallyBody());
+  Writer.AddSourceLocation(S->getAtFinallyLoc(), Record);
+  Code = pch::STMT_OBJC_FINALLY;
+}
+
+void PCHStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
+  Writer.WriteSubStmt(S->getTryBody());
+  Writer.WriteSubStmt(S->getCatchStmts());
+  Writer.WriteSubStmt(S->getFinallyStmt());
+  Writer.AddSourceLocation(S->getAtTryLoc(), Record);
+  Code = pch::STMT_OBJC_AT_TRY;
+}
+
+void PCHStmtWriter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
+  Writer.WriteSubStmt(S->getSynchExpr());
+  Writer.WriteSubStmt(S->getSynchBody());
+  Writer.AddSourceLocation(S->getAtSynchronizedLoc(), Record);
+  Code = pch::STMT_OBJC_AT_SYNCHRONIZED;
+}
+
+void PCHStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
+  Writer.WriteSubStmt(S->getThrowExpr());
+  Writer.AddSourceLocation(S->getThrowLoc(), Record);
+  Code = pch::STMT_OBJC_AT_THROW;
+}
 
 //===----------------------------------------------------------------------===//
 // PCHWriter Implementation
