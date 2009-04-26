@@ -923,7 +923,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
         << Literal->getSourceRange());
 
     TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
-                                    Literal->getByteLength());
+                                    Literal->getByteLength(),
+                                    Names[i]);
     if (!Context.Target.validateOutputConstraint(Info))
       return StmtError(Diag(Literal->getLocStart(),
                             diag::err_asm_invalid_output_constraint)
@@ -948,11 +949,10 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
         << Literal->getSourceRange());
 
     TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
-                                    Literal->getByteLength());
-    if (!Context.Target.validateInputConstraint(&Names[0],
-                                                &Names[0] + NumOutputs, 
-                                                &OutputConstraintInfos[0],
-                                                Info)) {
+                                    Literal->getByteLength(),
+                                    Names[i]);
+    if (!Context.Target.validateInputConstraint(&OutputConstraintInfos[0],
+                                                NumOutputs, Info)) {
       return StmtError(Diag(Literal->getLocStart(),
                             diag::err_asm_invalid_input_constraint)
                        << Info.getConstraintStr());

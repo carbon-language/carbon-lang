@@ -688,10 +688,9 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   CaseRangeBlock = SavedCRBlock;
 }
 
-static std::string SimplifyConstraint(const char* Constraint,
-                                      TargetInfo &Target,
-                                      const std::string *OutputNamesBegin = 0,
-                                      const std::string *OutputNamesEnd = 0) {
+static std::string
+SimplifyConstraint(const char *Constraint, TargetInfo &Target,
+                 llvm::SmallVectorImpl<TargetInfo::ConstraintInfo> *OutCons=0) {
   std::string Result;
   
   while (*Constraint) {
@@ -708,12 +707,12 @@ static std::string SimplifyConstraint(const char* Constraint,
       Result += "imr";
       break;
     case '[': {
-      assert(OutputNamesBegin && OutputNamesEnd &&
+      assert(OutCons &&
              "Must pass output names to constraints with a symbolic name");
       unsigned Index;
       bool result = Target.resolveSymbolicName(Constraint, 
-                                               OutputNamesBegin,
-                                               OutputNamesEnd, Index);
+                                               &(*OutCons)[0],
+                                               OutCons->size(), Index);
       assert(result && "Could not resolve symbolic name"); result=result;
       Result += llvm::utostr(Index);
       break;
@@ -798,7 +797,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
     std::string OutputConstraint(S.getOutputConstraint(i));
     
-    TargetInfo::ConstraintInfo Info(OutputConstraint);
+    TargetInfo::ConstraintInfo Info(OutputConstraint, S.getOutputName(i));
     bool result = Target.validateOutputConstraint(Info);
     assert(result && "Failed to parse output constraint"); result=result;
     
@@ -852,10 +851,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     std::string InputConstraint(S.getInputConstraint(i));
     
-    TargetInfo::ConstraintInfo Info(InputConstraint);
-    bool result = Target.validateInputConstraint(S.begin_output_names(),
-                                                 S.end_output_names(),
-                                                 &OutputConstraintInfos[0],
+    TargetInfo::ConstraintInfo Info(InputConstraint, S.getInputName(i));
+    bool result = Target.validateInputConstraint(&OutputConstraintInfos[0],
+                                                 S.getNumOutputs(),
                                                  Info); result=result;
     assert(result && "Failed to parse input constraint");
     
@@ -864,8 +862,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     
     // Simplify the input constraint.
     InputConstraint = SimplifyConstraint(InputConstraint.c_str(), Target,
-                                         S.begin_output_names(),
-                                         S.end_output_names());
+                                         &OutputConstraintInfos);
 
     llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, Constraints);
     

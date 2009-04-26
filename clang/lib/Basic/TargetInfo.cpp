@@ -204,8 +204,8 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
 }
 
 bool TargetInfo::resolveSymbolicName(const char *&Name,
-                                     const std::string *OutputNamesBegin,
-                                     const std::string *OutputNamesEnd,
+                                     ConstraintInfo *OutputConstraints,
+                                     unsigned NumOutputs,
                                      unsigned &Index) const {
   assert(*Name == '[' && "Symbolic name did not start with '['");
   Name++;
@@ -220,20 +220,15 @@ bool TargetInfo::resolveSymbolicName(const char *&Name,
   
   std::string SymbolicName(Start, Name - Start);
   
-  Index = 0;
-  for (const std::string *it = OutputNamesBegin; 
-       it != OutputNamesEnd; 
-       ++it, Index++) {
-    if (SymbolicName == *it)
+  for (Index = 0; Index != NumOutputs; ++Index)
+    if (SymbolicName == OutputConstraints[Index].getName())
       return true;
-  }
 
   return false;
 }
 
-bool TargetInfo::validateInputConstraint(const std::string *OutputNamesBegin,
-                                         const std::string *OutputNamesEnd,
-                                         ConstraintInfo *OutputConstraints,
+bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
+                                         unsigned NumOutputs,
                                          ConstraintInfo &Info) const {
   const char *Name = Info.ConstraintStr.c_str();
 
@@ -242,7 +237,6 @@ bool TargetInfo::validateInputConstraint(const std::string *OutputNamesBegin,
     default:
       // Check if we have a matching constraint
       if (*Name >= '0' && *Name <= '9') {
-        unsigned NumOutputs = OutputNamesEnd - OutputNamesBegin;
         unsigned i = *Name - '0';
   
         // Check if matching constraint is out of bounds.
@@ -262,7 +256,7 @@ bool TargetInfo::validateInputConstraint(const std::string *OutputNamesBegin,
       break;
     case '[': {
       unsigned Index = 0;
-      if (!resolveSymbolicName(Name, OutputNamesBegin, OutputNamesEnd, Index))
+      if (!resolveSymbolicName(Name, OutputConstraints, NumOutputs, Index))
         return false;
     
       break;

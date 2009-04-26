@@ -209,14 +209,16 @@ public:
     unsigned Flags;
     int TiedOperand;
     
-    std::string ConstraintStr;
+    std::string ConstraintStr;  // constraint: "=rm"
+    std::string Name;           // Operand name: [foo] with no []'s.
   public:
-    ConstraintInfo(const char *str, unsigned strlen)
-      : Flags(0), TiedOperand(-1), ConstraintStr(str, str+strlen) {}
-    explicit ConstraintInfo(const std::string &Str)
-      : Flags(0), TiedOperand(-1), ConstraintStr(Str) {}
+    ConstraintInfo(const char *str, unsigned strlen, const std::string &name)
+      : Flags(0), TiedOperand(-1), ConstraintStr(str, str+strlen), Name(name) {}
+    explicit ConstraintInfo(const std::string &Str, const std::string &name)
+      : Flags(0), TiedOperand(-1), ConstraintStr(Str), Name(name) {}
 
     const std::string &getConstraintStr() const { return ConstraintStr; }
+    const std::string &getName() const { return Name; }
     bool isReadWrite() const { return (Flags & CI_ReadWrite) != 0; }
     bool allowsRegister() const { return (Flags & CI_AllowsRegister) != 0; }
     bool allowsMemory() const { return (Flags & CI_AllowsMemory) != 0; }
@@ -236,14 +238,12 @@ public:
   // a constraint is valid and provides information about it.
   // FIXME: These should return a real error instead of just true/false.
   bool validateOutputConstraint(ConstraintInfo &Info) const;
-  bool validateInputConstraint(const std::string *OutputNamesBegin,
-                               const std::string *OutputNamesEnd,
-                               ConstraintInfo* OutputConstraints,
+  bool validateInputConstraint(ConstraintInfo *OutputConstraints,
+                               unsigned NumOutputs,
                                ConstraintInfo &info) const;
   bool resolveSymbolicName(const char *&Name,
-                           const std::string *OutputNamesBegin,
-                           const std::string *OutputNamesEnd,
-                           unsigned &Index) const;
+                           ConstraintInfo *OutputConstraints,
+                           unsigned NumOutputs, unsigned &Index) const;
   
   virtual std::string convertConstraint(const char Constraint) const {
     return std::string(1, Constraint);
